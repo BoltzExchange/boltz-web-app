@@ -21,6 +21,7 @@ h1 {
 }
 
 .btn {
+  cursor: pointer;
   display: inline-block;
   margin: 3px 3px 0;
   padding: 8px 12px;
@@ -28,9 +29,11 @@ h1 {
   color: white;
   text-decoration: none;
 }
+
 .btn:visited {
   color: white;
 }
+
 .btn:hover {
   background: #ECD138
 }
@@ -39,9 +42,31 @@ h1 {
   display: flex;
   justify-content: space-between;
 }
+.tags {
+  margin-top: 21px;
+  display: flex;
+  justify-content: center;
+}
 
 form {
   display: flex;
   justify-content: space-between;
   margin-bottom: 42px;
+}
+
+form[data-reverse=true] {
+  flex-direction: row-reverse;
+}
+
+form > div {
+  width: 33.3333%;
+}
+
+#sendAmount {
+  color: #00abff;
+  font-size: 32px;
+  font-weight: bold;
+  width: 166px;
+  border-radius: 10px;
+  text-align: center;
 }
