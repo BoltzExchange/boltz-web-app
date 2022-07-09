@@ -12,11 +12,47 @@ h1 {
   color: #00abff;
 }
 
+hr {
+  margin: 24px 0;
+  border: none;
+  height: 1px;
+  background: #ddd;
+}
+
+#reverse {
+  position: relative;
+  width: 65px;
+  height: 81px;
+  background: url(/src/assets/arrow.svg);
+  background-repeat: no-repeat;
+  background-size: 100%;
+  background-position: center;
+  margin: auto;
+  cursor: pointer;
+  transform: rotate(180deg);
+}
+[data-reverse=true] #reverse {
+  transform: rotate(0deg);
+}
+
+#reverse input {
+  cursor: pointer;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  margin: 0;
+  outline: none;
+  border:none;
+}
+
 .container {
   color: #666;
   background: white;
-  padding: 42px;
-  max-width: 666px;
+  padding: 32px;
+  max-width: 500px;
   margin: 66px auto;
 }
 
@@ -34,7 +70,12 @@ h1 {
   color: white;
 }
 
-.btn:hover {
+.tag .btn {
+  background: #ddd;
+}
+
+.btn:hover,
+.tag .btn:hover {
   background: #ECD138
 }
 
@@ -48,25 +89,68 @@ h1 {
   justify-content: center;
 }
 
-form {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 42px;
+.icons img {
+  width: 86px;
 }
 
-form[data-reverse=true] {
+.icons {
+  padding: 0 38px;
+  margin-bottom: 24px;
+}
+
+.icons,
+form {
+  display: flex;
+  justify-content: center;
+}
+
+form label {
+  display: block;
+  font-weight: bold;
+}
+
+[data-reverse=true] form {
   flex-direction: row-reverse;
 }
 
-form > div {
+.icons > div {
   width: 33.3333%;
 }
 
+form > div {
+  width: 50%;
+  padding: 0 6px;
+}
+
+#receiveAmount,
 #sendAmount {
   color: #00abff;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: bold;
-  width: 166px;
+  width: 100%;
+  border: none;
   border-radius: 10px;
   text-align: center;
+}
+
+#sendAmount {
+  padding: 0;
+  background: #ddd;
+  border: 1px dashed #00abff;
+  margin-bottom: 2px;
+}
+
+#root h2 {
+  margin: 0;
+}
+#root h2 + p {
+  margin-top: 0;
+}
+
+.creator {
+  display: block;
+  margin-bottom: 32px;
+}
+.creator a {
+  color: white;
 }
