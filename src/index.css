@@ -1,0 +1,47 @@
+body {
+  margin: 0;
+  background: #ECD138;
+  color: white;
+  font-family: sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+}
+
+h1 {
+  color: #00abff;
+}
+
+.container {
+  color: #666;
+  background: white;
+  padding: 42px;
+  max-width: 666px;
+  margin: 66px auto;
+}
+
+.btn {
+  display: inline-block;
+  margin: 3px 3px 0;
+  padding: 8px 12px;
+  background: #00abff;
+  color: white;
+  text-decoration: none;
+}
+.btn:visited {
+  color: white;
+}
+.btn:hover {
+  background: #ECD138
+}
+
+.fees {
+  display: flex;
+  justify-content: space-between;
+}
+
+form {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 42px;
+}
