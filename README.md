@@ -1,19 +1,17 @@
-## Usage
+# boltz.exchange for bitcoin maximalists
+providing **trustless** and **account-free** swap services since **2018.**
+move **IN** and **OUT** of the **lightning network** and remain in control of your bitcoin, at all times.
+* [https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2](Lightning Node)
+* [https://docs.boltz.exchange/en/latest/](Documentation)
+* [https://discord.gg/d6EK85KK](Discord)
+* [https://twitter.com/Boltzhq](Twitter)
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
-
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
-
+## development
 ```bash
-$ npm install # or pnpm install or yarn install
+$ npm install
 ```
-
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
-
-## Available Scripts
-
+## scripts
 In the project directory, you can run:
-
 ### `npm dev` or `npm start`
 
 Runs the app in the development mode.<br>
@@ -30,5 +28,4 @@ The build is minified and the filenames include the hashes.<br>
 Your app is ready to be deployed!
 
 ## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+You can deploy the `dist` folder to github pages.
