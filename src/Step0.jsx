@@ -15,6 +15,7 @@ import {
   valid, setValid,
 } from "./signals";
 
+
 export const checkAmount = (e) => {
   let errorkey = "";
   let target = document.getElementById("sendAmount");
@@ -38,8 +39,6 @@ export const checkAmount = (e) => {
 };
 
 const Step0 = () => {
-
-  setSendAmount(0.05);
 
   startInterval(() => {
     fetcher("/getpairs", (data) => {

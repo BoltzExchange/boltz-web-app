@@ -9,6 +9,11 @@ body {
   text-align: center;
 }
 
+/* #invoice-qr { */
+/*   width: 400px; */
+/*   height: 400px; */
+/* } */
+
 #logo img {
   width: 100%;
   max-width: 260px;
@@ -37,16 +42,31 @@ hr {
 .icon-1, .icon-2 {
   cursor: pointer;
 }
-[data-reverse=true] .icon-1 {
+.bitcoin-icon {
+  width: 22px;
+  height: 22px;
+  padding: 0px;
+  border-radius: 100%;
+  margin: 32px auto;
+  background-size: 10%;
+  animation: rotate .4s;
+}
+.animation-spacer {
+  padding: 70px 0 110px;
+}
+
+.lightning-icon,
+[data-reverse=true] .icon-1,
+[data-reverse=false] .icon-2 {
   background-image: url(./assets/lightning-icon.svg);
 }
+
+.bitcoin-icon,
 [data-reverse=false] .icon-1,
 [data-reverse=true] .icon-2 {
   background-image: url(./assets/bitcoin-icon.svg);
 }
-[data-reverse=false] .icon-2 {
-  background-image: url(./assets/lightning-icon.svg);
-}
+
 .pornhub:before {
   content: " ";
   display: inline-block;
@@ -286,4 +306,25 @@ h2 + p {
 @keyframes go{
   0%{background-position:0;}
   100%{background-position:0 -7100px;}
+}
+
+.rotate {
+  animation: rotation 3s;
+}
+
+.linear {
+  animation-timing-function: linear;
+}
+
+.infinite {
+  animation-iteration-count: infinite;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+  to {
+    transform: rotate(359deg) scale(10);
+  }
 }

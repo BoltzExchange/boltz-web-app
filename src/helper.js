@@ -1,7 +1,7 @@
+import QRCode from 'qrcode'
+
 export const BOLTZ_API_URL = "https://boltz.exchange/api";
-
 export const divider = 100000000;
-
 export const startInterval = (cb) => {
   cb();
   return setInterval(cb, 10000);
@@ -20,5 +20,28 @@ export const fetcher = (url, cb, opts = {}) => {
     .then(cb)
     .catch(error => console.error(error));
 };
+
+export const downloadRefundFile = (swap) => {
+  let json = {
+    "id": swap.boltz_id,
+    "currency": "BTC",
+    "redeemScript": swap.redeem_script,
+    "privateKey": swap.refund_privkey,
+    "timeoutBlockHeight": swap.timeout_block_height
+  };
+  let hiddenElement = document.createElement('a');
+  hiddenElement.href = 'data:application/json;charset=utf-8,' + encodeURI(JSON.stringify(json));
+  hiddenElement.target = '_blank';
+  hiddenElement.download = 'boltz-refund-'+swap.boltz_id+'.json';
+  hiddenElement.click();
+};
+
+export const qr = (text, cb) => {
+  QRCode.toDataURL(text, { version: 2, width: 400 })
+    .then(cb)
+    .catch(err => {
+      console.error(err)
+    });
+}
 
 export default fetcher;

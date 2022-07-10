@@ -11,3 +11,4 @@ export const [sendAmount, setSendAmount] = createSignal(0);
 export const [receiveAmount, setReceiveAmount] = createSignal(0);
 export const [reverse, setReverse] = createSignal(false);
 export const [valid, setValid] = createSignal(false);
+export const [invoiceQr, setInvoiceQr] = createSignal("");
