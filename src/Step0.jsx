@@ -12,6 +12,7 @@ import {
   receiveAmount, setReceiveAmount,
   reverse, setReverse,
   config, setConfig,
+  valid, setValid,
 } from "./signals";
 
 const Step0 = () => {
@@ -31,16 +32,42 @@ const Step0 = () => {
       setMinimum(cfg.limits.minimal / divider);
       setMaximum(cfg.limits.maximal / divider);
       setBoltzFee(cfg.fees.percentage);
-      setReceiveAmount(sendAmount() - sendAmount() / 100 * boltzFee());
       if (reverse()) {
         let rev = cfg.fees.minerFees.baseAsset.reverse;
         let fee = (rev.claim  + rev.lockup) / divider;
         setMinerFee(fee.toFixed(8));
       } else {
-        setMinerFee(cfg.fees.minerFees.baseAsset.normal / divider);
+        let fee = cfg.fees.minerFees.baseAsset.normal / divider;
+        setMinerFee(fee.toFixed(8));
       }
     }
   });
+
+  createEffect(() => {
+    let amount = sendAmount() - minerFee() - sendAmount() * boltzFee() / 100;
+    setReceiveAmount(amount.toFixed(8));
+  });
+
+  const checkAmount = (e) => {
+    let errorkey = "";
+    e.currentTarget.checkValidity();
+    setValid(false);
+    for (let k in e.currentTarget.validity) {
+      if (k === "valid") continue;
+      if (e.currentTarget.validity[k]) {
+        errorkey = k;
+        setValid(false);
+        break;
+      }
+      setValid(true);
+    }
+
+    if (valid()) {
+      setSendAmount(e.currentTarget.value);
+    } else {
+      setReceiveAmount(errorkey);
+    }
+  };
 
   return (
     <div data-reverse={reverse()}>
@@ -48,7 +75,10 @@ const Step0 = () => {
     <p>Payment includes miner and boltz service fees.</p>
       <hr />
       <div class="icons">
-        <div><span class="icon-1 icon" onClick={(e) => setReverse(!reverse()) }></span></div>
+        <div><span class="icon-1 icon" onClick={(e) => {
+          setReverse(!reverse());
+          focus();
+        }}></span></div>
         <div>
             <div id="reverse">
               <input type="checkbox" value="true" checked={reverse()} onChange={(e) => {
@@ -62,11 +92,8 @@ const Step0 = () => {
       <form name="swap" action="#">
         <div>
           <div>
-            <input autofocus maxlength="10" min={minimum()} max={maximum()} type="text" id="sendAmount" value={sendAmount()} onKeyUp={(e) => {
-              setSendAmount(e.currentTarget.value);
-              let valid = e.currentTarget.checkValidity();
-              console.log(valid);
-            }} />
+            <input autofocus required step="0.00000001" maxlength="10" min={minimum()} max={maximum()}
+                type="number" id="sendAmount" value={sendAmount()} onChange={checkAmount} onKeyUp={checkAmount} />
             <label>BTC</label>
           </div>
           <div>
@@ -99,7 +126,7 @@ const Step0 = () => {
         </div>
       </div>
       <hr />
-      <p>Click the button to create a swap and a popover with invoice details will appear.</p>
+      <p>creates a swap and go to the invoicing step.</p>
     </div>
   );
 };

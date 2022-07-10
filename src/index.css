@@ -235,7 +235,7 @@ form > div > div:last-child {
 #receiveAmount,
 #sendAmount {
   color: #00abff;
-  font-size: 28px;
+  font-size: 25px;
   font-weight: bold;
   width: 100%;
   border: none;

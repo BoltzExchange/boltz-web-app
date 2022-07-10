@@ -1,6 +1,6 @@
 import { render } from "solid-js/web";
 
-const Step2 = () => {
+const Step1 = () => {
   return (
     <div>
       <h2>Pay invoice</h2>
@@ -10,4 +10,4 @@ const Step2 = () => {
   );
 };
 
-export default Step2;
+export default Step1;

@@ -4,11 +4,12 @@ import { render } from 'solid-js/web';
 import Step0 from './Step0';
 import Step1 from './Step1';
 import { fetcher } from './helper';
-
-const [step, setStep] = createSignal(0);
+import { step, setStep, valid } from './signals';
 
 const create_swap = (e) => {
-  setStep(1);
+  if (valid()) {
+    setStep(1);
+  };
   // const params = {
   //   yo: "yo"
   // };
@@ -33,7 +34,7 @@ const App = () => {
       <div class={step() == 1 ? "active" : ""}>
         <div class="container">
           <Step1 />
-          <span class="btn btn-danger" onClick={(e) => setStep(0)}>cancel</span>
+          <span class="btn btn-danger" onClick={(e) => setStep(0) }>cancel</span>
         </div>
       </div>
     </div>
