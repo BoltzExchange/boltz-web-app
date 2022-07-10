@@ -49,6 +49,7 @@ const App = () => {
       <div class={step() == 2 ? "active" : ""}>
         <div class="container">
           <Success />
+          <hr />
           <span class="btn btn-success" onClick={(e) => setStep(0) }>new swap</span>
           <a class="btn" target="_blank" href="https://mempool.space">mempool</a>
         </div>

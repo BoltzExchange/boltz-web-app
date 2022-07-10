@@ -52,7 +52,7 @@ hr {
   animation: rotate .4s;
 }
 .animation-spacer {
-  padding: 70px 0 110px;
+  padding: 70px 0;
 }
 
 .lightning-icon,
