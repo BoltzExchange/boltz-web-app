@@ -15,6 +15,28 @@ import {
   valid, setValid,
 } from "./signals";
 
+export const checkAmount = (e) => {
+  let errorkey = "";
+  let target = document.getElementById("sendAmount");
+  target.checkValidity();
+  setValid(false);
+  for (let k in target.validity) {
+    if (k === "valid") continue;
+    if (target.validity[k]) {
+      errorkey = k;
+      setValid(false);
+      break;
+    }
+    setValid(true);
+  }
+
+  if (valid()) {
+    setSendAmount(target.value);
+  } else {
+    setReceiveAmount(errorkey);
+  }
+};
+
 const Step0 = () => {
 
   setSendAmount(0.05);
@@ -47,27 +69,6 @@ const Step0 = () => {
     let amount = sendAmount() - minerFee() - sendAmount() * boltzFee() / 100;
     setReceiveAmount(amount.toFixed(8));
   });
-
-  const checkAmount = (e) => {
-    let errorkey = "";
-    e.currentTarget.checkValidity();
-    setValid(false);
-    for (let k in e.currentTarget.validity) {
-      if (k === "valid") continue;
-      if (e.currentTarget.validity[k]) {
-        errorkey = k;
-        setValid(false);
-        break;
-      }
-      setValid(true);
-    }
-
-    if (valid()) {
-      setSendAmount(e.currentTarget.value);
-    } else {
-      setReceiveAmount(errorkey);
-    }
-  };
 
   return (
     <div data-reverse={reverse()}>
