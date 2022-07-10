@@ -1,18 +1,14 @@
 body {
   font-size: 14px;
   margin: 0;
-  background: #ECD138;
-  color: white;
+  /* background: #ECD138; */
+  background: #313131;
+  color: #d0d0d0;
   font-family: sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
 }
-
-/* #invoice-qr { */
-/*   width: 400px; */
-/*   height: 400px; */
-/* } */
 
 #logo img {
   width: 100%;
@@ -27,7 +23,11 @@ hr {
   margin: 24px 0;
   border: none;
   height: 1px;
-  background: #ddd;
+  background: #333;
+}
+
+.rainbow hr {
+  background: transparent;
 }
 
 .integrations {
@@ -53,6 +53,10 @@ hr {
 }
 .animation-spacer {
   padding: 70px 0;
+}
+[data-reverse=false] #onchainAddress,
+[data-reverse=true] #invoice {
+  display: none;
 }
 
 .lightning-icon,
@@ -86,7 +90,7 @@ hr {
   padding-left: 50px;
   text-decoration: none;
   font-size: 27px;
-  color: #24306b;
+  color: #bdc5ee;
   font-weight: bold;
   line-height: 1.1;
 }
@@ -142,9 +146,6 @@ hr {
   cursor: pointer;
   transform: rotate(180deg);
 }
-/* [data-reverse=true] #reverse { */
-/*   transform: rotate(0deg); */
-/* } */
 
 #reverse input {
   cursor: pointer;
@@ -160,8 +161,8 @@ hr {
 }
 
 .container {
-  color: #666;
-  background: white;
+  color: #fff;
+  background: #0003;
   padding: 32px;
   max-width: 500px;
   margin: 66px auto;
@@ -182,7 +183,7 @@ hr {
 }
 
 .tag .btn {
-  background: #ddd;
+  background: #333;
 }
 
 .btn:hover,
@@ -264,7 +265,7 @@ form > div > div:last-child {
 
 #sendAmount {
   padding: 0 8px;
-  background: #ddd;
+  background: #333;
   border: 1px dashed #00abff;
   margin-bottom: 2px;
 }

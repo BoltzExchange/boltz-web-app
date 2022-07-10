@@ -126,6 +126,9 @@ const Step0 = () => {
         </div>
       </div>
       <hr />
+      <textarea id="invoice" name="invoice" placeholder="Paste lightning invoice"></textarea>
+      <input type="text" id="onchainAddress" name="onchainAddress" placeholder="On-chain address" />
+      <hr />
       <p>creates a swap and go to the invoicing step.</p>
     </div>
   );

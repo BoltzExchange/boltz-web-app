@@ -2,28 +2,51 @@
 import { createSignal, createEffect } from "solid-js";
 import { render } from 'solid-js/web';
 import { fetcher, qr } from './helper';
-import { step, setStep, valid, setInvoiceQr } from './signals';
+
+import {
+  step, setStep,
+  invoice, setInvoice,
+  refundPublicKey, setRefundPublicKey,
+  reverse, valid, setInvoiceQr, sendAmount,
+  preimageHash, claimPublicKey
+} from './signals';
+
 import Step0 from './Step0';
 import Step1 from './Step1';
 import Success from './Success';
 import Refund from './Refund';
 
-const create= (e) => {
+const create = (e) => {
   if (valid()) {
-    setStep(1);
+    let params = null;
+    let cb = null;
+    if (reverse()) {
+      params = {
+        "type": "reversesubmarine",
+        "pairId": "BTC/BTC",
+        "orderSide": "buy",
+        "invoiceAmount": sendAmount(),
+        "preimageHash": preimageHash(),
+        "claimPublicKey": claimPublicKey(),
+      };
+      cb = (data) => {
+        setStep(2);
+      };
+    } else {
+      params = {
+        "type": "submarine",
+        "pairId": "BTC/BTC",
+        "orderSide": "sell",
+        "refundPublicKey": refundPublicKey(),
+        "invoice": invoice()
+      };
+      cb = (data) => {
+        qr(data.bip21, setInvoiceQr);
+        setStep(1);
+      };
+    }
+    fetcher("/createswap", cb, params);
   };
-  qr("testing", setInvoiceQr);
-
-  // const params = {
-  //   yo: "yo"
-  // };
-  // fetcher("/getpairs", (data) => {
-  //   let cfg = data.pairs["BTC/BTC"];
-  //   setConfig(cfg);
-  // }, {
-  //     method: 'POST',
-  //     body: JSON.stringify( params )
-  // });
 };
 
 const success = (e) => setStep(2);
