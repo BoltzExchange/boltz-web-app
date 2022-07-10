@@ -1,4 +1,5 @@
 body {
+  font-size: 14px;
   margin: 0;
   background: #ECD138;
   color: white;
@@ -6,6 +7,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
+}
+
+#logo img {
+  width: 100%;
+  max-width: 260px;
 }
 
 h1 {
@@ -19,11 +25,96 @@ hr {
   background: #ddd;
 }
 
+.integrations {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.integrations > a {
+  margin: 12px;
+}
+
+.icon-1, .icon-2 {
+  cursor: pointer;
+}
+[data-reverse=true] .icon-1 {
+  background-image: url(./assets/lightning-icon.svg);
+}
+[data-reverse=false] .icon-1,
+[data-reverse=true] .icon-2 {
+  background-image: url(./assets/bitcoin-icon.svg);
+}
+[data-reverse=false] .icon-2 {
+  background-image: url(./assets/lightning-icon.svg);
+}
+.pornhub:before {
+  content: " ";
+  display: inline-block;
+  background: url(./assets/thunderhub.jpg);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  width: 42px;
+  height: 42px;
+  margin-right: 10px;
+  border-radius: 12px;
+  position: absolute;
+  top: -3px;
+  left: 0;
+}
+.pornhub {
+  position: relative;
+  padding-left: 50px;
+  text-decoration: none;
+  font-size: 27px;
+  color: #24306b;
+  font-weight: bold;
+  line-height: 1.1;
+}
+.rtl {
+  display: inline-block;
+  background: url(./assets/rtl.webp);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  width: 150px;
+  height: 36px;
+}
+.lnbits {
+  display: inline-block;
+  background: url(./assets/lnbits.svg);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  width: 155px;
+  height: 46px;
+}
+.breez {
+  display: inline-block;
+  background: url(./assets/breez.png);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  width: 133px;
+  height: 46px;
+}
+.electrum {
+  display: inline-block;
+  background: url(./assets/electrum.png);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  width: 212px;
+  height: 59px;
+}
+.clboss {
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 32px;
+  text-decoration: none;
+  color: purple;
+}
+
 #reverse {
   position: relative;
   width: 65px;
   height: 81px;
-  background: url(/src/assets/arrow.svg);
+  background: url(./assets/arrow.svg);
   background-repeat: no-repeat;
   background-size: 100%;
   background-position: center;
@@ -31,9 +122,9 @@ hr {
   cursor: pointer;
   transform: rotate(180deg);
 }
-[data-reverse=true] #reverse {
-  transform: rotate(0deg);
-}
+/* [data-reverse=true] #reverse { */
+/*   transform: rotate(0deg); */
+/* } */
 
 #reverse input {
   cursor: pointer;
@@ -79,6 +170,19 @@ hr {
   background: #ECD138
 }
 
+.btn-success {
+  background: #36a404;
+}
+.btn-success:hover {
+  background: #43d700;
+}
+.btn-danger {
+  background: red;
+}
+.btn-danger:hover {
+  background: darkred;
+}
+
 .fees {
   display: flex;
   justify-content: space-between;
@@ -89,17 +193,20 @@ hr {
   justify-content: center;
 }
 
-.icons img {
+.icon {
+  display: inline-block;
   width: 86px;
+  height: 86px;
+  background-repeat: no-repeat;
+  background-size: 100%;
 }
 
 .icons {
-  padding: 0 38px;
   margin-bottom: 24px;
 }
 
 .icons,
-form {
+form > div {
   display: flex;
   justify-content: center;
 }
@@ -109,17 +216,20 @@ form label {
   font-weight: bold;
 }
 
-[data-reverse=true] form {
-  flex-direction: row-reverse;
-}
-
 .icons > div {
   width: 33.3333%;
 }
 
-form > div {
+form > div > div {
   width: 50%;
   padding: 0 6px;
+}
+#sendAmount,
+form > div > div {
+  text-align: left;
+}
+form > div > div:last-child {
+  text-align: right;
 }
 
 #receiveAmount,
@@ -130,21 +240,23 @@ form > div {
   width: 100%;
   border: none;
   border-radius: 10px;
-  text-align: center;
 }
 
 #sendAmount {
-  padding: 0;
+  padding: 0 8px;
   background: #ddd;
   border: 1px dashed #00abff;
   margin-bottom: 2px;
 }
 
-#root h2 {
+h2 {
   margin: 0;
 }
-#root h2 + p {
+h2 + p {
   margin-top: 0;
+}
+#slogan h2 {
+  margin: 12px 0;
 }
 
 .creator {
@@ -153,4 +265,11 @@ form > div {
 }
 .creator a {
   color: white;
+}
+
+#steps > div {
+  display: none;
+}
+#steps > .active {
+  display: block;
 }
