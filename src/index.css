@@ -273,3 +273,17 @@ h2 + p {
 #steps > .active {
   display: block;
 }
+
+.rainbow{
+  background: linear-gradient(to top, red,orange,yellow,green,blue,indigo,violet,red);
+  background-repeat:repeat-y;
+
+  -webkit-animation:go 10s linear infinite;
+  -moz-animation:go 10s linear infinite;
+  animation:go 10s linear infinite;
+}
+
+@keyframes go{
+  0%{background-position:0;}
+  100%{background-position:0 -7100px;}
+}
