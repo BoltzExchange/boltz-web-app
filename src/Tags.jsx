@@ -1,11 +1,17 @@
 /* @refresh reload */
 import { render } from 'solid-js/web';
-import { setSendAmount } from './signals';
+import { setSendAmount, minimum, maximum } from './signals';
 import { focus } from './helper';
 
 const Tags = () => {
   return (
     <div class="tags">
+      <div class="tag">
+        <span class="btn" onClick={(e) => {
+          setSendAmount(minimum());
+          focus();
+        }}>min</span>
+      </div>
       <div class="tag">
         <span class="btn" onClick={(e) => {
           setSendAmount(0.001);
@@ -44,9 +50,9 @@ const Tags = () => {
       </div>
       <div class="tag">
         <span class="btn" onClick={(e) => {
-          setSendAmount(0.1);
+          setSendAmount(maximum());
           focus();
-        }}>10M</span>
+        }}>max</span>
       </div>
     </div>
   );
