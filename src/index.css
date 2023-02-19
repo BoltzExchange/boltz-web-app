@@ -54,7 +54,12 @@ hr {
 .animation-spacer {
   padding: 70px 0;
 }
+#invoiceLabel {
+  display: block;
+  margin-bottom: 6px;
+}
 [data-reverse=false] #onchainAddress,
+[data-reverse=true] #invoiceLabel,
 [data-reverse=true] #invoice {
   display: none;
 }
@@ -253,22 +258,35 @@ form > div > div:last-child {
   text-align: right;
 }
 
-#receiveAmount,
-#sendAmount {
+input, textarea {
   color: #00abff;
-  font-size: 25px;
-  font-weight: bold;
-  width: 100%;
-  border: none;
+  background: #333;
+  border: 1px dashed #00abff;
   border-radius: 10px;
+  width: 100%;
+  font-size: 20px;
+  font-weight: normal;
+  /* font-size: 25px; */
+  /* font-weight: bold; */
+  /* padding: 0 8px; */
+  text-align: center;
+  margin-bottom: 2px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+textarea {
+  min-height: 198px;
+}
+
+#refundUpload {
+  margin: 21px 0;
 }
 
 #sendAmount {
-  padding: 0 8px;
-  background: #333;
-  border: 1px dashed #00abff;
-  margin-bottom: 2px;
+  width: 135px;
 }
+
 
 h2 {
   margin: 0;
@@ -329,3 +347,21 @@ h2 + p {
     transform: rotate(359deg) scale(10);
   }
 }
+#notification {
+  background: black;
+  color: white;
+}
+
+.hidden {
+  display: none;
+}
+.frame {
+  margin-bottom: 21px;
+}
+.error {
+  background: #ff000052;
+  color: #ddd;
+  padding: 6px 10px;
+  display: inline-block;
+}
+

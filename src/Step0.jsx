@@ -13,6 +13,7 @@ import {
   reverse, setReverse,
   config, setConfig,
   valid, setValid,
+  setInvoice, setOnchainAddress
 } from "./signals";
 
 
@@ -126,8 +127,9 @@ const Step0 = () => {
         </div>
       </div>
       <hr />
-      <textarea id="invoice" name="invoice" placeholder="Paste lightning invoice"></textarea>
-      <input type="text" id="onchainAddress" name="onchainAddress" placeholder="On-chain address" />
+      <label id="invoiceLabel">Create an invoice with exactly <b>{Math.floor(sendAmount() * 100000000)}</b> sats and paste it here</label>
+      <textarea onChange={(e) => setInvoice(e.currentTarget.value)} id="invoice" name="invoice" placeholder="Paste lightning invoice"></textarea>
+      <input  onChange={(e) => setOnchainAddress(e.currentTarget.value)} type="text" id="onchainAddress" name="onchainAddress" placeholder="On-chain address" />
       <hr />
       <p>creates a swap and go to the invoicing step.</p>
     </div>
