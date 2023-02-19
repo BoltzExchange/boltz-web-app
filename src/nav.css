@@ -1,0 +1,98 @@
+body {
+    padding-top: 90px;
+}
+
+nav {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 14px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: rgba(0,0,0,.2);
+}
+nav a:visited,
+nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+}
+nav a:first-child {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+nav a:hover,
+nav a.active {
+  color: #e6c826;
+  text-decoration: underline;
+}
+
+#logo img {
+  width: 100%;
+  max-width: 165px;
+  margin-right: 24px;
+}
+
+.hamburger {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 400ms;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.hamburger.active {
+  transform: rotate(45deg);
+}
+
+.hamburger .line {
+  fill:none;
+  transition: stroke-dasharray 400ms, stroke-dashoffset 400ms;
+  stroke:#fff;
+  stroke-width:5.5;
+  stroke-linecap:round;
+}
+
+.hamburger .top {
+  stroke-dasharray: 40 121;
+}
+
+.hamburger .bottom {
+  stroke-dasharray: 40 121;
+}
+
+.hamburger.active .top {
+  stroke-dashoffset: -68px;
+}
+
+.hamburger.active .bottom {
+  stroke-dashoffset: -68px;
+}
+
+.collapse {
+    display: none;
+}
+.collapse a {
+    display: block;
+}
+
+@media (min-width: 769px) {
+    .hamburger {
+        display: none;
+    }
+    .collapse {
+        display: flex;
+    }
+
+    .collapse a {
+        margin-left: 21px;
+        padding-left: 21px;
+        border-left: 1px solid rgba(255,255,255,.3);
+        display: inline;
+    }
+}

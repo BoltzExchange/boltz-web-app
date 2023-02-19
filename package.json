@@ -2,6 +2,7 @@
   "name": "boltz-frontend",
   "version": "3.0.0",
   "description": "",
+  "license": "MIT",
   "scripts": {
     "start": "vite",
     "dev": "vite",
@@ -9,7 +10,6 @@
     "deploy": "git push origin `git subtree split --prefix dist main`:gh-pages --force",
     "serve": "vite preview"
   },
-  "license": "MIT",
   "devDependencies": {
     "prettier": "^2.8.4",
     "vite": "^2.9.9",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@solidjs/router": "^0.7.0",
     "babel-preset-solid": "^1.4.6",
     "bitcoinjs-lib": "^5.2.0",
     "boltz-core": "^0.5.0",

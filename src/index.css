@@ -1,8 +1,7 @@
 body {
   font-size: 14px;
   margin: 0;
-  /* background: #ECD138; */
-  background: #313131;
+  background: #14283f;
   color: #d0d0d0;
   font-family: sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -10,9 +9,14 @@ body {
   text-align: center;
 }
 
-#logo img {
-  width: 100%;
-  max-width: 260px;
+footer {
+    text-align: center;
+    padding: 12px 0;
+}
+
+a:visited,
+a:hover {
+  color: #e6c826;
 }
 
 h1 {
@@ -24,19 +28,6 @@ hr {
   border: none;
   height: 1px;
   background: #333;
-}
-
-.rainbow hr {
-  background: transparent;
-}
-
-.integrations {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-.integrations > a {
-  margin: 12px;
 }
 
 .icon-1,
@@ -166,7 +157,7 @@ hr {
   border: none;
 }
 
-.container {
+.frame {
   color: #fff;
   background: #0003;
   padding: 32px;
@@ -289,24 +280,6 @@ textarea {
   width: 135px;
 }
 
-h2 {
-  margin: 0;
-}
-h2 + p {
-  margin-top: 0;
-}
-#slogan h2 {
-  margin: 12px 0;
-}
-
-.creator {
-  display: block;
-  margin-bottom: 32px;
-}
-.creator a {
-  color: white;
-}
-
 #steps > div {
   display: none;
 }
@@ -314,54 +287,6 @@ h2 + p {
   display: block;
 }
 
-.rainbow {
-  background: linear-gradient(
-    to top,
-    red,
-    orange,
-    yellow,
-    green,
-    blue,
-    indigo,
-    violet,
-    red
-  );
-  background-repeat: repeat-y;
-
-  -webkit-animation: go 10s linear infinite;
-  -moz-animation: go 10s linear infinite;
-  animation: go 10s linear infinite;
-}
-
-@keyframes go {
-  0% {
-    background-position: 0;
-  }
-  100% {
-    background-position: 0 -7100px;
-  }
-}
-
-.rotate {
-  animation: rotation 3s;
-}
-
-.linear {
-  animation-timing-function: linear;
-}
-
-.infinite {
-  animation-iteration-count: infinite;
-}
-
-@keyframes rotation {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-  to {
-    transform: rotate(359deg) scale(10);
-  }
-}
 #notification {
   background: black;
   color: white;
@@ -370,9 +295,11 @@ h2 + p {
 .hidden {
   display: none;
 }
+
 .frame {
   margin-bottom: 21px;
 }
+
 .error {
   background: #ff000052;
   color: #ddd;

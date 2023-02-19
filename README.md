@@ -10,8 +10,10 @@ move **IN** and **OUT** of the **lightning network** and remain in control of yo
 
 ## development
 
+installing
+
 ```bash
-$ npm install
+$ yarn
 ```
 
 ## scripts
