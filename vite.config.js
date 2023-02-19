@@ -4,7 +4,6 @@ import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfil
 import nodePolyfills from "rollup-plugin-node-polyfills";
 
 export default defineConfig({
-  base: "/boltz-btc-frontend/",
   plugins: [solidPlugin(), nodePolyfills({ crypto: true, stream: true })],
   build: {
     rollupOptions: {
