@@ -6,6 +6,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
+    "deploy": "git push origin `git subtree split --prefix dist main`:gh-pages --force",
     "serve": "vite preview"
   },
   "license": "MIT",
