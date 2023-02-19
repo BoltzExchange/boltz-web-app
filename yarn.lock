@@ -336,6 +336,11 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
+"@solid-primitives/i18n@^1.1.4":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@solid-primitives/i18n/-/i18n-1.1.4.tgz#6e84b8d6f5f1b86a4e91f3eaa8a5fad587dc8244"
+  integrity sha512-TKTcwItoL+T0QJCf1W5Hav5Zdl4JKwWWdri34cgBpUEx4eSb5CouH3Mr3kH9cknaETV2oVU9lJObeCoQikLj0w==
+
 "@solidjs/router@^0.7.0":
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/@solidjs/router/-/router-0.7.0.tgz#5f8f1289caf4a1eb24e57cbe93e6dde639b04a6e"

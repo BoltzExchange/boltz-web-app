@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@solid-primitives/i18n": "^1.1.4",
     "@solidjs/router": "^0.7.0",
     "babel-preset-solid": "^1.4.6",
     "bitcoinjs-lib": "^5.2.0",
