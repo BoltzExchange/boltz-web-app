@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { createStorage } from "@solid-primitives/storage";
 
 export const [step, setStep] = createSignal(0);
 export const [config, setConfig] = createSignal(0);
@@ -18,3 +19,9 @@ export const [claimECPair, setClaimECPair] = createSignal("");
 export const [refundECPair, setRefundECPair] = createSignal("");
 export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
+
+// export const [store, setStore, {
+//   remove: (key) => void;
+//   clear: () => void;
+//   toJSON: () => ({ [key]});
+// }] = createStorage({ api: localStorage, prefix: 'boltz' });

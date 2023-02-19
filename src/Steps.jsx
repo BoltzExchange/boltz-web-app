@@ -18,11 +18,15 @@ import {
   preimageHash,
   claimECPair,
   setClaimECPair,
+  // store,
+  // setStorn,
 } from "./signals";
 
 import Step0 from "./Step0";
 import Step1 from "./Step1";
 import Success from "./Success";
+
+// setStore("onchain_address", "LOOOOOOOOOOOOL")
 
 const create = () => {};
 // const create = (e) => {

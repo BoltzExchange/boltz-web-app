@@ -1,5 +1,6 @@
 import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
+import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, divider, startInterval, focus } from "./helper";
 import Tags from "./Tags";
 
@@ -78,10 +79,12 @@ const Step0 = () => {
     setReceiveAmount(amount.toFixed(8));
   });
 
+  const [t, { add, locale, dict }] = useI18n();
+
   return (
     <div data-reverse={reverse()}>
-      <h2>Create Submarine Swap</h2>
-      <p>Payment includes miner and boltz service fees.</p>
+      <h2>{t("create_swap")}</h2>
+      <p>{t("create_swap_subline")}</p>
       <hr />
       <div class="icons">
         <div>
