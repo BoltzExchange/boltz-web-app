@@ -5,6 +5,7 @@ const dict = {
     documentation: "Documentation",
     onion: "Onion",
     help: "Help",
+    network_fee: "Network Fee",
     footer: "made with ❤️ in El Salvador",
     create_swap: "Create Submarine Swap",
     create_swap_subline: "Payment includes miner and boltz service fees.",
@@ -15,6 +16,7 @@ const dict = {
     documentation: "Dokumentation",
     onion: "Zwiebel",
     footer: "mit ❤️ gemacht in El Salvador",
+    network_fee: "Netzwerk Gebühren",
     help: "Hilfe",
   },
 };

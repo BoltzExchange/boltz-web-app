@@ -20,14 +20,21 @@ a:hover {
 }
 
 h1 {
-  color: #00abff;
+  color: rgba(255,255,255,.3);
+}
+
+h2 {
+    margin-bottom: 0;
+}
+h2+p {
+    margin-top: 0;
 }
 
 hr {
   margin: 24px 0;
   border: none;
   height: 1px;
-  background: #333;
+  background: rgba(255,255,255,.1);
 }
 
 .icon-1,
@@ -132,10 +139,8 @@ hr {
 }
 
 #reverse {
-  z-index: -1;
-  position: relative;
-  width: 65px;
-  height: 81px;
+  width: 45px;
+  height: 40px;
   background: url(./assets/arrow.svg);
   background-repeat: no-repeat;
   background-size: 100%;
@@ -158,22 +163,17 @@ hr {
   border: none;
 }
 
-.frame {
-  color: #fff;
-  background: #0003;
-  padding: 32px;
-  max-width: 500px;
-  margin: 66px auto;
-}
-
 .btn {
   cursor: pointer;
-  display: inline-block;
+  display: block;
   margin: 3px 3px 0;
   padding: 8px 12px;
-  background: #00abff;
-  color: white;
   text-decoration: none;
+  border-radius: 16px;
+  background: #e6c826;
+  color: #14283f;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 .btn:visited {
@@ -182,24 +182,29 @@ hr {
 
 .tag .btn {
   background: #333;
+  color: white;
 }
 
 .btn:hover,
 .tag .btn:hover {
-  background: #ecd138;
+  background: #fff;
 }
 
 .btn-success {
-  background: #36a404;
+  background: #e6c826;
 }
 .btn-success:hover {
-  background: #43d700;
+  background: #fff;
 }
 .btn-danger {
   background: red;
 }
 .btn-danger:hover {
   background: darkred;
+}
+
+.fee {
+  padding: 0 24px;
 }
 
 .fees {
@@ -215,8 +220,8 @@ hr {
 
 .icon {
   display: inline-block;
-  width: 86px;
-  height: 86px;
+  width: 42px;
+  height: 42px;
   background-repeat: no-repeat;
   background-size: 100%;
 }
@@ -254,9 +259,9 @@ form > div > div:last-child {
 
 input,
 textarea {
-  color: #00abff;
+  color: rgba(255,255,255,.3);
   background: rgba(0,0,0,.3);
-  border: 1px dashed #00abff;
+  border: 1px dashed rgba(255,255,255,.3);
   border-radius: 10px;
   width: 100%;
   font-size: 20px;
@@ -280,14 +285,14 @@ textarea {
   margin: 21px 0;
 }
 
-#sendAmount {
-  width: 135px;
+#steps {
+    padding: 0 12px;
 }
-
-#steps > div {
+#steps > .frame > div {
   display: none;
 }
-#steps > .active {
+
+#steps > .frame > .active {
   display: block;
 }
 
@@ -301,7 +306,13 @@ textarea {
 }
 
 .frame {
-  margin-bottom: 21px;
+  color: #fff;
+  background: #0003;
+  padding: 12px;
+  max-width: 480px;
+  margin: 21px auto;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 16px;
 }
 
 .error {

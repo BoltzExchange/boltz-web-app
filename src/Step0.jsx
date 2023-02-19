@@ -144,7 +144,7 @@ const Step0 = () => {
             >
               {receiveAmount()}
             </span>
-            <label>BTC</label>
+            <label>{t("network_fee")}</label> <span class="network-fee">{minerFee()}</span>
           </div>
         </div>
       </form>
@@ -171,13 +171,6 @@ const Step0 = () => {
           </span>
           <br />
           <label>Boltz fee</label>
-        </div>
-        <div class="fee">
-          <span>
-            <b>{minerFee()} BTC</b>
-          </span>
-          <br />
-          <label>Miner fee</label>
         </div>
       </div>
       <hr />

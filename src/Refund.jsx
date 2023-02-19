@@ -40,31 +40,33 @@ const refundAddressChange = (e) => {
 
 const Refund = () => {
   return (
-    <div class="frame">
-      <h2>Refund a failed swap</h2>
-      <p>Upload your refund.json file and reclaim you on-chain funds</p>
-      <hr />
-      <input
-        onKeyUp={refundAddressChange}
-        onChange={refundAddressChange}
-        type="text"
-        id="refundAddress"
-        name="refundAddress"
-        placeholder="Refund On-chain address"
-      />
-      <input
-        type="file"
-        id="refundUpload"
-        onChange={(e) => setUpload(e.currentTarget.files[0])}
-      />
-      <div class={error() === false ? "hidden" : ""}>
-        <span class="error">{error()}</span>
-      </div>
-      <div class={error() !== false ? "hidden" : ""}>
-        <span class="btn btn-success" onClick={refund}>
-          refund
-        </span>
-      </div>
+    <div id="steps">
+        <div class="frame">
+          <h2>Refund a failed swap</h2>
+          <p>Upload your refund.json file and reclaim you on-chain funds</p>
+          <hr />
+          <input
+            onKeyUp={refundAddressChange}
+            onChange={refundAddressChange}
+            type="text"
+            id="refundAddress"
+            name="refundAddress"
+            placeholder="Refund On-chain address"
+          />
+          <input
+            type="file"
+            id="refundUpload"
+            onChange={(e) => setUpload(e.currentTarget.files[0])}
+          />
+          <div class={error() === false ? "hidden" : ""}>
+            <span class="error">{error()}</span>
+          </div>
+          <div class={error() !== false ? "hidden" : ""}>
+            <span class="btn btn-success" onClick={refund}>
+              refund
+            </span>
+          </div>
+        </div>
     </div>
   );
 };
