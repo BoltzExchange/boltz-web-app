@@ -6,9 +6,10 @@ import { I18nContext, createI18nContext, useI18n } from "@solid-primitives/i18n"
 import App from "./App";
 import Nav from "./Nav";
 import Refund from "./Refund";
-import dict from "./i18n";
 
-const i18n_context = createI18nContext(dict, "en");
+import { i18n } from "./signals";
+import dict from "./i18n";
+const i18n_context = createI18nContext(dict, i18n());
 
 render(
   () => (

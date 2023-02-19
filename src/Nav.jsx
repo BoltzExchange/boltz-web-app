@@ -1,12 +1,22 @@
+import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { A } from "@solidjs/router";
+
+import { useI18n } from "@solid-primitives/i18n";
+import { setI18n } from "./signals";
+
 import "./nav.css";
 import logo from "./assets/boltz-btc-logo.svg";
 
-import { useI18n } from "@solid-primitives/i18n";
 
 const Nav = () => {
   const [t, { add, locale, dict }] = useI18n();
+
+  const set_local = (locale_code) => {
+      locale(locale_code);
+      setI18n(locale_code);
+  };
+
   return (
     <nav>
       <svg class="hamburger" viewBox="0 0 100 100" width="50" onclick="this.classList.toggle('active')">
@@ -42,8 +52,8 @@ const Nav = () => {
           >
       </div>
       <div id="languages">
-          <button onClick={() => locale("en")}>en</button>
-          <button onClick={() => locale("de")}>de</button>
+          <button onClick={() => set_local("en")}>en</button>
+          <button onClick={() => set_local("de")}>de</button>
       </div>
 
     </nav>

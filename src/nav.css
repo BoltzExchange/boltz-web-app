@@ -30,6 +30,9 @@ nav a.active {
   text-decoration: underline;
 }
 
+#languages button {
+}
+
 .external {
     padding-right: 30px;
     padding-right: 25px;

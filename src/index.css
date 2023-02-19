@@ -253,19 +253,21 @@ form > div > div:last-child {
 input,
 textarea {
   color: #00abff;
-  background: #333;
+  background: rgba(0,0,0,.3);
   border: 1px dashed #00abff;
   border-radius: 10px;
   width: 100%;
   font-size: 20px;
   font-weight: normal;
-  /* font-size: 25px; */
-  /* font-weight: bold; */
-  /* padding: 0 8px; */
   text-align: center;
   margin-bottom: 2px;
   padding: 8px;
   box-sizing: border-box;
+}
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: #e6c826;
 }
 
 textarea {
