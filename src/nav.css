@@ -75,7 +75,7 @@ nav a.active {
 #logo img {
   width: 100%;
   max-width: 165px;
-  margin-right: 42px;
+  padding-right: 21px;
 }
 
 #hamburger {
@@ -124,32 +124,33 @@ nav a.active {
     display: block;
 }
 
-#collapse.active {
-  display: flex;
-  position: fixed;
-  background: #14283f;
-  left: 0;
-  z-index: 100;
-  right: 0;
-  bottom: 0;
-  top: 0;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+@media (max-width: 769px) {
+    #collapse.active {
+      display: flex;
+      position: fixed;
+      background: #14283f;
+      left: 0;
+      z-index: 100;
+      right: 0;
+      bottom: 0;
+      top: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    #collapse.active a {
+      display: block;
+      padding: 6px 24px;
+      font-size: 26px;
+    }
+
+    #collapse.active a.external {
+      margin-right: 24px;
+    }
 }
 
-#collapse.active a {
-  display: block;
-  padding: 6px 24px;
-  font-size: 26px;
-}
-
-#collapse.active a.external {
-  margin-right: 24px;
-}
-
-@media (min-width: 769px) {
-    #collapse.active,
+@media (min-width: 768px) {
     #hamburger {
         display: none;
     }
@@ -158,8 +159,8 @@ nav a.active {
     }
 
     #collapse a {
-        margin-left: 21px;
-        padding-left: 21px;
+        margin-left: 13px;
+        padding-left: 13px;
         border-left: 1px solid rgba(255,255,255,.3);
         display: inline;
     }
