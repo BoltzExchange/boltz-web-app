@@ -1,5 +1,5 @@
 import { render } from "solid-js/web";
-import { sendAmount } from './signals';
+import { sendAmount } from "./signals";
 
 const Success = () => {
   return (

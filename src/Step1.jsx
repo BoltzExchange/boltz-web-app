@@ -1,6 +1,5 @@
 import { render } from "solid-js/web";
-import { invoiceQr, setInvoiceQr } from './signals';
-
+import { invoiceQr, setInvoiceQr } from "./signals";
 
 const Step1 = () => {
   return (

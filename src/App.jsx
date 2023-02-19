@@ -2,23 +2,32 @@
 import { createSignal, createEffect } from "solid-js";
 // import { ECPair, crypto } from "bitcoinjs-lib";
 // import randomBytes from "randombytes";
-import { render } from 'solid-js/web';
-import { fetcher, qr } from './helper';
+import { render } from "solid-js/web";
+import { fetcher, qr } from "./helper";
 // import bitcore from './bitcore';
 
 import {
-  step, setStep,
-  invoice, setInvoice,
-  refundECPair, setRefundECPair,
-  reverse, valid, setInvoiceQr, sendAmount,
-  preimage, setPreimage, preimageHash, claimECPair, setClaimECPair
-} from './signals';
+  step,
+  setStep,
+  invoice,
+  setInvoice,
+  refundECPair,
+  setRefundECPair,
+  reverse,
+  valid,
+  setInvoiceQr,
+  sendAmount,
+  preimage,
+  setPreimage,
+  preimageHash,
+  claimECPair,
+  setClaimECPair,
+} from "./signals";
 
-import Step0 from './Step0';
-import Step1 from './Step1';
-import Success from './Success';
-import Refund from './Refund';
-
+import Step0 from "./Step0";
+import Step1 from "./Step1";
+import Success from "./Success";
+import Refund from "./Refund";
 
 // console.log(digest);
 
@@ -69,34 +78,48 @@ const App = () => {
         <div class={step() == 0 ? "active" : ""}>
           <div class="container">
             <Step0 />
-            <span class="btn" onClick={refund}>refund</span>
-            <span class="btn btn-success" onClick={create}>create</span>
+            <span class="btn" onClick={refund}>
+              refund
+            </span>
+            <span class="btn btn-success" onClick={create}>
+              create
+            </span>
           </div>
         </div>
         <div class={step() == 1 ? "active" : ""}>
           <div class="container">
             <Step1 />
-            <span class="btn btn-danger" onClick={(e) => setStep(0) }>cancel</span>
-            <span class="btn btn-success" onClick={success}>success</span>
+            <span class="btn btn-danger" onClick={(e) => setStep(0)}>
+              cancel
+            </span>
+            <span class="btn btn-success" onClick={success}>
+              success
+            </span>
           </div>
         </div>
         <div class={step() == 2 ? "active" : ""}>
           <div class="container">
             <Success />
             <hr />
-            <span class="btn btn-success" onClick={(e) => setStep(0) }>new swap</span>
-            <a class="btn" target="_blank" href="https://mempool.space">mempool</a>
+            <span class="btn btn-success" onClick={(e) => setStep(0)}>
+              new swap
+            </span>
+            <a class="btn" target="_blank" href="https://mempool.space">
+              mempool
+            </a>
           </div>
         </div>
         <div class={step() == 3 ? "active" : ""}>
           <div class="container">
             <Refund />
-            <span class="btn btn-danger" onClick={(e) => setStep(0) }>cancel</span>
+            <span class="btn btn-danger" onClick={(e) => setStep(0)}>
+              cancel
+            </span>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default App;

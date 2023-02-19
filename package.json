@@ -1,6 +1,6 @@
 {
-  "name": "vite-template-solid",
-  "version": "0.0.0",
+  "name": "boltz-frontend",
+  "version": "3.0.0",
   "description": "",
   "scripts": {
     "start": "vite",
@@ -11,6 +11,7 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "prettier": "^2.8.4",
     "vite": "^2.9.9",
     "vite-plugin-solid": "^2.2.6"
   },

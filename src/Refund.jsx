@@ -7,13 +7,16 @@ const [refundJson, setRefundJson] = createSignal(null);
 const [refundAddress, setRefundAddress] = createSignal(null);
 
 createEffect(() => {
-  new Response(upload()).json().then(json => {
-    if (json === 0) return;
-    setRefundJson(json);
-  }, err => {
-    setRefundJson(null);
-    setError("not a json file");
-  });
+  new Response(upload()).json().then(
+    (json) => {
+      if (json === 0) return;
+      setRefundJson(json);
+    },
+    (err) => {
+      setRefundJson(null);
+      setError("not a json file");
+    }
+  );
 });
 
 createEffect(() => {
@@ -33,7 +36,7 @@ const refundAddressChange = (e) => {
   } else {
     setRefundAddress(null);
   }
-}
+};
 
 const Refund = () => {
   return (
@@ -41,13 +44,26 @@ const Refund = () => {
       <h2>Refund a failed swap</h2>
       <p>Upload your refund.json file and reclaim you on-chain funds</p>
       <hr />
-      <input onKeyUp={refundAddressChange} onChange={refundAddressChange} type="text" id="refundAddress" name="refundAddress" placeholder="Refund On-chain address" />
-      <input type="file" id="refundUpload" onChange={(e) => setUpload(e.currentTarget.files[0])} />
-      <div class={error() === false ? "hidden":""}>
+      <input
+        onKeyUp={refundAddressChange}
+        onChange={refundAddressChange}
+        type="text"
+        id="refundAddress"
+        name="refundAddress"
+        placeholder="Refund On-chain address"
+      />
+      <input
+        type="file"
+        id="refundUpload"
+        onChange={(e) => setUpload(e.currentTarget.files[0])}
+      />
+      <div class={error() === false ? "hidden" : ""}>
         <span class="error">{error()}</span>
       </div>
-      <div class={error() !== false ? "hidden":""}>
-        <span class="btn btn-success" onClick={refund}>refund</span>
+      <div class={error() !== false ? "hidden" : ""}>
+        <span class="btn btn-success" onClick={refund}>
+          refund
+        </span>
       </div>
     </div>
   );

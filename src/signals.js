@@ -1,6 +1,5 @@
 import { createSignal } from "solid-js";
 
-
 export const [step, setStep] = createSignal(0);
 export const [config, setConfig] = createSignal(0);
 export const [upload, setUpload] = createSignal(0);

@@ -39,7 +39,8 @@ hr {
   margin: 12px;
 }
 
-.icon-1, .icon-2 {
+.icon-1,
+.icon-2 {
   cursor: pointer;
 }
 .bitcoin-icon {
@@ -49,7 +50,7 @@ hr {
   border-radius: 100%;
   margin: 32px auto;
   background-size: 10%;
-  animation: rotate .4s;
+  animation: rotate 0.4s;
 }
 .animation-spacer {
   padding: 70px 0;
@@ -58,21 +59,21 @@ hr {
   display: block;
   margin-bottom: 6px;
 }
-[data-reverse=false] #onchainAddress,
-[data-reverse=true] #invoiceLabel,
-[data-reverse=true] #invoice {
+[data-reverse="false"] #onchainAddress,
+[data-reverse="true"] #invoiceLabel,
+[data-reverse="true"] #invoice {
   display: none;
 }
 
 .lightning-icon,
-[data-reverse=true] .icon-1,
-[data-reverse=false] .icon-2 {
+[data-reverse="true"] .icon-1,
+[data-reverse="false"] .icon-2 {
   background-image: url(./assets/lightning-icon.svg);
 }
 
 .bitcoin-icon,
-[data-reverse=false] .icon-1,
-[data-reverse=true] .icon-2 {
+[data-reverse="false"] .icon-1,
+[data-reverse="true"] .icon-2 {
   background-image: url(./assets/bitcoin-icon.svg);
 }
 
@@ -162,7 +163,7 @@ hr {
   opacity: 0;
   margin: 0;
   outline: none;
-  border:none;
+  border: none;
 }
 
 .container {
@@ -193,7 +194,7 @@ hr {
 
 .btn:hover,
 .tag .btn:hover {
-  background: #ECD138
+  background: #ecd138;
 }
 
 .btn-success {
@@ -258,7 +259,8 @@ form > div > div:last-child {
   text-align: right;
 }
 
-input, textarea {
+input,
+textarea {
   color: #00abff;
   background: #333;
   border: 1px dashed #00abff;
@@ -287,7 +289,6 @@ textarea {
   width: 135px;
 }
 
-
 h2 {
   margin: 0;
 }
@@ -313,18 +314,32 @@ h2 + p {
   display: block;
 }
 
-.rainbow{
-  background: linear-gradient(to top, red,orange,yellow,green,blue,indigo,violet,red);
-  background-repeat:repeat-y;
+.rainbow {
+  background: linear-gradient(
+    to top,
+    red,
+    orange,
+    yellow,
+    green,
+    blue,
+    indigo,
+    violet,
+    red
+  );
+  background-repeat: repeat-y;
 
-  -webkit-animation:go 10s linear infinite;
-  -moz-animation:go 10s linear infinite;
-  animation:go 10s linear infinite;
+  -webkit-animation: go 10s linear infinite;
+  -moz-animation: go 10s linear infinite;
+  animation: go 10s linear infinite;
 }
 
-@keyframes go{
-  0%{background-position:0;}
-  100%{background-position:0 -7100px;}
+@keyframes go {
+  0% {
+    background-position: 0;
+  }
+  100% {
+    background-position: 0 -7100px;
+  }
 }
 
 .rotate {
@@ -364,4 +379,3 @@ h2 + p {
   padding: 6px 10px;
   display: inline-block;
 }
-
