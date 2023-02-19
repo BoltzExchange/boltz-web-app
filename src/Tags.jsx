@@ -1,6 +1,6 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
-import { setSendAmount, minimum, maximum } from "./signals";
+import { sendAmount, setSendAmount, minimum, maximum } from "./signals";
 import { focus } from "./helper";
 import { checkAmount } from "./Step0";
 
@@ -23,24 +23,12 @@ const Tags = () => {
         <span
           class="btn"
           onClick={(e) => {
-            setSendAmount(0.001);
+            setSendAmount((parseFloat(sendAmount()) - 0.001).toPrecision(8));
             checkAmount();
             focus();
           }}
         >
-          100K
-        </span>
-      </div>
-      <div class="tag">
-        <span
-          class="btn"
-          onClick={(e) => {
-            setSendAmount(0.005);
-            checkAmount();
-            focus();
-          }}
-        >
-          500K
+          - 100K
         </span>
       </div>
       <div class="tag">
@@ -59,24 +47,12 @@ const Tags = () => {
         <span
           class="btn"
           onClick={(e) => {
-            setSendAmount(0.05);
+            setSendAmount((parseFloat(sendAmount()) + 0.001).toPrecision(8));
             checkAmount();
             focus();
           }}
         >
-          5M
-        </span>
-      </div>
-      <div class="tag">
-        <span
-          class="btn"
-          onClick={(e) => {
-            setSendAmount(0.07);
-            checkAmount();
-            focus();
-          }}
-        >
-          7M
+          + 100K
         </span>
       </div>
       <div class="tag">

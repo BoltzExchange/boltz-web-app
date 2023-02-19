@@ -175,13 +175,14 @@ hr {
 }
 
 .tag .btn {
-  background: #333;
+  background: rgba(0,0,0,.2);
   color: white;
 }
 
 .btn:hover,
 .tag .btn:hover {
   background: #fff;
+  color: #14283f;
 }
 
 .btn-success {
@@ -236,6 +237,7 @@ hr {
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
 }
 
 .icons,

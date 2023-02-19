@@ -94,6 +94,19 @@ const Step0 = () => {
       <h2>{t("create_swap")}</h2>
       <p>{t("create_swap_subline")}</p>
       <hr />
+      <div className="denomination-assets">
+          <div class="denomination">
+              <label>{t("denomination")}: </label>
+              <img src={btc_svg} onClick={() => setDenomination("btc")} class={denomination() == "btc" ? "active" : ""} alt="denominator" />
+              <img src={sat_svg} onClick={() => setDenomination("sat")} class={denomination() == "sat" ? "active" : ""} alt="denominator" />
+          </div>
+          <div class="assets">
+              <label>{t("assets")}: </label>
+              <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
+              <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
+          </div>
+      </div>
+      <hr />
       <div class="icons" data-asset={asset()}>
         <div>
           <span
@@ -155,19 +168,6 @@ const Step0 = () => {
           </div>
         </div>
       </form>
-      <hr />
-      <div className="denomination-assets">
-          <div class="denomination">
-              <label>{t("denomination")}: </label>
-              <img src={btc_svg} onClick={() => setDenomination("btc")} class={denomination() == "btc" ? "active" : ""} alt="denominator" />
-              <img src={sat_svg} onClick={() => setDenomination("sat")} class={denomination() == "sat" ? "active" : ""} alt="denominator" />
-          </div>
-          <div class="assets">
-              <label>{t("assets")}: </label>
-              <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
-              <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
-          </div>
-      </div>
       <hr />
       <Tags />
       <hr />
