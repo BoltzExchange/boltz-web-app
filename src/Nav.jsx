@@ -29,7 +29,13 @@ const Nav = () => {
             class="external"
             target="_blank"
             href="https://docs.boltz.exchange/en/latest/"
-            >Documentation</a
+            >Docs</a
+          >
+          <a
+            class="external"
+            target="_blank"
+            href="http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/"
+            >Onion</a
           >
       </div>
 
