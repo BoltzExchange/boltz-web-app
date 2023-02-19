@@ -22,3 +22,5 @@ export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
 
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");
+export const [denomination, setDenomination] = createStorageSignal("denomination", "sat");
+export const [asset, setAsset] = createStorageSignal("asset", "btc");

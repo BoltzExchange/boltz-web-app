@@ -3,8 +3,16 @@ import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, divider, startInterval, focus } from "./helper";
 import Tags from "./Tags";
+import btc_svg from "./assets/btc.svg";
+import sat_svg from "./assets/sat.svg";
+import bitcoin_svg from "./assets/bitcoin-icon.svg";
+import liquid_svg from "./assets/liquid-icon.svg";
 
 import {
+  asset,
+  setAsset,
+  denomination,
+  setDenomination,
   boltzFee,
   setBoltzFee,
   sendAmount,
@@ -86,7 +94,7 @@ const Step0 = () => {
       <h2>{t("create_swap")}</h2>
       <p>{t("create_swap_subline")}</p>
       <hr />
-      <div class="icons">
+      <div class="icons" data-asset={asset()}>
         <div>
           <span
             class="icon-1 icon"
@@ -132,8 +140,7 @@ const Step0 = () => {
               onChange={checkAmount}
               onKeyUp={checkAmount}
             />
-            <label>BTC</label>
-          </div>
+      </div>
           <div>
             <span
               id="receiveAmount"
@@ -148,6 +155,20 @@ const Step0 = () => {
           </div>
         </div>
       </form>
+      <hr />
+      <div className="denomination-assets">
+          <div class="denomination">
+              <label>{t("denomination")}: </label>
+              <img src={btc_svg} onClick={() => setDenomination("btc")} class={denomination() == "btc" ? "active" : ""} alt="denominator" />
+              <img src={sat_svg} onClick={() => setDenomination("sat")} class={denomination() == "sat" ? "active" : ""} alt="denominator" />
+          </div>
+          <div class="assets">
+              <label>{t("assets")}: </label>
+              <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
+              <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
+          </div>
+      </div>
+      <hr />
       <Tags />
       <hr />
       <div class="fees">
@@ -156,28 +177,25 @@ const Step0 = () => {
             <b>{minimum()} BTC</b>
           </span>
           <br />
-          <label>Min. amount</label>
+          <label>{t("min")}</label>
         </div>
         <div class="fee">
           <span>
             <b>{maximum()} BTC</b>
           </span>
           <br />
-          <label>Max. amount</label>
+          <label>{t("max")}</label>
         </div>
         <div class="fee">
           <span>
             <b>{boltzFee()} %</b>
           </span>
           <br />
-          <label>Boltz fee</label>
+          <label>{t("fee")}</label>
         </div>
       </div>
       <hr />
-      <label id="invoiceLabel">
-        Create an invoice with exactly{" "}
-        <b>{Math.floor(sendAmount() * 100000000)}</b> sats and paste it here
-      </label>
+      <label id="invoiceLabel">{t("create_and_paste", { amount: sendAmount(), denomination: denomination()})}</label>
       <textarea
         onChange={(e) => setInvoice(e.currentTarget.value)}
         id="invoice"
@@ -192,7 +210,6 @@ const Step0 = () => {
         placeholder="On-chain address"
       />
       <hr />
-      <p>creates a swap and go to the invoicing step.</p>
     </div>
   );
 };

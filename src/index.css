@@ -41,18 +41,7 @@ hr {
 .icon-2 {
   cursor: pointer;
 }
-.bitcoin-icon {
-  width: 22px;
-  height: 22px;
-  padding: 0px;
-  border-radius: 100%;
-  margin: 32px auto;
-  background-size: 10%;
-  animation: rotate 0.4s;
-}
-.animation-spacer {
-  padding: 70px 0;
-}
+
 #invoiceLabel {
   display: block;
   margin-bottom: 6px;
@@ -63,16 +52,21 @@ hr {
   display: none;
 }
 
-.lightning-icon,
 [data-reverse="true"] .icon-1,
 [data-reverse="false"] .icon-2 {
   background-image: url(./assets/lightning-icon.svg);
 }
 
-.bitcoin-icon,
-[data-reverse="false"] .icon-1,
-[data-reverse="true"] .icon-2 {
+[data-reverse="false"] [data-asset="btc"] .icon-1,
+[data-reverse="true"] [data-asset="btc"] .icon-2 {
   background-image: url(./assets/bitcoin-icon.svg);
+  background-size: 113%;
+}
+
+[data-reverse="false"] [data-asset="l-btc"] .icon-1,
+[data-reverse="true"] [data-asset="l-btc"] .icon-2 {
+  background-image: url(./assets/liquid-icon.svg);
+  background-size: 113%;
 }
 
 .pornhub:before {
@@ -220,14 +214,28 @@ hr {
 
 .icon {
   display: inline-block;
-  width: 42px;
-  height: 42px;
+  width: 82px;
+  height: 82px;
   background-repeat: no-repeat;
   background-size: 100%;
 }
 
 .icons {
   margin-bottom: 24px;
+}
+.icons > :last-child {
+  justify-content: end;
+}
+
+.denomination-assets {
+    display: flex;
+    justify-content: center;
+}
+.denomination-assets > * {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .icons,
@@ -243,6 +251,8 @@ form label {
 
 .icons > div {
   width: 33.3333%;
+  align-items: center;
+  display: flex;
 }
 
 form > div > div {
@@ -299,6 +309,14 @@ textarea {
 #notification {
   background: black;
   color: white;
+}
+.denomination img {
+    filter: brightness(10);
+    cursor: pointer;
+    width: 28px;
+}
+.denomination .active {
+    filter: none;
 }
 
 .hidden {
