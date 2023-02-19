@@ -1,3 +1,6 @@
+* {
+    box-sizing: border-box;
+}
 body {
     padding-top: 90px;
 }
@@ -30,7 +33,35 @@ nav a.active {
   text-decoration: underline;
 }
 
-#languages button {
+#languages {
+    position: relative;
+    margin-left: auto;
+}
+
+#languages > span:after {
+    content: "\25bc";
+    margin-left: 6px;
+}
+
+#languages .lang {
+  display: block;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+#languages .lang:hover {
+  background-color: #e6c826;
+  color: rgb(11, 22, 35);
+}
+
+#languages .dropdown {
+    display: none;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    background: rgb(11, 22, 35);
+}
+#languages:hover .dropdown{
+    display: block;
 }
 
 .external {
@@ -43,7 +74,7 @@ nav a.active {
 #logo img {
   width: 100%;
   max-width: 165px;
-  margin-right: 24px;
+  margin-right: 42px;
 }
 
 .hamburger {
