@@ -2,6 +2,7 @@ import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
 
 export const [step, setStep] = createSignal(0);
+export const [hamburger, setHamburger] = createSignal(false);
 export const [config, setConfig] = createSignal(0);
 export const [upload, setUpload] = createSignal(0);
 export const [boltzFee, setBoltzFee] = createSignal(0);

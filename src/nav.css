@@ -48,6 +48,7 @@ nav a.active {
   padding: 4px 12px;
   cursor: pointer;
 }
+
 #languages .lang:hover {
   background-color: #e6c826;
   color: rgb(11, 22, 35);
@@ -77,7 +78,7 @@ nav a.active {
   margin-right: 42px;
 }
 
-.hamburger {
+#hamburger {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 400ms;
@@ -85,13 +86,14 @@ nav a.active {
   -webkit-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  z-index: 1000;
 }
 
-.hamburger.active {
+#hamburger.active {
   transform: rotate(45deg);
 }
 
-.hamburger .line {
+#hamburger .line {
   fill:none;
   transition: stroke-dasharray 400ms, stroke-dashoffset 400ms;
   stroke:#fff;
@@ -99,38 +101,63 @@ nav a.active {
   stroke-linecap:round;
 }
 
-.hamburger .top {
+#hamburger .top {
   stroke-dasharray: 40 121;
 }
 
-.hamburger .bottom {
+#hamburger .bottom {
   stroke-dasharray: 40 121;
 }
 
-.hamburger.active .top {
+#hamburger.active .top {
   stroke-dashoffset: -68px;
 }
 
-.hamburger.active .bottom {
+#hamburger.active .bottom {
   stroke-dashoffset: -68px;
 }
 
-.collapse {
+#collapse {
     display: none;
 }
-.collapse a {
+#collapse a {
     display: block;
 }
 
+#collapse.active {
+  display: flex;
+  position: fixed;
+  background: #14283f;
+  left: 0;
+  z-index: 100;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+#collapse.active a {
+  display: block;
+  padding: 6px 24px;
+  font-size: 26px;
+}
+
+#collapse.active a.external {
+  margin-right: 24px;
+}
+
 @media (min-width: 769px) {
-    .hamburger {
+    #collapse.active,
+    #hamburger {
         display: none;
     }
-    .collapse {
+    #collapse {
         display: flex;
     }
 
-    .collapse a {
+    #collapse a {
         margin-left: 21px;
         padding-left: 21px;
         border-left: 1px solid rgba(255,255,255,.3);

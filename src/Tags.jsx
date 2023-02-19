@@ -59,18 +59,6 @@ const Tags = () => {
         <span
           class="btn"
           onClick={(e) => {
-            setSendAmount(0.03);
-            checkAmount();
-            focus();
-          }}
-        >
-          3M
-        </span>
-      </div>
-      <div class="tag">
-        <span
-          class="btn"
-          onClick={(e) => {
             setSendAmount(0.05);
             checkAmount();
             focus();

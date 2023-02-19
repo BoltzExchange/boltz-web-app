@@ -132,6 +132,7 @@ hr {
 }
 
 #reverse {
+  z-index: -1;
   position: relative;
   width: 65px;
   height: 81px;
@@ -208,6 +209,7 @@ hr {
 .tags {
   margin-top: 21px;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 

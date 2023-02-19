@@ -5,6 +5,7 @@ import { I18nContext, createI18nContext, useI18n } from "@solid-primitives/i18n"
 
 import App from "./App";
 import Nav from "./Nav";
+import Footer from "./Footer";
 import Refund from "./Refund";
 
 import { i18n } from "./signals";
@@ -21,6 +22,7 @@ render(
             <Route path="/swap" component={App} />
             <Route path="/refund" component={Refund} />
           </Routes>
+          <Footer />
         </Router>
     </I18nContext.Provider>
   ),

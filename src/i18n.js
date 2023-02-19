@@ -5,7 +5,7 @@ const dict = {
     documentation: "Documentation",
     onion: "Onion",
     help: "Help",
-    lightning_node: "Lightning Node",
+    footer: "made with ❤️ in El Salvador",
     create_swap: "Create Submarine Swap",
     create_swap_subline: "Payment includes miner and boltz service fees.",
   },
@@ -14,8 +14,8 @@ const dict = {
     refund: "Rückerstattung",
     documentation: "Dokumentation",
     onion: "Zwiebel",
+    footer: "mit ❤️ gemacht in El Salvador",
     help: "Hilfe",
-    lightning_node: "Lightning Node",
   },
 };
 
