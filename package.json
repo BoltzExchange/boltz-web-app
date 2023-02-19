@@ -6,7 +6,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build; cp CNAME dist",
     "deploy": "git push origin `git subtree split --prefix dist main`:gh-pages --force",
     "serve": "vite preview"
   },
