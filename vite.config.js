@@ -4,6 +4,7 @@ import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfil
 import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 export default defineConfig({
+  base: '',
   plugins: [
     solidPlugin(),
     nodePolyfills({crypto: true, stream: true}),
