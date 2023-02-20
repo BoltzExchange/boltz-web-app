@@ -43,6 +43,7 @@ hr {
     text-transform: uppercase;
     margin-left: 4px;
 }
+
 .asset {
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -222,8 +223,8 @@ hr {
 
 .icon {
   display: inline-block;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   background-repeat: no-repeat;
   background-size: 100%;
 }
@@ -280,7 +281,7 @@ textarea:focus {
 }
 #receiveAmount,
 #sendAmount {
-    font-size: 40px;
+    font-size: 36px;
     text-align: right;
 }
 textarea {

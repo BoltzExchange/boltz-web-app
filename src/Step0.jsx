@@ -134,14 +134,8 @@ const Step0 = () => {
       <hr />
       <div class="icons">
         <div>
-          <div className="asset asset-1">
-              <span
-                class="icon-1 icon"
-                onClick={(e) => {
-                  setReverse(!reverse());
-                  focus();
-                }}
-              ></span>
+          <div className="asset asset-1" onClick={(e) => { setReverse(!reverse()); focus(); }}>
+              <span class="icon-1 icon"></span>
               <span class="asset-text">bitcoin</span>
           </div>
           <input autofocus required type="number" id="sendAmount" maxlength="10"
@@ -154,10 +148,9 @@ const Step0 = () => {
           />
         </div>
         <div>
-          <div class="asset asset-2">
+          <div onClick={(e) => { setReverse(!reverse()); focus(); }} class="asset asset-2">
               <span
                 class="icon-2 icon"
-                onClick={(e) => setReverse(!reverse())}
               ></span>
               <span class="asset-text">lightning</span>
           </div>
