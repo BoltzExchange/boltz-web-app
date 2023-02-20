@@ -31,15 +31,36 @@ h2+p {
 }
 
 hr {
-  margin: 24px 0;
+  margin: 16px 0;
   border: none;
   height: 1px;
   background: rgba(255,255,255,.1);
 }
 
-.icon-1,
-.icon-2 {
+
+.asset-text {
+    font-size: 16px;
+    text-transform: uppercase;
+    margin-left: 4px;
+}
+.asset {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: absolute;
+  border-radius: 29px;
+  display: flex;
+  align-items: center;
+  padding: 1px;
+  padding-right: 16px;
+  top: 10px;
+  left: 10px;
   cursor: pointer;
+}
+
+.fees-dyn,
+.icons > div {
+  position: relative;
+  text-align: right;
 }
 
 #invoiceLabel {
@@ -55,18 +76,17 @@ hr {
 [data-reverse="true"] .icon-1,
 [data-reverse="false"] .icon-2 {
   background-image: url(./assets/lightning-icon.svg);
+  background-size: 90%;
 }
 
-[data-reverse="false"] [data-asset="btc"] .icon-1,
-[data-reverse="true"] [data-asset="btc"] .icon-2 {
+[data-reverse="false"][data-asset="btc"] .icon-1,
+[data-reverse="true"][data-asset="btc"] .icon-2 {
   background-image: url(./assets/bitcoin-icon.svg);
-  background-size: 113%;
 }
 
-[data-reverse="false"] [data-asset="l-btc"] .icon-1,
-[data-reverse="true"] [data-asset="l-btc"] .icon-2 {
+[data-reverse="false"][data-asset="l-btc"] .icon-1,
+[data-reverse="true"][data-asset="l-btc"] .icon-2 {
   background-image: url(./assets/liquid-icon.svg);
-  background-size: 113%;
 }
 
 .pornhub:before {
@@ -75,8 +95,8 @@ hr {
   background: url(./assets/thunderhub.jpg);
   background-size: 100%;
   background-repeat: no-repeat;
-  width: 42px;
-  height: 42px;
+  width: 66px;
+  height: 66px;
   margin-right: 10px;
   border-radius: 12px;
   position: absolute;
@@ -130,18 +150,6 @@ hr {
   font-size: 32px;
   text-decoration: none;
   color: purple;
-}
-
-#reverse {
-  width: 45px;
-  height: 40px;
-  background: url(./assets/arrow.svg);
-  background-repeat: no-repeat;
-  background-size: 100%;
-  background-position: center;
-  margin: auto;
-  cursor: pointer;
-  transform: rotate(180deg);
 }
 
 #reverse input {
@@ -207,7 +215,6 @@ hr {
   justify-content: space-between;
 }
 .tags {
-  margin-top: 21px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -215,17 +222,10 @@ hr {
 
 .icon {
   display: inline-block;
-  width: 82px;
-  height: 82px;
+  width: 44px;
+  height: 44px;
   background-repeat: no-repeat;
   background-size: 100%;
-}
-
-.icons {
-  margin-bottom: 24px;
-}
-.icons > :last-child {
-  justify-content: end;
 }
 
 .denomination-assets {
@@ -240,33 +240,20 @@ hr {
     cursor: pointer;
 }
 
-.icons,
-form > div {
-  display: flex;
-  justify-content: center;
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-form label {
-  display: block;
-  font-weight: bold;
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
 }
 
-.icons > div {
-  width: 33.3333%;
-  align-items: center;
-  display: flex;
-}
-
-form > div > div {
-  width: 50%;
-  padding: 0 6px;
-}
-#sendAmount,
-form > div > div {
-  text-align: left;
-}
-form > div > div:last-child {
-  text-align: right;
+textarea {
+  resize: none;
 }
 
 input,
@@ -288,7 +275,14 @@ textarea:focus {
     outline: none;
     border-color: #e6c826;
 }
-
+.fees-dyn label {
+    display: block;
+}
+#receiveAmount,
+#sendAmount {
+    font-size: 40px;
+    text-align: right;
+}
 textarea {
   min-height: 198px;
 }
@@ -326,6 +320,11 @@ textarea {
     display: inline-block;
     transform: scale(2.1);
     background-position: right;
+}
+.denominator-big {
+    width: 33px;
+    height: 30px;
+    transform: scale(1.5);
 }
 
 [data-denominator=btc] {

@@ -113,7 +113,7 @@ const Step0 = () => {
   const [t, { add, locale, dict }] = useI18n();
 
   return (
-    <div data-reverse={reverse()}>
+    <div data-reverse={reverse()} data-asset={asset()}>
       <h2>{t("create_swap")}</h2>
       <p>{t("create_swap_subline")}</p>
       <hr />
@@ -130,65 +130,62 @@ const Step0 = () => {
           </div>
       </div>
       <hr />
-      <div class="icons" data-asset={asset()}>
-        <div>
-          <span
-            class="icon-1 icon"
-            onClick={(e) => {
-              setReverse(!reverse());
-              focus();
-            }}
-          ></span>
-        </div>
-        <div>
-          <div id="reverse">
-            <input
-              type="checkbox"
-              value="true"
-              checked={reverse()}
-              onChange={(e) => {
-                setReverse(e.currentTarget.checked);
-                focus();
-              }}
-            />
-          </div>
-        </div>
-        <div>
-          <span
-            class="icon-2 icon"
-            onClick={(e) => setReverse(!reverse())}
-          ></span>
-        </div>
-      </div>
-      <form name="swap" action="#">
-        <div>
-          <div>
-            <input
-              autofocus
-              required
-              step={denomination() == "btc" ? 0.00000001 : 1 }
-              maxlength="10"
-              min={minimum()}
-              max={maximum()}
-              type="number"
-              id="sendAmount"
-              value={sendAmount()}
-              onChange={checkAmount}
-              onKeyUp={checkAmount}
-            />
-      </div>
-          <div>
-            <span id="receiveAmount">{receiveAmount()}</span>
-            <span class="denominator" data-denominator={denomination()}></span>
-            <label>{t("network_fee")}</label>
-            <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span>
-            <label>{t("fee")} ({boltzFee()}%)</label>
-            <span class="boltz-fee">{denomination() == "btc" ? ((sendAmount() * boltzFee()) / 100).toFixed(8) : Math.ceil((sendAmount() * boltzFee()) / 100)} <span class="denominator" data-denominator={denomination()}></span></span>
-          </div>
-        </div>
-      </form>
-      <hr />
       <Tags />
+      <hr />
+      <div class="icons">
+        <div>
+          <div className="asset asset-1">
+              <span
+                class="icon-1 icon"
+                onClick={(e) => {
+                  setReverse(!reverse());
+                  focus();
+                }}
+              ></span>
+              <span class="asset-text">bitcoin</span>
+          </div>
+          <input autofocus required type="number" id="sendAmount" maxlength="10"
+            step={denomination() == "btc" ? 0.00000001 : 1 }
+            min={minimum()}
+            max={maximum()}
+            value={sendAmount()}
+            onChange={checkAmount}
+            onKeyUp={checkAmount}
+          />
+        </div>
+        <div>
+          <div class="asset asset-2">
+              <span
+                class="icon-2 icon"
+                onClick={(e) => setReverse(!reverse())}
+              ></span>
+              <span class="asset-text">lightning</span>
+          </div>
+          <div class="receiveAmount">
+            <span id="receiveAmount">{receiveAmount()}</span>
+            <span class="denominator denominator-big" data-denominator={denomination()}></span>
+          </div>
+        </div>
+      </div>
+      <div class="fees-dyn">
+        <label>{t("network_fee")}: <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span></label>
+        <label>{t("fee")} ({boltzFee()}%): <span class="boltz-fee">{denomination() == "btc" ? ((sendAmount() * boltzFee()) / 100).toFixed(8) : Math.ceil((sendAmount() * boltzFee()) / 100)} <span class="denominator" data-denominator={denomination()}></span></span></label>
+      </div>
+      <hr />
+      <label id="invoiceLabel">{t("create_and_paste", { amount: sendAmount(), denomination: denomination()})}</label>
+      <textarea
+        onChange={(e) => setInvoice(e.currentTarget.value)}
+        id="invoice"
+        name="invoice"
+        placeholder="Paste lightning invoice"
+      ></textarea>
+      <input
+        onChange={(e) => setOnchainAddress(e.currentTarget.value)}
+        type="text"
+        id="onchainAddress"
+        name="onchainAddress"
+        placeholder="On-chain address"
+      />
       <hr />
       <div class="fees">
         <div class="fee">
@@ -215,21 +212,6 @@ const Step0 = () => {
           <label>{t("fee")}</label>
         </div>
       </div>
-      <hr />
-      <label id="invoiceLabel">{t("create_and_paste", { amount: sendAmount(), denomination: denomination()})}</label>
-      <textarea
-        onChange={(e) => setInvoice(e.currentTarget.value)}
-        id="invoice"
-        name="invoice"
-        placeholder="Paste lightning invoice"
-      ></textarea>
-      <input
-        onChange={(e) => setOnchainAddress(e.currentTarget.value)}
-        type="text"
-        id="onchainAddress"
-        name="onchainAddress"
-        placeholder="On-chain address"
-      />
       <hr />
     </div>
   );
