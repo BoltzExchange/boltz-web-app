@@ -65,13 +65,6 @@ const Step0 = () => {
     });
   });
 
-  // createEffect(() => {
-  //   let denom = denomination();
-  //   let amount = sendAmount();
-  //   amout = (denom == "btc") ? amount * btc_divider :  (amount / btc_divider).toFixed(8);
-  //   setSendAmount(amount)
-  // });
-
   createEffect(() => {
     let cfg = config();
     let denom = denomination();
@@ -110,6 +103,9 @@ const Step0 = () => {
     let amount = send_amount - minerFee() - (send_amount * boltzFee()) / 100;
     if (denomination() == "btc") {
         amount = amount.toFixed(8);
+    }
+    if (denomination() == "sat") {
+        amount = Math.ceil(amount);
     }
     setReceiveAmount(amount);
   });
