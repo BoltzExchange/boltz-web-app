@@ -2,8 +2,10 @@ const dict = {
   en: {
     swap: "Swap",
     refund: "Refund",
-    documentation: "Documentation",
+    documentation: "Docs",
     onion: "Onion",
+    channels: "Channels",
+    ordinals: "Ordinals",
     help: "Help",
     network_fee: "Network Fee",
     fee: "Boltz Fee",
