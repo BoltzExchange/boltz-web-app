@@ -180,7 +180,10 @@ const Step0 = () => {
           <div>
             <span id="receiveAmount">{receiveAmount()}</span>
             <span class="denominator" data-denominator={denomination()}></span>
-            <label>{t("network_fee")}</label> <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span>
+            <label>{t("network_fee")}</label>
+            <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span>
+            <label>{t("fee")} ({boltzFee()}%)</label>
+            <span class="boltz-fee">{denomination() == "btc" ? ((sendAmount() * boltzFee()) / 100).toFixed(8) : Math.ceil((sendAmount() * boltzFee()) / 100)} <span class="denominator" data-denominator={denomination()}></span></span>
           </div>
         </div>
       </form>
