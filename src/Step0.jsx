@@ -1,7 +1,7 @@
 import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, divider, startInterval, focus } from "./helper";
+import { fetcher, btc_divider, startInterval, focus } from "./helper";
 import Tags from "./Tags";
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
@@ -65,26 +65,53 @@ const Step0 = () => {
     });
   });
 
+  // createEffect(() => {
+  //   let denom = denomination();
+  //   let amount = sendAmount();
+  //   amout = (denom == "btc") ? amount * btc_divider :  (amount / btc_divider).toFixed(8);
+  //   setSendAmount(amount)
+  // });
+
   createEffect(() => {
     let cfg = config();
+    let denom = denomination();
     if (cfg) {
+      let divider = (denom == "btc") ? btc_divider : 1;
       setMinimum(cfg.limits.minimal / divider);
       setMaximum(cfg.limits.maximal / divider);
       setBoltzFee(cfg.fees.percentage);
       if (reverse()) {
         let rev = cfg.fees.minerFees.baseAsset.reverse;
-        let fee = (rev.claim + rev.lockup) / divider;
-        setMinerFee(fee.toFixed(8));
+        let fee = rev.claim + rev.lockup;
+        if (denom == "btc") {
+            fee = (fee / btc_divider).toFixed(8);
+        }
+        setMinerFee(fee);
       } else {
-        let fee = cfg.fees.minerFees.baseAsset.normal / divider;
-        setMinerFee(fee.toFixed(8));
+        let fee = cfg.fees.minerFees.baseAsset.normal;
+        if (denom == "btc") {
+            fee = (fee / btc_divider).toFixed(8);
+        }
+        setMinerFee(fee);
       }
     }
   });
 
   createEffect(() => {
-    let amount = sendAmount() - minerFee() - (sendAmount() * boltzFee()) / 100;
-    setReceiveAmount(amount.toFixed(8));
+    let send_amount = 100000;
+    if (denomination() == "btc") {
+        send_amount = 0.001;
+    }
+    setSendAmount(send_amount)
+  });
+
+  createEffect(() => {
+    let send_amount = sendAmount();
+    let amount = send_amount - minerFee() - (send_amount * boltzFee()) / 100;
+    if (denomination() == "btc") {
+        amount = amount.toFixed(8);
+    }
+    setReceiveAmount(amount);
   });
 
   const [t, { add, locale, dict }] = useI18n();
@@ -143,7 +170,7 @@ const Step0 = () => {
             <input
               autofocus
               required
-              step="0.00000001"
+              step={denomination() == "btc" ? 0.00000001 : 1 }
               maxlength="10"
               min={minimum()}
               max={maximum()}
@@ -155,16 +182,9 @@ const Step0 = () => {
             />
       </div>
           <div>
-            <span
-              id="receiveAmount"
-              onClick={(e) => {
-                setReverse(!reverse());
-                focus();
-              }}
-            >
-              {receiveAmount()}
-            </span>
-            <label>{t("network_fee")}</label> <span class="network-fee">{minerFee()}</span>
+            <span id="receiveAmount">{receiveAmount()}</span>
+            <span class="denominator" data-denominator={denomination()}></span>
+            <label>{t("network_fee")}</label> <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span>
           </div>
         </div>
       </form>
@@ -174,14 +194,16 @@ const Step0 = () => {
       <div class="fees">
         <div class="fee">
           <span>
-            <b>{minimum()} BTC</b>
+            <b>{minimum()}</b>
+            <span class="denominator" data-denominator={denomination()}></span>
           </span>
           <br />
           <label>{t("min")}</label>
         </div>
         <div class="fee">
           <span>
-            <b>{maximum()} BTC</b>
+            <b>{maximum()}</b>
+            <span class="denominator" data-denominator={denomination()}></span>
           </span>
           <br />
           <label>{t("max")}</label>

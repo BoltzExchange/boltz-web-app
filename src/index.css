@@ -317,6 +317,24 @@ textarea {
     cursor: pointer;
     width: 28px;
 }
+.denominator {
+    filter: brightness(10);
+    width: 15px;
+    height: 11px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    display: inline-block;
+    transform: scale(2.1);
+    background-position: right;
+}
+
+[data-denominator=btc] {
+    background-image: url(./assets/btc.svg);
+}
+[data-denominator=sat] {
+    background-image: url(./assets/sat.svg);
+}
+
 .denomination .active {
     filter: none;
 }

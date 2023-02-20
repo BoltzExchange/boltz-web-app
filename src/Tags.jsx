@@ -1,6 +1,6 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
-import { sendAmount, setSendAmount, minimum, maximum } from "./signals";
+import { sendAmount, setSendAmount, minimum, maximum, denomination } from "./signals";
 import { focus } from "./helper";
 import { checkAmount } from "./Step0";
 
@@ -23,36 +23,41 @@ const Tags = () => {
         <span
           class="btn"
           onClick={(e) => {
-            setSendAmount((parseFloat(sendAmount()) - 0.001).toPrecision(8));
+            let amount = (denomination() == "btc") ? 0.001 : 100000;
+            amount = (denomination() == "btc") ? (parseFloat(sendAmount()) - amount).toPrecision(8) : sendAmount() - amount;
+            setSendAmount(amount);
             checkAmount();
             focus();
           }}
         >
-          - 100K
+          - {(denomination() == "btc") ? "0.001" : "100K"}
         </span>
       </div>
       <div class="tag">
         <span
           class="btn"
           onClick={(e) => {
-            setSendAmount(0.01);
+            let amount = (denomination() == "btc") ? 0.01 : 1000000;
+            setSendAmount(amount);
             checkAmount();
             focus();
           }}
         >
-          1M
+          {(denomination() == "btc") ? "0.01" : "1M"}
         </span>
       </div>
       <div class="tag">
         <span
           class="btn"
           onClick={(e) => {
-            setSendAmount((parseFloat(sendAmount()) + 0.001).toPrecision(8));
+            let amount = (denomination() == "btc") ? 0.001 : 100000;
+            amount = (denomination() == "btc") ? (parseFloat(sendAmount()) + amount).toPrecision(8) : parseInt(sendAmount()) + amount;
+            setSendAmount(amount);
             checkAmount();
             focus();
           }}
         >
-          + 100K
+          + {(denomination() == "btc") ? "0.001" : "100K"}
         </span>
       </div>
       <div class="tag">

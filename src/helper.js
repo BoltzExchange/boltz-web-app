@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 // export const BOLTZ_API_URL = "https://boltz.exchange/api";
 export const BOLTZ_API_URL = "http://localhost:9001";
 
-export const divider = 100000000;
+export const btc_divider = 100000000;
 
 export const startInterval = (cb) => {
   cb();
