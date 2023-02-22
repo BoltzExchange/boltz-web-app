@@ -20,7 +20,11 @@ const dict = {
     cancel_swap: "Cancel Swap",
     new_swap: "New Swap",
     success_swap: "Swap Success",
-    create_and_paste: "Create an invoice with exactly {{ amount }} {{ denomination }} and paste it here"
+    create_and_paste: "Create an invoice with exactly {{ amount }} {{ denomination }} and paste it here",
+    congrats: "Congratulations! Swap: {{ id }} complete!",
+    successfully_swapped: "You have successfully swapped {{ amount }} {{ denomination }}.",
+    pay_invoice: "Pay invoice. Swap: {{ id }}.",
+    pay_invoice_subline: "Pay your invoice and the swap is done.",
   },
   de: {
     swap: "Tausch",

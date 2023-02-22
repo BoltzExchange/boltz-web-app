@@ -9,8 +9,8 @@ const Pay = () => {
   const [t, { add, locale, dict }] = useI18n();
   return (
     <div class="frame">
-      <h2>Pay invoice boltz id: {params.id}</h2>
-      <p>Pay your invoice and the swap is done.</p>
+      <h2>{t("pay_invoice", {id: params.id})}</h2>
+      <p>{t("pay_invoice_subline")}</p>
       <hr />
       <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
       <span class="btn btn-success" onclick={() => navigate("/swap/1zt192/success")}>Success test</span>
