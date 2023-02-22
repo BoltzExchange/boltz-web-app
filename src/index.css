@@ -79,15 +79,28 @@ hr {
   background-image: url(./assets/lightning-icon.svg);
   background-size: 90%;
 }
+[data-reverse="true"] .asset-1 .asset-text:before,
+[data-reverse="false"] .asset-2 .asset-text:before {
+    content: "lightning";
+}
 
 [data-reverse="false"][data-asset="btc"] .icon-1,
 [data-reverse="true"][data-asset="btc"] .icon-2 {
   background-image: url(./assets/bitcoin-icon.svg);
 }
+[data-reverse="false"][data-asset="btc"] .asset-1 .asset-text:before,
+[data-reverse="true"][data-asset="btc"] .asset-2 .asset-text:before {
+    content: "bitcoin";
+}
+
 
 [data-reverse="false"][data-asset="l-btc"] .icon-1,
 [data-reverse="true"][data-asset="l-btc"] .icon-2 {
   background-image: url(./assets/liquid-icon.svg);
+}
+[data-reverse="false"][data-asset="l-btc"] .asset-1 .asset-text:before,
+[data-reverse="true"][data-asset="l-btc"] .asset-2 .asset-text:before {
+    content: "liquid";
 }
 
 .pornhub:before {
@@ -194,6 +207,10 @@ hr {
   color: #14283f;
 }
 
+.btn-mempool {
+  background: #533180;
+}
+
 .btn-success {
   background: #e6c826;
 }
@@ -264,7 +281,7 @@ textarea {
   border: 1px dashed rgba(255,255,255,.3);
   border-radius: 10px;
   width: 100%;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: normal;
   text-align: center;
   margin-bottom: 2px;

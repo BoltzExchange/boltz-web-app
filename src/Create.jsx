@@ -1,7 +1,9 @@
-import { createEffect } from "solid-js";
+import { createSignal, createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, btc_divider, startInterval, focus } from "./helper";
+import { useNavigate } from "@solidjs/router";
+
 import Tags from "./Tags";
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
@@ -57,13 +59,7 @@ export const checkAmount = (e) => {
   }
 };
 
-const Step0 = () => {
-  startInterval(() => {
-    fetcher("/getpairs", (data) => {
-      let cfg = data.pairs["BTC/BTC"];
-      setConfig(cfg);
-    });
-  });
+const Create = () => {
 
   createEffect(() => {
     let cfg = config();
@@ -112,8 +108,15 @@ const Step0 = () => {
 
   const [t, { add, locale, dict }] = useI18n();
 
+  const navigate = useNavigate();
+
+  const create = () => {
+      navigate("/swap/1zt192");
+  };
+
+
   return (
-    <div data-reverse={reverse()} data-asset={asset()}>
+    <div class="frame" data-reverse={reverse()} data-asset={asset()}>
       <h2>{t("create_swap")}</h2>
       <p>{t("create_swap_subline")}</p>
       <hr />
@@ -206,8 +209,9 @@ const Step0 = () => {
         </div>
       </div>
       <hr />
+      <span class="btn btn-success" onClick={create}>{t("create_swap")}</span>
     </div>
   );
 };
 
-export default Step0;
+export default Create;

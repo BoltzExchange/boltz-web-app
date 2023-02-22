@@ -6,6 +6,7 @@ const dict = {
     onion: "Onion",
     channels: "Channels",
     ordinals: "Ordinals",
+    mempool: "View on mempool.space",
     help: "Help",
     network_fee: "Network Fee",
     fee: "Boltz Fee",
@@ -17,7 +18,7 @@ const dict = {
     create_swap: "Create Submarine Swap",
     create_swap_subline: "Payment includes miner and boltz service fees.",
     cancel_swap: "Cancel Swap",
-    new_swap: "New Cancel",
+    new_swap: "New Swap",
     success_swap: "Swap Success",
     create_and_paste: "Create an invoice with exactly {{ amount }} {{ denomination }} and paste it here"
   },

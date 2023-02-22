@@ -71,28 +71,26 @@ const success = (e) => setStep(2);
 const Steps = () => {
     const [t, { add, locale, dict }] = useI18n();
     return (
-        <div id="steps">
-            <div class="frame">
-                <div class={step() == 0 ? "active" : ""}>
-                    <div class="step0">
-                        <Step0 />
-                        <span class="btn btn-success" onClick={create}>{t("create_swap")}</span>
-                    </div>
+        <div class="frame">
+            <div class={step() == 0 ? "active" : ""}>
+                <div class="step0">
+                    <Step0 />
+                    <span class="btn btn-success" onClick={create}>{t("create_swap")}</span>
                 </div>
-                <div class={step() == 1 ? "active" : ""}>
-                    <div class="step1">
-                        <Step1 />
-                        <span class="btn btn-danger" onClick={(e) => setStep(0)}>{t("cancel_swap")}</span>
-                        <span class="btn btn-success" onClick={success}>{t("success_swap")}</span>
-                    </div>
+            </div>
+            <div class={step() == 1 ? "active" : ""}>
+                <div class="step1">
+                    <Step1 />
+                    <span class="btn btn-danger" onClick={(e) => setStep(0)}>{t("cancel_swap")}</span>
+                    <span class="btn btn-success" onClick={success}>{t("success_swap")}</span>
                 </div>
-                <div class={step() == 2 ? "active" : ""}>
-                    <div class="step2">
-                        <Success />
-                        <hr />
-                        <span class="btn btn-success" onClick={(e) => setStep(0)}>{t("new_swap")}</span>
-                        <a class="btn" target="_blank" href="https://mempool.space">{t("mempool")}</a>
-                    </div>
+            </div>
+            <div class={step() == 2 ? "active" : ""}>
+                <div class="step2">
+                    <Success />
+                    <hr />
+                    <span class="btn btn-success" onClick={(e) => setStep(0)}>{t("new_swap")}</span>
+                    <a class="btn" target="_blank" href="https://mempool.space">{t("mempool")}</a>
                 </div>
             </div>
         </div>
