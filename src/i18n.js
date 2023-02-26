@@ -26,6 +26,9 @@ const dict = {
     successfully_swapped: "You have successfully swapped {{ amount }} {{ denomination }}.",
     pay_invoice: "Pay invoice. Swap: {{ id }}.",
     pay_invoice_subline: "Pay your invoice and the swap is done.",
+    pay_swap_404: "Swap not found!",
+    download_refund_json: "Download refund JSON",
+    download_refund_qr: "Download refund QRCode",
   },
   de: {
     swap: "Tausch",

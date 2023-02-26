@@ -1,13 +1,14 @@
 import QRCode from "qrcode";
+import { setNotification, setNotificationType } from "./signals";
 
 // export const BOLTZ_API_URL = "https://boltz.exchange/api";
 export const BOLTZ_API_URL = "http://localhost:9001";
 
 export const btc_divider = 100000000;
 
-export const startInterval = (cb) => {
+export const startInterval = (cb, interval) => {
   cb();
-  return setInterval(cb, 10000);
+  return setInterval(cb, interval);
 };
 
 export const focus = () => {
@@ -28,17 +29,29 @@ export const fetcher = (url, cb, params = null) => {
   }
   fetch(BOLTZ_API_URL + url, opts)
     .then((response) => {
-      if (!response.ok)
-        throw new Error(`Request failed with status ${response.status}`);
+      if (!response.ok) {
+          return Promise.reject(response);
+      }
       return response.json();
     })
     .then(cb)
-    .catch((error) => console.error(error));
+    .catch((error) => {
+        setNotificationType("error")
+        if (typeof error.json === "function") {
+            error.json().then(jsonError => {
+                setNotification(jsonError.error);
+            }).catch(genericError => {
+                setNotification(error.statusText);
+            });
+        } else {
+            setNotification(error.message);
+        }
+    });
 };
 
 export const downloadRefundFile = (swap) => {
   let json = {
-    id: swap.boltz_id,
+    id: swap.id,
     currency: "BTC",
     redeemScript: swap.redeem_script,
     privateKey: swap.refund_privkey,

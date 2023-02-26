@@ -1,7 +1,7 @@
-import { createSignal, createEffect } from "solid-js";
+import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, btc_divider, startInterval, focus } from "./helper";
+import { fetcher, qr, btc_divider, startInterval, focus } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
@@ -17,6 +17,8 @@ import bitcoin_svg from "./assets/bitcoin-icon.svg";
 import liquid_svg from "./assets/liquid-icon.svg";
 
 import {
+  swap,
+  setSwap,
   asset,
   setAsset,
   denomination,
@@ -46,6 +48,7 @@ import {
   setSwapValid,
   invoice,
   setInvoice,
+  setInvoiceQr,
   onchainAddress,
   setOnchainAddress,
 } from "./signals";
@@ -53,6 +56,7 @@ import {
 
 const Create = () => {
 
+  // set fees and pairs
   createEffect(() => {
     let cfg = config();
     let denom = denomination();
@@ -78,6 +82,7 @@ const Create = () => {
     }
   });
 
+  // reset send amount when changing denomination
   createEffect(() => {
     let send_amount = 100000;
     if (denomination() == "btc") {
@@ -86,6 +91,7 @@ const Create = () => {
     setSendAmount(send_amount)
   });
 
+  // set receive amount when changing denomination
   createEffect(() => {
     let send_amount = sendAmount();
     let amount = send_amount - minerFee() - (send_amount * boltzFee()) / 100;
@@ -139,44 +145,48 @@ const Create = () => {
 
   const navigate = useNavigate();
 
-    const create = () => {
-        if (valid()) {
-            let params = null;
-            let cb = null;
-            if (reverse()) {
-                console.log("reverse not supported");
-                // setPreimage(randomBytes(32));
-                // setClaimECPair(ECPair.makeRandom());
-                // params = {
-                //     "type": "reversesubmarine",
-                //     "pairId": "BTC/BTC",
-                //     "orderSide": "buy",
-                //     "invoiceAmount": sendAmount(),
-                //     "preimageHash": crypto.sha256(preimage()).toString("hex"),
-                //     "claimPublicKey": claimECPair().publicKey.toString("hex")
-                // };
-                // cb = (data) => {
-                //     setStep(2);
-                // };
-            } else {
-                const refundPrivateKey = secp.utils.randomPrivateKey();
-                const refundPublicKey = secp.getPublicKey(refundPrivateKey);
-                setRefundPrivateKey(secp.utils.bytesToHex(refundPrivateKey));
-                params = {
-                    "type": "submarine",
-                    "pairId": "BTC/BTC",
-                    "orderSide": "sell",
-                    "refundPublicKey": secp.utils.bytesToHex(refundPublicKey),
-                    "invoice": invoice()
-                };
-                cb = (data) => {
-                    qr(data.bip21, setInvoiceQr);
-                    navigate("/swap/"+data.id);
-                };
-            }
-            fetcher("/createswap", cb, params);
-        };
-    };
+  const create = () => {
+      if (valid()) {
+          let params = null;
+          let callback = null;
+          if (reverse()) {
+              console.log("reverse not supported");
+              // setPreimage(randomBytes(32));
+              // setClaimECPair(ECPair.makeRandom());
+              // params = {
+              //     "type": "reversesubmarine",
+              //     "pairId": "BTC/BTC",
+              //     "orderSide": "buy",
+              //     "invoiceAmount": sendAmount(),
+              //     "preimageHash": crypto.sha256(preimage()).toString("hex"),
+              //     "claimPublicKey": claimECPair().publicKey.toString("hex")
+              // };
+              // callback = (data) => {
+              //     setStep(2);
+              // };
+          } else {
+              const refundPrivateKey = secp.utils.randomPrivateKey();
+              const refundPublicKey = secp.getPublicKey(refundPrivateKey);
+              setRefundPrivateKey(secp.utils.bytesToHex(refundPrivateKey));
+              params = {
+                  "type": "submarine",
+                  "pairId": "BTC/BTC",
+                  "orderSide": "sell",
+                  "refundPublicKey": secp.utils.bytesToHex(refundPublicKey),
+                  "invoice": invoice()
+              };
+              callback = (data) => {
+                  console.log("created normal swap", data);
+                  setSwap(data);
+                  let tmp_swaps = swaps();
+                  tmp_swaps.push(data)
+                  setSwaps(tmp_swaps);
+                  navigate("/swap/" + data.id);
+              };
+          }
+          fetcher("/createswap", callback, params);
+      };
+  };
 
 
   return (
