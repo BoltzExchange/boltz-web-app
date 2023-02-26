@@ -11,12 +11,17 @@ export const [minimum, setMinimum] = createSignal(0);
 export const [maximum, setMaximum] = createSignal(0);
 export const [receiveAmount, setReceiveAmount] = createSignal(0);
 export const [reverse, setReverse] = createSignal(false);
+
+// validation
 export const [valid, setValid] = createSignal(false);
+export const [amountValid, setAmountValid] = createSignal(false);
+export const [swapValid, setSwapValid] = createSignal(false);
+
 export const [onchainAddress, setOnchainAddress] = createSignal("");
 export const [invoice, setInvoice] = createSignal("");
 export const [invoiceQr, setInvoiceQr] = createSignal("");
 export const [claimECPair, setClaimECPair] = createSignal("");
-export const [refundECPair, setRefundECPair] = createSignal("");
+export const [refundPrivateKey, setRefundPrivateKey] = createSignal("");
 export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
 

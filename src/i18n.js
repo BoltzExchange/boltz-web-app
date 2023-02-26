@@ -14,6 +14,7 @@ const dict = {
     min: "Mininum",
     max: "Maximum",
     assets: "Assets",
+    socialmedia: "Follow us on Social Media",
     footer: "made with ❤️ in El Salvador",
     create_swap: "Create Submarine Swap",
     create_swap_subline: "Payment includes miner and boltz service fees.",

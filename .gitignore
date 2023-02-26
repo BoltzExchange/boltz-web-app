@@ -1,3 +1,4 @@
+*.log
 node_modules
 src/bitcore-lib.js
 src/bitcore-lib.min.js

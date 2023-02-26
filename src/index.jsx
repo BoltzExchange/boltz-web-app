@@ -5,6 +5,8 @@ import { I18nContext, createI18nContext, useI18n } from "@solid-primitives/i18n"
 import { i18n, setConfig } from "./signals";
 import { startInterval, fetcher } from "./helper";
 
+import "./vendor/bitcoinjs-lib.js"
+
 // import App from "./App";
 import Create from "./Create";
 import Pay from "./Pay";

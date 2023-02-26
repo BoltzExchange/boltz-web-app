@@ -190,6 +190,12 @@ hr {
   color: #14283f;
   font-weight: bold;
   text-transform: uppercase;
+  border: none;
+  width: 100%;
+}
+.btn:disabled {
+  background-color: #ddd;
+  cursor: not-allowed;
 }
 
 .btn:visited {

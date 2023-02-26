@@ -6,9 +6,10 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
+    "serve": "vite preview",
+    "bitcoinlib": "npx browserify --standalone bitcoin - -o src/vendor/bitcoinjs-lib.js <<<\"module.exports = require(\\\"bitcoinjs-lib\\\");\"",
     "build": "vite build; cp CNAME dist; cp dist/index.html dist/404.html",
-    "deploy": "git push origin `git subtree split --prefix dist main`:gh-pages --force",
-    "serve": "vite preview"
+    "deploy": "git push origin `git subtree split --prefix dist main`:gh-pages --force"
   },
   "devDependencies": {
     "prettier": "^2.8.4",
@@ -17,14 +18,11 @@
   },
   "dependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@noble/secp256k1": "^1.7.1",
     "@solid-primitives/i18n": "^1.1.4",
     "@solid-primitives/storage": "^1.3.4",
     "@solidjs/router": "^0.7.0",
     "babel-preset-solid": "^1.4.6",
-    "bitcoinjs-lib": "^5.2.0",
-    "boltz-core": "^0.5.0",
-    "buffer": "^6.0.3",
-    "ecpair": "^2.0.1",
     "qrcode": "^1.5.0",
     "readable-stream": "^4.0.0",
     "rollup-plugin-node-polyfills": "^0.2.1",

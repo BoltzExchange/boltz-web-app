@@ -4,6 +4,12 @@ import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, btc_divider, startInterval, focus } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
+import * as secp from '@noble/secp256k1';
+
+// import { ECPairFactory } from "./vendor/bitcoinjs-lib.js"
+// console.log(bitcoinlib);
+// const ECPair = ECPairFactory(ecc);
+
 import Tags from "./Tags";
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
@@ -27,37 +33,23 @@ import {
   setMaximum,
   receiveAmount,
   setReceiveAmount,
+  setRefundPrivateKey,
   reverse,
   setReverse,
   config,
   setConfig,
   valid,
   setValid,
+  amountValid,
+  setAmountValid,
+  swapValid,
+  setSwapValid,
+  invoice,
   setInvoice,
+  onchainAddress,
   setOnchainAddress,
 } from "./signals";
 
-export const checkAmount = (e) => {
-  let errorkey = "";
-  let target = document.getElementById("sendAmount");
-  target.checkValidity();
-  setValid(false);
-  for (let k in target.validity) {
-    if (k === "valid") continue;
-    if (target.validity[k]) {
-      errorkey = k;
-      setValid(false);
-      break;
-    }
-    setValid(true);
-  }
-
-  if (valid()) {
-    setSendAmount(target.value);
-  } else {
-    setReceiveAmount(errorkey);
-  }
-};
 
 const Create = () => {
 
@@ -106,13 +98,85 @@ const Create = () => {
     setReceiveAmount(amount);
   });
 
+  // validation swap
+  createEffect(() => {
+      if (!reverse() && invoice() || reverse() && onchainAddress()) {
+        setSwapValid(true);
+      } else {
+        setSwapValid(false);
+      }
+  });
+
+  // validation amount
+  createEffect(() => {
+      let send_amount = sendAmount();
+      let target = document.getElementById("sendAmount");
+      target.checkValidity();
+      setAmountValid(true);
+      for (let k in target.validity) {
+        if (k === "valid") continue;
+        if (target.validity[k]) {
+          setReceiveAmount(k);
+          setAmountValid(false);
+          break;
+        }
+     };
+  });
+
+  // validation form
+  createEffect(() => {
+      let create_btn = document.getElementById("create-swap");
+      if (amountValid() && swapValid()) {
+        setValid(true);
+        create_btn.disabled = false;
+      } else {
+        setValid(false);
+        create_btn.disabled = true;
+      }
+  });
+
   const [t, { add, locale, dict }] = useI18n();
 
   const navigate = useNavigate();
 
-  const create = () => {
-      navigate("/swap/1zt192");
-  };
+    const create = () => {
+        if (valid()) {
+            let params = null;
+            let cb = null;
+            if (reverse()) {
+                console.log("reverse not supported");
+                // setPreimage(randomBytes(32));
+                // setClaimECPair(ECPair.makeRandom());
+                // params = {
+                //     "type": "reversesubmarine",
+                //     "pairId": "BTC/BTC",
+                //     "orderSide": "buy",
+                //     "invoiceAmount": sendAmount(),
+                //     "preimageHash": crypto.sha256(preimage()).toString("hex"),
+                //     "claimPublicKey": claimECPair().publicKey.toString("hex")
+                // };
+                // cb = (data) => {
+                //     setStep(2);
+                // };
+            } else {
+                const refundPrivateKey = secp.utils.randomPrivateKey();
+                const refundPublicKey = secp.getPublicKey(refundPrivateKey);
+                setRefundPrivateKey(secp.utils.bytesToHex(refundPrivateKey));
+                params = {
+                    "type": "submarine",
+                    "pairId": "BTC/BTC",
+                    "orderSide": "sell",
+                    "refundPublicKey": secp.utils.bytesToHex(refundPublicKey),
+                    "invoice": invoice()
+                };
+                cb = (data) => {
+                    qr(data.bip21, setInvoiceQr);
+                    navigate("/swap/"+data.id);
+                };
+            }
+            fetcher("/createswap", cb, params);
+        };
+    };
 
 
   return (
@@ -146,8 +210,8 @@ const Create = () => {
             min={minimum()}
             max={maximum()}
             value={sendAmount()}
-            onChange={checkAmount}
-            onKeyUp={checkAmount}
+            onChange={(e) => setSendAmount(e.currentTarget.value)}
+            onKeyUp={(e) => setSendAmount(e.currentTarget.value)}
           />
         </div>
         <div>
@@ -171,12 +235,14 @@ const Create = () => {
       <label id="invoiceLabel">{t("create_and_paste", { amount: sendAmount(), denomination: denomination()})}</label>
       <textarea
         onChange={(e) => setInvoice(e.currentTarget.value)}
+        onKeyUp={(e) => setInvoice(e.currentTarget.value)}
         id="invoice"
         name="invoice"
         placeholder="Paste lightning invoice"
       ></textarea>
       <input
         onChange={(e) => setOnchainAddress(e.currentTarget.value)}
+        onKeyUp={(e) => setOnchainAddress(e.currentTarget.value)}
         type="text"
         id="onchainAddress"
         name="onchainAddress"
@@ -209,7 +275,7 @@ const Create = () => {
         </div>
       </div>
       <hr />
-      <span class="btn btn-success" onClick={create}>{t("create_swap")}</span>
+      <button id="create-swap" class="btn btn-success" onClick={create}>{t("create_swap")}</button>
     </div>
   );
 };
