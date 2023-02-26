@@ -6,10 +6,6 @@ import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
 
-// import { ECPairFactory } from "./vendor/bitcoinjs-lib.js"
-// console.log(bitcoinlib);
-// const ECPair = ECPairFactory(ecc);
-
 import Tags from "./Tags";
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
@@ -17,8 +13,9 @@ import bitcoin_svg from "./assets/bitcoin-icon.svg";
 import liquid_svg from "./assets/liquid-icon.svg";
 
 import {
-  swap,
   setSwap,
+  swaps,
+  setSwaps,
   asset,
   setAsset,
   denomination,
@@ -35,11 +32,9 @@ import {
   setMaximum,
   receiveAmount,
   setReceiveAmount,
-  setRefundPrivateKey,
   reverse,
   setReverse,
   config,
-  setConfig,
   valid,
   setValid,
   amountValid,
@@ -48,9 +43,10 @@ import {
   setSwapValid,
   invoice,
   setInvoice,
-  setInvoiceQr,
   onchainAddress,
   setOnchainAddress,
+  setNotification,
+  setNotificationType,
 } from "./signals";
 
 
@@ -150,7 +146,8 @@ const Create = () => {
           let params = null;
           let callback = null;
           if (reverse()) {
-              console.log("reverse not supported");
+              setNotificationType("error");
+              setNotification("reverse swap not implemented");
               // setPreimage(randomBytes(32));
               // setClaimECPair(ECPair.makeRandom());
               // params = {
@@ -167,7 +164,6 @@ const Create = () => {
           } else {
               const refundPrivateKey = secp.utils.randomPrivateKey();
               const refundPublicKey = secp.getPublicKey(refundPrivateKey);
-              setRefundPrivateKey(secp.utils.bytesToHex(refundPrivateKey));
               params = {
                   "type": "submarine",
                   "pairId": "BTC/BTC",
@@ -176,15 +172,15 @@ const Create = () => {
                   "invoice": invoice()
               };
               callback = (data) => {
-                  console.log("created normal swap", data);
+                  data.privateKey = secp.utils.bytesToHex(refundPrivateKey);
                   setSwap(data);
-                  let tmp_swaps = swaps();
+                  let tmp_swaps = JSON.parse(swaps());
                   tmp_swaps.push(data)
-                  setSwaps(tmp_swaps);
+                  setSwaps(JSON.stringify(tmp_swaps));
                   navigate("/swap/" + data.id);
               };
+              fetcher("/createswap", callback, params);
           }
-          fetcher("/createswap", callback, params);
       };
   };
 

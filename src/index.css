@@ -224,7 +224,7 @@ hr {
   background: #fff;
 }
 .btn-danger {
-  background: red;
+  background: darkred;
 }
 .btn-danger:hover {
   background: darkred;

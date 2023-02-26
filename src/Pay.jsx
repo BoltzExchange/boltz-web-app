@@ -3,7 +3,7 @@ import { render } from "solid-js/web";
 import { invoiceQr, setInvoiceQr, swap, setSwap, swaps } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { downloadRefundFile } from "./helper";
+import { qr, downloadRefundFile } from "./helper";
 
 const Pay = () => {
   const params = useParams();
@@ -11,10 +11,11 @@ const Pay = () => {
   const [t, { add, locale, dict }] = useI18n();
 
   createEffect(() => {
-      let tmp_swaps = swaps();
+      let tmp_swaps = JSON.parse(swaps());
       if (tmp_swaps) {
-          let current_swap = tmp_swaps.filter(s => s.id === params.id);
+          let current_swap = tmp_swaps.filter(s => s.id === params.id).pop();
           setSwap(current_swap);
+          console.log(current_swap);
           qr(current_swap.bip21, setInvoiceQr);
       }
   });
@@ -25,6 +26,7 @@ const Pay = () => {
       <p>{t("pay_invoice_subline")}</p>
       <hr />
       <Show when={swap()}>
+          <p>{t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight}</p>
           <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
           <span class="btn btn-danger" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
           <span class="btn btn-danger" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>

@@ -53,15 +53,15 @@ export const downloadRefundFile = (swap) => {
   let json = {
     id: swap.id,
     currency: "BTC",
-    redeemScript: swap.redeem_script,
-    privateKey: swap.refund_privkey,
-    timeoutBlockHeight: swap.timeout_block_height,
+    redeemScript: swap.redeemScript,
+    privateKey: swap.refundPrivatekey,
+    timeoutBlockHeight: swap.timeoutBlockHeight,
   };
   let hiddenElement = document.createElement("a");
   hiddenElement.href =
     "data:application/json;charset=utf-8," + encodeURI(JSON.stringify(json));
   hiddenElement.target = "_blank";
-  hiddenElement.download = "boltz-refund-" + swap.boltz_id + ".json";
+  hiddenElement.download = "boltz-refund-" + swap.id + ".json";
   hiddenElement.click();
 };
 
@@ -70,7 +70,9 @@ export const qr = (data, cb) => {
   QRCode.toDataURL(data, { version: 6, width: 400 })
     .then(cb)
     .catch((err) => {
-      console.error(err);
+        console.error(err);
+        setNotificationType("error")
+        setNotification(err.message);
     });
 };
 

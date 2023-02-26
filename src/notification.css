@@ -17,7 +17,7 @@
     border-radius: 20px;
 }
 #notification.error {
-    background-color: red;
+    background-color: #ff000052;
 }
 #notification.success {
     background-color: green;
