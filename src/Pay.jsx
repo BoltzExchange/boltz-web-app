@@ -27,7 +27,6 @@ const Pay = () => {
           let current_swap = tmp_swaps.filter(s => s.id === params.id).pop();
           fetchSwapStatus(params.id);
           setSwap(current_swap);
-          console.log(current_swap);
           qr(current_swap.bip21, setInvoiceQr);
       }
   });
@@ -42,7 +41,9 @@ const Pay = () => {
       <p>{t("pay_invoice_subline")}</p>
       <Show when={swap()}>
           <p>Status: <span class="btn-small">{swapStatus()}</span>
-            <span class="icon-reload" onClick={() => fetchSwapStatus(swap().id)}><img src={reload_svg} /></span>
+            <Show when={swapStatus() != "transaction.claimed"}>
+                <span class="icon-reload" onClick={() => fetchSwapStatus(swap().id)}><img src={reload_svg} /></span>
+            </Show>
           </p>
       </Show>
       <hr />
@@ -54,7 +55,16 @@ const Pay = () => {
               <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
               <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().address)}>{t("mempool")}</a>
           </Show>
-              <Show when={swapStatus() != "transaction.claimed"}>
+          <Show when={swapStatus() == "transaction.mempool"}>
+              <h2>{t("tx_in_mempool")}</h2>
+              <p>{t("tx_in_mempool_subline")}</p>
+              <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+              </div>
+          </Show>
+          <Show when={swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool"}>
               <p>
                 {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
                 {t("pay_expected_amount")}: {swap().expectedAmount} <br />
@@ -70,7 +80,6 @@ const Pay = () => {
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().address)}>{t("mempool")}</a>
               <button class="btn btn-danger">{t("delete_swap")}</button>
-              <span class="btn btn-success" onclick={() => navigate("/swap/"+params.id+"/success")}>Success TEST</span>
           </Show>
       </Show>
       <Show when={!swap()}>

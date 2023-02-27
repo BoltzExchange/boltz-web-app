@@ -70,7 +70,7 @@ export const qr = (data, cb) => {
   QRCode.toDataURL(data, { version: 6, width: 400 })
     .then(cb)
     .catch((err) => {
-        console.error(err);
+        console.error("qr code generation error", err);
         setNotificationType("error")
         setNotification(err.message);
     });
