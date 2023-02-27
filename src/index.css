@@ -37,6 +37,15 @@ hr {
   background: rgba(255,255,255,.1);
 }
 
+.icon-reload {
+    cursor: pointer;
+    vertical-align: middle;
+    display: inline-block;
+    padding: 0 6px;
+}
+.icon-reload img {
+    width: 20px;
+}
 
 .asset-text {
     font-size: 16px;
@@ -202,11 +211,20 @@ hr {
   color: white;
 }
 
+.btn-small {
+  background: #e6c826;
+  color: #14283f;
+  border-radius: 7px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
 .tag .btn {
   background: rgba(0,0,0,.2);
   color: white;
 }
 
+.btn-small:hover,
 .btn:hover,
 .tag .btn:hover {
   background: #fff;
@@ -218,7 +236,7 @@ hr {
 }
 
 .btn-success {
-  background: #e6c826;
+  background: #00b900;
 }
 .btn-success:hover {
   background: #fff;

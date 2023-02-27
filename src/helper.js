@@ -54,7 +54,7 @@ export const downloadRefundFile = (swap) => {
     id: swap.id,
     currency: "BTC",
     redeemScript: swap.redeemScript,
-    privateKey: swap.refundPrivatekey,
+    privateKey: swap.privateKey,
     timeoutBlockHeight: swap.timeoutBlockHeight,
   };
   let hiddenElement = document.createElement("a");

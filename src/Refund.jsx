@@ -1,6 +1,6 @@
 import { createSignal, createEffect } from "solid-js";
 import { render } from "solid-js/web";
-import { upload, setUpload, swaps } from "./signals";
+import { upload, setUpload, swaps, setSwaps } from "./signals";
 
 const [error, setError] = createSignal("no file seleced");
 const [refundJson, setRefundJson] = createSignal(null);
@@ -45,6 +45,18 @@ const Refund = () => {
   const navigate = useNavigate();
   const [t, { add, locale, dict }] = useI18n();
 
+  const printDate = (d) => {
+    let date = new Date();
+    date.setTime(d);
+    return date.toLocaleDateString();
+  };
+
+  const deleteLocalstorage = () => {
+      if(confirm(t("delete_localstorage"))) {
+          setSwaps("[]")
+      }
+  };
+
   return (
     <div id="refund">
         <div class="frame">
@@ -79,17 +91,18 @@ const Refund = () => {
               <p>{t("refund_past_swaps_subline")}</p>
               <hr />
               <div id="past-swaps">
-                  <For each={JSON.parse(swaps())} fallback={<div>Loading...</div>}>
+                  <For each={JSON.parse(swaps())}>
                       {(_swap) => (
                           <div class="past-swap">
-                              <button onClick={() => navigate("/swap/" + _swap.id)}>status</button> |
-                              ID: {_swap.id}, Timeout: {_swap.timeoutBlockHeight}, Amount: {_swap.expectedAmount}
+                              <span class="btn-small" onClick={() => navigate("/swap/" + _swap.id)}>view</span> |
+                              <span data-reverse={_swap.reverse} data-asset={_swap.asset} class="past-asset"></span>,
+                              {printDate(_swap.date)}, ID: {_swap.id}
                               <hr />
                           </div>
                       )}
                   </For>
               </div>
-              <button class="btn btn-danger" onClick={() => setSwaps("[]")}>{t("refund_clear")}</button>
+              <button class="btn btn-danger" onClick={deleteLocalstorage}>{t("refund_clear")}</button>
             </div>
         </Show>
     </div>

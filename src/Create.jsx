@@ -11,6 +11,7 @@ import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
 import bitcoin_svg from "./assets/bitcoin-icon.svg";
 import liquid_svg from "./assets/liquid-icon.svg";
+import reload_svg from "./assets/reload.svg";
 
 import {
   setSwap,
@@ -35,6 +36,7 @@ import {
   reverse,
   setReverse,
   config,
+  setConfig,
   valid,
   setValid,
   amountValid,
@@ -141,10 +143,18 @@ const Create = () => {
 
   const navigate = useNavigate();
 
+  const fetchPairs = () => {
+    fetcher("/getpairs", (data) => {
+        let cfg = data.pairs["BTC/BTC"];
+        setConfig(cfg);
+        setNotificationType("success");
+        setNotification("successfully updated fees!");
+    });
+    return false;
+  };
+
   const create = () => {
       if (valid()) {
-          let params = null;
-          let callback = null;
           if (reverse()) {
               setNotificationType("error");
               setNotification("reverse swap not implemented");
@@ -164,15 +174,19 @@ const Create = () => {
           } else {
               const refundPrivateKey = secp.utils.randomPrivateKey();
               const refundPublicKey = secp.getPublicKey(refundPrivateKey);
-              params = {
+              // TODO: not hardcode asset
+              let params = {
                   "type": "submarine",
                   "pairId": "BTC/BTC",
                   "orderSide": "sell",
                   "refundPublicKey": secp.utils.bytesToHex(refundPublicKey),
                   "invoice": invoice()
               };
-              callback = (data) => {
+              let callback = (data) => {
                   data.privateKey = secp.utils.bytesToHex(refundPrivateKey);
+                  data.date = (new Date()).getTime();
+                  data.reverse = reverse();
+                  data.asset = asset();
                   setSwap(data);
                   let tmp_swaps = JSON.parse(swaps());
                   tmp_swaps.push(data)
@@ -184,6 +198,8 @@ const Create = () => {
       };
   };
 
+
+  fetchPairs();
 
   return (
     <div class="frame" data-reverse={reverse()} data-asset={asset()}>
@@ -234,17 +250,19 @@ const Create = () => {
         </div>
       </div>
       <div class="fees-dyn">
-        <label>{t("network_fee")}: <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span></label>
-        <label>{t("fee")} ({boltzFee()}%): <span class="boltz-fee">{denomination() == "btc" ? ((sendAmount() * boltzFee()) / 100).toFixed(8) : Math.ceil((sendAmount() * boltzFee()) / 100)} <span class="denominator" data-denominator={denomination()}></span></span></label>
+        <label>
+            <span class="icon-reload" onClick={fetchPairs}><img src={reload_svg} /></span>
+            {t("network_fee")}: <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span><br />
+            {t("fee")} ({boltzFee()}%): <span class="boltz-fee">{denomination() == "btc" ? ((sendAmount() * boltzFee()) / 100).toFixed(8) : Math.ceil((sendAmount() * boltzFee()) / 100)} <span class="denominator" data-denominator={denomination()}></span></span>
+        </label>
       </div>
       <hr />
-      <label id="invoiceLabel">{t("create_and_paste", { amount: sendAmount(), denomination: denomination()})}</label>
       <textarea
         onChange={(e) => setInvoice(e.currentTarget.value)}
         onKeyUp={(e) => setInvoice(e.currentTarget.value)}
         id="invoice"
         name="invoice"
-        placeholder="Paste lightning invoice"
+        placeholder={t("create_and_paste", { amount: receiveAmount(), denomination: denomination()})}
       ></textarea>
       <input
         onChange={(e) => setOnchainAddress(e.currentTarget.value)}
@@ -281,7 +299,7 @@ const Create = () => {
         </div>
       </div>
       <hr />
-      <button id="create-swap" class="btn btn-success" onClick={create}>{t("create_swap")}</button>
+      <button id="create-swap" class="btn" onClick={create}>{t("create_swap")}</button>
     </div>
   );
 };
