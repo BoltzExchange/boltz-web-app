@@ -233,16 +233,19 @@ hr {
 
 .btn-mempool {
   background: #533180;
+  color: white;
 }
 
 .btn-success {
-  background: #00b900;
+  background: #246c24;
+  color: white;
 }
 .btn-success:hover {
   background: #fff;
 }
 .btn-danger {
   background: darkred;
+  color: white;
 }
 .btn-danger:hover {
   background: darkred;

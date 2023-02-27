@@ -40,7 +40,11 @@ const Pay = () => {
     <div class="frame">
       <h2>{t("pay_invoice", {id: params.id})}</h2>
       <p>{t("pay_invoice_subline")}</p>
-      <p>Status: <span class="btn-small">{swapStatus()}</span> <span class="icon-reload" onClick={() => fetchSwapStatus(swap().id)}><img src={reload_svg} /></span></p>
+      <Show when={swap()}>
+          <p>Status: <span class="btn-small">{swapStatus()}</span>
+            <span class="icon-reload" onClick={() => fetchSwapStatus(swap().id)}><img src={reload_svg} /></span>
+          </p>
+      </Show>
       <hr />
       <Show when={swap()}>
           <p>

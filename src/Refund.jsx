@@ -8,6 +8,8 @@ const [refundAddress, setRefundAddress] = createSignal(null);
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
+import "./refund.css";
+
 createEffect(() => {
   new Response(upload()).json().then(
     (json) => {
@@ -94,9 +96,9 @@ const Refund = () => {
                   <For each={JSON.parse(swaps())}>
                       {(_swap) => (
                           <div class="past-swap">
-                              <span class="btn-small" onClick={() => navigate("/swap/" + _swap.id)}>view</span> |
-                              <span data-reverse={_swap.reverse} data-asset={_swap.asset} class="past-asset"></span>,
-                              {printDate(_swap.date)}, ID: {_swap.id}
+                              <span class="btn-small" onClick={() => navigate("/swap/" + _swap.id)}>view</span>
+                              <span data-reverse={_swap.reverse} data-asset={_swap.asset} class="past-asset">-></span>
+                              &nbsp;ID: {_swap.id}, created: {printDate(_swap.date)}
                               <hr />
                           </div>
                       )}
