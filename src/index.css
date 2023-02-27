@@ -25,13 +25,14 @@ h1 {
 
 h2 {
     margin-bottom: 0;
+    margin-top: 6px;
 }
 h2+p {
     margin-top: 0;
 }
 
 hr {
-  margin: 16px 0;
+  margin: 14px 0;
   border: none;
   height: 1px;
   background: rgba(255,255,255,.1);
@@ -192,6 +193,7 @@ hr {
   cursor: pointer;
   display: block;
   margin: 3px 3px 0;
+  margin-top: 5px;
   padding: 8px 12px;
   text-decoration: none;
   border-radius: 16px;

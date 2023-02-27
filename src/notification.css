@@ -13,8 +13,9 @@
     font-size: 17px;
     white-space: nowrap;
     overflow: hidden;
-    padding: 12px;
+    padding: 6px 12px;
     border-radius: 20px;
+    box-shadow: 0px 0 3px black;
 }
 #notification.error {
     background-color: #ff000052;

@@ -9,7 +9,6 @@ import { startInterval, fetcher } from "./helper";
 
 import Create from "./Create";
 import Pay from "./Pay";
-import Success from "./Success";
 import Nav from "./Nav";
 import Notification from "./Notification";
 import Footer from "./Footer";
@@ -28,7 +27,6 @@ render(
             <Route path="/" component={Create} />
             <Route path="/swap" component={Create} />
             <Route path="/swap/:id" component={Pay} />
-            <Route path="/swap/:id/success" component={Success} />
             <Route path="/refund" component={Refund} />
           </Routes>
           <Notification />

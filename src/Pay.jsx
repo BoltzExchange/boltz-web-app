@@ -1,6 +1,6 @@
 import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
-import { invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setNotification, setNotificationType } from "./signals";
+import { denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setNotification, setNotificationType } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, qr, downloadRefundFile } from "./helper";
@@ -47,21 +47,31 @@ const Pay = () => {
       </Show>
       <hr />
       <Show when={swap()}>
-          <p>
-            {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
-            {t("pay_expected_amount")}: {swap().expectedAmount} <br />
-            {t("pay_address")}: {swap().address}
-          </p>
-          <hr />
-          <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
-          <hr />
-          <span class="btn" onclick={() => navigator.clipboard.writeText(swap().address)}>{t("copy_onchain")}</span>
-          <span class="btn" onclick={() => navigator.clipboard.writeText(swap().amount)}>{t("copy_amount")}</span>
-          <span class="btn" onclick={() => navigator.clipboard.writeText(swap().bip21)}>{t("copy_bip21")}</span>
-          <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
-          <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
-          <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().address)}>{t("mempool")}</a>
-          <span class="btn btn-success" onclick={() => navigate("/swap/"+params.id+"/success")}>Success TEST</span>
+          <Show when={swapStatus() == "transaction.claimed"}>
+              <h2>{t("congrats")}</h2>
+              <p>{t("successfully_swapped", {amount: swap().expectedAmount, denomination: denomination()})}</p>
+              <hr />
+              <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
+              <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().address)}>{t("mempool")}</a>
+          </Show>
+              <Show when={swapStatus() != "transaction.claimed"}>
+              <p>
+                {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
+                {t("pay_expected_amount")}: {swap().expectedAmount} <br />
+                {t("pay_address")}: {swap().address}
+              </p>
+              <hr />
+              <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
+              <hr />
+              <span class="btn" onclick={() => navigator.clipboard.writeText(swap().bip21)}>{t("copy_bip21")}</span>
+              <span class="btn" onclick={() => navigator.clipboard.writeText(swap().address)}>{t("copy_onchain")}</span>
+              <span class="btn" onclick={() => navigator.clipboard.writeText(swap().amount)}>{t("copy_amount")}</span>
+              <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
+              <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
+              <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().address)}>{t("mempool")}</a>
+              <button class="btn btn-danger">{t("delete_swap")}</button>
+              <span class="btn btn-success" onclick={() => navigate("/swap/"+params.id+"/success")}>Success TEST</span>
+          </Show>
       </Show>
       <Show when={!swap()}>
           <p>{t("pay_swap_404")}</p>
