@@ -50,7 +50,7 @@ const dict = {
     tx_in_mempool: "Transaction is in mempool",
     tx_in_mempool_subline: "waiting for confirmation to complete the swap",
     expired: "Swap expired!",
-    swap_expired: "Swap expired, you did not pay your lightning invoice in time. Try again.",
+    swap_expired: "You did not complete your payment in time. Try again.",
   },
   de: {
     swap: "Tausch",

@@ -45,6 +45,12 @@ const Pay = () => {
     return "https://mempool.space/address/" + a;
   };
 
+  const can_reload = (status) => {
+    return status != "transaction.claimed"
+          && status != "swap.expired"
+          && status != "transaction.lockupFailed";
+  };
+
   return (
     <div data-status={swapStatus()} class="frame">
       <h2>
@@ -53,15 +59,16 @@ const Pay = () => {
       </h2>
       <p>{t("pay_invoice_subline")}</p>
       <Show when={swap()}>
-          <p>Status: <span class="btn-small">{swapStatus()}</span>
-            <Show when={swapStatus() != "transaction.claimed" && swapStatus() != "transaction.lockupFailed"}>
-                <span class="icon-reload" onClick={() => fetchSwapStatus(swap().id)}><img src={reload_svg} /></span>
-            </Show>
+          <p>
+              Status: <span class="btn-small">{swapStatus()}</span>
+              <Show when={can_reload(swapStatus())}>
+                  <span class="icon-reload" onClick={() => fetchSwapStatus(swap().id)}><img src={reload_svg} /></span>
+              </Show>
           </p>
       </Show>
       <hr />
       <Show when={swap()}>
-          <Show when={swapStatus() == "invoice.expired"}>
+          <Show when={swapStatus() == "swap.expired" || swapStatus() == "invoice.expired"}>
               <h2>{t("expired")}</h2>
               <p>{t("swap_expired")}</p>
               <hr />
@@ -90,7 +97,7 @@ const Pay = () => {
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <hr />
           </Show>
-          <Show when={swapStatus() != "invoice.expired" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed"}>
+          <Show when={swapStatus() != "swap.expired" && swapStatus() != "invoice.expired" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed"}>
               <p>
                 {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
                 {t("pay_expected_amount")}: {(!reverse()) ? swap().expectedAmount: swap().onchainAmount} <br />
