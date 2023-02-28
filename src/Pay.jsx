@@ -79,8 +79,8 @@ const Pay = () => {
               <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().address)}>{t("mempool")}</a>
-              <button class="btn btn-danger">{t("delete_swap")}</button>
           </Show>
+          <button class="btn btn-danger">{t("delete_swap")}</button>
       </Show>
       <Show when={!swap()}>
           <p>{t("pay_swap_404")}</p>
