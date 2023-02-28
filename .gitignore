@@ -1,4 +1,5 @@
 *.log
 node_modules
+src/config.js
 src/bitcore-lib.js
 src/bitcore-lib.min.js

@@ -2,10 +2,11 @@ import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import {
     failureReason, setFailureReason, reverse,
-    denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setNotification, setNotificationType } from "./signals";
+    denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setSwaps, setNotification, setNotificationType } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
+import { mempool_url } from "./config";
 
 import reload_svg from "./assets/reload.svg";
 
@@ -28,13 +29,26 @@ const Pay = () => {
       let tmp_swaps = JSON.parse(swaps());
       if (tmp_swaps) {
           let current_swap = tmp_swaps.filter(s => s.id === params.id).pop();
-          fetchSwapStatus(params.id);
-          setSwap(current_swap);
-          console.log(current_swap);
-          let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
-          qr(qr_code, setInvoiceQr);
+          if (current_swap) {
+              fetchSwapStatus(params.id);
+              setSwap(current_swap);
+              let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
+              qr(qr_code, setInvoiceQr);
+              // console.log(current_swap);
+          }
       }
   });
+
+  const delete_swap = () => {
+      if(confirm(t("delete_localstorage"))) {
+          let tmp_swaps = JSON.parse(swaps());
+          if (tmp_swaps) {
+              navigate("/swap");
+              let new_swaps = tmp_swaps.filter(s => s.id !== params.id);
+              setSwaps(JSON.stringify(new_swaps));
+          }
+      }
+  };
 
   const refund = (swap) => {
     setNotificationType("error");
@@ -42,7 +56,7 @@ const Pay = () => {
   };
 
   const mempoolLink = (a) => {
-    return "https://mempool.space/address/" + a;
+    return mempool_url + "/address/" + a;
   };
 
   const can_reload = (status) => {
@@ -117,7 +131,7 @@ const Pay = () => {
               </Show>
           </Show>
           <a class="btn btn-mempool" target="_blank" href={mempoolLink((reverse()) ? swap().address: swap().lockupAddress )}>{t("mempool")}</a>
-          <button class="btn btn-danger">{t("delete_swap")}</button>
+          <button onclick={delete_swap} class="btn btn-danger">{t("delete_swap")}</button>
       </Show>
       <Show when={!swap()}>
           <p>{t("pay_swap_404")}</p>

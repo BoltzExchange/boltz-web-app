@@ -1,8 +1,6 @@
 import QRCode from "qrcode";
 import { setNotification, setNotificationType } from "./signals";
-
-// export const BOLTZ_API_URL = "https://boltz.exchange/api";
-export const BOLTZ_API_URL = "http://localhost:9001";
+import { api_url } from "./config";
 
 export const btc_divider = 100000000;
 
@@ -35,7 +33,7 @@ export const fetcher = (url, cb, params = null) => {
       body: JSON.stringify(params),
     };
   }
-  fetch(BOLTZ_API_URL + url, opts)
+  fetch(api_url + url, opts)
     .then((response) => {
       if (!response.ok) {
           return Promise.reject(response);
