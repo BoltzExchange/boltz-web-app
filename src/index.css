@@ -221,6 +221,7 @@ hr {
   cursor: pointer;
 }
 
+[data-status='invoice.expired'] .btn-small,
 [data-status='transaction.lockupFailed'] .btn-small {
   background: darkred;
   color: #fff;

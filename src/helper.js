@@ -11,6 +11,14 @@ export const startInterval = (cb, interval) => {
   return setInterval(cb, interval);
 };
 
+
+export const clipboard = (text, message) => {
+  navigator.clipboard.writeText(text);
+  setNotificationType("success")
+  setNotification(message);
+};
+
+
 export const focus = () => {
   document.getElementById("sendAmount").focus();
 };

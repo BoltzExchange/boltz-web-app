@@ -5,7 +5,7 @@ import {
     denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setNotification, setNotificationType } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, qr, downloadRefundFile } from "./helper";
+import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
 
 import reload_svg from "./assets/reload.svg";
 
@@ -36,13 +36,21 @@ const Pay = () => {
       }
   });
 
+  const refund = (swap) => {
+    setNotificationType("error");
+    setNotification("not implemented yet");
+  };
+
   const mempoolLink = (a) => {
     return "https://mempool.space/address/" + a;
   };
 
   return (
     <div data-status={swapStatus()} class="frame">
-      <h2>{t("pay_invoice", {id: params.id})}</h2>
+      <h2>
+        {t("pay_invoice", {id: params.id})}
+      <Show when={swap()}><span data-reverse={swap().reverse} data-asset={swap().asset} class="past-asset">-</span></Show>
+      </h2>
       <p>{t("pay_invoice_subline")}</p>
       <Show when={swap()}>
           <p>Status: <span class="btn-small">{swapStatus()}</span>
@@ -53,6 +61,12 @@ const Pay = () => {
       </Show>
       <hr />
       <Show when={swap()}>
+          <Show when={swapStatus() == "invoice.expired"}>
+              <h2>{t("expired")}</h2>
+              <p>{t("swap_expired")}</p>
+              <hr />
+              <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
+          </Show>
           <Show when={swapStatus() == "transaction.claimed"}>
               <h2>{t("congrats")}</h2>
               <p>{t("successfully_swapped", {amount: swap().expectedAmount, denomination: denomination()})}</p>
@@ -71,29 +85,27 @@ const Pay = () => {
           <Show when={swapStatus() == "transaction.lockupFailed"}>
               <h2>{t("lockup_failed")}</h2>
               <p>{t("lockup_failed_reason")}: {failureReason()}</p>
+              <span class="btn" onclick={() => refund(swap())}>{t("refund")}</span>
               <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <hr />
           </Show>
-          <Show when={swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed"}>
+          <Show when={swapStatus() != "invoice.expired" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed"}>
               <p>
                 {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
-                {t("pay_expected_amount")}: {(reverse()) ? swap().expectedAmount: swap().onchainAmount} <br />
-                <Show when={reverse()}>
-                    {t("pay_address")}: {(reverse()) ? swap().address: swap().lockupAddress}
-                </Show>
+                {t("pay_expected_amount")}: {(!reverse()) ? swap().expectedAmount: swap().onchainAmount} <br />
               </p>
               <hr />
               <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
               <hr />
-              <Show when={reverse()}>
-                  <span class="btn" onclick={() => navigator.clipboard.writeText(swap().bip21)}>{t("copy_bip21")}</span>
-                  <span class="btn" onclick={() => navigator.clipboard.writeText(swap().address)}>{t("copy_onchain")}</span>
-                  <span class="btn" onclick={() => navigator.clipboard.writeText(swap().amount)}>{t("copy_amount")}</span>
+              <Show when={!reverse()}>
+                  <span class="btn" onclick={() => clipboard(swap().bip21, t("copied"))}>{t("copy_bip21")}</span>
+                  <span class="btn" onclick={() => clipboard(swap().address, t("copied"))}>{t("copy_onchain")}</span>
+                  <span class="btn" onclick={() => clipboard(swap().expectedAmount, t("copied"))}>{t("copy_amount")}</span>
                   <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
                   <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               </Show>
-              <Show when={!reverse()}>
+              <Show when={reverse()}>
                   <span class="btn" onclick={() => navigator.clipboard.writeText(swap().invoice)}>{t("copy_invoice")}</span>
               </Show>
           </Show>

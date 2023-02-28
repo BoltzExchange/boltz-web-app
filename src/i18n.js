@@ -38,6 +38,7 @@ const dict = {
     copy_onchain: "Copy onchain address",
     copy_amount: "Copy amount",
     copy_bip21: "Copy BIP21",
+    copied: "Copied to clipboard!",
     refund_a_swap: "Refund a swap",
     refund_a_swap_subline: "Upload your refund.json file and reclaim you on-chain funds",
     refund_past_swaps: "Past swaps",
@@ -48,6 +49,8 @@ const dict = {
     delete_localstorage: "Are you sure you want to clear your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
     tx_in_mempool: "Transaction is in mempool",
     tx_in_mempool_subline: "waiting for confirmation to complete the swap",
+    expired: "Swap expired!",
+    swap_expired: "Swap expired, you did not pay your lightning invoice in time. Try again.",
   },
   de: {
     swap: "Tausch",
