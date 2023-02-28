@@ -67,7 +67,7 @@ export const downloadRefundFile = (swap) => {
 
 export const qr = (data, cb) => {
   if (!data) return cb(null);
-  QRCode.toDataURL(data, { version: 6, width: 400 })
+  QRCode.toDataURL(data, { version: 13, width: 400 })
     .then(cb)
     .catch((err) => {
         console.error("qr code generation error", err);

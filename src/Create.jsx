@@ -153,48 +153,51 @@ const Create = () => {
     return false;
   };
 
-  const create = () => {
+  const create = async () => {
       if (valid()) {
+          const privateKey = secp.utils.randomPrivateKey();
+          const privateKeyHex = secp.utils.bytesToHex(privateKey);
+          const publicKey = secp.getPublicKey(privateKey);
+          const publicKeyHex = secp.utils.bytesToHex(publicKey);
+          let params = null;
+          let preimageHex = null;
+
+          // TODO: not hardcode asset
           if (reverse()) {
-              setNotificationType("error");
-              setNotification("reverse swap not implemented");
-              // setPreimage(randomBytes(32));
-              // setClaimECPair(ECPair.makeRandom());
-              // params = {
-              //     "type": "reversesubmarine",
-              //     "pairId": "BTC/BTC",
-              //     "orderSide": "buy",
-              //     "invoiceAmount": sendAmount(),
-              //     "preimageHash": crypto.sha256(preimage()).toString("hex"),
-              //     "claimPublicKey": claimECPair().publicKey.toString("hex")
-              // };
-              // callback = (data) => {
-              //     setStep(2);
-              // };
+              const preimage = secp.utils.randomBytes(32);
+              preimageHex = secp.utils.bytesToHex(preimage);
+              let preimageHash = await secp.utils.sha256(preimage);
+              let preimageHashHex = secp.utils.bytesToHex(preimageHash);
+              params = {
+                  "type": "reversesubmarine",
+                  "pairId": "BTC/BTC",
+                  "orderSide": "buy",
+                  "invoiceAmount": sendAmount(),
+                  "claimPublicKey": publicKeyHex,
+                  "preimageHash": preimageHashHex
+              };
           } else {
-              const refundPrivateKey = secp.utils.randomPrivateKey();
-              const refundPublicKey = secp.getPublicKey(refundPrivateKey);
-              // TODO: not hardcode asset
-              let params = {
+              params = {
                   "type": "submarine",
                   "pairId": "BTC/BTC",
                   "orderSide": "sell",
-                  "refundPublicKey": secp.utils.bytesToHex(refundPublicKey),
+                  "refundPublicKey": publicKeyHex,
                   "invoice": invoice()
               };
-              let callback = (data) => {
-                  data.privateKey = secp.utils.bytesToHex(refundPrivateKey);
-                  data.date = (new Date()).getTime();
-                  data.reverse = reverse();
-                  data.asset = asset();
-                  setSwap(data);
-                  let tmp_swaps = JSON.parse(swaps());
-                  tmp_swaps.push(data)
-                  setSwaps(JSON.stringify(tmp_swaps));
-                  navigate("/swap/" + data.id);
-              };
-              fetcher("/createswap", callback, params);
           }
+          fetcher("/createswap", (data) => {
+              data.privateKey = privateKeyHex;
+              data.date = (new Date()).getTime();
+              data.reverse = reverse();
+              data.asset = asset();
+              data.preimage = preimageHex;
+              data.onchainAddress = onchainAddress();
+              setSwap(data);
+              let tmp_swaps = JSON.parse(swaps());
+              tmp_swaps.push(data)
+              setSwaps(JSON.stringify(tmp_swaps));
+              navigate("/swap/" + data.id);
+          }, params);
       };
   };
 

@@ -7,6 +7,7 @@ TODO
 * bolt11 decoding / validation???
 * webln
 * lnurl
+* automatic dowload of refund file
 
 * marketing stuff
 * nostr icon

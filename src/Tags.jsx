@@ -2,7 +2,6 @@
 import { render } from "solid-js/web";
 import { sendAmount, setSendAmount, minimum, maximum, denomination } from "./signals";
 import { focus } from "./helper";
-import { checkAmount } from "./Step0";
 
 const Tags = () => {
   return (
@@ -12,7 +11,6 @@ const Tags = () => {
           class="btn"
           onClick={(e) => {
             setSendAmount(minimum());
-            checkAmount();
             focus();
           }}
         >
@@ -26,7 +24,6 @@ const Tags = () => {
             let amount = (denomination() == "btc") ? 0.001 : 100000;
             amount = (denomination() == "btc") ? (parseFloat(sendAmount()) - amount).toPrecision(8) : sendAmount() - amount;
             setSendAmount(amount);
-            checkAmount();
             focus();
           }}
         >
@@ -39,7 +36,6 @@ const Tags = () => {
           onClick={(e) => {
             let amount = (denomination() == "btc") ? 0.01 : 1000000;
             setSendAmount(amount);
-            checkAmount();
             focus();
           }}
         >
@@ -53,7 +49,6 @@ const Tags = () => {
             let amount = (denomination() == "btc") ? 0.001 : 100000;
             amount = (denomination() == "btc") ? (parseFloat(sendAmount()) + amount).toPrecision(8) : parseInt(sendAmount()) + amount;
             setSendAmount(amount);
-            checkAmount();
             focus();
           }}
         >
@@ -65,7 +60,6 @@ const Tags = () => {
           class="btn"
           onClick={(e) => {
             setSendAmount(maximum());
-            checkAmount();
             focus();
           }}
         >

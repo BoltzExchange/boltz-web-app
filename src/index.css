@@ -221,6 +221,15 @@ hr {
   cursor: pointer;
 }
 
+[data-status='transaction.lockupFailed'] .btn-small {
+  background: darkred;
+  color: #fff;
+}
+[data-status='transaction.claimed'] .btn-small {
+  background: #246c24;
+  color: #fff;
+}
+
 .tag .btn {
   background: rgba(0,0,0,.2);
   color: white;

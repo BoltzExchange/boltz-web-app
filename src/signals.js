@@ -21,6 +21,7 @@ export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
 export const [swap, setSwap] = createSignal(null);
 export const [swapStatus, setSwapStatus] = createSignal("");
+export const [failureReason, setFailureReason] = createSignal("");
 
 // local storage
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");
