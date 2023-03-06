@@ -39,17 +39,6 @@ const Pay = () => {
       }
   });
 
-  const delete_swap = () => {
-      if(confirm(t("delete_localstorage"))) {
-          let tmp_swaps = JSON.parse(swaps());
-          if (tmp_swaps) {
-              navigate("/swap");
-              let new_swaps = tmp_swaps.filter(s => s.id !== params.id);
-              setSwaps(JSON.stringify(new_swaps));
-          }
-      }
-  };
-
   const refund = (swap) => {
     setNotificationType("error");
     setNotification("not implemented yet");
@@ -131,7 +120,6 @@ const Pay = () => {
               </Show>
           </Show>
           <a class="btn btn-mempool" target="_blank" href={mempoolLink((reverse()) ? swap().address: swap().lockupAddress )}>{t("mempool")}</a>
-          <button onclick={delete_swap} class="btn btn-danger">{t("delete_swap")}</button>
       </Show>
       <Show when={!swap()}>
           <p>{t("pay_swap_404")}</p>

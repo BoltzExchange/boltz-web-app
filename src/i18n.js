@@ -17,7 +17,7 @@ const dict = {
     socialmedia: "Follow us on Social Media",
     footer: "made with ❤️ in El Salvador",
     create_swap: "Create Atomic Swap",
-    create_swap_subline: "Payment includes miner and boltz service fees.",
+    create_swap_subline: "Payment includes network and boltz service fees",
     cancel_swap: "Cancel Swap",
     new_swap: "New Swap",
     success_swap: "Swap Success",

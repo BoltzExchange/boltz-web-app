@@ -12,6 +12,7 @@ nav {
     padding: 14px;
     position: fixed;
     top: 0;
+    z-index: 999;
     width: 100%;
     background: rgba(0,0,0,.2);
 }
@@ -77,6 +78,9 @@ nav a.active {
   max-width: 165px;
   padding-right: 21px;
 }
+#logo {
+  z-index: 1;
+}
 
 #hamburger {
   cursor: pointer;
@@ -130,7 +134,6 @@ nav a.active {
       position: fixed;
       background: #14283f;
       left: 0;
-      z-index: 100;
       right: 0;
       bottom: 0;
       top: 0;

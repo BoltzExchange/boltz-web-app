@@ -12,6 +12,7 @@ import sat_svg from "./assets/sat.svg";
 import bitcoin_svg from "./assets/bitcoin-icon.svg";
 import liquid_svg from "./assets/liquid-icon.svg";
 import reload_svg from "./assets/reload.svg";
+import arrow_svg from "./assets/arrow.svg";
 
 import {
   setSwap,
@@ -87,19 +88,7 @@ const Create = () => {
         send_amount = 0.001;
     }
     setSendAmount(send_amount)
-  });
-
-  // set receive amount when changing denomination
-  createEffect(() => {
-    let send_amount = sendAmount();
-    let amount = send_amount - minerFee() - (send_amount * boltzFee()) / 100;
-    if (denomination() == "btc") {
-        amount = amount.toFixed(8);
-    }
-    if (denomination() == "sat") {
-        amount = Math.ceil(amount);
-    }
-    setReceiveAmount(amount);
+    setReceiveAmount(calculateAmount(send_amount))
   });
 
   // validation swap
@@ -151,6 +140,27 @@ const Create = () => {
         setNotification("successfully updated fees!");
     });
     return false;
+  };
+
+  const calculateAmount = (amount) => {
+    amount = amount - minerFee() - (amount * boltzFee()) / 100;
+    if (denomination() == "btc") {
+        amount = amount.toFixed(8);
+    }
+    if (denomination() == "sat") {
+        amount = Math.ceil(amount);
+    }
+    return amount;
+  };
+
+  const changeReceiveAmount = (amount) => {
+    setReceiveAmount(amount);
+    setSendAmount(calculateAmount(amount));
+  };
+
+  const changeSendAmount = (amount) => {
+    setSendAmount(amount);
+    setReceiveAmount(calculateAmount(amount));
   };
 
   const create = async () => {
@@ -222,11 +232,9 @@ const Create = () => {
           </div>
       </div>
       <hr />
-      <Tags />
-      <hr />
       <div class="icons">
         <div>
-          <div className="asset asset-1" onClick={(e) => { setReverse(!reverse()); focus(); }}>
+          <div className="asset asset-1">
               <span class="icon-1 icon"></span>
               <span class="asset-text"></span>
           </div>
@@ -235,21 +243,28 @@ const Create = () => {
             min={minimum()}
             max={maximum()}
             value={sendAmount()}
-            onChange={(e) => setSendAmount(e.currentTarget.value)}
-            onKeyUp={(e) => setSendAmount(e.currentTarget.value)}
+            onChange={(e) => changeSendAmount(e.currentTarget.value)}
+            onKeyUp={(e) => changeSendAmount(e.currentTarget.value)}
           />
         </div>
+        <div id="flip-assets" onClick={(e) => { setReverse(!reverse()); focus(); }}>
+            <img src={arrow_svg} alt="flip assets" />
+        </div>
         <div>
-          <div onClick={(e) => { setReverse(!reverse()); focus(); }} class="asset asset-2">
+          <div class="asset asset-2">
               <span
                 class="icon-2 icon"
               ></span>
               <span class="asset-text"></span>
           </div>
-          <div class="receiveAmount">
-            <span id="receiveAmount">{receiveAmount()}</span>
-            <span class="denominator denominator-big" data-denominator={denomination()}></span>
-          </div>
+          <input autofocus required type="number" id="receiveAmount" maxlength="10"
+            step={denomination() == "btc" ? 0.00000001 : 1 }
+            min={minimum()}
+            max={maximum()}
+            value={receiveAmount()}
+            onChange={(e) => changeReceiveAmount(e.currentTarget.value)}
+            onKeyUp={(e) => changeReceiveAmount(e.currentTarget.value)}
+          />
         </div>
       </div>
       <div class="fees-dyn">
