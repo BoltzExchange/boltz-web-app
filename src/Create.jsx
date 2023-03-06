@@ -6,7 +6,6 @@ import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
 
-import Tags from "./Tags";
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
 import bitcoin_svg from "./assets/bitcoin-icon.svg";
@@ -102,6 +101,7 @@ const Create = () => {
 
   // validation amount
   createEffect(() => {
+      // think about validation again
       let send_amount = sendAmount();
       let target = document.getElementById("sendAmount");
       target.checkValidity();
@@ -109,7 +109,7 @@ const Create = () => {
       for (let k in target.validity) {
         if (k === "valid") continue;
         if (target.validity[k]) {
-          setReceiveAmount(k);
+          // setReceiveAmount(k);
           setAmountValid(false);
           break;
         }
