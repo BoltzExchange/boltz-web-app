@@ -219,24 +219,26 @@ const Create = () => {
       <h2>{t("create_swap")}</h2>
       <p>{t("create_swap_subline")}</p>
       <hr />
-      <div className="denomination-assets">
-          <div class="denomination">
-              <label>{t("denomination")}: </label>
-              <img src={btc_svg} onClick={() => setDenomination("btc")} class={denomination() == "btc" ? "active" : ""} alt="denominator" />
-              <img src={sat_svg} onClick={() => setDenomination("sat")} class={denomination() == "sat" ? "active" : ""} alt="denominator" />
-          </div>
-          <div class="assets">
-              <label>{t("assets")}: </label>
-              <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
-              <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
-          </div>
-      </div>
-      <hr />
       <div class="icons">
         <div>
-          <div className="asset asset-1">
-              <span class="icon-1 icon"></span>
-              <span class="asset-text"></span>
+          <div className="asset-wrap">
+              <div className="asset asset-1">
+                  <div className="asset-selected">
+                      <span class="icon-1 icon"></span>
+                      <span class="asset-text"></span>
+                      <span class="arrow-down"></span>
+                  </div>
+              </div>
+              <div class="assets-select">
+                  <div className="asset-select">
+                      <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
+                      <span>bitcoin</span>
+                  </div>
+                  <div className="asset-select">
+                      <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
+                      <span>liquid</span>
+                  </div>
+              </div>
           </div>
           <input autofocus required type="number" id="sendAmount" maxlength="10"
             step={denomination() == "btc" ? 0.00000001 : 1 }
@@ -251,11 +253,16 @@ const Create = () => {
             <img src={arrow_svg} alt="flip assets" />
         </div>
         <div>
-          <div class="asset asset-2">
-              <span
-                class="icon-2 icon"
-              ></span>
-              <span class="asset-text"></span>
+          <div className="asset-wrap">
+              <div className="asset asset-2">
+                  <div className="asset-selected">
+                      <span class="icon-2 icon"></span>
+                      <span class="asset-text"></span>
+                      <span class="arrow-down"></span>
+                  </div>
+              </div>
+              <div class="assets-select">
+              </div>
           </div>
           <input autofocus required type="number" id="receiveAmount" maxlength="10"
             step={denomination() == "btc" ? 0.00000001 : 1 }
@@ -268,6 +275,11 @@ const Create = () => {
         </div>
       </div>
       <div class="fees-dyn">
+        <div class="denomination">
+            <label>{t("denomination")}: </label>
+            <img src={btc_svg} onClick={() => setDenomination("btc")} class={denomination() == "btc" ? "active" : ""} alt="denominator" />
+            <img src={sat_svg} onClick={() => setDenomination("sat")} class={denomination() == "sat" ? "active" : ""} alt="denominator" />
+        </div>
         <label>
             <span class="icon-reload" onClick={fetchPairs}><img src={reload_svg} /></span>
             {t("network_fee")}: <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span><br />

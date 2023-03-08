@@ -54,13 +54,11 @@ hr {
     margin-left: 4px;
 }
 
-.asset {
+.asset-wrap {
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
   position: absolute;
   border-radius: 29px;
-  display: flex;
-  align-items: center;
   padding: 1px;
   padding-right: 16px;
   top: 9px;
@@ -68,6 +66,28 @@ hr {
   cursor: pointer;
 }
 
+.asset-selected {
+  display: flex;
+  align-items: center;
+  padding: 1px;
+  padding-right: 16px;
+}
+
+.denomination {
+    margin-left: 5px;
+}
+
+.fees-dyn {
+    display: flex;
+    justify-content: center;
+}
+.fees-dyn > * {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    cursor: pointer;
+}
 .fees-dyn,
 .icons > div {
   position: relative;
@@ -92,6 +112,13 @@ hr {
   background-image: url(./assets/lightning-icon.svg);
   background-size: 90%;
 }
+[data-reverse="true"] .asset-1 .assets,
+[data-reverse="false"] .asset-2 .assets,
+[data-reverse="true"] .asset-1 .arrow-down,
+[data-reverse="false"] .asset-2 .arrow-down {
+    display: none;
+}
+
 [data-reverse="true"] .asset-1 .asset-text:before,
 [data-reverse="false"] .asset-2 .asset-text:before {
     content: "lightning";
@@ -289,17 +316,6 @@ hr {
   background-size: 100%;
 }
 
-.denomination-assets {
-    display: flex;
-    justify-content: center;
-}
-.denomination-assets > * {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
 
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
@@ -464,7 +480,7 @@ textarea {
     height: 32px;
     padding: 8px;
     background: rgb(11, 22, 35);
-    margin: -24px auto;
+    margin: -21px auto;
     border: 1px dashed rgb(55,55,55);
     border-radius: 6px;
     cursor: pointer;
@@ -478,4 +494,22 @@ textarea {
 #flip-assets img {
     width: 100%;
     opacity: 0.5;
+}
+
+.arrow-down {
+  border: solid white;
+  display: inline-block;
+  border-width: 0 2px 2px 0;
+  display: inline-block;
+  padding: 4px;
+  margin-left: 8px;
+  position: relative;
+  transform: rotate(45deg);
+  -webkit-transform: rotate(45deg);
+  top: -2px;
+}
+
+.asset-select {
+    display: flex;
+    align-items: center;
 }
