@@ -31,10 +31,11 @@ const Pay = () => {
           let current_swap = tmp_swaps.filter(s => s.id === params.id).pop();
           if (current_swap) {
               fetchSwapStatus(params.id);
-              setSwap(current_swap);
-              let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
-              qr(qr_code, setInvoiceQr);
-              // console.log(current_swap);
+              if (swapStatus()) {
+                  setSwap(current_swap);
+                  let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
+                  qr(qr_code, setInvoiceQr);
+              }
           }
       }
   });

@@ -229,16 +229,6 @@ const Create = () => {
                       <span class="arrow-down"></span>
                   </div>
               </div>
-              <div class="assets-select">
-                  <div className="asset-select">
-                      <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
-                      <span>bitcoin</span>
-                  </div>
-                  <div className="asset-select">
-                      <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
-                      <span>liquid</span>
-                  </div>
-              </div>
           </div>
           <input autofocus required type="number" id="sendAmount" maxlength="10"
             step={denomination() == "btc" ? 0.00000001 : 1 }
@@ -330,6 +320,17 @@ const Create = () => {
       </div>
       <hr />
       <button id="create-swap" class="btn" onClick={create}>{t("create_swap")}</button>
+      <div class="assets-select">
+          <h2>Select Asset</h2>
+          <div className="asset-select">
+              <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
+              <span>bitcoin</span>
+          </div>
+          <div className="asset-select">
+              <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
+              <span>liquid</span>
+          </div>
+      </div>
     </div>
   );
 };
