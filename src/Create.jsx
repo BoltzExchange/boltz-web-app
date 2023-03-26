@@ -17,6 +17,8 @@ import {
   setSwap,
   swaps,
   setSwaps,
+  assetSelect,
+  setAssetSelect,
   asset,
   setAsset,
   denomination,
@@ -163,6 +165,11 @@ const Create = () => {
     setReceiveAmount(calculateAmount(amount));
   };
 
+  const changeAsset = (asset) => {
+    setAsset(asset);
+    setAssetSelect(false);
+  };
+
   const create = async () => {
       if (valid()) {
           const privateKey = secp.utils.randomPrivateKey();
@@ -221,7 +228,7 @@ const Create = () => {
       <hr />
       <div class="icons">
         <div>
-          <div className="asset-wrap">
+          <div className="asset-wrap" onClick={() => setAssetSelect(!assetSelect())}>
               <div className="asset asset-1">
                   <div className="asset-selected">
                       <span class="icon-1 icon"></span>
@@ -243,7 +250,7 @@ const Create = () => {
             <img src={arrow_svg} alt="flip assets" />
         </div>
         <div>
-          <div className="asset-wrap">
+          <div className="asset-wrap" onClick={() => setAssetSelect(!assetSelect())}>
               <div className="asset asset-2">
                   <div className="asset-selected">
                       <span class="icon-2 icon"></span>
@@ -320,14 +327,19 @@ const Create = () => {
       </div>
       <hr />
       <button id="create-swap" class="btn" onClick={create}>{t("create_swap")}</button>
-      <div class="assets-select">
+      <div class="frame assets-select" style={assetSelect() ? "display: block;" : "display: none;"}>
           <h2>Select Asset</h2>
-          <div className="asset-select">
-              <img src={bitcoin_svg} onClick={() => setAsset("btc")} alt="bitcoin" />
+          <svg id="close" viewBox="0 0 100 100" width="50" onClick={() => setAssetSelect(!assetSelect())}>
+              <path class="line top" d="m 70,33 h -40 c 0,0 -8.5,-0.149796 -8.5,8.5 0,8.649796 8.5,8.5 8.5,8.5 h 20 v -20" />
+              <path class="line bottom" d="m 30,67 h 40 c 0,0 8.5,0.149796 8.5,-8.5 0,-8.649796 -8.5,-8.5 -8.5,-8.5 h -20 v 20" />
+          </svg>
+          <hr />
+          <div className="asset-select" onClick={() => changeAsset("btc")}>
+              <img src={bitcoin_svg} alt="bitcoin" />
               <span>bitcoin</span>
           </div>
-          <div className="asset-select">
-              <img src={liquid_svg} onClick={() => setAsset("l-btc")} alt="liquid bitcoin" />
+          <div className="asset-select" onClick={() => changeAsset("l-btc")}>
+              <img src={liquid_svg} alt="liquid bitcoin" />
               <span>liquid</span>
           </div>
       </div>

@@ -427,6 +427,7 @@ textarea {
   margin: 21px auto;
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 16px;
+  position: relative;
 }
 
 .error {
@@ -512,4 +513,69 @@ textarea {
 .asset-select {
     display: flex;
     align-items: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 29px;
+    padding: 1px;
+    padding-right: 16px;
+    cursor: pointer;
+    display: inline-flex;
+    text-transform: uppercase;
+    margin: 6px;
+}
+.asset-select:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+}
+.assets-select {
+    background: #102032;
+    position: absolute;
+    width: 454px;
+    top: 64px;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 0 12px black;
+}
+.assets-select.active {
+    display: block;
+}
+.assets-select:after {
+    content: "";
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,.5);
+    z-index: -1;
+}
+
+#close {
+  cursor: pointer;
+  transform: rotate(45deg);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 400ms;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  z-index: 1000;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+#close .line {
+  fill:none;
+  transition: stroke-dasharray 400ms, stroke-dashoffset 400ms;
+  stroke:#fff;
+  stroke-width:5.5;
+  stroke-linecap:round;
+}
+#close .top {
+  stroke-dashoffset: -68px;
+  stroke-dasharray: 40 121;
+}
+#close .bottom {
+  stroke-dashoffset: -68px;
+  stroke-dasharray: 40 121;
 }

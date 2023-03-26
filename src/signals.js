@@ -3,6 +3,7 @@ import { createStorageSignal } from "@solid-primitives/storage";
 
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
+export const [assetSelect, setAssetSelect] = createSignal(false);
 
 // fees
 export const [config, setConfig] = createSignal(0);
