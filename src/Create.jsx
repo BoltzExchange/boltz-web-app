@@ -90,7 +90,7 @@ const Create = () => {
         send_amount = 0.001;
     }
     setSendAmount(send_amount)
-    setReceiveAmount(calculateAmount(send_amount))
+    setReceiveAmount(calculateReceiveAmount(send_amount))
   });
 
   // validation swap
@@ -145,8 +145,7 @@ const Create = () => {
     return false;
   };
 
-  const calculateAmount = (amount) => {
-    amount = amount - minerFee() - (amount * boltzFee()) / 100;
+  const formatAmount = (amount) => {
     if (denomination() == "btc") {
         amount = amount.toFixed(8);
     }
@@ -156,14 +155,24 @@ const Create = () => {
     return amount;
   };
 
+  const calculateReceiveAmount = (amount) => {
+    amount = amount - minerFee() - (amount * boltzFee()) / 100;
+    return formatAmount(amount);
+  };
+
+  const calculateSendAmount = (amount) => {
+    amount = parseFloat(amount) + parseFloat(minerFee()) + (amount * boltzFee()) / 100;
+    return formatAmount(amount);
+  };
+
   const changeReceiveAmount = (amount) => {
     setReceiveAmount(amount);
-    setSendAmount(calculateAmount(amount));
+    setSendAmount(calculateSendAmount(amount));
   };
 
   const changeSendAmount = (amount) => {
     setSendAmount(amount);
-    setReceiveAmount(calculateAmount(amount));
+    setReceiveAmount(calculateReceiveAmount(amount));
   };
 
   const changeAsset = (asset) => {
