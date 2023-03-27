@@ -2,8 +2,8 @@
 import { render } from "solid-js/web";
 import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext, useI18n } from "@solid-primitives/i18n";
-import { i18n, setConfig, setNotification, setNotificationType } from "./signals";
-import { startInterval, fetcher } from "./helper";
+import { i18n, setConfig, setNotification, setNotificationType, setWebln } from "./signals";
+import { startInterval, fetcher, detectWebLNProvider } from "./helper";
 
 // import "./vendor/bitcoinjs-lib.js"
 
@@ -17,6 +17,8 @@ import Refund from "./Refund";
 
 import dict from "./i18n";
 const i18n_context = createI18nContext(dict, i18n());
+
+detectWebLNProvider().then(() => setWebln(true));
 
 render(
   () => (

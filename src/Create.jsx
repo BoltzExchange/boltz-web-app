@@ -51,6 +51,7 @@ import {
   setOnchainAddress,
   setNotification,
   setNotificationType,
+  webln,
 } from "./signals";
 
 
@@ -168,6 +169,18 @@ const Create = () => {
   const changeAsset = (asset) => {
     setAsset(asset);
     setAssetSelect(false);
+  };
+
+  const createWeblnInvoice = async () => {
+      let check_enable = await window.webln.enable();
+      if (check_enable.enabled) {
+          let amount = sendAmount();
+          if (denomination() == "btc") {
+              amount = amount * 100000000;
+          }
+          const invoice = await window.webln.makeInvoice({ amount: amount });
+          setInvoice(invoice.paymentRequest);
+      }
   };
 
   const create = async () => {
@@ -289,6 +302,7 @@ const Create = () => {
         onKeyUp={(e) => setInvoice(e.currentTarget.value)}
         id="invoice"
         name="invoice"
+        value={invoice()}
         placeholder={t("create_and_paste", { amount: receiveAmount(), denomination: denomination()})}
       ></textarea>
       <input
@@ -299,6 +313,10 @@ const Create = () => {
         name="onchainAddress"
         placeholder="On-chain address"
       />
+      <Show when={webln()}>
+          or&nbsp;
+          <button onClick={(e) => createWeblnInvoice()}>Use WebLN to create the invoice</button>
+      </Show>
       <hr />
       <div class="fees">
         <div class="fee">
