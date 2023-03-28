@@ -1,7 +1,7 @@
 import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, qr, btc_divider, startInterval, focus } from "./helper";
+import { fetcher, lnurl_fetcher, qr, btc_divider, startInterval, focus } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
@@ -54,7 +54,12 @@ import {
   webln,
 } from "./signals";
 
+let lnurl = "LNURL1DP68GURN8GHJ7MR9VAJKUEPWD3HXY6T5WVHXXMMD9AKXUATJD3CZ7D3S8QUQLFF2GW";
+// let lnurl = "dni@600.wtf";
 
+lnurl_fetcher(lnurl, 10000, (invoice) => {
+    console.log("invoice", invoice);
+});
 const Create = () => {
 
   // set fees and pairs
@@ -103,33 +108,33 @@ const Create = () => {
   });
 
   // validation amount
-  createEffect(() => {
-      // think about validation again
-      let send_amount = sendAmount();
-      let target = document.getElementById("sendAmount");
-      target.checkValidity();
-      setAmountValid(true);
-      for (let k in target.validity) {
-        if (k === "valid") continue;
-        if (target.validity[k]) {
-          // setReceiveAmount(k);
-          setAmountValid(false);
-          break;
-        }
-     };
-  });
+  // createEffect(() => {
+  //     // think about validation again
+  //     let send_amount = sendAmount();
+  //     let target = document.getElementById("sendAmount");
+  //     target.checkValidity();
+  //     setAmountValid(true);
+  //     for (let k in target.validity) {
+  //       if (k === "valid") continue;
+  //       if (target.validity[k]) {
+  //         // setReceiveAmount(k);
+  //         setAmountValid(false);
+  //         break;
+  //       }
+  //    };
+  // });
 
   // validation form
-  createEffect(() => {
-      let create_btn = document.getElementById("create-swap");
-      if (amountValid() && swapValid()) {
-        setValid(true);
-        create_btn.disabled = false;
-      } else {
-        setValid(false);
-        create_btn.disabled = true;
-      }
-  });
+  // createEffect(() => {
+  //     let create_btn = document.getElementById("create-swap");
+  //     if (amountValid() && swapValid()) {
+  //       setValid(true);
+  //       create_btn.disabled = false;
+  //     } else {
+  //       setValid(false);
+  //       create_btn.disabled = true;
+  //     }
+  // });
 
   const [t, { add, locale, dict }] = useI18n();
 

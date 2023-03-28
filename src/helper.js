@@ -1,4 +1,6 @@
 import QRCode from "qrcode";
+
+import { bech32, utf8 } from '@scure/base';
 import { setNotification, setNotificationType } from "./signals";
 import { api_url } from "./config";
 
@@ -21,6 +23,26 @@ export const focus = () => {
   document.getElementById("sendAmount").focus();
 };
 
+export const errorHandler = (error) => {
+    setNotificationType("error")
+    if (typeof error.json === "function") {
+        error.json().then(jsonError => {
+            setNotification(jsonError.error);
+        }).catch(genericError => {
+            setNotification(error.statusText);
+        });
+    } else {
+        setNotification(error.message);
+    }
+};
+
+export const checkResponse = (response) => {
+  if (!response.ok) {
+      return Promise.reject(response);
+  }
+  return response.json();
+};
+
 export const fetcher = (url, cb, params = null) => {
   let opts = {};
   if (params) {
@@ -34,25 +56,9 @@ export const fetcher = (url, cb, params = null) => {
     };
   }
   fetch(api_url + url, opts)
-    .then((response) => {
-      if (!response.ok) {
-          return Promise.reject(response);
-      }
-      return response.json();
-    })
+    .then(checkResponse)
     .then(cb)
-    .catch((error) => {
-        setNotificationType("error")
-        if (typeof error.json === "function") {
-            error.json().then(jsonError => {
-                setNotification(jsonError.error);
-            }).catch(genericError => {
-                setNotification(error.statusText);
-            });
-        } else {
-            setNotification(error.message);
-        }
-    });
+    .catch(errorHandler);
 };
 
 export const downloadRefundFile = (swap) => {
@@ -118,6 +124,34 @@ export async function detectWebLNProvider(timeoutParam) {
       }
     }
   });
+};
+
+
+export const lnurl_fetcher = (lnurl, amount, cb) => {
+    let url = "";
+    if (lnurl.indexOf("@") > 0) {
+        // Lightning address
+        let urlsplit = lnurl.split("@")
+        url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`
+    } else {
+        // LNURL
+        const { prefix, words, bytes } = bech32.decodeToBytes(lnurl);
+        url = utf8.encode(bytes);
+    }
+    fetch(url)
+        .then(checkResponse)
+        .then((data) => {
+            if (amount < data.minSendable || amount > data.maxSendable) {
+              return Promise.reject("Amount not in LNURL range.");
+            }
+            fetch(`${data.callback}?amount=${amount}`)
+                .then(checkResponse)
+                .then((data) => {
+                    cb(data.pr);
+                })
+                .catch(errorHandler);
+        })
+        .catch(errorHandler);
 };
 
 
