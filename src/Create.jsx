@@ -60,6 +60,7 @@ let lnurl = "LNURL1DP68GURN8GHJ7MR9VAJKUEPWD3HXY6T5WVHXXMMD9AKXUATJD3CZ7D3S8QUQL
 lnurl_fetcher(lnurl, 10000, (invoice) => {
     console.log("invoice", invoice);
 });
+
 const Create = () => {
 
   // set fees and pairs
@@ -327,9 +328,8 @@ const Create = () => {
         name="onchainAddress"
         placeholder="On-chain address"
       />
-      <Show when={webln()}>
-          or&nbsp;
-          <button onClick={(e) => createWeblnInvoice()}>Use WebLN to create the invoice</button>
+      <Show when={webln() && !reverse()}>
+          <button class="btn btn-light" onClick={(e) => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
       </Show>
       <hr />
       <div class="fees">
@@ -360,7 +360,7 @@ const Create = () => {
       <hr />
       <button id="create-swap" class="btn" onClick={create}>{t("create_swap")}</button>
       <div class="frame assets-select" style={assetSelect() ? "display: block;" : "display: none;"}>
-          <h2>Select Asset</h2>
+          <h2>{t("select_asset")}</h2>
           <svg id="close" viewBox="0 0 100 100" width="50" onClick={() => setAssetSelect(!assetSelect())}>
               <path class="line top" d="m 70,33 h -40 c 0,0 -8.5,-0.149796 -8.5,8.5 0,8.649796 8.5,8.5 8.5,8.5 h 20 v -20" />
               <path class="line bottom" d="m 30,67 h 40 c 0,0 8.5,0.149796 8.5,-8.5 0,-8.649796 -8.5,-8.5 -8.5,-8.5 h -20 v 20" />

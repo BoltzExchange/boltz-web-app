@@ -234,6 +234,7 @@ hr {
   border: none;
   width: 100%;
 }
+
 .btn:disabled {
   background-color: #ddd;
   cursor: not-allowed;
@@ -277,6 +278,16 @@ hr {
 .btn-mempool {
   background: #533180;
   color: white;
+}
+.btn-light {
+    color: white;
+    background: rgb(11, 22, 35);
+    width: auto;
+    margin: auto;
+    margin-top: 9px;
+}
+.btn-light:hover {
+  background: #e6c826;
 }
 
 .btn-success {

@@ -21,7 +21,7 @@ const dict = {
     cancel_swap: "Cancel Swap",
     new_swap: "New Swap",
     success_swap: "Swap Success",
-    create_and_paste: "Create an invoice with exactly {{ amount }} {{ denomination }} and paste it here",
+    create_and_paste: "Amount: {{ amount }} {{ denomination }}\nPaste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink",
     congrats: "Congratulations!",
     successfully_swapped: "You have successfully swapped {{ amount }} {{ denomination }}.",
     pay_invoice: "Swap: {{ id }}",
@@ -51,6 +51,8 @@ const dict = {
     tx_in_mempool_subline: "waiting for confirmation to complete the swap",
     expired: "Swap expired!",
     swap_expired: "You did not complete your payment in time. Try again.",
+    create_invoice_webln: "create invoice via WebLN",
+    select_asset: "Select Asset",
   },
   de: {
     swap: "Tausch",
