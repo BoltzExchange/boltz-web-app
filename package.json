@@ -8,8 +8,7 @@
     "dev": "vite",
     "serve": "vite preview",
     "bitcoinlib": "npx browserify --standalone bitcoin - -o src/vendor/bitcoinjs-lib.js <<<\"module.exports = require(\\\"bitcoinjs-lib\\\");\"",
-    "build": "cp src/config.prod.js src/config.js; vite build; cp CNAME dist; cp dist/index.html dist/404.html",
-    "deploy": "git push origin `git subtree split --prefix dist main`:gh-pages --force; cp src/config.test.js src/config.js;"
+    "build": "cp src/config.prod.js src/config.js; vite build; cp dist/index.html dist/404.html"
   },
   "devDependencies": {
     "prettier": "^2.8.4",
