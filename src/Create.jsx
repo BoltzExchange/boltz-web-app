@@ -348,33 +348,35 @@ const Create = () => {
       <Show when={webln() && !reverse()}>
           <button class="btn btn-light" onClick={(e) => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
       </Show>
-      <hr />
-      <div class="fees">
-        <div class="fee">
-          <span>
-            <b>{minimum()}</b>
-            <span class="denominator" data-denominator={denomination()}></span>
-          </span>
-          <br />
-          <label>{t("min")}</label>
-        </div>
-        <div class="fee">
-          <span>
-            <b>{maximum()}</b>
-            <span class="denominator" data-denominator={denomination()}></span>
-          </span>
-          <br />
-          <label>{t("max")}</label>
-        </div>
-        <div class="fee">
-          <span>
-            <b>{boltzFee()} %</b>
-          </span>
-          <br />
-          <label>{t("fee")}</label>
-        </div>
-      </div>
-      <hr />
+          <hr />
+      <Show when={false}>
+          <div class="fees">
+            <div class="fee">
+              <span>
+                <b>{minimum()}</b>
+                <span class="denominator" data-denominator={denomination()}></span>
+              </span>
+              <br />
+              <label>{t("min")}</label>
+            </div>
+            <div class="fee">
+              <span>
+                <b>{maximum()}</b>
+                <span class="denominator" data-denominator={denomination()}></span>
+              </span>
+              <br />
+              <label>{t("max")}</label>
+            </div>
+            <div class="fee">
+              <span>
+                <b>{boltzFee()} %</b>
+              </span>
+              <br />
+              <label>{t("fee")}</label>
+            </div>
+          </div>
+          <hr />
+      </Show>
       <button id="create-swap" class="btn" onClick={create}>{t("create_swap")}</button>
       <div class="frame assets-select" style={assetSelect() ? "display: block;" : "display: none;"}>
           <h2>{t("select_asset")}</h2>
