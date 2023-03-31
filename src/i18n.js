@@ -52,6 +52,7 @@ const dict = {
     expired: "Swap expired!",
     swap_expired: "You did not complete your payment in time. Try again.",
     create_invoice_webln: "create invoice via WebLN",
+    pay_invoice_webln: "pay invoice via WebLN",
     select_asset: "Select Asset",
   },
   de: {

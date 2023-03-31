@@ -127,31 +127,37 @@ export async function detectWebLNProvider(timeoutParam) {
 };
 
 
-export const lnurl_fetcher = (lnurl, amount, cb) => {
-    let url = "";
-    if (lnurl.indexOf("@") > 0) {
-        // Lightning address
-        let urlsplit = lnurl.split("@")
-        url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`
-    } else {
-        // LNURL
-        const { prefix, words, bytes } = bech32.decodeToBytes(lnurl);
-        url = utf8.encode(bytes);
-    }
-    fetch(url)
-        .then(checkResponse)
-        .then((data) => {
-            if (amount < data.minSendable || amount > data.maxSendable) {
-              return Promise.reject("Amount not in LNURL range.");
-            }
-            fetch(`${data.callback}?amount=${amount}`)
-                .then(checkResponse)
-                .then((data) => {
-                    cb(data.pr);
-                })
-                .catch(errorHandler);
-        })
-        .catch(errorHandler);
+export function lnurl_fetcher(lnurl, amount) {
+    return new Promise((resolve) => {
+        let url = "";
+        if (lnurl.indexOf("@") > 0) {
+            // Lightning address
+            let urlsplit = lnurl.split("@")
+            url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`
+        } else {
+            // LNURL
+            const { prefix, words, bytes } = bech32.decodeToBytes(lnurl);
+            url = utf8.encode(bytes);
+        }
+        console.log("fetching lnurl:", url);
+        fetch(url)
+            .then(checkResponse)
+            .then((data) => {
+                console.log("amount check: (x, min, max)", amount, data.minSendable, data.maxSendable);
+                if (amount < data.minSendable || amount > data.maxSendable) {
+                  return Promise.reject("Amount not in LNURL range.");
+                }
+                console.log("fetching invoice", `${data.callback}?amount=${amount}`);
+                fetch(`${data.callback}?amount=${amount}`)
+                    .then(checkResponse)
+                    .then((data) => {
+                        console.log("fetched invoice", data);
+                        resolve(data.pr);
+                    })
+                    .catch(errorHandler);
+            })
+            .catch(errorHandler);
+    });
 };
 
 

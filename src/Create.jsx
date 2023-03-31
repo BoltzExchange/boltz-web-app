@@ -54,13 +54,6 @@ import {
   webln,
 } from "./signals";
 
-let lnurl = "LNURL1DP68GURN8GHJ7MR9VAJKUEPWD3HXY6T5WVHXXMMD9AKXUATJD3CZ7D3S8QUQLFF2GW";
-// let lnurl = "dni@600.wtf";
-
-lnurl_fetcher(lnurl, 10000, (invoice) => {
-    console.log("invoice", invoice);
-});
-
 const Create = () => {
 
   // set fees and pairs
@@ -189,7 +182,7 @@ const Create = () => {
   const createWeblnInvoice = async () => {
       let check_enable = await window.webln.enable();
       if (check_enable.enabled) {
-          let amount = sendAmount();
+          let amount = receiveAmount();
           if (denomination() == "btc") {
               amount = amount * 100000000;
           }
@@ -199,7 +192,10 @@ const Create = () => {
   };
 
   const create = async () => {
+      setValid(true);
       if (valid()) {
+
+
           const privateKey = secp.utils.randomPrivateKey();
           const privateKeyHex = secp.utils.bytesToHex(privateKey);
           const publicKey = secp.getPublicKey(privateKey);
@@ -222,6 +218,17 @@ const Create = () => {
                   "preimageHash": preimageHashHex
               };
           } else {
+              if (invoice().indexOf("@") > 0 || invoice().indexOf("lnurl") == 0 || invoice().indexOf("LNURL") == 0) {
+                  let amount = receiveAmount();
+                  if (denomination() == "btc") {
+                      amount = amount * 100000000;
+                  }
+                  let pr = await lnurl_fetcher(invoice(), amount);
+                  setInvoice(pr);
+              }
+              if (invoice().indexOf("lnbc") != 0) {
+                  return false;
+              }
               params = {
                   "type": "submarine",
                   "pairId": "BTC/BTC",

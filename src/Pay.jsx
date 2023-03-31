@@ -1,7 +1,7 @@
 import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import {
-    failureReason, setFailureReason, reverse,
+    failureReason, setFailureReason, reverse, setReverse, webln,
     denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setSwaps, setNotification, setNotificationType } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
@@ -33,6 +33,7 @@ const Pay = () => {
               fetchSwapStatus(params.id);
               if (swapStatus()) {
                   setSwap(current_swap);
+                  setReverse(current_swap.reverse)
                   let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
                   qr(qr_code, setInvoiceQr);
               }
@@ -51,9 +52,20 @@ const Pay = () => {
 
   const can_reload = (status) => {
     return status != "transaction.claimed"
-          && status != "swap.expired"
-          && status != "transaction.lockupFailed";
+          && status != "transaction.confirmed"
+          && status != "transaction.lockupFailed"
+          && status != "swap.expired";
   };
+
+  const payWeblnInvoice = async (pr) => {
+      let check_enable = await window.webln.enable();
+      if (check_enable.enabled) {
+          const result = await window.webln.sendPayment(pr);
+          console.log("webln payment result:", result);
+          fetchSwapStatus(swap().id);
+      }
+  };
+
 
   return (
     <div data-status={swapStatus()} class="frame">
@@ -78,7 +90,7 @@ const Pay = () => {
               <hr />
               <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
           </Show>
-          <Show when={swapStatus() == "transaction.claimed"}>
+          <Show when={swapStatus() == "transaction.confirmed" || swapStatus() == "transaction.claimed"}>
               <h2>{t("congrats")}</h2>
               <p>{t("successfully_swapped", {amount: swap().expectedAmount, denomination: denomination()})}</p>
               <hr />
@@ -101,10 +113,12 @@ const Pay = () => {
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <hr />
           </Show>
-          <Show when={swapStatus() != "swap.expired" && swapStatus() != "invoice.expired" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed"}>
+          <Show when={swapStatus() != "swap.expired" && swapStatus() != "invoice.expired" && swapStatus() != "transaction.confirmed" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed"}>
               <p>
                 {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
-                {t("pay_expected_amount")}: {(!reverse()) ? swap().expectedAmount: swap().onchainAmount} <br />
+                <Show when={!reverse()}>
+                    {t("pay_expected_amount")}: {swap().expectedAmount} <br />
+                </Show>
               </p>
               <hr />
               <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
@@ -117,6 +131,9 @@ const Pay = () => {
                   <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               </Show>
               <Show when={reverse()}>
+                  <Show when={webln()}>
+                      <span class="btn btn-light" onClick={(e) => payWeblnInvoice(swap().invoice)}>{t("pay_invoice_webln")}</span>
+                  </Show>
                   <span class="btn" onclick={() => navigator.clipboard.writeText(swap().invoice)}>{t("copy_invoice")}</span>
               </Show>
           </Show>
