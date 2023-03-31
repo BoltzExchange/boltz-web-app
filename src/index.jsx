@@ -4,6 +4,7 @@ import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext, useI18n } from "@solid-primitives/i18n";
 import { i18n, setConfig, setNotification, setNotificationType, setWebln } from "./signals";
 import { startInterval, fetcher, detectWebLNProvider } from "./helper";
+import log from 'loglevel';
 
 // import "./vendor/bitcoinjs-lib.js"
 
@@ -13,7 +14,9 @@ import Nav from "./Nav";
 import Notification from "./Notification";
 import Footer from "./Footer";
 import Refund from "./Refund";
+import { loglevel } from "./config";
 
+log.setLevel(loglevel);
 
 import dict from "./i18n";
 const i18n_context = createI18nContext(dict, i18n());

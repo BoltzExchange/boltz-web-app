@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import { bech32, utf8 } from '@scure/base';
 import { setNotification, setNotificationType } from "./signals";
 import { api_url } from "./config";
+import log from 'loglevel';
 
 export const btc_divider = 100000000;
 
@@ -82,7 +83,7 @@ export const qr = (data, cb) => {
   QRCode.toDataURL(data, { version: 13, width: 400 })
     .then(cb)
     .catch((err) => {
-        console.error("qr code generation error", err);
+        log.error("qr code generation error", err);
         setNotificationType("error")
         setNotification(err.message);
     });
@@ -140,19 +141,19 @@ export function lnurl_fetcher(lnurl, amount_sat) {
             const { prefix, words, bytes } = bech32.decodeToBytes(lnurl);
             url = utf8.encode(bytes);
         }
-        console.log("fetching lnurl:", url);
+        log.debug("fetching lnurl:", url);
         fetch(url)
             .then(checkResponse)
             .then((data) => {
-                console.log("amount check: (x, min, max)", amount, data.minSendable, data.maxSendable);
+                log.debug("amount check: (x, min, max)", amount, data.minSendable, data.maxSendable);
                 if (amount < data.minSendable || amount > data.maxSendable) {
                   return Promise.reject("Amount not in LNURL range.");
                 }
-                console.log("fetching invoice", `${data.callback}?amount=${amount}`);
+                log.debug("fetching invoice", `${data.callback}?amount=${amount}`);
                 fetch(`${data.callback}?amount=${amount}`)
                     .then(checkResponse)
                     .then((data) => {
-                        console.log("fetched invoice", data);
+                        log.debug("fetched invoice", data);
                         resolve(data.pr);
                     })
                     .catch(errorHandler);

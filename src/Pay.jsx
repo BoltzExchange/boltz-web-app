@@ -1,3 +1,4 @@
+import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import {
@@ -61,20 +62,20 @@ const Pay = () => {
       let check_enable = await window.webln.enable();
       if (check_enable.enabled) {
           const result = await window.webln.sendPayment(pr);
-          console.log("webln payment result:", result);
+          log.debug("webln payment result:", result);
           fetchSwapStatus(swap().id);
       }
   };
 
   let timer = setInterval(() => {
-      console.log("tick Pay")
+      log.debug("tick Pay")
       if (swap()) {
           fetchSwapStatus(swap().id);
       }
   }, 10000);
 
   onCleanup(() => {
-      console.log("cleanup Pay")
+      log.debug("cleanup Pay")
       clearInterval(timer)
   });
 

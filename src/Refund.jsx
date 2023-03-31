@@ -1,3 +1,4 @@
+import log from 'loglevel';
 import { createSignal, createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { upload, setUpload, swaps, setSwaps } from "./signals";
@@ -30,7 +31,7 @@ createEffect(() => {
 });
 
 const refund = (e) => {
-  console.log("not implemented yet", refundAddress(), refundJson());
+  log.info("not implemented yet", refundAddress(), refundJson());
 };
 
 const refundAddressChange = (e) => {

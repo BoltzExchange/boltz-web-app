@@ -11,6 +11,7 @@
     "build": "cp src/config.prod.js src/config.js; vite build; cp dist/index.html dist/404.html"
   },
   "devDependencies": {
+    "loglevel": "^1.8.1",
     "prettier": "^2.8.4",
     "vite": "^2.9.9",
     "vite-plugin-solid": "^2.2.6"

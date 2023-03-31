@@ -1,3 +1,4 @@
+import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
@@ -255,12 +256,12 @@ const Create = () => {
 
 
   let timer = setInterval(() => {
-      console.log("tick Create")
+      log.debug("tick Create")
       fetchPairs();
   }, 30000);
 
   onCleanup(() => {
-      console.log("cleanup Create")
+      log.debug("cleanup Create")
       clearInterval(timer)
   });
 
