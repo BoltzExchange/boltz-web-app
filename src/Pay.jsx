@@ -1,4 +1,4 @@
-import { createEffect } from "solid-js";
+import { createEffect, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import {
     failureReason, setFailureReason, reverse, setReverse, webln,
@@ -66,6 +66,17 @@ const Pay = () => {
       }
   };
 
+  let timer = setInterval(() => {
+      console.log("tick Pay")
+      if (swap()) {
+          fetchSwapStatus(swap().id);
+      }
+  }, 10000);
+
+  onCleanup(() => {
+      console.log("cleanup Pay")
+      clearInterval(timer)
+  });
 
   return (
     <div data-status={swapStatus()} class="frame">

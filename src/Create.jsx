@@ -1,4 +1,4 @@
-import { createEffect } from "solid-js";
+import { createEffect, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, lnurl_fetcher, qr, btc_divider, startInterval, focus } from "./helper";
@@ -253,6 +253,16 @@ const Create = () => {
       };
   };
 
+
+  let timer = setInterval(() => {
+      console.log("tick Create")
+      fetchPairs();
+  }, 30000);
+
+  onCleanup(() => {
+      console.log("cleanup Create")
+      clearInterval(timer)
+  });
 
   fetchPairs();
 

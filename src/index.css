@@ -363,6 +363,7 @@ textarea {
 input:focus,
 textarea:focus {
     outline: none;
+    color: #ddd;
     border-color: #e6c826;
 }
 .fees-dyn label {
