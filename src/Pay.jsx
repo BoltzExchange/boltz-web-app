@@ -7,7 +7,7 @@ import {
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
-import { mempool_url } from "./config";
+import { mempool_url, api_url } from "./config";
 
 import reload_svg from "./assets/reload.svg";
 
@@ -26,6 +26,8 @@ const Pay = () => {
     return false;
   };
 
+  let stream = null;
+
   createEffect(() => {
       let tmp_swaps = JSON.parse(swaps());
       if (tmp_swaps) {
@@ -37,6 +39,18 @@ const Pay = () => {
                   setReverse(current_swap.reverse)
                   let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
                   qr(qr_code, setInvoiceQr);
+                  if (stream) {
+                      log.debug("stream closed");
+                      stream.close();
+                  }
+                  let stream_url = `${api_url}/streamswapstatus?id=${params.id}`;
+                  stream = new EventSource(stream_url);
+                  log.debug(`stream started: ${stream_url}`);
+                  stream.onmessage = function(event) {
+                      const data = JSON.parse(event.data);
+                      log.debug(`Swap status update: ${data.status}`);
+                      setSwapStatus(data.status);
+                  };
               }
           }
       }
@@ -45,6 +59,7 @@ const Pay = () => {
   const refund = (swap) => {
     setNotificationType("error");
     setNotification("not implemented yet");
+    log.warn('not implemented');
   };
 
   const mempoolLink = (a) => {
@@ -53,7 +68,6 @@ const Pay = () => {
 
   const can_reload = (status) => {
     return status != "transaction.claimed"
-          && status != "transaction.confirmed"
           && status != "transaction.lockupFailed"
           && status != "swap.expired";
   };
@@ -67,16 +81,12 @@ const Pay = () => {
       }
   };
 
-  let timer = setInterval(() => {
-      log.debug("tick Pay")
-      if (swap()) {
-          fetchSwapStatus(swap().id);
-      }
-  }, 10000);
-
   onCleanup(() => {
-      log.debug("cleanup Pay")
-      clearInterval(timer)
+      log.debug("cleanup Pay");
+      if (stream) {
+          log.debug("stream closed");
+          stream.close();
+      }
   });
 
   return (
@@ -102,11 +112,20 @@ const Pay = () => {
               <hr />
               <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
           </Show>
-          <Show when={swapStatus() == "transaction.confirmed" || swapStatus() == "transaction.claimed"}>
+          <Show when={swapStatus() == "transaction.claimed"}>
               <h2>{t("congrats")}</h2>
               <p>{t("successfully_swapped", {amount: swap().expectedAmount, denomination: denomination()})}</p>
               <hr />
               <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
+          </Show>
+          <Show when={swapStatus() == "transaction.confirmed"}>
+              <h2>{t("tx_confirmed")}</h2>
+              <p>{t("tx_ready_to_claim")}</p>
+              <div class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+              </div>
           </Show>
           <Show when={swapStatus() == "transaction.mempool"}>
               <h2>{t("tx_in_mempool")}</h2>
@@ -149,7 +168,7 @@ const Pay = () => {
                   <span class="btn" onclick={() => navigator.clipboard.writeText(swap().invoice)}>{t("copy_invoice")}</span>
               </Show>
           </Show>
-          <a class="btn btn-mempool" target="_blank" href={mempoolLink((reverse()) ? swap().address: swap().lockupAddress )}>{t("mempool")}</a>
+          <a class="btn btn-mempool" target="_blank" href={mempoolLink(!reverse() ? swap().address : swap().lockupAddress )}>{t("mempool")}</a>
       </Show>
       <Show when={!swap()}>
           <p>{t("pay_swap_404")}</p>

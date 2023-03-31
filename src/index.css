@@ -97,6 +97,10 @@ hr {
     margin: 9px 0;
 }
 
+#invoice-qr {
+    width: 66.666%
+}
+
 #invoiceLabel {
   display: block;
   margin-bottom: 6px;
