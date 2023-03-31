@@ -127,9 +127,10 @@ export async function detectWebLNProvider(timeoutParam) {
 };
 
 
-export function lnurl_fetcher(lnurl, amount) {
+export function lnurl_fetcher(lnurl, amount_sat) {
     return new Promise((resolve) => {
         let url = "";
+        let amount = amount_sat * 1000;
         if (lnurl.indexOf("@") > 0) {
             // Lightning address
             let urlsplit = lnurl.split("@")
