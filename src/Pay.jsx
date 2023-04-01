@@ -37,8 +37,7 @@ const Pay = () => {
               fetchSwapStatus(params.id);
               setSwap(current_swap);
               setReverse(current_swap.reverse)
-              let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
-              qr(qr_code, setInvoiceQr);
+              qr((current_swap.reverse) ? current_swap.invoice : current_swap.bip21, setInvoiceQr);
               if (stream) {
                   log.debug("stream closed");
                   stream.close();
@@ -48,7 +47,7 @@ const Pay = () => {
               log.debug(`stream started: ${stream_url}`);
               stream.onmessage = function(event) {
                   const data = JSON.parse(event.data);
-                  log.debug(`Swap status update: ${data.status}`);
+                  log.debug(`Event status update: ${data.status}`);
                   setSwapStatus(data.status);
               };
           }

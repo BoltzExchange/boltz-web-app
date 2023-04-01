@@ -1,9 +1,9 @@
+import log from 'loglevel';
 import QRCode from "qrcode";
 
 import { bech32, utf8 } from '@scure/base';
 import { setNotification, setNotificationType } from "./signals";
 import { api_url } from "./config";
-import log from 'loglevel';
 
 export const btc_divider = 100000000;
 

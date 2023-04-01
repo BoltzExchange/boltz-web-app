@@ -206,12 +206,12 @@ const Create = () => {
           let params = null;
           let preimageHex = null;
 
-          // TODO: not hardcode asset
           if (reverse()) {
               const preimage = secp.utils.randomBytes(32);
               preimageHex = secp.utils.bytesToHex(preimage);
               let preimageHash = await secp.utils.sha256(preimage);
               let preimageHashHex = secp.utils.bytesToHex(preimageHash);
+              // TODO: not hardcode asset
               params = {
                   "type": "reversesubmarine",
                   "pairId": "BTC/BTC",
@@ -230,6 +230,7 @@ const Create = () => {
                   setInvoice(pr);
               }
               if (invoice().indexOf("lnbc") != 0) {
+                  log.warn("neither lnurl, lnaddress or invoice supplied")
                   return false;
               }
               params = {
@@ -247,7 +248,6 @@ const Create = () => {
               data.asset = asset();
               data.preimage = preimageHex;
               data.onchainAddress = onchainAddress();
-              setSwap(data);
               let tmp_swaps = JSON.parse(swaps());
               tmp_swaps.push(data)
               setSwaps(JSON.stringify(tmp_swaps));
