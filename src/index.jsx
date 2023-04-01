@@ -5,6 +5,11 @@ import { I18nContext, createI18nContext, useI18n } from "@solid-primitives/i18n"
 import { i18n, setWebln } from "./signals";
 import { startInterval, fetcher, detectWebLNProvider } from "./helper";
 import log from 'loglevel';
+
+import { Transaction } from "bitcoinjs-lib";
+
+console.log(Transaction)
+
 import Create from "./Create";
 import Pay from "./Pay";
 import Nav from "./Nav";

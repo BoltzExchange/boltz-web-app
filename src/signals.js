@@ -22,6 +22,7 @@ export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
 export const [swap, setSwap] = createSignal(null);
 export const [swapStatus, setSwapStatus] = createSignal("");
+export const [swapStatusTransaction, setSwapStatusTransaction] = createSignal("");
 export const [failureReason, setFailureReason] = createSignal("");
 
 // local storage

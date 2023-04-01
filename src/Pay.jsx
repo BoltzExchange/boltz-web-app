@@ -2,12 +2,17 @@ import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import {
+    setSwapStatusTransaction, swapStatusTransaction,
     failureReason, setFailureReason, reverse, setReverse, webln,
     denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setSwaps, setNotification, setNotificationType } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
 import { mempool_url, api_url } from "./config";
+
+// import { ECPair } from "./ecpair";
+// import { Transaction } from "bitcoinjs-lib";
+// import { constructClaimTransaction } from "boltz-core";
 
 import reload_svg from "./assets/reload.svg";
 
@@ -19,6 +24,7 @@ const Pay = () => {
   const fetchSwapStatus = (id) => {
     fetcher("/swapstatus", (data) => {
       setSwapStatus(data.status);
+      setSwapStatusTransaction(data.transaction);
       setFailureReason(data.failureReason);
       setNotificationType("success");
       setNotification("swap status retrieved!");
@@ -47,7 +53,7 @@ const Pay = () => {
               log.debug(`stream started: ${stream_url}`);
               stream.onmessage = function(event) {
                   const data = JSON.parse(event.data);
-                  log.debug(`Event status update: ${data.status}`);
+                  log.debug(`Event status update: ${data.status}`, data);
                   setSwapStatus(data.status);
               };
           }
@@ -59,6 +65,16 @@ const Pay = () => {
     setNotification("not implemented yet");
     log.warn('not implemented');
   };
+
+  const claim = (swap) => {
+      tx = Transaction.fromHex()
+        // utxos: ClaimDetails[],
+  // destinationScript: Buffer,
+  // feePerByte: number,
+
+    log.debug("CLAIM");
+  };
+
 
   const mempoolLink = (a) => {
     return mempool_url + "/address/" + a;
@@ -119,6 +135,7 @@ const Pay = () => {
           <Show when={swapStatus() == "transaction.confirmed"}>
               <h2>{t("tx_confirmed")}</h2>
               <p>{t("tx_ready_to_claim")}</p>
+              <span class="btn" onclick={() => claim(swap())}>CLAIM!!!!</span>
               <div class="spinner">
                 <div class="bounce1"></div>
                 <div class="bounce2"></div>
