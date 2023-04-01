@@ -4,11 +4,12 @@
   "description": "Boltz Exchange, Atomic swaps, frontend",
   "license": "MIT",
   "scripts": {
-    "start": "vite",
+    "start": "cp src/configs/config.regtest.js src/config.js && vite",
     "dev": "vite",
     "serve": "vite preview",
     "bitcoinlib": "npx browserify --standalone bitcoin - -o src/vendor/bitcoinjs-lib.js <<<\"module.exports = require(\\\"bitcoinjs-lib\\\");\"",
-    "build": "cp src/config.prod.js src/config.js; vite build; cp dist/index.html dist/404.html"
+    "mainnet": "cp src/configs/config.mainnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
+    "testnet": "cp src/configs/config.testnet.js src/config.js; vite build; cp dist/index.html dist/404.html"
   },
   "devDependencies": {
     "loglevel": "^1.8.1",
