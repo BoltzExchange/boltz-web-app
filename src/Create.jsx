@@ -137,6 +137,7 @@ const Create = () => {
 
   const fetchPairs = () => {
     fetcher("/getpairs", (data) => {
+        log.debug("getpairs", data);
         let cfg = data.pairs["BTC/BTC"];
         setConfig(cfg);
         setNotificationType("success");
@@ -188,6 +189,7 @@ const Create = () => {
               amount = amount * 100000000;
           }
           const invoice = await window.webln.makeInvoice({ amount: amount });
+          log.debug("created webln invoice", invoice);
           setInvoice(invoice.paymentRequest);
       }
   };

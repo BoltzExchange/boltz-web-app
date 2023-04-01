@@ -33,25 +33,24 @@ const Pay = () => {
       if (tmp_swaps) {
           let current_swap = tmp_swaps.filter(s => s.id === params.id).pop();
           if (current_swap) {
+              log.debug("selecting swap", current_swap);
               fetchSwapStatus(params.id);
-              if (swapStatus()) {
-                  setSwap(current_swap);
-                  setReverse(current_swap.reverse)
-                  let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
-                  qr(qr_code, setInvoiceQr);
-                  if (stream) {
-                      log.debug("stream closed");
-                      stream.close();
-                  }
-                  let stream_url = `${api_url}/streamswapstatus?id=${params.id}`;
-                  stream = new EventSource(stream_url);
-                  log.debug(`stream started: ${stream_url}`);
-                  stream.onmessage = function(event) {
-                      const data = JSON.parse(event.data);
-                      log.debug(`Swap status update: ${data.status}`);
-                      setSwapStatus(data.status);
-                  };
+              setSwap(current_swap);
+              setReverse(current_swap.reverse)
+              let qr_code = (current_swap.reverse) ? current_swap.invoice : current_swap.bip21;
+              qr(qr_code, setInvoiceQr);
+              if (stream) {
+                  log.debug("stream closed");
+                  stream.close();
               }
+              let stream_url = `${api_url}/streamswapstatus?id=${params.id}`;
+              stream = new EventSource(stream_url);
+              log.debug(`stream started: ${stream_url}`);
+              stream.onmessage = function(event) {
+                  const data = JSON.parse(event.data);
+                  log.debug(`Swap status update: ${data.status}`);
+                  setSwapStatus(data.status);
+              };
           }
       }
   });

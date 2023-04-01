@@ -2,6 +2,7 @@ import log from 'loglevel';
 import { createSignal, createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { upload, setUpload, swaps, setSwaps } from "./signals";
+import { downloadBackup } from "./helper";
 
 const [error, setError] = createSignal("no file seleced");
 const [refundJson, setRefundJson] = createSignal(null);
@@ -59,6 +60,7 @@ const Refund = () => {
           setSwaps("[]")
       }
   };
+
 
   const delete_swap = (swap_id) => {
       if(confirm(t("delete_localstorage"))) {
@@ -118,6 +120,7 @@ const Refund = () => {
                   </For>
               </div>
               <button class="btn btn-danger" onClick={deleteLocalstorage}>{t("refund_clear")}</button>
+              <button class="btn " onClick={() => downloadBackup(swaps())}>{t("refund_backup")}</button>
             </div>
         </Show>
     </div>

@@ -2,7 +2,7 @@
 import { render } from "solid-js/web";
 import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext, useI18n } from "@solid-primitives/i18n";
-import { i18n, setConfig, setNotification, setNotificationType, setWebln } from "./signals";
+import { i18n, setWebln } from "./signals";
 import { startInterval, fetcher, detectWebLNProvider } from "./helper";
 import log from 'loglevel';
 
