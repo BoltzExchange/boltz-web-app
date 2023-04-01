@@ -15,6 +15,7 @@
     "loglevel": "^1.8.1",
     "prettier": "^2.8.4",
     "vite": "^4.2.1",
+    "vite-plugin-node-polyfills": "^0.7.0",
     "vite-plugin-solid": "^2.6.1"
   },
   "dependencies": {
