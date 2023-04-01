@@ -12,7 +12,7 @@ import log from 'loglevel';
 // import { Transaction } from "bitcoinjs-lib";
 
 // import "./vendor/bitcoinjs-lib.js"
-// console.log(bitcoin)
+// console.log(Transaction)
 
 import Create from "./Create";
 import Pay from "./Pay";

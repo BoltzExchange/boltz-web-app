@@ -476,34 +476,34 @@
   resolved "https://registry.yarnpkg.com/@scure/base/-/base-1.1.1.tgz#ebb651ee52ff84f420097055f4bf46cfba403938"
   integrity sha512-ZxOhsSyxYwLJj3pLZCefNitxsj093tb2vq90mp2txoYeBqbcjDjqFhyM8eUjq/uFm6zJ+mUuqxlS2FkuSY1MTA==
 
-"@solid-primitives/context@^0.1.4":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@solid-primitives/context/-/context-0.1.4.tgz#9bba71683096ba64260233f987643942222e219e"
-  integrity sha512-k7lwcepYQJazsctHMkz88GAxEH6J7NYUprYjcnpkgD95qqWav8KaaQ3n+uTrB2seSVLMMqok1YyP8dqsiN5ltQ==
+"@solid-primitives/context@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@solid-primitives/context/-/context-0.2.1.tgz#ebbc423baa14bb5f6150d979c0945e486d790af5"
+  integrity sha512-XIIwCOWpRKDersgkR9LNFXaJHIV8QlCFo/tq5bV0cAOZklcwOFcqi2bN+uWgEIQSWGjWXU2kc1H1/TzgYzVDlg==
 
-"@solid-primitives/i18n@^1.1.4":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@solid-primitives/i18n/-/i18n-1.2.1.tgz#bf67a148945682654b03de8c4d2f1984d0616666"
-  integrity sha512-IfpIFPqpKX6pRnGv4qc+02+CGRZl+IGirpbX3Oxk04sEDnOyYOUs9S5+na6jntcU3aAEirchViOxJUheRbJmHQ==
+"@solid-primitives/i18n@^1.2.4":
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/@solid-primitives/i18n/-/i18n-1.2.4.tgz#f27519da7da954ef61a44a067037525a8b053db5"
+  integrity sha512-4phkfhFKAfKWWwN+U5M77P8lq65J5XljyjPkZSVzk+AI2OwpO5aDtKpDxiAMWSS8aYhnfJvlfCkIY7X7XDCDLw==
   dependencies:
-    "@solid-primitives/context" "^0.1.4"
+    "@solid-primitives/context" "^0.2.1"
 
-"@solid-primitives/storage@^1.3.4":
-  version "1.3.6"
-  resolved "https://registry.yarnpkg.com/@solid-primitives/storage/-/storage-1.3.6.tgz#88262853b0995b48808d3de7e43ef71cce3180da"
-  integrity sha512-xPfDsTi/gLNBPqBO3aCBm8rseWeKlFyIK/PUSp5RmSsaVdKFVNYtxfWr1WZWi8bDxY+myab3Ic+9Vd0K8kSS3w==
+"@solid-primitives/storage@^1.3.9":
+  version "1.3.9"
+  resolved "https://registry.yarnpkg.com/@solid-primitives/storage/-/storage-1.3.9.tgz#3c03666a0ec04089d9b6c11a6c6b0627e3fac56d"
+  integrity sha512-ysJSIycmToQD8Hpt4jpIlh7U8EuYdpQwkamppng3g93E5f6RZVPCzYmRZ+ckRN2cNLFpAuTEqZx7OBRh3PBWFQ==
   dependencies:
-    "@solid-primitives/utils" "^5.2.1"
+    "@solid-primitives/utils" "^6.0.0"
 
-"@solid-primitives/utils@^5.2.1":
-  version "5.3.0"
-  resolved "https://registry.yarnpkg.com/@solid-primitives/utils/-/utils-5.3.0.tgz#98148d6453f4d40bbe20434f3dc456fba53efc71"
-  integrity sha512-YlMvXtJxm5zWQC+EW24qO9kMoUdfR5I4bi6zsL9RlETyfJEPrmTY2ztU0T9lPq5hC3Qwn3q+ifd4tz4js3fTUA==
+"@solid-primitives/utils@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@solid-primitives/utils/-/utils-6.0.0.tgz#157fae6f22d7b341b6eb9af39e5455ecae7079ca"
+  integrity sha512-SSu12+vvU6J8SVWW9eGV+dqiMsc0WG1Oy8YYY9AWzRzssmzNXg/uexaW+0eqTuj8JcRAaGplMDjhraB01HOidA==
 
-"@solidjs/router@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@solidjs/router/-/router-0.7.0.tgz#5f8f1289caf4a1eb24e57cbe93e6dde639b04a6e"
-  integrity sha512-8HI84twe5FjYRebSLMAhtkL9bRuTDIlxJK56kjfjU9WKGoUCTaWpCnkuj8Hqde1bWZ0X+GOZxKDfNkn1CjtjxA==
+"@solidjs/router@^0.8.2":
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/@solidjs/router/-/router-0.8.2.tgz#3dd82fd052cb8654a2948989ed3e17cf6b25b04d"
+  integrity sha512-gUKW+LZqxtX6y/Aw6JKyy4gQ9E7dLqp513oB9pSYJR1HM5c56Pf7eijzyXX+b3WuXig18Cxqah4tMtF0YGu80w==
 
 "@types/babel__core@^7.1.20":
   version "7.20.0"
@@ -1121,6 +1121,11 @@ semver@^6.3.0:
   resolved "https://registry.yarnpkg.com/semver/-/semver-6.3.0.tgz#ee0a64c8af5e8ceea67687b133761e1becbd1d3d"
   integrity sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==
 
+seroval@^0.5.0:
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/seroval/-/seroval-0.5.1.tgz#e6d17365cdaaae7e50815c7e0bcd7102facdadf3"
+  integrity sha512-ZfhQVB59hmIauJG5Ydynupy8KHyr5imGNtdDhbZG68Ufh1Ynkv9KOYOAABf71oVbQxJ8VkWnMHAjEHE7fWkH5g==
+
 set-blocking@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/set-blocking/-/set-blocking-2.0.0.tgz#045f9782d011ae9a6803ddd382b24392b3d890f7"
@@ -1134,12 +1139,13 @@ sha.js@^2.4.0:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-solid-js@^1.4.7:
-  version "1.6.11"
-  resolved "https://registry.yarnpkg.com/solid-js/-/solid-js-1.6.11.tgz#263a512bf94efd89245a77f58dc18c195302237f"
-  integrity sha512-JquQQHPArGq+i2PLURxJ99Pcz2/1docpbycSio/cKSA0SeI3z5zRjy0TNcH4NRYvbOLrcini+iovXwnexKabyw==
+solid-js@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/solid-js/-/solid-js-1.7.0.tgz#afa0a427a53bae782d2f9d52a4d828bb208865a4"
+  integrity sha512-tLG68KWlVRgzYeAW003G3E70emZqTcqCKJR9QoGr0rcuiLIuKrlUoezT8jLME1YSl3Wfu35jzgeY10iLEY4YQQ==
   dependencies:
     csstype "^3.1.0"
+    seroval "^0.5.0"
 
 solid-refresh@^0.5.0:
   version "0.5.2"
