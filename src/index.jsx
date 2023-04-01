@@ -6,7 +6,13 @@ import { i18n, setWebln } from "./signals";
 import { startInterval, fetcher, detectWebLNProvider } from "./helper";
 import log from 'loglevel';
 
+// import { Buffer } from "buffer";
+// globalThis.Buffer = Buffer;
+
+// import { Transaction } from "bitcoinjs-lib";
+
 // import "./vendor/bitcoinjs-lib.js"
+// console.log(bitcoin)
 
 import Create from "./Create";
 import Pay from "./Pay";
