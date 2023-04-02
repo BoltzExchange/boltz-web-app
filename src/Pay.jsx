@@ -10,7 +10,7 @@ import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
 import { mempool_url, api_url } from "./config";
 
-// import { ECPair } from "./ecpair";
+import { ECPair } from "./ecpair/ecpair";
 // import { Transaction } from "bitcoinjs-lib";
 // import { constructClaimTransaction } from "boltz-core";
 
