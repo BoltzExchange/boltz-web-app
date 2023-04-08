@@ -201,15 +201,6 @@ const Create = () => {
   const create = async () => {
       setValid(true);
       if (valid()) {
-          try {
-            address.toOutputScript(onchainAddress(), net);
-          }
-          catch (e){
-              log.error(e);
-              setNotificationType("error");
-              setNotification("invalid onchain address");
-              return false;
-          }
 
           const pair = ECPair.makeRandom();
           const privateKey = pair.privateKey;
@@ -220,6 +211,15 @@ const Create = () => {
           let preimageHex = null;
 
           if (reverse()) {
+              try {
+                address.toOutputScript(onchainAddress(), net);
+              }
+              catch (e){
+                  log.error(e);
+                  setNotificationType("error");
+                  setNotification("invalid onchain address");
+                  return false;
+              }
               const preimage = secp.utils.randomBytes(32);
               preimageHex = secp.utils.bytesToHex(preimage);
               let preimageHash = await secp.utils.sha256(preimage);
