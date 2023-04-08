@@ -3,7 +3,7 @@ import { useI18n } from "@solid-primitives/i18n";
 
 import medium from "./assets/medium.svg";
 import twitter from "./assets/twitter.svg";
-import nostr from "./assets/twitter.svg";
+import nostr from "./assets/nostr.svg";
 import discord from "./assets/discord.svg";
 
 import "./footer.css";
