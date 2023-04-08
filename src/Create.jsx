@@ -9,6 +9,8 @@ import * as secp from '@noble/secp256k1';
 import { ECPair } from './ecpair/ecpair';
 import { address } from 'bitcoinjs-lib';
 
+import AssetSelect from "./AssetSelect";
+
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
 import bitcoin_svg from "./assets/bitcoin-icon.svg";
@@ -178,11 +180,6 @@ const Create = () => {
   const changeSendAmount = (amount) => {
     setSendAmount(amount);
     setReceiveAmount(calculateReceiveAmount(amount));
-  };
-
-  const changeAsset = (asset) => {
-    setAsset(asset);
-    setAssetSelect(false);
   };
 
   const createWeblnInvoice = async () => {
@@ -364,52 +361,9 @@ const Create = () => {
       <Show when={webln() && !reverse()}>
           <button class="btn btn-light" onClick={(e) => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
       </Show>
-          <hr />
-      <Show when={false}>
-          <div class="fees">
-            <div class="fee">
-              <span>
-                <b>{minimum()}</b>
-                <span class="denominator" data-denominator={denomination()}></span>
-              </span>
-              <br />
-              <label>{t("min")}</label>
-            </div>
-            <div class="fee">
-              <span>
-                <b>{maximum()}</b>
-                <span class="denominator" data-denominator={denomination()}></span>
-              </span>
-              <br />
-              <label>{t("max")}</label>
-            </div>
-            <div class="fee">
-              <span>
-                <b>{boltzFee()} %</b>
-              </span>
-              <br />
-              <label>{t("fee")}</label>
-            </div>
-          </div>
-          <hr />
-      </Show>
+      <hr />
       <button id="create-swap" class="btn" onClick={create}>{t("create_swap")}</button>
-      <div class="frame assets-select" style={assetSelect() ? "display: block;" : "display: none;"}>
-          <h2>{t("select_asset")}</h2>
-          <svg id="close" viewBox="0 0 100 100" width="50" onClick={() => setAssetSelect(!assetSelect())}>
-              <path class="line top" d="m 70,33 h -40 c 0,0 -8.5,-0.149796 -8.5,8.5 0,8.649796 8.5,8.5 8.5,8.5 h 20 v -20" />
-              <path class="line bottom" d="m 30,67 h 40 c 0,0 8.5,0.149796 8.5,-8.5 0,-8.649796 -8.5,-8.5 -8.5,-8.5 h -20 v 20" />
-          </svg>
-          <hr />
-          <div className="asset-select" onClick={() => changeAsset("btc")}>
-              <img src={bitcoin_svg} alt="bitcoin" />
-              <span>bitcoin</span>
-          </div>
-          <div className="asset-select" onClick={() => changeAsset("l-btc")}>
-              <img src={liquid_svg} alt="liquid bitcoin" />
-              <span>liquid</span>
-          </div>
-      </div>
+      <AssetSelect />
     </div>
   );
 };
