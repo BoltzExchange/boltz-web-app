@@ -347,8 +347,8 @@ const Create = () => {
       <hr />
       <Show when={webln() && !reverse()}>
           <button class="btn btn-light" onClick={(e) => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
+          <hr />
       </Show>
-      <hr />
       <textarea
         onChange={(e) => setInvoice(e.currentTarget.value)}
         onKeyUp={(e) => setInvoice(e.currentTarget.value)}
