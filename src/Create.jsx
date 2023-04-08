@@ -163,7 +163,7 @@ const Create = () => {
   };
 
   const calculateReceiveAmount = (amount) => {
-    amount = amount - minerFee() - (amount * boltzFee()) / 100;
+    amount = parseFloat(amount) - minerFee() - (amount * boltzFee()) / 100;
     return formatAmount(amount);
   };
 
@@ -209,9 +209,10 @@ const Create = () => {
 
           if (reverse()) {
               try {
+                // validate btc address
                 address.toOutputScript(onchainAddress(), net);
               }
-              catch (e){
+              catch (e) {
                   log.error(e);
                   setNotificationType("error");
                   setNotification("invalid onchain address");
@@ -344,6 +345,10 @@ const Create = () => {
         </label>
       </div>
       <hr />
+      <Show when={webln() && !reverse()}>
+          <button class="btn btn-light" onClick={(e) => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
+      </Show>
+      <hr />
       <textarea
         onChange={(e) => setInvoice(e.currentTarget.value)}
         onKeyUp={(e) => setInvoice(e.currentTarget.value)}
@@ -360,9 +365,6 @@ const Create = () => {
         name="onchainAddress"
         placeholder="On-chain address"
       />
-      <Show when={webln() && !reverse()}>
-          <button class="btn btn-light" onClick={(e) => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
-      </Show>
       <hr />
       <button id="create-swap" class="btn" onClick={create}>{t("create_swap")}</button>
       <AssetSelect />

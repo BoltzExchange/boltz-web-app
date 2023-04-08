@@ -369,6 +369,12 @@ textarea:focus {
     color: #ddd;
     border-color: #e6c826;
 }
+input:invalid,
+textarea:invalid {
+    outline: none;
+    color: #ddd;
+    border-color: darkred;
+}
 .fees-dyn label {
     display: block;
 }
