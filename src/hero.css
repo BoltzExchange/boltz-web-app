@@ -22,7 +22,7 @@ h3 {
 }
 
 .hero-boxes {
-    margin: 42px -12px;
+    margin: 72px -12px;
     display: flex;
 }
 .hero-box {
@@ -37,4 +37,21 @@ h3 {
 }
 .hero-box img {
     width: 36px;
+}
+
+#numbers {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 82px;
+
+}
+.number {
+    font-size: 40px;
+    font-weight: bold;
+}
+.number small {
+    font-size: 20px;
+    display: block;
+    font-weight: normal;
+    color: #e6c826;
 }

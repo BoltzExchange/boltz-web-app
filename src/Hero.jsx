@@ -40,6 +40,12 @@ const Hero = () => {
                     <img src={liquid} alt="Liquid Bitcoin" />
                 </div>
             </div>
+            <div id="numbers">
+              <div class="number">1840 <small>Number of Channels</small></div>
+              <div class="number">1338 <small>Number of Peers</small></div>
+              <div class="number">650.000.000<small>Capacity (sats)</small></div>
+              <div class="number">4 years <small>Oldest Channel</small></div>
+            </div>
         </div>
     );
 };
