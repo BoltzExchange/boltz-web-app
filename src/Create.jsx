@@ -7,12 +7,16 @@ import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
 
+// log.debug(secp);
+
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
 import bitcoin_svg from "./assets/bitcoin-icon.svg";
 import liquid_svg from "./assets/liquid-icon.svg";
 import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
+
+import { bolt11_prefix } from "./config";
 
 import {
   setSwap,
@@ -229,7 +233,7 @@ const Create = () => {
                   let pr = await lnurl_fetcher(invoice(), amount);
                   setInvoice(pr);
               }
-              if (invoice().indexOf("lnbc") != 0) {
+              if (invoice().indexOf(bolt11_prefix) != 0) {
                   log.warn("neither lnurl, lnaddress or invoice supplied")
                   return false;
               }
