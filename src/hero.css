@@ -1,0 +1,41 @@
+h1 {
+    font-size: 70px;
+    line-height: 1;
+    background: linear-gradient(20deg, rgb(255, 197, 0) 10%, rgb(0, 88, 255) 100%) padding-box text;
+    margin-bottom: 12px;
+    margin-top: 112px;
+}
+h1 small {
+    margin-top: 21px;
+    font-size: 30px;
+    font-weight: 400;
+    color: #fff;
+    display: block;
+}
+h3 {
+    margin: 0;
+    color: #e6c826;
+}
+.inner-wrap {
+    margin: auto;
+    max-width: 1024px;
+    padding-bottom: 42px;
+}
+
+.hero-boxes {
+    margin: 102px -12px 42px;
+    display: flex;
+}
+.hero-box {
+    border-radius: 21px;
+    padding: 12px;
+    margin: 12px;
+    width: 50%;
+
+    color: #fff;
+    background: #0003;
+    border: 1px solid rgba(255,255,255,.1);
+}
+.hero-box img {
+    width: 36px;
+}

@@ -602,3 +602,7 @@ textarea {
   stroke-dashoffset: -68px;
   stroke-dasharray: 40 121;
 }
+.btn-inline {
+    display: inline-block;
+    width: auto;
+}

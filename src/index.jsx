@@ -10,6 +10,7 @@ import Pay from "./Pay";
 import Nav from "./Nav";
 import Notification from "./Notification";
 import Footer from "./Footer";
+import Hero from "./Hero";
 import Refund from "./Refund";
 import { loglevel } from "./config";
 
@@ -26,7 +27,7 @@ render(
         <Router>
           <Nav />
           <Routes>
-            <Route path="/" component={Create} />
+            <Route path="/" component={Hero} />
             <Route path="/swap" component={Create} />
             <Route path="/swap/:id" component={Pay} />
             <Route path="/refund" component={Refund} />
