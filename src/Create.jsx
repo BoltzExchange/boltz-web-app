@@ -229,7 +229,7 @@ const Create = () => {
                   "type": "reversesubmarine",
                   "pairId": "BTC/BTC",
                   "orderSide": "buy",
-                  "invoiceAmount": sendAmount(),
+                  "invoiceAmount": parseInt(sendAmount()),
                   "claimPublicKey": publicKeyHex,
                   "preimageHash": preimageHashHex
               };
