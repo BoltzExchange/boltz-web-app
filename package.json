@@ -27,6 +27,7 @@
     "boltz-core": "^0.6.2",
     "buffer": "^6.0.3",
     "create-hmac": "^1.1.7",
+    "ecpair": "^2.1.0",
     "qrcode": "^1.5.0",
     "solid-js": "^1.7.0"
   }

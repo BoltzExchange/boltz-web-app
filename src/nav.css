@@ -5,10 +5,15 @@ body {
     padding-top: 90px;
 }
 
-nav {
+.nav-inner {
+    margin: auto;
+    max-width: 1024px;
     display: flex;
     justify-content: flex-start;
     align-items: center;
+}
+
+nav {
     padding: 14px;
     position: fixed;
     top: 0;
@@ -34,9 +39,15 @@ nav a.active {
   text-decoration: underline;
 }
 
+#network {
+    position: relative;
+    width: auto;
+}
+
 #languages {
     position: relative;
     margin-left: auto;
+    margin-right: 6px;
 }
 
 #languages > span:after {

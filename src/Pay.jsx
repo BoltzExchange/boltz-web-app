@@ -10,9 +10,9 @@ import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
 import { mempool_url, api_url } from "./config";
 
-import { ECPair } from "./ecpair/ecpair";
-// import { Transaction } from "bitcoinjs-lib";
-// import { constructClaimTransaction } from "boltz-core";
+// import { ECPair } from "./ecpair/ecpair";
+import { Transaction } from "bitcoinjs-lib";
+import { constructClaimTransaction } from "boltz-core";
 
 import reload_svg from "./assets/reload.svg";
 
@@ -67,12 +67,21 @@ const Pay = () => {
   };
 
   const claim = (swap) => {
-      tx = Transaction.fromHex()
-        // utxos: ClaimDetails[],
-  // destinationScript: Buffer,
-  // feePerByte: number,
+    let mempool_tx = swapStatusTransaction();
+    if (!mempool_tx) {
+      return log.debug("no mempool tx found");
+    }
+    if (!mempool_tx.hex) {
+      return log.debug("mempool tx hex not found");
+    }
+    log.debug("mempool_tx", mempool_tx.hex);
+    let tx = Transaction.fromHex(mempool_tx.hex)
+    log.debug(tx);
+    // let script = script.fromHex(swap.redeemScript)
+    // log.debug(tx, script);
+    // let claim_tx = constructClaimTransaction(utxos: ClaimDetails[], script, 10);
 
-    log.debug("CLAIM");
+    // log.debug("CLAIM", claim_tx);
   };
 
 
