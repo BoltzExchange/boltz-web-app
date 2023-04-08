@@ -114,8 +114,10 @@ const Refund = () => {
                       )}
                   </For>
               </div>
+            <div class="btns">
               <button class="btn btn-danger" onClick={deleteLocalstorage}>{t("refund_clear")}</button>
               <button class="btn " onClick={() => downloadBackup(swaps())}>{t("refund_backup")}</button>
+            </div>
             </div>
         </Show>
     </div>

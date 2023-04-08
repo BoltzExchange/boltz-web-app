@@ -19,11 +19,10 @@ h3 {
 .inner-wrap {
     margin: auto;
     max-width: 1024px;
-    padding-bottom: 42px;
 }
 
 .hero-boxes {
-    margin: 102px -12px 42px;
+    margin: 42px -12px;
     display: flex;
 }
 .hero-box {

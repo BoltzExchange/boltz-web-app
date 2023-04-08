@@ -303,11 +303,20 @@ hr {
   background: #fff;
 }
 .btn-danger {
-  background: darkred;
+  background: #8b000085;
   color: white;
 }
 .btn-danger:hover {
   background: darkred;
+}
+.btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btns > * {
+    display: inline-block;
+    width: auto;
 }
 
 .fee {
