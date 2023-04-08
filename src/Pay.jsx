@@ -176,6 +176,7 @@ const Pay = () => {
 
   const can_reload = (status) => {
     return status != "transaction.claimed"
+          && status != "transaction.refunded"
           && status != "invoice.settled"
           && status != "transaction.lockupFailed"
           && status != "swap.expired";
@@ -271,7 +272,12 @@ const Pay = () => {
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <hr />
           </Show>
-          <Show when={swapStatus() != "swap.expired" && swapStatus() != "invoice.expired" && swapStatus() != "transaction.confirmed" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed" && swapStatus() != "invoice.settled"}>
+          <Show when={swapStatus() == "transaction.refunded"}>
+              <h2>Boltz has refunded the Transaction</h2>
+              <hr />
+              <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
+          </Show>
+          <Show when={swapStatus() != "transaction.refunded" && swapStatus() != "swap.expired" && swapStatus() != "invoice.expired" && swapStatus() != "transaction.confirmed" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed" && swapStatus() != "invoice.settled"}>
               <p>
                 {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
                 <Show when={!reverse()}>

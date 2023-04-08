@@ -259,6 +259,7 @@ hr {
 [data-status='swap.expired'] .btn-small,
 [data-status='invoice.expired'] .btn-small,
 [data-status='invoice.failedToPay'] .btn-small,
+[data-status='transaction.refunded'] .btn-small,
 [data-status='transaction.lockupFailed'] .btn-small {
   background: darkred;
   color: #fff;
