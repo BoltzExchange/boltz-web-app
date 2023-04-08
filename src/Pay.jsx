@@ -8,7 +8,7 @@ import {
     denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setSwaps, setNotification, setNotificationType } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { refund, fetcher, qr, downloadRefundFile, clipboard } from "./helper";
+import { getfeeestimation, refund, fetcher, qr, downloadRefundFile, clipboard } from "./helper";
 import { mempool_url, api_url, net } from "./config";
 
 import { Buffer } from "buffer";
@@ -69,7 +69,7 @@ const Pay = () => {
       }
   });
 
-  const claim = () => {
+  const claim = async () => {
 
     log.info("claiming swap: ", swap().id);
     let mempool_tx = swapStatusTransaction();
@@ -80,6 +80,7 @@ const Pay = () => {
       return log.debug("mempool tx hex not found");
     }
     log.debug("mempool_tx", mempool_tx.hex);
+    let fees = await getfeeestimation();
     let tx = Transaction.fromHex(mempool_tx.hex);
     let script = Buffer.from(swap().redeemScript, "hex");
     let swapOutput = detectSwap(script, tx);
@@ -96,7 +97,7 @@ const Pay = () => {
         keys: private_key,
       }],
       address.toOutputScript(swap().onchainAddress, net),
-      10,
+      fees,
       true,
     ).toHex();
     log.debug("claim_tx", claimTransaction);

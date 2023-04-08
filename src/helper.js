@@ -172,7 +172,7 @@ export function lnurl_fetcher(lnurl, amount_sat) {
     });
 };
 
-export const refund = (swap) => {
+export async function refund(swap) {
     let output = "";
     try {
         output = address.toOutputScript(refundAddress(), net);
@@ -184,6 +184,7 @@ export const refund = (swap) => {
         return false;
     }
     log.info("refunding swap: ", swap.id);
+    let fees = await getfeeestimation();
 
     fetcher("/getswaptransaction", (data) => {
         log.debug("refund swap result:", data);
@@ -214,7 +215,7 @@ export const refund = (swap) => {
             }],
             output,
             data.timeoutBlockHeight,
-            10, // fee vbyte
+            fees,
             true, // rbf
         ).toHex();
 
@@ -228,6 +229,15 @@ export const refund = (swap) => {
         });
     }, {
         "id": swap.id,
+    });
+};
+
+export async function getfeeestimation() {
+    return new Promise((resolve) => {
+        fetcher("/getfeeestimation", (data) => {
+            log.debug("getfeeestimation: ", data);
+            resolve(data.BTC);
+        });
     });
 };
 
