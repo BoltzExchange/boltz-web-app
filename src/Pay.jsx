@@ -8,11 +8,12 @@ import {
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
-import { mempool_url, api_url } from "./config";
+import { mempool_url, api_url, net } from "./config";
 
-// import { ECPair } from "./ecpair/ecpair";
-import { Transaction } from "bitcoinjs-lib";
-import { constructClaimTransaction } from "boltz-core";
+import { Buffer } from "buffer";
+import { ECPair } from "./ecpair/ecpair";
+import { Transaction, networks, address } from "bitcoinjs-lib";
+import { constructClaimTransaction, detectSwap } from "boltz-core";
 
 import reload_svg from "./assets/reload.svg";
 
@@ -55,6 +56,7 @@ const Pay = () => {
                   const data = JSON.parse(event.data);
                   log.debug(`Event status update: ${data.status}`, data);
                   setSwapStatus(data.status);
+                  setSwapStatusTransaction(data.transaction);
               };
           }
       }
@@ -75,13 +77,34 @@ const Pay = () => {
       return log.debug("mempool tx hex not found");
     }
     log.debug("mempool_tx", mempool_tx.hex);
-    let tx = Transaction.fromHex(mempool_tx.hex)
-    log.debug(tx);
-    // let script = script.fromHex(swap.redeemScript)
-    // log.debug(tx, script);
-    // let claim_tx = constructClaimTransaction(utxos: ClaimDetails[], script, 10);
+    let tx = Transaction.fromHex(mempool_tx.hex);
+    let script = Buffer.from(swap.redeemScript, "hex");
+    let swapOutput = detectSwap(script, tx);
+    let private_key = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
+    log.debug("private_key: ", private_key);
+    let preimage = Buffer.from(swap.preimage, "hex");
+    log.debug("preimage: ", preimage);
+    const claimTransaction = constructClaimTransaction(
+      [{
+        ...swapOutput,
+        txHash: tx.getHash(),
+        preimage: preimage,
+        redeemScript: script,
+        keys: private_key,
+      }],
+      address.toOutputScript(swap.onchainAddress, net),
+      10,
+      true,
+    ).toHex();
+    log.debug("claim_tx", claimTransaction);
 
-    // log.debug("CLAIM", claim_tx);
+    fetcher("/broadcasttransaction", (data) => {
+        log.debug("claim result:", data);
+    }, {
+        "currency": "BTC",
+        "transactionHex": claimTransaction,
+    });
+
   };
 
 
@@ -91,6 +114,7 @@ const Pay = () => {
 
   const can_reload = (status) => {
     return status != "transaction.claimed"
+          && status != "invoice.settled"
           && status != "transaction.lockupFailed"
           && status != "swap.expired";
   };
@@ -135,7 +159,7 @@ const Pay = () => {
               <hr />
               <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
           </Show>
-          <Show when={swapStatus() == "transaction.claimed"}>
+          <Show when={swapStatus() == "transaction.claimed" || swapStatus() == "invoice.settled"}>
               <h2>{t("congrats")}</h2>
               <p>{t("successfully_swapped", {amount: swap().expectedAmount, denomination: denomination()})}</p>
               <hr />
@@ -168,7 +192,7 @@ const Pay = () => {
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <hr />
           </Show>
-          <Show when={swapStatus() != "swap.expired" && swapStatus() != "invoice.expired" && swapStatus() != "transaction.confirmed" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed"}>
+          <Show when={swapStatus() != "swap.expired" && swapStatus() != "invoice.expired" && swapStatus() != "transaction.confirmed" && swapStatus() != "transaction.claimed" && swapStatus() != "transaction.mempool" && swapStatus() != "transaction.lockupFailed" && swapStatus() != "invoice.settled"}>
               <p>
                 {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight} <br />
                 <Show when={!reverse()}>

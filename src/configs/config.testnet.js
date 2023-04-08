@@ -1,4 +1,6 @@
+import { networks } from "bitcoinjs-lib";
 export const network = "testnet";
+export const net = networks[network];
 export const bolt11_prefix = "lntb";
 export const loglevel = "info";
 export const api_url = "https://testnet.boltz.exchange/api";

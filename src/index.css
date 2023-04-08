@@ -263,6 +263,7 @@ hr {
   background: darkred;
   color: #fff;
 }
+[data-status='invoice.settled'] .btn-small,
 [data-status='transaction.confirmed'] .btn-small,
 [data-status='transaction.claimed'] .btn-small {
   background: #246c24;

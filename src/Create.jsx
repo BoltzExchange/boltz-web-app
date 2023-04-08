@@ -6,8 +6,7 @@ import { fetcher, lnurl_fetcher, qr, btc_divider, startInterval, focus } from ".
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
-
-// log.debug(secp);
+import { ECPair } from './ecpair/ecpair';
 
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
@@ -203,10 +202,11 @@ const Create = () => {
       if (valid()) {
 
 
-          const privateKey = secp.utils.randomPrivateKey();
-          const privateKeyHex = secp.utils.bytesToHex(privateKey);
-          const publicKey = secp.getPublicKey(privateKey);
-          const publicKeyHex = secp.utils.bytesToHex(publicKey);
+          const pair = ECPair.makeRandom();
+          const privateKey = pair.privateKey;
+          const privateKeyHex = pair.privateKey.toString("hex");
+          const publicKey = pair.publicKey;
+          const publicKeyHex = pair.publicKey.toString("hex");
           let params = null;
           let preimageHex = null;
 
