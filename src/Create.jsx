@@ -261,6 +261,8 @@ const Create = () => {
               let tmp_swaps = JSON.parse(swaps());
               tmp_swaps.push(data)
               setSwaps(JSON.stringify(tmp_swaps));
+              setInvoice("");
+              setOnchainAddress("");
               navigate("/swap/" + data.id);
           }, params);
       };
