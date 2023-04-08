@@ -7,6 +7,7 @@ import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
 import { ECPair } from './ecpair/ecpair';
+import { address } from 'bitcoinjs-lib';
 
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
@@ -15,7 +16,7 @@ import liquid_svg from "./assets/liquid-icon.svg";
 import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
-import { bolt11_prefix } from "./config";
+import { bolt11_prefix, net } from "./config";
 
 import {
   setSwap,
@@ -192,7 +193,7 @@ const Create = () => {
               amount = amount * 100000000;
           }
           const invoice = await window.webln.makeInvoice({ amount: amount });
-          log.debug("created webln invoice", invoice);
+          log.debug ("created webln invoice", invoice);
           setInvoice(invoice.paymentRequest);
       }
   };
@@ -200,7 +201,15 @@ const Create = () => {
   const create = async () => {
       setValid(true);
       if (valid()) {
-
+          try {
+            address.toOutputScript(onchainAddress(), net);
+          }
+          catch (e){
+              log.error(e);
+              setNotificationType("error");
+              setNotification("invalid onchain address");
+              return false;
+          }
 
           const pair = ECPair.makeRandom();
           const privateKey = pair.privateKey;
