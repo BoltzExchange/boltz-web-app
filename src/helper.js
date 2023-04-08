@@ -2,8 +2,9 @@ import log from 'loglevel';
 import QRCode from "qrcode";
 
 import { bech32, utf8 } from '@scure/base';
-import { setNotification, setNotificationType } from "./signals";
-import { api_url } from "./config";
+import { setNotification, setNotificationType, refundAddress } from "./signals";
+import { address } from "bitcoinjs-lib";
+import { api_url, net } from "./config";
 
 export const btc_divider = 100000000;
 
@@ -170,6 +171,66 @@ export function lnurl_fetcher(lnurl, amount_sat) {
             .catch(errorHandler);
     });
 };
+
+export const refund = (swap) => {
+    let output = "";
+    try {
+        output = address.toOutputScript(refundAddress(), net);
+    }
+    catch (e){
+        log.error(e);
+        setNotificationType("error");
+        setNotification("invalid onchain address");
+        return false;
+    }
+    log.info("refunding swap: ", swap.id);
+
+    fetcher("/getswaptransaction", (data) => {
+        log.debug("refund swap result:", data);
+        if (!data.transactionHex) {
+            return log.debug("no mempool tx found");
+        }
+        if (data.timeoutEta) {
+            const eta = new Date(data.timeoutEta * 1000);
+            const msg = "Timeout Eta: \n " + eta.toLocaleString();
+            setNotificationType("error");
+            setNotification(msg);
+            log.error(msg);
+            return false;
+        }
+        let tx = Transaction.fromHex(data.transactionHex);
+        let script = Buffer.from(swap.redeemScript, "hex");
+        log.debug("script", script);
+        let swapOutput = detectSwap(script, tx);
+        log.debug("swapoutput", swapOutput);
+        let private_key = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
+        log.debug("privkey", private_key);
+        const refundTransaction = constructRefundTransaction(
+            [{
+                ...swapOutput,
+                txHash: tx.getHash(),
+                redeemScript: script,
+                keys: private_key,
+            }],
+            output,
+            data.timeoutBlockHeight,
+            10, // fee vbyte
+            true, // rbf
+        ).toHex();
+
+        log.debug("refund_tx", refundTransaction);
+
+        fetcher("/broadcasttransaction", (data) => {
+            log.debug("refund result:", data);
+        }, {
+            "currency": "BTC",
+            "transactionHex": refundTransaction,
+        });
+    }, {
+        "id": swap.id,
+    });
+};
+
 
 
 export default fetcher;

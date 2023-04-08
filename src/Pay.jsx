@@ -8,7 +8,7 @@ import {
     denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setSwaps, setNotification, setNotificationType } from "./signals";
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, qr, downloadRefundFile, clipboard } from "./helper";
+import { refund, fetcher, qr, downloadRefundFile, clipboard } from "./helper";
 import { mempool_url, api_url, net } from "./config";
 
 import { Buffer } from "buffer";
@@ -68,65 +68,6 @@ const Pay = () => {
           }
       }
   });
-
-  const refund = () => {
-    let output = "";
-    try {
-      output = address.toOutputScript(refundAddress(), net);
-    }
-    catch (e){
-        log.error(e);
-        setNotificationType("error");
-        setNotification("invalid onchain address");
-        return false;
-    }
-    log.info("refunding swap: ", swap().id);
-
-    fetcher("/getswaptransaction", (data) => {
-        log.debug("refund swap result:", data);
-        if (!data.transactionHex) {
-          return log.debug("no mempool tx found");
-        }
-        if (data.timeoutEta) {
-            const eta = new Date(data.timeoutEta * 1000);
-            const msg = "Timeout Eta: \n " + eta.toLocaleString();
-            setNotificationType("error");
-            setNotification(msg);
-            log.error(msg);
-            return false;
-        }
-        let tx = Transaction.fromHex(data.transactionHex);
-        let script = Buffer.from(swap().redeemScript, "hex");
-        log.debug("script", script);
-        let swapOutput = detectSwap(script, tx);
-        log.debug("swapoutput", swapOutput);
-        let private_key = ECPair.fromPrivateKey(Buffer.from(swap().privateKey, "hex"));
-        log.debug("privkey", private_key);
-        const refundTransaction = constructRefundTransaction(
-          [{
-            ...swapOutput,
-            txHash: tx.getHash(),
-            redeemScript: script,
-            keys: private_key,
-          }],
-          output,
-          data.timeoutBlockHeight,
-          10, // fee vbyte
-          true, // rbf
-        ).toHex();
-
-        log.debug("refund_tx", refundTransaction);
-
-        fetcher("/broadcasttransaction", (data) => {
-            log.debug("refund result:", data);
-        }, {
-            "currency": "BTC",
-            "transactionHex": refundTransaction,
-        });
-    }, {
-        "id": swap().id,
-    });
-  };
 
   const claim = () => {
 
@@ -228,7 +169,7 @@ const Pay = () => {
                 name="refundAddress"
                 placeholder={t("refund_address_placeholder")}
               />
-              <span class="btn" onclick={() => refund()}>{t("refund")}</span>
+              <span class="btn" onclick={() => refund(swap())}>{t("refund")}</span>
               <hr />
               <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
           </Show>

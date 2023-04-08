@@ -2,7 +2,7 @@ import log from 'loglevel';
 import { createSignal, createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { refundAddress, setRefundAddress, upload, setUpload, swaps, setSwaps } from "./signals";
-import { downloadBackup } from "./helper";
+import { downloadBackup, refund } from "./helper";
 
 const [error, setError] = createSignal("no file seleced");
 const [refundJson, setRefundJson] = createSignal(null);
@@ -29,10 +29,6 @@ createEffect(() => {
   if (refundJson() === null) return setError("no json file");
   setError(false);
 });
-
-const refund = (e) => {
-  log.info("not implemented yet", refundAddress(), refundJson());
-};
 
 const refundAddressChange = (e) => {
   let t = e.currentTarget;
@@ -95,7 +91,7 @@ const Refund = () => {
             <span class="error">{error()}</span>
           </div>
           <div class={error() !== false ? "hidden" : ""}>
-            <span class="btn btn-success" onClick={refund}>
+            <span class="btn btn-success" onClick={() => refund(refundJson())}>
               refund
             </span>
           </div>
