@@ -1,12 +1,11 @@
 import log from 'loglevel';
 import { createSignal, createEffect } from "solid-js";
 import { render } from "solid-js/web";
-import { upload, setUpload, swaps, setSwaps } from "./signals";
+import { refundAddress, setRefundAddress, upload, setUpload, swaps, setSwaps } from "./signals";
 import { downloadBackup } from "./helper";
 
 const [error, setError] = createSignal("no file seleced");
 const [refundJson, setRefundJson] = createSignal(null);
-const [refundAddress, setRefundAddress] = createSignal(null);
 import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 

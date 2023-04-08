@@ -2,6 +2,7 @@ import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
 import { render } from "solid-js/web";
 import {
+    refundAddress, setRefundAddress,
     setSwapStatusTransaction, swapStatusTransaction,
     failureReason, setFailureReason, reverse, setReverse, webln,
     denomination, invoiceQr, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setSwaps, setNotification, setNotificationType } from "./signals";
@@ -13,7 +14,7 @@ import { mempool_url, api_url, net } from "./config";
 import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
 import { Transaction, networks, address } from "bitcoinjs-lib";
-import { constructClaimTransaction, detectSwap } from "boltz-core";
+import { constructClaimTransaction, constructRefundTransaction, detectSwap } from "boltz-core";
 
 import reload_svg from "./assets/reload.svg";
 
@@ -68,10 +69,63 @@ const Pay = () => {
       }
   });
 
-  const refund = (swap) => {
-    setNotificationType("error");
-    setNotification("not implemented yet");
-    log.warn('not implemented');
+  const refund = () => {
+    let output = "";
+    try {
+      output = address.toOutputScript(refundAddress(), net);
+    }
+    catch (e){
+        log.error(e);
+        setNotificationType("error");
+        setNotification("invalid onchain address");
+        return false;
+    }
+    log.info("refunding swap: ", swap().id);
+
+    fetcher("/getswaptransaction", (data) => {
+        log.debug("refund swap result:", data);
+        if (!data.transactionHex) {
+          return log.debug("no mempool tx found");
+        }
+        if (data.timeoutEta) {
+            const eta = new Date(data.timeoutEta * 1000);
+            const msg = "Timeout Eta: \n " + eta.toLocaleString();
+            setNotificationType("error");
+            setNotification(msg);
+            log.error(msg);
+            return false;
+        }
+        let tx = Transaction.fromHex(data.transactionHex);
+        let script = Buffer.from(swap().redeemScript, "hex");
+        log.debug("script", script);
+        let swapOutput = detectSwap(script, tx);
+        log.debug("swapoutput", swapOutput);
+        let private_key = ECPair.fromPrivateKey(Buffer.from(swap().privateKey, "hex"));
+        log.debug("privkey", private_key);
+        const refundTransaction = constructRefundTransaction(
+          [{
+            ...swapOutput,
+            txHash: tx.getHash(),
+            redeemScript: script,
+            keys: private_key,
+          }],
+          output,
+          data.timeoutBlockHeight,
+          10, // fee vbyte
+          true, // rbf
+        ).toHex();
+
+        log.debug("refund_tx", refundTransaction);
+
+        fetcher("/broadcasttransaction", (data) => {
+            log.debug("refund result:", data);
+        }, {
+            "currency": "BTC",
+            "transactionHex": refundTransaction,
+        });
+    }, {
+        "id": swap().id,
+    });
   };
 
   const claim = () => {
@@ -165,6 +219,16 @@ const Pay = () => {
               <h2>{t("expired")}</h2>
               <p>{t("swap_expired")}</p>
               <hr />
+              <input
+                onKeyUp={(e) => setRefundAddress(e.currentTarget.value)}
+                onChange={(e) => setRefundAddress(e.currentTarget.value)}
+                type="text"
+                id="refundAddress"
+                name="refundAddress"
+                placeholder={t("refund_address_placeholder")}
+              />
+              <span class="btn" onclick={() => refund()}>{t("refund")}</span>
+              <hr />
               <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
           </Show>
           <Show when={swapStatus() == "transaction.claimed" || swapStatus() == "invoice.settled"}>
@@ -191,10 +255,18 @@ const Pay = () => {
                 <div class="bounce3"></div>
               </div>
           </Show>
+          <Show when={swapStatus() == "invoice.failedToPay"}>
+              <h2>{t("lockup_failed")}</h2>
+              <p>{t("lockup_failed_reason")}: {failureReason()}</p>
+              SHOW ETA
+              <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
+              <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
+              <hr />
+          </Show>
           <Show when={swapStatus() == "transaction.lockupFailed"}>
               <h2>{t("lockup_failed")}</h2>
               <p>{t("lockup_failed_reason")}: {failureReason()}</p>
-              <span class="btn" onclick={() => refund(swap())}>{t("refund")}</span>
+              SHOW ETA
               <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
               <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
               <hr />

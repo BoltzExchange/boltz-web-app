@@ -15,6 +15,7 @@ export const [maximum, setMaximum] = createSignal(0);
 // swaps
 export const [receiveAmount, setReceiveAmount] = createSignal(0);
 export const [reverse, setReverse] = createSignal(false);
+export const [refundAddress, setRefundAddress] = createSignal("");
 export const [onchainAddress, setOnchainAddress] = createSignal("");
 export const [invoice, setInvoice] = createSignal("");
 export const [invoiceQr, setInvoiceQr] = createSignal("");
