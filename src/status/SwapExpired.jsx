@@ -1,8 +1,8 @@
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
-import { setRefundAddress, swap } from "./signals";
-import { refund } from "./helper";
+import { setRefundAddress, swap } from "../signals";
+import { refund } from "../helper";
 
 const SwapExpired = () => {
     const [t, { add, locale, dict }] = useI18n();

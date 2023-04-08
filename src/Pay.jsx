@@ -15,7 +15,8 @@ import TransactionMempool from "./status/TransactionMempool";
 import TransactionConfirmed from "./status/TransactionConfirmed";
 import TransactionLockupFailed from "./status/TransactionLockupFailed";
 import TransactionClaimed from "./status/TransactionClaimed";
-import SwapExpired from "./SwapExpired";
+import SwapExpired from "./status/SwapExpired";
+import SwapCreated from "./status/SwapCreated";
 
 
 const Pay = () => {
@@ -88,6 +89,7 @@ const Pay = () => {
           <Show when={swapStatus() == "transaction.lockupFailed"}><TransactionLockupFailed /></Show>
           <Show when={swapStatus() == "transaction.refunded"}><TransactionRefunded /></Show>
           <Show when={swapStatus() == "invoice.set"}><InvoiceSet /></Show>
+          <Show when={swapStatus() == "swap.created"}><SwapCreated /></Show>
           <a class="btn btn-mempool" target="_blank" href={mempoolLink(!reverse() ? swap().address : swap().lockupAddress )}>{t("mempool")}</a>
       </Show>
       <Show when={!swap()}>

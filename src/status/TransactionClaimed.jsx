@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
-import { swap, denomination } from "./signals";
+import { swap, denomination } from "../signals";
 
 const TransactionClaimed = () => {
     const [t, { add, locale, dict }] = useI18n();
