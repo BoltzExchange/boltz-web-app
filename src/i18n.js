@@ -56,7 +56,8 @@ const dict = {
     pay_invoice_webln: "pay invoice via WebLN",
     select_asset: "Select Asset",
     tx_confirmed: "Transaction confirmed",
-    tx_ready_to_claim: "claiming transaction now..."
+    tx_ready_to_claim: "claiming transaction now...",
+    transaction_refunded: "Boltz has refunded the Transaction",
   },
   de: {
     swap: "Tausch",

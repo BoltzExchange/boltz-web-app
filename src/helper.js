@@ -2,8 +2,13 @@ import log from 'loglevel';
 import QRCode from "qrcode";
 
 import { bech32, utf8 } from '@scure/base';
-import { setNotification, setNotificationType, refundAddress } from "./signals";
-import { address } from "bitcoinjs-lib";
+import { setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
+
+import { Buffer } from "buffer";
+import { ECPair } from "./ecpair/ecpair";
+import { Transaction, networks, address } from "bitcoinjs-lib";
+import { constructClaimTransaction, constructRefundTransaction, detectSwap } from "boltz-core";
+
 import { api_url, net } from "./config";
 
 export const btc_divider = 100000000;
@@ -63,7 +68,37 @@ export const fetcher = (url, cb, params = null) => {
     .catch(errorHandler);
 };
 
+export const fetchSwapStatus = (swap) => {
+  fetcher("/swapstatus", (data) => {
+    setSwapStatus(data.status);
+    setSwapStatusTransaction(data.transaction);
+    if (data.status == "transaction.confirmed" && data.transaction) {
+        claim(swap);
+    }
+    setFailureReason(data.failureReason);
+    setNotificationType("success");
+    setNotification("swap status retrieved!");
+  }, {id: swap.id});
+  return false;
+};
+
 export const downloadRefundFile = (swap) => {
+  let json = {
+    id: swap.id,
+    currency: "BTC",
+    redeemScript: swap.redeemScript,
+    privateKey: swap.privateKey,
+    timeoutBlockHeight: swap.timeoutBlockHeight,
+  };
+  let hiddenElement = document.createElement("a");
+  hiddenElement.href =
+    "data:application/json;charset=utf-8," + encodeURI(JSON.stringify(json));
+  hiddenElement.target = "_blank";
+  hiddenElement.download = "boltz-refund-" + swap.id + ".json";
+  hiddenElement.click();
+};
+
+export const downloadRefundQr = (swap) => {
   let json = {
     id: swap.id,
     currency: "BTC",
@@ -239,6 +274,48 @@ export async function getfeeestimation() {
             resolve(data.BTC);
         });
     });
+};
+
+export const claim = async (swap) => {
+
+    log.info("claiming swap: ", swap.id);
+    let mempool_tx = swapStatusTransaction();
+    if (!mempool_tx) {
+        return log.debug("no mempool tx found");
+    }
+    if (!mempool_tx.hex) {
+        return log.debug("mempool tx hex not found");
+    }
+    log.debug("mempool_tx", mempool_tx.hex);
+    let fees = await getfeeestimation();
+    let tx = Transaction.fromHex(mempool_tx.hex);
+    let script = Buffer.from(swap.redeemScript, "hex");
+    let swapOutput = detectSwap(script, tx);
+    let private_key = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
+    log.debug("private_key: ", private_key);
+    let preimage = Buffer.from(swap.preimage, "hex");
+    log.debug("preimage: ", preimage);
+    const claimTransaction = constructClaimTransaction(
+        [{
+            ...swapOutput,
+            txHash: tx.getHash(),
+            preimage: preimage,
+            redeemScript: script,
+            keys: private_key,
+        }],
+        address.toOutputScript(swap.onchainAddress, net),
+        fees,
+        true,
+    ).toHex();
+    log.debug("claim_tx", claimTransaction);
+
+    fetcher("/broadcasttransaction", (data) => {
+        log.debug("claim result:", data);
+    }, {
+        "currency": "BTC",
+        "transactionHex": claimTransaction,
+    });
+
 };
 
 
