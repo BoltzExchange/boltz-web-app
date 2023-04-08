@@ -26,6 +26,9 @@ const Pay = () => {
     fetcher("/swapstatus", (data) => {
       setSwapStatus(data.status);
       setSwapStatusTransaction(data.transaction);
+      if (data.status == "transaction.confirmed" && data.transaction) {
+          claim();
+      }
       setFailureReason(data.failureReason);
       setNotificationType("success");
       setNotification("swap status retrieved!");
@@ -57,6 +60,9 @@ const Pay = () => {
                   log.debug(`Event status update: ${data.status}`, data);
                   setSwapStatus(data.status);
                   setSwapStatusTransaction(data.transaction);
+                  if (data.status == "transaction.confirmed" && data.transaction) {
+                      claim();
+                  }
               };
           }
       }
@@ -68,7 +74,9 @@ const Pay = () => {
     log.warn('not implemented');
   };
 
-  const claim = (swap) => {
+  const claim = () => {
+
+    log.info("claiming swap: ", swap().id);
     let mempool_tx = swapStatusTransaction();
     if (!mempool_tx) {
       return log.debug("no mempool tx found");
@@ -78,11 +86,11 @@ const Pay = () => {
     }
     log.debug("mempool_tx", mempool_tx.hex);
     let tx = Transaction.fromHex(mempool_tx.hex);
-    let script = Buffer.from(swap.redeemScript, "hex");
+    let script = Buffer.from(swap().redeemScript, "hex");
     let swapOutput = detectSwap(script, tx);
-    let private_key = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
+    let private_key = ECPair.fromPrivateKey(Buffer.from(swap().privateKey, "hex"));
     log.debug("private_key: ", private_key);
-    let preimage = Buffer.from(swap.preimage, "hex");
+    let preimage = Buffer.from(swap().preimage, "hex");
     log.debug("preimage: ", preimage);
     const claimTransaction = constructClaimTransaction(
       [{
@@ -92,7 +100,7 @@ const Pay = () => {
         redeemScript: script,
         keys: private_key,
       }],
-      address.toOutputScript(swap.onchainAddress, net),
+      address.toOutputScript(swap().onchainAddress, net),
       10,
       true,
     ).toHex();
@@ -168,7 +176,6 @@ const Pay = () => {
           <Show when={swapStatus() == "transaction.confirmed"}>
               <h2>{t("tx_confirmed")}</h2>
               <p>{t("tx_ready_to_claim")}</p>
-              <span class="btn" onclick={() => claim(swap())}>CLAIM!!!!</span>
               <div class="spinner">
                 <div class="bounce1"></div>
                 <div class="bounce2"></div>
