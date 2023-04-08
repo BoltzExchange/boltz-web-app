@@ -226,7 +226,7 @@ hr {
 .btn {
   cursor: pointer;
   display: block;
-  margin: 3px 3px 0;
+  margin: 3px 3px;
   margin-top: 5px;
   padding: 8px 12px;
   text-decoration: none;
