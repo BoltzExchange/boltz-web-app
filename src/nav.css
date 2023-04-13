@@ -42,6 +42,10 @@ nav a.active {
 #network {
     position: relative;
     width: auto;
+    color: #0b1623;
+    background: #fff;
+    margin-right: 12px;
+    font-size: 12px;
 }
 
 #languages {

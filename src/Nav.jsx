@@ -35,6 +35,7 @@ const Nav = () => {
           <A id="logo" href="/">
             <img src={logo} alt="boltz.exchange btc logo" />
           </A>
+          <div id="network" class="btn btn-small">{network}</div>
 
           <div id="collapse" class={hamburger() ? "active" : ""}>
               <A href="/swap" onClick={() => setHamburger(false)}>{t("swap")}</A>
@@ -66,7 +67,6 @@ const Nav = () => {
                   <span class="lang" onClick={() => set_local("es")}>{locales["es"]}</span>
               </div>
           </div>
-          <div id="network" class="btn btn-small">{network}</div>
       </div>
 
     </nav>
