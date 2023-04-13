@@ -6,8 +6,6 @@ import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetchSwapStatus, claim, fetcher, qr, } from "./helper";
 import { mempool_url, api_url } from "./config";
-
-import reload_svg from "./assets/reload.svg";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
 import TransactionRefunded from "./status/TransactionRefunded";
@@ -17,7 +15,6 @@ import TransactionLockupFailed from "./status/TransactionLockupFailed";
 import TransactionClaimed from "./status/TransactionClaimed";
 import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
-
 
 const Pay = () => {
   const params = useParams();
@@ -56,10 +53,7 @@ const Pay = () => {
       }
   });
 
-
-  const mempoolLink = (a) => {
-    return mempool_url + "/address/" + a;
-  };
+  const mempoolLink = (a) => `${mempool_url}/address/${a}`;
 
   onCleanup(() => {
       log.debug("cleanup Pay");

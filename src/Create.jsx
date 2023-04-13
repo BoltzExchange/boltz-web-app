@@ -1,8 +1,7 @@
 import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
-import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, lnurl_fetcher, qr, btc_divider, startInterval, focus } from "./helper";
+import { fetcher, lnurl_fetcher, btc_divider, focus } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
@@ -13,21 +12,17 @@ import AssetSelect from "./AssetSelect";
 
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
-import bitcoin_svg from "./assets/bitcoin-icon.svg";
-import liquid_svg from "./assets/liquid-icon.svg";
 import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
 import { bolt11_prefix, net } from "./config";
 
 import {
-  setSwap,
   swaps,
   setSwaps,
   assetSelect,
   setAssetSelect,
   asset,
-  setAsset,
   denomination,
   setDenomination,
   boltzFee,
@@ -48,9 +43,6 @@ import {
   setConfig,
   valid,
   setValid,
-  amountValid,
-  setAmountValid,
-  swapValid,
   setSwapValid,
   invoice,
   setInvoice,
@@ -108,36 +100,7 @@ const Create = () => {
       }
   });
 
-  // validation amount
-  // createEffect(() => {
-  //     // think about validation again
-  //     let send_amount = sendAmount();
-  //     let target = document.getElementById("sendAmount");
-  //     target.checkValidity();
-  //     setAmountValid(true);
-  //     for (let k in target.validity) {
-  //       if (k === "valid") continue;
-  //       if (target.validity[k]) {
-  //         // setReceiveAmount(k);
-  //         setAmountValid(false);
-  //         break;
-  //       }
-  //    };
-  // });
-
-  // validation form
-  // createEffect(() => {
-  //     let create_btn = document.getElementById("create-swap");
-  //     if (amountValid() && swapValid()) {
-  //       setValid(true);
-  //       create_btn.disabled = false;
-  //     } else {
-  //       setValid(false);
-  //       create_btn.disabled = true;
-  //     }
-  // });
-
-  const [t, { add, locale, dict }] = useI18n();
+  const [t] = useI18n();
 
   const navigate = useNavigate();
 
@@ -200,9 +163,7 @@ const Create = () => {
       if (valid()) {
 
           const pair = ECPair.makeRandom();
-          const privateKey = pair.privateKey;
           const privateKeyHex = pair.privateKey.toString("hex");
-          const publicKey = pair.publicKey;
           const publicKeyHex = pair.publicKey.toString("hex");
           let params = null;
           let preimageHex = null;
@@ -307,7 +268,7 @@ const Create = () => {
             onKeyUp={(e) => changeSendAmount(e.currentTarget.value)}
           />
         </div>
-        <div id="flip-assets" onClick={(e) => { setReverse(!reverse()); focus(); }}>
+        <div id="flip-assets" onClick={() => { setReverse(!reverse()); focus(); }}>
             <img src={arrow_svg} alt="flip assets" />
         </div>
         <div>
@@ -346,7 +307,7 @@ const Create = () => {
       </div>
       <hr />
       <Show when={webln() && !reverse()}>
-          <button class="btn btn-light" onClick={(e) => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
+          <button class="btn btn-light" onClick={() => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
           <hr />
       </Show>
       <textarea
