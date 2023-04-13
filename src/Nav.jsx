@@ -40,6 +40,7 @@ const Nav = () => {
           <div id="collapse" class={hamburger() ? "active" : ""}>
               <A href="/swap" onClick={() => setHamburger(false)}>{t("swap")}</A>
               <A href="/refund" onClick={() => setHamburger(false)}>{t("refund")}</A>
+              <A href="/history" onClick={() => setHamburger(false)}>{t("history")}</A>
               <a
                 class="external"
                 target="_blank"

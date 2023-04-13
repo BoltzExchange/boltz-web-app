@@ -30,16 +30,7 @@ createEffect(() => {
   setError(false);
 });
 
-const refundAddressChange = (e) => {
-  let t = e.currentTarget;
-  if (t.value.trim()) {
-    setRefundAddress(t.value.trim());
-  } else {
-    setRefundAddress(null);
-  }
-};
-
-const Refund = () => {
+const History = () => {
 
   const navigate = useNavigate();
   const [t, { add, locale, dict }] = useI18n();
@@ -69,35 +60,33 @@ const Refund = () => {
 
 
   return (
-    <div id="refund">
-        <div class="frame">
-          <h2>{t("refund_a_swap")}</h2>
-          <p>{t("refund_a_swap_subline")}</p>
-          <hr />
-          <input
-            onKeyUp={refundAddressChange}
-            onChange={refundAddressChange}
-            type="text"
-            id="refundAddress"
-            name="refundAddress"
-            placeholder={t("refund_address_placeholder")}
-          />
-          <input
-            type="file"
-            id="refundUpload"
-            onChange={(e) => setUpload(e.currentTarget.files[0])}
-          />
-          <div class={error() === false ? "hidden" : ""}>
-            <span class="error">{error()}</span>
-          </div>
-          <div class={error() !== false ? "hidden" : ""}>
-            <span class="btn btn-success" onClick={() => refund(refundJson())}>
-              refund
-            </span>
-          </div>
-        </div>
+    <div id="history">
+        <Show when={JSON.parse(swaps()).length > 0}>
+            <div class="frame">
+              <h2>{t("refund_past_swaps")}</h2>
+              <p>{t("refund_past_swaps_subline")}</p>
+              <hr />
+              <div id="past-swaps">
+                  <For each={JSON.parse(swaps())}>
+                      {(_swap) => (
+                          <div class="past-swap">
+                              <span class="btn-small" onClick={() => navigate("/swap/" + _swap.id)}>view</span>
+                              <span data-reverse={_swap.reverse} data-asset={_swap.asset} class="past-asset">-></span>
+                              &nbsp;ID: {_swap.id}, created: {printDate(_swap.date)}&nbsp;
+                              <span class="btn-small btn-danger" onClick={() => delete_swap(_swap.id)}>delete</span>
+                              <hr />
+                          </div>
+                      )}
+                  </For>
+              </div>
+            <div class="btns">
+              <button class="btn btn-danger" onClick={deleteLocalstorage}>{t("refund_clear")}</button>
+              <button class="btn " onClick={() => downloadBackup(swaps())}>{t("refund_backup")}</button>
+            </div>
+            </div>
+        </Show>
     </div>
   );
 };
 
-export default Refund;
+export default History;

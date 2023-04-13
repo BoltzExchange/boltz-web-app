@@ -1,5 +1,6 @@
 const dict = {
   en: {
+    history: "History",
     swap: "Swap",
     refund: "Refund",
     documentation: "Docs",
@@ -21,7 +22,7 @@ const dict = {
     cancel_swap: "Cancel Swap",
     new_swap: "New Swap",
     success_swap: "Swap Success",
-    create_and_paste: "Amount: {{ amount }} {{ denomination }}\nPaste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink",
+    create_and_paste: "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink\n\nAmount: {{ amount }} {{ denomination }}",
     congrats: "Congratulations!",
     successfully_swapped: "You have successfully swapped {{ amount }} {{ denomination }}.",
     pay_invoice: "Swap: {{ id }}",

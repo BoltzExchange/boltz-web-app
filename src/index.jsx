@@ -12,6 +12,7 @@ import Notification from "./Notification";
 import Footer from "./Footer";
 import Hero from "./Hero";
 import Refund from "./Refund";
+import History from "./History";
 import { loglevel } from "./config";
 
 log.setLevel(loglevel);
@@ -31,6 +32,7 @@ render(
             <Route path="/swap" component={Create} />
             <Route path="/swap/:id" component={Pay} />
             <Route path="/refund" component={Refund} />
+            <Route path="/history" component={History} />
           </Routes>
           <Notification />
           <Footer />

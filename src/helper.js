@@ -26,10 +26,6 @@ export const clipboard = (text, message) => {
 };
 
 
-export const focus = () => {
-  document.getElementById("sendAmount").focus();
-};
-
 export const errorHandler = (error) => {
     setNotificationType("error")
     if (typeof error.json === "function") {

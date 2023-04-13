@@ -1,7 +1,7 @@
 import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, lnurl_fetcher, btc_divider, focus } from "./helper";
+import { fetcher, lnurl_fetcher, btc_divider } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
@@ -64,6 +64,7 @@ const Create = () => {
       setMinimum(cfg.limits.minimal / divider);
       setMaximum(cfg.limits.maximal / divider);
       setBoltzFee(cfg.fees.percentage);
+      // TODO issue do not touch amounts when flipping assets
       if (reverse()) {
         let rev = cfg.fees.minerFees.baseAsset.reverse;
         let fee = rev.claim + rev.lockup;
@@ -268,7 +269,7 @@ const Create = () => {
             onKeyUp={(e) => changeSendAmount(e.currentTarget.value)}
           />
         </div>
-        <div id="flip-assets" onClick={() => { setReverse(!reverse()); focus(); }}>
+        <div id="flip-assets" onClick={() => { setReverse(!reverse()) }}>
             <img src={arrow_svg} alt="flip assets" />
         </div>
         <div>
