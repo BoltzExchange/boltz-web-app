@@ -1,11 +1,10 @@
 import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
-import { render } from "solid-js/web";
-import { setSwapStatusTransaction, reverse, setReverse, denomination, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps, setSwaps } from "./signals";
-import { useParams, useNavigate } from "@solidjs/router";
+import { setSwapStatusTransaction, reverse, setReverse, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps } from "./signals";
+import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetchSwapStatus, claim, fetcher, qr, } from "./helper";
-import { mempool_url, api_url } from "./config";
+import { fetchSwapStatus, claim, qr } from "./helper";
+import { mempool_url, mempool_url_liquid, api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
 import TransactionRefunded from "./status/TransactionRefunded";
@@ -18,7 +17,6 @@ import SwapCreated from "./status/SwapCreated";
 
 const Pay = () => {
   const params = useParams();
-  const navigate = useNavigate();
   const [t, { add, locale, dict }] = useI18n();
 
   let stream = null;
@@ -53,7 +51,13 @@ const Pay = () => {
       }
   });
 
-  const mempoolLink = (a) => `${mempool_url}/address/${a}`;
+  const mempoolLink = (asset, a) => {
+      if (asset == "L-BTC") {
+          return `${mempool_url_liquid}/address/${a}`;
+      } else {
+          return `${mempool_url}/address/${a}`;
+      }
+  };
 
   onCleanup(() => {
       log.debug("cleanup Pay");
@@ -84,7 +88,7 @@ const Pay = () => {
           <Show when={swapStatus() == "transaction.refunded"}><TransactionRefunded /></Show>
           <Show when={swapStatus() == "invoice.set"}><InvoiceSet /></Show>
           <Show when={swapStatus() == "swap.created"}><SwapCreated /></Show>
-          <a class="btn btn-mempool" target="_blank" href={mempoolLink(!reverse() ? swap().address : swap().lockupAddress )}>{t("mempool")}</a>
+          <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().asset, !reverse() ? swap().address : swap().lockupAddress )}>{t("mempool")}</a>
       </Show>
       <Show when={!swap()}>
           <p>{t("pay_swap_404")}</p>

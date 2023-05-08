@@ -60,14 +60,16 @@ const Nav = () => {
                 >{t("onion")}</a
               >
           </div>
-          <div id="languages">
-              <span>{locales[i18n()]}</span>
-              <div class="dropdown">
-                  <span class="lang" onClick={() => set_local("en")}>{locales["en"]}</span>
-                  <span class="lang" onClick={() => set_local("de")}>{locales["de"]}</span>
-                  <span class="lang" onClick={() => set_local("es")}>{locales["es"]}</span>
+          <Show when={false}>
+              <div id="languages">
+                  <span>{locales[i18n()]}</span>
+                  <div class="dropdown">
+                      <span class="lang" onClick={() => set_local("en")}>{locales["en"]}</span>
+                      <span class="lang" onClick={() => set_local("de")}>{locales["de"]}</span>
+                      <span class="lang" onClick={() => set_local("es")}>{locales["es"]}</span>
+                  </div>
               </div>
-          </div>
+          </Show>
       </div>
 
     </nav>
