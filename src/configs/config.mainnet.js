@@ -5,3 +5,5 @@ export const loglevel = "info";
 export const api_url = "https://boltz.exchange/api";
 export const mempool_url = "https://mempool.space";
 export const mempool_ws_url = "wss://mempool.space/api/v1/ws";
+export const mempool_url_liquid = "https://liquid.network";
+export const mempool_ws_url_liquid = "wss://liquid.network/api/v1/ws";

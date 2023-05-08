@@ -5,3 +5,5 @@ export const loglevel = "debug";
 export const api_url = "http://localhost:9001";
 export const mempool_url = "http://localhost:8080";
 export const mempool_ws_url = "ws://localhost:8080/api/v1/ws";
+export const mempool_url_liquid = "http://localhost:8081";
+export const mempool_ws_url_liquid = "ws://localhost:8081/api/v1/ws";
