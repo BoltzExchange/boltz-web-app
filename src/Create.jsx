@@ -5,8 +5,8 @@ import { fetcher, lnurl_fetcher, btc_divider } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
-import { ECPair } from './ecpair/ecpair';
-import { address } from 'bitcoinjs-lib';
+import { getECPair } from './ecpair/ecpair';
+import { getAddress, getNetwork } from './compat';
 
 import AssetSelect from "./AssetSelect";
 
@@ -15,7 +15,7 @@ import sat_svg from "./assets/sat.svg";
 import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
-import { bolt11_prefix, net } from "./config";
+import { bolt11_prefix, pairs } from "./config";
 
 import {
   swaps,
@@ -57,7 +57,10 @@ const Create = () => {
 
   // set fees and pairs
   createEffect(() => {
-    let cfg = config();
+    let cfg = config()["BTC/BTC"];
+    if (asset() == "l-btc") {
+       cfg = config()["L-BTC/BTC"];
+    }
     let denom = denomination();
     if (cfg) {
       let divider = (denom == "btc") ? btc_divider : 1;
@@ -108,8 +111,7 @@ const Create = () => {
   const fetchPairs = () => {
     fetcher("/getpairs", (data) => {
         log.debug("getpairs", data);
-        let cfg = data.pairs["BTC/BTC"];
-        setConfig(cfg);
+        setConfig(data.pairs);
         setNotificationType("success");
         setNotification("successfully updated fees!");
     });
@@ -163,6 +165,12 @@ const Create = () => {
       setValid(true);
       if (valid()) {
 
+          let asset_name = asset() == "btc" ? "BTC" : "L-BTC";
+
+          const ECPair = getECPair(asset_name);
+          const address = getAddress(asset_name);
+          const net = getNetwork(asset_name);
+
           const pair = ECPair.makeRandom();
           const privateKeyHex = pair.privateKey.toString("hex");
           const publicKeyHex = pair.publicKey.toString("hex");
@@ -184,10 +192,9 @@ const Create = () => {
               preimageHex = secp.utils.bytesToHex(preimage);
               let preimageHash = await secp.utils.sha256(preimage);
               let preimageHashHex = secp.utils.bytesToHex(preimageHash);
-              // TODO: not hardcode asset
               params = {
                   "type": "reversesubmarine",
-                  "pairId": "BTC/BTC",
+                  "pairId": asset_name+"/BTC",
                   "orderSide": "buy",
                   "invoiceAmount": parseInt(sendAmount()),
                   "claimPublicKey": publicKeyHex,
@@ -206,9 +213,10 @@ const Create = () => {
                   log.warn("neither lnurl, lnaddress or invoice supplied")
                   return false;
               }
+
               params = {
                   "type": "submarine",
-                  "pairId": "BTC/BTC",
+                  "pairId": asset_name+"/BTC",
                   "orderSide": "sell",
                   "refundPublicKey": publicKeyHex,
                   "invoice": invoice()
@@ -244,6 +252,14 @@ const Create = () => {
 
   fetchPairs();
 
+  let setAssetPair = () => {
+    if (pairs.length <= 1) {
+        return false;
+    }
+    setAssetSelect(!assetSelect())
+  };
+
+
   return (
     <div class="frame" data-reverse={reverse()} data-asset={asset()}>
       <h2>{t("create_swap")}</h2>
@@ -251,12 +267,14 @@ const Create = () => {
       <hr />
       <div class="icons">
         <div>
-          <div className="asset-wrap" onClick={() => setAssetSelect(!assetSelect())}>
+          <div className="asset-wrap" onClick={setAssetPair}>
               <div className="asset asset-1">
                   <div className="asset-selected">
                       <span class="icon-1 icon"></span>
                       <span class="asset-text"></span>
-                      <span class="arrow-down"></span>
+                      <Show when={pairs.length > 1}>
+                          <span class="arrow-down"></span>
+                      </Show>
                   </div>
               </div>
           </div>
@@ -273,12 +291,14 @@ const Create = () => {
             <img src={arrow_svg} alt="flip assets" />
         </div>
         <div>
-          <div className="asset-wrap" onClick={() => setAssetSelect(!assetSelect())}>
+          <div className="asset-wrap" onClick={setAssetPair}>
               <div className="asset asset-2">
                   <div className="asset-selected">
                       <span class="icon-2 icon"></span>
                       <span class="asset-text"></span>
-                      <span class="arrow-down"></span>
+                      <Show when={pairs.length > 1}>
+                          <span class="arrow-down"></span>
+                      </Show>
                   </div>
               </div>
               <div class="assets-select">

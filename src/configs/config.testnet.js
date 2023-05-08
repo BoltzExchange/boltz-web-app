@@ -1,6 +1,5 @@
-import { networks } from "bitcoinjs-lib";
+export const pairs = ["BTC/BTC", "L-BTC/BTC"];
 export const network = "testnet";
-export const net = networks[network];
 export const bolt11_prefix = "lntb";
 export const loglevel = "debug";
 export const api_url = "https://testnet.boltz.exchange/api";

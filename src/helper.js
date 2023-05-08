@@ -5,9 +5,8 @@ import { bech32, utf8 } from '@scure/base';
 import { setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
 
 import { Buffer } from "buffer";
-import { ECPair } from "./ecpair/ecpair";
-import { Transaction, networks, address } from "bitcoinjs-lib";
-import { constructClaimTransaction, constructRefundTransaction, detectSwap } from "boltz-core";
+import { getECPair } from "./ecpair/ecpair";
+import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap} from "./compat";
 
 import { api_url, net } from "./config";
 
@@ -32,6 +31,7 @@ export const errorHandler = (error) => {
         error.json().then(jsonError => {
             setNotification(jsonError.error);
         }).catch(genericError => {
+            log.error(genericError);
             setNotification(error.statusText);
         });
     } else {
@@ -81,7 +81,7 @@ export const fetchSwapStatus = (swap) => {
 export const downloadRefundFile = (swap) => {
   let json = {
     id: swap.id,
-    currency: "BTC",
+    currency: swap.asset.toUpperCase(),
     redeemScript: swap.redeemScript,
     privateKey: swap.privateKey,
     timeoutBlockHeight: swap.timeoutBlockHeight,
@@ -97,7 +97,7 @@ export const downloadRefundFile = (swap) => {
 export const downloadRefundQr = (swap) => {
   let json = {
     id: swap.id,
-    currency: "BTC",
+    currency: swap.asset.toUpperCase(),
     redeemScript: swap.redeemScript,
     privateKey: swap.privateKey,
     timeoutBlockHeight: swap.timeoutBlockHeight,
@@ -205,6 +205,12 @@ export function lnurl_fetcher(lnurl, amount_sat) {
 
 export async function refund(swap) {
     let output = "";
+
+    const asset_name = swap.asset.toUpperCase()
+    const ECPair = getECPair(asset_name);
+    const address = getAddress(asset_name);
+    const net = getNetwork(asset_name);
+
     try {
         output = address.toOutputScript(refundAddress(), net);
     }
@@ -215,7 +221,7 @@ export async function refund(swap) {
         return false;
     }
     log.info("refunding swap: ", swap.id);
-    let fees = await getfeeestimation();
+    let fees = await getfeeestimation(swap);
 
     fetcher("/getswaptransaction", (data) => {
         log.debug("refund swap result:", data);
@@ -230,6 +236,12 @@ export async function refund(swap) {
             log.error(msg);
             return false;
         }
+        const Transaction = getTransaction(asset_name);
+        const constructRefundTransaction = getConstructRefundTransaction(asset_name);
+        const detectSwap = getDetectSwap(asset_name);
+        const net = getNetwork(asset_name);
+        const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
+
         let tx = Transaction.fromHex(data.transactionHex);
         let script = Buffer.from(swap.redeemScript, "hex");
         log.debug("script", script);
@@ -248,6 +260,7 @@ export async function refund(swap) {
             data.timeoutBlockHeight,
             fees,
             true, // rbf
+            assetHash
         ).toHex();
 
         log.debug("refund_tx", refundTransaction);
@@ -255,7 +268,7 @@ export async function refund(swap) {
         fetcher("/broadcasttransaction", (data) => {
             log.debug("refund result:", data);
         }, {
-            "currency": "BTC",
+            "currency": asset_name,
             "transactionHex": refundTransaction,
         });
     }, {
@@ -263,16 +276,19 @@ export async function refund(swap) {
     });
 };
 
-export async function getfeeestimation() {
+export async function getfeeestimation(swap) {
     return new Promise((resolve) => {
         fetcher("/getfeeestimation", (data) => {
             log.debug("getfeeestimation: ", data);
-            resolve(data.BTC);
+            let asset = swap.asset.toUpperCase();
+            resolve(data[asset]);
         });
     });
 };
 
 export const claim = async (swap) => {
+    const asset_name = swap.asset.toUpperCase()
+    const ECPair = getECPair(asset_name);
 
     log.info("claiming swap: ", swap.id);
     let mempool_tx = swapStatusTransaction();
@@ -283,9 +299,18 @@ export const claim = async (swap) => {
         return log.debug("mempool tx hex not found");
     }
     log.debug("mempool_tx", mempool_tx.hex);
-    let fees = await getfeeestimation();
+
+    const Transaction = getTransaction(asset_name);
+    const constructClaimTransaction = getConstructClaimTransaction(asset_name);
+    const detectSwap = getDetectSwap(asset_name);
+    const address = getAddress(asset_name);
+    const net = getNetwork(asset_name);
+    const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
+
+    let fees = await getfeeestimation(swap);
     let tx = Transaction.fromHex(mempool_tx.hex);
     let script = Buffer.from(swap.redeemScript, "hex");
+
     let swapOutput = detectSwap(script, tx);
     let private_key = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
     log.debug("private_key: ", private_key);
@@ -302,13 +327,14 @@ export const claim = async (swap) => {
         address.toOutputScript(swap.onchainAddress, net),
         fees,
         true,
+        assetHash,
     ).toHex();
     log.debug("claim_tx", claimTransaction);
 
     fetcher("/broadcasttransaction", (data) => {
         log.debug("claim result:", data);
     }, {
-        "currency": "BTC",
+        "currency": asset_name,
         "transactionHex": claimTransaction,
     });
 

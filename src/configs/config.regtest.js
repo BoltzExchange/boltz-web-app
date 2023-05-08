@@ -1,6 +1,5 @@
-import { networks } from "bitcoinjs-lib";
+export const pairs = ["L-BTC/BTC"];
 export const network = "regtest";
-export const net = networks[network];
 export const bolt11_prefix = "lnbcrt";
 export const loglevel = "debug";
 export const api_url = "http://localhost:9001";
