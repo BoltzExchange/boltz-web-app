@@ -16,7 +16,7 @@ import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
 import { bolt11_prefix, pairs } from "./config";
-
+import { formatAmount } from './utils/denomination';
 import {
   swaps,
   setSwaps,
@@ -117,24 +117,15 @@ const Create = () => {
     return false;
   };
 
-  const formatAmount = (amount) => {
-    if (denomination() == "btc") {
-        amount = amount.toFixed(8);
-    }
-    if (denomination() == "sat") {
-        amount = Math.ceil(amount);
-    }
-    return amount;
+  const calculateReceiveAmount = (sendAmount) => {
+    const preMinerFee = parseFloat(sendAmount) - minerFee();
+    sendAmount = preMinerFee - Math.floor(preMinerFee * (boltzFee() / 100));
+    return formatAmount(sendAmount);
   };
 
-  const calculateReceiveAmount = (amount) => {
-    amount = parseFloat(amount) - minerFee() - (amount * boltzFee()) / 100;
-    return formatAmount(amount);
-  };
-
-  const calculateSendAmount = (amount) => {
-    amount = parseFloat(amount) + parseFloat(minerFee()) + (amount * boltzFee()) / 100;
-    return formatAmount(amount);
+  const calculateSendAmount = (receiveAmount) => {
+    receiveAmount = parseFloat(receiveAmount) + parseFloat(minerFee()) + Math.ceil((receiveAmount * boltzFee()) / 100);
+    return formatAmount(Math.floor(receiveAmount));
   };
 
   const changeReceiveAmount = (amount) => {
@@ -231,6 +222,7 @@ const Create = () => {
               data.reverse = reverse();
               data.asset = asset();
               data.preimage = preimageHex;
+              data.receiveAmount = receiveAmount();
               data.onchainAddress = onchainAddress();
               let tmp_swaps = JSON.parse(swaps());
               tmp_swaps.push(data)
