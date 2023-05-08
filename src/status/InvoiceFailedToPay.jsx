@@ -15,7 +15,6 @@ const InvoiceFailedToPay = () => {
            <p>{t("lockup_failed_reason")}: {failureReason()}</p>
            SHOW ETA
            <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
-           <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
            <hr />
         </div>
     );

@@ -1,12 +1,9 @@
-import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { reverse, invoiceQr, swap } from "../signals";
-import { downloadRefundFile, fetchSwapStatus, clipboard } from "../helper";
+import { invoiceQr, swap } from "../signals";
+import { downloadRefundFile, clipboard } from "../helper";
 
 const InvoiceSet = () => {
     const [t, { add, locale, dict }] = useI18n();
-
-    const navigate = useNavigate();
 
     return (
         <div>
@@ -25,7 +22,6 @@ const InvoiceSet = () => {
             <div class="btns">
 
                 <span class="btn btn-success" onclick={() => downloadRefundFile(swap())}>{t("download_refund_json")}</span>
-                <span class="btn btn-success" onclick={() => downloadRefundQr(swap())}>{t("download_refund_qr")}</span>
             </div>
         </div>
     );
