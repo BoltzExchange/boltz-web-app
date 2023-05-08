@@ -16,7 +16,7 @@ import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
 import { bolt11_prefix, pairs } from "./config";
-
+import { formatAmount } from './utils/denomination';
 import {
   swaps,
   setSwaps,
@@ -115,16 +115,6 @@ const Create = () => {
         setConfig(data.pairs);
     });
     return false;
-  };
-
-  const formatAmount = (amount) => {
-    if (denomination() == "btc") {
-        amount = amount.toFixed(8);
-    }
-    if (denomination() == "sat") {
-        amount = Math.ceil(amount);
-    }
-    return amount;
   };
 
   const calculateReceiveAmount = (amount) => {
