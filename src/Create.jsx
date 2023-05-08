@@ -117,14 +117,15 @@ const Create = () => {
     return false;
   };
 
-  const calculateReceiveAmount = (amount) => {
-    amount = parseFloat(amount) - minerFee() - (amount * boltzFee()) / 100;
-    return formatAmount(amount);
+  const calculateReceiveAmount = (sendAmount) => {
+    const preMinerFee = parseFloat(sendAmount) - minerFee();
+    sendAmount = preMinerFee - Math.floor(preMinerFee * (boltzFee() / 100));
+    return formatAmount(sendAmount);
   };
 
-  const calculateSendAmount = (amount) => {
-    amount = parseFloat(amount) + parseFloat(minerFee()) + (amount * boltzFee()) / 100;
-    return formatAmount(amount);
+  const calculateSendAmount = (receiveAmount) => {
+    receiveAmount = parseFloat(receiveAmount) + parseFloat(minerFee()) + Math.ceil((receiveAmount * boltzFee()) / 100);
+    return formatAmount(Math.floor(receiveAmount));
   };
 
   const changeReceiveAmount = (amount) => {
@@ -221,6 +222,7 @@ const Create = () => {
               data.reverse = reverse();
               data.asset = asset();
               data.preimage = preimageHex;
+              data.receiveAmount = receiveAmount();
               data.onchainAddress = onchainAddress();
               let tmp_swaps = JSON.parse(swaps());
               tmp_swaps.push(data)
