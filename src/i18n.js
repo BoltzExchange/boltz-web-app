@@ -16,7 +16,7 @@ const dict = {
     max: "Maximum",
     assets: "Assets",
     socialmedia: "Follow us on Social Media",
-    footer: "made with ❤️ in El Salvador",
+    footer: "made with ❤️ by Team Boltz",
     create_swap: "Create Atomic Swap",
     create_swap_subline: "Payment includes network and boltz service fees",
     cancel_swap: "Cancel Swap",
