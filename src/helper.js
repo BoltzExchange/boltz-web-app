@@ -49,7 +49,7 @@ export const checkResponse = (response) => {
 export const fetcher = (url, cb, params = null) => {
   let opts = {};
   if (params) {
-    params.referralId = "dni";
+    params.referralId = "frontend";
     opts = {
       method: "POST",
       headers: {

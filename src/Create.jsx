@@ -192,11 +192,15 @@ const Create = () => {
               preimageHex = secp.utils.bytesToHex(preimage);
               let preimageHash = await secp.utils.sha256(preimage);
               let preimageHashHex = secp.utils.bytesToHex(preimageHash);
+              let amount = sendAmount();
+              if (denomination() == "btc") {
+                  amount = amount * 100000000;
+              }
               params = {
                   "type": "reversesubmarine",
                   "pairId": asset_name+"/BTC",
                   "orderSide": "buy",
-                  "invoiceAmount": parseInt(sendAmount()),
+                  "invoiceAmount": amount,
                   "claimPublicKey": publicKeyHex,
                   "preimageHash": preimageHashHex
               };
