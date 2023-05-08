@@ -1,9 +1,7 @@
-import { createEffect } from "solid-js";
-import { render } from "solid-js/web";
 import { A } from "@solidjs/router";
 
 import { useI18n } from "@solid-primitives/i18n";
-import { i18n, setI18n, hamburger, setHamburger } from "./signals";
+import { i18n, setI18n, hamburger, setHamburger, swaps } from "./signals";
 import { network } from "./config";
 
 import "./nav.css";
@@ -40,7 +38,9 @@ const Nav = () => {
           <div id="collapse" class={hamburger() ? "active" : ""}>
               <A href="/swap" onClick={() => setHamburger(false)}>{t("swap")}</A>
               <A href="/refund" onClick={() => setHamburger(false)}>{t("refund")}</A>
-              <A href="/history" onClick={() => setHamburger(false)}>{t("history")}</A>
+              <Show when={JSON.parse(swaps()).length > 0}>
+                <A href="/history" onClick={() => setHamburger(false)}>{t("history")}</A>
+              </Show>
               <a
                 class="external"
                 target="_blank"

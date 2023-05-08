@@ -8,7 +8,7 @@ import { Buffer } from "buffer";
 import { getECPair } from "./ecpair/ecpair";
 import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap} from "./compat";
 
-import { api_url, net } from "./config";
+import { api_url } from "./config";
 
 export const btc_divider = 100000000;
 
