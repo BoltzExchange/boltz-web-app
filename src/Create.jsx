@@ -66,7 +66,6 @@ const Create = () => {
       let divider = (denom == "btc") ? btc_divider : 1;
       setMinimum(cfg.limits.minimal / divider);
       setMaximum(cfg.limits.maximal / divider);
-      setBoltzFee(cfg.fees.percentage);
       // TODO issue do not touch amounts when flipping assets
       if (reverse()) {
         let rev = cfg.fees.minerFees.baseAsset.reverse;
@@ -74,12 +73,14 @@ const Create = () => {
         if (denom == "btc") {
             fee = (fee / btc_divider).toFixed(8);
         }
+        setBoltzFee(cfg.fees.percentage);
         setMinerFee(fee);
       } else {
         let fee = cfg.fees.minerFees.baseAsset.normal;
         if (denom == "btc") {
             fee = (fee / btc_divider).toFixed(8);
         }
+        setBoltzFee(cfg.fees.percentageSwapIn);
         setMinerFee(fee);
       }
     }
