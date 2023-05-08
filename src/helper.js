@@ -81,7 +81,7 @@ export const fetchSwapStatus = (swap) => {
 export const downloadRefundFile = (swap) => {
   let json = {
     id: swap.id,
-    currency: swap.asset.toUpperCase(),
+    currency: swap.asset,
     redeemScript: swap.redeemScript,
     privateKey: swap.privateKey,
     timeoutBlockHeight: swap.timeoutBlockHeight,
@@ -97,7 +97,7 @@ export const downloadRefundFile = (swap) => {
 export const downloadRefundQr = (swap) => {
   let json = {
     id: swap.id,
-    currency: swap.asset.toUpperCase(),
+    currency: swap.asset,
     redeemScript: swap.redeemScript,
     privateKey: swap.privateKey,
     timeoutBlockHeight: swap.timeoutBlockHeight,
@@ -206,7 +206,7 @@ export function lnurl_fetcher(lnurl, amount_sat) {
 export async function refund(swap) {
     let output = "";
 
-    const asset_name = swap.asset.toUpperCase()
+    const asset_name = swap.asset;
     const ECPair = getECPair(asset_name);
     const address = getAddress(asset_name);
     const net = getNetwork(asset_name);
@@ -280,14 +280,14 @@ export async function getfeeestimation(swap) {
     return new Promise((resolve) => {
         fetcher("/getfeeestimation", (data) => {
             log.debug("getfeeestimation: ", data);
-            let asset = swap.asset.toUpperCase();
+            let asset = swap.asset;
             resolve(data[asset]);
         });
     });
 };
 
 export const claim = async (swap) => {
-    const asset_name = swap.asset.toUpperCase()
+    const asset_name = swap.asset;
     const ECPair = getECPair(asset_name);
 
     log.info("claiming swap: ", swap.id);

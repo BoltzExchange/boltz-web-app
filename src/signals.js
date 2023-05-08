@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
+import { pairs } from "./config";
 
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
@@ -28,7 +29,7 @@ export const [failureReason, setFailureReason] = createSignal("");
 // local storage
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");
 export const [denomination, setDenomination] = createStorageSignal("denomination", "sat");
-export const [asset, setAsset] = createStorageSignal("asset", "l-btc");
+export const [asset, setAsset] = createStorageSignal("asset", pairs[0].split("/")[0]);
 export const [sendAmount, setSendAmount] = createStorageSignal("sendAmount", 0);
 export const [swaps, setSwaps] = createStorageSignal("swaps", "[]");
 export const [reverse, setReverse] = createStorageSignal("reverse", true);

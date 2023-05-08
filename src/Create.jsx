@@ -58,7 +58,7 @@ const Create = () => {
   // set fees and pairs
   createEffect(() => {
     let cfg = config()["BTC/BTC"];
-    if (asset() == "l-btc") {
+    if (asset() == "L-BTC") {
        cfg = config()["L-BTC/BTC"];
     }
     let denom = denomination();
@@ -165,7 +165,7 @@ const Create = () => {
       setValid(true);
       if (valid()) {
 
-          let asset_name = asset() == "btc" ? "BTC" : "L-BTC";
+          let asset_name = asset();
 
           const ECPair = getECPair(asset_name);
           const address = getAddress(asset_name);

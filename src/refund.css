@@ -13,12 +13,12 @@
 .past-asset[data-reverse=true]:before {
     background-image: url(./assets/lightning-icon.svg);
 }
-.past-asset[data-asset=btc][data-reverse=true]:after,
-.past-asset[data-asset=btc][data-reverse=false]:before {
+.past-asset[data-asset=BTC][data-reverse=true]:after,
+.past-asset[data-asset=BTC][data-reverse=false]:before {
     background-image: url(./assets/bitcoin-icon.svg);
 }
-.past-asset[data-asset=l-btc][data-reverse=true]:after,
-.past-asset[data-asset=l-btc][data-reverse=false]:before {
+.past-asset[data-asset=L-BTC][data-reverse=true]:after,
+.past-asset[data-asset=L-BTC][data-reverse=false]:before {
     background-image: url(./assets/liquid-icon.svg);
 }
 
