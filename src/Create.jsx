@@ -112,8 +112,6 @@ const Create = () => {
     fetcher("/getpairs", (data) => {
         log.debug("getpairs", data);
         setConfig(data.pairs);
-        setNotificationType("success");
-        setNotification("successfully updated fees!");
     });
     return false;
   };
