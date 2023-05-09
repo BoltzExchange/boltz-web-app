@@ -29,7 +29,7 @@
     "boltz-core-liquid-michael1011": "^0.5.3",
     "buffer": "^6.0.3",
     "create-hmac": "^1.1.7",
-    "ecpair": "^2.1.0",
+    "ecpair": "2.0.1",
     "liquidjs-lib": "^6.0.2-liquid.24",
     "qrcode": "^1.5.0",
     "solid-js": "^1.7.0"

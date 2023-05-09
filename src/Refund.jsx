@@ -6,7 +6,6 @@ import { downloadBackup, refund } from "./helper";
 
 const [error, setError] = createSignal("no file seleced");
 const [refundJson, setRefundJson] = createSignal(null);
-import { useParams, useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
 import "./refund.css";
@@ -41,32 +40,7 @@ const refundAddressChange = (e) => {
 
 const Refund = () => {
 
-  const navigate = useNavigate();
   const [t, { add, locale, dict }] = useI18n();
-
-  const printDate = (d) => {
-    let date = new Date();
-    date.setTime(d);
-    return date.toLocaleDateString();
-  };
-
-  const deleteLocalstorage = () => {
-      if(confirm(t("delete_localstorage"))) {
-          setSwaps("[]")
-      }
-  };
-
-
-  const delete_swap = (swap_id) => {
-      if(confirm(t("delete_localstorage"))) {
-          let tmp_swaps = JSON.parse(swaps());
-          if (tmp_swaps) {
-              let new_swaps = tmp_swaps.filter(s => s.id !== swap_id);
-              setSwaps(JSON.stringify(new_swaps));
-          }
-      }
-  };
-
 
   return (
     <div id="refund">

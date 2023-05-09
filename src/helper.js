@@ -2,10 +2,10 @@ import log from 'loglevel';
 import QRCode from "qrcode";
 
 import { bech32, utf8 } from '@scure/base';
-import { setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
+import { setTimeoutEta, setTimeoutBlockheight, setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
 
 import { Buffer } from "buffer";
-import { getECPair } from "./ecpair/ecpair";
+import { ECPair } from "./ecpair/ecpair";
 import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap, getOutputAmount } from "./compat";
 
 import { api_url } from "./config";
@@ -71,6 +71,26 @@ export const fetchSwapStatus = (swap) => {
     if (data.status == "transaction.confirmed" && data.transaction) {
         claim(swap);
     }
+    if (data.status == "transaction.lockupFailed" || data.status == "invoice.failedToPay") {
+        fetcher("/getswaptransaction", (data) => {
+            if (!data.transactionHex) {
+                log.error("no mempool tx found");
+            }
+            if (!data.timeoutEta) {
+                log.error("no timeout eta");
+            }
+            if (!data.timeoutBlockHeight) {
+                log.error("no timeout blockheight");
+            }
+            const timestamp = data.timeoutEta * 1000;
+            const eta = new Date(timestamp);
+            log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
+            setTimeoutEta(timestamp);
+            setTimeoutBlockheight(data.timeoutBlockHeight);
+        }, {
+            "id": swap.id,
+        });
+    };
     setFailureReason(data.failureReason);
     setNotificationType("success");
     setNotification("swap status retrieved!");
@@ -82,6 +102,7 @@ export const downloadRefundFile = (swap) => {
   let json = {
     id: swap.id,
     currency: swap.asset,
+    asset: swap.asset,
     redeemScript: swap.redeemScript,
     privateKey: swap.privateKey,
     timeoutBlockHeight: swap.timeoutBlockHeight,
@@ -206,8 +227,9 @@ export function lnurl_fetcher(lnurl, amount_sat) {
 export async function refund(swap) {
     let output = "";
 
+    log.debug("starting to refund swap", swap);
+
     const asset_name = swap.asset;
-    const ECPair = getECPair(asset_name);
     const address = getAddress(asset_name);
     const net = getNetwork(asset_name);
 
@@ -264,9 +286,12 @@ export async function refund(swap) {
         ).toHex();
 
         log.debug("refund_tx", refundTransaction);
-
         fetcher("/broadcasttransaction", (data) => {
             log.debug("refund result:", data);
+            if (data.transactionId) {
+                setNotificationType("success");
+                setNotification(`Refund transaction broadcasted: ${data.transactionId}`);
+            }
         }, {
             "currency": asset_name,
             "transactionHex": refundTransaction,
@@ -305,7 +330,6 @@ const createAdjustedClaim = (swap, claimDetails, destination, fees, assetHash) =
 
 export const claim = async (swap) => {
     const asset_name = swap.asset;
-    const ECPair = getECPair(asset_name);
 
     log.info("claiming swap: ", swap.id);
     let mempool_tx = swapStatusTransaction();
@@ -357,7 +381,6 @@ export const claim = async (swap) => {
     });
 
 };
-
 
 
 export default fetcher;

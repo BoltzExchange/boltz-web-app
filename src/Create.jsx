@@ -5,7 +5,7 @@ import { fetcher, lnurl_fetcher, btc_divider } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
-import { getECPair } from './ecpair/ecpair';
+import { ECPair } from './ecpair/ecpair';
 import { getAddress, getNetwork } from './compat';
 
 import AssetSelect from "./AssetSelect";
@@ -159,7 +159,6 @@ const Create = () => {
 
           let asset_name = asset();
 
-          const ECPair = getECPair(asset_name);
           const address = getAddress(asset_name);
           const net = getNetwork(asset_name);
 
@@ -330,7 +329,7 @@ const Create = () => {
       </div>
       <hr />
       <Show when={webln() && !reverse()}>
-          <button class="btn btn-light" onClick={() => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
+          <button id="webln" class="btn btn-light" onClick={() => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
           <hr />
       </Show>
       <textarea
