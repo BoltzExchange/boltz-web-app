@@ -2,7 +2,7 @@ import log from 'loglevel';
 import QRCode from "qrcode";
 
 import { bech32, utf8 } from '@scure/base';
-import { setTimeoutEta, setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
+import { setTimeoutEta, setTimeoutBlockheight, setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
 
 import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
@@ -79,10 +79,14 @@ export const fetchSwapStatus = (swap) => {
             if (!data.timeoutEta) {
                 log.error("no timeout eta");
             }
+            if (!data.timeoutBlockHeight) {
+                log.error("no timeout blockheight");
+            }
             const timestamp = data.timeoutEta * 1000;
             const eta = new Date(timestamp);
             log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
             setTimeoutEta(timestamp);
+            setTimeoutBlockheight(data.timeoutBlockHeight);
         }, {
             "id": swap.id,
         });
