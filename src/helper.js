@@ -2,7 +2,7 @@ import log from 'loglevel';
 import QRCode from "qrcode";
 
 import { bech32, utf8 } from '@scure/base';
-import { setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
+import { setTimeoutEta, setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
 
 import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
@@ -71,6 +71,22 @@ export const fetchSwapStatus = (swap) => {
     if (data.status == "transaction.confirmed" && data.transaction) {
         claim(swap);
     }
+    if (data.status == "transaction.lockupFailed" || data.status == "invoice.failedToPay") {
+        fetcher("/getswaptransaction", (data) => {
+            if (!data.transactionHex) {
+                log.error("no mempool tx found");
+            }
+            if (!data.timeoutEta) {
+                log.error("no timeout eta");
+            }
+            const timestamp = data.timeoutEta * 1000;
+            const eta = new Date(timestamp);
+            log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
+            setTimeoutEta(timestamp);
+        }, {
+            "id": swap.id,
+        });
+    };
     setFailureReason(data.failureReason);
     setNotificationType("success");
     setNotification("swap status retrieved!");
@@ -337,7 +353,6 @@ export const claim = async (swap) => {
     });
 
 };
-
 
 
 export default fetcher;

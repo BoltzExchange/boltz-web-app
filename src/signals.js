@@ -25,6 +25,7 @@ export const [swap, setSwap] = createSignal(null);
 export const [swapStatus, setSwapStatus] = createSignal("");
 export const [swapStatusTransaction, setSwapStatusTransaction] = createSignal("");
 export const [failureReason, setFailureReason] = createSignal("");
+export const [timeoutEta, setTimeoutEta] = createSignal(0);
 
 // local storage
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");

@@ -25,6 +25,7 @@ const dict = {
     create_and_paste: "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink\n\nAmount: {{ amount }} {{ denomination }}",
     congrats: "Congratulations!",
     successfully_swapped: "You have successfully swapped {{ amount }} {{ denomination }}.",
+    timeout_eta: "Timeout ETA",
     pay_invoice: "Swap: {{ id }}",
     pay_swap_404: "Swap not found!",
     pay_timeout_blockheight: "Timeout blockheight",
