@@ -192,7 +192,7 @@ const Create = () => {
                   "type": "reversesubmarine",
                   "pairId": asset_name+"/BTC",
                   "orderSide": "buy",
-                  "invoiceAmount": amount,
+                  "invoiceAmount": Number(amount),
                   "claimPublicKey": publicKeyHex,
                   "preimageHash": preimageHashHex
               };
@@ -319,8 +319,13 @@ const Create = () => {
         </div>
         <label>
             <span class="icon-reload" onClick={fetchPairs}><img src={reload_svg} /></span>
-            {t("network_fee")}: <span class="network-fee">{convertAmount(minerFee(), denominations.sat)} <span class="denominator" data-denominator={denomination()}></span></span><br />
-            {t("fee")} ({boltzFee()}%): <span class="boltz-fee">{convertAmount(minerFee(), denominations.sat)} <span class="denominator" data-denominator={denomination()}></span></span>
+            {t("network_fee")}: <span class="network-fee">{formatAmount(convertAmount(minerFee(), denominations.sat))} <span class="denominator" data-denominator={denomination()}></span></span><br />
+            {t("fee")} ({boltzFee()}%): <span class="boltz-fee">{
+              prepareAmountCalculation(
+                (amount) => amount * boltzFee() / 100,
+                sendAmount(),
+              )
+            } <span class="denominator" data-denominator={denomination()}></span></span>
         </label>
       </div>
       <hr />

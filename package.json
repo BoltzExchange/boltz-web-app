@@ -26,7 +26,7 @@
     "@solidjs/router": "^0.8.2",
     "@vulpemventures/secp256k1-zkp": "^3.0.0",
     "boltz-core": "^0.6.2",
-    "boltz-core-liquid": "^0.5.1",
+    "boltz-core-liquid-michael1011": "^0.5.3",
     "buffer": "^6.0.3",
     "create-hmac": "^1.1.7",
     "ecpair": "^2.1.0",
