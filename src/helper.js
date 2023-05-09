@@ -5,7 +5,7 @@ import { bech32, utf8 } from '@scure/base';
 import { setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
 
 import { Buffer } from "buffer";
-import { getECPair } from "./ecpair/ecpair";
+import { ECPair } from "./ecpair/ecpair";
 import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap} from "./compat";
 
 import { api_url } from "./config";
@@ -207,7 +207,6 @@ export async function refund(swap) {
     let output = "";
 
     const asset_name = swap.asset;
-    const ECPair = getECPair(asset_name);
     const address = getAddress(asset_name);
     const net = getNetwork(asset_name);
 
@@ -288,7 +287,6 @@ export async function getfeeestimation(swap) {
 
 export const claim = async (swap) => {
     const asset_name = swap.asset;
-    const ECPair = getECPair(asset_name);
 
     log.info("claiming swap: ", swap.id);
     let mempool_tx = swapStatusTransaction();
