@@ -1,6 +1,6 @@
 import { denomination } from "../signals";
 
-export const sat_factor = 100_000_000;
+export const satFactor = 100_000_000;
 
 export const denominations = {
   sat: "sat",
@@ -13,8 +13,8 @@ export const convertAmount = (amount, amountDenomination) => {
   }
 
   switch (denomination()) {
-    case denominations.btc: return amount / sat_factor;
-    case denominations.sat: return Math.ceil(amount * sat_factor);
+    case denominations.btc: return amount / satFactor;
+    case denominations.sat: return Math.ceil(amount * satFactor);
   }
 }
 
