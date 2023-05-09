@@ -8,9 +8,17 @@ import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
 import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap} from "./compat";
 
-import { api_url } from "./config";
+import { api_url, mempool_url, mempool_url_liquid } from "./config";
 
 export const btc_divider = 100000000;
+
+export const mempoolLink = (asset, a) => {
+    if (asset == "L-BTC") {
+        return `${mempool_url_liquid}/address/${a}`;
+    } else {
+        return `${mempool_url}/address/${a}`;
+    }
+};
 
 export const startInterval = (cb, interval) => {
   cb();
@@ -289,8 +297,14 @@ export async function refund(swap) {
         fetcher("/broadcasttransaction", (data) => {
             log.debug("refund result:", data);
             if (data.transactionId) {
+                // TODO: save refundTx into swaps json and set it to the current swap
+                // only if the swaps was not initiated with the refund json
+
+                // let tmp_swaps = JSON.parse(swaps());
+                // tmp_swaps.push(data)
+                // setSwaps(JSON.stringify(tmp_swaps));
                 setNotificationType("success");
-                setNotification(`Refund transaction broadcasted: ${data.transactionId}`);
+                setNotification(`Refund broadcasted`);
             }
         }, {
             "currency": asset_name,

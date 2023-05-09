@@ -8,6 +8,7 @@ const dict = {
     channels: "Channels",
     ordinals: "Ordinals",
     mempool: "View on mempool.space",
+    mempool_refund: "View on refund tx on mempool.space",
     help: "Help",
     network_fee: "Network Fee",
     fee: "Boltz Fee",

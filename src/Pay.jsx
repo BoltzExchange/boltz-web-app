@@ -3,15 +3,15 @@ import { createEffect, onCleanup } from "solid-js";
 import { setSwapStatusTransaction, reverse, setReverse, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps } from "./signals";
 import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetchSwapStatus, claim, qr } from "./helper";
-import { mempool_url, mempool_url_liquid, api_url } from "./config";
+import { fetchSwapStatus, claim, qr, mempoolLink } from "./helper";
+import { api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
-import TransactionRefunded from "./status/TransactionRefunded";
 import TransactionMempool from "./status/TransactionMempool";
 import TransactionConfirmed from "./status/TransactionConfirmed";
 import TransactionLockupFailed from "./status/TransactionLockupFailed";
 import TransactionClaimed from "./status/TransactionClaimed";
+import SwapRefunded from "./status/SwapRefunded";
 import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
 
@@ -51,14 +51,6 @@ const Pay = () => {
       }
   });
 
-  const mempoolLink = (asset, a) => {
-      if (asset == "L-BTC") {
-          return `${mempool_url_liquid}/address/${a}`;
-      } else {
-          return `${mempool_url}/address/${a}`;
-      }
-  };
-
   onCleanup(() => {
       log.debug("cleanup Pay");
       if (stream) {
@@ -85,9 +77,9 @@ const Pay = () => {
           <Show when={swapStatus() == "transaction.mempool"}><TransactionMempool /></Show>
           <Show when={swapStatus() == "invoice.failedToPay"}><InvoiceFailedToPay /></Show>
           <Show when={swapStatus() == "transaction.lockupFailed"}><TransactionLockupFailed /></Show>
-          <Show when={swapStatus() == "transaction.refunded"}><TransactionRefunded /></Show>
           <Show when={swapStatus() == "invoice.set"}><InvoiceSet /></Show>
           <Show when={swapStatus() == "swap.created"}><SwapCreated /></Show>
+          <Show when={swapStatus() == "swap.refunded"}><SwapRefunded /></Show>
           <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().asset, !reverse() ? swap().address : swap().lockupAddress )}>{t("mempool")}</a>
       </Show>
       <Show when={!swap()}>
