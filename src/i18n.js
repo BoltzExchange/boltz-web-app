@@ -53,7 +53,7 @@ const dict = {
     tx_in_mempool: "Transaction is in mempool",
     tx_in_mempool_subline: "waiting for confirmation to complete the swap",
     expired: "Swap expired!",
-    swap_expired: "You did not complete your payment in time. Try again.",
+    swap_expired: "You did not complete your payment in time.",
     create_invoice_webln: "create invoice via WebLN",
     pay_invoice_webln: "pay invoice via WebLN",
     select_asset: "Select Asset",

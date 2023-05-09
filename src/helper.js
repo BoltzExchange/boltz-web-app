@@ -102,6 +102,7 @@ export const downloadRefundFile = (swap) => {
   let json = {
     id: swap.id,
     currency: swap.asset,
+    asset: swap.asset,
     redeemScript: swap.redeemScript,
     privateKey: swap.privateKey,
     timeoutBlockHeight: swap.timeoutBlockHeight,
@@ -226,6 +227,8 @@ export function lnurl_fetcher(lnurl, amount_sat) {
 export async function refund(swap) {
     let output = "";
 
+    log.debug("starting to refund swap", swap);
+
     const asset_name = swap.asset;
     const address = getAddress(asset_name);
     const net = getNetwork(asset_name);
@@ -283,9 +286,12 @@ export async function refund(swap) {
         ).toHex();
 
         log.debug("refund_tx", refundTransaction);
-
         fetcher("/broadcasttransaction", (data) => {
             log.debug("refund result:", data);
+            if (data.transactionId) {
+                setNotificationType("success");
+                setNotification(`Refund transaction broadcasted: ${data.transactionId}`);
+            }
         }, {
             "currency": asset_name,
             "transactionHex": refundTransaction,
