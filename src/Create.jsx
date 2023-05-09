@@ -322,7 +322,7 @@ const Create = () => {
       </div>
       <hr />
       <Show when={webln() && !reverse()}>
-          <button class="btn btn-light" onClick={() => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
+          <button id="webln" class="btn btn-light" onClick={() => createWeblnInvoice()}>{t("create_invoice_webln")}</button>
           <hr />
       </Show>
       <textarea

@@ -32,7 +32,7 @@ export const [denomination, setDenomination] = createStorageSignal("denomination
 export const [asset, setAsset] = createStorageSignal("asset", pairs[0].split("/")[0]);
 export const [sendAmount, setSendAmount] = createStorageSignal("sendAmount", 0);
 export const [swaps, setSwaps] = createStorageSignal("swaps", "[]");
-export const [reverse, setReverse] = createStorageSignal("reverse", true);
+export const [reverse, setReverse] = createSignal(true);
 
 // validation
 export const [valid, setValid] = createSignal(false);
