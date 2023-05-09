@@ -16,7 +16,7 @@ import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
 import { bolt11_prefix, pairs } from "./config";
-import { formatAmount } from './utils/denomination';
+import { convertAmount, denominations, formatAmount, satFactor } from './utils/denomination';
 import {
   swaps,
   setSwaps,
@@ -70,16 +70,10 @@ const Create = () => {
       if (reverse()) {
         let rev = cfg.fees.minerFees.baseAsset.reverse;
         let fee = rev.claim + rev.lockup;
-        if (denom == "btc") {
-            fee = (fee / btc_divider).toFixed(8);
-        }
         setBoltzFee(cfg.fees.percentage);
         setMinerFee(fee);
       } else {
         let fee = cfg.fees.minerFees.baseAsset.normal;
-        if (denom == "btc") {
-            fee = (fee / btc_divider).toFixed(8);
-        }
         setBoltzFee(cfg.fees.percentageSwapIn);
         setMinerFee(fee);
       }
@@ -93,7 +87,7 @@ const Create = () => {
         send_amount = 0.001;
     }
     setSendAmount(send_amount)
-    setReceiveAmount(calculateReceiveAmount(send_amount))
+    setReceiveAmount(prepareAmountCalculation(calculateReceiveAmount, send_amount))
   });
 
   // validation swap
@@ -120,22 +114,30 @@ const Create = () => {
   const calculateReceiveAmount = (sendAmount) => {
     const preMinerFee = parseFloat(sendAmount) - minerFee();
     sendAmount = preMinerFee - Math.floor(preMinerFee * (boltzFee() / 100));
-    return formatAmount(sendAmount);
+    return sendAmount;
   };
 
   const calculateSendAmount = (receiveAmount) => {
     receiveAmount = parseFloat(receiveAmount) + parseFloat(minerFee()) + Math.ceil((receiveAmount * boltzFee()) / 100);
-    return formatAmount(Math.floor(receiveAmount));
+    return Math.floor(receiveAmount);
+  };
+
+  const prepareAmountCalculation = (fn, amount) => {
+    const satAmount = denomination() === denominations.sat ?
+      amount :
+      Math.ceil(amount * satFactor);
+
+    return formatAmount(convertAmount(fn(satAmount), denominations.sat))
   };
 
   const changeReceiveAmount = (amount) => {
     setReceiveAmount(amount);
-    setSendAmount(calculateSendAmount(amount));
+    setSendAmount(prepareAmountCalculation(calculateSendAmount, amount));
   };
 
   const changeSendAmount = (amount) => {
     setSendAmount(amount);
-    setReceiveAmount(calculateReceiveAmount(amount));
+    setReceiveAmount(prepareAmountCalculation(calculateReceiveAmount, amount));
   };
 
   const createWeblnInvoice = async () => {
@@ -189,7 +191,7 @@ const Create = () => {
                   "type": "reversesubmarine",
                   "pairId": asset_name+"/BTC",
                   "orderSide": "buy",
-                  "invoiceAmount": amount,
+                  "invoiceAmount": Number(amount),
                   "claimPublicKey": publicKeyHex,
                   "preimageHash": preimageHashHex
               };
@@ -316,8 +318,13 @@ const Create = () => {
         </div>
         <label>
             <span class="icon-reload" onClick={fetchPairs}><img src={reload_svg} /></span>
-            {t("network_fee")}: <span class="network-fee">{minerFee()} <span class="denominator" data-denominator={denomination()}></span></span><br />
-            {t("fee")} ({boltzFee()}%): <span class="boltz-fee">{denomination() == "btc" ? ((sendAmount() * boltzFee()) / 100).toFixed(8) : Math.ceil((sendAmount() * boltzFee()) / 100)} <span class="denominator" data-denominator={denomination()}></span></span>
+            {t("network_fee")}: <span class="network-fee">{formatAmount(convertAmount(minerFee(), denominations.sat))} <span class="denominator" data-denominator={denomination()}></span></span><br />
+            {t("fee")} ({boltzFee()}%): <span class="boltz-fee">{
+              prepareAmountCalculation(
+                (amount) => amount * boltzFee() / 100,
+                sendAmount(),
+              )
+            } <span class="denominator" data-denominator={denomination()}></span></span>
         </label>
       </div>
       <hr />

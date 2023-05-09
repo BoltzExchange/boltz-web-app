@@ -6,7 +6,7 @@ import { setTimeoutEta, setTimeoutBlockheight, setFailureReason, setSwapStatus, 
 
 import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
-import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap} from "./compat";
+import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap, getOutputAmount } from "./compat";
 
 import { api_url, mempool_url, mempool_url_liquid } from "./config";
 
@@ -325,6 +325,23 @@ export async function getfeeestimation(swap) {
     });
 };
 
+const createAdjustedClaim = (swap, claimDetails, destination, fees, assetHash) => {
+  const inputSum = claimDetails.reduce(
+    (total, input) => total + getOutputAmount(swap.asset, input),
+    0,
+  );
+  const feeBudget = inputSum - swap.receiveAmount;
+  
+  const constructClaimTransaction = getConstructClaimTransaction(swap.asset)
+  return constructClaimTransaction(
+    claimDetails,
+    destination,
+    feeBudget,
+    true,
+    assetHash,
+  );
+};
+
 export const claim = async (swap) => {
     const asset_name = swap.asset;
 
@@ -339,7 +356,6 @@ export const claim = async (swap) => {
     log.debug("mempool_tx", mempool_tx.hex);
 
     const Transaction = getTransaction(asset_name);
-    const constructClaimTransaction = getConstructClaimTransaction(asset_name);
     const detectSwap = getDetectSwap(asset_name);
     const address = getAddress(asset_name);
     const net = getNetwork(asset_name);
@@ -354,18 +370,20 @@ export const claim = async (swap) => {
     log.debug("private_key: ", private_key);
     let preimage = Buffer.from(swap.preimage, "hex");
     log.debug("preimage: ", preimage);
-    const claimTransaction = constructClaimTransaction(
-        [{
-            ...swapOutput,
-            txHash: tx.getHash(),
-            preimage: preimage,
-            redeemScript: script,
-            keys: private_key,
-        }],
-        address.toOutputScript(swap.onchainAddress, net),
-        fees,
-        true,
-        assetHash,
+    const claimTransaction = createAdjustedClaim(
+      swap,
+      [
+        {
+          ...swapOutput,
+          txHash: tx.getHash(),
+          preimage: preimage,
+          redeemScript: script,
+          keys: private_key,
+        },
+      ],
+      address.toOutputScript(swap.onchainAddress, net),
+      fees,
+      assetHash
     ).toHex();
     log.debug("claim_tx", claimTransaction);
 

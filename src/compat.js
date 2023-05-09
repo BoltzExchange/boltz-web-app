@@ -1,8 +1,8 @@
 import { network } from "./config";
 import { address, networks, Transaction } from 'bitcoinjs-lib';
-import { address as l_address, networks as l_networks, Transaction as l_Transaction } from "liquidjs-lib";
+import { address as l_address, networks as l_networks, Transaction as l_Transaction, confidential } from "liquidjs-lib";
 import { constructClaimTransaction, constructRefundTransaction, detectSwap } from "boltz-core";
-import { constructClaimTransaction as lcCT, constructRefundTransaction as lcRT, detectSwap as ldS } from "boltz-core-liquid";
+import { constructClaimTransaction as lcCT, constructRefundTransaction as lcRT, detectSwap as ldS, targetFee } from "boltz-core-liquid-michael1011";
 
 const getAddress = (asset) => {
     if (asset === "L-BTC") {
@@ -38,7 +38,17 @@ const getConstructClaimTransaction = (asset) => {
 
 const getConstructRefundTransaction = (asset) => {
     if (asset === "L-BTC") {
-        return lcRT;
+        return (
+          refundDetails,
+          outputScript,
+          timeoutBlockHeight,
+          feePerVbyte,
+          isRbf,
+          assetHash
+        ) =>
+            targetFee(feePerVbyte, (fee) =>
+                lcRT(refundDetails, outputScript, timeoutBlockHeight, fee, isRbf, assetHash),
+            );
     } else {
         return constructRefundTransaction;
     }
@@ -52,5 +62,19 @@ const getDetectSwap = (asset) => {
     }
 }
 
+const getOutputAmount = (asset, output) => {
+    return asset === "L-BTC" ?
+        confidential.confidentialValueToSatoshi(output.value) :
+        output.value;
+}
 
-export { getDetectSwap, getConstructClaimTransaction, getConstructRefundTransaction, getAddress, getNetwork, getTransaction };
+
+export {
+    getAddress,
+    getNetwork,
+    getDetectSwap,
+    getTransaction,
+    getOutputAmount,
+    getConstructClaimTransaction,
+    getConstructRefundTransaction,
+};
