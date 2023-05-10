@@ -1,13 +1,10 @@
-import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
 import { swap, failureReason, timeoutEta, timeoutBlockHeight } from "../signals";
 import { downloadRefundFile } from "../helper";
 
 const InvoiceFailedToPay = () => {
-    const [t, { add, locale, dict }] = useI18n();
-
-    const navigate = useNavigate();
+    const [t] = useI18n();
 
     return (
         <div>

@@ -10,8 +10,6 @@ import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, g
 
 import { api_url, mempool_url, mempool_url_liquid } from "./config";
 
-export const btc_divider = 100000000;
-
 export const mempoolLink = (asset, a) => {
     if (asset == "L-BTC") {
         return `${mempool_url_liquid}/address/${a}`;
@@ -344,7 +342,7 @@ const createAdjustedClaim = (swap, claimDetails, destination, assetHash) => {
     0,
   );
   const feeBudget = Math.floor(inputSum - swap.receiveAmount);
-  
+
   const constructClaimTransaction = getConstructClaimTransaction(swap.asset)
   return constructClaimTransaction(
     claimDetails,
