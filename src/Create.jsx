@@ -191,7 +191,7 @@ const Create = () => {
                   "type": "reversesubmarine",
                   "pairId": asset_name+"/BTC",
                   "orderSide": "buy",
-                  "invoiceAmount": Number(amount),
+                  "invoiceAmount": Math.ceil(Number(amount)),
                   "claimPublicKey": publicKeyHex,
                   "preimageHash": preimageHashHex
               };
@@ -226,7 +226,9 @@ const Create = () => {
               data.reverse = reverse();
               data.asset = asset();
               data.preimage = preimageHex;
-              data.receiveAmount = receiveAmount();
+              data.receiveAmount = denomination() === denominations.sat ?
+                receiveAmount() :
+                Math.ceil(receiveAmount() * satFactor);
               data.onchainAddress = onchainAddress();
               let tmp_swaps = JSON.parse(swaps());
               tmp_swaps.push(data)
