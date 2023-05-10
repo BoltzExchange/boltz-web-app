@@ -1,31 +1,15 @@
-import { createSignal, createEffect } from "solid-js";
-import { refundAddress, upload, swaps, setSwaps } from "./signals";
+import { swaps, setSwaps } from "./signals";
 import { downloadBackup } from "./helper";
-
-const [error, setError] = createSignal("no file seleced");
 
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
-import "./css/refund.css";
-
-createEffect(() => {
-  new Response(upload()).json().then(
-    (json) => {
-      if (json === 0) return;
-      setRefundJson(json);
-    },
-    () => {
-      setRefundJson(null);
-      setError("not a json file");
-    }
-  );
-});
+import "./css/history.css";
 
 const History = () => {
 
   const navigate = useNavigate();
-  const [t, { add, locale, dict }] = useI18n();
+  const [t] = useI18n();
 
   const printDate = (d) => {
     let date = new Date();
@@ -63,7 +47,7 @@ const History = () => {
                       {(_swap) => (
                           <div class="past-swap">
                               <span class="btn-small" onClick={() => navigate("/swap/" + _swap.id)}>view</span>
-                              <span data-reverse={_swap.reverse} data-asset={_swap.asset} class="past-asset">-></span>
+                              <span data-reverse={_swap.reverse} data-asset={_swap.asset} class="past-asset">-&gt;</span>
                               &nbsp;ID: {_swap.id}, created: {printDate(_swap.date)}&nbsp;
                               <span class="btn-small btn-danger" onClick={() => delete_swap(_swap.id)}>delete</span>
                               <hr />

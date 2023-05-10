@@ -1,4 +1,9 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
+  padding-top: 90px;
   font-size: 14px;
   margin: 0;
   background: #14283f;

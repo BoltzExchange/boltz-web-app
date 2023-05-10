@@ -6,8 +6,6 @@ const [error, setError] = createSignal("no file seleced");
 const [refundJson, setRefundJson] = createSignal(null);
 import { useI18n } from "@solid-primitives/i18n";
 
-import "./css/refund.css";
-
 createEffect(() => {
   new Response(upload()).json().then(
     (json) => {
