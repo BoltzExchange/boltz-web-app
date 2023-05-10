@@ -6,6 +6,7 @@ import { useI18n } from "@solid-primitives/i18n";
 import { checkForFailed, fetchSwapStatus, claim, qr, mempoolLink } from "./helper";
 import { api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
+import InvoiceExpired from "./status/InvoiceExpired";
 import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
 import TransactionMempool from "./status/TransactionMempool";
 import TransactionConfirmed from "./status/TransactionConfirmed";
@@ -81,7 +82,8 @@ const Pay = () => {
                   Status: <span class="btn-small">{swapStatus()}</span>
               </p>
               <hr />
-              <Show when={swapStatus() == "swap.expired" || swapStatus() == "invoice.expired"}><SwapExpired /></Show>
+              <Show when={swapStatus() == "swap.expired"}><SwapExpired /></Show>
+              <Show when={swapStatus() == "invoice.expired"}><InvoiceExpired /></Show>
               <Show when={swapStatus() == "transaction.claimed" || swapStatus() == "invoice.settled"}><TransactionClaimed /></Show>
               <Show when={swapStatus() == "transaction.confirmed"}><TransactionConfirmed /></Show>
               <Show when={swapStatus() == "transaction.mempool"}><TransactionMempool /></Show>
