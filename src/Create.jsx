@@ -79,6 +79,10 @@ const Create = () => {
         setBoltzFee(cfg.fees.percentageSwapIn);
         setMinerFee(fee);
       }
+      if (sendAmount() === BigInt(0)) {
+        setReceiveAmount(BigInt(cfg.limits.minimal));
+        setSendAmount(BigInt(calculateSendAmount(cfg.limits.minimal)));
+      }
     }
   });
 
