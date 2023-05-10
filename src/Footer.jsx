@@ -6,7 +6,7 @@ import twitter from "./assets/twitter.svg";
 import nostr from "./assets/nostr.svg";
 import discord from "./assets/discord.svg";
 
-import "./footer.css";
+import "./css/footer.css";
 
 const Footer = () => {
   const [t, { add, locale, dict }] = useI18n();

@@ -4,7 +4,7 @@ import { useI18n } from "@solid-primitives/i18n";
 import { i18n, setI18n, hamburger, setHamburger, swaps } from "./signals";
 import { network } from "./config";
 
-import "./nav.css";
+import "./css/nav.css";
 import logo from "./assets/boltz.svg";
 
 const locales = {

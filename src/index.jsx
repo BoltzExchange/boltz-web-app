@@ -13,6 +13,8 @@ import Footer from "./Footer";
 // import Hero from "./Hero";
 import Refund from "./Refund";
 import History from "./History";
+import "./css/index.css";
+
 import { loglevel } from "./config";
 
 log.setLevel(loglevel);

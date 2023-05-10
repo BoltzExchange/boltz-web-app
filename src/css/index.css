@@ -114,7 +114,7 @@ hr {
 
 [data-reverse="true"] .icon-1,
 [data-reverse="false"] .icon-2 {
-  background-image: url(./assets/lightning-icon.svg);
+  background-image: url(../assets/lightning-icon.svg);
   background-size: 90%;
 }
 [data-reverse="true"] .asset-1 .assets,
@@ -131,7 +131,7 @@ hr {
 
 [data-reverse="false"][data-asset="BTC"] .icon-1,
 [data-reverse="true"][data-asset="BTC"] .icon-2 {
-  background-image: url(./assets/bitcoin-icon.svg);
+  background-image: url(../assets/bitcoin-icon.svg);
 }
 [data-reverse="false"][data-asset="BTC"] .asset-1 .asset-text:before,
 [data-reverse="true"][data-asset="BTC"] .asset-2 .asset-text:before {
@@ -141,7 +141,7 @@ hr {
 
 [data-reverse="false"][data-asset="L-BTC"] .icon-1,
 [data-reverse="true"][data-asset="L-BTC"] .icon-2 {
-  background-image: url(./assets/liquid-icon.svg);
+  background-image: url(../assets/liquid-icon.svg);
 }
 [data-reverse="false"][data-asset="L-BTC"] .asset-1 .asset-text:before,
 [data-reverse="true"][data-asset="L-BTC"] .asset-2 .asset-text:before {
@@ -151,7 +151,7 @@ hr {
 .pornhub:before {
   content: " ";
   display: inline-block;
-  background: url(./assets/thunderhub.jpg);
+  background: url(../assets/thunderhub.jpg);
   background-size: 100%;
   background-repeat: no-repeat;
   width: 66px;
@@ -173,7 +173,7 @@ hr {
 }
 .rtl {
   display: inline-block;
-  background: url(./assets/rtl.webp);
+  background: url(../assets/rtl.webp);
   background-size: 100%;
   background-repeat: no-repeat;
   width: 150px;
@@ -181,7 +181,7 @@ hr {
 }
 .lnbits {
   display: inline-block;
-  background: url(./assets/lnbits.svg);
+  background: url(../assets/lnbits.svg);
   background-size: 100%;
   background-repeat: no-repeat;
   width: 155px;
@@ -189,7 +189,7 @@ hr {
 }
 .breez {
   display: inline-block;
-  background: url(./assets/breez.png);
+  background: url(../assets/breez.png);
   background-size: 100%;
   background-repeat: no-repeat;
   width: 133px;
@@ -197,7 +197,7 @@ hr {
 }
 .electrum {
   display: inline-block;
-  background: url(./assets/electrum.png);
+  background: url(../assets/electrum.png);
   background-size: 100%;
   background-repeat: no-repeat;
   width: 212px;
@@ -439,10 +439,10 @@ textarea {
 }
 
 [data-denominator=btc] {
-    background-image: url(./assets/btc.svg);
+    background-image: url(../assets/btc.svg);
 }
 [data-denominator=sat] {
-    background-image: url(./assets/sat.svg);
+    background-image: url(../assets/sat.svg);
 }
 
 .denomination .active {

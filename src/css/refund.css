@@ -11,17 +11,16 @@
 }
 .past-asset[data-reverse=false]:after,
 .past-asset[data-reverse=true]:before {
-    background-image: url(./assets/lightning-icon.svg);
+    background-image: url(../assets/lightning-icon.svg);
 }
 .past-asset[data-asset=BTC][data-reverse=true]:after,
 .past-asset[data-asset=BTC][data-reverse=false]:before {
-    background-image: url(./assets/bitcoin-icon.svg);
+    background-image: url(../assets/bitcoin-icon.svg);
 }
 .past-asset[data-asset=L-BTC][data-reverse=true]:after,
 .past-asset[data-asset=L-BTC][data-reverse=false]:before {
-    background-image: url(./assets/liquid-icon.svg);
+    background-image: url(../assets/liquid-icon.svg);
 }
-
 
 .past-asset {
     display: inline-block;

@@ -1,13 +1,9 @@
 import { createEffect } from "solid-js";
-import { render } from "solid-js/web";
-import { useI18n } from "@solid-primitives/i18n";
 
 import { notification, setNotification, notificationType, setNotificationType } from "./signals";
-import "./notification.css";
+import "./css/notification.css";
 
 const Notification = () => {
-  const [t, { add, locale, dict }] = useI18n();
-
   createEffect(() => {
       var new_notication = notification();
       if (new_notication) {

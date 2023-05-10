@@ -1,15 +1,13 @@
-import log from 'loglevel';
 import { createSignal, createEffect } from "solid-js";
-import { render } from "solid-js/web";
-import { refundAddress, setRefundAddress, upload, setUpload, swaps, setSwaps } from "./signals";
-import { downloadBackup, refund } from "./helper";
+import { refundAddress, upload, swaps, setSwaps } from "./signals";
+import { downloadBackup } from "./helper";
 
 const [error, setError] = createSignal("no file seleced");
-const [refundJson, setRefundJson] = createSignal(null);
-import { useParams, useNavigate } from "@solidjs/router";
+
+import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
-import "./refund.css";
+import "./css/refund.css";
 
 createEffect(() => {
   new Response(upload()).json().then(
@@ -17,17 +15,11 @@ createEffect(() => {
       if (json === 0) return;
       setRefundJson(json);
     },
-    (err) => {
+    () => {
       setRefundJson(null);
       setError("not a json file");
     }
   );
-});
-
-createEffect(() => {
-  if (refundAddress() === null) return setError("no refund address");
-  if (refundJson() === null) return setError("no json file");
-  setError(false);
 });
 
 const History = () => {
