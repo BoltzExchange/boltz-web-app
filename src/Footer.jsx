@@ -12,6 +12,8 @@ const Footer = () => {
   const [t, { add, locale, dict }] = useI18n();
   return (
       <footer>
+          <h4>⚠️ This is a beta release ⚠️<br />
+          Got Feedback? Join our <a title="Discord" class="discord" target="_blank" href="https://discord.gg/sYwnRBJxyD">Discord</a></h4>
           <h2>{t("socialmedia")}</h2>
           <div class="socials">
               <a title="Medium" class="medium" target="_blank" href="https://medium.com/boltzhq">

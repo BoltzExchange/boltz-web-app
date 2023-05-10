@@ -205,7 +205,10 @@ const Create = () => {
                   setInvoice(pr);
               }
               if (invoice().indexOf(bolt11_prefix) != 0) {
-                  log.warn("neither lnurl, lnaddress or invoice supplied")
+                  let msg = "neither lnurl, lnaddress or invoice supplied";
+                  log.error(msg)
+                  setNotificationType("error");
+                  setNotification(msg);
                   return false;
               }
 
@@ -259,7 +262,8 @@ const Create = () => {
   return (
     <div class="frame" data-reverse={reverse()} data-asset={asset()}>
       <h2>{t("create_swap")}</h2>
-      <p>{t("create_swap_subline")}</p>
+      <p>{t("create_swap_subline")} <br />
+      Min: {minimum()}, Max: {maximum()}</p>
       <hr />
       <div class="icons">
         <div>

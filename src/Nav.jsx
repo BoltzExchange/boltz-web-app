@@ -50,7 +50,7 @@ const Nav = () => {
               <a
                 class="external"
                 target="_blank"
-                href="https://docs.boltz.exchange/"
+                href="https://discord.gg/QBvZGcW"
                 >{t("help")}</a
               >
               <a
