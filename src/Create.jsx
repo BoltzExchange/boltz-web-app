@@ -196,7 +196,7 @@ const Create = () => {
                   setInvoice(pr);
               }
               if (invoice().indexOf(bolt11_prefix) != 0) {
-                  let msg = "neither lnurl, lnaddress or invoice supplied";
+                  let msg = "wrong network";
                   log.error(msg)
                   setNotificationType("error");
                   setNotification(msg);
