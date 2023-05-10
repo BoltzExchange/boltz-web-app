@@ -17,7 +17,7 @@ import SwapCreated from "./status/SwapCreated";
 
 const Pay = () => {
   const params = useParams();
-  const [t, { add, locale, dict }] = useI18n();
+  const [t] = useI18n();
 
   let stream = null;
 

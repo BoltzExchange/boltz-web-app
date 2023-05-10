@@ -1,10 +1,7 @@
-import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
 const TransactionConfirmed = () => {
-    const [t, { add, locale, dict }] = useI18n();
-
-    const navigate = useNavigate();
+    const [t] = useI18n();
 
     return (
         <div>

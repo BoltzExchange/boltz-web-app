@@ -7,20 +7,16 @@ export const denominations = {
   btc: "btc",
 };
 
-export const convertAmount = (amount, amountDenomination) => {
-  if (denomination() === amountDenomination) {
-    return amount;
-  }
-
+export const formatAmount = (amount) => {
   switch (denomination()) {
-    case denominations.btc: return amount / satFactor;
-    case denominations.sat: return Math.ceil(amount * satFactor);
+    case denominations.btc: return (amount / satFactor).toFixed(8);
+    case denominations.sat: return Math.ceil(amount);
   }
 }
 
-export const formatAmount = (amount) => {
+export const convertAmount = (amount) => {
   switch (denomination()) {
-    case denominations.btc: return amount.toFixed(8);
-    case denominations.sat: return Math.ceil(amount); 
+    case denominations.btc: return Math.ceil(amount * satFactor);
+    case denominations.sat: return amount;
   }
-};
+}

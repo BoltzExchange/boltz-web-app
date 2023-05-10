@@ -1,7 +1,7 @@
 import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, lnurl_fetcher, btc_divider } from "./helper";
+import { fetcher, lnurl_fetcher } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from '@noble/secp256k1';
@@ -16,7 +16,7 @@ import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
 import { bolt11_prefix, pairs } from "./config";
-import { convertAmount, denominations, formatAmount, satFactor } from './utils/denomination';
+import { convertAmount, denominations, formatAmount } from './utils/denomination';
 import {
   swaps,
   setSwaps,
@@ -29,14 +29,18 @@ import {
   setBoltzFee,
   sendAmount,
   setSendAmount,
+  sendAmountFormatted,
+  setSendAmountFormatted,
+  receiveAmount,
+  setReceiveAmount,
+  receiveAmountFormatted,
+  setReceiveAmountFormatted,
   minerFee,
   setMinerFee,
   minimum,
   setMinimum,
   maximum,
   setMaximum,
-  receiveAmount,
-  setReceiveAmount,
   reverse,
   setReverse,
   config,
@@ -61,11 +65,9 @@ const Create = () => {
     if (asset() == "L-BTC") {
        cfg = config()["L-BTC/BTC"];
     }
-    let denom = denomination();
     if (cfg) {
-      let divider = (denom == "btc") ? btc_divider : 1;
-      setMinimum(cfg.limits.minimal / divider);
-      setMaximum(cfg.limits.maximal / divider);
+      setMinimum(formatAmount(cfg.limits.minimal));
+      setMaximum(formatAmount(cfg.limits.maximal));
       // TODO issue do not touch amounts when flipping assets
       if (reverse()) {
         let rev = cfg.fees.minerFees.baseAsset.reverse;
@@ -80,14 +82,10 @@ const Create = () => {
     }
   });
 
-  // reset send amount when changing denomination
+  // change denomination
   createEffect(() => {
-    let send_amount = 100000;
-    if (denomination() == "btc") {
-        send_amount = 0.001;
-    }
-    setSendAmount(send_amount)
-    setReceiveAmount(prepareAmountCalculation(calculateReceiveAmount, send_amount))
+    setReceiveAmountFormatted(formatAmount(Number(receiveAmount())));
+    setSendAmountFormatted(formatAmount(Number(sendAmount())));
   });
 
   // validation swap
@@ -112,41 +110,38 @@ const Create = () => {
   };
 
   const calculateReceiveAmount = (sendAmount) => {
-    const preMinerFee = parseFloat(sendAmount) - minerFee();
-    sendAmount = preMinerFee - Math.floor(preMinerFee * (boltzFee() / 100));
+    const preMinerFee = sendAmount - minerFee();
+    sendAmount = preMinerFee - Math.floor(preMinerFee * boltzFee() / 100);
     return sendAmount;
   };
 
   const calculateSendAmount = (receiveAmount) => {
-    receiveAmount = parseFloat(receiveAmount) + parseFloat(minerFee()) + Math.ceil((receiveAmount * boltzFee()) / 100);
+    receiveAmount = parseInt(receiveAmount) + parseInt(minerFee()) + Math.ceil(receiveAmount * boltzFee() / 100);
     return Math.floor(receiveAmount);
   };
 
-  const prepareAmountCalculation = (fn, amount) => {
-    const satAmount = denomination() === denominations.sat ?
-      amount :
-      Math.ceil(amount * satFactor);
-
-    return formatAmount(convertAmount(fn(satAmount), denominations.sat))
-  };
-
   const changeReceiveAmount = (amount) => {
-    setReceiveAmount(amount);
-    setSendAmount(prepareAmountCalculation(calculateSendAmount, amount));
+    let satAmount = convertAmount(Number(amount), denominations.sat);
+    setReceiveAmount(BigInt(satAmount));
+    setReceiveAmountFormatted(formatAmount(satAmount));
+    let sendAmount = calculateSendAmount(satAmount);
+    setSendAmount(sendAmount);
+    setSendAmountFormatted(formatAmount(sendAmount));
   };
 
   const changeSendAmount = (amount) => {
-    setSendAmount(amount);
-    setReceiveAmount(prepareAmountCalculation(calculateReceiveAmount, amount));
+    let satAmount = BigInt(convertAmount(Number(amount), denominations.sat));
+    setSendAmount(satAmount);
+    setSendAmountFormatted(formatAmount(Number(satAmount)));
+    let receiveAmount = calculateReceiveAmount(Number(satAmount));
+    setReceiveAmount(receiveAmount);
+    setReceiveAmountFormatted(formatAmount(Number(receiveAmount)));
   };
 
   const createWeblnInvoice = async () => {
       let check_enable = await window.webln.enable();
       if (check_enable.enabled) {
-          let amount = receiveAmount();
-          if (denomination() == "btc") {
-              amount = amount * 100000000;
-          }
+          let amount = Number(receiveAmount());
           const invoice = await window.webln.makeInvoice({ amount: amount });
           log.debug ("created webln invoice", invoice);
           setInvoice(invoice.paymentRequest);
@@ -183,25 +178,17 @@ const Create = () => {
               preimageHex = secp.utils.bytesToHex(preimage);
               let preimageHash = await secp.utils.sha256(preimage);
               let preimageHashHex = secp.utils.bytesToHex(preimageHash);
-              let amount = sendAmount();
-              if (denomination() == "btc") {
-                  amount = amount * 100000000;
-              }
               params = {
                   "type": "reversesubmarine",
                   "pairId": asset_name+"/BTC",
                   "orderSide": "buy",
-                  "invoiceAmount": Math.ceil(Number(amount)),
+                  "invoiceAmount": Number(sendAmount()),
                   "claimPublicKey": publicKeyHex,
                   "preimageHash": preimageHashHex
               };
           } else {
               if (invoice().indexOf("@") > 0 || invoice().indexOf("lnurl") == 0 || invoice().indexOf("LNURL") == 0) {
-                  let amount = receiveAmount();
-                  if (denomination() == "btc") {
-                      amount = amount * 100000000;
-                  }
-                  let pr = await lnurl_fetcher(invoice(), amount);
+                  let pr = await lnurl_fetcher(invoice(), Number(receiveAmount()));
                   setInvoice(pr);
               }
               if (invoice().indexOf(bolt11_prefix) != 0) {
@@ -226,9 +213,7 @@ const Create = () => {
               data.reverse = reverse();
               data.asset = asset();
               data.preimage = preimageHex;
-              data.receiveAmount = denomination() === denominations.sat ?
-                receiveAmount() :
-                Math.ceil(receiveAmount() * satFactor);
+              data.receiveAmount = Number(receiveAmount());
               data.onchainAddress = onchainAddress();
               let tmp_swaps = JSON.parse(swaps());
               tmp_swaps.push(data)
@@ -284,7 +269,7 @@ const Create = () => {
             step={denomination() == "btc" ? 0.00000001 : 1 }
             min={minimum()}
             max={maximum()}
-            value={sendAmount()}
+            value={sendAmountFormatted()}
             onChange={(e) => changeSendAmount(e.currentTarget.value)}
             onKeyUp={(e) => changeSendAmount(e.currentTarget.value)}
           />
@@ -310,7 +295,7 @@ const Create = () => {
             step={denomination() == "btc" ? 0.00000001 : 1 }
             min={minimum()}
             max={maximum()}
-            value={receiveAmount()}
+            value={receiveAmountFormatted()}
             onChange={(e) => changeReceiveAmount(e.currentTarget.value)}
             onKeyUp={(e) => changeReceiveAmount(e.currentTarget.value)}
           />
@@ -324,13 +309,9 @@ const Create = () => {
         </div>
         <label>
             <span class="icon-reload" onClick={fetchPairs}><img src={reload_svg} /></span>
-            {t("network_fee")}: <span class="network-fee">{formatAmount(convertAmount(minerFee(), denominations.sat))} <span class="denominator" data-denominator={denomination()}></span></span><br />
-            {t("fee")} ({boltzFee()}%): <span class="boltz-fee">{
-              prepareAmountCalculation(
-                (amount) => amount * boltzFee() / 100,
-                sendAmount(),
-              )
-            } <span class="denominator" data-denominator={denomination()}></span></span>
+            {t("network_fee")}: <span class="network-fee">{formatAmount(minerFee())}<span class="denominator" data-denominator={denomination()}></span></span><br />
+            {t("fee")} ({boltzFee()}%): <span class="boltz-fee">{formatAmount(Number(sendAmount()) * boltzFee() / 100)}
+            <span class="denominator" data-denominator={denomination()}></span></span>
         </label>
       </div>
       <hr />
@@ -344,7 +325,7 @@ const Create = () => {
         id="invoice"
         name="invoice"
         value={invoice()}
-        placeholder={t("create_and_paste", { amount: receiveAmount(), denomination: denomination()})}
+        placeholder={t("create_and_paste", { amount: receiveAmountFormatted(), denomination: denomination()})}
       ></textarea>
       <input
         onChange={(e) => setOnchainAddress(e.currentTarget.value)}
