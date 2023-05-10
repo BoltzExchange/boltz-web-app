@@ -1,8 +1,6 @@
-import log from 'loglevel';
 import { createSignal, createEffect } from "solid-js";
-import { render } from "solid-js/web";
-import { refundAddress, setRefundAddress, upload, setUpload, swaps, setSwaps } from "./signals";
-import { downloadBackup, refund } from "./helper";
+import { refundTx, refundAddress, setRefundAddress, upload, setUpload } from "./signals";
+import { mempoolLink, refund } from "./helper";
 
 const [error, setError] = createSignal("no file seleced");
 const [refundJson, setRefundJson] = createSignal(null);
@@ -65,10 +63,12 @@ const Refund = () => {
             <span class="error">{error()}</span>
           </div>
           <div class={error() !== false ? "hidden" : ""}>
-            <span class="btn btn-success" onClick={() => refund(refundJson())}>
-              refund
-            </span>
+            <span class="btn btn-success" onClick={() => refund(refundJson())}>{t("refund")}</span>
           </div>
+          <Show when={refundTx() !== ""}>
+            <hr />
+            <a class="btn btn-mempool" target="_blank" href={mempoolLink(refundJson().asset, refundTx() )}>{t("mempool")}</a>
+          </Show>
         </div>
     </div>
   );

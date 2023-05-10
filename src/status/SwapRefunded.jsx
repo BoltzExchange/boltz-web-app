@@ -11,10 +11,8 @@ const SwapRefunded = () => {
 
     return (
         <div>
-            <h2>{t("refunded")}</h2>
-            <p>{t("swap_refunded")}</p>
+            <p>{t("refunded")}</p>
             <hr />
-            <span class="btn" onclick={() => refund(swap())}>{t("refund")}</span>
             <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().asset, swap().refundTx )}>{t("mempool")}</a>
             <hr />
             <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>

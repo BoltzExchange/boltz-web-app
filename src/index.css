@@ -264,6 +264,7 @@ hr {
   background: darkred;
   color: #fff;
 }
+[data-status='swap.expired'] .btn-success,
 [data-status='invoice.settled'] .btn-small,
 [data-status='transaction.confirmed'] .btn-small,
 [data-status='transaction.claimed'] .btn-small {

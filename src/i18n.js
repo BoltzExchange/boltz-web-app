@@ -61,6 +61,7 @@ const dict = {
     tx_confirmed: "Transaction confirmed",
     tx_ready_to_claim: "claiming transaction now...",
     transaction_refunded: "Boltz has refunded the Transaction",
+    refunded: "You have refunded this swap",
   },
   de: {
     swap: "Tausch",

@@ -1,9 +1,9 @@
 import log from 'loglevel';
 import { createEffect, onCleanup } from "solid-js";
-import { setSwapStatusTransaction, reverse, setReverse, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps } from "./signals";
+import { setFailureReason, setSwapStatusTransaction, reverse, setReverse, setInvoiceQr, swap, setSwap, swapStatus, setSwapStatus, swaps } from "./signals";
 import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetchSwapStatus, claim, qr, mempoolLink } from "./helper";
+import { checkForFailed, fetchSwapStatus, claim, qr, mempoolLink } from "./helper";
 import { api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
@@ -46,6 +46,8 @@ const Pay = () => {
                   if (data.status == "transaction.confirmed" && data.transaction) {
                       claim(current_swap);
                   }
+                  checkForFailed(current_swap.id, data);
+                  setFailureReason(data.failureReason);
               };
           }
       }
@@ -67,20 +69,28 @@ const Pay = () => {
       </h2>
       <p>{t("pay_invoice_subline")}</p>
       <Show when={swap()}>
-          <p>
-              Status: <span class="btn-small">{swapStatus()}</span>
-          </p>
-          <hr />
-          <Show when={swapStatus() == "swap.expired" || swapStatus() == "invoice.expired"}><SwapExpired /></Show>
-          <Show when={swapStatus() == "transaction.claimed" || swapStatus() == "invoice.settled"}><TransactionClaimed /></Show>
-          <Show when={swapStatus() == "transaction.confirmed"}><TransactionConfirmed /></Show>
-          <Show when={swapStatus() == "transaction.mempool"}><TransactionMempool /></Show>
-          <Show when={swapStatus() == "invoice.failedToPay"}><InvoiceFailedToPay /></Show>
-          <Show when={swapStatus() == "transaction.lockupFailed"}><TransactionLockupFailed /></Show>
-          <Show when={swapStatus() == "invoice.set"}><InvoiceSet /></Show>
-          <Show when={swapStatus() == "swap.created"}><SwapCreated /></Show>
-          <Show when={swapStatus() == "swap.refunded"}><SwapRefunded /></Show>
-          <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().asset, !reverse() ? swap().address : swap().lockupAddress )}>{t("mempool")}</a>
+          <Show when={swap().refundTx}>
+              <p>
+                  Status: <span class="btn-small btn-success">swap.refunded</span>
+              </p>
+              <hr />
+              <SwapRefunded />
+          </Show>
+          <Show when={!swap().refundTx}>
+              <p>
+                  Status: <span class="btn-small">{swapStatus()}</span>
+              </p>
+              <hr />
+              <Show when={swapStatus() == "swap.expired" || swapStatus() == "invoice.expired"}><SwapExpired /></Show>
+              <Show when={swapStatus() == "transaction.claimed" || swapStatus() == "invoice.settled"}><TransactionClaimed /></Show>
+              <Show when={swapStatus() == "transaction.confirmed"}><TransactionConfirmed /></Show>
+              <Show when={swapStatus() == "transaction.mempool"}><TransactionMempool /></Show>
+              <Show when={swapStatus() == "invoice.failedToPay"}><InvoiceFailedToPay /></Show>
+              <Show when={swapStatus() == "transaction.lockupFailed"}><TransactionLockupFailed /></Show>
+              <Show when={swapStatus() == "invoice.set"}><InvoiceSet /></Show>
+              <Show when={swapStatus() == "swap.created"}><SwapCreated /></Show>
+              <a class="btn btn-mempool" target="_blank" href={mempoolLink(swap().asset, !reverse() ? swap().address : swap().lockupAddress )}>{t("mempool")}</a>
+          </Show>
       </Show>
       <Show when={!swap()}>
           <p>{t("pay_swap_404")}</p>

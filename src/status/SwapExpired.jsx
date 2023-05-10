@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
-import { setRefundAddress, swap } from "../signals";
+import { failureReason, setRefundAddress, swap } from "../signals";
 import { refund } from "../helper";
 
 const SwapExpired = () => {
@@ -11,8 +11,7 @@ const SwapExpired = () => {
 
     return (
         <div>
-            <h2>{t("expired")}</h2>
-            <p>{t("swap_expired")}</p>
+            <p>{t("lockup_failed_reason")}: {failureReason()}</p>
             <hr />
             <input
                 onKeyUp={(e) => setRefundAddress(e.currentTarget.value)}

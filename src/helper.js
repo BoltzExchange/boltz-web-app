@@ -2,7 +2,7 @@ import log from 'loglevel';
 import QRCode from "qrcode";
 
 import { bech32, utf8 } from '@scure/base';
-import { setTimeoutEta, setTimeoutBlockheight, setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
+import { swaps, setSwaps, setRefundTx, setTimeoutEta, setTimeoutBlockheight, setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
 
 import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
@@ -72,13 +72,7 @@ export const fetcher = (url, cb, params = null) => {
     .catch(errorHandler);
 };
 
-export const fetchSwapStatus = (swap) => {
-  fetcher("/swapstatus", (data) => {
-    setSwapStatus(data.status);
-    setSwapStatusTransaction(data.transaction);
-    if (data.status == "transaction.confirmed" && data.transaction) {
-        claim(swap);
-    }
+export const checkForFailed = (swap_id, data) => {
     if (data.status == "transaction.lockupFailed" || data.status == "invoice.failedToPay") {
         fetcher("/getswaptransaction", (data) => {
             if (!data.transactionHex) {
@@ -96,9 +90,19 @@ export const fetchSwapStatus = (swap) => {
             setTimeoutEta(timestamp);
             setTimeoutBlockheight(data.timeoutBlockHeight);
         }, {
-            "id": swap.id,
+            "id": swap_id,
         });
     };
+};
+
+export const fetchSwapStatus = (swap) => {
+  fetcher("/swapstatus", (data) => {
+    setSwapStatus(data.status);
+    setSwapStatusTransaction(data.transaction);
+    if (data.status == "transaction.confirmed" && data.transaction) {
+        claim(swap);
+    }
+    checkForFailed(swap.id, data);
     setFailureReason(data.failureReason);
     setNotificationType("success");
     setNotification("swap status retrieved!");
@@ -234,6 +238,7 @@ export function lnurl_fetcher(lnurl, amount_sat) {
 
 export async function refund(swap) {
     let output = "";
+    setRefundTx("");
 
     log.debug("starting to refund swap", swap);
 
@@ -297,12 +302,20 @@ export async function refund(swap) {
         fetcher("/broadcasttransaction", (data) => {
             log.debug("refund result:", data);
             if (data.transactionId) {
-                // TODO: save refundTx into swaps json and set it to the current swap
+                // save refundTx into swaps json and set it to the current swap
                 // only if the swaps was not initiated with the refund json
+                // refundjson has no date
+                if (swap.date !== undefined) {
+                    let tmp_swaps = JSON.parse(swaps());
+                    let current_swap = tmp_swaps.filter(s => s.id === swap.id).pop();
+                    current_swap.refundTx = data.transactionId;
+                    log.debug("current_swap", current_swap);
+                    log.debug("swaps", tmp_swaps);
+                    setSwaps(JSON.stringify(tmp_swaps));
+                } else {
+                    setRefundTx(data.transactionId);
+                }
 
-                // let tmp_swaps = JSON.parse(swaps());
-                // tmp_swaps.push(data)
-                // setSwaps(JSON.stringify(tmp_swaps));
                 setNotificationType("success");
                 setNotification(`Refund broadcasted`);
             }
