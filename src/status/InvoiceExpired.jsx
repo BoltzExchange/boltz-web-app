@@ -10,7 +10,9 @@ const InvoiceExpired = () => {
         <div>
             <p>{t("invoice_expired")}</p>
             <hr />
-            <span class="btn" onClick={() => navigate("/swap")}>{t("new_swap")}</span>
+            <span class="btn" onClick={() => navigate("/swap")}>
+                {t("new_swap")}
+            </span>
         </div>
     );
 };

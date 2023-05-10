@@ -9,16 +9,16 @@
     transform: scale(1.5);
     margin: 0 6px;
 }
-.past-asset[data-reverse=false]:after,
-.past-asset[data-reverse=true]:before {
+.past-asset[data-reverse="false"]:after,
+.past-asset[data-reverse="true"]:before {
     background-image: url(../assets/lightning-icon.svg);
 }
-.past-asset[data-asset=BTC][data-reverse=true]:after,
-.past-asset[data-asset=BTC][data-reverse=false]:before {
+.past-asset[data-asset="BTC"][data-reverse="true"]:after,
+.past-asset[data-asset="BTC"][data-reverse="false"]:before {
     background-image: url(../assets/bitcoin-icon.svg);
 }
-.past-asset[data-asset=L-BTC][data-reverse=true]:after,
-.past-asset[data-asset=L-BTC][data-reverse=false]:before {
+.past-asset[data-asset="L-BTC"][data-reverse="true"]:after,
+.past-asset[data-asset="L-BTC"][data-reverse="false"]:before {
     background-image: url(../assets/liquid-icon.svg);
 }
 

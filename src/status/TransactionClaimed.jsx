@@ -13,12 +13,18 @@ const TransactionClaimed = () => {
     return (
         <div>
             <h2>{t("congrats")}</h2>
-            <p>{t("successfully_swapped", {
-                amount: formatAmount(curSwap.expectedAmount | curSwap.onchainAmount),
-                denomination: denomination()})}
+            <p>
+                {t("successfully_swapped", {
+                    amount: formatAmount(
+                        curSwap.expectedAmount | curSwap.onchainAmount
+                    ),
+                    denomination: denomination(),
+                })}
             </p>
             <hr />
-            <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
+            <span class="btn" onClick={(e) => navigate("/swap")}>
+                {t("new_swap")}
+            </span>
         </div>
     );
 };

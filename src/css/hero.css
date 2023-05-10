@@ -1,7 +1,12 @@
 h1 {
     font-size: 70px;
     line-height: 1;
-    background: linear-gradient(20deg, rgb(255, 197, 0) 10%, rgb(0, 88, 255) 100%) padding-box text;
+    background: linear-gradient(
+            20deg,
+            rgb(255, 197, 0) 10%,
+            rgb(0, 88, 255) 100%
+        )
+        padding-box text;
     margin-bottom: 12px;
     margin-top: 112px;
 }
@@ -33,7 +38,7 @@ h3 {
 
     color: #fff;
     background: #0003;
-    border: 1px solid rgba(255,255,255,.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .hero-box img {
     width: 36px;
@@ -43,7 +48,6 @@ h3 {
     display: flex;
     justify-content: space-between;
     margin-bottom: 82px;
-
 }
 .number {
     font-size: 40px;

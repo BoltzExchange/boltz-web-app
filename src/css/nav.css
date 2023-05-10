@@ -12,7 +12,7 @@ nav {
     top: 0;
     z-index: 999;
     width: 100%;
-    background: rgba(0,0,0,.2);
+    background: rgba(0, 0, 0, 0.2);
 }
 nav a:visited,
 nav a {
@@ -28,8 +28,8 @@ nav a:first-child {
 
 nav a:hover,
 nav a.active {
-  color: #e6c826;
-  text-decoration: underline;
+    color: #e6c826;
+    text-decoration: underline;
 }
 
 #network {
@@ -53,14 +53,14 @@ nav a.active {
 }
 
 #languages .lang {
-  display: block;
-  padding: 4px 12px;
-  cursor: pointer;
+    display: block;
+    padding: 4px 12px;
+    cursor: pointer;
 }
 
 #languages .lang:hover {
-  background-color: #e6c826;
-  color: rgb(11, 22, 35);
+    background-color: #e6c826;
+    color: rgb(11, 22, 35);
 }
 
 #languages .dropdown {
@@ -70,7 +70,7 @@ nav a.active {
     right: 0px;
     background: rgb(11, 22, 35);
 }
-#languages:hover .dropdown{
+#languages:hover .dropdown {
     display: block;
 }
 
@@ -82,51 +82,51 @@ nav a.active {
 }
 
 #logo img {
-  width: 100%;
-  max-width: 165px;
-  padding-right: 21px;
+    width: 100%;
+    max-width: 165px;
+    padding-right: 21px;
 }
 #logo {
-  z-index: 1;
+    z-index: 1;
 }
 
 #hamburger {
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 400ms;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  z-index: 1000;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 400ms;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    z-index: 1000;
 }
 
 #hamburger.active {
-  transform: rotate(45deg);
+    transform: rotate(45deg);
 }
 
 #hamburger .line {
-  fill:none;
-  transition: stroke-dasharray 400ms, stroke-dashoffset 400ms;
-  stroke:#fff;
-  stroke-width:5.5;
-  stroke-linecap:round;
+    fill: none;
+    transition: stroke-dasharray 400ms, stroke-dashoffset 400ms;
+    stroke: #fff;
+    stroke-width: 5.5;
+    stroke-linecap: round;
 }
 
 #hamburger .top {
-  stroke-dasharray: 40 121;
+    stroke-dasharray: 40 121;
 }
 
 #hamburger .bottom {
-  stroke-dasharray: 40 121;
+    stroke-dasharray: 40 121;
 }
 
 #hamburger.active .top {
-  stroke-dashoffset: -68px;
+    stroke-dashoffset: -68px;
 }
 
 #hamburger.active .bottom {
-  stroke-dashoffset: -68px;
+    stroke-dashoffset: -68px;
 }
 
 #collapse {
@@ -138,26 +138,26 @@ nav a.active {
 
 @media (max-width: 769px) {
     #collapse.active {
-      display: flex;
-      position: fixed;
-      background: #14283f;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      top: 0;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+        display: flex;
+        position: fixed;
+        background: #14283f;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: 0;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
     }
 
     #collapse.active a {
-      display: block;
-      padding: 6px 24px;
-      font-size: 26px;
+        display: block;
+        padding: 6px 24px;
+        font-size: 26px;
     }
 
     #collapse.active a.external {
-      margin-right: 24px;
+        margin-right: 24px;
     }
 }
 
@@ -172,7 +172,7 @@ nav a.active {
     #collapse a {
         margin-left: 13px;
         padding-left: 13px;
-        border-left: 1px solid rgba(255,255,255,.3);
+        border-left: 1px solid rgba(255, 255, 255, 0.3);
         display: inline;
     }
 }

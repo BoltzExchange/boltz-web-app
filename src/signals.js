@@ -17,7 +17,8 @@ export const [maximum, setMaximum] = createSignal(0);
 export const [sendAmount, setSendAmount] = createSignal(BigInt(0));
 export const [receiveAmount, setReceiveAmount] = createSignal(BigInt(0));
 export const [sendAmountFormatted, setSendAmountFormatted] = createSignal(0);
-export const [receiveAmountFormatted, setReceiveAmountFormatted] = createSignal(0);
+export const [receiveAmountFormatted, setReceiveAmountFormatted] =
+    createSignal(0);
 export const [refundAddress, setRefundAddress] = createSignal("");
 export const [onchainAddress, setOnchainAddress] = createSignal("");
 export const [invoice, setInvoice] = createSignal("");
@@ -26,7 +27,8 @@ export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
 export const [swap, setSwap] = createSignal(null);
 export const [swapStatus, setSwapStatus] = createSignal("");
-export const [swapStatusTransaction, setSwapStatusTransaction] = createSignal("");
+export const [swapStatusTransaction, setSwapStatusTransaction] =
+    createSignal("");
 export const [failureReason, setFailureReason] = createSignal("");
 export const [timeoutEta, setTimeoutEta] = createSignal(0);
 export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
@@ -34,8 +36,14 @@ export const [refundTx, setRefundTx] = createSignal("");
 
 // local storage
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");
-export const [denomination, setDenomination] = createStorageSignal("denomination", "sat");
-export const [asset, setAsset] = createStorageSignal("asset", pairs[0].split("/")[0]);
+export const [denomination, setDenomination] = createStorageSignal(
+    "denomination",
+    "sat"
+);
+export const [asset, setAsset] = createStorageSignal(
+    "asset",
+    pairs[0].split("/")[0]
+);
 export const [swaps, setSwaps] = createStorageSignal("swaps", "[]");
 export const [reverse, setReverse] = createSignal(true);
 

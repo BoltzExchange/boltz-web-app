@@ -1,12 +1,33 @@
-import log from 'loglevel';
+import log from "loglevel";
 import QRCode from "qrcode";
 
-import { bech32, utf8 } from '@scure/base';
-import { swaps, setSwaps, setRefundTx, setTimeoutEta, setTimeoutBlockheight, setFailureReason, setSwapStatus, setSwapStatusTransaction, swapStatusTransaction, setNotification, setNotificationType, refundAddress } from "./signals";
+import { bech32, utf8 } from "@scure/base";
+import {
+    swaps,
+    setSwaps,
+    setRefundTx,
+    setTimeoutEta,
+    setTimeoutBlockheight,
+    setFailureReason,
+    setSwapStatus,
+    setSwapStatusTransaction,
+    swapStatusTransaction,
+    setNotification,
+    setNotificationType,
+    refundAddress,
+} from "./signals";
 
 import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
-import { getNetwork, getAddress, getTransaction, getConstructClaimTransaction, getConstructRefundTransaction, getDetectSwap, getOutputAmount } from "./compat";
+import {
+    getNetwork,
+    getAddress,
+    getTransaction,
+    getConstructClaimTransaction,
+    getConstructRefundTransaction,
+    getDetectSwap,
+    getOutputAmount,
+} from "./compat";
 
 import { api_url, mempool_url, mempool_url_liquid } from "./config";
 
@@ -19,186 +40,201 @@ export const mempoolLink = (asset, a) => {
 };
 
 export const startInterval = (cb, interval) => {
-  cb();
-  return setInterval(cb, interval);
+    cb();
+    return setInterval(cb, interval);
 };
-
 
 export const clipboard = (text, message) => {
-  navigator.clipboard.writeText(text);
-  setNotificationType("success")
-  setNotification(message);
+    navigator.clipboard.writeText(text);
+    setNotificationType("success");
+    setNotification(message);
 };
 
-
 export const errorHandler = (error) => {
-    setNotificationType("error")
+    setNotificationType("error");
     if (typeof error.json === "function") {
-        error.json().then(jsonError => {
-            setNotification(jsonError.error);
-        }).catch(genericError => {
-            log.error(genericError);
-            setNotification(error.statusText);
-        });
+        error
+            .json()
+            .then((jsonError) => {
+                setNotification(jsonError.error);
+            })
+            .catch((genericError) => {
+                log.error(genericError);
+                setNotification(error.statusText);
+            });
     } else {
         setNotification(error.message);
     }
 };
 
 export const checkResponse = (response) => {
-  if (!response.ok) {
-      return Promise.reject(response);
-  }
-  return response.json();
+    if (!response.ok) {
+        return Promise.reject(response);
+    }
+    return response.json();
 };
 
 export const fetcher = (url, cb, params = null) => {
-  let opts = {};
-  if (params) {
-    params.referralId = "frontend";
-    opts = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(params),
-    };
-  }
-  fetch(api_url + url, opts)
-    .then(checkResponse)
-    .then(cb)
-    .catch(errorHandler);
+    let opts = {};
+    if (params) {
+        params.referralId = "frontend";
+        opts = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(params),
+        };
+    }
+    fetch(api_url + url, opts)
+        .then(checkResponse)
+        .then(cb)
+        .catch(errorHandler);
 };
 
 export const checkForFailed = (swap_id, data) => {
-    if (data.status == "transaction.lockupFailed" || data.status == "invoice.failedToPay") {
-        fetcher("/getswaptransaction", (data) => {
-            if (!data.transactionHex) {
-                log.error("no mempool tx found");
+    if (
+        data.status == "transaction.lockupFailed" ||
+        data.status == "invoice.failedToPay"
+    ) {
+        fetcher(
+            "/getswaptransaction",
+            (data) => {
+                if (!data.transactionHex) {
+                    log.error("no mempool tx found");
+                }
+                if (!data.timeoutEta) {
+                    log.error("no timeout eta");
+                }
+                if (!data.timeoutBlockHeight) {
+                    log.error("no timeout blockheight");
+                }
+                const timestamp = data.timeoutEta * 1000;
+                const eta = new Date(timestamp);
+                log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
+                setTimeoutEta(timestamp);
+                setTimeoutBlockheight(data.timeoutBlockHeight);
+            },
+            {
+                id: swap_id,
             }
-            if (!data.timeoutEta) {
-                log.error("no timeout eta");
-            }
-            if (!data.timeoutBlockHeight) {
-                log.error("no timeout blockheight");
-            }
-            const timestamp = data.timeoutEta * 1000;
-            const eta = new Date(timestamp);
-            log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
-            setTimeoutEta(timestamp);
-            setTimeoutBlockheight(data.timeoutBlockHeight);
-        }, {
-            "id": swap_id,
-        });
-    };
+        );
+    }
 };
 
 export const fetchSwapStatus = (swap) => {
-  fetcher("/swapstatus", (data) => {
-    setSwapStatus(data.status);
-    setSwapStatusTransaction(data.transaction);
-    if (data.status == "transaction.confirmed" && data.transaction) {
-        claim(swap);
-    }
-    checkForFailed(swap.id, data);
-    setFailureReason(data.failureReason);
-    setNotificationType("success");
-    setNotification("swap status retrieved!");
-  }, {id: swap.id});
-  return false;
+    fetcher(
+        "/swapstatus",
+        (data) => {
+            setSwapStatus(data.status);
+            setSwapStatusTransaction(data.transaction);
+            if (data.status == "transaction.confirmed" && data.transaction) {
+                claim(swap);
+            }
+            checkForFailed(swap.id, data);
+            setFailureReason(data.failureReason);
+            setNotificationType("success");
+            setNotification("swap status retrieved!");
+        },
+        { id: swap.id }
+    );
+    return false;
 };
 
 export const downloadRefundFile = (swap) => {
-  let json = {
-    id: swap.id,
-    currency: swap.asset,
-    asset: swap.asset,
-    redeemScript: swap.redeemScript,
-    privateKey: swap.privateKey,
-    timeoutBlockHeight: swap.timeoutBlockHeight,
-  };
-  let hiddenElement = document.createElement("a");
-  hiddenElement.href =
-    "data:application/json;charset=utf-8," + encodeURI(JSON.stringify(json));
-  hiddenElement.target = "_blank";
-  hiddenElement.download = "boltz-refund-" + swap.id + ".json";
-  hiddenElement.click();
+    let json = {
+        id: swap.id,
+        currency: swap.asset,
+        asset: swap.asset,
+        redeemScript: swap.redeemScript,
+        privateKey: swap.privateKey,
+        timeoutBlockHeight: swap.timeoutBlockHeight,
+    };
+    let hiddenElement = document.createElement("a");
+    hiddenElement.href =
+        "data:application/json;charset=utf-8," +
+        encodeURI(JSON.stringify(json));
+    hiddenElement.target = "_blank";
+    hiddenElement.download = "boltz-refund-" + swap.id + ".json";
+    hiddenElement.click();
 };
 
 export const downloadRefundQr = (swap) => {
-  let json = {
-    id: swap.id,
-    currency: swap.asset,
-    redeemScript: swap.redeemScript,
-    privateKey: swap.privateKey,
-    timeoutBlockHeight: swap.timeoutBlockHeight,
-  };
-  let hiddenElement = document.createElement("a");
-  hiddenElement.href =
-    "data:application/json;charset=utf-8," + encodeURI(JSON.stringify(json));
-  hiddenElement.target = "_blank";
-  hiddenElement.download = "boltz-refund-" + swap.id + ".json";
-  hiddenElement.click();
+    let json = {
+        id: swap.id,
+        currency: swap.asset,
+        redeemScript: swap.redeemScript,
+        privateKey: swap.privateKey,
+        timeoutBlockHeight: swap.timeoutBlockHeight,
+    };
+    let hiddenElement = document.createElement("a");
+    hiddenElement.href =
+        "data:application/json;charset=utf-8," +
+        encodeURI(JSON.stringify(json));
+    hiddenElement.target = "_blank";
+    hiddenElement.download = "boltz-refund-" + swap.id + ".json";
+    hiddenElement.click();
 };
 
 export const downloadBackup = (json) => {
-  let hiddenElement = document.createElement("a");
-  hiddenElement.href =
-    "data:application/json;charset=utf-8," + encodeURI(json);
-  hiddenElement.target = "_blank";
-  hiddenElement.download = "boltz-backup-localstorage.json";
-  hiddenElement.click();
+    let hiddenElement = document.createElement("a");
+    hiddenElement.href =
+        "data:application/json;charset=utf-8," + encodeURI(json);
+    hiddenElement.target = "_blank";
+    hiddenElement.download = "boltz-backup-localstorage.json";
+    hiddenElement.click();
 };
 
 export const qr = (data, cb) => {
-  if (!data) return cb(null);
-  QRCode.toDataURL(data, { version: 13, width: 400 })
-    .then(cb)
-    .catch((err) => {
-        log.error("qr code generation error", err);
-        setNotificationType("error")
-        setNotification(err.message);
-    });
+    if (!data) return cb(null);
+    QRCode.toDataURL(data, { version: 13, width: 400 })
+        .then(cb)
+        .catch((err) => {
+            log.error("qr code generation error", err);
+            setNotificationType("error");
+            setNotification(err.message);
+        });
 };
 
 export async function detectWebLNProvider(timeoutParam) {
-  const timeout = timeoutParam ?? 3000;
-  const interval = 100;
-  let handled = false;
+    const timeout = timeoutParam ?? 3000;
+    const interval = 100;
+    let handled = false;
 
-  return new Promise((resolve) => {
-    if (window.webln) {
-      handleWebLN();
-    } else {
-      document.addEventListener("webln:ready", handleWebLN, { once: true });
+    return new Promise((resolve) => {
+        if (window.webln) {
+            handleWebLN();
+        } else {
+            document.addEventListener("webln:ready", handleWebLN, {
+                once: true,
+            });
 
-      let i = 0;
-      const checkInterval = setInterval(function() {
-        if (window.webln || i >= timeout/interval) {
-          handleWebLN();
-          clearInterval(checkInterval);
+            let i = 0;
+            const checkInterval = setInterval(function () {
+                if (window.webln || i >= timeout / interval) {
+                    handleWebLN();
+                    clearInterval(checkInterval);
+                }
+                i++;
+            }, interval);
         }
-        i++;
-      }, interval);
-    }
 
-    function handleWebLN() {
-      if (handled) {
-        return;
-      }
-      handled = true;
+        function handleWebLN() {
+            if (handled) {
+                return;
+            }
+            handled = true;
 
-      document.removeEventListener("webln:ready", handleWebLN);
+            document.removeEventListener("webln:ready", handleWebLN);
 
-      if (window.webln) {
-        resolve(window.webln);
-      } else {
-        resolve(null);
-      }
-    }
-  });
-};
-
+            if (window.webln) {
+                resolve(window.webln);
+            } else {
+                resolve(null);
+            }
+        }
+    });
+}
 
 export function lnurl_fetcher(lnurl, amount_sat) {
     return new Promise((resolve) => {
@@ -206,8 +242,8 @@ export function lnurl_fetcher(lnurl, amount_sat) {
         let amount = amount_sat * 1000;
         if (lnurl.indexOf("@") > 0) {
             // Lightning address
-            let urlsplit = lnurl.split("@")
-            url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`
+            let urlsplit = lnurl.split("@");
+            url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`;
         } else {
             // LNURL
             const { prefix, words, bytes } = bech32.decodeToBytes(lnurl);
@@ -217,11 +253,19 @@ export function lnurl_fetcher(lnurl, amount_sat) {
         fetch(url)
             .then(checkResponse)
             .then((data) => {
-                log.debug("amount check: (x, min, max)", amount, data.minSendable, data.maxSendable);
+                log.debug(
+                    "amount check: (x, min, max)",
+                    amount,
+                    data.minSendable,
+                    data.maxSendable
+                );
                 if (amount < data.minSendable || amount > data.maxSendable) {
-                  return Promise.reject("Amount not in LNURL range.");
+                    return Promise.reject("Amount not in LNURL range.");
                 }
-                log.debug("fetching invoice", `${data.callback}?amount=${amount}`);
+                log.debug(
+                    "fetching invoice",
+                    `${data.callback}?amount=${amount}`
+                );
                 fetch(`${data.callback}?amount=${amount}`)
                     .then(checkResponse)
                     .then((data) => {
@@ -232,7 +276,7 @@ export function lnurl_fetcher(lnurl, amount_sat) {
             })
             .catch(errorHandler);
     });
-};
+}
 
 export async function refund(swap) {
     let output = "";
@@ -246,8 +290,7 @@ export async function refund(swap) {
 
     try {
         output = address.toOutputScript(refundAddress(), net);
-    }
-    catch (e){
+    } catch (e) {
         log.error(e);
         setNotificationType("error");
         setNotification("invalid onchain address");
@@ -256,75 +299,91 @@ export async function refund(swap) {
     log.info("refunding swap: ", swap.id);
     let fees = await getfeeestimation(swap);
 
-    fetcher("/getswaptransaction", (data) => {
-        log.debug("refund swap result:", data);
-        if (!data.transactionHex) {
-            return log.debug("no mempool tx found");
-        }
-        if (data.timeoutEta) {
-            const eta = new Date(data.timeoutEta * 1000);
-            const msg = "Timeout Eta: \n " + eta.toLocaleString();
-            setNotificationType("error");
-            setNotification(msg);
-            log.error(msg);
-            return false;
-        }
-        const Transaction = getTransaction(asset_name);
-        const constructRefundTransaction = getConstructRefundTransaction(asset_name);
-        const detectSwap = getDetectSwap(asset_name);
-        const net = getNetwork(asset_name);
-        const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
-
-        let tx = Transaction.fromHex(data.transactionHex);
-        let script = Buffer.from(swap.redeemScript, "hex");
-        log.debug("script", script);
-        let swapOutput = detectSwap(script, tx);
-        log.debug("swapoutput", swapOutput);
-        let private_key = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
-        log.debug("privkey", private_key);
-        const refundTransaction = constructRefundTransaction(
-            [{
-                ...swapOutput,
-                txHash: tx.getHash(),
-                redeemScript: script,
-                keys: private_key,
-            }],
-            output,
-            data.timeoutBlockHeight,
-            fees,
-            true, // rbf
-            assetHash
-        ).toHex();
-
-        log.debug("refund_tx", refundTransaction);
-        fetcher("/broadcasttransaction", (data) => {
-            log.debug("refund result:", data);
-            if (data.transactionId) {
-                // save refundTx into swaps json and set it to the current swap
-                // only if the swaps was not initiated with the refund json
-                // refundjson has no date
-                if (swap.date !== undefined) {
-                    let tmp_swaps = JSON.parse(swaps());
-                    let current_swap = tmp_swaps.filter(s => s.id === swap.id).pop();
-                    current_swap.refundTx = data.transactionId;
-                    log.debug("current_swap", current_swap);
-                    log.debug("swaps", tmp_swaps);
-                    setSwaps(JSON.stringify(tmp_swaps));
-                } else {
-                    setRefundTx(data.transactionId);
-                }
-
-                setNotificationType("success");
-                setNotification(`Refund broadcasted`);
+    fetcher(
+        "/getswaptransaction",
+        (data) => {
+            log.debug("refund swap result:", data);
+            if (!data.transactionHex) {
+                return log.debug("no mempool tx found");
             }
-        }, {
-            "currency": asset_name,
-            "transactionHex": refundTransaction,
-        });
-    }, {
-        "id": swap.id,
-    });
-};
+            if (data.timeoutEta) {
+                const eta = new Date(data.timeoutEta * 1000);
+                const msg = "Timeout Eta: \n " + eta.toLocaleString();
+                setNotificationType("error");
+                setNotification(msg);
+                log.error(msg);
+                return false;
+            }
+            const Transaction = getTransaction(asset_name);
+            const constructRefundTransaction =
+                getConstructRefundTransaction(asset_name);
+            const detectSwap = getDetectSwap(asset_name);
+            const net = getNetwork(asset_name);
+            const assetHash =
+                asset_name === "L-BTC" ? net.assetHash : undefined;
+
+            let tx = Transaction.fromHex(data.transactionHex);
+            let script = Buffer.from(swap.redeemScript, "hex");
+            log.debug("script", script);
+            let swapOutput = detectSwap(script, tx);
+            log.debug("swapoutput", swapOutput);
+            let private_key = ECPair.fromPrivateKey(
+                Buffer.from(swap.privateKey, "hex")
+            );
+            log.debug("privkey", private_key);
+            const refundTransaction = constructRefundTransaction(
+                [
+                    {
+                        ...swapOutput,
+                        txHash: tx.getHash(),
+                        redeemScript: script,
+                        keys: private_key,
+                    },
+                ],
+                output,
+                data.timeoutBlockHeight,
+                fees,
+                true, // rbf
+                assetHash
+            ).toHex();
+
+            log.debug("refund_tx", refundTransaction);
+            fetcher(
+                "/broadcasttransaction",
+                (data) => {
+                    log.debug("refund result:", data);
+                    if (data.transactionId) {
+                        // save refundTx into swaps json and set it to the current swap
+                        // only if the swaps was not initiated with the refund json
+                        // refundjson has no date
+                        if (swap.date !== undefined) {
+                            let tmp_swaps = JSON.parse(swaps());
+                            let current_swap = tmp_swaps
+                                .filter((s) => s.id === swap.id)
+                                .pop();
+                            current_swap.refundTx = data.transactionId;
+                            log.debug("current_swap", current_swap);
+                            log.debug("swaps", tmp_swaps);
+                            setSwaps(JSON.stringify(tmp_swaps));
+                        } else {
+                            setRefundTx(data.transactionId);
+                        }
+
+                        setNotificationType("success");
+                        setNotification(`Refund broadcasted`);
+                    }
+                },
+                {
+                    currency: asset_name,
+                    transactionHex: refundTransaction,
+                }
+            );
+        },
+        {
+            id: swap.id,
+        }
+    );
+}
 
 export async function getfeeestimation(swap) {
     return new Promise((resolve) => {
@@ -334,23 +393,23 @@ export async function getfeeestimation(swap) {
             resolve(data[asset]);
         });
     });
-};
+}
 
 const createAdjustedClaim = (swap, claimDetails, destination, assetHash) => {
-  const inputSum = claimDetails.reduce(
-    (total, input) => total + getOutputAmount(swap.asset, input),
-    0,
-  );
-  const feeBudget = Math.floor(inputSum - swap.receiveAmount);
+    const inputSum = claimDetails.reduce(
+        (total, input) => total + getOutputAmount(swap.asset, input),
+        0
+    );
+    const feeBudget = Math.floor(inputSum - swap.receiveAmount);
 
-  const constructClaimTransaction = getConstructClaimTransaction(swap.asset)
-  return constructClaimTransaction(
-    claimDetails,
-    destination,
-    feeBudget,
-    true,
-    assetHash,
-  );
+    const constructClaimTransaction = getConstructClaimTransaction(swap.asset);
+    return constructClaimTransaction(
+        claimDetails,
+        destination,
+        feeBudget,
+        true,
+        assetHash
+    );
 };
 
 export const claim = async (swap) => {
@@ -376,34 +435,38 @@ export const claim = async (swap) => {
     let script = Buffer.from(swap.redeemScript, "hex");
 
     let swapOutput = detectSwap(script, tx);
-    let private_key = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
+    let private_key = ECPair.fromPrivateKey(
+        Buffer.from(swap.privateKey, "hex")
+    );
     log.debug("private_key: ", private_key);
     let preimage = Buffer.from(swap.preimage, "hex");
     log.debug("preimage: ", preimage);
     const claimTransaction = createAdjustedClaim(
-      swap,
-      [
-        {
-          ...swapOutput,
-          txHash: tx.getHash(),
-          preimage: preimage,
-          redeemScript: script,
-          keys: private_key,
-        },
-      ],
-      address.toOutputScript(swap.onchainAddress, net),
-      assetHash,
+        swap,
+        [
+            {
+                ...swapOutput,
+                txHash: tx.getHash(),
+                preimage: preimage,
+                redeemScript: script,
+                keys: private_key,
+            },
+        ],
+        address.toOutputScript(swap.onchainAddress, net),
+        assetHash
     ).toHex();
     log.debug("claim_tx", claimTransaction);
 
-    fetcher("/broadcasttransaction", (data) => {
-        log.debug("claim result:", data);
-    }, {
-        "currency": asset_name,
-        "transactionHex": claimTransaction,
-    });
-
+    fetcher(
+        "/broadcasttransaction",
+        (data) => {
+            log.debug("claim result:", data);
+        },
+        {
+            currency: asset_name,
+            transactionHex: claimTransaction,
+        }
+    );
 };
-
 
 export default fetcher;

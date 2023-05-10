@@ -4,7 +4,7 @@ import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext } from "@solid-primitives/i18n";
 import { i18n, setWebln } from "./signals";
 import { detectWebLNProvider } from "./helper";
-import log from 'loglevel';
+import log from "loglevel";
 import Create from "./Create";
 import Pay from "./Pay";
 import Nav from "./Nav";
@@ -26,21 +26,21 @@ detectWebLNProvider().then(() => setWebln(true));
 
 // <Route path="/" component={Hero} />
 render(
-  () => (
-    <I18nContext.Provider value={i18n_context}>
-        <Router>
-          <Nav />
-          <Routes>
-            <Route path="/" component={Create} />
-            <Route path="/swap" component={Create} />
-            <Route path="/swap/:id" component={Pay} />
-            <Route path="/refund" component={Refund} />
-            <Route path="/history" component={History} />
-          </Routes>
-          <Notification />
-          <Footer />
-        </Router>
-    </I18nContext.Provider>
-  ),
-  document.getElementById("root")
+    () => (
+        <I18nContext.Provider value={i18n_context}>
+            <Router>
+                <Nav />
+                <Routes>
+                    <Route path="/" component={Create} />
+                    <Route path="/swap" component={Create} />
+                    <Route path="/swap/:id" component={Pay} />
+                    <Route path="/refund" component={Refund} />
+                    <Route path="/history" component={History} />
+                </Routes>
+                <Notification />
+                <Footer />
+            </Router>
+        </I18nContext.Provider>
+    ),
+    document.getElementById("root")
 );

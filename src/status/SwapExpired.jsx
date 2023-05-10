@@ -11,7 +11,9 @@ const SwapExpired = () => {
 
     return (
         <div>
-            <p>{t("lockup_failed_reason")}: {failureReason()}</p>
+            <p>
+                {t("lockup_failed_reason")}: {failureReason()}
+            </p>
             <hr />
             <input
                 onKeyUp={(e) => setRefundAddress(e.currentTarget.value)}
@@ -21,9 +23,13 @@ const SwapExpired = () => {
                 name="refundAddress"
                 placeholder={t("refund_address_placeholder")}
             />
-            <span class="btn" onclick={() => refund(swap())}>{t("refund")}</span>
+            <span class="btn" onclick={() => refund(swap())}>
+                {t("refund")}
+            </span>
             <hr />
-            <span class="btn" onClick={(e) => navigate("/swap")}>{t("new_swap")}</span>
+            <span class="btn" onClick={(e) => navigate("/swap")}>
+                {t("new_swap")}
+            </span>
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import log from 'loglevel';
+import log from "loglevel";
 import { useI18n } from "@solid-primitives/i18n";
 import { invoiceQr, swap, webln } from "../signals";
 import { fetchSwapStatus } from "../helper";
@@ -17,14 +17,26 @@ const SwapCreated = () => {
 
     return (
         <div>
-            <p>{t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight}</p>
+            <p>
+                {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight}
+            </p>
             <hr />
             <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
             <hr />
             <Show when={webln()}>
-              <span class="btn btn-light" onClick={() => payWeblnInvoice(swap().invoice)}>{t("pay_invoice_webln")}</span>
+                <span
+                    class="btn btn-light"
+                    onClick={() => payWeblnInvoice(swap().invoice)}
+                >
+                    {t("pay_invoice_webln")}
+                </span>
             </Show>
-            <span class="btn" onclick={() => navigator.clipboard.writeText(swap().invoice)}>{t("copy_invoice")}</span>
+            <span
+                class="btn"
+                onclick={() => navigator.clipboard.writeText(swap().invoice)}
+            >
+                {t("copy_invoice")}
+            </span>
         </div>
     );
 };

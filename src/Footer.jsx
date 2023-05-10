@@ -9,28 +9,59 @@ import discord from "./assets/discord.svg";
 import "./css/footer.css";
 
 const Footer = () => {
-  const [t, { add, locale, dict }] = useI18n();
-  return (
-      <footer>
-          <h4>⚠️ This is a beta release ⚠️<br />
-          Got Feedback? Join our <a title="Discord" class="discord" target="_blank" href="https://discord.gg/sYwnRBJxyD">Discord</a></h4>
-          <h2>{t("socialmedia")}</h2>
-          <div class="socials">
-              <a title="Medium" class="medium" target="_blank" href="https://medium.com/boltzhq">
-                <img src={medium} alt="Medium Logo" />
-              </a>
-              <a title="Discord" class="discord" target="_blank" href="https://discord.gg/QBvZGcW">
-                <img src={discord} alt="Discord Logo" />
-              </a>
-              <a title="Twitter" class="twitter" target="_blank" href="https://twitter.com/boltzhq">
-                <img src={twitter} alt="Twitter Logo" />
-              </a>
-              <a title="Nostr" class="nostr" target="_blank" href="https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970">
-                <img src={nostr} alt="Nostr Logo" />
-              </a>
-          </div>
-          <p>{t("footer")}</p>
-      </footer>
-  );
+    const [t, { add, locale, dict }] = useI18n();
+    return (
+        <footer>
+            <h4>
+                ⚠️ This is a beta release ⚠️
+                <br />
+                Got Feedback? Join our{" "}
+                <a
+                    title="Discord"
+                    class="discord"
+                    target="_blank"
+                    href="https://discord.gg/sYwnRBJxyD"
+                >
+                    Discord
+                </a>
+            </h4>
+            <h2>{t("socialmedia")}</h2>
+            <div class="socials">
+                <a
+                    title="Medium"
+                    class="medium"
+                    target="_blank"
+                    href="https://medium.com/boltzhq"
+                >
+                    <img src={medium} alt="Medium Logo" />
+                </a>
+                <a
+                    title="Discord"
+                    class="discord"
+                    target="_blank"
+                    href="https://discord.gg/QBvZGcW"
+                >
+                    <img src={discord} alt="Discord Logo" />
+                </a>
+                <a
+                    title="Twitter"
+                    class="twitter"
+                    target="_blank"
+                    href="https://twitter.com/boltzhq"
+                >
+                    <img src={twitter} alt="Twitter Logo" />
+                </a>
+                <a
+                    title="Nostr"
+                    class="nostr"
+                    target="_blank"
+                    href="https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970"
+                >
+                    <img src={nostr} alt="Nostr Logo" />
+                </a>
+            </div>
+            <p>{t("footer")}</p>
+        </footer>
+    );
 };
 export default Footer;
