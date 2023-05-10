@@ -338,12 +338,12 @@ export async function getfeeestimation(swap) {
     });
 };
 
-const createAdjustedClaim = (swap, claimDetails, destination, fees, assetHash) => {
+const createAdjustedClaim = (swap, claimDetails, destination, assetHash) => {
   const inputSum = claimDetails.reduce(
     (total, input) => total + getOutputAmount(swap.asset, input),
     0,
   );
-  const feeBudget = inputSum - swap.receiveAmount;
+  const feeBudget = Math.floor(inputSum - swap.receiveAmount);
   
   const constructClaimTransaction = getConstructClaimTransaction(swap.asset)
   return constructClaimTransaction(
@@ -374,7 +374,6 @@ export const claim = async (swap) => {
     const net = getNetwork(asset_name);
     const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
 
-    let fees = await getfeeestimation(swap);
     let tx = Transaction.fromHex(mempool_tx.hex);
     let script = Buffer.from(swap.redeemScript, "hex");
 
@@ -395,8 +394,7 @@ export const claim = async (swap) => {
         },
       ],
       address.toOutputScript(swap.onchainAddress, net),
-      fees,
-      assetHash
+      assetHash,
     ).toHex();
     log.debug("claim_tx", claimTransaction);
 
