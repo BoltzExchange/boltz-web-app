@@ -96,6 +96,9 @@ const Nav = () => {
                             <span class="lang" onClick={() => set_local("es")}>
                                 {locales["es"]}
                             </span>
+                            <span class="lang" onClick={() => set_local("jp")}>
+                                {locales["jp"]}
+                            </span>
                         </div>
                     </div>
                 </Show>

@@ -71,13 +71,7 @@ const dict = {
         refunded: "You have refunded this swap",
     },
     de: {
-        swap: "Tausch",
-        refund: "Rückerstattung",
-        documentation: "Dokumentation",
-        onion: "Zwiebel",
-        footer: "mit ❤️ gemacht in El Salvador",
-        network_fee: "Netzwerk Gebühren",
-        help: "Hilfe",
+        history: "Verlauf",
     },
 };
 
