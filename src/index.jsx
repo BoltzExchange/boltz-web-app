@@ -1,4 +1,5 @@
 /* @refresh reload */
+import "./utils/patches";
 import { render } from "solid-js/web";
 import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext } from "@solid-primitives/i18n";
@@ -13,13 +14,12 @@ import Footer from "./Footer";
 // import Hero from "./Hero";
 import Refund from "./Refund";
 import History from "./History";
-import "./css/index.css";
-
 import { loglevel } from "./config";
+import dict from "./i18n";
+import "./css/index.css";
 
 log.setLevel(loglevel);
 
-import dict from "./i18n";
 const i18n_context = createI18nContext(dict, i18n());
 
 detectWebLNProvider().then(() => setWebln(true));

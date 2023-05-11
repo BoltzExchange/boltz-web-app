@@ -29,7 +29,7 @@ const setup = async () => {
 
     const zkpLib = await zkp();
     confi = new confidential.Confidential(zkpLib);
-    // prepareConfidential(zkpLib);
+    prepareConfidential(zkpLib);
 };
 
 const getAddress = (asset) => {
