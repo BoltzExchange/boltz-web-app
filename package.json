@@ -7,7 +7,6 @@
     "start": "cp src/configs/config.regtest.js src/config.js && vite",
     "dev": "vite",
     "serve": "vite preview",
-    "bitcoinlib": "npx browserify --standalone bitcoin - -o src/vendor/bitcoinjs-lib.js <<<\"module.exports = require(\\\"bitcoinjs-lib\\\");\"",
     "mainnet": "cp src/configs/config.mainnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
     "testnet": "cp src/configs/config.testnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
     "prettier": "./node_modules/prettier/bin-prettier.js --write src"
@@ -27,7 +26,7 @@
     "@solidjs/router": "^0.8.2",
     "@vulpemventures/secp256k1-zkp": "^3.0.0",
     "boltz-core": "^0.6.2",
-    "boltz-core-liquid-michael1011": "^0.5.3",
+    "boltz-core-liquid-michael1011": "^1.0.0",
     "buffer": "^6.0.3",
     "create-hmac": "^1.1.7",
     "ecpair": "2.0.1",

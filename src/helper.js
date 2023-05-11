@@ -27,6 +27,8 @@ import {
     getConstructRefundTransaction,
     getDetectSwap,
     getOutputAmount,
+    decodeAddress,
+    setup,
 } from "./compat";
 
 import { api_url, mempool_url, mempool_url_liquid } from "./config";
@@ -395,7 +397,7 @@ export async function getfeeestimation(swap) {
     });
 }
 
-const createAdjustedClaim = (swap, claimDetails, destination, assetHash) => {
+const createAdjustedClaim = (swap, claimDetails, destination, assetHash, blindingKey) => {
     const inputSum = claimDetails.reduce(
         (total, input) => total + getOutputAmount(swap.asset, input),
         0
@@ -408,11 +410,13 @@ const createAdjustedClaim = (swap, claimDetails, destination, assetHash) => {
         destination,
         feeBudget,
         true,
-        assetHash
+        assetHash,
+        blindingKey
     );
 };
 
 export const claim = async (swap) => {
+    await setup();
     const asset_name = swap.asset;
 
     log.info("claiming swap: ", swap.id);
@@ -427,33 +431,36 @@ export const claim = async (swap) => {
 
     const Transaction = getTransaction(asset_name);
     const detectSwap = getDetectSwap(asset_name);
-    const address = getAddress(asset_name);
     const net = getNetwork(asset_name);
     const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
 
     let tx = Transaction.fromHex(mempool_tx.hex);
-    let script = Buffer.from(swap.redeemScript, "hex");
+    let redeemScript = Buffer.from(swap.redeemScript, "hex");
 
-    let swapOutput = detectSwap(script, tx);
+    let swapOutput = detectSwap(redeemScript, tx);
     let private_key = ECPair.fromPrivateKey(
         Buffer.from(swap.privateKey, "hex")
     );
     log.debug("private_key: ", private_key);
     let preimage = Buffer.from(swap.preimage, "hex");
     log.debug("preimage: ", preimage);
+    const { script, blindingKey } = decodeAddress(asset_name, swap.onchainAddress);
     const claimTransaction = createAdjustedClaim(
         swap,
         [
             {
                 ...swapOutput,
+                redeemScript,
                 txHash: tx.getHash(),
                 preimage: preimage,
-                redeemScript: script,
                 keys: private_key,
+                // TODO: fix that typo in the library
+                blindinkPrivKey: Buffer.from(swap.blindingKey, 'hex'),
             },
         ],
-        address.toOutputScript(swap.onchainAddress, net),
-        assetHash
+        script,
+        assetHash,
+        blindingKey
     ).toHex();
     log.debug("claim_tx", claimTransaction);
 
