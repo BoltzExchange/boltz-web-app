@@ -47,23 +47,20 @@ const History = () => {
                                         class="btn-small"
                                         onClick={() =>
                                             navigate("/swap/" + _swap.id)
-                                        }
-                                    >
+                                        }>
                                         view
                                     </span>
                                     <span
                                         data-reverse={_swap.reverse}
                                         data-asset={_swap.asset}
-                                        class="past-asset"
-                                    >
+                                        class="past-asset">
                                         -&gt;
                                     </span>
                                     &nbsp;ID: {_swap.id}, created:{" "}
                                     {printDate(_swap.date)}&nbsp;
                                     <span
                                         class="btn-small btn-danger"
-                                        onClick={() => delete_swap(_swap.id)}
-                                    >
+                                        onClick={() => delete_swap(_swap.id)}>
                                         delete
                                     </span>
                                     <hr />
@@ -74,14 +71,12 @@ const History = () => {
                     <div class="btns">
                         <button
                             class="btn btn-danger"
-                            onClick={deleteLocalstorage}
-                        >
+                            onClick={deleteLocalstorage}>
                             {t("refund_clear")}
                         </button>
                         <button
                             class="btn "
-                            onClick={() => downloadBackup(swaps())}
-                        >
+                            onClick={() => downloadBackup(swaps())}>
                             {t("refund_backup")}
                         </button>
                     </div>

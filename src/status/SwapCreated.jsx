@@ -26,15 +26,13 @@ const SwapCreated = () => {
             <Show when={webln()}>
                 <span
                     class="btn btn-light"
-                    onClick={() => payWeblnInvoice(swap().invoice)}
-                >
+                    onClick={() => payWeblnInvoice(swap().invoice)}>
                     {t("pay_invoice_webln")}
                 </span>
             </Show>
             <span
                 class="btn"
-                onclick={() => navigator.clipboard.writeText(swap().invoice)}
-            >
+                onclick={() => navigator.clipboard.writeText(swap().invoice)}>
                 {t("copy_invoice")}
             </span>
         </div>

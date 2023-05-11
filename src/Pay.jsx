@@ -97,8 +97,7 @@ const Pay = () => {
                     <span
                         data-reverse={swap().reverse}
                         data-asset={swap().asset}
-                        class="past-asset"
-                    >
+                        class="past-asset">
                         -
                     </span>
                 </Show>
@@ -128,8 +127,7 @@ const Pay = () => {
                         when={
                             swapStatus() == "transaction.claimed" ||
                             swapStatus() == "invoice.settled"
-                        }
-                    >
+                        }>
                         <TransactionClaimed />
                     </Show>
                     <Show when={swapStatus() == "transaction.confirmed"}>
@@ -156,8 +154,7 @@ const Pay = () => {
                         href={mempoolLink(
                             swap().asset,
                             !reverse() ? swap().address : swap().lockupAddress
-                        )}
-                    >
+                        )}>
                         {t("mempool")}
                     </a>
                 </Show>

@@ -20,14 +20,12 @@ const InvoiceSet = () => {
             <div class="btns">
                 <span
                     class="btn"
-                    onclick={() => clipboard(swap().bip21, t("copied"))}
-                >
+                    onclick={() => clipboard(swap().bip21, t("copied"))}>
                     {t("copy_bip21")}
                 </span>
                 <span
                     class="btn"
-                    onclick={() => clipboard(swap().address, t("copied"))}
-                >
+                    onclick={() => clipboard(swap().address, t("copied"))}>
                     {t("copy_onchain")}
                 </span>
                 <span
@@ -37,16 +35,14 @@ const InvoiceSet = () => {
                             formatAmount(swap().expectedAmount),
                             t("copied")
                         )
-                    }
-                >
+                    }>
                     {t("copy_amount")}
                 </span>
             </div>
             <div class="btns">
                 <span
                     class="btn btn-success"
-                    onclick={() => downloadRefundFile(swap())}
-                >
+                    onclick={() => downloadRefundFile(swap())}>
                     {t("download_refund_json")}
                 </span>
             </div>

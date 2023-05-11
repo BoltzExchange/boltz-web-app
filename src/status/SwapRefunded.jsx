@@ -16,8 +16,7 @@ const SwapRefunded = () => {
             <a
                 class="btn btn-mempool"
                 target="_blank"
-                href={mempoolLink(swap().asset, swap().refundTx)}
-            >
+                href={mempoolLink(swap().asset, swap().refundTx)}>
                 {t("mempool")}
             </a>
             <hr />

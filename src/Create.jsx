@@ -306,8 +306,7 @@ const Create = () => {
                     id="flip-assets"
                     onClick={() => {
                         setReverse(!reverse());
-                    }}
-                >
+                    }}>
                     <img src={arrow_svg} alt="flip assets" />
                 </div>
                 <div>
@@ -367,8 +366,7 @@ const Create = () => {
                         {formatAmount(minerFee())}
                         <span
                             class="denominator"
-                            data-denominator={denomination()}
-                        ></span>
+                            data-denominator={denomination()}></span>
                     </span>
                     <br />
                     {t("fee")} ({boltzFee()}%):{" "}
@@ -378,8 +376,7 @@ const Create = () => {
                         )}
                         <span
                             class="denominator"
-                            data-denominator={denomination()}
-                        ></span>
+                            data-denominator={denomination()}></span>
                     </span>
                 </label>
             </div>
@@ -388,8 +385,7 @@ const Create = () => {
                 <button
                     id="webln"
                     class="btn btn-light"
-                    onClick={() => createWeblnInvoice()}
-                >
+                    onClick={() => createWeblnInvoice()}>
                     {t("create_invoice_webln")}
                 </button>
                 <hr />
@@ -403,8 +399,7 @@ const Create = () => {
                 placeholder={t("create_and_paste", {
                     amount: receiveAmountFormatted(),
                     denomination: denomination(),
-                })}
-            ></textarea>
+                })}></textarea>
             <input
                 onChange={(e) => setOnchainAddress(e.currentTarget.value)}
                 onKeyUp={(e) => setOnchainAddress(e.currentTarget.value)}

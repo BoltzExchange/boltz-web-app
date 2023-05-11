@@ -29,8 +29,7 @@ const Nav = () => {
                     viewBox="0 0 100 100"
                     width="50"
                     class={hamburger() ? "active" : ""}
-                    onClick={() => setHamburger(!hamburger())}
-                >
+                    onClick={() => setHamburger(!hamburger())}>
                     <path
                         class="line top"
                         d="m 70,33 h -40 c 0,0 -8.5,-0.149796 -8.5,8.5 0,8.649796 8.5,8.5 8.5,8.5 h 20 v -20"
@@ -64,22 +63,19 @@ const Nav = () => {
                     <a
                         class="external"
                         target="_blank"
-                        href="https://docs.boltz.exchange/en/latest/"
-                    >
+                        href="https://docs.boltz.exchange/en/latest/">
                         {t("documentation")}
                     </a>
                     <a
                         class="external"
                         target="_blank"
-                        href="https://discord.gg/QBvZGcW"
-                    >
+                        href="https://discord.gg/QBvZGcW">
                         {t("help")}
                     </a>
                     <a
                         class="external"
                         target="_blank"
-                        href="http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/"
-                    >
+                        href="http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/">
                         {t("onion")}
                     </a>
                 </div>

@@ -20,8 +20,7 @@ const Footer = () => {
                     title="Discord"
                     class="discord"
                     target="_blank"
-                    href="https://discord.gg/sYwnRBJxyD"
-                >
+                    href="https://discord.gg/sYwnRBJxyD">
                     Discord
                 </a>
             </h4>
@@ -31,32 +30,28 @@ const Footer = () => {
                     title="Medium"
                     class="medium"
                     target="_blank"
-                    href="https://medium.com/boltzhq"
-                >
+                    href="https://medium.com/boltzhq">
                     <img src={medium} alt="Medium Logo" />
                 </a>
                 <a
                     title="Discord"
                     class="discord"
                     target="_blank"
-                    href="https://discord.gg/QBvZGcW"
-                >
+                    href="https://discord.gg/QBvZGcW">
                     <img src={discord} alt="Discord Logo" />
                 </a>
                 <a
                     title="Twitter"
                     class="twitter"
                     target="_blank"
-                    href="https://twitter.com/boltzhq"
-                >
+                    href="https://twitter.com/boltzhq">
                     <img src={twitter} alt="Twitter Logo" />
                 </a>
                 <a
                     title="Nostr"
                     class="nostr"
                     target="_blank"
-                    href="https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970"
-                >
+                    href="https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970">
                     <img src={nostr} alt="Nostr Logo" />
                 </a>
             </div>

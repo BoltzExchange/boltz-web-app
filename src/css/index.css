@@ -628,6 +628,7 @@ textarea {
     display: inline-block;
     width: auto;
 }
-.network-fee, .boltz-fee {
+.network-fee,
+.boltz-fee {
     margin-right: 4px;
 }

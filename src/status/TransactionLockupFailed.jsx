@@ -23,8 +23,7 @@ const TransactionLockupFailed = () => {
             </p>
             <span
                 class="btn btn-success"
-                onclick={() => downloadRefundFile(swap())}
-            >
+                onclick={() => downloadRefundFile(swap())}>
                 {t("download_refund_json")}
             </span>
             <hr />

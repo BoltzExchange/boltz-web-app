@@ -68,8 +68,7 @@ const Refund = () => {
                 <div class={error() !== false ? "hidden" : ""}>
                     <span
                         class="btn btn-success"
-                        onClick={() => refund(refundJson())}
-                    >
+                        onClick={() => refund(refundJson())}>
                         {t("refund")}
                     </span>
                 </div>
@@ -78,8 +77,7 @@ const Refund = () => {
                     <a
                         class="btn btn-mempool"
                         target="_blank"
-                        href={mempoolLink(refundJson().asset, refundTx())}
-                    >
+                        href={mempoolLink(refundJson().asset, refundTx())}>
                         {t("mempool")}
                     </a>
                 </Show>
