@@ -88,7 +88,8 @@ const getConstructRefundTransaction = (asset) => {
             timeoutBlockHeight,
             feePerVbyte,
             isRbf,
-            assetHash
+            assetHash,
+            blindingKey
         ) =>
             targetFee(feePerVbyte, (fee) =>
                 lcRT(
@@ -97,7 +98,8 @@ const getConstructRefundTransaction = (asset) => {
                     timeoutBlockHeight,
                     fee,
                     isRbf,
-                    assetHash
+                    assetHash,
+                    blindingKey
                 )
             );
     } else {

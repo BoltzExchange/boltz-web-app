@@ -1,6 +1,5 @@
 import log from "loglevel";
 import QRCode from "qrcode";
-
 import { bech32, utf8 } from "@scure/base";
 import {
     swaps,
@@ -53,6 +52,7 @@ export const clipboard = (text, message) => {
 };
 
 export const errorHandler = (error) => {
+    console.log(error);
     setNotificationType("error");
     if (typeof error.json === "function") {
         error
@@ -143,36 +143,33 @@ export const fetchSwapStatus = (swap) => {
     return false;
 };
 
-export const downloadRefundFile = (swap) => {
-    let json = {
+const createRefundData = (swap) => {
+    return {
         id: swap.id,
-        currency: swap.asset,
         asset: swap.asset,
-        redeemScript: swap.redeemScript,
+        currency: swap.asset,
         privateKey: swap.privateKey,
+        blindingKey: swap.blindingKey,
+        redeemScript: swap.redeemScript,
         timeoutBlockHeight: swap.timeoutBlockHeight,
     };
-    let hiddenElement = document.createElement("a");
+}
+
+export const downloadRefundFile = (swap) => {
+    const hiddenElement = document.createElement("a");
     hiddenElement.href =
         "data:application/json;charset=utf-8," +
-        encodeURI(JSON.stringify(json));
+        encodeURI(JSON.stringify(createRefundData(swap)));
     hiddenElement.target = "_blank";
     hiddenElement.download = "boltz-refund-" + swap.id + ".json";
     hiddenElement.click();
 };
 
 export const downloadRefundQr = (swap) => {
-    let json = {
-        id: swap.id,
-        currency: swap.asset,
-        redeemScript: swap.redeemScript,
-        privateKey: swap.privateKey,
-        timeoutBlockHeight: swap.timeoutBlockHeight,
-    };
     let hiddenElement = document.createElement("a");
     hiddenElement.href =
         "data:application/json;charset=utf-8," +
-        encodeURI(JSON.stringify(json));
+        encodeURI(JSON.stringify(createRefundData(swap)));
     hiddenElement.target = "_blank";
     hiddenElement.download = "boltz-refund-" + swap.id + ".json";
     hiddenElement.click();
@@ -248,7 +245,7 @@ export function lnurl_fetcher(lnurl, amount_sat) {
             url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`;
         } else {
             // LNURL
-            const { prefix, words, bytes } = bech32.decodeToBytes(lnurl);
+            const { bytes } = bech32.decodeToBytes(lnurl);
             url = utf8.encode(bytes);
         }
         log.debug("fetching lnurl:", url);
@@ -287,11 +284,9 @@ export async function refund(swap) {
     log.debug("starting to refund swap", swap);
 
     const asset_name = swap.asset;
-    const address = getAddress(asset_name);
-    const net = getNetwork(asset_name);
 
     try {
-        output = address.toOutputScript(refundAddress(), net);
+        output = decodeAddress(asset_name, refundAddress());
     } catch (e) {
         log.error(e);
         setNotificationType("error");
@@ -299,7 +294,7 @@ export async function refund(swap) {
         return false;
     }
     log.info("refunding swap: ", swap.id);
-    let fees = await getfeeestimation(swap);
+    let [_, fees] = await Promise.all([setup(), getfeeestimation(swap)]);
 
     fetcher(
         "/getswaptransaction",
@@ -333,6 +328,7 @@ export async function refund(swap) {
                 Buffer.from(swap.privateKey, "hex")
             );
             log.debug("privkey", private_key);
+            console.log(output);
             const refundTransaction = constructRefundTransaction(
                 [
                     {
@@ -340,13 +336,15 @@ export async function refund(swap) {
                         txHash: tx.getHash(),
                         redeemScript: script,
                         keys: private_key,
+                        blindinkPrivKey: Buffer.from(swap.blindingKey, "hex"),
                     },
                 ],
-                output,
+                output.script,
                 data.timeoutBlockHeight,
                 fees,
                 true, // rbf
-                assetHash
+                assetHash,
+                output.blindingKey
             ).toHex();
 
             log.debug("refund_tx", refundTransaction);

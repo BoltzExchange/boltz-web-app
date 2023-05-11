@@ -24,7 +24,7 @@ Uint8Array.prototype.writeBigUInt64BE = function (int64, offset) {
 Buffer.isBuffer = function (b) {
     return (
         b != null &&
-        (b._isBuffer === true || b != null, b instanceof Uint8Array) &&
+        (b._isBuffer === true || b instanceof Uint8Array) &&
         b !== Buffer.prototype
     );
 };
