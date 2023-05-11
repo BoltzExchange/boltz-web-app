@@ -121,7 +121,7 @@ const getOutputAmount = (asset, output) => {
     }
 
     if (output.rangeProof?.length !== 0) {
-        const unblinded = confi.unblindOutputWithKey(output, output.blindinkPrivKey);
+        const unblinded = confi.unblindOutputWithKey(output, output.blindingPrivKey);
         return Number(unblinded.value);
     } else {
         return confidential.confidentialValueToSatoshi(output.value);
