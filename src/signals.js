@@ -33,6 +33,7 @@ export const [failureReason, setFailureReason] = createSignal("");
 export const [timeoutEta, setTimeoutEta] = createSignal(0);
 export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
 export const [refundTx, setRefundTx] = createSignal("");
+export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
 // local storage
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");
