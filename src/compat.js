@@ -58,7 +58,8 @@ const decodeAddress = (asset, addr) => {
 
 const getNetwork = (asset) => {
     if (asset === "L-BTC") {
-        return l_networks[network];
+        const liquidNet = network === "main" ? "liquid" : network;
+        return l_networks[liquidNet];
     } else {
         return networks[network];
     }
