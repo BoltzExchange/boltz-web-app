@@ -27,7 +27,7 @@ const dict = {
             "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink\n\nAmount: {{ amount }} {{ denomination }}",
         congrats: "Congratulations!",
         successfully_swapped:
-            "You have successfully swapped {{ amount }} {{ denomination }}.",
+            "Your swap completed successfully",
         timeout_eta: "Timeout ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
