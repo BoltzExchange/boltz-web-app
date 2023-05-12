@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createEffect, createMemo, onCleanup } from "solid-js";
+import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, lnurl_fetcher } from "./helper";
 import { useNavigate } from "@solidjs/router";
@@ -62,6 +62,8 @@ import {
 } from "./signals";
 
 const Create = () => {
+    const [firstLoad, setFirstLoad] = createSignal(true);
+
     // set fees and pairs
     createEffect(() => {
         let cfg = config()["BTC/BTC"];
@@ -82,7 +84,8 @@ const Create = () => {
                 setBoltzFee(cfg.fees.percentageSwapIn);
                 setMinerFee(fee);
             }
-            if (sendAmount() === BigInt(0)) {
+            if (firstLoad() && sendAmount() === BigInt(0)) {
+                setFirstLoad(false);
                 setReceiveAmount(BigInt(cfg.limits.minimal));
                 setSendAmount(BigInt(calculateSendAmount(cfg.limits.minimal)));
             }
