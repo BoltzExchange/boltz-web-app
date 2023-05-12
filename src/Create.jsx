@@ -95,12 +95,6 @@ const Create = () => {
         setSendAmountFormatted(formatAmount(Number(sendAmount())));
     });
 
-    // change direction
-    createEffect(() => {
-        reverse();
-        setSendAmount(BigInt(calculateSendAmount(Number(receiveAmount()))));
-    });
-
     // validation swap
     createEffect(() => {
         if ((!reverse() && invoice()) || (reverse() && onchainAddress())) {
@@ -125,7 +119,7 @@ const Create = () => {
     const calculateReceiveAmount = (sendAmount) => {
         const preMinerFee = sendAmount - minerFee();
         sendAmount = preMinerFee - Math.floor((preMinerFee * boltzFee()) / 100);
-        return sendAmount;
+        return Math.max(sendAmount, 0);
     };
 
     const calculateSendAmount = (receiveAmount) => {
@@ -133,7 +127,7 @@ const Create = () => {
             parseInt(receiveAmount) +
             parseInt(minerFee()) +
             Math.ceil((receiveAmount * boltzFee()) / 100);
-        return Math.floor(receiveAmount);
+        return Math.max(Math.floor(receiveAmount));
     };
 
     const changeReceiveAmount = (amount) => {
@@ -312,6 +306,7 @@ const Create = () => {
                     id="flip-assets"
                     onClick={() => {
                         setReverse(!reverse());
+                        setSendAmount(BigInt(calculateSendAmount(Number(receiveAmount()))));
                     }}>
                     <img src={arrow_svg} alt="flip assets" />
                 </div>
