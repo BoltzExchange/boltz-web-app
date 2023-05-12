@@ -14,7 +14,7 @@ const locales = {
 };
 
 const Nav = () => {
-    const [t, { add, locale, dict }] = useI18n();
+    const [t, { locale }] = useI18n();
 
     const set_local = (locale_code) => {
         locale(locale_code);
@@ -55,11 +55,9 @@ const Nav = () => {
                     <A href="/refund" onClick={() => setHamburger(false)}>
                         {t("refund")}
                     </A>
-                    <Show when={JSON.parse(swaps()).length > 0}>
-                        <A href="/history" onClick={() => setHamburger(false)}>
-                            {t("history")}
-                        </A>
-                    </Show>
+                    <A href="/history" onClick={() => setHamburger(false)}>
+                        {t("history")}
+                    </A>
                     <a
                         class="external"
                         target="_blank"

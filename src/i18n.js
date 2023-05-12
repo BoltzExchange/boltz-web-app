@@ -50,7 +50,8 @@ const dict = {
             "Upload your refund.json file and reclaim you on-chain funds",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
-            "those swap got saved into your browsers localstorage",
+            "Swaps that got saved into your browsers storage",
+        history_no_swaps: "Looks like you didn't do any swaps yet. Click \"Swap\" to get started.",
         refund_address_placeholder: "Refund onchain address",
         refund_clear: "Delete localstorage",
         delete_swap: "Delete swap from localstorage",

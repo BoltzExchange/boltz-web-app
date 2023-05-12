@@ -1,9 +1,9 @@
-import { swaps, setSwaps } from "./signals";
-import { downloadBackup } from "./helper";
 
+import { Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-
+import { downloadBackup } from "./helper";
+import { swaps, setSwaps } from "./signals";
 import "./css/history.css";
 
 const History = () => {
@@ -19,7 +19,6 @@ const History = () => {
     const deleteLocalstorage = () => {
         if (confirm(t("delete_localstorage"))) {
             setSwaps("[]");
-            navigate("/swap");
         }
     };
 
@@ -29,42 +28,44 @@ const History = () => {
             if (tmp_swaps) {
                 const new_swaps = tmp_swaps.filter((s) => s.id !== swap_id);
                 setSwaps(JSON.stringify(new_swaps));
-                if (new_swaps.length === 0) {
-                    navigate("/swap");
-                }
             }
         }
     };
 
     return (
         <div id="history">
-            <Show when={JSON.parse(swaps()).length > 0}>
-                <div class="frame">
-                    <h2>{t("refund_past_swaps")}</h2>
-                    <p>{t("refund_past_swaps_subline")}</p>
-                    <hr />
+            <div class="frame">
+                <h2>{t("refund_past_swaps")}</h2>
+                <p>{t("refund_past_swaps_subline")}</p>
+                <hr />
+                <Show
+                    when={JSON.parse(swaps()).length > 0}
+                    fallback={
+                        <p>{t("history_no_swaps")}</p>
+                    }
+                >
                     <div id="past-swaps">
                         <For each={JSON.parse(swaps())}>
-                            {(_swap) => (
+                            {(swap) => (
                                 <div class="past-swap">
                                     <span
                                         class="btn-small"
                                         onClick={() =>
-                                            navigate("/swap/" + _swap.id)
+                                            navigate("/swap/" + swap.id)
                                         }>
                                         view
                                     </span>
                                     <span
-                                        data-reverse={_swap.reverse}
-                                        data-asset={_swap.asset}
+                                        data-reverse={swap.reverse}
+                                        data-asset={swap.asset}
                                         class="past-asset">
                                         -&gt;
                                     </span>
-                                    &nbsp;ID: {_swap.id}, created:{" "}
-                                    {printDate(_swap.date)}&nbsp;
+                                    &nbsp;ID: {swap.id}, created:{" "}
+                                    {printDate(swap.date)}&nbsp;
                                     <span
                                         class="btn-small btn-danger"
-                                        onClick={() => delete_swap(_swap.id)}>
+                                        onClick={() => delete_swap(swap.id)}>
                                         delete
                                     </span>
                                     <hr />
@@ -84,8 +85,8 @@ const History = () => {
                             {t("refund_backup")}
                         </button>
                     </div>
-                </div>
-            </Show>
+                </Show>
+            </div>
         </div>
     );
 };
