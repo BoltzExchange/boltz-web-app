@@ -1,7 +1,7 @@
 import { A } from "@solidjs/router";
 
 import { useI18n } from "@solid-primitives/i18n";
-import { i18n, setI18n, hamburger, setHamburger, swaps } from "./signals";
+import { i18n, setI18n, hamburger, setHamburger } from "./signals";
 import { network } from "./config";
 
 import "./css/nav.css";
@@ -11,6 +11,7 @@ const locales = {
     en: "English",
     de: "Deutsch",
     es: "Español",
+    jp: "Japanese",
 };
 
 const Nav = () => {

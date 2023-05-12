@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { useI18n } from "@solid-primitives/i18n";
 import { invoiceQr, swap, webln } from "../signals";
-import { fetchSwapStatus } from "../helper";
+import { fetchSwapStatus, clipboard } from "../helper";
 
 const SwapCreated = () => {
     const [t] = useI18n();
@@ -32,7 +32,7 @@ const SwapCreated = () => {
             </Show>
             <span
                 class="btn"
-                onclick={() => navigator.clipboard.writeText(swap().invoice)}>
+                onclick={() => clipboard(swap().invoice, t("copied"))}>
                 {t("copy_invoice")}
             </span>
         </div>
