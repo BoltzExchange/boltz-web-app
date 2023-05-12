@@ -19,15 +19,19 @@ const History = () => {
     const deleteLocalstorage = () => {
         if (confirm(t("delete_localstorage"))) {
             setSwaps("[]");
+            navigate("/swap");
         }
     };
 
     const delete_swap = (swap_id) => {
         if (confirm(t("delete_localstorage"))) {
-            let tmp_swaps = JSON.parse(swaps());
+            const tmp_swaps = JSON.parse(swaps());
             if (tmp_swaps) {
-                let new_swaps = tmp_swaps.filter((s) => s.id !== swap_id);
+                const new_swaps = tmp_swaps.filter((s) => s.id !== swap_id);
                 setSwaps(JSON.stringify(new_swaps));
+                if (new_swaps.length === 0) {
+                    navigate("/swap");
+                }
             }
         }
     };
