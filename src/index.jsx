@@ -11,7 +11,6 @@ import Pay from "./Pay";
 import Nav from "./Nav";
 import Notification from "./Notification";
 import Footer from "./Footer";
-// import Hero from "./Hero";
 import Refund from "./Refund";
 import History from "./History";
 import { loglevel } from "./config";
