@@ -127,7 +127,7 @@ const Create = () => {
             parseInt(receiveAmount) +
             parseInt(minerFee()) +
             Math.ceil((receiveAmount * boltzFee()) / 100);
-        return Math.max(Math.floor(receiveAmount));
+        return Math.max(Math.floor(receiveAmount), 0);
     };
 
     const changeReceiveAmount = (amount) => {
