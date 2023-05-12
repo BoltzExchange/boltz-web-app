@@ -1,4 +1,4 @@
-import { network } from "./config";
+import zkp from '@vulpemventures/secp256k1-zkp';
 import { address, networks, Transaction } from "bitcoinjs-lib";
 import {
     address as l_address,
@@ -16,13 +16,43 @@ import {
     constructRefundTransaction as lcRT,
     detectSwap as ldS,
     targetFee,
+    prepareConfidential,
 } from "boltz-core-liquid-michael1011";
+import { network } from "./config";
+
+let confi;
+
+const setup = async () => {
+    if (confi !== undefined) {
+        return;
+    }
+
+    const zkpLib = await zkp();
+    confi = new confidential.Confidential(zkpLib);
+    prepareConfidential(zkpLib);
+};
 
 const getAddress = (asset) => {
     if (asset === "L-BTC") {
         return l_address;
     } else {
         return address;
+    }
+};
+
+const decodeAddress = (asset, addr) => {
+    const address = getAddress(asset);
+    if (asset === "L-BTC") {
+        const decoded = address.fromConfidential(addr);
+
+        return {
+            script: decoded.scriptPubKey,
+            blindingKey: decoded.blindingKey,
+        };
+    } else {
+        return {
+            script: address.toOutputScript(addr, getNetwork(asset)),
+        };
     }
 };
 
@@ -58,7 +88,8 @@ const getConstructRefundTransaction = (asset) => {
             timeoutBlockHeight,
             feePerVbyte,
             isRbf,
-            assetHash
+            assetHash,
+            blindingKey
         ) =>
             targetFee(feePerVbyte, (fee) =>
                 lcRT(
@@ -67,7 +98,8 @@ const getConstructRefundTransaction = (asset) => {
                     timeoutBlockHeight,
                     fee,
                     isRbf,
-                    assetHash
+                    assetHash,
+                    blindingKey
                 )
             );
     } else {
@@ -84,14 +116,23 @@ const getDetectSwap = (asset) => {
 };
 
 const getOutputAmount = (asset, output) => {
-    return asset === "L-BTC"
-        ? confidential.confidentialValueToSatoshi(output.value)
-        : output.value;
+    if (asset !== "L-BTC") {
+        return output.value;
+    }
+
+    if (output.rangeProof?.length !== 0) {
+        const unblinded = confi.unblindOutputWithKey(output, output.blindingPrivKey);
+        return Number(unblinded.value);
+    } else {
+        return confidential.confidentialValueToSatoshi(output.value);
+    }
 };
 
 export {
+    setup,
     getAddress,
     getNetwork,
+    decodeAddress,
     getDetectSwap,
     getTransaction,
     getOutputAmount,
