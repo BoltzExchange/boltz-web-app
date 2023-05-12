@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createEffect, onCleanup } from "solid-js";
+import { createEffect, createMemo, onCleanup } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
 import { fetcher, lnurl_fetcher } from "./helper";
 import { useNavigate } from "@solidjs/router";
@@ -90,9 +90,15 @@ const Create = () => {
     });
 
     // change denomination
-    createEffect(() => {
+    createMemo(() => {
         setReceiveAmountFormatted(formatAmount(Number(receiveAmount())));
         setSendAmountFormatted(formatAmount(Number(sendAmount())));
+    });
+
+    // change direction
+    createEffect(() => {
+        reverse();
+        setSendAmount(BigInt(calculateSendAmount(Number(receiveAmount()))));
     });
 
     // validation swap
