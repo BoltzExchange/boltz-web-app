@@ -25,7 +25,7 @@ const i18n_context = createI18nContext(dict, i18n());
 detectWebLNProvider().then(() => setWebln(true));
 
 // <Route path="/" component={Hero} />
-render(
+const cleanup = render(
     () => (
         <I18nContext.Provider value={i18n_context}>
             <Router>
@@ -44,3 +44,8 @@ render(
     ),
     document.getElementById("root")
 );
+
+if (import.meta.hot) {
+  console.log("Hot reload");
+  import.meta.hot.dispose(cleanup);
+}
