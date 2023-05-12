@@ -21,7 +21,7 @@ log.setLevel(loglevel);
 
 const i18n_context = createI18nContext(dict, i18n());
 
-detectWebLNProvider().then(() => setWebln(true));
+detectWebLNProvider().then((state) => setWebln(state));
 
 // <Route path="/" component={Hero} />
 const cleanup = render(

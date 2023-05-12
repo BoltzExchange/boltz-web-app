@@ -221,7 +221,7 @@ export async function detectWebLNProvider(timeoutParam) {
 
         function handleWebLN() {
             if (handled) {
-                return;
+                return false;
             }
             handled = true;
 
@@ -230,7 +230,7 @@ export async function detectWebLNProvider(timeoutParam) {
             if (window.webln) {
                 resolve(window.webln);
             } else {
-                resolve(null);
+                resolve(false);
             }
         }
     });
