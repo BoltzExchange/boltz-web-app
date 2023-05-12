@@ -14,6 +14,7 @@ import {
     setNotification,
     setNotificationType,
     refundAddress,
+    transactionToRefund,
 } from "./signals";
 
 import { Buffer } from "buffer";
@@ -76,7 +77,7 @@ export const checkResponse = (response) => {
     return response.json();
 };
 
-export const fetcher = (url, cb, params = null) => {
+export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
     let opts = {};
     if (params) {
         params.referralId = "boltz_webapp";
@@ -91,7 +92,7 @@ export const fetcher = (url, cb, params = null) => {
     fetch(api_url + url, opts)
         .then(checkResponse)
         .then(cb)
-        .catch(errorHandler);
+        .catch(errorCb);
 };
 
 export const checkForFailed = (swap_id, data) => {
@@ -296,91 +297,83 @@ export async function refund(swap) {
     log.info("refunding swap: ", swap.id);
     let [_, fees] = await Promise.all([setup(), getfeeestimation(swap)]);
 
+    const txToRefund = transactionToRefund();
+    
+    if (txToRefund.timeoutEta) {
+        const eta = new Date(txToRefund.timeoutEta * 1000);
+        const msg = "Timeout Eta: \n " + eta.toLocaleString();
+        setNotificationType("error");
+        setNotification(msg);
+        log.error(msg);
+        return false;
+    }
+    const Transaction = getTransaction(asset_name);
+    const constructRefundTransaction =
+        getConstructRefundTransaction(asset_name);
+    const detectSwap = getDetectSwap(asset_name);
+    const net = getNetwork(asset_name);
+    const assetHash =
+        asset_name === "L-BTC" ? net.assetHash : undefined;
+
+    let tx = Transaction.fromHex(txToRefund.transactionHex);
+    let script = Buffer.from(swap.redeemScript, "hex");
+    log.debug("script", script);
+    let swapOutput = detectSwap(script, tx);
+    log.debug("swapoutput", swapOutput);
+    let private_key = ECPair.fromPrivateKey(
+        Buffer.from(swap.privateKey, "hex")
+    );
+    log.debug("privkey", private_key);
+    const refundTransaction = constructRefundTransaction(
+        [
+            {
+                ...swapOutput,
+                txHash: tx.getHash(),
+                redeemScript: script,
+                keys: private_key,
+                blindingPrivKey: Buffer.from(
+                    swap.blindingKey,
+                    "hex"
+                ),
+            },
+        ],
+        output.script,
+        txToRefund.timeoutBlockHeight,
+        fees,
+        true, // rbf
+        assetHash,
+        output.blindingKey
+    ).toHex();
+
+    log.debug("refund_tx", refundTransaction);
     fetcher(
-        "/getswaptransaction",
+        "/broadcasttransaction",
         (data) => {
-            log.debug("refund swap result:", data);
-            if (!data.transactionHex) {
-                return log.debug("no mempool tx found");
-            }
-            if (data.timeoutEta) {
-                const eta = new Date(data.timeoutEta * 1000);
-                const msg = "Timeout Eta: \n " + eta.toLocaleString();
-                setNotificationType("error");
-                setNotification(msg);
-                log.error(msg);
-                return false;
-            }
-            const Transaction = getTransaction(asset_name);
-            const constructRefundTransaction =
-                getConstructRefundTransaction(asset_name);
-            const detectSwap = getDetectSwap(asset_name);
-            const net = getNetwork(asset_name);
-            const assetHash =
-                asset_name === "L-BTC" ? net.assetHash : undefined;
-
-            let tx = Transaction.fromHex(data.transactionHex);
-            let script = Buffer.from(swap.redeemScript, "hex");
-            log.debug("script", script);
-            let swapOutput = detectSwap(script, tx);
-            log.debug("swapoutput", swapOutput);
-            let private_key = ECPair.fromPrivateKey(
-                Buffer.from(swap.privateKey, "hex")
-            );
-            log.debug("privkey", private_key);
-            console.log(output);
-            const refundTransaction = constructRefundTransaction(
-                [
-                    {
-                        ...swapOutput,
-                        txHash: tx.getHash(),
-                        redeemScript: script,
-                        keys: private_key,
-                        blindingPrivKey: Buffer.from(swap.blindingKey, "hex"),
-                    },
-                ],
-                output.script,
-                data.timeoutBlockHeight,
-                fees,
-                true, // rbf
-                assetHash,
-                output.blindingKey
-            ).toHex();
-
-            log.debug("refund_tx", refundTransaction);
-            fetcher(
-                "/broadcasttransaction",
-                (data) => {
-                    log.debug("refund result:", data);
-                    if (data.transactionId) {
-                        // save refundTx into swaps json and set it to the current swap
-                        // only if the swaps was not initiated with the refund json
-                        // refundjson has no date
-                        if (swap.date !== undefined) {
-                            let tmp_swaps = JSON.parse(swaps());
-                            let current_swap = tmp_swaps
-                                .filter((s) => s.id === swap.id)
-                                .pop();
-                            current_swap.refundTx = data.transactionId;
-                            log.debug("current_swap", current_swap);
-                            log.debug("swaps", tmp_swaps);
-                            setSwaps(JSON.stringify(tmp_swaps));
-                        } else {
-                            setRefundTx(data.transactionId);
-                        }
-
-                        setNotificationType("success");
-                        setNotification(`Refund broadcasted`);
-                    }
-                },
-                {
-                    currency: asset_name,
-                    transactionHex: refundTransaction,
+            log.debug("refund result:", data);
+            if (data.transactionId) {
+                // save refundTx into swaps json and set it to the current swap
+                // only if the swaps was not initiated with the refund json
+                // refundjson has no date
+                if (swap.date !== undefined) {
+                    let tmp_swaps = JSON.parse(swaps());
+                    let current_swap = tmp_swaps
+                        .filter((s) => s.id === swap.id)
+                        .pop();
+                    current_swap.refundTx = data.transactionId;
+                    log.debug("current_swap", current_swap);
+                    log.debug("swaps", tmp_swaps);
+                    setSwaps(JSON.stringify(tmp_swaps));
+                } else {
+                    setRefundTx(data.transactionId);
                 }
-            );
+
+                setNotificationType("success");
+                setNotification(`Refund broadcasted`);
+            }
         },
         {
-            id: swap.id,
+            currency: asset_name,
+            transactionHex: refundTransaction,
         }
     );
 }
