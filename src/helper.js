@@ -77,7 +77,7 @@ export const checkResponse = (response) => {
 export const fetcher = (url, cb, params = null) => {
     let opts = {};
     if (params) {
-        params.referralId = "frontend";
+        params.referralId = "boltz_webapp";
         opts = {
             method: "POST",
             headers: {
