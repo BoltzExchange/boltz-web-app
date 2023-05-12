@@ -1,27 +1,19 @@
 import { useI18n } from "@solid-primitives/i18n";
-
-import {
-    swap,
-    failureReason,
-    timeoutEta,
-    timeoutBlockHeight,
-} from "../signals";
 import { downloadRefundFile } from "../helper";
+import { failureReason, swap } from "../signals";
+import RefundEta from "../components/RefundEta";
 
 const InvoiceFailedToPay = () => {
     const [t] = useI18n();
 
     return (
         <div>
-            <h2>{t("lockup_failed")}</h2>
+            <h2>{t("invoice_payment_failure")}</h2>
             <p>
-                {t("lockup_failed_reason")}: {failureReason()}
+                {t("failure_reason")}: {failureReason()}
             </p>
-            <p>
-                {t("timeout_eta")}: {new Date(timeoutEta()).toLocaleString()}{" "}
-                <br />
-                {t("pay_timeout_blockheight")}: {timeoutBlockHeight()}
-            </p>
+            <hr />
+            <RefundEta />
             <span
                 class="btn btn-success"
                 onclick={() => downloadRefundFile(swap())}>

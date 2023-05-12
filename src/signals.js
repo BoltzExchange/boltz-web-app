@@ -20,7 +20,7 @@ export const [receiveAmount, setReceiveAmount] = createSignal(BigInt(0));
 export const [sendAmountFormatted, setSendAmountFormatted] = createSignal(0);
 export const [receiveAmountFormatted, setReceiveAmountFormatted] =
     createSignal(0);
-export const [refundAddress, setRefundAddress] = createSignal("");
+export const [refundAddress, setRefundAddress] = createSignal(null);
 export const [onchainAddress, setOnchainAddress] = createSignal("");
 export const [invoice, setInvoice] = createSignal("");
 export const [invoiceQr, setInvoiceQr] = createSignal("");
