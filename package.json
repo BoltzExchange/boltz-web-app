@@ -13,7 +13,6 @@
     "prettier": "./node_modules/prettier/bin-prettier.js --write src"
   },
   "devDependencies": {
-    "loglevel": "^1.8.1",
     "prettier": "^2.8.8",
     "vite": "^4.2.1",
     "vite-plugin-node-polyfills": "^0.8.2",
@@ -33,6 +32,7 @@
     "ecpair": "2.0.1",
     "liquidjs-lib": "^6.0.2-liquid.24",
     "qrcode": "^1.5.0",
+    "loglevel": "^1.8.1",
     "solid-js": "^1.7.0"
   }
 }
