@@ -260,6 +260,17 @@ const Create = () => {
         setAssetSelect(!assetSelect());
     };
 
+    let validate = (evt) => {
+        var theEvent = evt || window.event;
+        var key = theEvent.keyCode || theEvent.which;
+        key = String.fromCharCode(key);
+        var regex = /[0-9]|\./;
+        if( !regex.test(key) ) {
+            theEvent.returnValue = false;
+            if(theEvent.preventDefault) theEvent.preventDefault();
+        }
+    }
+
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
             <h2>{t("create_swap")}</h2>
@@ -285,12 +296,14 @@ const Create = () => {
                         autofocus
                         required
                         type="number"
+                        inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="sendAmount"
                         maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         min={minimum()}
                         max={maximum()}
                         value={sendAmountFormatted()}
+                        onkeypress={validate}
                         onInput={(e) => changeSendAmount(e.currentTarget.value)}
                     />
                 </div>
@@ -319,12 +332,14 @@ const Create = () => {
                         autofocus
                         required
                         type="number"
+                        inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="receiveAmount"
                         maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         min={minimum()}
                         max={maximum()}
                         value={receiveAmountFormatted()}
+                        onKeypress={validate}
                         onInput={(e) => changeReceiveAmount(e.currentTarget.value)}
                     />
                 </div>
