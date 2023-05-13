@@ -291,10 +291,7 @@ const Create = () => {
                         min={minimum()}
                         max={maximum()}
                         value={sendAmountFormatted()}
-                        onChange={(e) =>
-                            changeSendAmount(e.currentTarget.value)
-                        }
-                        onKeyUp={(e) => changeSendAmount(e.currentTarget.value)}
+                        onInput={(e) => changeSendAmount(e.currentTarget.value)}
                     />
                 </div>
                 <div
@@ -328,12 +325,7 @@ const Create = () => {
                         min={minimum()}
                         max={maximum()}
                         value={receiveAmountFormatted()}
-                        onChange={(e) =>
-                            changeReceiveAmount(e.currentTarget.value)
-                        }
-                        onKeyUp={(e) =>
-                            changeReceiveAmount(e.currentTarget.value)
-                        }
+                        onInput={(e) => changeReceiveAmount(e.currentTarget.value)}
                     />
                 </div>
             </div>
