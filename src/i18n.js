@@ -70,6 +70,7 @@ const dict = {
         tx_ready_to_claim: "claiming transaction now...",
         transaction_refunded: "Boltz has refunded the Transaction",
         refunded: "You have refunded this swap",
+        api_offline: "API is offline",
     },
     de: {
         history: "Verlauf",
