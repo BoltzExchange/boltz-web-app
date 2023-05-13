@@ -8,7 +8,7 @@ import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { getAddress, getNetwork } from "./compat";
 
-import AssetSelect from "./AssetSelect";
+import AssetSelect from "./components/AssetSelect";
 
 import btc_svg from "./assets/btc.svg";
 import sat_svg from "./assets/sat.svg";
@@ -49,7 +49,6 @@ import {
     reverse,
     setReverse,
     config,
-    setConfig,
     valid,
     setValid,
     setSwapValid,

@@ -1,13 +1,11 @@
-import { setAsset, setAssetSelect, assetSelect } from "./signals";
-import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import bitcoin_svg from "./assets/bitcoin-icon.svg";
-import liquid_svg from "./assets/liquid-icon.svg";
+import { setAsset, setAssetSelect, assetSelect } from "../signals";
+import bitcoin_svg from "../assets/bitcoin-icon.svg";
+import liquid_svg from "../assets/liquid-icon.svg";
+
 
 const SelectAsset = () => {
-    const [t, { add, locale, dict }] = useI18n();
-
-    const navigate = useNavigate();
+    const [t] = useI18n();
 
     const changeAsset = (asset) => {
         setAsset(asset);
