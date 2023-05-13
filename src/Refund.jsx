@@ -1,6 +1,6 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
-import { fetcher, blockexplorerLink, refund } from "./helper";
+import { fetcher, refund } from "./helper";
 import {
     refundTx,
     refundAddress,
@@ -12,6 +12,7 @@ import {
     setTransactionToRefund,
 } from "./signals";
 import RefundEta from "./components/RefundEta";
+import BlockExplorer from "./components/BlockExplorer";
 
 const refundAddressChange = (e) => {
     let t = e.currentTarget;
@@ -104,12 +105,10 @@ const Refund = () => {
                 </Show>
                 <Show when={refundTx() !== ""}>
                     <hr />
-                    <a
-                        class="btn btn-explorer"
-                        target="_blank"
-                        href={blockexplorerLink(refundJson().asset, refundTx())}>
-                        {t("blockexplorer")}
-                    </a>
+                    <BlockExplorer
+                        address={refundTx()}
+                        asset={refundJson().asset}
+                    />
                 </Show>
             </div>
         </div>

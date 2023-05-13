@@ -15,11 +15,10 @@ import {
 import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import {
+    qr,
+    claim,
     checkForFailed,
     fetchSwapStatus,
-    claim,
-    qr,
-    blockexplorerLink,
 } from "./helper";
 import { api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
@@ -32,6 +31,7 @@ import TransactionClaimed from "./status/TransactionClaimed";
 import SwapRefunded from "./status/SwapRefunded";
 import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
+import BlockExplorer from "./components/BlockExplorer";
 
 const Pay = () => {
     const params = useParams();
@@ -148,15 +148,10 @@ const Pay = () => {
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />
                     </Show>
-                    <a
-                        class="btn btn-explorer"
-                        target="_blank"
-                        href={blockexplorerLink(
-                            swap().asset,
-                            !reverse() ? swap().address : swap().lockupAddress
-                        )}>
-                        {t("blockexplorer")}
-                    </a>
+                    <BlockExplorer
+                        asset={swap().asset}
+                        address={!reverse() ? swap().address : swap().lockupAddress}
+                    />
                 </Show>
             </Show>
             <Show when={!swap()}>
