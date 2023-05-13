@@ -39,6 +39,7 @@ export const [refundTx, setRefundTx] = createSignal("");
 export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
 // local storage
+export const [ref, setRef] = createStorageSignal("ref", "frontend");
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");
 export const [denomination, setDenomination] = createStorageSignal(
     "denomination",

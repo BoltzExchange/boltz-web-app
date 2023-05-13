@@ -2,6 +2,7 @@ import log from "loglevel";
 import QRCode from "qrcode";
 import { bech32, utf8 } from "@scure/base";
 import {
+    ref,
     swaps,
     setSwaps,
     setRefundTx,
@@ -72,7 +73,7 @@ export const checkResponse = (response) => {
 export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
     let opts = {};
     if (params) {
-        params.referralId = "boltz_webapp";
+        params.referralId = ref();
         opts = {
             method: "POST",
             headers: {

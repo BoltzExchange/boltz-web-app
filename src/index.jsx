@@ -3,7 +3,7 @@ import "./utils/patches";
 import { render } from "solid-js/web";
 import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext } from "@solid-primitives/i18n";
-import { i18n, setWebln, setWasmSupported } from "./signals";
+import { i18n, setWebln, setRef, setWasmSupported } from "./signals";
 import { detectWebLNProvider } from "./helper";
 import log from "loglevel";
 import Create from "./Create";
@@ -24,6 +24,11 @@ const i18n_context = createI18nContext(dict, i18n());
 
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
+
+if (window.location.href.search('ref=') !== -1) {
+  setRef(window.location.href.split('ref=')[1].split('&')[0]);
+  window.history.replaceState({}, document.title, window.location.pathname)
+}
 
 // <Route path="/" component={Hero} />
 const cleanup = render(
