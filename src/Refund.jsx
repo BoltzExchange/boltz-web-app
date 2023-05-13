@@ -106,7 +106,7 @@ const Refund = () => {
                 <Show when={refundTx() !== ""}>
                     <hr />
                     <BlockExplorer
-                        transactionId={refundTx()}
+                        address={refundTx()}
                         asset={refundJson().asset}
                     />
                 </Show>

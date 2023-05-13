@@ -31,16 +31,7 @@ import {
     decodeAddress,
     setup,
 } from "./compat";
-
-import { api_url, blockexplorer_url, blockexplorer_url_liquid } from "./config";
-
-export const blockexplorerLink = (asset, a) => {
-    if (asset == "L-BTC") {
-        return `${blockexplorer_url_liquid}/address/${a}`;
-    } else {
-        return `${blockexplorer_url}/address/${a}`;
-    }
-};
+import { api_url } from "./config";
 
 export const startInterval = (cb, interval) => {
     cb();

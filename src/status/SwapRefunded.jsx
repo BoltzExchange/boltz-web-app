@@ -14,7 +14,7 @@ const SwapRefunded = () => {
             <hr />
             <BlockExplorer
                 asset={swap().asset}
-                transactionId={swap().refundTx}
+                address={swap().refundTx}
             />
             <hr />
             <span class="btn" onClick={() => navigate("/swap")}>
