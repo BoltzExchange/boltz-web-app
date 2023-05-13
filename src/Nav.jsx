@@ -1,11 +1,13 @@
 import { A } from "@solidjs/router";
 
 import { useI18n } from "@solid-primitives/i18n";
-import { i18n, setI18n, hamburger, setHamburger } from "./signals";
+import { online, i18n, setI18n, hamburger, setHamburger } from "./signals";
 import { network } from "./config";
+import { fetchPairs } from "./helper";
 
 import "./css/nav.css";
 import logo from "./assets/boltz.svg";
+import reload_svg from "./assets/reload.svg";
 
 const locales = {
     en: "English",
@@ -98,6 +100,14 @@ const Nav = () => {
                     </div>
                 </Show>
             </div>
+            <Show when={!online()}>
+                <div id="offline">
+                    {t("api_offline")}
+                    <span class="icon-reload" onClick={fetchPairs}>
+                        <img src={reload_svg} />
+                    </span>
+                </div>
+            </Show>
         </nav>
     );
 };

@@ -8,6 +8,7 @@ export const [assetSelect, setAssetSelect] = createSignal(false);
 
 // fees
 export const [config, setConfig] = createSignal(0);
+export const [online, setOnline] = createSignal(true);
 export const [boltzFee, setBoltzFee] = createSignal(0);
 export const [minerFee, setMinerFee] = createSignal(0);
 export const [minimum, setMinimum] = createSignal(0);

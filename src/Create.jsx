@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, lnurl_fetcher } from "./helper";
+import { fetcher, lnurl_fetcher, fetchPairs } from "./helper";
 import { useNavigate } from "@solidjs/router";
 
 import * as secp from "@noble/secp256k1";
@@ -22,6 +22,7 @@ import {
     formatAmount,
 } from "./utils/denomination";
 import {
+    online,
     swaps,
     setSwaps,
     assetSelect,
@@ -110,14 +111,6 @@ const Create = () => {
     const [t] = useI18n();
 
     const navigate = useNavigate();
-
-    const fetchPairs = () => {
-        fetcher("/getpairs", (data) => {
-            log.debug("getpairs", data);
-            setConfig(data.pairs);
-        });
-        return false;
-    };
 
     const calculateReceiveAmount = (sendAmount) => {
         const preMinerFee = sendAmount - minerFee();
@@ -413,9 +406,16 @@ const Create = () => {
                 placeholder="On-chain address"
             />
             <hr />
-            <button id="create-swap" class="btn" onClick={create}>
-                {t("create_swap")}
-            </button>
+            <Show when={online()}>
+                <button id="create-swap" class="btn" onClick={create}>
+                    {t("create_swap")}
+                </button>
+            </Show>
+            <Show when={!online()}>
+                <button id="create-swap" class="btn btn-danger" onClick={fetchPairs}>
+                    {t("api_offline")}
+                </button>
+            </Show>
             <AssetSelect />
         </div>
     );

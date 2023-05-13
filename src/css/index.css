@@ -632,3 +632,9 @@ textarea {
 .boltz-fee {
     margin-right: 4px;
 }
+
+#offline {
+    background: darkred;
+    margin-top: 5px;
+    font-size: 18px;
+}

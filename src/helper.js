@@ -15,6 +15,8 @@ import {
     setNotificationType,
     refundAddress,
     transactionToRefund,
+    setOnline,
+    setConfig,
 } from "./signals";
 
 import { Buffer } from "buffer";
@@ -298,7 +300,7 @@ export async function refund(swap) {
     let [_, fees] = await Promise.all([setup(), getfeeestimation(swap)]);
 
     const txToRefund = transactionToRefund();
-    
+
     if (txToRefund.timeoutEta) {
         const eta = new Date(txToRefund.timeoutEta * 1000);
         const msg = "Timeout Eta: \n " + eta.toLocaleString();
@@ -465,5 +467,19 @@ export const claim = async (swap) => {
         }
     );
 };
+
+
+export const fetchPairs = () => {
+    fetcher("/getpairs", (data) => {
+        log.debug("getpairs", data);
+        setOnline(true);
+        setConfig(data.pairs);
+    }, null, (error) => {
+        log.debug(error);
+        setOnline(false);
+    });
+    return false;
+};
+
 
 export default fetcher;
