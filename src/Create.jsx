@@ -68,7 +68,7 @@ const Create = () => {
     // set fees and pairs
     createEffect(() => {
         let cfg = config()["BTC/BTC"];
-        if (asset() == "L-BTC") {
+        if (asset() === "L-BTC") {
             cfg = config()["L-BTC/BTC"];
         }
         if (cfg) {

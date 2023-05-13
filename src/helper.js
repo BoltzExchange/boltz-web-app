@@ -300,15 +300,6 @@ export async function refund(swap) {
     let [_, fees] = await Promise.all([setup(), getfeeestimation(swap)]);
 
     const txToRefund = transactionToRefund();
-
-    if (txToRefund.timeoutEta) {
-        const eta = new Date(txToRefund.timeoutEta * 1000);
-        const msg = "Timeout Eta: \n " + eta.toLocaleString();
-        setNotificationType("error");
-        setNotification(msg);
-        log.error(msg);
-        return false;
-    }
     const Transaction = getTransaction(asset_name);
     const constructRefundTransaction =
         getConstructRefundTransaction(asset_name);

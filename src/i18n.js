@@ -37,7 +37,8 @@ const dict = {
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
             "Your Onchain lockup failed, wait for the timeout to refund your bitcoin",
-        lockup_failed_reason: "Failure reason",
+        failure_reason: "Failure reason",
+        invoice_payment_failure: "Could not pay your lightning invoice",
         download_refund_json: "Download refund JSON",
         download_refund_qr: "Download refund QRCode",
         copy_invoice: "Copy lightning invoice",
@@ -71,6 +72,8 @@ const dict = {
         transaction_refunded: "Boltz has refunded the Transaction",
         refunded: "You have refunded this swap",
         api_offline: "API is offline",
+        refund_explainer: "You will be able to refund after the timeout",
+        swap_not_refundable_yet: "Your swap is not refundable yet",
     },
     de: {
         history: "Verlauf",

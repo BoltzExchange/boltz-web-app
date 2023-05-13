@@ -36,7 +36,7 @@ const SwapExpired = () => {
     return (
         <div>
             <p>
-                {t("lockup_failed_reason")}: {failureReason()}
+                {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
             <Show when={transactionToRefund() !== null}>
