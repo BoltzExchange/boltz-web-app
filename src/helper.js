@@ -23,7 +23,6 @@ import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
 import {
     getNetwork,
-    getAddress,
     getTransaction,
     getConstructClaimTransaction,
     getConstructRefundTransaction,
@@ -33,13 +32,13 @@ import {
     setup,
 } from "./compat";
 
-import { api_url, mempool_url, mempool_url_liquid } from "./config";
+import { api_url, blockexplorer_url, blockexplorer_url_liquid } from "./config";
 
-export const mempoolLink = (asset, a) => {
+export const blockexplorerLink = (asset, a) => {
     if (asset == "L-BTC") {
-        return `${mempool_url_liquid}/address/${a}`;
+        return `${blockexplorer_url_liquid}/address/${a}`;
     } else {
-        return `${mempool_url}/address/${a}`;
+        return `${blockexplorer_url}/address/${a}`;
     }
 };
 

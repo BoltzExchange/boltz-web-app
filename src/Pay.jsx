@@ -19,7 +19,7 @@ import {
     fetchSwapStatus,
     claim,
     qr,
-    mempoolLink,
+    blockexplorerLink,
 } from "./helper";
 import { api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
@@ -149,13 +149,13 @@ const Pay = () => {
                         <SwapCreated />
                     </Show>
                     <a
-                        class="btn btn-mempool"
+                        class="btn btn-explorer"
                         target="_blank"
-                        href={mempoolLink(
+                        href={blockexplorerLink(
                             swap().asset,
                             !reverse() ? swap().address : swap().lockupAddress
                         )}>
-                        {t("mempool")}
+                        {t("blockexplorer")}
                     </a>
                 </Show>
             </Show>

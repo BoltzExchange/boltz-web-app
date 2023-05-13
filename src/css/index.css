@@ -20,7 +20,6 @@ footer {
 }
 
 a,
-a:visited,
 a:hover {
     color: #e6c826;
 }
@@ -236,7 +235,7 @@ hr {
     padding: 8px 12px;
     text-decoration: none;
     border-radius: 16px;
-    background: #e6c826;
+    background-color: #e6c826;
     color: #14283f;
     font-weight: bold;
     text-transform: uppercase;
@@ -249,12 +248,8 @@ hr {
     cursor: not-allowed;
 }
 
-.btn:visited {
-    color: white;
-}
-
 .btn-small {
-    background: #e6c826;
+    background-color: #e6c826;
     color: #14283f;
     border-radius: 7px;
     padding: 1px 6px;
@@ -266,50 +261,54 @@ hr {
 [data-status="invoice.failedToPay"] .btn-small,
 [data-status="transaction.refunded"] .btn-small,
 [data-status="transaction.lockupFailed"] .btn-small {
-    background: darkred;
+    background-color: darkred;
     color: #fff;
 }
 [data-status="swap.expired"] .btn-success,
 [data-status="invoice.settled"] .btn-small,
 [data-status="transaction.confirmed"] .btn-small,
 [data-status="transaction.claimed"] .btn-small {
-    background: #246c24;
+    background-color: #246c24;
     color: #fff;
 }
 
 .tag .btn {
-    background: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.2);
     color: white;
 }
 
 .btn-small:hover,
 .btn:hover,
 .tag .btn:hover {
-    background: #fff;
+    background-color: #fff;
     color: #14283f;
 }
 
-.btn-mempool {
+.btn-light {
+    color: white;
+    background-color: rgb(11, 22, 35);
+}
+.btn-light:hover {
+    background-color: #e6c826;
+}
+.btn-explorer {
     background: #533180;
     color: white;
 }
-.btn-light {
-    color: white;
-    background: rgb(11, 22, 35);
-}
-.btn-light:hover {
-    background: #e6c826;
+.btn-explorer:hover {
+    background: white;
+    color: #533180;
 }
 
 .btn-success {
-    background: #246c24;
+    background-color: #246c24;
     color: white;
 }
 .btn-success:hover {
-    background: #fff;
+    background-color: #fff;
 }
 .btn-danger {
-    background: #8b000085;
+    background-color: #8b000085;
     color: white;
 }
 .btn-danger:hover {
@@ -637,4 +636,13 @@ textarea {
     background: darkred;
     margin-top: 5px;
     font-size: 18px;
+}
+
+.external {
+    padding-right: 30px;
+    padding-right: 25px;
+    background-image: url(../assets/external_link.svg);
+    background-repeat: no-repeat;
+    background-position: right;
+    background-size: 17px;
 }
