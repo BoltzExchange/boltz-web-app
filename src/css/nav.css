@@ -14,7 +14,6 @@ nav {
     width: 100%;
     background: rgba(0, 0, 0, 0.2);
 }
-nav a:visited,
 nav a {
     color: white;
     text-decoration: none;
@@ -72,13 +71,6 @@ nav a.active {
 }
 #languages:hover .dropdown {
     display: block;
-}
-
-.external {
-    padding-right: 30px;
-    padding-right: 25px;
-    background: url(../assets/external_link.svg) no-repeat right;
-    background-size: 17px;
 }
 
 #logo img {

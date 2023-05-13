@@ -1,6 +1,6 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
-import { fetcher, mempoolLink, refund } from "./helper";
+import { fetcher, blockexplorerLink, refund } from "./helper";
 import {
     refundTx,
     refundAddress,
@@ -105,10 +105,10 @@ const Refund = () => {
                 <Show when={refundTx() !== ""}>
                     <hr />
                     <a
-                        class="btn btn-mempool"
+                        class="btn btn-explorer"
                         target="_blank"
-                        href={mempoolLink(refundJson().asset, refundTx())}>
-                        {t("mempool")}
+                        href={blockexplorerLink(refundJson().asset, refundTx())}>
+                        {t("blockexplorer")}
                     </a>
                 </Show>
             </div>
