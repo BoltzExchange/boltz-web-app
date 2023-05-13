@@ -292,11 +292,12 @@ hr {
     background-color: #e6c826;
 }
 .btn-explorer {
-    color: rgb(11, 22, 35);
-    background-color: white;
+    background: #533180;
+    color: white;
 }
 .btn-explorer:hover {
-    background-color: #e6c826;
+    background: white;
+    color: #533180;
 }
 
 .btn-success {
