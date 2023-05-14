@@ -43,17 +43,20 @@ const getAddress = (asset) => {
 const decodeAddress = (asset, addr) => {
     const address = getAddress(asset);
     if (asset === "L-BTC") {
-        const decoded = address.fromConfidential(addr);
-
-        return {
-            script: decoded.scriptPubKey,
-            blindingKey: decoded.blindingKey,
-        };
-    } else {
-        return {
-            script: address.toOutputScript(addr, getNetwork(asset)),
-        };
+        // This throws for unconfidential addresses -> fallback to output script decoding
+        try {
+            const decoded = address.fromConfidential(addr);
+    
+            return {
+                script: decoded.scriptPubKey,
+                blindingKey: decoded.blindingKey,
+            };
+        } catch (e) {}
     }
+
+    return {
+        script: address.toOutputScript(addr, getNetwork(asset)),
+    };
 };
 
 const getNetwork = (asset) => {
