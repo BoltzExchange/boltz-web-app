@@ -176,7 +176,7 @@ const Create = () => {
                 } catch (e) {
                     log.error(e);
                     setNotificationType("error");
-                    setNotification("invalid onchain address");
+                    setNotification("invalid address");
                     return false;
                 }
                 const preimage = secp.utils.randomBytes(32);
@@ -392,7 +392,7 @@ const Create = () => {
                 type="text"
                 id="onchainAddress"
                 name="onchainAddress"
-                placeholder="On-chain address"
+                placeholder={t("onchain_address", { asset: asset() })}
             />
             <hr />
             <Show when={online()}>

@@ -26,7 +26,7 @@ const InvoiceSet = () => {
                 <span
                     class="btn"
                     onclick={() => clipboard(swap().address, t("copied"))}>
-                    {t("copy_onchain")}
+                    {t("copy_address")}
                 </span>
                 <span
                     class="btn"
