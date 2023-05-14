@@ -283,7 +283,7 @@ export async function refund(swap) {
     } catch (e) {
         log.error(e);
         setNotificationType("error");
-        setNotification("invalid onchain address");
+        setNotification("invalid address");
         return false;
     }
     log.info("refunding swap: ", swap.id);
