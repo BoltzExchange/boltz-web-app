@@ -25,10 +25,15 @@ const i18n_context = createI18nContext(dict, i18n());
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 
-if (window.location.href.search('ref=') !== -1) {
-  setRef(window.location.href.split('ref=')[1].split('&')[0]);
-  window.history.replaceState({}, document.title, window.location.pathname)
+const setReferralId = () => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref && ref !== '') {
+        setRef(ref);
+        window.history.replaceState({}, document.title, window.location.pathname)
+    }
 }
+setReferralId();
+
 
 // <Route path="/" component={Hero} />
 const cleanup = render(
