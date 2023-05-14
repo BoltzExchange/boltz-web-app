@@ -59,6 +59,7 @@ import {
     setNotification,
     setNotificationType,
     webln,
+    wasmSupported,
 } from "./signals";
 
 const Create = () => {
@@ -410,7 +411,7 @@ const Create = () => {
                 placeholder={t("onchain_address", { asset: asset() })}
             />
             <hr />
-            <Show when={online()}>
+            <Show when={online() && wasmSupported()}>
                 <button id="create-swap" class="btn" onClick={create}>
                     {t("create_swap")}
                 </button>
@@ -418,6 +419,11 @@ const Create = () => {
             <Show when={!online()}>
                 <button id="create-swap" class="btn btn-danger" onClick={fetchPairs}>
                     {t("api_offline")}
+                </button>
+            </Show>
+            <Show when={!wasmSupported()}>
+                <button id="create-swap" class="btn btn-danger" onClick={fetchPairs}>
+                    {t("wasm_not_supported")}
                 </button>
             </Show>
             <AssetSelect />

@@ -1,7 +1,7 @@
 import { A } from "@solidjs/router";
 
 import { useI18n } from "@solid-primitives/i18n";
-import { online, i18n, setI18n, hamburger, setHamburger } from "./signals";
+import { online, i18n, setI18n, hamburger, setHamburger, wasmSupported } from "./signals";
 import { network } from "./config";
 import { fetchPairs } from "./helper";
 
@@ -106,6 +106,11 @@ const Nav = () => {
                     <span class="icon-reload" onClick={fetchPairs}>
                         <img src={reload_svg} />
                     </span>
+                </div>
+            </Show>
+            <Show when={!wasmSupported()}>
+                <div id="noWasm">
+                    {t("wasm_not_supported")}
                 </div>
             </Show>
         </nav>

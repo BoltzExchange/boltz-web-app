@@ -632,10 +632,12 @@ textarea {
     margin-right: 4px;
 }
 
-#offline {
+#offline, #noWasm {
     background: darkred;
     margin-top: 5px;
     font-size: 18px;
+    padding: 5px 0;
+    border-radius: 16px;
 }
 
 .external {
