@@ -288,8 +288,6 @@ const Create = () => {
                         id="sendAmount"
                         maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
-                        min={minimum()}
-                        max={maximum()}
                         value={sendAmountFormatted()}
                         onInput={(e) => changeSendAmount(e.currentTarget.value)}
                     />
