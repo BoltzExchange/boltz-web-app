@@ -25,8 +25,7 @@ const dict = {
         create_and_paste:
             "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink\n\nAmount: {{ amount }} {{ denomination }}",
         congrats: "Congratulations!",
-        successfully_swapped:
-            "Your swap completed successfully",
+        successfully_swapped: "Your swap completed successfully",
         timeout_eta: "Timeout ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
@@ -74,6 +73,7 @@ const dict = {
         api_offline: "API is offline",
         refund_explainer: "You will be able to refund after the timeout",
         swap_not_refundable_yet: "Your swap is not refundable yet",
+        wasm_not_supported: "Your browser does not support WebAssembly",
     },
     de: {
         history: "Verlauf",
