@@ -265,7 +265,7 @@ const Create = () => {
         let key = theEvent.keyCode || theEvent.which;
         key = String.fromCharCode(key);
         const regex = (denomination() == "sat") ? /[0-9]/ : /[0-9]|\./;
-        if( !regex.test(key) ) {
+        if( !regex.test(key) || evt.currentTarget.value.length > 10) {
             theEvent.returnValue = false;
             if(theEvent.preventDefault) theEvent.preventDefault();
         }
