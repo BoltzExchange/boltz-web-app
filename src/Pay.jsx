@@ -22,6 +22,7 @@ import {
 } from "./helper";
 import { api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
+import InvoicePending from "./status/InvoicePending";
 import InvoiceExpired from "./status/InvoiceExpired";
 import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
 import TransactionMempool from "./status/TransactionMempool";
@@ -144,6 +145,9 @@ const Pay = () => {
                     </Show>
                     <Show when={swapStatus() == "invoice.set"}>
                         <InvoiceSet />
+                    </Show>
+                    <Show when={swapStatus() == "invoice.pending"}>
+                        <InvoicePending />
                     </Show>
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />
