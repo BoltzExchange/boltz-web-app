@@ -52,7 +52,7 @@ const dict = {
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
-        history_no_swaps: "Looks like you didn't do any swaps yet. Click \"Swap\" to get started.",
+        history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_placeholder: "Refund address",
         refund_clear: "Delete localstorage",
         delete_swap: "Delete swap from localstorage",
