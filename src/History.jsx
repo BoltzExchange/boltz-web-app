@@ -41,7 +41,12 @@ const History = () => {
                 <Show
                     when={JSON.parse(swaps()).length > 0}
                     fallback={
-                        <p>{t("history_no_swaps")}</p>
+                        <div>
+                            <p>{t("history_no_swaps")}</p>
+                            <span class="btn" onClick={() => navigate("/swap")}>
+                                {t("new_swap")}
+                            </span>
+                        </div>
                     }
                 >
                     <div id="past-swaps">
