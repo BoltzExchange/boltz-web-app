@@ -132,7 +132,7 @@ const Create = () => {
         setReceiveAmountFormatted(formatAmount(satAmount));
         let sendAmount = calculateSendAmount(satAmount);
         setSendAmount(sendAmount);
-        setSendAmountFormatted(formatAmount(sendAmount));
+        setSendAmountFormatted(formatAmount(sendAmount, true));
     };
 
     const changeSendAmount = (amount) => {
@@ -143,7 +143,7 @@ const Create = () => {
         setSendAmountFormatted(formatAmount(Number(satAmount)));
         let receiveAmount = calculateReceiveAmount(Number(satAmount));
         setReceiveAmount(receiveAmount);
-        setReceiveAmountFormatted(formatAmount(Number(receiveAmount)));
+        setReceiveAmountFormatted(formatAmount(Number(receiveAmount), true));
     };
 
     const createWeblnInvoice = async () => {
@@ -266,7 +266,8 @@ const Create = () => {
         let key = theEvent.keyCode || theEvent.which;
         key = String.fromCharCode(key);
         const regex = (denomination() == "sat") ? /[0-9]/ : /[0-9]|\./;
-        if( !regex.test(key) || evt.currentTarget.value.length > 10) {
+        const count = (denomination() == "sat") ? maximum().toString().length : 10;
+        if( !regex.test(key) || evt.currentTarget.value.length >= count) {
             theEvent.returnValue = false;
             if(theEvent.preventDefault) theEvent.preventDefault();
         }
@@ -365,7 +366,7 @@ const Create = () => {
                     </span>
                     {t("network_fee")}:{" "}
                     <span class="network-fee">
-                        {formatAmount(minerFee())}
+                        {formatAmount(minerFee(), true)}
                         <span
                             class="denominator"
                             data-denominator={denomination()}></span>
@@ -375,7 +376,7 @@ const Create = () => {
                     <span class="boltz-fee">
                         {formatAmount(
                             (Number(sendAmount()) * boltzFee()) / 100
-                        )}
+                        , true)}
                         <span
                             class="denominator"
                             data-denominator={denomination()}></span>

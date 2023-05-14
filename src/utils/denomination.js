@@ -7,10 +7,14 @@ export const denominations = {
     btc: "btc",
 };
 
-export const formatAmount = (amount) => {
+export const formatAmount = (amount, fixed = false) => {
     switch (denomination()) {
         case denominations.btc:
-            return (amount / satFactor).toFixed(8);
+            if (fixed) {
+                return (amount / satFactor).toFixed(8);
+            } else {
+                return amount / satFactor;
+            }
         case denominations.sat:
             return Math.ceil(amount);
     }
