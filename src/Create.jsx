@@ -264,7 +264,7 @@ const Create = () => {
         const theEvent = evt || window.event;
         let key = theEvent.keyCode || theEvent.which;
         key = String.fromCharCode(key);
-        const regex = /[0-9]|\./;
+        const regex = (denomination() == "sat") ? /[0-9]/ : /[0-9]|\./;
         if( !regex.test(key) ) {
             theEvent.returnValue = false;
             if(theEvent.preventDefault) theEvent.preventDefault();
@@ -303,7 +303,7 @@ const Create = () => {
                         min={minimum()}
                         max={maximum()}
                         value={sendAmountFormatted()}
-                        onkeypress={validate}
+                        onKeypress={validate}
                         onInput={(e) => changeSendAmount(e.currentTarget.value)}
                     />
                 </div>
