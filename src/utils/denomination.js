@@ -15,6 +15,9 @@ export const formatAmount = (amount, fixed = false) => {
             if (fixed) {
                 return amountBig.toFixed(8);
             }
+            if (amountBig.isZero()) {
+                return amountBig.toFixed(1);
+            }
             return amountBig.toNumber();
         case denominations.sat:
             return amount;
