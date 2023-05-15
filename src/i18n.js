@@ -74,7 +74,7 @@ const dict = {
         api_offline: "API is offline",
         refund_explainer: "You will be able to refund after the timeout",
         swap_not_refundable_yet: "Your swap is not refundable yet",
-        wasm_not_supported: "Your browser does not support WebAssembly",
+        wasm_not_supported: "Please activate WebAssembly in your browser",
     },
     de: {
         history: "Verlauf",
