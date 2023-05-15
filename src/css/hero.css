@@ -59,3 +59,68 @@ h3 {
     font-weight: normal;
     color: #e6c826;
 }
+
+
+
+.pornhub:before {
+    content: " ";
+    display: inline-block;
+    background: url(../assets/thunderhub.jpg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 66px;
+    height: 66px;
+    margin-right: 10px;
+    border-radius: 12px;
+    position: absolute;
+    top: -3px;
+    left: 0;
+}
+.pornhub {
+    position: relative;
+    padding-left: 50px;
+    text-decoration: none;
+    font-size: 27px;
+    color: #bdc5ee;
+    font-weight: bold;
+    line-height: 1.1;
+}
+.rtl {
+    display: inline-block;
+    background: url(../assets/rtl.webp);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 150px;
+    height: 36px;
+}
+.lnbits {
+    display: inline-block;
+    background: url(../assets/lnbits.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 155px;
+    height: 46px;
+}
+.breez {
+    display: inline-block;
+    background: url(../assets/breez.png);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 133px;
+    height: 46px;
+}
+.electrum {
+    display: inline-block;
+    background: url(../assets/electrum.png);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 212px;
+    height: 59px;
+}
+.clboss {
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 32px;
+    text-decoration: none;
+    color: purple;
+}

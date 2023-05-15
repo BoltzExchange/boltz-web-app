@@ -116,104 +116,6 @@ hr {
     display: none;
 }
 
-[data-reverse="true"] .icon-1,
-[data-reverse="false"] .icon-2 {
-    background-image: url(../assets/lightning-icon.svg);
-    background-size: 90%;
-}
-[data-reverse="true"] .asset-1 .assets,
-[data-reverse="false"] .asset-2 .assets,
-[data-reverse="true"] .asset-1 .arrow-down,
-[data-reverse="false"] .asset-2 .arrow-down {
-    display: none;
-}
-
-[data-reverse="true"] .asset-1 .asset-text:before,
-[data-reverse="false"] .asset-2 .asset-text:before {
-    content: "lightning";
-}
-
-[data-reverse="false"][data-asset="BTC"] .icon-1,
-[data-reverse="true"][data-asset="BTC"] .icon-2 {
-    background-image: url(../assets/bitcoin-icon.svg);
-}
-[data-reverse="false"][data-asset="BTC"] .asset-1 .asset-text:before,
-[data-reverse="true"][data-asset="BTC"] .asset-2 .asset-text:before {
-    content: "bitcoin";
-}
-
-[data-reverse="false"][data-asset="L-BTC"] .icon-1,
-[data-reverse="true"][data-asset="L-BTC"] .icon-2 {
-    background-image: url(../assets/liquid-icon.svg);
-}
-[data-reverse="false"][data-asset="L-BTC"] .asset-1 .asset-text:before,
-[data-reverse="true"][data-asset="L-BTC"] .asset-2 .asset-text:before {
-    content: "liquid";
-}
-
-.pornhub:before {
-    content: " ";
-    display: inline-block;
-    background: url(../assets/thunderhub.jpg);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 66px;
-    height: 66px;
-    margin-right: 10px;
-    border-radius: 12px;
-    position: absolute;
-    top: -3px;
-    left: 0;
-}
-.pornhub {
-    position: relative;
-    padding-left: 50px;
-    text-decoration: none;
-    font-size: 27px;
-    color: #bdc5ee;
-    font-weight: bold;
-    line-height: 1.1;
-}
-.rtl {
-    display: inline-block;
-    background: url(../assets/rtl.webp);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 150px;
-    height: 36px;
-}
-.lnbits {
-    display: inline-block;
-    background: url(../assets/lnbits.svg);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 155px;
-    height: 46px;
-}
-.breez {
-    display: inline-block;
-    background: url(../assets/breez.png);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 133px;
-    height: 46px;
-}
-.electrum {
-    display: inline-block;
-    background: url(../assets/electrum.png);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 212px;
-    height: 59px;
-}
-.clboss {
-    text-transform: uppercase;
-    font-weight: bold;
-    font-size: 32px;
-    text-decoration: none;
-    color: purple;
-}
-
 #reverse input {
     cursor: pointer;
     position: absolute;
@@ -336,14 +238,6 @@ hr {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-}
-
-.icon {
-    display: inline-block;
-    width: 36px;
-    height: 36px;
-    background-repeat: no-repeat;
-    background-size: 100%;
 }
 
 /* Chrome, Safari, Edge, Opera */
