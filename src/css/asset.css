@@ -1,0 +1,42 @@
+.icon {
+    display: inline-block;
+    width: 36px;
+    height: 36px;
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+[data-reverse="true"] .icon-1,
+[data-reverse="false"] .icon-2 {
+    background-image: url(../assets/lightning-icon.svg);
+    background-size: 90%;
+}
+[data-reverse="true"] .asset-1 .assets,
+[data-reverse="false"] .asset-2 .assets,
+[data-reverse="true"] .asset-1 .arrow-down,
+[data-reverse="false"] .asset-2 .arrow-down {
+    display: none;
+}
+
+[data-reverse="true"] .asset-1 .asset-text:before,
+[data-reverse="false"] .asset-2 .asset-text:before {
+    content: "lightning";
+}
+
+[data-reverse="false"][data-asset="BTC"] .icon-1,
+[data-reverse="true"][data-asset="BTC"] .icon-2 {
+    background-image: url(../assets/bitcoin-icon.svg);
+}
+[data-reverse="false"][data-asset="BTC"] .asset-1 .asset-text:before,
+[data-reverse="true"][data-asset="BTC"] .asset-2 .asset-text:before {
+    content: "bitcoin";
+}
+
+[data-reverse="false"][data-asset="L-BTC"] .icon-1,
+[data-reverse="true"][data-asset="L-BTC"] .icon-2 {
+    background-image: url(../assets/liquid-icon.svg);
+}
+[data-reverse="false"][data-asset="L-BTC"] .asset-1 .asset-text:before,
+[data-reverse="true"][data-asset="L-BTC"] .asset-2 .asset-text:before {
+    content: "liquid";
+}

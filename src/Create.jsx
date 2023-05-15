@@ -8,6 +8,7 @@ import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { getAddress, getNetwork } from "./compat";
 
+import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
 
 import btc_svg from "./assets/btc.svg";
@@ -15,7 +16,7 @@ import sat_svg from "./assets/sat.svg";
 import reload_svg from "./assets/reload.svg";
 import arrow_svg from "./assets/arrow.svg";
 
-import { bolt11_prefix, pairs } from "./config";
+import { bolt11_prefix } from "./config";
 import {
     convertAmount,
     denominations,
@@ -25,8 +26,6 @@ import {
     online,
     swaps,
     setSwaps,
-    assetSelect,
-    setAssetSelect,
     asset,
     denomination,
     setDenomination,
@@ -256,13 +255,6 @@ const Create = () => {
 
     fetchPairs();
 
-    const setAssetPair = () => {
-        if (pairs.length <= 1) {
-            return false;
-        }
-        setAssetSelect(!assetSelect());
-    };
-
     const validate = (evt) => {
         const theEvent = evt || window.event;
         let key = theEvent.keyCode || theEvent.which;
@@ -285,17 +277,7 @@ const Create = () => {
             <hr />
             <div class="icons">
                 <div>
-                    <div className="asset-wrap" onClick={setAssetPair}>
-                        <div className="asset asset-1">
-                            <div className="asset-selected">
-                                <span class="icon-1 icon"></span>
-                                <span class="asset-text"></span>
-                                <Show when={pairs.length > 1}>
-                                    <span class="arrow-down"></span>
-                                </Show>
-                            </div>
-                        </div>
-                    </div>
+                    <Asset id="1" />
                     <input
                         autofocus
                         required
@@ -318,18 +300,7 @@ const Create = () => {
                     <img src={arrow_svg} alt="flip assets" />
                 </div>
                 <div>
-                    <div className="asset-wrap" onClick={setAssetPair}>
-                        <div className="asset asset-2">
-                            <div className="asset-selected">
-                                <span class="icon-2 icon"></span>
-                                <span class="asset-text"></span>
-                                <Show when={pairs.length > 1}>
-                                    <span class="arrow-down"></span>
-                                </Show>
-                            </div>
-                        </div>
-                        <div class="assets-select"></div>
-                    </div>
+                    <Asset id="2" />
                     <input
                         autofocus
                         required
