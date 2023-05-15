@@ -18,6 +18,7 @@ import {
     transactionToRefund,
     setOnline,
     setConfig,
+    setRef,
 } from "./signals";
 
 import { Buffer } from "buffer";
@@ -33,6 +34,14 @@ import {
     setup,
 } from "./compat";
 import { api_url } from "./config";
+
+export const setReferralId = () => {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref && ref !== '') {
+        setRef(ref);
+        window.history.replaceState({}, document.title, window.location.pathname)
+    }
+}
 
 export const startInterval = (cb, interval) => {
     cb();

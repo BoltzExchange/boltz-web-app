@@ -3,8 +3,8 @@ import "./utils/patches";
 import { render } from "solid-js/web";
 import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext } from "@solid-primitives/i18n";
-import { i18n, setWebln, setRef, setWasmSupported } from "./signals";
-import { detectWebLNProvider } from "./helper";
+import { i18n, setWebln, setWasmSupported } from "./signals";
+import { detectWebLNProvider, setReferralId } from "./helper";
 import log from "loglevel";
 import Create from "./Create";
 import Pay from "./Pay";
@@ -24,14 +24,6 @@ const i18n_context = createI18nContext(dict, i18n());
 
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
-
-const setReferralId = () => {
-    const ref = new URLSearchParams(window.location.search).get("ref");
-    if (ref && ref !== '') {
-        setRef(ref);
-        window.history.replaceState({}, document.title, window.location.pathname)
-    }
-}
 setReferralId();
 
 
