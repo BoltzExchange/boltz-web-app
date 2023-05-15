@@ -92,8 +92,8 @@ const Create = () => {
 
     // change denomination
     createMemo(() => {
-        setReceiveAmountFormatted(formatAmount(Number(receiveAmount())));
-        setSendAmountFormatted(formatAmount(Number(sendAmount())));
+        setReceiveAmountFormatted(formatAmount(Number(receiveAmount())).toString());
+        setSendAmountFormatted(formatAmount(Number(sendAmount())).toString());
     });
 
     // validation swap
@@ -114,17 +114,17 @@ const Create = () => {
     const navigate = useNavigate();
 
     const calculateReceiveAmount = (sendAmount) => {
-        const preMinerFee = sendAmount - minerFee();
-        sendAmount = preMinerFee - Math.floor((preMinerFee * boltzFee()) / 100);
-        return Math.max(sendAmount, 0);
+        const preMinerFee = parseInt(sendAmount) - minerFee();
+        const receiveAmount = preMinerFee - preMinerFee * boltzFee() * 0.01;
+        return Math.max(Math.floor(receiveAmount), 0);
     };
 
     const calculateSendAmount = (receiveAmount) => {
-        receiveAmount =
+        const sendAmount =
             parseInt(receiveAmount) +
             parseInt(minerFee()) +
-            Math.ceil((receiveAmount * boltzFee()) / 100);
-        return Math.max(Math.floor(receiveAmount), 0);
+            parseInt(receiveAmount) * boltzFee() / 100;
+        return Math.max(Math.floor(sendAmount), 0);
     };
 
     const changeReceiveAmount = (e) => {
