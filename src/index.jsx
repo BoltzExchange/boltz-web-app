@@ -4,7 +4,7 @@ import { render } from "solid-js/web";
 import { Router, Route, Routes } from "@solidjs/router";
 import { I18nContext, createI18nContext } from "@solid-primitives/i18n";
 import { i18n, setWebln, setWasmSupported } from "./signals";
-import { detectWebLNProvider } from "./helper";
+import { detectWebLNProvider, checkReferralId } from "./helper";
 import log from "loglevel";
 import Create from "./Create";
 import Pay from "./Pay";
@@ -24,6 +24,8 @@ const i18n_context = createI18nContext(dict, i18n());
 
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
+checkReferralId();
+
 
 // <Route path="/" component={Hero} />
 const cleanup = render(

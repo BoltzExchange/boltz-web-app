@@ -2,6 +2,7 @@ import log from "loglevel";
 import QRCode from "qrcode";
 import { bech32, utf8 } from "@scure/base";
 import {
+    ref,
     swaps,
     setSwaps,
     setRefundTx,
@@ -17,6 +18,7 @@ import {
     transactionToRefund,
     setOnline,
     setConfig,
+    setRef,
 } from "./signals";
 
 import { Buffer } from "buffer";
@@ -32,6 +34,14 @@ import {
     setup,
 } from "./compat";
 import { api_url } from "./config";
+
+export const checkReferralId = () => {
+    const ref_param = new URLSearchParams(window.location.search).get("ref");
+    if (ref_param && ref_param !== '') {
+        setRef(ref_param);
+        window.history.replaceState({}, document.title, window.location.pathname)
+    }
+}
 
 export const startInterval = (cb, interval) => {
     cb();
@@ -72,7 +82,7 @@ export const checkResponse = (response) => {
 export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
     let opts = {};
     if (params) {
-        params.referralId = "boltz_webapp";
+        params.referralId = ref();
         opts = {
             method: "POST",
             headers: {
