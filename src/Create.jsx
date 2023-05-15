@@ -129,35 +129,36 @@ const Create = () => {
     const changeReceiveAmount = (amount) => {
         let satAmount = convertAmount(Number(amount), denominations.sat);
         let sendAmount = calculateSendAmount(satAmount);
-        if (sendAmount < minimum()) {
-            satAmount = minimum();
-            sendAmount = calculateSendAmount(satAmount);
-        }
-        if (sendAmount > maximum()) {
-            satAmount = maximum();
-            sendAmount = calculateSendAmount(satAmount);
-        }
-        setReceiveAmount(BigInt(satAmount));
-        setReceiveAmountFormatted(formatAmount(satAmount));
-        setSendAmount(sendAmount);
-        setSendAmountFormatted(formatAmount(sendAmount, true));
-    };
-
-    const changeSendAmount = (amount) => {
-        let satAmount = convertAmount(Number(amount), denominations.sat);
-        let receiveAmount = calculateReceiveAmount(satAmount);
         if (satAmount < minimum()) {
             satAmount = minimum();
-            receiveAmount = calculateReceiveAmount(satAmount);
+            sendAmount = calculateSendAmount(satAmount);
         }
         if (satAmount > maximum()) {
             satAmount = maximum();
-            receiveAmount = calculateReceiveAmount(satAmount);
+            sendAmount = calculateSendAmount(satAmount);
         }
-        setSendAmount(BigInt(satAmount));
-        setSendAmountFormatted(formatAmount(satAmount));
+        setReceiveAmount(BigInt(0));
+        setSendAmount(BigInt(0));
+        setReceiveAmount(BigInt(satAmount));
+        setSendAmount(BigInt(sendAmount));
+    };
+
+    const changeSendAmount = (amount) => {
+        const satAmount = convertAmount(Number(amount), denominations.sat);
+        let receiveAmount = calculateReceiveAmount(satAmount);
+        let sendAmount = satAmount;
+        if (receiveAmount < minimum()) {
+            receiveAmount = minimum();
+            sendAmount = calculateSendAmount(receiveAmount);
+        }
+        if (receiveAmount > maximum()) {
+            receiveAmount = maximum();
+            sendAmount = calculateSendAmount(receiveAmount);
+        }
+        setReceiveAmount(BigInt(0));
+        setSendAmount(BigInt(0));
         setReceiveAmount(BigInt(receiveAmount));
-        setReceiveAmountFormatted(formatAmount(receiveAmount, true));
+        setSendAmount(BigInt(sendAmount));
     };
 
     const createWeblnInvoice = async () => {
@@ -264,6 +265,7 @@ const Create = () => {
         if( !regex.test(key)) {
             theEvent.returnValue = false;
             if (theEvent.preventDefault) theEvent.preventDefault();
+            return false;
         }
     }
 
