@@ -36,9 +36,9 @@ import {
 import { api_url } from "./config";
 
 export const setReferralId = () => {
-    const ref = new URLSearchParams(window.location.search).get("ref");
-    if (ref && ref !== '') {
-        setRef(ref);
+    const ref_param = new URLSearchParams(window.location.search).get("ref");
+    if (ref_param && ref_param !== '') {
+        setRef(ref_param);
         window.history.replaceState({}, document.title, window.location.pathname)
     }
 }
