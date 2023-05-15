@@ -1,20 +1,16 @@
 import log from "loglevel";
-import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
-import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, lnurl_fetcher, fetchPairs } from "./helper";
-import { useNavigate } from "@solidjs/router";
-
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
+import { useNavigate } from "@solidjs/router";
+import { useI18n } from "@solid-primitives/i18n";
+import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import { fetcher, fetchPairs } from "./helper";
+import { fetchLnurl, isInvoice, isLnurl } from './utils/invoice';
 import { getAddress, getNetwork } from "./compat";
-
 import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
 import Fees from "./components/Fees";
-
 import arrow_svg from "./assets/arrow.svg";
-
-import { bolt11_prefix } from "./config";
 import {
     convertAmount,
     denominations,
@@ -47,6 +43,10 @@ import {
     config,
     valid,
     setValid,
+    invoiceValid,
+    setInvoiceValid,
+    addressValid,
+    setAddressValid,
     invoice,
     setInvoice,
     onchainAddress,
@@ -58,6 +58,7 @@ import {
 } from "./signals";
 
 const Create = () => {
+    let invoiceInputRef;
     const [firstLoad, setFirstLoad] = createSignal(true);
 
     // set fees and pairs
@@ -96,7 +97,7 @@ const Create = () => {
 
     // validation swap
     createMemo(() => {
-        if ((!reverse() && invoice()) || (reverse() && onchainAddress())) {
+        if ((!reverse() && invoiceValid()) || (reverse() && addressValid())) {
             if (receiveAmount() >= BigInt(minimum())) {
                 if (receiveAmount() <= BigInt(maximum())) {
                     setValid(true);
@@ -152,6 +153,7 @@ const Create = () => {
             const invoice = await window.webln.makeInvoice({ amount: amount });
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
+            validateAddress(invoiceInputRef);
         }
     };
 
@@ -169,15 +171,7 @@ const Create = () => {
             let preimageHex = null;
 
             if (reverse()) {
-                try {
-                    // validate btc address
-                    address.toOutputScript(onchainAddress(), net);
-                } catch (e) {
-                    log.error(e);
-                    setNotificationType("error");
-                    setNotification("invalid address");
-                    return false;
-                }
+                address.toOutputScript(onchainAddress(), net);
                 const preimage = secp.utils.randomBytes(32);
                 preimageHex = secp.utils.bytesToHex(preimage);
                 let preimageHash = await secp.utils.sha256(preimage);
@@ -191,19 +185,14 @@ const Create = () => {
                     preimageHash: preimageHashHex,
                 };
             } else {
-                if (
-                    invoice().indexOf("@") > 0 ||
-                    invoice().indexOf("lnurl") == 0 ||
-                    invoice().indexOf("LNURL") == 0
-                ) {
-                    let pr = await lnurl_fetcher(
+                if (isLnurl(invoice())) {
+                    setInvoice(await fetchLnurl(
                         invoice(),
                         Number(receiveAmount())
-                    );
-                    setInvoice(pr);
+                    ));
                 }
-                if (invoice().indexOf(bolt11_prefix) != 0) {
-                    let msg = "wrong network";
+                if (!isInvoice(invoice())) {
+                    const msg = "invalid network";
                     log.error(msg);
                     setNotificationType("error");
                     setNotification(msg);
@@ -252,15 +241,43 @@ const Create = () => {
 
     fetchPairs();
 
-    const validate = (evt) => {
+
+    const validateInput = (evt) => {
         const theEvent = evt || window.event;
         let key = theEvent.keyCode || theEvent.which;
         key = String.fromCharCode(key);
         const regex = (denomination() == "sat") ? /[0-9]/ : /[0-9]|\./;
         const count = 10;
-        if( !regex.test(key) || evt.currentTarget.value.length >= count) {
+        if (!regex.test(key) || evt.currentTarget.value.length >= count) {
             theEvent.returnValue = false;
-            if(theEvent.preventDefault) theEvent.preventDefault();
+            if (theEvent.preventDefault) theEvent.preventDefault();
+        }
+    }
+
+    const validateAddress = (input) => {
+        const inputValue = input.value;
+        if (reverse()) {
+            try {
+                // validate btc address
+                const asset_name = asset();
+                const address = getAddress(asset_name);
+                address.toOutputScript(inputValue, getNetwork(asset_name));
+                input.setCustomValidity("");
+                setAddressValid(true);
+                setOnchainAddress(inputValue);
+            } catch (e) {
+                setAddressValid(false);
+                input.setCustomValidity("invalid address");
+            }
+        } else {
+            if (isInvoice(inputValue) || isLnurl(inputValue)) {
+                input.setCustomValidity("");
+                setInvoiceValid(true);
+                setInvoice(inputValue);
+            } else {
+                setInvoiceValid(false);
+                input.setCustomValidity("invalid network");
+            }
         }
     }
 
@@ -276,15 +293,13 @@ const Create = () => {
                 <div>
                     <Asset id="1" />
                     <input
-                        autofocus
                         required
                         type="number"
                         inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="sendAmount"
-                        maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         value={sendAmountFormatted()}
-                        onKeypress={validate}
+                        onKeypress={validateInput}
                         onInput={(e) => changeSendAmount(e.currentTarget.value)}
                     />
                 </div>
@@ -304,12 +319,11 @@ const Create = () => {
                         type="number"
                         inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="receiveAmount"
-                        maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         min={formatAmount(minimum())}
                         max={formatAmount(maximum())}
                         value={receiveAmountFormatted()}
-                        onKeypress={validate}
+                        onKeypress={validateInput}
                         onInput={(e) => changeReceiveAmount(e.currentTarget.value)}
                     />
                 </div>
@@ -326,18 +340,20 @@ const Create = () => {
                 <hr />
             </Show>
             <textarea
-                onChange={(e) => setInvoice(e.currentTarget.value)}
-                onKeyUp={(e) => setInvoice(e.currentTarget.value)}
+                required
+                ref={invoiceInputRef}
+                onInput={(e) => validateAddress(e.currentTarget)}
                 id="invoice"
                 name="invoice"
                 value={invoice()}
                 placeholder={t("create_and_paste", {
                     amount: receiveAmountFormatted(),
                     denomination: denomination(),
-                })}></textarea>
+                })}>
+            </textarea>
             <input
-                onChange={(e) => setOnchainAddress(e.currentTarget.value)}
-                onKeyUp={(e) => setOnchainAddress(e.currentTarget.value)}
+                required
+                onInput={(e) => validateAddress(e.currentTarget)}
                 type="text"
                 id="onchainAddress"
                 name="onchainAddress"
