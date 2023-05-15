@@ -47,6 +47,10 @@ import {
     config,
     valid,
     setValid,
+    invoiceValid,
+    setInvoiceValid,
+    addressValid,
+    setAddressValid,
     invoice,
     setInvoice,
     onchainAddress,
@@ -96,7 +100,7 @@ const Create = () => {
 
     // validation swap
     createMemo(() => {
-        if ((!reverse() && invoice()) || (reverse() && onchainAddress())) {
+        if ((!reverse() && invoiceValid()) || (reverse() && addressValid())) {
             if (receiveAmount() >= BigInt(minimum())) {
                 if (receiveAmount() <= BigInt(maximum())) {
                     setValid(true);
@@ -169,15 +173,7 @@ const Create = () => {
             let preimageHex = null;
 
             if (reverse()) {
-                try {
-                    // validate btc address
-                    address.toOutputScript(onchainAddress(), net);
-                } catch (e) {
-                    log.error(e);
-                    setNotificationType("error");
-                    setNotification("invalid address");
-                    return false;
-                }
+                address.toOutputScript(onchainAddress(), net);
                 const preimage = secp.utils.randomBytes(32);
                 preimageHex = secp.utils.bytesToHex(preimage);
                 let preimageHash = await secp.utils.sha256(preimage);
@@ -203,7 +199,7 @@ const Create = () => {
                     setInvoice(pr);
                 }
                 if (invoice().indexOf(bolt11_prefix) != 0) {
-                    let msg = "wrong network";
+                    let msg = "invalid network";
                     log.error(msg);
                     setNotificationType("error");
                     setNotification(msg);
@@ -252,7 +248,8 @@ const Create = () => {
 
     fetchPairs();
 
-    const validate = (evt) => {
+
+    const validateInput = (evt) => {
         const theEvent = evt || window.event;
         let key = theEvent.keyCode || theEvent.which;
         key = String.fromCharCode(key);
@@ -263,6 +260,40 @@ const Create = () => {
             if(theEvent.preventDefault) theEvent.preventDefault();
         }
     }
+
+    const validateAddress = (input) => {
+        const inputValue = input.value;
+        if (reverse()) {
+            try {
+                // validate btc address
+                let asset_name = asset();
+                const address = getAddress(asset_name);
+                const net = getNetwork(asset_name);
+                address.toOutputScript(inputValue, net);
+                input.setCustomValidity("");
+                setAddressValid(true);
+                setOnchainAddress(inputValue);
+            } catch (e) {
+                setAddressValid(false);
+                input.setCustomValidity("invalid address");
+            }
+        } else {
+            if (
+                inputValue.indexOf("@") > 0 ||
+                inputValue.indexOf("lnurl") == 0 ||
+                inputValue.indexOf("LNURL") == 0 ||
+                inputValue.indexOf(bolt11_prefix) == 0
+            ) {
+                input.setCustomValidity("");
+                setInvoiceValid(true);
+                setInvoice(inputValue);
+            } else {
+                setInvoiceValid(false);
+                input.setCustomValidity("invalid network");
+            }
+        }
+    }
+
 
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
@@ -276,15 +307,13 @@ const Create = () => {
                 <div>
                     <Asset id="1" />
                     <input
-                        autofocus
                         required
                         type="number"
                         inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="sendAmount"
-                        maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         value={sendAmountFormatted()}
-                        onKeypress={validate}
+                        onKeypress={validateInput}
                         onInput={(e) => changeSendAmount(e.currentTarget.value)}
                     />
                 </div>
@@ -304,12 +333,11 @@ const Create = () => {
                         type="number"
                         inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="receiveAmount"
-                        maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         min={formatAmount(minimum())}
                         max={formatAmount(maximum())}
                         value={receiveAmountFormatted()}
-                        onKeypress={validate}
+                        onKeypress={validateInput}
                         onInput={(e) => changeReceiveAmount(e.currentTarget.value)}
                     />
                 </div>
@@ -326,8 +354,8 @@ const Create = () => {
                 <hr />
             </Show>
             <textarea
-                onChange={(e) => setInvoice(e.currentTarget.value)}
-                onKeyUp={(e) => setInvoice(e.currentTarget.value)}
+                required
+                onInput={(e) => validateAddress(e.currentTarget)}
                 id="invoice"
                 name="invoice"
                 value={invoice()}
@@ -336,8 +364,8 @@ const Create = () => {
                     denomination: denomination(),
                 })}></textarea>
             <input
-                onChange={(e) => setOnchainAddress(e.currentTarget.value)}
-                onKeyUp={(e) => setOnchainAddress(e.currentTarget.value)}
+                required
+                onInput={(e) => validateAddress(e.currentTarget)}
                 type="text"
                 id="onchainAddress"
                 name="onchainAddress"

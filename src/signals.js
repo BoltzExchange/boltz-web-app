@@ -54,6 +54,8 @@ export const [reverse, setReverse] = createSignal(true);
 
 // validation
 export const [valid, setValid] = createSignal(false);
+export const [invoiceValid, setInvoiceValid] = createSignal(false);
+export const [addressValid, setAddressValid] = createSignal(false);
 
 // notification
 export const [notification, setNotification] = createSignal("");
