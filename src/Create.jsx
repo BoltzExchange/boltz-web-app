@@ -128,22 +128,36 @@ const Create = () => {
 
     const changeReceiveAmount = (amount) => {
         let satAmount = convertAmount(Number(amount), denominations.sat);
+        let sendAmount = calculateSendAmount(satAmount);
+        if (sendAmount < minimum()) {
+            satAmount = minimum();
+            sendAmount = calculateSendAmount(satAmount);
+        }
+        if (sendAmount > maximum()) {
+            satAmount = maximum();
+            sendAmount = calculateSendAmount(satAmount);
+        }
         setReceiveAmount(BigInt(satAmount));
         setReceiveAmountFormatted(formatAmount(satAmount));
-        let sendAmount = calculateSendAmount(satAmount);
         setSendAmount(sendAmount);
         setSendAmountFormatted(formatAmount(sendAmount, true));
     };
 
     const changeSendAmount = (amount) => {
-        let satAmount = BigInt(
-            convertAmount(Number(amount), denominations.sat)
-        );
-        setSendAmount(satAmount);
-        setSendAmountFormatted(formatAmount(Number(satAmount)));
-        let receiveAmount = calculateReceiveAmount(Number(satAmount));
-        setReceiveAmount(receiveAmount);
-        setReceiveAmountFormatted(formatAmount(Number(receiveAmount), true));
+        let satAmount = convertAmount(Number(amount), denominations.sat);
+        let receiveAmount = calculateReceiveAmount(satAmount);
+        if (satAmount < minimum()) {
+            satAmount = minimum();
+            receiveAmount = calculateReceiveAmount(satAmount);
+        }
+        if (satAmount > maximum()) {
+            satAmount = maximum();
+            receiveAmount = calculateReceiveAmount(satAmount);
+        }
+        setSendAmount(BigInt(satAmount));
+        setSendAmountFormatted(formatAmount(satAmount));
+        setReceiveAmount(BigInt(receiveAmount));
+        setReceiveAmountFormatted(formatAmount(receiveAmount, true));
     };
 
     const createWeblnInvoice = async () => {
@@ -247,8 +261,7 @@ const Create = () => {
         let key = theEvent.keyCode || theEvent.which;
         key = String.fromCharCode(key);
         const regex = (denomination() == "sat") ? /[0-9]/ : /[0-9]|\./;
-        const count = 10;
-        if (!regex.test(key) || evt.currentTarget.value.length >= count) {
+        if( !regex.test(key)) {
             theEvent.returnValue = false;
             if (theEvent.preventDefault) theEvent.preventDefault();
         }
@@ -320,8 +333,6 @@ const Create = () => {
                         inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="receiveAmount"
                         step={denomination() == "btc" ? 0.00000001 : 1}
-                        min={formatAmount(minimum())}
-                        max={formatAmount(maximum())}
                         value={receiveAmountFormatted()}
                         onKeypress={validateInput}
                         onInput={(e) => changeReceiveAmount(e.currentTarget.value)}
