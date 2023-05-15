@@ -35,7 +35,7 @@ import {
 } from "./compat";
 import { api_url } from "./config";
 
-export const setReferralId = () => {
+export const checkReferralId = () => {
     const ref_param = new URLSearchParams(window.location.search).get("ref");
     if (ref_param && ref_param !== '') {
         setRef(ref_param);
