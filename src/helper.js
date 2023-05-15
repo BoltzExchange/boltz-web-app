@@ -1,6 +1,5 @@
 import log from "loglevel";
 import QRCode from "qrcode";
-import { bech32, utf8 } from "@scure/base";
 import {
     ref,
     swaps,
@@ -235,48 +234,6 @@ export async function detectWebLNProvider(timeoutParam) {
                 resolve(false);
             }
         }
-    });
-}
-
-export function lnurl_fetcher(lnurl, amount_sat) {
-    return new Promise((resolve) => {
-        let url = "";
-        let amount = amount_sat * 1000;
-        if (lnurl.indexOf("@") > 0) {
-            // Lightning address
-            let urlsplit = lnurl.split("@");
-            url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`;
-        } else {
-            // LNURL
-            const { bytes } = bech32.decodeToBytes(lnurl);
-            url = utf8.encode(bytes);
-        }
-        log.debug("fetching lnurl:", url);
-        fetch(url)
-            .then(checkResponse)
-            .then((data) => {
-                log.debug(
-                    "amount check: (x, min, max)",
-                    amount,
-                    data.minSendable,
-                    data.maxSendable
-                );
-                if (amount < data.minSendable || amount > data.maxSendable) {
-                    return Promise.reject("Amount not in LNURL range.");
-                }
-                log.debug(
-                    "fetching invoice",
-                    `${data.callback}?amount=${amount}`
-                );
-                fetch(`${data.callback}?amount=${amount}`)
-                    .then(checkResponse)
-                    .then((data) => {
-                        log.debug("fetched invoice", data);
-                        resolve(data.pr);
-                    })
-                    .catch(errorHandler);
-            })
-            .catch(errorHandler);
     });
 }
 

@@ -1,20 +1,16 @@
 import log from "loglevel";
-import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
-import { useI18n } from "@solid-primitives/i18n";
-import { fetcher, lnurl_fetcher, fetchPairs } from "./helper";
-import { useNavigate } from "@solidjs/router";
-
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
+import { useNavigate } from "@solidjs/router";
+import { useI18n } from "@solid-primitives/i18n";
+import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import { fetcher, fetchPairs } from "./helper";
+import { fetchLnurl, isInvoice, isLnurl } from './utils/invoice';
 import { getAddress, getNetwork } from "./compat";
-
 import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
 import Fees from "./components/Fees";
-
 import arrow_svg from "./assets/arrow.svg";
-
-import { bolt11_prefix } from "./config";
 import {
     convertAmount,
     denominations,
@@ -62,6 +58,7 @@ import {
 } from "./signals";
 
 const Create = () => {
+    let invoiceInputRef;
     const [firstLoad, setFirstLoad] = createSignal(true);
 
     // set fees and pairs
@@ -156,6 +153,7 @@ const Create = () => {
             const invoice = await window.webln.makeInvoice({ amount: amount });
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
+            validateAddress(invoiceInputRef);
         }
     };
 
@@ -187,19 +185,14 @@ const Create = () => {
                     preimageHash: preimageHashHex,
                 };
             } else {
-                if (
-                    invoice().indexOf("@") > 0 ||
-                    invoice().indexOf("lnurl") == 0 ||
-                    invoice().indexOf("LNURL") == 0
-                ) {
-                    let pr = await lnurl_fetcher(
+                if (isLnurl(invoice())) {
+                    setInvoice(await fetchLnurl(
                         invoice(),
                         Number(receiveAmount())
-                    );
-                    setInvoice(pr);
+                    ));
                 }
-                if (invoice().indexOf(bolt11_prefix) != 0) {
-                    let msg = "invalid network";
+                if (!isInvoice(invoice())) {
+                    const msg = "invalid network";
                     log.error(msg);
                     setNotificationType("error");
                     setNotification(msg);
@@ -255,9 +248,9 @@ const Create = () => {
         key = String.fromCharCode(key);
         const regex = (denomination() == "sat") ? /[0-9]/ : /[0-9]|\./;
         const count = 10;
-        if( !regex.test(key) || evt.currentTarget.value.length >= count) {
+        if (!regex.test(key) || evt.currentTarget.value.length >= count) {
             theEvent.returnValue = false;
-            if(theEvent.preventDefault) theEvent.preventDefault();
+            if (theEvent.preventDefault) theEvent.preventDefault();
         }
     }
 
@@ -266,10 +259,9 @@ const Create = () => {
         if (reverse()) {
             try {
                 // validate btc address
-                let asset_name = asset();
+                const asset_name = asset();
                 const address = getAddress(asset_name);
-                const net = getNetwork(asset_name);
-                address.toOutputScript(inputValue, net);
+                address.toOutputScript(inputValue, getNetwork(asset_name));
                 input.setCustomValidity("");
                 setAddressValid(true);
                 setOnchainAddress(inputValue);
@@ -278,12 +270,7 @@ const Create = () => {
                 input.setCustomValidity("invalid address");
             }
         } else {
-            if (
-                inputValue.indexOf("@") > 0 ||
-                inputValue.indexOf("lnurl") == 0 ||
-                inputValue.indexOf("LNURL") == 0 ||
-                inputValue.indexOf(bolt11_prefix) == 0
-            ) {
+            if (isInvoice(inputValue) || isLnurl(inputValue)) {
                 input.setCustomValidity("");
                 setInvoiceValid(true);
                 setInvoice(inputValue);
@@ -293,7 +280,6 @@ const Create = () => {
             }
         }
     }
-
 
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
@@ -355,6 +341,7 @@ const Create = () => {
             </Show>
             <textarea
                 required
+                ref={invoiceInputRef}
                 onInput={(e) => validateAddress(e.currentTarget)}
                 id="invoice"
                 name="invoice"
@@ -362,7 +349,8 @@ const Create = () => {
                 placeholder={t("create_and_paste", {
                     amount: receiveAmountFormatted(),
                     denomination: denomination(),
-                })}></textarea>
+                })}>
+            </textarea>
             <input
                 required
                 onInput={(e) => validateAddress(e.currentTarget)}
