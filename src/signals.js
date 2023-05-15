@@ -54,8 +54,6 @@ export const [reverse, setReverse] = createSignal(true);
 
 // validation
 export const [valid, setValid] = createSignal(false);
-export const [amountValid, setAmountValid] = createSignal(false);
-export const [swapValid, setSwapValid] = createSignal(false);
 
 // notification
 export const [notification, setNotification] = createSignal("");
