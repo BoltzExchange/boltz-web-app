@@ -71,8 +71,8 @@ const Create = () => {
             cfg = config()["L-BTC/BTC"];
         }
         if (cfg) {
-            setMinimum(formatAmount(cfg.limits.minimal));
-            setMaximum(formatAmount(cfg.limits.maximal));
+            setMinimum(cfg.limits.minimal);
+            setMaximum(cfg.limits.maximal);
             // TODO issue do not touch amounts when flipping assets
             if (reverse()) {
                 let rev = cfg.fees.minerFees.baseAsset.reverse;
@@ -280,7 +280,7 @@ const Create = () => {
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                Min: {minimum()}, Max: {maximum()}
+                Min: {formatAmount(minimum())}, Max: {formatAmount(maximum())}
             </p>
             <hr />
             <div class="icons">
@@ -338,8 +338,8 @@ const Create = () => {
                         id="receiveAmount"
                         maxlength="10"
                         step={denomination() == "btc" ? 0.00000001 : 1}
-                        min={minimum()}
-                        max={maximum()}
+                        min={formatAmount(minimum())}
+                        max={formatAmount(maximum())}
                         value={receiveAmountFormatted()}
                         onKeypress={validate}
                         onInput={(e) => changeReceiveAmount(e.currentTarget.value)}
