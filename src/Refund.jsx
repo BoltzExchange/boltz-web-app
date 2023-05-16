@@ -11,23 +11,17 @@ import {
     setTimeoutBlockheight,
     setTransactionToRefund,
 } from "./signals";
+import { getAddress, getNetwork } from "./compat";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
 
-const refundAddressChange = (e) => {
-    let t = e.currentTarget;
-    if (t.value.trim()) {
-        setRefundAddress(t.value.trim());
-    } else {
-        setRefundAddress(null);
-    }
-};
 
 const Refund = () => {
     const [t] = useI18n();
 
+    const [valid, setValid] = createSignal(false);
+    const [addressValid, setAddressValid] = createSignal(false);
     const [refundable, setRefundable] = createSignal(true);
-    const [error, setError] = createSignal("no file seleced");
     const [refundJson, setRefundJson] = createSignal(null);
 
     createEffect(() => {
@@ -35,27 +29,41 @@ const Refund = () => {
             (json) => {
                 if (json === 0) return;
                 setRefundJson(json);
-            },
-            (err) => {
-                setRefundJson(null);
-                setError("not a json file");
             }
         );
     });
 
     createEffect(() => {
-        if (refundAddress() === null) return setError("no refund address");
-        if (refundJson() === null) return setError("no json file");
-        setError(false);
+        if (addressValid() && refundJson()) {
+            setValid(true);
+        } else {
+            setValid(false);
+        }
     });
 
+    const refundAddressChange = (e) => {
+        const input= e.currentTarget;
+        const inputValue = input.value;
+        try {
+            const asset_name = refundJson().asset;
+            const address = getAddress(asset_name);
+            address.toOutputScript(inputValue, getNetwork(asset_name));
+            input.setCustomValidity("");
+            setAddressValid(true);
+            setRefundAddress(inputValue);
+        } catch (e) {
+            setAddressValid(false);
+            input.setCustomValidity("invalid address");
+        }
+    };
+
     const startRefund = () => {
+        if (!valid()) return;
         const refundInfo = refundJson();
         fetcher(
             "/getswaptransaction",
             async (data) => {
                 if (data.timeoutEta) {
-                    setError(t("swap_not_refundable_yet"));
                     setTimeoutEta(data.timeoutEta * 1000);
                     setTimeoutBlockheight(data.timeoutBlockHeight);
                     setRefundable(false);
@@ -77,27 +85,28 @@ const Refund = () => {
                 <h2>{t("refund_a_swap")}</h2>
                 <p>{t("refund_a_swap_subline")}</p>
                 <hr />
+                <Show when={refundJson()}>
+                    <input
+                        required
+                        onInput={refundAddressChange}
+                        type="text"
+                        id="refundAddress"
+                        name="refundAddress"
+                        placeholder={t("refund_address_placeholder")}
+                    />
+                </Show>
                 <input
-                    onKeyUp={refundAddressChange}
-                    onChange={refundAddressChange}
-                    type="text"
-                    id="refundAddress"
-                    name="refundAddress"
-                    placeholder={t("refund_address_placeholder")}
-                />
-                <input
+                    required
                     type="file"
                     id="refundUpload"
-                    onChange={(e) => setUpload(e.currentTarget.files[0])}
+                    onInput={(e) => setUpload(e.currentTarget.files[0])}
                 />
-                <div class={error() === false ? "hidden" : ""}>
-                    <span class="error">{error()}</span>
-                </div>
-                <div class={error() !== false ? "hidden" : ""}>
-                    <span class="btn btn-success" onClick={startRefund}>
-                        {t("refund")}
-                    </span>
-                </div>
+                <button
+                    class="btn"
+                    disabled={valid() ? "" : "disabled"}
+                    onClick={startRefund}>
+                    {t("refund")}
+                </button>
                 <Show when={!refundable()}>
                     <RefundEta />
                 </Show>
