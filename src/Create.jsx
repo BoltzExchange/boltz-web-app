@@ -58,7 +58,8 @@ import {
 } from "./signals";
 
 const Create = () => {
-    let invoiceInputRef;
+    let invoiceInputRef, receiveAmountRef;
+
     const [firstLoad, setFirstLoad] = createSignal(true);
 
     // set fees and pairs
@@ -91,8 +92,8 @@ const Create = () => {
 
     // change denomination
     createMemo(() => {
-        setReceiveAmountFormatted(formatAmount(Number(receiveAmount())));
-        setSendAmountFormatted(formatAmount(Number(sendAmount())));
+        setReceiveAmountFormatted(formatAmount(Number(receiveAmount())).toString());
+        setSendAmountFormatted(formatAmount(Number(sendAmount())).toString());
     });
 
     // validation swap
@@ -113,37 +114,35 @@ const Create = () => {
     const navigate = useNavigate();
 
     const calculateReceiveAmount = (sendAmount) => {
-        const preMinerFee = sendAmount - minerFee();
-        sendAmount = preMinerFee - Math.floor((preMinerFee * boltzFee()) / 100);
-        return Math.max(sendAmount, 0);
-    };
-
-    const calculateSendAmount = (receiveAmount) => {
-        receiveAmount =
-            parseInt(receiveAmount) +
-            parseInt(minerFee()) +
-            Math.ceil((receiveAmount * boltzFee()) / 100);
+        const preMinerFee = parseInt(sendAmount) - minerFee();
+        const receiveAmount = preMinerFee - preMinerFee * boltzFee() * 0.01;
         return Math.max(Math.floor(receiveAmount), 0);
     };
 
-    const changeReceiveAmount = (amount) => {
-        let satAmount = convertAmount(Number(amount), denominations.sat);
-        setReceiveAmount(BigInt(satAmount));
-        setReceiveAmountFormatted(formatAmount(satAmount));
-        let sendAmount = calculateSendAmount(satAmount);
-        setSendAmount(sendAmount);
-        setSendAmountFormatted(formatAmount(sendAmount, true));
+    const calculateSendAmount = (receiveAmount) => {
+        const sendAmount =
+            parseInt(receiveAmount) +
+            parseInt(minerFee()) +
+            parseInt(receiveAmount) * boltzFee() / 100;
+        return Math.max(Math.floor(sendAmount), 0);
     };
 
-    const changeSendAmount = (amount) => {
-        let satAmount = BigInt(
-            convertAmount(Number(amount), denominations.sat)
-        );
-        setSendAmount(satAmount);
-        setSendAmountFormatted(formatAmount(Number(satAmount)));
-        let receiveAmount = calculateReceiveAmount(Number(satAmount));
-        setReceiveAmount(receiveAmount);
-        setReceiveAmountFormatted(formatAmount(Number(receiveAmount), true));
+    const changeReceiveAmount = (e) => {
+        const amount = e.currentTarget.value;
+        let satAmount = convertAmount(Number(amount), denominations.sat);
+        let sendAmount = calculateSendAmount(satAmount);
+        setReceiveAmount(BigInt(satAmount));
+        setSendAmount(sendAmount);
+        validateReceiveAmount(e.currentTarget);
+    };
+
+    const changeSendAmount = (e) => {
+        const amount = e.currentTarget.value;
+        let satAmount = convertAmount(Number(amount), denominations.sat);
+        let receiveAmount = calculateReceiveAmount(satAmount);
+        setSendAmount(BigInt(satAmount));
+        setReceiveAmount(BigInt(receiveAmount));
+        validateReceiveAmount(receiveAmountRef);
     };
 
     const createWeblnInvoice = async () => {
@@ -158,99 +157,104 @@ const Create = () => {
     };
 
     const create = async () => {
-        if (valid()) {
-            let asset_name = asset();
+        if (!valid()) return;
 
-            const address = getAddress(asset_name);
-            const net = getNetwork(asset_name);
+        let asset_name = asset();
 
-            const pair = ECPair.makeRandom();
-            const privateKeyHex = pair.privateKey.toString("hex");
-            const publicKeyHex = pair.publicKey.toString("hex");
-            let params = null;
-            let preimageHex = null;
+        const address = getAddress(asset_name);
+        const net = getNetwork(asset_name);
 
-            if (reverse()) {
-                address.toOutputScript(onchainAddress(), net);
-                const preimage = secp.utils.randomBytes(32);
-                preimageHex = secp.utils.bytesToHex(preimage);
-                let preimageHash = await secp.utils.sha256(preimage);
-                let preimageHashHex = secp.utils.bytesToHex(preimageHash);
-                params = {
-                    type: "reversesubmarine",
-                    pairId: asset_name + "/BTC",
-                    orderSide: "buy",
-                    invoiceAmount: Number(sendAmount()),
-                    claimPublicKey: publicKeyHex,
-                    preimageHash: preimageHashHex,
-                };
-            } else {
-                if (isLnurl(invoice())) {
-                    setInvoice(await fetchLnurl(
-                        invoice(),
-                        Number(receiveAmount())
-                    ));
-                }
-                if (!isInvoice(invoice())) {
-                    const msg = "invalid network";
-                    log.error(msg);
-                    setNotificationType("error");
-                    setNotification(msg);
-                    return false;
-                }
+        const pair = ECPair.makeRandom();
+        const privateKeyHex = pair.privateKey.toString("hex");
+        const publicKeyHex = pair.publicKey.toString("hex");
+        let params = null;
+        let preimageHex = null;
 
-                params = {
-                    type: "submarine",
-                    pairId: asset_name + "/BTC",
-                    orderSide: "sell",
-                    refundPublicKey: publicKeyHex,
-                    invoice: invoice(),
-                };
+        if (reverse()) {
+            address.toOutputScript(onchainAddress(), net);
+            const preimage = secp.utils.randomBytes(32);
+            preimageHex = secp.utils.bytesToHex(preimage);
+            let preimageHash = await secp.utils.sha256(preimage);
+            let preimageHashHex = secp.utils.bytesToHex(preimageHash);
+            params = {
+                type: "reversesubmarine",
+                pairId: asset_name + "/BTC",
+                orderSide: "buy",
+                invoiceAmount: Number(sendAmount()),
+                claimPublicKey: publicKeyHex,
+                preimageHash: preimageHashHex,
+            };
+        } else {
+            if (isLnurl(invoice())) {
+                setInvoice(await fetchLnurl(
+                    invoice(),
+                    Number(receiveAmount())
+                ));
             }
-            fetcher(
-                "/createswap",
-                (data) => {
-                    data.privateKey = privateKeyHex;
-                    data.date = new Date().getTime();
-                    data.reverse = reverse();
-                    data.asset = asset();
-                    data.preimage = preimageHex;
-                    data.receiveAmount = Number(receiveAmount());
-                    data.onchainAddress = onchainAddress();
-                    let tmp_swaps = JSON.parse(swaps());
-                    tmp_swaps.push(data);
-                    setSwaps(JSON.stringify(tmp_swaps));
-                    setInvoice("");
-                    setOnchainAddress("");
-                    navigate("/swap/" + data.id);
-                },
-                params
-            );
+            if (!isInvoice(invoice())) {
+                const msg = "invalid network";
+                log.error(msg);
+                setNotificationType("error");
+                setNotification(msg);
+                return false;
+            }
+
+            params = {
+                type: "submarine",
+                pairId: asset_name + "/BTC",
+                orderSide: "sell",
+                refundPublicKey: publicKeyHex,
+                invoice: invoice(),
+            };
         }
+        fetcher(
+            "/createswap",
+            (data) => {
+                data.privateKey = privateKeyHex;
+                data.date = new Date().getTime();
+                data.reverse = reverse();
+                data.asset = asset();
+                data.preimage = preimageHex;
+                data.receiveAmount = Number(receiveAmount());
+                data.onchainAddress = onchainAddress();
+                let tmp_swaps = JSON.parse(swaps());
+                tmp_swaps.push(data);
+                setSwaps(JSON.stringify(tmp_swaps));
+                setInvoice("");
+                setOnchainAddress("");
+                navigate("/swap/" + data.id);
+            },
+            params
+        );
     };
-
-    let timer = setInterval(() => {
-        log.debug("tick Create");
-        fetchPairs();
-    }, 30000);
-
-    onCleanup(() => {
-        log.debug("cleanup Create");
-        clearInterval(timer);
-    });
-
-    fetchPairs();
-
 
     const validateInput = (evt) => {
         const theEvent = evt || window.event;
-        let key = theEvent.keyCode || theEvent.which;
-        key = String.fromCharCode(key);
-        const regex = (denomination() == "sat") ? /[0-9]/ : /[0-9]|\./;
-        const count = 10;
-        if (!regex.test(key) || evt.currentTarget.value.length >= count) {
+        const input = evt.currentTarget;
+        let keycode = theEvent.keyCode || theEvent.which;
+        keycode = String.fromCharCode(keycode);
+        const hasDot = input.value.includes(".");
+        const regex = (denomination() == "sat") || hasDot ? /[0-9]/ : /[0-9]|\./;
+        if (!regex.test(keycode)) {
             theEvent.returnValue = false;
             if (theEvent.preventDefault) theEvent.preventDefault();
+        }
+    };
+
+    const validateReceiveAmount = (input) => {
+        input.setCustomValidity("");
+        const amount = convertAmount(Number(input.value), denominations.sat);
+        if (amount < minimum()) {
+            input.setCustomValidity(t("minimum_amount", {
+                amount: formatAmount(minimum()),
+                denomination: denomination(),
+            }));
+        }
+        if (amount > maximum()) {
+            input.setCustomValidity(t("maximum_amount", {
+                amount: formatAmount(maximum()),
+                denomination: denomination(),
+            }));
         }
     }
 
@@ -281,12 +285,24 @@ const Create = () => {
         }
     }
 
+    let timer = setInterval(() => {
+        log.debug("tick Create");
+        fetchPairs();
+    }, 30000);
+
+    onCleanup(() => {
+        log.debug("cleanup Create");
+        clearInterval(timer);
+    });
+
+    fetchPairs();
+
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                Min: {formatAmount(minimum())}, Max: {formatAmount(maximum())}
+                {t("min")}: {formatAmount(minimum())}, {t("max")}: {formatAmount(maximum())}
             </p>
             <hr />
             <div class="icons">
@@ -294,13 +310,15 @@ const Create = () => {
                     <Asset id="1" />
                     <input
                         required
-                        type="number"
+                        type="text"
+                        maxlength={denomination() == "btc" ? "10" : "7"}
+                        pattern="0\.[0-9]{1,8}|[0-9]{1,10}"
                         inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="sendAmount"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         value={sendAmountFormatted()}
-                        onKeypress={validateInput}
-                        onInput={(e) => changeSendAmount(e.currentTarget.value)}
+                        onKeypress={(e) => validateInput(e)}
+                        onInput={(e) => changeSendAmount(e)}
                     />
                 </div>
                 <div
@@ -314,17 +332,18 @@ const Create = () => {
                 <div>
                     <Asset id="2" />
                     <input
+                        ref={receiveAmountRef}
                         autofocus
                         required
-                        type="number"
+                        type="text"
+                        pattern="0\.[0-9]{1,8}|[0-9]{1,10}"
+                        maxlength={denomination() == "btc" ? "10" : "7"}
                         inputmode={denomination() == "btc" ? "decimal" : "numeric"}
                         id="receiveAmount"
                         step={denomination() == "btc" ? 0.00000001 : 1}
-                        min={formatAmount(minimum())}
-                        max={formatAmount(maximum())}
                         value={receiveAmountFormatted()}
-                        onKeypress={validateInput}
-                        onInput={(e) => changeReceiveAmount(e.currentTarget.value)}
+                        onKeypress={(e) => validateInput(e)}
+                        onInput={(e) => changeReceiveAmount(e)}
                     />
                 </div>
             </div>

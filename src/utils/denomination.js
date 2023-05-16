@@ -1,4 +1,5 @@
 import { denomination } from "../signals";
+import { BigNumber } from "bignumber.js";
 
 export const satFactor = 100_000_000;
 
@@ -10,20 +11,24 @@ export const denominations = {
 export const formatAmount = (amount, fixed = false) => {
     switch (denomination()) {
         case denominations.btc:
+            let amountBig = new BigNumber(amount).div(satFactor);
             if (fixed) {
-                return (amount / satFactor).toFixed(8);
-            } else {
-                return amount / satFactor;
+                return amountBig.toFixed(8);
             }
+            if (amountBig.isZero()) {
+                return amountBig.toFixed(1);
+            }
+            return amountBig.toNumber();
         case denominations.sat:
-            return Math.ceil(amount);
+            return amount;
     }
 };
 
 export const convertAmount = (amount) => {
     switch (denomination()) {
         case denominations.btc:
-            return Math.ceil(amount * satFactor);
+            let amountBig = new BigNumber(amount).multipliedBy(satFactor);
+            return amountBig.toNumber();
         case denominations.sat:
             return amount;
     }
