@@ -1,4 +1,5 @@
 import log from "loglevel";
+import { BigNumber } from "bignumber.js";
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
@@ -11,11 +12,7 @@ import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
 import Fees from "./components/Fees";
 import arrow_svg from "./assets/arrow.svg";
-import {
-    convertAmount,
-    denominations,
-    formatAmount,
-} from "./utils/denomination";
+import { convertAmount, denominations, formatAmount, } from "./utils/denomination";
 import {
     online,
     swaps,
@@ -114,17 +111,16 @@ const Create = () => {
     const navigate = useNavigate();
 
     const calculateReceiveAmount = (sendAmount) => {
-        const preMinerFee = parseInt(sendAmount) - minerFee();
-        const receiveAmount = preMinerFee - preMinerFee * boltzFee() * 0.01;
-        return Math.max(Math.floor(receiveAmount), 0);
+        const preMinerFee = BigNumber(sendAmount).minus(minerFee())
+        const receiveAmount = preMinerFee.minus(preMinerFee.times(boltzFee()).div(100));
+        return Math.floor(receiveAmount.toNumber());
     };
 
     const calculateSendAmount = (receiveAmount) => {
-        const sendAmount =
-            parseInt(receiveAmount) +
-            parseInt(minerFee()) +
-            parseInt(receiveAmount) * boltzFee() / 100;
-        return Math.max(Math.floor(sendAmount), 0);
+        return Math.floor(BigNumber(receiveAmount)
+            .plus(minerFee())
+            .plus(BigNumber(receiveAmount).times(boltzFee()).div(100))
+            .toNumber());
     };
 
     const changeReceiveAmount = (e) => {
