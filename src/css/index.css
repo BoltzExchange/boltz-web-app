@@ -147,7 +147,7 @@ hr {
 
 .btn:disabled:hover,
 .btn:disabled {
-    background-color: #d0d0d0;
+    background-color: #545c65;
     cursor: not-allowed;
 }
 
