@@ -13,7 +13,6 @@ const Footer = () => {
     return (
         <footer>
             <h4>
-                <br />
                 Got Feedback? Join our{" "}
                 <a
                     title="Discord"
