@@ -134,7 +134,7 @@ const Create = () => {
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateReceiveAmount(e.currentTarget);
-        setInvoice("");
+        if (isInvoice(invoice())) setInvoice("");
     };
 
     const changeSendAmount = (e) => {
@@ -144,7 +144,7 @@ const Create = () => {
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateReceiveAmount(receiveAmountRef);
-        setInvoice("");
+        if (isInvoice(invoice())) setInvoice("");
     };
 
     const createWeblnInvoice = async () => {
