@@ -48,7 +48,7 @@ const Nav = () => {
                     <img src={logo} alt="boltz.exchange btc logo" />
                 </A>
                 <div id="network" class="btn btn-small">
-                    {network === 'main' ? 'Liquid beta' : network }
+                    {network === 'main' ? 'Liquid' : network }
                 </div>
 
                 <div id="collapse" class={hamburger() ? "active" : ""}>

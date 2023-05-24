@@ -13,7 +13,6 @@ const Footer = () => {
     return (
         <footer>
             <h4>
-                ⚠️ This is a beta release ⚠️
                 <br />
                 Got Feedback? Join our{" "}
                 <a
