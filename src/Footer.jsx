@@ -1,7 +1,6 @@
-import { render } from "solid-js/web";
 import { useI18n } from "@solid-primitives/i18n";
 
-import medium from "./assets/medium.svg";
+import substack from "./assets/substack.svg";
 import twitter from "./assets/twitter.svg";
 import nostr from "./assets/nostr.svg";
 import discord from "./assets/discord.svg";
@@ -9,7 +8,7 @@ import discord from "./assets/discord.svg";
 import "./css/footer.css";
 
 const Footer = () => {
-    const [t, { add, locale, dict }] = useI18n();
+    const [t] = useI18n();
     return (
         <footer>
             <h4>
@@ -25,11 +24,11 @@ const Footer = () => {
             <h2>{t("socialmedia")}</h2>
             <div class="socials">
                 <a
-                    title="Medium"
-                    class="medium"
+                    title="Substack"
+                    class="stubstack"
                     target="_blank"
-                    href="https://medium.com/boltzhq">
-                    <img src={medium} alt="Medium Logo" />
+                    href="https://blog.boltz.exchange/">
+                    <img src={substack} alt="Substack Logo" />
                 </a>
                 <a
                     title="Discord"
