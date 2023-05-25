@@ -61,7 +61,4 @@ export const [addressValid, setAddressValid] = createSignal(false);
 export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
 
-// refund
-export const [upload, setUpload] = createSignal(0);
-
 export const [webln, setWebln] = createSignal(false);

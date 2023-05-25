@@ -149,6 +149,15 @@ export const fetchSwapStatus = (swap) => {
     return false;
 };
 
+export const refund_keys = [
+    "id",
+    "asset",
+    "currency",
+    "privateKey",
+    "blindingKey",
+    "redeemScript",
+];
+
 const createRefundData = (swap) => {
     return {
         id: swap.id,
