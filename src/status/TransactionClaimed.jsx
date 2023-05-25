@@ -9,9 +9,7 @@ const TransactionClaimed = () => {
     return (
         <div>
             <h2>{t("congrats")}</h2>
-            <p>
-                {t("successfully_swapped")}
-            </p>
+            <p>{t("successfully_swapped")}</p>
             <hr />
             <span class="btn" onClick={(e) => navigate("/swap")}>
                 {t("new_swap")}

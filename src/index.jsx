@@ -14,7 +14,7 @@ import Footer from "./Footer";
 import Refund from "./Refund";
 import History from "./History";
 import { loglevel } from "./config";
-import { checkWasmSupported } from './utils/wasmSupport';
+import { checkWasmSupported } from "./utils/wasmSupport";
 import dict from "./i18n";
 import "./css/index.css";
 
@@ -25,7 +25,6 @@ const i18n_context = createI18nContext(dict, i18n());
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
-
 
 // <Route path="/" component={Hero} />
 const cleanup = render(
@@ -49,6 +48,6 @@ const cleanup = render(
 );
 
 if (import.meta.hot) {
-  console.log("Hot reload");
-  import.meta.hot.dispose(cleanup);
+    console.log("Hot reload");
+    import.meta.hot.dispose(cleanup);
 }

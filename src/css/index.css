@@ -527,7 +527,8 @@ textarea {
     margin-right: 4px;
 }
 
-#offline, #noWasm {
+#offline,
+#noWasm {
     background: darkred;
     margin-top: 5px;
     font-size: 18px;

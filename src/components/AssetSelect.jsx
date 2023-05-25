@@ -3,7 +3,6 @@ import { setAsset, setAssetSelect, assetSelect } from "../signals";
 import bitcoin_svg from "../assets/bitcoin-icon.svg";
 import liquid_svg from "../assets/liquid-icon.svg";
 
-
 const SelectAsset = () => {
     const [t] = useI18n();
 
