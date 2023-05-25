@@ -19,7 +19,7 @@ const BlockExplorer = ({ asset, address }) => {
             href={blockexplorerLink(asset, address)}>
             {t("blockexplorer")}
         </a>
-    )
+    );
 };
 
 export default BlockExplorer;

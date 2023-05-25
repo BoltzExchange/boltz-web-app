@@ -14,12 +14,7 @@ import {
 } from "./signals";
 import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import {
-    qr,
-    claim,
-    checkForFailed,
-    fetchSwapStatus,
-} from "./helper";
+import { qr, claim, checkForFailed, fetchSwapStatus } from "./helper";
 import { api_url } from "./config";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoicePending from "./status/InvoicePending";
@@ -154,7 +149,9 @@ const Pay = () => {
                     </Show>
                     <BlockExplorer
                         asset={swap().asset}
-                        address={!reverse() ? swap().address : swap().lockupAddress}
+                        address={
+                            !reverse() ? swap().address : swap().lockupAddress
+                        }
                     />
                 </Show>
             </Show>

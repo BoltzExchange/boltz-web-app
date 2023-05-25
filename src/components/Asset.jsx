@@ -3,7 +3,6 @@ import { setAssetSelect, assetSelect } from "../signals";
 import "../css/asset.css";
 
 const Asset = ({ id }) => {
-
     const setAssetPair = () => {
         if (pairs.length <= 1) {
             return false;

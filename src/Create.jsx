@@ -6,13 +6,17 @@ import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import { fetcher, fetchPairs } from "./helper";
-import { fetchLnurl, isInvoice, isLnurl } from './utils/invoice';
+import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
 import { getAddress, getNetwork } from "./compat";
 import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
 import Fees from "./components/Fees";
 import arrow_svg from "./assets/arrow.svg";
-import { convertAmount, denominations, formatAmount, } from "./utils/denomination";
+import {
+    convertAmount,
+    denominations,
+    formatAmount,
+} from "./utils/denomination";
 import {
     online,
     swaps,
@@ -89,7 +93,9 @@ const Create = () => {
 
     // change denomination
     createMemo(() => {
-        setReceiveAmountFormatted(formatAmount(Number(receiveAmount())).toString());
+        setReceiveAmountFormatted(
+            formatAmount(Number(receiveAmount())).toString()
+        );
         setSendAmountFormatted(formatAmount(Number(sendAmount())).toString());
     });
 
@@ -111,16 +117,20 @@ const Create = () => {
     const navigate = useNavigate();
 
     const calculateReceiveAmount = (sendAmount) => {
-        const preMinerFee = BigNumber(sendAmount).minus(minerFee())
-        const receiveAmount = preMinerFee.minus(preMinerFee.times(boltzFee()).div(100));
+        const preMinerFee = BigNumber(sendAmount).minus(minerFee());
+        const receiveAmount = preMinerFee.minus(
+            preMinerFee.times(boltzFee()).div(100)
+        );
         return Math.floor(receiveAmount.toNumber());
     };
 
     const calculateSendAmount = (receiveAmount) => {
-        return Math.floor(BigNumber(receiveAmount)
-            .plus(minerFee())
-            .plus(BigNumber(receiveAmount).times(boltzFee()).div(100))
-            .toNumber());
+        return Math.floor(
+            BigNumber(receiveAmount)
+                .plus(minerFee())
+                .plus(BigNumber(receiveAmount).times(boltzFee()).div(100))
+                .toNumber()
+        );
     };
 
     const changeReceiveAmount = (e) => {
@@ -182,10 +192,9 @@ const Create = () => {
             };
         } else {
             if (isLnurl(invoice())) {
-                setInvoice(await fetchLnurl(
-                    invoice(),
-                    Number(receiveAmount())
-                ));
+                setInvoice(
+                    await fetchLnurl(invoice(), Number(receiveAmount()))
+                );
             }
             if (!isInvoice(invoice())) {
                 const msg = "invalid network";
@@ -230,7 +239,7 @@ const Create = () => {
         let keycode = theEvent.keyCode || theEvent.which;
         keycode = String.fromCharCode(keycode);
         const hasDot = input.value.includes(".");
-        const regex = (denomination() == "sat") || hasDot ? /[0-9]/ : /[0-9]|\./;
+        const regex = denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\./;
         if (!regex.test(keycode)) {
             theEvent.returnValue = false;
             if (theEvent.preventDefault) theEvent.preventDefault();
@@ -241,18 +250,22 @@ const Create = () => {
         input.setCustomValidity("");
         const amount = convertAmount(Number(input.value), denominations.sat);
         if (amount < minimum()) {
-            input.setCustomValidity(t("minimum_amount", {
-                amount: formatAmount(minimum()),
-                denomination: denomination(),
-            }));
+            input.setCustomValidity(
+                t("minimum_amount", {
+                    amount: formatAmount(minimum()),
+                    denomination: denomination(),
+                })
+            );
         }
         if (amount > maximum()) {
-            input.setCustomValidity(t("maximum_amount", {
-                amount: formatAmount(maximum()),
-                denomination: denomination(),
-            }));
+            input.setCustomValidity(
+                t("maximum_amount", {
+                    amount: formatAmount(maximum()),
+                    denomination: denomination(),
+                })
+            );
         }
-    }
+    };
 
     const validateAddress = (input) => {
         const inputValue = input.value;
@@ -279,7 +292,7 @@ const Create = () => {
                 input.setCustomValidity("invalid network");
             }
         }
-    }
+    };
 
     let timer = setInterval(() => {
         log.debug("tick Create");
@@ -298,7 +311,8 @@ const Create = () => {
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                {t("min")}: {formatAmount(minimum())}, {t("max")}: {formatAmount(maximum())}
+                {t("min")}: {formatAmount(minimum())}, {t("max")}:{" "}
+                {formatAmount(maximum())}
             </p>
             <hr />
             <div class="icons">
@@ -309,7 +323,9 @@ const Create = () => {
                         type="text"
                         maxlength={denomination() == "btc" ? "10" : "7"}
                         pattern="0\.[0-9]{1,8}|[0-9]{1,10}"
-                        inputmode={denomination() == "btc" ? "decimal" : "numeric"}
+                        inputmode={
+                            denomination() == "btc" ? "decimal" : "numeric"
+                        }
                         id="sendAmount"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         value={sendAmountFormatted()}
@@ -321,7 +337,9 @@ const Create = () => {
                     id="flip-assets"
                     onClick={() => {
                         setReverse(!reverse());
-                        setSendAmount(BigInt(calculateSendAmount(Number(receiveAmount()))));
+                        setSendAmount(
+                            BigInt(calculateSendAmount(Number(receiveAmount())))
+                        );
                     }}>
                     <img src={arrow_svg} alt="flip assets" />
                 </div>
@@ -334,7 +352,9 @@ const Create = () => {
                         type="text"
                         pattern="0\.[0-9]{1,8}|[0-9]{1,10}"
                         maxlength={denomination() == "btc" ? "10" : "7"}
-                        inputmode={denomination() == "btc" ? "decimal" : "numeric"}
+                        inputmode={
+                            denomination() == "btc" ? "decimal" : "numeric"
+                        }
                         id="receiveAmount"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         value={receiveAmountFormatted()}
@@ -364,8 +384,7 @@ const Create = () => {
                 placeholder={t("create_and_paste", {
                     amount: receiveAmountFormatted(),
                     denomination: denomination(),
-                })}>
-            </textarea>
+                })}></textarea>
             <input
                 required
                 onInput={(e) => validateAddress(e.currentTarget)}
@@ -376,17 +395,27 @@ const Create = () => {
             />
             <hr />
             <Show when={online() && wasmSupported()}>
-                <button id="create-swap" class="btn" disabled={valid() ? "" : "disabled"} onClick={create}>
+                <button
+                    id="create-swap"
+                    class="btn"
+                    disabled={valid() ? "" : "disabled"}
+                    onClick={create}>
                     {t("create_swap")}
                 </button>
             </Show>
             <Show when={!online()}>
-                <button id="create-swap" class="btn btn-danger" onClick={fetchPairs}>
+                <button
+                    id="create-swap"
+                    class="btn btn-danger"
+                    onClick={fetchPairs}>
                     {t("api_offline")}
                 </button>
             </Show>
             <Show when={!wasmSupported()}>
-                <button id="create-swap" class="btn btn-danger" onClick={fetchPairs}>
+                <button
+                    id="create-swap"
+                    class="btn btn-danger"
+                    onClick={fetchPairs}>
                     {t("wasm_not_supported")}
                 </button>
             </Show>

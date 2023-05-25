@@ -67,8 +67,8 @@ const Refund = () => {
             },
             {
                 id: refundInfo.id,
-            },
-        )
+            }
+        );
     };
 
     return (
@@ -94,9 +94,7 @@ const Refund = () => {
                     <span class="error">{error()}</span>
                 </div>
                 <div class={error() !== false ? "hidden" : ""}>
-                    <span
-                        class="btn btn-success"
-                        onClick={startRefund}>
+                    <span class="btn btn-success" onClick={startRefund}>
                         {t("refund")}
                     </span>
                 </div>

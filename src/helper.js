@@ -36,11 +36,15 @@ import { api_url } from "./config";
 
 export const checkReferralId = () => {
     const ref_param = new URLSearchParams(window.location.search).get("ref");
-    if (ref_param && ref_param !== '') {
+    if (ref_param && ref_param !== "") {
         setRef(ref_param);
-        window.history.replaceState({}, document.title, window.location.pathname)
+        window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+        );
     }
-}
+};
 
 export const startInterval = (cb, interval) => {
     cb();
@@ -155,7 +159,7 @@ const createRefundData = (swap) => {
         redeemScript: swap.redeemScript,
         timeoutBlockHeight: swap.timeoutBlockHeight,
     };
-}
+};
 
 export const downloadRefundFile = (swap) => {
     const hiddenElement = document.createElement("a");
@@ -262,8 +266,7 @@ export async function refund(swap) {
         getConstructRefundTransaction(asset_name);
     const detectSwap = getDetectSwap(asset_name);
     const net = getNetwork(asset_name);
-    const assetHash =
-        asset_name === "L-BTC" ? net.assetHash : undefined;
+    const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
 
     let tx = Transaction.fromHex(txToRefund.transactionHex);
     let script = Buffer.from(swap.redeemScript, "hex");
@@ -281,10 +284,7 @@ export async function refund(swap) {
                 txHash: tx.getHash(),
                 redeemScript: script,
                 keys: private_key,
-                blindingPrivKey: Buffer.from(
-                    swap.blindingKey,
-                    "hex"
-                ),
+                blindingPrivKey: Buffer.from(swap.blindingKey, "hex"),
             },
         ],
         output.script,
@@ -338,7 +338,13 @@ export async function getfeeestimation(swap) {
     });
 }
 
-const createAdjustedClaim = (swap, claimDetails, destination, assetHash, blindingKey) => {
+const createAdjustedClaim = (
+    swap,
+    claimDetails,
+    destination,
+    assetHash,
+    blindingKey
+) => {
     const inputSum = claimDetails.reduce(
         (total, input) => total + getOutputAmount(swap.asset, input),
         0
@@ -385,7 +391,10 @@ export const claim = async (swap) => {
     log.debug("private_key: ", private_key);
     let preimage = Buffer.from(swap.preimage, "hex");
     log.debug("preimage: ", preimage);
-    const { script, blindingKey } = decodeAddress(asset_name, swap.onchainAddress);
+    const { script, blindingKey } = decodeAddress(
+        asset_name,
+        swap.onchainAddress
+    );
     const claimTransaction = createAdjustedClaim(
         swap,
         [
@@ -395,7 +404,7 @@ export const claim = async (swap) => {
                 txHash: tx.getHash(),
                 preimage: preimage,
                 keys: private_key,
-                blindingPrivKey: Buffer.from(swap.blindingKey, 'hex'),
+                blindingPrivKey: Buffer.from(swap.blindingKey, "hex"),
             },
         ],
         script,
@@ -416,18 +425,21 @@ export const claim = async (swap) => {
     );
 };
 
-
 export const fetchPairs = () => {
-    fetcher("/getpairs", (data) => {
-        log.debug("getpairs", data);
-        setOnline(true);
-        setConfig(data.pairs);
-    }, null, (error) => {
-        log.debug(error);
-        setOnline(false);
-    });
+    fetcher(
+        "/getpairs",
+        (data) => {
+            log.debug("getpairs", data);
+            setOnline(true);
+            setConfig(data.pairs);
+        },
+        null,
+        (error) => {
+            log.debug(error);
+            setOnline(false);
+        }
+    );
     return false;
 };
-
 
 export default fetcher;

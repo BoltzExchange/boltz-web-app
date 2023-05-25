@@ -1,4 +1,3 @@
-
 import { Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
@@ -47,8 +46,7 @@ const History = () => {
                                 {t("new_swap")}
                             </span>
                         </div>
-                    }
-                >
+                    }>
                     <div id="past-swaps">
                         <For each={JSON.parse(swaps())}>
                             {(swap) => (

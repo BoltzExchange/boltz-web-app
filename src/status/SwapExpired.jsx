@@ -27,8 +27,8 @@ const SwapExpired = () => {
             },
             () => {
                 log.warn(`no swap transaction for: ${swap().id}`);
-            },
-        )
+            }
+        );
     });
 
     const navigate = useNavigate();

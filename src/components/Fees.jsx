@@ -1,6 +1,12 @@
 import { BigNumber } from "bignumber.js";
 import { useI18n } from "@solid-primitives/i18n";
-import { denomination, setDenomination, receiveAmount, boltzFee, minerFee } from "../signals";
+import {
+    denomination,
+    setDenomination,
+    receiveAmount,
+    boltzFee,
+    minerFee,
+} from "../signals";
 import { formatAmount } from "../utils/denomination";
 import { fetchPairs } from "../helper";
 import btc_svg from "../assets/btc.svg";
@@ -40,8 +46,15 @@ const Fees = () => {
                 <br />
                 {t("fee")} ({boltzFee()}%):{" "}
                 <span class="boltz-fee">
-                    {formatAmount(Math.floor(BigNumber(receiveAmount()).multipliedBy(boltzFee()).div(100).toNumber())
-                    , true)}
+                    {formatAmount(
+                        Math.floor(
+                            BigNumber(receiveAmount())
+                                .multipliedBy(boltzFee())
+                                .div(100)
+                                .toNumber()
+                        ),
+                        true
+                    )}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>

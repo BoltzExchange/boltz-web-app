@@ -1,4 +1,4 @@
-import zkp from '@vulpemventures/secp256k1-zkp';
+import zkp from "@vulpemventures/secp256k1-zkp";
 import { address, networks, Transaction } from "bitcoinjs-lib";
 import {
     address as l_address,
@@ -46,7 +46,7 @@ const decodeAddress = (asset, addr) => {
         // This throws for unconfidential addresses -> fallback to output script decoding
         try {
             const decoded = address.fromConfidential(addr);
-    
+
             return {
                 script: decoded.scriptPubKey,
                 blindingKey: decoded.blindingKey,
@@ -125,7 +125,10 @@ const getOutputAmount = (asset, output) => {
     }
 
     if (output.rangeProof?.length !== 0) {
-        const unblinded = confi.unblindOutputWithKey(output, output.blindingPrivKey);
+        const unblinded = confi.unblindOutputWithKey(
+            output,
+            output.blindingPrivKey
+        );
         return Number(unblinded.value);
     } else {
         return confidential.confidentialValueToSatoshi(output.value);

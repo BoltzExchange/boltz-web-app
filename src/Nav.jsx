@@ -1,7 +1,14 @@
 import { A } from "@solidjs/router";
 
 import { useI18n } from "@solid-primitives/i18n";
-import { online, i18n, setI18n, hamburger, setHamburger, wasmSupported } from "./signals";
+import {
+    online,
+    i18n,
+    setI18n,
+    hamburger,
+    setHamburger,
+    wasmSupported,
+} from "./signals";
 import { network } from "./config";
 import { fetchPairs } from "./helper";
 
@@ -48,7 +55,7 @@ const Nav = () => {
                     <img src={logo} alt="boltz.exchange btc logo" />
                 </A>
                 <div id="network" class="btn btn-small">
-                    {network === 'main' ? 'Liquid' : network }
+                    {network === "main" ? "Liquid" : network}
                 </div>
 
                 <div id="collapse" class={hamburger() ? "active" : ""}>
@@ -109,9 +116,7 @@ const Nav = () => {
                 </div>
             </Show>
             <Show when={!wasmSupported()}>
-                <div id="noWasm">
-                    {t("wasm_not_supported")}
-                </div>
+                <div id="noWasm">{t("wasm_not_supported")}</div>
             </Show>
         </nav>
     );
