@@ -149,7 +149,7 @@ export const fetchSwapStatus = (swap) => {
     return false;
 };
 
-export const refund_keys = [
+export const refundJsonKeys = [
     "id",
     "asset",
     "currency",

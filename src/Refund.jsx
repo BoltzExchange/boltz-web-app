@@ -1,6 +1,6 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
-import { fetcher, refund, refund_keys } from "./helper";
+import { fetcher, refund, refundJsonKeys } from "./helper";
 import {
     refundTx,
     setTimeoutEta,
@@ -34,8 +34,11 @@ const Refund = () => {
         const inputValue = input.value;
         try {
             const asset_name = refundJson().asset;
-            const address = getAddress(asset_name);
-            address.toOutputScript(inputValue, getNetwork(asset_name));
+            getAddress(asset_name).toOutputScript(
+                inputValue,
+                getNetwork(asset_name)
+            );
+
             input.setCustomValidity("");
             setAddressValid(true);
             setRefundAddress(inputValue);
@@ -56,7 +59,7 @@ const Refund = () => {
             .then((json) => {
                 if (json === 0) return;
                 let valid = true;
-                refund_keys.forEach((key) => {
+                refundJsonKeys.forEach((key) => {
                     if (!(key in json)) {
                         input.setCustomValidity("json: " + key + " is missing");
                         valid = false;
