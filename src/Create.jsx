@@ -270,7 +270,7 @@ const Create = () => {
     };
 
     const validateAddress = (input) => {
-        const inputValue = input.value;
+        const inputValue = input.value.trim();
         if (reverse()) {
             try {
                 // validate btc address

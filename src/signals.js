@@ -65,3 +65,12 @@ export const [notificationType, setNotificationType] = createSignal("");
 export const [upload, setUpload] = createSignal(0);
 
 export const [webln, setWebln] = createSignal(false);
+
+export const refundAddressChange = (e) => {
+    const addr = e.currentTarget.value;
+    if (addr) {
+        setRefundAddress(addr.trim());
+    } else {
+        setRefundAddress(null);
+    }
+};

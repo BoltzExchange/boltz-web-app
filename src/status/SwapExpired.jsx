@@ -6,9 +6,9 @@ import fetcher, { refund } from "../helper";
 import {
     swap,
     failureReason,
-    setRefundAddress,
     transactionToRefund,
     setTransactionToRefund,
+    refundAddressChange,
 } from "../signals";
 
 const SwapExpired = () => {
@@ -41,8 +41,8 @@ const SwapExpired = () => {
             <hr />
             <Show when={transactionToRefund() !== null}>
                 <input
-                    onKeyUp={(e) => setRefundAddress(e.currentTarget.value)}
-                    onChange={(e) => setRefundAddress(e.currentTarget.value)}
+                    onKeyUp={refundAddressChange}
+                    onChange={refundAddressChange}
                     type="text"
                     id="refundAddress"
                     name="refundAddress"
