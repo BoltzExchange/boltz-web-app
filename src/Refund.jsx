@@ -4,24 +4,15 @@ import { fetcher, refund } from "./helper";
 import {
     refundTx,
     refundAddress,
-    setRefundAddress,
     upload,
     setUpload,
     setTimeoutEta,
     setTimeoutBlockheight,
     setTransactionToRefund,
+    refundAddressChange,
 } from "./signals";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
-
-const refundAddressChange = (e) => {
-    let t = e.currentTarget;
-    if (t.value.trim()) {
-        setRefundAddress(t.value.trim());
-    } else {
-        setRefundAddress(null);
-    }
-};
 
 const Refund = () => {
     const [t] = useI18n();
@@ -36,7 +27,7 @@ const Refund = () => {
                 if (json === 0) return;
                 setRefundJson(json);
             },
-            (err) => {
+            () => {
                 setRefundJson(null);
                 setError("not a json file");
             }
