@@ -3,13 +3,13 @@ import { createSignal, createEffect } from "solid-js";
 import { fetcher, refund, refund_keys } from "./helper";
 import {
     refundTx,
-    setRefundAddress,
     setTimeoutEta,
+    setRefundAddress,
     setTimeoutBlockheight,
     setTransactionToRefund,
 } from "./signals";
-import { getAddress, getNetwork } from "./compat";
 import RefundEta from "./components/RefundEta";
+import { getAddress, getNetwork } from "./compat";
 import BlockExplorer from "./components/BlockExplorer";
 
 const Refund = () => {
@@ -106,16 +106,15 @@ const Refund = () => {
                     accept="application/json"
                     onChange={(e) => uploadChange(e)}
                 />
-                <Show when={refundJsonValid()}>
-                    <input
-                        required
-                        onInput={refundAddressChange}
-                        type="text"
-                        id="refundAddress"
-                        name="refundAddress"
-                        placeholder={t("refund_address_placeholder")}
-                    />
-                </Show>
+                <input
+                    required
+                    disabled={!refundJsonValid()}
+                    onInput={refundAddressChange}
+                    type="text"
+                    id="refundAddress"
+                    name="refundAddress"
+                    placeholder={t("refund_address_placeholder")}
+                />
                 <hr />
                 <button
                     class="btn"
