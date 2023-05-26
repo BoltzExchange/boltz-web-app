@@ -404,7 +404,9 @@ export const claim = async (swap) => {
                 txHash: tx.getHash(),
                 preimage: preimage,
                 keys: private_key,
-                blindingPrivKey: swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined,
+                blindingPrivKey: swap.blindingKey
+                    ? Buffer.from(swap.blindingKey, "hex")
+                    : undefined,
             },
         ],
         script,

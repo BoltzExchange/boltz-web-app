@@ -150,7 +150,9 @@ const Pay = () => {
                     <BlockExplorer
                         asset={swap().asset}
                         address={
-                            !swap().reverse ? swap().address : swap().lockupAddress
+                            !swap().reverse
+                                ? swap().address
+                                : swap().lockupAddress
                         }
                     />
                 </Show>
