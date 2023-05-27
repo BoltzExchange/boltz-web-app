@@ -152,7 +152,6 @@ export const fetchSwapStatus = (swap) => {
 export const refundJsonKeys = [
     "id",
     "asset",
-    "currency",
     "privateKey",
     "blindingKey",
     "redeemScript",
@@ -162,7 +161,6 @@ const createRefundData = (swap) => {
     return {
         id: swap.id,
         asset: swap.asset,
-        currency: swap.asset,
         privateKey: swap.privateKey,
         blindingKey: swap.blindingKey,
         redeemScript: swap.redeemScript,
