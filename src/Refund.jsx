@@ -1,15 +1,12 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
-import { fetcher, refund } from "./helper";
+import { fetcher, refundAddressChange, refund, refundJsonKeys } from "./helper";
+
 import {
     refundTx,
-    refundAddress,
-    upload,
-    setUpload,
     setTimeoutEta,
     setTimeoutBlockheight,
     setTransactionToRefund,
-    refundAddressChange,
 } from "./signals";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
@@ -17,36 +14,53 @@ import BlockExplorer from "./components/BlockExplorer";
 const Refund = () => {
     const [t] = useI18n();
 
+    const [valid, setValid] = createSignal(false);
+    const [addressValid, setAddressValid] = createSignal(false);
+    const [refundJsonValid, setRefundJsonValid] = createSignal(false);
     const [refundable, setRefundable] = createSignal(true);
-    const [error, setError] = createSignal("no file seleced");
     const [refundJson, setRefundJson] = createSignal(null);
 
     createEffect(() => {
-        new Response(upload()).json().then(
-            (json) => {
-                if (json === 0) return;
-                setRefundJson(json);
-            },
-            () => {
-                setRefundJson(null);
-                setError("not a json file");
-            }
-        );
+        if (addressValid() && refundJsonValid()) {
+            setValid(true);
+        } else {
+            setValid(false);
+        }
     });
 
-    createEffect(() => {
-        if (refundAddress() === null) return setError("no refund address");
-        if (refundJson() === null) return setError("no json file");
-        setError(false);
-    });
+    const uploadChange = (e) => {
+        const input = e.currentTarget;
+        const inputFile = input.files[0];
+        input.setCustomValidity("");
+        setRefundJson("");
+        setRefundJsonValid(false);
+        new Response(inputFile)
+            .json()
+            .then((json) => {
+                if (json === 0) return;
+                let valid = true;
+                refundJsonKeys.forEach((key) => {
+                    if (!(key in json)) {
+                        input.setCustomValidity("json: " + key + " is missing");
+                        valid = false;
+                        return;
+                    }
+                });
+                if (valid) {
+                    setRefundJson(json);
+                    setRefundJsonValid(true);
+                }
+            })
+            .catch(() => input.setCustomValidity("invalid json"));
+    };
 
     const startRefund = () => {
+        if (!valid()) return;
         const refundInfo = refundJson();
         fetcher(
             "/getswaptransaction",
             async (data) => {
                 if (data.timeoutEta) {
-                    setError(t("swap_not_refundable_yet"));
                     setTimeoutEta(data.timeoutEta * 1000);
                     setTimeoutBlockheight(data.timeoutBlockHeight);
                     setRefundable(false);
@@ -69,26 +83,32 @@ const Refund = () => {
                 <p>{t("refund_a_swap_subline")}</p>
                 <hr />
                 <input
-                    onKeyUp={refundAddressChange}
-                    onChange={refundAddressChange}
+                    required
+                    type="file"
+                    id="refundUpload"
+                    accept="application/json"
+                    onChange={(e) => uploadChange(e)}
+                />
+                <input
+                    required
+                    disabled={!refundJsonValid()}
+                    onInput={(e) =>
+                        setAddressValid(
+                            refundAddressChange(e, refundJson().asset)
+                        )
+                    }
                     type="text"
                     id="refundAddress"
                     name="refundAddress"
                     placeholder={t("refund_address_placeholder")}
                 />
-                <input
-                    type="file"
-                    id="refundUpload"
-                    onChange={(e) => setUpload(e.currentTarget.files[0])}
-                />
-                <div class={error() === false ? "hidden" : ""}>
-                    <span class="error">{error()}</span>
-                </div>
-                <div class={error() !== false ? "hidden" : ""}>
-                    <span class="btn btn-success" onClick={startRefund}>
-                        {t("refund")}
-                    </span>
-                </div>
+                <hr />
+                <button
+                    class="btn"
+                    disabled={valid() ? "" : "disabled"}
+                    onClick={startRefund}>
+                    {t("refund")}
+                </button>
                 <Show when={!refundable()}>
                     <RefundEta />
                 </Show>

@@ -5,6 +5,7 @@ import {
     swaps,
     setSwaps,
     setRefundTx,
+    setRefundAddress,
     setTimeoutEta,
     setTimeoutBlockheight,
     setFailureReason,
@@ -149,11 +150,18 @@ export const fetchSwapStatus = (swap) => {
     return false;
 };
 
+export const refundJsonKeys = [
+    "id",
+    "asset",
+    "privateKey",
+    "blindingKey",
+    "redeemScript",
+];
+
 const createRefundData = (swap) => {
     return {
         id: swap.id,
         asset: swap.asset,
-        currency: swap.asset,
         privateKey: swap.privateKey,
         blindingKey: swap.blindingKey,
         redeemScript: swap.redeemScript,
@@ -441,6 +449,21 @@ export const fetchPairs = () => {
             setOnline(false);
         }
     );
+    return false;
+};
+
+export const refundAddressChange = (e, asset) => {
+    const input = e.currentTarget;
+    const inputValue = input.value.trim();
+    try {
+        getAddress(asset).toOutputScript(inputValue, getNetwork(asset));
+        input.setCustomValidity("");
+        setRefundAddress(inputValue);
+        return true;
+    } catch (e) {
+        input.setCustomValidity("invalid address");
+    }
+
     return false;
 };
 

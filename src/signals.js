@@ -1,3 +1,4 @@
+import { getAddress, getNetwork } from "./compat";
 import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
 import { pairs } from "./config";
@@ -61,16 +62,4 @@ export const [addressValid, setAddressValid] = createSignal(false);
 export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
 
-// refund
-export const [upload, setUpload] = createSignal(0);
-
 export const [webln, setWebln] = createSignal(false);
-
-export const refundAddressChange = (e) => {
-    const addr = e.currentTarget.value;
-    if (addr) {
-        setRefundAddress(addr.trim());
-    } else {
-        setRefundAddress(null);
-    }
-};
