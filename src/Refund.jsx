@@ -1,6 +1,6 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
-import { fetcher, refundAddressChange, refund, refundJsonKeys } from "./helper";
+import { fetcher, refundAddressChange, refund } from "./helper";
 
 import {
     refundTx,
@@ -10,6 +10,14 @@ import {
 } from "./signals";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
+
+export const refundJsonKeys = [
+    "id",
+    "asset",
+    "privateKey",
+    "blindingKey",
+    "redeemScript",
+];
 
 const Refund = () => {
     const [t] = useI18n();

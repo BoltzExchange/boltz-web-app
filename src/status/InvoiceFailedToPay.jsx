@@ -1,7 +1,7 @@
 import { useI18n } from "@solid-primitives/i18n";
-import { downloadRefundFile } from "../helper";
-import { failureReason, swap } from "../signals";
+import { failureReason } from "../signals";
 import RefundEta from "../components/RefundEta";
+import DownloadRefund from "../components/DownloadRefund";
 
 const InvoiceFailedToPay = () => {
     const [t] = useI18n();
@@ -14,11 +14,7 @@ const InvoiceFailedToPay = () => {
             </p>
             <hr />
             <RefundEta />
-            <span
-                class="btn btn-success"
-                onclick={() => downloadRefundFile(swap())}>
-                {t("download_refund_json")}
-            </span>
+            <DownloadRefund/>
             <hr />
         </div>
     );
