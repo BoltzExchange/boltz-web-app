@@ -1,10 +1,9 @@
 import log from "loglevel";
-import { BigNumber } from "bignumber.js";
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import { createMemo } from "solid-js";
 import { fetcher, fetchPairs } from "./helper";
 import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
 import { getAddress, getNetwork } from "./compat";
@@ -17,14 +16,13 @@ import {
     denominations,
     formatAmount,
 } from "./utils/denomination";
+import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     online,
     swaps,
     setSwaps,
     asset,
     denomination,
-    boltzFee,
-    setBoltzFee,
     sendAmount,
     setSendAmount,
     sendAmountFormatted,
@@ -33,15 +31,10 @@ import {
     setReceiveAmount,
     receiveAmountFormatted,
     setReceiveAmountFormatted,
-    minerFee,
-    setMinerFee,
     minimum,
-    setMinimum,
     maximum,
-    setMaximum,
     reverse,
     setReverse,
-    config,
     valid,
     setValid,
     invoiceValid,
@@ -60,36 +53,6 @@ import {
 
 const Create = () => {
     let invoiceInputRef, receiveAmountRef;
-
-    const [firstLoad, setFirstLoad] = createSignal(true);
-
-    // set fees and pairs
-    createEffect(() => {
-        let cfg = config()["BTC/BTC"];
-        if (asset() === "L-BTC") {
-            cfg = config()["L-BTC/BTC"];
-        }
-        if (cfg) {
-            setMinimum(cfg.limits.minimal);
-            setMaximum(cfg.limits.maximal);
-            // TODO issue do not touch amounts when flipping assets
-            if (reverse()) {
-                let rev = cfg.fees.minerFees.baseAsset.reverse;
-                let fee = rev.claim + rev.lockup;
-                setBoltzFee(cfg.fees.percentage);
-                setMinerFee(fee);
-            } else {
-                let fee = cfg.fees.minerFees.baseAsset.normal;
-                setBoltzFee(cfg.fees.percentageSwapIn);
-                setMinerFee(fee);
-            }
-            if (firstLoad() && sendAmount() === BigInt(0)) {
-                setFirstLoad(false);
-                setReceiveAmount(BigInt(cfg.limits.minimal));
-                setSendAmount(BigInt(calculateSendAmount(cfg.limits.minimal)));
-            }
-        }
-    });
 
     // change denomination
     createMemo(() => {
@@ -115,23 +78,6 @@ const Create = () => {
     const [t] = useI18n();
 
     const navigate = useNavigate();
-
-    const calculateReceiveAmount = (sendAmount) => {
-        const preMinerFee = BigNumber(sendAmount).minus(minerFee());
-        const receiveAmount = preMinerFee.minus(
-            preMinerFee.times(boltzFee()).div(100)
-        );
-        return Math.floor(receiveAmount.toNumber());
-    };
-
-    const calculateSendAmount = (receiveAmount) => {
-        return Math.floor(
-            BigNumber(receiveAmount)
-                .plus(minerFee())
-                .plus(BigNumber(receiveAmount).times(boltzFee()).div(100))
-                .toNumber()
-        );
-    };
 
     const changeReceiveAmount = (e) => {
         const amount = e.currentTarget.value;
@@ -295,18 +241,6 @@ const Create = () => {
             }
         }
     };
-
-    let timer = setInterval(() => {
-        log.debug("tick Create");
-        fetchPairs();
-    }, 30000);
-
-    onCleanup(() => {
-        log.debug("cleanup Create");
-        clearInterval(timer);
-    });
-
-    fetchPairs();
 
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>

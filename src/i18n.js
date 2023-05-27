@@ -2,6 +2,7 @@ const dict = {
     en: {
         history: "History",
         swap: "Swap",
+        channel: "Channel",
         refund: "Refund",
         documentation: "Docs",
         onion: "Onion",
@@ -19,6 +20,8 @@ const dict = {
         assets: "Assets",
         socialmedia: "Follow us on Social Media",
         footer: "made with ❤️ by Team Boltz",
+        create_channel: "Create Lightning Channel",
+        create_channel_subline: "Channel Inbound or Outbound Capacity",
         create_swap: "Create Atomic Swap",
         create_swap_subline: "Payment includes network and boltz service fees",
         cancel_swap: "Cancel Swap",
