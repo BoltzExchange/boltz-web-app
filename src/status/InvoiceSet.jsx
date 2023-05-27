@@ -40,9 +40,8 @@ const InvoiceSet = () => {
                     {t("copy_amount")}
                 </span>
             </div>
-            <div class="btns">
-                <DownloadRefund />
-            </div>
+            <hr />
+            <DownloadRefund />
         </div>
     );
 };

@@ -1,6 +1,8 @@
+import log from "loglevel";
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
 import { fetcher, refundAddressChange, refund } from "./helper";
+import QrScanner from "qr-scanner";
 
 import {
     refundTx,
@@ -10,14 +12,6 @@ import {
 } from "./signals";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
-
-export const refundJsonKeys = [
-    "id",
-    "asset",
-    "privateKey",
-    "blindingKey",
-    "redeemScript",
-];
 
 const Refund = () => {
     const [t] = useI18n();
@@ -36,30 +30,43 @@ const Refund = () => {
         }
     });
 
+    const checkRefundJsonKeys = (json) => {
+        log.debug("checking refund json", json);
+        let valid = true;
+        ["id", "asset", "privateKey", "redeemScript"].forEach((key) => {
+            if (!(key in json)) {
+                input.setCustomValidity("json: " + key + " is missing");
+                valid = false;
+                return;
+            }
+        });
+        if (json.asset === "L-BTC" && !("blindingKey" in json)) {
+            input.setCustomValidity("json: blindingKey is missing");
+            valid = false;
+            return;
+        }
+        if (valid) {
+            setRefundJson(json);
+            setRefundJsonValid(true);
+        }
+    };
+
     const uploadChange = (e) => {
         const input = e.currentTarget;
         const inputFile = input.files[0];
         input.setCustomValidity("");
         setRefundJson("");
         setRefundJsonValid(false);
-        new Response(inputFile)
-            .json()
-            .then((json) => {
-                if (json === 0) return;
-                let valid = true;
-                refundJsonKeys.forEach((key) => {
-                    if (!(key in json)) {
-                        input.setCustomValidity("json: " + key + " is missing");
-                        valid = false;
-                        return;
-                    }
-                });
-                if (valid) {
-                    setRefundJson(json);
-                    setRefundJsonValid(true);
-                }
-            })
-            .catch(() => input.setCustomValidity("invalid json"));
+        if (inputFile.type === "image/png") {
+            QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
+                .then((result) => checkRefundJsonKeys(JSON.parse(result.data)))
+                .catch(() => input.setCustomValidity("invalid qr code"));
+        } else {
+            new Response(inputFile)
+                .json()
+                .then(checkRefundJsonKeys)
+                .catch(() => input.setCustomValidity("invalid json"));
+        }
     };
 
     const startRefund = () => {
@@ -94,7 +101,7 @@ const Refund = () => {
                     required
                     type="file"
                     id="refundUpload"
-                    accept="application/json"
+                    accept="application/json,image/png"
                     onChange={(e) => uploadChange(e)}
                 />
                 <input

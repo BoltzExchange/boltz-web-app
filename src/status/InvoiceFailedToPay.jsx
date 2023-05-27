@@ -14,7 +14,7 @@ const InvoiceFailedToPay = () => {
             </p>
             <hr />
             <RefundEta />
-            <DownloadRefund/>
+            <DownloadRefund />
             <hr />
         </div>
     );
