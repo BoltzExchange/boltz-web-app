@@ -1,10 +1,10 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
-import { fetcher, refund, refundJsonKeys } from "./helper";
+import { fetcher, refundAddressChange, refund, refundJsonKeys } from "./helper";
+
 import {
     refundTx,
     setTimeoutEta,
-    refundAddressChange,
     setTimeoutBlockheight,
     setTransactionToRefund,
 } from "./signals";

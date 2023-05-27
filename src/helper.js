@@ -5,6 +5,7 @@ import {
     swaps,
     setSwaps,
     setRefundTx,
+    setRefundAddress,
     setTimeoutEta,
     setTimeoutBlockheight,
     setFailureReason,
@@ -448,6 +449,21 @@ export const fetchPairs = () => {
             setOnline(false);
         }
     );
+    return false;
+};
+
+export const refundAddressChange = (e, asset) => {
+    const input = e.currentTarget;
+    const inputValue = input.value.trim();
+    try {
+        getAddress(asset).toOutputScript(inputValue, getNetwork(asset));
+        input.setCustomValidity("");
+        setRefundAddress(inputValue);
+        return true;
+    } catch (e) {
+        input.setCustomValidity("invalid address");
+    }
+
     return false;
 };
 

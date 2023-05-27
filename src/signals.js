@@ -63,21 +63,3 @@ export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
 
 export const [webln, setWebln] = createSignal(false);
-
-export const refundAddressChange = (e, asset) => {
-    const input = e.currentTarget;
-    const inputValue = input.value.trim();
-    try {
-        getAddress(asset).toOutputScript(inputValue, getNetwork(asset));
-
-        input.setCustomValidity("");
-        setAddressValid(true);
-        setRefundAddress(inputValue);
-        return true;
-    } catch (e) {
-        setAddressValid(false);
-        input.setCustomValidity("invalid address");
-    }
-
-    return false;
-};
