@@ -4,12 +4,11 @@ import { fetcher, refund, refundJsonKeys } from "./helper";
 import {
     refundTx,
     setTimeoutEta,
-    setRefundAddress,
+    refundAddressChange,
     setTimeoutBlockheight,
     setTransactionToRefund,
 } from "./signals";
 import RefundEta from "./components/RefundEta";
-import { getAddress, getNetwork } from "./compat";
 import BlockExplorer from "./components/BlockExplorer";
 
 const Refund = () => {
@@ -28,25 +27,6 @@ const Refund = () => {
             setValid(false);
         }
     });
-
-    const refundAddressChange = (e) => {
-        const input = e.currentTarget;
-        const inputValue = input.value;
-        try {
-            const asset_name = refundJson().asset;
-            getAddress(asset_name).toOutputScript(
-                inputValue,
-                getNetwork(asset_name)
-            );
-
-            input.setCustomValidity("");
-            setAddressValid(true);
-            setRefundAddress(inputValue);
-        } catch (e) {
-            setAddressValid(false);
-            input.setCustomValidity("invalid address");
-        }
-    };
 
     const uploadChange = (e) => {
         const input = e.currentTarget;
@@ -112,7 +92,11 @@ const Refund = () => {
                 <input
                     required
                     disabled={!refundJsonValid()}
-                    onInput={refundAddressChange}
+                    onInput={(e) =>
+                        setAddressValid(
+                            refundAddressChange(e, refundJson().asset)
+                        )
+                    }
                     type="text"
                     id="refundAddress"
                     name="refundAddress"

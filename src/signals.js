@@ -1,3 +1,4 @@
+import { getAddress, getNetwork } from "./compat";
 import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
 import { pairs } from "./config";
@@ -63,11 +64,20 @@ export const [notificationType, setNotificationType] = createSignal("");
 
 export const [webln, setWebln] = createSignal(false);
 
-export const refundAddressChange = (e) => {
-    const addr = e.currentTarget.value;
-    if (addr) {
-        setRefundAddress(addr.trim());
-    } else {
-        setRefundAddress(null);
+export const refundAddressChange = (e, asset) => {
+    const input = e.currentTarget;
+    const inputValue = input.value.trim();
+    try {
+        getAddress(asset).toOutputScript(inputValue, getNetwork(asset));
+
+        input.setCustomValidity("");
+        setAddressValid(true);
+        setRefundAddress(inputValue);
+        return true;
+    } catch (e) {
+        setAddressValid(false);
+        input.setCustomValidity("invalid address");
     }
+
+    return false;
 };
