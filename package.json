@@ -34,6 +34,7 @@
     "ecpair": "2.0.1",
     "liquidjs-lib": "^6.0.2-liquid.24",
     "loglevel": "^1.8.1",
+    "qr-scanner": "^1.4.2",
     "qrcode": "^1.5.0",
     "solid-js": "^1.7.0"
   }

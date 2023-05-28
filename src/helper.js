@@ -150,45 +150,6 @@ export const fetchSwapStatus = (swap) => {
     return false;
 };
 
-export const refundJsonKeys = [
-    "id",
-    "asset",
-    "privateKey",
-    "blindingKey",
-    "redeemScript",
-];
-
-const createRefundData = (swap) => {
-    return {
-        id: swap.id,
-        asset: swap.asset,
-        privateKey: swap.privateKey,
-        blindingKey: swap.blindingKey,
-        redeemScript: swap.redeemScript,
-        timeoutBlockHeight: swap.timeoutBlockHeight,
-    };
-};
-
-export const downloadRefundFile = (swap) => {
-    const hiddenElement = document.createElement("a");
-    hiddenElement.href =
-        "data:application/json;charset=utf-8," +
-        encodeURI(JSON.stringify(createRefundData(swap)));
-    hiddenElement.target = "_blank";
-    hiddenElement.download = "boltz-refund-" + swap.id + ".json";
-    hiddenElement.click();
-};
-
-export const downloadRefundQr = (swap) => {
-    let hiddenElement = document.createElement("a");
-    hiddenElement.href =
-        "data:application/json;charset=utf-8," +
-        encodeURI(JSON.stringify(createRefundData(swap)));
-    hiddenElement.target = "_blank";
-    hiddenElement.download = "boltz-refund-" + swap.id + ".json";
-    hiddenElement.click();
-};
-
 export const downloadBackup = (json) => {
     let hiddenElement = document.createElement("a");
     hiddenElement.href =

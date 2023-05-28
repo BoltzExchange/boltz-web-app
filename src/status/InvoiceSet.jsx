@@ -1,7 +1,8 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { invoiceQr, swap } from "../signals";
-import { downloadRefundFile, clipboard } from "../helper";
+import { clipboard } from "../helper";
 import { formatAmount } from "../utils/denomination";
+import DownloadRefund from "../components/DownloadRefund";
 
 const InvoiceSet = () => {
     const [t] = useI18n();
@@ -39,13 +40,8 @@ const InvoiceSet = () => {
                     {t("copy_amount")}
                 </span>
             </div>
-            <div class="btns">
-                <span
-                    class="btn btn-success"
-                    onclick={() => downloadRefundFile(swap())}>
-                    {t("download_refund_json")}
-                </span>
-            </div>
+            <hr />
+            <DownloadRefund />
         </div>
     );
 };

@@ -3,7 +3,6 @@ import { createEffect, onCleanup } from "solid-js";
 import {
     setFailureReason,
     setSwapStatusTransaction,
-    reverse,
     setReverse,
     setInvoiceQr,
     swap,
