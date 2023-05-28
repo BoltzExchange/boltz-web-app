@@ -43,8 +43,7 @@ const dict = {
         failure_reason: "Failure reason",
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
-        download_refund_json: "Download refund JSON",
-        download_refund_qr: "Download refund QRCode",
+        download_refund_file: "Download refund file",
         copy_invoice: "Copy lightning invoice",
         copy_address: "Copy address",
         copy_amount: "Copy amount",
@@ -52,7 +51,7 @@ const dict = {
         copied: "Copied to clipboard!",
         refund_a_swap: "Refund a swap",
         refund_a_swap_subline:
-            "Upload your refund.json file and reclaim your locked funds",
+            "Upload your refund file and reclaim your locked funds",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",

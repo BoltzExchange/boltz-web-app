@@ -1,6 +1,7 @@
-import { useI18n } from "@solid-primitives/i18n";
-import { swap } from "../signals";
+import log from "loglevel";
 import QRCode from "qrcode";
+import { useI18n } from "@solid-primitives/i18n";
+import { swap, setNotificationType, setNotification } from "../signals";
 
 const is_mobile =
     !!navigator.userAgent.match(/iphone|android|blackberry/gi) || false;
@@ -16,30 +17,33 @@ const createRefundData = (swap) => {
     };
 };
 
+const getRefundFileName = (swap) => {
+    return "boltz-refund-" + swap.id;
+};
+
 export const downloadRefundFile = (swap) => {
     const hiddenElement = document.createElement("a");
     hiddenElement.href =
         "data:application/json;charset=utf-8," +
         encodeURI(JSON.stringify(createRefundData(swap)));
     hiddenElement.target = "_blank";
-    hiddenElement.download = "boltz-refund-" + swap.id + ".json";
+    hiddenElement.download = getRefundFileName(swap) + ".json";
     hiddenElement.click();
 };
 
 export const downloadRefundQr = (swap) => {
     let hiddenElement = document.createElement("a");
     QRCode.toDataURL(JSON.stringify(createRefundData(swap)), {
-        version: 14,
         width: 400,
     })
         .then((url) => {
             hiddenElement.href = url;
             hiddenElement.target = "_blank";
-            hiddenElement.download = "boltz-refund-" + swap.id + ".png";
+            hiddenElement.download = getRefundFileName(swap) + ".png";
             hiddenElement.click();
         })
         .catch((err) => {
-            const msg = "error: qr code generation";
+            const msg = "error: QR code generation failed";
             log.error(msg, err);
             setNotificationType("error");
             setNotification(msg);
@@ -50,20 +54,15 @@ const DownloadRefund = () => {
     const [t] = useI18n();
     return (
         <div className="download-refund">
-            <Show when={is_mobile}>
-                <button
-                    class="btn btn-success"
-                    onclick={() => downloadRefundQr(swap())}>
-                    {t("download_refund_qr")}
-                </button>
-            </Show>
-            <Show when={!is_mobile}>
-                <button
-                    class="btn btn-success"
-                    onclick={() => downloadRefundFile(swap())}>
-                    {t("download_refund_json")}
-                </button>
-            </Show>
+            <button
+                class="btn btn-success"
+                onclick={() =>
+                    is_mobile
+                        ? downloadRefundQr(swap())
+                        : downloadRefundFile(swap())
+                }>
+                {t("download_refund_file")}
+            </button>
         </div>
     );
 };
