@@ -37,7 +37,8 @@ const Refund = () => {
     const checkRefundJsonKeys = (input, json) => {
         log.debug("checking refund json", json);
 
-        const requiredKeys = json.asset !== "L-BTC" ? refundJsonKeys : refundJsonKeysLiquid;
+        const requiredKeys =
+            json.asset !== "L-BTC" ? refundJsonKeys : refundJsonKeysLiquid;
         const valid = requiredKeys.every((key) => key in json);
 
         setRefundJsonValid(valid);
@@ -58,18 +59,20 @@ const Refund = () => {
 
         if (inputFile.type === "image/png") {
             QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
-                .then((result) => checkRefundJsonKeys(input, JSON.parse(result.data)))
+                .then((result) =>
+                    checkRefundJsonKeys(input, JSON.parse(result.data))
+                )
                 .catch((e) => {
-                    log.error('invalid QR code upload', e);
-                    input.setCustomValidity(invalidFileError)
+                    log.error("invalid QR code upload", e);
+                    input.setCustomValidity(invalidFileError);
                 });
         } else {
             new Response(inputFile)
                 .json()
                 .then((result) => checkRefundJsonKeys(input, result))
                 .catch((e) => {
-                    log.error('invalid file upload', e);
-                    input.setCustomValidity(invalidFileError)
+                    log.error("invalid file upload", e);
+                    input.setCustomValidity(invalidFileError);
                 });
         }
     };
