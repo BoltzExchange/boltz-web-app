@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createSignal } from "solid-js";
+import { createSignal, createEffect } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
 import fetcher, { refundAddressChange } from "../helper";
 import {
@@ -43,6 +43,7 @@ const InvoiceFailedToPay = () => {
                 <RefundEta />
             </Show>
             <Show when={!timeoutEta()}>
+                <h2>{t("refund")}</h2>
                 <input
                     onInput={(e) =>
                         setValid(refundAddressChange(e, swap().asset))
