@@ -32,6 +32,7 @@ import {
     getOutputAmount,
     decodeAddress,
     setup,
+    getAddress,
 } from "./compat";
 import { api_url } from "./config";
 
@@ -422,6 +423,7 @@ export const refundAddressChange = (e, asset) => {
         setRefundAddress(inputValue);
         return true;
     } catch (e) {
+        log.warn("parsing refund address failed", e);
         input.setCustomValidity("invalid address");
     }
 
