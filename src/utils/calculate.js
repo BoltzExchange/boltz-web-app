@@ -16,6 +16,15 @@ export const calculateReceiveAmount = (sendAmount) => {
     return Math.max(Math.floor(receiveAmount.toNumber()), 0);
 };
 
+export const calculateBoltzFeeOnSend = (sendAmount) => {
+    const fee = reverse()
+        ? bigRound(BigNumber(sendAmount).times(boltzFee()).div(100))
+        : BigNumber(sendAmount)
+              .minus(calculateReceiveAmount(sendAmount))
+              .minus(minerFee());
+    return Math.ceil(fee.toNumber());
+};
+
 export const calculateSendAmount = (receiveAmount) => {
     return reverse()
         ? Math.ceil(
