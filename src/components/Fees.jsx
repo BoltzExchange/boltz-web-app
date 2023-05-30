@@ -1,4 +1,3 @@
-import { BigNumber } from "bignumber.js";
 import { createSignal, createEffect, onCleanup } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
 import log from "loglevel";
@@ -15,12 +14,14 @@ import {
     sendAmount,
     denomination,
     setDenomination,
-    receiveAmount,
     boltzFee,
     minerFee,
 } from "../signals";
 import { formatAmount } from "../utils/denomination";
-import { calculateSendAmount } from "../utils/calculate";
+import {
+    calculateBoltzFeeOnSend,
+    calculateSendAmount,
+} from "../utils/calculate";
 import { fetchPairs } from "../helper";
 import btc_svg from "../assets/btc.svg";
 import sat_svg from "../assets/sat.svg";
@@ -100,15 +101,7 @@ const Fees = () => {
                 <br />
                 {t("fee")} ({boltzFee()}%):{" "}
                 <span class="boltz-fee">
-                    {formatAmount(
-                        Math.floor(
-                            BigNumber(receiveAmount())
-                                .multipliedBy(boltzFee())
-                                .div(100)
-                                .toNumber()
-                        ),
-                        true
-                    )}
+                    {formatAmount(calculateBoltzFeeOnSend(sendAmount()), true)}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>

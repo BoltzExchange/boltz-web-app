@@ -6,6 +6,7 @@
   "scripts": {
     "start": "cp src/configs/config.regtest.js src/config.js && vite",
     "postinstall": "sed -i '1s/^/var tempDouble;var tempI64;\\n/' node_modules/@vulpemventures/secp256k1-zkp/dist/secp256k1-zkp.js",
+    "test": "cp src/configs/config.regtest.js src/config.js && vitest tests",
     "dev": "vite",
     "serve": "vite preview",
     "mainnet": "cp src/configs/config.mainnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
@@ -14,10 +15,12 @@
     "prettier-check": "./node_modules/prettier/bin-prettier.js --check src"
   },
   "devDependencies": {
+    "jsdom": "^22.1.0",
     "prettier": "^2.8.8",
     "vite": "^4.2.1",
     "vite-plugin-node-polyfills": "^0.8.2",
-    "vite-plugin-solid": "^2.6.1"
+    "vite-plugin-solid": "^2.6.1",
+    "vitest": "^0.31.1"
   },
   "dependencies": {
     "@noble/secp256k1": "^1.7.1",

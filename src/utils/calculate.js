@@ -1,19 +1,48 @@
 import { BigNumber } from "bignumber.js";
-import { boltzFee, minerFee } from "../signals";
+import { boltzFee, minerFee, reverse } from "../signals";
+
+const bigRound = (big) => {
+    return big.integerValue(BigNumber.ROUND_CEIL);
+};
 
 export const calculateReceiveAmount = (sendAmount) => {
-    const preMinerFee = BigNumber(sendAmount).minus(minerFee());
-    const receiveAmount = preMinerFee.minus(
-        preMinerFee.times(boltzFee()).div(100)
-    );
-    return Math.floor(receiveAmount.toNumber());
+    const receiveAmount = reverse()
+        ? BigNumber(sendAmount)
+              .minus(bigRound(BigNumber(sendAmount).times(boltzFee()).div(100)))
+              .minus(minerFee())
+        : BigNumber(sendAmount)
+              .minus(minerFee())
+              .div(BigNumber(1).plus(BigNumber(boltzFee()).div(100)));
+    return Math.max(Math.floor(receiveAmount.toNumber()), 0);
+};
+
+export const calculateBoltzFeeOnSend = (sendAmount) => {
+    const fee = reverse()
+        ? bigRound(BigNumber(sendAmount).times(boltzFee()).div(100))
+        : BigNumber(sendAmount)
+              .minus(calculateReceiveAmount(sendAmount))
+              .minus(minerFee());
+    return Math.ceil(fee.toNumber());
 };
 
 export const calculateSendAmount = (receiveAmount) => {
-    return Math.floor(
-        BigNumber(receiveAmount)
-            .plus(minerFee())
-            .plus(BigNumber(receiveAmount).times(boltzFee()).div(100))
-            .toNumber()
-    );
+    return reverse()
+        ? Math.ceil(
+              BigNumber(receiveAmount)
+                  .plus(minerFee())
+                  .div(BigNumber(1).minus(BigNumber(boltzFee()).div(100)))
+                  .toNumber()
+          )
+        : Math.floor(
+              BigNumber(receiveAmount)
+                  .plus(
+                      bigRound(
+                          BigNumber(receiveAmount).times(
+                              BigNumber(boltzFee()).div(100)
+                          )
+                      )
+                  )
+                  .plus(minerFee())
+                  .toNumber()
+          );
 };
