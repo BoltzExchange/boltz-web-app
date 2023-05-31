@@ -10,7 +10,6 @@ import {
     constructClaimTransaction,
     constructRefundTransaction,
     targetFee,
-    detectSwap,
 } from "boltz-core";
 import {
     constructClaimTransaction as lcCT,
@@ -103,10 +102,6 @@ const getConstructRefundTransaction = (asset) => {
         );
 };
 
-const getDetectSwap = () => {
-    return detectSwap;
-};
-
 const getOutputAmount = (asset, output) => {
     if (asset !== "L-BTC") {
         return output.value;
@@ -128,7 +123,6 @@ export {
     getAddress,
     getNetwork,
     decodeAddress,
-    getDetectSwap,
     getTransaction,
     getOutputAmount,
     getConstructClaimTransaction,
