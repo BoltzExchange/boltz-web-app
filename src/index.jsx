@@ -2,8 +2,8 @@
 import "./utils/patches";
 import { render } from "solid-js/web";
 import { Router, Route, Routes } from "@solidjs/router";
-import { I18nContext, createI18nContext } from "@solid-primitives/i18n";
-import { i18n, setWebln, setWasmSupported } from "./signals";
+import { I18nContext } from "@solid-primitives/i18n";
+import { setWebln, setWasmSupported } from "./signals";
 import { detectWebLNProvider, checkReferralId } from "./helper";
 import log from "loglevel";
 import Create from "./Create";
@@ -12,15 +12,13 @@ import Nav from "./Nav";
 import Notification from "./Notification";
 import Footer from "./Footer";
 import Refund from "./Refund";
+import createI18n from "./i18n";
 import History from "./History";
 import { loglevel } from "./config";
 import { checkWasmSupported } from "./utils/wasmSupport";
-import dict from "./i18n";
 import "./css/index.css";
 
 log.setLevel(loglevel);
-
-const i18n_context = createI18nContext(dict, i18n());
 
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
@@ -29,7 +27,7 @@ checkReferralId();
 // <Route path="/" component={Hero} />
 const cleanup = render(
     () => (
-        <I18nContext.Provider value={i18n_context}>
+        <I18nContext.Provider value={createI18n()}>
             <Router>
                 <Nav />
                 <Routes>

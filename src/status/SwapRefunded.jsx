@@ -12,11 +12,7 @@ const SwapRefunded = () => {
         <div>
             <p>{t("refunded")}</p>
             <hr />
-            <BlockExplorer
-                isTxId={true}
-                asset={swap().asset}
-                address={swap().refundTx}
-            />
+            <BlockExplorer asset={swap().asset} txId={swap().refundTx} />
             <hr />
             <span class="btn" onClick={() => navigate("/swap")}>
                 {t("new_swap")}
