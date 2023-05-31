@@ -143,8 +143,6 @@ export const fetchSwapStatus = (swap) => {
             }
             checkForFailed(swap.id, data);
             setFailureReason(data.failureReason);
-            setNotificationType("success");
-            setNotification("swap status retrieved!");
         },
         { id: swap.id }
     );
