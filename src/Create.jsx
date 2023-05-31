@@ -6,6 +6,8 @@ import { useI18n } from "@solid-primitives/i18n";
 import { createMemo, createSignal } from "solid-js";
 import { errorHandler, fetcher, fetchPairs } from "./helper";
 import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
+import { validateResponse } from "./utils/validation";
+
 import { getAddress, getNetwork } from "./compat";
 import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
@@ -178,7 +180,12 @@ const Create = () => {
                 data.asset = asset();
                 data.preimage = preimageHex;
                 data.receiveAmount = Number(receiveAmount());
+                data.sendAmount = Number(sendAmount());
                 data.onchainAddress = onchainAddress();
+                if (validateResponse(data)) {
+                    navigate("/error/");
+                    return;
+                }
                 let tmp_swaps = JSON.parse(swaps());
                 tmp_swaps.push(data);
                 setSwaps(JSON.stringify(tmp_swaps));
