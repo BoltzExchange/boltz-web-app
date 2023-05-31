@@ -36,6 +36,10 @@ import {
 } from "./compat";
 import { api_url } from "./config";
 
+const parseBlindingKey = (swap) => {
+    return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
+};
+
 export const checkReferralId = () => {
     const ref_param = new URLSearchParams(window.location.search).get("ref");
     if (ref_param && ref_param !== "") {
@@ -254,9 +258,7 @@ export async function refund(swap) {
                 txHash: tx.getHash(),
                 redeemScript: script,
                 keys: private_key,
-                blindingPrivateKey: swap.blindingKey
-                    ? Buffer.from(swap.blindingKey, "hex")
-                    : undefined,
+                blindingPrivateKey: parseBlindingKey(swap),
             },
         ],
         output.script,
@@ -376,9 +378,7 @@ export const claim = async (swap) => {
                 txHash: tx.getHash(),
                 preimage: preimage,
                 keys: private_key,
-                blindingPrivateKey: swap.blindingKey
-                    ? Buffer.from(swap.blindingKey, "hex")
-                    : undefined,
+                blindingPrivateKey: parseBlindingKey(swap),
             },
         ],
         script,
