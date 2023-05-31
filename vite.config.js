@@ -7,12 +7,6 @@ export default defineConfig({
   server: {
     cors: { origin: "*" },
   },
-  test: {
-    browser: {
-      enabled: true,
-      name: 'firefox',
-    },
-  },
   build: {
     commonjsOptions: {
       transformMixedEsModules: true,

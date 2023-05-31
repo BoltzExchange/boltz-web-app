@@ -182,7 +182,7 @@ const Create = () => {
                 data.receiveAmount = Number(receiveAmount());
                 data.sendAmount = Number(sendAmount());
                 data.onchainAddress = onchainAddress();
-                if (validateResponse(data)) {
+                if (!validateResponse(data)) {
                     navigate("/error/");
                     return;
                 }
