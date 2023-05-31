@@ -40,16 +40,40 @@ describe("validate response", () => {
             reverse: false,
             sendAmount: 10636,
             expectedAmount: 10636,
+            privateKey: "a3cd1a24ef10189dd2ee7ec7a6b90d9f2e2da65bca68b675365e09d45b7c6530",
+            address: "2N4e6SQjs1mfiCFkP2XNVZ81kg1EMD56ahr",
+            redeemScript: "a914df70c5de77acd4dac7e14d19a3d75fb749e7862d87632103f82bf603cda9cc3fa2558638213664f50cf77adb250a94420807fb56b888ce746702f901b1752102542081e340c94275636172d93c78ace3a58c1f639ebbe03cccc5922a70957e5768ac",
         };
         const swap_invalid_amount = {
             reverse: false,
             sendAmount: 10636,
             expectedAmount: 10000,
+            privateKey: "a3cd1a24ef10189dd2ee7ec7a6b90d9f2e2da65bca68b675365e09d45b7c6530",
+            address: "2N4e6SQjs1mfiCFkP2XNVZ81kg1EMD56ahr",
+            redeemScript: "a914df70c5de77acd4dac7e14d19a3d75fb749e7862d87632103f82bf603cda9cc3fa2558638213664f50cf77adb250a94420807fb56b888ce746702f901b1752102542081e340c94275636172d93c78ace3a58c1f639ebbe03cccc5922a70957e5768ac",
+        };
+        const swap_invalid_address = {
+            reverse: false,
+            sendAmount: 10636,
+            expectedAmount: 10000,
+            privateKey: "a3cd1a24ef10189dd2ee7ec7a6b90d9f2e2da65bca68b675365e09d45b7c6530",
+            address: "2N4e6SQjs1mfiCFkP2XNVZ81kg1EMD56xxx",
+            redeemScript: "a914df70c5de77acd4dac7e14d19a3d75fb749e7862d87632103f82bf603cda9cc3fa2558638213664f50cf77adb250a94420807fb56b888ce746702f901b1752102542081e340c94275636172d93c78ace3a58c1f639ebbe03cccc5922a70957e5768ac",
+        };
+        const swap_invalid_preimage_hash = {
+            reverse: false,
+            sendAmount: 10636,
+            expectedAmount: 10000,
+            privateKey: "a3cd1a24ef10189dd2ee7ec7a6b90d9f2e2da65bca68b675365e09d45b7c6530",
+            address: "2N4e6SQjs1mfiCFkP2XNVZ81kg1EMD56ahr",
+            redeemScript: "a914df70c5de77acd4dac7e14d19a3d75fb749e7862d87632103f82bf603cda9cc3fa2558638213664f50cf77adb250a94420807fb56b888ce746702f901b1752102542081e340c94275636172d93c78ace3a58c1f639ebbe03cccc5922a70957e5768ac",
         };
         test.each`
-            desc                | valid    | swap
-            ${"valid"}          | ${true}  | ${swap_valid}
-            ${"invalid amount"} | ${false} | ${swap_invalid_amount}
+            desc                       | valid    | swap
+            ${"valid"}                 | ${true}  | ${swap_valid}
+            ${"invalid amount"}        | ${false} | ${swap_invalid_amount}
+            ${"invalid address"}       | ${false} | ${swap_invalid_address}
+            ${"invalid preimage hash"} | ${false} | ${swap_invalid_preimage_hash}
         `("$desc", ({ valid, swap }) => {
             expect(validateResponse(swap)).toBe(valid);
         });
