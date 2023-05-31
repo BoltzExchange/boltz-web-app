@@ -8,7 +8,9 @@ export const validateResponse = (swap) => {
         let preimage = Buffer.from(swap.preimage, "hex");
         let preimageHash = crypto.sha256(preimage);
         let preimageHashHex = preimageHash.toString("hex");
-        let paymentHashTag = decoded.tags.find((tag) => tag.tagName === "payment_hash");
+        let paymentHashTag = decoded.tags.find(
+            (tag) => tag.tagName === "payment_hash"
+        );
         if (
             paymentHashTag.data === preimageHashHex &&
             decoded.satoshis === swap.sendAmount

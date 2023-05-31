@@ -1,6 +1,5 @@
 import { validateResponse } from "../../src/utils/validation";
 
-
 describe("validate response", () => {
     describe("validate reverse swap", () => {
         const reverse_swap_valid = {
@@ -48,9 +47,9 @@ describe("validate response", () => {
             expectedAmount: 10000,
         };
         test.each`
-            desc                  | valid    | swap
-            ${"valid"}            | ${true}  | ${swap_valid}
-            ${"invalid amount"}   | ${false} | ${swap_invalid_amount}
+            desc                | valid    | swap
+            ${"valid"}          | ${true}  | ${swap_valid}
+            ${"invalid amount"} | ${false} | ${swap_invalid_amount}
         `("$desc", ({ valid, swap }) => {
             expect(validateResponse(swap)).toBe(valid);
         });
