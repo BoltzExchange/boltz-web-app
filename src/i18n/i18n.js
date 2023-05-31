@@ -81,6 +81,10 @@ const dict = {
         wasm_not_supported: "Please activate WebAssembly in your browser",
         ios_image_download:
             'Long press and select "Save to Photos" to download refund file',
+        created: "created",
+        delete: "delete",
+        view: "view",
+        id: "ID",
     },
     de: {
         history: "Verlauf",

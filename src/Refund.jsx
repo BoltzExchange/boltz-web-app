@@ -2,10 +2,12 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
+import SwapList from "./components/SwapList";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
 import { fetcher, refundAddressChange, refund } from "./helper";
 import {
+    swaps,
     refundTx,
     setTimeoutEta,
     setTimeoutBlockheight,
@@ -99,12 +101,42 @@ const Refund = () => {
         );
     };
 
+    const [refundableSwaps, setRefundableSwaps] = createSignal(undefined);
+
+    createEffect(() => {
+        Promise.all(
+            JSON.parse(swaps()).map((swap) => {
+                return new Promise((resolve) => {
+                    fetcher(
+                        "/swapstatus",
+                        async (data) => {
+                            if (
+                                data.status == "transaction.lockupFailed" ||
+                                data.status == "invoice.failedToPay"
+                            ) {
+                                resolve(swap);
+                            } else {
+                                resolve();
+                            }
+                        },
+                        { id: swap.id },
+                        () => resolve()
+                    );
+                });
+            })
+        ).then((tmp_swaps) => {
+            const filtered = tmp_swaps.filter((s) => s !== undefined);
+            setRefundableSwaps(filtered);
+        });
+    });
+
     return (
         <div id="refund">
             <div class="frame">
                 <h2>{t("refund_a_swap")}</h2>
                 <p>{t("refund_a_swap_subline")}</p>
                 <hr />
+                <SwapList swapsSignal={refundableSwaps} />
                 <input
                     required
                     type="file"
