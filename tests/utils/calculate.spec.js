@@ -1,5 +1,10 @@
 import { BigNumber } from "bignumber.js";
-import { minerFee, setBoltzFee, setMinerFee, setReverse } from "../../src/signals";
+import {
+    minerFee,
+    setBoltzFee,
+    setMinerFee,
+    setReverse,
+} from "../../src/signals";
 import {
     calculateSendAmount,
     calculateReceiveAmount,
@@ -8,16 +13,16 @@ import {
 
 describe("Calculate amounts", () => {
     const setSwapFees = () => {
-            setReverse(false);
-            setMinerFee(147);
-            setBoltzFee(0.1);
-    }
+        setReverse(false);
+        setMinerFee(147);
+        setBoltzFee(0.1);
+    };
 
     const setReverseSwapFees = () => {
-            setReverse(true);
-            setMinerFee(428);
-            setBoltzFee(0.25);
-    }
+        setReverse(true);
+        setMinerFee(428);
+        setBoltzFee(0.25);
+    };
 
     describe("should calculate Swap amounts", () => {
         beforeAll(() => {
@@ -102,7 +107,7 @@ describe("Calculate amounts", () => {
                 ).toEqual(receiveAmount);
             }
         );
-        
+
         test.each`
             sendAmount | receiveAmount | fee
             ${1000000} | ${997072}     | ${2500}

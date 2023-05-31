@@ -9,15 +9,13 @@ import {
 import {
     constructClaimTransaction,
     constructRefundTransaction,
-    detectSwap,
+    targetFee,
 } from "boltz-core";
 import {
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
-    detectSwap as ldS,
-    targetFee,
-    prepareConfidential,
-} from "boltz-core-liquid-michael1011";
+    init as prepareConfidential,
+} from "boltz-core/dist/lib/liquid";
 import { network } from "./config";
 
 let confi;
@@ -77,46 +75,31 @@ const getTransaction = (asset) => {
 };
 
 const getConstructClaimTransaction = (asset) => {
-    if (asset === "L-BTC") {
-        return lcCT;
-    } else {
-        return constructClaimTransaction;
-    }
+    return asset === "L-BTC" ? lcCT : constructClaimTransaction;
 };
 
 const getConstructRefundTransaction = (asset) => {
-    if (asset === "L-BTC") {
-        return (
-            refundDetails,
-            outputScript,
-            timeoutBlockHeight,
-            feePerVbyte,
-            isRbf,
-            assetHash,
-            blindingKey
-        ) =>
-            targetFee(feePerVbyte, (fee) =>
-                lcRT(
-                    refundDetails,
-                    outputScript,
-                    timeoutBlockHeight,
-                    fee,
-                    isRbf,
-                    assetHash,
-                    blindingKey
-                )
-            );
-    } else {
-        return constructRefundTransaction;
-    }
-};
-
-const getDetectSwap = (asset) => {
-    if (asset === "L-BTC") {
-        return ldS;
-    } else {
-        return detectSwap;
-    }
+    const fn = asset === "L-BTC" ? lcRT : constructRefundTransaction;
+    return (
+        refundDetails,
+        outputScript,
+        timeoutBlockHeight,
+        feePerVbyte,
+        isRbf,
+        assetHash,
+        blindingKey
+    ) =>
+        targetFee(feePerVbyte, (fee) =>
+            fn(
+                refundDetails,
+                outputScript,
+                timeoutBlockHeight,
+                fee,
+                isRbf,
+                assetHash,
+                blindingKey
+            )
+        );
 };
 
 const getOutputAmount = (asset, output) => {
@@ -127,7 +110,7 @@ const getOutputAmount = (asset, output) => {
     if (output.rangeProof?.length !== 0) {
         const unblinded = confi.unblindOutputWithKey(
             output,
-            output.blindingPrivKey
+            output.blindingPrivateKey
         );
         return Number(unblinded.value);
     } else {
@@ -140,7 +123,6 @@ export {
     getAddress,
     getNetwork,
     decodeAddress,
-    getDetectSwap,
     getTransaction,
     getOutputAmount,
     getConstructClaimTransaction,

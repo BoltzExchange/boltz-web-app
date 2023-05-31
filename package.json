@@ -11,10 +11,11 @@
     "serve": "vite preview",
     "mainnet": "cp src/configs/config.mainnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
     "testnet": "cp src/configs/config.testnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
-    "prettier": "./node_modules/prettier/bin-prettier.js --write src",
-    "prettier-check": "./node_modules/prettier/bin-prettier.js --check src"
+    "prettier": "./node_modules/prettier/bin-prettier.js --write src tests",
+    "prettier-check": "./node_modules/prettier/bin-prettier.js --check src tests"
   },
   "devDependencies": {
+    "@solidjs/testing-library": "^0.7.1",
     "jsdom": "^22.1.0",
     "prettier": "^2.8.8",
     "vite": "^4.2.1",
@@ -30,8 +31,7 @@
     "@solidjs/router": "^0.8.2",
     "@vulpemventures/secp256k1-zkp": "^3.0.0",
     "bignumber.js": "^9.1.1",
-    "boltz-core": "^0.6.2",
-    "boltz-core-liquid-michael1011": "^1.0.1",
+    "boltz-core": "^1.0.0",
     "buffer": "^6.0.3",
     "create-hmac": "^1.1.7",
     "ecpair": "2.0.1",

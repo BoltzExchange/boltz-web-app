@@ -1,5 +1,6 @@
 import log from "loglevel";
 import QRCode from "qrcode";
+import { detectSwap } from "boltz-core";
 import {
     ref,
     swaps,
@@ -20,7 +21,6 @@ import {
     setConfig,
     setRef,
 } from "./signals";
-
 import { Buffer } from "buffer";
 import { ECPair } from "./ecpair/ecpair";
 import {
@@ -28,13 +28,16 @@ import {
     getTransaction,
     getConstructClaimTransaction,
     getConstructRefundTransaction,
-    getDetectSwap,
     getOutputAmount,
     decodeAddress,
     setup,
     getAddress,
 } from "./compat";
 import { api_url } from "./config";
+
+const parseBlindingKey = (swap) => {
+    return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
+};
 
 export const checkReferralId = () => {
     const ref_param = new URLSearchParams(window.location.search).get("ref");
@@ -232,7 +235,6 @@ export async function refund(swap) {
     const Transaction = getTransaction(asset_name);
     const constructRefundTransaction =
         getConstructRefundTransaction(asset_name);
-    const detectSwap = getDetectSwap(asset_name);
     const net = getNetwork(asset_name);
     const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
 
@@ -252,7 +254,7 @@ export async function refund(swap) {
                 txHash: tx.getHash(),
                 redeemScript: script,
                 keys: private_key,
-                blindingPrivKey: Buffer.from(swap.blindingKey, "hex"),
+                blindingPrivateKey: parseBlindingKey(swap),
             },
         ],
         output.script,
@@ -345,7 +347,6 @@ export const claim = async (swap) => {
     log.debug("mempool_tx", mempool_tx.hex);
 
     const Transaction = getTransaction(asset_name);
-    const detectSwap = getDetectSwap(asset_name);
     const net = getNetwork(asset_name);
     const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
 
@@ -372,9 +373,7 @@ export const claim = async (swap) => {
                 txHash: tx.getHash(),
                 preimage: preimage,
                 keys: private_key,
-                blindingPrivKey: swap.blindingKey
-                    ? Buffer.from(swap.blindingKey, "hex")
-                    : undefined,
+                blindingPrivateKey: parseBlindingKey(swap),
             },
         ],
         script,
