@@ -1,5 +1,4 @@
 import { Show } from "solid-js";
-import { createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { downloadBackup } from "./helper";
@@ -11,13 +10,11 @@ const History = () => {
     const navigate = useNavigate();
     const [t] = useI18n();
 
-    const deleteLocalstorage = () => {
+    const deleteLocalStorage = () => {
         if (confirm(t("delete_localstorage"))) {
-            setSwaps("[]");
+            setSwaps([]);
         }
     };
-
-    const [parsedSwaps, setParsedSwaps] = createSignal(JSON.parse(swaps()));
 
     return (
         <div id="history">
@@ -26,7 +23,7 @@ const History = () => {
                 <p>{t("refund_past_swaps_subline")}</p>
                 <hr />
                 <Show
-                    when={parsedSwaps().length > 0}
+                    when={swaps().length > 0}
                     fallback={
                         <div>
                             <p>{t("history_no_swaps")}</p>
@@ -35,11 +32,15 @@ const History = () => {
                             </span>
                         </div>
                     }>
-                    <SwapList swapsSignal={parsedSwaps} deleteButton={true} />
+                    <SwapList
+                        swapsSignal={swaps}
+                        setSwapSignal={setSwaps}
+                        deleteButton={true}
+                    />
                     <div class="btns">
                         <button
                             class="btn btn-danger"
-                            onClick={deleteLocalstorage}>
+                            onClick={deleteLocalStorage}>
                             {t("refund_clear")}
                         </button>
                         <button

@@ -1,4 +1,3 @@
-import { getAddress, getNetwork } from "./compat";
 import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
 import { pairs } from "./config";
@@ -50,7 +49,17 @@ export const [asset, setAsset] = createStorageSignal(
     "asset",
     pairs[0].split("/")[0]
 );
-export const [swaps, setSwaps] = createStorageSignal("swaps", "[]");
+export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
+    // Because arrays are the same object when changed,
+    // we have to override the equality checker
+    equals: () => false,
+    deserializer: (data) => {
+        return JSON.parse(data);
+    },
+    serializer: (data) => {
+        return JSON.stringify(data);
+    },
+});
 export const [reverse, setReverse] = createSignal(true);
 
 // validation

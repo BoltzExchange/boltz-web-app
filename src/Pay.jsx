@@ -35,7 +35,7 @@ const Pay = () => {
     let stream = null;
 
     createEffect(() => {
-        let tmp_swaps = JSON.parse(swaps());
+        let tmp_swaps = swaps();
         if (tmp_swaps) {
             let current_swap = tmp_swaps
                 .filter((s) => s.id === params.id)

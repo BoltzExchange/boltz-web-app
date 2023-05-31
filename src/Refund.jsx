@@ -105,7 +105,7 @@ const Refund = () => {
 
     createEffect(() => {
         Promise.all(
-            JSON.parse(swaps()).map((swap) => {
+            swaps().map((swap) => {
                 return new Promise((resolve) => {
                     fetcher(
                         "/swapstatus",

@@ -1,8 +1,7 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { useNavigate } from "@solidjs/router";
-import { setSwaps } from "../signals";
 
-const SwapList = ({ swapsSignal, deleteButton }) => {
+const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
     const [t] = useI18n();
     const navigate = useNavigate();
 
@@ -12,13 +11,12 @@ const SwapList = ({ swapsSignal, deleteButton }) => {
         return date.toLocaleDateString();
     };
 
-    const delete_swap = (swap_id) => {
-        if (confirm(t("delete_localstorage"))) {
-            const tmp_swaps = JSON.parse(swapsSignal());
-            if (tmp_swaps) {
-                const new_swaps = tmp_swaps.filter((s) => s.id !== swap_id);
-                setSwaps(JSON.stringify(new_swaps));
-            }
+    const deleteSwap = (swapId) => {
+        if (
+            setSwapSignal !== undefined &&
+            confirm(t("delete_localstorage_single_swap", { id: swapId }))
+        ) {
+            setSwapSignal(swapsSignal().filter((s) => s.id != swapId));
         }
     };
 
@@ -43,7 +41,7 @@ const SwapList = ({ swapsSignal, deleteButton }) => {
                         <Show when={deleteButton}>
                             <span
                                 class="btn-small btn-danger"
-                                onClick={() => delete_swap(swap.id)}>
+                                onClick={() => deleteSwap(swap.id)}>
                                 {t("delete")}
                             </span>
                         </Show>
