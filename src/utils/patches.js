@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-
+// liquidjs-lib node buffer patch for writeBigUInt64BE
 Uint8Array.prototype.writeBigUInt64BE = function (int64, offset) {
     if (typeof int64 !== "number") {
         int64 = Number(int64);

@@ -254,7 +254,9 @@ export async function refund(swap) {
                 txHash: tx.getHash(),
                 redeemScript: script,
                 keys: private_key,
-                blindingPrivKey: Buffer.from(swap.blindingKey, "hex"),
+                blindingPrivateKey: swap.blindingKey
+                    ? Buffer.from(swap.blindingKey, "hex")
+                    : undefined,
             },
         ],
         output.script,
@@ -374,7 +376,7 @@ export const claim = async (swap) => {
                 txHash: tx.getHash(),
                 preimage: preimage,
                 keys: private_key,
-                blindingPrivKey: swap.blindingKey
+                blindingPrivateKey: swap.blindingKey
                     ? Buffer.from(swap.blindingKey, "hex")
                     : undefined,
             },
