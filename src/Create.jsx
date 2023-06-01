@@ -3,8 +3,8 @@ import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { createMemo } from "solid-js";
-import { fetcher, fetchPairs } from "./helper";
+import { createMemo, createSignal } from "solid-js";
+import { errorHandler, fetcher, fetchPairs } from "./helper";
 import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
 import { getAddress, getNetwork } from "./compat";
 import Asset from "./components/Asset";
@@ -54,6 +54,8 @@ import {
 const Create = () => {
     let invoiceInputRef, receiveAmountRef;
 
+    const [buttonDisable, setButtonDisable] = createSignal(true);
+
     // change denomination
     createMemo(() => {
         setReceiveAmountFormatted(
@@ -73,6 +75,10 @@ const Create = () => {
             }
         }
         setValid(false);
+    });
+
+    createMemo(() => {
+        setButtonDisable(!valid());
     });
 
     const [t] = useI18n();
@@ -160,6 +166,7 @@ const Create = () => {
                 invoice: invoice(),
             };
         }
+        setButtonDisable(true);
         fetcher(
             "/createswap",
             (data) => {
@@ -176,8 +183,13 @@ const Create = () => {
                 setInvoice("");
                 setOnchainAddress("");
                 navigate("/swap/" + data.id);
+                setButtonDisable(false);
             },
-            params
+            params,
+            (err) => {
+                setButtonDisable(false);
+                errorHandler(err);
+            }
         );
     };
 
@@ -334,7 +346,7 @@ const Create = () => {
                 <button
                     id="create-swap"
                     class="btn"
-                    disabled={valid() ? "" : "disabled"}
+                    disabled={buttonDisable() ? "disabled" : ""}
                     onClick={create}>
                     {t("create_swap")}
                 </button>
