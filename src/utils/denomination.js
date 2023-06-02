@@ -1,4 +1,4 @@
-import { denomination } from "../signals";
+import { denomination, maximum } from "../signals";
 import { BigNumber } from "bignumber.js";
 
 export const satFactor = 100_000_000;
@@ -6,6 +6,15 @@ export const satFactor = 100_000_000;
 export const denominations = {
     sat: "sat",
     btc: "btc",
+};
+
+export const getValidationRegex = () => {
+    const digits = calculateDigits();
+    const regex =
+        denomination() == denominations.sat
+            ? "^[0-9]{1," + digits + "}$"
+            : "^[0-9].[0-9]{1," + digits + "}$";
+    return new RegExp(regex);
 };
 
 export const formatAmount = (amount, fixed = false) => {
@@ -32,4 +41,16 @@ export const convertAmount = (amount) => {
         case denominations.sat:
             return amount;
     }
+};
+
+export const calculateDigits = () => {
+    let digits = maximum().toString().length;
+    if (denomination() === denominations.btc) {
+        if (digits < 10) {
+            digits = 10;
+        } else {
+            digits += 1;
+        }
+    }
+    return digits;
 };

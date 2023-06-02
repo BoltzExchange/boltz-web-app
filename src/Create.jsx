@@ -15,6 +15,8 @@ import {
     convertAmount,
     denominations,
     formatAmount,
+    calculateDigits,
+    getValidationRegex,
 } from "./utils/denomination";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
@@ -208,10 +210,9 @@ const Create = () => {
 
     const validatePaste = (evt) => {
         let clipboardData, pastedData;
-        const regex =
-            denomination() == "sat" ? /^[0-9]{1,10}$/ : /^0\.[0-9]{1,8}$|/;
-        clipboardData = evt.clipboardData || window.clipboardData;
+        clipboardData = evt.clipboardData || globalThis.clipboardData;
         pastedData = clipboardData.getData("Text");
+        const regex = getValidationRegex();
         if (!regex.test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
@@ -281,13 +282,11 @@ const Create = () => {
                     <input
                         required
                         type="text"
-                        maxlength={denomination() == "btc" ? "10" : "7"}
-                        pattern="0\.[0-9]{1,8}|[0-9]{1,10}"
+                        maxlength={calculateDigits()}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="sendAmount"
-                        step={denomination() == "btc" ? 0.00000001 : 1}
                         value={sendAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}
@@ -311,13 +310,11 @@ const Create = () => {
                         autofocus
                         required
                         type="text"
-                        pattern="0\.[0-9]{1,8}|[0-9]{1,10}"
-                        maxlength={denomination() == "btc" ? "10" : "7"}
+                        maxlength={calculateDigits()}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="receiveAmount"
-                        step={denomination() == "btc" ? 0.00000001 : 1}
                         value={receiveAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}
