@@ -29,7 +29,7 @@ export const formatAmount = (amount, fixed = false) => {
             }
             return amountBig.toNumber();
         case denominations.sat:
-            return amount;
+            return Number(amount);
     }
 };
 
@@ -39,7 +39,7 @@ export const convertAmount = (amount) => {
             let amountBig = new BigNumber(amount).multipliedBy(satFactor);
             return amountBig.toNumber();
         case denominations.sat:
-            return amount;
+            return Number(amount);
     }
 };
 

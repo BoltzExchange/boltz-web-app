@@ -1,11 +1,49 @@
 import { setDenomination, setMaximum } from "../../src/signals";
 import {
+    convertAmount,
+    formatAmount,
     getValidationRegex,
     calculateDigits,
     denominations,
 } from "../../src/utils/denomination";
 
 describe("denomination utils", () => {
+    describe("convert amount", () => {
+        test.each`
+            denomination         | amount           | converted
+            ${denominations.sat} | ${"123123"}      | ${123123}
+            ${denominations.sat} | ${"12312300000"} | ${12312300000}
+            ${denominations.btc} | ${"0.00123123"}  | ${123123}
+            ${denominations.btc} | ${"0.999999"}    | ${99999900}
+            ${denominations.btc} | ${"1.123123"}    | ${112312300}
+        `(
+            "convert $amount in $denomination",
+            ({ denomination, amount, converted }) => {
+                setDenomination(denomination);
+                expect(convertAmount(amount)).toEqual(converted);
+            }
+        );
+    });
+
+    describe("format amount", () => {
+        test.each`
+            denomination         | amount           | formatted
+            ${denominations.sat} | ${"123123"}      | ${123123}
+            ${denominations.sat} | ${"12312300000"} | ${12312300000}
+            ${denominations.btc} | ${"100123123"}   | ${1.00123123}
+            ${denominations.btc} | ${"123123"}      | ${0.00123123}
+            ${denominations.btc} | ${"1"}           | ${0.00000001}
+            ${denominations.btc} | ${"1000"}        | ${0.00001}
+            ${denominations.btc} | ${"1000"}        | ${0.00001}
+        `(
+            "format $amount in $denomination",
+            ({ denomination, amount, formatted }) => {
+                setDenomination(denomination);
+                expect(formatAmount(amount)).toEqual(formatted);
+            }
+        );
+    });
+
     describe("calculate allowed digits", () => {
         test.each`
             denomination         | digits | amount
