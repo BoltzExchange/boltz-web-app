@@ -27,9 +27,15 @@ export const formatAmount = (amount, fixed = false) => {
             if (amountBig.isZero()) {
                 return amountBig.toFixed(1);
             }
-            return amountBig.toNumber();
+            // 0.00000001.toString() returns "1e-8"
+            // 0.0000001.toString() returns "1e-7"
+            if (amountBig.toString().indexOf("-") !== -1) {
+                const digits = amountBig.toString().slice(-1);
+                return amountBig.toFixed(Number(digits));
+            }
+            return amountBig.toString();
         case denominations.sat:
-            return Number(amount);
+            return amount.toString();
     }
 };
 

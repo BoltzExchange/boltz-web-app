@@ -27,14 +27,16 @@ describe("denomination utils", () => {
 
     describe("format amount", () => {
         test.each`
-            denomination         | amount           | formatted
-            ${denominations.sat} | ${"123123"}      | ${123123}
-            ${denominations.sat} | ${"12312300000"} | ${12312300000}
-            ${denominations.btc} | ${"100123123"}   | ${1.00123123}
-            ${denominations.btc} | ${"123123"}      | ${0.00123123}
-            ${denominations.btc} | ${"1"}           | ${0.00000001}
-            ${denominations.btc} | ${"1000"}        | ${0.00001}
-            ${denominations.btc} | ${"1000"}        | ${0.00001}
+            denomination         | amount         | formatted
+            ${denominations.sat} | ${123123}      | ${"123123"}
+            ${denominations.sat} | ${12312300000} | ${"12312300000"}
+            ${denominations.btc} | ${100123123}   | ${"1.00123123"}
+            ${denominations.btc} | ${123123}      | ${"0.00123123"}
+            ${denominations.btc} | ${1}           | ${"0.00000001"}
+            ${denominations.btc} | ${10}          | ${"0.0000001"}
+            ${denominations.btc} | ${100}         | ${"0.000001"}
+            ${denominations.btc} | ${1000}        | ${"0.00001"}
+            ${denominations.btc} | ${10000}       | ${"0.0001"}
         `(
             "format $amount in $denomination",
             ({ denomination, amount, formatted }) => {
