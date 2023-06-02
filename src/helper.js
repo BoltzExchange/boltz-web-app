@@ -275,14 +275,12 @@ export async function refund(swap) {
                 // only if the swaps was not initiated with the refund json
                 // refundjson has no date
                 if (swap.date !== undefined) {
-                    let tmp_swaps = swaps();
-                    let current_swap = tmp_swaps
-                        .filter((s) => s.id === swap.id)
-                        .pop();
-                    current_swap.refundTx = data.transactionId;
-                    log.debug("current_swap", current_swap);
-                    log.debug("swaps", tmp_swaps);
-                    setSwaps(tmp_swaps);
+                    const tmpSwaps = swaps();
+                    const currentSwap = tmpSwaps.find((s) => s.id === swap.id);
+                    currentSwap.refundTx = data.transactionId;
+                    log.debug("current_swap", currentSwap);
+                    log.debug("swaps", tmpSwaps);
+                    setSwaps(tmpSwaps);
                 } else {
                     setRefundTx(data.transactionId);
                 }
