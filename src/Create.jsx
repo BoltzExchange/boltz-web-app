@@ -206,6 +206,18 @@ const Create = () => {
         }
     };
 
+    const validatePaste = (evt) => {
+        let clipboardData, pastedData;
+        const regex =
+            denomination() == "sat" ? /^[0-9]{1,10}$/ : /^0\.[0-9]{1,8}$|/;
+        clipboardData = evt.clipboardData || window.clipboardData;
+        pastedData = clipboardData.getData("Text");
+        if (!regex.test(pastedData)) {
+            evt.stopPropagation();
+            evt.preventDefault();
+        }
+    };
+
     const validateReceiveAmount = (input) => {
         input.setCustomValidity("");
         const amount = convertAmount(Number(input.value), denominations.sat);
@@ -277,6 +289,7 @@ const Create = () => {
                         id="sendAmount"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         value={sendAmountFormatted()}
+                        onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
                     />
@@ -306,6 +319,7 @@ const Create = () => {
                         id="receiveAmount"
                         step={denomination() == "btc" ? 0.00000001 : 1}
                         value={receiveAmountFormatted()}
+                        onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}
                     />
