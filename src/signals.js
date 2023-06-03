@@ -28,7 +28,10 @@ export const [invoice, setInvoice] = createSignal("");
 export const [invoiceQr, setInvoiceQr] = createSignal("");
 export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
-export const [swap, setSwap] = createSignal(null);
+export const [swap, setSwap] = createSignal(null, {
+    // To allow updating properties of the swap object without replacing it completely
+    equals: () => false,
+});
 export const [swapStatus, setSwapStatus] = createSignal("");
 export const [swapStatusTransaction, setSwapStatusTransaction] =
     createSignal("");

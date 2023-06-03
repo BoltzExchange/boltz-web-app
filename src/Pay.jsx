@@ -27,6 +27,7 @@ import SwapRefunded from "./status/SwapRefunded";
 import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
 import BlockExplorer from "./components/BlockExplorer";
+import { updateSwapStatus } from "./utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
@@ -61,6 +62,7 @@ const Pay = () => {
                 stream.onmessage = function (event) {
                     const data = JSON.parse(event.data);
                     log.debug(`Event status update: ${data.status}`, data);
+                    updateSwapStatus(params.id, data.status);
                     setSwapStatus(data.status);
                     setSwapStatusTransaction(data.transaction);
                     if (

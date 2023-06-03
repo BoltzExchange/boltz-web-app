@@ -13,6 +13,11 @@ import {
     setTimeoutBlockheight,
     setTransactionToRefund,
 } from "./signals";
+import {
+    swapStatusFailed,
+    swapStatusSuccess,
+    updateSwapStatus,
+} from "./utils/swapStatus";
 
 const invalidFileError = "Invalid refund file";
 
@@ -101,33 +106,43 @@ const Refund = () => {
         );
     };
 
+    const refundSwapsSanityFilter = (swap) => !swap.reverse &&
+                swap.refundTx === undefined;
+
     const [refundableSwaps, setRefundableSwaps] = createSignal(undefined);
 
     createEffect(() => {
-        Promise.all(
-            swaps().map((swap) => {
-                return new Promise((resolve) => {
-                    fetcher(
-                        "/swapstatus",
-                        async (data) => {
-                            if (
-                                data.status == "transaction.lockupFailed" ||
-                                data.status == "invoice.failedToPay"
-                            ) {
-                                resolve(swap);
-                            } else {
-                                resolve();
-                            }
-                        },
-                        { id: swap.id },
-                        () => resolve()
-                    );
-                });
-            })
-        ).then((tmp_swaps) => {
-            const filtered = tmp_swaps.filter((s) => s !== undefined);
-            setRefundableSwaps(filtered);
-        });
+        const swapsToRefund = swaps().filter(refundSwapsSanityFilter).filter(
+            (swap) =>
+                Object.values(swapStatusFailed).includes(swap.status)
+        );
+        setRefundableSwaps(swapsToRefund);
+
+        swaps()
+            .filter(refundSwapsSanityFilter)
+            .filter(
+                (swap) =>
+                    swap.status !== swapStatusSuccess.TransactionClaimed &&
+                    swapsToRefund.find((found) => found.id === swap.id) ===
+                        undefined
+            )
+            .map((swap) => {
+                fetcher(
+                    "/swapstatus",
+                    (data) => {
+                        if (
+                            !updateSwapStatus(swap.id, data.status) &&
+                            Object.values(swapStatusFailed).includes(
+                                data.status
+                            )
+                        ) {
+                            setRefundableSwaps(refundableSwaps().concat(swap));
+                        }
+                    },
+                    { id: swap.id },
+                    () => {}
+                );
+            });
     });
 
     return (
