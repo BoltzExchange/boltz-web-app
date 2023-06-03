@@ -73,7 +73,6 @@ const Fees = () => {
     return (
         <div class="fees-dyn">
             <div class="denomination">
-                <label>{t("denomination")}: </label>
                 <img
                     src={btc_svg}
                     onClick={() => setDenomination("btc")}
