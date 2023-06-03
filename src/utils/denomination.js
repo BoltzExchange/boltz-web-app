@@ -1,5 +1,5 @@
-import { denomination, maximum } from "../signals";
 import { BigNumber } from "bignumber.js";
+import { denomination, maximum } from "../signals";
 
 export const satFactor = 100_000_000;
 
@@ -12,15 +12,15 @@ export const getValidationRegex = () => {
     const digits = calculateDigits();
     const regex =
         denomination() == denominations.sat
-            ? "^[0-9]{1," + digits + "}$"
-            : "^[0-9].[0-9]{1," + digits + "}$";
+            ? `^[0-9]{1,${digits}}$`
+            : `^[0-9](.[0-9]{1,${digits}}){0,1}$`;
     return new RegExp(regex);
 };
 
 export const formatAmount = (amount, fixed = false) => {
     switch (denomination()) {
         case denominations.btc:
-            let amountBig = new BigNumber(amount).div(satFactor);
+            const amountBig = new BigNumber(amount).div(satFactor);
             if (fixed) {
                 return amountBig.toFixed(8);
             }
@@ -33,7 +33,9 @@ export const formatAmount = (amount, fixed = false) => {
                 const digits = amountBig.toString().slice(-1);
                 return amountBig.toFixed(Number(digits));
             }
+
             return amountBig.toString();
+
         case denominations.sat:
             return amount.toString();
     }
@@ -42,7 +44,7 @@ export const formatAmount = (amount, fixed = false) => {
 export const convertAmount = (amount) => {
     switch (denomination()) {
         case denominations.btc:
-            let amountBig = new BigNumber(amount).multipliedBy(satFactor);
+            const amountBig = new BigNumber(amount).multipliedBy(satFactor);
             return amountBig.toNumber();
         case denominations.sat:
             return Number(amount);
@@ -51,12 +53,11 @@ export const convertAmount = (amount) => {
 
 export const calculateDigits = () => {
     let digits = maximum().toString().length;
-    if (denomination() === denominations.btc) {
-        if (digits < 10) {
-            digits = 10;
-        } else {
-            digits += 1;
-        }
+    if (denomination() === denominations.btc && digits < 10) {
+        digits = 10;
+    } else {
+        digits += 1;
     }
+
     return digits;
 };

@@ -209,11 +209,9 @@ const Create = () => {
     };
 
     const validatePaste = (evt) => {
-        let clipboardData, pastedData;
-        clipboardData = evt.clipboardData || globalThis.clipboardData;
-        pastedData = clipboardData.getData("Text");
-        const regex = getValidationRegex();
-        if (!regex.test(pastedData)) {
+        const clipboardData = evt.clipboardData || globalThis.clipboardData;
+        const pastedData = clipboardData.getData("Text");
+        if (!getValidationRegex().test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
         }
