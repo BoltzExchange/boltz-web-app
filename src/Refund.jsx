@@ -106,16 +106,24 @@ const Refund = () => {
         );
     };
 
-    const refundSwapsSanityFilter = (swap) => !swap.reverse &&
-                swap.refundTx === undefined;
+    const refundSwapsSanityFilter = (swap) =>
+        !swap.reverse && swap.refundTx === undefined;
 
     const [refundableSwaps, setRefundableSwaps] = createSignal(undefined);
 
+    const addToRefundableSwaps = (swap) => {
+        setRefundableSwaps(refundableSwaps().concat(swap));
+    };
+
     createEffect(() => {
-        const swapsToRefund = swaps().filter(refundSwapsSanityFilter).filter(
-            (swap) =>
-                Object.values(swapStatusFailed).includes(swap.status)
-        );
+        const swapsToRefund = swaps()
+            .filter(refundSwapsSanityFilter)
+            .filter((swap) =>
+                [
+                    swapStatusFailed.InvoiceFailedToPay,
+                    swapStatusFailed.TransactionLockupFailed,
+                ].includes(swap.status)
+            );
         setRefundableSwaps(swapsToRefund);
 
         swaps()
@@ -129,14 +137,29 @@ const Refund = () => {
             .map((swap) => {
                 fetcher(
                     "/swapstatus",
-                    (data) => {
+                    (status) => {
                         if (
-                            !updateSwapStatus(swap.id, data.status) &&
+                            !updateSwapStatus(swap.id, status.status) &&
                             Object.values(swapStatusFailed).includes(
-                                data.status
+                                status.status
                             )
                         ) {
-                            setRefundableSwaps(refundableSwaps().concat(swap));
+                            if (
+                                status.status !== swapStatusFailed.SwapExpired
+                            ) {
+                                addToRefundableSwaps(swap);
+                                return;
+                            }
+
+                            // Make sure coins were locked for the swap with status "swap.expired"
+                            fetcher(
+                                "/getswaptransaction",
+                                () => {
+                                    addToRefundableSwaps(swap);
+                                },
+                                { id: swap.id },
+                                () => {}
+                            );
                         }
                     },
                     { id: swap.id },
