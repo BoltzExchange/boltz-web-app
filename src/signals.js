@@ -1,4 +1,3 @@
-import { getAddress, getNetwork } from "./compat";
 import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
 import { pairs } from "./config";
@@ -29,7 +28,10 @@ export const [invoice, setInvoice] = createSignal("");
 export const [invoiceQr, setInvoiceQr] = createSignal("");
 export const [preimageHash, setPreimageHash] = createSignal("");
 export const [preimage, setPreimage] = createSignal("");
-export const [swap, setSwap] = createSignal(null);
+export const [swap, setSwap] = createSignal(null, {
+    // To allow updating properties of the swap object without replacing it completely
+    equals: () => false,
+});
 export const [swapStatus, setSwapStatus] = createSignal("");
 export const [swapStatusTransaction, setSwapStatusTransaction] =
     createSignal("");
@@ -50,7 +52,17 @@ export const [asset, setAsset] = createStorageSignal(
     "asset",
     pairs[0].split("/")[0]
 );
-export const [swaps, setSwaps] = createStorageSignal("swaps", "[]");
+export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
+    // Because arrays are the same object when changed,
+    // we have to override the equality checker
+    equals: () => false,
+    deserializer: (data) => {
+        return JSON.parse(data);
+    },
+    serializer: (data) => {
+        return JSON.stringify(data);
+    },
+});
 export const [reverse, setReverse] = createSignal(true);
 
 // validation

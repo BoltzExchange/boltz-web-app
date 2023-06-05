@@ -2,15 +2,22 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
+import SwapList from "./components/SwapList";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
 import { fetcher, refundAddressChange, refund } from "./helper";
 import {
+    swaps,
     refundTx,
     setTimeoutEta,
     setTimeoutBlockheight,
     setTransactionToRefund,
 } from "./signals";
+import {
+    swapStatusFailed,
+    swapStatusSuccess,
+    updateSwapStatus,
+} from "./utils/swapStatus";
 
 const invalidFileError = "Invalid refund file";
 
@@ -99,12 +106,75 @@ const Refund = () => {
         );
     };
 
+    const refundSwapsSanityFilter = (swap) =>
+        !swap.reverse && swap.refundTx === undefined;
+
+    const [refundableSwaps, setRefundableSwaps] = createSignal(undefined);
+
+    const addToRefundableSwaps = (swap) => {
+        setRefundableSwaps(refundableSwaps().concat(swap));
+    };
+
+    createEffect(() => {
+        const swapsToRefund = swaps()
+            .filter(refundSwapsSanityFilter)
+            .filter((swap) =>
+                [
+                    swapStatusFailed.InvoiceFailedToPay,
+                    swapStatusFailed.TransactionLockupFailed,
+                ].includes(swap.status)
+            );
+        setRefundableSwaps(swapsToRefund);
+
+        swaps()
+            .filter(refundSwapsSanityFilter)
+            .filter(
+                (swap) =>
+                    swap.status !== swapStatusSuccess.TransactionClaimed &&
+                    swapsToRefund.find((found) => found.id === swap.id) ===
+                        undefined
+            )
+            .map((swap) => {
+                fetcher(
+                    "/swapstatus",
+                    (status) => {
+                        if (
+                            !updateSwapStatus(swap.id, status.status) &&
+                            Object.values(swapStatusFailed).includes(
+                                status.status
+                            )
+                        ) {
+                            if (
+                                status.status !== swapStatusFailed.SwapExpired
+                            ) {
+                                addToRefundableSwaps(swap);
+                                return;
+                            }
+
+                            // Make sure coins were locked for the swap with status "swap.expired"
+                            fetcher(
+                                "/getswaptransaction",
+                                () => {
+                                    addToRefundableSwaps(swap);
+                                },
+                                { id: swap.id },
+                                () => {}
+                            );
+                        }
+                    },
+                    { id: swap.id },
+                    () => {}
+                );
+            });
+    });
+
     return (
         <div id="refund">
             <div class="frame">
                 <h2>{t("refund_a_swap")}</h2>
                 <p>{t("refund_a_swap_subline")}</p>
                 <hr />
+                <SwapList swapsSignal={refundableSwaps} />
                 <input
                     required
                     type="file"

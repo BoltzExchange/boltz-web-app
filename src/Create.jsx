@@ -179,9 +179,7 @@ const Create = () => {
                 data.preimage = preimageHex;
                 data.receiveAmount = Number(receiveAmount());
                 data.onchainAddress = onchainAddress();
-                let tmp_swaps = JSON.parse(swaps());
-                tmp_swaps.push(data);
-                setSwaps(JSON.stringify(tmp_swaps));
+                setSwaps(swaps().concat(data));
                 setInvoice("");
                 setOnchainAddress("");
                 navigate("/swap/" + data.id);
