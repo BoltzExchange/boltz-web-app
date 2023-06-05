@@ -10,6 +10,7 @@ import {
     setBoltzFee,
     setMinerFee,
     setReceiveAmount,
+    receiveAmount,
     setSendAmount,
     sendAmount,
     denomination,
@@ -52,6 +53,8 @@ const Fees = () => {
                 setFirstLoad(false);
                 setReceiveAmount(BigInt(cfg.limits.minimal));
                 setSendAmount(BigInt(calculateSendAmount(cfg.limits.minimal)));
+            } else {
+                setSendAmount(calculateSendAmount(Number(receiveAmount())));
             }
         }
     });
