@@ -64,6 +64,8 @@ const dict = {
         refund_backup: "Backup localstorage",
         delete_localstorage:
             "Are you sure you want to clear your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
+        delete_localstorage_single_swap:
+            "Are you sure you want to clear Swap {{ id }} from your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
         tx_in_mempool: "Transaction is in mempool",
         tx_in_mempool_subline: "waiting for confirmation to complete the swap",
         expired: "Swap expired!",
@@ -83,6 +85,10 @@ const dict = {
         wasm_not_supported: "Please activate WebAssembly in your browser",
         ios_image_download:
             'Long press and select "Save to Photos" to download refund file',
+        created: "Created",
+        delete: "Delete",
+        view: "View",
+        id: "ID",
     },
     de: {
         history: "Verlauf",

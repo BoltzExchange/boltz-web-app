@@ -10,6 +10,7 @@ import {
     setBoltzFee,
     setMinerFee,
     setReceiveAmount,
+    receiveAmount,
     setSendAmount,
     sendAmount,
     denomination,
@@ -22,7 +23,7 @@ import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
-import { fetchPairs } from "../helper";
+import { isMobile, fetchPairs } from "../helper";
 import btc_svg from "../assets/btc.svg";
 import sat_svg from "../assets/sat.svg";
 import reload_svg from "../assets/reload.svg";
@@ -52,6 +53,8 @@ const Fees = () => {
                 setFirstLoad(false);
                 setReceiveAmount(BigInt(cfg.limits.minimal));
                 setSendAmount(BigInt(calculateSendAmount(cfg.limits.minimal)));
+            } else {
+                setSendAmount(calculateSendAmount(Number(receiveAmount())));
             }
         }
     });
@@ -73,7 +76,9 @@ const Fees = () => {
     return (
         <div class="fees-dyn">
             <div class="denomination">
-                <label>{t("denomination")}: </label>
+                <Show when={!isMobile}>
+                    <label>{t("denomination")}: </label>
+                </Show>
                 <img
                     src={btc_svg}
                     onClick={() => setDenomination("btc")}

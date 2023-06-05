@@ -1,6 +1,10 @@
 import log from "loglevel";
 import QRCode from "qrcode";
+import { Buffer } from "buffer";
 import { detectSwap } from "boltz-core";
+import { ECPair } from "./ecpair/ecpair";
+import { api_url } from "./config";
+import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
 import {
     ref,
     swaps,
@@ -20,9 +24,8 @@ import {
     setOnline,
     setConfig,
     setRef,
+    setSwap,
 } from "./signals";
-import { Buffer } from "buffer";
-import { ECPair } from "./ecpair/ecpair";
 import {
     getNetwork,
     getTransaction,
@@ -33,7 +36,10 @@ import {
     setup,
     getAddress,
 } from "./compat";
-import { api_url } from "./config";
+
+export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
+export const isMobile =
+    isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
 const parseBlindingKey = (swap) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
@@ -141,9 +147,15 @@ export const fetchSwapStatus = (swap) => {
         (data) => {
             setSwapStatus(data.status);
             setSwapStatusTransaction(data.transaction);
-            if (data.status == "transaction.confirmed" && data.transaction) {
+
+            updateSwapStatus(swap.id, data.status);
+            if (
+                data.status == swapStatusPending.TransactionConfirmed &&
+                data.transaction
+            ) {
                 claim(swap);
             }
+
             checkForFailed(swap.id, data);
             setFailureReason(data.failureReason);
         },
@@ -275,14 +287,13 @@ export async function refund(swap) {
                 // only if the swaps was not initiated with the refund json
                 // refundjson has no date
                 if (swap.date !== undefined) {
-                    let tmp_swaps = JSON.parse(swaps());
-                    let current_swap = tmp_swaps
-                        .filter((s) => s.id === swap.id)
-                        .pop();
-                    current_swap.refundTx = data.transactionId;
-                    log.debug("current_swap", current_swap);
-                    log.debug("swaps", tmp_swaps);
-                    setSwaps(JSON.stringify(tmp_swaps));
+                    const tmpSwaps = swaps();
+                    const currentSwap = tmpSwaps.find((s) => s.id === swap.id);
+                    currentSwap.refundTx = data.transactionId;
+                    setSwaps(tmpSwaps);
+                    setSwap(currentSwap);
+                    log.debug("current_swap", currentSwap);
+                    log.debug("swaps", tmpSwaps);
                 } else {
                     setRefundTx(data.transactionId);
                 }

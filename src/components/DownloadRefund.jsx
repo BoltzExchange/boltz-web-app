@@ -2,10 +2,7 @@ import log from "loglevel";
 import QRCode from "qrcode";
 import { useI18n } from "@solid-primitives/i18n";
 import { swap, setNotificationType, setNotification } from "../signals";
-
-const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
-const isMobile =
-    isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
+import { isIos, isMobile } from "../helper";
 
 const createRefundData = (swap) => {
     return {
