@@ -28,8 +28,7 @@ const validateReverseSwap = (swap) => {
     }
 
     // Invoice
-    const preimageHash = crypto
-        .sha256(Buffer.from(swap.preimage, "hex"));
+    const preimageHash = crypto.sha256(Buffer.from(swap.preimage, "hex"));
 
     if (invoiceData.preimageHash !== preimageHash.toString("hex")) {
         return false;
