@@ -88,7 +88,7 @@ const Create = () => {
     const navigate = useNavigate();
 
     const changeReceiveAmount = (e) => {
-        const amount = e.currentTarget.value;
+        const amount = e.currentTarget.value.trim();
         let satAmount = convertAmount(Number(amount), denominations.sat);
         let sendAmount = calculateSendAmount(satAmount);
         setReceiveAmount(BigInt(satAmount));
@@ -98,7 +98,7 @@ const Create = () => {
     };
 
     const changeSendAmount = (e) => {
-        const amount = e.currentTarget.value;
+        const amount = e.currentTarget.value.trim();
         let satAmount = convertAmount(Number(amount), denominations.sat);
         let receiveAmount = calculateReceiveAmount(satAmount);
         setSendAmount(BigInt(satAmount));
@@ -210,7 +210,7 @@ const Create = () => {
 
     const validatePaste = (evt) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
-        const pastedData = clipboardData.getData("Text");
+        const pastedData = clipboardData.getData("Text").trim();
         if (!getValidationRegex().test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
@@ -219,7 +219,10 @@ const Create = () => {
 
     const validateReceiveAmount = (input) => {
         input.setCustomValidity("");
-        const amount = convertAmount(Number(input.value), denominations.sat);
+        const amount = convertAmount(
+            Number(input.value.trim()),
+            denominations.sat
+        );
         if (amount < minimum()) {
             input.setCustomValidity(
                 t("minimum_amount", {
