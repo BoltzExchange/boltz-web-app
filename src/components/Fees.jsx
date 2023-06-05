@@ -22,7 +22,7 @@ import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
-import { fetchPairs } from "../helper";
+import { isMobile, fetchPairs } from "../helper";
 import btc_svg from "../assets/btc.svg";
 import sat_svg from "../assets/sat.svg";
 import reload_svg from "../assets/reload.svg";
@@ -73,6 +73,9 @@ const Fees = () => {
     return (
         <div class="fees-dyn">
             <div class="denomination">
+                <Show when={!isMobile}>
+                    <label>{t("denomination")}: </label>
+                </Show>
                 <img
                     src={btc_svg}
                     onClick={() => setDenomination("btc")}

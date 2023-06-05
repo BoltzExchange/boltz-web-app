@@ -35,6 +35,10 @@ import {
 } from "./compat";
 import { api_url } from "./config";
 
+export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
+export const isMobile =
+    isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
+
 const parseBlindingKey = (swap) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
 };
