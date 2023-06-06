@@ -7,6 +7,7 @@ import { setWebln, setWasmSupported } from "./signals";
 import { detectWebLNProvider, checkReferralId } from "./helper";
 import log from "loglevel";
 import Create from "./Create";
+import Error from "./Error";
 import Pay from "./Pay";
 import Nav from "./Nav";
 import Notification from "./Notification";
@@ -34,6 +35,7 @@ const cleanup = render(
                     <Route path="/" component={Create} />
                     <Route path="/swap" component={Create} />
                     <Route path="/swap/:id" component={Pay} />
+                    <Route path="/error" component={Error} />
                     <Route path="/refund" component={Refund} />
                     <Route path="/history" component={History} />
                 </Routes>

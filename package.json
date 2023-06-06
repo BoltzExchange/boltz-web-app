@@ -21,7 +21,7 @@
     "vite": "^4.2.1",
     "vite-plugin-node-polyfills": "^0.8.2",
     "vite-plugin-solid": "^2.6.1",
-    "vitest": "^0.31.1"
+    "vitest": "^0.31.3"
   },
   "dependencies": {
     "@noble/secp256k1": "^1.7.1",
@@ -31,6 +31,8 @@
     "@solidjs/router": "^0.8.2",
     "@vulpemventures/secp256k1-zkp": "^3.0.0",
     "bignumber.js": "^9.1.1",
+    "bitcoinjs-lib": "^6.1.2",
+    "bolt11": "^1.4.1",
     "boltz-core": "^1.0.0",
     "buffer": "^6.0.3",
     "create-hmac": "^1.1.7",

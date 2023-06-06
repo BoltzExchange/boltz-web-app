@@ -1,5 +1,7 @@
 const dict = {
     en: {
+        error: "Error",
+        error_subline: "Invalid response from the API, something is wrong.",
         history: "History",
         swap: "Swap",
         channel: "Channel",

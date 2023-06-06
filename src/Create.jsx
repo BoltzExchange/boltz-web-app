@@ -1,16 +1,18 @@
 import log from "loglevel";
+import { createMemo, createSignal } from "solid-js";
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { createMemo, createSignal } from "solid-js";
-import { errorHandler, fetcher, fetchPairs } from "./helper";
-import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
-import { getAddress, getNetwork } from "./compat";
-import Asset from "./components/Asset";
-import AssetSelect from "./components/AssetSelect";
 import Fees from "./components/Fees";
+import Asset from "./components/Asset";
 import arrow_svg from "./assets/arrow.svg";
+import { errorHandler, fetcher, fetchPairs } from "./helper";
+import { getAddress, getNetwork } from "./compat";
+import AssetSelect from "./components/AssetSelect";
+import { validateResponse } from "./utils/validation";
+import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
+import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     convertAmount,
     denominations,
@@ -18,7 +20,6 @@ import {
     calculateDigits,
     getValidationRegex,
 } from "./utils/denomination";
-import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     online,
     swaps,
@@ -136,8 +137,8 @@ const Create = () => {
             address.toOutputScript(onchainAddress(), net);
             const preimage = secp.utils.randomBytes(32);
             preimageHex = secp.utils.bytesToHex(preimage);
-            let preimageHash = await secp.utils.sha256(preimage);
-            let preimageHashHex = secp.utils.bytesToHex(preimageHash);
+            const preimageHash = await secp.utils.sha256(preimage);
+            const preimageHashHex = secp.utils.bytesToHex(preimageHash);
             params = {
                 type: "reversesubmarine",
                 pairId: asset_name + "/BTC",
@@ -178,12 +179,26 @@ const Create = () => {
                 data.asset = asset();
                 data.preimage = preimageHex;
                 data.receiveAmount = Number(receiveAmount());
+                data.sendAmount = Number(sendAmount());
                 data.onchainAddress = onchainAddress();
-                setSwaps(swaps().concat(data));
-                setInvoice("");
-                setOnchainAddress("");
-                navigate("/swap/" + data.id);
-                setButtonDisable(false);
+
+                if (!data.reverse) {
+                    data.invoice = invoice();
+                }
+
+                // TODO: show updated quote when amount doesn't match exactly
+                validateResponse(data).then((success) => {
+                    if (!success) {
+                        navigate("/error/");
+                        return;
+                    }
+
+                    setSwaps(swaps().concat(data));
+                    setInvoice("");
+                    setOnchainAddress("");
+                    navigate("/swap/" + data.id);
+                    setButtonDisable(false);
+                });
             },
             params,
             (err) => {

@@ -12,12 +12,14 @@ import {
     targetFee,
 } from "boltz-core";
 import {
+    init,
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
-    init as prepareConfidential,
 } from "boltz-core/dist/lib/liquid";
+
 import { network } from "./config";
 
+export let secp;
 let confi;
 
 const setup = async () => {
@@ -25,9 +27,9 @@ const setup = async () => {
         return;
     }
 
-    const zkpLib = await zkp();
-    confi = new confidential.Confidential(zkpLib);
-    prepareConfidential(zkpLib);
+    secp = await zkp();
+    init(secp);
+    confi = new confidential.Confidential(secp);
 };
 
 const getAddress = (asset) => {
