@@ -11,14 +11,18 @@ export const denominations = {
 export const getValidationRegex = () => {
     const digits = calculateDigits();
     const regex =
-        denomination() == denominations.sat
+        denomination() === denominations.sat
             ? `^[0-9]{1,${digits}}$`
             : `^[0-9](.[0-9]{1,${digits}}){0,1}$`;
     return new RegExp(regex);
 };
 
 export const formatAmount = (amount, fixed = false) => {
-    switch (denomination()) {
+    return formatAmountDenomination(denomination(), amount, fixed);
+};
+
+export const formatAmountDenomination = (denom, amount, fixed = false) => {
+    switch (denom) {
         case denominations.btc:
             const amountBig = new BigNumber(amount).div(satFactor);
             if (fixed) {

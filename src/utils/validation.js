@@ -1,11 +1,14 @@
-import bolt11 from "bolt11";
 import log from "loglevel";
+import bolt11 from "bolt11";
+import { Buffer as BufferBrowser } from "buffer";
 import { crypto, script } from "bitcoinjs-lib";
-import { Scripts, reverseSwapScript } from "boltz-core";
+import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
 import { ECPair } from "../ecpair/ecpair";
-import { decodeAddress } from "../compat";
+import { decodeAddress, secp, setup } from "../compat";
+import { denominations, formatAmountDenomination } from "./denomination";
 
 // TODO: sanity check timeout block height?
+// TODO: buffers for amounts
 
 export const decodeInvoice = (invoice) => {
     const decoded = bolt11.decode(invoice);
@@ -16,30 +19,90 @@ export const decodeInvoice = (invoice) => {
     };
 };
 
-const validateReverseSwap = (swap) => {
+const getScriptHashFunction = (swap) => {
+    return swap.asset === "BTC" && !swap.reverse
+        ? Scripts.p2shP2wshOutput
+        : Scripts.p2wshOutput;
+};
+
+const validateAddress = async (swap, address, buffer) => {
+    const compareScript = getScriptHashFunction(swap)(
+        buffer.from(swap.redeemScript, "hex")
+    );
+    const decodedAddress = decodeAddress(swap.asset, address);
+
+    if (!decodedAddress.script.equals(compareScript)) {
+        log.warn("swap address validation: address script mismatch");
+        return false;
+    }
+
+    if (swap.asset === "L-BTC") {
+        await setup();
+
+        const blindingPrivateKey = buffer.from(swap.blindingKey, "hex");
+        const blindingPublicKey = buffer.from(
+            secp.ecc.pointFromScalar(blindingPrivateKey)
+        );
+
+        if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
+            log.warn("swap address validation: invalid Liquid blinding key");
+            return false;
+        }
+    }
+
+    return true;
+};
+
+const validateReverseSwap = (swap, buffer) => {
     const invoiceData = decodeInvoice(swap.invoice);
 
     // Amounts
     if (
         invoiceData.satoshis !== swap.sendAmount ||
-        swap.onchainAmount !== swap.receiveAmount
+        swap.onchainAmount <= swap.receiveAmount
     ) {
+        log.warn("reverse swap validation: amounts");
         return false;
     }
 
     // Invoice
-    const preimageHash = crypto.sha256(Buffer.from(swap.preimage, "hex"));
-
+    const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
     if (invoiceData.preimageHash !== preimageHash.toString("hex")) {
+        log.warn("reverse swap validation: preimage hash");
         return false;
     }
 
     // Redeem script
-    const redeemScript = Buffer.from(swap.redeemScript, "hex");
+    const redeemScript = buffer.from(swap.redeemScript, "hex");
     const compareRedeemScript = reverseSwapScript(
         preimageHash,
-        ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex")).publicKey,
+        ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
         script.decompile(redeemScript)[13],
+        swap.timeoutBlockHeight
+    );
+
+    if (!redeemScript.equals(compareRedeemScript)) {
+        log.warn("reverse swap validation: redeem script");
+        return false;
+    }
+
+    return validateAddress(swap, swap.lockupAddress, buffer);
+};
+
+const validateSwap = async (swap, buffer) => {
+    const invoiceData = decodeInvoice(swap.invoice);
+
+    // Amounts
+    if (swap.expectedAmount !== swap.sendAmount) {
+        return false;
+    }
+
+    // Redeem script
+    const redeemScript = buffer.from(swap.redeemScript, "hex");
+    const compareRedeemScript = swapScript(
+        buffer.from(invoiceData.preimageHash, "hex"),
+        script.decompile(redeemScript)[4],
+        ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
         swap.timeoutBlockHeight
     );
 
@@ -48,35 +111,30 @@ const validateReverseSwap = (swap) => {
     }
 
     // Address
-    const compareScript = Scripts.p2wshOutput(compareRedeemScript);
-    const decodedAddress = decodeAddress(swap.asset, swap.lockupAddress);
-
-    if (!decodedAddress.script.equals(compareScript)) {
+    if (!(await validateAddress(swap, swap.address, buffer))) {
         return false;
     }
 
-    // TODO: valid blinding key on liquid
+    // BIP-21
+    const bip21Split = swap.bip21.split("?");
+    if (bip21Split[0].split(":")[1] !== swap.address) {
+        return false;
+    }
 
-    return true;
+    return (
+        new URLSearchParams(bip21Split[1]).get("amount") ===
+        formatAmountDenomination(denominations.btc, swap.sendAmount)
+    );
 };
 
-export const validateResponse = (swap) => {
+// To be able to use the Buffer from Node.js
+export const validateResponse = async (swap, buffer = BufferBrowser) => {
     try {
-        if (swap.reverse) {
-            return validateReverseSwap(swap);
-        } else {
-            const output = Scripts.p2shP2wshOutput(
-                Buffer.from(swap.redeemScript, "hex")
-            );
-            console.log(output);
-            if (swap.sendAmount === swap.expectedAmount) {
-                valid = true;
-            }
-        }
-        return valid;
+        return await (swap.reverse
+            ? validateReverseSwap(swap, buffer)
+            : validateSwap(swap, buffer));
     } catch (e) {
-        console.log(e);
-        log.debug("swap validation threw", e);
+        log.warn("swap validation threw", e);
         return false;
     }
 };

@@ -181,16 +181,24 @@ const Create = () => {
                 data.receiveAmount = Number(receiveAmount());
                 data.sendAmount = Number(sendAmount());
                 data.onchainAddress = onchainAddress();
-                // TODO: show updated quote when amount doesn't match exactly
-                if (!validateResponse(data)) {
-                    navigate("/error/");
-                    return;
+
+                if (!data.reverse) {
+                    data.invoice = invoice();
                 }
-                setSwaps(swaps().concat(data));
-                setInvoice("");
-                setOnchainAddress("");
-                navigate("/swap/" + data.id);
-                setButtonDisable(false);
+
+                // TODO: show updated quote when amount doesn't match exactly
+                validateResponse(data).then((success) => {
+                    if (!success) {
+                        navigate("/error/");
+                        return;
+                    }
+
+                    setSwaps(swaps().concat(data));
+                    setInvoice("");
+                    setOnchainAddress("");
+                    navigate("/swap/" + data.id);
+                    setButtonDisable(false);
+                });
             },
             params,
             (err) => {
