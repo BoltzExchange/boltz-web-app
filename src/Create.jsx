@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createMemo, createSignal } from "solid-js";
+import { createMemo, createSignal, createEffect } from "solid-js";
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
@@ -52,12 +52,42 @@ import {
     setNotificationType,
     webln,
     wasmSupported,
+    config,
 } from "./signals";
 
 const Create = () => {
     let invoiceInputRef, receiveAmountRef, sendAmountRef;
 
     const [buttonDisable, setButtonDisable] = createSignal(true);
+    const [sendAmountValid, setSendAmountValid] = createSignal(true);
+    const [receiveAmountValid, setReceiveAmountValid] = createSignal(true);
+    const [firstLoad, setFirstLoad] = createSignal(true);
+
+    createEffect(() => {
+        let cfg = config()["BTC/BTC"];
+        if (asset() === "L-BTC") {
+            cfg = config()["L-BTC/BTC"];
+        }
+        if (cfg) {
+            if (firstLoad() && sendAmount() === BigInt(0)) {
+                setFirstLoad(false);
+                setSendAmount(BigInt(cfg.limits.minimal));
+                setReceiveAmount(
+                    BigInt(calculateReceiveAmount(cfg.limits.minimal))
+                );
+            } else {
+                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+                validateReceiveAmount(receiveAmountRef);
+                validateSendAmount(sendAmountRef);
+            }
+        }
+    });
+
+    createEffect(() => {
+        reverse();
+        validateReceiveAmount(receiveAmountRef);
+        validateSendAmount(sendAmountRef);
+    });
 
     // change denomination
     createMemo(() => {
@@ -69,17 +99,15 @@ const Create = () => {
 
     // validation swap
     createMemo(() => {
-        if ((!reverse() && invoiceValid()) || (reverse() && addressValid())) {
-            if (receiveAmount() >= BigInt(minimum())) {
-                if (receiveAmount() <= BigInt(maximum())) {
-                    setValid(true);
-                    return;
-                }
-            }
+        if (
+            (!reverse() && invoiceValid() && sendAmountValid()) ||
+            (reverse() && addressValid() && receiveAmountValid())
+        ) {
+            setValid(true);
+            return;
         }
         setValid(false);
     });
-
     createMemo(() => {
         setButtonDisable(!valid());
     });
@@ -115,6 +143,8 @@ const Create = () => {
         if (check_enable.enabled) {
             let amount = Number(receiveAmount());
             const invoice = await window.webln.makeInvoice({ amount: amount });
+            validateReceiveAmount(receiveAmountRef);
+            validateSendAmount(sendAmountRef);
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
             validateAddress(invoiceInputRef);
@@ -233,30 +263,24 @@ const Create = () => {
     };
 
     const validateReceiveAmount = (input) => {
-        validateAmount(input, calculateReceiveAmount);
+        const min = calculateReceiveAmount(Number(minimum()));
+        const max = calculateReceiveAmount(Number(maximum()));
+        validateAmount(input, receiveAmount, setReceiveAmountValid, min, max);
     };
 
     const validateSendAmount = (input) => {
-        validateAmount(input, calculateSendAmount);
+        validateAmount(
+            input,
+            sendAmount,
+            setSendAmountValid,
+            minimum(),
+            maximum()
+        );
     };
 
-    const validateAmount = (input, calcFn) => {
+    const validateAmount = (input, amountSignal, validSignal, min, max) => {
         input.setCustomValidity("");
-        const amount = convertAmount(
-            Number(input.value.trim()),
-            denominations.sat
-        );
-        let min, max;
-        if (
-            (reverse() && calcFn === calculateReceiveAmount) ||
-            (!reverse() && calcFn === calculateSendAmount)
-        ) {
-            min = calcFn(minimum());
-            max = calcFn(maximum());
-        } else {
-            min = minimum();
-            max = maximum();
-        }
+        let amount = Number(amountSignal());
         if (amount < min) {
             input.setCustomValidity(
                 t("minimum_amount", {
@@ -264,6 +288,7 @@ const Create = () => {
                     denomination: denomination(),
                 })
             );
+            return validSignal(false);
         }
         if (amount > max) {
             input.setCustomValidity(
@@ -272,7 +297,9 @@ const Create = () => {
                     denomination: denomination(),
                 })
             );
+            return validSignal(false);
         }
+        validSignal(true);
     };
 
     const validateAddress = (input) => {
@@ -316,6 +343,7 @@ const Create = () => {
                     <Asset id="1" />
                     <input
                         ref={sendAmountRef}
+                        autofocus
                         required
                         type="text"
                         maxlength={calculateDigits()}
@@ -343,7 +371,6 @@ const Create = () => {
                     <Asset id="2" />
                     <input
                         ref={receiveAmountRef}
-                        autofocus
                         required
                         type="text"
                         maxlength={calculateDigits()}
