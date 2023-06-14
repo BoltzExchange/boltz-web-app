@@ -55,7 +55,7 @@ import {
 } from "./signals";
 
 const Create = () => {
-    let invoiceInputRef, receiveAmountRef;
+    let invoiceInputRef, receiveAmountRef, sendAmountRef;
 
     const [buttonDisable, setButtonDisable] = createSignal(true);
 
@@ -94,7 +94,8 @@ const Create = () => {
         let sendAmount = calculateSendAmount(satAmount);
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
-        validateReceiveAmount(e.currentTarget);
+        validateReceiveAmount(receiveAmountRef);
+        validateSendAmount(sendAmountRef);
         if (isInvoice(invoice())) setInvoice("");
     };
 
@@ -105,6 +106,7 @@ const Create = () => {
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateReceiveAmount(receiveAmountRef);
+        validateSendAmount(sendAmountRef);
         if (isInvoice(invoice())) setInvoice("");
     };
 
@@ -230,28 +232,42 @@ const Create = () => {
         }
     };
 
-    const validateReceiveAmount = (input) => {
+    const validateAmount = (input, amount, min, max) => {
         input.setCustomValidity("");
+        if (amount < min) {
+            input.setCustomValidity(
+                t("minimum_amount", {
+                    amount: formatAmount(min),
+                    denomination: denomination(),
+                })
+            );
+        }
+        if (amount > max) {
+            input.setCustomValidity(
+                t("maximum_amount", {
+                    amount: formatAmount(max),
+                    denomination: denomination(),
+                })
+            );
+        }
+    };
+
+    const validateSendAmount = (input) => {
         const amount = convertAmount(
             Number(input.value.trim()),
             denominations.sat
         );
-        if (amount < minimum()) {
-            input.setCustomValidity(
-                t("minimum_amount", {
-                    amount: formatAmount(minimum()),
-                    denomination: denomination(),
-                })
-            );
-        }
-        if (amount > maximum()) {
-            input.setCustomValidity(
-                t("maximum_amount", {
-                    amount: formatAmount(maximum()),
-                    denomination: denomination(),
-                })
-            );
-        }
+        const localMinimum = calculateSendAmount(minimum());
+        const localMaximum = calculateSendAmount(maximum());
+        validateAmount(input, amount, localMinimum, localMaximum);
+    };
+
+    const validateReceiveAmount = (input) => {
+        const amount = convertAmount(
+            Number(input.value.trim()),
+            denominations.sat
+        );
+        validateAmount(input, amount, minimum(), maximum());
     };
 
     const validateAddress = (input) => {
@@ -294,6 +310,7 @@ const Create = () => {
                 <div>
                     <Asset id="1" />
                     <input
+                        ref={sendAmountRef}
                         required
                         type="text"
                         maxlength={calculateDigits()}
