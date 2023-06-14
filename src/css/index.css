@@ -468,7 +468,8 @@ textarea {
 .assets-select {
     background: #102032;
     position: absolute;
-    width: 454px;
+    max-width: 454px;
+    width: 100%;
     top: 64px;
     z-index: 9999;
     display: none;
