@@ -7,10 +7,10 @@ import { useI18n } from "@solid-primitives/i18n";
 import Fees from "./components/Fees";
 import Asset from "./components/Asset";
 import arrow_svg from "./assets/arrow.svg";
-import { errorHandler, fetcher, fetchPairs } from "./helper";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
 import { validateResponse } from "./utils/validation";
+import { errorHandler, fetcher, fetchPairs } from "./helper";
 import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
@@ -57,10 +57,9 @@ import {
 const Create = () => {
     let invoiceInputRef, receiveAmountRef, sendAmountRef;
 
+    const [firstLoad, setFirstLoad] = createSignal(true);
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [sendAmountValid, setSendAmountValid] = createSignal(true);
-    const [receiveAmountValid, setReceiveAmountValid] = createSignal(true);
-    const [firstLoad, setFirstLoad] = createSignal(true);
 
     createEffect(() => {
         if (minimum() === 0) {
@@ -73,15 +72,13 @@ const Create = () => {
             setReceiveAmount(BigInt(calculateReceiveAmount(minimum())));
         } else {
             setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
-            validateReceiveAmount(receiveAmountRef);
-            validateSendAmount(sendAmountRef);
+            validateAmount();
         }
     });
 
     createEffect(() => {
         reverse();
-        validateReceiveAmount(receiveAmountRef);
-        validateSendAmount(sendAmountRef);
+        validateAmount();
     });
 
     // change denomination
@@ -94,15 +91,13 @@ const Create = () => {
 
     // validation swap
     createMemo(() => {
-        if (
-            (!reverse() && invoiceValid() && sendAmountValid()) ||
-            (reverse() && addressValid() && receiveAmountValid())
-        ) {
+        if (invoiceValid() && sendAmountValid()) {
             setValid(true);
             return;
         }
         setValid(false);
     });
+
     createMemo(() => {
         setButtonDisable(!valid());
     });
@@ -117,8 +112,7 @@ const Create = () => {
         let sendAmount = calculateSendAmount(satAmount);
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
-        validateReceiveAmount(receiveAmountRef);
-        validateSendAmount(sendAmountRef);
+        validateAmount();
         if (isInvoice(invoice())) setInvoice("");
     };
 
@@ -128,8 +122,7 @@ const Create = () => {
         let receiveAmount = calculateReceiveAmount(satAmount);
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
-        validateReceiveAmount(receiveAmountRef);
-        validateSendAmount(sendAmountRef);
+        validateAmount();
         if (isInvoice(invoice())) setInvoice("");
     };
 
@@ -138,8 +131,7 @@ const Create = () => {
         if (check_enable.enabled) {
             let amount = Number(receiveAmount());
             const invoice = await window.webln.makeInvoice({ amount: amount });
-            validateReceiveAmount(receiveAmountRef);
-            validateSendAmount(sendAmountRef);
+            validateAmount();
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
             validateAddress(invoiceInputRef);
@@ -257,44 +249,29 @@ const Create = () => {
         }
     };
 
-    const validateReceiveAmount = (input) => {
-        const min = calculateReceiveAmount(Number(minimum()));
-        const max = calculateReceiveAmount(Number(maximum()));
-        validateAmount(input, receiveAmount, setReceiveAmountValid, min, max);
-    };
+    const validateAmount = () => {
+        const setCustomValidity = (val) => {
+            [sendAmountRef, receiveAmountRef].forEach((ref) =>
+                ref.setCustomValidity(val)
+            );
+        };
 
-    const validateSendAmount = (input) => {
-        validateAmount(
-            input,
-            sendAmount,
-            setSendAmountValid,
-            minimum(),
-            maximum()
-        );
-    };
+        setCustomValidity("");
 
-    const validateAmount = (input, amountSignal, validSignal, min, max) => {
-        input.setCustomValidity("");
-        let amount = Number(amountSignal());
-        if (amount < min) {
-            input.setCustomValidity(
-                t("minimum_amount", {
-                    amount: formatAmount(min),
+        const amount = Number(sendAmount());
+        const lessThanMin = amount < minimum();
+
+        if (lessThanMin || amount > maximum()) {
+            setCustomValidity(
+                t(lessThanMin ? "minimum_amount" : "maximum_amount", {
+                    amount: formatAmount(lessThanMin ? minimum() : maximum()),
                     denomination: denomination(),
                 })
             );
-            return validSignal(false);
+            setSendAmountValid(false);
         }
-        if (amount > max) {
-            input.setCustomValidity(
-                t("maximum_amount", {
-                    amount: formatAmount(max),
-                    denomination: denomination(),
-                })
-            );
-            return validSignal(false);
-        }
-        validSignal(true);
+
+        setSendAmountValid(true);
     };
 
     const validateAddress = (input) => {
