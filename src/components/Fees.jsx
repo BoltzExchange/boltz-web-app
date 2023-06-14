@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup } from "solid-js";
+import { createEffect, onCleanup } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
 import log from "loglevel";
 import {
@@ -9,9 +9,6 @@ import {
     setMinimum,
     setBoltzFee,
     setMinerFee,
-    setReceiveAmount,
-    receiveAmount,
-    setSendAmount,
     sendAmount,
     denomination,
     setDenomination,
@@ -35,11 +32,9 @@ const Fees = () => {
             cfg = config()["L-BTC/BTC"];
         }
         if (cfg) {
-            setMinimum(cfg.limits.minimal);
-            setMaximum(cfg.limits.maximal);
             if (reverse()) {
-                let rev = cfg.fees.minerFees.baseAsset.reverse;
-                let fee = rev.claim + rev.lockup;
+                const rev = cfg.fees.minerFees.baseAsset.reverse;
+                const fee = rev.claim + rev.lockup;
                 setBoltzFee(cfg.fees.percentage);
                 setMinerFee(fee);
             } else {
@@ -47,6 +42,13 @@ const Fees = () => {
                 setBoltzFee(cfg.fees.percentageSwapIn);
                 setMinerFee(fee);
             }
+
+            const calculateLimit = (limit) => {
+                return reverse() ? limit : calculateSendAmount(limit);
+            };
+
+            setMinimum(calculateLimit(cfg.limits.minimal));
+            setMaximum(calculateLimit(cfg.limits.maximal));
         }
     });
 

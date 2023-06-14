@@ -52,7 +52,6 @@ import {
     setNotificationType,
     webln,
     wasmSupported,
-    config,
 } from "./signals";
 
 const Create = () => {
@@ -64,22 +63,18 @@ const Create = () => {
     const [firstLoad, setFirstLoad] = createSignal(true);
 
     createEffect(() => {
-        let cfg = config()["BTC/BTC"];
-        if (asset() === "L-BTC") {
-            cfg = config()["L-BTC/BTC"];
+        if (minimum() === 0) {
+            return;
         }
-        if (cfg) {
-            if (firstLoad() && sendAmount() === BigInt(0)) {
-                setFirstLoad(false);
-                setSendAmount(BigInt(cfg.limits.minimal));
-                setReceiveAmount(
-                    BigInt(calculateReceiveAmount(cfg.limits.minimal))
-                );
-            } else {
-                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
-                validateReceiveAmount(receiveAmountRef);
-                validateSendAmount(sendAmountRef);
-            }
+
+        if (firstLoad() && sendAmount() === BigInt(0)) {
+            setFirstLoad(false);
+            setSendAmount(BigInt(minimum()));
+            setReceiveAmount(BigInt(calculateReceiveAmount(minimum())));
+        } else {
+            setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            validateReceiveAmount(receiveAmountRef);
+            validateSendAmount(sendAmountRef);
         }
     });
 
