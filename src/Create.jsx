@@ -232,8 +232,31 @@ const Create = () => {
         }
     };
 
-    const validateAmount = (input, amount, min, max) => {
+    const validateReceiveAmount = (input) => {
+        validateAmount(input, calculateReceiveAmount);
+    };
+
+    const validateSendAmount = (input) => {
+        validateAmount(input, calculateSendAmount);
+    };
+
+    const validateAmount = (input, calcFn) => {
         input.setCustomValidity("");
+        const amount = convertAmount(
+            Number(input.value.trim()),
+            denominations.sat
+        );
+        let min, max;
+        if (
+            (reverse() && calcFn === calculateReceiveAmount) ||
+            (!reverse() && calcFn === calculateSendAmount)
+        ) {
+            min = calcFn(minimum());
+            max = calcFn(maximum());
+        } else {
+            min = minimum();
+            max = maximum();
+        }
         if (amount < min) {
             input.setCustomValidity(
                 t("minimum_amount", {
@@ -250,24 +273,6 @@ const Create = () => {
                 })
             );
         }
-    };
-
-    const validateSendAmount = (input) => {
-        const amount = convertAmount(
-            Number(input.value.trim()),
-            denominations.sat
-        );
-        const localMinimum = calculateSendAmount(minimum());
-        const localMaximum = calculateSendAmount(maximum());
-        validateAmount(input, amount, localMinimum, localMaximum);
-    };
-
-    const validateReceiveAmount = (input) => {
-        const amount = convertAmount(
-            Number(input.value.trim()),
-            denominations.sat
-        );
-        validateAmount(input, amount, minimum(), maximum());
     };
 
     const validateAddress = (input) => {
