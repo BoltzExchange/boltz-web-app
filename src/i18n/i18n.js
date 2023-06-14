@@ -15,6 +15,7 @@ const dict = {
         network_fee: "Network Fee",
         fee: "Boltz Fee",
         denomination: "Denomination",
+        send: "Send",
         min: "Min",
         max: "Max",
         minimum_amount: "Minimum amount is {{ amount }} {{ denomination }}",

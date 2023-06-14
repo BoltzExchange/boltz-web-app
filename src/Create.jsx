@@ -334,7 +334,7 @@ const Create = () => {
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                {t("min")}: {formatAmount(minimum())}, {t("max")}:{" "}
+                {t("send")} {t("min")}: {formatAmount(minimum())}, {t("max")}:{" "}
                 {formatAmount(maximum())}
             </p>
             <hr />
