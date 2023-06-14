@@ -25,6 +25,14 @@ detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
 
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker
+      .register('./service-worker.js', {scope: './'})
+      .then((reg) => {
+          log.info(`Registration succeeded. Scope is ${reg.scope}`);
+      });
+}
+
 // <Route path="/" component={Hero} />
 const cleanup = render(
     () => (

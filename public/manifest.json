@@ -1,0 +1,21 @@
+{
+  "short_name": "Boltz",
+  "name": "Boltz Frontend",
+  "icons": [
+    {
+      "src": "android-chrome-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "android-chrome-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "portrait",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#e6c826",
+  "background_color": "#14283f"
+}
