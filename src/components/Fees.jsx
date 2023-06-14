@@ -29,8 +29,6 @@ import sat_svg from "../assets/sat.svg";
 import reload_svg from "../assets/reload.svg";
 
 const Fees = () => {
-    const [firstLoad, setFirstLoad] = createSignal(true);
-
     createEffect(() => {
         let cfg = config()["BTC/BTC"];
         if (asset() === "L-BTC") {
@@ -48,13 +46,6 @@ const Fees = () => {
                 let fee = cfg.fees.minerFees.baseAsset.normal;
                 setBoltzFee(cfg.fees.percentageSwapIn);
                 setMinerFee(fee);
-            }
-            if (firstLoad() && sendAmount() === BigInt(0)) {
-                setFirstLoad(false);
-                setReceiveAmount(BigInt(cfg.limits.minimal));
-                setSendAmount(BigInt(calculateSendAmount(cfg.limits.minimal)));
-            } else {
-                setSendAmount(calculateSendAmount(Number(receiveAmount())));
             }
         }
     });
