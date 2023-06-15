@@ -11,7 +11,12 @@ import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
 import { validateResponse } from "./utils/validation";
 import { errorHandler, fetcher, fetchPairs } from "./helper";
-import { fetchLnurl, isInvoice, isLnurl } from "./utils/invoice";
+import {
+    fetchLnurl,
+    isInvoice,
+    isLnurl,
+    trimLightningPrefix,
+} from "./utils/invoice";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     convertAmount,
@@ -91,10 +96,16 @@ const Create = () => {
 
     // validation swap
     createMemo(() => {
-        if (invoiceValid() && sendAmountValid()) {
-            setValid(true);
-            return;
+        if (sendAmountValid()) {
+            if (
+                (reverse() && addressValid()) ||
+                (!reverse() && invoiceValid())
+            ) {
+                setValid(true);
+                return;
+            }
         }
+
         setValid(false);
     });
 
@@ -269,13 +280,14 @@ const Create = () => {
                 })
             );
             setSendAmountValid(false);
+            return;
         }
 
         setSendAmountValid(true);
     };
 
     const validateAddress = (input) => {
-        const inputValue = input.value.trim();
+        let inputValue = input.value.trim();
         if (reverse()) {
             try {
                 // validate btc address
@@ -290,6 +302,8 @@ const Create = () => {
                 input.setCustomValidity("invalid address");
             }
         } else {
+            inputValue = trimLightningPrefix(inputValue);
+
             if (isInvoice(inputValue) || isLnurl(inputValue)) {
                 input.setCustomValidity("");
                 setInvoiceValid(true);
