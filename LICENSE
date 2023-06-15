@@ -5,21 +5,17 @@ Parameters
 
 Licensor:             Boltz
 
-Licensed Work:        boltz-webapp 3.0.0
+Licensed Work:        boltz-web-app 1.0.0
                       The Licensed Work is (c) 2023 Boltz
                      
-Additional Use Grant: Modification of theming & logo as long as webapp connects
-                      to https://boltz.exchange/api. Under no circumstances can
-                      atomic swap security features be altered. All changes need
-                      to be made publicly availble.
+Additional Use Grant: Running source locally without modification
 
 Change Date:          2027-06-15
 
-Change License:       Version 2 or later of the GNU General Public License as
-                      published by the Free Software Foundation.
+Change License:       AGPL v3.0 (GNU AFFERO GENERAL PUBLIC LICENSE Version 3)
 
 For information about alternative licensing arrangements for the Software,
-please contact us: https://boltz.exchange/
+please contact us: https://boltz.exchange
 
 Notice
 
