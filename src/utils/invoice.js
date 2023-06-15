@@ -3,6 +3,8 @@ import { bech32, utf8 } from "@scure/base";
 import { bolt11_prefix } from "../config";
 import { checkResponse, errorHandler } from "../helper";
 
+const invoicePrefix = "lightning:";
+
 export function fetchLnurl(lnurl, amount_sat) {
     return new Promise((resolve, reject) => {
         let url = "";
@@ -43,6 +45,14 @@ export function fetchLnurl(lnurl, amount_sat) {
             })
             .catch(errorHandler);
     });
+}
+
+export function trimLightningPrefix(invoice) {
+    if (invoice.toLowerCase().startsWith(invoicePrefix)) {
+        return invoice.slice(invoicePrefix.length);
+    }
+
+    return invoice;
 }
 
 export function isInvoice(data) {
