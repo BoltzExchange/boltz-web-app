@@ -1,40 +1,23 @@
-# Boltz Web App 3.0
+# Boltz Web App
 
-providing **trustless** and **account-free** swap services since **2018.**
-move **IN** and **OUT** of the **lightning network** and remain in control of your bitcoin, at all times.
+This is the source of the official Boltz Web App served at [boltz.exchange](https://boltz.exchange/). It enables **non-custodial** swaps between different Bitcoin layers. You remain in control of your bitcoin, at all times.
 
-- [Lightning Node](https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2)
-- [Documentation](https://docs.boltz.exchange/en/latest/)
+We encourage our technical users to check the code and run the web app locally following the instructions below.
+
+## Dependencies
+
+Make sure to have the latest [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) lts installed. We recommend using [nvm](https://github.com/nvm-sh/nvm#install--update-script) to manage npm installs: `nvm install --lts`
+
+## Run
+
+Clone the repository, change to the project folder and run `npm install` to install all dependencies. Then `npm run mainnet` and `npx serve dist` to bring it up.
+
+Open [http://localhost:3000](http://localhost:3000) in your browser and start swapping! 
+
+## Resources
+
+- [⚡ Node](https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2)
+- [Docs](https://docs.boltz.exchange/en/latest/)
 - [Discord](https://discord.gg/d6EK85KK)
 - [Twitter](https://twitter.com/Boltzhq)
-
-## development
-
-installing
-
-```bash
-$ yarn
-```
-
-## scripts
-
-In the project directory, you can run:
-
-### `npm dev` or `npm start`
-
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-You can deploy the `dist` folder to github pages.
+- [Nostr](https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970)
