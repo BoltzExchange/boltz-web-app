@@ -6,7 +6,7 @@ We encourage our technical users to check the code and run the web app locally f
 
 ## Dependencies
 
-Make sure to have the latest [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) lts installed. We recommend using [nvm](https://github.com/nvm-sh/nvm#install--update-script) to manage npm installs: `nvm install --lts`
+Make sure to have the latest [Node.js LTS and NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed. We recommend using [nvm](https://github.com/nvm-sh/nvm#install--update-script) to manage npm installs: `nvm install --lts`
 
 ## Run
 
