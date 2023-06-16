@@ -20,12 +20,12 @@ const Notification = () => {
                 target.classList.remove(notificationType());
                 setNotification("");
                 setNotificationType("");
-            }, 2222);
+            }, 4000);
         }
     });
 
     return (
-        <div id="notification" class="notificationType()">
+        <div id="notification" class={notificationType()}>
             <span>{notification()}</span>
         </div>
     );

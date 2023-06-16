@@ -1,6 +1,6 @@
 #notification {
     visibility: hidden;
-    max-width: 0;
+    max-width: 480px;
     margin: auto;
     background-color: rgb(11, 22, 35);
     color: #fff;
@@ -10,15 +10,14 @@
     left: 0;
     right: 0;
     bottom: 30px;
-    font-size: 17px;
-    white-space: nowrap;
+    font-size: 16px;
     overflow: hidden;
     padding: 6px 12px;
-    border-radius: 20px;
+    border-radius: 6px;
     box-shadow: 0px 0 3px black;
 }
 #notification.error {
-    background-color: #ff000052;
+    background-color: #6c0000;
 }
 #notification.success {
     background-color: green;
@@ -39,14 +38,13 @@
     color: #fff;
     padding: 16px;
     overflow: hidden;
-    white-space: nowrap;
 }
 
 #notification.show {
     visibility: visible;
-    -webkit-animation: fadein 0.5s, expand 0.5s 0.5s, stay 3s 1s, shrink 0.5s 2s,
+    -webkit-animation: fadein 0.5s, stay 3s 1s, shrink 0.5s 2s,
         fadeout 0.5s 2.5s;
-    animation: fadein 0.5s, expand 0.5s 0.5s, stay 3s 1s, shrink 0.5s 4s,
+    animation: fadein 0.5s, stay 3s 1s, shrink 0.5s 4s,
         fadeout 0.5s 4.5s;
 }
 
@@ -69,24 +67,6 @@
     to {
         bottom: 30px;
         opacity: 1;
-    }
-}
-
-@-webkit-keyframes expand {
-    from {
-        min-width: 50px;
-    }
-    to {
-        min-width: 350px;
-    }
-}
-
-@keyframes expand {
-    from {
-        min-width: 50px;
-    }
-    to {
-        min-width: 350px;
     }
 }
 @-webkit-keyframes stay {

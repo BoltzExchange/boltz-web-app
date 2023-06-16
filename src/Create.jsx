@@ -10,7 +10,7 @@ import arrow_svg from "./assets/arrow.svg";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
 import { validateResponse } from "./utils/validation";
-import { errorHandler, fetcher, fetchPairs } from "./helper";
+import { errorHandler, fetcher, fetchPairs, feeCheck } from "./helper";
 import {
     fetchLnurl,
     isInvoice,
@@ -151,6 +151,7 @@ const Create = () => {
 
     const create = async () => {
         if (!valid()) return;
+        if (!await feeCheck(t("feecheck"))) return;
 
         let asset_name = asset();
 

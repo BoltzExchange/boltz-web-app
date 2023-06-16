@@ -30,6 +30,7 @@ const dict = {
         cancel_swap: "Cancel Swap",
         new_swap: "New Swap",
         success_swap: "Swap Success",
+        feecheck: "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
         create_and_paste:
             "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink\n\nAmount: {{ amount }} {{ denomination }}",
         congrats: "Congratulations!",
