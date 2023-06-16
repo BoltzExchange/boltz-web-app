@@ -78,6 +78,13 @@ hr {
     padding-right: 8px;
 }
 
+#dollar {
+    font-size: 23px;
+    padding: 0 7px;
+}
+#dollar.active {
+    color: #f7931a;
+}
 .denomination {
     margin-left: 5px;
 }
@@ -341,6 +348,13 @@ textarea {
 [data-denominator="sat"] {
     background-image: url(../assets/sat.svg);
 }
+[data-denominator="fusd"]:after {
+    content: "$";
+    font-size: 8px;
+    position: absolute;
+    left: 7px;
+    top: -1px;
+}
 
 .denomination .active {
     filter: none;
@@ -449,6 +463,9 @@ textarea {
     top: -2px;
 }
 
+.asset-select img {
+    width: 32px;
+}
 .asset-select {
     display: flex;
     align-items: center;

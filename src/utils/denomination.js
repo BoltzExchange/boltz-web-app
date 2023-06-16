@@ -2,19 +2,24 @@ import { BigNumber } from "bignumber.js";
 import { denomination, maximum } from "../signals";
 
 export const satFactor = 100_000_000;
+export const fusdFactor = 4_000; // 1 dollar = 4000 satoshis
 
 export const denominations = {
     sat: "sat",
     btc: "btc",
+    fusd: "fusd",
 };
 
 export const getValidationRegex = () => {
     const digits = calculateDigits();
-    const regex =
-        denomination() === denominations.sat
-            ? `^[0-9]{1,${digits}}$`
-            : `^[0-9](.[0-9]{1,${digits}}){0,1}$`;
-    return new RegExp(regex);
+    switch (denomination()) {
+        case denominations.sat:
+            return new RegExp(`^[0-9]{1,${digits}}$`);
+        case denominations.btc:
+            return new RegExp(`^[0-9](.[0-9]{1,${digits}}){0,1}$`);
+        case denominations.fusd:
+            return new RegExp(`^[0-9](.[0-9]{0,2}){0,10}$`);
+    }
 };
 
 export const formatAmount = (amount, fixed = false) => {
@@ -42,6 +47,10 @@ export const formatAmountDenomination = (denom, amount, fixed = false) => {
 
         case denominations.sat:
             return amount.toString();
+
+        case denominations.fusd:
+            const amountDollar = new BigNumber(amount).div(fusdFactor);
+            return amountDollar.toFixed(2);
     }
 };
 
@@ -52,6 +61,9 @@ export const convertAmount = (amount) => {
             return amountBig.toNumber();
         case denominations.sat:
             return Number(amount);
+        case denominations.fusd:
+            const amountDollar = new BigNumber(amount).multipliedBy(fusdFactor);
+            return amountDollar.toNumber();
     }
 };
 

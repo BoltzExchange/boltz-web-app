@@ -40,3 +40,12 @@
 [data-reverse="true"][data-asset="L-BTC"] .asset-2 .asset-text:before {
     content: "liquid";
 }
+
+[data-reverse="false"][data-asset="FUSD"] .icon-1,
+[data-reverse="true"][data-asset="FUSD"] .icon-2 {
+    background-image: url(../assets/fuji.png);
+}
+[data-reverse="false"][data-asset="FUSD"] .asset-1 .asset-text:before,
+[data-reverse="true"][data-asset="FUSD"] .asset-2 .asset-text:before {
+    content: "fuji";
+}

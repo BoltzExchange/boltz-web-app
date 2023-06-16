@@ -83,6 +83,13 @@ const Fees = () => {
                     class={denomination() == "sat" ? "active" : ""}
                     alt="denominator"
                 />
+                <span
+                    id="dollar"
+                    onClick={() => setDenomination("fusd")}
+                    class={denomination() == "fusd" ? "active" : ""}
+                    alt="denominator">
+                    $
+                </span>
             </div>
             <label>
                 <span class="icon-reload" onClick={fetchPairs}>

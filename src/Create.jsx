@@ -355,6 +355,9 @@ const Create = () => {
                 {t("create_swap_subline")} <br />
                 {t("send")} {t("min")}: {formatAmount(minimum())}, {t("max")}:{" "}
                 {formatAmount(maximum())}
+                <span
+                    class="denominator"
+                    data-denominator={denomination()}></span>
             </p>
             <hr />
             <div class="icons">
@@ -423,8 +426,8 @@ const Create = () => {
                 name="invoice"
                 value={invoice()}
                 placeholder={t("create_and_paste", {
-                    amount: receiveAmountFormatted(),
-                    denomination: denomination(),
+                    amount: receiveAmount().toString(),
+                    denomination: "sat",
                 })}></textarea>
             <input
                 required

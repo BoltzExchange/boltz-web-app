@@ -1,4 +1,4 @@
-export const pairs = ["BTC/BTC", "L-BTC/BTC"];
+export const pairs = ["BTC/BTC", "L-BTC/BTC", "FUSD/BTC"];
 export const network = "main";
 export const bolt11_prefix = "lnbc";
 export const loglevel = "info";

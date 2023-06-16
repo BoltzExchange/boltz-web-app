@@ -2,6 +2,7 @@ import { useI18n } from "@solid-primitives/i18n";
 import { setAsset, setAssetSelect, assetSelect } from "../signals";
 import bitcoin_svg from "../assets/bitcoin-icon.svg";
 import liquid_svg from "../assets/liquid-icon.svg";
+import fuji_svg from "../assets/fuji.png";
 
 const SelectAsset = () => {
     const [t] = useI18n();
@@ -38,6 +39,10 @@ const SelectAsset = () => {
             <div className="asset-select" onClick={() => changeAsset("L-BTC")}>
                 <img src={liquid_svg} alt="liquid bitcoin" />
                 <span>liquid</span>
+            </div>
+            <div className="asset-select" onClick={() => changeAsset("FUSD")}>
+                <img src={fuji_svg} alt="fuji bitcoin" />
+                <span>fuji</span>
             </div>
         </div>
     );
