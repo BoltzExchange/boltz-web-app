@@ -1,6 +1,5 @@
-import { createEffect, onCleanup } from "solid-js";
+import { createEffect } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import log from "loglevel";
 import {
     config,
     reverse,
@@ -52,15 +51,15 @@ const Fees = () => {
         }
     });
 
-    let timer = setInterval(() => {
-        log.debug("tick Fees");
-        fetchPairs();
-    }, 30000);
+    // let timer = setInterval(() => {
+    //     log.debug("tick Fees");
+    //     fetchPairs();
+    // }, 30000);
 
-    onCleanup(() => {
-        log.debug("cleanup Fees");
-        clearInterval(timer);
-    });
+    // onCleanup(() => {
+    //     log.debug("cleanup Fees");
+    //     clearInterval(timer);
+    // });
 
     fetchPairs();
 
