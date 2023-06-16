@@ -2,6 +2,7 @@ import { setSwaps, swaps } from "../signals";
 
 export const swapStatusPending = {
     TransactionConfirmed: "transaction.confirmed",
+    TransactionMempool: "transaction.mempool",
 };
 
 export const swapStatusFailed = {

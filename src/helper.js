@@ -150,9 +150,10 @@ export const fetchSwapStatus = (swap) => {
 
             updateSwapStatus(swap.id, data.status);
             if (
-                data.status == swapStatusPending.TransactionConfirmed &&
+                data.status == swapStatusPending.TransactionMempool &&
                 data.transaction
             ) {
+                // 0conf
                 claim(swap);
             }
 
