@@ -5,8 +5,5 @@ export const feeChecker = (pairs) => {
     const hash = pairs[`${asset()}/BTC`]["hash"];
     console.log(`oldHash: ${oldHash}`);
     console.log(`hash: ${hash}`);
-    if (oldHash === hash) {
-        return true;
-    }
-    return false;
+    return oldHash === hash;
 };
