@@ -27,7 +27,7 @@ import SwapRefunded from "./status/SwapRefunded";
 import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
 import BlockExplorer from "./components/BlockExplorer";
-import { updateSwapStatus } from "./utils/swapStatus";
+import { updateSwapStatus, swapStatusPending } from "./utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
@@ -66,7 +66,7 @@ const Pay = () => {
                     setSwapStatus(data.status);
                     setSwapStatusTransaction(data.transaction);
                     if (
-                        data.status == "transaction.mempool" &&
+                        data.status == swapStatusPending.TransactionMempool &&
                         data.transaction
                     ) {
                         // 0conf
