@@ -452,7 +452,6 @@ export const feeCheck = async (notification) => {
     });
 };
 
-
 export const refundAddressChange = (e, asset) => {
     const input = e.currentTarget;
     const inputValue = input.value.trim();
