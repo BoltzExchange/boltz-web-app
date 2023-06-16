@@ -117,6 +117,13 @@ const Create = () => {
 
     const navigate = useNavigate();
 
+    const checkInvoice = () => {
+        if (isInvoice(invoice())) {
+            setInvoice("");
+            setInvoiceValid(false);
+        }
+    };
+
     const changeReceiveAmount = (e) => {
         const amount = e.currentTarget.value.trim();
         let satAmount = convertAmount(Number(amount), denominations.sat);
@@ -124,7 +131,7 @@ const Create = () => {
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateAmount();
-        if (isInvoice(invoice())) setInvoice("");
+        checkInvoice();
     };
 
     const changeSendAmount = (e) => {
@@ -134,7 +141,7 @@ const Create = () => {
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateAmount();
-        if (isInvoice(invoice())) setInvoice("");
+        checkInvoice();
     };
 
     const createWeblnInvoice = async () => {
@@ -151,7 +158,7 @@ const Create = () => {
 
     const create = async () => {
         if (!valid()) return;
-        if (!await feeCheck(t("feecheck"))) return;
+        if (!(await feeCheck(t("feecheck")))) return;
 
         let asset_name = asset();
 
@@ -226,7 +233,9 @@ const Create = () => {
 
                     setSwaps(swaps().concat(data));
                     setInvoice("");
+                    setInvoiceValid(false);
                     setOnchainAddress("");
+                    setAddressValid(false);
                     navigate("/swap/" + data.id);
                     setButtonDisable(false);
                 });
