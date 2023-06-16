@@ -60,7 +60,7 @@ import {
 } from "./signals";
 
 const Create = () => {
-    let invoiceInputRef, receiveAmountRef, sendAmountRef;
+    let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;
 
     const [firstLoad, setFirstLoad] = createSignal(true);
     const [buttonDisable, setButtonDisable] = createSignal(true);
@@ -315,6 +315,12 @@ const Create = () => {
         }
     };
 
+    createEffect(() => {
+        if (reverse()) {
+            validateAddress(addressInputRef);
+        }
+    });
+
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
             <h2>{t("create_swap")}</h2>
@@ -395,6 +401,7 @@ const Create = () => {
                 })}></textarea>
             <input
                 required
+                ref={addressInputRef}
                 onInput={(e) => validateAddress(e.currentTarget)}
                 type="text"
                 id="onchainAddress"
