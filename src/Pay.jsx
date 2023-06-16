@@ -80,6 +80,7 @@ const Pay = () => {
 
     onCleanup(() => {
         log.debug("cleanup Pay");
+        setSwap(null);
         setSwapStatus(null);
         if (stream) {
             log.debug("stream closed");
