@@ -10,7 +10,7 @@ const dict = {
         onion: "Onion",
         channels: "Channels",
         ordinals: "Ordinals",
-        blockexplorer: "Open with blockexplorer",
+        blockexplorer: "View in block explorer",
         help: "Help",
         network_fee: "Network Fee",
         fee: "Boltz Fee",
