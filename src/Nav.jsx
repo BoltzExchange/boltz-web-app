@@ -71,6 +71,12 @@ const Nav = ({ network }) => {
                     <a
                         class="external"
                         target="_blank"
+                        href="https://blog.boltz.exchange//">
+                        {t("blog")}
+                    </a>
+                    <a
+                        class="external"
+                        target="_blank"
                         href="https://docs.boltz.exchange/en/latest/">
                         {t("documentation")}
                     </a>

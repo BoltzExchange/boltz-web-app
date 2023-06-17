@@ -6,6 +6,7 @@ const dict = {
         swap: "Swap",
         channel: "Channel",
         refund: "Refund",
+        blog: "Blog",
         documentation: "Docs",
         onion: "Onion",
         channels: "Channels",
