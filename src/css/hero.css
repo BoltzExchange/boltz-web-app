@@ -206,7 +206,7 @@ h2.special {
 #partners > div > a,
 #integrations > div > a:before,
 #integrations > div > a {
-    opacity: 0.6;
+    opacity: 0.4;
     filter: brightness(1000) grayscale(1);
 }
 

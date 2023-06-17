@@ -16,7 +16,7 @@ const Hero = () => {
     return (
         <div id="hero" class="inner-wrap">
             <h1>
-                Privacy first, account-free crypto exchange
+                Privacy first, account-free bitcoin exchange
                 <small>
                     Trading shouldn't require an account. Your money remains in
                     your control, at all times.
