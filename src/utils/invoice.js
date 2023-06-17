@@ -59,6 +59,18 @@ export function isInvoice(data) {
     return data.toLowerCase().startsWith(bolt11_prefix);
 }
 
+const isValidBech32 = (data) => {
+    try {
+        bech32.decodeToBytes(data);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
 export function isLnurl(data) {
-    return data.includes("@") || data.toLowerCase().startsWith("lnurl");
+    return (
+        data.includes("@") ||
+        (data.toLowerCase().startsWith("lnurl") && isValidBech32(data))
+    );
 }

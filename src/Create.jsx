@@ -9,7 +9,7 @@ import Asset from "./components/Asset";
 import arrow_svg from "./assets/arrow.svg";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
-import { validateResponse } from "./utils/validation";
+import { decodeInvoice, validateResponse } from "./utils/validation";
 import { errorHandler, fetcher, fetchPairs, feeCheck } from "./helper";
 import {
     fetchLnurl,
@@ -195,12 +195,13 @@ const Create = () => {
                     await fetchLnurl(invoice(), Number(receiveAmount()))
                 );
             }
-            if (!isInvoice(invoice())) {
-                const msg = "invalid network";
+            validateAddress(invoiceInputRef);
+            if (!invoiceValid()) {
+                const msg = "invalid invoice";
                 log.error(msg);
                 setNotificationType("error");
                 setNotification(msg);
-                return;
+                return true;
             }
 
             params = {
@@ -301,6 +302,14 @@ const Create = () => {
         setSendAmountValid(true);
     };
 
+    const checkInvoiceAmount = (invoice) => {
+        try {
+            return receiveAmount() === BigInt(decodeInvoice(invoice).satoshis);
+        } catch (e) {
+            return false;
+        }
+    };
+
     const validateAddress = (input) => {
         let inputValue = input.value.trim();
         if (reverse()) {
@@ -319,7 +328,10 @@ const Create = () => {
         } else {
             inputValue = trimLightningPrefix(inputValue);
 
-            if (isInvoice(inputValue) || isLnurl(inputValue)) {
+            if (
+                isLnurl(inputValue) ||
+                (isInvoice(inputValue) && checkInvoiceAmount(inputValue))
+            ) {
                 input.setCustomValidity("");
                 setInvoiceValid(true);
                 setInvoice(inputValue);
@@ -424,7 +436,9 @@ const Create = () => {
                     disabled={buttonDisable() ? "disabled" : ""}
                     onClick={() => {
                         setButtonDisable(true);
-                        create().then(() => setButtonDisable(false));
+                        create()
+                            .then((res) => !res && setButtonDisable(false))
+                            .catch(() => setButtonDisable(false));
                     }}>
                     {t("create_swap")}
                 </button>
