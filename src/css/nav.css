@@ -1,9 +1,12 @@
 .nav-inner {
-    margin: auto;
-    max-width: 1024px;
     display: flex;
     justify-content: flex-start;
     align-items: center;
+}
+@media (min-width: 769px) {
+    .nav-inner {
+        justify-content: center;
+    }
 }
 
 nav {
@@ -91,6 +94,7 @@ nav a.active {
     -ms-user-select: none;
     user-select: none;
     z-index: 1000;
+    margin-left: auto;
 }
 
 #hamburger.active {

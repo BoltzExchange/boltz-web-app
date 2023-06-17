@@ -32,23 +32,6 @@ const Nav = ({ network }) => {
     return (
         <nav>
             <div class="nav-inner">
-                <svg
-                    id="hamburger"
-                    viewBox="0 0 100 100"
-                    width="50"
-                    class={hamburger() ? "active" : ""}
-                    onClick={() => setHamburger(!hamburger())}>
-                    <path
-                        class="line top"
-                        d="m 70,33 h -40 c 0,0 -8.5,-0.149796 -8.5,8.5 0,8.649796 8.5,8.5 8.5,8.5 h 20 v -20"
-                    />
-                    <path class="line middle" d="m 70,50 h -40" />
-                    <path
-                        class="line bottom"
-                        d="m 30,67 h 40 c 0,0 8.5,0.149796 8.5,-8.5 0,-8.649796 -8.5,-8.5 -8.5,-8.5 h -20 v 20"
-                    />
-                </svg>
-
                 <A id="logo" href="/">
                     <img src={logo} alt="boltz.exchange btc logo" />
                 </A>
@@ -112,6 +95,22 @@ const Nav = ({ network }) => {
                         </div>
                     </div>
                 </Show>
+                <svg
+                    id="hamburger"
+                    viewBox="0 0 100 100"
+                    width="50"
+                    class={hamburger() ? "active" : ""}
+                    onClick={() => setHamburger(!hamburger())}>
+                    <path
+                        class="line top"
+                        d="m 70,33 h -40 c 0,0 -8.5,-0.149796 -8.5,8.5 0,8.649796 8.5,8.5 8.5,8.5 h 20 v -20"
+                    />
+                    <path class="line middle" d="m 70,50 h -40" />
+                    <path
+                        class="line bottom"
+                        d="m 30,67 h 40 c 0,0 8.5,0.149796 8.5,-8.5 0,-8.649796 -8.5,-8.5 -8.5,-8.5 h -20 v 20"
+                    />
+                </svg>
             </div>
             <Show when={!online()}>
                 <div id="offline">
