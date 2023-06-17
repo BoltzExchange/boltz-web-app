@@ -19,8 +19,8 @@ const Hero = () => {
                 Privacy first, account-free bitcoin exchange and lightning
                 service provider
                 <small>
-                    Trading shouldn't require an account. Your money remains in
-                    your control, at all times.
+                    Your money remains in your control, at all times. We don't
+                    collect any data.
                 </small>
             </h1>
             <span class="btn btn-inline" onclick={() => navigate("swap")}>
@@ -36,7 +36,7 @@ const Hero = () => {
                     <hr />
                     <p>
                         Boltz focuses on the adoption of second layer scaling
-                        technology like the lightning network.
+                        technology
                     </p>
                 </div>
                 <div class="hero-box">
@@ -45,7 +45,7 @@ const Hero = () => {
                     <hr />
                     <p>
                         Boltz does not and will never collect any data that
-                        could identify our users.
+                        could identify our users
                     </p>
                 </div>
                 <div class="hero-box">
