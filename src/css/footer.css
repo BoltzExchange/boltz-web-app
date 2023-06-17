@@ -4,6 +4,7 @@
     align-items: center;
 }
 .socials a {
+    opacity: 0.4;
     padding: 8px;
     background: #fff;
     border-radius: 100%;
@@ -12,6 +13,9 @@
     margin: 14px;
     align-items: center;
     display: flex;
+}
+.socials a:hover {
+    opacity: 1;
 }
 .socials img {
     width: 100%;
