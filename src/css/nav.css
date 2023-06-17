@@ -157,8 +157,13 @@ nav a.active {
     #hamburger {
         display: none;
     }
+
     #collapse {
         display: flex;
+    }
+
+    #collapse > :first-child {
+        border-left: none;
     }
 
     #collapse a {

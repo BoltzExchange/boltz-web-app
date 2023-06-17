@@ -9,8 +9,8 @@ import Asset from "./components/Asset";
 import arrow_svg from "./assets/arrow.svg";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
-import { validateResponse } from "./utils/validation";
-import { errorHandler, fetcher, fetchPairs } from "./helper";
+import { decodeInvoice, validateResponse } from "./utils/validation";
+import { errorHandler, fetcher, fetchPairs, feeCheck } from "./helper";
 import {
     fetchLnurl,
     isInvoice,
@@ -76,7 +76,11 @@ const Create = () => {
             setSendAmount(BigInt(minimum()));
             setReceiveAmount(BigInt(calculateReceiveAmount(minimum())));
         } else {
-            setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            if (reverse()) {
+                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            } else {
+                setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
+            }
             validateAmount();
         }
     });
@@ -117,6 +121,13 @@ const Create = () => {
 
     const navigate = useNavigate();
 
+    const checkInvoice = () => {
+        if (isInvoice(invoice())) {
+            setInvoice("");
+            setInvoiceValid(false);
+        }
+    };
+
     const changeReceiveAmount = (e) => {
         const amount = e.currentTarget.value.trim();
         let satAmount = convertAmount(Number(amount), denominations.sat);
@@ -124,7 +135,7 @@ const Create = () => {
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateAmount();
-        if (isInvoice(invoice())) setInvoice("");
+        checkInvoice();
     };
 
     const changeSendAmount = (e) => {
@@ -134,7 +145,7 @@ const Create = () => {
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateAmount();
-        if (isInvoice(invoice())) setInvoice("");
+        checkInvoice();
     };
 
     const createWeblnInvoice = async () => {
@@ -151,6 +162,7 @@ const Create = () => {
 
     const create = async () => {
         if (!valid()) return;
+        if (!(await feeCheck(t("feecheck")))) return;
 
         let asset_name = asset();
 
@@ -183,12 +195,13 @@ const Create = () => {
                     await fetchLnurl(invoice(), Number(receiveAmount()))
                 );
             }
-            if (!isInvoice(invoice())) {
-                const msg = "invalid network";
+            validateAddress(invoiceInputRef);
+            if (!invoiceValid()) {
+                const msg = "invalid invoice";
                 log.error(msg);
                 setNotificationType("error");
                 setNotification(msg);
-                return false;
+                return true;
             }
 
             params = {
@@ -199,43 +212,46 @@ const Create = () => {
                 invoice: invoice(),
             };
         }
-        setButtonDisable(true);
-        fetcher(
-            "/createswap",
-            (data) => {
-                data.privateKey = privateKeyHex;
-                data.date = new Date().getTime();
-                data.reverse = reverse();
-                data.asset = asset();
-                data.preimage = preimageHex;
-                data.receiveAmount = Number(receiveAmount());
-                data.sendAmount = Number(sendAmount());
-                data.onchainAddress = onchainAddress();
+        await new Promise((resolve) => {
+            fetcher(
+                "/createswap",
+                (data) => {
+                    data.privateKey = privateKeyHex;
+                    data.date = new Date().getTime();
+                    data.reverse = reverse();
+                    data.asset = asset();
+                    data.preimage = preimageHex;
+                    data.receiveAmount = Number(receiveAmount());
+                    data.sendAmount = Number(sendAmount());
+                    data.onchainAddress = onchainAddress();
 
-                if (!data.reverse) {
-                    data.invoice = invoice();
-                }
-
-                // TODO: show updated quote when amount doesn't match exactly
-                validateResponse(data).then((success) => {
-                    if (!success) {
-                        navigate("/error/");
-                        return;
+                    if (!data.reverse) {
+                        data.invoice = invoice();
                     }
 
-                    setSwaps(swaps().concat(data));
-                    setInvoice("");
-                    setOnchainAddress("");
-                    navigate("/swap/" + data.id);
-                    setButtonDisable(false);
-                });
-            },
-            params,
-            (err) => {
-                setButtonDisable(false);
-                errorHandler(err);
-            }
-        );
+                    validateResponse(data).then((success) => {
+                        if (!success) {
+                            resolve();
+                            navigate("/error/");
+                            return;
+                        }
+
+                        setSwaps(swaps().concat(data));
+                        setInvoice("");
+                        setInvoiceValid(false);
+                        setOnchainAddress("");
+                        setAddressValid(false);
+                        resolve();
+                        navigate("/swap/" + data.id);
+                    });
+                },
+                params,
+                (err) => {
+                    resolve();
+                    errorHandler(err);
+                }
+            );
+        });
     };
 
     const validateInput = (evt) => {
@@ -286,6 +302,14 @@ const Create = () => {
         setSendAmountValid(true);
     };
 
+    const checkInvoiceAmount = (invoice) => {
+        try {
+            return receiveAmount() === BigInt(decodeInvoice(invoice).satoshis);
+        } catch (e) {
+            return false;
+        }
+    };
+
     const validateAddress = (input) => {
         let inputValue = input.value.trim();
         if (reverse()) {
@@ -304,7 +328,10 @@ const Create = () => {
         } else {
             inputValue = trimLightningPrefix(inputValue);
 
-            if (isInvoice(inputValue) || isLnurl(inputValue)) {
+            if (
+                isLnurl(inputValue) ||
+                (isInvoice(inputValue) && checkInvoiceAmount(inputValue))
+            ) {
                 input.setCustomValidity("");
                 setInvoiceValid(true);
                 setInvoice(inputValue);
@@ -414,7 +441,12 @@ const Create = () => {
                     id="create-swap"
                     class="btn"
                     disabled={buttonDisable() ? "disabled" : ""}
-                    onClick={create}>
+                    onClick={() => {
+                        setButtonDisable(true);
+                        create()
+                            .then((res) => !res && setButtonDisable(false))
+                            .catch(() => setButtonDisable(false));
+                    }}>
                     {t("create_swap")}
                 </button>
             </Show>

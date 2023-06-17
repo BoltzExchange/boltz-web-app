@@ -5,6 +5,8 @@ import { detectSwap } from "boltz-core";
 import { ECPair } from "./ecpair/ecpair";
 import { api_url } from "./config";
 import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
+import { feeChecker } from "./utils/feeChecker";
+
 import {
     ref,
     swaps,
@@ -421,6 +423,34 @@ export const fetchPairs = () => {
         }
     );
     return false;
+};
+
+export const feeCheck = async (notification) => {
+    return new Promise((resolve) => {
+        fetcher(
+            "/getpairs",
+            (data) => {
+                log.debug("getpairs", data);
+                if (feeChecker(data.pairs)) {
+                    // hash matches and fees are ok
+                    resolve(true);
+                } else {
+                    // update fees
+                    setConfig(data.pairs);
+                    setNotificationType("error");
+                    setNotification(notification);
+                    resolve(false);
+                }
+            },
+            null,
+            (error) => {
+                log.debug(error);
+                setNotificationType("error");
+                setNotification(error);
+                resolve(false);
+            }
+        );
+    });
 };
 
 export const refundAddressChange = (e, asset) => {
