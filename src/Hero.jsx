@@ -128,7 +128,6 @@ const Hero = () => {
                         class="fuji"></a>
                 </div>
             </div>
-            <hr />
             <h2 class="special">Partners</h2>
             <div id="partners">
                 <div>
