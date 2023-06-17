@@ -189,6 +189,15 @@ h2.special {
     width: 142px;
     height: 62px;
 }
+.fuji {
+    display: inline-block;
+    background: url(../assets/fuji.png);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 142px;
+    height: 40px;
+}
+
 #partners,
 #integrations {
     display: flex;

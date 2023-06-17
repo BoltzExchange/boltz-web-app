@@ -121,6 +121,12 @@ const Hero = () => {
                         bolt.observer
                     </a>
                 </div>
+                <div>
+                    <a
+                        href="https://fuji.money/"
+                        target="_blank"
+                        class="fuji"></a>
+                </div>
             </div>
             <hr />
             <h2 class="special">Partners</h2>
