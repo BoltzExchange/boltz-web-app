@@ -1,5 +1,5 @@
 import { A } from "@solidjs/router";
-
+import { Show } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
 import {
     online,
@@ -9,10 +9,8 @@ import {
     setHamburger,
     wasmSupported,
 } from "./signals";
-import { network } from "./config";
-import { fetchPairs } from "./helper";
-
 import "./css/nav.css";
+import { fetchPairs } from "./helper";
 import logo from "./assets/boltz.svg";
 import reload_svg from "./assets/reload.svg";
 
@@ -23,7 +21,7 @@ const locales = {
     jp: "Japanese",
 };
 
-const Nav = () => {
+const Nav = ({ network }) => {
     const [t, { locale }] = useI18n();
 
     const set_local = (locale_code) => {
@@ -54,9 +52,11 @@ const Nav = () => {
                 <A id="logo" href="/">
                     <img src={logo} alt="boltz.exchange btc logo" />
                 </A>
-                <div id="network" class="btn btn-small">
-                    {network}
-                </div>
+                <Show when={network !== "main"}>
+                    <div id="network" class="btn btn-small">
+                        {network}
+                    </div>
+                </Show>
 
                 <div id="collapse" class={hamburger() ? "active" : ""}>
                     <A href="/swap" onClick={() => setHamburger(false)}>
