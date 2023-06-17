@@ -1,13 +1,13 @@
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
-import "./hero.css";
+import "./css/hero.css";
 import liquid from "./assets/liquid-icon.svg";
 import bitcoin from "./assets/bitcoin-icon.svg";
 import lightning from "./assets/lightning-icon.svg";
 
 const Hero = () => {
-    const [t, { add, locale, dict }] = useI18n();
+    const [t] = useI18n();
 
     const navigate = useNavigate();
 

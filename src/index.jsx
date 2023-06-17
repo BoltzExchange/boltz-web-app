@@ -15,6 +15,7 @@ import Footer from "./Footer";
 import Refund from "./Refund";
 import createI18n from "./i18n";
 import History from "./History";
+import Hero from "./Hero";
 import { loglevel, network } from "./config";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import "./css/index.css";
@@ -33,14 +34,13 @@ if ("serviceWorker" in navigator) {
         });
 }
 
-// <Route path="/" component={Hero} />
 const cleanup = render(
     () => (
         <I18nContext.Provider value={createI18n()}>
             <Router>
                 <Nav network={network} />
                 <Routes>
-                    <Route path="/" component={Create} />
+                    <Route path="/" component={Hero} />
                     <Route path="/swap" component={Create} />
                     <Route path="/swap/:id" component={Pay} />
                     <Route path="/error" component={Error} />
