@@ -5,6 +5,8 @@ import "./css/hero.css";
 import liquid from "./assets/liquid-icon.svg";
 import bitcoin from "./assets/bitcoin-icon.svg";
 import lightning from "./assets/lightning-icon.svg";
+import electrum from "./assets/electrum.png";
+import breez from "./assets/logo-breez-header.svg";
 
 const Hero = () => {
     const [t] = useI18n();
@@ -12,7 +14,7 @@ const Hero = () => {
     const navigate = useNavigate();
 
     return (
-        <div class="inner-wrap">
+        <div id="hero" class="inner-wrap">
             <h1>
                 Privacy first, account-free crypto exchange
                 <small>
@@ -51,6 +53,7 @@ const Hero = () => {
                     <img src={liquid} alt="Liquid Bitcoin" />
                 </div>
             </div>
+            <hr />
             <div id="numbers">
                 <div class="number">
                     1840 <small>Number of Channels</small>
@@ -65,6 +68,59 @@ const Hero = () => {
                     4 years <small>Oldest Channel</small>
                 </div>
             </div>
+            <hr />
+            <h2 class="special">Integrations</h2>
+            <div id="integrations">
+                <div>
+                    <a
+                        href="https://breez.technology/"
+                        target="_blank"
+                        class="breez"></a>
+                </div>
+                <div>
+                    <a
+                        href="https://electrum.org/"
+                        target="_blank"
+                        class="electrum"></a>
+                </div>
+                <div>
+                    <a
+                        href="https://lnbits.com/"
+                        target="_blank"
+                        class="lnbits"></a>
+                </div>
+                <div>
+                    <a
+                        href="https://github.com/Ride-The-Lightning/RTL"
+                        target="_blank"
+                        class="rtl"></a>
+                </div>
+                <div>
+                    <a
+                        href="https://thunderhub.io/"
+                        target="_blank"
+                        class="pornhub">
+                        Thunderhub
+                    </a>
+                </div>
+                <div>
+                    <a
+                        href="https://bolt.observer/"
+                        target="_blank"
+                        class="boltobserver">
+                        bolt.observer
+                    </a>
+                </div>
+                <div>
+                    <a
+                        href="https://github.com/ZmnSCPxj/clboss"
+                        target="_blank"
+                        class="clboss">
+                        CLBOSS
+                    </a>
+                </div>
+            </div>
+            <hr />
         </div>
     );
 };
