@@ -35,10 +35,8 @@ h2.special {
         padding-box text;
 }
 #hero h2.special {
+    margin: 0;
     font-size: 24px;
-    margin-bottom: 12px;
-    margin-top: 52px;
-    padding-bottom: 12px;
 }
 
 .inner-wrap {
@@ -115,8 +113,8 @@ h2.special {
     background: url(../assets/lnbits.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 155px;
-    height: 46px;
+    width: 147px;
+    height: 42px;
 }
 .breez {
     display: inline-block;
@@ -131,8 +129,8 @@ h2.special {
     background: url(../assets/electrum.png);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 212px;
-    height: 59px;
+    width: 190px;
+    height: 53px;
 }
 .cln {
     display: inline-block;
@@ -204,7 +202,6 @@ h2.special {
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 52px;
 }
 
 #partners > div,

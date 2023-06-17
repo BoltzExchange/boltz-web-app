@@ -71,10 +71,11 @@ const Hero = () => {
                     4 years <small>Oldest Channel</small>
                 </div>
             </div>
-            <hr />
 
-            <h2 class="special">Integrations</h2>
             <div id="integrations">
+                <div>
+                    <h2 class="special">Integrations</h2>
+                </div>
                 <div>
                     <a
                         href="https://corelightning.org/"
@@ -128,8 +129,10 @@ const Hero = () => {
                         class="fuji"></a>
                 </div>
             </div>
-            <h2 class="special">Partners</h2>
             <div id="partners">
+                <div>
+                    <h2 class="special">Partners</h2>
+                </div>
                 <div>
                     <a
                         href="https://blockstream.com/"
