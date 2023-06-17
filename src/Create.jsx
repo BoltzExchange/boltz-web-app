@@ -76,7 +76,11 @@ const Create = () => {
             setSendAmount(BigInt(minimum()));
             setReceiveAmount(BigInt(calculateReceiveAmount(minimum())));
         } else {
-            setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            if (reverse()) {
+                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            } else {
+                setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
+            }
             validateAmount();
         }
     });
@@ -196,7 +200,7 @@ const Create = () => {
                 log.error(msg);
                 setNotificationType("error");
                 setNotification(msg);
-                return false;
+                return;
             }
 
             params = {
@@ -207,45 +211,46 @@ const Create = () => {
                 invoice: invoice(),
             };
         }
-        setButtonDisable(true);
-        fetcher(
-            "/createswap",
-            (data) => {
-                data.privateKey = privateKeyHex;
-                data.date = new Date().getTime();
-                data.reverse = reverse();
-                data.asset = asset();
-                data.preimage = preimageHex;
-                data.receiveAmount = Number(receiveAmount());
-                data.sendAmount = Number(sendAmount());
-                data.onchainAddress = onchainAddress();
+        await new Promise((resolve) => {
+            fetcher(
+                "/createswap",
+                (data) => {
+                    data.privateKey = privateKeyHex;
+                    data.date = new Date().getTime();
+                    data.reverse = reverse();
+                    data.asset = asset();
+                    data.preimage = preimageHex;
+                    data.receiveAmount = Number(receiveAmount());
+                    data.sendAmount = Number(sendAmount());
+                    data.onchainAddress = onchainAddress();
 
-                if (!data.reverse) {
-                    data.invoice = invoice();
-                }
-
-                // TODO: show updated quote when amount doesn't match exactly
-                validateResponse(data).then((success) => {
-                    if (!success) {
-                        navigate("/error/");
-                        return;
+                    if (!data.reverse) {
+                        data.invoice = invoice();
                     }
 
-                    setSwaps(swaps().concat(data));
-                    setInvoice("");
-                    setInvoiceValid(false);
-                    setOnchainAddress("");
-                    setAddressValid(false);
-                    navigate("/swap/" + data.id);
-                    setButtonDisable(false);
-                });
-            },
-            params,
-            (err) => {
-                setButtonDisable(false);
-                errorHandler(err);
-            }
-        );
+                    validateResponse(data).then((success) => {
+                        if (!success) {
+                            resolve();
+                            navigate("/error/");
+                            return;
+                        }
+
+                        setSwaps(swaps().concat(data));
+                        setInvoice("");
+                        setInvoiceValid(false);
+                        setOnchainAddress("");
+                        setAddressValid(false);
+                        resolve();
+                        navigate("/swap/" + data.id);
+                    });
+                },
+                params,
+                (err) => {
+                    resolve();
+                    errorHandler(err);
+                }
+            );
+        });
     };
 
     const validateInput = (evt) => {
@@ -417,7 +422,10 @@ const Create = () => {
                     id="create-swap"
                     class="btn"
                     disabled={buttonDisable() ? "disabled" : ""}
-                    onClick={create}>
+                    onClick={() => {
+                        setButtonDisable(true);
+                        create().then(() => setButtonDisable(false));
+                    }}>
                     {t("create_swap")}
                 </button>
             </Show>
