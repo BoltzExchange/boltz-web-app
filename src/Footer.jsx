@@ -21,7 +21,7 @@ const Footer = () => {
                     Discord
                 </a>
             </h4>
-            <h2>{t("socialmedia")}</h2>
+            <h2 class="special">{t("socialmedia")}</h2>
             <div class="socials">
                 <a
                     title="Substack"

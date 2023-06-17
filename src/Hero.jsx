@@ -25,6 +25,9 @@ const Hero = () => {
             <span class="btn btn-inline" onclick={() => navigate("swap")}>
                 Start Swapping
             </span>
+            <span class="btn btn-inline" onclick={() => navigate("swap")}>
+                Manage Liquidity
+            </span>
             <div class="hero-boxes">
                 <div class="hero-box">
                     <h2>We're fast</h2>
@@ -53,7 +56,6 @@ const Hero = () => {
                     <img src={liquid} alt="Liquid Bitcoin" />
                 </div>
             </div>
-            <hr />
             <div id="numbers">
                 <div class="number">
                     1840 <small>Number of Channels</small>
@@ -69,8 +71,15 @@ const Hero = () => {
                 </div>
             </div>
             <hr />
+
             <h2 class="special">Integrations</h2>
             <div id="integrations">
+                <div>
+                    <a
+                        href="https://corelightning.org/"
+                        target="_blank"
+                        class="cln"></a>
+                </div>
                 <div>
                     <a
                         href="https://breez.technology/"
@@ -111,16 +120,29 @@ const Hero = () => {
                         bolt.observer
                     </a>
                 </div>
-                <div>
-                    <a
-                        href="https://github.com/ZmnSCPxj/clboss"
-                        target="_blank"
-                        class="clboss">
-                        CLBOSS
-                    </a>
-                </div>
             </div>
             <hr />
+            <h2 class="special">Partners</h2>
+            <div id="partners">
+                <div>
+                    <a
+                        href="https://blockstream.com/"
+                        target="_blank"
+                        class="blockstream"></a>
+                </div>
+                <div>
+                    <a
+                        href="https://www.diamondhandsnode.com/"
+                        target="_blank"
+                        class="diamondhands"></a>
+                </div>
+                <div>
+                    <a
+                        href="https://vulpem.com/"
+                        target="_blank"
+                        class="vulpem"></a>
+                </div>
+            </div>
         </div>
     );
 };
