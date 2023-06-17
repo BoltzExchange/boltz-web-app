@@ -57,6 +57,7 @@ import {
     setNotificationType,
     webln,
     wasmSupported,
+    config,
 } from "./signals";
 
 const Create = () => {
@@ -162,12 +163,11 @@ const Create = () => {
 
     const create = async () => {
         if (!valid()) return;
-        if (!(await feeCheck(t("feecheck")))) return;
 
-        let asset_name = asset();
+        const assetName = asset();
 
-        const address = getAddress(asset_name);
-        const net = getNetwork(asset_name);
+        const address = getAddress(assetName);
+        const net = getNetwork(assetName);
 
         const pair = ECPair.makeRandom();
         const privateKeyHex = pair.privateKey.toString("hex");
@@ -183,7 +183,7 @@ const Create = () => {
             const preimageHashHex = secp.utils.bytesToHex(preimageHash);
             params = {
                 type: "reversesubmarine",
-                pairId: asset_name + "/BTC",
+                pairId: assetName + "/BTC",
                 orderSide: "buy",
                 invoiceAmount: Number(sendAmount()),
                 claimPublicKey: publicKeyHex,
@@ -206,12 +206,15 @@ const Create = () => {
 
             params = {
                 type: "submarine",
-                pairId: asset_name + "/BTC",
+                pairId: assetName + "/BTC",
                 orderSide: "sell",
                 refundPublicKey: publicKeyHex,
                 invoice: invoice(),
             };
         }
+
+        params.pairHash = config()[`${assetName}/BTC`]["hash"];
+
         await new Promise((resolve) => {
             fetcher(
                 "/createswap",
@@ -246,9 +249,16 @@ const Create = () => {
                     });
                 },
                 params,
-                (err) => {
+                async (err) => {
+                    const res = await err.json();
+                    if (res.error === "invalid pair hash") {
+                        await feeCheck(t("feecheck"));
+                    } else {
+                        setNotificationType("error");
+                        setNotification(res.error);
+                    }
+
                     resolve();
-                    errorHandler(err);
                 }
             );
         });
@@ -445,7 +455,10 @@ const Create = () => {
                         setButtonDisable(true);
                         create()
                             .then((res) => !res && setButtonDisable(false))
-                            .catch(() => setButtonDisable(false));
+                            .catch((e) => {
+                                log.warn("create failed", e);
+                                setButtonDisable(false);
+                            });
                     }}>
                     {t("create_swap")}
                 </button>
