@@ -45,7 +45,7 @@ h2.special {
 }
 #hero h2.special {
     margin: 0;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .inner-wrap {
@@ -89,7 +89,7 @@ h2.special {
     }
 }
 .number {
-    font-size: 40px;
+    font-size: 36px;
     font-weight: bold;
     margin-bottom: 16px;
 }
@@ -106,18 +106,18 @@ h2.special {
     background: url(../assets/thunderhub.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     position: absolute;
-    top: -3px;
+    top: -8px;
     left: 0;
 }
 .pornhub {
     position: relative;
-    padding-left: 54px;
+    padding-left: 48px;
     text-decoration: none;
-    font-size: 25px;
+    font-size: 18px;
     color: #bdc5ee;
     font-weight: bold;
     line-height: 1.1;
@@ -135,32 +135,32 @@ h2.special {
     background: url(../assets/lnbits.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 147px;
-    height: 42px;
+    width: 128px;
+    height: 36px;
 }
 .breez {
     display: inline-block;
     background: url(../assets/logo-breez-header.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 133px;
-    height: 46px;
+    width: 96px;
+    height: 37px;
 }
 .electrum {
     display: inline-block;
     background: url(../assets/electrum.png);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 190px;
-    height: 53px;
+    width: 153px;
+    height: 42px;
 }
 .cln {
     display: inline-block;
     background: url(../assets/cln.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 159px;
-    height: 59px;
+    width: 124px;
+    height: 48px;
 }
 
 .boltobserver:before {
@@ -169,18 +169,18 @@ h2.special {
     background: url(../assets/boltobserver.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 45px;
-    height: 45px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     position: absolute;
-    top: -3px;
+    top: -8px;
     left: 0;
 }
 .boltobserver {
     position: relative;
-    padding-left: 54px;
+    padding-left: 52px;
     text-decoration: none;
-    font-size: 25px;
+    font-size: 18px;
     color: white;
     font-weight: bold;
     line-height: 1.1;
@@ -190,32 +190,32 @@ h2.special {
     background: url(../assets/diamondhands.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 224px;
-    height: 40px;
+    width: 186px;
+    height: 32px;
 }
 .blockstream {
     display: inline-block;
     background: url(../assets/blockstream.png);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 195px;
-    height: 67px;
+    width: 170px;
+    height: 58px;
 }
 .vulpem {
     display: inline-block;
     background: url(../assets/vulpem.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 142px;
-    height: 62px;
+    width: 124px;
+    height: 52px;
 }
 .fuji {
     display: inline-block;
     background: url(../assets/fuji.png);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 142px;
-    height: 40px;
+    width: 120px;
+    height: 35px;
 }
 
 #partners,
@@ -228,7 +228,7 @@ h2.special {
 
 #partners > div,
 #integrations > div {
-    padding: 22px;
+    padding: 16px 22px;
 }
 
 #partners > div > a,
