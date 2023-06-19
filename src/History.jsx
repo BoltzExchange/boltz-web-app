@@ -1,7 +1,6 @@
 import { Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { downloadBackup } from "./helper";
 import { swaps, setSwaps } from "./signals";
 import SwapList from "./components/SwapList";
 import "./css/history.css";
@@ -42,11 +41,6 @@ const History = () => {
                             class="btn btn-danger"
                             onClick={deleteLocalStorage}>
                             {t("refund_clear")}
-                        </button>
-                        <button
-                            class="btn "
-                            onClick={() => downloadBackup(swaps())}>
-                            {t("refund_backup")}
                         </button>
                     </div>
                 </Show>
