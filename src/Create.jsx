@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createMemo, createSignal, createEffect } from "solid-js";
+import { createMemo, createSignal, createEffect, on } from "solid-js";
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
@@ -58,6 +58,8 @@ import {
     webln,
     wasmSupported,
     config,
+    boltzFee,
+    minerFee,
 } from "./signals";
 
 const Create = () => {
@@ -76,15 +78,19 @@ const Create = () => {
             setFirstLoad(false);
             setSendAmount(BigInt(minimum()));
             setReceiveAmount(BigInt(calculateReceiveAmount(minimum())));
-        } else {
+        }
+    });
+
+    createEffect(
+        on([boltzFee, minerFee], () => {
             if (reverse()) {
                 setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
             } else {
                 setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
             }
             validateAmount();
-        }
-    });
+        })
+    );
 
     createEffect(() => {
         reverse();
@@ -131,8 +137,8 @@ const Create = () => {
 
     const changeReceiveAmount = (e) => {
         const amount = e.currentTarget.value.trim();
-        let satAmount = convertAmount(Number(amount), denominations.sat);
-        let sendAmount = calculateSendAmount(satAmount);
+        const satAmount = convertAmount(Number(amount), denominations.sat);
+        const sendAmount = calculateSendAmount(satAmount);
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateAmount();
@@ -141,8 +147,8 @@ const Create = () => {
 
     const changeSendAmount = (e) => {
         const amount = e.currentTarget.value.trim();
-        let satAmount = convertAmount(Number(amount), denominations.sat);
-        let receiveAmount = calculateReceiveAmount(satAmount);
+        const satAmount = convertAmount(Number(amount), denominations.sat);
+        const receiveAmount = calculateReceiveAmount(satAmount);
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateAmount();

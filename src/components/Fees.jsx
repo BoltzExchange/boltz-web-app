@@ -98,7 +98,10 @@ const Fees = () => {
                 <br />
                 {t("fee")} ({boltzFee()}%):{" "}
                 <span class="boltz-fee">
-                    {formatAmount(calculateBoltzFeeOnSend(sendAmount()), true)}
+                    {formatAmount(
+                        Math.max(calculateBoltzFeeOnSend(sendAmount()), 0),
+                        true
+                    )}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>
