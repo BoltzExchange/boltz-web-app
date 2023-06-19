@@ -10,7 +10,7 @@ import arrow_svg from "./assets/arrow.svg";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
 import { decodeInvoice, validateResponse } from "./utils/validation";
-import { errorHandler, fetcher, fetchPairs, feeCheck } from "./helper";
+import { fetcher, fetchPairs, feeCheck } from "./helper";
 import {
     fetchLnurl,
     isInvoice,

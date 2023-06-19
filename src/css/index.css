@@ -533,8 +533,9 @@ textarea {
     background: darkred;
     margin-top: 5px;
     font-size: 18px;
-    padding: 5px 0;
+    padding: 5px 16px;
     border-radius: 16px;
+    display: inline-block;
 }
 
 .external {

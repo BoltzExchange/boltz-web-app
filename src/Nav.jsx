@@ -1,18 +1,9 @@
 import { A } from "@solidjs/router";
 import { Show } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import {
-    online,
-    i18n,
-    setI18n,
-    hamburger,
-    setHamburger,
-    wasmSupported,
-} from "./signals";
+import { i18n, setI18n, hamburger, setHamburger } from "./signals";
 import "./css/nav.css";
-import { fetchPairs } from "./helper";
 import logo from "./assets/boltz.svg";
-import reload_svg from "./assets/reload.svg";
 
 const locales = {
     en: "English",
@@ -112,17 +103,6 @@ const Nav = ({ network }) => {
                     />
                 </svg>
             </div>
-            <Show when={!online()}>
-                <div id="offline">
-                    {t("api_offline")}
-                    <span class="icon-reload" onClick={fetchPairs}>
-                        <img src={reload_svg} />
-                    </span>
-                </div>
-            </Show>
-            <Show when={!wasmSupported()}>
-                <div id="noWasm">{t("wasm_not_supported")}</div>
-            </Show>
         </nav>
     );
 };
