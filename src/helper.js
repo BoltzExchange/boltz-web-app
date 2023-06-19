@@ -167,15 +167,6 @@ export const fetchSwapStatus = (swap) => {
     return false;
 };
 
-export const downloadBackup = (json) => {
-    let hiddenElement = document.createElement("a");
-    hiddenElement.href =
-        "data:application/json;charset=utf-8," + encodeURI(json);
-    hiddenElement.target = "_blank";
-    hiddenElement.download = "boltz-backup-localstorage.json";
-    hiddenElement.click();
-};
-
 export const qr = (data, cb) => {
     if (!data) return cb(null);
     QRCode.toDataURL(data, { version: 13, width: 400 })

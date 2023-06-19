@@ -65,7 +65,6 @@ const dict = {
         refund_address_placeholder: "Refund address",
         refund_clear: "Delete localstorage",
         delete_swap: "Delete swap from localstorage",
-        refund_backup: "Backup localstorage",
         delete_localstorage:
             "Are you sure you want to clear your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
         delete_localstorage_single_swap:
