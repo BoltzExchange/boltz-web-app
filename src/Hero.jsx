@@ -1,5 +1,8 @@
+import { createSignal, createMemo } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
+
+import { nodeStats } from "./signals";
 
 import "./css/hero.css";
 import liquid from "./assets/liquid-icon.svg";
@@ -11,6 +14,21 @@ const Hero = () => {
     const [t] = useI18n();
 
     const navigate = useNavigate();
+    const [numChannel, setNumChannel] = createSignal(0);
+    const [numPeers, setNumPeers] = createSignal(0);
+    const [capacity, setCapacity] = createSignal(0);
+    const [oldestChannel, setOldestChannel] = createSignal(0);
+
+    createMemo(() => {
+        const stats = nodeStats();
+        if (!stats) return;
+        setNumChannel(Number(stats.numChannel).toLocaleString());
+        setNumPeers(Number(stats.numPeers).toLocaleString());
+        setCapacity(Number(stats.capacity).toLocaleString());
+        const difference = Date.now() - stats.oldestChannel * 1000;
+        const years = (difference / 1000 / 60 / 60 / 24 / 365).toFixed(2);
+        setOldestChannel(years);
+    });
 
     return (
         <div id="hero" class="inner-wrap">
@@ -58,16 +76,16 @@ const Hero = () => {
             </div>
             <div id="numbers">
                 <div class="number">
-                    1840 <small>Number of Channels</small>
+                    {numChannel()} <small>Number of Channels</small>
                 </div>
                 <div class="number">
-                    1338 <small>Number of Peers</small>
+                    {numPeers()} <small>Number of Peers</small>
                 </div>
                 <div class="number">
-                    650.000.000<small>Capacity (sats)</small>
+                    {capacity()} <small>Capacity (sats)</small>
                 </div>
                 <div class="number">
-                    4 years <small>Oldest Channel</small>
+                    {oldestChannel()} yrs<small>Oldest Channel</small>
                 </div>
             </div>
 

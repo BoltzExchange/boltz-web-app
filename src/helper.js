@@ -27,6 +27,7 @@ import {
     setConfig,
     setRef,
     setSwap,
+    setNodeStats,
 } from "./signals";
 import {
     getNetwork,
@@ -397,6 +398,23 @@ export const claim = async (swap) => {
             transactionHex: claimTransaction,
         }
     );
+};
+
+export const fetchNodeInfo = () => {
+    fetcher(
+        "/nodestats",
+        (data) => {
+            log.debug("nodestats", data);
+            setOnline(true);
+            setNodeStats(data);
+        },
+        null,
+        (error) => {
+            log.debug(error);
+            setOnline(false);
+        }
+    );
+    return false;
 };
 
 export const fetchPairs = () => {

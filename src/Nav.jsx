@@ -91,7 +91,7 @@ const Nav = ({ network }) => {
                 <svg
                     id="hamburger"
                     viewBox="0 0 100 100"
-                    width="50"
+                    width="45"
                     class={hamburger() ? "active" : ""}
                     onClick={() => setHamburger(!hamburger())}>
                     <path
