@@ -7,7 +7,7 @@ h1 {
             rgb(0, 88, 255) 100%
         )
         padding-box text;
-    margin: 112px 12px 12px;
+    margin: 74px 12px 12px;
 }
 
 h1 small {
@@ -243,4 +243,18 @@ h2.special {
 #integrations > div > a:hover {
     opacity: 1;
     filter: brightness(1) grayscale(0);
+}
+
+#create-overlay {
+    cursor: pointer;
+    opacity: 0.6;
+    height: 333px;
+    overflow: hidden;
+}
+#create-overlay:hover {
+    opacity: 1;
+}
+
+#create-overlay .frame {
+    box-shadow: 0 0 143px #e6c826;
 }

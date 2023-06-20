@@ -5,8 +5,7 @@ import "./css/hero.css";
 import liquid from "./assets/liquid-icon.svg";
 import bitcoin from "./assets/bitcoin-icon.svg";
 import lightning from "./assets/lightning-icon.svg";
-import electrum from "./assets/electrum.png";
-import breez from "./assets/logo-breez-header.svg";
+import Create from "./Create";
 
 const Hero = () => {
     const [t] = useI18n();
@@ -15,6 +14,9 @@ const Hero = () => {
 
     return (
         <div id="hero" class="inner-wrap">
+            <div id="create-overlay" onclick={() => navigate("swap")}>
+                <Create />
+            </div>
             <h1>
                 Privacy first, account-free bitcoin exchange and lightning
                 service provider
@@ -25,9 +27,6 @@ const Hero = () => {
             </h1>
             <span class="btn btn-inline" onclick={() => navigate("swap")}>
                 Start Swapping
-            </span>
-            <span class="btn btn-inline" onclick={() => navigate("swap")}>
-                Manage Liquidity
             </span>
             <div class="hero-boxes">
                 <div class="hero-box">
