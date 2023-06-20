@@ -252,14 +252,14 @@ h2.special {
     height: 343px;
     overflow: hidden;
     position: relative;
-    transition: opacity 0.8s ease-in-out;
+    transition: opacity 0.4s ease-in-out;
 }
 #create-overlay:hover {
     opacity: 1;
 }
 
 #create-overlay .frame {
-    box-shadow: 0 0 80px #e6c826;
+    box-shadow: 0 0 60px #e6c826;
 }
 
 #create-overlay:after {
