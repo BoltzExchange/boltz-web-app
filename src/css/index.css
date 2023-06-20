@@ -528,16 +528,6 @@ textarea {
     margin-right: 4px;
 }
 
-#offline,
-#noWasm {
-    background: darkred;
-    margin-top: 5px;
-    font-size: 18px;
-    padding: 5px 16px;
-    border-radius: 16px;
-    display: inline-block;
-}
-
 .external {
     padding-right: 30px;
     padding-right: 25px;
