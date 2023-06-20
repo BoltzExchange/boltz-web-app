@@ -114,7 +114,7 @@ const Refund = () => {
     const refundSwapsSanityFilter = (swap) =>
         !swap.reverse && swap.refundTx === undefined;
 
-    const [refundableSwaps, setRefundableSwaps] = createSignal(undefined);
+    const [refundableSwaps, setRefundableSwaps] = createSignal([]);
 
     const addToRefundableSwaps = (swap) => {
         setRefundableSwaps(refundableSwaps().concat(swap));
