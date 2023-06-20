@@ -2,11 +2,12 @@ h1 {
     font-size: 64px;
     line-height: 1.05;
     background: linear-gradient(
-            20deg,
-            rgb(255, 197, 0) 10%,
-            rgb(0, 88, 255) 100%
-        )
-        padding-box text;
+        20deg,
+        rgb(255, 197, 0) 10%,
+        rgb(0, 88, 255) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin: 74px 12px 12px;
 }
 
@@ -14,6 +15,7 @@ h1 small {
     font-size: 24px;
     font-weight: normal;
     display: block;
+    -webkit-text-fill-color: white;
     color: rgba(255, 255, 255, 0.9);
     max-width: 661px;
     margin: 21px auto 34px;
@@ -22,7 +24,7 @@ h1 small {
 @media (max-width: 768px) {
     h1 {
         font-size: 36px;
-        margin: 72px 12px 12px;
+        margin: 62px 12px 12px;
     }
     h1 small {
         font-size: 20px;
@@ -248,8 +250,9 @@ h2.special {
 #create-overlay {
     cursor: pointer;
     opacity: 0.6;
-    height: 333px;
+    height: 343px;
     overflow: hidden;
+    position: relative;
 }
 #create-overlay:hover {
     opacity: 1;
@@ -257,4 +260,20 @@ h2.special {
 
 #create-overlay .frame {
     box-shadow: 0 0 143px #e6c826;
+}
+
+#create-overlay:after {
+    background: rgb(20, 40, 63);
+    background: linear-gradient(
+        0deg,
+        rgba(20, 40, 63, 1) 0%,
+        rgba(20, 40, 63, 0) 100%
+    );
+    content: " ";
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 162px;
 }
