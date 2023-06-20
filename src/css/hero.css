@@ -257,7 +257,7 @@ h2.special {
 }
 
 #create-overlay .frame {
-    box-shadow: 0 0 143px #e6c826;
+    box-shadow: 0 0 80px #e6c826;
 }
 
 #create-overlay:after {
