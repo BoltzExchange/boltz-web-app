@@ -22,7 +22,7 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
 
     return (
         <div id="past-swaps">
-            <For each={swapsSignal()}>
+            <For each={swapsSignal().reverse()}>
                 {(swap) => (
                     <div class="past-swap">
                         <span
