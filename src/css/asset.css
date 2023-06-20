@@ -5,6 +5,12 @@
     background-repeat: no-repeat;
     background-size: 100%;
 }
+@media (max-width: 488px) {
+    .icon {
+        width: 30px;
+        height: 30px;
+    }
+}
 
 [data-reverse="true"] .icon-1,
 [data-reverse="false"] .icon-2 {

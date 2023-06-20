@@ -291,6 +291,12 @@ textarea:invalid {
     font-size: 36px;
     text-align: right;
 }
+@media (max-width: 488px) {
+    #receiveAmount,
+    #sendAmount {
+        font-size: 30px;
+    }
+}
 textarea {
     min-height: 198px;
 }
@@ -352,13 +358,17 @@ textarea {
 
 .frame {
     color: #fff;
-    background: #0003;
     padding: 12px;
     max-width: 480px;
     margin: 21px auto;
-    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     position: relative;
+}
+@media (min-width: 488px) {
+    .frame {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #0003;
+    }
 }
 
 .error {
