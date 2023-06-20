@@ -83,6 +83,8 @@ const dict = {
         transaction_refunded: "Boltz has refunded the Transaction",
         refunded: "You have refunded this swap",
         api_offline: "API is offline",
+        api_offline_msg:
+            "Could not connect to the Boltz API, please try again later",
         refund_explainer: "You will be able to refund after the timeout",
         swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",

@@ -8,14 +8,14 @@ const ApiOffline = () => {
     return (
         <div>
             <Show when={!online()}>
-                <div id="offline">
-                    {t("api_offline")}
+                <div id="offline" class="banner">
+                    {t("api_offline_msg")}
                     <span class="icon-reload" onClick={fetchPairs}>
                         <img src={reload_svg} />
                     </span>
                 </div>
             </Show>
-            <Show when={!wasmSupported()}>
+            <Show when={!wasmSupported()} class="banner">
                 <div id="noWasm">{t("wasm_not_supported")}</div>
             </Show>
         </div>

@@ -15,7 +15,6 @@ import Footer from "./Footer";
 import Refund from "./Refund";
 import createI18n from "./i18n";
 import History from "./History";
-import ApiOffline from "./components/ApiOffline";
 import { loglevel, network } from "./config";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import "./css/index.css";
@@ -40,7 +39,6 @@ const cleanup = render(
         <I18nContext.Provider value={createI18n()}>
             <Router>
                 <Nav network={network} />
-                <ApiOffline />
                 <Routes>
                     <Route path="/" component={Create} />
                     <Route path="/swap" component={Create} />
