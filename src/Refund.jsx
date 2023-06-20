@@ -44,6 +44,11 @@ const Refund = () => {
     const checkRefundJsonKeys = (input, json) => {
         log.debug("checking refund json", json);
 
+        // Compatibility with the old refund files
+        if (json.asset === undefined && json.currency) {
+            json.asset = json.currency;
+        }
+
         const requiredKeys =
             json.asset !== "L-BTC" ? refundJsonKeys : refundJsonKeysLiquid;
         const valid = requiredKeys.every((key) => key in json);
