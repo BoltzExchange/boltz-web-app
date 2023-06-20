@@ -236,6 +236,7 @@ h2.special {
 #integrations > div > a {
     opacity: 0.4;
     filter: brightness(1000) grayscale(1);
+    transition: opacity 0.4s ease-in-out;
 }
 
 #partners > div > a:hover,
@@ -251,6 +252,7 @@ h2.special {
     height: 343px;
     overflow: hidden;
     position: relative;
+    transition: opacity 0.8s ease-in-out;
 }
 #create-overlay:hover {
     opacity: 1;
