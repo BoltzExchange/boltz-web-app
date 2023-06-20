@@ -3,6 +3,7 @@ import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 
 import { nodeStats } from "./signals";
+import { fetchNodeInfo } from "./helper";
 
 import "./css/hero.css";
 import liquid from "./assets/liquid-icon.svg";
@@ -22,13 +23,15 @@ const Hero = () => {
     createMemo(() => {
         const stats = nodeStats();
         if (!stats) return;
-        setNumChannel(Number(stats.numChannel).toLocaleString());
-        setNumPeers(Number(stats.numPeers).toLocaleString());
+        setNumChannel(Number(stats.channels).toLocaleString());
+        setNumPeers(Number(stats.peers).toLocaleString());
         setCapacity(Number(stats.capacity).toLocaleString());
         const difference = Date.now() - stats.oldestChannel * 1000;
         const years = (difference / 1000 / 60 / 60 / 24 / 365).toFixed(2);
         setOldestChannel(years);
     });
+
+    fetchNodeInfo();
 
     return (
         <div id="hero" class="inner-wrap">

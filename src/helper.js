@@ -406,7 +406,7 @@ export const fetchNodeInfo = () => {
         (data) => {
             log.debug("nodestats", data);
             setOnline(true);
-            setNodeStats(data);
+            setNodeStats(data.nodes.BTC);
         },
         null,
         (error) => {
