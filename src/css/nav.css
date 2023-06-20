@@ -15,7 +15,7 @@ nav {
     top: 0;
     z-index: 999;
     width: 100%;
-    background: rgba(0, 0, 0, 0.2);
+    background: #102032;
 }
 nav a {
     color: white;
