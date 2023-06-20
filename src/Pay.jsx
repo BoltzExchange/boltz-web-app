@@ -66,8 +66,11 @@ const Pay = () => {
                     setSwapStatus(data.status);
                     setSwapStatusTransaction(data.transaction);
                     if (
-                        data.status == swapStatusPending.TransactionMempool &&
-                        data.transaction
+                        data.transaction &&
+                        (data.status ===
+                            swapStatusPending.TransactionConfirmed ||
+                            data.status ===
+                                swapStatusPending.TransactionMempool)
                     ) {
                         // 0conf
                         claim(current_swap);
