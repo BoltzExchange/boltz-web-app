@@ -361,13 +361,16 @@ textarea {
     padding: 12px;
     max-width: 480px;
     margin: 21px auto;
-    border-radius: 16px;
     position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 0;
+    border-right: 0;
+    background: #0003;
 }
 @media (min-width: 488px) {
     .frame {
         border: 1px solid rgba(255, 255, 255, 0.1);
-        background: #0003;
+        border-radius: 16px;
     }
 }
 
