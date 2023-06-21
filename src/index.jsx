@@ -42,6 +42,8 @@ const cleanup = render(
                 <Routes>
                     <Route path="/" component={Create} />
                     <Route path="/swap" component={Create} />
+                    {/* Compatibility with link in Breez: https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
+                    <Route path="/swapbox" component={Create} />
                     <Route path="/swap/:id" component={Pay} />
                     <Route path="/error" component={Error} />
                     <Route path="/refund" component={Refund} />
