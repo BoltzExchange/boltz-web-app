@@ -100,7 +100,7 @@ h2.special {
     color: #e6c826;
 }
 
-.pornhub:before {
+.thunderhub:before {
     content: " ";
     display: inline-block;
     background: url(../assets/thunderhub.svg);
@@ -113,7 +113,7 @@ h2.special {
     top: -8px;
     left: 0;
 }
-.pornhub {
+.thunderhub {
     position: relative;
     padding-left: 48px;
     text-decoration: none;

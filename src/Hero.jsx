@@ -39,11 +39,9 @@ const Hero = () => {
                 <Create />
             </div>
             <h1>
-                Privacy first, account-free bitcoin exchange and lightning
-                service provider
+                Privacy First, Non-Custodial Bitcoin Exchange
                 <small>
-                    Your money remains in your control, at all times. We don't
-                    collect any data.
+                    Can't be evil. You are in control of your money. Always.
                 </small>
             </h1>
             <span class="btn btn-inline" onclick={() => navigate("swap")}>
@@ -51,21 +49,21 @@ const Hero = () => {
             </span>
             <div class="hero-boxes">
                 <div class="hero-box">
-                    <h2>We're fast</h2>
-                    <h3>Built on Lightning</h3>
+                    <h2>Fast</h2>
+                    <h3>Built on Layer 2</h3>
                     <hr />
                     <p>
-                        Boltz focuses on the adoption of second layer scaling
-                        technology
+                        Boltz utilizes second layer scaling
+                        technology like the Lightning and Liquid Network
                     </p>
                 </div>
                 <div class="hero-box">
-                    <h2>We're safe</h2>
-                    <h3>We don't collect any data</h3>
+                    <h2>Safe</h2>
+                    <h3>No data collection</h3>
                     <hr />
                     <p>
-                        Boltz does not and will never collect any data that
-                        could identify our users
+                        Boltz does not and will never collect data that
+                        could identify users and is available via Onion.
                     </p>
                 </div>
                 <div class="hero-box">
@@ -122,7 +120,7 @@ const Hero = () => {
                 </div>
                 <div>
                     <a
-                        href="https://github.com/Ride-The-Lightning/RTL"
+                        href="https://www.ridethelightning.info/"
                         target="_blank"
                         class="rtl"></a>
                 </div>
@@ -130,7 +128,7 @@ const Hero = () => {
                     <a
                         href="https://thunderhub.io/"
                         target="_blank"
-                        class="pornhub">
+                        class="thunderhub">
                         Thunderhub
                     </a>
                 </div>
