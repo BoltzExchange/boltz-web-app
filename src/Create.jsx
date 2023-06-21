@@ -133,7 +133,7 @@ const Create = () => {
 
     const changeReceiveAmount = (e) => {
         const amount = e.currentTarget.value.trim();
-        const satAmount = convertAmount(Number(amount), denominations.sat);
+        const satAmount = convertAmount(amount, denominations.sat);
         const sendAmount = calculateSendAmount(satAmount);
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
@@ -143,7 +143,7 @@ const Create = () => {
 
     const changeSendAmount = (e) => {
         const amount = e.currentTarget.value.trim();
-        const satAmount = convertAmount(Number(amount), denominations.sat);
+        const satAmount = convertAmount(amount, denominations.sat);
         const receiveAmount = calculateReceiveAmount(satAmount);
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));

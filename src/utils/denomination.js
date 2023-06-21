@@ -41,7 +41,7 @@ export const formatAmountDenomination = (denom, amount, fixed = false) => {
             return amountBig.toString();
 
         case denominations.sat:
-            return amount.toString();
+            return amount.toLocaleString("en").replace(/,/g, " ");
     }
 };
 
@@ -51,7 +51,7 @@ export const convertAmount = (amount) => {
             const amountBig = new BigNumber(amount).multipliedBy(satFactor);
             return amountBig.toNumber();
         case denominations.sat:
-            return Number(amount);
+            return Number(amount.replace(/ /g, ""));
     }
 };
 
