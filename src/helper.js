@@ -401,19 +401,10 @@ export const claim = async (swap) => {
 };
 
 export const fetchNodeInfo = () => {
-    fetcher(
-        "/nodestats",
-        (data) => {
-            log.debug("nodestats", data);
-            setOnline(true);
-            setNodeStats(data.nodes.BTC);
-        },
-        null,
-        (error) => {
-            log.debug(error);
-            setOnline(false);
-        }
-    );
+    fetcher("/nodestats", (data) => {
+        log.debug("nodestats", data);
+        setNodeStats(data.nodes.BTC);
+    });
     return false;
 };
 
