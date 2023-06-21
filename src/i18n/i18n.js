@@ -1,5 +1,6 @@
 const dict = {
     en: {
+        view_amboss: "view lightning node on amboss",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",
         history: "History",
