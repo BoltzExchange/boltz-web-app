@@ -53,8 +53,8 @@ const Hero = () => {
                     <h3>Built on Layer 2</h3>
                     <hr />
                     <p>
-                        Boltz utilizes second layer scaling
-                        technology like the Lightning and Liquid Network
+                        Boltz utilizes second layer scaling technology like the
+                        Lightning and Liquid Network
                     </p>
                 </div>
                 <div class="hero-box">
@@ -62,8 +62,8 @@ const Hero = () => {
                     <h3>No data collection</h3>
                     <hr />
                     <p>
-                        Boltz does not and will never collect data that
-                        could identify users and is available via Onion.
+                        Boltz does not and will never collect data that could
+                        identify users and is available via Onion.
                     </p>
                 </div>
                 <div class="hero-box">
