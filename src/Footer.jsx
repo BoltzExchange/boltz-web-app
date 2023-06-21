@@ -52,7 +52,15 @@ const Footer = () => {
                     <img src={nostr} alt="Nostr Logo" />
                 </a>
             </div>
-            <p>{t("footer")}<br /><a target="_blank" href="https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2">{t("view_amboss")}</a></p>
+            <p>
+                {t("footer")}
+                <br />
+                <a
+                    target="_blank"
+                    href="https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2">
+                    {t("view_amboss")}
+                </a>
+            </p>
         </footer>
     );
 };
