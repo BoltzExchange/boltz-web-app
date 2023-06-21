@@ -10,12 +10,12 @@ import {
 describe("denomination utils", () => {
     describe("convert amount", () => {
         test.each`
-            denomination         | amount           | converted
-            ${denominations.sat} | ${"123123"}      | ${123123}
-            ${denominations.sat} | ${"12312300000"} | ${12312300000}
-            ${denominations.btc} | ${"0.00123123"}  | ${123123}
-            ${denominations.btc} | ${"0.999999"}    | ${99999900}
-            ${denominations.btc} | ${"1.123123"}    | ${112312300}
+            denomination         | amount              | converted
+            ${denominations.sat} | ${"123 123"}        | ${123123}
+            ${denominations.sat} | ${"12 312 300 000"} | ${12312300000}
+            ${denominations.btc} | ${"0.00123123"}     | ${123123}
+            ${denominations.btc} | ${"0.999999"}       | ${99999900}
+            ${denominations.btc} | ${"1.123123"}       | ${112312300}
         `(
             "convert $amount in $denomination",
             ({ denomination, amount, converted }) => {
@@ -28,8 +28,8 @@ describe("denomination utils", () => {
     describe("format amount", () => {
         test.each`
             denomination         | amount         | formatted
-            ${denominations.sat} | ${123123}      | ${"123123"}
-            ${denominations.sat} | ${12312300000} | ${"12312300000"}
+            ${denominations.sat} | ${123123}      | ${"123 123"}
+            ${denominations.sat} | ${12312300000} | ${"12 312 300 000"}
             ${denominations.btc} | ${100123123}   | ${"1.00123123"}
             ${denominations.btc} | ${123123}      | ${"0.00123123"}
             ${denominations.btc} | ${1}           | ${"0.00000001"}
