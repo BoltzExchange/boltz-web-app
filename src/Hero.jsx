@@ -53,17 +53,17 @@ const Hero = () => {
                     <h3>Built on Layer 2</h3>
                     <hr />
                     <p>
-                        Boltz utilizes second layer scaling technology like the
-                        Lightning and Liquid Network
+                        Boltz utilizes second-layer scaling technologies like
+                        the Liquid and Lightning Networks
                     </p>
                 </div>
                 <div class="hero-box">
                     <h2>Safe</h2>
-                    <h3>No data collection</h3>
+                    <h3>Non-Custodial</h3>
                     <hr />
                     <p>
-                        Boltz does not and will never collect data that could
-                        identify users and is available via Onion.
+                        Swaps on Boltz are non-custodial; cryptography ensures
+                        that users are always in control of their money
                     </p>
                 </div>
                 <div class="hero-box">
