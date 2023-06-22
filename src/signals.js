@@ -7,6 +7,7 @@ export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
 
 // fees
+export const [nodeStats, setNodeStats] = createSignal(null);
 export const [config, setConfig] = createSignal(0);
 export const [online, setOnline] = createSignal(true);
 export const [wasmSupported, setWasmSupported] = createSignal(true);

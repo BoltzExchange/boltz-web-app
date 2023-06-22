@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createMemo, createSignal, createEffect, on } from "solid-js";
+import { createMemo, createSignal, createEffect, on, onMount } from "solid-js";
 import * as secp from "@noble/secp256k1";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
@@ -64,6 +64,10 @@ import {
 
 const Create = () => {
     let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;
+
+    onMount(() => {
+        sendAmountRef.focus();
+    });
 
     const [firstLoad, setFirstLoad] = createSignal(true);
     const [buttonDisable, setButtonDisable] = createSignal(true);

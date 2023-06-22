@@ -1,41 +1,67 @@
 h1 {
-    font-size: 70px;
-    line-height: 1;
+    font-size: 64px;
+    line-height: 1.05;
     background: linear-gradient(
-            20deg,
-            rgb(255, 197, 0) 10%,
-            rgb(0, 88, 255) 100%
-        )
-        padding-box text;
-    margin-bottom: 12px;
-    margin-top: 112px;
+        20deg,
+        rgb(255, 197, 0) 10%,
+        rgb(0, 88, 255) 100%
+    );
+    -webkit-background-clip: text;
+    margin: 74px 12px 12px;
 }
+
 h1 small {
-    margin-top: 21px;
-    font-size: 30px;
-    font-weight: 400;
-    color: #fff;
+    font-size: 24px;
+    font-weight: normal;
     display: block;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 661px;
+    margin: 21px auto 34px;
+    line-height: 1.2;
+}
+@media (max-width: 768px) {
+    h1 {
+        font-size: 36px;
+        margin: 62px 12px 12px;
+    }
+    h1 small {
+        font-size: 20px;
+    }
 }
 h3 {
     margin: 0;
     color: #e6c826;
 }
+
+h2.special {
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.3);
+    background: linear-gradient(
+        20deg,
+        rgb(255, 197, 0) 10%,
+        rgb(0, 88, 255) 100%
+    );
+    -webkit-background-clip: text;
+}
+#hero h2.special {
+    margin: 0;
+    font-size: 20px;
+}
+
 .inner-wrap {
     margin: auto;
     max-width: 1024px;
 }
 
 .hero-boxes {
-    margin: 72px -12px;
+    margin: 72px 0 52px;
     display: flex;
 }
 .hero-box {
+    width: 33.33%;
     border-radius: 21px;
     padding: 12px;
     margin: 12px;
-    width: 50%;
-
     color: #fff;
     background: #0003;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -43,82 +69,224 @@ h3 {
 .hero-box img {
     width: 36px;
 }
+@media (max-width: 768px) {
+    .hero-boxes {
+        display: block;
+    }
+    .hero-box {
+        width: auto;
+    }
+}
 
 #numbers {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 82px;
+    margin-bottom: 46px;
+}
+@media (max-width: 768px) {
+    #numbers {
+        display: block;
+    }
+}
+.number-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.number-label:hover {
+    text-decoration: underline;
+}
+
+.number-label a {
+    background: transparent;
 }
 .number {
-    font-size: 40px;
+    font-size: 30px;
     font-weight: bold;
+    margin-bottom: 16px;
 }
 .number small {
-    font-size: 20px;
+    font-size: 16px;
     display: block;
     font-weight: normal;
     color: #e6c826;
 }
 
-.pornhub:before {
+.thunderhub:before {
     content: " ";
     display: inline-block;
-    background: url(../assets/thunderhub.jpg);
+    background: url(../assets/thunderhub.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 66px;
-    height: 66px;
-    margin-right: 10px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     position: absolute;
-    top: -3px;
+    top: -8px;
     left: 0;
 }
-.pornhub {
+.thunderhub {
     position: relative;
-    padding-left: 50px;
+    padding-left: 48px;
     text-decoration: none;
-    font-size: 27px;
+    font-size: 18px;
     color: #bdc5ee;
     font-weight: bold;
     line-height: 1.1;
 }
 .rtl {
     display: inline-block;
-    background: url(../assets/rtl.webp);
+    background: url(../assets/rtl.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 150px;
-    height: 36px;
+    width: 63px;
+    height: 51px;
 }
 .lnbits {
     display: inline-block;
     background: url(../assets/lnbits.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 155px;
-    height: 46px;
+    width: 128px;
+    height: 36px;
 }
 .breez {
     display: inline-block;
-    background: url(../assets/breez.png);
+    background: url(../assets/logo-breez-header.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 133px;
-    height: 46px;
+    width: 96px;
+    height: 37px;
 }
 .electrum {
     display: inline-block;
     background: url(../assets/electrum.png);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 212px;
-    height: 59px;
+    width: 153px;
+    height: 42px;
 }
-.clboss {
-    text-transform: uppercase;
-    font-weight: bold;
-    font-size: 32px;
+.cln {
+    display: inline-block;
+    background: url(../assets/cln.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 124px;
+    height: 48px;
+}
+
+.boltobserver:before {
+    content: " ";
+    display: inline-block;
+    background: url(../assets/boltobserver.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    position: absolute;
+    top: -8px;
+    left: 0;
+}
+.boltobserver {
+    position: relative;
+    padding-left: 52px;
     text-decoration: none;
-    color: purple;
+    font-size: 18px;
+    color: white;
+    font-weight: bold;
+    line-height: 1.1;
+}
+.diamondhands {
+    display: inline-block;
+    background: url(../assets/diamondhands.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 186px;
+    height: 32px;
+}
+.blockstream {
+    display: inline-block;
+    background: url(../assets/blockstream.png);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 170px;
+    height: 58px;
+}
+.vulpem {
+    display: inline-block;
+    background: url(../assets/vulpem.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 124px;
+    height: 52px;
+}
+.fuji {
+    display: inline-block;
+    background: url(../assets/fuji.png);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 120px;
+    height: 35px;
+}
+
+#partners,
+#integrations {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#partners > div,
+#integrations > div {
+    padding: 22px;
+}
+
+#partners > div > a,
+#integrations > div > a:before,
+#integrations > div > a {
+    opacity: 0.4;
+    filter: brightness(1000) grayscale(1);
+    transition: opacity 0.4s ease-in-out;
+}
+
+#partners > div > a:hover,
+#integrations > div > a:hover:before,
+#integrations > div > a:hover {
+    opacity: 1;
+    filter: brightness(1) grayscale(0);
+}
+
+#create-overlay {
+    cursor: pointer;
+    opacity: 0.6;
+    height: 343px;
+    overflow: hidden;
+    position: relative;
+    transition: opacity 0.4s ease-in-out;
+}
+#create-overlay:hover {
+    opacity: 1;
+}
+
+#create-overlay .frame {
+    box-shadow: 0 0 60px #e6c826;
+}
+
+#create-overlay:after {
+    background: rgb(20, 40, 63);
+    background: linear-gradient(
+        0deg,
+        rgba(20, 40, 63, 1) 0%,
+        rgba(20, 40, 63, 0) 100%
+    );
+    content: " ";
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 162px;
 }
