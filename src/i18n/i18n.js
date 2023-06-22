@@ -1,5 +1,6 @@
 const dict = {
     en: {
+        node: "Node Information",
         lightningnode: "view lightning node",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",

@@ -88,6 +88,19 @@ h2.special {
         display: block;
     }
 }
+.number-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.number-label:hover {
+    text-decoration: underline;
+}
+
+.number-label a {
+    background: transparent;
+}
 .number {
     font-size: 36px;
     font-weight: bold;
