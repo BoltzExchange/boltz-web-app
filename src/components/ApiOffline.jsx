@@ -15,8 +15,10 @@ const ApiOffline = () => {
                     </span>
                 </div>
             </Show>
-            <Show when={!wasmSupported()} class="banner">
-                <div id="noWasm">{t("wasm_not_supported")}</div>
+            <Show when={!wasmSupported()}>
+                <div id="noWasm" class="banner">
+                    {t("wasm_not_supported")}
+                </div>
             </Show>
         </div>
     );
