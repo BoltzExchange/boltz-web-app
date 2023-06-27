@@ -82,7 +82,7 @@ h2.special {
     display: flex;
     justify-content: space-between;
     margin-bottom: 46px;
-    padding: 0 14px;
+    padding: 0 42px;
 }
 @media (max-width: 768px) {
     #numbers {
