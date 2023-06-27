@@ -52,6 +52,9 @@ const dict = {
         pay_swap_404: "Swap not found!",
         pay_timeout_blockheight: "Timeout blockheight",
         pay_expected_amount: "Expected amount",
+        send_to: "Send {{ amount }} {{ denomination }} to address",
+        send_to_desc:
+            "Please send exactly {{ amount }} {{ denomination }} before timeout blockheight {{ blockheight }}",
         pay_address: "Address",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:

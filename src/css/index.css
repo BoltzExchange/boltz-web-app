@@ -550,3 +550,18 @@ textarea {
     background-position: right;
     background-size: 17px;
 }
+
+.break-word {
+    word-break: break-all;
+}
+
+.address-box {
+    background-color: #545c65;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 7px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 9px;
+    cursor: pointer;
+}
