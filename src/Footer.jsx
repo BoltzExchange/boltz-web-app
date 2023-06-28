@@ -12,7 +12,7 @@ const Footer = () => {
     return (
         <footer>
             <h4>
-                Got Feedback? Join our{" "}
+                {t("feedback")}{" "}
                 <a
                     title="Discord"
                     class="discord"
