@@ -129,7 +129,8 @@ const dict = {
         assets_sub: "Lightning / Bitcoin / Liquid",
         safe: "安全",
         non_custodial: "非預託型",
-        non_custodial_sub: "Boltzのスワップは非預託型です。暗号技術により、ユーザーは常に資金を自己管理できます",
+        non_custodial_sub:
+            "Boltzのスワップは非預託型です。暗号技術により、ユーザーは常に資金を自己管理できます",
         node: "ノード",
         lightningnode: "Lightningノードを表示",
         error: "エラー",
@@ -155,14 +156,18 @@ const dict = {
         socialmedia: "ソーシャルメディアでフォロー",
         footer: "Team Boltzによる❤️で作成されました",
         create_channel: "Lightningチャネルの作成",
-        create_channel_subline: "チャネルのインバウンドまたはアウトバウンド容量",
+        create_channel_subline:
+            "チャネルのインバウンドまたはアウトバウンド容量",
         create_swap: "Atomic Swapの作成",
-        create_swap_subline: "支払いにはネットワーク手数料とBoltzサービス手数料が含まれます",
+        create_swap_subline:
+            "支払いにはネットワーク手数料とBoltzサービス手数料が含まれます",
         cancel_swap: "スワップのキャンセル",
         new_swap: "新しいスワップ",
         success_swap: "スワップが成功しました",
-        feecheck: "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",
-        create_and_paste: "Bolt11ライトニング請求書、またはライトニングアドレス、またはLNURL Paylinkを貼り付けてください\n\n金額：{{ amount }} {{ denomination }}",
+        feecheck:
+            "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",
+        create_and_paste:
+            "Bolt11ライトニング請求書、またはライトニングアドレス、またはLNURL Paylinkを貼り付けてください\n\n金額：{{ amount }} {{ denomination }}",
         congrats: "おめでとうございます！",
         successfully_swapped: "スワップが正常に完了しました",
         timeout_eta: "タイムアウト予想時間",
@@ -172,9 +177,11 @@ const dict = {
         pay_expected_amount: "予想金額",
         pay_address: "アドレス",
         lockup_failed: "ロックアップに失敗しました！",
-        lockup_failed_subline: "ロックアップトランザクションが失敗しました。タイムアウトまで待って返金してください",
+        lockup_failed_subline:
+            "ロックアップトランザクションが失敗しました。タイムアウトまで待って返金してください",
         failure_reason: "失敗の理由",
-        invoice_payment_failure: "ライトニング請求書を支払うことができませんでした",
+        invoice_payment_failure:
+            "ライトニング請求書を支払うことができませんでした",
         onchain_address: "{{ asset }}アドレスを入力してください",
         download_refund_file: "返金ファイルをダウンロード",
         copy_invoice: "ライトニング請求書をコピー",
@@ -183,19 +190,23 @@ const dict = {
         copy_bip21: "BIP21をコピー",
         copied: "クリップボードにコピーしました！",
         refund_a_swap: "スワップを返金する",
-        refund_a_swap_subline: "返金ファイルをアップロードし、ロックされた資金を回収します",
+        refund_a_swap_subline:
+            "返金ファイルをアップロードし、ロックされた資金を回収します",
         refund_past_swaps: "過去のスワップ",
         refund_past_swaps_subline: "ブラウザのストレージに保存されたスワップ",
         history_no_swaps: "まだスワップを行っていないようです。",
         refund_address_placeholder: "返金先アドレス",
         refund_clear: "ローカルストレージを削除",
         delete_swap: "ローカルストレージからスワップを削除",
-        delete_localstorage: "ローカルストレージをクリアしてもよろしいですか？\nスワップ情報と返金/請求の秘密鍵が失われます。",
-        delete_localstorage_single_swap: "Swap {{ id }}をローカルストレージから削除してもよろしいですか？\nスワップ情報と返金/請求の秘密鍵が失われます。",
+        delete_localstorage:
+            "ローカルストレージをクリアしてもよろしいですか？\nスワップ情報と返金/請求の秘密鍵が失われます。",
+        delete_localstorage_single_swap:
+            "Swap {{ id }}をローカルストレージから削除してもよろしいですか？\nスワップ情報と返金/請求の秘密鍵が失われます。",
         tx_in_mempool: "トランザクションがメモリプール内にあります",
         tx_in_mempool_subline: "スワップを完了するために確認を待っています",
         expired: "スワップが期限切れです！",
-        invoice_pending: "トランザクションを受け取りました。請求書を支払っています",
+        invoice_pending:
+            "トランザクションを受け取りました。請求書を支払っています",
         invoice_expired: "請求書の有効期限が切れました。もう一度試してください",
         swap_expired: "支払いがタイムリーに完了されませんでした",
         create_invoice_webln: "WebLNを使用して請求書を作成",
@@ -206,11 +217,13 @@ const dict = {
         transaction_refunded: "Boltzがトランザクションを返金しました",
         refunded: "このスワップを返金しました",
         api_offline: "APIがオフラインです",
-        api_offline_msg: "Boltz APIに接続できませんでした。後でもう一度お試しください",
+        api_offline_msg:
+            "Boltz APIに接続できませんでした。後でもう一度お試しください",
         refund_explainer: "タイムアウト後に返金できます",
         swap_not_refundable_yet: "まだスワップは返金できません",
         wasm_not_supported: "ブラウザでWebAssemblyを有効にしてください",
-        ios_image_download: '長押しして「「写真に保存」を選択して返金ファイルをダウンロードしてください',
+        ios_image_download:
+            "長押しして「「写真に保存」を選択して返金ファイルをダウンロードしてください",
         created: "作成済み",
         delete: "削除",
         view: "表示",
