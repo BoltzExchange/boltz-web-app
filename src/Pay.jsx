@@ -109,7 +109,7 @@ const Pay = () => {
             <Show when={swap()}>
                 <Show when={swap().refundTx}>
                     <p>
-                        Status:{" "}
+                        {t("status")}:{" "}
                         <span class="btn-small btn-success">swap.refunded</span>
                     </p>
                     <hr />
@@ -117,7 +117,8 @@ const Pay = () => {
                 </Show>
                 <Show when={!swap().refundTx}>
                     <p>
-                        Status: <span class="btn-small">{swapStatus()}</span>
+                        {t("status")}:{" "}
+                        <span class="btn-small">{swapStatus()}</span>
                     </p>
                     <hr />
                     <Show when={swapStatus() == "swap.expired"}>

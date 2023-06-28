@@ -46,36 +46,28 @@ const Hero = () => {
                 <Create />
             </div>
             <h1>
-                Privacy First, Non-Custodial Bitcoin Exchange
-                <small>
-                    Can't be evil. You are in control of your money. Always.
-                </small>
+                {t("headline")}
+                <small>{t("subline")}</small>
             </h1>
             <span class="btn btn-inline" onclick={() => navigate("swap")}>
-                Start Swapping
+                {t("start_swapping")}
             </span>
             <div class="hero-boxes">
                 <div class="hero-box">
-                    <h2>Fast</h2>
-                    <h3>Built on Layer 2</h3>
+                    <h2>{t("fast")}</h2>
+                    <h3>{t("l2")}</h3>
                     <hr />
-                    <p>
-                        Boltz utilizes second-layer scaling technologies like
-                        the Liquid and Lightning Networks
-                    </p>
+                    <p>{t("l2_sub")}</p>
                 </div>
                 <div class="hero-box">
-                    <h2>Safe</h2>
-                    <h3>Non-Custodial</h3>
+                    <h2>{t("safe")}</h2>
+                    <h3>{t("non_custodial")}</h3>
                     <hr />
-                    <p>
-                        Swaps on Boltz are non-custodial; cryptography ensures
-                        that users are always in control of their money
-                    </p>
+                    <p>{t("non_custodial_sub")}</p>
                 </div>
                 <div class="hero-box">
-                    <h2>Assets</h2>
-                    <h3>Lightning / Bitcoin / Liquid</h3>
+                    <h2>{t("assets")}</h2>
+                    <h3>{t("assets_sub")}</h3>
                     <hr />
                     <img src={lightning} alt="Lightning Bitcoin" />
                     <img src={bitcoin} alt="Bitcoin" />
@@ -89,22 +81,23 @@ const Hero = () => {
                     </h2>
                 </div>
                 <div class="number">
-                    {numChannel()} <small>Number of Channels</small>
+                    {numChannel()} <small>{t("num_channels")}</small>
                 </div>
                 <div class="number">
-                    {numPeers()} <small>Number of Peers</small>
+                    {numPeers()} <small>{t("peers")}</small>
                 </div>
                 <div class="number">
-                    {capacity()} <small>Capacity (sats)</small>
+                    {capacity()} <small>{t("capacity")}</small>
                 </div>
                 <div class="number">
-                    {oldestChannel()} yrs<small>Oldest Channel</small>
+                    {t("oldest_channel_years", { years: oldestChannel() })}
+                    <small>{t("oldest_channel")}</small>
                 </div>
             </div>
 
             <div id="integrations">
                 <div>
-                    <h2 class="special">Integrations</h2>
+                    <h2 class="special">{t("integrations")}</h2>
                 </div>
                 <div>
                     <a
@@ -161,7 +154,7 @@ const Hero = () => {
             </div>
             <div id="partners">
                 <div>
-                    <h2 class="special">Partners</h2>
+                    <h2 class="special">{t("partners")}</h2>
                 </div>
                 <div>
                     <a
