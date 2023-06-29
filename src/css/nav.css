@@ -45,13 +45,16 @@ nav a.active {
 
 #languages {
     position: relative;
-    margin-left: auto;
-    margin-right: 6px;
 }
 
-#languages > span:after {
+#languages > a:after {
     content: "\25bc";
     margin-left: 6px;
+}
+#languages > a {
+    margin-left: 13px;
+    padding-left: 13px;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 #languages .lang {
