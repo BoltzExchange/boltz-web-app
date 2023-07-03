@@ -17,7 +17,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and start sw
 ## Resources
 
 - [⚡ Node](https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2)
-- [Docs](https://docs.boltz.exchange/en/latest/)
-- [Discord](https://discord.gg/d6EK85KK)
+- [Docs](https://docs.boltz.exchange)
+- [Discord](https://discord.gg/QBvZGcW)
 - [Twitter](https://twitter.com/Boltzhq)
 - [Nostr](https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970)
