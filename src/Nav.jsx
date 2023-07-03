@@ -47,7 +47,7 @@ const Nav = ({ network }) => {
                     <a
                         class="external"
                         target="_blank"
-                        href="https://blog.boltz.exchange//">
+                        href="https://blog.boltz.exchange/">
                         {t("blog")}
                     </a>
                     <a

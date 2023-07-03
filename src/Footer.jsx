@@ -17,7 +17,7 @@ const Footer = () => {
                     title="Discord"
                     class="discord"
                     target="_blank"
-                    href="https://discord.gg/sYwnRBJxyD">
+                    href="https://discord.gg/QBvZGcW">
                     Discord
                 </a>
             </h4>
