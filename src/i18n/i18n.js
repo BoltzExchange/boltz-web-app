@@ -33,7 +33,7 @@ const dict = {
         maximum_amount: "Maximum amount is {{ amount }} {{ denomination }}",
         assets: "Assets",
         socialmedia: "Follow us on Social Media",
-        footer: "made with ❤️ by Team Boltz",
+        footer: "Made with ❤️ by Team Boltz",
         create_channel: "Create Lightning Channel",
         create_channel_subline: "Channel Inbound or Outbound Capacity",
         create_swap: "Create Atomic Swap",
