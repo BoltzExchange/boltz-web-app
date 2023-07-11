@@ -58,8 +58,7 @@ const Pay = () => {
                 }
 
                 let reconnectFrequencySeconds = 1;
-                let failed_stream = false;
-                let stream_url = `${api_url}/streamswapstatus?id=${params.id}`;
+                let streamUrl = `${api_url}/streamswapstatus?id=${params.id}`;
 
                 // Putting these functions in extra variables is just for the sake of readability
                 const waitFunc = function () {
@@ -76,8 +75,8 @@ const Pay = () => {
                     setTimeout(tryToSetupFunc, waitFunc());
                 };
                 function setupEventSource() {
-                    stream = new EventSource(stream_url);
-                    log.debug(`stream started: ${stream_url}`);
+                    stream = new EventSource(streamUrl);
+                    log.debug(`stream started: ${streamUrl}`);
                     stream.onmessage = function (event) {
                         const data = JSON.parse(event.data);
                         log.debug(`Event status update: ${data.status}`, data);
@@ -91,7 +90,6 @@ const Pay = () => {
                                 data.status ===
                                     swapStatusPending.TransactionMempool)
                         ) {
-                            // 0conf
                             claim(current_swap);
                         }
                         checkForFailed(current_swap.id, data);
@@ -99,14 +97,9 @@ const Pay = () => {
                     };
                     stream.onopen = function () {
                         reconnectFrequencySeconds = 1;
-                        // If the stream was previously closed due to an error, reload the page
-                        if (failed_stream) {
-                            window.location.reload();
-                        }
                     };
                     stream.onerror = function (e) {
                         log.debug("stream error", e);
-                        failed_stream = true;
                         stream.close();
                         reconnectFunc();
                     };
