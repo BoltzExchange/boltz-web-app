@@ -1,11 +1,11 @@
 import log from "loglevel";
-import QRCode from "qrcode";
+import QRCode from "qrcode/lib/server";
 import { Buffer } from "buffer";
 import { detectSwap } from "boltz-core";
 import { ECPair } from "./ecpair/ecpair";
 import { api_url } from "./config";
-import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
 import { feeChecker } from "./utils/feeChecker";
+import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
 
 import {
     ref,
