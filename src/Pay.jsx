@@ -56,28 +56,62 @@ const Pay = () => {
                     log.debug("stream closed");
                     stream.close();
                 }
+
+                let reconnectFrequencySeconds = 1;
+                let failed_stream = false;
                 let stream_url = `${api_url}/streamswapstatus?id=${params.id}`;
-                stream = new EventSource(stream_url);
-                log.debug(`stream started: ${stream_url}`);
-                stream.onmessage = function (event) {
-                    const data = JSON.parse(event.data);
-                    log.debug(`Event status update: ${data.status}`, data);
-                    updateSwapStatus(params.id, data.status);
-                    setSwapStatus(data.status);
-                    setSwapStatusTransaction(data.transaction);
-                    if (
-                        data.transaction &&
-                        (data.status ===
-                            swapStatusPending.TransactionConfirmed ||
-                            data.status ===
-                                swapStatusPending.TransactionMempool)
-                    ) {
-                        // 0conf
-                        claim(current_swap);
-                    }
-                    checkForFailed(current_swap.id, data);
-                    setFailureReason(data.failureReason);
+
+                // Putting these functions in extra variables is just for the sake of readability
+                const waitFunc = function () {
+                    return reconnectFrequencySeconds * 1000;
                 };
+                const tryToSetupFunc = function () {
+                    setupEventSource();
+                    reconnectFrequencySeconds *= 2;
+                    if (reconnectFrequencySeconds >= 64) {
+                        reconnectFrequencySeconds = 64;
+                    }
+                };
+                const reconnectFunc = function () {
+                    setTimeout(tryToSetupFunc, waitFunc());
+                };
+                function setupEventSource() {
+                    stream = new EventSource(stream_url);
+                    log.debug(`stream started: ${stream_url}`);
+                    stream.onmessage = function (event) {
+                        const data = JSON.parse(event.data);
+                        log.debug(`Event status update: ${data.status}`, data);
+                        updateSwapStatus(params.id, data.status);
+                        setSwapStatus(data.status);
+                        setSwapStatusTransaction(data.transaction);
+                        if (
+                            data.transaction &&
+                            (data.status ===
+                                swapStatusPending.TransactionConfirmed ||
+                                data.status ===
+                                    swapStatusPending.TransactionMempool)
+                        ) {
+                            // 0conf
+                            claim(current_swap);
+                        }
+                        checkForFailed(current_swap.id, data);
+                        setFailureReason(data.failureReason);
+                    };
+                    stream.onopen = function () {
+                        reconnectFrequencySeconds = 1;
+                        // If the stream was previously closed due to an error, reload the page
+                        if (failed_stream) {
+                            window.location.reload();
+                        }
+                    };
+                    stream.onerror = function (e) {
+                        log.debug("stream error", e);
+                        failed_stream = true;
+                        stream.close();
+                        reconnectFunc();
+                    };
+                }
+                setupEventSource();
             }
         }
     });
