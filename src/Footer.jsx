@@ -4,6 +4,7 @@ import substack from "./assets/substack.svg";
 import twitter from "./assets/twitter.svg";
 import nostr from "./assets/nostr.svg";
 import discord from "./assets/discord.svg";
+import github from "./assets/github.svg";
 
 import "./css/footer.css";
 
@@ -24,8 +25,15 @@ const Footer = () => {
             <h2 class="special">{t("socialmedia")}</h2>
             <div class="socials">
                 <a
+                    title="Github"
+                    class="github"
+                    target="_blank"
+                    href="https://github.com/BoltzExchange">
+                    <img src={github} alt="Github Logo" />
+                </a>
+                <a
                     title="Substack"
-                    class="stubstack"
+                    class="substack"
                     target="_blank"
                     href="https://blog.boltz.exchange/">
                     <img src={substack} alt="Substack Logo" />
