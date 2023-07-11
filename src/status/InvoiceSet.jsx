@@ -1,5 +1,5 @@
 import { useI18n } from "@solid-primitives/i18n";
-import { invoiceQr, swap } from "../signals";
+import { invoiceQr, swap, denomination } from "../signals";
 import { clipboard } from "../helper";
 import { formatAmount } from "../utils/denomination";
 import DownloadRefund from "../components/DownloadRefund";
@@ -10,24 +10,32 @@ const InvoiceSet = () => {
     return (
         <div>
             <p>
-                {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight}{" "}
+                {t("send_to_desc", {
+                    amount: formatAmount(swap().expectedAmount),
+                    denomination: denomination(),
+                    blockheight: swap().timeoutBlockHeight,
+                })}
                 <br />
-                {t("pay_expected_amount")}:{" "}
-                {formatAmount(swap().expectedAmount)}
             </p>
             <hr />
             <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
             <hr />
+            <h2>
+                {t("send_to", {
+                    amount: formatAmount(swap().expectedAmount),
+                    denomination: denomination(),
+                })}
+            </h2>
+            <p
+                onclick={() => clipboard(swap().address, t("copied"))}
+                class="address-box break-word">
+                {swap().address}
+            </p>
             <div class="btns">
                 <span
                     class="btn"
                     onclick={() => clipboard(swap().bip21, t("copied"))}>
                     {t("copy_bip21")}
-                </span>
-                <span
-                    class="btn"
-                    onclick={() => clipboard(swap().address, t("copied"))}>
-                    {t("copy_address")}
                 </span>
                 <span
                     class="btn"
@@ -38,6 +46,11 @@ const InvoiceSet = () => {
                         )
                     }>
                     {t("copy_amount")}
+                </span>
+                <span
+                    class="btn"
+                    onclick={() => clipboard(swap().address, t("copied"))}>
+                    {t("copy_address")}
                 </span>
             </div>
             <hr />
