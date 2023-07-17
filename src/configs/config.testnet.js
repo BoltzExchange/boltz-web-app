@@ -1,5 +1,6 @@
 export const pairs = ["BTC/BTC", "L-BTC/BTC"];
 export const network = "testnet";
+export const isBeta = false;
 export const bolt11_prefix = "lntb";
 export const loglevel = "debug";
 export const api_url = "https://testnet.boltz.exchange/api";

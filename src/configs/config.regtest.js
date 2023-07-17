@@ -1,5 +1,6 @@
 export const pairs = ["BTC/BTC", "L-BTC/BTC"];
 export const network = "regtest";
+export const isBeta = false;
 export const bolt11_prefix = "lnbcrt";
 export const loglevel = "debug";
 export const api_url = "http://localhost:9001";

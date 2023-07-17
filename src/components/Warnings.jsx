@@ -1,9 +1,11 @@
+import { Show } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import { online, wasmSupported } from "../signals";
+import { isBeta } from "../config";
 import { fetchPairs } from "../helper";
 import reload_svg from "../assets/reload.svg";
+import { online, wasmSupported } from "../signals";
 
-const ApiOffline = () => {
+const Warnings = () => {
     const [t] = useI18n();
     return (
         <div>
@@ -20,8 +22,11 @@ const ApiOffline = () => {
                     {t("wasm_not_supported")}
                 </div>
             </Show>
+            <Show when={isBeta}>
+                <div class="banner banner-yellow">{t("beta_caution")}</div>
+            </Show>
         </div>
     );
 };
 
-export default ApiOffline;
+export default Warnings;
