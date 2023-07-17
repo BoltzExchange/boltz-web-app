@@ -117,6 +117,7 @@ const dict = {
         capacity: "Capacity (sats)",
         peers: "Number of Peers",
         num_channels: "Number of Channels",
+        beta_caution: "BETA - use with caution",
     },
     de: {
         history: "Verlauf",

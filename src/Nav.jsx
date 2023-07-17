@@ -4,7 +4,7 @@ import { useI18n } from "@solid-primitives/i18n";
 import { i18n, setI18n, hamburger, setHamburger } from "./signals";
 import "./css/nav.css";
 import logo from "./assets/boltz.svg";
-import ApiOffline from "./components/ApiOffline";
+import Warnings from "./components/Warnings";
 
 const locales = {
     en: "English",
@@ -23,7 +23,7 @@ const Nav = ({ network }) => {
 
     return (
         <nav>
-            <ApiOffline />
+            <Warnings />
             <div class="nav-inner">
                 <A id="logo" href="/">
                     <img src={logo} alt="boltz.exchange btc logo" />

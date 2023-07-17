@@ -2,6 +2,7 @@ const isTor = window?.location?.hostname.endsWith(".onion");
 
 export const pairs = ["BTC/BTC", "L-BTC/BTC"];
 export const network = "main";
+export const isBeta = false;
 export const bolt11_prefix = "lnbc";
 export const loglevel = "info";
 export const api_url = isTor

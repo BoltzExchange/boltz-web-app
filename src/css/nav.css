@@ -184,3 +184,8 @@ nav a.active {
     font-size: 18px;
     padding: 5px;
 }
+
+.banner-yellow {
+    background: #e6c826;
+    color: #14283f;
+}
