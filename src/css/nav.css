@@ -2,7 +2,7 @@
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding: 14px 0;
+    padding: 14px 8px;
 }
 @media (min-width: 769px) {
     .nav-inner {
@@ -11,11 +11,11 @@
 }
 
 nav {
-    position: fixed;
     top: 0;
     z-index: 999;
     width: 100%;
     background: #102032;
+    position: relative;
 }
 nav a {
     color: white;
@@ -183,6 +183,8 @@ nav a.active {
     background: darkred;
     font-size: 18px;
     padding: 5px;
+    position: relative;
+    z-index: 9999;
 }
 
 .banner-yellow {

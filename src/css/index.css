@@ -3,7 +3,6 @@
 }
 
 body {
-    padding-top: 72px;
     font-size: 14px;
     margin: 0;
     background: #14283f;
@@ -360,7 +359,7 @@ textarea {
     color: #fff;
     padding: 12px;
     max-width: 480px;
-    margin: 74px auto 42px;
+    margin: 21px auto 42px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -370,8 +369,12 @@ textarea {
 }
 @media (min-width: 488px) {
     .frame {
+        margin-top: 74px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
+    }
+    #create-overlay .frame {
+        box-shadow: 0 0 60px #e6c826;
     }
 }
 
