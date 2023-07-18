@@ -22,6 +22,7 @@ const SwapCreated = () => {
             </p>
             <hr />
             <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
+            <h4>{t("warning_return")}</h4>
             <hr />
             <Show when={webln()}>
                 <span

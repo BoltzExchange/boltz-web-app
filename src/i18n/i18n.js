@@ -118,6 +118,7 @@ const dict = {
         peers: "Number of Peers",
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
+        warning_return: "Important: Return to this page after paying invoice",
     },
     de: {
         history: "Verlauf",
