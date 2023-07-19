@@ -17,12 +17,13 @@ const SwapCreated = () => {
 
     return (
         <div>
+            <h4>{t("warning_return")}</h4>
+            <hr />
             <p>
                 {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight}
             </p>
             <hr />
             <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
-            <h4>{t("warning_return")}</h4>
             <hr />
             <Show when={webln()}>
                 <span
