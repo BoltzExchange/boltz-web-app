@@ -1,8 +1,7 @@
 {
   "name": "boltz-frontend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Boltz Exchange, Atomic swaps, frontend",
-  "license": "MIT",
   "scripts": {
     "start": "cp src/configs/config.regtest.js src/config.js && vite",
     "test": "cp src/configs/config.regtest.js src/config.js && vitest tests",
