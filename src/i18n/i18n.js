@@ -50,11 +50,11 @@ const dict = {
         timeout_eta: "Timeout ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
-        pay_timeout_blockheight: "Timeout blockheight",
+        pay_timeout_blockheight: "Timeout block height",
         pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
         send_to_desc:
-            "Please send exactly {{ amount }} {{ denomination }} before timeout blockheight {{ blockheight }}",
+            "Please send exactly {{ amount }} {{ denomination }} before timeout block height {{ blockheight }}",
         pay_address: "Address",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
@@ -118,6 +118,7 @@ const dict = {
         peers: "Number of Peers",
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
+        warning_return: "Important: Return to this page after paying invoice",
     },
     de: {
         history: "Verlauf",
