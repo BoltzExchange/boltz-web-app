@@ -1,6 +1,7 @@
 import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { useI18n } from "@solid-primitives/i18n";
+import { useNavigate } from "@solidjs/router";
 import { createSignal, createEffect } from "solid-js";
 import SwapList from "./components/SwapList";
 import RefundEta from "./components/RefundEta";
@@ -26,6 +27,7 @@ const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 
 const Refund = () => {
     const [t] = useI18n();
+    const navigate = useNavigate();
 
     const [valid, setValid] = createSignal(false);
     const [addressValid, setAddressValid] = createSignal(false);
@@ -43,6 +45,14 @@ const Refund = () => {
 
     const checkRefundJsonKeys = (input, json) => {
         log.debug("checking refund json", json);
+
+        // redirect to normal flow if swap is in localstorage
+        let current_swap = swaps()
+            .filter((s) => s.id === json.id)
+            .pop();
+        if (current_swap) {
+            navigate("/swap/" + json.id);
+        }
 
         // Compatibility with the old refund files
         if (json.asset === undefined && json.currency) {
