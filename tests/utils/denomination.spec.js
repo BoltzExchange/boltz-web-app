@@ -51,9 +51,9 @@ describe("denomination utils", () => {
             denomination         | digits | amount
             ${denominations.sat} | ${5}   | ${1000}
             ${denominations.sat} | ${7}   | ${100000}
-            ${denominations.sat} | ${10}  | ${100000000}
-            ${denominations.sat} | ${11}  | ${1000000000}
-            ${denominations.sat} | ${12}  | ${10000000000}
+            ${denominations.sat} | ${11}  | ${100000000}
+            ${denominations.sat} | ${13}  | ${1000000000}
+            ${denominations.sat} | ${14}  | ${10000000000}
             ${denominations.btc} | ${10}  | ${1000}
             ${denominations.btc} | ${10}  | ${100000}
             ${denominations.btc} | ${10}  | ${10000000}
@@ -80,8 +80,8 @@ describe("denomination utils", () => {
 
         test.each`
             denomination         | amount                  | valid
-            ${denominations.sat} | ${"123123"}             | ${true}
-            ${denominations.sat} | ${"12312300000"}        | ${false}
+            ${denominations.sat} | ${"123 123"}            | ${true}
+            ${denominations.sat} | ${"12 312 300 000"}     | ${false}
             ${denominations.sat} | ${max}                  | ${true}
             ${denominations.sat} | ${"lol"}                | ${false}
             ${denominations.btc} | ${"lol"}                | ${false}

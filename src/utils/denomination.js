@@ -12,7 +12,7 @@ export const getValidationRegex = () => {
     const digits = calculateDigits();
     const regex =
         denomination() === denominations.sat
-            ? `^[0-9]{1,${digits}}$`
+            ? `^[0-9 ]{1,${digits}}$`
             : `^[0-9](.[0-9]{1,${digits}}){0,1}$`;
     return new RegExp(regex);
 };
@@ -59,8 +59,12 @@ export const calculateDigits = () => {
     let digits = maximum().toString().length;
     if (denomination() === denominations.btc && digits < 10) {
         digits = 10;
-    } else {
+    } else if (denomination() === denominations.btc) {
+        // account for decimal point
         digits += 1;
+    } else {
+        // account for spaces
+        digits += Math.floor((digits - 1) / 3);
     }
 
     return digits;
