@@ -203,7 +203,7 @@ const Refund = () => {
                 <hr />
                 <button
                     class="btn"
-                    disabled={valid() ? "" : "disabled"}
+                    disabled={valid() && refundTx() === "" ? "" : "disabled"}
                     onClick={startRefund}>
                     {t("refund")}
                 </button>
@@ -212,9 +212,11 @@ const Refund = () => {
                 </Show>
                 <Show when={refundTx() !== ""}>
                     <hr />
+                    <p>{t("refunded")}</p>
+                    <hr />
                     <BlockExplorer
-                        address={refundTx()}
                         asset={refundJson().asset}
+                        txId={refundTx()}
                     />
                 </Show>
             </div>
