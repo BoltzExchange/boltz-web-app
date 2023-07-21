@@ -219,7 +219,7 @@ export async function detectWebLNProvider(timeoutParam) {
     });
 }
 
-export async function refund(swap) {
+export async function refund(swap, t) {
     let output = "";
     setRefundTx("");
 
@@ -294,12 +294,37 @@ export async function refund(swap) {
                 }
 
                 setNotificationType("success");
-                setNotification(`Refund broadcasted`);
+                setNotification(t("broadcasted"));
             }
         },
         {
             currency: asset_name,
             transactionHex: refundTransaction,
+        },
+        (error) => {
+            console.log(error);
+            setNotificationType("error");
+            if (typeof error.json === "function") {
+                error
+                    .json()
+                    .then((jsonError) => {
+                        let msg = jsonError.error;
+                        if (msg === "bad-txns-inputs-missingorspent") {
+                            msg = t("already_refunded");
+                        }
+                        if (msg === "mandatory-script-verify-flag-failed") {
+                            msg = t("locktime_not_satisfied");
+                        }
+                        setNotification(msg);
+                    })
+                    .catch((genericError) => {
+                        log.debug("generic error", genericError);
+                        log.error(genericError);
+                        setNotification(error.statusText);
+                    });
+            } else {
+                setNotification(error.message);
+            }
         }
     );
 }

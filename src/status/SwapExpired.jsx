@@ -13,6 +13,7 @@ import {
 
 const SwapExpired = () => {
     const [t] = useI18n();
+    const navigate = useNavigate();
 
     const [valid, setValid] = createSignal(false);
 
@@ -33,8 +34,6 @@ const SwapExpired = () => {
         );
     });
 
-    const navigate = useNavigate();
-
     return (
         <div>
             <p>
@@ -54,7 +53,7 @@ const SwapExpired = () => {
                 <button
                     class="btn"
                     disabled={valid() ? "" : "disabled"}
-                    onclick={() => refund(swap())}>
+                    onclick={() => refund(swap(), t)}>
                     {t("refund")}
                 </button>
                 <hr />

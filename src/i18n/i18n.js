@@ -95,6 +95,9 @@ const dict = {
         tx_ready_to_claim: "claiming transaction now...",
         transaction_refunded: "Boltz has refunded the Transaction",
         refunded: "You have refunded this swap",
+        broadcasted: "Refund broadcasted",
+        locktime_not_satisfied: "Locktime requirement not satisfied",
+        already_refunded: "Swap already refunded",
         api_offline: "API is offline",
         api_offline_msg:
             "Could not connect to the Boltz API, please try again later",
