@@ -93,12 +93,27 @@ const Create = () => {
         })
     );
 
-    // change denomination
-    createMemo(() => {
-        setReceiveAmountFormatted(
-            formatAmount(Number(receiveAmount())).toString()
-        );
-        setSendAmountFormatted(formatAmount(Number(sendAmount())).toString());
+    const changeFormatted = (ref, setSignal, signalValue) => {
+        const amount = formatAmount(Number(signalValue)).toString();
+        let selectionIndex = ref.selectionStart;
+        const matches = amount.match(new RegExp(" ", "g"));
+        if (matches) {
+            selectionIndex += matches.length - 1;
+        }
+        setSignal(amount);
+        setTimeout(() => {
+            ref.setSelectionRange(selectionIndex, selectionIndex);
+        }, 1);
+    }
+
+    // format receive amount
+    createEffect(() => {
+        changeFormatted(receiveAmountRef, setReceiveAmountFormatted, receiveAmount());
+    });
+
+    // format send amount
+    createEffect(() => {
+        changeFormatted(sendAmountRef, setSendAmountFormatted, sendAmount());
     });
 
     // validation swap
@@ -278,6 +293,57 @@ const Create = () => {
         }
     };
 
+    const validateKeyDown = (evt) => {
+        const theEvent = evt || window.event;
+        const input = evt.currentTarget;
+        let keycode = theEvent.keyCode || theEvent.which;
+        if  (keycode === 37) {
+            // left arrow
+            if (input.value[input.selectionStart-2] === " ") {
+                input.setSelectionRange(input.selectionStart - 1, input.selectionStart - 1);
+            }
+        } else if (keycode === 39) {
+            // right arrow
+            if (input.value[input.selectionStart] === " ") {
+                input.setSelectionRange(input.selectionStart + 1, input.selectionStart + 1);
+            }
+        } else if (keycode === 8) {
+            // backspace
+            if (input.value[input.selectionStart-1] === " ") {
+                input.setSelectionRange(input.selectionStart - 1, input.selectionStart - 1);
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            }
+        } else if (keycode === 46) {
+            // delete
+            if (input.value[input.selectionStart] === " ") {
+                input.setSelectionRange(input.selectionStart + 1, input.selectionStart + 1);
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            }
+        }
+        if (calculateDigits() < input.value.length && input.selectionStart !== input.value.length) {
+            const normalizedKeyCode = keycode >= 96 && keycode <= 105 ? keycode - 48 : keycode;
+            const isDigit = normalizedKeyCode >= 48 && normalizedKeyCode <= 57;
+            const digit = String.fromCharCode(normalizedKeyCode);
+            if (isDigit) {
+                let index = input.selectionStart;
+                if (input.value[index] === " ") {
+                    index++;
+                }
+                input.value = input.value.substring(0, index) + digit + input.value.substring(index + 1);
+                if (input.value[index + 1] === " ") {
+                    index++;
+                }
+                input.setSelectionRange(index, index);
+                input.dispatchEvent(new Event('input', {
+                    'bubbles': true,
+                    'cancelable': true
+                }));
+            }
+        }
+    };
+
     const validatePaste = (evt) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
@@ -383,8 +449,10 @@ const Create = () => {
                         id="sendAmount"
                         value={sendAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
+                        onKeyDown={(e) => validateKeyDown(e)}
                         onKeypress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
+                        onSelect={(e) => e.currentTarget.selectionStart = e.currentTarget.selectionEnd}
                     />
                 </div>
                 <div id="flip-assets" onClick={() => setReverse(!reverse())}>
@@ -403,8 +471,10 @@ const Create = () => {
                         id="receiveAmount"
                         value={receiveAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
+                        onKeyDown={(e) => validateKeyDown(e)}
                         onKeypress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}
+                        onSelect={(e) => e.currentTarget.selectionStart = e.currentTarget.selectionEnd}
                     />
                 </div>
             </div>
