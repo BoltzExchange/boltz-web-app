@@ -310,14 +310,26 @@ const Create = () => {
         } else if (keycode === 8) {
             // backspace
             if (input.value[input.selectionStart-1] === " ") {
-                input.setSelectionRange(input.selectionStart - 1, input.selectionStart - 1);
+                const index = input.selectionStart;
+                input.value = input.value.substring(0, index - 2) + input.value.substring(index);
+                input.setSelectionRange(index-1, index-1);
+                input.dispatchEvent(new Event('input', {
+                    'bubbles': true,
+                    'cancelable': true
+                }));
                 theEvent.returnValue = false;
                 if (theEvent.preventDefault) theEvent.preventDefault();
             }
         } else if (keycode === 46) {
             // delete
             if (input.value[input.selectionStart] === " ") {
-                input.setSelectionRange(input.selectionStart + 1, input.selectionStart + 1);
+                const index = input.selectionStart;
+                input.value = input.value.substring(0, index) + input.value.substring(index + 2);
+                input.setSelectionRange(index, index);
+                input.dispatchEvent(new Event('input', {
+                    'bubbles': true,
+                    'cancelable': true
+                }));
                 theEvent.returnValue = false;
                 if (theEvent.preventDefault) theEvent.preventDefault();
             }
