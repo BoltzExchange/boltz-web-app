@@ -334,7 +334,7 @@ const Create = () => {
                 if (theEvent.preventDefault) theEvent.preventDefault();
             }
         }
-        if (calculateDigits() < input.value.length && input.selectionStart !== input.value.length) {
+        if (calculateDigits() == input.value.replace(" ", "").length && input.selectionStart !== input.value.length) {
             const normalizedKeyCode = keycode >= 96 && keycode <= 105 ? keycode - 48 : keycode;
             const isDigit = normalizedKeyCode >= 48 && normalizedKeyCode <= 57;
             const digit = String.fromCharCode(normalizedKeyCode);
@@ -345,6 +345,9 @@ const Create = () => {
                 }
                 input.value = input.value.substring(0, index) + digit + input.value.substring(index + 1);
                 if (input.value[index + 1] === " ") {
+                    index++;
+                }
+                if (input.value.includes(".")) {
                     index++;
                 }
                 input.setSelectionRange(index, index);
