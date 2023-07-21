@@ -303,7 +303,10 @@ const Create = () => {
         let keycode = theEvent.keyCode || theEvent.which;
         if (keycode === 37) {
             // left arrow
-            if (input.value[input.selectionStart - 2] === " ") {
+            if (
+                input.value[input.selectionStart - 2] === " " ||
+                input.value[input.selectionStart - 2] === "."
+            ) {
                 input.setSelectionRange(
                     input.selectionStart - 1,
                     input.selectionStart - 1
@@ -311,7 +314,10 @@ const Create = () => {
             }
         } else if (keycode === 39) {
             // right arrow
-            if (input.value[input.selectionStart] === " ") {
+            if (
+                input.value[input.selectionStart] === " " ||
+                input.value[input.selectionStart] === "."
+            ) {
                 input.setSelectionRange(
                     input.selectionStart + 1,
                     input.selectionStart + 1
@@ -319,6 +325,14 @@ const Create = () => {
             }
         } else if (keycode === 8) {
             // backspace
+            if (input.value[input.selectionStart - 1] === ".") {
+                input.setSelectionRange(
+                    input.selectionStart - 1,
+                    input.selectionStart - 1
+                );
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            }
             if (input.value[input.selectionStart - 1] === " ") {
                 const index = input.selectionStart;
                 input.value =
@@ -336,6 +350,14 @@ const Create = () => {
             }
         } else if (keycode === 46) {
             // delete
+            if (input.value[input.selectionStart] === ".") {
+                input.setSelectionRange(
+                    input.selectionStart + 1,
+                    input.selectionStart + 1
+                );
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            }
             if (input.value[input.selectionStart] === " ") {
                 const index = input.selectionStart;
                 input.value =
