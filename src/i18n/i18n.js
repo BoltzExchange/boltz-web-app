@@ -180,8 +180,7 @@ const dict = {
         lockup_failed_subline:
             "ロックアップトランザクションが失敗しました。タイムアウトまで待って返金してください",
         failure_reason: "失敗の理由",
-        invoice_payment_failure:
-            "インボイスを支払うことができませんでした",
+        invoice_payment_failure: "インボイスを支払うことができませんでした",
         onchain_address: "{{ asset }}アドレスを入力してください",
         download_refund_file: "返金ファイルをダウンロード",
         copy_invoice: "インボイスをコピー",
@@ -207,7 +206,8 @@ const dict = {
         expired: "スワップが期限切れです！",
         invoice_pending:
             "トランザクションを受け取りました。インボイスを支払っています",
-        invoice_expired: "インボイスの有効期限が切れました。もう一度試してください",
+        invoice_expired:
+            "インボイスの有効期限が切れました。もう一度試してください",
         swap_expired: "支払いがタイムリーに完了されませんでした",
         create_invoice_webln: "WebLNを使用してインボイスを作成",
         pay_invoice_webln: "WebLNを使用してインボイスを支払う",
@@ -228,7 +228,8 @@ const dict = {
         delete: "削除",
         view: "表示",
         id: "ID",
-        headline: "プライバシーファースト、ノンカストディアル型のビットコイン取引所",
+        headline:
+            "プライバシーファースト、ノンカストディアル型のビットコイン取引所",
         subline: "誰にも奪われない。常に、お金はあなたの管理下に。",
         start_swapping: "取引を開始する",
         partners: "パートナー",
@@ -238,6 +239,10 @@ const dict = {
         capacity: "容量（サトシ）",
         peers: "ピアの数",
         num_channels: "チャネルの数",
+        send_to: "",
+        send_to_desc: "",
+        beta_caution: "",
+        warning_return: "",
     },
 };
 

@@ -2,6 +2,7 @@
   "name": "boltz-frontend",
   "version": "1.0.1",
   "description": "Boltz Exchange, Atomic swaps, frontend",
+  "type": "module",
   "scripts": {
     "start": "cp src/configs/config.regtest.js src/config.js && vite",
     "test": "cp src/configs/config.regtest.js src/config.js && vitest tests",
@@ -12,6 +13,7 @@
     "testnet": "cp src/configs/config.testnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
     "prettier": "./node_modules/prettier/bin-prettier.js --write src tests",
     "prettier-check": "./node_modules/prettier/bin-prettier.js --check src tests",
+    "i18n-check": "node tools/i18n-check.js",
     "changelog": "git-cliff -o CHANGELOG.md"
   },
   "devDependencies": {
