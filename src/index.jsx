@@ -34,6 +34,8 @@ if ("serviceWorker" in navigator) {
         });
 }
 
+document.body.classList.remove("loading");
+
 const cleanup = render(
     () => (
         <I18nContext.Provider value={createI18n()}>
