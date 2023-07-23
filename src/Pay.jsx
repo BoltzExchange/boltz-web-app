@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createEffect, onCleanup } from "solid-js";
+import { Show, createEffect, onCleanup } from "solid-js";
 import {
     setFailureReason,
     setSwapStatusTransaction,
@@ -150,6 +150,9 @@ const Pay = () => {
                         </span>
                     </p>
                     <hr />
+                    <Show when={swapStatus() === null}>
+                        <h3>{t("loading_swap_status")}</h3>
+                    </Show>
                     <Show when={swapStatus() == "swap.expired"}>
                         <SwapExpired />
                     </Show>
@@ -184,7 +187,11 @@ const Pay = () => {
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />
                     </Show>
-                    <Show when={swapStatus() != "swap.created"}>
+                    <Show
+                        when={
+                            swapStatus() !== null &&
+                            swapStatus() != "swap.created"
+                        }>
                         <BlockExplorer
                             asset={swap().asset}
                             address={

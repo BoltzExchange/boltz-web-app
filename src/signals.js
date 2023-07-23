@@ -33,7 +33,7 @@ export const [swap, setSwap] = createSignal(null, {
     // To allow updating properties of the swap object without replacing it completely
     equals: () => false,
 });
-export const [swapStatus, setSwapStatus] = createSignal("");
+export const [swapStatus, setSwapStatus] = createSignal(null);
 export const [swapStatusTransaction, setSwapStatusTransaction] =
     createSignal("");
 export const [failureReason, setFailureReason] = createSignal("");
