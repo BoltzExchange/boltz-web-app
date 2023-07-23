@@ -239,11 +239,13 @@ const dict = {
         capacity: "容量（サトシ）",
         peers: "ピアの数",
         num_channels: "チャネルの数",
-        send_to: "{{ amount }} {{ denomination }} を以下のアドレスへ送金して下さい",
-        send_to_desc: 
+        send_to:
+            "{{ amount }} {{ denomination }} を以下のアドレスへ送金して下さい",
+        send_to_desc:
             "{{ amount }} {{ denomination }} を過不足なく、{{ blockheight }}ブロック高になる前に送金して下さい",
         beta_caution: "ベータ版の為、ご利用は慎重にお願いします",
-        warning_return: "重要：インボイスのお支払い後、このページへ戻ってください",
+        warning_return:
+            "重要：インボイスのお支払い後、このページへ戻ってください",
     },
 };
 
