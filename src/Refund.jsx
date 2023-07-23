@@ -1,5 +1,6 @@
 import log from "loglevel";
 import QrScanner from "qr-scanner";
+import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
 import SwapList from "./components/SwapList";
@@ -26,6 +27,7 @@ const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 
 const Refund = () => {
     const [t] = useI18n();
+    const navigate = useNavigate();
 
     const [valid, setValid] = createSignal(false);
     const [addressValid, setAddressValid] = createSignal(false);
@@ -43,6 +45,12 @@ const Refund = () => {
 
     const checkRefundJsonKeys = (input, json) => {
         log.debug("checking refund json", json);
+
+        // Redirect to normal flow if swap is in local storage
+        const localStorageSwap = swaps().find((s) => s.id === json.id);
+        if (localStorageSwap !== undefined) {
+            navigate("/swap/" + json.id);
+        }
 
         // Compatibility with the old refund files
         if (json.asset === undefined && json.currency) {
@@ -102,8 +110,9 @@ const Refund = () => {
                     return;
                 }
 
+                setRefundable(true);
                 setTransactionToRefund(data);
-                await refund(refundJson());
+                await refund(refundJson(), t);
             },
             {
                 id: refundInfo.id,
@@ -203,18 +212,21 @@ const Refund = () => {
                 <hr />
                 <button
                     class="btn"
-                    disabled={valid() ? "" : "disabled"}
+                    disabled={valid() && refundTx() === "" ? "" : "disabled"}
                     onClick={startRefund}>
                     {t("refund")}
                 </button>
                 <Show when={!refundable()}>
+                    <hr />
                     <RefundEta />
                 </Show>
                 <Show when={refundTx() !== ""}>
                     <hr />
+                    <p>{t("refunded")}</p>
+                    <hr />
                     <BlockExplorer
-                        address={refundTx()}
                         asset={refundJson().asset}
+                        txId={refundTx()}
                     />
                 </Show>
             </div>
