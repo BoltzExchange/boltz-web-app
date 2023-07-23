@@ -309,10 +309,14 @@ export async function refund(swap, t) {
                     .json()
                     .then((jsonError) => {
                         let msg = jsonError.error;
-                        if (msg === "bad-txns-inputs-missingorspent") {
+                        if (
+                            msg === "bad-txns-inputs-missingorspent" ||
+                            msg === "Transaction already in block chain"
+                        ) {
                             msg = t("already_refunded");
-                        }
-                        if (msg === "mandatory-script-verify-flag-failed") {
+                        } else if (
+                            msg === "mandatory-script-verify-flag-failed"
+                        ) {
                             msg = t("locktime_not_satisfied");
                         }
                         setNotification(msg);

@@ -1,7 +1,7 @@
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { useI18n } from "@solid-primitives/i18n";
 import { useNavigate } from "@solidjs/router";
+import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
 import SwapList from "./components/SwapList";
 import RefundEta from "./components/RefundEta";
@@ -46,11 +46,9 @@ const Refund = () => {
     const checkRefundJsonKeys = (input, json) => {
         log.debug("checking refund json", json);
 
-        // redirect to normal flow if swap is in localstorage
-        let current_swap = swaps()
-            .filter((s) => s.id === json.id)
-            .pop();
-        if (current_swap) {
+        // Redirect to normal flow if swap is in local storage
+        const localStorageSwap = swaps().find((s) => s.id === json.id);
+        if (localStorageSwap !== undefined) {
             navigate("/swap/" + json.id);
         }
 
@@ -112,6 +110,7 @@ const Refund = () => {
                     return;
                 }
 
+                setRefundable(true);
                 setTransactionToRefund(data);
                 await refund(refundJson(), t);
             },
@@ -218,6 +217,7 @@ const Refund = () => {
                     {t("refund")}
                 </button>
                 <Show when={!refundable()}>
+                    <hr />
                     <RefundEta />
                 </Show>
                 <Show when={refundTx() !== ""}>

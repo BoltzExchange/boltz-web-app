@@ -94,7 +94,7 @@ const dict = {
         tx_confirmed: "Transaction confirmed",
         tx_ready_to_claim: "claiming transaction now...",
         transaction_refunded: "Boltz has refunded the Transaction",
-        refunded: "You have refunded this swap",
+        refunded: "Swap has been refunded",
         broadcasted: "Refund broadcasted",
         locktime_not_satisfied: "Locktime requirement not satisfied",
         already_refunded: "Swap already refunded",
