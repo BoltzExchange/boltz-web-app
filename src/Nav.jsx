@@ -68,7 +68,9 @@ const Nav = ({ network }) => {
                     <div class="dropdown">
                         <For each={Object.keys(locales)}>
                             {(_locale) => (
-                                <span class="lang" onClick={() => set_local(_locale)}>
+                                <span
+                                    class="lang"
+                                    onClick={() => set_local(_locale)}>
                                     {locales[_locale].language}
                                 </span>
                             )}
