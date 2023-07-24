@@ -374,7 +374,7 @@ textarea {
         border-radius: 16px;
     }
     #create-overlay .frame {
-        box-shadow: 0 0 60px #e6c826;
+        box-shadow: 0 0 60px #e6c82654;
     }
 }
 
