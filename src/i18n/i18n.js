@@ -259,11 +259,13 @@ const dict = {
         assets_sub: "Lightning / Bitcoin / Liquid",
         safe: "Sicher",
         non_custodial: "Non-Custodial",
-        non_custodial_sub: "Swaps auf Boltz sind non-custodial; Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihr Geld haben",
+        non_custodial_sub:
+            "Swaps auf Boltz sind non-custodial; Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihr Geld haben",
         node: "Knoten",
         lightningnode: "Knoten anzeigen",
         error: "Fehler",
-        error_subline: "Ungültige Antwort von der API, irgendwas ist hier falsch.",
+        error_subline:
+            "Ungültige Antwort von der API, irgendwas ist hier falsch.",
         history: "Verlauf",
         swap: "Swap",
         channel: "Kanal",
@@ -291,8 +293,10 @@ const dict = {
         cancel_swap: "Swap abbrechen",
         new_swap: "Neuer Swap",
         success_swap: "Swap erfolgreich",
-        feecheck: "Die Netzwerkgebühr wurde basierend auf der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
-        create_and_paste: "Füge eine bolt11 Lightning-Rechnung ein\n oder eine Lightning-Adresse\n oder einen LNURL Paylink\n\nBetrag: {{ amount }} {{ denomination }}",
+        feecheck:
+            "Die Netzwerkgebühr wurde basierend auf der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
+        create_and_paste:
+            "Füge eine bolt11 Lightning-Rechnung ein\n oder eine Lightning-Adresse\n oder einen LNURL Paylink\n\nBetrag: {{ amount }} {{ denomination }}",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped: "Swap erfolgreich!",
         timeout_eta: "Timeout-ETA",
@@ -301,12 +305,15 @@ const dict = {
         pay_timeout_blockheight: "Timeout Blockhöhe",
         pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
-        send_to_desc: "Bitte sende genau {{ amount }} {{ denomination }} vor der Timeout-Blockhöhe {{ blockheight }}",
+        send_to_desc:
+            "Bitte sende genau {{ amount }} {{ denomination }} vor der Timeout-Blockhöhe {{ blockheight }}",
         pay_address: "Adresse",
         lockup_failed: "Lockup fehlgeschlagen!",
-        lockup_failed_subline: "Deine Lockup-Transaktion ist fehlgeschlagen, warte auf den Timeout, um eine Rückerstattung zu starten.",
+        lockup_failed_subline:
+            "Deine Lockup-Transaktion ist fehlgeschlagen, warte auf den Timeout, um eine Rückerstattung zu starten.",
         failure_reason: "Grund für den Fehler",
-        invoice_payment_failure: "Deine Lightning-Rechung konnte nicht bezahlt werden",
+        invoice_payment_failure:
+            "Deine Lightning-Rechung konnte nicht bezahlt werden",
         onchain_address: "{{ asset }}-Adresse eingeben",
         download_refund_file: "Rückerstattungsdatei herunterladen",
         copy_invoice: "Lightning-Rechnung kopieren",
@@ -315,17 +322,23 @@ const dict = {
         copy_bip21: "BIP21 kopieren",
         copied: "In die Zwischenablage kopiert!",
         refund_a_swap: "Einen Swap erstatten",
-        refund_a_swap_subline: "Laden deine Rückerstattungsdatei hoch und hole dir Geld aus einem fehlgeschlagenen Swap zurück",
+        refund_a_swap_subline:
+            "Laden deine Rückerstattungsdatei hoch und hole dir Geld aus einem fehlgeschlagenen Swap zurück",
         refund_past_swaps: "Historische Swaps",
-        refund_past_swaps_subline: "Swaps, die in deinem Browser gespeichert wurden",
-        history_no_swaps: "Es sieht so aus, als hättest du noch nicht geswappt.",
+        refund_past_swaps_subline:
+            "Swaps, die in deinem Browser gespeichert wurden",
+        history_no_swaps:
+            "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_placeholder: "Rückerstattungsadresse",
         refund_clear: "Lokalen Speicher löschen",
         delete_swap: "Swap aus dem lokalen Speicher löschen",
-        delete_localstorage: "Bist du sicher, dass du deinen lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
-        delete_localstorage_single_swap: "Bist du sicher, dass du den Swap {{ id }} aus deinem lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
+        delete_localstorage:
+            "Bist du sicher, dass du deinen lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
+        delete_localstorage_single_swap:
+            "Bist du sicher, dass du den Swap {{ id }} aus deinem lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
         tx_in_mempool: "Transaktion befindet sich im Mempool",
-        tx_in_mempool_subline: "Warte auf Bestätigung, um den Swap abzuschließen",
+        tx_in_mempool_subline:
+            "Warte auf Bestätigung, um den Swap abzuschließen",
         expired: "Swap ist abgelaufen!",
         invoice_pending: "Transaktion erhalten, Rechnung wird bezahlt.",
         invoice_expired: "Rechnung ist abgelaufen, bitte erneut versuchen!",
@@ -341,11 +354,14 @@ const dict = {
         locktime_not_satisfied: "Locktime-Anforderung nicht erfüllt",
         already_refunded: "Swap wurde bereits erstattet",
         api_offline: "API ist offline",
-        api_offline_msg: "Konnte keine Verbindung zur Boltz API herstellen. Bitte versuche es später noch einmal.",
-        refund_explainer: "Du kannst nach dem Timeout eine Rückerstattung beantragen",
+        api_offline_msg:
+            "Konnte keine Verbindung zur Boltz API herstellen. Bitte versuche es später noch einmal.",
+        refund_explainer:
+            "Du kannst nach dem Timeout eine Rückerstattung beantragen",
         swap_not_refundable_yet: "Dein Swap kann noch nicht erstattet werden",
         wasm_not_supported: "Bitte aktivieren Sie WebAssembly in Ihrem Browser",
-        ios_image_download: 'Lange drücken und "In Fotos speichern" auswählen, um die Rückerstattungsdatei herunterzuladen',
+        ios_image_download:
+            'Lange drücken und "In Fotos speichern" auswählen, um die Rückerstattungsdatei herunterzuladen',
         created: "Erstellt",
         delete: "Löschen",
         view: "Anzeigen",
@@ -361,7 +377,8 @@ const dict = {
         peers: "Anzahl der Peers",
         num_channels: "Anzahl der Kanäle",
         beta_caution: "BETA - OBACHT!",
-        warning_return: "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück",
+        warning_return:
+            "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück",
     },
 };
 
