@@ -358,8 +358,10 @@ const dict = {
             "Konnte keine Verbindung zur Boltz API herstellen. Bitte versuche es später noch einmal.",
         refund_explainer:
             "Du kannst nach dem Timeout eine Rückerstattung beantragen",
-        swap_not_refundable_yet: "Dein Swap kann noch nicht erstattet werden. Warte auf den Timeout, um eine Rückerstattung zu starten.",
-        wasm_not_supported: "Bitte aktivieren Sie WebAssembly in Ihrem Browser!",
+        swap_not_refundable_yet:
+            "Dein Swap kann noch nicht erstattet werden. Warte auf den Timeout, um eine Rückerstattung zu starten.",
+        wasm_not_supported:
+            "Bitte aktivieren Sie WebAssembly in Ihrem Browser!",
         ios_image_download:
             'Lange drücken und "In Fotos speichern" auswählen, um die Rückerstattungsdatei herunterzuladen',
         created: "Erstellt",
@@ -389,7 +391,8 @@ const dict = {
         assets_sub: "Lightning / Bitcoin / Liquid",
         safe: "Seguro",
         non_custodial: "Sin Custodia",
-        non_custodial_sub: "Los intercambios en Boltz son sin custodia; la criptografía garantiza que los usuarios siempre tienen el control de su Bitcoin",
+        non_custodial_sub:
+            "Los intercambios en Boltz son sin custodia; la criptografía garantiza que los usuarios siempre tienen el control de su Bitcoin",
         node: "Nodo",
         lightningnode: "Ver nodo Lightning",
         error: "Error",
@@ -417,12 +420,15 @@ const dict = {
         create_channel: "Crear canal Lightning",
         create_channel_subline: "Capacidad del canal entrante o saliente",
         create_swap: "Crear intercambio atómico",
-        create_swap_subline: "El pago incluye tarifas de red y servicio de Boltz",
+        create_swap_subline:
+            "El pago incluye tarifas de red y servicio de Boltz",
         cancel_swap: "Cancelar intercambio",
         new_swap: "Nuevo intercambio",
         success_swap: "Intercambio realizado con éxito!",
-        feecheck: "La tarifa de red se actualizó según la situación de la red. Por favor, confirma los nuevos montos y continúa con el intercambio.",
-        create_and_paste: "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay\n\nMonto: {{ amount }} {{ denomination }}",
+        feecheck:
+            "La tarifa de red se actualizó según la situación de la red. Por favor, confirma los nuevos montos y continúa con el intercambio.",
+        create_and_paste:
+            "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay\n\nMonto: {{ amount }} {{ denomination }}",
         congrats: "¡Felicitaciones!",
         successfully_swapped: "Su intercambio se realizó con éxito!",
         timeout_eta: "Tiempo de espera estimado",
@@ -431,10 +437,12 @@ const dict = {
         pay_timeout_blockheight: "Altura del bloque de tiempo de espera",
         pay_expected_amount: "Monto esperado",
         send_to: "Enviar {{ amount }} {{ denomination }} a",
-        send_to_desc: "Por favor, envíe exactamente {{ amount }} {{ denomination }} antes de la altura del bloque de tiempo de espera {{ blockheight }}",
+        send_to_desc:
+            "Por favor, envíe exactamente {{ amount }} {{ denomination }} antes de la altura del bloque de tiempo de espera {{ blockheight }}",
         pay_address: "Dirección",
         lockup_failed: "Fallo en el lockup",
-        lockup_failed_subline: "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
+        lockup_failed_subline:
+            "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
         failure_reason: "Motivo del fallo",
         invoice_payment_failure: "No se pudo pagar su factura Lightning",
         onchain_address: "Ingrese la dirección de {{ asset }}",
@@ -445,17 +453,22 @@ const dict = {
         copy_bip21: "Copiar BIP21",
         copied: "Copiado",
         refund_a_swap: "Reembolsar un intercambio",
-        refund_a_swap_subline: "Cargue su archivo de reembolso y recupere sus fondos bloqueados",
+        refund_a_swap_subline:
+            "Cargue su archivo de reembolso y recupere sus fondos bloqueados",
         refund_past_swaps: "Intercambios anteriores",
-        refund_past_swaps_subline: "Intercambios que se guardaron en el almacenamiento del navegador",
+        refund_past_swaps_subline:
+            "Intercambios que se guardaron en el almacenamiento del navegador",
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_placeholder: "Dirección de reembolso",
         refund_clear: "Borrar almacenamiento local",
         delete_swap: "Eliminar intercambio del almacenamiento local",
-        delete_localstorage: "¿Estás seguro de que deseas borrar tu almacenamiento local?\nSe perderán la información de su intercambio y sus claves de reembolso.",
-        delete_localstorage_single_swap: "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento local?\nSe perderán la información de su intercambio y sus claves privadas de reembolso.",
+        delete_localstorage:
+            "¿Estás seguro de que deseas borrar tu almacenamiento local?\nSe perderán la información de su intercambio y sus claves de reembolso.",
+        delete_localstorage_single_swap:
+            "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento local?\nSe perderán la información de su intercambio y sus claves privadas de reembolso.",
         tx_in_mempool: "La transacción está en el mempool.",
-        tx_in_mempool_subline: "Esperando confirmación para completar el intercambio",
+        tx_in_mempool_subline:
+            "Esperando confirmación para completar el intercambio",
         expired: "¡El intercambio ha expirado!",
         invoice_pending: "Transacción recibida, pagando la factura...",
         invoice_expired: "La factura ha expirado, ¡intente nuevamente!",
@@ -468,19 +481,25 @@ const dict = {
         transaction_refunded: "Boltz ha reembolsado la transacción!",
         refunded: "El intercambio ha sido reembolsado!",
         broadcasted: "Reembolso transmitido!",
-        locktime_not_satisfied: "No se cumple el requisito de tiempo de bloqueo!",
+        locktime_not_satisfied:
+            "No se cumple el requisito de tiempo de bloqueo!",
         already_refunded: "El intercambio ya ha sido reembolsado!",
         api_offline: "API está offline!",
-        api_offline_msg: "No se pudo conectar a la API de Boltz, por favor inténtelo de nuevo más tarde!",
-        refund_explainer: "Podrás solicitar un reembolso después del tiempo de espera.",
-        swap_not_refundable_yet: "Tu intercambio aún no es reembolsable, por favor inténtelo de nuevo más tarde!",
+        api_offline_msg:
+            "No se pudo conectar a la API de Boltz, por favor inténtelo de nuevo más tarde!",
+        refund_explainer:
+            "Podrás solicitar un reembolso después del tiempo de espera.",
+        swap_not_refundable_yet:
+            "Tu intercambio aún no es reembolsable, por favor inténtelo de nuevo más tarde!",
         wasm_not_supported: "Por favor, activa WebAssembly en tu navegador!",
-        ios_image_download: 'Mantén presionado y selecciona "Guardar en Fotos" para descargar el archivo de reembolso.',
+        ios_image_download:
+            'Mantén presionado y selecciona "Guardar en Fotos" para descargar el archivo de reembolso.',
         created: "Creado",
         delete: "Eliminar",
         view: "Ver",
         id: "ID",
-        headline: "Intercambio de Bitcoin sin custodia y orientado a la privacidad",
+        headline:
+            "Intercambio de Bitcoin sin custodia y orientado a la privacidad",
         subline: "Tienes el control de tu dinero. Siempre.",
         start_swapping: "Comenzar a intercambiar",
         partners: "Socios",
@@ -491,7 +510,8 @@ const dict = {
         peers: "Número de peers",
         num_channels: "Número de canales",
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
-        warning_return: "Importante: Regresa a esta página después de pagar la factura!",
+        warning_return:
+            "Importante: Regresa a esta página después de pagar la factura!",
     },
 };
 
