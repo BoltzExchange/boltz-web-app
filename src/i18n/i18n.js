@@ -31,7 +31,7 @@ const dict = {
         max: "Max",
         minimum_amount: "Minimum amount is {{ amount }} {{ denomination }}",
         maximum_amount: "Maximum amount is {{ amount }} {{ denomination }}",
-        assets: "Assets",
+        assets: "Multi-Layer",
         socialmedia: "Follow us on",
         footer: "Made with ❤️ by Team Boltz",
         create_channel: "Create Lightning Channel",
