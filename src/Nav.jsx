@@ -8,9 +8,7 @@ import Warnings from "./components/Warnings";
 
 const locales = {
     en: "English",
-    de: "Deutsch",
-    es: "Español",
-    jp: "Japanese",
+    ja: "Japanese",
 };
 
 const Nav = ({ network }) => {
@@ -69,25 +67,17 @@ const Nav = ({ network }) => {
                         {t("onion")}
                     </a>
                 </div>
-                <Show when={false}>
-                    <div id="languages">
-                        <span>{locales[i18n()]}</span>
-                        <div class="dropdown">
-                            <span class="lang" onClick={() => set_local("en")}>
-                                {locales["en"]}
-                            </span>
-                            <span class="lang" onClick={() => set_local("de")}>
-                                {locales["de"]}
-                            </span>
-                            <span class="lang" onClick={() => set_local("es")}>
-                                {locales["es"]}
-                            </span>
-                            <span class="lang" onClick={() => set_local("jp")}>
-                                {locales["jp"]}
-                            </span>
-                        </div>
+                <div id="languages">
+                    <a href="#">{locales[i18n()]}</a>
+                    <div class="dropdown">
+                        <span class="lang" onClick={() => set_local("en")}>
+                            {locales["en"]}
+                        </span>
+                        <span class="lang" onClick={() => set_local("ja")}>
+                            {locales["ja"]}
+                        </span>
                     </div>
-                </Show>
+                </div>
                 <svg
                     id="hamburger"
                     viewBox="0 0 100 100"
