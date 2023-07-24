@@ -498,8 +498,7 @@ const dict = {
         delete: "Eliminar",
         view: "Ver",
         id: "ID",
-        headline:
-            "Intercambio de Bitcoin sin custodia y orientado a la privacidad",
+        headline: "Intercambio de Bitcoin sin custodia y con privacidad",
         subline: "Tienes el control de tu dinero. Siempre.",
         start_swapping: "Comenzar a intercambiar",
         partners: "Socios",
