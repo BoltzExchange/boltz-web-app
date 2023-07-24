@@ -5,11 +5,7 @@ import { i18n, setI18n, hamburger, setHamburger } from "./signals";
 import "./css/nav.css";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
-
-const locales = {
-    en: "English",
-    ja: "Japanese",
-};
+import locales from "./i18n/i18n.js";
 
 const Nav = ({ network }) => {
     const [t, { locale }] = useI18n();
@@ -68,14 +64,15 @@ const Nav = ({ network }) => {
                     </a>
                 </div>
                 <div id="languages">
-                    <a href="#">{locales[i18n()]}</a>
+                    <a class="globe" href="#"></a>
                     <div class="dropdown">
-                        <span class="lang" onClick={() => set_local("en")}>
-                            {locales["en"]}
-                        </span>
-                        <span class="lang" onClick={() => set_local("ja")}>
-                            {locales["ja"]}
-                        </span>
+                        <For each={Object.keys(locales)}>
+                            {(_locale) => (
+                                <span class="lang" onClick={() => set_local(_locale)}>
+                                    {locales[_locale].language}
+                                </span>
+                            )}
+                        </For>
                     </div>
                 </div>
                 <svg

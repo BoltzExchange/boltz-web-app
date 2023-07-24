@@ -1,5 +1,6 @@
 const dict = {
     en: {
+        language: "English",
         status: "Status",
         feedback: "Got Feedback? Join our",
         fast: "Fast",
@@ -121,6 +122,7 @@ const dict = {
         warning_return: "Important: Return to this page after paying invoice",
     },
     ja: {
+        language: "日本語",
         status: "ステータス",
         feedback: "フィードバックはこちらへ",
         fast: "高速",

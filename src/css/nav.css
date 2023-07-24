@@ -47,10 +47,6 @@ nav a.active {
     position: relative;
 }
 
-#languages > a:after {
-    content: "\25bc";
-    margin-left: 6px;
-}
 #languages > a {
     margin-left: 13px;
     padding-left: 13px;
