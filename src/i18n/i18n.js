@@ -323,7 +323,7 @@ const dict = {
         copied: "In die Zwischenablage kopiert!",
         refund_a_swap: "Einen Swap erstatten",
         refund_a_swap_subline:
-            "Laden deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück",
+            "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück",
         refund_past_swaps: "Historische Swaps",
         refund_past_swaps_subline:
             "Swaps, die in deinem Browser gespeichert wurden",
