@@ -8,7 +8,8 @@ import Warnings from "./components/Warnings";
 
 const locales = {
     en: "English",
-    ja: "Japanese",
+    ja: "日本語",
+    de: "Deutsch",
 };
 
 const Nav = ({ network }) => {
@@ -75,6 +76,9 @@ const Nav = ({ network }) => {
                         </span>
                         <span class="lang" onClick={() => set_local("ja")}>
                             {locales["ja"]}
+                        </span>
+                        <span class="lang" onClick={() => set_local("de")}>
+                            {locales["de"]}
                         </span>
                     </div>
                 </div>
