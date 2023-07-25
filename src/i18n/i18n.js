@@ -269,7 +269,7 @@ const dict = {
         history: "Historie",
         swap: "Swap",
         channel: "Kanal",
-        refund: "Starte Rückerstattung",
+        refund: "Rückerstattung",
         blog: "Blog",
         documentation: "Dokumentation",
         onion: "Onion",
