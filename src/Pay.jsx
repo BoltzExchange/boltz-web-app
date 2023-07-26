@@ -27,6 +27,7 @@ import SwapRefunded from "./status/SwapRefunded";
 import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
 import BlockExplorer from "./components/BlockExplorer";
+import LoadingSpinner from "./components/LoadingSpinner";
 import { updateSwapStatus, swapStatusPending } from "./utils/swapStatus";
 
 const Pay = () => {
@@ -144,19 +145,15 @@ const Pay = () => {
                 </Show>
                 <Show when={!swap().refundTx}>
                     <Show when={swapStatus() === null}>
-                        <div class="spinner">
-                            <div class="bounce1"></div>
-                            <div class="bounce2"></div>
-                            <div class="bounce3"></div>
-                        </div>
+                        <LoadingSpinner />
                     </Show>
                     <Show when={swapStatus()}>
                         <p>
                             {t("status")}:{" "}
                             <span class="btn-small">{swapStatus()}</span>
                         </p>
+                        <hr />
                     </Show>
-                    <hr />
                     <Show when={swapStatus() == "swap.expired"}>
                         <SwapExpired />
                     </Show>
