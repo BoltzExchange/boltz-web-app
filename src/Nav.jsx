@@ -27,7 +27,25 @@ const Nav = ({ network }) => {
                         {network}
                     </div>
                 </Show>
-
+                <div
+                    id="languages"
+                    onClick={(e) => e.currentTarget.classList.toggle("active")}
+                    onMouseleave={(e) =>
+                        e.currentTarget.classList.remove("active")
+                    }>
+                    <a class="globe" href="#"></a>
+                    <div class="dropdown">
+                        <For each={Object.keys(locales)}>
+                            {(lang) => (
+                                <span
+                                    class="lang"
+                                    onClick={() => setLocale(lang)}>
+                                    {locales[lang].language}
+                                </span>
+                            )}
+                        </For>
+                    </div>
+                </div>
                 <div id="collapse" class={hamburger() ? "active" : ""}>
                     <A href="/swap" onClick={() => setHamburger(false)}>
                         {t("swap")}
@@ -62,22 +80,6 @@ const Nav = ({ network }) => {
                         href="http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/">
                         {t("onion")}
                     </a>
-                </div>
-                <div
-                    id="languages"
-                    onClick={(e) => e.currentTarget.classList.toggle("active")}>
-                    <a class="globe" href="#"></a>
-                    <div class="dropdown">
-                        <For each={Object.keys(locales)}>
-                            {(lang) => (
-                                <span
-                                    class="lang"
-                                    onClick={() => setLocale(lang)}>
-                                    {locales[lang].language}
-                                </span>
-                            )}
-                        </For>
-                    </div>
                 </div>
                 <svg
                     id="hamburger"

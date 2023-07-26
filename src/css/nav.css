@@ -45,6 +45,7 @@ nav a.active {
 
 #languages {
     position: relative;
+    z-index: 1;
 }
 
 #languages > a {
@@ -53,7 +54,7 @@ nav a.active {
     border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
 #languages > a.globe {
-    margin-left: 21px;
+    margin-left: 0;
     border: none;
 }
 
