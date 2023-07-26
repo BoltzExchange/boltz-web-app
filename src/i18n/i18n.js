@@ -122,6 +122,9 @@ const dict = {
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
         warning_return: "Important: Return to this page after paying invoice",
+        not_found: "404 - Page Not found",
+        not_found_subline: "The page you are looking for does not exist.",
+        back_to_home: "Back to Home",
     },
     ja: {
         status: "ステータス",
