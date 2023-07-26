@@ -1,16 +1,16 @@
 import { A } from "@solidjs/router";
 import { Show } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import { setI18n, hamburger, setHamburger } from "./signals";
 import "./css/nav.css";
 import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
+import { setI18n, hamburger, setHamburger } from "./signals";
 
 const Nav = ({ network }) => {
     const [t, { locale }] = useI18n();
 
-    const set_local = (locale_code) => {
+    const setLocale = (locale_code) => {
         locale(locale_code);
         setI18n(locale_code);
     };
@@ -69,11 +69,11 @@ const Nav = ({ network }) => {
                     <a class="globe" href="#"></a>
                     <div class="dropdown">
                         <For each={Object.keys(locales)}>
-                            {(_locale) => (
+                            {(lang) => (
                                 <span
                                     class="lang"
-                                    onClick={() => set_local(_locale)}>
-                                    {locales[_locale].language}
+                                    onClick={() => setLocale(lang)}>
+                                    {locales[lang].language}
                                 </span>
                             )}
                         </For>

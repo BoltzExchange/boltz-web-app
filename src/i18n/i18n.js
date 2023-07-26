@@ -521,13 +521,14 @@ const dict = {
     },
 };
 
-Object.keys(dict).map((key) => {
-    if (key === "en") return;
-    Object.keys(dict.en).map((subkey) => {
-        if (dict[key][subkey] === undefined) {
-            dict[key][subkey] = dict.en[subkey];
-        }
+Object.entries(dict)
+    .filter(([lang]) => lang !== "en")
+    .map(([, langDict]) => {
+        Object.entries(dict.en).map(([key, enVal]) => {
+            if (langDict[key] === undefined) {
+                langDict[key] = enVal;
+            }
+        });
     });
-});
 
 export default dict;
