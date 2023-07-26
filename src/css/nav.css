@@ -45,6 +45,7 @@ nav a.active {
 
 #languages {
     position: relative;
+    z-index: 1;
 }
 
 #languages > a {
@@ -52,10 +53,14 @@ nav a.active {
     padding-left: 13px;
     border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
+#languages > a.globe {
+    margin-left: 0;
+    border: none;
+}
 
 #languages .lang {
     display: block;
-    padding: 4px 12px;
+    padding: 10px 20px;
     cursor: pointer;
 }
 
