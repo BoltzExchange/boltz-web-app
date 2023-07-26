@@ -43,9 +43,7 @@ const cleanup = render(
             <Router>
                 <Nav network={network} />
                 <Routes>
-                    <Route path="*">
-                        <Navigate href={"/404"} />
-                    </Route>
+                    <Route path="*" element={<Navigate href={"/404"} />} />
                     <Route path="/404" component={NotFound} />
                     <Route path="/" component={Hero} />
                     <Route path="/swap" component={Create} />
