@@ -1,22 +1,16 @@
 import { A } from "@solidjs/router";
 import { Show } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import { i18n, setI18n, hamburger, setHamburger } from "./signals";
 import "./css/nav.css";
+import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
-
-const locales = {
-    en: "English",
-    es: "Español",
-    de: "Deutsch",
-    ja: "日本語",
-};
+import { setI18n, hamburger, setHamburger } from "./signals";
 
 const Nav = ({ network }) => {
     const [t, { locale }] = useI18n();
 
-    const set_local = (locale_code) => {
+    const setLocale = (locale_code) => {
         locale(locale_code);
         setI18n(locale_code);
     };
@@ -69,21 +63,20 @@ const Nav = ({ network }) => {
                         {t("onion")}
                     </a>
                 </div>
-                <div id="languages">
-                    <a href="#">{locales[i18n()]}</a>
+                <div
+                    id="languages"
+                    onClick={(e) => e.currentTarget.classList.toggle("active")}>
+                    <a class="globe" href="#"></a>
                     <div class="dropdown">
-                        <span class="lang" onClick={() => set_local("en")}>
-                            {locales["en"]}
-                        </span>
-                        <span class="lang" onClick={() => set_local("ja")}>
-                            {locales["ja"]}
-                        </span>
-                        <span class="lang" onClick={() => set_local("de")}>
-                            {locales["de"]}
-                        </span>
-                        <span class="lang" onClick={() => set_local("es")}>
-                            {locales["es"]}
-                        </span>
+                        <For each={Object.keys(locales)}>
+                            {(lang) => (
+                                <span
+                                    class="lang"
+                                    onClick={() => setLocale(lang)}>
+                                    {locales[lang].language}
+                                </span>
+                            )}
+                        </For>
                     </div>
                 </div>
                 <svg
