@@ -1,7 +1,7 @@
 /* @refresh reload */
 import "./utils/patches";
 import { render } from "solid-js/web";
-import { Router, Route, Routes } from "@solidjs/router";
+import { Router, Route, Routes, Navigate } from "@solidjs/router";
 import { I18nContext } from "@solid-primitives/i18n";
 import { setWebln, setWasmSupported } from "./signals";
 import { detectWebLNProvider, checkReferralId } from "./helper";
@@ -16,6 +16,7 @@ import Refund from "./Refund";
 import createI18n from "./i18n";
 import History from "./History";
 import Hero from "./Hero";
+import NotFound from "./NotFound";
 import { loglevel, network } from "./config";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import "./css/index.css";
@@ -42,6 +43,8 @@ const cleanup = render(
             <Router>
                 <Nav network={network} />
                 <Routes>
+                    <Route path="*" element={<Navigate href={"/404"} />} />
+                    <Route path="/404" component={NotFound} />
                     <Route path="/" component={Hero} />
                     <Route path="/swap" component={Create} />
                     {/* Compatibility with link in Breez: https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
