@@ -143,16 +143,20 @@ const Pay = () => {
                     <SwapRefunded />
                 </Show>
                 <Show when={!swap().refundTx}>
-                    <p>
-                        {t("status")}:{" "}
-                        <span class="btn-small">
-                            {swapStatus() || t("loading")}
-                        </span>
-                    </p>
-                    <hr />
                     <Show when={swapStatus() === null}>
-                        <h3>{t("loading_swap_status")}</h3>
+                        <div class="spinner">
+                            <div class="bounce1"></div>
+                            <div class="bounce2"></div>
+                            <div class="bounce3"></div>
+                        </div>
                     </Show>
+                    <Show when={swapStatus()}>
+                        <p>
+                            {t("status")}:{" "}
+                            <span class="btn-small">{swapStatus()}</span>
+                        </p>
+                    </Show>
+                    <hr />
                     <Show when={swapStatus() == "swap.expired"}>
                         <SwapExpired />
                     </Show>
