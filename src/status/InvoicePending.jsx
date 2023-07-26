@@ -1,4 +1,5 @@
 import { useI18n } from "@solid-primitives/i18n";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const InvoicePending = () => {
     const [t] = useI18n();
@@ -6,11 +7,7 @@ const InvoicePending = () => {
     return (
         <div>
             <p>{t("invoice_pending")}</p>
-            <div class="spinner">
-                <div class="bounce1"></div>
-                <div class="bounce2"></div>
-                <div class="bounce3"></div>
-            </div>
+            <LoadingSpinner />
         </div>
     );
 };

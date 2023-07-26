@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { createEffect, onCleanup } from "solid-js";
+import { Show, createEffect, onCleanup } from "solid-js";
 import {
     setFailureReason,
     setSwapStatusTransaction,
@@ -27,6 +27,7 @@ import SwapRefunded from "./status/SwapRefunded";
 import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
 import BlockExplorer from "./components/BlockExplorer";
+import LoadingSpinner from "./components/LoadingSpinner";
 import { updateSwapStatus, swapStatusPending } from "./utils/swapStatus";
 
 const Pay = () => {
@@ -143,11 +144,16 @@ const Pay = () => {
                     <SwapRefunded />
                 </Show>
                 <Show when={!swap().refundTx}>
-                    <p>
-                        {t("status")}:{" "}
-                        <span class="btn-small">{swapStatus()}</span>
-                    </p>
-                    <hr />
+                    <Show when={swapStatus() === null}>
+                        <LoadingSpinner />
+                    </Show>
+                    <Show when={swapStatus()}>
+                        <p>
+                            {t("status")}:{" "}
+                            <span class="btn-small">{swapStatus()}</span>
+                        </p>
+                        <hr />
+                    </Show>
                     <Show when={swapStatus() == "swap.expired"}>
                         <SwapExpired />
                     </Show>
@@ -182,7 +188,11 @@ const Pay = () => {
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />
                     </Show>
-                    <Show when={swapStatus() != "swap.created"}>
+                    <Show
+                        when={
+                            swapStatus() !== null &&
+                            swapStatus() != "swap.created"
+                        }>
                         <BlockExplorer
                             asset={swap().asset}
                             address={
