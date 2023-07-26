@@ -12,7 +12,7 @@ const NotFound = () => {
                 {t("not_found")}
                 <small>{t("not_found_subline")}</small>
             </h1>
-            <span class="btn btn-inline" onclick={() => navigate("/swap")}>
+            <span class="btn btn-inline" onclick={() => navigate("/")}>
                 {t("back_to_home")}
             </span>
         </div>
