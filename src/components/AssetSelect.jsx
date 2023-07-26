@@ -14,6 +14,7 @@ const SelectAsset = () => {
     return (
         <div
             class="frame assets-select"
+            onClick={() => setAssetSelect(false)}
             style={assetSelect() ? "display: block;" : "display: none;"}>
             <h2>{t("select_asset")}</h2>
             <svg
