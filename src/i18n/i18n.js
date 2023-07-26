@@ -1,5 +1,6 @@
 const dict = {
     en: {
+        language: "English",
         status: "Status",
         feedback: "Got Feedback? Join our",
         fast: "Fast",
@@ -127,6 +128,7 @@ const dict = {
         back_to_home: "Back to Home",
     },
     ja: {
+        language: "日本語",
         status: "ステータス",
         feedback: "フィードバックはこちらへ",
         fast: "高速",
@@ -254,6 +256,7 @@ const dict = {
             "重要：インボイスのお支払い後、このページへ戻ってください",
     },
     de: {
+        language: "Deutsch",
         status: "Status",
         feedback: "Feedback? Schreib uns auf",
         fast: "Schnell",
@@ -386,6 +389,7 @@ const dict = {
             "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
     },
     es: {
+        language: "Español",
         status: "Estado",
         feedback: "¿Tienes comentarios? Únete a nuestro",
         fast: "Rápido",

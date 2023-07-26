@@ -545,8 +545,15 @@ textarea {
     margin-right: 4px;
 }
 
+.globe {
+    background-image: url(../assets/globe.svg);
+    background-repeat: no-repeat;
+    background-position: 12px;
+    background-size: 18px;
+    padding-left: 40px !important;
+}
+
 .external {
-    padding-right: 30px;
     padding-right: 25px;
     background-image: url(../assets/external_link.svg);
     background-repeat: no-repeat;
