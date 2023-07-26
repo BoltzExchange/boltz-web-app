@@ -368,10 +368,6 @@ textarea {
     background: #0003;
 }
 
-.frame h3 {
-    color: #fff;
-}
-
 @media (min-width: 488px) {
     .frame {
         margin-top: 74px;
