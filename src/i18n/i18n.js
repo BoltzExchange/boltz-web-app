@@ -519,10 +519,6 @@ const dict = {
         warning_return:
             "Importante: Regresa a esta página después de pagar la factura!",
     },
-    ja: {
-        loading: "読み込み中",
-        loading_swap_status: "スワップ状態の取得中...",
-    },
 };
 
 Object.entries(dict)
