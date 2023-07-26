@@ -63,7 +63,9 @@ const Nav = ({ network }) => {
                         {t("onion")}
                     </a>
                 </div>
-                <div id="languages">
+                <div
+                    id="languages"
+                    onClick={(e) => e.currentTarget.classList.toggle("active")}>
                     <a class="globe" href="#"></a>
                     <div class="dropdown">
                         <For each={Object.keys(locales)}>

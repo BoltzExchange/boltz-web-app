@@ -71,7 +71,7 @@ nav a.active {
     right: 0px;
     background: rgb(11, 22, 35);
 }
-#languages:hover .dropdown {
+#languages.active .dropdown {
     display: block;
 }
 
