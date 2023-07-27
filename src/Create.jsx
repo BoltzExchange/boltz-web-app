@@ -160,14 +160,16 @@ const Create = () => {
     };
 
     const createWeblnInvoice = async () => {
-        let check_enable = await window.webln.enable();
-        if (check_enable.enabled) {
+        try {
+            await window.webln.enable();
             let amount = Number(receiveAmount());
             const invoice = await window.webln.makeInvoice({ amount: amount });
             validateAmount();
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
             validateAddress(invoiceInputRef);
+        } catch (error) {
+            log.error(error);
         }
     };
 

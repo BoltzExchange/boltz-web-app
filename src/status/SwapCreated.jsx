@@ -7,11 +7,13 @@ const SwapCreated = () => {
     const [t] = useI18n();
 
     const payWeblnInvoice = async (pr) => {
-        let check_enable = await window.webln.enable();
-        if (check_enable.enabled) {
+        try {
+            await window.webln.enable();
             const result = await window.webln.sendPayment(pr);
             log.debug("webln payment result:", result);
             fetchSwapStatus(swap());
+        } catch (error) {
+            log.error(error);
         }
     };
 
