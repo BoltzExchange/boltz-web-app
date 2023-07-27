@@ -15,6 +15,8 @@ const Nav = ({ network }) => {
         setI18n(locale_code);
     };
 
+    let timeout;
+
     return (
         <nav>
             <Warnings />
@@ -30,9 +32,16 @@ const Nav = ({ network }) => {
                 <div
                     id="languages"
                     onClick={(e) => e.currentTarget.classList.toggle("active")}
-                    onMouseleave={(e) =>
-                        e.currentTarget.classList.remove("active")
-                    }>
+                    onMouseenter={() => {
+                        if (timeout) {
+                            clearTimeout(timeout);
+                        }
+                    }}
+                    onMouseleave={(e) => {
+                        timeout = setTimeout(() => {
+                            e.target.classList.remove("active");
+                        }, 300);
+                    }}>
                     <a class="globe" href="#"></a>
                     <div class="dropdown">
                         <For each={Object.keys(locales)}>
