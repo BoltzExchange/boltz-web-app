@@ -4,7 +4,9 @@ import { render } from "solid-js/web";
 import { Router, Route, Routes, Navigate } from "@solidjs/router";
 import { I18nContext } from "@solid-primitives/i18n";
 import { setWebln, setWasmSupported } from "./signals";
-import { detectWebLNProvider, checkReferralId } from "./helper";
+import { checkReferralId } from "./helper";
+import { loglevel, network } from "./config";
+import { detectWebLNProvider } from "./utils/webln";
 import log from "loglevel";
 import Create from "./Create";
 import Error from "./Error";
@@ -17,7 +19,6 @@ import createI18n from "./i18n";
 import History from "./History";
 import Hero from "./Hero";
 import NotFound from "./NotFound";
-import { loglevel, network } from "./config";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import "./css/index.css";
 

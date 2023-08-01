@@ -7,6 +7,7 @@ import { useI18n } from "@solid-primitives/i18n";
 import Fees from "./components/Fees";
 import Asset from "./components/Asset";
 import arrow_svg from "./assets/arrow.svg";
+import { enableWebln } from "./utils/webln";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
 import { decodeInvoice, validateResponse } from "./utils/validation";
@@ -160,17 +161,14 @@ const Create = () => {
     };
 
     const createWeblnInvoice = async () => {
-        try {
-            await window.webln.enable();
-            let amount = Number(receiveAmount());
+        enableWebln(async () => {
+            const amount = Number(receiveAmount());
             const invoice = await window.webln.makeInvoice({ amount: amount });
             validateAmount();
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
             validateAddress(invoiceInputRef);
-        } catch (error) {
-            log.error(error);
-        }
+        });
     };
 
     const create = async () => {
