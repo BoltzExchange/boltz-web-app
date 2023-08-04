@@ -13,8 +13,13 @@ import {
 } from "./signals";
 import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { qr, claim, checkForFailed, fetchSwapStatus } from "./helper";
-import { api_url } from "./config";
+import {
+    qr,
+    claim,
+    checkForFailed,
+    fetchSwapStatus,
+    getApiUrl,
+} from "./helper";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoicePending from "./status/InvoicePending";
 import InvoiceExpired from "./status/InvoiceExpired";
@@ -59,7 +64,9 @@ const Pay = () => {
                 }
 
                 let reconnectFrequencySeconds = 1;
-                let streamUrl = `${api_url}/streamswapstatus?id=${params.id}`;
+                let streamUrl = `${getApiUrl(
+                    current_swap.asset
+                )}/streamswapstatus?id=${params.id}`;
 
                 // Putting these functions in extra variables is just for the sake of readability
                 const waitFunc = function () {
