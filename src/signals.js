@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
-import { pairs } from "./config";
 import { isMobile } from "./helper";
+import { defaultLanguage, pairs } from "./config";
 
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
@@ -48,7 +48,7 @@ export const [ref, setRef] = createStorageSignal(
     "ref",
     isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"
 );
-export const [i18n, setI18n] = createStorageSignal("i18n", "en");
+export const [i18n, setI18n] = createStorageSignal("i18n", defaultLanguage);
 export const [denomination, setDenomination] = createStorageSignal(
     "denomination",
     "sat"
