@@ -30,7 +30,7 @@ h1 small {
 }
 h3 {
     margin: 0;
-    color: #e6c826;
+    color: $primary;
 }
 
 h2.special {
@@ -111,7 +111,7 @@ h2.special {
     font-size: 16px;
     display: block;
     font-weight: normal;
-    color: #e6c826;
+    color: $primary;
 }
 
 .thunderhub:before {

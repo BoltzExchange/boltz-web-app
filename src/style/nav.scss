@@ -30,7 +30,7 @@ nav a:first-child {
 
 nav a:hover,
 nav a.active {
-    color: #e6c826;
+    color: $primary;
     text-decoration: underline;
 }
 
@@ -65,7 +65,7 @@ nav a.active {
 }
 
 #languages .lang:hover {
-    background-color: #e6c826;
+    background-color: $primary;
     color: rgb(11, 22, 35);
 }
 
@@ -192,6 +192,6 @@ nav a.active {
 }
 
 .banner-yellow {
-    background: #e6c826;
+    background: $primary;
     color: #14283f;
 }

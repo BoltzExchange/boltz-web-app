@@ -22,7 +22,7 @@ footer {
 
 a,
 a:hover {
-    color: #e6c826;
+    color: $primary;
 }
 
 h1 {
@@ -138,7 +138,7 @@ hr {
     padding: 8px 12px;
     text-decoration: none;
     border-radius: 16px;
-    background-color: #e6c826;
+    background-color: $primary;
     color: #14283f;
     font-weight: bold;
     text-transform: uppercase;
@@ -153,7 +153,7 @@ hr {
 }
 
 .btn-small {
-    background-color: #e6c826;
+    background-color: $primary;
     color: #14283f;
     border-radius: 7px;
     padding: 1px 6px;
@@ -193,7 +193,7 @@ hr {
     background-color: rgb(11, 22, 35);
 }
 .btn-light:hover {
-    background-color: #e6c826;
+    background-color: $primary;
 }
 .btn-explorer {
     background: #533180;
@@ -276,7 +276,7 @@ input:focus,
 textarea:focus {
     outline: none;
     color: #ddd;
-    border-color: #e6c826;
+    border-color: $primary;
 }
 input:invalid,
 textarea:invalid {
