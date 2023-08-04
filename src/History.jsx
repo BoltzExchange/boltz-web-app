@@ -3,7 +3,7 @@ import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { swaps, setSwaps } from "./signals";
 import SwapList from "./components/SwapList";
-import "./css/history.css";
+import "./style/history.sass";
 
 const History = () => {
     const navigate = useNavigate();

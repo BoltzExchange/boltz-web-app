@@ -1,6 +1,6 @@
 import { pairs } from "../config";
 import { setAssetSelect, assetSelect } from "../signals";
-import "../css/asset.css";
+import "../style/asset.sass";
 
 const Asset = ({ id }) => {
     const setAssetPair = () => {

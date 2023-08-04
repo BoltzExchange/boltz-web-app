@@ -6,7 +6,7 @@ import nostr from "./assets/nostr.svg";
 import discord from "./assets/discord.svg";
 import github from "./assets/github.svg";
 
-import "./css/footer.css";
+import "./style/footer.sass";
 
 const Footer = () => {
     const [t] = useI18n();
