@@ -1,9 +1,8 @@
 import { useI18n } from "@solid-primitives/i18n";
-import { blockexplorer_url, blockexplorer_url_liquid } from "../config";
+import { pairs } from "../config";
 
 const blockexplorerLink = (asset, isTxId, val) => {
-    const basePath =
-        asset == "L-BTC" ? blockexplorer_url_liquid : blockexplorer_url;
+    const basePath = pairs[`${asset}/BTC`]["blockexplorer_url"];
     return `${basePath}/${isTxId ? "tx" : "address"}/${val}`;
 };
 
