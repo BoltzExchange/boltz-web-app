@@ -1,3 +1,5 @@
+@import "vars";
+
 .nav-inner {
     display: flex;
     justify-content: flex-start;
@@ -14,7 +16,7 @@ nav {
     top: 0;
     z-index: 999;
     width: 100%;
-    background: #102032;
+    background: darken($background, 3%);
     position: relative;
 }
 nav a {
@@ -184,7 +186,7 @@ nav a.active {
 }
 
 .banner {
-    background: darkred;
+    background: $error;
     font-size: 18px;
     padding: 5px;
     position: relative;
