@@ -22,7 +22,6 @@ import {
 import { isMobile, fetchPairs } from "../helper";
 import btc_svg from "../assets/btc.svg";
 import sat_svg from "../assets/sat.svg";
-import reload_svg from "../assets/reload.svg";
 
 const Fees = () => {
     createEffect(() => {
@@ -85,9 +84,6 @@ const Fees = () => {
                 />
             </div>
             <label>
-                <span class="icon-reload" onClick={fetchPairs}>
-                    <img src={reload_svg} />
-                </span>
                 {t("network_fee")}:{" "}
                 <span class="network-fee">
                     {formatAmount(minerFee(), true)}
