@@ -80,6 +80,8 @@ const dict = {
             "Swaps that got saved into your browsers storage",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_placeholder: "Refund address",
+        refund_backup: "Backup",
+        refund_import: "Import Backup",
         refund_clear: "Delete localstorage",
         delete_swap: "Delete swap from localstorage",
         delete_localstorage:
