@@ -10,17 +10,20 @@ const blockexplorerLink = (asset, isTxId, val) => {
 const BlockExplorer = ({ asset, address, txId, typeLabel }) => {
     const [t] = useI18n();
 
-    typeLabel = txId ? typeLabel || "claim_tx" : "lockup_address";
+    let href;
+    if (txId) {
+        typeLabel = typeLabel || "claim_tx";
+        href = blockexplorerLink(asset, true, txId);
+    } else {
+        typeLabel = "lockup_address";
+        href = blockexplorerLink(asset, false, address);
+    }
 
     return (
         <a
             class="btn btn-explorer"
             target="_blank"
-            href={blockexplorerLink(
-                asset,
-                txId !== undefined,
-                txId || address
-            )}>
+            href={href}>
             {t("blockexplorer", { typeLabel: t(`blockexplorer_${typeLabel}`) })}
         </a>
     );
