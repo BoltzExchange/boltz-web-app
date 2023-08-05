@@ -1,10 +1,12 @@
 /* @refresh reload */
 import "./utils/patches";
+import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { Router, Route, Routes, Navigate } from "@solidjs/router";
 import { I18nContext } from "@solid-primitives/i18n";
-import { setWebln, setWasmSupported } from "./signals";
+import { setWebln, setWasmSupported, swaps } from "./signals";
 import { checkReferralId } from "./helper";
+import { swapChecker } from "./utils/swapChecker";
 import { loglevel, network } from "./config";
 import { detectWebLNProvider } from "./utils/webln";
 import log from "loglevel";
@@ -28,6 +30,10 @@ detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
 
+createEffect(() => {
+    swapChecker(swaps());
+});
+
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
         .register("./service-worker.js", { scope: "./" })
@@ -48,7 +54,8 @@ const cleanup = render(
                     <Route path="/404" component={NotFound} />
                     <Route path="/" component={Hero} />
                     <Route path="/swap" component={Create} />
-                    {/* Compatibility with link in Breez: https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
+                    {/* Compatibility with link in Breez:
+                        https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
                     <Route path="/swapbox" component={Create} />
                     <Route path="/swap/:id" component={Pay} />
                     <Route path="/error" component={Error} />
