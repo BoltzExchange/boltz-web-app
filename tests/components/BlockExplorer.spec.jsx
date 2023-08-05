@@ -19,7 +19,12 @@ describe("BlockExplorer", () => {
                 </I18nContext.Provider>
             ));
 
-            const button = await screen.findByText(i18n.en.blockexplorer);
+            const button = await screen.findByText(
+                i18n.en.blockexplorer.replace(
+                    "{{ typeLabel }}",
+                    i18n.en.blockexplorer_lockup_address
+                )
+            );
             expect(button).not.toBeUndefined();
             expect(button.href).toEqual(`${baseLink}/address/${address}`);
         }
@@ -38,7 +43,12 @@ describe("BlockExplorer", () => {
                 </I18nContext.Provider>
             ));
 
-            const button = await screen.findByText(i18n.en.blockexplorer);
+            const button = await screen.findByText(
+                i18n.en.blockexplorer.replace(
+                    "{{ typeLabel }}",
+                    i18n.en.blockexplorer_claim_tx
+                )
+            );
             expect(button).not.toBeUndefined();
             expect(button.href).toEqual(`${baseLink}/tx/${txId}`);
         }
