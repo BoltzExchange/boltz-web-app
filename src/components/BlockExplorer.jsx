@@ -7,10 +7,10 @@ const blockexplorerLink = (asset, isTxId, val) => {
     return `${basePath}/${isTxId ? "tx" : "address"}/${val}`;
 };
 
-const BlockExplorer = ({ asset, address, txId, typeLabel = "lockup_address"}) => {
+const BlockExplorer = ({ asset, address, txId, typeLabel }) => {
     const [t] = useI18n();
 
-    typeLabel = txId ? "refund_tx" : typeLabel;
+    typeLabel = txId ? typeLabel || "claim_tx" : "lockup_address";
 
     return (
         <a
@@ -18,8 +18,8 @@ const BlockExplorer = ({ asset, address, txId, typeLabel = "lockup_address"}) =>
             target="_blank"
             href={blockexplorerLink(
                 asset,
-                address === undefined,
-                address || txId
+                txId !== undefined,
+                txId || address
             )}>
             {t("blockexplorer", { typeLabel: t(`blockexplorer_${typeLabel}`) })}
         </a>
