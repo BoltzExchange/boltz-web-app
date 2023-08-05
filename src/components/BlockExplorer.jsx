@@ -20,10 +20,7 @@ const BlockExplorer = ({ asset, address, txId, typeLabel }) => {
     }
 
     return (
-        <a
-            class="btn btn-explorer"
-            target="_blank"
-            href={href}>
+        <a class="btn btn-explorer" target="_blank" href={href}>
             {t("blockexplorer", { typeLabel: t(`blockexplorer_${typeLabel}`) })}
         </a>
     );
