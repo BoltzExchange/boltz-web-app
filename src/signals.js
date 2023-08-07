@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
 import { pairs } from "./config";
+import { isMobile } from "./helper";
 
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
@@ -43,7 +44,10 @@ export const [refundTx, setRefundTx] = createSignal("");
 export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
 // local storage
-export const [ref, setRef] = createStorageSignal("ref", "boltz_webapp");
+export const [ref, setRef] = createStorageSignal(
+    "ref",
+    isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"
+);
 export const [i18n, setI18n] = createStorageSignal("i18n", "en");
 export const [denomination, setDenomination] = createStorageSignal(
     "denomination",
