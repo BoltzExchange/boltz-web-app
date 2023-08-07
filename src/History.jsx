@@ -1,13 +1,34 @@
+import log from "loglevel";
+import { Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { swaps, setSwaps } from "./signals";
+import { isIos } from "./helper";
 import SwapList from "./components/SwapList";
+import {
+    swaps,
+    setSwaps,
+    setNotificationType,
+    setNotification,
+} from "./signals";
 import "./style/history.scss";
 
+// Throws when the file is invalid
+const validateBackupFile = (file) => {
+    // Check if the object is an array and all elements have at least the id property
+    if (!(file instanceof Array)) {
+        throw "not an Array";
+    }
+
+    if (file.some((swap) => swap.id === undefined || swap.id === null)) {
+        throw "not all elements have an id";
+    }
+};
+
 const History = () => {
-    let importRef;
-    const navigate = useNavigate();
     const [t] = useI18n();
+    const navigate = useNavigate();
+
+    let importRef;
 
     const deleteLocalStorage = () => {
         if (confirm(t("delete_localstorage"))) {
@@ -19,7 +40,9 @@ const History = () => {
         const enc = encodeURI(JSON.stringify(swaps()));
         let hiddenElement = document.createElement("a");
         hiddenElement.href = `data:application/json;charset=utf-8,${enc}`;
-        hiddenElement.download = "boltz-backup-localstorage.json";
+        hiddenElement.download = `boltz-backup-${Math.floor(
+            Date.now() / 1000
+        )}.json`;
         hiddenElement.target = "_blank";
         hiddenElement.click();
     };
@@ -31,19 +54,13 @@ const History = () => {
         new Response(inputFile)
             .json()
             .then((result) => {
-                // check at least if json has id field
-                result.forEach((swap) => {
-                    if (Object.keys(swap).indexOf("id") === -1) {
-                        log.error("invalid file upload", e);
-                        input.setCustomValidity("invalid file upload");
-                        return;
-                    }
-                });
+                validateBackupFile(result);
                 setSwaps(result);
             })
             .catch((e) => {
                 log.error("invalid file upload", e);
-                input.setCustomValidity(invalidFileError);
+                setNotificationType("error");
+                setNotification(t("invalid_backup_file"));
             });
     };
 
@@ -83,20 +100,20 @@ const History = () => {
                         setSwapSignal={setSwaps}
                         deleteButton={true}
                     />
-                    <div class="btns">
-                        <Show when={swaps().length > 0}>
-                            <button
-                                class="btn btn-danger"
-                                onClick={deleteLocalStorage}>
-                                {t("refund_clear")}
-                            </button>
+                    <Show when={swaps().length > 0}>
+                        <Show when={!isIos}>
                             <button
                                 class="btn btn-success"
                                 onClick={backupLocalStorage}>
                                 {t("refund_backup")}
                             </button>
                         </Show>
-                    </div>
+                        <button
+                            class="btn btn-danger"
+                            onClick={deleteLocalStorage}>
+                            {t("refund_clear")}
+                        </button>
+                    </Show>
                 </Show>
             </div>
         </div>
@@ -104,3 +121,4 @@ const History = () => {
 };
 
 export default History;
+export { validateBackupFile };

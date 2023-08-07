@@ -20,8 +20,6 @@ import {
     updateSwapStatus,
 } from "./utils/swapStatus";
 
-const invalidFileError = "Invalid refund file";
-
 const refundJsonKeys = ["id", "asset", "privateKey", "redeemScript"];
 const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 
@@ -66,7 +64,7 @@ const Refund = () => {
         if (valid) {
             setRefundJson(json);
         } else {
-            input.setCustomValidity(invalidFileError);
+            input.setCustomValidity(t("invalid_refund_file"));
         }
     };
 
@@ -84,7 +82,7 @@ const Refund = () => {
                 )
                 .catch((e) => {
                     log.error("invalid QR code upload", e);
-                    input.setCustomValidity(invalidFileError);
+                    input.setCustomValidity(t("invalid_refund_file"));
                 });
         } else {
             new Response(inputFile)
@@ -92,7 +90,7 @@ const Refund = () => {
                 .then((result) => checkRefundJsonKeys(input, result))
                 .catch((e) => {
                     log.error("invalid file upload", e);
-                    input.setCustomValidity(invalidFileError);
+                    input.setCustomValidity(t("invalid_refund_file"));
                 });
         }
     };

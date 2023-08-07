@@ -67,6 +67,8 @@ const dict = {
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
         download_refund_file: "Download refund file",
+        invalid_refund_file: "Invalid refund file",
+        invalid_backup_file: "Invalid backup file",
         copy_invoice: "Copy lightning invoice",
         copy_address: "Copy address",
         copy_amount: "Copy amount",
