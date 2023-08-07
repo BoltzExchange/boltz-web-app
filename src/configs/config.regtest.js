@@ -1,3 +1,4 @@
+export const defaultLanguage = "en";
 export const pairs = ["BTC/BTC", "L-BTC/BTC"];
 export const network = "regtest";
 export const isBeta = false;

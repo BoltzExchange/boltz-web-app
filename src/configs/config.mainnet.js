@@ -1,5 +1,6 @@
 const isTor = window?.location?.hostname.endsWith(".onion");
 
+export const defaultLanguage = "en";
 export const pairs = ["BTC/BTC", "L-BTC/BTC"];
 export const network = "main";
 export const isBeta = false;
