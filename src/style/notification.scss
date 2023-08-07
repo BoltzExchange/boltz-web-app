@@ -1,3 +1,5 @@
+@import "vars";
+
 #notification {
     visibility: hidden;
     max-width: 480px;
@@ -17,10 +19,10 @@
     box-shadow: 0px 0 3px black;
 }
 #notification.error {
-    background-color: #6c0000;
+    background-color: transparentize($error, 0.15);
 }
 #notification.success {
-    background-color: green;
+    background-color: transparentize($success, 0.15);
 }
 
 #notification img {

@@ -5,7 +5,7 @@ import { useI18n } from "@solid-primitives/i18n";
 import { nodeStats } from "./signals";
 import { fetchNodeInfo } from "./helper";
 
-import "./css/hero.css";
+import "./style/hero.scss";
 import liquid from "./assets/liquid-icon.svg";
 import bitcoin from "./assets/bitcoin-icon.svg";
 import lightning from "./assets/lightning-icon.svg";

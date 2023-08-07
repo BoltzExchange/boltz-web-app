@@ -1,3 +1,5 @@
+@import "vars";
+
 * {
     box-sizing: border-box;
 }
@@ -5,8 +7,8 @@
 body {
     font-size: 14px;
     margin: 0;
-    background: #14283f;
-    color: #d0d0d0;
+    background: $background;
+    color: $color;
     font-family: sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -20,7 +22,7 @@ footer {
 
 a,
 a:hover {
-    color: #e6c826;
+    color: $primary;
 }
 
 h1 {
@@ -136,7 +138,7 @@ hr {
     padding: 8px 12px;
     text-decoration: none;
     border-radius: 16px;
-    background-color: #e6c826;
+    background-color: $primary;
     color: #14283f;
     font-weight: bold;
     text-transform: uppercase;
@@ -151,7 +153,7 @@ hr {
 }
 
 .btn-small {
-    background-color: #e6c826;
+    background-color: $primary;
     color: #14283f;
     border-radius: 7px;
     padding: 1px 6px;
@@ -163,7 +165,7 @@ hr {
 [data-status="invoice.failedToPay"] .btn-small,
 [data-status="transaction.refunded"] .btn-small,
 [data-status="transaction.lockupFailed"] .btn-small {
-    background-color: darkred;
+    background-color: $error;
     color: #fff;
 }
 [data-status="swap.expired"] .btn-success,
@@ -191,7 +193,7 @@ hr {
     background-color: rgb(11, 22, 35);
 }
 .btn-light:hover {
-    background-color: #e6c826;
+    background-color: $primary;
 }
 .btn-explorer {
     background: #533180;
@@ -210,11 +212,11 @@ hr {
     background-color: #fff;
 }
 .btn-danger {
-    background-color: #8b000085;
+    background-color: transparentize($error, 0.42);
     color: white;
 }
 .btn-danger:hover {
-    background: darkred;
+    background: $error;
 }
 .btns {
     display: flex;
@@ -274,13 +276,13 @@ input:focus,
 textarea:focus {
     outline: none;
     color: #ddd;
-    border-color: #e6c826;
+    border-color: $primary;
 }
 input:invalid,
 textarea:invalid {
     outline: none;
     color: #ddd;
-    border-color: darkred;
+    border-color: $error;
 }
 .fees-dyn label {
     display: block;
@@ -375,12 +377,12 @@ textarea {
         border-radius: 16px;
     }
     #create-overlay .frame {
-        box-shadow: 0 0 60px #e6c82654;
+        box-shadow: 0 0 60px transparentize($primary, 0.7);
     }
 }
 
 .error {
-    background: #ff000052;
+    background: transparentize($error, 0.15);
     color: #ddd;
     padding: 6px 10px;
     display: inline-block;

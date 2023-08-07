@@ -1,3 +1,5 @@
+@import "vars";
+
 .nav-inner {
     display: flex;
     justify-content: flex-start;
@@ -14,7 +16,7 @@ nav {
     top: 0;
     z-index: 999;
     width: 100%;
-    background: #102032;
+    background: darken($background, 3%);
     position: relative;
 }
 nav a {
@@ -30,7 +32,7 @@ nav a:first-child {
 
 nav a:hover,
 nav a.active {
-    color: #e6c826;
+    color: $primary;
     text-decoration: underline;
 }
 
@@ -65,7 +67,7 @@ nav a.active {
 }
 
 #languages .lang:hover {
-    background-color: #e6c826;
+    background-color: $primary;
     color: rgb(11, 22, 35);
 }
 
@@ -184,7 +186,7 @@ nav a.active {
 }
 
 .banner {
-    background: darkred;
+    background: $error;
     font-size: 18px;
     padding: 5px;
     position: relative;
@@ -192,6 +194,6 @@ nav a.active {
 }
 
 .banner-yellow {
-    background: #e6c826;
+    background: $primary;
     color: #14283f;
 }

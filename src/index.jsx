@@ -20,7 +20,7 @@ import History from "./History";
 import Hero from "./Hero";
 import NotFound from "./NotFound";
 import { checkWasmSupported } from "./utils/wasmSupport";
-import "./css/index.css";
+import "./style/index.scss";
 
 log.setLevel(loglevel);
 

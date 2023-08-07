@@ -1,7 +1,7 @@
 import { A } from "@solidjs/router";
 import { Show } from "solid-js";
 import { useI18n } from "@solid-primitives/i18n";
-import "./css/nav.css";
+import "./style/nav.scss";
 import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
