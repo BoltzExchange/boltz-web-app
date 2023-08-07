@@ -376,11 +376,16 @@ export const claim = async (swap) => {
         blindingKey
     ).toHex();
     log.debug("claim_tx", claimTransaction);
-
     fetcher(
         "/broadcasttransaction",
         (data) => {
             log.debug("claim result:", data);
+            if (data.transactionId) {
+                const swapsTmp = swaps();
+                const currentSwap = swapsTmp.find((s) => swap.id === s.id);
+                currentSwap.claimTx = data.transactionId;
+                setSwaps(swapsTmp);
+            }
         },
         {
             currency: asset_name,

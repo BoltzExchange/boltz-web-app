@@ -22,7 +22,10 @@ const dict = {
         blog: "Blog",
         documentation: "Docs",
         onion: "Onion",
-        blockexplorer: "View in block explorer",
+        blockexplorer: "open {{ typeLabel }}",
+        blockexplorer_lockup_address: "lockup address",
+        blockexplorer_claim_tx: "claim transaction",
+        blockexplorer_refund_tx: "refund transaction",
         help: "Help",
         network_fee: "Network Fee",
         fee: "Boltz Fee",
@@ -521,6 +524,8 @@ const dict = {
     },
 };
 
+const rawDict = JSON.parse(JSON.stringify(dict));
+
 Object.entries(dict)
     .filter(([lang]) => lang !== "en")
     .map(([, langDict]) => {
@@ -532,3 +537,4 @@ Object.entries(dict)
     });
 
 export default dict;
+export { rawDict };
