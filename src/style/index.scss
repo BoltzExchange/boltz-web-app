@@ -212,7 +212,7 @@ hr {
     background-color: #fff;
 }
 .btn-danger {
-    background-color: transparentize($error, 0.85);
+    background-color: transparentize($error, 0.42);
     color: white;
 }
 .btn-danger:hover {
@@ -382,7 +382,7 @@ textarea {
 }
 
 .error {
-    background: transparentize($error, 0.85);
+    background: transparentize($error, 0.15);
     color: #ddd;
     padding: 6px 10px;
     display: inline-block;
