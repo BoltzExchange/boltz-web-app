@@ -382,11 +382,9 @@ export const claim = async (swap) => {
             log.debug("claim result:", data);
             if (data.transactionId) {
                 const swapsTmp = swaps();
-                const current_swap = swapsTmp.find((s) => swap.id === s.id);
-                current_swap.claimTx = data.transactionId;
+                const currentSwap = swapsTmp.find((s) => swap.id === s.id);
+                currentSwap.claimTx = data.transactionId;
                 setSwaps(swapsTmp);
-                setNotificationType("success");
-                setNotification(t("broadcasted"));
             }
         },
         {

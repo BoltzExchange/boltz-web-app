@@ -188,15 +188,21 @@ const Pay = () => {
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />
                     </Show>
-                    <BlockExplorer
-                        asset={swap().asset}
-                        txId={swap().claimTx || swap().refundTx}
-                        address={
-                            !swap().reverse
-                                ? swap().address
-                                : swap().lockupAddress
-                        }
-                    />
+                    <Show
+                        when={
+                            swapStatus() !== null &&
+                            swapStatus() !== "swap.created"
+                        }>
+                        <BlockExplorer
+                            asset={swap().asset}
+                            txId={swap().claimTx}
+                            address={
+                                !swap().reverse
+                                    ? swap().address
+                                    : swap().lockupAddress
+                            }
+                        />
+                    </Show>
                 </Show>
             </Show>
             <Show when={!swap()}>

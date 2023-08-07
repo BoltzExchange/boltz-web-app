@@ -524,6 +524,8 @@ const dict = {
     },
 };
 
+const rawDict = JSON.parse(JSON.stringify(dict));
+
 Object.entries(dict)
     .filter(([lang]) => lang !== "en")
     .map(([, langDict]) => {
@@ -535,3 +537,4 @@ Object.entries(dict)
     });
 
 export default dict;
+export { rawDict };
