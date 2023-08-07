@@ -129,6 +129,12 @@ describe("Calculate amounts", () => {
             }
         );
 
+        test("should calculate negative fees", () => {
+            setSwapFees();
+            setBoltzFee(-0.1);
+            expect(calculateBoltzFeeOnSend(1_000_000)).toEqual(-1000);
+        });
+
         test("should return correct types", () => {
             setReverse(true);
             expect(typeof calculateBoltzFeeOnSend(1000000)).toEqual("number");
