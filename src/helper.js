@@ -3,12 +3,13 @@ import QRCode from "qrcode/lib/server";
 import { Buffer } from "buffer";
 import { detectSwap } from "boltz-core";
 import { ECPair } from "./ecpair/ecpair";
-import { api_url } from "./config";
 import { feeChecker } from "./utils/feeChecker";
 import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
+import { pairs } from "./config";
 
 import {
     ref,
+    asset,
     swaps,
     setSwaps,
     setRefundTx,
@@ -96,6 +97,10 @@ export const checkResponse = (response) => {
     return response.json();
 };
 
+export const getApiUrl = (asset) => {
+    return pairs[`${asset}/BTC`].apiUrl;
+};
+
 export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
     let opts = {};
     if (params) {
@@ -108,10 +113,9 @@ export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
             body: JSON.stringify(params),
         };
     }
-    fetch(api_url + url, opts)
-        .then(checkResponse)
-        .then(cb)
-        .catch(errorCb);
+    const apiUrl = getApiUrl(asset()) + url;
+    log.debug("fetching: " + apiUrl);
+    fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
 };
 
 export const checkForFailed = (swap_id, data) => {
@@ -399,7 +403,6 @@ export const fetchNodeInfo = () => {
         log.debug("nodestats", data);
         setNodeStats(data.nodes.BTC);
     });
-    return false;
 };
 
 export const fetchPairs = () => {

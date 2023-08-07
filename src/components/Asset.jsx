@@ -4,8 +4,8 @@ import "../style/asset.scss";
 
 const Asset = ({ id }) => {
     const setAssetPair = () => {
-        if (pairs.length <= 1) {
-            return false;
+        if (Object.keys(pairs).length <= 1) {
+            return;
         }
         setAssetSelect(!assetSelect());
     };
@@ -16,7 +16,7 @@ const Asset = ({ id }) => {
                 <div class="asset-selected">
                     <span class={`icon icon-${id}`}></span>
                     <span class="asset-text"></span>
-                    <Show when={pairs.length > 1}>
+                    <Show when={Object.keys(pairs).length > 1}>
                         <span class="arrow-down"></span>
                     </Show>
                 </div>

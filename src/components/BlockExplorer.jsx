@@ -1,9 +1,8 @@
 import { useI18n } from "@solid-primitives/i18n";
-import { blockexplorer_url, blockexplorer_url_liquid } from "../config";
+import { pairs } from "../config";
 
-const blockexplorerLink = (asset, isTxId, val) => {
-    const basePath =
-        asset == "L-BTC" ? blockexplorer_url_liquid : blockexplorer_url;
+const blockExplorerLink = (asset, isTxId, val) => {
+    const basePath = pairs[`${asset}/BTC`].blockExplorerUrl;
     return `${basePath}/${isTxId ? "tx" : "address"}/${val}`;
 };
 
@@ -12,8 +11,8 @@ const BlockExplorer = ({ asset, address, txId, typeLabel }) => {
 
     const href =
         txId !== undefined
-            ? blockexplorerLink(asset, true, txId)
-            : blockexplorerLink(asset, false, address);
+            ? blockExplorerLink(asset, true, txId)
+            : blockExplorerLink(asset, false, address);
     typeLabel =
         typeLabel || (txId !== undefined ? "claim_tx" : "lockup_address");
 

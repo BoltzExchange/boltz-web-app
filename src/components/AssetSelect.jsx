@@ -1,7 +1,8 @@
 import { useI18n } from "@solid-primitives/i18n";
-import { setAsset, setAssetSelect, assetSelect } from "../signals";
-import bitcoin_svg from "../assets/bitcoin-icon.svg";
+import { fetchPairs } from "../helper";
 import liquid_svg from "../assets/liquid-icon.svg";
+import bitcoin_svg from "../assets/bitcoin-icon.svg";
+import { setAsset, setAssetSelect, assetSelect } from "../signals";
 
 const SelectAsset = () => {
     const [t] = useI18n();
@@ -9,6 +10,7 @@ const SelectAsset = () => {
     const changeAsset = (asset) => {
         setAsset(asset);
         setAssetSelect(false);
+        fetchPairs();
     };
 
     return (

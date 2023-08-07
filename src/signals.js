@@ -55,7 +55,7 @@ export const [denomination, setDenomination] = createStorageSignal(
 );
 export const [asset, setAsset] = createStorageSignal(
     "asset",
-    pairs[0].split("/")[0]
+    Object.keys(pairs)[0].split("/")[0]
 );
 export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
     // Because arrays are the same object when changed,

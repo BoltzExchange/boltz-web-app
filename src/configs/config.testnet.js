@@ -1,9 +1,20 @@
+const apiUrl = "https://testnet.boltz.exchange/api";
+const blockExplorerUrl = "https://mempool.space/testnet";
+const blockExplorerUrlLiquid = "https://liquid.network/testnet";
+
 export const defaultLanguage = "en";
-export const pairs = ["BTC/BTC", "L-BTC/BTC"];
 export const network = "testnet";
 export const isBeta = false;
 export const bolt11_prefix = "lntb";
 export const loglevel = "debug";
-export const api_url = "https://testnet.boltz.exchange/api";
-export const blockexplorer_url = "https://mempool.space/testnet";
-export const blockexplorer_url_liquid = "https://liquid.network/testnet";
+
+export const pairs = {
+    "BTC/BTC": {
+        apiUrl: apiUrl,
+        blockExplorerUrl: blockExplorerUrl,
+    },
+    "L-BTC/BTC": {
+        apiUrl: apiUrl,
+        blockExplorerUrl: blockExplorerUrlLiquid,
+    },
+};
