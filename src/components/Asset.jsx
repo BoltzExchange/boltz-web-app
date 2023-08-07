@@ -5,7 +5,7 @@ import "../style/asset.scss";
 const Asset = ({ id }) => {
     const setAssetPair = () => {
         if (Object.keys(pairs).length <= 1) {
-            return false;
+            return;
         }
         setAssetSelect(!assetSelect());
     };

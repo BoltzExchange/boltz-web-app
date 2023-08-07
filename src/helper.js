@@ -98,7 +98,7 @@ export const checkResponse = (response) => {
 };
 
 export const getApiUrl = (asset) => {
-    return pairs[`${asset}/BTC`].api_url;
+    return pairs[`${asset}/BTC`].apiUrl;
 };
 
 export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
@@ -113,9 +113,9 @@ export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
             body: JSON.stringify(params),
         };
     }
-    const api_url = getApiUrl(asset()) + url;
-    log.debug("fetching: " + api_url);
-    fetch(api_url, opts).then(checkResponse).then(cb).catch(errorCb);
+    const apiUrl = getApiUrl(asset()) + url;
+    log.debug("fetching: " + apiUrl);
+    fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
 };
 
 export const checkForFailed = (swap_id, data) => {
@@ -403,7 +403,6 @@ export const fetchNodeInfo = () => {
         log.debug("nodestats", data);
         setNodeStats(data.nodes.BTC);
     });
-    return false;
 };
 
 export const fetchPairs = () => {
