@@ -18,7 +18,7 @@ export const loglevel = "info";
 
 export const pairs = {
     "BTC/BTC": {
-        apiUrl: apiUrl,
+        apiUrl: "https://boltz.diamondhands.technology/api",
         blockExplorerUrl: blockExplorerUrl,
     },
     "L-BTC/BTC": {
