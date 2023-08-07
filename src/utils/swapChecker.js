@@ -1,6 +1,5 @@
 import log from "loglevel";
-import { api_url } from "../config";
-import { setSwapStatusAndClaim } from "../helper";
+import { setSwapStatusAndClaim, getApiUrl } from "../helper";
 import { swapStatusFinal } from "./swapStatus";
 
 let streams = {};
@@ -21,7 +20,7 @@ export const swapChecker = (swaps) => {
             return;
         }
         streams[swap.id] = handleStream(
-            `${api_url}/streamswapstatus?id=${swap.id}`,
+            `${getApiUrl(swap.asset)}/streamswapstatus?id=${swap.id}`,
             (data) => {
                 setSwapStatusAndClaim(data, swap);
             }
