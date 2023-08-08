@@ -1,8 +1,9 @@
 import log from "loglevel";
 import QRCode from "qrcode";
 import { useI18n } from "@solid-primitives/i18n";
-import { swap, setNotificationType, setNotification } from "../signals";
 import { isIos, isMobile } from "../helper";
+import { download, downloadJson } from "../utils/download";
+import { swap, setNotificationType, setNotification } from "../signals";
 
 const createRefundData = (swap) => {
     return {
@@ -16,17 +17,11 @@ const createRefundData = (swap) => {
 };
 
 const getRefundFileName = (swap) => {
-    return "boltz-refund-" + swap.id;
+    return `boltz-refund-${swap.id}`;
 };
 
-const downloadRefundFile = (swap) => {
-    const hiddenElement = document.createElement("a");
-    hiddenElement.href =
-        "data:application/json;charset=utf-8," +
-        encodeURI(JSON.stringify(createRefundData(swap)));
-    hiddenElement.target = "_blank";
-    hiddenElement.download = getRefundFileName(swap) + ".json";
-    hiddenElement.click();
+const downloadRefundJson = (swap) => {
+    downloadJson(getRefundFileName(swap), createRefundData(swap));
 };
 
 const DownloadRefund = () => {
@@ -47,11 +42,7 @@ const DownloadRefund = () => {
                         <h1>${t("ios_image_download")}</h1>
                     </body>`;
                 } else {
-                    const hiddenElement = document.createElement("a");
-                    hiddenElement.href = url;
-                    hiddenElement.target = "_blank";
-                    hiddenElement.download = getRefundFileName(swap) + ".png";
-                    hiddenElement.click();
+                    download(`${getRefundFileName(swap)}.png`, url);
                 }
             })
             .catch((err) => {
@@ -69,7 +60,7 @@ const DownloadRefund = () => {
                 onclick={() =>
                     isMobile
                         ? downloadRefundQr(swap())
-                        : downloadRefundFile(swap())
+                        : downloadRefundJson(swap())
                 }>
                 {t("download_refund_file")}
             </button>

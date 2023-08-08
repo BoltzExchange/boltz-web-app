@@ -67,6 +67,8 @@ const dict = {
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
         download_refund_file: "Download refund file",
+        invalid_refund_file: "Invalid refund file",
+        invalid_backup_file: "Invalid backup file",
         copy_invoice: "Copy lightning invoice",
         copy_address: "Copy address",
         copy_amount: "Copy amount",
@@ -80,6 +82,8 @@ const dict = {
             "Swaps that got saved into your browsers storage",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_placeholder: "Refund address",
+        refund_backup: "Backup",
+        refund_import: "Import Backup",
         refund_clear: "Delete localstorage",
         delete_swap: "Delete swap from localstorage",
         delete_localstorage:
