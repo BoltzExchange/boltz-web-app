@@ -4,6 +4,7 @@ import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import { isIos } from "./helper";
 import SwapList from "./components/SwapList";
+import { downloadJson } from "./utils/download";
 import {
     swaps,
     setSwaps,
@@ -37,14 +38,7 @@ const History = () => {
     };
 
     const backupLocalStorage = () => {
-        const enc = encodeURI(JSON.stringify(swaps()));
-        let hiddenElement = document.createElement("a");
-        hiddenElement.href = `data:application/json;charset=utf-8,${enc}`;
-        hiddenElement.download = `boltz-backup-${Math.floor(
-            Date.now() / 1000
-        )}.json`;
-        hiddenElement.target = "_blank";
-        hiddenElement.click();
+        downloadJson(`boltz-backup-${Math.floor(Date.now() / 1000)}`, swaps());
     };
 
     const importLocalStorage = (e) => {
