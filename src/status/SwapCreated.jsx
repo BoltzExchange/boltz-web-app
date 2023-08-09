@@ -1,8 +1,8 @@
 import log from "loglevel";
 import { useI18n } from "@solid-primitives/i18n";
+import { clipboard } from "../helper";
 import { enableWebln } from "../utils/webln";
 import { invoiceQr, swap, webln } from "../signals";
-import { fetchSwapStatus, clipboard } from "../helper";
 
 const SwapCreated = () => {
     const [t] = useI18n();
@@ -11,7 +11,6 @@ const SwapCreated = () => {
         enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);
             log.debug("webln payment result:", result);
-            fetchSwapStatus(swap());
         });
     };
 

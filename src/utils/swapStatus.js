@@ -7,6 +7,7 @@ export const swapStatusPending = {
 
 export const swapStatusFailed = {
     SwapExpired: "swap.expired",
+    SwapRefunded: "swap.refunded",
     InvoiceFailedToPay: "invoice.failedToPay",
     TransactionLockupFailed: "transaction.lockupFailed",
 };
@@ -18,8 +19,8 @@ export const swapStatusSuccess = {
 
 export const swapStatusFinal = [
     swapStatusFailed.SwapExpired,
+    swapStatusFailed.SwapRefunded,
     swapStatusFailed.InvoiceFailedToPay,
-    "swap.refunded",
 ].concat(Object.values(swapStatusSuccess));
 
 export const updateSwapStatus = (id, newStatus) => {

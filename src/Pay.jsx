@@ -25,6 +25,7 @@ import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
 import BlockExplorer from "./components/BlockExplorer";
 import LoadingSpinner from "./components/LoadingSpinner";
+import { swapStatusFailed } from "./utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
@@ -75,7 +76,9 @@ const Pay = () => {
                 <Show when={swap().refundTx}>
                     <p>
                         {t("status")}:{" "}
-                        <span class="btn-small btn-success">swap.refunded</span>
+                        <span class="btn-small btn-success">
+                            {swapStatusFailed.SwapRefunded}
+                        </span>
                     </p>
                     <hr />
                     <SwapRefunded />

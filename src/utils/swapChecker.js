@@ -1,31 +1,33 @@
 import log from "loglevel";
-import { setSwapStatusAndClaim, getApiUrl } from "../helper";
 import { swapStatusFinal } from "./swapStatus";
+import { setSwapStatusAndClaim, getApiUrl } from "../helper";
 
-let streams = {};
+export const streams = {};
 
 export const swapChecker = (swaps) => {
-    swaps.forEach((swap) => {
-        if (Object.keys(streams).indexOf(swap.id) !== -1) {
-            // stream already open for this swap
-            if (swapStatusFinal.includes(swap.status)) {
-                log.debug("stream: swap finalized closing stream.", swap.id);
+    swaps
+        .map((swap) => [swap, swapStatusFinal.includes(swap.status)])
+        .filter(([swap, isFinalized]) => {
+            const hasStreamAlready = streams[swap.id] !== undefined;
+
+            // Cleanup of streams for swaps that have finalized states
+            if (hasStreamAlready && isFinalized) {
+                log.debug("swap finalized; closing stream for:", swap.id);
                 streams[swap.id].close();
                 delete streams[swap.id];
             }
-            return;
-        }
-        // if swap is already finalized, we don't need to open a stream
-        if (swapStatusFinal.includes(swap.status)) {
-            return;
-        }
-        streams[swap.id] = handleStream(
-            `${getApiUrl(swap.asset)}/streamswapstatus?id=${swap.id}`,
-            (data) => {
-                setSwapStatusAndClaim(data, swap);
-            }
-        );
-    });
+
+            return !hasStreamAlready;
+        })
+        .filter(([, isFinalized]) => !isFinalized)
+        .forEach(([swap]) => {
+            streams[swap.id] = handleStream(
+                `${getApiUrl(swap.asset)}/streamswapstatus?id=${swap.id}`,
+                (data) => {
+                    setSwapStatusAndClaim(data, swap);
+                }
+            );
+        });
 };
 
 const handleStream = (streamUrl, cb) => {
@@ -53,7 +55,7 @@ const handleStream = (streamUrl, cb) => {
         log.debug(`stream started: ${streamUrl}`);
         stream.onmessage = function (event) {
             const data = JSON.parse(event.data);
-            log.debug(`Event status update: ${data.status}`, data);
+            log.debug(`stream status update: ${data.status}`, data);
             cb(data);
         };
         stream.onopen = function () {

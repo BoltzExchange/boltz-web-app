@@ -29,6 +29,7 @@ import {
     setRef,
     setSwap,
     setNodeStats,
+    swap,
 } from "./signals";
 import {
     getNetwork,
@@ -148,18 +149,21 @@ export const checkForFailed = (swap_id, data) => {
     }
 };
 
-export const setSwapStatusAndClaim = (data, swap) => {
-    setSwapStatus(data.status);
+export const setSwapStatusAndClaim = (data, activeSwap) => {
+    if (swap().id === activeSwap.id) {
+        setSwapStatus(data.status);
+    }
+
     setSwapStatusTransaction(data.transaction);
-    updateSwapStatus(swap.id, data.status);
+    updateSwapStatus(activeSwap.id, data.status);
     if (
         data.transaction &&
         (data.status === swapStatusPending.TransactionConfirmed ||
             data.status === swapStatusPending.TransactionMempool)
     ) {
-        claim(swap);
+        claim(activeSwap);
     }
-    checkForFailed(swap.id, data);
+    checkForFailed(activeSwap.id, data);
     setFailureReason(data.failureReason);
 };
 
