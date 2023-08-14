@@ -1,8 +1,6 @@
 import log from "loglevel";
 import { Show, createEffect, onCleanup } from "solid-js";
 import {
-    setFailureReason,
-    setSwapStatusTransaction,
     setReverse,
     setInvoiceQr,
     swap,
@@ -13,13 +11,7 @@ import {
 } from "./signals";
 import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import {
-    qr,
-    claim,
-    checkForFailed,
-    fetchSwapStatus,
-    getApiUrl,
-} from "./helper";
+import { qr, fetchSwapStatus } from "./helper";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoicePending from "./status/InvoicePending";
 import InvoiceExpired from "./status/InvoiceExpired";
@@ -33,13 +25,11 @@ import SwapExpired from "./status/SwapExpired";
 import SwapCreated from "./status/SwapCreated";
 import BlockExplorer from "./components/BlockExplorer";
 import LoadingSpinner from "./components/LoadingSpinner";
-import { updateSwapStatus, swapStatusPending } from "./utils/swapStatus";
+import { swapStatusFailed } from "./utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
     const [t] = useI18n();
-
-    let stream = null;
 
     createEffect(() => {
         let tmp_swaps = swaps();
@@ -58,61 +48,6 @@ const Pay = () => {
                         : current_swap.bip21,
                     setInvoiceQr
                 );
-                if (stream) {
-                    log.debug("stream closed");
-                    stream.close();
-                }
-
-                let reconnectFrequencySeconds = 1;
-                let streamUrl = `${getApiUrl(
-                    current_swap.asset
-                )}/streamswapstatus?id=${params.id}`;
-
-                // Putting these functions in extra variables is just for the sake of readability
-                const waitFunc = function () {
-                    return reconnectFrequencySeconds * 1000;
-                };
-                const tryToSetupFunc = function () {
-                    setupEventSource();
-                    reconnectFrequencySeconds *= 2;
-                    if (reconnectFrequencySeconds >= 64) {
-                        reconnectFrequencySeconds = 64;
-                    }
-                };
-                const reconnectFunc = function () {
-                    setTimeout(tryToSetupFunc, waitFunc());
-                };
-                function setupEventSource() {
-                    stream = new EventSource(streamUrl);
-                    log.debug(`stream started: ${streamUrl}`);
-                    stream.onmessage = function (event) {
-                        const data = JSON.parse(event.data);
-                        log.debug(`Event status update: ${data.status}`, data);
-                        updateSwapStatus(params.id, data.status);
-                        setSwapStatus(data.status);
-                        setSwapStatusTransaction(data.transaction);
-                        if (
-                            data.transaction &&
-                            (data.status ===
-                                swapStatusPending.TransactionConfirmed ||
-                                data.status ===
-                                    swapStatusPending.TransactionMempool)
-                        ) {
-                            claim(current_swap);
-                        }
-                        checkForFailed(current_swap.id, data);
-                        setFailureReason(data.failureReason);
-                    };
-                    stream.onopen = function () {
-                        reconnectFrequencySeconds = 1;
-                    };
-                    stream.onerror = function (e) {
-                        log.debug("stream error", e);
-                        stream.close();
-                        reconnectFunc();
-                    };
-                }
-                setupEventSource();
             }
         }
     });
@@ -121,10 +56,6 @@ const Pay = () => {
         log.debug("cleanup Pay");
         setSwap(null);
         setSwapStatus(null);
-        if (stream) {
-            log.debug("stream closed");
-            stream.close();
-        }
     });
 
     return (
@@ -145,7 +76,9 @@ const Pay = () => {
                 <Show when={swap().refundTx}>
                     <p>
                         {t("status")}:{" "}
-                        <span class="btn-small btn-success">swap.refunded</span>
+                        <span class="btn-small btn-success">
+                            {swapStatusFailed.SwapRefunded}
+                        </span>
                     </p>
                     <hr />
                     <SwapRefunded />
