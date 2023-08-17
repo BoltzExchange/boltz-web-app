@@ -180,7 +180,7 @@ export const fetchSwapStatus = (swap) => {
 
 export const qr = (data, cb) => {
     if (!data) return cb(null);
-    QRCode.toDataURL(data, { version: 13, width: 400 })
+    QRCode.toDataURL(data, { width: 400 })
         .then(cb)
         .catch((err) => {
             log.error("qr code generation error", err);
