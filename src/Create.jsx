@@ -70,19 +70,12 @@ const Create = () => {
         sendAmountRef.focus();
     });
 
-    const [firstLoad, setFirstLoad] = createSignal(true);
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [sendAmountValid, setSendAmountValid] = createSignal(true);
 
     createEffect(() => {
         if (minimum() === 0) {
             return;
-        }
-
-        if (firstLoad() && sendAmount() === BigInt(0)) {
-            setFirstLoad(false);
-            setSendAmount(BigInt(minimum()));
-            setReceiveAmount(BigInt(calculateReceiveAmount(minimum())));
         }
     });
 
