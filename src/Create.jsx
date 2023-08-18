@@ -387,9 +387,7 @@ const Create = () => {
                         onInput={(e) => changeSendAmount(e)}
                     />
                 </div>
-                <div
-                    id="flip-assets"
-                    onClick={() => setReverse(!reverse())}>
+                <div id="flip-assets" onClick={() => setReverse(!reverse())}>
                     <img src={arrow_svg} alt="flip assets" />
                 </div>
                 <div>
