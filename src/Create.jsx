@@ -325,15 +325,24 @@ const Create = () => {
             }
         } else if (keycode === 8) {
             // backspace
-            if (input.value[input.selectionStart - 1] === ".") {
+            if (
+                input.selectionEnd - input.selectionStart === 1 &&
+                input.value[input.selectionStart] === " "
+            ) {
+                input.setSelectionRange(
+                    input.selectionStart,
+                    input.selectionStart
+                );
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            } else if (input.value[input.selectionStart - 1] === ".") {
                 input.setSelectionRange(
                     input.selectionStart - 1,
                     input.selectionStart - 1
                 );
                 theEvent.returnValue = false;
                 if (theEvent.preventDefault) theEvent.preventDefault();
-            }
-            if (input.value[input.selectionStart - 1] === " ") {
+            } else if (input.value[input.selectionStart - 1] === " ") {
                 const index = input.selectionStart;
                 input.value =
                     input.value.substring(0, index - 2) +
@@ -350,15 +359,24 @@ const Create = () => {
             }
         } else if (keycode === 46) {
             // delete
-            if (input.value[input.selectionStart] === ".") {
+            if (
+                input.selectionEnd - input.selectionStart === 1 &&
+                input.value[input.selectionStart] === " "
+            ) {
                 input.setSelectionRange(
                     input.selectionStart + 1,
                     input.selectionStart + 1
                 );
                 theEvent.returnValue = false;
                 if (theEvent.preventDefault) theEvent.preventDefault();
-            }
-            if (input.value[input.selectionStart] === " ") {
+            } else if (input.value[input.selectionStart] === ".") {
+                input.setSelectionRange(
+                    input.selectionStart + 1,
+                    input.selectionStart + 1
+                );
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            } else if (input.value[input.selectionStart] === " ") {
                 const index = input.selectionStart;
                 input.value =
                     input.value.substring(0, index) +
@@ -519,10 +537,6 @@ const Create = () => {
                         onKeyDown={(e) => validateKeyDown(e)}
                         onKeypress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
-                        onSelect={(e) =>
-                            (e.currentTarget.selectionStart =
-                                e.currentTarget.selectionEnd)
-                        }
                     />
                 </div>
                 <div id="flip-assets" onClick={() => setReverse(!reverse())}>
@@ -544,10 +558,6 @@ const Create = () => {
                         onKeyDown={(e) => validateKeyDown(e)}
                         onKeypress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}
-                        onSelect={(e) =>
-                            (e.currentTarget.selectionStart =
-                                e.currentTarget.selectionEnd)
-                        }
                     />
                 </div>
             </div>
