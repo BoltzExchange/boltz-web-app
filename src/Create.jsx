@@ -278,9 +278,8 @@ const Create = () => {
         const setCustomValidity = (val, isZero) => {
             [sendAmountRef, receiveAmountRef].forEach((ref) => {
                 ref.setCustomValidity(val);
-                ref.classList.add("invalid");
-                if (isZero || val === "") {
-                    ref.classList.remove("invalid");
+                if (!isZero && val !== "") {
+                    ref.classList.add("invalid");
                 }
             });
         };

@@ -42,6 +42,12 @@ describe("Create", () => {
             </I18nContext.Provider>;
         });
 
+        signals.setSendAmount(50_000n);
+
+        // To force trigger a recalculation
+        signals.setAsset("L-BTC");
+        signals.setAsset("BTC");
+
         expect(setReceiveAmount).toHaveBeenCalledWith(38110n);
 
         signals.setAsset("L-BTC");
