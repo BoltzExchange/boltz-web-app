@@ -87,20 +87,11 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee], () => {
-            if (reverse()) {
-                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
-            } else {
-                setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
-            }
+        on([boltzFee, minerFee, reverse, asset], () => {
+            setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
             validateAmount();
         })
     );
-
-    createEffect(() => {
-        reverse();
-        validateAmount();
-    });
 
     // change denomination
     createMemo(() => {
@@ -396,14 +387,7 @@ const Create = () => {
                         onInput={(e) => changeSendAmount(e)}
                     />
                 </div>
-                <div
-                    id="flip-assets"
-                    onClick={() => {
-                        setReverse(!reverse());
-                        setSendAmount(
-                            BigInt(calculateSendAmount(Number(receiveAmount())))
-                        );
-                    }}>
+                <div id="flip-assets" onClick={() => setReverse(!reverse())}>
                     <img src={arrow_svg} alt="flip assets" />
                 </div>
                 <div>
