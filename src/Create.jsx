@@ -323,6 +323,16 @@ const Create = () => {
                     input.selectionStart + 1
                 );
             }
+        } else if (keycode === 190) {
+            // .
+            if (input.value[input.selectionStart] === ".") {
+                input.setSelectionRange(
+                    input.selectionStart + 1,
+                    input.selectionStart + 1
+                );
+                theEvent.returnValue = false;
+                if (theEvent.preventDefault) theEvent.preventDefault();
+            }
         } else if (keycode === 8) {
             // backspace
             if (
