@@ -275,10 +275,14 @@ const Create = () => {
     };
 
     const validateAmount = () => {
-        const setCustomValidity = (val) => {
-            [sendAmountRef, receiveAmountRef].forEach((ref) =>
-                ref.setCustomValidity(val)
-            );
+        const setCustomValidity = (val, isZero) => {
+            [sendAmountRef, receiveAmountRef].forEach((ref) => {
+                ref.setCustomValidity(val);
+                ref.classList.add("invalid");
+                if (isZero || val === "") {
+                    ref.classList.remove("invalid");
+                }
+            });
         };
 
         setCustomValidity("");
@@ -291,7 +295,8 @@ const Create = () => {
                 t(lessThanMin ? "minimum_amount" : "maximum_amount", {
                     amount: formatAmount(lessThanMin ? minimum() : maximum()),
                     denomination: denomination(),
-                })
+                }),
+                amount === 0
             );
             setSendAmountValid(false);
             return;

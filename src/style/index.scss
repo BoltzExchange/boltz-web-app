@@ -277,8 +277,8 @@ textarea:focus {
     color: #ddd;
     border-color: $primary;
 }
-input:invalid,
-textarea:invalid {
+input.invalid,
+textarea.invalid {
     outline: none;
     color: #ddd;
     border-color: $error;
