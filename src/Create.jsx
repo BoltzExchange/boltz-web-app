@@ -280,6 +280,8 @@ const Create = () => {
                 ref.setCustomValidity(val);
                 if (!isZero && val !== "") {
                     ref.classList.add("invalid");
+                } else {
+                    ref.classList.remove("invalid");
                 }
             });
         };
