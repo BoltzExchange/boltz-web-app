@@ -73,12 +73,6 @@ const Create = () => {
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [sendAmountValid, setSendAmountValid] = createSignal(true);
 
-    createEffect(() => {
-        if (minimum() === 0) {
-            return;
-        }
-    });
-
     createEffect(
         on([boltzFee, minerFee, reverse, asset], () => {
             setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
