@@ -322,11 +322,13 @@ const Create = () => {
                 const address = getAddress(asset_name);
                 address.toOutputScript(inputValue, getNetwork(asset_name));
                 input.setCustomValidity("");
+                input.classList.remove("invalid");
                 setAddressValid(true);
                 setOnchainAddress(inputValue);
             } catch (e) {
                 setAddressValid(false);
                 input.setCustomValidity("invalid address");
+                input.classList.add("invalid");
             }
         } else {
             inputValue = trimLightningPrefix(inputValue);
@@ -336,11 +338,13 @@ const Create = () => {
                 (isInvoice(inputValue) && checkInvoiceAmount(inputValue))
             ) {
                 input.setCustomValidity("");
+                input.classList.remove("invalid");
                 setInvoiceValid(true);
                 setInvoice(inputValue);
             } else {
                 setInvoiceValid(false);
                 input.setCustomValidity("invalid network");
+                input.classList.add("invalid");
             }
         }
     };
