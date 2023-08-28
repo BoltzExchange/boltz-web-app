@@ -70,21 +70,8 @@ const Create = () => {
         sendAmountRef.focus();
     });
 
-    const [firstLoad, setFirstLoad] = createSignal(true);
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [sendAmountValid, setSendAmountValid] = createSignal(true);
-
-    createEffect(() => {
-        if (minimum() === 0) {
-            return;
-        }
-
-        if (firstLoad() && sendAmount() === BigInt(0)) {
-            setFirstLoad(false);
-            setSendAmount(BigInt(minimum()));
-            setReceiveAmount(BigInt(calculateReceiveAmount(minimum())));
-        }
-    });
 
     createEffect(
         on([boltzFee, minerFee, reverse, asset], () => {
@@ -288,10 +275,15 @@ const Create = () => {
     };
 
     const validateAmount = () => {
-        const setCustomValidity = (val) => {
-            [sendAmountRef, receiveAmountRef].forEach((ref) =>
-                ref.setCustomValidity(val)
-            );
+        const setCustomValidity = (val, isZero) => {
+            [sendAmountRef, receiveAmountRef].forEach((ref) => {
+                ref.setCustomValidity(val);
+                if (!isZero && val !== "") {
+                    ref.classList.add("invalid");
+                } else {
+                    ref.classList.remove("invalid");
+                }
+            });
         };
 
         setCustomValidity("");
@@ -304,7 +296,8 @@ const Create = () => {
                 t(lessThanMin ? "minimum_amount" : "maximum_amount", {
                     amount: formatAmount(lessThanMin ? minimum() : maximum()),
                     denomination: denomination(),
-                })
+                }),
+                amount === 0
             );
             setSendAmountValid(false);
             return;
@@ -330,11 +323,13 @@ const Create = () => {
                 const address = getAddress(asset_name);
                 address.toOutputScript(inputValue, getNetwork(asset_name));
                 input.setCustomValidity("");
+                input.classList.remove("invalid");
                 setAddressValid(true);
                 setOnchainAddress(inputValue);
             } catch (e) {
                 setAddressValid(false);
                 input.setCustomValidity("invalid address");
+                input.classList.add("invalid");
             }
         } else {
             inputValue = trimLightningPrefix(inputValue);
@@ -344,11 +339,13 @@ const Create = () => {
                 (isInvoice(inputValue) && checkInvoiceAmount(inputValue))
             ) {
                 input.setCustomValidity("");
+                input.classList.remove("invalid");
                 setInvoiceValid(true);
                 setInvoice(inputValue);
             } else {
                 setInvoiceValid(false);
                 input.setCustomValidity("invalid network");
+                input.classList.add("invalid");
             }
         }
     };
