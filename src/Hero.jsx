@@ -164,7 +164,7 @@ const Hero = () => {
                 </div>
                 <div>
                     <a
-                        href="https://www.diamondhandsnode.com/"
+                        href="https://www.diamondhands.community/"
                         target="_blank"
                         class="diamondhands"></a>
                 </div>
