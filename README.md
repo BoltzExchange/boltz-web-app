@@ -3,7 +3,7 @@ cover: .gitbook/assets/Screenshot from 2023-07-27 17-22-02.png
 coverY: 0
 ---
 
-# Boltz Web App
+# 🖥 Boltz Web App
 
 This is the source of the official Boltz Web App served at [boltz.exchange](https://boltz.exchange/). It enables **non-custodial** swaps between different Bitcoin layers. You remain in control of your bitcoin, at all times.
 
@@ -21,7 +21,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and start sw
 
 ## Resources
 
-* [⚡ Node](https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2)
+* [CLN](https://amboss.space/node/02d96eadea3d780104449aca5c93461ce67c1564e2e1d73225fa67dd3b997a6018) | [LND](https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2)&#x20;
 * [Docs](https://docs.boltz.exchange)
 * [Discord](https://discord.gg/QBvZGcW)
 * [Twitter](https://twitter.com/Boltzhq)
