@@ -1,5 +1,5 @@
 ---
-cover: .gitbook/assets/web_app_header
+cover: .gitbook/assets/boltz-web_app_header.png
 coverY: 0
 ---
 
