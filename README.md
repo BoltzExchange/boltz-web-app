@@ -21,7 +21,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and start sw
 
 ## Resources
 
-* Read: [Docs](https://docs.boltz.exchange)
 * Get Help: [Discord](https://discord.gg/QBvZGcW)
 * Read our Blog: [Substack](https://blog.boltz.exchange/)
 * Follow us: [X/Twitter](https://twitter.com/Boltzhq) | [Nostr](https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970)
