@@ -1,5 +1,5 @@
 ---
-cover: .gitbook/assets/Screenshot from 2023-07-27 17-22-02.png
+cover: .gitbook/assets/Screenshot from 2023-09-19 18-09-42.png
 coverY: 0
 ---
 
