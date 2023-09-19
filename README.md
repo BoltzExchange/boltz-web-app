@@ -1,5 +1,5 @@
 ---
-cover: .gitbook/assets/Screenshot from 2023-09-19 18-09-42.png
+cover: .gitbook/assets/web_app_header
 coverY: 0
 ---
 
