@@ -74,7 +74,7 @@ const Nav = ({ network }) => {
                     <a
                         class="external"
                         target="_blank"
-                        href="https://docs.boltz.exchange/en/latest/">
+                        href="https://docs.boltz.exchange/">
                         {t("documentation")}
                     </a>
                     <a
