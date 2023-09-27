@@ -21,7 +21,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser and start sw
 
 ## ⚠️ License ⚠️
 
-Boltz Web App is licensed under [BSL 1.1](https://mariadb.com/bsl11/), a "source available" license which automatically turns into an open source license after 4 years, see [LICENSE](LICENSE) and [BSL FAQs](https://mariadb.com/bsl-faq-mariadb/) for details. If you are interested in a partnership to run the latest version please contact us at [hi@boltz](mailto:hi@boltz).
+Boltz Web App is licensed under [BSL 1.1](https://mariadb.com/bsl11/), a "source available" license which automatically turns into an open source license after 4 years, see [LICENSE](LICENSE) and [BSL FAQs](https://mariadb.com/bsl-faq-mariadb/) for details. If you are interested in a partnership to run the latest version please contact us at [hi@bol.tz](mailto:hi@bol.tz).
 
 Current Partnerships:
 * [Diamond Hands](https://swap.diamondhands.technology/)
