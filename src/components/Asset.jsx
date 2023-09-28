@@ -2,7 +2,6 @@ import { pairs } from "../config";
 import { setAssetSelect, assetSelect, setAssetSelected } from "../signals";
 import "../style/asset.scss";
 
-
 const Asset = ({ id, signal }) => {
     id = parseInt(id);
 
@@ -13,7 +12,6 @@ const Asset = ({ id, signal }) => {
         setAssetSelect(!assetSelect());
         setAssetSelected(id);
     };
-
 
     return (
         <div class="asset-wrap" onClick={openSelect}>

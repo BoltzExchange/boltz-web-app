@@ -1,6 +1,18 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { fetchPairs } from "../helper";
-import { asset, reverse, setReverse, setAsset, asset1, setAsset1, asset2, setAsset2, setAssetSelect, assetSelect, assetSelected } from "../signals";
+import {
+    asset,
+    reverse,
+    setReverse,
+    setAsset,
+    asset1,
+    setAsset1,
+    asset2,
+    setAsset2,
+    setAssetSelect,
+    assetSelect,
+    assetSelected,
+} from "../signals";
 
 const SelectAsset = () => {
     const [t] = useI18n();
@@ -65,15 +77,24 @@ const SelectAsset = () => {
                 />
             </svg>
             <hr />
-            <div class="asset-select asset-BTC" data-selected={isSelected("BTC")} onClick={() => changeAsset("BTC")}>
+            <div
+                class="asset-select asset-BTC"
+                data-selected={isSelected("BTC")}
+                onClick={() => changeAsset("BTC")}>
                 <span class="icon"></span>
                 <span class="asset-text"></span>
             </div>
-            <div class="asset-select asset-L-BTC" data-selected={isSelected("L-BTC")} onClick={() => changeAsset("L-BTC")}>
+            <div
+                class="asset-select asset-L-BTC"
+                data-selected={isSelected("L-BTC")}
+                onClick={() => changeAsset("L-BTC")}>
                 <span class="icon"></span>
                 <span class="asset-text"></span>
             </div>
-            <div class="asset-select asset-LN" data-selected={isSelected("LN")} onClick={() => changeAsset("LN")}>
+            <div
+                class="asset-select asset-LN"
+                data-selected={isSelected("LN")}
+                onClick={() => changeAsset("LN")}>
                 <span class="icon"></span>
                 <span class="asset-text"></span>
             </div>

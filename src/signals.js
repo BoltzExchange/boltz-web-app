@@ -7,8 +7,12 @@ import { defaultLanguage, pairs } from "./config";
 export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
 export const [assetSelected, setAssetSelected] = createSignal(0);
-export const [asset, setAsset] = createSignal(Object.keys(pairs)[0].split("/")[0]);
-export const [asset1, setAsset1] = createSignal(Object.keys(pairs)[0].split("/")[0]);
+export const [asset, setAsset] = createSignal(
+    Object.keys(pairs)[0].split("/")[0]
+);
+export const [asset1, setAsset1] = createSignal(
+    Object.keys(pairs)[0].split("/")[0]
+);
 export const [asset2, setAsset2] = createSignal("LN");
 
 // fees

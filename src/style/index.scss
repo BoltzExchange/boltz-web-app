@@ -434,11 +434,11 @@ textarea {
     text-transform: uppercase;
     margin: 5px;
 }
-[data-selected=true],
+[data-selected="true"],
 .asset-select:hover {
     background-color: rgba(255, 255, 255, 0.35);
 }
-[data-selected=true] {
+[data-selected="true"] {
     cursor: default;
 }
 .assets-select {
