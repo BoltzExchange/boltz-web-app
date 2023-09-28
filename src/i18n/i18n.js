@@ -75,6 +75,14 @@ const dict = {
         copy_amount: "Copy amount",
         copy_bip21: "Copy BIP21",
         copied: "Copied to clipboard!",
+        backup_skip: "Skip download",
+        backup_refund: "Download Refund File",
+        backup_refund_subline:
+            "If this swap fails, you'll have to refund your chain bitcoin. Refund information is additionally stored in your browser's local storage but can be lost if you",
+        backup_refund_list:
+            "are using incognito mode\nare using tor browser\nclear your browsing history",
+        backup_refund_skip:
+            "If any of the above applies to you, we strongly recommend downloading this refund file!",
         refund_a_swap: "Refund a swap",
         refund_a_swap_subline:
             "Upload your refund file and reclaim your locked funds",
@@ -213,6 +221,14 @@ const dict = {
         copy_amount: "Betrag kopieren",
         copy_bip21: "BIP21 kopieren",
         copied: "In die Zwischenablage kopiert!",
+        backup_skip: "Überspringen",
+        backup_refund: "Rückerstattungsdatei herunterladen",
+        backup_refund_subline:
+            "Lade deine Rückerstattungsdatei herunter und bewahre sie sicher auf. Du benötigst diese Datei, um deine Bitcoin zurückzuerhalten, falls der Swap fehlschlägt.",
+        backup_refund_list:
+            "are using incognito mode\nare using tor browser\nclear your browsing history",
+        backup_refund_skip:
+            "Du kannst diese Datei später herunterladen, indem du auf den Button in der oberen rechten Ecke klickst.",
         refund_a_swap: "Einen Swap erstatten",
         refund_a_swap_subline:
             "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück",
@@ -356,6 +372,14 @@ const dict = {
         copy_amount: "Copiar monto",
         copy_bip21: "Copiar BIP21",
         copied: "Copiado",
+        backup_skip: "Omitir",
+        backup_refund: "Descargar archivo de reembolso",
+        backup_refund_subline:
+            "Descargue el archivo de reembolso para recuperar sus fondos en caso de que algo salga mal",
+        backup_refund_list:
+            "están usando el modo incógnito\nestán usando el navegador Tor Borra\ntu historial de navegación",
+        backup_refund_skip:
+            "Si no desea descargar el archivo de reembolso, puede omitir este paso",
         refund_a_swap: "Reembolsar un intercambio",
         refund_a_swap_subline:
             "Cargue su archivo de reembolso y recupere sus fondos bloqueados",

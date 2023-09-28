@@ -1,4 +1,3 @@
-import DownloadRefund from "../components/DownloadRefund";
 import { clipboard } from "../helper";
 import t from "../i18n";
 import { denomination, invoiceQr, swap } from "../signals";
@@ -51,8 +50,6 @@ const InvoiceSet = () => {
                     {t("copy_address")}
                 </span>
             </div>
-            <hr />
-            <DownloadRefund />
         </div>
     );
 };

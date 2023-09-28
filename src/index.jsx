@@ -14,6 +14,7 @@ import NotFound from "./NotFound";
 import Notification from "./Notification";
 import Pay from "./Pay";
 import Refund from "./Refund";
+import RefundStep from "./RefundStep";
 import { loglevel, network } from "./config";
 import { checkReferralId } from "./helper";
 import { detectLanguage } from "./i18n/detect";
@@ -58,6 +59,7 @@ const cleanup = render(
                         https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
                 <Route path="/swapbox" component={Create} />
                 <Route path="/swap/:id" component={Pay} />
+                <Route path="/swap/refund/:id" component={RefundStep} />
                 <Route path="/error" component={Error} />
                 <Route path="/refund" component={Refund} />
                 <Route path="/history" component={History} />

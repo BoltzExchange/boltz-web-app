@@ -271,7 +271,11 @@ const Create = () => {
                         setOnchainAddress("");
                         setAddressValid(false);
                         resolve();
-                        navigate("/swap/" + data.id);
+                        if (reverse()) {
+                            navigate("/swap/" + data.id);
+                        } else {
+                            navigate("/swap/refund/" + data.id);
+                        }
                     });
                 },
                 params,

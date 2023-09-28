@@ -228,6 +228,9 @@ hr {
     align-items: center;
     justify-content: center;
 }
+.btns-space-between {
+    justify-content: space-between;
+}
 .btns > * {
     display: inline-block;
     width: auto;
@@ -544,4 +547,10 @@ textarea {
     color: rgba(255, 255, 255, 0.3);
     margin-top: 9px;
     cursor: pointer;
+}
+
+.bulletpoints {
+    text-align: left;
+    display: inline-block;
+    margin: 0;
 }
