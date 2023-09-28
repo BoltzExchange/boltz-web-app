@@ -6,7 +6,7 @@ import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import Fees from "./components/Fees";
 import Asset from "./components/Asset";
-import arrow_svg from "./assets/arrow.svg";
+import Reverse from "./components/Reverse";
 import { enableWebln } from "./utils/webln";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
@@ -31,6 +31,8 @@ import {
     swaps,
     setSwaps,
     asset,
+    asset1,
+    asset2,
     denomination,
     sendAmount,
     setSendAmount,
@@ -367,7 +369,7 @@ const Create = () => {
             <hr />
             <div class="icons">
                 <div>
-                    <Asset id="1" />
+                    <Asset id="1" signal={asset1} />
                     <input
                         ref={sendAmountRef}
                         autofocus
@@ -384,11 +386,9 @@ const Create = () => {
                         onInput={(e) => changeSendAmount(e)}
                     />
                 </div>
-                <div id="flip-assets" onClick={() => setReverse(!reverse())}>
-                    <img src={arrow_svg} alt="flip assets" />
-                </div>
+                <Reverse />
                 <div>
-                    <Asset id="2" />
+                    <Asset id="2" signal={asset2} />
                     <input
                         ref={receiveAmountRef}
                         required

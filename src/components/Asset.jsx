@@ -1,20 +1,25 @@
 import { pairs } from "../config";
-import { setAssetSelect, assetSelect } from "../signals";
+import { setAssetSelect, assetSelect, setAssetSelected } from "../signals";
 import "../style/asset.scss";
 
-const Asset = ({ id }) => {
-    const setAssetPair = () => {
+
+const Asset = ({ id, signal }) => {
+    id = parseInt(id);
+
+    const openSelect = () => {
         if (Object.keys(pairs).length <= 1) {
             return;
         }
         setAssetSelect(!assetSelect());
+        setAssetSelected(id);
     };
 
+
     return (
-        <div class="asset-wrap" onClick={setAssetPair}>
-            <div class={`asset asset-${id}`}>
-                <div class="asset-selected">
-                    <span class={`icon icon-${id}`}></span>
+        <div class="asset-wrap" onClick={openSelect}>
+            <div class={`asset asset-${signal()}`}>
+                <div class="asset-selection">
+                    <span class="icon"></span>
                     <span class="asset-text"></span>
                     <Show when={Object.keys(pairs).length > 1}>
                         <span class="arrow-down"></span>

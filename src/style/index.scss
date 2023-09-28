@@ -72,7 +72,7 @@ hr {
     cursor: pointer;
 }
 
-.asset-selected {
+.asset-selection {
     display: flex;
     align-items: center;
     padding: 1px;
@@ -432,10 +432,14 @@ textarea {
     cursor: pointer;
     display: inline-flex;
     text-transform: uppercase;
-    margin: 6px;
+    margin: 5px;
 }
+[data-selected=true],
 .asset-select:hover {
     background-color: rgba(255, 255, 255, 0.35);
+}
+[data-selected=true] {
+    cursor: default;
 }
 .assets-select {
     background: #102032;

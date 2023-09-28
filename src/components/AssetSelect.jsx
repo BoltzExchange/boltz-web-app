@@ -1,16 +1,47 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { fetchPairs } from "../helper";
-import liquid_svg from "../assets/liquid-icon.svg";
-import bitcoin_svg from "../assets/bitcoin-icon.svg";
-import { setAsset, setAssetSelect, assetSelect } from "../signals";
+import { asset, reverse, setReverse, setAsset, asset1, setAsset1, asset2, setAsset2, setAssetSelect, assetSelect, assetSelected } from "../signals";
 
 const SelectAsset = () => {
     const [t] = useI18n();
 
-    const changeAsset = (asset) => {
-        setAsset(asset);
+    const changeAsset = (new_asset) => {
+        if (isSelected(new_asset)) return;
+
+        if (new_asset === "LN" || isSelected("LN")) {
+            setReverse(!reverse());
+        }
+
+        // set main asset only if it is not LN
+        if (new_asset !== "LN") {
+            setAsset(new_asset);
+        }
+
+        if (assetSelected() === 1 && new_asset !== "LN") {
+            setAsset1(new_asset);
+            setAsset2("LN");
+        } else if (assetSelected() === 2 && new_asset !== "LN") {
+            setAsset1("LN");
+            setAsset2(new_asset);
+        } else if (assetSelected() === 1 && new_asset === "LN") {
+            setAsset1("LN");
+            setAsset2(asset());
+        } else if (assetSelected() === 2 && new_asset === "LN") {
+            setAsset1(asset());
+            setAsset2("LN");
+        }
+
         setAssetSelect(false);
         fetchPairs();
+    };
+
+    const isSelected = (new_asset) => {
+        if (assetSelected() === 1) {
+            return new_asset === asset1();
+        } else if (assetSelected() === 2) {
+            return new_asset === asset2();
+        }
+        return false;
     };
 
     return (
@@ -34,13 +65,17 @@ const SelectAsset = () => {
                 />
             </svg>
             <hr />
-            <div className="asset-select" onClick={() => changeAsset("BTC")}>
-                <img src={bitcoin_svg} alt="bitcoin" />
-                <span>bitcoin</span>
+            <div class="asset-select asset-BTC" data-selected={isSelected("BTC")} onClick={() => changeAsset("BTC")}>
+                <span class="icon"></span>
+                <span class="asset-text"></span>
             </div>
-            <div className="asset-select" onClick={() => changeAsset("L-BTC")}>
-                <img src={liquid_svg} alt="liquid bitcoin" />
-                <span>liquid</span>
+            <div class="asset-select asset-L-BTC" data-selected={isSelected("L-BTC")} onClick={() => changeAsset("L-BTC")}>
+                <span class="icon"></span>
+                <span class="asset-text"></span>
+            </div>
+            <div class="asset-select asset-LN" data-selected={isSelected("LN")} onClick={() => changeAsset("LN")}>
+                <span class="icon"></span>
+                <span class="asset-text"></span>
             </div>
         </div>
     );

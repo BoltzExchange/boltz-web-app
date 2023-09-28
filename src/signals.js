@@ -6,6 +6,10 @@ import { defaultLanguage, pairs } from "./config";
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
+export const [assetSelected, setAssetSelected] = createSignal(0);
+export const [asset, setAsset] = createSignal(Object.keys(pairs)[0].split("/")[0]);
+export const [asset1, setAsset1] = createSignal(Object.keys(pairs)[0].split("/")[0]);
+export const [asset2, setAsset2] = createSignal("LN");
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);
@@ -52,10 +56,6 @@ export const [i18n, setI18n] = createStorageSignal("i18n", defaultLanguage);
 export const [denomination, setDenomination] = createStorageSignal(
     "denomination",
     "sat"
-);
-export const [asset, setAsset] = createStorageSignal(
-    "asset",
-    Object.keys(pairs)[0].split("/")[0]
 );
 export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
     // Because arrays are the same object when changed,
