@@ -14,6 +14,7 @@ export const [asset1, setAsset1] = createSignal(
     Object.keys(pairs)[0].split("/")[0]
 );
 export const [asset2, setAsset2] = createSignal("LN");
+export const [reverse, setReverse] = createSignal(false);
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);
@@ -72,7 +73,6 @@ export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
         return JSON.stringify(data);
     },
 });
-export const [reverse, setReverse] = createSignal(true);
 
 // validation
 export const [valid, setValid] = createSignal(false);
