@@ -70,6 +70,9 @@ hr {
     top: 10px;
     left: 10px;
     cursor: pointer;
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+    }
 }
 
 .asset-selection {
@@ -436,7 +439,7 @@ textarea {
 }
 [data-selected="true"],
 .asset-select:hover {
-    background-color: rgba(255, 255, 255, 0.35);
+    background-color: rgba(255, 255, 255, 0.25);
 }
 [data-selected="true"] {
     cursor: default;

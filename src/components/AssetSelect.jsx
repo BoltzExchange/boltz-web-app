@@ -43,7 +43,6 @@ const SelectAsset = () => {
             setAsset2("LN");
         }
 
-        setAssetSelect(false);
         fetchPairs();
     };
 
