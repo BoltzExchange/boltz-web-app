@@ -19,6 +19,13 @@ Clone the repository, change to the project folder and run `npm install` to inst
 
 Open [http://localhost:3000](http://localhost:3000) in your browser and start swapping!
 
+## ⚠️ License ⚠️
+
+Boltz Web App is licensed under [BSL 1.1](https://mariadb.com/bsl11/), a "source available" license which automatically turns into an open source license after 4 years, see [LICENSE](LICENSE) and [BSL FAQs](https://mariadb.com/bsl-faq-mariadb/) for details. If you are interested in a partnership to run the latest version please contact us at [hi@bol.tz](mailto:hi@bol.tz).
+
+Current Partnerships:
+* [Diamond Hands](https://swap.diamondhands.technology/)
+
 ## Resources
 
 * Get Help: [Discord](https://discord.gg/QBvZGcW)
