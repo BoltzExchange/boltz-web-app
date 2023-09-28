@@ -60,7 +60,11 @@ const SelectAsset = () => {
             class="frame assets-select"
             onClick={() => setAssetSelect(false)}
             style={assetSelect() ? "display: block;" : "display: none;"}>
-            <h2>{t("select_asset")}</h2>
+            <h2>
+                {t("select_asset", {
+                    direction: assetSelected() === 1 ? t("send") : t("receive"),
+                })}
+            </h2>
             <svg
                 id="close"
                 viewBox="0 0 100 100"
