@@ -27,6 +27,8 @@ import {
     getValidationRegex,
 } from "./utils/denomination";
 import {
+    assetSelect,
+    assetSelected,
     online,
     swaps,
     setSwaps,
@@ -355,6 +357,16 @@ const Create = () => {
     createEffect(() => {
         if (reverse()) {
             validateAddress(addressInputRef);
+        }
+    });
+
+    createEffect(() => {
+        if (assetSelect() === false) {
+            if (assetSelected() === 1) {
+                sendAmountRef.focus();
+            } else if (assetSelected() === 2) {
+                receiveAmountRef.focus();
+            }
         }
     });
 
