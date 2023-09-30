@@ -150,7 +150,7 @@ export const checkForFailed = (swap_id, data) => {
 };
 
 export const setSwapStatusAndClaim = (data, activeSwap) => {
-    if (swap().id === activeSwap.id) {
+    if (swap() && swap().id === activeSwap.id) {
         setSwapStatus(data.status);
     }
 
