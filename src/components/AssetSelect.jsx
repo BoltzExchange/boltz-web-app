@@ -2,7 +2,6 @@ import { useI18n } from "@solid-primitives/i18n";
 import { fetchPairs } from "../helper";
 import { LN, assets, sideSend } from "../consts";
 import {
-    asset,
     setAsset,
     assetSend,
     setAssetSend,
@@ -16,7 +15,7 @@ import {
 const SelectAsset = () => {
     const [t] = useI18n();
 
-    const setAsset = (isSend, asset) => {
+    const setSelectAsset = (isSend, asset) => {
         const setter = isSend ? setAssetSend : setAssetReceive;
         setter(asset);
     };
@@ -31,12 +30,16 @@ const SelectAsset = () => {
 
         const isSend = assetSelected() === sideSend;
 
-        // Only one side can be lightning; set the other side to the previously selected asset
+        // Only one side can be lightning
+        // Set the other side to the previously selected asset
+        // Or, if something else than lightning was selected, set the other side to lightning
         if (newAsset === LN) {
-            setAsset(!isSend, isSend ? assetSend() : assetReceive());
+            setSelectAsset(!isSend, isSend ? assetSend() : assetReceive());
+        } else if ((isSend ? assetReceive() : assetSend()) !== LN) {
+            setSelectAsset(!isSend, LN);
         }
 
-        setAsset(isSend, newAsset);
+        setSelectAsset(isSend, newAsset);
 
         fetchPairs();
     };
