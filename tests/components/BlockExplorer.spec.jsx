@@ -2,8 +2,8 @@ import { I18nContext } from "@solid-primitives/i18n";
 import { render, screen } from "@solidjs/testing-library";
 import i18n from "../../src/i18n/i18n";
 import createI18n from "../../src/i18n";
-import BlockExplorer from "../../src/components/BlockExplorer";
 import { pairs } from "../../src/config";
+import BlockExplorer from "../../src/components/BlockExplorer";
 
 describe("BlockExplorer", () => {
     test.each`

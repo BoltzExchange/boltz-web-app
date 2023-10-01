@@ -3,8 +3,8 @@ import "../style/asset.scss";
 
 const Asset = ({ side, signal }) => {
     const openSelect = () => {
-        setAssetSelect(true);
         setAssetSelected(side);
+        setAssetSelect(true);
     };
 
     return (

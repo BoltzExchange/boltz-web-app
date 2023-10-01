@@ -4,12 +4,12 @@ import { LN, assets, sideSend } from "../consts";
 import {
     setAsset,
     assetSend,
+    assetSelect,
     setAssetSend,
     assetReceive,
-    setAssetReceive,
-    setAssetSelect,
-    assetSelect,
     assetSelected,
+    setAssetSelect,
+    setAssetReceive,
 } from "../signals";
 
 const SelectAsset = () => {
@@ -58,7 +58,8 @@ const SelectAsset = () => {
             style={assetSelect() ? "display: block;" : "display: none;"}>
             <h2>
                 {t("select_asset", {
-                    direction: assetSelected() === 1 ? t("send") : t("receive"),
+                    direction:
+                        assetSelected() === sideSend ? t("send") : t("receive"),
                 })}
             </h2>
             <svg
@@ -80,6 +81,7 @@ const SelectAsset = () => {
                 <div
                     class={`asset-select asset-${asset}`}
                     data-selected={isSelected(asset)}
+                    data-testid={`select-${asset}`}
                     onClick={() => changeAsset(asset)}>
                     <span class="icon"></span>
                     <span class="asset-text"></span>
