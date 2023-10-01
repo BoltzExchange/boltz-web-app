@@ -1,16 +1,10 @@
-import { pairs } from "../config";
-import { setAssetSelect, assetSelect, setAssetSelected } from "../signals";
+import { setAssetSelect, setAssetSelected } from "../signals";
 import "../style/asset.scss";
 
-const Asset = ({ id, signal }) => {
-    id = parseInt(id);
-
+const Asset = ({ side, signal }) => {
     const openSelect = () => {
-        if (Object.keys(pairs).length <= 1) {
-            return;
-        }
-        setAssetSelect(!assetSelect());
-        setAssetSelected(id);
+        setAssetSelect(true);
+        setAssetSelected(side);
     };
 
     return (
@@ -19,9 +13,7 @@ const Asset = ({ id, signal }) => {
                 <div class="asset-selection">
                     <span class="icon"></span>
                     <span class="asset-text"></span>
-                    <Show when={Object.keys(pairs).length > 1}>
-                        <span class="arrow-down"></span>
-                    </Show>
+                    <span class="arrow-down"></span>
                 </div>
             </div>
             <div class="assets-select"></div>

@@ -1,20 +1,21 @@
-import { createSignal } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
+import { LN } from "./consts";
 import { isMobile } from "./helper";
 import { defaultLanguage, pairs } from "./config";
+
+const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
-export const [assetSelected, setAssetSelected] = createSignal(0);
-export const [asset, setAsset] = createSignal(
-    Object.keys(pairs)[0].split("/")[0]
-);
-export const [asset1, setAsset1] = createSignal(
-    Object.keys(pairs)[0].split("/")[0]
-);
-export const [asset2, setAsset2] = createSignal("LN");
+export const [assetSelected, setAssetSelected] = createSignal();
+export const [asset, setAsset] = createSignal(defaultSelection);
+export const [assetSend, setAssetSend] = createSignal(defaultSelection);
+export const [assetReceive, setAssetReceive] = createSignal(LN);
 export const [reverse, setReverse] = createSignal(false);
+
+createEffect(() => setReverse(assetReceive() !== LN))
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);

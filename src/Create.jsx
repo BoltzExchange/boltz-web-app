@@ -8,17 +8,18 @@ import Fees from "./components/Fees";
 import Asset from "./components/Asset";
 import Reverse from "./components/Reverse";
 import { enableWebln } from "./utils/webln";
+import { sideSend, sideReceive } from "./consts";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
-import { decodeInvoice, validateResponse } from "./utils/validation";
 import { fetcher, fetchPairs, feeCheck } from "./helper";
+import { decodeInvoice, validateResponse } from "./utils/validation";
+import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     fetchLnurl,
     isInvoice,
     isLnurl,
     trimLightningPrefix,
 } from "./utils/invoice";
-import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     convertAmount,
     denominations,
@@ -27,14 +28,10 @@ import {
     getValidationRegex,
 } from "./utils/denomination";
 import {
-    assetSelect,
-    assetSelected,
     online,
     swaps,
     setSwaps,
     asset,
-    asset1,
-    asset2,
     denomination,
     sendAmount,
     setSendAmount,
@@ -47,7 +44,6 @@ import {
     minimum,
     maximum,
     reverse,
-    setReverse,
     valid,
     setValid,
     invoiceValid,
@@ -65,6 +61,10 @@ import {
     config,
     boltzFee,
     minerFee,
+    assetReceive,
+    assetSend,
+    assetSelect,
+    assetSelected,
 } from "./signals";
 
 const Create = () => {
@@ -83,6 +83,15 @@ const Create = () => {
             validateAmount();
         })
     );
+
+    createEffect(() => {
+        if (assetSelect()) {
+            return;
+        }
+
+        const ref = assetSelected() === sideSend ? sendAmountRef : receiveAmountRef; 
+        ref.focus();
+    });
 
     // change denomination
     createMemo(() => {
@@ -360,16 +369,6 @@ const Create = () => {
         }
     });
 
-    createEffect(() => {
-        if (assetSelect() === false) {
-            if (assetSelected() === 1) {
-                sendAmountRef.focus();
-            } else if (assetSelected() === 2) {
-                receiveAmountRef.focus();
-            }
-        }
-    });
-
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
             <h2>{t("create_swap")}</h2>
@@ -381,7 +380,7 @@ const Create = () => {
             <hr />
             <div class="icons">
                 <div>
-                    <Asset id="1" signal={asset1} />
+                    <Asset side={sideSend} signal={assetSend} />
                     <input
                         ref={sendAmountRef}
                         autofocus
@@ -400,7 +399,7 @@ const Create = () => {
                 </div>
                 <Reverse />
                 <div>
-                    <Asset id="2" signal={asset2} />
+                    <Asset side={sideReceive} signal={assetReceive} />
                     <input
                         ref={receiveAmountRef}
                         required

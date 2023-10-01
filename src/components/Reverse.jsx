@@ -1,26 +1,21 @@
-import log from "loglevel";
-import arrow_svg from "../assets/arrow.svg";
+import arrowSvg from "../assets/arrow.svg";
 import {
-    reverse,
-    setReverse,
-    asset1,
-    setAsset1,
-    asset2,
-    setAsset2,
+    assetSend,
+    setAssetSend,
+    assetReceive,
+    setAssetReceive,
 } from "../signals";
 
 const Reverse = () => {
     const setDirection = () => {
-        setReverse(!reverse());
-        const asset1_old = asset1();
-        setAsset1(asset2());
-        setAsset2(asset1_old);
-        log.debug("set direction to reverse: ", reverse());
+        const sendOld = assetSend();
+        setAssetSend(assetReceive());
+        setAssetReceive(sendOld);
     };
 
     return (
         <div id="flip-assets" onClick={() => setDirection()}>
-            <img src={arrow_svg} alt="flip assets" />
+            <img src={arrowSvg} alt="flip assets" />
         </div>
     );
 };
