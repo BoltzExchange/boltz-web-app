@@ -18,7 +18,11 @@ describe("i18n", () => {
 
                 expect(
                     Array.from(langSet.values()),
-                    `${Array.from(langSet.values())} missing from ${comp}`
+                    `${JSON.stringify(
+                        Array.from(langSet.values()),
+                        undefined,
+                        2
+                    )} missing from ${comp}`
                 ).toEqual([]);
             }
         }

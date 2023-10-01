@@ -159,7 +159,10 @@ const dict = {
         blog: "Blog",
         documentation: "Docs",
         onion: "Onion",
-        blockexplorer: "Im Blockexplorer anzeigen",
+        blockexplorer: "{{ typeLabel }} anzeigen",
+        blockexplorer_lockup_address: "Lockup Adresse",
+        blockexplorer_claim_tx: "Claim Transaktion",
+        blockexplorer_refund_tx: "Rückerstattung Transaktion",
         help: "Hilfe",
         network_fee: "Netzwerkgebühr",
         fee: "Boltzgebühr",
@@ -222,6 +225,10 @@ const dict = {
             "Bist du sicher, dass du deinen lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
         delete_localstorage_single_swap:
             "Bist du sicher, dass du den Swap {{ id }} aus deinem lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
+        refund_backup: "Backup",
+        refund_import: "Backup importieren",
+        invalid_refund_file: "Ungültige Rückerstattungs-Datei",
+        invalid_backup_file: "Ungültige Backup Datei",
         tx_in_mempool: "Transaktion befindet sich im Mempool.",
         tx_in_mempool_subline:
             "Warte auf Bestätigung, um den Swap abzuschließen.",
@@ -267,6 +274,9 @@ const dict = {
         beta_caution: "BETA - OBACHT!",
         warning_return:
             "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
+        not_found: "404 - Seite nicht gefunden",
+        not_found_subline: "Die gesuchte Seite existiert nicht.",
+        back_to_home: "Zurück zur Startseite",
     },
     es: {
         language: "Español",
