@@ -35,6 +35,23 @@ describe("validate responses", () => {
             timeoutBlockHeight: 255,
         };
 
+        const swapBtcNativeSegwit = {
+            asset: "BTC",
+            sendAmount: 405220,
+            expectedAmount: 405220,
+            invoice:
+                "lnbcrt4m1pj3s34lpp53z3yu4sj7zg7544h3rhg6lcdyk4chhgym7pd77zzwuumgqacqpdqdqqcqzzsxqyz5vqsp5e08q2vpvhs4ra9c6pj52zstd6gxkfesxfpc3f7kryn257nwu5djq9qyyssq03xrmk42pn6we6qdga4qhzcmglccv5y5u2743gxeu4j9w0jvvllke8wtddhqac22yh70vcl4d75tunyg4ncvjj46aewqvdwvejnl34cqucfzfl",
+            privateKey:
+                "69272ef503fae315265fb1a0852868e6971d355d58033efc457377307b2efc38",
+            bip21: "bitcoin:bcrt1q8nm7wftpvllzakdvk5vmlcrvxqm7lj0vnjxj69vxjyxc9dstfe9q06lz5q?amount=0.0040522&label=Send%20to%20BTC%20lightning",
+            address:
+                "bcrt1q8nm7wftpvllzakdvk5vmlcrvxqm7lj0vnjxj69vxjyxc9dstfe9q06lz5q",
+            redeemScript:
+                "a914629103e7aa4dfdba0d0b2d8577fe5e40d3c69e2b876321024370b575d99a1511daf0f36c41ec3715fbbddee43f5290576fdb967f8a5190b167025c01b17521030f46aef763fbfaff4e6b8784628f3ab2cb5db02b1cc33b74e74683a99c7a7d5a68ac",
+            acceptZeroConf: false,
+            timeoutBlockHeight: 348,
+        };
+
         const swapLbtc = {
             asset: "L-BTC",
             sendAmount: 100247,
@@ -57,6 +74,7 @@ describe("validate responses", () => {
         test.each`
             desc                                   | valid    | swap
             ${"BTC valid"}                         | ${true}  | ${swapBtc}
+            ${"BTC native SegWit valid"}           | ${true}  | ${swapBtcNativeSegwit}
             ${"BTC invalid send amount"}           | ${false} | ${{ ...swapBtc, sendAmount: 12313123 }}
             ${"BTC invalid refund key"}            | ${false} | ${{ ...swapBtc, privateKey: "6321bb238f0678fb4c971024193f650eebe69fb891788e1af70184b2dd5d1d5f" }}
             ${"BTC invalid invoice preimage hash"} | ${false} | ${{ ...swapBtc, invoice: "lnbcrt1m1pj87krqpp508n5tj4ur4em04k9r0lg2nwm6jy0tvta6h3zrhvtypz8srhzapgqdqqcqzzsxqyz5vqsp5admanudc6jgftclpxh0wt8tzcd3qumhjhlnnhgmw57nagygrvjas9qyyssqfpaxy85h53v4cv4merj3fequfpfy3pry5tpazupv8v2wmcnh2vu463m44pgw3zlhyj3z6mkgnuat8eyrsr0p9zgq2w6fc0gacytgsmgpr8wa3v" }}

@@ -19,14 +19,11 @@ export const decodeInvoice = (invoice) => {
     };
 };
 
-const getScriptHashFunction = (swap) => {
-    return swap.asset === "BTC" && !swap.reverse
-        ? Scripts.p2shP2wshOutput
-        : Scripts.p2wshOutput;
-};
+const getScriptHashFunction = (isNativeSegwit) =>
+    isNativeSegwit ? Scripts.p2wshOutput : Scripts.p2shP2wshOutput;
 
-const validateAddress = async (swap, address, buffer) => {
-    const compareScript = getScriptHashFunction(swap)(
+const validateAddress = async (swap, isNativeSegwit, address, buffer) => {
+    const compareScript = getScriptHashFunction(isNativeSegwit)(
         buffer.from(swap.redeemScript, "hex")
     );
     const decodedAddress = decodeAddress(swap.asset, address);
@@ -86,7 +83,7 @@ const validateReverseSwap = (swap, buffer) => {
         return false;
     }
 
-    return validateAddress(swap, swap.lockupAddress, buffer);
+    return validateAddress(swap, true, swap.lockupAddress, buffer);
 };
 
 const validateSwap = async (swap, buffer) => {
@@ -111,7 +108,12 @@ const validateSwap = async (swap, buffer) => {
     }
 
     // Address
-    if (!(await validateAddress(swap, swap.address, buffer))) {
+    const addressComparisons = await Promise.all(
+        [true, false].map((isNativeSegwit) =>
+            validateAddress(swap, isNativeSegwit, swap.address, buffer)
+        )
+    );
+    if (addressComparisons.every((val) => !val)) {
         return false;
     }
 
