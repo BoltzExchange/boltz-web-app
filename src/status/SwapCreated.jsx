@@ -2,7 +2,8 @@ import log from "loglevel";
 import { useI18n } from "@solid-primitives/i18n";
 import { clipboard } from "../helper";
 import { enableWebln } from "../utils/webln";
-import { invoiceQr, swap, webln } from "../signals";
+import { formatAmount } from "../utils/denomination";
+import { invoiceQr, swap, webln, denomination } from "../signals";
 
 const SwapCreated = () => {
     const [t] = useI18n();
@@ -14,6 +15,14 @@ const SwapCreated = () => {
         });
     };
 
+    const cropInvoice = (invoice) => {
+        return (
+            invoice.substring(0, 20) +
+            "..." +
+            invoice.substring(invoice.length - 20)
+        );
+    };
+
     return (
         <div>
             <h4>{t("warning_return")}</h4>
@@ -23,6 +32,18 @@ const SwapCreated = () => {
             </p>
             <hr />
             <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
+            <hr />
+            <h2>
+                {t("send_to", {
+                    amount: formatAmount(swap().sendAmount),
+                    denomination: denomination(),
+                })}
+            </h2>
+            <p
+                onclick={() => clipboard(swap().invoice, t("copied"))}
+                class="address-box break-word">
+                {cropInvoice(swap().invoice)}
+            </p>
             <hr />
             <Show when={webln()}>
                 <span
