@@ -1,9 +1,9 @@
 import { describe, expect } from "vitest";
-import dict from "../../src/i18n/i18n";
+import { rawDict } from "../../src/i18n/i18n";
 
 describe("i18n", () => {
     test("should have same strings for all languages", () => {
-        const langs = Object.entries(dict);
+        const langs = Object.entries(rawDict);
 
         for (const [lang, langStrs] of langs) {
             for (const [comp, compStrs] of langs) {
@@ -11,9 +11,15 @@ describe("i18n", () => {
                     continue;
                 }
 
-                expect(Object.keys(langStrs).sort()).toEqual(
-                    Object.keys(compStrs).sort()
-                );
+                const langSet = new Set(Object.keys(langStrs));
+                const compSet = new Set(Object.keys(compStrs));
+
+                compSet.forEach((val) => langSet.delete(val));
+
+                expect(
+                    Array.from(langSet.values()),
+                    `${Array.from(langSet.values())} missing from ${comp}`
+                ).toEqual([]);
             }
         }
     });
