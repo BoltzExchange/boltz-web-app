@@ -239,7 +239,7 @@ const dict = {
         swap_expired: "Du hast deine Zahlung nicht rechtzeitig abgeschlossen.",
         create_invoice_webln: "Rechnung über WebLN erstellen",
         pay_invoice_webln: "Rechnung über WebLN bezahlen",
-        select_asset: "{{ direction }} Asset auswählen",
+        select_asset: "{{ direction }} - Asset auswählen",
         tx_confirmed: "Transaktion bestätigt!",
         tx_ready_to_claim: "Claime die Transaktion jetzt...",
         transaction_refunded: "Boltz hat die Transaktion erstattet.",
