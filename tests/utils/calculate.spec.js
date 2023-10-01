@@ -93,6 +93,7 @@ describe("Calculate amounts", () => {
             ${12473}   | ${12313}      | ${13}
             ${4299409} | ${4294967}    | ${4295}
             ${62531}   | ${62321}      | ${63}
+            ${100}     | ${-47}        | ${0}
         `(
             "should calculate fee for Swaps $sendAmount -> $fee",
             ({ sendAmount, receiveAmount, fee }) => {

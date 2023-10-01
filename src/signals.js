@@ -1,11 +1,21 @@
-import { createSignal } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
+import { LN } from "./consts";
 import { isMobile } from "./helper";
 import { defaultLanguage, pairs } from "./config";
+
+const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
+export const [assetSelected, setAssetSelected] = createSignal();
+export const [asset, setAsset] = createSignal(defaultSelection);
+export const [assetSend, setAssetSend] = createSignal(defaultSelection);
+export const [assetReceive, setAssetReceive] = createSignal(LN);
+export const [reverse, setReverse] = createSignal(false);
+
+createEffect(() => setReverse(assetReceive() !== LN));
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);
@@ -53,10 +63,6 @@ export const [denomination, setDenomination] = createStorageSignal(
     "denomination",
     "sat"
 );
-export const [asset, setAsset] = createStorageSignal(
-    "asset",
-    Object.keys(pairs)[0].split("/")[0]
-);
 export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
     // Because arrays are the same object when changed,
     // we have to override the equality checker
@@ -68,7 +74,6 @@ export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
         return JSON.stringify(data);
     },
 });
-export const [reverse, setReverse] = createSignal(true);
 
 // validation
 export const [valid, setValid] = createSignal(false);

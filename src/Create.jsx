@@ -6,19 +6,20 @@ import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
 import Fees from "./components/Fees";
 import Asset from "./components/Asset";
-import arrow_svg from "./assets/arrow.svg";
+import Reverse from "./components/Reverse";
 import { enableWebln } from "./utils/webln";
+import { sideSend, sideReceive } from "./consts";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
-import { decodeInvoice, validateResponse } from "./utils/validation";
 import { fetcher, fetchPairs, feeCheck } from "./helper";
+import { decodeInvoice, validateResponse } from "./utils/validation";
+import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     fetchLnurl,
     isInvoice,
     isLnurl,
     trimLightningPrefix,
 } from "./utils/invoice";
-import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     convertAmount,
     denominations,
@@ -43,7 +44,6 @@ import {
     minimum,
     maximum,
     reverse,
-    setReverse,
     valid,
     setValid,
     invoiceValid,
@@ -61,6 +61,10 @@ import {
     config,
     boltzFee,
     minerFee,
+    assetReceive,
+    assetSend,
+    assetSelect,
+    assetSelected,
 } from "./signals";
 
 const Create = () => {
@@ -79,6 +83,16 @@ const Create = () => {
             validateAmount();
         })
     );
+
+    createEffect(() => {
+        if (assetSelect()) {
+            return;
+        }
+
+        const ref =
+            assetSelected() === sideSend ? sendAmountRef : receiveAmountRef;
+        ref.focus();
+    });
 
     // change denomination
     createMemo(() => {
@@ -367,7 +381,7 @@ const Create = () => {
             <hr />
             <div class="icons">
                 <div>
-                    <Asset id="1" />
+                    <Asset side={sideSend} signal={assetSend} />
                     <input
                         ref={sendAmountRef}
                         autofocus
@@ -384,11 +398,9 @@ const Create = () => {
                         onInput={(e) => changeSendAmount(e)}
                     />
                 </div>
-                <div id="flip-assets" onClick={() => setReverse(!reverse())}>
-                    <img src={arrow_svg} alt="flip assets" />
-                </div>
+                <Reverse />
                 <div>
-                    <Asset id="2" />
+                    <Asset side={sideReceive} signal={assetReceive} />
                     <input
                         ref={receiveAmountRef}
                         required

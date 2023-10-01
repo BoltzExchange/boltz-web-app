@@ -17,11 +17,20 @@ export const calculateReceiveAmount = (sendAmount) => {
 };
 
 export const calculateBoltzFeeOnSend = (sendAmount) => {
-    const fee = reverse()
-        ? bigRound(BigNumber(sendAmount).times(boltzFee()).div(100))
-        : BigNumber(sendAmount)
-              .minus(calculateReceiveAmount(sendAmount))
-              .minus(minerFee());
+    let fee;
+
+    if (reverse()) {
+        fee = bigRound(BigNumber(sendAmount).times(boltzFee()).div(100));
+    } else {
+        fee = BigNumber(sendAmount)
+            .minus(calculateReceiveAmount(sendAmount))
+            .minus(minerFee());
+
+        if (sendAmount < minerFee()) {
+            fee = BigNumber(0);
+        }
+    }
+
     return Math.ceil(fee.toNumber());
 };
 

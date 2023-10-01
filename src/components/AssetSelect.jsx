@@ -1,16 +1,54 @@
 import { useI18n } from "@solid-primitives/i18n";
 import { fetchPairs } from "../helper";
-import liquid_svg from "../assets/liquid-icon.svg";
-import bitcoin_svg from "../assets/bitcoin-icon.svg";
-import { setAsset, setAssetSelect, assetSelect } from "../signals";
+import { LN, assets, sideSend } from "../consts";
+import {
+    setAsset,
+    assetSend,
+    assetSelect,
+    setAssetSend,
+    assetReceive,
+    assetSelected,
+    setAssetSelect,
+    setAssetReceive,
+} from "../signals";
 
 const SelectAsset = () => {
     const [t] = useI18n();
 
-    const changeAsset = (asset) => {
-        setAsset(asset);
-        setAssetSelect(false);
+    const setSelectAsset = (isSend, asset) => {
+        const setter = isSend ? setAssetSend : setAssetReceive;
+        setter(asset);
+    };
+
+    const changeAsset = (newAsset) => {
+        if (isSelected(newAsset)) return;
+
+        // set main asset only if it is not LN
+        if (newAsset !== LN) {
+            setAsset(newAsset);
+        }
+
+        const isSend = assetSelected() === sideSend;
+
+        // Only one side can be lightning
+        // Set the other side to the previously selected asset
+        // Or, if something else than lightning was selected, set the other side to lightning
+        if (newAsset === LN) {
+            setSelectAsset(!isSend, isSend ? assetSend() : assetReceive());
+        } else if ((isSend ? assetReceive() : assetSend()) !== LN) {
+            setSelectAsset(!isSend, LN);
+        }
+
+        setSelectAsset(isSend, newAsset);
+
         fetchPairs();
+    };
+
+    const isSelected = (asset) => {
+        return (
+            asset ===
+            (assetSelected() === sideSend ? assetSend() : assetReceive())
+        );
     };
 
     return (
@@ -18,7 +56,12 @@ const SelectAsset = () => {
             class="frame assets-select"
             onClick={() => setAssetSelect(false)}
             style={assetSelect() ? "display: block;" : "display: none;"}>
-            <h2>{t("select_asset")}</h2>
+            <h2>
+                {t("select_asset", {
+                    direction:
+                        assetSelected() === sideSend ? t("send") : t("receive"),
+                })}
+            </h2>
             <svg
                 id="close"
                 viewBox="0 0 100 100"
@@ -34,14 +77,16 @@ const SelectAsset = () => {
                 />
             </svg>
             <hr />
-            <div className="asset-select" onClick={() => changeAsset("BTC")}>
-                <img src={bitcoin_svg} alt="bitcoin" />
-                <span>bitcoin</span>
-            </div>
-            <div className="asset-select" onClick={() => changeAsset("L-BTC")}>
-                <img src={liquid_svg} alt="liquid bitcoin" />
-                <span>liquid</span>
-            </div>
+            {assets.map((asset) => (
+                <div
+                    class={`asset-select asset-${asset}`}
+                    data-selected={isSelected(asset)}
+                    data-testid={`select-${asset}`}
+                    onClick={() => changeAsset(asset)}>
+                    <span class="icon"></span>
+                    <span class="asset-text"></span>
+                </div>
+            ))}
         </div>
     );
 };
