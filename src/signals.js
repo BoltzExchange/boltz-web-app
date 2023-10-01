@@ -15,7 +15,7 @@ export const [assetSend, setAssetSend] = createSignal(defaultSelection);
 export const [assetReceive, setAssetReceive] = createSignal(LN);
 export const [reverse, setReverse] = createSignal(false);
 
-createEffect(() => setReverse(assetReceive() !== LN))
+createEffect(() => setReverse(assetReceive() !== LN));
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);

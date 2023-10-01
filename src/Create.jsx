@@ -89,7 +89,8 @@ const Create = () => {
             return;
         }
 
-        const ref = assetSelected() === sideSend ? sendAmountRef : receiveAmountRef; 
+        const ref =
+            assetSelected() === sideSend ? sendAmountRef : receiveAmountRef;
         ref.focus();
     });
 
