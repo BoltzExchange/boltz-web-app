@@ -150,20 +150,23 @@ export const checkForFailed = (swap_id, data) => {
 };
 
 export const setSwapStatusAndClaim = (data, activeSwap) => {
-    if (swap() && swap().id === activeSwap.id) {
+    const currentSwap = swaps().find((s) => activeSwap.id === s.id);
+
+    if (swap() && swap().id === currentSwap.id) {
         setSwapStatus(data.status);
     }
 
     setSwapStatusTransaction(data.transaction);
-    updateSwapStatus(activeSwap.id, data.status);
+    updateSwapStatus(currentSwap.id, data.status);
     if (
+        currentSwap.claimTx === undefined &&
         data.transaction &&
         (data.status === swapStatusPending.TransactionConfirmed ||
             data.status === swapStatusPending.TransactionMempool)
     ) {
-        claim(activeSwap);
+        claim(currentSwap);
     }
-    checkForFailed(activeSwap.id, data);
+    checkForFailed(currentSwap.id, data);
     setFailureReason(data.failureReason);
 };
 
