@@ -1,6 +1,6 @@
-import { createSignal, createMemo } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
+import { createSignal, createMemo } from "solid-js";
 
 import { nodeStats } from "./signals";
 import { fetchNodeInfo } from "./helper";

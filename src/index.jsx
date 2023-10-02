@@ -1,10 +1,9 @@
 /* @refresh reload */
 import "./utils/patches";
-import { createEffect } from "solid-js";
 import { render } from "solid-js/web";
 import { Router, Route, Routes, Navigate } from "@solidjs/router";
 import { I18nContext } from "@solid-primitives/i18n";
-import { setWebln, setWasmSupported, swaps } from "./signals";
+import { setWebln, setWasmSupported } from "./signals";
 import { checkReferralId } from "./helper";
 import { swapChecker } from "./utils/swapChecker";
 import { loglevel, network } from "./config";
@@ -30,9 +29,7 @@ detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
 
-createEffect(() => {
-    swapChecker(swaps());
-});
+swapChecker();
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker

@@ -1,44 +1,93 @@
 import log from "loglevel";
+import { createEffect, createSignal } from "solid-js";
+import { swap, swaps } from "../signals";
 import { swapStatusFinal } from "./swapStatus";
-import { setSwapStatusAndClaim, getApiUrl } from "../helper";
+import { setSwapStatusAndClaim, getApiUrl, fetcher } from "../helper";
 
-export const streams = {};
+const swapCheckInterval = 3000;
 
-export const swapChecker = (swaps) => {
-    swaps
-        .map((swap) => [swap, swapStatusFinal.includes(swap.status)])
-        .filter(([swap, isFinalized]) => {
-            const hasStreamAlready = streams[swap.id] !== undefined;
+let activeSwapStream = undefined;
 
-            // Cleanup of streams for swaps that have finalized states
-            if (hasStreamAlready && isFinalized) {
-                log.debug("swap finalized; closing stream for:", swap.id);
-                streams[swap.id].close();
-                delete streams[swap.id];
+export const [checkInterval, setCheckInterval] = createSignal(undefined);
+
+export const swapChecker = () => {
+    createEffect(() => {
+        const activeSwap = swap();
+
+        if (activeSwapStream !== undefined) {
+            activeSwapStream.close();
+            activeSwapStream = undefined;
+        }
+
+        if (activeSwap === null) {
+            return;
+        }
+
+        log.debug(`subscribing to SSE of swap`, activeSwap.id);
+        activeSwapStream = handleStream(
+            `${getApiUrl(activeSwap.asset)}/streamswapstatus?id=${
+                activeSwap.id
+            }`,
+            (data) => {
+                setSwapStatusAndClaim(data, activeSwap);
+            }
+        );
+    });
+
+    let checkRunning = false;
+
+    if (checkInterval() !== undefined) {
+        clearInterval(checkInterval());
+    }
+
+    runSwapCheck();
+
+    setCheckInterval(
+        setInterval(async () => {
+            if (checkRunning) {
+                return;
             }
 
-            return !hasStreamAlready;
-        })
-        .filter(([, isFinalized]) => !isFinalized)
-        .forEach(([swap]) => {
-            streams[swap.id] = handleStream(
-                `${getApiUrl(swap.asset)}/streamswapstatus?id=${swap.id}`,
+            checkRunning = true;
+            try {
+                await runSwapCheck();
+            } catch (e) {
+                log.error("swap update check failed", e);
+            }
+
+            checkRunning = false;
+        }, swapCheckInterval)
+    );
+};
+
+const runSwapCheck = async () => {
+    const swapsToCheck = swaps()
+        .filter((s) => !swapStatusFinal.includes(s.status))
+        .filter((s) => s.id !== swap()?.id);
+
+    for (const swap of swapsToCheck) {
+        await new Promise((resolve) => {
+            fetcher(
+                "/swapstatus",
                 (data) => {
                     setSwapStatusAndClaim(data, swap);
-                }
+                    resolve();
+                },
+                { id: swap.id }
             );
         });
+    }
 };
 
 const handleStream = (streamUrl, cb) => {
     let reconnectFrequencySeconds = 1;
 
     // Putting these functions in extra variables is just for the sake of readability
-    const waitFunc = function () {
+    const waitFunc = () => {
         return reconnectFrequencySeconds * 1000;
     };
 
-    const tryToSetupFunc = function () {
+    const tryToSetupFunc = () => {
         setupEventSource();
         reconnectFrequencySeconds *= 2;
         if (reconnectFrequencySeconds >= 64) {
@@ -46,7 +95,7 @@ const handleStream = (streamUrl, cb) => {
         }
     };
 
-    const reconnectFunc = function () {
+    const reconnectFunc = () => {
         setTimeout(tryToSetupFunc, waitFunc());
     };
 

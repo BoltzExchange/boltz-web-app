@@ -115,7 +115,6 @@ export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
         };
     }
     const apiUrl = getApiUrl(asset()) + url;
-    log.debug("fetching: " + apiUrl);
     fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
 };
 
