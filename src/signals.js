@@ -11,9 +11,9 @@ export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
 export const [assetSelected, setAssetSelected] = createSignal();
 export const [asset, setAsset] = createSignal(defaultSelection);
-export const [assetSend, setAssetSend] = createSignal(defaultSelection);
-export const [assetReceive, setAssetReceive] = createSignal(LN);
-export const [reverse, setReverse] = createSignal(false);
+export const [assetReceive, setAssetReceive] = createSignal(defaultSelection);
+export const [assetSend, setAssetSend] = createSignal(LN);
+export const [reverse, setReverse] = createSignal(true);
 
 createEffect(() => setReverse(assetReceive() !== LN));
 
