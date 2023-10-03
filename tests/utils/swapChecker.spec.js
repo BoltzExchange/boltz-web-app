@@ -1,8 +1,9 @@
 import { createServer } from "https";
 import EventSource from "eventsource";
-import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import { vi, test, expect, describe, afterEach, beforeEach } from "vitest";
+import { setSwap, setSwaps } from "../../src/signals";
 import { setSwapStatusAndClaim } from "../../src/helper";
-import { streams, swapChecker } from "../../src/utils/swapChecker";
+import { checkInterval, swapChecker } from "../../src/utils/swapChecker";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -13,15 +14,21 @@ global.EventSource = EventSource;
 
 let apiUrl;
 
+const fetcherCallData = [];
+
 vi.mock("../../src/helper", async () => {
     return {
         isMobile: () => false,
         getApiUrl: () => apiUrl,
+        fetcher: (_path, cb, data) => {
+            fetcherCallData.push(data);
+            cb();
+        },
         setSwapStatusAndClaim: vi.fn(),
     };
 });
 
-class Sse {
+class Server {
     connections = {};
 
     start() {
@@ -58,15 +65,17 @@ class Sse {
 const wait = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe("swapChecker", () => {
-    const sse = new Sse();
+    const server = new Server();
 
-    beforeAll(() => {
-        sse.start();
-        apiUrl = sse.address;
+    beforeEach(() => {
+        server.start();
+        vi.resetAllMocks();
+        apiUrl = server.address;
     });
 
-    afterAll(() => {
-        sse.close();
+    afterEach(() => {
+        checkInterval().close();
+        server.close();
     });
 
     const swaps = [
@@ -88,52 +97,49 @@ describe("swapChecker", () => {
         },
     ];
 
-    test("should open streams for non final swaps", async () => {
-        swapChecker(swaps);
-        await wait();
+    test("should poll status of pending swaps", async () => {
+        setSwaps(swaps);
+        swapChecker();
+        await wait(100);
 
-        expect(Object.keys(sse.connections).length).toEqual(2);
-        expect(sse.connections[swaps[0].id]).not.toBeUndefined();
-        expect(sse.connections[swaps[1].id]).not.toBeUndefined();
-
-        expect(Object.keys(streams).length).toEqual(2);
-        expect(streams[swaps[0].id]).not.toBeUndefined();
-        expect(streams[swaps[1].id]).not.toBeUndefined();
+        expect(fetcherCallData).toHaveLength(2);
+        expect(fetcherCallData).toEqual([
+            {
+                id: swaps[0].id,
+            },
+            {
+                id: swaps[1].id,
+            },
+        ]);
     });
 
-    test("should not open streams multiple times", async () => {
-        const realCons = sse.connections;
-        sse.connections = {};
-
-        swapChecker(swaps);
+    test("should connect and handle SSE for active swap", async () => {
+        swapChecker();
+        setSwap(swaps[0]);
         await wait();
 
-        expect(Object.keys(sse.connections).length).toEqual(0);
-
-        sse.connections = realCons;
-    });
-
-    test("should close stream after swap status becomes final", async () => {
-        swaps[1].status = swapStatusSuccess.InvoiceSettled;
-
-        swapChecker(swaps);
-        await wait();
-
-        expect(Object.keys(sse.connections).length).toEqual(1);
-        expect(sse.connections[swaps[0].id]).not.toBeUndefined();
-        expect(sse.connections[swaps[1].id]).toBeUndefined();
-
-        expect(Object.keys(streams).length).toEqual(1);
-        expect(streams[swaps[0].id]).not.toBeUndefined();
-        expect(streams[swaps[1].id]).toBeUndefined();
-    });
-
-    test("should callback after message", async () => {
         const message = { status: "some update" };
-        sse.sendMessage(swaps[0].id, JSON.stringify(message));
+        server.sendMessage(swaps[0].id, JSON.stringify(message));
         await wait();
 
-        expect(setSwapStatusAndClaim).toHaveBeenCalledTimes(1);
+        expect(Object.keys(server.connections).length).toEqual(1);
+        expect(server.connections[swaps[0].id]).not.toBeUndefined();
+
+        expect(setSwapStatusAndClaim).toHaveBeenCalledTimes(3);
         expect(setSwapStatusAndClaim).toHaveBeenCalledWith(message, swaps[0]);
+    });
+
+    test("should close SSE when active swap changes", async () => {
+        swapChecker();
+        setSwap(swaps[0]);
+        await wait();
+
+        expect(Object.keys(server.connections).length).toEqual(1);
+        expect(server.connections[swaps[0].id]).not.toBeUndefined();
+
+        setSwap(null);
+        await wait();
+
+        expect(Object.keys(server.connections).length).toEqual(0);
     });
 });
