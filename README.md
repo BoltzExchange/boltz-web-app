@@ -1,27 +1,12 @@
----
-cover: .gitbook/assets/boltz-web_app_header.png
-coverY: 0
----
+# Boltz Web App
 
-# 🖥 Boltz Web App
+This is the source of the official Boltz Web App served at [boltz.exchange](https://boltz.exchange/). It enables **non-custodial** swaps between different Bitcoin layers.
 
-This is the source of the official Boltz Web App served at [boltz.exchange](https://boltz.exchange/). It enables **non-custodial** swaps between different Bitcoin layers. You remain in control of your bitcoin, at all times.
-
-We encourage our technical users to check the code and run the web app locally following the instructions below.
-
-## Dependencies
-
-Make sure to have the latest [Node.js LTS and NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed. We recommend using [nvm](https://github.com/nvm-sh/nvm#install--update-script) to manage npm installs: `nvm install --lts`
-
-## Run
-
-Clone the repository, change to the project folder and run `npm install` to install all dependencies. Then `npm run mainnet` and `npx serve dist` to bring it up.
-
-Open [http://localhost:3000](http://localhost:3000) in your browser and start swapping!
+We encourage our technical users to check the code and run the web app locally from source following [these instructions](https://docs.boltz.exchange/v/web-app/).
 
 ## ⚠️ License ⚠️
 
-Boltz Web App is licensed under [BSL 1.1](https://mariadb.com/bsl11/), a "source available" license which automatically turns into an open source license after 4 years, see [LICENSE](LICENSE) and [BSL FAQs](https://mariadb.com/bsl-faq-mariadb/) for details. If you are interested in a partnership to run the latest version please contact us at [hi@bol.tz](mailto:hi@bol.tz).
+Boltz Web App is licensed under [BSL 1.1](https://mariadb.com/bsl11/), a "source available" license which automatically turns into an open source license after 4 years, see [LICENSE](LICENSE) and [BSL FAQs](https://mariadb.com/bsl-faq-mariadb/) for details. If you are interested in a partnership to run a the latest version please contact us at [hi@bol.tz](mailto:hi@bol.tz).
 
 Current Partnerships:
 * [Diamond Hands](https://swap.diamondhands.technology/)
