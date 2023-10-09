@@ -8,7 +8,7 @@ description: >-
 
 ## Android
 
-1. Open [boltz.exchange](https://boltz.exchange) in a mobile browser like Chrome/Chromium, open the browser menu and tap "Install app":
+1. Open [boltz.exchange](https://boltz.exchange) in a mobile browser like [Chrome](https://www.google.com/chrome/) or [Vanadium](https://github.com/GrapheneOS/Vanadium), open the browser menu and tap "Install app":
 
 <figure><img src=".gitbook/assets/android-0.jpeg" alt=""><figcaption></figcaption></figure>
 
@@ -36,9 +36,9 @@ description: >-
 
 ## Desktop
 
-Here an example how to install Boltz as App on a Ubuntu Desktop Computer:
+Here an example how to install Boltz as App on a Ubuntu Desktop Computer using [Chromium](https://www.chromium.org/Home/):
 
-1. Open [boltz.exchange](https://boltz.exchange) in browser like Chrome/Chromium and click the install icon that automatically appears:
+1. Open [boltz.exchange](https://boltz.exchange) and click the install icon that automatically appears:
 
 <figure><img src=".gitbook/assets/desktop-0.png" alt=""><figcaption></figcaption></figure>
 
