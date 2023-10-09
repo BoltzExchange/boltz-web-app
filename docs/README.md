@@ -1,13 +1,12 @@
 ---
+description: >-
+  We encourage our technical users to check the code and run the web app locally
+  from source following the instructions below.
 cover: .gitbook/assets/boltz-web_app_header.png
 coverY: 0
 ---
 
-# 🖥 Boltz Web App
-
-Boltz Web App enables **non-custodial** swaps between different Bitcoin layers. You remain in control of your bitcoin through the entire flow of a swap.
-
-We encourage our technical users to check the code and run the web app locally from source following these instructions:
+# 🖥 Run from Source
 
 ## Dependencies
 
