@@ -42,7 +42,7 @@ const Nav = ({ network }) => {
                             e.target.classList.remove("active");
                         }, 300);
                     }}>
-                    <a class="globe" href="#"></a>
+                    <span class="globe"></span>
                     <div class="dropdown">
                         <For each={Object.keys(locales)}>
                             {(lang) => (

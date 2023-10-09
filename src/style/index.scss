@@ -508,11 +508,14 @@ textarea {
 }
 
 .globe {
+    cursor: pointer;
     background-image: url(../assets/globe.svg);
     background-repeat: no-repeat;
-    background-position: 12px;
+    background-position: 12px 6px;
     background-size: 18px;
+    height: 25px;
     padding-left: 40px !important;
+    display: inline-block;
 }
 
 .external {
