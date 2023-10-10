@@ -351,7 +351,7 @@ const Create = () => {
             if (isLnurl(inputValue) || isInvoice(inputValue)) {
                 // set receive/send when invoice differs from the amounts
                 if (!checkInvoiceAmount(inputValue)) {
-                    const decoded = decodeInvoice(invoice());
+                    const decoded = decodeInvoice(inputValue);
                     if (decoded) {
                         setReceiveAmount(decoded.satoshis);
                         setSendAmount(calculateSendAmount(decoded.satoshis));
@@ -439,6 +439,7 @@ const Create = () => {
                 ref={invoiceInputRef}
                 onInput={(e) => validateAddress(e.currentTarget)}
                 onKeyUp={(e) => validateAddress(e.currentTarget)}
+                onPaste={(e) => validateAddress(e.currentTarget)}
                 id="invoice"
                 name="invoice"
                 value={invoice()}
@@ -450,6 +451,8 @@ const Create = () => {
                 required
                 ref={addressInputRef}
                 onInput={(e) => validateAddress(e.currentTarget)}
+                onKeyUp={(e) => validateAddress(e.currentTarget)}
+                onPaste={(e) => validateAddress(e.currentTarget)}
                 type="text"
                 id="onchainAddress"
                 name="onchainAddress"
