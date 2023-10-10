@@ -125,7 +125,7 @@ const Create = () => {
 
     const navigate = useNavigate();
 
-    const checkInvoice = () => {
+    const resetInvoice = () => {
         if (isInvoice(invoice())) {
             setInvoice("");
             setInvoiceValid(false);
@@ -139,7 +139,7 @@ const Create = () => {
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateAmount();
-        checkInvoice();
+        resetInvoice();
     };
 
     const changeSendAmount = (e) => {
@@ -149,7 +149,7 @@ const Create = () => {
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateAmount();
-        checkInvoice();
+        resetInvoice();
     };
 
     const createWeblnInvoice = async () => {
@@ -348,10 +348,16 @@ const Create = () => {
         } else {
             inputValue = trimLightningPrefix(inputValue);
 
-            if (
-                isLnurl(inputValue) ||
-                (isInvoice(inputValue) && checkInvoiceAmount(inputValue))
-            ) {
+            if (isLnurl(inputValue) || isInvoice(inputValue)) {
+                // set receive/send when invoice differs from the amounts
+                if (!checkInvoiceAmount(inputValue)) {
+                    const decoded = decodeInvoice(invoice());
+                    if (decoded) {
+                        setReceiveAmount(decoded.satoshis);
+                        setSendAmount(calculateSendAmount(decoded.satoshis));
+                        validateAmount();
+                    }
+                }
                 input.setCustomValidity("");
                 input.classList.remove("invalid");
                 setInvoiceValid(true);
@@ -432,6 +438,7 @@ const Create = () => {
                 required
                 ref={invoiceInputRef}
                 onInput={(e) => validateAddress(e.currentTarget)}
+                onKeyUp={(e) => validateAddress(e.currentTarget)}
                 id="invoice"
                 name="invoice"
                 value={invoice()}
