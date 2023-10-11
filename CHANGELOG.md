@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2023-10-11
+
+### Bug Fixes
+
+- Default swap direction (#269)
+- No # in language selector (#272)
+
+### Documentation
+
+- Add PWA instructions (#275)
+
+### Features
+
+- Use invoice amount from pasted invoice (#276)
+
+### Miscellaneous Tasks
+
+- Update CHANGELOG.md for v1.1.0
+- Add commit template (#267)
+- Bump postcss from 8.4.24 to 8.4.31 (#274)
+- v1.1.1 release prep (#278)
+
 ## [1.1.0] - 2023-10-03
 
 ### Bug Fixes
