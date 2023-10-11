@@ -1,7 +1,7 @@
 {
   "name": "boltz-frontend",
-  "version": "1.1.0",
-  "description": "Boltz Exchange, Atomic swaps, frontend",
+  "version": "1.1.1",
+  "description": "Boltz Exchange, Atomic Swaps, Web App",
   "type": "module",
   "scripts": {
     "start": "cp src/configs/config.regtest.js src/config.js && vite",
