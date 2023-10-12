@@ -351,11 +351,24 @@ const Create = () => {
             if (isLnurl(inputValue) || isInvoice(inputValue)) {
                 // set receive/send when invoice differs from the amounts
                 if (!checkInvoiceAmount(inputValue)) {
-                    const decoded = decodeInvoice(inputValue);
-                    if (decoded) {
+                    try {
+                        const decoded = decodeInvoice(inputValue);
+                        if (decoded.satoshis === null) {
+                            setInvoiceValid(false);
+                            input.setCustomValidity(
+                                "0 amount invoices are not allowed"
+                            );
+                            input.classList.add("invalid");
+                            return;
+                        }
                         setReceiveAmount(decoded.satoshis);
                         setSendAmount(calculateSendAmount(decoded.satoshis));
                         validateAmount();
+                    } catch (e) {
+                        setInvoiceValid(false);
+                        input.setCustomValidity(e);
+                        input.classList.add("invalid");
+                        return;
                     }
                 }
                 input.setCustomValidity("");
