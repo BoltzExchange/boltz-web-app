@@ -157,6 +157,7 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
 
     setSwapStatusTransaction(data.transaction);
     updateSwapStatus(currentSwap.id, data.status);
+
     if (
         currentSwap.claimTx === undefined &&
         data.transaction &&
@@ -167,17 +168,6 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
     }
     checkForFailed(currentSwap.id, data);
     setFailureReason(data.failureReason);
-};
-
-export const fetchSwapStatus = (swap) => {
-    fetcher(
-        "/swapstatus",
-        (data) => {
-            setSwapStatusAndClaim(data, swap);
-        },
-        { id: swap.id }
-    );
-    return false;
 };
 
 export const qr = (data, cb) => {
