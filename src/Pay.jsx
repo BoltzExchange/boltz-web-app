@@ -50,7 +50,7 @@ const Pay = () => {
                         checkForFailed(currentSwap.id, data);
                         setFailureReason(data.failureReason);
                     },
-                    { id: currentSwap.id }
+                    { id: currentSwap.id },
                 );
                 qr(
                     currentSwap.reverse

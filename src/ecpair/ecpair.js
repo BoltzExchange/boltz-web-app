@@ -1,6 +1,6 @@
 import { ECPairFactory } from "ecpair";
+import ecc from "@bitcoinerlab/secp256k1";
 import { initEccLib } from "bitcoinjs-lib";
-import * as ecc from "./noble";
 
 initEccLib(ecc);
 const ECPair = ECPairFactory(ecc);

@@ -59,6 +59,7 @@ const stringSerializer = {
     serialize: (value) => value,
     deserialize: (value) => value,
 };
+
 export const [ref, setRef] = makePersisted(
     createSignal(isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"),
     {

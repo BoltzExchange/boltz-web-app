@@ -1,11 +1,12 @@
 import log from "loglevel";
-import { createMemo, createSignal, createEffect, on, onMount } from "solid-js";
-import * as secp from "@noble/secp256k1";
-import t from "./i18n";
-import { ECPair } from "./ecpair/ecpair";
+import { randomBytes } from "crypto";
+import { crypto } from "bitcoinjs-lib";
 import { useNavigate } from "@solidjs/router";
+import { createMemo, createSignal, createEffect, on, onMount } from "solid-js";
+import t from "./i18n";
 import Fees from "./components/Fees";
 import Asset from "./components/Asset";
+import { ECPair } from "./ecpair/ecpair";
 import Reverse from "./components/Reverse";
 import { enableWebln } from "./utils/webln";
 import { sideSend, sideReceive } from "./consts";
@@ -181,21 +182,19 @@ const Create = () => {
         const privateKeyHex = pair.privateKey.toString("hex");
         const publicKeyHex = pair.publicKey.toString("hex");
         let params = null;
-        let preimageHex = null;
+        let preimage = null;
 
         if (reverse()) {
             address.toOutputScript(onchainAddress(), net);
-            const preimage = secp.utils.randomBytes(32);
-            preimageHex = secp.utils.bytesToHex(preimage);
-            const preimageHash = await secp.utils.sha256(preimage);
-            const preimageHashHex = secp.utils.bytesToHex(preimageHash);
+            preimage = randomBytes(32);
+            const preimageHash = crypto.sha256(preimage).toString("hex");
             params = {
                 type: "reversesubmarine",
                 pairId: assetName + "/BTC",
                 orderSide: "buy",
                 invoiceAmount: Number(sendAmount()),
                 claimPublicKey: publicKeyHex,
-                preimageHash: preimageHashHex,
+                preimageHash: preimageHash,
             };
         } else {
             if (isLnurl(invoice())) {
@@ -235,10 +234,13 @@ const Create = () => {
                     data.date = new Date().getTime();
                     data.reverse = reverse();
                     data.asset = asset();
-                    data.preimage = preimageHex;
                     data.receiveAmount = Number(receiveAmount());
                     data.sendAmount = Number(sendAmount());
                     data.onchainAddress = onchainAddress();
+
+                    if (preimage !== null) {
+                        data.preimage = preimage.toString("hex");
+                    }
 
                     if (!data.reverse) {
                         data.invoice = invoice();
