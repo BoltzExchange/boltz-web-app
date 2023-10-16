@@ -437,7 +437,7 @@ export const feeCheck = async (notification) => {
             (data) => {
                 log.debug("getpairs", data);
                 if (feeChecker(data.pairs)) {
-                    // hash matches and fees are ok
+                    // amounts matches and fees are ok
                     resolve(true);
                 } else {
                     // update fees

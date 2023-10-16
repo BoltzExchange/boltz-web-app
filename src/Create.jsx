@@ -215,6 +215,10 @@ const Create = () => {
             };
         }
 
+        if (!await feeCheck(t("feecheck"))) {
+            return;
+        }
+
         params.pairHash = config()[`${assetName}/BTC`]["hash"];
 
         await new Promise((resolve) => {
@@ -253,13 +257,8 @@ const Create = () => {
                 params,
                 async (err) => {
                     const res = await err.json();
-                    if (res.error === "invalid pair hash") {
-                        await feeCheck(t("feecheck"));
-                    } else {
-                        setNotificationType("error");
-                        setNotification(res.error);
-                    }
-
+                    setNotificationType("error");
+                    setNotification(res.error);
                     resolve();
                 }
             );
