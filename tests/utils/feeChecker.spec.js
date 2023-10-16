@@ -38,7 +38,7 @@ const changed_cfg = {
             percentageSwapIn: 0.1,
             minerFees: {
                 baseAsset: {
-                    normal: 9999,
+                    normal: 1870,
                     reverse: {
                         claim: 1518,
                         lockup: 1683,
@@ -47,8 +47,8 @@ const changed_cfg = {
                 quoteAsset: {
                     normal: 1870,
                     reverse: {
-                        claim: 1518,
                         lockup: 1683,
+                        claim: 9999,
                     },
                 },
             },

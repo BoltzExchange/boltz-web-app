@@ -4,7 +4,7 @@ export const feeChecker = (pairs) => {
     const oldCfg = config()[`${asset()}/BTC`];
     const minerFeesOld = oldCfg.fees.minerFees;
     const minerFees = pairs[`${asset()}/BTC`].fees.minerFees;
-    if (minerFeesOld !== minerFees) {
+    if (JSON.stringify(minerFeesOld) !== JSON.stringify(minerFees)) {
         return false;
     }
     return true;
