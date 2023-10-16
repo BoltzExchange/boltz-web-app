@@ -1,12 +1,11 @@
 import { Show } from "solid-js";
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
 import { isBeta } from "../config";
 import { fetchPairs } from "../helper";
 import reload_svg from "../assets/reload.svg";
 import { online, wasmSupported } from "../signals";
 
 const Warnings = () => {
-    const [t] = useI18n();
     return (
         <div>
             <Show when={!online()}>

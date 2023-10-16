@@ -1,9 +1,7 @@
 import { useNavigate } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
 
 const TransactionClaimed = () => {
-    const [t] = useI18n();
-
     const navigate = useNavigate();
 
     return (

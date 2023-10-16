@@ -1,4 +1,4 @@
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
 import { pairs } from "../config";
 
 const blockExplorerLink = (asset, isTxId, val) => {
@@ -7,8 +7,6 @@ const blockExplorerLink = (asset, isTxId, val) => {
 };
 
 const BlockExplorer = ({ asset, address, txId, typeLabel }) => {
-    const [t] = useI18n();
-
     const href =
         txId !== undefined
             ? blockExplorerLink(asset, true, txId)

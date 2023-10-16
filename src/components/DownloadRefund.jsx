@@ -1,4 +1,4 @@
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
 import { swap } from "../signals";
 import { isIos, isMobile, qr } from "../helper";
 import { download, downloadJson } from "../utils/download";
@@ -23,8 +23,6 @@ const downloadRefundJson = (swap) => {
 };
 
 const DownloadRefund = () => {
-    const [t] = useI18n();
-
     const downloadRefundQr = (swap) => {
         qr(JSON.stringify(createRefundData(swap)), (url) => {
             if (isIos) {

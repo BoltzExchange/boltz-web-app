@@ -11,27 +11,26 @@ import {
     setFailureReason,
     swaps,
 } from "./signals";
+import t from "./i18n";
 import { useParams } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
-import { qr, fetcher, checkForFailed } from "./helper";
 import InvoiceSet from "./status/InvoiceSet";
+import SwapCreated from "./status/SwapCreated";
+import SwapExpired from "./status/SwapExpired";
+import SwapRefunded from "./status/SwapRefunded";
 import InvoicePending from "./status/InvoicePending";
 import InvoiceExpired from "./status/InvoiceExpired";
+import { swapStatusFailed } from "./utils/swapStatus";
+import BlockExplorer from "./components/BlockExplorer";
+import { qr, fetcher, checkForFailed } from "./helper";
+import LoadingSpinner from "./components/LoadingSpinner";
 import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
+import TransactionClaimed from "./status/TransactionClaimed";
 import TransactionMempool from "./status/TransactionMempool";
 import TransactionConfirmed from "./status/TransactionConfirmed";
 import TransactionLockupFailed from "./status/TransactionLockupFailed";
-import TransactionClaimed from "./status/TransactionClaimed";
-import SwapRefunded from "./status/SwapRefunded";
-import SwapExpired from "./status/SwapExpired";
-import SwapCreated from "./status/SwapCreated";
-import BlockExplorer from "./components/BlockExplorer";
-import LoadingSpinner from "./components/LoadingSpinner";
-import { swapStatusFailed } from "./utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
-    const [t] = useI18n();
 
     createEffect(() => {
         let tmpSwaps = swaps();

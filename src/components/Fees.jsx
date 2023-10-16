@@ -1,5 +1,9 @@
-import { createEffect } from "solid-js";
-import { useI18n } from "@solid-primitives/i18n";
+import { createEffect, Show } from "solid-js";
+import t from "../i18n";
+import btcSvg from "../assets/btc.svg";
+import satSvg from "../assets/sat.svg";
+import { formatAmount } from "../utils/denomination";
+import { isMobile, fetchPairs } from "../helper";
 import {
     config,
     reverse,
@@ -14,14 +18,10 @@ import {
     boltzFee,
     minerFee,
 } from "../signals";
-import { formatAmount } from "../utils/denomination";
 import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
-import { isMobile, fetchPairs } from "../helper";
-import btc_svg from "../assets/btc.svg";
-import sat_svg from "../assets/sat.svg";
 
 const Fees = () => {
     createEffect(() => {
@@ -52,8 +52,6 @@ const Fees = () => {
 
     fetchPairs();
 
-    const [t] = useI18n();
-
     return (
         <div class="fees-dyn">
             <div class="denomination">
@@ -61,13 +59,13 @@ const Fees = () => {
                     <label>{t("denomination")}: </label>
                 </Show>
                 <img
-                    src={btc_svg}
+                    src={btcSvg}
                     onClick={() => setDenomination("btc")}
                     class={denomination() == "btc" ? "active" : ""}
                     alt="denominator"
                 />
                 <img
-                    src={sat_svg}
+                    src={satSvg}
                     onClick={() => setDenomination("sat")}
                     class={denomination() == "sat" ? "active" : ""}
                     alt="denominator"

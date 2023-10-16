@@ -1,13 +1,12 @@
 import log from "loglevel";
-import { useI18n } from "@solid-primitives/i18n";
+import { Show } from "solid-js";
+import t from "../i18n";
 import { clipboard } from "../helper";
 import { enableWebln } from "../utils/webln";
 import { formatAmount } from "../utils/denomination";
 import { invoiceQr, swap, webln, denomination } from "../signals";
 
 const SwapCreated = () => {
-    const [t] = useI18n();
-
     const payWeblnInvoice = async (pr) => {
         enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);

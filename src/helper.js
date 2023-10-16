@@ -160,7 +160,7 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
 
     if (
         currentSwap.claimTx === undefined &&
-        data.transaction &&
+        data.transaction !== undefined &&
         (data.status === swapStatusPending.TransactionConfirmed ||
             data.status === swapStatusPending.TransactionMempool)
     ) {

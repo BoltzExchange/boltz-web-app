@@ -1,12 +1,10 @@
-import { useI18n } from "@solid-primitives/i18n";
-import { invoiceQr, swap, denomination } from "../signals";
+import t from "../i18n";
 import { clipboard } from "../helper";
+import { invoiceQr, swap, denomination } from "../signals";
 import { formatAmount } from "../utils/denomination";
 import DownloadRefund from "../components/DownloadRefund";
 
 const InvoiceSet = () => {
-    const [t] = useI18n();
-
     return (
         <div>
             <p>

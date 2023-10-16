@@ -1,9 +1,7 @@
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 const TransactionMempool = () => {
-    const [t] = useI18n();
-
     return (
         <div>
             <h2>{t("tx_in_mempool")}</h2>

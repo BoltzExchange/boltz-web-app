@@ -1,8 +1,6 @@
 import { describe, test, expect } from "vitest";
-import { I18nContext } from "@solid-primitives/i18n";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import i18n from "../../src/i18n/i18n";
-import createI18n from "../../src/i18n";
 import * as signals from "../../src/signals";
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
@@ -18,11 +16,7 @@ describe("AssetSelect", () => {
         signals.setAssetSelect(true);
         signals.setAssetSelected(sideSend);
 
-        const res = render(() => (
-            <I18nContext.Provider value={createI18n()}>
-                <SelectAsset />
-            </I18nContext.Provider>
-        ));
+        const res = render(() => <SelectAsset />);
 
         for (const elem of res.container.children[0].children) {
             const classes = Array.from(elem.classList.values());
@@ -44,11 +38,7 @@ describe("AssetSelect", () => {
         signals.setAssetSelect(true);
         signals.setAssetSelected(side);
 
-        render(() => (
-            <I18nContext.Provider value={createI18n()}>
-                <SelectAsset />
-            </I18nContext.Provider>
-        ));
+        render(() => <SelectAsset />);
 
         const header = await screen.findByText(
             i18n.en.select_asset.replace(
@@ -68,11 +58,7 @@ describe("AssetSelect", () => {
         const setAssetSend = vi.spyOn(signals, "setAssetSend");
         const setAssetReceive = vi.spyOn(signals, "setAssetReceive");
 
-        const { container } = render(() => (
-            <I18nContext.Provider value={createI18n()}>
-                <SelectAsset />
-            </I18nContext.Provider>
-        ));
+        const { container } = render(() => <SelectAsset />);
 
         const btcButton = container.children[0].children[3];
         fireEvent.click(btcButton);
@@ -106,11 +92,7 @@ describe("AssetSelect", () => {
             signals.setAssetSend(prevSend);
             signals.setAssetReceive(prevReceive);
 
-            render(() => (
-                <I18nContext.Provider value={createI18n()}>
-                    <SelectAsset />
-                </I18nContext.Provider>
-            ));
+            render(() => <SelectAsset />);
             fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
             expect(signals.asset()).toEqual(asset);

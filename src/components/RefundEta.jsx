@@ -1,9 +1,7 @@
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
 import { timeoutBlockHeight, timeoutEta } from "../signals";
 
 const RefundEta = () => {
-    const [t] = useI18n();
-
     return (
         <div>
             <h3>{t("refund_explainer")}</h3>

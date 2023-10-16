@@ -1,9 +1,7 @@
+import t from "./i18n";
 import { useNavigate } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
 
 const NotFound = () => {
-    const [t] = useI18n();
-
     const navigate = useNavigate();
 
     return (

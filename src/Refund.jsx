@@ -1,8 +1,8 @@
 import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { useNavigate } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createEffect } from "solid-js";
+import t from "./i18n";
 import SwapList from "./components/SwapList";
 import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
@@ -24,7 +24,6 @@ const refundJsonKeys = ["id", "asset", "privateKey", "redeemScript"];
 const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 
 const Refund = () => {
-    const [t] = useI18n();
     const navigate = useNavigate();
 
     const [valid, setValid] = createSignal(false);

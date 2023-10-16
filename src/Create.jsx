@@ -1,9 +1,9 @@
 import log from "loglevel";
 import { createMemo, createSignal, createEffect, on, onMount } from "solid-js";
 import * as secp from "@noble/secp256k1";
+import t from "./i18n";
 import { ECPair } from "./ecpair/ecpair";
 import { useNavigate } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
 import Fees from "./components/Fees";
 import Asset from "./components/Asset";
 import Reverse from "./components/Reverse";
@@ -126,8 +126,6 @@ const Create = () => {
     createMemo(() => {
         setButtonDisable(!valid());
     });
-
-    const [t] = useI18n();
 
     const navigate = useNavigate();
 

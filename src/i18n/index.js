@@ -1,5 +1,8 @@
-import { createI18nContext } from "@solid-primitives/i18n";
+import { createMemo } from "solid-js";
+import { translator, flatten, resolveTemplate } from "@solid-primitives/i18n";
 import dict from "./i18n";
 import { i18n } from "../signals";
 
-export default () => createI18nContext(dict, i18n());
+const dictLocale = createMemo(() => flatten(dict[i18n()]));
+
+export default translator(dictLocale, resolveTemplate);

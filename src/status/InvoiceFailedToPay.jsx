@@ -1,6 +1,8 @@
 import log from "loglevel";
 import { createSignal, createEffect } from "solid-js";
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
+import RefundEta from "../components/RefundEta";
+import DownloadRefund from "../components/DownloadRefund";
 import fetcher, { refund, refundAddressChange } from "../helper";
 import {
     failureReason,
@@ -8,11 +10,8 @@ import {
     timeoutEta,
     setTransactionToRefund,
 } from "../signals";
-import RefundEta from "../components/RefundEta";
-import DownloadRefund from "../components/DownloadRefund";
 
 const InvoiceFailedToPay = () => {
-    const [t] = useI18n();
     const [valid, setValid] = createSignal(false);
 
     createEffect(() => {
