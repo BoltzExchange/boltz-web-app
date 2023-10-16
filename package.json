@@ -13,7 +13,6 @@
     "testnet": "cp src/configs/config.testnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
     "prettier": "prettier --write src tests",
     "prettier-check": "prettier --check src tests",
-    "i18n-check": "node tools/i18n-check.js",
     "changelog": "git-cliff -o CHANGELOG.md"
   },
   "devDependencies": {
