@@ -1,12 +1,13 @@
 import { Router } from "@solidjs/router";
 import { I18nContext } from "@solid-primitives/i18n";
-import { render, screen } from "@solidjs/testing-library";
+import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { beforeAll, beforeEach, expect, vi } from "vitest";
 import { cfg } from "../config";
 import Create from "../../src/Create";
 import i18n from "../../src/i18n/i18n";
 import createI18n from "../../src/i18n";
 import * as signals from "../../src/signals";
+import { sideReceive, sideSend } from "../../src/consts.js";
 
 describe("Create", () => {
     beforeAll(() => {
@@ -34,13 +35,13 @@ describe("Create", () => {
     test("should update receive amount on asset change", async () => {
         const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
 
-        render(() => {
+        render(() => (
             <I18nContext.Provider value={createI18n()}>
                 <Router>
                     <Create />
                 </Router>
-            </I18nContext.Provider>;
-        });
+            </I18nContext.Provider>
+        ));
 
         signals.setSendAmount(50_000n);
 
@@ -58,13 +59,13 @@ describe("Create", () => {
     test("should update receive amount on miner fee change", async () => {
         const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
 
-        render(() => {
+        render(() => (
             <I18nContext.Provider value={createI18n()}>
                 <Router>
                     <Create />
                 </Router>
-            </I18nContext.Provider>;
-        });
+            </I18nContext.Provider>
+        ));
 
         expect(setReceiveAmount).toHaveBeenCalledWith(38110n);
 
@@ -73,5 +74,56 @@ describe("Create", () => {
         signals.setConfig(updatedCfg);
 
         expect(setReceiveAmount).toHaveBeenLastCalledWith(38110n - 1n);
+    });
+
+    test("should update calculated value on fee change", async () => {
+        render(() => (
+            <I18nContext.Provider value={createI18n()}>
+                <Router>
+                    <Create />
+                </Router>
+            </I18nContext.Provider>
+        ));
+
+        const updateConfig = () => {
+            const updatedCfg = { ...cfg };
+            cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
+            signals.setConfig(updatedCfg);
+        };
+
+        const setSendAmount = vi.spyOn(signals, "setSendAmount");
+        const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
+        const setAmountChanged = vi.spyOn(signals, "setAmountChanged");
+
+        const amount = 100_000;
+        fireEvent.input(await screen.findByTestId("receiveAmount"), {
+            target: { value: amount },
+        });
+
+        expect(setAmountChanged).toHaveBeenCalledWith(sideReceive);
+
+        expect(setSendAmount).toHaveBeenCalledTimes(1);
+        expect(setSendAmount).not.toHaveBeenCalledWith(BigInt(amount));
+        expect(setReceiveAmount).toHaveBeenCalledTimes(1);
+        expect(setReceiveAmount).toHaveBeenCalledWith(BigInt(amount));
+
+        updateConfig();
+
+        expect(setSendAmount).toHaveBeenCalledTimes(2);
+        expect(setReceiveAmount).toHaveBeenCalledTimes(1);
+
+        fireEvent.input(await screen.findByTestId("sendAmount"), {
+            target: { value: amount },
+        });
+
+        expect(setAmountChanged).toHaveBeenCalledWith(sideSend);
+
+        expect(setSendAmount).toHaveBeenCalledTimes(3);
+        expect(setReceiveAmount).toHaveBeenCalledTimes(2);
+
+        updateConfig();
+
+        expect(setSendAmount).toHaveBeenCalledTimes(3);
+        expect(setReceiveAmount).toHaveBeenCalledTimes(3);
     });
 });

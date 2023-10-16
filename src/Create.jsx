@@ -33,6 +33,8 @@ import {
     setSwaps,
     asset,
     denomination,
+    amountChanged,
+    setAmountChanged,
     sendAmount,
     setSendAmount,
     sendAmountFormatted,
@@ -79,7 +81,11 @@ const Create = () => {
 
     createEffect(
         on([boltzFee, minerFee, reverse, asset], () => {
-            setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            if (amountChanged() === sideReceive) {
+                setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
+            } else {
+                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            }
             validateAmount();
         })
     );
@@ -136,6 +142,7 @@ const Create = () => {
         const amount = e.currentTarget.value.trim();
         const satAmount = convertAmount(Number(amount), denominations.sat);
         const sendAmount = calculateSendAmount(satAmount);
+        setAmountChanged(sideReceive);
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateAmount();
@@ -146,6 +153,7 @@ const Create = () => {
         const amount = e.currentTarget.value.trim();
         const satAmount = convertAmount(Number(amount), denominations.sat);
         const receiveAmount = calculateReceiveAmount(satAmount);
+        setAmountChanged(sideSend);
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateAmount();
@@ -414,6 +422,7 @@ const Create = () => {
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="sendAmount"
+                        data-testid="sendAmount"
                         value={sendAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}
@@ -432,6 +441,7 @@ const Create = () => {
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="receiveAmount"
+                        data-testid="receiveAmount"
                         value={receiveAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}

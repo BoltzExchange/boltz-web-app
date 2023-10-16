@@ -50,16 +50,6 @@ const Fees = () => {
         }
     });
 
-    // let timer = setInterval(() => {
-    //     log.debug("tick Fees");
-    //     fetchPairs();
-    // }, 30000);
-
-    // onCleanup(() => {
-    //     log.debug("cleanup Fees");
-    //     clearInterval(timer);
-    // });
-
     fetchPairs();
 
     const [t] = useI18n();
