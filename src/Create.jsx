@@ -257,8 +257,12 @@ const Create = () => {
                 params,
                 async (err) => {
                     const res = await err.json();
-                    setNotificationType("error");
-                    setNotification(res.error);
+                    if (res.error === "invalid pair hash") {
+                        await feeCheck(t("feecheck"));
+                    } else {
+                        setNotificationType("error");
+                        setNotification(res.error);
+                    }
                     resolve();
                 }
             );
