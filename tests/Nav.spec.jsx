@@ -19,7 +19,7 @@ describe("Nav", () => {
 
             const networkLabel = screen.queryAllByText(network);
             expect(networkLabel.length).toBe(1);
-        }
+        },
     );
 
     test("should not show network on mainnet", async () => {

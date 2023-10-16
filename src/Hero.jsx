@@ -34,7 +34,7 @@ const Hero = () => {
     const openNodeInfo = async () => {
         window.open(
             "https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2",
-            "_blank"
+            "_blank",
         );
     };
 

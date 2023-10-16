@@ -57,7 +57,7 @@ const Pay = () => {
                     currentSwap.reverse
                         ? currentSwap.invoice
                         : currentSwap.bip21,
-                    setInvoiceQr
+                    setInvoiceQr,
                 );
             }
         }

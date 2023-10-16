@@ -87,7 +87,7 @@ const Create = () => {
                 setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
             }
             validateAmount();
-        })
+        }),
     );
 
     createEffect(() => {
@@ -103,7 +103,7 @@ const Create = () => {
     // change denomination
     createMemo(() => {
         setReceiveAmountFormatted(
-            formatAmount(Number(receiveAmount())).toString()
+            formatAmount(Number(receiveAmount())).toString(),
         );
         setSendAmountFormatted(formatAmount(Number(sendAmount())).toString());
     });
@@ -202,7 +202,7 @@ const Create = () => {
         } else {
             if (isLnurl(invoice())) {
                 setInvoice(
-                    await fetchLnurl(invoice(), Number(receiveAmount()))
+                    await fetchLnurl(invoice(), Number(receiveAmount())),
                 );
             }
             validateAddress(invoiceInputRef);
@@ -272,7 +272,7 @@ const Create = () => {
                         setNotification(res.error);
                     }
                     resolve();
-                }
+                },
             );
         });
     };
@@ -322,7 +322,7 @@ const Create = () => {
                     amount: formatAmount(lessThanMin ? minimum() : maximum()),
                     denomination: denomination(),
                 }),
-                amount === 0
+                amount === 0,
             );
             setSendAmountValid(false);
             return;
@@ -367,7 +367,7 @@ const Create = () => {
                         if (decoded.satoshis === null) {
                             setInvoiceValid(false);
                             input.setCustomValidity(
-                                "0 amount invoices are not allowed"
+                                "0 amount invoices are not allowed",
                             );
                             input.classList.add("invalid");
                             return;

@@ -78,7 +78,7 @@ const Refund = () => {
         if (inputFile.type === "image/png") {
             QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
                 .then((result) =>
-                    checkRefundJsonKeys(input, JSON.parse(result.data))
+                    checkRefundJsonKeys(input, JSON.parse(result.data)),
                 )
                 .catch((e) => {
                     log.error("invalid QR code upload", e);
@@ -114,7 +114,7 @@ const Refund = () => {
             },
             {
                 id: refundInfo.id,
-            }
+            },
         );
     };
 
@@ -134,7 +134,7 @@ const Refund = () => {
                 [
                     swapStatusFailed.InvoiceFailedToPay,
                     swapStatusFailed.TransactionLockupFailed,
-                ].includes(swap.status)
+                ].includes(swap.status),
             );
         setRefundableSwaps(swapsToRefund);
 
@@ -144,7 +144,7 @@ const Refund = () => {
                 (swap) =>
                     swap.status !== swapStatusSuccess.TransactionClaimed &&
                     swapsToRefund.find((found) => found.id === swap.id) ===
-                        undefined
+                        undefined,
             )
             .map((swap) => {
                 fetcher(
@@ -153,7 +153,7 @@ const Refund = () => {
                         if (
                             !updateSwapStatus(swap.id, status.status) &&
                             Object.values(swapStatusFailed).includes(
-                                status.status
+                                status.status,
                             )
                         ) {
                             if (
@@ -170,12 +170,12 @@ const Refund = () => {
                                     addToRefundableSwaps(swap);
                                 },
                                 { id: swap.id },
-                                () => {}
+                                () => {},
                             );
                         }
                     },
                     { id: swap.id },
-                    () => {}
+                    () => {},
                 );
             });
     });
@@ -199,7 +199,7 @@ const Refund = () => {
                     disabled={!refundJsonValid()}
                     onInput={(e) =>
                         setAddressValid(
-                            refundAddressChange(e, refundJson().asset)
+                            refundAddressChange(e, refundJson().asset),
                         )
                     }
                     type="text"

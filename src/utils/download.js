@@ -10,7 +10,7 @@ export const downloadJson = (file, content) => {
     download(
         `${file}.json`,
         `data:application/json;charset=utf-8,${encodeURI(
-            JSON.stringify(content)
-        )}`
+            JSON.stringify(content),
+        )}`,
     );
 };

@@ -89,7 +89,7 @@ const getConstructRefundTransaction = (asset) => {
         feePerVbyte,
         isRbf,
         assetHash,
-        blindingKey
+        blindingKey,
     ) =>
         targetFee(feePerVbyte, (fee) =>
             fn(
@@ -99,8 +99,8 @@ const getConstructRefundTransaction = (asset) => {
                 fee,
                 isRbf,
                 assetHash,
-                blindingKey
-            )
+                blindingKey,
+            ),
         );
 };
 
@@ -112,7 +112,7 @@ const getOutputAmount = (asset, output) => {
     if (output.rangeProof?.length !== 0) {
         const unblinded = confi.unblindOutputWithKey(
             output,
-            output.blindingPrivateKey
+            output.blindingPrivateKey,
         );
         return Number(unblinded.value);
     } else {

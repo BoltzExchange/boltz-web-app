@@ -115,7 +115,7 @@ const _privateAdd = (privateKey, tweak) => {
     const p = normalizePrivateKey(privateKey);
     const t = normalizeScalar(tweak);
     const add = necc.utils._bigintTo32Bytes(
-        necc.utils.mod(p + t, necc.CURVE.n)
+        necc.utils.mod(p + t, necc.CURVE.n),
     );
     if (necc.utils.isValidPrivateKey(add)) return add;
     else return null;
@@ -125,7 +125,7 @@ const _privateSub = (privateKey, tweak) => {
     const p = normalizePrivateKey(privateKey);
     const t = normalizeScalar(tweak);
     const sub = necc.utils._bigintTo32Bytes(
-        necc.utils.mod(p - t, necc.CURVE.n)
+        necc.utils.mod(p - t, necc.CURVE.n),
     );
     if (necc.utils.isValidPrivateKey(sub)) return sub;
     else return null;
@@ -220,7 +220,7 @@ export function pointFromScalar(sk, compressed) {
         throw new Error("Expected Private");
     }
     return throwToNull(() =>
-        necc.getPublicKey(sk, assumeCompression(compressed))
+        necc.getPublicKey(sk, assumeCompression(compressed)),
     );
 }
 
@@ -246,7 +246,7 @@ export function pointMultiply(a, tweak, compressed) {
         throw new Error("Expected Tweak");
     }
     return throwToNull(() =>
-        _pointMultiply(a, tweak, assumeCompression(compressed, a))
+        _pointMultiply(a, tweak, assumeCompression(compressed, a)),
     );
 }
 
@@ -273,7 +273,7 @@ export function pointAddScalar(p, tweak, compressed) {
         throw new Error("Expected Tweak");
     }
     return throwToNull(() =>
-        _pointAddScalar(p, tweak, assumeCompression(compressed, p))
+        _pointAddScalar(p, tweak, assumeCompression(compressed, p)),
     );
 }
 

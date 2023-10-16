@@ -41,10 +41,10 @@ describe("Fees component", () => {
         signals.setReverse(false);
 
         expect(setMinimum).toHaveBeenLastCalledWith(
-            calculateSendAmount(cfg["BTC/BTC"].limits.minimal)
+            calculateSendAmount(cfg["BTC/BTC"].limits.minimal),
         );
         expect(setMaximum).toHaveBeenLastCalledWith(
-            calculateSendAmount(cfg["BTC/BTC"].limits.maximal)
+            calculateSendAmount(cfg["BTC/BTC"].limits.maximal),
         );
     });
 });

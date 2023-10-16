@@ -30,7 +30,7 @@ export const swapChecker = () => {
             }`,
             (data) => {
                 setSwapStatusAndClaim(data, activeSwap);
-            }
+            },
         );
     });
 
@@ -56,7 +56,7 @@ export const swapChecker = () => {
             }
 
             checkRunning = false;
-        }, swapCheckInterval)
+        }, swapCheckInterval),
     );
 };
 
@@ -73,7 +73,7 @@ const runSwapCheck = async () => {
                     setSwapStatusAndClaim(data, swap);
                     resolve();
                 },
-                { id: swap.id }
+                { id: swap.id },
             );
         });
     }

@@ -31,7 +31,7 @@ describe("AssetSelect", () => {
             }
 
             expect(elem.getAttribute("data-selected")).toEqual(
-                String(classes[1].substring(6) === asset)
+                String(classes[1].substring(6) === asset),
             );
         }
     });
@@ -53,8 +53,8 @@ describe("AssetSelect", () => {
         const header = await screen.findByText(
             i18n.en.select_asset.replace(
                 "{{ direction }}",
-                side === sideSend ? i18n.en.send : i18n.en.receive
-            )
+                side === sideSend ? i18n.en.send : i18n.en.receive,
+            ),
         );
         expect(header).not.toBeUndefined();
     });
@@ -117,11 +117,11 @@ describe("AssetSelect", () => {
 
             const isSend = side === sideSend;
             expect(
-                isSend ? signals.assetSend() : signals.assetReceive()
+                isSend ? signals.assetSend() : signals.assetReceive(),
             ).toEqual(newAsset);
             expect(
-                !isSend ? signals.assetSend() : signals.assetReceive()
+                !isSend ? signals.assetSend() : signals.assetReceive(),
             ).toEqual(expectedOther);
-        }
+        },
     );
 });

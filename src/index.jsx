@@ -64,7 +64,7 @@ const cleanup = render(
             </Router>
         </I18nContext.Provider>
     ),
-    document.getElementById("root")
+    document.getElementById("root"),
 );
 
 if (import.meta.hot) {

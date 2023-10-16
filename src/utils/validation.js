@@ -24,12 +24,11 @@ const getScriptHashFunction = (isNativeSegwit) =>
 
 const validateAddress = async (swap, isNativeSegwit, address, buffer) => {
     const compareScript = getScriptHashFunction(isNativeSegwit)(
-        buffer.from(swap.redeemScript, "hex")
+        buffer.from(swap.redeemScript, "hex"),
     );
     const decodedAddress = decodeAddress(swap.asset, address);
 
     if (!decodedAddress.script.equals(compareScript)) {
-        log.warn("swap address validation: address script mismatch");
         return false;
     }
 
@@ -38,7 +37,7 @@ const validateAddress = async (swap, isNativeSegwit, address, buffer) => {
 
         const blindingPrivateKey = buffer.from(swap.blindingKey, "hex");
         const blindingPublicKey = buffer.from(
-            secp.ecc.pointFromScalar(blindingPrivateKey)
+            secp.ecc.pointFromScalar(blindingPrivateKey),
         );
 
         if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
@@ -75,7 +74,7 @@ const validateReverseSwap = (swap, buffer) => {
         preimageHash,
         ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
         script.decompile(redeemScript)[13],
-        swap.timeoutBlockHeight
+        swap.timeoutBlockHeight,
     );
 
     if (!redeemScript.equals(compareRedeemScript)) {
@@ -100,7 +99,7 @@ const validateSwap = async (swap, buffer) => {
         buffer.from(invoiceData.preimageHash, "hex"),
         script.decompile(redeemScript)[4],
         ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
-        swap.timeoutBlockHeight
+        swap.timeoutBlockHeight,
     );
 
     if (!redeemScript.equals(compareRedeemScript)) {
@@ -110,10 +109,11 @@ const validateSwap = async (swap, buffer) => {
     // Address
     const addressComparisons = await Promise.all(
         [true, false].map((isNativeSegwit) =>
-            validateAddress(swap, isNativeSegwit, swap.address, buffer)
-        )
+            validateAddress(swap, isNativeSegwit, swap.address, buffer),
+        ),
     );
     if (addressComparisons.every((val) => !val)) {
+        log.warn("swap address validation: address script mismatch");
         return false;
     }
 

@@ -26,14 +26,14 @@ export function fetchLnurl(lnurl, amount_sat) {
                     "amount check: (x, min, max)",
                     amount,
                     data.minSendable,
-                    data.maxSendable
+                    data.maxSendable,
                 );
                 if (amount < data.minSendable || amount > data.maxSendable) {
                     return reject("Amount not in LNURL range.");
                 }
                 log.debug(
                     "fetching invoice",
-                    `${data.callback}?amount=${amount}`
+                    `${data.callback}?amount=${amount}`,
                 );
                 fetch(`${data.callback}?amount=${amount}`)
                     .then(checkResponse)

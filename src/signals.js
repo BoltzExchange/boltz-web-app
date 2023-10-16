@@ -57,12 +57,12 @@ export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 // local storage
 export const [ref, setRef] = createStorageSignal(
     "ref",
-    isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"
+    isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop",
 );
 export const [i18n, setI18n] = createStorageSignal("i18n", defaultLanguage);
 export const [denomination, setDenomination] = createStorageSignal(
     "denomination",
-    "sat"
+    "sat",
 );
 export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
     // Because arrays are the same object when changed,

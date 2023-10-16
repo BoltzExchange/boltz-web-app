@@ -28,7 +28,7 @@ const InvoiceFailedToPay = () => {
             },
             () => {
                 log.warn(`no swap transaction for: ${swap().id}`);
-            }
+            },
         );
     });
 

@@ -42,7 +42,7 @@ const InvoiceSet = () => {
                     onclick={() =>
                         clipboard(
                             formatAmount(swap().expectedAmount),
-                            t("copied")
+                            t("copied"),
                         )
                     }>
                     {t("copy_amount")}
