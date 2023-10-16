@@ -215,6 +215,10 @@ const Create = () => {
             };
         }
 
+        if (!(await feeCheck(t("feecheck")))) {
+            return;
+        }
+
         params.pairHash = config()[`${assetName}/BTC`]["hash"];
 
         await new Promise((resolve) => {
@@ -259,7 +263,6 @@ const Create = () => {
                         setNotificationType("error");
                         setNotification(res.error);
                     }
-
                     resolve();
                 }
             );

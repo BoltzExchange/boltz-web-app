@@ -437,15 +437,16 @@ export const feeCheck = async (notification) => {
             (data) => {
                 log.debug("getpairs", data);
                 if (feeChecker(data.pairs)) {
-                    // hash matches and fees are ok
+                    // amounts matches and fees are ok
                     resolve(true);
                 } else {
-                    // update fees
-                    setConfig(data.pairs);
                     setNotificationType("error");
                     setNotification(notification);
                     resolve(false);
                 }
+
+                // Always update the pairs to make sure the pairHash for the next request is up to date
+                setConfig(data.pairs);
             },
             null,
             (error) => {
