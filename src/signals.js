@@ -1,7 +1,7 @@
 import { createEffect, createSignal } from "solid-js";
 import { createStorageSignal } from "@solid-primitives/storage";
-import { LN } from "./consts";
 import { isMobile } from "./helper";
+import { LN, sideSend } from "./consts";
 import { defaultLanguage, pairs } from "./config";
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
@@ -29,7 +29,7 @@ export const [minimum, setMinimum] = createSignal(0);
 export const [maximum, setMaximum] = createSignal(0);
 
 // swaps
-export const [amountChanged, setAmountChanged] = createSignal(null);
+export const [amountChanged, setAmountChanged] = createSignal(sideSend);
 export const [sendAmount, setSendAmount] = createSignal(BigInt(0));
 export const [receiveAmount, setReceiveAmount] = createSignal(BigInt(0));
 export const [sendAmountFormatted, setSendAmountFormatted] = createSignal(0);

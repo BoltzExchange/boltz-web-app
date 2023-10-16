@@ -84,7 +84,6 @@ const Create = () => {
             if (amountChanged() === sideReceive) {
                 setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
             } else {
-                // if its `null` or `sideSend`
                 setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
             }
             validateAmount();
@@ -420,6 +419,7 @@ const Create = () => {
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="sendAmount"
+                        data-testid="sendAmount"
                         value={sendAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}
@@ -438,6 +438,7 @@ const Create = () => {
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="receiveAmount"
+                        data-testid="receiveAmount"
                         value={receiveAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onKeypress={(e) => validateInput(e)}
