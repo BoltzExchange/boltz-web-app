@@ -215,7 +215,7 @@ const Create = () => {
             };
         }
 
-        if (!await feeCheck(t("feecheck"))) {
+        if (!(await feeCheck(t("feecheck")))) {
             return;
         }
 
