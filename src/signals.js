@@ -29,6 +29,7 @@ export const [minimum, setMinimum] = createSignal(0);
 export const [maximum, setMaximum] = createSignal(0);
 
 // swaps
+export const [amountChanged, setAmountChanged] = createSignal(null);
 export const [sendAmount, setSendAmount] = createSignal(BigInt(0));
 export const [receiveAmount, setReceiveAmount] = createSignal(BigInt(0));
 export const [sendAmountFormatted, setSendAmountFormatted] = createSignal(0);
