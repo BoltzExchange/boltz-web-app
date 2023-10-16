@@ -1,5 +1,5 @@
 import { createEffect, createSignal } from "solid-js";
-import { createStorageSignal } from "@solid-primitives/storage";
+import { makePersisted } from "@solid-primitives/storage";
 import { isMobile } from "./helper";
 import { LN, sideSend } from "./consts";
 import { defaultLanguage, pairs } from "./config";
@@ -39,8 +39,6 @@ export const [refundAddress, setRefundAddress] = createSignal(null);
 export const [onchainAddress, setOnchainAddress] = createSignal("");
 export const [invoice, setInvoice] = createSignal("");
 export const [invoiceQr, setInvoiceQr] = createSignal("");
-export const [preimageHash, setPreimageHash] = createSignal("");
-export const [preimage, setPreimage] = createSignal("");
 export const [swap, setSwap] = createSignal(null, {
     // To allow updating properties of the swap object without replacing it completely
     equals: () => false,
@@ -55,26 +53,37 @@ export const [refundTx, setRefundTx] = createSignal("");
 export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
 // local storage
-export const [ref, setRef] = createStorageSignal(
-    "ref",
-    isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop",
-);
-export const [i18n, setI18n] = createStorageSignal("i18n", defaultLanguage);
-export const [denomination, setDenomination] = createStorageSignal(
-    "denomination",
-    "sat",
-);
-export const [swaps, setSwaps] = createStorageSignal("swaps", [], {
-    // Because arrays are the same object when changed,
-    // we have to override the equality checker
-    equals: () => false,
-    deserializer: (data) => {
-        return JSON.parse(data);
+
+// To support the values created by the deprecated "createStorageSignal"
+const stringSerializer = {
+    serialize: (value) => value,
+    deserialize: (value) => value,
+};
+export const [ref, setRef] = makePersisted(
+    createSignal(isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"),
+    {
+        name: "ref",
+        ...stringSerializer,
     },
-    serializer: (data) => {
-        return JSON.stringify(data);
-    },
+);
+export const [i18n, setI18n] = makePersisted(createSignal(defaultLanguage), {
+    name: "i18n",
+    ...stringSerializer,
 });
+export const [denomination, setDenomination] = makePersisted(
+    createSignal("sat"),
+    { name: "denomination", ...stringSerializer },
+);
+export const [swaps, setSwaps] = makePersisted(
+    createSignal([], {
+        // Because arrays are the same object when changed,
+        // we have to override the equality checker
+        equals: () => false,
+    }),
+    {
+        name: "swaps",
+    },
+);
 
 // validation
 export const [valid, setValid] = createSignal(false);
