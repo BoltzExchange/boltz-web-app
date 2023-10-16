@@ -36,9 +36,7 @@ const Pay = () => {
     createEffect(() => {
         let tmpSwaps = swaps();
         if (tmpSwaps) {
-            let currentSwap = tmpSwaps
-                .filter((s) => s.id === params.id)
-                .pop();
+            let currentSwap = tmpSwaps.filter((s) => s.id === params.id).pop();
             if (currentSwap) {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);
@@ -46,10 +44,10 @@ const Pay = () => {
                 fetcher(
                     "/swapstatus",
                     (data) => {
-                       setSwapStatus(data.status);
-                       setSwapStatusTransaction(data.transaction);
-                       checkForFailed(currentSwap.id, data);
-                       setFailureReason(data.failureReason);
+                        setSwapStatus(data.status);
+                        setSwapStatusTransaction(data.transaction);
+                        checkForFailed(currentSwap.id, data);
+                        setFailureReason(data.failureReason);
                     },
                     { id: currentSwap.id }
                 );
