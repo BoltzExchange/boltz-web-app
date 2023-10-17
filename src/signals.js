@@ -11,11 +11,7 @@ export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
 export const [assetSelected, setAssetSelected] = createSignal();
 export const [asset, setAsset] = createSignal(defaultSelection);
-export const [assetReceive, setAssetReceive] = createSignal(defaultSelection);
-export const [assetSend, setAssetSend] = createSignal(LN);
 export const [reverse, setReverse] = createSignal(true);
-
-createEffect(() => setReverse(assetReceive() !== LN));
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);
@@ -86,6 +82,14 @@ export const [swaps, setSwaps] = makePersisted(
     },
 );
 
+export const [assetReceive, setAssetReceive] = makePersisted(
+    createSignal(defaultSelection),
+    { name: "assetReceive" },
+);
+export const [assetSend, setAssetSend] = makePersisted(createSignal(LN), {
+    name: "assetSend",
+});
+
 // validation
 export const [valid, setValid] = createSignal(false);
 export const [invoiceValid, setInvoiceValid] = createSignal(false);
@@ -96,3 +100,14 @@ export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
 
 export const [webln, setWebln] = createSignal(false);
+
+// effects
+createEffect(() => setReverse(assetReceive() !== LN));
+
+[assetSend, assetReceive].forEach((signal) => {
+    createEffect(() => {
+        if (signal() !== LN) {
+            setAsset(signal());
+        }
+    });
+});
