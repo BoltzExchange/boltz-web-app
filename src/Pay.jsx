@@ -36,7 +36,9 @@ const Pay = () => {
     createEffect(() => {
         let tmpSwaps = swaps();
         if (tmpSwaps) {
-            const currentSwap = tmpSwaps.filter((s) => s.id === params.id).pop();
+            const currentSwap = tmpSwaps
+                .filter((s) => s.id === params.id)
+                .pop();
             if (currentSwap) {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);
