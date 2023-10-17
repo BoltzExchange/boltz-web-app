@@ -7,11 +7,13 @@ import {
     setSwap,
     swapStatus,
     setSwapStatus,
+    setSwapStatusTransaction,
+    setFailureReason,
     swaps,
 } from "./signals";
 import { useParams } from "@solidjs/router";
 import { useI18n } from "@solid-primitives/i18n";
-import { qr, fetchSwapStatus } from "./helper";
+import { qr, fetcher, checkForFailed } from "./helper";
 import InvoiceSet from "./status/InvoiceSet";
 import InvoicePending from "./status/InvoicePending";
 import InvoiceExpired from "./status/InvoiceExpired";
@@ -32,20 +34,29 @@ const Pay = () => {
     const [t] = useI18n();
 
     createEffect(() => {
-        let tmp_swaps = swaps();
-        if (tmp_swaps) {
-            let current_swap = tmp_swaps
+        let tmpSwaps = swaps();
+        if (tmpSwaps) {
+            const currentSwap = tmpSwaps
                 .filter((s) => s.id === params.id)
                 .pop();
-            if (current_swap) {
-                log.debug("selecting swap", current_swap);
-                setSwap(current_swap);
-                fetchSwapStatus(current_swap);
-                setReverse(current_swap.reverse);
+            if (currentSwap) {
+                log.debug("selecting swap", currentSwap);
+                setSwap(currentSwap);
+                setReverse(currentSwap.reverse);
+                fetcher(
+                    "/swapstatus",
+                    (data) => {
+                        setSwapStatus(data.status);
+                        setSwapStatusTransaction(data.transaction);
+                        checkForFailed(currentSwap.id, data);
+                        setFailureReason(data.failureReason);
+                    },
+                    { id: currentSwap.id }
+                );
                 qr(
-                    current_swap.reverse
-                        ? current_swap.invoice
-                        : current_swap.bip21,
+                    currentSwap.reverse
+                        ? currentSwap.invoice
+                        : currentSwap.bip21,
                     setInvoiceQr
                 );
             }
