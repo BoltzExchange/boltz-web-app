@@ -103,3 +103,11 @@ export const [webln, setWebln] = createSignal(false);
 
 // effects
 createEffect(() => setReverse(assetReceive() !== LN));
+
+[assetSend, assetReceive].forEach((signal) => {
+    createEffect(() => {
+        if (signal() !== LN) {
+            setAsset(signal());
+        }
+    });
+});
