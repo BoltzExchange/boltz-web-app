@@ -1,8 +1,8 @@
-import { useI18n } from "@solid-primitives/i18n";
+import { For } from "solid-js";
 import { useNavigate } from "@solidjs/router";
+import t from "../i18n";
 
 const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
-    const [t] = useI18n();
     const navigate = useNavigate();
 
     const printDate = (d) => {
@@ -16,7 +16,7 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
             setSwapSignal !== undefined &&
             confirm(t("delete_localstorage_single_swap", { id: swapId }))
         ) {
-            setSwapSignal(swapsSignal().filter((s) => s.id != swapId));
+            setSwapSignal(swapsSignal().filter((s) => s.id !== swapId));
         }
     };
 

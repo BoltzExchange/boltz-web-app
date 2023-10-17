@@ -15,7 +15,7 @@ export const feeChecker = (pairs) => {
         JSON.stringify(relevantMinerFees(feesOld)) ===
             JSON.stringify(relevantMinerFees(fees)) &&
         ["percentage", "percentageSwapIn"].every(
-            (fee) => feesOld[fee] === fees[fee]
+            (fee) => feesOld[fee] === fees[fee],
         )
     );
 };

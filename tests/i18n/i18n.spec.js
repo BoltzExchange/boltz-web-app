@@ -21,8 +21,8 @@ describe("i18n", () => {
                     `${JSON.stringify(
                         Array.from(langSet.values()),
                         undefined,
-                        2
-                    )} missing from ${comp}`
+                        2,
+                    )} missing from ${comp}`,
                 ).toEqual([]);
             }
         }

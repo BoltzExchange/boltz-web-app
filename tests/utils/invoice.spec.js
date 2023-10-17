@@ -12,7 +12,7 @@ describe("invoice", () => {
         "should determine if $data is lnurl ($expected)",
         ({ data, expected }) => {
             expect(isLnurl(data)).toEqual(expected);
-        }
+        },
     );
 
     test("should trim lightning: prefix of invoices", () => {

@@ -1,4 +1,4 @@
-import { useI18n } from "@solid-primitives/i18n";
+import t from "../i18n";
 import { fetchPairs } from "../helper";
 import { LN, assets, sideSend } from "../consts";
 import {
@@ -13,8 +13,6 @@ import {
 } from "../signals";
 
 const SelectAsset = () => {
-    const [t] = useI18n();
-
     const setSelectAsset = (isSend, asset) => {
         const setter = isSend ? setAssetSend : setAssetReceive;
         setter(asset);

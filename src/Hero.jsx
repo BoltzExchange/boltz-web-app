@@ -1,19 +1,15 @@
 import { useNavigate } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
 import { createSignal, createMemo } from "solid-js";
-
+import t from "./i18n";
 import { nodeStats } from "./signals";
 import { fetchNodeInfo } from "./helper";
-
 import "./style/hero.scss";
+import Create from "./Create";
 import liquid from "./assets/liquid-icon.svg";
 import bitcoin from "./assets/bitcoin-icon.svg";
 import lightning from "./assets/lightning-icon.svg";
-import Create from "./Create";
 
 const Hero = () => {
-    const [t] = useI18n();
-
     const navigate = useNavigate();
     const [numChannel, setNumChannel] = createSignal(0);
     const [numPeers, setNumPeers] = createSignal(0);
@@ -34,7 +30,7 @@ const Hero = () => {
     const openNodeInfo = async () => {
         window.open(
             "https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2",
-            "_blank"
+            "_blank",
         );
     };
 

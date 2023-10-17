@@ -1,7 +1,6 @@
-import { useI18n } from "@solid-primitives/i18n";
+import t from "./i18n";
 
 const Error = () => {
-    const [t] = useI18n();
     return (
         <div class="frame">
             <p style="font-size: 46px; margin:0;">⚠️</p>

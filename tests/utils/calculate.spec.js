@@ -39,10 +39,10 @@ describe("Calculate amounts", () => {
             "calculate amounts $sendAmount <-> $receiveAmount",
             ({ sendAmount, receiveAmount }) => {
                 expect(calculateReceiveAmount(sendAmount)).toEqual(
-                    receiveAmount
+                    receiveAmount,
                 );
                 expect(calculateSendAmount(receiveAmount)).toEqual(sendAmount);
-            }
+            },
         );
 
         test("should return correct types", () => {
@@ -70,10 +70,10 @@ describe("Calculate amounts", () => {
             "calculate amounts $sendAmount <-> $receiveAmount",
             ({ sendAmount, receiveAmount }) => {
                 expect(calculateReceiveAmount(sendAmount)).toEqual(
-                    receiveAmount
+                    receiveAmount,
                 );
                 expect(calculateSendAmount(receiveAmount)).toEqual(sendAmount);
-            }
+            },
         );
 
         test("should return correct types", () => {
@@ -104,9 +104,9 @@ describe("Calculate amounts", () => {
                     BigNumber(sendAmount)
                         .minus(calculateBoltzFeeOnSend(sendAmount))
                         .minus(minerFee())
-                        .toNumber()
+                        .toNumber(),
                 ).toEqual(receiveAmount);
-            }
+            },
         );
 
         test.each`
@@ -125,9 +125,9 @@ describe("Calculate amounts", () => {
                     BigNumber(sendAmount)
                         .minus(calculateBoltzFeeOnSend(sendAmount))
                         .minus(minerFee())
-                        .toNumber()
+                        .toNumber(),
                 ).toEqual(receiveAmount);
-            }
+            },
         );
 
         test("should calculate negative fees", () => {

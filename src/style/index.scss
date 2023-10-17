@@ -485,7 +485,9 @@ textarea {
 }
 #close .line {
     fill: none;
-    transition: stroke-dasharray 400ms, stroke-dashoffset 400ms;
+    transition:
+        stroke-dasharray 400ms,
+        stroke-dashoffset 400ms;
     stroke: #fff;
     stroke-width: 5.5;
     stroke-linecap: round;

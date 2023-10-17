@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router";
-import { Show } from "solid-js";
-import { useI18n } from "@solid-primitives/i18n";
+import { For, Show } from "solid-js";
+import t from "./i18n";
 import "./style/nav.scss";
 import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
@@ -8,13 +8,6 @@ import Warnings from "./components/Warnings";
 import { setI18n, hamburger, setHamburger } from "./signals";
 
 const Nav = ({ network }) => {
-    const [t, { locale }] = useI18n();
-
-    const setLocale = (locale_code) => {
-        locale(locale_code);
-        setI18n(locale_code);
-    };
-
     let timeout;
 
     return (
@@ -48,7 +41,7 @@ const Nav = ({ network }) => {
                             {(lang) => (
                                 <span
                                     class="lang"
-                                    onClick={() => setLocale(lang)}>
+                                    onClick={() => setI18n(lang)}>
                                     {locales[lang].language}
                                 </span>
                             )}

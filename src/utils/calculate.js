@@ -40,18 +40,18 @@ export const calculateSendAmount = (receiveAmount) => {
               BigNumber(receiveAmount)
                   .plus(minerFee())
                   .div(BigNumber(1).minus(BigNumber(boltzFee()).div(100)))
-                  .toNumber()
+                  .toNumber(),
           )
         : Math.floor(
               BigNumber(receiveAmount)
                   .plus(
                       bigRound(
                           BigNumber(receiveAmount).times(
-                              BigNumber(boltzFee()).div(100)
-                          )
-                      )
+                              BigNumber(boltzFee()).div(100),
+                          ),
+                      ),
                   )
                   .plus(minerFee())
-                  .toNumber()
+                  .toNumber(),
           );
 };

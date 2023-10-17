@@ -1,5 +1,4 @@
-import { useI18n } from "@solid-primitives/i18n";
-
+import t from "./i18n";
 import substack from "./assets/substack.svg";
 import twitter from "./assets/twitter.svg";
 import nostr from "./assets/nostr.svg";
@@ -9,7 +8,6 @@ import github from "./assets/github.svg";
 import "./style/footer.scss";
 
 const Footer = () => {
-    const [t] = useI18n();
     return (
         <footer>
             <h4>

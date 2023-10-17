@@ -1,7 +1,5 @@
-import { I18nContext } from "@solid-primitives/i18n";
 import { render, screen } from "@solidjs/testing-library";
 import i18n from "../../src/i18n/i18n";
-import createI18n from "../../src/i18n";
 import { pairs } from "../../src/config";
 import BlockExplorer from "../../src/components/BlockExplorer";
 
@@ -13,21 +11,17 @@ describe("BlockExplorer", () => {
     `(
         "should link to $asset addresses",
         async ({ asset, baseLink, address }) => {
-            render(() => (
-                <I18nContext.Provider value={createI18n()}>
-                    <BlockExplorer asset={asset} address={address} />
-                </I18nContext.Provider>
-            ));
+            render(() => <BlockExplorer asset={asset} address={address} />);
 
             const button = await screen.findByText(
                 i18n.en.blockexplorer.replace(
                     "{{ typeLabel }}",
-                    i18n.en.blockexplorer_lockup_address
-                )
+                    i18n.en.blockexplorer_lockup_address,
+                ),
             );
             expect(button).not.toBeUndefined();
             expect(button.href).toEqual(`${baseLink}/address/${address}`);
-        }
+        },
     );
 
     test.each`
@@ -37,20 +31,16 @@ describe("BlockExplorer", () => {
     `(
         "should link to $asset transactions",
         async ({ asset, baseLink, txId }) => {
-            render(() => (
-                <I18nContext.Provider value={createI18n()}>
-                    <BlockExplorer asset={asset} txId={txId} />
-                </I18nContext.Provider>
-            ));
+            render(() => <BlockExplorer asset={asset} txId={txId} />);
 
             const button = await screen.findByText(
                 i18n.en.blockexplorer.replace(
                     "{{ typeLabel }}",
-                    i18n.en.blockexplorer_claim_tx
-                )
+                    i18n.en.blockexplorer_claim_tx,
+                ),
             );
             expect(button).not.toBeUndefined();
             expect(button.href).toEqual(`${baseLink}/tx/${txId}`);
-        }
+        },
     );
 });

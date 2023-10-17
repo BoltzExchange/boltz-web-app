@@ -21,7 +21,7 @@ describe("denomination utils", () => {
             ({ denomination, amount, converted }) => {
                 setDenomination(denomination);
                 expect(convertAmount(amount)).toEqual(converted);
-            }
+            },
         );
     });
 
@@ -42,7 +42,7 @@ describe("denomination utils", () => {
             ({ denomination, amount, formatted }) => {
                 setDenomination(denomination);
                 expect(formatAmount(amount)).toEqual(formatted);
-            }
+            },
         );
     });
 
@@ -67,7 +67,7 @@ describe("denomination utils", () => {
                 setMaximum(amount);
                 setDenomination(denomination);
                 expect(calculateDigits()).toEqual(digits);
-            }
+            },
         );
     });
 
@@ -99,7 +99,7 @@ describe("denomination utils", () => {
                 setDenomination(denomination);
                 let regex = getValidationRegex();
                 expect(regex.test(amount)).toEqual(valid);
-            }
+            },
         );
     });
 });

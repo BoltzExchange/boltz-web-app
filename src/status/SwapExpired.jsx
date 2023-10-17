@@ -1,6 +1,6 @@
+import t from "../i18n";
 import log from "loglevel";
 import { useNavigate } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
 import { Show, createEffect, createSignal } from "solid-js";
 import fetcher, { refund, refundAddressChange } from "../helper";
 
@@ -12,7 +12,6 @@ import {
 } from "../signals";
 
 const SwapExpired = () => {
-    const [t] = useI18n();
     const navigate = useNavigate();
 
     const [valid, setValid] = createSignal(false);
@@ -30,7 +29,7 @@ const SwapExpired = () => {
             },
             () => {
                 log.warn(`no swap transaction for: ${swap().id}`);
-            }
+            },
         );
     });
 

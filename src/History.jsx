@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import { useI18n } from "@solid-primitives/i18n";
+import t from "./i18n";
 import { isIos } from "./helper";
 import SwapList from "./components/SwapList";
 import { downloadJson } from "./utils/download";
@@ -26,7 +26,6 @@ const validateBackupFile = (file) => {
 };
 
 const History = () => {
-    const [t] = useI18n();
     const navigate = useNavigate();
 
     let importRef;
