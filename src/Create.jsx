@@ -101,12 +101,15 @@ const Create = () => {
         ref.focus();
     });
 
-    // change denomination
     createMemo(() => {
-        setReceiveAmountFormatted(
-            formatAmount(Number(receiveAmount())).toString(),
-        );
-        setSendAmountFormatted(formatAmount(Number(sendAmount())).toString());
+        const rAmount = Number(receiveAmount());
+        if (rAmount > 0) {
+            setReceiveAmountFormatted(formatAmount(rAmount).toString());
+        }
+        const sAmount = Number(sendAmount());
+        if (sAmount > 0) {
+            setSendAmountFormatted(formatAmount(sAmount).toString());
+        }
     });
 
     // validation swap
