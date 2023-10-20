@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2023-10-20
+
+### Bug Fixes
+
+- Invoice validation (#282)
+- Check fee amount instead of pair hash (#283)
+- Only claim from inside swapchecker (#284)
+
+### Features
+
+- Change calculated send/receive amount on fee update (#285)
+- Save selected send/receive asset in localstorage (#288)
+
+### Miscellaneous Tasks
+
+- V1.1.1 changelog
+- Trivial dependency updates
+- Remove unused i18n check
+- Update i18n
+- Decimals handling for 0.000 (#287)
+- Release v1.1.2 preparation
+
+### Refactor
+
+- Remove usages of deprecated createStorageSignal
+- Switch to @bitcoinerlab/secp256k1
+
 ## [1.1.1] - 2023-10-11
 
 ### Bug Fixes
@@ -22,7 +49,7 @@ All notable changes to this project will be documented in this file.
 - Update CHANGELOG.md for v1.1.0
 - Add commit template (#267)
 - Bump postcss from 8.4.24 to 8.4.31 (#274)
-- v1.1.1 release prep (#278)
+- V1.1.1 release prep (#278)
 
 ## [1.1.0] - 2023-10-03
 
