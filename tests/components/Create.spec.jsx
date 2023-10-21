@@ -6,8 +6,8 @@ import Create from "../../src/Create";
 import i18n from "../../src/i18n/i18n";
 import * as signals from "../../src/signals";
 import { sideReceive, sideSend } from "../../src/consts.js";
-import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
 import { decodeInvoice } from "../../src/utils/validation.js";
+import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
 
 describe("Create", () => {
     beforeAll(() => {
