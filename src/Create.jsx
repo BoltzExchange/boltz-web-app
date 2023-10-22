@@ -2,7 +2,14 @@ import log from "loglevel";
 import { randomBytes } from "crypto";
 import { crypto } from "bitcoinjs-lib";
 import { useNavigate } from "@solidjs/router";
-import { createMemo, createSignal, createEffect, on, onMount } from "solid-js";
+import {
+    createMemo,
+    createSignal,
+    createEffect,
+    on,
+    onMount,
+    Show,
+} from "solid-js";
 import t from "./i18n";
 import Fees from "./components/Fees";
 import Asset from "./components/Asset";
@@ -362,9 +369,11 @@ const Create = () => {
         } else {
             inputValue = trimLightningPrefix(inputValue);
 
-            if (isLnurl(inputValue) || isInvoice(inputValue)) {
+            const isInputInvoice = isInvoice(inputValue);
+            if (isLnurl(inputValue) || isInputInvoice) {
                 // set receive/send when invoice differs from the amounts
-                if (!checkInvoiceAmount(inputValue)) {
+                // and the input is an invoice
+                if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
                     try {
                         const decoded = decodeInvoice(inputValue);
                         if (decoded.satoshis === null) {
@@ -385,6 +394,7 @@ const Create = () => {
                         return;
                     }
                 }
+
                 input.setCustomValidity("");
                 input.classList.remove("invalid");
                 setInvoiceValid(true);
@@ -470,6 +480,7 @@ const Create = () => {
                 onKeyUp={(e) => validateAddress(e.currentTarget)}
                 onPaste={(e) => validateAddress(e.currentTarget)}
                 id="invoice"
+                data-testid="invoice"
                 name="invoice"
                 value={invoice()}
                 placeholder={t("create_and_paste", {

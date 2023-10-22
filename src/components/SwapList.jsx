@@ -1,11 +1,11 @@
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import t from "../i18n";
 
 const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
     const navigate = useNavigate();
 
-    const printDate = (d) => {
+    const formatDate = (d) => {
         let date = new Date();
         date.setTime(d);
         return date.toLocaleDateString();
@@ -22,7 +22,10 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
 
     return (
         <div id="past-swaps">
-            <For each={swapsSignal().sort((a, b) => a.date < b.date)}>
+            <For
+                each={swapsSignal().sort((a, b) =>
+                    a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
+                )}>
                 {(swap) => (
                     <div class="past-swap">
                         <span
@@ -37,7 +40,7 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
                             -&gt;
                         </span>
                         &nbsp;{t("id")}: {swap.id}, {t("created")}:{" "}
-                        {printDate(swap.date)}&nbsp;
+                        {formatDate(swap.date)}&nbsp;
                         <Show when={deleteButton}>
                             <span
                                 class="btn-small btn-danger"
