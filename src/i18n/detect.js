@@ -3,10 +3,11 @@ import locales from "./i18n";
 import { i18nCached, setI18n } from "../signals";
 import { defaultLanguage } from "../config";
 
-
 export const getNavigatorLanguage = (language) => {
     if (language === undefined) {
-        log.info(`navigator.language undefined, using default: ${defaultLanguage}`);
+        log.info(
+            `navigator.language undefined, using default: ${defaultLanguage}`,
+        );
         return defaultLanguage;
     }
     const lang = language.split("-")[0];
@@ -15,9 +16,8 @@ export const getNavigatorLanguage = (language) => {
         return defaultLanguage;
     }
     log.info("detected navigator.language", language, lang);
-    return lang
+    return lang;
 };
-
 
 export const detectLanguage = () => {
     if (i18nCached() === null) {
