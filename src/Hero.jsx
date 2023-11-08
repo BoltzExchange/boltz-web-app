@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { createSignal, createMemo } from "solid-js";
 import t from "./i18n";
-import { nodeStats } from "./signals";
+import { nodeStats, hideHero, setHideHero } from "./signals";
 import { fetchNodeInfo } from "./helper";
 import "./style/hero.scss";
 import Create from "./Create";
@@ -11,7 +11,6 @@ import lightning from "./assets/lightning-icon.svg";
 
 const Hero = () => {
     const navigate = useNavigate();
-    const [hideHero, setHideHero] = createSignal(false);
     const [numChannel, setNumChannel] = createSignal(0);
     const [numPeers, setNumPeers] = createSignal(0);
     const [capacity, setCapacity] = createSignal(0);

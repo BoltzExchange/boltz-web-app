@@ -12,6 +12,7 @@ export const [assetSelect, setAssetSelect] = createSignal(false);
 export const [assetSelected, setAssetSelected] = createSignal(null);
 export const [asset, setAsset] = createSignal(defaultSelection);
 export const [reverse, setReverse] = createSignal(true);
+export const [hideHero, setHideHero] = createSignal(false);
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);
