@@ -25,10 +25,8 @@ import {
 
 const Fees = () => {
     createEffect(() => {
-        let cfg = config()["BTC/BTC"];
-        if (asset() === "L-BTC") {
-            cfg = config()["L-BTC/BTC"];
-        }
+        const cfg = config()[`${asset()}/BTC`];
+
         if (cfg) {
             if (reverse()) {
                 const rev = cfg.fees.minerFees.baseAsset.reverse;

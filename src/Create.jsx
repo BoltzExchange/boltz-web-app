@@ -16,11 +16,13 @@ import Asset from "./components/Asset";
 import { ECPair } from "./ecpair/ecpair";
 import Reverse from "./components/Reverse";
 import { enableWebln } from "./utils/webln";
-import { sideSend, sideReceive } from "./consts";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
+import AddressInput from "./components/AddressInput";
+import { sideSend, sideReceive, RBTC } from "./consts";
 import { fetcher, fetchPairs, feeCheck } from "./helper";
 import ClickableAmount from "./components/ClickableAmount";
+import ConnectMetamask from "./components/ConnectMetamask";
 import { decodeInvoice, validateResponse } from "./utils/validation";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
@@ -194,6 +196,7 @@ const Create = () => {
         const address = getAddress(assetName);
         const net = getNetwork(assetName);
 
+        // TODO: not needed for ethereum
         const pair = ECPair.makeRandom();
         const privateKeyHex = pair.privateKey.toString("hex");
         const publicKeyHex = pair.publicKey.toString("hex");
@@ -357,60 +360,48 @@ const Create = () => {
     };
 
     const validateAddress = (input) => {
-        let inputValue = input.value.trim();
         if (reverse()) {
-            try {
-                // validate btc address
-                const asset_name = asset();
-                const address = getAddress(asset_name);
-                address.toOutputScript(inputValue, getNetwork(asset_name));
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setAddressValid(true);
-                setOnchainAddress(inputValue);
-            } catch (e) {
-                setAddressValid(false);
-                input.setCustomValidity("invalid address");
-                input.classList.add("invalid");
-            }
-        } else {
-            inputValue = trimLightningPrefix(inputValue);
+            return;
+        }
 
-            const isInputInvoice = isInvoice(inputValue);
-            if (isLnurl(inputValue) || isInputInvoice) {
-                // set receive/send when invoice differs from the amounts
-                // and the input is an invoice
-                if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
-                    try {
-                        const decoded = decodeInvoice(inputValue);
-                        if (decoded.satoshis === null) {
-                            setInvoiceValid(false);
-                            input.setCustomValidity(
-                                "0 amount invoices are not allowed",
-                            );
-                            input.classList.add("invalid");
-                            return;
-                        }
-                        setReceiveAmount(decoded.satoshis);
-                        setSendAmount(calculateSendAmount(decoded.satoshis));
-                        validateAmount();
-                    } catch (e) {
+        let inputValue = input.value.trim();
+
+        inputValue = trimLightningPrefix(inputValue);
+
+        const isInputInvoice = isInvoice(inputValue);
+        if (isLnurl(inputValue) || isInputInvoice) {
+            // set receive/send when invoice differs from the amounts
+            // and the input is an invoice
+            if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
+                try {
+                    const decoded = decodeInvoice(inputValue);
+                    if (decoded.satoshis === null) {
                         setInvoiceValid(false);
-                        input.setCustomValidity(e);
+                        input.setCustomValidity(
+                            "0 amount invoices are not allowed",
+                        );
                         input.classList.add("invalid");
                         return;
                     }
+                    setReceiveAmount(decoded.satoshis);
+                    setSendAmount(calculateSendAmount(decoded.satoshis));
+                    validateAmount();
+                } catch (e) {
+                    setInvoiceValid(false);
+                    input.setCustomValidity(e);
+                    input.classList.add("invalid");
+                    return;
                 }
-
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setInvoiceValid(true);
-                setInvoice(inputValue);
-            } else {
-                setInvoiceValid(false);
-                input.setCustomValidity("invalid network");
-                input.classList.add("invalid");
             }
+
+            input.setCustomValidity("");
+            input.classList.remove("invalid");
+            setInvoiceValid(true);
+            setInvoice(inputValue);
+        } else {
+            setInvoiceValid(false);
+            input.setCustomValidity("invalid network");
+            input.classList.add("invalid");
         }
     };
 
@@ -487,52 +478,45 @@ const Create = () => {
             </div>
             <Fees />
             <hr />
-            <Show when={webln() && !reverse()}>
-                <button
-                    id="webln"
-                    class="btn btn-light"
-                    onClick={() => createWeblnInvoice()}>
-                    {t("create_invoice_webln")}
-                </button>
-                <hr />
+            <Show when={asset() === RBTC}>
+                <ConnectMetamask
+                    showAddress={true}
+                    setAddressValid={setAddressValid}
+                />
+
+                <Show when={!reverse()}>
+                    <hr />
+                </Show>
             </Show>
-            <textarea
-                required
-                ref={invoiceInputRef}
-                onInput={(e) => validateAddress(e.currentTarget)}
-                onKeyUp={(e) => validateAddress(e.currentTarget)}
-                onPaste={(e) => validateAddress(e.currentTarget)}
-                id="invoice"
-                data-testid="invoice"
-                name="invoice"
-                value={invoice()}
-                placeholder={t("create_and_paste", {
-                    amount: receiveAmountFormatted(),
-                    denomination: denomination(),
-                })}></textarea>
-            <Show when={reverse()}>
-                <Show when={metamask()}>
+            <Show when={reverse() && asset() !== RBTC}>
+                <AddressInput setAddressValid={setAddressValid} />
+            </Show>
+            <Show when={!reverse()}>
+                <Show when={webln()}>
                     <button
                         id="webln"
                         class="btn btn-light"
-                        onClick={() => createMetamaskAddress()}>
-                        {t("onchain_address_create", { asset: asset() })}
+                        onClick={() => createWeblnInvoice()}>
+                        {t("create_invoice_webln")}
                     </button>
                     <hr />
                 </Show>
-                <input
+                <textarea
                     required
-                    ref={addressInputRef}
+                    ref={invoiceInputRef}
                     onInput={(e) => validateAddress(e.currentTarget)}
                     onKeyUp={(e) => validateAddress(e.currentTarget)}
                     onPaste={(e) => validateAddress(e.currentTarget)}
-                    type="text"
-                    id="onchainAddress"
-                    name="onchainAddress"
-                    placeholder={t("onchain_address", { asset: asset() })}
-                />
+                    id="invoice"
+                    data-testid="invoice"
+                    name="invoice"
+                    value={invoice()}
+                    placeholder={t("create_and_paste", {
+                        amount: receiveAmountFormatted(),
+                        denomination: denomination(),
+                    })}></textarea>
+                <hr />
             </Show>
-            <hr />
             <Show when={online() && wasmSupported()}>
                 <button
                     id="create-swap"

@@ -6,6 +6,7 @@ import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
 import { ECPair } from "../ecpair/ecpair";
 import { decodeAddress, secp, setup } from "../compat";
 import { denominations, formatAmountDenomination } from "./denomination";
+import { RBTC } from "../consts.js";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -131,6 +132,11 @@ const validateSwap = async (swap, buffer) => {
 
 // To be able to use the Buffer from Node.js
 export const validateResponse = async (swap, buffer = BufferBrowser) => {
+    // TODO: actually check rsk responses
+    if (swap.asset === RBTC) {
+        return true;
+    }
+
     try {
         return await (swap.reverse
             ? validateReverseSwap(swap, buffer)

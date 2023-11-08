@@ -21,6 +21,10 @@
 .past-asset[data-asset="L-BTC"][data-reverse="false"]:before {
     background-image: url(../assets/liquid-icon.svg);
 }
+.past-asset[data-asset="RBTC"][data-reverse="true"]:after,
+.past-asset[data-asset="RBTC"][data-reverse="false"]:before {
+    background-image: url(../assets/rootstock-icon.svg);
+}
 
 .past-asset {
     display: inline-block;
