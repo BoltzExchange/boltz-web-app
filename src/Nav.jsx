@@ -13,10 +13,10 @@ const Nav = ({ network }) => {
     let timeout;
 
     if (i18n() === null && navigator.language) {
-        log.info("detected navigator.language", navigator.language);
         const lang = navigator.language.split("-")[0];
+        log.info("detected navigator.language", navigator.language, lang);
         setI18n(lang);
-    } else {
+    } else if (i18n() === null) {
         log.info("setting default language", defaultLanguage);
         setI18n(defaultLanguage);
     }
