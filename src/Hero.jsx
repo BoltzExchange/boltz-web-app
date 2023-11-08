@@ -41,7 +41,7 @@ const Hero = () => {
         <div id="hero" class="inner-wrap">
             <div
                 id="create-overlay"
-                class={hideHero() ? "glow" : ""}
+                class={hideHero() ? "" : "glow"}
                 onclick={() => setHideHero(true)}>
                 <Create />
             </div>
