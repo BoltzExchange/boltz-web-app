@@ -18,7 +18,7 @@ import { checkReferralId } from "./helper";
 import { loglevel, network } from "./config";
 import { swapChecker } from "./utils/swapChecker";
 import { detectWebLNProvider } from "./utils/webln";
-import { setWebln, setWasmSupported } from "./signals";
+import { setWebln, setWasmSupported, setI18n } from "./signals";
 import { checkWasmSupported } from "./utils/wasmSupport";
 
 log.setLevel(loglevel);

@@ -1,14 +1,25 @@
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
+import log from "loglevel";
 import t from "./i18n";
 import "./style/nav.scss";
 import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
-import { setI18n, hamburger, setHamburger } from "./signals";
+import { i18n, setI18n, hamburger, setHamburger } from "./signals";
+import { defaultLanguage } from "./config";
 
 const Nav = ({ network }) => {
     let timeout;
+
+    if (i18n() === null && navigator.language) {
+        log.info("detected navigator.language", navigator.language);
+        const lang = navigator.language.split("-")[0];
+        setI18n(lang);
+    } else {
+        log.info("setting default language", defaultLanguage);
+        setI18n(defaultLanguage);
+    }
 
     return (
         <nav>

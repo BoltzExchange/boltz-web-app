@@ -2,7 +2,7 @@ import { createEffect, createSignal } from "solid-js";
 import { makePersisted } from "@solid-primitives/storage";
 import { isMobile } from "./helper";
 import { LN, sideSend } from "./consts";
-import { defaultLanguage, pairs } from "./config";
+import { pairs } from "./config";
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
@@ -63,7 +63,7 @@ export const [ref, setRef] = makePersisted(
         ...stringSerializer,
     },
 );
-export const [i18n, setI18n] = makePersisted(createSignal(defaultLanguage), {
+export const [i18n, setI18n] = makePersisted(createSignal(null), {
     name: "i18n",
     ...stringSerializer,
 });
