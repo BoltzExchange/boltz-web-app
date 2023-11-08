@@ -48,6 +48,8 @@ export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
 export const [refundTx, setRefundTx] = createSignal("");
 export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
+export const [i18n, setI18n] = createSignal(null);
+
 // local storage
 
 // To support the values created by the deprecated "createStorageSignal"
@@ -63,7 +65,7 @@ export const [ref, setRef] = makePersisted(
         ...stringSerializer,
     },
 );
-export const [i18n, setI18n] = makePersisted(createSignal(null), {
+export const [i18nCached, setI18nCached] = makePersisted(createSignal(null), {
     name: "i18n",
     ...stringSerializer,
 });

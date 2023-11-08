@@ -1,25 +1,14 @@
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
-import log from "loglevel";
 import t from "./i18n";
 import "./style/nav.scss";
 import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
-import { i18n, setI18n, hamburger, setHamburger } from "./signals";
-import { defaultLanguage } from "./config";
+import { setI18nCached, hamburger, setHamburger } from "./signals";
 
 const Nav = ({ network }) => {
     let timeout;
-
-    if (i18n() === null && navigator.language) {
-        const lang = navigator.language.split("-")[0];
-        log.info("detected navigator.language", navigator.language, lang);
-        setI18n(lang);
-    } else if (i18n() === null) {
-        log.info("setting default language", defaultLanguage);
-        setI18n(defaultLanguage);
-    }
 
     return (
         <nav>
@@ -52,7 +41,7 @@ const Nav = ({ network }) => {
                             {(lang) => (
                                 <span
                                     class="lang"
-                                    onClick={() => setI18n(lang)}>
+                                    onClick={() => setI18nCached(lang)}>
                                     {locales[lang].language}
                                 </span>
                             )}

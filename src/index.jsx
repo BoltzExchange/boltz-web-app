@@ -18,14 +18,16 @@ import { checkReferralId } from "./helper";
 import { loglevel, network } from "./config";
 import { swapChecker } from "./utils/swapChecker";
 import { detectWebLNProvider } from "./utils/webln";
-import { setWebln, setWasmSupported, setI18n } from "./signals";
+import { setWebln, setWasmSupported } from "./signals";
 import { checkWasmSupported } from "./utils/wasmSupport";
+import { detectLanguage } from "./i18n/detect";
 
 log.setLevel(loglevel);
 
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
+detectLanguage();
 
 swapChecker();
 
