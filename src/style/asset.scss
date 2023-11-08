@@ -41,3 +41,14 @@
         content: "liquid";
     }
 }
+
+.asset-R-BTC {
+    .icon {
+        background-image: url(../assets/rsk-icon.svg);
+        background-size: 70%;
+        background-position: center;
+    }
+    .asset-text:before {
+        content: "rootstock";
+    }
+}

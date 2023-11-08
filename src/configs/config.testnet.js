@@ -17,4 +17,8 @@ export const pairs = {
         apiUrl: apiUrl,
         blockExplorerUrl: blockExplorerUrlLiquid,
     },
+    "R-BTC/BTC": {
+        apiUrl: apiUrl,
+        blockExplorerUrl: blockExplorerUrlLiquid,
+    },
 };
