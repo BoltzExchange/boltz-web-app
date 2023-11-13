@@ -15,13 +15,14 @@ const ConnectMetamask = ({ showAddress }) => {
     return (
         <>
             <button
-                id="create-swap"
-                class="btn"
+                id="metamask"
+                class="btn btn-light"
                 onClick={async () =>
                     setAddress(await (await getSigner()).getAddress())
                 }>
                 Connect Metamask
             </button>
+            <hr />
             <Show when={showAddress !== undefined ? showAddress : true}>
                 <input
                     disabled

@@ -483,13 +483,11 @@ const Create = () => {
                     showAddress={true}
                     setAddressValid={setAddressValid}
                 />
-
-                <Show when={!reverse()}>
-                    <hr />
-                </Show>
+                <hr />
             </Show>
             <Show when={reverse() && asset() !== RBTC}>
                 <AddressInput setAddressValid={setAddressValid} />
+                <hr />
             </Show>
             <Show when={!reverse()}>
                 <Show when={webln()}>
