@@ -249,7 +249,6 @@ const Create = () => {
             fetcher(
                 "/createswap",
                 (data) => {
-                    debugger;
                     data.privateKey = privateKeyHex;
                     data.date = new Date().getTime();
                     data.reverse = reverse();
