@@ -407,6 +407,12 @@ const Create = () => {
         }
     };
 
+    const setAmount = (amount) => {
+        setSendAmount(amount);
+        setReceiveAmount(calculateReceiveAmount(amount));
+        validateAmount();
+    };
+
     createEffect(() => {
         if (reverse()) {
             validateAddress(addressInputRef);
@@ -418,8 +424,18 @@ const Create = () => {
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                {t("send")} {t("min")}: {formatAmount(minimum())}, {t("max")}:{" "}
-                {formatAmount(maximum())}
+                {t("send")} {t("min")}:{" "}
+                <span
+                    onClick={() => setAmount(minimum())}
+                    class="btn-small btn-light">
+                    {formatAmount(minimum())}
+                </span>{" "}
+                {t("max")}:{" "}
+                <span
+                    onClick={() => setAmount(maximum())}
+                    class="btn-small btn-light">
+                    {formatAmount(maximum())}
+                </span>
             </p>
             <hr />
             <div class="icons">
