@@ -27,7 +27,8 @@ import {
     fetchLnurl,
     isInvoice,
     isLnurl,
-    trimLightningPrefix,
+    trimBip21Lightning,
+    trimPrefix,
 } from "./utils/invoice";
 import {
     convertAmount,
@@ -354,6 +355,7 @@ const Create = () => {
         let inputValue = input.value.trim();
         if (reverse()) {
             try {
+                inputValue = trimPrefix(inputValue, "bitcoin:");
                 // validate btc address
                 const asset_name = asset();
                 const address = getAddress(asset_name);
@@ -368,8 +370,10 @@ const Create = () => {
                 input.classList.add("invalid");
             }
         } else {
-            inputValue = trimLightningPrefix(inputValue);
+            inputValue = trimPrefix(inputValue, "lightning:");
+            inputValue = trimBip21Lightning(inputValue);
 
+            debugger;
             const isInputInvoice = isInvoice(inputValue);
             if (isLnurl(inputValue) || isInputInvoice) {
                 // set receive/send when invoice differs from the amounts

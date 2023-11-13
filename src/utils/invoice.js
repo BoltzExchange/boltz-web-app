@@ -3,8 +3,6 @@ import { bech32, utf8 } from "@scure/base";
 import { bolt11_prefix } from "../config";
 import { checkResponse, errorHandler } from "../helper";
 
-const invoicePrefix = "lightning:";
-
 export function fetchLnurl(lnurl, amount_sat) {
     return new Promise((resolve, reject) => {
         let url = "";
@@ -47,11 +45,19 @@ export function fetchLnurl(lnurl, amount_sat) {
     });
 }
 
-export function trimLightningPrefix(invoice) {
-    if (invoice.toLowerCase().startsWith(invoicePrefix)) {
-        return invoice.slice(invoicePrefix.length);
+export function trimPrefix(invoice, prefix) {
+    if (invoice.toLowerCase().startsWith(prefix)) {
+        const url = new URL(invoice);
+        return url.pathname;
     }
+    return invoice;
+}
 
+export function trimBip21Lightning(invoice) {
+    if (invoice.toLowerCase().startsWith("bitcoin:")) {
+        const url = new URL(invoice);
+        return url.searchParams.get("lightning");
+    }
     return invoice;
 }
 
