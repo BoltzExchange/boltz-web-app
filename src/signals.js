@@ -1,8 +1,8 @@
 import { createEffect, createSignal } from "solid-js";
 import { makePersisted } from "@solid-primitives/storage";
-import { isMobile } from "./helper";
-import { LN, sideSend } from "./consts";
 import { pairs } from "./config";
+import { isMobile } from "./helper";
+import { LN, RBTC, sideSend } from "./consts";
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
@@ -105,9 +105,11 @@ export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
 
 export const [webln, setWebln] = createSignal(false);
+export const [metamask, setMetamask] = createSignal(true);
 
 // effects
 createEffect(() => setReverse(assetReceive() !== LN));
+createEffect(() => setMetamask(asset() === RBTC));
 
 [assetSend, assetReceive].forEach((signal) => {
     createEffect(() => {

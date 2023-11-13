@@ -76,6 +76,7 @@ import {
     assetSend,
     assetSelect,
     assetSelected,
+    metamask,
 } from "./signals";
 
 const Create = () => {
@@ -181,6 +182,10 @@ const Create = () => {
         });
     };
 
+    const createMetamaskAddress = async () => {
+        log.debug("createMetamaskAddress");
+    };
+
     const create = async () => {
         if (!valid()) return;
 
@@ -241,6 +246,7 @@ const Create = () => {
             fetcher(
                 "/createswap",
                 (data) => {
+                    debugger;
                     data.privateKey = privateKeyHex;
                     data.date = new Date().getTime();
                     data.reverse = reverse();
@@ -504,17 +510,28 @@ const Create = () => {
                     amount: receiveAmountFormatted(),
                     denomination: denomination(),
                 })}></textarea>
-            <input
-                required
-                ref={addressInputRef}
-                onInput={(e) => validateAddress(e.currentTarget)}
-                onKeyUp={(e) => validateAddress(e.currentTarget)}
-                onPaste={(e) => validateAddress(e.currentTarget)}
-                type="text"
-                id="onchainAddress"
-                name="onchainAddress"
-                placeholder={t("onchain_address", { asset: asset() })}
-            />
+            <Show when={reverse()}>
+                <Show when={metamask()}>
+                    <button
+                        id="webln"
+                        class="btn btn-light"
+                        onClick={() => createMetamaskAddress()}>
+                        {t("onchain_address_create", { asset: asset() })}
+                    </button>
+                    <hr />
+                </Show>
+                <input
+                    required
+                    ref={addressInputRef}
+                    onInput={(e) => validateAddress(e.currentTarget)}
+                    onKeyUp={(e) => validateAddress(e.currentTarget)}
+                    onPaste={(e) => validateAddress(e.currentTarget)}
+                    type="text"
+                    id="onchainAddress"
+                    name="onchainAddress"
+                    placeholder={t("onchain_address", { asset: asset() })}
+                />
+            </Show>
             <hr />
             <Show when={online() && wasmSupported()}>
                 <button

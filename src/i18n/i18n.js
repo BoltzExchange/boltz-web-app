@@ -67,6 +67,7 @@ const dict = {
         failure_reason: "Failure reason",
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
+        onchain_address_create: "Create {{ asset }} address",
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
@@ -205,6 +206,7 @@ const dict = {
         invoice_payment_failure:
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
         onchain_address: "{{ asset }}-Adresse eingeben",
+        onchain_address_create: "Erstelle {{ asset }}-Adresse",
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
@@ -348,6 +350,7 @@ const dict = {
         failure_reason: "Motivo del fallo",
         invoice_payment_failure: "No se pudo pagar su factura Lightning",
         onchain_address: "Ingrese la dirección de {{ asset }}",
+        onchain_address_create: "Create {{ asset }} address",
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
