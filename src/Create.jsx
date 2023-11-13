@@ -372,8 +372,6 @@ const Create = () => {
         } else {
             inputValue = trimPrefix(inputValue, "lightning:");
             inputValue = trimBip21Lightning(inputValue);
-
-            debugger;
             const isInputInvoice = isInvoice(inputValue);
             if (isLnurl(inputValue) || isInputInvoice) {
                 // set receive/send when invoice differs from the amounts
