@@ -20,6 +20,7 @@ import { sideSend, sideReceive } from "./consts";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
 import { fetcher, fetchPairs, feeCheck } from "./helper";
+import ClickableAmount from "./components/ClickableAmount";
 import { decodeInvoice, validateResponse } from "./utils/validation";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
@@ -407,6 +408,13 @@ const Create = () => {
         }
     };
 
+    const setAmount = (amount) => {
+        setSendAmount(amount);
+        setReceiveAmount(calculateReceiveAmount(amount));
+        validateAmount();
+        sendAmountRef.focus();
+    };
+
     createEffect(() => {
         if (reverse()) {
             validateAddress(addressInputRef);
@@ -418,8 +426,17 @@ const Create = () => {
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                {t("send")} {t("min")}: {formatAmount(minimum())}, {t("max")}:{" "}
-                {formatAmount(maximum())}
+                {t("send")}
+                <ClickableAmount
+                    label={t("min")}
+                    onClick={setAmount}
+                    amount={minimum}
+                />{" "}
+                <ClickableAmount
+                    label={t("max")}
+                    onClick={setAmount}
+                    amount={maximum}
+                />
             </p>
             <hr />
             <div class="icons">
