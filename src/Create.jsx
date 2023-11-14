@@ -20,6 +20,7 @@ import { sideSend, sideReceive } from "./consts";
 import { getAddress, getNetwork } from "./compat";
 import AssetSelect from "./components/AssetSelect";
 import { fetcher, fetchPairs, feeCheck } from "./helper";
+import ClickableAmount from "./components/ClickableAmount";
 import { decodeInvoice, validateResponse } from "./utils/validation";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
@@ -425,18 +426,17 @@ const Create = () => {
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                {t("send")} {t("min")}:{" "}
-                <span
-                    onClick={() => setAmount(minimum())}
-                    class="btn-small btn-light">
-                    {formatAmount(minimum())}
-                </span>{" "}
-                {t("max")}:{" "}
-                <span
-                    onClick={() => setAmount(maximum())}
-                    class="btn-small btn-light">
-                    {formatAmount(maximum())}
-                </span>
+                {t("send")}
+                <ClickableAmount
+                    label={t("min")}
+                    onClick={setAmount}
+                    amount={minimum}
+                />{" "}
+                <ClickableAmount
+                    label={t("max")}
+                    onClick={setAmount}
+                    amount={maximum}
+                />
             </p>
             <hr />
             <div class="icons">

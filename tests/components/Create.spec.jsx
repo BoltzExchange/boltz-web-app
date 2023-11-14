@@ -7,6 +7,7 @@ import i18n from "../../src/i18n/i18n";
 import * as signals from "../../src/signals";
 import { sideReceive, sideSend } from "../../src/consts.js";
 import { decodeInvoice } from "../../src/utils/validation.js";
+import { calculateReceiveAmount } from "../../src/utils/calculate.js";
 import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
 
 describe("Create", () => {
@@ -219,5 +220,33 @@ describe("Create", () => {
         });
 
         expect(setInvoice).toHaveBeenCalledTimes(1);
+    });
+
+    test.each`
+        extrema
+        ${"min"}
+        ${"max"}
+    `("should set $extrema amount on click", async (extrema) => {
+        render(() => (
+            <Router>
+                <Create />
+            </Router>
+        ));
+
+        const setSendAmount = vi.spyOn(signals, "setSendAmount");
+        const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
+
+        const amount =
+            extrema === "min" ? signals.minimum() : signals.maximum();
+
+        fireEvent.click(await screen.findByText(amount));
+
+        expect(setSendAmount).toHaveBeenCalledTimes(1);
+        expect(setSendAmount).toHaveBeenCalledWith(amount);
+
+        expect(setReceiveAmount).toHaveBeenCalledTimes(1);
+        expect(setReceiveAmount).toHaveBeenCalledWith(
+            calculateReceiveAmount(amount),
+        );
     });
 });
