@@ -29,9 +29,9 @@ describe("invoice", () => {
         expect(extractInvoice(`LIGHTNING:${invoice}`, "lightning:")).toEqual(
             invoice,
         );
-        expect(extractInvoice(`lightning:${invoice}?label=test`, "lightning:")).toEqual(
-            invoice,
-        );
+        expect(
+            extractInvoice(`lightning:${invoice}?label=test`, "lightning:"),
+        ).toEqual(invoice);
     });
 
     test("should trim bip21 lightning invoice", () => {
@@ -53,11 +53,10 @@ describe("invoice", () => {
         expect(extractBip21Invoice(bip21)).toEqual(invoice);
     });
 
-
     test("should trim bip21 address", () => {
         const bip21 =
             "bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?amount=0.00001&label=" +
-            "sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday"
+            "sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday";
         const address = "bc1qylh3u67j673h6y6alv70m0pl2yz53tzhvxgg7u";
 
         expect(extractBip21(bip21)).toEqual(address);
