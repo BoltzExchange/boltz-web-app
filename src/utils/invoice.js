@@ -45,18 +45,26 @@ export function fetchLnurl(lnurl, amount_sat) {
     });
 }
 
-export function trimPrefix(invoice, prefix) {
-    if (invoice.toLowerCase().startsWith(prefix)) {
+export function extractInvoice(invoice) {
+    if (invoice.toLowerCase().startsWith("lightning:")) {
         const url = new URL(invoice);
-        return url.pathname;
+        return url.pathname.toLowerCase();
     }
     return invoice;
 }
 
-export function trimBip21Lightning(invoice) {
+export function extractBip21(invoice) {
     if (invoice.toLowerCase().startsWith("bitcoin:")) {
         const url = new URL(invoice);
-        return url.searchParams.get("lightning");
+        return url.pathname.toLowerCase();
+    }
+    return invoice;
+}
+
+export function extractBip21Invoice(invoice) {
+    if (invoice.toLowerCase().startsWith("bitcoin:")) {
+        const url = new URL(invoice);
+        return url.searchParams.get("lightning").toLowerCase();
     }
     return invoice;
 }
