@@ -16,11 +16,11 @@ import NotFound from "./NotFound";
 import Notification from "./Notification";
 import { checkReferralId } from "./helper";
 import { loglevel, network } from "./config";
+import { detectLanguage } from "./i18n/detect";
 import { swapChecker } from "./utils/swapChecker";
 import { detectWebLNProvider } from "./utils/webln";
 import { setWebln, setWasmSupported } from "./signals";
 import { checkWasmSupported } from "./utils/wasmSupport";
-import { detectLanguage } from "./i18n/detect";
 
 log.setLevel(loglevel);
 

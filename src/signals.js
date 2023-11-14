@@ -65,10 +65,13 @@ export const [ref, setRef] = makePersisted(
         ...stringSerializer,
     },
 );
-export const [i18nCached, setI18nCached] = makePersisted(createSignal(null), {
-    name: "i18n",
-    ...stringSerializer,
-});
+export const [i18nConfigured, setI18nConfigured] = makePersisted(
+    createSignal(null),
+    {
+        name: "i18n",
+        ...stringSerializer,
+    },
+);
 export const [denomination, setDenomination] = makePersisted(
     createSignal("sat"),
     { name: "denomination", ...stringSerializer },
