@@ -2,7 +2,7 @@ import { createEffect, createSignal } from "solid-js";
 import { makePersisted } from "@solid-primitives/storage";
 import { isMobile } from "./helper";
 import { LN, sideSend } from "./consts";
-import { defaultLanguage, pairs } from "./config";
+import { pairs } from "./config";
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
@@ -48,6 +48,8 @@ export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
 export const [refundTx, setRefundTx] = createSignal("");
 export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
+export const [i18n, setI18n] = createSignal(null);
+
 // local storage
 
 // To support the values created by the deprecated "createStorageSignal"
@@ -63,10 +65,13 @@ export const [ref, setRef] = makePersisted(
         ...stringSerializer,
     },
 );
-export const [i18n, setI18n] = makePersisted(createSignal(defaultLanguage), {
-    name: "i18n",
-    ...stringSerializer,
-});
+export const [i18nConfigured, setI18nConfigured] = makePersisted(
+    createSignal(null),
+    {
+        name: "i18n",
+        ...stringSerializer,
+    },
+);
 export const [denomination, setDenomination] = makePersisted(
     createSignal("sat"),
     { name: "denomination", ...stringSerializer },

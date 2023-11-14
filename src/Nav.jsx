@@ -5,7 +5,7 @@ import "./style/nav.scss";
 import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
-import { setI18n, hamburger, setHamburger } from "./signals";
+import { setI18nConfigured, hamburger, setHamburger } from "./signals";
 
 const Nav = ({ network }) => {
     let timeout;
@@ -41,7 +41,7 @@ const Nav = ({ network }) => {
                             {(lang) => (
                                 <span
                                     class="lang"
-                                    onClick={() => setI18n(lang)}>
+                                    onClick={() => setI18nConfigured(lang)}>
                                     {locales[lang].language}
                                 </span>
                             )}

@@ -16,6 +16,7 @@ import NotFound from "./NotFound";
 import Notification from "./Notification";
 import { checkReferralId } from "./helper";
 import { loglevel, network } from "./config";
+import { detectLanguage } from "./i18n/detect";
 import { swapChecker } from "./utils/swapChecker";
 import { detectWebLNProvider } from "./utils/webln";
 import { setWebln, setWasmSupported } from "./signals";
@@ -26,6 +27,7 @@ log.setLevel(loglevel);
 detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
+detectLanguage();
 
 swapChecker();
 
