@@ -411,6 +411,7 @@ const Create = () => {
         setSendAmount(amount);
         setReceiveAmount(calculateReceiveAmount(amount));
         validateAmount();
+        sendAmountRef.focus();
     };
 
     createEffect(() => {
