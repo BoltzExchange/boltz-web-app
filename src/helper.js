@@ -40,6 +40,7 @@ import {
     setup,
     getAddress,
 } from "./compat";
+import { RBTC } from "./consts";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
@@ -329,6 +330,10 @@ const createAdjustedClaim = (
 };
 
 export const claim = async (swap) => {
+    if (swap.asset === RBTC) {
+        return;
+    }
+    
     await setup();
     const asset_name = swap.asset;
 

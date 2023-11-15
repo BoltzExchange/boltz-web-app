@@ -184,10 +184,6 @@ const Create = () => {
         });
     };
 
-    const createMetamaskAddress = async () => {
-        log.debug("createMetamaskAddress");
-    };
-
     const create = async () => {
         if (!valid()) return;
 
@@ -204,7 +200,6 @@ const Create = () => {
         let preimage = null;
 
         if (reverse()) {
-            address.toOutputScript(onchainAddress(), net);
             preimage = randomBytes(32);
             const preimageHash = crypto.sha256(preimage).toString("hex");
             params = {
@@ -215,6 +210,10 @@ const Create = () => {
                 claimPublicKey: publicKeyHex,
                 preimageHash: preimageHash,
             };
+
+            if (asset() == RBTC) {
+                params.claimAddress = onchainAddress();
+            }
         } else {
             if (isLnurl(invoice())) {
                 setInvoice(
