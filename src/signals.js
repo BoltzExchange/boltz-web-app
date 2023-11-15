@@ -105,11 +105,9 @@ export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
 
 export const [webln, setWebln] = createSignal(false);
-export const [metamask, setMetamask] = createSignal(true);
 
 // effects
 createEffect(() => setReverse(assetReceive() !== LN));
-createEffect(() => setMetamask(asset() === RBTC));
 
 [assetSend, assetReceive].forEach((signal) => {
     createEffect(() => {

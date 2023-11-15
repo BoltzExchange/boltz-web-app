@@ -4,14 +4,14 @@ import { asset, swap } from "../signals";
 import { useWeb3Signer } from "../context/Web3";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { prefix0x, satoshiToWei } from "../utils/ethereum";
+import EthereumTransaction from "../components/EthereumTransaction.jsx";
 
 const TransactionConfirmed = () => {
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
         return (
-            <button
-                class="btn"
+            <EthereumTransaction
                 onClick={async () => {
                     const contract = await getEtherSwap();
 
@@ -21,12 +21,14 @@ const TransactionConfirmed = () => {
                         swap().refundAddress,
                         swap().timeoutBlockHeight,
                     );
-                }}>
-                Claim
-            </button>
+                }}
+                buttonText={t("claim")}
+                promptText={t("claim_prompt")}
+                waitingText={t("tx_ready_to_claim")}
+            />
         );
     }
-    
+
     return (
         <div>
             <h2>{t("tx_confirmed")}</h2>

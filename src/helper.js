@@ -333,7 +333,7 @@ export const claim = async (swap) => {
     if (swap.asset === RBTC) {
         return;
     }
-    
+
     await setup();
     const asset_name = swap.asset;
 

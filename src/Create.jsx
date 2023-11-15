@@ -78,7 +78,6 @@ import {
     assetSend,
     assetSelect,
     assetSelected,
-    metamask,
 } from "./signals";
 
 const Create = () => {
@@ -128,7 +127,9 @@ const Create = () => {
         if (sendAmountValid()) {
             if (
                 (reverse() && addressValid()) ||
-                (!reverse() && invoiceValid())
+                (!reverse() &&
+                    invoiceValid() &&
+                    (asset() !== RBTC || addressValid()))
             ) {
                 setValid(true);
                 return;
@@ -211,7 +212,7 @@ const Create = () => {
                 preimageHash: preimageHash,
             };
 
-            if (asset() == RBTC) {
+            if (asset() === RBTC) {
                 params.claimAddress = onchainAddress();
             }
         } else {
@@ -407,6 +408,8 @@ const Create = () => {
         setSendAmount(amount);
         setReceiveAmount(calculateReceiveAmount(amount));
         validateAmount();
+
+        resetInvoice();
         sendAmountRef.focus();
     };
 

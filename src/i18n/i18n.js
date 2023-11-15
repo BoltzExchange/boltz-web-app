@@ -31,6 +31,7 @@ const dict = {
         fee: "Boltz Fee",
         denomination: "Denomination",
         send: "Send",
+        claim: "Claim",
         receive: "Receive",
         min: "Min",
         max: "Max",
@@ -61,13 +62,15 @@ const dict = {
         send_to_desc:
             "Please send exactly {{ amount }} {{ denomination }} before timeout block height {{ blockheight }}",
         pay_address: "Address",
+        connect_metamask: "Connect MetaMask",
+        disconnect_metamask: "Disconnect MetaMask",
+        connect_to_address: "Connect to MetaMask to set address",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
             "Your lockup transaction failed, wait for the timeout to refund.",
         failure_reason: "Failure reason",
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
-        onchain_address_create: "Create {{ asset }} address",
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
@@ -93,7 +96,7 @@ const dict = {
         delete_localstorage_single_swap:
             "Are you sure you want to clear Swap {{ id }} from your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
         tx_in_mempool: "Transaction is in mempool",
-        tx_in_mempool_subline: "waiting for confirmation to complete the swap",
+        tx_in_mempool_subline: "Waiting for confirmation to complete the swap",
         expired: "Swap expired!",
         invoice_pending: "Transaction received, paying invoice.",
         invoice_expired: "Invoice expired, try again!",
@@ -102,7 +105,7 @@ const dict = {
         pay_invoice_webln: "pay invoice via WebLN",
         select_asset: "Select {{ direction }} Asset",
         tx_confirmed: "Transaction confirmed",
-        tx_ready_to_claim: "claiming transaction now...",
+        tx_ready_to_claim: "Claiming transaction now...",
         transaction_refunded: "Boltz has refunded the Transaction",
         refunded: "Swap has been refunded",
         broadcasted: "Refund broadcasted",
@@ -135,6 +138,10 @@ const dict = {
         not_found: "404 - Page Not Found",
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
+        claim_prompt:
+            'Press "Claim" in order to open your connected wallet and confirm the displayed transaction.',
+        send_prompt:
+            'Press "Send" in order to open your connected wallet and confirm the displayed transaction.',
     },
     de: {
         language: "Deutsch",
@@ -206,7 +213,6 @@ const dict = {
         invoice_payment_failure:
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
         onchain_address: "{{ asset }}-Adresse eingeben",
-        onchain_address_create: "Erstelle {{ asset }}-Adresse",
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
@@ -350,7 +356,6 @@ const dict = {
         failure_reason: "Motivo del fallo",
         invoice_payment_failure: "No se pudo pagar su factura Lightning",
         onchain_address: "Ingrese la dirección de {{ asset }}",
-        onchain_address_create: "Create {{ asset }} address",
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",

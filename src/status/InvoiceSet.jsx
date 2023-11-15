@@ -7,14 +7,14 @@ import { formatAmount } from "../utils/denomination";
 import DownloadRefund from "../components/DownloadRefund";
 import { prefix0x, satoshiToWei } from "../utils/ethereum";
 import { invoiceQr, swap, denomination, asset } from "../signals";
+import EthereumTransaction from "../components/EthereumTransaction.jsx";
 
 const InvoiceSet = () => {
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
         return (
-            <button
-                class="btn"
+            <EthereumTransaction
                 onClick={async () => {
                     const contract = await getEtherSwap();
 
@@ -26,9 +26,11 @@ const InvoiceSet = () => {
                             value: satoshiToWei(swap().expectedAmount),
                         },
                     );
-                }}>
-                Send
-            </button>
+                }}
+                promptText={t("send_prompt")}
+                buttonText={t("send")}
+                waitingText={t("tx_in_mempool_subline")}
+            />
         );
     }
 
