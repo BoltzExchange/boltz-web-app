@@ -189,31 +189,29 @@ const Create = () => {
         if (!valid()) return;
 
         const assetName = asset();
+        const isRsk = assetName === RBTC;
 
-        const address = getAddress(assetName);
-        const net = getNetwork(assetName);
+        const keyPair = !isRsk ? ECPair.makeRandom() : null;
 
-        // TODO: not needed for ethereum
-        const pair = ECPair.makeRandom();
-        const privateKeyHex = pair.privateKey.toString("hex");
-        const publicKeyHex = pair.publicKey.toString("hex");
         let params = null;
         let preimage = null;
 
         if (reverse()) {
             preimage = randomBytes(32);
             const preimageHash = crypto.sha256(preimage).toString("hex");
+
             params = {
                 type: "reversesubmarine",
                 pairId: assetName + "/BTC",
                 orderSide: "buy",
                 invoiceAmount: Number(sendAmount()),
-                claimPublicKey: publicKeyHex,
                 preimageHash: preimageHash,
             };
 
-            if (asset() === RBTC) {
+            if (isRsk) {
                 params.claimAddress = onchainAddress();
+            } else {
+                params.claimPublicKey = keyPair.publicKey.toString("hex");
             }
         } else {
             if (isLnurl(invoice())) {
@@ -234,9 +232,12 @@ const Create = () => {
                 type: "submarine",
                 pairId: assetName + "/BTC",
                 orderSide: "sell",
-                refundPublicKey: publicKeyHex,
                 invoice: invoice(),
             };
+
+            if (!isRsk) {
+                params.refundPublicKey = keyPair.publicKey.toString("hex");
+            }
         }
 
         if (!(await feeCheck(t("feecheck")))) {
@@ -249,13 +250,16 @@ const Create = () => {
             fetcher(
                 "/createswap",
                 (data) => {
-                    data.privateKey = privateKeyHex;
                     data.date = new Date().getTime();
                     data.reverse = reverse();
                     data.asset = asset();
                     data.receiveAmount = Number(receiveAmount());
                     data.sendAmount = Number(sendAmount());
                     data.onchainAddress = onchainAddress();
+
+                    if (keyPair !== null) {
+                        data.privateKey = keyPair.privateKey.toString("hex");
+                    }
 
                     if (preimage !== null) {
                         data.preimage = preimage.toString("hex");
