@@ -1,4 +1,4 @@
-export * from "./configs/config.common";
+export * from "./configs/templates/defaults";
 
 const apiUrl = "http://localhost:9001";
 const blockExplorerUrl = "http://localhost:8090";

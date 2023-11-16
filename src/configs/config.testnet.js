@@ -1,6 +1,4 @@
-export * from "./configs/config.common";
-
-export const torUrl = "";
+export * from "./configs/templates/defaults";
 
 const apiUrl = "https://testnet.boltz.exchange/api";
 const blockExplorerUrl = "https://mempool.space/testnet";

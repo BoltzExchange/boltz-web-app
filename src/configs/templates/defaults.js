@@ -1,8 +1,7 @@
 export const defaultLanguage = "en";
 export const isBeta = false;
 
-export const torUrl =
-    "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/";
+export const torUrl = "";
 export const discordUrl = "https://discord.gg/QBvZGcW";
 export const twitterUrl = "https://twitter.com/boltzhq";
 export const githubUrl = "https://github.com/BoltzExchange";
