@@ -25,25 +25,22 @@ const SwapCreated = () => {
 
     return (
         <div>
-            <h4>{t("warning_return")}</h4>
-            <hr />
-            <p>
-                {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight}
-            </p>
-            <hr />
-            <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
-            <hr />
             <h2>
-                {t("send_to", {
+                {t("pay_invoice_to", {
                     amount: formatAmount(swap().sendAmount),
                     denomination: denomination(),
                 })}
             </h2>
+            <hr />
+            <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
+            <hr />
             <p
                 onclick={() => clipboard(swap().invoice, t("copied"))}
                 class="address-box break-word">
                 {cropInvoice(swap().invoice)}
             </p>
+            <hr />
+            <h3>{t("warning_return")}</h3>
             <hr />
             <Show when={webln()}>
                 <span
@@ -51,6 +48,7 @@ const SwapCreated = () => {
                     onClick={() => payWeblnInvoice(swap().invoice)}>
                     {t("pay_invoice_webln")}
                 </span>
+                <hr />
             </Show>
             <span
                 class="btn"

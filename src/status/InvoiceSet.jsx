@@ -7,28 +7,23 @@ import { formatAmount } from "../utils/denomination";
 const InvoiceSet = () => {
     return (
         <div>
-            <p>
-                {t("send_to_desc", {
-                    amount: formatAmount(swap().expectedAmount),
-                    denomination: denomination(),
-                    blockheight: swap().timeoutBlockHeight,
-                })}
-                <br />
-            </p>
-            <hr />
-            <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
-            <hr />
             <h2>
                 {t("send_to", {
                     amount: formatAmount(swap().expectedAmount),
-                    denomination: denomination(),
+                    asset: swap().asset,
                 })}
             </h2>
+            <hr />
+            <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
+            <hr />
             <p
                 onclick={() => clipboard(swap().address, t("copied"))}
                 class="address-box break-word">
                 {swap().address}
             </p>
+            <hr />
+            <h3>{t("warning_expiry", { hours: 24 })}</h3>
+            <hr />
             <div class="btns">
                 <span
                     class="btn"
