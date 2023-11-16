@@ -1,5 +1,5 @@
-import bolt11 from "bolt11";
 import { bech32, utf8 } from "@scure/base";
+import bolt11 from "bolt11";
 import log from "loglevel";
 
 import { bolt11_prefix } from "../config";

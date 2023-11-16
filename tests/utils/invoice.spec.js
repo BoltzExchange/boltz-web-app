@@ -1,11 +1,12 @@
-import { describe, expect } from "vitest";
 import bolt11 from "bolt11";
+import { describe, expect } from "vitest";
+
 import {
-    getExpiryEtaHours,
     decodeInvoice,
+    getExpiryEtaHours,
     isLnurl,
-    trimLightningPrefix,
     maxExpiryHours,
+    trimLightningPrefix,
 } from "../../src/utils/invoice";
 
 describe("invoice", () => {

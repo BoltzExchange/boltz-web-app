@@ -1,5 +1,6 @@
 import log from "loglevel";
 import { expect } from "vitest";
+
 import { validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {

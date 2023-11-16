@@ -1,8 +1,8 @@
-import t from "../i18n";
+import DownloadRefund from "../components/DownloadRefund";
 import { clipboard } from "../helper";
+import t from "../i18n";
 import { invoiceQr, swap } from "../signals";
 import { formatAmount } from "../utils/denomination";
-import DownloadRefund from "../components/DownloadRefund";
 import { getExpiryEtaHours } from "../utils/invoice";
 
 const InvoiceSet = () => {
