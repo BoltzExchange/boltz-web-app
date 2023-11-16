@@ -9,9 +9,10 @@ const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 // ui
 export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
-export const [assetSelected, setAssetSelected] = createSignal();
+export const [assetSelected, setAssetSelected] = createSignal(null);
 export const [asset, setAsset] = createSignal(defaultSelection);
 export const [reverse, setReverse] = createSignal(true);
+export const [hideHero, setHideHero] = createSignal(false);
 
 // fees
 export const [nodeStats, setNodeStats] = createSignal(null);

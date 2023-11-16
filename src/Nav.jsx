@@ -5,7 +5,12 @@ import "./style/nav.scss";
 import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
-import { setI18nConfigured, hamburger, setHamburger } from "./signals";
+import {
+    setI18nConfigured,
+    hamburger,
+    setHamburger,
+    setHideHero,
+} from "./signals";
 import { blogUrl, docsUrl, discordUrl, torUrl } from "./config";
 
 const Nav = ({ network }) => {
@@ -14,7 +19,7 @@ const Nav = ({ network }) => {
         <nav>
             <Warnings />
             <div class="nav-inner">
-                <A id="logo" href="/">
+                <A id="logo" href="/" onClick={() => setHideHero(false)}>
                     <img src={logo} alt="boltz.exchange logo" />
                 </A>
                 <Show when={network !== "main"}>
