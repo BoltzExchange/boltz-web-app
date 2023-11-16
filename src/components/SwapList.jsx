@@ -39,8 +39,8 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
                             class="past-asset">
                             -&gt;
                         </span>
-                        &nbsp;{t("id")}: {swap.id}, {t("created")}:{" "}
-                        {formatDate(swap.date)}&nbsp;
+                        <span class="past-asset-id">{t("id")}:&nbsp;{swap.id}</span>
+                        <span class="past-asset-date">{t("created")}:&nbsp;{formatDate(swap.date)}</span>
                         <Show when={deleteButton}>
                             <span
                                 class="btn-small btn-danger"

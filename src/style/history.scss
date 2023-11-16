@@ -1,6 +1,17 @@
 #past-swaps {
     text-align: left;
-    padding: 0 22px;
+    margin: auto;
+    display: inline-block;
+}
+@media (max-width: 468px) {
+    #past-swaps {
+        text-align: center;
+        line-height: 1.66;
+    }
+}
+.past-asset-date,
+.past-asset-id {
+    padding: 0 9px 0 0;
 }
 .past-asset:after,
 .past-asset:before {
