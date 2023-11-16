@@ -10,10 +10,15 @@
     }
 }
 
-.swaplist-asset-date,
-.swaplist-asset-id {
+.swaplist-date,
+.swaplist-id-container {
     padding: 0 9px 0 0;
 }
+
+.swaplist-id {
+    font-family: monospace;
+}
+
 .swaplist-asset:after,
 .swaplist-asset:before {
     content: " ";

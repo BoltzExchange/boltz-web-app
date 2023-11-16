@@ -40,10 +40,11 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
                             class="swaplist-asset">
                             -&gt;
                         </span>
-                        <span class="swaplist-asset-id">
-                            {t("id")}:&nbsp;{swap.id}
+                        <span class="swaplist-id-container">
+                            {t("id")}:&nbsp;
+                            <span class="swaplist-id">{swap.id}</span>
                         </span>
-                        <span class="swaplist-asset-date">
+                        <span class="swaplist-date">
                             {t("created")}:&nbsp;{formatDate(swap.date)}
                         </span>
                         <Show when={deleteButton}>
