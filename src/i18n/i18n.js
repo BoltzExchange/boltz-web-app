@@ -419,7 +419,8 @@ const dict = {
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
         warning_return:
             "Importante: Regresa a esta página después de pagar la factura!",
-        warning_expiry: "Importante: Asegúrese de que la transacción se confirma en {{ hours }} horas",
+        warning_expiry:
+            "Importante: Asegúrese de que la transacción se confirma en {{ hours }} horas",
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",

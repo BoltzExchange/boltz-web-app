@@ -1,3 +1,5 @@
+import log from "loglevel";
+import { Buffer as BufferBrowser } from "buffer";
 import { crypto, script } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
@@ -7,18 +9,10 @@ import log from "loglevel";
 import { decodeAddress, secp, setup } from "../compat";
 import { ECPair } from "../ecpair/ecpair";
 import { denominations, formatAmountDenomination } from "./denomination";
+import { decodeInvoice } from "./invoice";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
-
-export const decodeInvoice = (invoice) => {
-    const decoded = bolt11.decode(invoice);
-    return {
-        satoshis: decoded.satoshis,
-        preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
-            .data,
-    };
-};
 
 const getScriptHashFunction = (isNativeSegwit) =>
     isNativeSegwit ? Scripts.p2wshOutput : Scripts.p2shP2wshOutput;

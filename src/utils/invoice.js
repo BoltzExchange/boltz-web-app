@@ -1,3 +1,4 @@
+import bolt11 from "bolt11";
 import { bech32, utf8 } from "@scure/base";
 import log from "loglevel";
 
@@ -5,6 +6,15 @@ import { bolt11_prefix } from "../config";
 import { checkResponse, errorHandler } from "../helper";
 
 const invoicePrefix = "lightning:";
+
+export const decodeInvoice = (invoice) => {
+    const decoded = bolt11.decode(invoice);
+    return {
+        satoshis: decoded.satoshis,
+        preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
+            .data,
+    };
+};
 
 export function fetchLnurl(lnurl, amount_sat) {
     return new Promise((resolve, reject) => {
