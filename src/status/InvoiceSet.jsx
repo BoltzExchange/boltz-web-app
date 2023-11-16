@@ -6,8 +6,15 @@ import { decodeInvoice } from "../utils/validation";
 import { formatAmount } from "../utils/denomination";
 import DownloadRefund from "../components/DownloadRefund";
 import { prefix0x, satoshiToWei } from "../utils/ethereum";
-import { invoiceQr, swap, denomination, asset } from "../signals";
 import EthereumTransaction from "../components/EthereumTransaction.jsx";
+import {
+    swap,
+    asset,
+    swaps,
+    setSwaps,
+    invoiceQr,
+    denomination,
+} from "../signals";
 
 const InvoiceSet = () => {
     if (asset() === RBTC) {
@@ -18,7 +25,7 @@ const InvoiceSet = () => {
                 onClick={async () => {
                     const contract = await getEtherSwap();
 
-                    await contract.lock(
+                    const tx = await contract.lock(
                         prefix0x(decodeInvoice(swap().invoice).preimageHash),
                         swap().claimAddress,
                         swap().timeoutBlockHeight,
@@ -26,10 +33,18 @@ const InvoiceSet = () => {
                             value: satoshiToWei(swap().expectedAmount),
                         },
                     );
+
+                    const swapsTmp = swaps();
+                    const currentSwap = swapsTmp.find(
+                        (s) => swap().id === s.id,
+                    );
+                    currentSwap.lockupTx = tx.hash;
+                    setSwaps(swapsTmp);
                 }}
                 promptText={t("send_prompt")}
                 buttonText={t("send")}
                 waitingText={t("tx_in_mempool_subline")}
+                showHr={false}
             />
         );
     }

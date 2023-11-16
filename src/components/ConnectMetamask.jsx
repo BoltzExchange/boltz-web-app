@@ -27,7 +27,10 @@ const ConnectMetamask = ({ showAddress }) => {
             </Show>
             <Show when={address() !== undefined}>
                 <Show when={showAddress}>
-                    <button onClick={() => setAddress(undefined)} class="btn btn-light" type="text">
+                    <button
+                        onClick={() => setAddress(undefined)}
+                        class="btn btn-light"
+                        type="text">
                         {address() || t("connect_to_address")}
                     </button>
                 </Show>
