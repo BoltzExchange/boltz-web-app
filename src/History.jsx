@@ -11,7 +11,6 @@ import {
     setNotificationType,
     setNotification,
 } from "./signals";
-import "./style/history.scss";
 
 // Throws when the file is invalid
 const validateBackupFile = (file) => {

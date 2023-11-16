@@ -1,20 +1,21 @@
-#past-swaps {
+#swaplist {
     text-align: left;
     margin: auto;
     display: inline-block;
 }
 @media (max-width: 468px) {
-    #past-swaps {
+    #swaplist {
         text-align: center;
         line-height: 1.66;
     }
 }
-.past-asset-date,
-.past-asset-id {
+
+.swaplist-asset-date,
+.swaplist-asset-id {
     padding: 0 9px 0 0;
 }
-.past-asset:after,
-.past-asset:before {
+.swaplist-asset:after,
+.swaplist-asset:before {
     content: " ";
     display: inline-block;
     width: 17px;
@@ -24,19 +25,19 @@
     transform: scale(1.5);
     margin: 0 6px;
 }
-.past-asset[data-reverse="false"]:after,
-.past-asset[data-reverse="true"]:before {
+.swaplist-asset[data-reverse="false"]:after,
+.swaplist-asset[data-reverse="true"]:before {
     background-image: url(../assets/lightning-icon.svg);
 }
-.past-asset[data-asset="BTC"][data-reverse="true"]:after,
-.past-asset[data-asset="BTC"][data-reverse="false"]:before {
+.swaplist-asset[data-asset="BTC"][data-reverse="true"]:after,
+.swaplist-asset[data-asset="BTC"][data-reverse="false"]:before {
     background-image: url(../assets/bitcoin-icon.svg);
 }
-.past-asset[data-asset="L-BTC"][data-reverse="true"]:after,
-.past-asset[data-asset="L-BTC"][data-reverse="false"]:before {
+.swaplist-asset[data-asset="L-BTC"][data-reverse="true"]:after,
+.swaplist-asset[data-asset="L-BTC"][data-reverse="false"]:before {
     background-image: url(../assets/liquid-icon.svg);
 }
 
-.past-asset {
+.swaplist-asset {
     display: inline-block;
 }
