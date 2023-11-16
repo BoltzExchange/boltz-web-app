@@ -8,7 +8,7 @@ import {
 } from "../../src/utils/swapStatus";
 import EventSource from "eventsource";
 import { createServer } from "https";
-import { vi, test, expect, describe, afterEach, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 global.EventSource = EventSource;
 

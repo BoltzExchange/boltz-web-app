@@ -1,6 +1,6 @@
 import { clipboard } from "../helper";
 import t from "../i18n";
-import { invoiceQr, swap, webln, denomination } from "../signals";
+import { denomination, invoiceQr, swap, webln } from "../signals";
 import { formatAmount } from "../utils/denomination";
 import { enableWebln } from "../utils/webln";
 import log from "loglevel";

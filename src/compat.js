@@ -1,6 +1,6 @@
 import { network } from "./config";
 import zkp from "@vulpemventures/secp256k1-zkp";
-import { address, networks, Transaction } from "bitcoinjs-lib";
+import { Transaction, address, networks } from "bitcoinjs-lib";
 import {
     constructClaimTransaction,
     constructRefundTransaction,
@@ -12,10 +12,10 @@ import {
     constructRefundTransaction as lcRT,
 } from "boltz-core/dist/lib/liquid";
 import {
+    confidential,
+    Transaction as l_Transaction,
     address as l_address,
     networks as l_networks,
-    Transaction as l_Transaction,
-    confidential,
 } from "liquidjs-lib";
 
 export let secp;

@@ -12,13 +12,13 @@ import Refund from "./Refund";
 import { loglevel, network } from "./config";
 import { checkReferralId } from "./helper";
 import { detectLanguage } from "./i18n/detect";
-import { setWebln, setWasmSupported } from "./signals";
+import { setWasmSupported, setWebln } from "./signals";
 import "./style/index.scss";
 import "./utils/patches";
 import { swapChecker } from "./utils/swapChecker";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import { detectWebLNProvider } from "./utils/webln";
-import { Router, Route, Routes, Navigate } from "@solidjs/router";
+import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
 import { render } from "solid-js/web";
 

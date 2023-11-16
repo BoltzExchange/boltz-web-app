@@ -2,10 +2,10 @@ import SwapList from "./components/SwapList";
 import { isIos } from "./helper";
 import t from "./i18n";
 import {
-    swaps,
-    setSwaps,
-    setNotificationType,
     setNotification,
+    setNotificationType,
+    setSwaps,
+    swaps,
 } from "./signals";
 import { downloadJson } from "./utils/download";
 import { useNavigate } from "@solidjs/router";

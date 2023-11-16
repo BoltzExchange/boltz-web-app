@@ -4,12 +4,12 @@ import fetcher, { refund, refundAddressChange } from "../helper";
 import t from "../i18n";
 import {
     failureReason,
+    setTransactionToRefund,
     swap,
     timeoutEta,
-    setTransactionToRefund,
 } from "../signals";
 import log from "loglevel";
-import { createSignal, createEffect } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 
 const InvoiceFailedToPay = () => {
     const [valid, setValid] = createSignal(false);

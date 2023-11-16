@@ -1,7 +1,7 @@
 import DownloadRefund from "../components/DownloadRefund";
 import { clipboard } from "../helper";
 import t from "../i18n";
-import { invoiceQr, swap, denomination } from "../signals";
+import { denomination, invoiceQr, swap } from "../signals";
 import { formatAmount } from "../utils/denomination";
 
 const InvoiceSet = () => {

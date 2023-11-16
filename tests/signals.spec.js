@@ -3,9 +3,9 @@ import {
     asset,
     reverse,
     setAsset,
-    setReverse,
-    setAssetSend,
     setAssetReceive,
+    setAssetSend,
+    setReverse,
 } from "../src/signals.js";
 import { expect } from "vitest";
 

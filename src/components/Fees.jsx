@@ -1,27 +1,27 @@
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
-import { isMobile, fetchPairs } from "../helper";
+import { fetchPairs, isMobile } from "../helper";
 import t from "../i18n";
 import {
-    config,
-    reverse,
     asset,
-    setMaximum,
-    setMinimum,
-    setBoltzFee,
-    setMinerFee,
-    sendAmount,
-    denomination,
-    setDenomination,
     boltzFee,
+    config,
+    denomination,
     minerFee,
+    reverse,
+    sendAmount,
+    setBoltzFee,
+    setDenomination,
+    setMaximum,
+    setMinerFee,
+    setMinimum,
 } from "../signals";
 import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
 import { formatAmount } from "../utils/denomination";
-import { createEffect, Show } from "solid-js";
+import { Show, createEffect } from "solid-js";
 
 const Fees = () => {
     createEffect(() => {

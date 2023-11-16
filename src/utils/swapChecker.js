@@ -1,4 +1,4 @@
-import { setSwapStatusAndClaim, getApiUrl, fetcher } from "../helper";
+import { fetcher, getApiUrl, setSwapStatusAndClaim } from "../helper";
 import { swap, swaps } from "../signals";
 import { swapStatusFinal } from "./swapStatus";
 import log from "loglevel";

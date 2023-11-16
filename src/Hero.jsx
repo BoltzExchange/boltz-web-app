@@ -4,10 +4,10 @@ import lightning from "./assets/lightning-icon.svg";
 import liquid from "./assets/liquid-icon.svg";
 import { fetchNodeInfo } from "./helper";
 import t from "./i18n";
-import { nodeStats, hideHero, setHideHero } from "./signals";
+import { hideHero, nodeStats, setHideHero } from "./signals";
 import "./style/hero.scss";
 import { useNavigate } from "@solidjs/router";
-import { createSignal, createMemo } from "solid-js";
+import { createMemo, createSignal } from "solid-js";
 
 const Hero = () => {
     const navigate = useNavigate();

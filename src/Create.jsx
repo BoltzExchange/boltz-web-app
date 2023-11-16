@@ -4,57 +4,57 @@ import AssetSelect from "./components/AssetSelect";
 import ClickableAmount from "./components/ClickableAmount";
 import Fees from "./components/Fees";
 import Reverse from "./components/Reverse";
-import { sideSend, sideReceive } from "./consts";
+import { sideReceive, sideSend } from "./consts";
 import { ECPair } from "./ecpair/ecpair";
-import { fetcher, fetchPairs, feeCheck } from "./helper";
+import { feeCheck, fetchPairs, fetcher } from "./helper";
 import t from "./i18n";
 import {
-    online,
-    swaps,
-    setSwaps,
-    asset,
-    denomination,
-    amountChanged,
-    setAmountChanged,
-    sendAmount,
-    setSendAmount,
-    sendAmountFormatted,
-    setSendAmountFormatted,
-    receiveAmount,
-    setReceiveAmount,
-    receiveAmountFormatted,
-    setReceiveAmountFormatted,
-    minimum,
-    maximum,
-    reverse,
-    valid,
-    setValid,
-    invoiceValid,
-    setInvoiceValid,
     addressValid,
-    setAddressValid,
-    invoice,
-    setInvoice,
-    onchainAddress,
-    setOnchainAddress,
-    setNotification,
-    setNotificationType,
-    webln,
-    wasmSupported,
-    config,
-    boltzFee,
-    minerFee,
+    amountChanged,
+    asset,
     assetReceive,
-    assetSend,
     assetSelect,
     assetSelected,
+    assetSend,
+    boltzFee,
+    config,
+    denomination,
+    invoice,
+    invoiceValid,
+    maximum,
+    minerFee,
+    minimum,
+    onchainAddress,
+    online,
+    receiveAmount,
+    receiveAmountFormatted,
+    reverse,
+    sendAmount,
+    sendAmountFormatted,
+    setAddressValid,
+    setAmountChanged,
+    setInvoice,
+    setInvoiceValid,
+    setNotification,
+    setNotificationType,
+    setOnchainAddress,
+    setReceiveAmount,
+    setReceiveAmountFormatted,
+    setSendAmount,
+    setSendAmountFormatted,
+    setSwaps,
+    setValid,
+    swaps,
+    valid,
+    wasmSupported,
+    webln,
 } from "./signals";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
+    calculateDigits,
     convertAmount,
     denominations,
     formatAmount,
-    calculateDigits,
     getValidationRegex,
 } from "./utils/denomination";
 import {
@@ -70,12 +70,12 @@ import { crypto } from "bitcoinjs-lib";
 import { randomBytes } from "crypto";
 import log from "loglevel";
 import {
+    Show,
+    createEffect,
     createMemo,
     createSignal,
-    createEffect,
     on,
     onMount,
-    Show,
 } from "solid-js";
 
 const Create = () => {

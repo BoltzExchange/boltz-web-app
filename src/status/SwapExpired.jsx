@@ -1,10 +1,10 @@
 import fetcher, { refund, refundAddressChange } from "../helper";
 import t from "../i18n";
 import {
-    swap,
     failureReason,
-    transactionToRefund,
     setTransactionToRefund,
+    swap,
+    transactionToRefund,
 } from "../signals";
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";

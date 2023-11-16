@@ -1,16 +1,16 @@
 import BlockExplorer from "./components/BlockExplorer";
 import LoadingSpinner from "./components/LoadingSpinner";
-import { qr, fetcher, checkForFailed } from "./helper";
+import { checkForFailed, fetcher, qr } from "./helper";
 import t from "./i18n";
 import {
-    setReverse,
+    setFailureReason,
     setInvoiceQr,
-    swap,
+    setReverse,
     setSwap,
-    swapStatus,
     setSwapStatus,
     setSwapStatusTransaction,
-    setFailureReason,
+    swap,
+    swapStatus,
     swaps,
 } from "./signals";
 import InvoiceExpired from "./status/InvoiceExpired";

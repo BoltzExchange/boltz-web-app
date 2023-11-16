@@ -1,13 +1,13 @@
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
-import { blogUrl, docsUrl, discordUrl, torUrl } from "./config";
+import { blogUrl, discordUrl, docsUrl, torUrl } from "./config";
 import t from "./i18n";
 import locales from "./i18n/i18n.js";
 import {
-    setI18nConfigured,
     hamburger,
     setHamburger,
     setHideHero,
+    setI18nConfigured,
 } from "./signals";
 import "./style/nav.scss";
 import { A } from "@solidjs/router";

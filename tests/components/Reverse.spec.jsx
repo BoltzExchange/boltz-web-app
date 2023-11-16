@@ -1,14 +1,14 @@
 import Reverse from "../../src/components/Reverse";
 import { BTC, LN } from "../../src/config";
 import {
-    reverse,
-    assetSend,
     assetReceive,
-    setAssetSend,
+    assetSend,
+    reverse,
     setAssetReceive,
+    setAssetSend,
 } from "../../src/signals";
 import { fireEvent, render } from "@solidjs/testing-library";
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 describe("Reverse", () => {
     test("should reverse assets", async () => {
