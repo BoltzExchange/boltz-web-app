@@ -18,7 +18,7 @@ const ConnectMetamask = ({ showAddress }) => {
             <Show when={address() === undefined}>
                 <button
                     id="metamask"
-                    class="btn"
+                    class="btn btn-light"
                     onClick={async () =>
                         setAddress(await (await getSigner()).getAddress())
                     }>
@@ -26,21 +26,11 @@ const ConnectMetamask = ({ showAddress }) => {
                 </button>
             </Show>
             <Show when={address() !== undefined}>
-                <button
-                    id="metamask"
-                    class="btn btn-light"
-                    onClick={() => setAddress(undefined)}>
-                    {t("disconnect_metamask")}
-                </button>
-            </Show>
-
-            <br />
-            <Show when={showAddress}>
-                <input
-                    disabled
-                    type="text"
-                    value={address() || t("connect_to_address")}
-                />
+                <Show when={showAddress}>
+                    <button onClick={() => setAddress(undefined)} class="btn btn-light" type="text">
+                        {address() || t("connect_to_address")}
+                    </button>
+                </Show>
             </Show>
         </>
     );

@@ -21,7 +21,9 @@ const EthereumTransaction = ({
                     }}>
                     {buttonText}
                 </button>
+                <hr />
             </Show>
+
             <Show when={txSent()}>
                 <p>{waitingText}</p>
                 <LoadingSpinner />
