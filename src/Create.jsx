@@ -1,41 +1,13 @@
-import log from "loglevel";
-import { randomBytes } from "crypto";
-import { crypto } from "bitcoinjs-lib";
-import { useNavigate } from "@solidjs/router";
-import {
-    createMemo,
-    createSignal,
-    createEffect,
-    on,
-    onMount,
-    Show,
-} from "solid-js";
-import t from "./i18n";
-import Fees from "./components/Fees";
-import Asset from "./components/Asset";
-import { ECPair } from "./ecpair/ecpair";
-import Reverse from "./components/Reverse";
-import { enableWebln } from "./utils/webln";
-import { sideSend, sideReceive } from "./consts";
 import { getAddress, getNetwork } from "./compat";
+import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
-import { fetcher, fetchPairs, feeCheck } from "./helper";
 import ClickableAmount from "./components/ClickableAmount";
-import { decodeInvoice, validateResponse } from "./utils/validation";
-import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
-import {
-    fetchLnurl,
-    isInvoice,
-    isLnurl,
-    trimLightningPrefix,
-} from "./utils/invoice";
-import {
-    convertAmount,
-    denominations,
-    formatAmount,
-    calculateDigits,
-    getValidationRegex,
-} from "./utils/denomination";
+import Fees from "./components/Fees";
+import Reverse from "./components/Reverse";
+import { sideSend, sideReceive } from "./consts";
+import { ECPair } from "./ecpair/ecpair";
+import { fetcher, fetchPairs, feeCheck } from "./helper";
+import t from "./i18n";
 import {
     online,
     swaps,
@@ -77,6 +49,34 @@ import {
     assetSelect,
     assetSelected,
 } from "./signals";
+import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
+import {
+    convertAmount,
+    denominations,
+    formatAmount,
+    calculateDigits,
+    getValidationRegex,
+} from "./utils/denomination";
+import {
+    fetchLnurl,
+    isInvoice,
+    isLnurl,
+    trimLightningPrefix,
+} from "./utils/invoice";
+import { decodeInvoice, validateResponse } from "./utils/validation";
+import { enableWebln } from "./utils/webln";
+import { useNavigate } from "@solidjs/router";
+import { crypto } from "bitcoinjs-lib";
+import { randomBytes } from "crypto";
+import log from "loglevel";
+import {
+    createMemo,
+    createSignal,
+    createEffect,
+    on,
+    onMount,
+    Show,
+} from "solid-js";
 
 const Create = () => {
     let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;

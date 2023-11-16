@@ -1,6 +1,6 @@
-import { describe, expect } from "vitest";
 import { defaultLanguage } from "../../src/config";
 import { getNavigatorLanguage } from "../../src/i18n/detect";
+import { describe, expect } from "vitest";
 
 describe("detect", () => {
     test.each`

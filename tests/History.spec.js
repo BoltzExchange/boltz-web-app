@@ -1,5 +1,5 @@
-import { describe, test, expect } from "vitest";
 import { validateBackupFile } from "../src/History";
+import { describe, test, expect } from "vitest";
 
 describe("History", () => {
     test.each`

@@ -1,5 +1,5 @@
-import { describe, expect } from "vitest";
 import { rawDict } from "../../src/i18n/i18n";
+import { describe, expect } from "vitest";
 
 describe("i18n", () => {
     test("should have same strings for all languages", () => {

@@ -1,5 +1,3 @@
-import { createEffect } from "solid-js";
-
 import {
     notification,
     setNotification,
@@ -7,6 +5,7 @@ import {
     setNotificationType,
 } from "./signals";
 import "./style/notification.scss";
+import { createEffect } from "solid-js";
 
 const Notification = () => {
     createEffect(() => {

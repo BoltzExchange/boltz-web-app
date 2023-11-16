@@ -1,9 +1,9 @@
+import Fees from "../../src/components/Fees";
+import * as signals from "../../src/signals";
+import { calculateSendAmount } from "../../src/utils/calculate";
+import { cfg } from "../config";
 import { render } from "@solidjs/testing-library";
 import { beforeAll, beforeEach, expect, vi } from "vitest";
-import { cfg } from "../config";
-import * as signals from "../../src/signals";
-import Fees from "../../src/components/Fees";
-import { calculateSendAmount } from "../../src/utils/calculate";
 
 describe("Fees component", () => {
     beforeAll(() => {

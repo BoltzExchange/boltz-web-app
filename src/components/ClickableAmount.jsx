@@ -1,5 +1,5 @@
-import { Show } from "solid-js";
 import { formatAmount } from "../utils/denomination";
+import { Show } from "solid-js";
 
 const ClickableAmount = ({ label, onClick, amount }) => {
     return (

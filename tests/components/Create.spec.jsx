@@ -1,14 +1,14 @@
+import Create from "../../src/Create";
+import { sideReceive, sideSend } from "../../src/consts.js";
+import i18n from "../../src/i18n/i18n";
+import * as signals from "../../src/signals";
+import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
+import { calculateReceiveAmount } from "../../src/utils/calculate.js";
+import { decodeInvoice } from "../../src/utils/validation.js";
+import { cfg } from "../config";
 import { Router } from "@solidjs/router";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { beforeAll, beforeEach, expect, vi } from "vitest";
-import { cfg } from "../config";
-import Create from "../../src/Create";
-import i18n from "../../src/i18n/i18n";
-import * as signals from "../../src/signals";
-import { sideReceive, sideSend } from "../../src/consts.js";
-import { decodeInvoice } from "../../src/utils/validation.js";
-import { calculateReceiveAmount } from "../../src/utils/calculate.js";
-import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
 
 describe("Create", () => {
     beforeAll(() => {

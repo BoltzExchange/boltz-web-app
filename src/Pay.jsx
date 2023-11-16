@@ -1,5 +1,7 @@
-import log from "loglevel";
-import { Show, createEffect, onCleanup } from "solid-js";
+import BlockExplorer from "./components/BlockExplorer";
+import LoadingSpinner from "./components/LoadingSpinner";
+import { qr, fetcher, checkForFailed } from "./helper";
+import t from "./i18n";
 import {
     setReverse,
     setInvoiceQr,
@@ -11,23 +13,21 @@ import {
     setFailureReason,
     swaps,
 } from "./signals";
-import t from "./i18n";
-import { useParams } from "@solidjs/router";
+import InvoiceExpired from "./status/InvoiceExpired";
+import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
+import InvoicePending from "./status/InvoicePending";
 import InvoiceSet from "./status/InvoiceSet";
 import SwapCreated from "./status/SwapCreated";
 import SwapExpired from "./status/SwapExpired";
 import SwapRefunded from "./status/SwapRefunded";
-import InvoicePending from "./status/InvoicePending";
-import InvoiceExpired from "./status/InvoiceExpired";
-import { swapStatusFailed } from "./utils/swapStatus";
-import BlockExplorer from "./components/BlockExplorer";
-import { qr, fetcher, checkForFailed } from "./helper";
-import LoadingSpinner from "./components/LoadingSpinner";
-import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
 import TransactionClaimed from "./status/TransactionClaimed";
-import TransactionMempool from "./status/TransactionMempool";
 import TransactionConfirmed from "./status/TransactionConfirmed";
 import TransactionLockupFailed from "./status/TransactionLockupFailed";
+import TransactionMempool from "./status/TransactionMempool";
+import { swapStatusFailed } from "./utils/swapStatus";
+import { useParams } from "@solidjs/router";
+import log from "loglevel";
+import { Show, createEffect, onCleanup } from "solid-js";
 
 const Pay = () => {
     const params = useParams();

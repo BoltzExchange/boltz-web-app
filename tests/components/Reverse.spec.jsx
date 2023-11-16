@@ -1,7 +1,5 @@
-import { describe, test, expect } from "vitest";
-import { fireEvent, render } from "@solidjs/testing-library";
-import { BTC, LN } from "../../src/config";
 import Reverse from "../../src/components/Reverse";
+import { BTC, LN } from "../../src/config";
 import {
     reverse,
     assetSend,
@@ -9,6 +7,8 @@ import {
     setAssetSend,
     setAssetReceive,
 } from "../../src/signals";
+import { fireEvent, render } from "@solidjs/testing-library";
+import { describe, test, expect } from "vitest";
 
 describe("Reverse", () => {
     test("should reverse assets", async () => {

@@ -1,5 +1,5 @@
-import { BigNumber } from "bignumber.js";
 import { boltzFee, minerFee, reverse } from "../signals";
+import { BigNumber } from "bignumber.js";
 
 const bigRound = (big) => {
     return big.integerValue(BigNumber.ROUND_CEIL);

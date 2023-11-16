@@ -1,17 +1,17 @@
-import { A } from "@solidjs/router";
-import { For, Show } from "solid-js";
-import t from "./i18n";
-import "./style/nav.scss";
-import locales from "./i18n/i18n.js";
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
+import { blogUrl, docsUrl, discordUrl, torUrl } from "./config";
+import t from "./i18n";
+import locales from "./i18n/i18n.js";
 import {
     setI18nConfigured,
     hamburger,
     setHamburger,
     setHideHero,
 } from "./signals";
-import { blogUrl, docsUrl, discordUrl, torUrl } from "./config";
+import "./style/nav.scss";
+import { A } from "@solidjs/router";
+import { For, Show } from "solid-js";
 
 const Nav = ({ network }) => {
     let timeout;

@@ -1,9 +1,7 @@
-import { createEffect, Show } from "solid-js";
-import t from "../i18n";
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
-import { formatAmount } from "../utils/denomination";
 import { isMobile, fetchPairs } from "../helper";
+import t from "../i18n";
 import {
     config,
     reverse,
@@ -22,6 +20,8 @@ import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
+import { formatAmount } from "../utils/denomination";
+import { createEffect, Show } from "solid-js";
 
 const Fees = () => {
     createEffect(() => {

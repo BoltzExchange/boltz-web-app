@@ -1,10 +1,10 @@
+import { clipboard } from "../helper";
+import t from "../i18n";
+import { invoiceQr, swap, webln, denomination } from "../signals";
+import { formatAmount } from "../utils/denomination";
+import { enableWebln } from "../utils/webln";
 import log from "loglevel";
 import { Show } from "solid-js";
-import t from "../i18n";
-import { clipboard } from "../helper";
-import { enableWebln } from "../utils/webln";
-import { formatAmount } from "../utils/denomination";
-import { invoiceQr, swap, webln, denomination } from "../signals";
 
 const SwapCreated = () => {
     const payWeblnInvoice = async (pr) => {

@@ -1,5 +1,5 @@
-import { describe, expect } from "vitest";
 import { isLnurl, trimLightningPrefix } from "../../src/utils/invoice";
+import { describe, expect } from "vitest";
 
 describe("invoice", () => {
     test.each`

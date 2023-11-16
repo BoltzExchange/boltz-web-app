@@ -1,11 +1,11 @@
-import log from "loglevel";
-import bolt11 from "bolt11";
-import { Buffer as BufferBrowser } from "buffer";
-import { crypto, script } from "bitcoinjs-lib";
-import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
-import { ECPair } from "../ecpair/ecpair";
 import { decodeAddress, secp, setup } from "../compat";
+import { ECPair } from "../ecpair/ecpair";
 import { denominations, formatAmountDenomination } from "./denomination";
+import { crypto, script } from "bitcoinjs-lib";
+import bolt11 from "bolt11";
+import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
+import { Buffer as BufferBrowser } from "buffer";
+import log from "loglevel";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts

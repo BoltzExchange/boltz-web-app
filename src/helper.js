@@ -1,11 +1,15 @@
-import log from "loglevel";
-import QRCode from "qrcode/lib/server";
-import { Buffer } from "buffer";
-import { detectSwap } from "boltz-core";
-import { ECPair } from "./ecpair/ecpair";
-import { feeChecker } from "./utils/feeChecker";
-import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
+import {
+    getNetwork,
+    getTransaction,
+    getConstructClaimTransaction,
+    getConstructRefundTransaction,
+    getOutputAmount,
+    decodeAddress,
+    setup,
+    getAddress,
+} from "./compat";
 import { pairs } from "./config";
+import { ECPair } from "./ecpair/ecpair";
 import {
     ref,
     asset,
@@ -30,16 +34,12 @@ import {
     setNodeStats,
     swap,
 } from "./signals";
-import {
-    getNetwork,
-    getTransaction,
-    getConstructClaimTransaction,
-    getConstructRefundTransaction,
-    getOutputAmount,
-    decodeAddress,
-    setup,
-    getAddress,
-} from "./compat";
+import { feeChecker } from "./utils/feeChecker";
+import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
+import { detectSwap } from "boltz-core";
+import { Buffer } from "buffer";
+import log from "loglevel";
+import QRCode from "qrcode/lib/server";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =

@@ -1,5 +1,5 @@
-import { useNavigate } from "@solidjs/router";
 import t from "../i18n";
+import { useNavigate } from "@solidjs/router";
 
 const InvoiceExpired = () => {
     const navigate = useNavigate();

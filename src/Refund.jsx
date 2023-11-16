@@ -1,12 +1,8 @@
-import log from "loglevel";
-import QrScanner from "qr-scanner";
-import { useNavigate } from "@solidjs/router";
-import { createSignal, createEffect } from "solid-js";
-import t from "./i18n";
-import SwapList from "./components/SwapList";
-import RefundEta from "./components/RefundEta";
 import BlockExplorer from "./components/BlockExplorer";
+import RefundEta from "./components/RefundEta";
+import SwapList from "./components/SwapList";
 import { fetcher, refundAddressChange, refund } from "./helper";
+import t from "./i18n";
 import {
     swaps,
     refundTx,
@@ -19,6 +15,10 @@ import {
     swapStatusSuccess,
     updateSwapStatus,
 } from "./utils/swapStatus";
+import { useNavigate } from "@solidjs/router";
+import log from "loglevel";
+import QrScanner from "qr-scanner";
+import { createSignal, createEffect } from "solid-js";
 
 const refundJsonKeys = ["id", "asset", "privateKey", "redeemScript"];
 const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
