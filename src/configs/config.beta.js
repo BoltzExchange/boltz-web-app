@@ -1,2 +1,3 @@
-export * from "./configs/config.mainnet";
+export * from "./configs/templates/mainnet";
+
 export const isBeta = true;
