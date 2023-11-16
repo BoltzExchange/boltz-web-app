@@ -2,7 +2,6 @@
 
 * {
     box-sizing: border-box;
-
 }
 
 body {
@@ -14,7 +13,9 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
-    scrollbar-gutter: stable both-edges;
+}
+body::-webkit-scrollbar {
+    display: none;
 }
 
 footer {
