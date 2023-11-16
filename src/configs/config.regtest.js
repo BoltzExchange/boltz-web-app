@@ -1,6 +1,7 @@
 const apiUrl = "http://localhost:9001";
 const blockExplorerUrl = "http://localhost:8090";
 const blockExplorerUrlLiquid = "http://localhost:8091";
+const blockExplorerUrlRsk = "https://explorer.rsk.co";
 
 export const defaultLanguage = "en";
 export const network = "regtest";
@@ -19,6 +20,6 @@ export const pairs = {
     },
     "RBTC/BTC": {
         apiUrl: apiUrl,
-        blockExplorerUrl: blockExplorerUrlLiquid,
+        blockExplorerUrl: blockExplorerUrlRsk,
     },
 };
