@@ -76,7 +76,7 @@ const Pay = () => {
                     <span
                         data-reverse={swap().reverse}
                         data-asset={swap().asset}
-                        class="past-asset">
+                        class="swaplist-asset">
                         -
                     </span>
                 </Show>

@@ -1,6 +1,7 @@
 import { For, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import t from "../i18n";
+import "../style/swaplist.scss";
 
 const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
     const navigate = useNavigate();
@@ -21,13 +22,13 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
     };
 
     return (
-        <div id="past-swaps">
+        <div id="swaplist">
             <For
                 each={swapsSignal().sort((a, b) =>
                     a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
                 )}>
                 {(swap) => (
-                    <div class="past-swap">
+                    <div class="swaplist-item">
                         <span
                             class="btn-small"
                             onClick={() => navigate("/swap/" + swap.id)}>
@@ -36,11 +37,15 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
                         <span
                             data-reverse={swap.reverse}
                             data-asset={swap.asset}
-                            class="past-asset">
+                            class="swaplist-asset">
                             -&gt;
                         </span>
-                        &nbsp;{t("id")}: {swap.id}, {t("created")}:{" "}
-                        {formatDate(swap.date)}&nbsp;
+                        <span class="swaplist-asset-id">
+                            {t("id")}:&nbsp;{swap.id}
+                        </span>
+                        <span class="swaplist-asset-date">
+                            {t("created")}:&nbsp;{formatDate(swap.date)}
+                        </span>
                         <Show when={deleteButton}>
                             <span
                                 class="btn-small btn-danger"
