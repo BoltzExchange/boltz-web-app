@@ -1,7 +1,4 @@
-import log from "loglevel";
-import { Buffer as BufferBrowser } from "buffer";
 import { crypto, script } from "bitcoinjs-lib";
-import bolt11 from "bolt11";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
 import { Buffer as BufferBrowser } from "buffer";
 import log from "loglevel";
