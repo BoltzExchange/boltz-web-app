@@ -1,3 +1,6 @@
+import log from "loglevel";
+import { createEffect, createSignal } from "solid-js";
+
 import DownloadRefund from "../components/DownloadRefund";
 import RefundEta from "../components/RefundEta";
 import fetcher, { refund, refundAddressChange } from "../helper";
@@ -8,8 +11,6 @@ import {
     swap,
     timeoutEta,
 } from "../signals";
-import log from "loglevel";
-import { createEffect, createSignal } from "solid-js";
 
 const InvoiceFailedToPay = () => {
     const [valid, setValid] = createSignal(false);

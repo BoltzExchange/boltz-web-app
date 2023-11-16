@@ -1,6 +1,7 @@
-import { decodeInvoice, validateResponse } from "../../src/utils/validation";
 import log from "loglevel";
 import { expect } from "vitest";
+
+import { decodeInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
     beforeAll(() => {

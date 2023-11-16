@@ -1,3 +1,7 @@
+import EventSource from "eventsource";
+import { createServer } from "https";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
 import { setSwapStatusAndClaim } from "../../src/helper";
 import { setSwap, setSwaps } from "../../src/signals";
 import { checkInterval, swapChecker } from "../../src/utils/swapChecker";
@@ -6,9 +10,6 @@ import {
     swapStatusPending,
     swapStatusSuccess,
 } from "../../src/utils/swapStatus";
-import EventSource from "eventsource";
-import { createServer } from "https";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 global.EventSource = EventSource;
 

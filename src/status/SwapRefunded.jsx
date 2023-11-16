@@ -1,7 +1,8 @@
+import { useNavigate } from "@solidjs/router";
+
 import BlockExplorer from "../components/BlockExplorer";
 import t from "../i18n";
 import { swap } from "../signals";
-import { useNavigate } from "@solidjs/router";
 
 const SwapRefunded = () => {
     const navigate = useNavigate();

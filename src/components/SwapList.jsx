@@ -1,7 +1,8 @@
-import t from "../i18n";
-import "../style/swaplist.scss";
 import { useNavigate } from "@solidjs/router";
 import { For, Show } from "solid-js";
+
+import t from "../i18n";
+import "../style/swaplist.scss";
 
 const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
     const navigate = useNavigate();

@@ -1,6 +1,7 @@
-import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 import log from "loglevel";
 import { beforeEach, describe, expect, vitest } from "vitest";
+
+import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 
 describe("WebLN", () => {
     beforeEach(() => {

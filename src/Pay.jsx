@@ -1,3 +1,7 @@
+import { useParams } from "@solidjs/router";
+import log from "loglevel";
+import { Show, createEffect, onCleanup } from "solid-js";
+
 import BlockExplorer from "./components/BlockExplorer";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { checkForFailed, fetcher, qr } from "./helper";
@@ -25,9 +29,6 @@ import TransactionConfirmed from "./status/TransactionConfirmed";
 import TransactionLockupFailed from "./status/TransactionLockupFailed";
 import TransactionMempool from "./status/TransactionMempool";
 import { swapStatusFailed } from "./utils/swapStatus";
-import { useParams } from "@solidjs/router";
-import log from "loglevel";
-import { Show, createEffect, onCleanup } from "solid-js";
 
 const Pay = () => {
     const params = useParams();

@@ -1,3 +1,6 @@
+import { A } from "@solidjs/router";
+import { For, Show } from "solid-js";
+
 import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
 import { blogUrl, discordUrl, docsUrl, torUrl } from "./config";
@@ -10,8 +13,6 @@ import {
     setI18nConfigured,
 } from "./signals";
 import "./style/nav.scss";
-import { A } from "@solidjs/router";
-import { For, Show } from "solid-js";
 
 const Nav = ({ network }) => {
     let timeout;

@@ -1,6 +1,7 @@
-import SwapList from "../../src/components/SwapList.jsx";
 import { Router } from "@solidjs/router";
 import { render } from "@solidjs/testing-library";
+
+import SwapList from "../../src/components/SwapList.jsx";
 
 describe("SwapList", () => {
     it("should sort correctly", async () => {

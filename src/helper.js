@@ -1,3 +1,8 @@
+import { detectSwap } from "boltz-core";
+import { Buffer } from "buffer";
+import log from "loglevel";
+import QRCode from "qrcode/lib/server";
+
 import {
     decodeAddress,
     getAddress,
@@ -36,10 +41,6 @@ import {
 } from "./signals";
 import { feeChecker } from "./utils/feeChecker";
 import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
-import { detectSwap } from "boltz-core";
-import { Buffer } from "buffer";
-import log from "loglevel";
-import QRCode from "qrcode/lib/server";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =

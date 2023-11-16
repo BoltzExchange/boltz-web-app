@@ -1,7 +1,8 @@
+import { render, screen } from "@solidjs/testing-library";
+
 import BlockExplorer from "../../src/components/BlockExplorer";
 import { pairs } from "../../src/config";
 import i18n from "../../src/i18n/i18n";
-import { render, screen } from "@solidjs/testing-library";
 
 describe("BlockExplorer", () => {
     test.each`

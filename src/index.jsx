@@ -1,4 +1,8 @@
 /* @refresh reload */
+import { Navigate, Route, Router, Routes } from "@solidjs/router";
+import log from "loglevel";
+import { render } from "solid-js/web";
+
 import Create from "./Create";
 import Error from "./Error";
 import Footer from "./Footer";
@@ -18,9 +22,6 @@ import "./utils/patches";
 import { swapChecker } from "./utils/swapChecker";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import { detectWebLNProvider } from "./utils/webln";
-import { Navigate, Route, Router, Routes } from "@solidjs/router";
-import log from "loglevel";
-import { render } from "solid-js/web";
 
 log.setLevel(loglevel);
 

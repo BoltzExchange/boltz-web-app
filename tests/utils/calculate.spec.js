@@ -1,3 +1,5 @@
+import { BigNumber } from "bignumber.js";
+
 import {
     minerFee,
     setBoltzFee,
@@ -9,7 +11,6 @@ import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "../../src/utils/calculate";
-import { BigNumber } from "bignumber.js";
 
 describe("Calculate amounts", () => {
     const setSwapFees = () => {

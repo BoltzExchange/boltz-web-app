@@ -1,8 +1,9 @@
+import { fireEvent, render } from "@solidjs/testing-library";
+import { describe, expect, vitest } from "vitest";
+
 import ClickableAmount from "../../src/components/ClickableAmount";
 import { setDenomination } from "../../src/signals";
 import { denominations, formatAmount } from "../../src/utils/denomination";
-import { fireEvent, render } from "@solidjs/testing-library";
-import { describe, expect, vitest } from "vitest";
 
 describe("ClickableAmount", () => {
     test("should not show label defined", async () => {

@@ -1,3 +1,16 @@
+import { useNavigate } from "@solidjs/router";
+import { crypto } from "bitcoinjs-lib";
+import { randomBytes } from "crypto";
+import log from "loglevel";
+import {
+    Show,
+    createEffect,
+    createMemo,
+    createSignal,
+    on,
+    onMount,
+} from "solid-js";
+
 import { getAddress, getNetwork } from "./compat";
 import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
@@ -65,18 +78,6 @@ import {
 } from "./utils/invoice";
 import { decodeInvoice, validateResponse } from "./utils/validation";
 import { enableWebln } from "./utils/webln";
-import { useNavigate } from "@solidjs/router";
-import { crypto } from "bitcoinjs-lib";
-import { randomBytes } from "crypto";
-import log from "loglevel";
-import {
-    Show,
-    createEffect,
-    createMemo,
-    createSignal,
-    on,
-    onMount,
-} from "solid-js";
 
 const Create = () => {
     let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;

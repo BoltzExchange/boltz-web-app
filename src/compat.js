@@ -1,4 +1,3 @@
-import { network } from "./config";
 import zkp from "@vulpemventures/secp256k1-zkp";
 import { Transaction, address, networks } from "bitcoinjs-lib";
 import {
@@ -17,6 +16,8 @@ import {
     address as l_address,
     networks as l_networks,
 } from "liquidjs-lib";
+
+import { network } from "./config";
 
 export let secp;
 let confi;

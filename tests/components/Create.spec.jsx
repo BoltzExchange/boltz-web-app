@@ -1,3 +1,7 @@
+import { Router } from "@solidjs/router";
+import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { beforeAll, beforeEach, expect, vi } from "vitest";
+
 import Create from "../../src/Create";
 import { sideReceive, sideSend } from "../../src/consts.js";
 import i18n from "../../src/i18n/i18n";
@@ -6,9 +10,6 @@ import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
 import { calculateReceiveAmount } from "../../src/utils/calculate.js";
 import { decodeInvoice } from "../../src/utils/validation.js";
 import { cfg } from "../config";
-import { Router } from "@solidjs/router";
-import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { beforeAll, beforeEach, expect, vi } from "vitest";
 
 describe("Create", () => {
     beforeAll(() => {
