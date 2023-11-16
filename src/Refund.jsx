@@ -1,18 +1,19 @@
+import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { useNavigate } from "@solidjs/router";
-import { createSignal, createEffect } from "solid-js";
-import t from "./i18n";
-import SwapList from "./components/SwapList";
-import RefundEta from "./components/RefundEta";
+import { createEffect, createSignal } from "solid-js";
+
 import BlockExplorer from "./components/BlockExplorer";
-import { fetcher, refundAddressChange, refund } from "./helper";
+import RefundEta from "./components/RefundEta";
+import SwapList from "./components/SwapList";
+import { fetcher, refund, refundAddressChange } from "./helper";
+import t from "./i18n";
 import {
-    swaps,
     refundTx,
-    setTimeoutEta,
     setTimeoutBlockheight,
+    setTimeoutEta,
     setTransactionToRefund,
+    swaps,
 } from "./signals";
 import {
     swapStatusFailed,

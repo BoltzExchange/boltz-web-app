@@ -1,12 +1,13 @@
 import { expect } from "vitest";
+
 import { BTC, LBTC, LN } from "../src/consts.js";
 import {
     asset,
     reverse,
     setAsset,
-    setReverse,
-    setAssetSend,
     setAssetReceive,
+    setAssetSend,
+    setReverse,
 } from "../src/signals.js";
 
 describe("signals", () => {

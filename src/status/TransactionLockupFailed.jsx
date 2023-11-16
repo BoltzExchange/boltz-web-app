@@ -1,7 +1,7 @@
+import DownloadRefund from "../components/DownloadRefund";
+import RefundEta from "../components/RefundEta";
 import t from "../i18n";
 import { failureReason } from "../signals";
-import RefundEta from "../components/RefundEta";
-import DownloadRefund from "../components/DownloadRefund";
 
 const TransactionLockupFailed = () => {
     return (

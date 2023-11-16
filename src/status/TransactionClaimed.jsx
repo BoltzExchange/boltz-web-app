@@ -1,4 +1,5 @@
 import { useNavigate } from "@solidjs/router";
+
 import t from "../i18n";
 
 const TransactionClaimed = () => {

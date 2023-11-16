@@ -1,7 +1,8 @@
 import log from "loglevel";
-import locales from "./i18n";
+
 import { defaultLanguage } from "../config";
 import { i18nConfigured, setI18n } from "../signals";
+import locales from "./i18n";
 
 export const getNavigatorLanguage = (language) => {
     if (language === undefined) {

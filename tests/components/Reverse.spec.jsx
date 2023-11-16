@@ -1,13 +1,14 @@
-import { describe, test, expect } from "vitest";
 import { fireEvent, render } from "@solidjs/testing-library";
-import { BTC, LN } from "../../src/config";
+import { describe, expect, test } from "vitest";
+
 import Reverse from "../../src/components/Reverse";
+import { BTC, LN } from "../../src/config";
 import {
-    reverse,
-    assetSend,
     assetReceive,
-    setAssetSend,
+    assetSend,
+    reverse,
     setAssetReceive,
+    setAssetSend,
 } from "../../src/signals";
 
 describe("Reverse", () => {

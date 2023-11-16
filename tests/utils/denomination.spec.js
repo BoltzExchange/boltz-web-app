@@ -1,10 +1,10 @@
 import { setDenomination, setMaximum } from "../../src/signals";
 import {
+    calculateDigits,
     convertAmount,
+    denominations,
     formatAmount,
     getValidationRegex,
-    calculateDigits,
-    denominations,
 } from "../../src/utils/denomination";
 
 describe("denomination utils", () => {

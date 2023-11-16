@@ -1,14 +1,14 @@
-import t from "../i18n";
-import log from "loglevel";
 import { useNavigate } from "@solidjs/router";
+import log from "loglevel";
 import { Show, createEffect, createSignal } from "solid-js";
-import fetcher, { refund, refundAddressChange } from "../helper";
 
+import fetcher, { refund, refundAddressChange } from "../helper";
+import t from "../i18n";
 import {
-    swap,
     failureReason,
-    transactionToRefund,
     setTransactionToRefund,
+    swap,
+    transactionToRefund,
 } from "../signals";
 
 const SwapExpired = () => {

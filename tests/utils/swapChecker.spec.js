@@ -1,8 +1,9 @@
-import { createServer } from "https";
 import EventSource from "eventsource";
-import { vi, test, expect, describe, afterEach, beforeEach } from "vitest";
-import { setSwap, setSwaps } from "../../src/signals";
+import { createServer } from "https";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
 import { setSwapStatusAndClaim } from "../../src/helper";
+import { setSwap, setSwaps } from "../../src/signals";
 import { checkInterval, swapChecker } from "../../src/utils/swapChecker";
 import {
     swapStatusFailed,

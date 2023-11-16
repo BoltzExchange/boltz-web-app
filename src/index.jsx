@@ -1,26 +1,27 @@
 /* @refresh reload */
-import "./utils/patches";
+import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
 import { render } from "solid-js/web";
-import { Router, Route, Routes, Navigate } from "@solidjs/router";
-import Pay from "./Pay";
-import Nav from "./Nav";
-import Hero from "./Hero";
-import "./style/index.scss";
-import Error from "./Error";
+
 import Create from "./Create";
+import Error from "./Error";
 import Footer from "./Footer";
-import Refund from "./Refund";
+import Hero from "./Hero";
 import History from "./History";
+import Nav from "./Nav";
 import NotFound from "./NotFound";
 import Notification from "./Notification";
-import { checkReferralId } from "./helper";
+import Pay from "./Pay";
+import Refund from "./Refund";
 import { loglevel, network } from "./config";
+import { checkReferralId } from "./helper";
 import { detectLanguage } from "./i18n/detect";
+import { setWasmSupported, setWebln } from "./signals";
+import "./style/index.scss";
+import "./utils/patches";
 import { swapChecker } from "./utils/swapChecker";
-import { detectWebLNProvider } from "./utils/webln";
-import { setWebln, setWasmSupported } from "./signals";
 import { checkWasmSupported } from "./utils/wasmSupport";
+import { detectWebLNProvider } from "./utils/webln";
 
 log.setLevel(loglevel);
 

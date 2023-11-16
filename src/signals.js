@@ -1,8 +1,9 @@
-import { createEffect, createSignal } from "solid-js";
 import { makePersisted } from "@solid-primitives/storage";
-import { isMobile } from "./helper";
-import { LN, sideSend } from "./consts";
+import { createEffect, createSignal } from "solid-js";
+
 import { pairs } from "./config";
+import { LN, sideSend } from "./consts";
+import { isMobile } from "./helper";
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 

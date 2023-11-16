@@ -1,13 +1,14 @@
 import { useNavigate } from "@solidjs/router";
-import { createSignal, createMemo } from "solid-js";
-import t from "./i18n";
-import { nodeStats, hideHero, setHideHero } from "./signals";
-import { fetchNodeInfo } from "./helper";
-import "./style/hero.scss";
+import { createMemo, createSignal } from "solid-js";
+
 import Create from "./Create";
-import liquid from "./assets/liquid-icon.svg";
 import bitcoin from "./assets/bitcoin-icon.svg";
 import lightning from "./assets/lightning-icon.svg";
+import liquid from "./assets/liquid-icon.svg";
+import { fetchNodeInfo } from "./helper";
+import t from "./i18n";
+import { hideHero, nodeStats, setHideHero } from "./signals";
+import "./style/hero.scss";
 
 const Hero = () => {
     const navigate = useNavigate();

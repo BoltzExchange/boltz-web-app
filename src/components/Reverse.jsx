@@ -1,9 +1,9 @@
 import arrowSvg from "../assets/arrow.svg";
 import {
-    assetSend,
-    setAssetSend,
     assetReceive,
+    assetSend,
     setAssetReceive,
+    setAssetSend,
 } from "../signals";
 
 const Reverse = () => {

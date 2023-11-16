@@ -1,5 +1,6 @@
-import log from "loglevel";
 import { bech32, utf8 } from "@scure/base";
+import log from "loglevel";
+
 import { bolt11_prefix } from "../config";
 import { checkResponse, errorHandler } from "../helper";
 
