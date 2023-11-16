@@ -28,7 +28,7 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
                     a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
                 )}>
                 {(swap) => (
-                    <div class="swaplist">
+                    <div class="swaplist-item">
                         <span
                             class="btn-small"
                             onClick={() => navigate("/swap/" + swap.id)}>
