@@ -1,8 +1,9 @@
-import DownloadRefund from "../components/DownloadRefund";
-import { clipboard } from "../helper";
 import t from "../i18n";
-import { denomination, invoiceQr, swap } from "../signals";
+import { clipboard } from "../helper";
+import { invoiceQr, swap } from "../signals";
 import { formatAmount } from "../utils/denomination";
+import DownloadRefund from "../components/DownloadRefund";
+import { getExpiryEtaHours } from "../utils/invoice";
 
 const InvoiceSet = () => {
     return (
@@ -22,7 +23,11 @@ const InvoiceSet = () => {
                 {swap().address}
             </p>
             <hr />
-            <h3>{t("warning_expiry", { hours: 24 })}</h3>
+            <h3>
+                {t("warning_expiry", {
+                    hours: getExpiryEtaHours(swap().invoice),
+                })}
+            </h3>
             <hr />
             <div class="btns">
                 <span

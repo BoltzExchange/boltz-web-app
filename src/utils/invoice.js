@@ -5,12 +5,28 @@ import log from "loglevel";
 import { bolt11_prefix } from "../config";
 import { checkResponse, errorHandler } from "../helper";
 
-const invoicePrefix = "lightning:";
+export const invoicePrefix = "lightning:";
+export const maxExpiryHours = 24;
+
+export const getExpiryEtaHours = (invoice) => {
+    const decoded = decodeInvoice(invoice);
+    const now = Date.now() / 1000;
+    const delta = decoded.expiry - now;
+    if (delta < 0) {
+        return 0;
+    }
+    const eta = Math.round(delta / 60 / 60);
+    if (eta > maxExpiryHours) {
+        return maxExpiryHours;
+    }
+    return eta;
+};
 
 export const decodeInvoice = (invoice) => {
     const decoded = bolt11.decode(invoice);
     return {
         satoshis: decoded.satoshis,
+        expiry: decoded.timeExpireDate,
         preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
             .data,
     };
