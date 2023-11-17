@@ -1,6 +1,5 @@
 import t from "../i18n";
 import { pairs } from "../config";
-import { createEffect } from "solid-js";
 
 const blockExplorerLink = (asset, isTxId, val) => {
     const basePath = pairs[`${asset}/BTC`].blockExplorerUrl;

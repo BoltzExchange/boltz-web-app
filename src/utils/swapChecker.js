@@ -6,6 +6,7 @@ import { setSwapStatusAndClaim, getApiUrl, fetcher } from "../helper";
 
 const swapCheckInterval = 3000;
 
+let activeStreamId = undefined;
 let activeSwapStream = undefined;
 
 export const [checkInterval, setCheckInterval] = createSignal(undefined);
@@ -13,10 +14,14 @@ export const [checkInterval, setCheckInterval] = createSignal(undefined);
 export const swapChecker = () => {
     createEffect(() => {
         const activeSwap = swap();
+        if (swap()?.id == activeStreamId) {
+            return;
+        }
 
         if (activeSwapStream !== undefined) {
             activeSwapStream.close();
             activeSwapStream = undefined;
+            activeStreamId = undefined;
         }
 
         if (activeSwap === null) {
@@ -24,6 +29,7 @@ export const swapChecker = () => {
         }
 
         log.debug(`subscribing to SSE of swap`, activeSwap.id);
+        activeStreamId = activeSwap.id;
         activeSwapStream = handleStream(
             `${getApiUrl(activeSwap.asset)}/streamswapstatus?id=${
                 activeSwap.id

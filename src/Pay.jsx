@@ -71,7 +71,7 @@ const Pay = () => {
     createEffect(() => {
         const tx = swapStatusTransaction();
 
-        if (swap().asset === RBTC && tx) {
+        if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
             setEthereumTransaction(tx.id);
         }
     });
