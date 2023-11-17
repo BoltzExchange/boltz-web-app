@@ -147,12 +147,6 @@ hr {
     width: 100%;
 }
 
-.btn:disabled:hover,
-.btn:disabled {
-    background-color: #545c65;
-    cursor: not-allowed;
-}
-
 .btn-small {
     background-color: $primary;
     color: #14283f;
@@ -180,6 +174,12 @@ hr {
 .tag .btn {
     background-color: rgba(0, 0, 0, 0.2);
     color: white;
+}
+
+.btn:disabled:hover,
+.btn:disabled {
+    background-color: #545c65;
+    cursor: not-allowed;
 }
 
 .btn-small:hover,
@@ -212,6 +212,7 @@ hr {
 .btn-success:hover {
     background-color: #fff;
 }
+.btn-danger:disabled,
 .btn-danger {
     background-color: transparentize($error, 0.42);
     color: white;

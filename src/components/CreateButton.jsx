@@ -2,23 +2,25 @@ import { useNavigate } from "@solidjs/router";
 import { crypto } from "bitcoinjs-lib";
 import { randomBytes } from "crypto";
 import log from "loglevel";
-import { Show, createMemo, createSignal } from "solid-js";
+import { createEffect, createMemo, createSignal } from "solid-js";
 
 import { getAddress, getNetwork } from "../compat";
 import { ECPair } from "../ecpair/ecpair";
-import { feeCheck, fetchPairs, fetcher } from "../helper";
+import { feeCheck, fetcher } from "../helper";
 import t from "../i18n";
 import {
     asset,
+    buttonLabel,
     config,
     invoice,
-    invoiceValid,
+    lnurl,
     onchainAddress,
     online,
     receiveAmount,
     reverse,
     sendAmount,
     setAddressValid,
+    setButtonLabel,
     setInvoice,
     setInvoiceValid,
     setNotification,
@@ -29,16 +31,43 @@ import {
     valid,
     wasmSupported,
 } from "../signals";
-import { fetchLnurl, isLnurl } from "../utils/invoice";
+import { fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
-const CreateButton = () => {
+const CreateButton = ({ validateAddress }) => {
     const navigate = useNavigate();
 
     const [buttonDisable, setButtonDisable] = createSignal(true);
+    const [buttonClass, setButtonClass] = createSignal("btn");
+
+    createEffect(() => {
+        setButtonDisable(!valid());
+    });
 
     createMemo(() => {
-        setButtonDisable(!valid());
+        setButtonClass(
+            !wasmSupported() || !online() ? "btn btn-danger" : "btn",
+        );
+    });
+
+    createEffect(() => {
+        if (valid()) {
+            if (reverse()) {
+                setButtonLabel(t("create_reverse_swap"));
+            } else {
+                if (lnurl()) {
+                    setButtonLabel(t("fetch_lnurl"));
+                } else {
+                    setButtonLabel(t("create_swap"));
+                }
+            }
+        }
+        if (!online()) {
+            setButtonLabel(t("api_offline"));
+        }
+        if (!wasmSupported()) {
+            setButtonLabel(t("wasm_not_supported"));
+        }
     });
 
     const create = async () => {
@@ -70,20 +99,19 @@ const CreateButton = () => {
                 params.claimPublicKey = keyPair.publicKey.toString("hex");
             }
         } else {
-            if (isLnurl(invoice())) {
-                setInvoice(
-                    await fetchLnurl(invoice(), Number(receiveAmount())),
-                );
-            }
-            validateAddress(invoiceInputRef);
-            if (!invoiceValid()) {
-                const msg = "invalid invoice";
-                log.error(msg);
-                setNotificationType("error");
-                setNotification(msg);
+            if (lnurl()) {
+                try {
+                    const inv = await fetchLnurl(
+                        lnurl(),
+                        Number(receiveAmount()),
+                    );
+                    setInvoice(inv);
+                    validateAddress();
+                } catch (e) {
+                    log.warn("fetch lnurl failed", e);
+                }
                 return true;
             }
-
             params = {
                 type: "submarine",
                 pairId: assetName + "/BTC",
@@ -160,42 +188,24 @@ const CreateButton = () => {
         });
     };
 
+    const buttonClick = () => {
+        setButtonDisable(true);
+        create()
+            .then((res) => !res && setButtonDisable(false))
+            .catch((e) => {
+                log.warn("create failed", e);
+                setButtonDisable(false);
+            });
+    };
+
     return (
-        <>
-            <Show when={online() && wasmSupported()}>
-                <button
-                    id="create-swap"
-                    class="btn"
-                    disabled={buttonDisable() ? "disabled" : ""}
-                    onClick={() => {
-                        setButtonDisable(true);
-                        create()
-                            .then((res) => !res && setButtonDisable(false))
-                            .catch((e) => {
-                                log.warn("create failed", e);
-                                setButtonDisable(false);
-                            });
-                    }}>
-                    {t("create_swap")}
-                </button>
-            </Show>
-            <Show when={!online()}>
-                <button
-                    id="create-swap"
-                    class="btn btn-danger"
-                    onClick={fetchPairs}>
-                    {t("api_offline")}
-                </button>
-            </Show>
-            <Show when={!wasmSupported()}>
-                <button
-                    id="create-swap"
-                    class="btn btn-danger"
-                    onClick={fetchPairs}>
-                    {t("wasm_not_supported")}
-                </button>
-            </Show>
-        </>
+        <button
+            id="create-swap"
+            class={buttonClass()}
+            disabled={buttonDisable() ? "disabled" : ""}
+            onClick={buttonClick}>
+            {buttonLabel()}
+        </button>
     );
 };
 

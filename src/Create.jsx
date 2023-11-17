@@ -1,15 +1,5 @@
-import { useNavigate } from "@solidjs/router";
-import { crypto } from "bitcoinjs-lib";
-import { randomBytes } from "crypto";
 import log from "loglevel";
-import {
-    Show,
-    createEffect,
-    createMemo,
-    createSignal,
-    on,
-    onMount,
-} from "solid-js";
+import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 
 import AddressInput from "./components/AddressInput";
 import Asset from "./components/Asset";
@@ -32,36 +22,31 @@ import {
     assetSelected,
     assetSend,
     boltzFee,
-    config,
     denomination,
     invoice,
     invoiceValid,
     maximum,
     minerFee,
     minimum,
-    onchainAddress,
-    online,
     receiveAmount,
     receiveAmountFormatted,
     reverse,
     sendAmount,
     sendAmountFormatted,
+    sendAmountValid,
     setAddressValid,
     setAmountChanged,
+    setButtonLabel,
     setInvoice,
     setInvoiceValid,
-    setNotification,
-    setNotificationType,
+    setLnurl,
     setOnchainAddress,
     setReceiveAmount,
     setReceiveAmountFormatted,
     setSendAmount,
     setSendAmountFormatted,
-    setSwaps,
+    setSendAmountValid,
     setValid,
-    swaps,
-    valid,
-    wasmSupported,
     webln,
 } from "./signals";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
@@ -87,10 +72,14 @@ const Create = () => {
 
     let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;
 
-    const [sendAmountValid, setSendAmountValid] = createSignal(true);
-
     onMount(() => {
         sendAmountRef.focus();
+    });
+
+    createEffect(() => {
+        if (sendAmountValid()) {
+            validateAddress();
+        }
     });
 
     createEffect(
@@ -141,10 +130,12 @@ const Create = () => {
         setValid(false);
     });
 
-    const resetInvoice = () => {
+    const resetInvoice = (input) => {
         if (isInvoice(invoice())) {
             setInvoice("");
             setInvoiceValid(false);
+            input.setCustomValidity("");
+            input.classList.remove("invalid");
         }
     };
 
@@ -156,7 +147,7 @@ const Create = () => {
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateAmount();
-        resetInvoice();
+        resetInvoice(e.currentTarget);
     };
 
     const changeSendAmount = (e) => {
@@ -167,7 +158,7 @@ const Create = () => {
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateAmount();
-        resetInvoice();
+        resetInvoice(e.currentTarget);
     };
 
     const createWeblnInvoice = async () => {
@@ -177,7 +168,7 @@ const Create = () => {
             validateAmount();
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
-            validateAddress(invoiceInputRef);
+            validateAddress();
         });
     };
 
@@ -221,61 +212,100 @@ const Create = () => {
         const lessThanMin = amount < minimum();
 
         if (lessThanMin || amount > maximum()) {
-            setCustomValidity(
-                t(lessThanMin ? "minimum_amount" : "maximum_amount", {
+            const errorMsg = t(
+                lessThanMin ? "minimum_amount" : "maximum_amount",
+                {
                     amount: formatAmount(lessThanMin ? minimum() : maximum()),
                     denomination: denomination(),
-                }),
-                amount === 0,
+                },
             );
+            setCustomValidity(errorMsg, amount === 0);
+            setButtonLabel(errorMsg);
             setSendAmountValid(false);
             return;
         }
-
         setSendAmountValid(true);
     };
 
-    const checkInvoiceAmount = (invoice) => {
-        try {
-            return receiveAmount() === BigInt(decodeInvoice(invoice).satoshis);
-        } catch (e) {
-            return false;
-        }
+    const invalidateAddress = (input, msg, setSignal) => {
+        setSignal(false);
+        input.setCustomValidity(msg);
+        setButtonLabel(msg);
+        input.classList.add("invalid");
     };
 
-    const validateAddress = (input) => {
+// <<<<<<< HEAD
+//     const validateAddress = (input) => {
+//         if (reverse()) {
+//             return;
+//         }
+
+//         let inputValue = input.value.trim();
+
+//         inputValue = trimLightningPrefix(inputValue);
+
+//         const isInputInvoice = isInvoice(inputValue);
+//         if (isLnurl(inputValue) || isInputInvoice) {
+//             // set receive/send when invoice differs from the amounts
+//             // and the input is an invoice
+//             if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
+//                 try {
+//                     const decoded = decodeInvoice(inputValue);
+//                     if (decoded.satoshis === null) {
+//                         setInvoiceValid(false);
+//                         input.setCustomValidity(
+//                             "0 amount invoices are not allowed",
+//                         );
+//                         input.classList.add("invalid");
+//                         return;
+//                     }
+//                     setReceiveAmount(decoded.satoshis);
+//                     setSendAmount(calculateSendAmount(decoded.satoshis));
+//                     validateAmount();
+//                 } catch (e) {
+//                     setInvoiceValid(false);
+//                     input.setCustomValidity(e);
+//                     input.classList.add("invalid");
+//                     return;
+//                 }
+// =======
+    const validateAddress = () => {
         if (reverse()) {
-            return;
-        }
-
-        let inputValue = input.value.trim();
-
-        inputValue = trimLightningPrefix(inputValue);
-
-        const isInputInvoice = isInvoice(inputValue);
-        if (isLnurl(inputValue) || isInputInvoice) {
-            // set receive/send when invoice differs from the amounts
-            // and the input is an invoice
-            if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
-                try {
-                    const decoded = decodeInvoice(inputValue);
-                    if (decoded.satoshis === null) {
-                        setInvoiceValid(false);
-                        input.setCustomValidity(
-                            "0 amount invoices are not allowed",
-                        );
-                        input.classList.add("invalid");
-                        return;
-                    }
-                    setReceiveAmount(decoded.satoshis);
-                    setSendAmount(calculateSendAmount(decoded.satoshis));
+            const input = addressInputRef;
+            const inputValue = input.value.trim();
+            try {
+                setOnchainAddress(validateOnchainAddress(inputValue, asset()));
+                setAddressValid(true);
+                input.setCustomValidity("");
+                input.classList.remove("invalid");
+            } catch (e) {
+                invalidateAddress(
+                    input,
+                    "Invalid onchain address",
+                    setAddressValid,
+                );
+            }
+        } else {
+            const input = invoiceInputRef;
+            const inputValue = input.value.trim();
+            try {
+                if (isLnurl(inputValue)) {
+                    setButtonLabel(t("fetch_lnurl"));
+                    setLnurl(inputValue);
+                    setInvoice("");
+                } else {
+                    const sats = validateInvoice(inputValue);
+                    setReceiveAmount(sats);
+                    setSendAmount(calculateSendAmount(sats));
                     validateAmount();
-                } catch (e) {
-                    setInvoiceValid(false);
-                    input.setCustomValidity(e);
-                    input.classList.add("invalid");
-                    return;
+                    setInvoice(inputValue);
+                    setLnurl(false);
                 }
+                setInvoiceValid(true);
+                input.setCustomValidity("");
+                input.classList.remove("invalid");
+            } catch (e) {
+                invalidateAddress(input, e.message, setInvoiceValid);
             }
 
             input.setCustomValidity("");
@@ -297,12 +327,6 @@ const Create = () => {
         resetInvoice();
         sendAmountRef.focus();
     };
-
-    createEffect(() => {
-        if (reverse()) {
-            validateAddress(addressInputRef);
-        }
-    });
 
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
@@ -401,7 +425,7 @@ const Create = () => {
                 <hr />
             </Show>
             <hr />
-            <CreateButton />
+            <CreateButton validateAddress={validateAddress} />
             <AssetSelect />
         </div>
     );

@@ -43,6 +43,7 @@ const dict = {
         footer: "Made with ❤️ by Team Boltz",
         create_channel: "Create Lightning Channel",
         create_channel_subline: "Channel Inbound or Outbound Capacity",
+        create_reverse_swap: "Create Reverse Atomic Swap",
         create_swap: "Create Atomic Swap",
         create_swap_subline: "Payment includes network and boltz service fees",
         cancel_swap: "Cancel Swap",
@@ -74,6 +75,8 @@ const dict = {
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
+        invalid_invoice: "Not a Lightning invoice, LNAddress or LNURL",
+        invalid_0_amount: "0 amount invoices are not allowed",
         copy_invoice: "Copy lightning invoice",
         copy_address: "Copy address",
         copy_amount: "Copy amount",
@@ -151,6 +154,7 @@ const dict = {
         back_to_home: "Back to Home",
         transaction_prompt:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
+        fetch_lnurl: "Fetch invoice from LNURL / LNAdress",
     },
     de: {
         language: "Deutsch",
@@ -197,6 +201,7 @@ const dict = {
         footer: "Gemacht mit ❤️ von Team Boltz",
         create_channel: "Erstelle Lightning-Kanal",
         create_channel_subline: "Eingehende oder ausgehende Kapazität",
+        create_reverse_swap: "Erstelle Reverse Atomic Swap",
         create_swap: "Erstelle Atomic Swap",
         create_swap_subline: "Zahlung beinhaltet Netzwerk- und Boltzgebühr",
         cancel_swap: "Swap abbrechen",
@@ -229,6 +234,8 @@ const dict = {
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
+        invalid_invoice: "Not a Lightning invoice, LNAddress or LNURL",
+        invalid_0_amount: "0 amount invoices are not allowed",
         copy_invoice: "Lightning-Rechnung kopieren",
         copy_address: "Adresse kopieren",
         copy_amount: "Betrag kopieren",
@@ -312,6 +319,7 @@ const dict = {
         back_to_home: "Zurück zur Startseite",
         transaction_prompt:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
+        fetch_lnurl: "Hole Rechnung von LNURL / LNAdress",
     },
     es: {
         language: "Español",
@@ -357,6 +365,7 @@ const dict = {
         footer: "Hecho con ❤️ por el equipo de Boltz",
         create_channel: "Crear canal Lightning",
         create_channel_subline: "Capacidad del canal entrante o saliente",
+        create_reverse_swap: "Crear Reverse intercambio atómico",
         create_swap: "Crear intercambio atómico",
         create_swap_subline:
             "El pago incluye la comisión de red y servicio de Boltz",
@@ -390,6 +399,8 @@ const dict = {
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
+        invalid_invoice: "Not a Lightning invoice, LNAddress or LNURL",
+        invalid_0_amount: "0 amount invoices are not allowed",
         copy_invoice: "Copiar factura Lightning",
         copy_address: "Copiar dirección",
         copy_amount: "Copiar monto",
@@ -472,6 +483,7 @@ const dict = {
         back_to_home: "Volver al inicio",
         transaction_prompt:
             'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
+        fetch_lnurl: "Fetch invoice from LNURL / LNAdress",
     },
 };
 

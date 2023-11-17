@@ -199,3 +199,34 @@ export const validateResponse = async (
         return false;
     }
 };
+
+export const validateOnchainAddress = (inputValue, asset) => {
+    const address = getAddress(asset);
+    address.toOutputScript(inputValue, getNetwork(asset));
+    return inputValue;
+};
+
+const checkInvoiceAmount = (invoice) => {
+    try {
+        return receiveAmount() === BigInt(decodeInvoice(invoice).satoshis);
+    } catch (e) {
+        return false;
+    }
+};
+
+export const validateInvoice = (inputValue) => {
+    inputValue = trimLightningPrefix(inputValue);
+    const isInputInvoice = isInvoice(inputValue);
+    if (isLnurl(inputValue) || isInputInvoice) {
+        // set receive/send when invoice differs from the amounts
+        if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
+            const decoded = decodeInvoice(inputValue);
+            if (decoded.satoshis === null) {
+                throw new Error(t("invalid_0_amount"));
+            }
+            return decoded.satoshis;
+        }
+    } else {
+        throw new Error(t("invalid_invoice"));
+    }
+};

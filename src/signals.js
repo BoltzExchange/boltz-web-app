@@ -99,6 +99,7 @@ export const [assetSend, setAssetSend] = makePersisted(createSignal(LN), {
 export const [valid, setValid] = createSignal(false);
 export const [invoiceValid, setInvoiceValid] = createSignal(false);
 export const [addressValid, setAddressValid] = createSignal(false);
+export const [sendAmountValid, setSendAmountValid] = createSignal(true);
 
 // notification
 export const [notification, setNotification] = createSignal("");
