@@ -78,7 +78,6 @@ import {
     isLnurl,
     trimLightningPrefix,
 } from "./utils/invoice";
-import { decodeInvoice, validateResponse } from "./utils/validation";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {
