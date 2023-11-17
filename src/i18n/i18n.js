@@ -24,6 +24,7 @@ const dict = {
         onion: "Onion",
         blockexplorer: "open {{ typeLabel }}",
         blockexplorer_lockup_address: "lockup address",
+        blockexplorer_lockup_tx: "lockup transaction",
         blockexplorer_claim_tx: "claim transaction",
         blockexplorer_refund_tx: "refund transaction",
         help: "Help",

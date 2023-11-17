@@ -6,6 +6,7 @@ const EthereumTransaction = ({
     promptText,
     buttonText,
     waitingText,
+    showHr,
 }) => {
     const [txSent, setTxSent] = createSignal(false);
 
@@ -21,12 +22,15 @@ const EthereumTransaction = ({
                     }}>
                     {buttonText}
                 </button>
-                <hr />
+                <Show when={showHr}>
+                    <hr />
+                </Show>
             </Show>
 
             <Show when={txSent()}>
                 <p>{waitingText}</p>
                 <LoadingSpinner />
+                <hr />
             </Show>
         </>
     );
