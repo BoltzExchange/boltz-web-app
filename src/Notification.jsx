@@ -2,8 +2,8 @@ import { createEffect } from "solid-js";
 
 import {
     notification,
-    setNotification,
     notificationType,
+    setNotification,
     setNotificationType,
 } from "./signals";
 import "./style/notification.scss";

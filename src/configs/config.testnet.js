@@ -1,11 +1,11 @@
+export * from "./configs/templates/defaults";
+
 const apiUrl = "https://testnet.boltz.exchange/api";
 const blockExplorerUrl = "https://mempool.space/testnet";
 const blockExplorerUrlLiquid = "https://liquid.network/testnet";
 const blockExplorerUrlRsk = "https://explorer.testnet.rsk.co";
 
-export const defaultLanguage = "en";
 export const network = "testnet";
-export const isBeta = false;
 export const bolt11_prefix = "lntb";
 export const loglevel = "debug";
 

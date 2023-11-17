@@ -1,84 +1,83 @@
-import log from "loglevel";
-import { randomBytes } from "crypto";
-import { crypto } from "bitcoinjs-lib";
 import { useNavigate } from "@solidjs/router";
+import { crypto } from "bitcoinjs-lib";
+import { randomBytes } from "crypto";
+import log from "loglevel";
 import {
+    Show,
+    createEffect,
     createMemo,
     createSignal,
-    createEffect,
     on,
     onMount,
-    Show,
 } from "solid-js";
-import t from "./i18n";
-import Fees from "./components/Fees";
-import Asset from "./components/Asset";
-import { ECPair } from "./ecpair/ecpair";
-import Reverse from "./components/Reverse";
-import { enableWebln } from "./utils/webln";
-import { getAddress, getNetwork } from "./compat";
-import AssetSelect from "./components/AssetSelect";
+
 import AddressInput from "./components/AddressInput";
-import { sideSend, sideReceive, RBTC } from "./consts";
-import { fetcher, fetchPairs, feeCheck } from "./helper";
+import Asset from "./components/Asset";
 import ClickableAmount from "./components/ClickableAmount";
 import ConnectMetamask from "./components/ConnectMetamask";
-import { decodeInvoice, validateResponse } from "./utils/validation";
+import Fees from "./components/Fees";
+import Reverse from "./components/Reverse";
+import { RBTC, sideReceive, sideSend } from "./consts";
+import { ECPair } from "./ecpair/ecpair";
+import { feeCheck, fetchPairs, fetcher } from "./helper";
+import t from "./i18n";
+import {
+    addressValid,
+    amountChanged,
+    asset,
+    assetReceive,
+    assetSelect,
+    assetSelected,
+    assetSend,
+    boltzFee,
+    config,
+    denomination,
+    invoice,
+    invoiceValid,
+    maximum,
+    minerFee,
+    minimum,
+    onchainAddress,
+    online,
+    receiveAmount,
+    receiveAmountFormatted,
+    reverse,
+    sendAmount,
+    sendAmountFormatted,
+    setAddressValid,
+    setAmountChanged,
+    setInvoice,
+    setInvoiceValid,
+    setNotification,
+    setNotificationType,
+    setOnchainAddress,
+    setReceiveAmount,
+    setReceiveAmountFormatted,
+    setSendAmount,
+    setSendAmountFormatted,
+    setSwaps,
+    setValid,
+    swaps,
+    valid,
+    wasmSupported,
+    webln,
+} from "./signals";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
+import {
+    calculateDigits,
+    convertAmount,
+    denominations,
+    formatAmount,
+    getValidationRegex,
+} from "./utils/denomination";
 import {
     fetchLnurl,
     isInvoice,
     isLnurl,
     trimLightningPrefix,
 } from "./utils/invoice";
-import {
-    convertAmount,
-    denominations,
-    formatAmount,
-    calculateDigits,
-    getValidationRegex,
-} from "./utils/denomination";
-import {
-    online,
-    swaps,
-    setSwaps,
-    asset,
-    denomination,
-    amountChanged,
-    setAmountChanged,
-    sendAmount,
-    setSendAmount,
-    sendAmountFormatted,
-    setSendAmountFormatted,
-    receiveAmount,
-    setReceiveAmount,
-    receiveAmountFormatted,
-    setReceiveAmountFormatted,
-    minimum,
-    maximum,
-    reverse,
-    valid,
-    setValid,
-    invoiceValid,
-    setInvoiceValid,
-    addressValid,
-    setAddressValid,
-    invoice,
-    setInvoice,
-    onchainAddress,
-    setOnchainAddress,
-    setNotification,
-    setNotificationType,
-    webln,
-    wasmSupported,
-    config,
-    boltzFee,
-    minerFee,
-    assetReceive,
-    assetSend,
-    assetSelect,
-    assetSelected,
-} from "./signals";
+import { decodeInvoice, validateResponse } from "./utils/validation";
+import { enableWebln } from "./utils/webln";
 
 const Create = () => {
     let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;

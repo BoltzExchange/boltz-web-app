@@ -1,0 +1,47 @@
+#swaplist {
+    text-align: left;
+    margin: auto;
+    display: inline-block;
+}
+@media (max-width: 468px) {
+    #swaplist {
+        text-align: center;
+        line-height: 1.66;
+    }
+}
+
+.swaplist-asset-date,
+.swaplist-asset-id {
+    padding: 0 9px 0 0;
+}
+.swaplist-asset:after,
+.swaplist-asset:before {
+    content: " ";
+    display: inline-block;
+    width: 17px;
+    height: 15px;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    transform: scale(1.5);
+    margin: 0 6px;
+}
+.swaplist-asset[data-reverse="false"]:after,
+.swaplist-asset[data-reverse="true"]:before {
+    background-image: url(../assets/lightning-icon.svg);
+}
+.swaplist-asset[data-asset="BTC"][data-reverse="true"]:after,
+.swaplist-asset[data-asset="BTC"][data-reverse="false"]:before {
+    background-image: url(../assets/bitcoin-icon.svg);
+}
+.swaplist-asset[data-asset="L-BTC"][data-reverse="true"]:after,
+.swaplist-asset[data-asset="L-BTC"][data-reverse="false"]:before {
+    background-image: url(../assets/liquid-icon.svg);
+}
+.swaplist-asset[data-asset="R-BTC"][data-reverse="true"]:after,
+.swaplist-asset[data-asset="R-BTC"][data-reverse="false"]:before {
+    background-image: url(../assets/rootstock-icon.svg);
+}
+
+.swaplist-asset {
+    display: inline-block;
+}

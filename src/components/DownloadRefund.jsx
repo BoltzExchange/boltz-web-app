@@ -1,6 +1,6 @@
+import { isIos, isMobile, qr } from "../helper";
 import t from "../i18n";
 import { swap } from "../signals";
-import { isIos, isMobile, qr } from "../helper";
 import { download, downloadJson } from "../utils/download";
 
 const createRefundData = (swap) => {

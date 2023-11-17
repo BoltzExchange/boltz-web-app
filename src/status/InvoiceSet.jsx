@@ -1,20 +1,20 @@
-import t from "../i18n";
-import { RBTC } from "../consts.js";
-import { clipboard } from "../helper";
-import { useWeb3Signer } from "../context/Web3.jsx";
-import { decodeInvoice } from "../utils/validation";
-import { formatAmount } from "../utils/denomination";
 import DownloadRefund from "../components/DownloadRefund";
-import { prefix0x, satoshiToWei } from "../utils/ethereum";
 import EthereumTransaction from "../components/EthereumTransaction.jsx";
+import { RBTC } from "../consts.js";
+import { useWeb3Signer } from "../context/Web3.jsx";
+import { clipboard } from "../helper";
+import t from "../i18n";
 import {
-    swap,
     asset,
-    swaps,
-    setSwaps,
-    invoiceQr,
     denomination,
+    invoiceQr,
+    setSwaps,
+    swap,
+    swaps,
 } from "../signals";
+import { formatAmount } from "../utils/denomination";
+import { prefix0x, satoshiToWei } from "../utils/ethereum";
+import { decodeInvoice } from "../utils/validation";
 
 const InvoiceSet = () => {
     if (asset() === RBTC) {

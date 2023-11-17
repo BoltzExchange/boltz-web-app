@@ -1,14 +1,15 @@
 import log from "loglevel";
-import { createSignal, createEffect } from "solid-js";
-import t from "../i18n";
-import RefundEta from "../components/RefundEta";
+import { createEffect, createSignal } from "solid-js";
+
 import DownloadRefund from "../components/DownloadRefund";
+import RefundEta from "../components/RefundEta";
 import fetcher, { refund, refundAddressChange } from "../helper";
+import t from "../i18n";
 import {
     failureReason,
+    setTransactionToRefund,
     swap,
     timeoutEta,
-    setTransactionToRefund,
 } from "../signals";
 
 const InvoiceFailedToPay = () => {

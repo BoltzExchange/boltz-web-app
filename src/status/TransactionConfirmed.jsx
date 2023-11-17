@@ -6,6 +6,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { prefix0x, satoshiToWei } from "../utils/ethereum";
 import EthereumTransaction from "../components/EthereumTransaction.jsx";
 
+
 const TransactionConfirmed = () => {
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();

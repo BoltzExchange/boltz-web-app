@@ -1,4 +1,5 @@
-import { createSignal, Show } from "solid-js";
+import { Show, createSignal } from "solid-js";
+
 import LoadingSpinner from "./LoadingSpinner.jsx";
 
 const EthereumTransaction = ({

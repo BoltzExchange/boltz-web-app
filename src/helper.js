@@ -1,46 +1,47 @@
+import { detectSwap } from "boltz-core";
+import { Buffer } from "buffer";
 import log from "loglevel";
 import QRCode from "qrcode/lib/server";
-import { Buffer } from "buffer";
-import { detectSwap } from "boltz-core";
-import { ECPair } from "./ecpair/ecpair";
-import { feeChecker } from "./utils/feeChecker";
-import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
-import { pairs } from "./config";
+
 import {
-    ref,
-    asset,
-    swaps,
-    setSwaps,
-    setRefundTx,
-    setRefundAddress,
-    setTimeoutEta,
-    setTimeoutBlockheight,
-    setFailureReason,
-    setSwapStatus,
-    setSwapStatusTransaction,
-    swapStatusTransaction,
-    setNotification,
-    setNotificationType,
-    refundAddress,
-    transactionToRefund,
-    setOnline,
-    setConfig,
-    setRef,
-    setSwap,
-    setNodeStats,
-    swap,
-} from "./signals";
-import {
-    getNetwork,
-    getTransaction,
+    decodeAddress,
+    getAddress,
     getConstructClaimTransaction,
     getConstructRefundTransaction,
+    getNetwork,
     getOutputAmount,
-    decodeAddress,
+    getTransaction,
     setup,
-    getAddress,
 } from "./compat";
+import { pairs } from "./config";
 import { RBTC } from "./consts";
+import { ECPair } from "./ecpair/ecpair";
+import {
+    asset,
+    ref,
+    refundAddress,
+    setConfig,
+    setFailureReason,
+    setNodeStats,
+    setNotification,
+    setNotificationType,
+    setOnline,
+    setRef,
+    setRefundAddress,
+    setRefundTx,
+    setSwap,
+    setSwapStatus,
+    setSwapStatusTransaction,
+    setSwaps,
+    setTimeoutBlockheight,
+    setTimeoutEta,
+    swap,
+    swapStatusTransaction,
+    swaps,
+    transactionToRefund,
+} from "./signals";
+import { feeChecker } from "./utils/feeChecker";
+import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =

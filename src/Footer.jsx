@@ -1,10 +1,10 @@
-import t from "./i18n";
-import substack from "./assets/substack.svg";
-import twitter from "./assets/twitter.svg";
-import nostr from "./assets/nostr.svg";
 import discord from "./assets/discord.svg";
 import github from "./assets/github.svg";
-
+import nostr from "./assets/nostr.svg";
+import substack from "./assets/substack.svg";
+import twitter from "./assets/twitter.svg";
+import { blogUrl, discordUrl, githubUrl, nostrUrl, twitterUrl } from "./config";
+import t from "./i18n";
 import "./style/footer.scss";
 
 const Footer = () => {
@@ -16,7 +16,7 @@ const Footer = () => {
                     title="Discord"
                     class="discord"
                     target="_blank"
-                    href="https://discord.gg/QBvZGcW">
+                    href={discordUrl}>
                     Discord
                 </a>
             </h4>
@@ -26,35 +26,31 @@ const Footer = () => {
                     title="Github"
                     class="github"
                     target="_blank"
-                    href="https://github.com/BoltzExchange">
+                    href={githubUrl}>
                     <img src={github} alt="Github Logo" />
                 </a>
                 <a
                     title="Substack"
                     class="substack"
                     target="_blank"
-                    href="https://blog.boltz.exchange/">
+                    href={blogUrl}>
                     <img src={substack} alt="Substack Logo" />
                 </a>
                 <a
                     title="Discord"
                     class="discord"
                     target="_blank"
-                    href="https://discord.gg/QBvZGcW">
+                    href={discordUrl}>
                     <img src={discord} alt="Discord Logo" />
                 </a>
                 <a
                     title="Twitter"
                     class="twitter"
                     target="_blank"
-                    href="https://twitter.com/boltzhq">
+                    href={twitterUrl}>
                     <img src={twitter} alt="Twitter Logo" />
                 </a>
-                <a
-                    title="Nostr"
-                    class="nostr"
-                    target="_blank"
-                    href="https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970">
+                <a title="Nostr" class="nostr" target="_blank" href={nostrUrl}>
                     <img src={nostr} alt="Nostr Logo" />
                 </a>
             </div>

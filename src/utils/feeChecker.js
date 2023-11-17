@@ -1,5 +1,5 @@
 import { BTC } from "../consts.js";
-import { config, asset } from "../signals.js";
+import { asset, config } from "../signals.js";
 
 const relevantMinerFees = (fees) => {
     return asset() === BTC

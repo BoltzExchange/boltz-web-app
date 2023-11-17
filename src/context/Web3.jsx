@@ -1,6 +1,7 @@
-import { createContext, createSignal, useContext } from "solid-js";
-import { BrowserProvider, Contract } from "ethers";
 import EtherSwap from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
+import { BrowserProvider, Contract } from "ethers";
+import { createContext, createSignal, useContext } from "solid-js";
+
 import { RBTC } from "../consts.js";
 import { getApiUrl } from "../helper.js";
 

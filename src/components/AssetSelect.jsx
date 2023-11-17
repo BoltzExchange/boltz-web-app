@@ -1,15 +1,15 @@
-import t from "../i18n";
-import { fetchPairs } from "../helper";
 import { LN, assets, sideSend } from "../consts";
+import { fetchPairs } from "../helper";
+import t from "../i18n";
 import {
-    setAsset,
-    assetSend,
-    assetSelect,
-    setAssetSend,
     assetReceive,
+    assetSelect,
     assetSelected,
-    setAssetSelect,
+    assetSend,
+    setAsset,
     setAssetReceive,
+    setAssetSelect,
+    setAssetSend,
 } from "../signals";
 
 const SelectAsset = () => {

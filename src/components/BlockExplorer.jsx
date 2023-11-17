@@ -1,5 +1,5 @@
-import t from "../i18n";
 import { pairs } from "../config";
+import t from "../i18n";
 
 const blockExplorerLink = (asset, isTxId, val) => {
     const basePath = pairs[`${asset}/BTC`].blockExplorerUrl;

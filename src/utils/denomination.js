@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+
 import { denomination, maximum } from "../signals";
 
 export const satFactor = 100_000_000;

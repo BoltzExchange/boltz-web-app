@@ -33,6 +33,7 @@
     "@solid-primitives/i18n": "^2.0.0",
     "@solid-primitives/storage": "^2.1.1",
     "@solidjs/router": "^0.8.3",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@vulpemventures/secp256k1-zkp": "^3.1.0",
     "bignumber.js": "^9.1.2 ",
     "bitcoinjs-lib": "^6.1.5",

@@ -1,11 +1,11 @@
+export * from "./configs/templates/defaults";
+
 const apiUrl = "http://localhost:9001";
 const blockExplorerUrl = "http://localhost:8090";
 const blockExplorerUrlLiquid = "http://localhost:8091";
 const blockExplorerUrlRsk = "http://localhost:8092";
 
-export const defaultLanguage = "en";
 export const network = "regtest";
-export const isBeta = false;
 export const bolt11_prefix = "lnbcrt";
 export const loglevel = "debug";
 

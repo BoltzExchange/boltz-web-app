@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+
 import {
     minerFee,
     setBoltzFee,
@@ -6,9 +7,9 @@ import {
     setReverse,
 } from "../../src/signals";
 import {
-    calculateSendAmount,
-    calculateReceiveAmount,
     calculateBoltzFeeOnSend,
+    calculateReceiveAmount,
+    calculateSendAmount,
 } from "../../src/utils/calculate";
 
 describe("Calculate amounts", () => {

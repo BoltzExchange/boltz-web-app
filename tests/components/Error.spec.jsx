@@ -1,7 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
-import i18n from "../../src/i18n/i18n";
 
 import Error from "../../src/Error";
+import i18n from "../../src/i18n/i18n";
 
 describe("Error", () => {
     test("should render the Error page", async () => {

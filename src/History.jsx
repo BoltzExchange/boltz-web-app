@@ -1,17 +1,17 @@
+import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show } from "solid-js";
-import { useNavigate } from "@solidjs/router";
-import t from "./i18n";
-import { isIos } from "./helper";
+
 import SwapList from "./components/SwapList";
-import { downloadJson } from "./utils/download";
+import { isIos } from "./helper";
+import t from "./i18n";
 import {
-    swaps,
-    setSwaps,
-    setNotificationType,
     setNotification,
+    setNotificationType,
+    setSwaps,
+    swaps,
 } from "./signals";
-import "./style/history.scss";
+import { downloadJson } from "./utils/download";
 
 // Throws when the file is invalid
 const validateBackupFile = (file) => {

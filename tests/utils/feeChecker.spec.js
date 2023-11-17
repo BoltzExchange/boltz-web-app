@@ -1,5 +1,5 @@
 import { BTC, LBTC } from "../../src/consts.js";
-import { setConfig, setAsset } from "../../src/signals";
+import { setAsset, setConfig } from "../../src/signals";
 import { feeChecker } from "../../src/utils/feeChecker";
 
 const cfg = {

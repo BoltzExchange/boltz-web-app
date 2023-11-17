@@ -1,9 +1,10 @@
-import { describe, test, expect } from "vitest";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import i18n from "../../src/i18n/i18n";
-import * as signals from "../../src/signals";
+import { describe, expect, test } from "vitest";
+
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
+import i18n from "../../src/i18n/i18n";
+import * as signals from "../../src/signals";
 
 describe("AssetSelect", () => {
     test.each`

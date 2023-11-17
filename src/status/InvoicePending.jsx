@@ -1,5 +1,5 @@
-import t from "../i18n";
 import LoadingSpinner from "../components/LoadingSpinner";
+import t from "../i18n";
 
 const InvoicePending = () => {
     return (

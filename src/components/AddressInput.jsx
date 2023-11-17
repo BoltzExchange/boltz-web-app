@@ -1,5 +1,5 @@
-import t from "../i18n/index.js";
 import { getAddress, getNetwork } from "../compat.js";
+import t from "../i18n/index.js";
 import { asset, setAddressValid, setOnchainAddress } from "../signals.js";
 
 const AddressInput = () => {
