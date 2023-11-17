@@ -1,11 +1,10 @@
-import t from "../i18n";
+import EthereumTransaction from "../components/EthereumTransaction";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
+import t from "../i18n";
 import { asset, setSwaps, swap, swaps } from "../signals";
-import LoadingSpinner from "../components/LoadingSpinner";
 import { prefix0x, satoshiToWei } from "../utils/ethereum";
-import EthereumTransaction from "../components/EthereumTransaction.jsx";
-
 
 const TransactionConfirmed = () => {
     if (asset() === RBTC) {

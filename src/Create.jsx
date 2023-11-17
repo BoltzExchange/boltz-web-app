@@ -13,6 +13,7 @@ import {
 
 import AddressInput from "./components/AddressInput";
 import Asset from "./components/Asset";
+import AssetSelect from "./components/AssetSelect";
 import ClickableAmount from "./components/ClickableAmount";
 import ConnectMetamask from "./components/ConnectMetamask";
 import Fees from "./components/Fees";

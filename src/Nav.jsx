@@ -5,7 +5,7 @@ import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
 import { blogUrl, discordUrl, docsUrl, torUrl } from "./config";
 import t from "./i18n";
-import locales from "./i18n/i18n.js";
+import locales from "./i18n/i18n";
 import {
     hamburger,
     setHamburger,

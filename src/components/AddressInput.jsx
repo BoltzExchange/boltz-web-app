@@ -1,6 +1,6 @@
-import { getAddress, getNetwork } from "../compat.js";
-import t from "../i18n/index.js";
-import { asset, setAddressValid, setOnchainAddress } from "../signals.js";
+import { getAddress, getNetwork } from "../compat";
+import t from "../i18n/index";
+import { asset, setAddressValid, setOnchainAddress } from "../signals";
 
 const AddressInput = () => {
     const validateAddress = (input) => {

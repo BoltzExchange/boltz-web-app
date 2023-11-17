@@ -1,7 +1,7 @@
 import DownloadRefund from "../components/DownloadRefund";
-import EthereumTransaction from "../components/EthereumTransaction.jsx";
-import { RBTC } from "../consts.js";
-import { useWeb3Signer } from "../context/Web3.jsx";
+import EthereumTransaction from "../components/EthereumTransaction";
+import { RBTC } from "../consts";
+import { useWeb3Signer } from "../context/Web3";
 import { clipboard } from "../helper";
 import t from "../i18n";
 import {

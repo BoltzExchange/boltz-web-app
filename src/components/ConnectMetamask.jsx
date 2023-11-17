@@ -1,8 +1,8 @@
 import { Show, createEffect, createSignal } from "solid-js";
 
-import { useWeb3Signer } from "../context/Web3.jsx";
+import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
-import { setAddressValid, setOnchainAddress } from "../signals.js";
+import { setAddressValid, setOnchainAddress } from "../signals";
 
 const ConnectMetamask = ({ showAddress }) => {
     const [address, setAddress] = createSignal();

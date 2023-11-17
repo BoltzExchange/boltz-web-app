@@ -5,7 +5,7 @@ import { Buffer as BufferBrowser } from "buffer";
 import log from "loglevel";
 
 import { decodeAddress, secp, setup } from "../compat";
-import { RBTC } from "../consts.js";
+import { RBTC } from "../consts";
 import { ECPair } from "../ecpair/ecpair";
 import { denominations, formatAmountDenomination } from "./denomination";
 

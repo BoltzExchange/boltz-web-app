@@ -2,8 +2,8 @@ import EtherSwap from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { BrowserProvider, Contract } from "ethers";
 import { createContext, createSignal, useContext } from "solid-js";
 
-import { RBTC } from "../consts.js";
-import { getApiUrl } from "../helper.js";
+import { RBTC } from "../consts";
+import { getApiUrl } from "../helper";
 
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
