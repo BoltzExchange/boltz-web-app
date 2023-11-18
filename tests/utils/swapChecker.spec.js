@@ -1,5 +1,6 @@
 import EventSource from "eventsource";
 import { createServer } from "https";
+import { createRoot } from "solid-js";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { setSwapStatusAndClaim } from "../../src/helper";
@@ -100,7 +101,9 @@ describe("swapChecker", () => {
 
     test("should poll status of pending swaps", async () => {
         setSwaps(swaps);
-        swapChecker();
+        createRoot(() => {
+            swapChecker();
+        });
         await wait(100);
 
         expect(fetcherCallData).toHaveLength(2);
@@ -115,7 +118,9 @@ describe("swapChecker", () => {
     });
 
     test("should connect and handle SSE for active swap", async () => {
-        swapChecker();
+        createRoot(() => {
+            swapChecker();
+        });
         setSwap(swaps[0]);
         await wait();
 
@@ -131,7 +136,9 @@ describe("swapChecker", () => {
     });
 
     test("should close SSE when active swap changes", async () => {
-        swapChecker();
+        createRoot(() => {
+            swapChecker();
+        });
         setSwap(swaps[0]);
         await wait();
 

@@ -1,5 +1,5 @@
 import { makePersisted } from "@solid-primitives/storage";
-import { createEffect, createSignal } from "solid-js";
+import { createEffect, createRoot, createSignal } from "solid-js";
 
 import { pairs } from "./config";
 import { LN, sideSend } from "./consts";
@@ -109,12 +109,13 @@ export const [notificationType, setNotificationType] = createSignal("");
 export const [webln, setWebln] = createSignal(false);
 
 // effects
-createEffect(() => setReverse(assetReceive() !== LN));
-
-[assetSend, assetReceive].forEach((signal) => {
-    createEffect(() => {
-        if (signal() !== LN) {
-            setAsset(signal());
-        }
+createRoot(() => {
+    createEffect(() => setReverse(assetReceive() !== LN));
+    [assetSend, assetReceive].forEach((signal) => {
+        createEffect(() => {
+            if (signal() !== LN) {
+                setAsset(signal());
+            }
+        });
     });
 });
