@@ -50,6 +50,7 @@ const InvoiceSet = () => {
                     {t("copy_address")}
                 </span>
             </div>
+            <hr />
         </div>
     );
 };

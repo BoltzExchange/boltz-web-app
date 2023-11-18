@@ -11,14 +11,12 @@ const RefundStep = () => {
     const navigate = useNavigate();
 
     createEffect(() => {
-        let tmp_swaps = swaps();
-        if (tmp_swaps) {
-            let current_swap = tmp_swaps
-                .filter((s) => s.id === params.id)
-                .pop();
-            if (current_swap) {
-                log.debug("selecting swap", current_swap);
-                setSwap(current_swap);
+        let tmpSwaps = swaps();
+        if (tmpSwaps) {
+            let currentSwap = tmpSwaps.filter((s) => s.id === params.id).pop();
+            if (currentSwap) {
+                log.debug("selecting swap", currentSwap);
+                setSwap(currentSwap);
             }
         }
     });
