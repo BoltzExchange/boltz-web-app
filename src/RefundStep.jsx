@@ -35,7 +35,7 @@ const RefundStep = () => {
                 </ul>
                 <hr />
                 <p style="font-size: 46px; margin:0;">⚠️</p>
-                <p>{t("backup_refund_skip")}</p>
+                <h3>{t("backup_refund_skip")}</h3>
                 <hr />
                 <div class="btns btns-space-between">
                     <button
