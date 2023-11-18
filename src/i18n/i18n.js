@@ -132,7 +132,7 @@ const dict = {
         beta_caution: "BETA - USE WITH CAUTION!",
         warning_return: "Important: Return to this page after paying invoice",
         warning_expiry:
-            "Make sure your transaction confirms within {{ hours }} hours!",
+            "Make sure your transaction confirms within ~24 hours after creation of this swap!",
         not_found: "404 - Page Not Found",
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
@@ -277,7 +277,7 @@ const dict = {
         warning_return:
             "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
         warning_expiry:
-            "Wichtig: Die Transaktion muss vor {{ hours }} Stunden bestätigt sein!",
+            "Wichtig: Die Transaktion muss innerhalb ~24 Stunden nach Erstellung dieses Swaps bestätigt sein!",
         not_found: "404 - Seite nicht gefunden",
         not_found_subline: "Die gesuchte Seite existiert nicht.",
         back_to_home: "Zurück zur Startseite",
@@ -420,7 +420,7 @@ const dict = {
         warning_return:
             "Importante: Regresa a esta página después de pagar la factura!",
         warning_expiry:
-            "Importante: Asegúrese de que la transacción se confirma en {{ hours }} horas",
+            "Importante: Asegúrese de que la transacción se confirma en ~24 horas",
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
