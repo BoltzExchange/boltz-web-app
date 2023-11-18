@@ -1,8 +1,8 @@
 import DownloadRefund from "../components/DownloadRefund";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
-import { invoiceQr, swap } from "../signals";
-import { formatAmount } from "../utils/denomination";
+import { denomination, invoiceQr, swap } from "../signals";
+import { denominations, formatAmount } from "../utils/denomination";
 
 const InvoiceSet = () => {
     return (
@@ -10,7 +10,10 @@ const InvoiceSet = () => {
             <h2>
                 {t("send_to", {
                     amount: formatAmount(swap().expectedAmount),
-                    asset: swap().asset,
+                    denomination:
+                        denomination() === denominations.sat
+                            ? "sats "
+                            : swap().asset,
                 })}
             </h2>
             <hr />

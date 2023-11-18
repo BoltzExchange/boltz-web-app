@@ -4,7 +4,7 @@ import { Show } from "solid-js";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
 import { denomination, invoiceQr, swap, webln } from "../signals";
-import { formatAmount } from "../utils/denomination";
+import { denominations, formatAmount } from "../utils/denomination";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
@@ -20,7 +20,10 @@ const SwapCreated = () => {
             <h2>
                 {t("pay_invoice_to", {
                     amount: formatAmount(swap().sendAmount),
-                    denomination: denomination(),
+                    denomination:
+                        denomination() === denominations.sat
+                            ? "sats "
+                            : denomination(),
                 })}
             </h2>
             <hr />
