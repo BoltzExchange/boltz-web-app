@@ -40,7 +40,6 @@ const SwapCreated = () => {
                     onClick={() => payWeblnInvoice(swap().invoice)}>
                     {t("pay_invoice_webln")}
                 </span>
-                <hr />
             </Show>
             <span
                 class="btn"
