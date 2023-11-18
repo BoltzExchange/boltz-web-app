@@ -17,7 +17,6 @@ export const [config, setConfig] = createSignal(0);
 
 export const [online, setOnline] = createSignal(true);
 export const [wasmSupported, setWasmSupported] = createSignal(true);
-export const [webln, setWebln] = createSignal(false);
 
 // fees
 export const [boltzFee, setBoltzFee] = createSignal(0);
@@ -105,6 +104,9 @@ export const [sendAmountValid, setSendAmountValid] = createSignal(true);
 // notification
 export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
+
+export const [webln, setWebln] = createSignal(false);
+export const [camera, setCamera] = createSignal(false);
 
 // effects
 createRoot(() => {
