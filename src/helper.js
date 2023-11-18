@@ -53,7 +53,7 @@ export const cropString = (str) => {
     if (str.length < 40) {
         return str;
     }
-    return str.substring(0, 20) + "..." + str.substring(str.length - 20);
+    return str.substring(0, 19) + "..." + str.substring(str.length - 19);
 };
 
 export const checkReferralId = () => {
