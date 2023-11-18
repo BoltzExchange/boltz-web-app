@@ -66,6 +66,7 @@ const dict = {
         connect_metamask: "Connect MetaMask",
         disconnect_metamask: "Disconnect MetaMask",
         connect_to_address: "Connect to MetaMask to set address",
+        disconnect_address: "Disconnect MetaMask",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
             "Your lockup transaction failed, wait for the timeout to refund.",

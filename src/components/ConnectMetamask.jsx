@@ -6,6 +6,15 @@ import { setAddressValid, setOnchainAddress } from "../signals";
 
 const ConnectMetamask = ({ showAddress }) => {
     const [address, setAddress] = createSignal();
+    const [buttonText, setButtonText] = createSignal();
+
+    const setButtonTextAddress = () => {
+        setButtonText(address() || t("connect_to_address"));
+    };
+
+    createEffect(() => {
+        setButtonTextAddress();
+    });
 
     createEffect(() => {
         setAddressValid(address() !== undefined);
@@ -19,7 +28,7 @@ const ConnectMetamask = ({ showAddress }) => {
             <Show when={address() === undefined}>
                 <button
                     id="metamask"
-                    class="btn btn-light"
+                    class="btn"
                     onClick={async () =>
                         setAddress(await (await getSigner()).getAddress())
                     }>
@@ -30,9 +39,13 @@ const ConnectMetamask = ({ showAddress }) => {
                 <Show when={showAddress}>
                     <button
                         onClick={() => setAddress(undefined)}
+                        onMouseEnter={() =>
+                            setButtonText(t("disconnect_address"))
+                        }
+                        onMouseLeave={() => setButtonTextAddress()}
                         class="btn btn-light"
                         type="text">
-                        {address() || t("connect_to_address")}
+                        {buttonText()}
                     </button>
                 </Show>
             </Show>
