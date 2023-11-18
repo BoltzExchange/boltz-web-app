@@ -1,17 +1,21 @@
 import { useNavigate } from "@solidjs/router";
+import log from "loglevel";
 import { createMemo, createSignal } from "solid-js";
 
 import Create from "./Create";
 import bitcoin from "./assets/bitcoin-icon.svg";
 import lightning from "./assets/lightning-icon.svg";
 import liquid from "./assets/liquid-icon.svg";
-import { fetchNodeInfo } from "./helper";
+import { ambossUrl } from "./config";
+import { fetcher } from "./helper";
 import t from "./i18n";
-import { hideHero, nodeStats, setHideHero } from "./signals";
 import "./style/hero.scss";
+
+export const [hideHero, setHideHero] = createSignal(false);
 
 const Hero = () => {
     const navigate = useNavigate();
+    const [nodeStats, setNodeStats] = createSignal(null);
     const [numChannel, setNumChannel] = createSignal(0);
     const [numPeers, setNumPeers] = createSignal(0);
     const [capacity, setCapacity] = createSignal(0);
@@ -29,13 +33,13 @@ const Hero = () => {
     });
 
     const openNodeInfo = async () => {
-        window.open(
-            "https://amboss.space/node/026165850492521f4ac8abd9bd8088123446d126f648ca35e60f88177dc149ceb2",
-            "_blank",
-        );
+        window.open(ambossUrl, "_blank");
     };
 
-    fetchNodeInfo();
+    fetcher("/nodestats", (data) => {
+        log.debug("nodestats", data);
+        setNodeStats(data.nodes.BTC);
+    });
 
     return (
         <div id="hero" class="inner-wrap">

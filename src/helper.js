@@ -21,7 +21,6 @@ import {
     refundAddress,
     setConfig,
     setFailureReason,
-    setNodeStats,
     setNotification,
     setNotificationType,
     setOnline,
@@ -74,7 +73,7 @@ export const clipboard = (text, message) => {
 };
 
 export const errorHandler = (error) => {
-    console.log(error);
+    log.error(error);
     setNotificationType("error");
     if (typeof error.json === "function") {
         error
@@ -394,13 +393,6 @@ export const claim = async (swap) => {
             transactionHex: claimTransaction,
         },
     );
-};
-
-export const fetchNodeInfo = () => {
-    fetcher("/nodestats", (data) => {
-        log.debug("nodestats", data);
-        setNodeStats(data.nodes.BTC);
-    });
 };
 
 export const fetchPairs = () => {
