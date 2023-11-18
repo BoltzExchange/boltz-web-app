@@ -9,6 +9,7 @@ import ConnectMetamask from "./components/ConnectMetamask";
 import { CreateButton, setButtonLabel } from "./components/CreateButton";
 import Fees from "./components/Fees";
 import InvoiceInput from "./components/InvoiceInput";
+import QrScan from "./components/QrScan";
 import Reverse from "./components/Reverse";
 import { RBTC, sideReceive, sideSend } from "./consts";
 import t from "./i18n";
@@ -293,6 +294,7 @@ const Create = () => {
                 </Show>
                 <InvoiceInput />
             </Show>
+            <QrScan />
             <CreateButton />
             <AssetSelect />
         </div>

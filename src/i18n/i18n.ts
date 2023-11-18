@@ -157,6 +157,7 @@ const dict = {
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
         fetch_lnurl: "Fetch invoice from LNURL/LNAddress",
         invalid_address: "Invalid {{ asset }} address",
+        scan_qr_code: "Scan QR Code",
     },
     de: {
         language: "Deutsch",
@@ -323,6 +324,7 @@ const dict = {
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
         fetch_lnurl: "Hole Rechnung von LNURL/LNAdresse",
         invalid_address: "Ungültige {{ asset }} Adresse",
+        scan_qr_code: "QR Code scannen",
     },
     es: {
         language: "Español",
@@ -488,6 +490,7 @@ const dict = {
             'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
         fetch_lnurl: "Obtener factura de LNURL/LNAddress",
         invalid_address: "Dirección {{ asset }} inválida",
+        scan_qr_code: "Escanear código QR",
     },
     zh: {
         language: "中文",
