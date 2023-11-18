@@ -1,6 +1,7 @@
 import { crypto, script } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
+import EtherSwap from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { Buffer as BufferBrowser } from "buffer";
 import log from "loglevel";
 
@@ -19,6 +20,17 @@ export const decodeInvoice = (invoice) => {
         preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
             .data,
     };
+};
+
+const validateContract = async (getEtherSwap) => {
+    const code = await (await getEtherSwap()).getDeployedCode();
+    const codeMatches = code === EtherSwap.deployedBytecode.object;
+
+    if (!codeMatches) {
+        log.warn("contract validation: code mismatch");
+    }
+
+    return codeMatches;
 };
 
 const getScriptHashFunction = (isNativeSegwit) =>
@@ -51,7 +63,7 @@ const validateAddress = async (swap, isNativeSegwit, address, buffer) => {
     return true;
 };
 
-const validateReverseSwap = (swap, buffer) => {
+const validateReverseSwap = async (swap, getEtherSwap, buffer) => {
     const invoiceData = decodeInvoice(swap.invoice);
 
     // Amounts
@@ -68,6 +80,10 @@ const validateReverseSwap = (swap, buffer) => {
     if (invoiceData.preimageHash !== preimageHash.toString("hex")) {
         log.warn("reverse swap validation: preimage hash");
         return false;
+    }
+
+    if (swap.asset === RBTC) {
+        return await validateContract(getEtherSwap);
     }
 
     // Redeem script
@@ -87,12 +103,16 @@ const validateReverseSwap = (swap, buffer) => {
     return validateAddress(swap, true, swap.lockupAddress, buffer);
 };
 
-const validateSwap = async (swap, buffer) => {
+const validateSwap = async (swap, getEtherSwap, buffer) => {
     const invoiceData = decodeInvoice(swap.invoice);
 
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
         return false;
+    }
+
+    if (swap.asset === RBTC) {
+        return await validateContract(getEtherSwap);
     }
 
     // Redeem script
@@ -132,16 +152,15 @@ const validateSwap = async (swap, buffer) => {
 };
 
 // To be able to use the Buffer from Node.js
-export const validateResponse = async (swap, buffer = BufferBrowser) => {
-    // TODO: actually check rsk responses
-    if (swap.asset === RBTC) {
-        return true;
-    }
-
+export const validateResponse = async (
+    swap,
+    getEtherSwap,
+    buffer = BufferBrowser,
+) => {
     try {
         return await (swap.reverse
-            ? validateReverseSwap(swap, buffer)
-            : validateSwap(swap, buffer));
+            ? validateReverseSwap(swap, getEtherSwap, buffer)
+            : validateSwap(swap, getEtherSwap, buffer));
     } catch (e) {
         log.warn("swap validation threw", e);
         return false;

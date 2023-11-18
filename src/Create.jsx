@@ -19,6 +19,7 @@ import ConnectMetamask from "./components/ConnectMetamask";
 import Fees from "./components/Fees";
 import Reverse from "./components/Reverse";
 import { RBTC, sideReceive, sideSend } from "./consts";
+import { useWeb3Signer } from "./context/Web3";
 import { ECPair } from "./ecpair/ecpair";
 import { feeCheck, fetchPairs, fetcher } from "./helper";
 import t from "./i18n";
@@ -81,6 +82,8 @@ import { decodeInvoice, validateResponse } from "./utils/validation";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {
+    const { getEtherSwap } = useWeb3Signer();
+
     let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;
 
     onMount(() => {
@@ -269,7 +272,7 @@ const Create = () => {
                         data.invoice = invoice();
                     }
 
-                    validateResponse(data).then((success) => {
+                    validateResponse(data, getEtherSwap).then((success) => {
                         if (!success) {
                             resolve();
                             navigate("/error/");
