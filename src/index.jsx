@@ -1,6 +1,7 @@
 /* @refresh reload */
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
+import { createRoot } from "solid-js";
 import { render } from "solid-js/web";
 
 import Create from "./Create";
@@ -30,7 +31,9 @@ setWasmSupported(checkWasmSupported());
 checkReferralId();
 detectLanguage();
 
-swapChecker();
+createRoot(() => {
+    swapChecker();
+});
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
