@@ -86,8 +86,8 @@ const Create = () => {
         sendAmountRef.focus();
     });
 
-    const [sendAmountValid, setSendAmountValid] = createSignal(true);
     const [buttonDisable, setButtonDisable] = createSignal(true);
+    const [sendAmountValid, setSendAmountValid] = createSignal(true);
 
     createEffect(
         on([boltzFee, minerFee, reverse, asset], () => {
