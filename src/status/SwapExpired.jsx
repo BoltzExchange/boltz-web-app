@@ -52,7 +52,7 @@ const SwapExpired = () => {
                 <button
                     class="btn"
                     disabled={valid() ? "" : "disabled"}
-                    onclick={() => refund(swap(), t)}>
+                    onclick={() => refund(swap())}>
                     {t("refund")}
                 </button>
                 <hr />

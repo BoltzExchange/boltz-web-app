@@ -5,7 +5,7 @@ import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import BlockExplorer from "./components/BlockExplorer";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { RBTC } from "./consts";
-import { checkForFailed, fetcher, qr } from "./helper";
+import { fetcher, qr } from "./helper";
 import t from "./i18n";
 import {
     setFailureReason,
@@ -54,7 +54,6 @@ const Pay = () => {
                     (data) => {
                         setSwapStatus(data.status);
                         setSwapStatusTransaction(data.transaction);
-                        checkForFailed(currentSwap.id, data);
                         setFailureReason(data.failureReason);
                     },
                     { id: currentSwap.id },

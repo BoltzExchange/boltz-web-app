@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { createEffect, createSignal } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 import BlockExplorer from "./components/BlockExplorer";
 import RefundEta from "./components/RefundEta";
@@ -110,7 +110,7 @@ const Refund = () => {
 
                 setRefundable(true);
                 setTransactionToRefund(data);
-                await refund(refundJson(), t);
+                await refund(refundJson());
             },
             {
                 id: refundInfo.id,
@@ -187,6 +187,7 @@ const Refund = () => {
                 <p>{t("refund_a_swap_subline")}</p>
                 <hr />
                 <SwapList swapsSignal={refundableSwaps} />
+                <hr />
                 <input
                     required
                     type="file"

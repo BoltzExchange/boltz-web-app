@@ -1,6 +1,7 @@
-import EtherSwap from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
-import { BrowserProvider, Contract } from "ethers";
-import { createContext, createSignal, useContext } from "solid-js";
+import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
+import { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
+import { Setter, createContext, createSignal, useContext } from "solid-js";
 
 import { RBTC } from "../consts";
 import { getApiUrl } from "../helper";
@@ -10,24 +11,27 @@ import { getApiUrl } from "../helper";
 
 const ethereumInitEvent = "ethereum#initialized";
 
-const detectInjection = (setSignerPromise) => {
+const detectInjection = (setProvider: Setter<BrowserProvider>) => {
     const handleEthereum = () => {
         window.removeEventListener(ethereumInitEvent, handleEthereum);
-        setSignerPromise(new BrowserProvider(window.ethereum));
+        setProvider(new BrowserProvider((window as any).ethereum));
     };
 
-    if (window.ethereum) {
+    if ((window as any).ethereum) {
         handleEthereum();
     } else {
         window.addEventListener(ethereumInitEvent, handleEthereum);
     }
 };
 
-const Web3SignerContext = createContext();
+const Web3SignerContext = createContext<{
+    getSigner: () => Promise<JsonRpcSigner>;
+    getEtherSwap: () => Promise<EtherSwap>;
+}>();
 
 const Web3SignerProvider = (props) => {
-    const [provider, setProvider] = createSignal(undefined);
-    const [signer, setSigner] = createSignal();
+    const [provider, setProvider] = createSignal<BrowserProvider | undefined>();
+    const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
 
     detectInjection(setProvider);
 
@@ -48,9 +52,9 @@ const Web3SignerProvider = (props) => {
         await getSigner();
         return new Contract(
             (await getContracts)["swapContracts"]["EtherSwap"],
-            EtherSwap.abi,
+            EtherSwapAbi,
             signer(),
-        );
+        ) as unknown as EtherSwap;
     };
 
     return (

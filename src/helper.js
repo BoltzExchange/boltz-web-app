@@ -16,6 +16,7 @@ import {
 import { pairs } from "./config";
 import { RBTC } from "./consts";
 import { ECPair } from "./ecpair/ecpair";
+import t from "./i18n";
 import {
     asset,
     ref,
@@ -119,15 +120,17 @@ export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
     fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
 };
 
-export const checkForFailed = (swap_id, data) => {
+export const checkForFailed = (swap, data) => {
     if (
         data.status == "transaction.lockupFailed" ||
         data.status == "invoice.failedToPay"
     ) {
+        const id = swap.id;
+
         fetcher(
             "/getswaptransaction",
             (data) => {
-                if (!data.transactionHex) {
+                if (swap.asset !== RBTC && !data.transactionHex) {
                     log.error("no mempool tx found");
                 }
                 if (!data.timeoutEta) {
@@ -143,7 +146,7 @@ export const checkForFailed = (swap_id, data) => {
                 setTimeoutBlockheight(data.timeoutBlockHeight);
             },
             {
-                id: swap_id,
+                id,
             },
         );
     }
@@ -167,7 +170,7 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
     ) {
         claim(currentSwap);
     }
-    checkForFailed(currentSwap.id, data);
+    checkForFailed(currentSwap, data);
     setFailureReason(data.failureReason);
 };
 
@@ -182,7 +185,7 @@ export const qr = (data, cb) => {
         });
 };
 
-export async function refund(swap, t) {
+export async function refund(swap) {
     let output = "";
     setRefundTx("");
 
@@ -468,6 +471,13 @@ export const refundAddressChange = (e, asset) => {
     }
 
     return false;
+};
+
+export const updateSwaps = (cb) => {
+    const swapsTmp = swaps();
+    const currentSwap = swapsTmp.find((s) => swap().id === s.id);
+    cb(currentSwap);
+    setSwaps(swapsTmp);
 };
 
 export default fetcher;

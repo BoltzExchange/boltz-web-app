@@ -13,5 +13,6 @@ jobs:
           node-version: '18.x'
           cache: 'npm'
       - run: npm ci
+      - run: npm run tsc
       - run: npm run prettier-check
       - run: npm run test

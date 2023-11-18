@@ -4,7 +4,8 @@ tags
 
 *.log
 dist/
-node_modules
+ts-out/
+node_modules/
 src/config.js
 src/bitcore-lib.js
 src/bitcore-lib.min.js

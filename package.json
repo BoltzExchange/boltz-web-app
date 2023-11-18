@@ -13,6 +13,7 @@
     "testnet": "cp src/configs/config.testnet.js src/config.js; vite build; cp dist/index.html dist/404.html",
     "prettier": "prettier --write src tests",
     "prettier-check": "prettier --check src tests",
+    "tsc": "tsc",
     "changelog": "git-cliff -o CHANGELOG.md"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
     "jsdom": "^22.1.0",
     "prettier": "^3.0.3",
     "sass": "^1.69.4",
+    "typescript": "^5.2.2",
     "vite": "^4.5.0",
     "vite-plugin-node-polyfills": "^0.15.0",
     "vite-plugin-solid": "^2.7.2",

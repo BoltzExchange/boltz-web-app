@@ -1,33 +1,40 @@
 import { useNavigate } from "@solidjs/router";
-import { For, Show } from "solid-js";
+import { For, Show, createMemo, createSignal } from "solid-js";
 
 import t from "../i18n";
 import "../style/swaplist.scss";
 
 const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
     const navigate = useNavigate();
+    const [sortedSwaps, setSortedSwaps] = createSignal([]);
+    const [lastSwap, setLastSwap] = createSignal();
 
-    const formatDate = (d) => {
+    createMemo(() => {
+        const sorted = swapsSignal().sort((a: any, b: any) =>
+            a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
+        );
+        setSortedSwaps(sorted);
+        setLastSwap(sorted[sorted.length - 1]);
+    });
+
+    const formatDate = (d: number) => {
         let date = new Date();
         date.setTime(d);
         return date.toLocaleDateString();
     };
 
-    const deleteSwap = (swapId) => {
+    const deleteSwap = (swapId: string) => {
         if (
             setSwapSignal !== undefined &&
             confirm(t("delete_localstorage_single_swap", { id: swapId }))
         ) {
-            setSwapSignal(swapsSignal().filter((s) => s.id !== swapId));
+            setSwapSignal(swapsSignal().filter((s: any) => s.id !== swapId));
         }
     };
 
     return (
         <div id="swaplist">
-            <For
-                each={swapsSignal().sort((a, b) =>
-                    a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
-                )}>
+            <For each={sortedSwaps()}>
                 {(swap) => (
                     <div class="swaplist-item">
                         <span
@@ -54,7 +61,9 @@ const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
                                 {t("delete")}
                             </span>
                         </Show>
-                        <hr />
+                        <Show when={lastSwap() !== swap}>
+                            <hr />
+                        </Show>
                     </div>
                 )}
             </For>

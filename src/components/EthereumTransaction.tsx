@@ -8,13 +8,21 @@ const EthereumTransaction = ({
     buttonText,
     waitingText,
     showHr,
+}: {
+    onClick: () => Promise<any>;
+    buttonText: string;
+    waitingText?: string;
+    showHr?: boolean;
+    promptText?: string;
 }) => {
     const [txSent, setTxSent] = createSignal(false);
 
     return (
         <>
             <Show when={!txSent()}>
-                <p>{promptText}</p>
+                <Show when={promptText}>
+                    <p>{promptText}</p>
+                </Show>
                 <button
                     class="btn"
                     onClick={async () => {
@@ -29,7 +37,9 @@ const EthereumTransaction = ({
             </Show>
 
             <Show when={txSent()}>
-                <p>{waitingText}</p>
+                <Show when={waitingText}>
+                    <p>{waitingText}</p>
+                </Show>
                 <LoadingSpinner />
                 <hr />
             </Show>
