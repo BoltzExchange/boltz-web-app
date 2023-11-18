@@ -1,5 +1,5 @@
 import DownloadRefund from "../components/DownloadRefund";
-import { clipboard } from "../helper";
+import { clipboard, cropString } from "../helper";
 import t from "../i18n";
 import { invoiceQr, swap } from "../signals";
 import { formatAmount } from "../utils/denomination";
@@ -20,7 +20,7 @@ const InvoiceSet = () => {
             <p
                 onclick={() => clipboard(swap().address, t("copied"))}
                 class="address-box break-word">
-                {swap().address}
+                {cropString(swap().address)}
             </p>
             <hr />
             <h3>

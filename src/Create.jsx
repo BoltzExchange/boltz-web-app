@@ -70,7 +70,6 @@ import {
     formatAmount,
     getValidationRegex,
 } from "./utils/denomination";
-import { validateResponse } from "./utils/validation";
 import {
     decodeInvoice,
     fetchLnurl,
@@ -78,6 +77,7 @@ import {
     isLnurl,
     trimLightningPrefix,
 } from "./utils/invoice";
+import { validateResponse } from "./utils/validation";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {

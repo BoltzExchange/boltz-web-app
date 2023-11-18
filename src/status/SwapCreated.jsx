@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { Show } from "solid-js";
 
-import { clipboard } from "../helper";
+import { clipboard, cropString } from "../helper";
 import t from "../i18n";
 import { denomination, invoiceQr, swap, webln } from "../signals";
 import { formatAmount } from "../utils/denomination";
@@ -13,14 +13,6 @@ const SwapCreated = () => {
             const result = await window.webln.sendPayment(pr);
             log.debug("webln payment result:", result);
         });
-    };
-
-    const cropInvoice = (invoice) => {
-        return (
-            invoice.substring(0, 20) +
-            "..." +
-            invoice.substring(invoice.length - 20)
-        );
     };
 
     return (
@@ -37,7 +29,7 @@ const SwapCreated = () => {
             <p
                 onclick={() => clipboard(swap().invoice, t("copied"))}
                 class="address-box break-word">
-                {cropInvoice(swap().invoice)}
+                {cropString(swap().invoice)}
             </p>
             <hr />
             <h3>{t("warning_return")}</h3>
