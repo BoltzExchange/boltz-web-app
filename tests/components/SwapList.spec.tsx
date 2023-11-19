@@ -2,7 +2,7 @@ import { Router } from "@solidjs/router";
 import { render } from "@solidjs/testing-library";
 import { describe, expect, it } from "vitest";
 
-import SwapList from "../../src/components/SwapList.jsx";
+import SwapList from "../../src/components/SwapList";
 
 describe("SwapList", () => {
     it("should sort correctly", async () => {
