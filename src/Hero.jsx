@@ -79,12 +79,11 @@ export const Hero = () => {
                         <img src={liquid} alt="Liquid Bitcoin" />
                     </div>
                 </div>
+                <h2 class="headline" onclick={openNodeInfo}>
+                    {t("node")}
+                    <small>{t("node_subline")}</small>
+                </h2>
                 <div id="numbers">
-                    <div class="number number-label">
-                        <h2 onclick={openNodeInfo} class="special">
-                            {t("node")}
-                        </h2>
-                    </div>
                     <div class="number">
                         {numChannel()} <small>{t("num_channels")}</small>
                     </div>
@@ -100,10 +99,11 @@ export const Hero = () => {
                     </div>
                 </div>
 
+                <h2 class="headline">
+                    {t("integrations")}
+                    <small>{t("integrations_subline")}</small>
+                </h2>
                 <div id="integrations">
-                    <div>
-                        <h2 class="special">{t("integrations")}</h2>
-                    </div>
                     <div>
                         <a
                             href="https://corelightning.org/"
@@ -157,10 +157,11 @@ export const Hero = () => {
                             class="fuji"></a>
                     </div>
                 </div>
+                <h2 class="headline">
+                    {t("partners")}
+                    <small>{t("partners_subline")}</small>
+                </h2>
                 <div id="partners">
-                    <div>
-                        <h2 class="special">{t("partners")}</h2>
-                    </div>
                     <div>
                         <a
                             href="https://blockstream.com/"

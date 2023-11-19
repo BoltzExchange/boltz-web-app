@@ -1,5 +1,6 @@
 @import "vars";
 
+.headline,
 h1 {
     font-size: 64px;
     line-height: 1.05;
@@ -11,7 +12,12 @@ h1 {
     -webkit-background-clip: text;
     margin: 74px 12px 12px;
 }
+h2.headline {
+    font-size: 42px;
+    margin: 62px 12px 12px;
+}
 
+.headline small,
 h1 small {
     font-size: 24px;
     font-weight: normal;
@@ -21,11 +27,20 @@ h1 small {
     margin: 21px auto 34px;
     line-height: 1.2;
 }
+h2.headline small {
+    font-size: 20px;
+    margin: 12px auto;
+}
 @media (max-width: 768px) {
+    .headline,
     h1 {
         font-size: 36px;
         margin: 62px 12px 12px;
     }
+    h2.headline {
+        font-size: 28px;
+    }
+    .headline small,
     h1 small {
         font-size: 20px;
     }
@@ -33,21 +48,6 @@ h1 small {
 h3 {
     margin: 0;
     color: $primary;
-}
-
-h2.special {
-    line-height: 1;
-    color: rgba(255, 255, 255, 0.3);
-    background: linear-gradient(
-        20deg,
-        rgb(255, 197, 0) 10%,
-        rgb(0, 88, 255) 100%
-    );
-    -webkit-background-clip: text;
-}
-#hero h2.special {
-    margin: 0;
-    font-size: 20px;
 }
 
 .inner-wrap {
@@ -105,7 +105,7 @@ h2.special {
     background: transparent;
 }
 .number {
-    font-size: 30px;
+    font-size: 42px;
     font-weight: bold;
     margin-bottom: 16px;
 }
@@ -251,7 +251,7 @@ h2.special {
 #integrations > div > a:before,
 #integrations > div > a {
     opacity: 0.4;
-    filter: brightness(1000) grayscale(1);
+    // filter: brightness(1000) grayscale(1);
     transition: opacity 0.4s ease-in-out;
 }
 
@@ -263,9 +263,23 @@ h2.special {
 }
 
 #create-overlay.glow {
-    position: relative;
-    transition: opacity 0.4s ease-in-out;
+    transition: all 0.8s ease-in-out;
+    height: 280px;
+    overflow: hidden;
+    opacity: 0.42;
 }
 #create-overlay.glow:hover {
-    opacity: 1;
+    transition: all 0.8s ease-in-out;
+    height: 290px;
+    opacity: 0.8;
+}
+#create-overlay.glow .frame {
+    transition: all 0.8s ease-in-out;
+    box-shadow: 0 0 0 transparentize($primary, 0.7);
+}
+
+@media (min-width: 488px) {
+    #create-overlay.glow .frame {
+        box-shadow: 0 0 60px transparentize($primary, 0.7);
+    }
 }
