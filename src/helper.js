@@ -22,7 +22,6 @@ import {
     refundAddress,
     setConfig,
     setFailureReason,
-    setNodeStats,
     setNotification,
     setNotificationType,
     setOnline,
@@ -41,6 +40,7 @@ import {
     transactionToRefund,
 } from "./signals";
 import { feeChecker } from "./utils/feeChecker";
+import { checkResponse } from "./utils/http";
 import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
@@ -49,6 +49,13 @@ export const isMobile =
 
 const parseBlindingKey = (swap) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
+};
+
+export const cropString = (str) => {
+    if (str.length < 40) {
+        return str;
+    }
+    return str.substring(0, 19) + "..." + str.substring(str.length - 19);
 };
 
 export const checkReferralId = () => {
@@ -75,7 +82,7 @@ export const clipboard = (text, message) => {
 };
 
 export const errorHandler = (error) => {
-    console.log(error);
+    log.error(error);
     setNotificationType("error");
     if (typeof error.json === "function") {
         error
@@ -90,13 +97,6 @@ export const errorHandler = (error) => {
     } else {
         setNotification(error.message);
     }
-};
-
-export const checkResponse = (response) => {
-    if (!response.ok) {
-        return Promise.reject(response);
-    }
-    return response.json();
 };
 
 export const getApiUrl = (asset) => {
@@ -401,13 +401,6 @@ export const claim = async (swap) => {
             transactionHex: claimTransaction,
         },
     );
-};
-
-export const fetchNodeInfo = () => {
-    fetcher("/nodestats", (data) => {
-        log.debug("nodestats", data);
-        setNodeStats(data.nodes.BTC);
-    });
 };
 
 export const fetchPairs = () => {

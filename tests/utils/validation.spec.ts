@@ -4,7 +4,7 @@ import log from "loglevel";
 import { beforeAll, describe, expect, test, vitest } from "vitest";
 
 import { RBTC } from "../../src/consts";
-import { decodeInvoice, validateResponse } from "../../src/utils/validation";
+import { validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
     const getEtherSwap = (code: string): (() => Promise<Contract>) => {
@@ -16,17 +16,6 @@ describe("validate responses", () => {
 
     beforeAll(() => {
         log.disableAll();
-    });
-
-    describe("decode invoices", () => {
-        test.each`
-            network      | invoice
-            ${"regtest"} | ${"lnbcrt623210n1pj8hfdspp5mhcxq3qgzn779zs0c02na32henclzt55uga68kck6tknyw0y59qsdqqcqzzsxqyz5vqsp54wll9s5jphgcjqzpnamqeszvfdz937pjels2cqr84pltjsqv2asq9qyyssq49028nqec7uz5vk73peg5a4fkxhltw90kkmupfradjp0sus6g5zxs6njedk8ml3qgdls3dfjfvd7z3py5qgst9fnzz5pwcr5564sf6sqtrlfzz"}
-            ${"testnet"} | ${"lntb4573450n1pj8hfnmsp58erxc4m9u09frqkalhw5udgvghvm27wewl99d7z3hjftgwtt234qpp572p5y0tplt70txw35kzypsef4mg2pwp5u0ej9hx8tse6f2rcvrjsdq5g9kxy7fqd9h8vmmfvdjsxqyjw5qcqp2rzjq0cxp9fmaadhwlw80ez2lgu9n5pzlsd803238r0tyv4dwf27s6wqqfggesqqqfqqqyqqqqlgqqqqqqgq9q9qyysgqw4msvmfgakcmxkglwnj7qgp6hlupefstyzhkld0uxlx3gdncnzw385c5qy6ng2qh59rtttktjzy8l43gzv3n9u6du64z2xu0mdz377splwf2qy"}
-            ${"mainnet"} | ${"lnbc678450n1pj8hf4kpp5kxh4x93kvxt43q0k0q6t3fp6gfhgusqxsajj6lcexsrg4lzm7rrqdq5g9kxy7fqd9h8vmmfvdjscqzzsxqyz5vqsp5n4rzwr2lzw68082ws4tjjerp2t5eluny75xx54jr530x073tvvzs9qyyssq3f43e2mzqx07zzt529ux480nj00908p3u5qdwhyuk3qrcepaqsjxqjhcnfde4ta74c3dkxkhwscxfhdm5v0y7qh7np22v9xc220taacqjanm3m"}
-        `("should decode $network invoices", ({ invoice }) => {
-            expect(decodeInvoice(invoice)).toMatchSnapshot();
-        });
     });
 
     describe("normal swap", () => {

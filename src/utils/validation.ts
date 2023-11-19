@@ -1,5 +1,4 @@
 import { crypto, script } from "bitcoinjs-lib";
-import bolt11 from "bolt11";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
 import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { Buffer, Buffer as BufferBrowser } from "buffer";
@@ -10,6 +9,7 @@ import { decodeAddress, secp, setup } from "../compat";
 import { RBTC } from "../consts";
 import { ECPair } from "../ecpair/ecpair";
 import { denominations, formatAmountDenomination } from "./denomination";
+import { decodeInvoice } from "./invoice";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -40,17 +40,6 @@ type SwapResponseLiquid = SwapResponse & {
 };
 
 type ContractGetter = () => Promise<Contract>;
-
-export const decodeInvoice = (
-    invoice: string,
-): { satoshis: number; preimageHash: string } => {
-    const decoded = bolt11.decode(invoice);
-    return {
-        satoshis: decoded.satoshis,
-        preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
-            .data as string,
-    };
-};
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
     const code = await (await getEtherSwap()).getDeployedCode();

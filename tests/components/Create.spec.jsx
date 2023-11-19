@@ -8,8 +8,8 @@ import { Web3SignerProvider } from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import * as signals from "../../src/signals";
 import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
-import { calculateReceiveAmount } from "../../src/utils/calculate";
-import { decodeInvoice } from "../../src/utils/validation";
+import { calculateReceiveAmount } from "../../src/utils/calculate.js";
+import { decodeInvoice } from "../../src/utils/invoice";
 import { cfg } from "../config";
 
 describe("Create", () => {

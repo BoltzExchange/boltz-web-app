@@ -8,19 +8,18 @@ import { isMobile } from "./helper";
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
 // ui
-export const [hamburger, setHamburger] = createSignal(false);
 export const [assetSelect, setAssetSelect] = createSignal(false);
 export const [assetSelected, setAssetSelected] = createSignal(null);
 export const [asset, setAsset] = createSignal(defaultSelection);
 export const [reverse, setReverse] = createSignal(true);
-export const [hideHero, setHideHero] = createSignal(false);
 
-// fees
-export const [nodeStats, setNodeStats] = createSignal(null);
 export const [config, setConfig] = createSignal(0);
+
 export const [online, setOnline] = createSignal(true);
 export const [wasmSupported, setWasmSupported] = createSignal(true);
+export const [webln, setWebln] = createSignal(false);
 
+// fees
 export const [boltzFee, setBoltzFee] = createSignal(0);
 export const [minerFee, setMinerFee] = createSignal(0);
 export const [minimum, setMinimum] = createSignal(0);
@@ -105,8 +104,6 @@ export const [addressValid, setAddressValid] = createSignal(false);
 // notification
 export const [notification, setNotification] = createSignal("");
 export const [notificationType, setNotificationType] = createSignal("");
-
-export const [webln, setWebln] = createSignal(false);
 
 // effects
 createRoot(() => {

@@ -5,7 +5,7 @@ import { useWeb3Signer } from "../context/Web3";
 import { refund, refundAddressChange, updateSwaps } from "../helper";
 import t from "../i18n";
 import { prefix0x, satoshiToWei } from "../utils/ethereum";
-import { decodeInvoice } from "../utils/validation";
+import { decodeInvoice } from "../utils/invoice";
 import EthereumTransaction from "./EthereumTransaction";
 
 const Refund = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
@@ -22,7 +22,7 @@ const Refund = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
                         swap().claimAddress,
                         swap().timeoutBlockHeight,
                     );
-                    updateSwaps((current) => (current.refundTx = tx.hash));
+                    updateSwaps((current: any) => (current.refundTx = tx.hash));
                     await tx.wait(1);
                 }}
                 buttonText={t("refund")}

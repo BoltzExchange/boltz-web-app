@@ -1,15 +1,58 @@
 import { bech32, utf8 } from "@scure/base";
+import bolt11 from "bolt11";
 import log from "loglevel";
 
 import { bolt11_prefix } from "../config";
-import { checkResponse, errorHandler } from "../helper";
+import { errorHandler } from "../helper";
+import { checkResponse } from "./http";
 
-const invoicePrefix = "lightning:";
+type LnurlResponse = {
+    minSendable: number;
+    maxSendable: number;
+    callback: string;
+};
 
-export function fetchLnurl(lnurl, amount_sat) {
-    return new Promise((resolve, reject) => {
-        let url = "";
+type LnurlCallbackResponse = {
+    pr: string;
+};
+
+export const invoicePrefix = "lightning:";
+export const maxExpiryHours = 24;
+
+export const getExpiryEtaHours = (invoice: string): number => {
+    const decoded = decodeInvoice(invoice);
+    const now = Date.now() / 1000;
+    const delta = (decoded.expiry || 0) - now;
+    if (delta < 0) {
+        return 0;
+    }
+    const eta = Math.round(delta / 60 / 60);
+    if (eta > maxExpiryHours) {
+        return maxExpiryHours;
+    }
+    return eta;
+};
+
+export const decodeInvoice = (
+    invoice: string,
+): { satoshis: number; preimageHash: string; expiry?: number } => {
+    const decoded = bolt11.decode(invoice);
+    return {
+        satoshis: decoded.satoshis,
+        expiry: decoded.timeExpireDate,
+        preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
+            .data as string,
+    };
+};
+
+export const fetchLnurl = (
+    lnurl: string,
+    amount_sat: number,
+): Promise<string> => {
+    return new Promise<string>((resolve, reject) => {
+        let url: string;
         const amount = Math.round(amount_sat * 1000);
+
         if (lnurl.includes("@")) {
             // Lightning address
             const urlsplit = lnurl.split("@");
@@ -19,9 +62,10 @@ export function fetchLnurl(lnurl, amount_sat) {
             const { bytes } = bech32.decodeToBytes(lnurl);
             url = utf8.encode(bytes);
         }
+
         log.debug("fetching lnurl:", url);
         fetch(url)
-            .then(checkResponse)
+            .then(checkResponse<LnurlResponse>)
             .then((data) => {
                 log.debug(
                     "amount check: (x, min, max)",
@@ -37,7 +81,7 @@ export function fetchLnurl(lnurl, amount_sat) {
                     `${data.callback}?amount=${amount}`,
                 );
                 fetch(`${data.callback}?amount=${amount}`)
-                    .then(checkResponse)
+                    .then(checkResponse<LnurlCallbackResponse>)
                     .then((data) => {
                         log.debug("fetched invoice", data);
                         resolve(data.pr);
@@ -46,21 +90,21 @@ export function fetchLnurl(lnurl, amount_sat) {
             })
             .catch(errorHandler);
     });
-}
+};
 
-export function trimLightningPrefix(invoice) {
+export const trimLightningPrefix = (invoice: string) => {
     if (invoice.toLowerCase().startsWith(invoicePrefix)) {
         return invoice.slice(invoicePrefix.length);
     }
 
     return invoice;
-}
+};
 
-export function isInvoice(data) {
+export const isInvoice = (data: string) => {
     return data.toLowerCase().startsWith(bolt11_prefix);
-}
+};
 
-const isValidBech32 = (data) => {
+const isValidBech32 = (data: string) => {
     try {
         bech32.decodeToBytes(data);
         return true;
@@ -69,9 +113,9 @@ const isValidBech32 = (data) => {
     }
 };
 
-export function isLnurl(data) {
+export const isLnurl = (data: string) => {
     return (
         data.includes("@") ||
         (data.toLowerCase().startsWith("lnurl") && isValidBech32(data))
     );
-}
+};
