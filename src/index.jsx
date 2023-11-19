@@ -1,4 +1,5 @@
 /* @refresh reload */
+import "@fontsource/alexandria";
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
 import { createRoot, createSignal } from "solid-js";

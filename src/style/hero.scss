@@ -28,7 +28,7 @@ h1 small {
     line-height: 1.2;
 }
 h2.headline small {
-    font-size: 20px;
+    font-size: 16px;
     margin: 12px auto;
 }
 @media (max-width: 768px) {
@@ -56,7 +56,7 @@ h3 {
 }
 
 .hero-boxes {
-    margin: 72px 0 52px;
+    margin: 72px 0 142px;
     display: flex;
 }
 .hero-box {
@@ -83,9 +83,10 @@ h3 {
 #numbers {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 46px;
+    margin: 50px 0 142px;
     padding: 0 42px;
 }
+
 @media (max-width: 768px) {
     #numbers {
         display: block;
@@ -240,6 +241,7 @@ h3 {
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
+    margin: 40px 0 142px;
 }
 
 #partners > div,
@@ -250,7 +252,7 @@ h3 {
 #partners > div > a,
 #integrations > div > a:before,
 #integrations > div > a {
-    opacity: 0.4;
+    opacity: 0.5;
     // filter: brightness(1000) grayscale(1);
     transition: opacity 0.4s ease-in-out;
 }
