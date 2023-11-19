@@ -1,4 +1,4 @@
-import { BTC, LBTC } from "../../src/consts.js";
+import { BTC, LBTC } from "../../src/consts";
 import { setAsset, setConfig } from "../../src/signals";
 import { feeChecker } from "../../src/utils/feeChecker";
 

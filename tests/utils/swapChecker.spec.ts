@@ -1,5 +1,6 @@
 import EventSource from "eventsource";
-import { createServer } from "https";
+import { Server as HttpsServer, createServer } from "https";
+import { AddressInfo } from "net";
 import { createRoot } from "solid-js";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -31,10 +32,15 @@ vi.mock("../../src/helper", async () => {
 });
 
 class Server {
-    connections = {};
+    public connectCount = 0;
+    public connections = {};
 
-    start() {
+    public address: string | undefined;
+    private server: HttpsServer | undefined;
+
+    public start = () => {
         this.server = createServer((req, res) => {
+            this.connectCount += 1;
             const id = req.url.split("=")[1];
             this.connections[id] = res;
 
@@ -47,21 +53,23 @@ class Server {
                 Connection: "keep-alive",
             });
         }).listen();
-        this.address = `http://127.0.0.1:${this.server.address().port}`;
-    }
+        this.address = `http://127.0.0.1:${
+            (this.server.address() as AddressInfo).port
+        }`;
+    };
 
-    close() {
+    public close = () => {
         this.server.close();
-    }
+    };
 
-    sendMessage(id, message) {
+    public sendMessage = (id: string, message: string) => {
         const con = this.connections[id];
         if (con === undefined) {
             throw "no connection for ID";
         }
 
         con.write(`data: ${message}\n\n`);
-    }
+    };
 }
 
 const wait = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -76,7 +84,7 @@ describe("swapChecker", () => {
     });
 
     afterEach(() => {
-        checkInterval().close();
+        clearInterval(checkInterval());
         server.close();
     });
 
@@ -149,5 +157,19 @@ describe("swapChecker", () => {
         await wait();
 
         expect(Object.keys(server.connections).length).toEqual(0);
+    });
+
+    test("should not reconnect SSE when change swap has same id", async () => {
+        setSwap(swaps[0]);
+        await wait();
+
+        const consCount = server.connectCount;
+
+        setSwap({ id: swaps[0].id, some: "other data" });
+
+        setSwap(swaps[0]);
+        await wait();
+
+        expect(server.connectCount).toEqual(consCount);
     });
 });

@@ -16,7 +16,6 @@ import {
 import { pairs } from "./config";
 import { RBTC } from "./consts";
 import { ECPair } from "./ecpair/ecpair";
-import t from "./i18n";
 import {
     asset,
     ref,
@@ -185,7 +184,7 @@ export const qr = (data, cb) => {
         });
 };
 
-export async function refund(swap) {
+export async function refund(swap, t) {
     let output = "";
     setRefundTx("");
 

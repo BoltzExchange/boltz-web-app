@@ -64,7 +64,6 @@ const dict = {
             "Please send exactly {{ amount }} {{ denomination }} before timeout block height {{ blockheight }}",
         pay_address: "Address",
         connect_metamask: "Connect MetaMask",
-        disconnect_metamask: "Disconnect MetaMask",
         connect_to_address: "Connect to MetaMask to set address",
         disconnect_address: "Disconnect MetaMask",
         lockup_failed: "Lockup Failed!",
@@ -140,10 +139,8 @@ const dict = {
         not_found: "404 - Page Not Found",
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
-        claim_prompt:
-            'Press "Claim" in order to open your connected wallet and confirm the displayed transaction.',
-        send_prompt:
-            'Press "Send" in order to open your connected wallet and confirm the displayed transaction.',
+        transaction_prompt:
+            'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
     },
     de: {
         language: "Deutsch",
@@ -171,6 +168,7 @@ const dict = {
         onion: "Onion",
         blockexplorer: "{{ typeLabel }} anzeigen",
         blockexplorer_lockup_address: "Lockupadresse",
+        blockexplorer_lockup_tx: "Lockuptransaktion",
         blockexplorer_claim_tx: "Claimtransaktion",
         blockexplorer_refund_tx: "Rückerstattungstransaktion",
         help: "Hilfe",
@@ -178,6 +176,7 @@ const dict = {
         fee: "Boltzgebühr",
         denomination: "Denominierung",
         send: "Sende",
+        claim: "Claim",
         receive: "Empfange",
         min: "Min",
         max: "Max",
@@ -208,6 +207,9 @@ const dict = {
         send_to_desc:
             "Bitte sende genau {{ amount }} {{ denomination }} vor der Timeout-Blockhöhe {{ blockheight }}",
         pay_address: "Adresse",
+        connect_metamask: "MetaMask verbinden",
+        connect_to_address: "Mit MetaMask verbinden um Adresse zu setzen",
+        disconnect_address: "MetaMask trennen",
         lockup_failed: "Lockup fehlgeschlagen!",
         lockup_failed_subline:
             "Deine Lockup-Transaktion ist fehlgeschlagen, warte auf den Timeout, um eine Rückerstattung zu starten.",
@@ -288,6 +290,8 @@ const dict = {
         not_found: "404 - Seite nicht gefunden",
         not_found_subline: "Die gesuchte Seite existiert nicht.",
         back_to_home: "Zurück zur Startseite",
+        transaction_prompt:
+            '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
     },
     es: {
         language: "Español",
@@ -314,6 +318,7 @@ const dict = {
         onion: "Onion",
         blockexplorer: "Ver en {{ typeLabel }}",
         blockexplorer_lockup_address: "Dirección Lockup",
+        blockexplorer_lockup_tx: "Transacción de Lockup",
         blockexplorer_claim_tx: "Transacción de Reclamación",
         blockexplorer_refund_tx: "Transacción de Reembolso",
         help: "Ayuda",
@@ -321,6 +326,7 @@ const dict = {
         fee: "Comisión de Boltz",
         denomination: "Denominación",
         send: "Enviar",
+        claim: "Reclamar",
         receive: "Recibir",
         min: "Mín",
         max: "Máx",
@@ -352,6 +358,10 @@ const dict = {
         send_to_desc:
             "Por favor, envíe exactamente {{ amount }} {{ denomination }} antes de la altura del bloque de tiempo de espera {{ blockheight }}",
         pay_address: "Dirección",
+        connect_metamask: "Conectar MetaMask",
+        connect_to_address:
+            "Conectar con MetaMask para establecer la dirección",
+        disconnect_address: "Desconectar MetaMask",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
             "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
@@ -430,6 +440,8 @@ const dict = {
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
+        transaction_prompt:
+            'Pulse "{{ botón }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
     },
 };
 

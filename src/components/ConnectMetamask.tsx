@@ -5,8 +5,8 @@ import t from "../i18n";
 import { setAddressValid, setOnchainAddress } from "../signals";
 
 const ConnectMetamask = ({ showAddress }) => {
-    const [address, setAddress] = createSignal();
-    const [buttonText, setButtonText] = createSignal();
+    const [address, setAddress] = createSignal<string | undefined>();
+    const [buttonText, setButtonText] = createSignal<string | undefined>();
 
     const setButtonTextAddress = () => {
         setButtonText(address() || t("connect_to_address"));
@@ -43,8 +43,7 @@ const ConnectMetamask = ({ showAddress }) => {
                             setButtonText(t("disconnect_address"))
                         }
                         onMouseLeave={() => setButtonTextAddress()}
-                        class="btn btn-light"
-                        type="text">
+                        class="btn btn-light">
                         {buttonText()}
                     </button>
                 </Show>

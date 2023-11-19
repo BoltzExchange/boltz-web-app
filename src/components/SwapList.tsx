@@ -1,10 +1,25 @@
 import { useNavigate } from "@solidjs/router";
-import { For, Show, createMemo, createSignal } from "solid-js";
+import {
+    Accessor,
+    For,
+    Setter,
+    Show,
+    createMemo,
+    createSignal,
+} from "solid-js";
 
 import t from "../i18n";
 import "../style/swaplist.scss";
 
-const SwapList = ({ swapsSignal, setSwapSignal, deleteButton }) => {
+const SwapList = ({
+    swapsSignal,
+    setSwapSignal,
+    deleteButton,
+}: {
+    swapsSignal: Accessor<any[]>;
+    setSwapSignal: Setter<any[]>;
+    deleteButton?: boolean;
+}) => {
     const navigate = useNavigate();
     const [sortedSwaps, setSortedSwaps] = createSignal([]);
     const [lastSwap, setLastSwap] = createSignal();

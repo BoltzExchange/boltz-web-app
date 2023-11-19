@@ -10,12 +10,14 @@ const swapCheckInterval = 3000;
 let activeStreamId = undefined;
 let activeSwapStream = undefined;
 
-export const [checkInterval, setCheckInterval] = createSignal(undefined);
+export const [checkInterval, setCheckInterval] = createSignal<
+    NodeJS.Timer | undefined
+>(undefined);
 
 export const swapChecker = () => {
     createEffect(() => {
         const activeSwap = swap();
-        if (swap()?.id == activeStreamId) {
+        if (swap()?.id === activeStreamId) {
             return;
         }
 
@@ -47,7 +49,7 @@ export const swapChecker = () => {
         clearInterval(checkInterval());
     }
 
-    runSwapCheck();
+    runSwapCheck().then();
 
     setCheckInterval(
         setInterval(async () => {
@@ -73,7 +75,7 @@ const runSwapCheck = async () => {
         .filter((s) => s.id !== swap()?.id);
 
     for (const swap of swapsToCheck) {
-        await new Promise((resolve) => {
+        await new Promise<void>((resolve) => {
             fetcher(
                 "/swapstatus",
                 (data) => {
@@ -86,7 +88,7 @@ const runSwapCheck = async () => {
     }
 };
 
-const handleStream = (streamUrl, cb) => {
+const handleStream = (streamUrl: string, cb: (data: any) => void) => {
     let reconnectFrequencySeconds = 1;
 
     // Putting these functions in extra variables is just for the sake of readability
@@ -106,7 +108,7 @@ const handleStream = (streamUrl, cb) => {
         setTimeout(tryToSetupFunc, waitFunc());
     };
 
-    function setupEventSource() {
+    const setupEventSource = () => {
         let stream = new EventSource(streamUrl);
         log.debug(`stream started: ${streamUrl}`);
         stream.onmessage = function (event) {
@@ -123,7 +125,7 @@ const handleStream = (streamUrl, cb) => {
             reconnectFunc();
         };
         return stream;
-    }
+    };
 
     return setupEventSource();
 };

@@ -24,13 +24,13 @@ const TransactionConfirmed = () => {
 
                     const swapsTmp = swaps();
                     const currentSwap = swapsTmp.find(
-                        (s) => swap().id === s.id,
+                        (s: any) => swap().id === s.id,
                     );
                     currentSwap.claimTx = tx.hash;
                     setSwaps(swapsTmp);
                 }}
                 buttonText={t("claim")}
-                promptText={t("claim_prompt")}
+                promptText={t("transaction_prompt", { button: t("claim") })}
                 waitingText={t("tx_ready_to_claim")}
                 showHr={true}
             />

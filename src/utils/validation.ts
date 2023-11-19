@@ -1,8 +1,9 @@
 import { crypto, script } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
-import EtherSwap from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
-import { Buffer as BufferBrowser } from "buffer";
+import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
+import { Buffer, Buffer as BufferBrowser } from "buffer";
+import { Contract } from "ethers";
 import log from "loglevel";
 
 import { decodeAddress, secp, setup } from "../compat";
@@ -13,18 +14,47 @@ import { denominations, formatAmountDenomination } from "./denomination";
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
 
-export const decodeInvoice = (invoice) => {
+type SwapResponse = {
+    reverse: boolean;
+
+    asset: string;
+    invoice: string;
+    timeoutBlockHeight: number;
+
+    sendAmount: number;
+    receiveAmount: number;
+
+    onchainAmount?: number;
+    expectedAmount?: number;
+
+    bip21?: string;
+    address?: string;
+    preimage?: string;
+    privateKey?: string;
+    redeemScript?: string;
+    lockupAddress?: string;
+};
+
+type SwapResponseLiquid = SwapResponse & {
+    blindingKey: string;
+};
+
+type ContractGetter = () => Promise<Contract>;
+
+export const decodeInvoice = (
+    invoice: string,
+): { satoshis: number; preimageHash: string } => {
     const decoded = bolt11.decode(invoice);
     return {
         satoshis: decoded.satoshis,
         preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
-            .data,
+            .data as string,
     };
 };
 
-const validateContract = async (getEtherSwap) => {
+const validateContract = async (getEtherSwap: ContractGetter) => {
     const code = await (await getEtherSwap()).getDeployedCode();
-    const codeMatches = code === EtherSwap.deployedBytecode.object;
+    const codeMatches = code === EtherSwapBytecode.object;
 
     if (!codeMatches) {
         log.warn("contract validation: code mismatch");
@@ -33,10 +63,15 @@ const validateContract = async (getEtherSwap) => {
     return codeMatches;
 };
 
-const getScriptHashFunction = (isNativeSegwit) =>
+const getScriptHashFunction = (isNativeSegwit: boolean) =>
     isNativeSegwit ? Scripts.p2wshOutput : Scripts.p2shP2wshOutput;
 
-const validateAddress = async (swap, isNativeSegwit, address, buffer) => {
+const validateAddress = async (
+    swap: SwapResponse,
+    isNativeSegwit: boolean,
+    address: string,
+    buffer: BufferConstructor,
+) => {
     const compareScript = getScriptHashFunction(isNativeSegwit)(
         buffer.from(swap.redeemScript, "hex"),
     );
@@ -49,7 +84,10 @@ const validateAddress = async (swap, isNativeSegwit, address, buffer) => {
     if (swap.asset === "L-BTC") {
         await setup();
 
-        const blindingPrivateKey = buffer.from(swap.blindingKey, "hex");
+        const blindingPrivateKey = buffer.from(
+            (swap as SwapResponseLiquid).blindingKey,
+            "hex",
+        );
         const blindingPublicKey = buffer.from(
             secp.ecc.pointFromScalar(blindingPrivateKey),
         );
@@ -63,7 +101,11 @@ const validateAddress = async (swap, isNativeSegwit, address, buffer) => {
     return true;
 };
 
-const validateReverseSwap = async (swap, getEtherSwap, buffer) => {
+const validateReverseSwap = async (
+    swap: SwapResponse,
+    getEtherSwap: ContractGetter,
+    buffer: BufferConstructor,
+) => {
     const invoiceData = decodeInvoice(swap.invoice);
 
     // Amounts
@@ -91,7 +133,7 @@ const validateReverseSwap = async (swap, getEtherSwap, buffer) => {
     const compareRedeemScript = reverseSwapScript(
         preimageHash,
         ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
-        script.decompile(redeemScript)[13],
+        script.decompile(redeemScript)[13] as Buffer,
         swap.timeoutBlockHeight,
     );
 
@@ -103,9 +145,11 @@ const validateReverseSwap = async (swap, getEtherSwap, buffer) => {
     return validateAddress(swap, true, swap.lockupAddress, buffer);
 };
 
-const validateSwap = async (swap, getEtherSwap, buffer) => {
-    const invoiceData = decodeInvoice(swap.invoice);
-
+const validateSwap = async (
+    swap: SwapResponse,
+    getEtherSwap: ContractGetter,
+    buffer: BufferConstructor,
+) => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
         return false;
@@ -116,10 +160,12 @@ const validateSwap = async (swap, getEtherSwap, buffer) => {
     }
 
     // Redeem script
+    const invoiceData = decodeInvoice(swap.invoice);
+
     const redeemScript = buffer.from(swap.redeemScript, "hex");
     const compareRedeemScript = swapScript(
         buffer.from(invoiceData.preimageHash, "hex"),
-        script.decompile(redeemScript)[4],
+        script.decompile(redeemScript)[4] as Buffer,
         ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
         swap.timeoutBlockHeight,
     );
@@ -153,9 +199,9 @@ const validateSwap = async (swap, getEtherSwap, buffer) => {
 
 // To be able to use the Buffer from Node.js
 export const validateResponse = async (
-    swap,
-    getEtherSwap,
-    buffer = BufferBrowser,
+    swap: SwapResponse,
+    getEtherSwap: ContractGetter,
+    buffer: BufferConstructor = BufferBrowser,
 ) => {
     try {
         return await (swap.reverse

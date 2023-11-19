@@ -110,7 +110,7 @@ const Refund = () => {
 
                 setRefundable(true);
                 setTransactionToRefund(data);
-                await refund(refundJson());
+                await refund(refundJson(), t);
             },
             {
                 id: refundInfo.id,

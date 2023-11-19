@@ -1,15 +1,15 @@
 import { getAddress, getNetwork } from "../compat";
-import t from "../i18n/index";
+import t from "../i18n";
 import { asset, setAddressValid, setOnchainAddress } from "../signals";
 
 const AddressInput = () => {
-    const validateAddress = (input) => {
+    const validateAddress = (input: EventTarget & HTMLInputElement) => {
         let inputValue = input.value.trim();
 
         try {
-            // validate btc address
             const assetName = asset();
             const address = getAddress(assetName);
+
             address.toOutputScript(inputValue, getNetwork(assetName));
             input.setCustomValidity("");
             input.classList.remove("invalid");

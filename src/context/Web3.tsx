@@ -1,7 +1,13 @@
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
-import { Setter, createContext, createSignal, useContext } from "solid-js";
+import {
+    ResolvedChildren,
+    Setter,
+    createContext,
+    createSignal,
+    useContext,
+} from "solid-js";
 
 import { RBTC } from "../consts";
 import { getApiUrl } from "../helper";
@@ -29,13 +35,20 @@ const Web3SignerContext = createContext<{
     getEtherSwap: () => Promise<EtherSwap>;
 }>();
 
-const Web3SignerProvider = (props) => {
+const Web3SignerProvider = (props: {
+    children: ResolvedChildren;
+    noFetch?: boolean;
+}) => {
     const [provider, setProvider] = createSignal<BrowserProvider | undefined>();
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
 
     detectInjection(setProvider);
 
     const getContracts = new Promise(async (resolve) => {
+        if (props.noFetch) {
+            return;
+        }
+
         const res = await (
             await fetch(`${getApiUrl(RBTC)}/getcontracts`)
         ).json();

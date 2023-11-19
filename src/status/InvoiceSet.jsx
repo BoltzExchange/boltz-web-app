@@ -41,8 +41,8 @@ const InvoiceSet = () => {
                     currentSwap.lockupTx = tx.hash;
                     setSwaps(swapsTmp);
                 }}
-                promptText={t("send_prompt")}
                 buttonText={t("send")}
+                promptText={t("transaction_prompt", { button: t("send") })}
                 waitingText={t("tx_in_mempool_subline")}
                 showHr={false}
             />

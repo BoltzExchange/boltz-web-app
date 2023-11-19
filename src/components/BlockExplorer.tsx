@@ -1,12 +1,18 @@
 import { pairs } from "../config";
 import t from "../i18n";
 
-const blockExplorerLink = (asset, isTxId, val) => {
+const blockExplorerLink = (asset: string, isTxId: boolean, val: string) => {
     const basePath = pairs[`${asset}/BTC`].blockExplorerUrl;
     return `${basePath}/${isTxId ? "tx" : "address"}/${val}`;
 };
 
-const BlockExplorer = (props) => {
+const BlockExplorer = (props: {
+    asset: string;
+
+    txId?: string;
+    address?: string;
+    typeLabel?: string;
+}) => {
     const href = () =>
         props.txId !== undefined
             ? blockExplorerLink(props.asset, true, props.txId)

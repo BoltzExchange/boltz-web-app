@@ -3,17 +3,17 @@ import { Show, createSignal } from "solid-js";
 import LoadingSpinner from "./LoadingSpinner";
 
 const EthereumTransaction = ({
+    showHr,
     onClick,
     promptText,
     buttonText,
     waitingText,
-    showHr,
 }: {
     onClick: () => Promise<any>;
     buttonText: string;
-    waitingText?: string;
-    showHr?: boolean;
     promptText?: string;
+    showHr?: boolean;
+    waitingText?: string;
 }) => {
     const [txSent, setTxSent] = createSignal(false);
 

@@ -5,6 +5,7 @@ tags
 *.log
 dist/
 ts-out/
+coverage/
 node_modules/
 src/config.js
 src/bitcore-lib.js
