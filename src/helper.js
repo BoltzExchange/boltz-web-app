@@ -49,6 +49,13 @@ const parseBlindingKey = (swap) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
 };
 
+export const cropString = (str) => {
+    if (str.length < 40) {
+        return str;
+    }
+    return str.substring(0, 19) + "..." + str.substring(str.length - 19);
+};
+
 export const checkReferralId = () => {
     const ref_param = new URLSearchParams(window.location.search).get("ref");
     if (ref_param && ref_param !== "") {

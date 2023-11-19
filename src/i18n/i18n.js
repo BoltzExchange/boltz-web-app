@@ -58,8 +58,7 @@ const dict = {
         pay_timeout_blockheight: "Timeout block height",
         pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
-        send_to_desc:
-            "Please send exactly {{ amount }} {{ denomination }} before timeout block height {{ blockheight }}",
+        pay_invoice_to: "Pay this invoice for {{ amount }} {{ denomination }}",
         pay_address: "Address",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
@@ -131,6 +130,8 @@ const dict = {
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
         warning_return: "Important: Return to this page after paying invoice",
+        warning_expiry:
+            "Make sure your transaction confirms within ~24 hours after creation of this swap!",
         not_found: "404 - Page Not Found",
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
@@ -195,8 +196,7 @@ const dict = {
         pay_timeout_blockheight: "Timeout Blockhöhe",
         pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
-        send_to_desc:
-            "Bitte sende genau {{ amount }} {{ denomination }} vor der Timeout-Blockhöhe {{ blockheight }}",
+        pay_invoice_to: "Zahle Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
         lockup_failed: "Lockup fehlgeschlagen!",
         lockup_failed_subline:
@@ -275,6 +275,8 @@ const dict = {
         beta_caution: "BETA - OBACHT!",
         warning_return:
             "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
+        warning_expiry:
+            "Wichtig: Die Transaktion muss innerhalb ~24 Stunden nach Erstellung dieses Swaps bestätigt sein!",
         not_found: "404 - Seite nicht gefunden",
         not_found_subline: "Die gesuchte Seite existiert nicht.",
         back_to_home: "Zurück zur Startseite",
@@ -339,8 +341,7 @@ const dict = {
         pay_timeout_blockheight: "Altura del bloque de tiempo de espera",
         pay_expected_amount: "Monto esperado",
         send_to: "Enviar {{ amount }} {{ denomination }} a",
-        send_to_desc:
-            "Por favor, envíe exactamente {{ amount }} {{ denomination }} antes de la altura del bloque de tiempo de espera {{ blockheight }}",
+        pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
@@ -417,6 +418,8 @@ const dict = {
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
         warning_return:
             "Importante: Regresa a esta página después de pagar la factura!",
+        warning_expiry:
+            "Importante: Asegúrese de que la transacción se confirma en ~24 horas",
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",

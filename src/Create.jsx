@@ -71,12 +71,13 @@ import {
     getValidationRegex,
 } from "./utils/denomination";
 import {
+    decodeInvoice,
     fetchLnurl,
     isInvoice,
     isLnurl,
     trimLightningPrefix,
 } from "./utils/invoice";
-import { decodeInvoice, validateResponse } from "./utils/validation";
+import { validateResponse } from "./utils/validation";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {
