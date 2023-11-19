@@ -10,7 +10,7 @@ describe("WebLN", () => {
     });
 
     test("should not detect WebLN when no injected provider is present", async () => {
-        expect(await detectWebLNProvider()).toEqual(false);
+        expect(await detectWebLNProvider(1)).toEqual(false);
     });
 
     test("should detect WebLN when provider is present", async () => {
