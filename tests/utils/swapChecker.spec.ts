@@ -15,7 +15,7 @@ import {
 
 global.EventSource = EventSource;
 
-let apiUrl;
+let apiUrl: string;
 
 const fetcherCallData = [];
 

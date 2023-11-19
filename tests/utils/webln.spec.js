@@ -19,7 +19,7 @@ describe("WebLN", () => {
     });
 
     test("should detect WebLN when provider is present after 200ms", async () => {
-        setTimeout(() => (window.webln = {}), 200);
+        setTimeout(() => (window.webln = {}), 1);
         expect(await detectWebLNProvider()).toEqual(true);
     });
 

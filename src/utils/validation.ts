@@ -5,9 +5,9 @@ import { Buffer, Buffer as BufferBrowser } from "buffer";
 import { Contract } from "ethers";
 import log from "loglevel";
 
-import { decodeAddress, secp, setup } from "../compat";
+import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
-import { ECPair } from "../ecpair/ecpair";
+import { ECPair, ecc } from "../ecpair/ecpair";
 import { denominations, formatAmountDenomination } from "./denomination";
 import { decodeInvoice } from "./invoice";
 
@@ -55,7 +55,7 @@ const validateContract = async (getEtherSwap: ContractGetter) => {
 const getScriptHashFunction = (isNativeSegwit: boolean) =>
     isNativeSegwit ? Scripts.p2wshOutput : Scripts.p2shP2wshOutput;
 
-const validateAddress = async (
+const validateAddress = (
     swap: SwapResponse,
     isNativeSegwit: boolean,
     address: string,
@@ -71,14 +71,12 @@ const validateAddress = async (
     }
 
     if (swap.asset === "L-BTC") {
-        await setup();
-
         const blindingPrivateKey = buffer.from(
             (swap as SwapResponseLiquid).blindingKey,
             "hex",
         );
         const blindingPublicKey = buffer.from(
-            secp.ecc.pointFromScalar(blindingPrivateKey),
+            ecc.pointFromScalar(blindingPrivateKey),
         );
 
         if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
@@ -164,10 +162,8 @@ const validateSwap = async (
     }
 
     // Address
-    const addressComparisons = await Promise.all(
-        [true, false].map((isNativeSegwit) =>
-            validateAddress(swap, isNativeSegwit, swap.address, buffer),
-        ),
+    const addressComparisons = [true, false].map((isNativeSegwit) =>
+        validateAddress(swap, isNativeSegwit, swap.address, buffer),
     );
     if (addressComparisons.every((val) => !val)) {
         log.warn("swap address validation: address script mismatch");
