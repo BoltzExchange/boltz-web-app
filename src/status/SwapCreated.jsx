@@ -1,6 +1,7 @@
 import log from "loglevel";
 import { Show } from "solid-js";
 
+import { BTC } from "../consts";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
 import { denomination, invoiceQr, swap, webln } from "../signals";
@@ -21,9 +22,7 @@ const SwapCreated = () => {
                 {t("pay_invoice_to", {
                     amount: formatAmount(swap().sendAmount),
                     denomination:
-                        denomination() === denominations.sat
-                            ? "sats "
-                            : denomination(),
+                        denomination() === denominations.sat ? "sats" : BTC,
                 })}
             </h2>
             <hr />
