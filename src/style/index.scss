@@ -29,6 +29,7 @@ a:hover {
     color: $primary;
 }
 
+.headline,
 h1 {
     color: rgba(255, 255, 255, 0.3);
 }
@@ -381,9 +382,6 @@ textarea {
         margin-top: 74px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
-    }
-    #create-overlay.glow .frame {
-        box-shadow: 0 0 60px transparentize($primary, 0.7);
     }
 }
 
