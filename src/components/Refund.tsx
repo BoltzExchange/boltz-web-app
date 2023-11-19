@@ -4,16 +4,16 @@ import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import { refund, refundAddressChange, updateSwaps } from "../helper";
 import t from "../i18n";
-import { prefix0x, satoshiToWei } from "../utils/ethereum";
 import { decodeInvoice } from "../utils/invoice";
-import EthereumTransaction from "./EthereumTransaction";
+import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import ContractTransaction from "./ContractTransaction";
 
 const Refund = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
     if (swap().asset === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
         return (
-            <EthereumTransaction
+            <ContractTransaction
                 onClick={async () => {
                     const contract = await getEtherSwap();
                     const tx = await contract.refund(

@@ -2,7 +2,7 @@ import { Show, createSignal } from "solid-js";
 
 import LoadingSpinner from "./LoadingSpinner";
 
-const EthereumTransaction = ({
+const ContractTransaction = ({
     showHr,
     onClick,
     promptText,
@@ -47,4 +47,4 @@ const EthereumTransaction = ({
     );
 };
 
-export default EthereumTransaction;
+export default ContractTransaction;

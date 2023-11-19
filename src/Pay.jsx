@@ -34,9 +34,9 @@ import { swapStatusFailed } from "./utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
-    const [ethereumTransaction, setEthereumTransaction] =
+    const [contractTransaction, setContractTransaction] =
         createSignal(undefined);
-    const [ethereumTransactionType, setEthereumTransactionType] =
+    const [contractTransactionType, setContractTransactionType] =
         createSignal("lockup_tx");
 
     createEffect(() => {
@@ -72,7 +72,7 @@ const Pay = () => {
         const tx = swapStatusTransaction();
 
         if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
-            setEthereumTransaction(tx.id);
+            setContractTransaction(tx.id);
         }
     });
 
@@ -80,8 +80,8 @@ const Pay = () => {
         const claimTx = swap().claimTx;
 
         if (swap().asset === RBTC && claimTx) {
-            setEthereumTransaction(claimTx);
-            setEthereumTransactionType("claim_tx");
+            setContractTransaction(claimTx);
+            setContractTransactionType("claim_tx");
         }
     });
 
@@ -89,7 +89,7 @@ const Pay = () => {
         const lockupTx = swap().lockupTx;
 
         if (swap().asset === RBTC && lockupTx) {
-            setEthereumTransaction(lockupTx);
+            setContractTransaction(lockupTx);
         }
     });
 
@@ -189,12 +189,12 @@ const Pay = () => {
                     <Show
                         when={
                             swap().asset === RBTC &&
-                            ethereumTransaction() !== undefined
+                            contractTransaction() !== undefined
                         }>
                         <BlockExplorer
                             asset={swap().asset}
-                            txId={ethereumTransaction()}
-                            typeLabel={ethereumTransactionType()}
+                            txId={contractTransaction()}
+                            typeLabel={contractTransactionType()}
                         />
                     </Show>
                 </Show>

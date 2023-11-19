@@ -1,14 +1,14 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { describe, expect, test, vi } from "vitest";
 
-import EthereumTransaction from "../../src/components/EthereumTransaction";
+import ContractTransaction from "../../src/components/ContractTransaction";
 import LoadingSpinner from "../../src/components/LoadingSpinner";
 
-describe("EthereumTransaction", () => {
+describe("ContractTransaction", () => {
     test("should show button in starting state", async () => {
         const buttonText = "button";
         const { container } = render(() => (
-            <EthereumTransaction
+            <ContractTransaction
                 onClick={async () => {}}
                 buttonText={buttonText}
             />
@@ -26,7 +26,7 @@ describe("EthereumTransaction", () => {
         const buttonText = "button";
 
         const { container } = render(() => (
-            <EthereumTransaction
+            <ContractTransaction
                 onClick={async () => {}}
                 promptText={promptText}
                 buttonText={buttonText}
@@ -43,7 +43,7 @@ describe("EthereumTransaction", () => {
         const buttonText = "button";
 
         const { container } = render(() => (
-            <EthereumTransaction
+            <ContractTransaction
                 onClick={async () => {}}
                 showHr={true}
                 promptText={promptText}
@@ -62,7 +62,7 @@ describe("EthereumTransaction", () => {
         const buttonText = "button";
 
         const { container } = render(() => (
-            <EthereumTransaction onClick={onClick} buttonText={buttonText} />
+            <ContractTransaction onClick={onClick} buttonText={buttonText} />
         ));
 
         fireEvent.click(await screen.findByText(buttonText));
@@ -83,7 +83,7 @@ describe("EthereumTransaction", () => {
         const waitingText = "waiting";
 
         const { container } = render(() => (
-            <EthereumTransaction
+            <ContractTransaction
                 onClick={onClick}
                 buttonText={buttonText}
                 waitingText={waitingText}

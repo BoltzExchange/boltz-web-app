@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 
-import { prefix0x, satoshiToWei } from "../../src/utils/ethereum";
+import { prefix0x, satoshiToWei } from "../../src/utils/rootstock";
 
-describe("ethereum", () => {
+describe("rootstock", () => {
     test.each`
         satoshis       | wei
         ${0}           | ${0n}

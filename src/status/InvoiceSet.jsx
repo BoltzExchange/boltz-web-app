@@ -1,5 +1,5 @@
+import ContractTransaction from "../components/ContractTransaction";
 import DownloadRefund from "../components/DownloadRefund";
-import EthereumTransaction from "../components/EthereumTransaction";
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import { clipboard, cropString } from "../helper";
@@ -13,15 +13,15 @@ import {
     swaps,
 } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
-import { prefix0x, satoshiToWei } from "../utils/ethereum";
 import { decodeInvoice } from "../utils/invoice";
+import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 const InvoiceSet = () => {
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
         return (
-            <EthereumTransaction
+            <ContractTransaction
                 onClick={async () => {
                     const contract = await getEtherSwap();
 

@@ -1,17 +1,17 @@
-import EthereumTransaction from "../components/EthereumTransaction";
+import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
 import { asset, setSwaps, swap, swaps } from "../signals";
-import { prefix0x, satoshiToWei } from "../utils/ethereum";
+import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 const TransactionConfirmed = () => {
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
         return (
-            <EthereumTransaction
+            <ContractTransaction
                 onClick={async () => {
                     const contract = await getEtherSwap();
 
