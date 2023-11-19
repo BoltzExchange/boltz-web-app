@@ -14,6 +14,7 @@ import {
     setup,
 } from "./compat";
 import { pairs } from "./config";
+import { RBTC } from "./consts";
 import { ECPair } from "./ecpair/ecpair";
 import {
     asset,
@@ -39,6 +40,7 @@ import {
     transactionToRefund,
 } from "./signals";
 import { feeChecker } from "./utils/feeChecker";
+import { checkResponse } from "./utils/http";
 import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
@@ -97,13 +99,6 @@ export const errorHandler = (error) => {
     }
 };
 
-export const checkResponse = (response) => {
-    if (!response.ok) {
-        return Promise.reject(response);
-    }
-    return response.json();
-};
-
 export const getApiUrl = (asset) => {
     return pairs[`${asset}/BTC`].apiUrl;
 };
@@ -124,15 +119,17 @@ export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
     fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
 };
 
-export const checkForFailed = (swap_id, data) => {
+export const checkForFailed = (swap, data) => {
     if (
         data.status == "transaction.lockupFailed" ||
         data.status == "invoice.failedToPay"
     ) {
+        const id = swap.id;
+
         fetcher(
             "/getswaptransaction",
             (data) => {
-                if (!data.transactionHex) {
+                if (swap.asset !== RBTC && !data.transactionHex) {
                     log.error("no mempool tx found");
                 }
                 if (!data.timeoutEta) {
@@ -148,7 +145,7 @@ export const checkForFailed = (swap_id, data) => {
                 setTimeoutBlockheight(data.timeoutBlockHeight);
             },
             {
-                id: swap_id,
+                id,
             },
         );
     }
@@ -172,7 +169,7 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
     ) {
         claim(currentSwap);
     }
-    checkForFailed(currentSwap.id, data);
+    checkForFailed(currentSwap, data);
     setFailureReason(data.failureReason);
 };
 
@@ -336,6 +333,10 @@ const createAdjustedClaim = (
 };
 
 export const claim = async (swap) => {
+    if (swap.asset === RBTC) {
+        return;
+    }
+
     await setup();
     const asset_name = swap.asset;
 
@@ -462,6 +463,13 @@ export const refundAddressChange = (e, asset) => {
     }
 
     return false;
+};
+
+export const updateSwaps = (cb) => {
+    const swapsTmp = swaps();
+    const currentSwap = swapsTmp.find((s) => swap().id === s.id);
+    cb(currentSwap);
+    setSwaps(swapsTmp);
 };
 
 export default fetcher;

@@ -1,6 +1,6 @@
 import { expect } from "vitest";
 
-import { BTC, LBTC, LN } from "../src/consts.js";
+import { BTC, LBTC, LN } from "../src/consts";
 import {
     asset,
     reverse,
@@ -8,7 +8,7 @@ import {
     setAssetReceive,
     setAssetSend,
     setReverse,
-} from "../src/signals.js";
+} from "../src/signals";
 
 describe("signals", () => {
     test.each`

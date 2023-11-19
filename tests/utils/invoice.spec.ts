@@ -1,11 +1,10 @@
 import bolt11 from "bolt11";
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import {
     decodeInvoice,
     getExpiryEtaHours,
     isLnurl,
-    maxExpiryHours,
     trimLightningPrefix,
 } from "../../src/utils/invoice";
 
@@ -50,11 +49,13 @@ describe("invoice", () => {
             expect(getExpiryEtaHours(invoice)).toEqual(0);
         });
 
-        test("expiry eta in 12 hours", () => {
-            const now = new Date() / 1000;
-            const hours = 12;
-            const hours_timestamp = hours * 60 * 60;
-            var encoded = bolt11.encode({
+        test.each`
+            delta
+            ${12}
+            ${24}
+        `("expiry eta in $delta hours", ({ delta }) => {
+            const now = +new Date() / 1000;
+            const encoded = bolt11.encode({
                 satoshis: 2000,
                 timestamp: now,
                 tags: [
@@ -64,42 +65,15 @@ describe("invoice", () => {
                     },
                     {
                         tagName: "expire_time",
-                        data: hours_timestamp,
+                        data: delta * 60 * 60,
                     },
                 ],
             });
             // sign takes the encoded object and the private key as arguments
-            var privateKeyHex =
+            const privateKeyHex =
                 "e126f68f7eafcc8b74f54d269fe206be715000f94dac067d1c04a8ca3b2db734";
-            var signed = bolt11.sign(encoded, privateKeyHex);
-            expect(getExpiryEtaHours(signed.paymentRequest)).toEqual(hours);
-        });
-
-        test("expiry eta greater than 24 hours", () => {
-            const now = new Date() / 1000;
-            const hours = 24;
-            const hours_timestamp = hours * 60 * 60;
-            var encoded = bolt11.encode({
-                satoshis: 2000,
-                timestamp: now,
-                tags: [
-                    {
-                        tagName: "payment_hash",
-                        data: "0001020304050607080900010203040506070809000102030405060708090102",
-                    },
-                    {
-                        tagName: "expire_time",
-                        data: hours_timestamp,
-                    },
-                ],
-            });
-            // sign takes the encoded object and the private key as arguments
-            var privateKeyHex =
-                "e126f68f7eafcc8b74f54d269fe206be715000f94dac067d1c04a8ca3b2db734";
-            var signed = bolt11.sign(encoded, privateKeyHex);
-            expect(getExpiryEtaHours(signed.paymentRequest)).toEqual(
-                maxExpiryHours,
-            );
+            const signed = bolt11.sign(encoded, privateKeyHex);
+            expect(getExpiryEtaHours(signed.paymentRequest)).toEqual(delta);
         });
     });
 });

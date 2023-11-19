@@ -1,4 +1,5 @@
 import { render, screen } from "@solidjs/testing-library";
+import { describe, expect, test } from "vitest";
 
 import BlockExplorer from "../../src/components/BlockExplorer";
 import { pairs } from "../../src/config";
@@ -21,7 +22,9 @@ describe("BlockExplorer", () => {
                 ),
             );
             expect(button).not.toBeUndefined();
-            expect(button.href).toEqual(`${baseLink}/address/${address}`);
+            expect((button as any).href).toEqual(
+                `${baseLink}/address/${address}`,
+            );
         },
     );
 
@@ -41,7 +44,7 @@ describe("BlockExplorer", () => {
                 ),
             );
             expect(button).not.toBeUndefined();
-            expect(button.href).toEqual(`${baseLink}/tx/${txId}`);
+            expect((button as any).href).toEqual(`${baseLink}/tx/${txId}`);
         },
     );
 });

@@ -1,10 +1,54 @@
+import ContractTransaction from "../components/ContractTransaction";
 import DownloadRefund from "../components/DownloadRefund";
+import { RBTC } from "../consts";
+import { useWeb3Signer } from "../context/Web3";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
-import { denomination, invoiceQr, swap } from "../signals";
+import {
+    asset,
+    denomination,
+    invoiceQr,
+    setSwaps,
+    swap,
+    swaps,
+} from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
+import { decodeInvoice } from "../utils/invoice";
+import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 const InvoiceSet = () => {
+    if (asset() === RBTC) {
+        const { getEtherSwap } = useWeb3Signer();
+
+        return (
+            <ContractTransaction
+                onClick={async () => {
+                    const contract = await getEtherSwap();
+
+                    const tx = await contract.lock(
+                        prefix0x(decodeInvoice(swap().invoice).preimageHash),
+                        swap().claimAddress,
+                        swap().timeoutBlockHeight,
+                        {
+                            value: satoshiToWei(swap().expectedAmount),
+                        },
+                    );
+
+                    const swapsTmp = swaps();
+                    const currentSwap = swapsTmp.find(
+                        (s) => swap().id === s.id,
+                    );
+                    currentSwap.lockupTx = tx.hash;
+                    setSwaps(swapsTmp);
+                }}
+                buttonText={t("send")}
+                promptText={t("transaction_prompt", { button: t("send") })}
+                waitingText={t("tx_in_mempool_subline")}
+                showHr={false}
+            />
+        );
+    }
+
     return (
         <div>
             <h2>
@@ -12,7 +56,7 @@ const InvoiceSet = () => {
                     amount: formatAmount(swap().expectedAmount),
                     denomination:
                         denomination() === denominations.sat
-                            ? "sats "
+                            ? "sats"
                             : swap().asset,
                 })}
             </h2>

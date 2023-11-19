@@ -11,13 +11,15 @@ import {
     onMount,
 } from "solid-js";
 
-import { getAddress, getNetwork } from "./compat";
+import AddressInput from "./components/AddressInput";
 import Asset from "./components/Asset";
 import AssetSelect from "./components/AssetSelect";
 import ClickableAmount from "./components/ClickableAmount";
+import ConnectMetamask from "./components/ConnectMetamask";
 import Fees from "./components/Fees";
 import Reverse from "./components/Reverse";
-import { sideReceive, sideSend } from "./consts";
+import { RBTC, sideReceive, sideSend } from "./consts";
+import { useWeb3Signer } from "./context/Web3";
 import { ECPair } from "./ecpair/ecpair";
 import { feeCheck, fetchPairs, fetcher } from "./helper";
 import t from "./i18n";
@@ -81,6 +83,8 @@ import { validateResponse } from "./utils/validation";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {
+    const { getEtherSwap } = useWeb3Signer();
+
     let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;
 
     onMount(() => {
@@ -127,7 +131,9 @@ const Create = () => {
         if (sendAmountValid()) {
             if (
                 (reverse() && addressValid()) ||
-                (!reverse() && invoiceValid())
+                (!reverse() &&
+                    invoiceValid() &&
+                    (asset() !== RBTC || addressValid()))
             ) {
                 setValid(true);
                 return;
@@ -187,28 +193,30 @@ const Create = () => {
         if (!valid()) return;
 
         const assetName = asset();
+        const isRsk = assetName === RBTC;
 
-        const address = getAddress(assetName);
-        const net = getNetwork(assetName);
+        const keyPair = !isRsk ? ECPair.makeRandom() : null;
 
-        const pair = ECPair.makeRandom();
-        const privateKeyHex = pair.privateKey.toString("hex");
-        const publicKeyHex = pair.publicKey.toString("hex");
         let params = null;
         let preimage = null;
 
         if (reverse()) {
-            address.toOutputScript(onchainAddress(), net);
             preimage = randomBytes(32);
             const preimageHash = crypto.sha256(preimage).toString("hex");
+
             params = {
                 type: "reversesubmarine",
                 pairId: assetName + "/BTC",
                 orderSide: "buy",
                 invoiceAmount: Number(sendAmount()),
-                claimPublicKey: publicKeyHex,
                 preimageHash: preimageHash,
             };
+
+            if (isRsk) {
+                params.claimAddress = onchainAddress();
+            } else {
+                params.claimPublicKey = keyPair.publicKey.toString("hex");
+            }
         } else {
             if (isLnurl(invoice())) {
                 setInvoice(
@@ -228,9 +236,12 @@ const Create = () => {
                 type: "submarine",
                 pairId: assetName + "/BTC",
                 orderSide: "sell",
-                refundPublicKey: publicKeyHex,
                 invoice: invoice(),
             };
+
+            if (!isRsk) {
+                params.refundPublicKey = keyPair.publicKey.toString("hex");
+            }
         }
 
         if (!(await feeCheck(t("feecheck")))) {
@@ -243,13 +254,16 @@ const Create = () => {
             fetcher(
                 "/createswap",
                 (data) => {
-                    data.privateKey = privateKeyHex;
                     data.date = new Date().getTime();
                     data.reverse = reverse();
                     data.asset = asset();
                     data.receiveAmount = Number(receiveAmount());
                     data.sendAmount = Number(sendAmount());
                     data.onchainAddress = onchainAddress();
+
+                    if (keyPair !== null) {
+                        data.privateKey = keyPair.privateKey.toString("hex");
+                    }
 
                     if (preimage !== null) {
                         data.preimage = preimage.toString("hex");
@@ -259,7 +273,7 @@ const Create = () => {
                         data.invoice = invoice();
                     }
 
-                    validateResponse(data).then((success) => {
+                    validateResponse(data, getEtherSwap).then((success) => {
                         if (!success) {
                             resolve();
                             navigate("/error/");
@@ -353,60 +367,48 @@ const Create = () => {
     };
 
     const validateAddress = (input) => {
-        let inputValue = input.value.trim();
         if (reverse()) {
-            try {
-                // validate btc address
-                const asset_name = asset();
-                const address = getAddress(asset_name);
-                address.toOutputScript(inputValue, getNetwork(asset_name));
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setAddressValid(true);
-                setOnchainAddress(inputValue);
-            } catch (e) {
-                setAddressValid(false);
-                input.setCustomValidity("invalid address");
-                input.classList.add("invalid");
-            }
-        } else {
-            inputValue = trimLightningPrefix(inputValue);
+            return;
+        }
 
-            const isInputInvoice = isInvoice(inputValue);
-            if (isLnurl(inputValue) || isInputInvoice) {
-                // set receive/send when invoice differs from the amounts
-                // and the input is an invoice
-                if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
-                    try {
-                        const decoded = decodeInvoice(inputValue);
-                        if (decoded.satoshis === null) {
-                            setInvoiceValid(false);
-                            input.setCustomValidity(
-                                "0 amount invoices are not allowed",
-                            );
-                            input.classList.add("invalid");
-                            return;
-                        }
-                        setReceiveAmount(decoded.satoshis);
-                        setSendAmount(calculateSendAmount(decoded.satoshis));
-                        validateAmount();
-                    } catch (e) {
+        let inputValue = input.value.trim();
+
+        inputValue = trimLightningPrefix(inputValue);
+
+        const isInputInvoice = isInvoice(inputValue);
+        if (isLnurl(inputValue) || isInputInvoice) {
+            // set receive/send when invoice differs from the amounts
+            // and the input is an invoice
+            if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
+                try {
+                    const decoded = decodeInvoice(inputValue);
+                    if (decoded.satoshis === null) {
                         setInvoiceValid(false);
-                        input.setCustomValidity(e);
+                        input.setCustomValidity(
+                            "0 amount invoices are not allowed",
+                        );
                         input.classList.add("invalid");
                         return;
                     }
+                    setReceiveAmount(decoded.satoshis);
+                    setSendAmount(calculateSendAmount(decoded.satoshis));
+                    validateAmount();
+                } catch (e) {
+                    setInvoiceValid(false);
+                    input.setCustomValidity(e);
+                    input.classList.add("invalid");
+                    return;
                 }
-
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setInvoiceValid(true);
-                setInvoice(inputValue);
-            } else {
-                setInvoiceValid(false);
-                input.setCustomValidity("invalid network");
-                input.classList.add("invalid");
             }
+
+            input.setCustomValidity("");
+            input.classList.remove("invalid");
+            setInvoiceValid(true);
+            setInvoice(inputValue);
+        } else {
+            setInvoiceValid(false);
+            input.setCustomValidity("invalid network");
+            input.classList.add("invalid");
         }
     };
 
@@ -414,6 +416,8 @@ const Create = () => {
         setSendAmount(amount);
         setReceiveAmount(calculateReceiveAmount(amount));
         validateAmount();
+
+        resetInvoice();
         sendAmountRef.focus();
     };
 
@@ -483,41 +487,43 @@ const Create = () => {
             </div>
             <Fees />
             <hr />
-            <Show when={webln() && !reverse()}>
-                <button
-                    id="webln"
-                    class="btn btn-light"
-                    onClick={() => createWeblnInvoice()}>
-                    {t("create_invoice_webln")}
-                </button>
+            <Show when={asset() === RBTC}>
+                <ConnectMetamask
+                    showAddress={true}
+                    setAddressValid={setAddressValid}
+                />
                 <hr />
             </Show>
-            <textarea
-                required
-                ref={invoiceInputRef}
-                onInput={(e) => validateAddress(e.currentTarget)}
-                onKeyUp={(e) => validateAddress(e.currentTarget)}
-                onPaste={(e) => validateAddress(e.currentTarget)}
-                id="invoice"
-                data-testid="invoice"
-                name="invoice"
-                value={invoice()}
-                placeholder={t("create_and_paste", {
-                    amount: receiveAmountFormatted(),
-                    denomination: denomination(),
-                })}></textarea>
-            <input
-                required
-                ref={addressInputRef}
-                onInput={(e) => validateAddress(e.currentTarget)}
-                onKeyUp={(e) => validateAddress(e.currentTarget)}
-                onPaste={(e) => validateAddress(e.currentTarget)}
-                type="text"
-                id="onchainAddress"
-                name="onchainAddress"
-                placeholder={t("onchain_address", { asset: asset() })}
-            />
-            <hr />
+            <Show when={reverse() && asset() !== RBTC}>
+                <AddressInput setAddressValid={setAddressValid} />
+                <hr />
+            </Show>
+            <Show when={!reverse()}>
+                <Show when={webln()}>
+                    <button
+                        id="webln"
+                        class="btn btn-light"
+                        onClick={() => createWeblnInvoice()}>
+                        {t("create_invoice_webln")}
+                    </button>
+                    <hr />
+                </Show>
+                <textarea
+                    required
+                    ref={invoiceInputRef}
+                    onInput={(e) => validateAddress(e.currentTarget)}
+                    onKeyUp={(e) => validateAddress(e.currentTarget)}
+                    onPaste={(e) => validateAddress(e.currentTarget)}
+                    id="invoice"
+                    data-testid="invoice"
+                    name="invoice"
+                    value={invoice()}
+                    placeholder={t("create_and_paste", {
+                        amount: receiveAmountFormatted(),
+                        denomination: denomination(),
+                    })}></textarea>
+                <hr />
+            </Show>
             <Show when={online() && wasmSupported()}>
                 <button
                     id="create-swap"

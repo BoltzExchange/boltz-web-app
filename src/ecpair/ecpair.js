@@ -5,4 +5,4 @@ import { ECPairFactory } from "ecpair";
 initEccLib(ecc);
 const ECPair = ECPairFactory(ecc);
 
-export { ECPair };
+export { ECPair, ecc };

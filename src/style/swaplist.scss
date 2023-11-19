@@ -37,6 +37,10 @@
 .swaplist-asset[data-asset="L-BTC"][data-reverse="false"]:before {
     background-image: url(../assets/liquid-icon.svg);
 }
+.swaplist-asset[data-asset="RBTC"][data-reverse="true"]:after,
+.swaplist-asset[data-asset="RBTC"][data-reverse="false"]:before {
+    background-image: url(../assets/rootstock-icon.svg);
+}
 
 .swaplist-asset {
     display: inline-block;

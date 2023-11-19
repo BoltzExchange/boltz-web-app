@@ -15,3 +15,4 @@ jobs:
       - run: npm ci
       - run: npm run prettier-check
       - run: npm run test
+      - run: npm run tsc

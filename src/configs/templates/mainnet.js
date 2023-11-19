@@ -11,6 +11,7 @@ const blockExplorerUrl = isTor
 const blockExplorerUrlLiquid = isTor
     ? "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion"
     : "https://liquid.network";
+// const blockExplorerUrlRsk = "https://explorer.rsk.co";
 
 export const torUrl =
     "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/";
@@ -28,4 +29,8 @@ export const pairs = {
         apiUrl: apiUrl,
         blockExplorerUrl: blockExplorerUrlLiquid,
     },
+    // "RBTC/BTC": {
+    //     apiUrl: apiUrl,
+    //     blockExplorerUrl: blockExplorerUrlRsk,
+    // },
 };

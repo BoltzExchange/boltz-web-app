@@ -6,7 +6,7 @@ import logo from "./assets/boltz.svg";
 import Warnings from "./components/Warnings";
 import { blogUrl, discordUrl, docsUrl, torUrl } from "./config";
 import t from "./i18n";
-import locales from "./i18n/i18n.js";
+import locales from "./i18n/i18n";
 import { setI18nConfigured } from "./signals";
 import "./style/nav.scss";
 
@@ -28,12 +28,12 @@ const Nav = ({ network }) => {
                 <div
                     id="languages"
                     onClick={(e) => e.currentTarget.classList.toggle("active")}
-                    onMouseenter={() => {
+                    onMouseEnter={() => {
                         if (timeout) {
                             clearTimeout(timeout);
                         }
                     }}
-                    onMouseleave={(e) => {
+                    onMouseLeave={(e) => {
                         timeout = setTimeout(() => {
                             e.target.classList.remove("active");
                         }, 300);
