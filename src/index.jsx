@@ -19,7 +19,7 @@ import { loglevel, network } from "./config";
 import { Web3SignerProvider } from "./context/Web3";
 import { checkReferralId } from "./helper";
 import { detectLanguage } from "./i18n/detect";
-import { embedded, setEmbedded, setWasmSupported, setWebln } from "./signals";
+import { setWasmSupported, setWebln } from "./signals";
 import "./style/index.scss";
 import { detectEmbedded } from "./utils/embed";
 import "./utils/patches";
@@ -35,10 +35,6 @@ detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
 detectLanguage();
-if (detectEmbedded()) {
-    setHideHero(true);
-    setEmbedded(true);
-}
 
 createRoot(() => {
     swapChecker();
