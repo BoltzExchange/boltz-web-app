@@ -79,8 +79,9 @@ const dict = {
         backup_refund: "Download Refund File",
         backup_refund_subline:
             "If this swap fails, you'll have to refund your chain bitcoin using your refund key. This key is stored in your browser's local storage by default, but can be lost if you",
-        backup_refund_list:
-            "are using incognito mode\nare using tor browser\nclear your browsing history",
+        backup_refund_list_incognito: "are using incognito mode",
+        backup_refund_list_tor: "are using Tor browser",
+        backup_refund_list_clear_history: "clear your browsing history",
         backup_refund_skip:
             "If any of the above applies to you, we strongly recommend downloading this refund file!",
         refund_a_swap: "Refund a swap",
@@ -225,9 +226,9 @@ const dict = {
         backup_refund: "Rückerstattungsdatei herunterladen",
         backup_refund_subline:
             "Falls dieser Swap fehlschlagen sollte, musst du dir deine Bitcoin mit deinem Rückerstattungsschlüssel zurückholen. Dieser Schlüssel wird standardmäßig lokal in dein Browser gespeichert, kann aber verloren gehen wenn",
-            
-        backup_refund_list:
-            "are using incognito mode\nare using tor browser\nclear your browsing history",
+        backup_refund_list_incognito: "du ein Inkognito Fenster verwendest",
+        backup_refund_list_tor: "du Tor Browser verwendest",
+        backup_refund_list_clear_history: "die Browser Daten gelöscht werden",
         backup_refund_skip:
             "Falls einer dieser Punkte zutrifft, empfehlen wir ausdrücklich die Rückerstattungsdatei herunterzuladen!",
         refund_a_swap: "Einen Swap erstatten",
@@ -377,8 +378,9 @@ const dict = {
         backup_refund: "Descargar archivo de reembolso",
         backup_refund_subline:
             "Si este intercambio falla, tendrás que reembolsar tu bitcoin utilizando tu clave de reembolso. Esta clave se guarda por defecto en el almacenamiento local de tu navegador, pero puede perderse si",
-        backup_refund_list:
-            "utiliza el modo incógnito\nutiliza el navegador tor\nborra tu historial de navegación",
+        backup_refund_list_incognito: "utiliza el modo incógnito",
+        backup_refund_list_tor: "utiliza el navegador Tor",
+        backup_refund_list_clear_history: "borra tu historial de navegación",
         backup_refund_skip:
             "Si alguno de los puntos anteriores le afecta, le recomendamos que descargue el archivo de reembolso.",
         refund_a_swap: "Reembolsar un intercambio",

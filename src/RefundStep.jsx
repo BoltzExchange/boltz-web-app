@@ -27,8 +27,13 @@ const RefundStep = () => {
                 <h2>{t("backup_refund")}</h2>
                 <p>{t("backup_refund_subline")}</p>
                 <ul class="bulletpoints">
-                    <For each={t("backup_refund_list").split("\n")}>
-                        {(line) => <li>{line}</li>}
+                    <For
+                        each={[
+                            "backup_refund_list_incognito",
+                            "backup_refund_list_tor",
+                            "backup_refund_list_clear_history",
+                        ]}>
+                        {(path) => <li>{t(path)}</li>}
                     </For>
                 </ul>
                 <hr />
