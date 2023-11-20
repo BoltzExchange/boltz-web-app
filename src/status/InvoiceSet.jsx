@@ -1,5 +1,4 @@
 import ContractTransaction from "../components/ContractTransaction";
-import DownloadRefund from "../components/DownloadRefund";
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import { clipboard, cropString } from "../helper";
@@ -94,7 +93,6 @@ const InvoiceSet = () => {
                 </span>
             </div>
             <hr />
-            <DownloadRefund />
         </div>
     );
 };
