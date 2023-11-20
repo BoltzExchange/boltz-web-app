@@ -4,13 +4,13 @@ import { randomBytes } from "crypto";
 import log from "loglevel";
 import { createEffect, createMemo, createSignal } from "solid-js";
 
-import { getAddress, getNetwork } from "../compat";
+import { RBTC } from "../consts";
+import { useWeb3Signer } from "../context/Web3";
 import { ECPair } from "../ecpair/ecpair";
 import { feeCheck, fetcher } from "../helper";
 import t from "../i18n";
 import {
     asset,
-    buttonLabel,
     config,
     invoice,
     lnurl,
@@ -20,7 +20,6 @@ import {
     reverse,
     sendAmount,
     setAddressValid,
-    setButtonLabel,
     setInvoice,
     setInvoiceValid,
     setNotification,
@@ -34,8 +33,11 @@ import {
 import { fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
-const CreateButton = ({ validateAddress }) => {
+export const [buttonLabel, setButtonLabel] = createSignal("");
+
+export const CreateButton = ({ validateAddress }) => {
     const navigate = useNavigate();
+    const { getEtherSwap } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -110,7 +112,7 @@ const CreateButton = ({ validateAddress }) => {
                 } catch (e) {
                     log.warn("fetch lnurl failed", e);
                 }
-                return true;
+                return;
             }
             params = {
                 type: "submarine",
@@ -155,7 +157,7 @@ const CreateButton = ({ validateAddress }) => {
 
                     validateResponse(data, getEtherSwap).then((success) => {
                         if (!success) {
-                            resolve();
+                            resolve(false);
                             navigate("/error/");
                             return;
                         }
@@ -165,7 +167,7 @@ const CreateButton = ({ validateAddress }) => {
                         setInvoiceValid(false);
                         setOnchainAddress("");
                         setAddressValid(false);
-                        resolve();
+                        resolve(true);
                         if (reverse() || isRsk) {
                             navigate("/swap/" + data.id);
                         } else {
@@ -174,7 +176,7 @@ const CreateButton = ({ validateAddress }) => {
                     });
                 },
                 params,
-                async (err) => {
+                async (err: Response) => {
                     const res = await err.json();
                     if (res.error === "invalid pair hash") {
                         await feeCheck(t("feecheck"));
@@ -182,7 +184,7 @@ const CreateButton = ({ validateAddress }) => {
                         setNotificationType("error");
                         setNotification(res.error);
                     }
-                    resolve();
+                    resolve(false);
                 },
             );
         });
@@ -191,7 +193,7 @@ const CreateButton = ({ validateAddress }) => {
     const buttonClick = () => {
         setButtonDisable(true);
         create()
-            .then((res) => !res && setButtonDisable(false))
+            .then(() => setButtonDisable(false))
             .catch((e) => {
                 log.warn("create failed", e);
                 setButtonDisable(false);
@@ -200,9 +202,9 @@ const CreateButton = ({ validateAddress }) => {
 
     return (
         <button
-            id="create-swap"
+            id="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable() ? "disabled" : ""}
+            disabled={buttonDisable()}
             onClick={buttonClick}>
             {buttonLabel()}
         </button>
