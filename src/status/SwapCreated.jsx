@@ -1,10 +1,11 @@
 import log from "loglevel";
 import { Show } from "solid-js";
 
+import QrCode from "../components/QrCode";
 import { BTC } from "../consts";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
-import { denomination, invoiceQr, swap, webln } from "../signals";
+import { denomination, swap, webln } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
 import { enableWebln } from "../utils/webln";
 
@@ -26,7 +27,7 @@ const SwapCreated = () => {
                 })}
             </h2>
             <hr />
-            <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
+            <QrCode data={swap().reverse ? swap().invoice : swap().bip21} />
             <hr />
             <p
                 onclick={() => clipboard(swap().invoice, t("copied"))}

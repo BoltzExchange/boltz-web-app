@@ -5,11 +5,10 @@ import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import BlockExplorer from "./components/BlockExplorer";
 import LoadingSpinner from "./components/LoadingSpinner";
 import { RBTC } from "./consts";
-import { fetcher, qr } from "./helper";
+import { fetcher } from "./helper";
 import t from "./i18n";
 import {
     setFailureReason,
-    setInvoiceQr,
     setReverse,
     setSwap,
     setSwapStatus,
@@ -57,12 +56,6 @@ const Pay = () => {
                         setFailureReason(data.failureReason);
                     },
                     { id: currentSwap.id },
-                );
-                qr(
-                    currentSwap.reverse
-                        ? currentSwap.invoice
-                        : currentSwap.bip21,
-                    setInvoiceQr,
                 );
             }
         }

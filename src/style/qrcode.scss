@@ -1,0 +1,18 @@
+$size: 40px;
+#qrcode {
+    position: relative;
+    span {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -($size/2);
+        margin-left: -($size/2);
+        width: $size;
+        height: $size;
+        z-index: 1;
+        background: #ff0;
+        background-image: url(/boltz-icon.svg);
+        background-size: 100%;
+        border-radius: 50%;
+    }
+}
