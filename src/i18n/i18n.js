@@ -224,11 +224,12 @@ const dict = {
         backup_skip: "Überspringen",
         backup_refund: "Rückerstattungsdatei herunterladen",
         backup_refund_subline:
-            "Lade deine Rückerstattungsdatei herunter und bewahre sie sicher auf. Du benötigst diese Datei, um deine Bitcoin zurückzuerhalten, falls der Swap fehlschlägt.",
+            "Falls dieser Swap fehlschlagen sollte, musst du dir deine Bitcoin mit deinem Rückerstattungsschlüssel zurückholen. Dieser Schlüssel wird standardmäßig lokal in dein Browser gespeichert, kann aber verloren gehen wenn",
+            
         backup_refund_list:
             "are using incognito mode\nare using tor browser\nclear your browsing history",
         backup_refund_skip:
-            "Du kannst diese Datei später herunterladen, indem du auf den Button in der oberen rechten Ecke klickst.",
+            "Falls einer dieser Punkte zutrifft, empfehlen wir ausdrücklich die Rückerstattungsdatei herunterzuladen!",
         refund_a_swap: "Einen Swap erstatten",
         refund_a_swap_subline:
             "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück",
@@ -372,14 +373,14 @@ const dict = {
         copy_amount: "Copiar monto",
         copy_bip21: "Copiar BIP21",
         copied: "Copiado",
-        backup_skip: "Omitir",
+        backup_skip: "Saltar",
         backup_refund: "Descargar archivo de reembolso",
         backup_refund_subline:
-            "Descargue el archivo de reembolso para recuperar sus fondos en caso de que algo salga mal",
+            "Si este intercambio falla, tendrás que reembolsar tu bitcoin utilizando tu clave de reembolso. Esta clave se guarda por defecto en el almacenamiento local de tu navegador, pero puede perderse si",
         backup_refund_list:
-            "están usando el modo incógnito\nestán usando el navegador Tor Borra\ntu historial de navegación",
+            "utiliza el modo incógnito\nutiliza el navegador tor\nborra tu historial de navegación",
         backup_refund_skip:
-            "Si no desea descargar el archivo de reembolso, puede omitir este paso",
+            "Si alguno de los puntos anteriores le afecta, le recomendamos que descargue el archivo de reembolso.",
         refund_a_swap: "Reembolsar un intercambio",
         refund_a_swap_subline:
             "Cargue su archivo de reembolso y recupere sus fondos bloqueados",
