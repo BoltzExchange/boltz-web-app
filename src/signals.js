@@ -18,6 +18,7 @@ export const [config, setConfig] = createSignal(0);
 export const [online, setOnline] = createSignal(true);
 export const [wasmSupported, setWasmSupported] = createSignal(true);
 export const [webln, setWebln] = createSignal(false);
+export const [embedded, setEmbedded] = createSignal(false);
 
 // fees
 export const [boltzFee, setBoltzFee] = createSignal(0);
