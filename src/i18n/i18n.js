@@ -78,7 +78,7 @@ const dict = {
         backup_skip: "Skip download",
         backup_refund: "Download Refund File",
         backup_refund_subline:
-            "If this swap fails, you'll have to refund your chain bitcoin. Refund information is additionally stored in your browser's local storage but can be lost if you",
+            "If this swap fails, you'll have to refund your chain bitcoin using your refund key. This key is stored in your browser's local storage by default, but can be lost if you",
         backup_refund_list:
             "are using incognito mode\nare using tor browser\nclear your browsing history",
         backup_refund_skip:
