@@ -7,7 +7,7 @@ import { render } from "solid-js/web";
 import Create from "./Create";
 import Error from "./Error";
 import Footer from "./Footer";
-import Hero from "./Hero";
+import { Hero, setHideHero } from "./Hero";
 import History from "./History";
 import Nav from "./Nav";
 import NotFound from "./NotFound";
@@ -18,8 +18,9 @@ import { loglevel, network } from "./config";
 import { Web3SignerProvider } from "./context/Web3";
 import { checkReferralId } from "./helper";
 import { detectLanguage } from "./i18n/detect";
-import { setWasmSupported, setWebln } from "./signals";
+import { embedded, setEmbedded, setWasmSupported, setWebln } from "./signals";
 import "./style/index.scss";
+import { detectEmbedded } from "./utils/embed";
 import "./utils/patches";
 import { swapChecker } from "./utils/swapChecker";
 import { checkWasmSupported } from "./utils/wasmSupport";
@@ -31,6 +32,10 @@ detectWebLNProvider().then((state) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
 detectLanguage();
+if (detectEmbedded()) {
+    setHideHero(true);
+    setEmbedded(true);
+}
 
 createRoot(() => {
     swapChecker();
@@ -49,8 +54,10 @@ document.body.classList.remove("loading");
 const cleanup = render(
     () => (
         <Router>
-            <Nav network={network} />
             <Web3SignerProvider>
+                <Show when={!embedded()}>
+                    <Nav network={network} />
+                </Show>
                 <Routes>
                     <Route path="*" element={<Navigate href={"/404"} />} />
                     <Route path="/404" component={NotFound} />
@@ -64,9 +71,11 @@ const cleanup = render(
                     <Route path="/refund" component={Refund} />
                     <Route path="/history" component={History} />
                 </Routes>
+                <Show when={!embedded()}>
+                    <Notification />
+                    <Footer />
+                </Show>
             </Web3SignerProvider>
-            <Notification />
-            <Footer />
         </Router>
     ),
     document.getElementById("root"),
