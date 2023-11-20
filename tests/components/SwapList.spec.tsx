@@ -1,7 +1,8 @@
 import { Router } from "@solidjs/router";
 import { render } from "@solidjs/testing-library";
+import { describe, expect, it } from "vitest";
 
-import SwapList from "../../src/components/SwapList.jsx";
+import SwapList from "../../src/components/SwapList";
 
 describe("SwapList", () => {
     it("should sort correctly", async () => {
@@ -17,15 +18,19 @@ describe("SwapList", () => {
         ];
 
         const {
-            debug,
             container: { firstChild: firstChild },
         } = render(() => (
             <Router>
-                <SwapList swapsSignal={swapsSignal} />
+                <SwapList
+                    swapsSignal={swapsSignal}
+                    setSwapSignal={() => {
+                        return undefined;
+                    }}
+                />
             </Router>
         ));
 
-        expect(firstChild.children.length).toEqual(swapsSignal().length);
+        expect(firstChild.childNodes.length).toEqual(swapsSignal().length);
 
         for (const [i, swap] of firstChild.childNodes.entries()) {
             expect(swap.textContent.includes(swapsSorted[i].id)).toEqual(true);

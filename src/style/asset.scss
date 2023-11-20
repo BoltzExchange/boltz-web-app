@@ -41,3 +41,12 @@
         content: "liquid";
     }
 }
+
+.asset-RBTC {
+    .icon {
+        background-image: url(../assets/rootstock-icon.svg);
+    }
+    .asset-text:before {
+        content: "rootstock";
+    }
+}

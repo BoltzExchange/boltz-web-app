@@ -24,6 +24,7 @@ const dict = {
         onion: "Onion",
         blockexplorer: "open {{ typeLabel }}",
         blockexplorer_lockup_address: "lockup address",
+        blockexplorer_lockup_tx: "lockup transaction",
         blockexplorer_claim_tx: "claim transaction",
         blockexplorer_refund_tx: "refund transaction",
         help: "Help",
@@ -31,6 +32,7 @@ const dict = {
         fee: "Boltz Fee",
         denomination: "Denomination",
         send: "Send",
+        claim: "Claim",
         receive: "Receive",
         min: "Min",
         max: "Max",
@@ -58,9 +60,11 @@ const dict = {
         pay_timeout_blockheight: "Timeout block height",
         pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
-        send_to_desc:
-            "Please send exactly {{ amount }} {{ denomination }} before timeout block height {{ blockheight }}",
+        pay_invoice_to: "Pay this invoice for {{ amount }} {{ denomination }}",
         pay_address: "Address",
+        connect_metamask: "Connect MetaMask",
+        connect_to_address: "Connect to MetaMask to set address",
+        disconnect_address: "Disconnect MetaMask",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
             "Your lockup transaction failed, wait for the timeout to refund.",
@@ -101,7 +105,7 @@ const dict = {
         delete_localstorage_single_swap:
             "Are you sure you want to clear Swap {{ id }} from your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
         tx_in_mempool: "Transaction is in mempool",
-        tx_in_mempool_subline: "waiting for confirmation to complete the swap",
+        tx_in_mempool_subline: "Waiting for confirmation to complete the swap",
         expired: "Swap expired!",
         invoice_pending: "Transaction received, paying invoice.",
         invoice_expired: "Invoice expired, try again!",
@@ -110,7 +114,7 @@ const dict = {
         pay_invoice_webln: "pay invoice via WebLN",
         select_asset: "Select {{ direction }} Asset",
         tx_confirmed: "Transaction confirmed",
-        tx_ready_to_claim: "claiming transaction now...",
+        tx_ready_to_claim: "Claiming transaction now...",
         transaction_refunded: "Boltz has refunded the Transaction",
         refunded: "Swap has been refunded",
         broadcasted: "Refund broadcasted",
@@ -140,9 +144,13 @@ const dict = {
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
         warning_return: "Important: Return to this page after paying invoice",
+        warning_expiry:
+            "Make sure your transaction confirms within ~24 hours after creation of this swap!",
         not_found: "404 - Page Not Found",
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
+        transaction_prompt:
+            'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
     },
     de: {
         language: "Deutsch",
@@ -170,6 +178,7 @@ const dict = {
         onion: "Onion",
         blockexplorer: "{{ typeLabel }} anzeigen",
         blockexplorer_lockup_address: "Lockupadresse",
+        blockexplorer_lockup_tx: "Lockuptransaktion",
         blockexplorer_claim_tx: "Claimtransaktion",
         blockexplorer_refund_tx: "Rückerstattungstransaktion",
         help: "Hilfe",
@@ -177,6 +186,7 @@ const dict = {
         fee: "Boltzgebühr",
         denomination: "Denominierung",
         send: "Sende",
+        claim: "Claim",
         receive: "Empfange",
         min: "Min",
         max: "Max",
@@ -204,9 +214,11 @@ const dict = {
         pay_timeout_blockheight: "Timeout Blockhöhe",
         pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
-        send_to_desc:
-            "Bitte sende genau {{ amount }} {{ denomination }} vor der Timeout-Blockhöhe {{ blockheight }}",
+        pay_invoice_to: "Zahle Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
+        connect_metamask: "MetaMask verbinden",
+        connect_to_address: "Mit MetaMask verbinden um Adresse zu setzen",
+        disconnect_address: "MetaMask trennen",
         lockup_failed: "Lockup fehlgeschlagen!",
         lockup_failed_subline:
             "Deine Lockup-Transaktion ist fehlgeschlagen, warte auf den Timeout, um eine Rückerstattung zu starten.",
@@ -293,9 +305,13 @@ const dict = {
         beta_caution: "BETA - OBACHT!",
         warning_return:
             "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
+        warning_expiry:
+            "Wichtig: Die Transaktion muss innerhalb ~24 Stunden nach Erstellung dieses Swaps bestätigt sein!",
         not_found: "404 - Seite nicht gefunden",
         not_found_subline: "Die gesuchte Seite existiert nicht.",
         back_to_home: "Zurück zur Startseite",
+        transaction_prompt:
+            '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
     },
     es: {
         language: "Español",
@@ -322,6 +338,7 @@ const dict = {
         onion: "Onion",
         blockexplorer: "Ver en {{ typeLabel }}",
         blockexplorer_lockup_address: "Dirección Lockup",
+        blockexplorer_lockup_tx: "Transacción de Lockup",
         blockexplorer_claim_tx: "Transacción de Reclamación",
         blockexplorer_refund_tx: "Transacción de Reembolso",
         help: "Ayuda",
@@ -329,6 +346,7 @@ const dict = {
         fee: "Comisión de Boltz",
         denomination: "Denominación",
         send: "Enviar",
+        claim: "Reclamar",
         receive: "Recibir",
         min: "Mín",
         max: "Máx",
@@ -357,9 +375,12 @@ const dict = {
         pay_timeout_blockheight: "Altura del bloque de tiempo de espera",
         pay_expected_amount: "Monto esperado",
         send_to: "Enviar {{ amount }} {{ denomination }} a",
-        send_to_desc:
-            "Por favor, envíe exactamente {{ amount }} {{ denomination }} antes de la altura del bloque de tiempo de espera {{ blockheight }}",
+        pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
+        connect_metamask: "Conectar MetaMask",
+        connect_to_address:
+            "Conectar con MetaMask para establecer la dirección",
+        disconnect_address: "Desconectar MetaMask",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
             "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
@@ -444,9 +465,13 @@ const dict = {
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
         warning_return:
             "Importante: Regresa a esta página después de pagar la factura!",
+        warning_expiry:
+            "Importante: Asegúrese de que la transacción se confirma en ~24 horas",
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
+        transaction_prompt:
+            'Pulse "{{ botón }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
     },
 };
 

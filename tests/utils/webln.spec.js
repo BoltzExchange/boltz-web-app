@@ -10,7 +10,7 @@ describe("WebLN", () => {
     });
 
     test("should not detect WebLN when no injected provider is present", async () => {
-        expect(await detectWebLNProvider()).toEqual(false);
+        expect(await detectWebLNProvider(1)).toEqual(false);
     });
 
     test("should detect WebLN when provider is present", async () => {
@@ -19,7 +19,7 @@ describe("WebLN", () => {
     });
 
     test("should detect WebLN when provider is present after 200ms", async () => {
-        setTimeout(() => (window.webln = {}), 200);
+        setTimeout(() => (window.webln = {}), 1);
         expect(await detectWebLNProvider()).toEqual(true);
     });
 

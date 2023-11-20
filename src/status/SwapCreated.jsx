@@ -1,10 +1,11 @@
 import log from "loglevel";
 import { Show } from "solid-js";
 
-import { clipboard } from "../helper";
+import { BTC } from "../consts";
+import { clipboard, cropString } from "../helper";
 import t from "../i18n";
 import { denomination, invoiceQr, swap, webln } from "../signals";
-import { formatAmount } from "../utils/denomination";
+import { denominations, formatAmount } from "../utils/denomination";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
@@ -15,35 +16,25 @@ const SwapCreated = () => {
         });
     };
 
-    const cropInvoice = (invoice) => {
-        return (
-            invoice.substring(0, 20) +
-            "..." +
-            invoice.substring(invoice.length - 20)
-        );
-    };
-
     return (
         <div>
-            <h4>{t("warning_return")}</h4>
-            <hr />
-            <p>
-                {t("pay_timeout_blockheight")}: {swap().timeoutBlockHeight}
-            </p>
+            <h2>
+                {t("pay_invoice_to", {
+                    amount: formatAmount(swap().sendAmount),
+                    denomination:
+                        denomination() === denominations.sat ? "sats" : BTC,
+                })}
+            </h2>
             <hr />
             <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
             <hr />
-            <h2>
-                {t("send_to", {
-                    amount: formatAmount(swap().sendAmount),
-                    denomination: denomination(),
-                })}
-            </h2>
             <p
                 onclick={() => clipboard(swap().invoice, t("copied"))}
                 class="address-box break-word">
-                {cropInvoice(swap().invoice)}
+                {cropString(swap().invoice)}
             </p>
+            <hr />
+            <h3>{t("warning_return")}</h3>
             <hr />
             <Show when={webln()}>
                 <span

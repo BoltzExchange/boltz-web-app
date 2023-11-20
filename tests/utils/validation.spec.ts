@@ -1,22 +1,21 @@
+import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
+import { Contract } from "ethers";
 import log from "loglevel";
-import { expect } from "vitest";
+import { beforeAll, describe, expect, test, vitest } from "vitest";
 
-import { decodeInvoice, validateResponse } from "../../src/utils/validation";
+import { RBTC } from "../../src/consts";
+import { validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
+    const getEtherSwap = (code: string): (() => Promise<Contract>) => {
+        const getDeployedCode = vitest.fn().mockResolvedValue(code);
+        return vitest.fn(() => ({
+            getDeployedCode,
+        })) as any;
+    };
+
     beforeAll(() => {
         log.disableAll();
-    });
-
-    describe("decode invoices", () => {
-        test.each`
-            network      | invoice
-            ${"regtest"} | ${"lnbcrt623210n1pj8hfdspp5mhcxq3qgzn779zs0c02na32henclzt55uga68kck6tknyw0y59qsdqqcqzzsxqyz5vqsp54wll9s5jphgcjqzpnamqeszvfdz937pjels2cqr84pltjsqv2asq9qyyssq49028nqec7uz5vk73peg5a4fkxhltw90kkmupfradjp0sus6g5zxs6njedk8ml3qgdls3dfjfvd7z3py5qgst9fnzz5pwcr5564sf6sqtrlfzz"}
-            ${"testnet"} | ${"lntb4573450n1pj8hfnmsp58erxc4m9u09frqkalhw5udgvghvm27wewl99d7z3hjftgwtt234qpp572p5y0tplt70txw35kzypsef4mg2pwp5u0ej9hx8tse6f2rcvrjsdq5g9kxy7fqd9h8vmmfvdjsxqyjw5qcqp2rzjq0cxp9fmaadhwlw80ez2lgu9n5pzlsd803238r0tyv4dwf27s6wqqfggesqqqfqqqyqqqqlgqqqqqqgq9q9qyysgqw4msvmfgakcmxkglwnj7qgp6hlupefstyzhkld0uxlx3gdncnzw385c5qy6ng2qh59rtttktjzy8l43gzv3n9u6du64z2xu0mdz377splwf2qy"}
-            ${"mainnet"} | ${"lnbc678450n1pj8hf4kpp5kxh4x93kvxt43q0k0q6t3fp6gfhgusqxsajj6lcexsrg4lzm7rrqdq5g9kxy7fqd9h8vmmfvdjscqzzsxqyz5vqsp5n4rzwr2lzw68082ws4tjjerp2t5eluny75xx54jr530x073tvvzs9qyyssq3f43e2mzqx07zzt529ux480nj00908p3u5qdwhyuk3qrcepaqsjxqjhcnfde4ta74c3dkxkhwscxfhdm5v0y7qh7np22v9xc220taacqjanm3m"}
-        `("should decode $network invoices", ({ invoice }) => {
-            expect(decodeInvoice(invoice)).toMatchSnapshot();
-        });
     });
 
     describe("normal swap", () => {
@@ -73,19 +72,25 @@ describe("validate responses", () => {
         };
 
         test.each`
-            desc                                   | valid    | swap
-            ${"BTC valid"}                         | ${true}  | ${swapBtc}
-            ${"BTC native SegWit valid"}           | ${true}  | ${swapBtcNativeSegwit}
-            ${"BTC invalid send amount"}           | ${false} | ${{ ...swapBtc, sendAmount: 12313123 }}
-            ${"BTC invalid refund key"}            | ${false} | ${{ ...swapBtc, privateKey: "6321bb238f0678fb4c971024193f650eebe69fb891788e1af70184b2dd5d1d5f" }}
-            ${"BTC invalid invoice preimage hash"} | ${false} | ${{ ...swapBtc, invoice: "lnbcrt1m1pj87krqpp508n5tj4ur4em04k9r0lg2nwm6jy0tvta6h3zrhvtypz8srhzapgqdqqcqzzsxqyz5vqsp5admanudc6jgftclpxh0wt8tzcd3qumhjhlnnhgmw57nagygrvjas9qyyssqfpaxy85h53v4cv4merj3fequfpfy3pry5tpazupv8v2wmcnh2vu463m44pgw3zlhyj3z6mkgnuat8eyrsr0p9zgq2w6fc0gacytgsmgpr8wa3v" }}
-            ${"BTC invalid invalid address"}       | ${false} | ${{ ...swapBtc, address: "2NGVzk8fgA8zHRkLBwkAgZKnBn3aYG6wwSx" }}
-            ${"BTC invalid BIP21 amount"}          | ${false} | ${{ ...swapBtc, bip21: "bitcoin:2NFjs5VkEHkX65QrZHwCgwXdphBvKPr6trL?amount=0.0010056&label=Send%20to%20BTC%20lightning" }}
-            ${"BTC invalid BIP21 address"}         | ${false} | ${{ ...swapBtc, bip21: "bitcoin:2NGVzk8fgA8zHRkLBwkAgZKnBn3aYG6wwSx?amount=0.0010054&label=Send%20to%20BTC%20lightning" }}
-            ${"L-BTC valid"}                       | ${true}  | ${swapLbtc}
-            ${"L-BTC invalid blinding key"}        | ${false} | ${{ ...swapLbtc, blindingKey: "e5d35d6e263249d1defe206a41dc969df61b1b64347a655fb575421f0369b321" }}
-        `("$desc", async ({ valid, swap }) => {
-            await expect(validateResponse(swap, Buffer)).resolves.toBe(valid);
+            desc                                   | valid    | contractCode                | swap
+            ${"BTC valid"}                         | ${true}  | ${""}                       | ${swapBtc}
+            ${"BTC native SegWit valid"}           | ${true}  | ${""}                       | ${swapBtcNativeSegwit}
+            ${"BTC invalid send amount"}           | ${false} | ${""}                       | ${{ ...swapBtc, sendAmount: 12313123 }}
+            ${"BTC invalid refund key"}            | ${false} | ${""}                       | ${{ ...swapBtc, privateKey: "6321bb238f0678fb4c971024193f650eebe69fb891788e1af70184b2dd5d1d5f" }}
+            ${"BTC invalid invoice preimage hash"} | ${false} | ${""}                       | ${{ ...swapBtc, invoice: "lnbcrt1m1pj87krqpp508n5tj4ur4em04k9r0lg2nwm6jy0tvta6h3zrhvtypz8srhzapgqdqqcqzzsxqyz5vqsp5admanudc6jgftclpxh0wt8tzcd3qumhjhlnnhgmw57nagygrvjas9qyyssqfpaxy85h53v4cv4merj3fequfpfy3pry5tpazupv8v2wmcnh2vu463m44pgw3zlhyj3z6mkgnuat8eyrsr0p9zgq2w6fc0gacytgsmgpr8wa3v" }}
+            ${"BTC invalid invalid address"}       | ${false} | ${""}                       | ${{ ...swapBtc, address: "2NGVzk8fgA8zHRkLBwkAgZKnBn3aYG6wwSx" }}
+            ${"BTC invalid BIP21 amount"}          | ${false} | ${""}                       | ${{ ...swapBtc, bip21: "bitcoin:2NFjs5VkEHkX65QrZHwCgwXdphBvKPr6trL?amount=0.0010056&label=Send%20to%20BTC%20lightning" }}
+            ${"BTC invalid BIP21 address"}         | ${false} | ${""}                       | ${{ ...swapBtc, bip21: "bitcoin:2NGVzk8fgA8zHRkLBwkAgZKnBn3aYG6wwSx?amount=0.0010054&label=Send%20to%20BTC%20lightning" }}
+            ${"L-BTC valid"}                       | ${true}  | ${""}                       | ${swapLbtc}
+            ${"L-BTC invalid blinding key"}        | ${false} | ${""}                       | ${{ ...swapLbtc, blindingKey: "e5d35d6e263249d1defe206a41dc969df61b1b64347a655fb575421f0369b321" }}
+            ${"RBTC valid"}                        | ${true}  | ${EtherSwapBytecode.object} | ${{ ...swapBtc, asset: RBTC }}
+            ${"RBTC invalid send amount"}          | ${false} | ${""}                       | ${{ ...swapBtc, asset: RBTC, sendAmount: 12313123 }}
+            ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...swapBtc, asset: RBTC }}
+        `("$desc", async ({ valid, contractCode, swap }) => {
+            const contract = getEtherSwap(contractCode);
+            await expect(
+                validateResponse(swap, contract, Buffer),
+            ).resolves.toBe(valid);
         });
     });
 
@@ -131,18 +136,23 @@ describe("validate responses", () => {
         };
 
         test.each`
-            desc                                            | valid    | swap
-            ${"BTC valid"}                                  | ${true}  | ${reverseSwapBtc}
-            ${"BTC invalid receive amount"}                 | ${false} | ${{ ...reverseSwapBtc, onchainAmount: reverseSwapBtc.onchainAmount - 1 }}
-            ${"BTC invalid invoice amount"}                 | ${false} | ${{ ...reverseSwapBtc, invoice: "lnbcrt1000010n1pj8hjy9pp5ylcun2dmcl0jukwprey0sxpnm6kfurwngvqrglak8www5rm9thqqdqqcqzzsxqyz5vqsp5xas59ytzy77vr7nz3q20ekfp36pahnf7pyp5yu2q6j69s0gf2mzq9qyyssq98vhx0hwngawut2n240ye2j693qh4afptj3fx93kdxdgelhg8w4ntqj6za2txudm2t8ge649h5jcleqrrhk2ef4hymjtmly4mma07lgpru8e9j" }}
-            ${"BTC invalid invoice preimage hash"}          | ${false} | ${{ ...reverseSwapBtc, invoice: "lnbcrt1m1pj8hjyjpp53ge8f7m79de2q3e4j8amvq9jq3g0eag9vymzyd32gjw3cz3uhjfqdqqcqzzsxqyz5vqsp52vdnu0n3yh8m0sykqk4gl6h9v7l4r736z4qswm8tmahvjet6w7uq9qyyssqytl6pnuel293xmkgnu9hc5f4taekhgl023zceztzy0eugya6908p5y0txdx0p0q448uru6ecqhd78aarr0lkj95h4s7nwrymjvnkdwcq2ds4qy" }}
-            ${"BTC invalid redeem script claim public key"} | ${false} | ${{ ...reverseSwapBtc, redeemScript: "8201208763a91400884cd36bf1e5a1bfbe50b54e41bb0ab2dfebdd882103b9b0ea9a8ea9f7cd5c757c4753aa30d75ee1f9a1f97b87bc5d1a4174b35fe769677502ff00b17521037c7980160182adad9eaea06c1b1cdf9dfdce5ef865c386a112bff4a62196caf668ac" }}
-            ${"BTC invalid redeem script preimage hash"}    | ${false} | ${{ ...reverseSwapBtc, redeemScript: "8201208763a9143ab4a6bb65bbf58652aac526832ead9461aeb939882103b9b0ea9a8ea9f7cd5c757c4753aa30d75ee149a1f97b87bc5d1a4174b35fe769677502ff00b17521036e2b63f3aa1f1e6b50438af9c505c25d3faeeb72414e84100a9ced7b5cddace168ac" }}
-            ${"BTC invalid lockupAddress"}                  | ${false} | ${{ ...reverseSwapBtc, lockupAddress: "bcrt1qcqyj0mdse8ewusdxgm30ynsnqw4j5700vsdgm8xg0eft5rqdnpgs9ndhwx" }}
-            ${"L-BTC valid"}                                | ${true}  | ${reverseSwapLbtc}
-            ${"L-BTC invalid blinding key"}                 | ${false} | ${{ ...reverseSwapLbtc, blindingKey: "6aa614e75363a597e2fc093503856a5371ee198751a632305a434e9de72d800d" }}
-        `("$desc", async ({ valid, swap }) => {
-            await expect(validateResponse(swap, Buffer)).resolves.toBe(valid);
+            desc                                            | valid    | contractCode                | swap
+            ${"BTC valid"}                                  | ${true}  | ${""}                       | ${reverseSwapBtc}
+            ${"BTC invalid receive amount"}                 | ${false} | ${""}                       | ${{ ...reverseSwapBtc, onchainAmount: reverseSwapBtc.onchainAmount - 1 }}
+            ${"BTC invalid invoice amount"}                 | ${false} | ${""}                       | ${{ ...reverseSwapBtc, invoice: "lnbcrt1000010n1pj8hjy9pp5ylcun2dmcl0jukwprey0sxpnm6kfurwngvqrglak8www5rm9thqqdqqcqzzsxqyz5vqsp5xas59ytzy77vr7nz3q20ekfp36pahnf7pyp5yu2q6j69s0gf2mzq9qyyssq98vhx0hwngawut2n240ye2j693qh4afptj3fx93kdxdgelhg8w4ntqj6za2txudm2t8ge649h5jcleqrrhk2ef4hymjtmly4mma07lgpru8e9j" }}
+            ${"BTC invalid invoice preimage hash"}          | ${false} | ${""}                       | ${{ ...reverseSwapBtc, invoice: "lnbcrt1m1pj8hjyjpp53ge8f7m79de2q3e4j8amvq9jq3g0eag9vymzyd32gjw3cz3uhjfqdqqcqzzsxqyz5vqsp52vdnu0n3yh8m0sykqk4gl6h9v7l4r736z4qswm8tmahvjet6w7uq9qyyssqytl6pnuel293xmkgnu9hc5f4taekhgl023zceztzy0eugya6908p5y0txdx0p0q448uru6ecqhd78aarr0lkj95h4s7nwrymjvnkdwcq2ds4qy" }}
+            ${"BTC invalid redeem script claim public key"} | ${false} | ${""}                       | ${{ ...reverseSwapBtc, redeemScript: "8201208763a91400884cd36bf1e5a1bfbe50b54e41bb0ab2dfebdd882103b9b0ea9a8ea9f7cd5c757c4753aa30d75ee1f9a1f97b87bc5d1a4174b35fe769677502ff00b17521037c7980160182adad9eaea06c1b1cdf9dfdce5ef865c386a112bff4a62196caf668ac" }}
+            ${"BTC invalid redeem script preimage hash"}    | ${false} | ${""}                       | ${{ ...reverseSwapBtc, redeemScript: "8201208763a9143ab4a6bb65bbf58652aac526832ead9461aeb939882103b9b0ea9a8ea9f7cd5c757c4753aa30d75ee149a1f97b87bc5d1a4174b35fe769677502ff00b17521036e2b63f3aa1f1e6b50438af9c505c25d3faeeb72414e84100a9ced7b5cddace168ac" }}
+            ${"BTC invalid lockupAddress"}                  | ${false} | ${""}                       | ${{ ...reverseSwapBtc, lockupAddress: "bcrt1qcqyj0mdse8ewusdxgm30ynsnqw4j5700vsdgm8xg0eft5rqdnpgs9ndhwx" }}
+            ${"L-BTC valid"}                                | ${true}  | ${""}                       | ${reverseSwapLbtc}
+            ${"L-BTC invalid blinding key"}                 | ${false} | ${""}                       | ${{ ...reverseSwapLbtc, blindingKey: "6aa614e75363a597e2fc093503856a5371ee198751a632305a434e9de72d800d" }}
+            ${"RBTC valid"}                                 | ${true}  | ${EtherSwapBytecode.object} | ${{ ...reverseSwapBtc, asset: RBTC }}
+            ${"RBTC invalid contract code"}                 | ${false} | ${"not correct"}            | ${{ ...reverseSwapBtc, asset: RBTC }}
+        `("$desc", async ({ valid, contractCode, swap }) => {
+            const contract = getEtherSwap(contractCode);
+            await expect(
+                validateResponse(swap, contract, Buffer),
+            ).resolves.toBe(valid);
         });
     });
 });

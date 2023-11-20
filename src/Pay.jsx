@@ -1,10 +1,11 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createEffect, onCleanup } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
 import BlockExplorer from "./components/BlockExplorer";
 import LoadingSpinner from "./components/LoadingSpinner";
-import { checkForFailed, fetcher, qr } from "./helper";
+import { RBTC } from "./consts";
+import { fetcher, qr } from "./helper";
 import t from "./i18n";
 import {
     setFailureReason,
@@ -15,6 +16,7 @@ import {
     setSwapStatusTransaction,
     swap,
     swapStatus,
+    swapStatusTransaction,
     swaps,
 } from "./signals";
 import InvoiceExpired from "./status/InvoiceExpired";
@@ -32,6 +34,10 @@ import { swapStatusFailed } from "./utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
+    const [contractTransaction, setContractTransaction] =
+        createSignal(undefined);
+    const [contractTransactionType, setContractTransactionType] =
+        createSignal("lockup_tx");
 
     createEffect(() => {
         let tmpSwaps = swaps();
@@ -48,7 +54,6 @@ const Pay = () => {
                     (data) => {
                         setSwapStatus(data.status);
                         setSwapStatusTransaction(data.transaction);
-                        checkForFailed(currentSwap.id, data);
                         setFailureReason(data.failureReason);
                     },
                     { id: currentSwap.id },
@@ -60,6 +65,31 @@ const Pay = () => {
                     setInvoiceQr,
                 );
             }
+        }
+    });
+
+    createEffect(() => {
+        const tx = swapStatusTransaction();
+
+        if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
+            setContractTransaction(tx.id);
+        }
+    });
+
+    createEffect(() => {
+        const claimTx = swap().claimTx;
+
+        if (swap().asset === RBTC && claimTx) {
+            setContractTransaction(claimTx);
+            setContractTransactionType("claim_tx");
+        }
+    });
+
+    createEffect(() => {
+        const lockupTx = swap().lockupTx;
+
+        if (swap().asset === RBTC && lockupTx) {
+            setContractTransaction(lockupTx);
         }
     });
 
@@ -139,8 +169,10 @@ const Pay = () => {
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />
                     </Show>
+
                     <Show
                         when={
+                            swap().asset !== RBTC &&
                             swapStatus() !== null &&
                             swapStatus() !== "swap.created"
                         }>
@@ -152,6 +184,17 @@ const Pay = () => {
                                     ? swap().address
                                     : swap().lockupAddress
                             }
+                        />
+                    </Show>
+                    <Show
+                        when={
+                            swap().asset === RBTC &&
+                            contractTransaction() !== undefined
+                        }>
+                        <BlockExplorer
+                            asset={swap().asset}
+                            txId={contractTransaction()}
+                            typeLabel={contractTransactionType()}
                         />
                     </Show>
                 </Show>

@@ -3,12 +3,13 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { beforeAll, beforeEach, expect, vi } from "vitest";
 
 import Create from "../../src/Create";
-import { sideReceive, sideSend } from "../../src/consts.js";
+import { sideReceive, sideSend } from "../../src/consts";
+import { Web3SignerProvider } from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import * as signals from "../../src/signals";
 import { invoiceValid, sendAmount, setReverse } from "../../src/signals";
-import { calculateReceiveAmount } from "../../src/utils/calculate.js";
-import { decodeInvoice } from "../../src/utils/validation.js";
+import { calculateReceiveAmount } from "../../src/utils/calculate";
+import { decodeInvoice } from "../../src/utils/invoice";
 import { cfg } from "../config";
 
 describe("Create", () => {
@@ -25,7 +26,9 @@ describe("Create", () => {
     test("should render Create", async () => {
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
         const button = await screen.findAllByText(i18n.en.create_swap);
@@ -37,7 +40,9 @@ describe("Create", () => {
 
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 
@@ -59,7 +64,9 @@ describe("Create", () => {
 
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 
@@ -75,7 +82,9 @@ describe("Create", () => {
     test("should update calculated value on fee change", async () => {
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 
@@ -135,7 +144,9 @@ describe("Create", () => {
 
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 
@@ -153,7 +164,9 @@ describe("Create", () => {
 
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 
@@ -174,7 +187,9 @@ describe("Create", () => {
 
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 
@@ -205,7 +220,9 @@ describe("Create", () => {
 
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 
@@ -230,7 +247,9 @@ describe("Create", () => {
     `("should set $extrema amount on click", async (extrema) => {
         render(() => (
             <Router>
-                <Create />
+                <Web3SignerProvider noFetch={true}>
+                    <Create />
+                </Web3SignerProvider>
             </Router>
         ));
 

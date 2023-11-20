@@ -16,6 +16,7 @@ import Pay from "./Pay";
 import Refund from "./Refund";
 import RefundStep from "./RefundStep";
 import { loglevel, network } from "./config";
+import { Web3SignerProvider } from "./context/Web3";
 import { checkReferralId } from "./helper";
 import { detectLanguage } from "./i18n/detect";
 import { setWasmSupported, setWebln } from "./signals";
@@ -50,20 +51,22 @@ const cleanup = render(
     () => (
         <Router>
             <Nav network={network} />
-            <Routes>
-                <Route path="*" element={<Navigate href={"/404"} />} />
-                <Route path="/404" component={NotFound} />
-                <Route path="/" component={Hero} />
-                <Route path="/swap" component={Create} />
-                {/* Compatibility with link in Breez:
+            <Web3SignerProvider>
+                <Routes>
+                    <Route path="*" element={<Navigate href={"/404"} />} />
+                    <Route path="/404" component={NotFound} />
+                    <Route path="/" component={Hero} />
+                    <Route path="/swap" component={Create} />
+                    {/* Compatibility with link in Breez:
                         https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
-                <Route path="/swapbox" component={Create} />
-                <Route path="/swap/:id" component={Pay} />
-                <Route path="/swap/refund/:id" component={RefundStep} />
-                <Route path="/error" component={Error} />
-                <Route path="/refund" component={Refund} />
-                <Route path="/history" component={History} />
-            </Routes>
+                    <Route path="/swapbox" component={Create} />
+                    <Route path="/swap/:id" component={Pay} />
+                    <Route path="/swap/refund/:id" component={RefundStep} />
+                    <Route path="/error" component={Error} />
+                    <Route path="/refund" component={Refund} />
+                    <Route path="/history" component={History} />
+                </Routes>
+            </Web3SignerProvider>
             <Notification />
             <Footer />
         </Router>
