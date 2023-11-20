@@ -14,12 +14,13 @@ import {
     setup,
 } from "./compat";
 import { pairs } from "./config";
-import { RBTC } from "./consts";
+import { BTC, RBTC } from "./consts";
 import { ECPair } from "./ecpair/ecpair";
 import {
     asset,
     ref,
     refundAddress,
+    setAsset,
     setConfig,
     setFailureReason,
     setNotification,
@@ -100,7 +101,13 @@ export const errorHandler = (error) => {
 };
 
 export const getApiUrl = (asset) => {
-    return pairs[`${asset}/BTC`].apiUrl;
+    const pair = pairs[`${asset}/BTC`];
+    if (pair) {
+        return pair.apiUrl;
+    }
+
+    log.error(`no pair found for ${asset}; falling back to ${BTC}`);
+    return getApiUrl(BTC);
 };
 
 export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
