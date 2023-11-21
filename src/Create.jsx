@@ -448,7 +448,6 @@ const Create = () => {
                     amount={maximum}
                 />
             </p>
-            <hr />
             <div class="icons">
                 <div>
                     <Asset side={sideSend} signal={assetSend} />

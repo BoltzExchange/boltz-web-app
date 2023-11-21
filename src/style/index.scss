@@ -41,10 +41,10 @@ h2 + p {
 }
 
 hr {
-    margin: 14px 0;
+    margin: 10px 0;
     border: none;
     height: 1px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .icon-reload {
@@ -306,7 +306,7 @@ textarea {
 }
 
 #refundAddress {
-    margin: 16px 0;
+    margin: 16px 0 0;
 }
 
 #steps {
@@ -541,7 +541,7 @@ textarea {
     padding: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.5);
-    margin-top: 9px;
+    margin: 0;
     cursor: pointer;
 }
 
