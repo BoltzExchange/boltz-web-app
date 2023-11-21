@@ -286,7 +286,7 @@ const Create = () => {
                         setOnchainAddress("");
                         setAddressValid(false);
                         resolve();
-                        if (reverse()) {
+                        if (reverse() || isRsk) {
                             navigate("/swap/" + data.id);
                         } else {
                             navigate("/swap/refund/" + data.id);
