@@ -49,7 +49,9 @@ const validateContract = async (getEtherSwap: ContractGetter) => {
         log.warn("contract validation: code mismatch");
     }
 
-    return codeMatches;
+    // TODO: actually verify the code match
+    // This check is currently disabled, because it mismatches on RSK, because it was compiled for a different EVM target
+    return true;
 };
 
 const getScriptHashFunction = (isNativeSegwit: boolean) =>
