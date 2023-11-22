@@ -359,12 +359,12 @@ const dict = {
         create_channel_subline: "Capacidad del canal entrante o saliente",
         create_swap: "Crear intercambio atómico",
         create_swap_subline:
-            "El pago incluye tarifas de red y servicio de Boltz",
+            "El pago incluye la comisión de red y servicio de Boltz",
         cancel_swap: "Cancelar intercambio",
         new_swap: "Nuevo intercambio",
         success_swap: "Intercambio realizado con éxito!",
         feecheck:
-            "La tarifa de red se actualizó según la situación de la red. Por favor, confirma los nuevos montos y continúa con el intercambio.",
+            "La comisión de red de red se actualizó según la situación de la red. Por favor, confirma los nuevos montos y continúa con el intercambio.",
         create_and_paste:
             "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay\n\nMonto: {{ amount }} {{ denomination }}",
         congrats: "¡Felicitaciones!",
@@ -471,7 +471,7 @@ const dict = {
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
         transaction_prompt:
-            'Pulse "{{ botón }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
+            'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
     },
 };
 
