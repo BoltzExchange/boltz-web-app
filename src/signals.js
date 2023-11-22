@@ -35,7 +35,6 @@ export const [receiveAmountFormatted, setReceiveAmountFormatted] =
 export const [refundAddress, setRefundAddress] = createSignal(null);
 export const [onchainAddress, setOnchainAddress] = createSignal("");
 export const [invoice, setInvoice] = createSignal("");
-export const [invoiceQr, setInvoiceQr] = createSignal("");
 export const [swap, setSwap] = createSignal(null, {
     // To allow updating properties of the swap object without replacing it completely
     equals: () => false,

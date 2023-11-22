@@ -1,7 +1,6 @@
 import { detectSwap } from "boltz-core";
 import { Buffer } from "buffer";
 import log from "loglevel";
-import QRCode from "qrcode/lib/server";
 
 import {
     decodeAddress,
@@ -178,17 +177,6 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
     }
     checkForFailed(currentSwap, data);
     setFailureReason(data.failureReason);
-};
-
-export const qr = (data, cb) => {
-    if (!data) return cb(null);
-    QRCode.toDataURL(data, { width: 400 })
-        .then(cb)
-        .catch((err) => {
-            log.error("qr code generation error", err);
-            setNotificationType("error");
-            setNotification(err.message);
-        });
 };
 
 export async function refund(swap, t) {

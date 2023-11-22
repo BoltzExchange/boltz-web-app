@@ -1,4 +1,4 @@
-import { isIos, isMobile, qr } from "../helper";
+import { isIos, isMobile } from "../helper";
 import t from "../i18n";
 import { swap } from "../signals";
 import { download, downloadJson } from "../utils/download";
@@ -24,20 +24,24 @@ const downloadRefundJson = (swap) => {
 
 const DownloadRefund = () => {
     const downloadRefundQr = (swap) => {
-        qr(JSON.stringify(createRefundData(swap)), (url) => {
-            if (isIos) {
-                // Compatibility with third party iOS browsers
-                const newTab = window.open();
-                newTab.document.body.innerHTML = `
-                    <!DOCTYPE html>
-                    <body>
-                        <img src="${url}">
-                        <h1>${t("ios_image_download")}</h1>
-                    </body>`;
-            } else {
-                download(`${getRefundFileName(swap)}.png`, url);
-            }
-        });
+        QRCode.toDataURL(JSON.stringify(createRefundData(swap)), { width: 400 })
+            .then((url) => {
+                if (isIos) {
+                    // Compatibility with third party iOS browsers
+                    const newTab = window.open();
+                    newTab.document.body.innerHTML = `
+                        <!DOCTYPE html>
+                        <body>
+                            <img src="${url}">
+                            <h1>${t("ios_image_download")}</h1>
+                        </body>`;
+                } else {
+                    download(`${getRefundFileName(swap)}.png`, url);
+                }
+            })
+            .catch((err) => {
+                log.error("qr code generation error", err);
+            });
     };
 
     return (

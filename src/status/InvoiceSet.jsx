@@ -1,16 +1,10 @@
 import ContractTransaction from "../components/ContractTransaction";
+import QrCode from "../components/QrCode";
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
-import {
-    asset,
-    denomination,
-    invoiceQr,
-    setSwaps,
-    swap,
-    swaps,
-} from "../signals";
+import { asset, denomination, setSwaps, swap, swaps } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
@@ -60,7 +54,7 @@ const InvoiceSet = () => {
                 })}
             </h2>
             <hr />
-            <img id="invoice-qr" src={invoiceQr()} alt="pay invoice qr" />
+            <QrCode data={swap().reverse ? swap().invoice : swap().bip21} />
             <hr />
             <p
                 onclick={() => clipboard(swap().address, t("copied"))}
