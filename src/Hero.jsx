@@ -13,7 +13,7 @@ import "./style/hero.scss";
 
 export const [hideHero, setHideHero] = createSignal(false);
 
-const Hero = () => {
+export const Hero = () => {
     const navigate = useNavigate();
     const [nodeStats, setNodeStats] = createSignal(null);
     const [numChannel, setNumChannel] = createSignal(0);

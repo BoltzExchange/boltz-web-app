@@ -1,13 +1,13 @@
 /* @refresh reload */
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
-import { createRoot } from "solid-js";
+import { createRoot, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 
 import Create from "./Create";
 import Error from "./Error";
 import Footer from "./Footer";
-import Hero from "./Hero";
+import { Hero, setHideHero } from "./Hero";
 import History from "./History";
 import Nav from "./Nav";
 import NotFound from "./NotFound";
@@ -21,10 +21,13 @@ import { checkReferralId } from "./helper";
 import { detectLanguage } from "./i18n/detect";
 import { setWasmSupported, setWebln } from "./signals";
 import "./style/index.scss";
+import { detectEmbedded } from "./utils/embed";
 import "./utils/patches";
 import { swapChecker } from "./utils/swapChecker";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import { detectWebLNProvider } from "./utils/webln";
+
+export const [embedded, setEmbedded] = createSignal(false);
 
 log.setLevel(loglevel);
 
@@ -36,6 +39,11 @@ detectLanguage();
 createRoot(() => {
     swapChecker();
 });
+
+if (detectEmbedded()) {
+    setHideHero(true);
+    setEmbedded(true);
+}
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
@@ -50,8 +58,10 @@ document.body.classList.remove("loading");
 const cleanup = render(
     () => (
         <Router>
-            <Nav network={network} />
             <Web3SignerProvider>
+                <Show when={!embedded()}>
+                    <Nav network={network} />
+                </Show>
                 <Routes>
                     <Route path="*" element={<Navigate href={"/404"} />} />
                     <Route path="/404" component={NotFound} />
@@ -66,9 +76,11 @@ const cleanup = render(
                     <Route path="/refund" component={Refund} />
                     <Route path="/history" component={History} />
                 </Routes>
+                <Show when={!embedded()}>
+                    <Notification />
+                    <Footer />
+                </Show>
             </Web3SignerProvider>
-            <Notification />
-            <Footer />
         </Router>
     ),
     document.getElementById("root"),
