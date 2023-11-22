@@ -1,13 +1,13 @@
 /* @refresh reload */
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
-import { createRoot, createSignal } from "solid-js";
+import { createRoot } from "solid-js";
 import { render } from "solid-js/web";
 
 import Create from "./Create";
 import Error from "./Error";
 import Footer from "./Footer";
-import { Hero, setHideHero } from "./Hero";
+import Hero from "./Hero";
 import History from "./History";
 import Nav from "./Nav";
 import NotFound from "./NotFound";
@@ -17,33 +17,17 @@ import Refund from "./Refund";
 import RefundStep from "./RefundStep";
 import { loglevel, network } from "./config";
 import { Web3SignerProvider } from "./context/Web3";
-import { checkReferralId } from "./helper";
-import { detectLanguage } from "./i18n/detect";
-import { setWasmSupported, setWebln } from "./signals";
 import "./style/index.scss";
-import { detectEmbedded } from "./utils/embed";
+import { detect, embedded } from "./utils/detect";
 import "./utils/patches";
 import { swapChecker } from "./utils/swapChecker";
-import { checkWasmSupported } from "./utils/wasmSupport";
-import { detectWebLNProvider } from "./utils/webln";
-
-export const [embedded, setEmbedded] = createSignal(false);
 
 log.setLevel(loglevel);
-
-detectWebLNProvider().then((state) => setWebln(state));
-setWasmSupported(checkWasmSupported());
-checkReferralId();
-detectLanguage();
+detect();
 
 createRoot(() => {
     swapChecker();
 });
-
-if (detectEmbedded()) {
-    setHideHero(true);
-    setEmbedded(true);
-}
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker

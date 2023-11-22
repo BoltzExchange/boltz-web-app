@@ -40,7 +40,8 @@ import {
     setSendAmountFormatted,
     setSendAmountValid,
     setValid,
-    webln,
+    swaps,
+    valid,
 } from "./signals";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
@@ -50,6 +51,15 @@ import {
     formatAmount,
     getValidationRegex,
 } from "./utils/denomination";
+import { online, wasmSupported, webln } from "./utils/detect";
+import {
+    decodeInvoice,
+    fetchLnurl,
+    isInvoice,
+    isLnurl,
+    trimLightningPrefix,
+} from "./utils/invoice";
+import { validateResponse } from "./utils/validation";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {

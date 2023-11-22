@@ -3,7 +3,7 @@ import { createEffect, createRoot, createSignal } from "solid-js";
 
 import { pairs } from "./config";
 import { LN, sideSend } from "./consts";
-import { isMobile } from "./helper";
+import { stringSerializer } from "./helper";
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
@@ -14,10 +14,6 @@ export const [asset, setAsset] = createSignal(defaultSelection);
 export const [reverse, setReverse] = createSignal(true);
 
 export const [config, setConfig] = createSignal(0);
-
-export const [online, setOnline] = createSignal(true);
-export const [wasmSupported, setWasmSupported] = createSignal(true);
-export const [webln, setWebln] = createSignal(false);
 
 // fees
 export const [boltzFee, setBoltzFee] = createSignal(0);
@@ -52,20 +48,6 @@ export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 export const [i18n, setI18n] = createSignal(null);
 
 // local storage
-
-// To support the values created by the deprecated "createStorageSignal"
-const stringSerializer = {
-    serialize: (value) => value,
-    deserialize: (value) => value,
-};
-
-export const [ref, setRef] = makePersisted(
-    createSignal(isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"),
-    {
-        name: "ref",
-        ...stringSerializer,
-    },
-);
 export const [i18nConfigured, setI18nConfigured] = makePersisted(
     createSignal(null),
     {

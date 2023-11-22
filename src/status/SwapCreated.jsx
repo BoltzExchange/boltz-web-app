@@ -5,8 +5,9 @@ import QrCode from "../components/QrCode";
 import { BTC } from "../consts";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
-import { denomination, swap, webln } from "../signals";
+import { denomination, invoiceQr, swap } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
+import { webln } from "../utils/detect";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {

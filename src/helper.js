@@ -17,15 +17,11 @@ import { BTC, RBTC } from "./consts";
 import { ECPair } from "./ecpair/ecpair";
 import {
     asset,
-    ref,
     refundAddress,
-    setAsset,
     setConfig,
     setFailureReason,
     setNotification,
     setNotificationType,
-    setOnline,
-    setRef,
     setRefundAddress,
     setRefundTx,
     setSwap,
@@ -39,9 +35,16 @@ import {
     swaps,
     transactionToRefund,
 } from "./signals";
+import { ref, setOnline } from "./utils/detect";
 import { feeChecker } from "./utils/feeChecker";
 import { checkResponse } from "./utils/http";
 import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
+
+// To support the values created by the deprecated "createStorageSignal"
+export const stringSerializer = {
+    serialize: (value) => value,
+    deserialize: (value) => value,
+};
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
@@ -56,18 +59,6 @@ export const cropString = (str) => {
         return str;
     }
     return str.substring(0, 19) + "..." + str.substring(str.length - 19);
-};
-
-export const checkReferralId = () => {
-    const ref_param = new URLSearchParams(window.location.search).get("ref");
-    if (ref_param && ref_param !== "") {
-        setRef(ref_param);
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname,
-        );
-    }
 };
 
 export const startInterval = (cb, interval) => {

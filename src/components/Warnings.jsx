@@ -4,7 +4,7 @@ import reload_svg from "../assets/reload.svg";
 import { isBeta } from "../config";
 import { fetchPairs } from "../helper";
 import t from "../i18n";
-import { online, wasmSupported } from "../signals";
+import { online, wasmSupported } from "../utils/detect";
 
 const Warnings = () => {
     return (
