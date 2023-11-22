@@ -4,10 +4,14 @@ import { createSignal } from "solid-js";
 
 import "../style/qrcode.scss";
 
-export const Qrcode = ({ data }) => {
+interface QrCodeProps {
+    data: string;
+}
+
+export const Qrcode = (params: QrCodeProps) => {
     const [dataUrl, setDataUrl] = createSignal("");
 
-    QRCode.toDataURL(data, { width: 300 })
+    QRCode.toDataURL(params.data, { width: 300 })
         .then(setDataUrl)
         .catch((err: Error) => {
             log.error("qr code generation error", err);
