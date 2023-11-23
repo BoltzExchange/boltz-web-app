@@ -364,7 +364,7 @@ const dict = {
         new_swap: "Nuevo intercambio",
         success_swap: "Intercambio realizado con éxito!",
         feecheck:
-            "La comisión de red de red se actualizó según la situación de la red. Por favor, confirma los nuevos montos y continúa con el intercambio.",
+            "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos montos y continúa con el intercambio.",
         create_and_paste:
             "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay\n\nMonto: {{ amount }} {{ denomination }}",
         congrats: "¡Felicitaciones!",
