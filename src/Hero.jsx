@@ -69,6 +69,18 @@ const Hero = () => {
                     <img src={bitcoin} alt="Bitcoin" />
                     <img src={liquid} alt="Liquid Bitcoin" />
                 </div>
+                
+                <div class="hero-box">
+                    <h2>{t("use_case")}</h2>
+                    <h3>{t("what_you_do_with_boltz")}</h3>
+                    <hr />
+                    <p>&#129310;{t("reliably_cheap_ln_channel_rebalancing")}</p>
+                    <p>&#10052;{t("dcaing_from_ln_into_cold_storage")}</p>
+                    <p>&#128104;&#8205;&#128187;{t("increase_coin_privacy_from_cex_purchases")}</p>
+                </div>
+
+
+
             </div>
             <div id="numbers">
                 <div class="number number-label">

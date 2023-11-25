@@ -134,6 +134,12 @@ const dict = {
         not_found: "404 - Page Not Found",
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
+        use_case: "Use Cases",
+        reliably_cheap_ln_channel_rebalancing: "Reliably cheap LN channel rebalancing",
+        what_you_do_with_boltz: "What you can do with Boltz",
+        dcaing_from_ln_into_cold_storage: "DCAing from LN into cold storage",
+        increase_coin_privacy_from_cex_purchases: "Increase coin privacy from CEX purchases",
+
     },
     de: {
         language: "Deutsch",
@@ -278,6 +284,11 @@ const dict = {
         not_found: "404 - Seite nicht gefunden",
         not_found_subline: "Die gesuchte Seite existiert nicht.",
         back_to_home: "Zurück zur Startseite",
+        use_case: "Verwendungszwecke",
+        reliably_cheap_ln_channel_rebalancing: "Zuverlässige günstige LN-Kanal-Neuverteilung",
+        what_you_do_with_boltz: "Was du mit Boltz machen kannst",
+        dcaing_from_ln_into_cold_storage: "DCA von LN zu Cold Storage",
+        increase_coin_privacy_from_cex_purchases: "Erhöhen der Münz Privatsphäre bei CEX-Käufen",
     },
     es: {
         language: "Español",
@@ -420,6 +431,11 @@ const dict = {
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
+        use_case: "Casos de uso",
+        reliably_cheap_ln_channel_rebalancing: "Redistribución confiable y económica de canales LN",
+        what_you_do_with_boltz: "Qué puedes hacer con Boltz",
+        dcaing_from_ln_into_cold_storage: "DCA de LN al almacenamiento en frío",
+        increase_coin_privacy_from_cex_purchases: "Aumento de la privacidad de las monedas en las compras de CEX",
     },
 };
 
