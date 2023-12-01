@@ -207,14 +207,6 @@ export const validateResponse = async (
     }
 };
 
-const checkInvoiceAmount = (invoice: string) => {
-    try {
-        return receiveAmount() === BigInt(decodeInvoice(invoice).satoshis);
-    } catch (e) {
-        return false;
-    }
-};
-
 export const validateOnchainAddress = (inputValue: string, asset: string) => {
     const address = getAddress(asset);
     address.toOutputScript(inputValue, getNetwork(asset));
@@ -226,7 +218,7 @@ export const validateInvoice = (inputValue: string) => {
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
         // set receive/send when invoice differs from the amounts
-        if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
+        if (isInputInvoice) {
             const decoded = decodeInvoice(inputValue);
             if (decoded.satoshis === null) {
                 throw new Error(t("invalid_0_amount"));

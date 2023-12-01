@@ -22,6 +22,7 @@ import {
     setAddressValid,
     setInvoice,
     setInvoiceValid,
+    setLnurl,
     setNotification,
     setNotificationType,
     setOnchainAddress,
@@ -35,7 +36,7 @@ import { validateResponse } from "../utils/validation";
 
 export const [buttonLabel, setButtonLabel] = createSignal("");
 
-export const CreateButton = ({ validateAddress }) => {
+export const CreateButton = () => {
     const navigate = useNavigate();
     const { getEtherSwap } = useWeb3Signer();
 
@@ -107,8 +108,8 @@ export const CreateButton = ({ validateAddress }) => {
                         lnurl(),
                         Number(receiveAmount()),
                     );
+                    setLnurl(false);
                     setInvoice(inv);
-                    validateAddress();
                 } catch (e) {
                     log.warn("fetch lnurl failed", e);
                 }
@@ -192,12 +193,9 @@ export const CreateButton = ({ validateAddress }) => {
 
     const buttonClick = () => {
         setButtonDisable(true);
-        create()
-            .then(() => setButtonDisable(false))
-            .catch((e) => {
-                log.warn("create failed", e);
-                setButtonDisable(false);
-            });
+        create().catch((e) => {
+            log.warn("create failed", e);
+        });
     };
 
     return (

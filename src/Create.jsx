@@ -33,7 +33,6 @@ import {
     sendAmount,
     sendAmountFormatted,
     sendAmountValid,
-    setAddressValid,
     setAmountChanged,
     setInvoice,
     setInvoiceValid,
@@ -276,14 +275,11 @@ const Create = () => {
             <Fees />
             <hr />
             <Show when={asset() === RBTC}>
-                <ConnectMetamask
-                    showAddress={true}
-                    setAddressValid={setAddressValid}
-                />
+                <ConnectMetamask showAddress={true} />
                 <hr />
             </Show>
             <Show when={reverse() && asset() !== RBTC}>
-                <AddressInput setAddressValid={setAddressValid} />
+                <AddressInput />
                 <hr />
             </Show>
             <Show when={!reverse()}>

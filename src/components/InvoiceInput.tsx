@@ -23,51 +23,40 @@ import { setButtonLabel } from "./CreateButton";
 const InvoiceInput = ({ validateAmount }) => {
     let inputRef: HTMLTextAreaElement;
 
-    const validateAddress = () => {
-        if (reverse()) {
-            return;
-        } else {
-            const input = inputRef;
-            const inputValue = input.value.trim();
-            try {
-                if (isLnurl(inputValue)) {
-                    setButtonLabel(t("fetch_lnurl"));
-                    setLnurl(inputValue);
-                    setInvoice("");
-                } else {
-                    const sats = validateInvoice(inputValue);
-                    setReceiveAmount(sats);
-                    setSendAmount(calculateSendAmount(sats));
-                    validateAmount();
-                    setInvoice(inputValue);
-                    setLnurl(false);
-                }
-                setInvoiceValid(true);
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-            } catch (e) {
-                setInvoiceValid(false);
-                input.setCustomValidity(e.message);
-                setButtonLabel(e.message);
-                input.classList.add("invalid");
+    const validateAddress = (input: HTMLTextAreaElement) => {
+        const inputValue = input.value.trim();
+        try {
+            if (isLnurl(inputValue)) {
+                setButtonLabel(t("fetch_lnurl"));
+                setLnurl(inputValue);
+            } else {
+                const sats = validateInvoice(inputValue);
+                setReceiveAmount(BigInt(sats));
+                setSendAmount(calculateSendAmount(sats));
+                validateAmount();
+                setInvoice(inputValue);
+                setLnurl(false);
             }
-
+            setInvoiceValid(true);
             input.setCustomValidity("");
             input.classList.remove("invalid");
-            setInvoiceValid(true);
-            setInvoice(inputValue);
+        } catch (e) {
+            setInvoiceValid(false);
+            input.setCustomValidity(e.message);
+            setButtonLabel(e.message);
+            input.classList.add("invalid");
         }
     };
 
     createEffect(() => {
-        if (sendAmountValid() && reverse() && asset() !== RBTC) {
-            validateAddress();
+        if (sendAmountValid() && !reverse() && asset() !== RBTC) {
+            validateAddress(inputRef);
         }
     });
 
     createEffect(() => {
-        if (invoice() !== "") {
-            validateAddress();
+        if (invoice()) {
+            validateAddress(inputRef);
         }
     });
 
@@ -75,9 +64,9 @@ const InvoiceInput = ({ validateAmount }) => {
         <textarea
             required
             ref={inputRef}
-            onInput={() => validateAddress()}
-            onKeyUp={() => validateAddress()}
-            onPaste={() => validateAddress()}
+            onInput={(e) => validateAddress(e.currentTarget)}
+            onKeyUp={(e) => validateAddress(e.currentTarget)}
+            onPaste={(e) => validateAddress(e.currentTarget)}
             id="invoice"
             data-testid="invoice"
             name="invoice"

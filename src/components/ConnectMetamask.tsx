@@ -2,7 +2,13 @@ import { Show, createEffect, createSignal } from "solid-js";
 
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
-import { setAddressValid, setOnchainAddress } from "../signals";
+import {
+    addressValid,
+    sendAmountValid,
+    setAddressValid,
+    setOnchainAddress,
+} from "../signals";
+import { setButtonLabel } from "./CreateButton";
 
 const ConnectMetamask = ({ showAddress }) => {
     const [address, setAddress] = createSignal<string | undefined>();
@@ -19,6 +25,12 @@ const ConnectMetamask = ({ showAddress }) => {
     createEffect(() => {
         setAddressValid(address() !== undefined);
         setOnchainAddress(address());
+    });
+
+    createEffect(() => {
+        if (sendAmountValid() && !addressValid()) {
+            setButtonLabel(t("connect_metamask"));
+        }
     });
 
     const { getSigner } = useWeb3Signer();
