@@ -155,6 +155,7 @@ const dict = {
         transaction_prompt:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
         fetch_lnurl: "Fetch invoice from LNURL / LNAdress",
+        invalid_address: "Invalid {{ asset }} address",
     },
     de: {
         language: "Deutsch",
@@ -320,6 +321,7 @@ const dict = {
         transaction_prompt:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
         fetch_lnurl: "Hole Rechnung von LNURL / LNAdress",
+        invalid_address: "Invalid {{ asset }} address",
     },
     es: {
         language: "Español",
@@ -484,6 +486,7 @@ const dict = {
         transaction_prompt:
             'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
         fetch_lnurl: "Fetch invoice from LNURL / LNAdress",
+        invalid_address: "Invalid {{ asset }} address",
     },
 };
 

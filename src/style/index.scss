@@ -69,8 +69,8 @@ hr {
     border: 1px solid rgba(255, 255, 255, 0.15);
     position: absolute;
     border-radius: 29px;
-    padding: 1px;
-    padding-right: 16px;
+    padding: 0px;
+    padding-right: 8px;
     top: 10px;
     left: 10px;
     cursor: pointer;
@@ -273,8 +273,8 @@ textarea {
     font-size: 15px;
     font-weight: normal;
     text-align: center;
-    margin-bottom: 2px;
-    padding: 8px;
+    margin: 0;
+    padding: 7px 8px;
     box-sizing: border-box;
 }
 input:focus,

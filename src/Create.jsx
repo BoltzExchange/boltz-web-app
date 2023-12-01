@@ -8,6 +8,7 @@ import ClickableAmount from "./components/ClickableAmount";
 import ConnectMetamask from "./components/ConnectMetamask";
 import { CreateButton, setButtonLabel } from "./components/CreateButton";
 import Fees from "./components/Fees";
+import InvoiceInput from "./components/InvoiceInput";
 import Reverse from "./components/Reverse";
 import { RBTC, sideReceive, sideSend } from "./consts";
 import t from "./i18n";
@@ -36,8 +37,6 @@ import {
     setAmountChanged,
     setInvoice,
     setInvoiceValid,
-    setLnurl,
-    setOnchainAddress,
     setReceiveAmount,
     setReceiveAmountFormatted,
     setSendAmount,
@@ -54,21 +53,14 @@ import {
     formatAmount,
     getValidationRegex,
 } from "./utils/denomination";
-import { isInvoice, isLnurl } from "./utils/invoice";
-import { validateOnchainAddress } from "./utils/validation";
+import { isInvoice } from "./utils/invoice";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {
-    let invoiceInputRef, receiveAmountRef, sendAmountRef, addressInputRef;
+    let receiveAmountRef, sendAmountRef;
 
     onMount(() => {
         sendAmountRef.focus();
-    });
-
-    createEffect(() => {
-        if (sendAmountValid()) {
-            validateAddress();
-        }
     });
 
     createEffect(
@@ -157,7 +149,6 @@ const Create = () => {
             validateAmount();
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
-            validateAddress();
         });
     };
 
@@ -214,95 +205,6 @@ const Create = () => {
             return;
         }
         setSendAmountValid(true);
-    };
-
-    const invalidateAddress = (input, msg, setSignal) => {
-        setSignal(false);
-        input.setCustomValidity(msg);
-        setButtonLabel(msg);
-        input.classList.add("invalid");
-    };
-
-    // <<<<<<< HEAD
-    //     const validateAddress = (input) => {
-    //         if (reverse()) {
-    //             return;
-    //         }
-
-    //         let inputValue = input.value.trim();
-
-    //         inputValue = trimLightningPrefix(inputValue);
-
-    //         const isInputInvoice = isInvoice(inputValue);
-    //         if (isLnurl(inputValue) || isInputInvoice) {
-    //             // set receive/send when invoice differs from the amounts
-    //             // and the input is an invoice
-    //             if (isInputInvoice && !checkInvoiceAmount(inputValue)) {
-    //                 try {
-    //                     const decoded = decodeInvoice(inputValue);
-    //                     if (decoded.satoshis === null) {
-    //                         setInvoiceValid(false);
-    //                         input.setCustomValidity(
-    //                             "0 amount invoices are not allowed",
-    //                         );
-    //                         input.classList.add("invalid");
-    //                         return;
-    //                     }
-    //                     setReceiveAmount(decoded.satoshis);
-    //                     setSendAmount(calculateSendAmount(decoded.satoshis));
-    //                     validateAmount();
-    //                 } catch (e) {
-    //                     setInvoiceValid(false);
-    //                     input.setCustomValidity(e);
-    //                     input.classList.add("invalid");
-    //                     return;
-    //                 }
-    // =======
-    const validateAddress = () => {
-        if (reverse()) {
-            return;
-            // const input = addressInputRef;
-            // const inputValue = input.value.trim();
-            // try {
-            //     setOnchainAddress(validateOnchainAddress(inputValue, asset()));
-            //     setAddressValid(true);
-            //     input.setCustomValidity("");
-            //     input.classList.remove("invalid");
-            // } catch (e) {
-            //     invalidateAddress(
-            //         input,
-            //         "Invalid onchain address",
-            //         setAddressValid,
-            //     );
-            // }
-        } else {
-            const input = invoiceInputRef;
-            const inputValue = input.value.trim();
-            try {
-                if (isLnurl(inputValue)) {
-                    setButtonLabel(t("fetch_lnurl"));
-                    setLnurl(inputValue);
-                    setInvoice("");
-                } else {
-                    const sats = validateInvoice(inputValue);
-                    setReceiveAmount(sats);
-                    setSendAmount(calculateSendAmount(sats));
-                    validateAmount();
-                    setInvoice(inputValue);
-                    setLnurl(false);
-                }
-                setInvoiceValid(true);
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-            } catch (e) {
-                invalidateAddress(input, e.message, setInvoiceValid);
-            }
-
-            input.setCustomValidity("");
-            input.classList.remove("invalid");
-            setInvoiceValid(true);
-            setInvoice(inputValue);
-        }
     };
 
     const setAmount = (amount) => {
@@ -394,24 +296,10 @@ const Create = () => {
                     </button>
                     <hr />
                 </Show>
-                <textarea
-                    required
-                    ref={invoiceInputRef}
-                    onInput={(e) => validateAddress(e.currentTarget)}
-                    onKeyUp={(e) => validateAddress(e.currentTarget)}
-                    onPaste={(e) => validateAddress(e.currentTarget)}
-                    id="invoice"
-                    data-testid="invoice"
-                    name="invoice"
-                    value={invoice()}
-                    placeholder={t("create_and_paste", {
-                        amount: receiveAmountFormatted(),
-                        denomination: denomination(),
-                    })}></textarea>
+                <InvoiceInput validateAmount={validateAmount} />
                 <hr />
             </Show>
-            <hr />
-            <CreateButton validateAddress={validateAddress} />
+            <CreateButton />
             <AssetSelect />
         </div>
     );

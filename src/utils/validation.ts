@@ -5,11 +5,18 @@ import { Buffer, Buffer as BufferBrowser } from "buffer";
 import { Contract } from "ethers";
 import log from "loglevel";
 
-import { decodeAddress } from "../compat";
+import { decodeAddress, getAddress, getNetwork } from "../compat";
 import { RBTC } from "../consts";
 import { ECPair, ecc } from "../ecpair/ecpair";
+import t from "../i18n";
+import { receiveAmount } from "../signals";
 import { denominations, formatAmountDenomination } from "./denomination";
-import { decodeInvoice } from "./invoice";
+import {
+    decodeInvoice,
+    isInvoice,
+    isLnurl,
+    trimLightningPrefix,
+} from "./invoice";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -200,13 +207,7 @@ export const validateResponse = async (
     }
 };
 
-export const validateOnchainAddress = (inputValue, asset) => {
-    const address = getAddress(asset);
-    address.toOutputScript(inputValue, getNetwork(asset));
-    return inputValue;
-};
-
-const checkInvoiceAmount = (invoice) => {
+const checkInvoiceAmount = (invoice: string) => {
     try {
         return receiveAmount() === BigInt(decodeInvoice(invoice).satoshis);
     } catch (e) {
@@ -214,7 +215,13 @@ const checkInvoiceAmount = (invoice) => {
     }
 };
 
-export const validateInvoice = (inputValue) => {
+export const validateOnchainAddress = (inputValue: string, asset: string) => {
+    const address = getAddress(asset);
+    address.toOutputScript(inputValue, getNetwork(asset));
+    return inputValue;
+};
+
+export const validateInvoice = (inputValue: string) => {
     inputValue = trimLightningPrefix(inputValue);
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
@@ -226,7 +233,6 @@ export const validateInvoice = (inputValue) => {
             }
             return decoded.satoshis;
         }
-    } else {
-        throw new Error(t("invalid_invoice"));
     }
+    throw new Error(t("invalid_invoice"));
 };
