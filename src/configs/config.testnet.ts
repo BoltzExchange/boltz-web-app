@@ -1,3 +1,4 @@
+// @ts-ignore
 export * from "./configs/templates/defaults";
 
 const apiUrl = "https://testnet.boltz.exchange/api";
