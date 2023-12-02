@@ -6,7 +6,7 @@ const blockExplorerUrl = "https://mempool.space/testnet";
 const blockExplorerUrlLiquid = "https://liquid.network/testnet";
 const blockExplorerUrlRsk = "https://explorer.testnet.rsk.co";
 
-export const network = "testnet";
+export const network: string = "testnet";
 export const bolt11_prefix = "lntb";
 export const loglevel = "debug";
 
