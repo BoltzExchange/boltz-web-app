@@ -108,8 +108,8 @@ export const CreateButton = () => {
                         lnurl(),
                         Number(receiveAmount()),
                     );
-                    setLnurl(false);
                     setInvoice(inv);
+                    setLnurl(false);
                 } catch (e) {
                     log.warn("fetch lnurl failed", e);
                 }
@@ -193,9 +193,18 @@ export const CreateButton = () => {
 
     const buttonClick = () => {
         setButtonDisable(true);
-        create().catch((e) => {
-            log.warn("create failed", e);
-        });
+        create()
+            .catch((e) => {
+                log.warn("create failed", e);
+            })
+            // Because we disable the button before calling create,
+            // we have to enable it again afterward.
+            // The validation logic is not triggered,
+            // because both, the LNURL and the invoice that was fetched,
+            // are considered valid -> signal didn't change -> no rerender in effects
+            .then(() => {
+                setButtonDisable(!valid());
+            });
     };
 
     return (
