@@ -9,7 +9,6 @@ import { decodeAddress, getAddress, getNetwork } from "../compat";
 import { RBTC } from "../consts";
 import { ECPair, ecc } from "../ecpair/ecpair";
 import t from "../i18n";
-import { receiveAmount } from "../signals";
 import { denominations, formatAmountDenomination } from "./denomination";
 import {
     decodeInvoice,

@@ -1,4 +1,4 @@
-import { Show, createEffect } from "solid-js";
+import { createEffect } from "solid-js";
 
 import { RBTC } from "../consts";
 import t from "../i18n";

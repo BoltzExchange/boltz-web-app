@@ -1,4 +1,4 @@
-import { createEffect, on } from "solid-js";
+import { createEffect } from "solid-js";
 
 import { RBTC } from "../consts";
 import t from "../i18n";
@@ -18,7 +18,7 @@ import {
     setSendAmount,
 } from "../signals";
 import { calculateSendAmount } from "../utils/calculate";
-import { isInvoice, isLnurl } from "../utils/invoice";
+import { isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 import { setButtonLabel } from "./CreateButton";
 
@@ -63,7 +63,7 @@ const InvoiceInput = () => {
 
     // reset invoice if amount is changed
     createEffect(() => {
-        if (sendAmount() > 0) {
+        if (sendAmount() > 0 && receiveAmount()) {
             setInvoice("");
         }
     });

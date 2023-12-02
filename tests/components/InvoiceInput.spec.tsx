@@ -1,4 +1,3 @@
-import { Router } from "@solidjs/router";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { describe, expect, test, vi } from "vitest";
 
@@ -82,7 +81,6 @@ describe("InvoiceInput", () => {
         ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
     `("should not clear lnurl $lnurl on amount change", async ({ lnurl }) => {
         setReverse(false);
-        const setInvoice = vi.spyOn(signals, "setInvoice");
         const setLnurl = vi.spyOn(signals, "setLnurl");
 
         render(() => <InvoiceInput />);
