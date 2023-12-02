@@ -14,8 +14,8 @@ import { setButtonLabel } from "./CreateButton";
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
-    const validateAddress = () => {
-        const input = inputRef;
+
+    const validateAddress = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
 
         try {
@@ -36,7 +36,7 @@ const AddressInput = () => {
 
     createEffect(() => {
         if (sendAmountValid() && reverse() && asset() !== RBTC) {
-            validateAddress();
+            validateAddress(inputRef);
         }
     });
 
@@ -44,9 +44,9 @@ const AddressInput = () => {
         <input
             ref={inputRef}
             required
-            onInput={() => validateAddress()}
-            onKeyUp={() => validateAddress()}
-            onPaste={() => validateAddress()}
+            onInput={(e) => validateAddress(e.currentTarget)}
+            onKeyUp={(e) => validateAddress(e.currentTarget)}
+            onPaste={(e) => validateAddress(e.currentTarget)}
             type="text"
             id="onchainAddress"
             name="onchainAddress"
