@@ -114,8 +114,10 @@ const Create = () => {
         if (isInvoice(invoice())) {
             setInvoice("");
             setInvoiceValid(false);
-            input.setCustomValidity("");
-            input.classList.remove("invalid");
+            if (input) {
+                input.setCustomValidity("");
+                input.classList.remove("invalid");
+            }
         }
     };
 
