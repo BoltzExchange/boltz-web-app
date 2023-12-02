@@ -1,4 +1,4 @@
-import { createEffect } from "solid-js";
+import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
 import t from "../i18n";
@@ -6,8 +6,10 @@ import {
     asset,
     denomination,
     invoice,
+    receiveAmount,
     receiveAmountFormatted,
     reverse,
+    sendAmount,
     sendAmountValid,
     setInvoice,
     setInvoiceValid,
@@ -16,11 +18,11 @@ import {
     setSendAmount,
 } from "../signals";
 import { calculateSendAmount } from "../utils/calculate";
-import { isLnurl } from "../utils/invoice";
+import { isInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 import { setButtonLabel } from "./CreateButton";
 
-const InvoiceInput = ({ validateAmount }) => {
+const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
     const validateAddress = (input: HTMLTextAreaElement) => {
@@ -31,9 +33,8 @@ const InvoiceInput = ({ validateAmount }) => {
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
-                setReceiveAmount(BigInt(sats));
+                setReceiveAmount(sats);
                 setSendAmount(calculateSendAmount(sats));
-                validateAmount();
                 setInvoice(inputValue);
                 setLnurl(false);
             }
@@ -57,6 +58,13 @@ const InvoiceInput = ({ validateAmount }) => {
     createEffect(() => {
         if (invoice()) {
             validateAddress(inputRef);
+        }
+    });
+
+    // reset invoice if amount is changed
+    createEffect(() => {
+        if (sendAmount() > 0) {
+            setInvoice("");
         }
     });
 

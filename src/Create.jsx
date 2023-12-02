@@ -22,7 +22,6 @@ import {
     assetSend,
     boltzFee,
     denomination,
-    invoice,
     invoiceValid,
     maximum,
     minerFee,
@@ -35,7 +34,6 @@ import {
     sendAmountValid,
     setAmountChanged,
     setInvoice,
-    setInvoiceValid,
     setReceiveAmount,
     setReceiveAmountFormatted,
     setSendAmount,
@@ -52,7 +50,6 @@ import {
     formatAmount,
     getValidationRegex,
 } from "./utils/denomination";
-import { isInvoice } from "./utils/invoice";
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {
@@ -110,16 +107,13 @@ const Create = () => {
         setValid(false);
     });
 
-    const resetInvoice = (input) => {
-        if (isInvoice(invoice())) {
-            setInvoice("");
-            setInvoiceValid(false);
-            if (input) {
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-            }
+    // validate amounts when invoice is valid, because we
+    // set the amount based on invoice amount if amount is 0
+    createMemo(() => {
+        if (invoiceValid()) {
+            validateAmount();
         }
-    };
+    });
 
     const changeReceiveAmount = (e) => {
         const amount = e.currentTarget.value.trim();
@@ -129,7 +123,8 @@ const Create = () => {
         setReceiveAmount(BigInt(satAmount));
         setSendAmount(sendAmount);
         validateAmount();
-        resetInvoice(e.currentTarget);
+        e.currentTarget.setCustomValidity("");
+        e.currentTarget.classList.remove("invalid");
     };
 
     const changeSendAmount = (e) => {
@@ -140,7 +135,8 @@ const Create = () => {
         setSendAmount(BigInt(satAmount));
         setReceiveAmount(BigInt(receiveAmount));
         validateAmount();
-        resetInvoice(e.currentTarget);
+        e.currentTarget.setCustomValidity("");
+        e.currentTarget.classList.remove("invalid");
     };
 
     const createWeblnInvoice = async () => {
@@ -212,8 +208,6 @@ const Create = () => {
         setSendAmount(amount);
         setReceiveAmount(calculateReceiveAmount(amount));
         validateAmount();
-
-        resetInvoice();
         sendAmountRef.focus();
     };
 
@@ -294,7 +288,7 @@ const Create = () => {
                     </button>
                     <hr />
                 </Show>
-                <InvoiceInput validateAmount={validateAmount} />
+                <InvoiceInput />
                 <hr />
             </Show>
             <CreateButton />
