@@ -6,10 +6,10 @@ import {
     asset,
     denomination,
     invoice,
+    invoiceValid,
     receiveAmount,
     receiveAmountFormatted,
     reverse,
-    sendAmount,
     sendAmountValid,
     setInvoice,
     setInvoiceValid,
@@ -18,7 +18,7 @@ import {
     setSendAmount,
 } from "../signals";
 import { calculateSendAmount } from "../utils/calculate";
-import { isLnurl } from "../utils/invoice";
+import { decodeInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 import { setButtonLabel } from "./CreateButton";
 
@@ -33,11 +33,8 @@ const InvoiceInput = () => {
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
-                const amount = Number(receiveAmount());
-                if (sats !== amount) {
-                    setReceiveAmount(sats);
-                    setSendAmount(calculateSendAmount(sats));
-                }
+                setReceiveAmount(sats);
+                setSendAmount(calculateSendAmount(sats));
                 setInvoice(inputValue);
                 setLnurl(false);
             }
@@ -59,15 +56,19 @@ const InvoiceInput = () => {
     });
 
     createEffect(() => {
-        if (invoice()) {
+        if (invoice() !== "") {
             validateAddress(inputRef);
         }
     });
 
     // reset invoice if amount is changed
     createEffect(() => {
-        if (sendAmount() > 0) {
-            setInvoice("");
+        if (invoice() !== "" && invoiceValid() && !reverse()) {
+            const amount = Number(receiveAmount());
+            const inv = decodeInvoice(invoice());
+            if (inv.satoshis !== amount) {
+                setInvoice("");
+            }
         }
     });
 
