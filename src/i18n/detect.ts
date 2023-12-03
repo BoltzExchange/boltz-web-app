@@ -4,7 +4,7 @@ import { defaultLanguage } from "../config";
 import { i18nConfigured, setI18n } from "../signals";
 import locales from "./i18n";
 
-export const getNavigatorLanguage = (language) => {
+export const getNavigatorLanguage = (language: string) => {
     if (language === undefined) {
         log.info(
             `browser language undefined; using default: ${defaultLanguage}`,
