@@ -218,7 +218,7 @@ export const validateInvoice = (inputValue: string) => {
         // set receive/send when invoice differs from the amounts
         if (isInputInvoice) {
             const decoded = decodeInvoice(inputValue);
-            if (decoded.satoshis === null) {
+            if (decoded.satoshis === null || decoded.satoshis === 0) {
                 throw new Error(t("invalid_0_amount"));
             }
             return decoded.satoshis;
