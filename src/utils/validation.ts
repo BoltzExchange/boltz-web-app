@@ -209,7 +209,6 @@ export const validateResponse = async (
 export const validateOnchainAddress = (inputValue: string, asset: string) => {
     const address = getAddress(asset);
     address.toOutputScript(inputValue, getNetwork(asset));
-    return inputValue;
 };
 
 export const validateInvoice = (inputValue: string) => {
