@@ -55,14 +55,10 @@ export const CreateButton = () => {
 
     createEffect(() => {
         if (valid()) {
-            if (reverse()) {
-                setButtonLabel(t("create_reverse_swap"));
+            if (reverse() && lnurl()) {
+                setButtonLabel(t("fetch_lnurl"));
             } else {
-                if (lnurl()) {
-                    setButtonLabel(t("fetch_lnurl"));
-                } else {
-                    setButtonLabel(t("create_swap"));
-                }
+                setButtonLabel(t("create_swap"));
             }
         }
         if (!online()) {

@@ -43,7 +43,6 @@ const dict = {
         footer: "Made with ❤️ by Team Boltz",
         create_channel: "Create Lightning Channel",
         create_channel_subline: "Channel Inbound or Outbound Capacity",
-        create_reverse_swap: "Create Reverse Atomic Swap",
         create_swap: "Create Atomic Swap",
         create_swap_subline: "Payment includes network and boltz service fees",
         cancel_swap: "Cancel Swap",
@@ -202,7 +201,6 @@ const dict = {
         footer: "Gemacht mit ❤️ von Team Boltz",
         create_channel: "Erstelle Lightning-Kanal",
         create_channel_subline: "Eingehende oder ausgehende Kapazität",
-        create_reverse_swap: "Erstelle Reverse Atomic Swap",
         create_swap: "Erstelle Atomic Swap",
         create_swap_subline: "Zahlung beinhaltet Netzwerk- und Boltzgebühr",
         cancel_swap: "Swap abbrechen",
@@ -367,7 +365,6 @@ const dict = {
         footer: "Hecho con ❤️ por el equipo de Boltz",
         create_channel: "Crear canal Lightning",
         create_channel_subline: "Capacidad del canal entrante o saliente",
-        create_reverse_swap: "Crear Reverse intercambio atómico",
         create_swap: "Crear intercambio atómico",
         create_swap_subline:
             "El pago incluye la comisión de red y servicio de Boltz",
