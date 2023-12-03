@@ -11,4 +11,7 @@ createRoot(() => {
     dictLocale = createMemo(() => flatten(dict[i18n() || defaultLanguage]));
 });
 
-export default translator(dictLocale, resolveTemplate);
+export default translator(dictLocale, resolveTemplate) as (
+    key: string,
+    values?: Record<string, any>,
+) => string;
