@@ -1,29 +1,48 @@
-import { getAddress, getNetwork } from "../compat";
+import { createEffect } from "solid-js";
+
+import { RBTC } from "../consts";
 import t from "../i18n";
-import { asset, setAddressValid, setOnchainAddress } from "../signals";
+import {
+    asset,
+    reverse,
+    sendAmountValid,
+    setAddressValid,
+    setOnchainAddress,
+} from "../signals";
+import { validateOnchainAddress } from "../utils/validation";
+import { setButtonLabel } from "./CreateButton";
 
 const AddressInput = () => {
-    const validateAddress = (input: EventTarget & HTMLInputElement) => {
-        let inputValue = input.value.trim();
+    let inputRef: HTMLInputElement;
+
+    const validateAddress = (input: HTMLInputElement) => {
+        const inputValue = input.value.trim();
 
         try {
             const assetName = asset();
-            const address = getAddress(assetName);
-
-            address.toOutputScript(inputValue, getNetwork(assetName));
+            validateOnchainAddress(inputValue, assetName);
             input.setCustomValidity("");
             input.classList.remove("invalid");
             setAddressValid(true);
             setOnchainAddress(inputValue);
         } catch (e) {
+            const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);
-            input.setCustomValidity("invalid address");
             input.classList.add("invalid");
+            input.setCustomValidity(msg);
+            setButtonLabel(msg);
         }
     };
 
+    createEffect(() => {
+        if (sendAmountValid() && reverse() && asset() !== RBTC) {
+            validateAddress(inputRef);
+        }
+    });
+
     return (
         <input
+            ref={inputRef}
             required
             onInput={(e) => validateAddress(e.currentTarget)}
             onKeyUp={(e) => validateAddress(e.currentTarget)}

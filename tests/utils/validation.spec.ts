@@ -3,7 +3,8 @@ import { Contract } from "ethers";
 import log from "loglevel";
 import { beforeAll, describe, expect, test, vitest } from "vitest";
 
-import { validateResponse } from "../../src/utils/validation";
+import t from "../../src/i18n";
+import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
     const getEtherSwap = (code: string): (() => Promise<Contract>) => {
@@ -163,5 +164,27 @@ describe("validate responses", () => {
                 ).resolves.toBe(valid);
             },
         );
+    });
+});
+
+describe("validate invoices", () => {
+    test.each`
+        error                 | invoice
+        ${"invalid_invoice"}  | ${"lnbcrt1pjkepjmpp5khv3s30apary2hry"}
+        ${"invalid_0_amount"} | ${"lnbcrt1pjkepjmpp5khv3s30apary2hry5864d6t206jm7stpd4wv8sk3g3mfwp43x8wsdqqcqzzsxqyz5vqsp5hg3za92fpwwxfvme72vaa2vkmc4ukcuujpw8w6d2l4mr2jygku0q9qyyssqcqlhhtwc30jzdvszmva3maf74ytxw0pcyadt7wh6c2z9p7amp3rycfqa55lvyr825cepdh3fpgsuxxn9jj7vccrwg02lhj56awwgjtcq5f372c"}
+        ${"invalid_0_amount"} | ${"lnbcrt1pjkez94sp5zk8dj2zyp3sng3v4xkp4m85yuuk2tqh5jw5dvrhu4atu79yrejwspp5cgrj9s3rqz80jth0ehhm7mxxtkruualungad73w78u7l2nrmqzcqdq9dfhnzxqyjw5qcqp2rzjqfvckvedaaankysf067nfn3pnapxc5jgruymhjy2ef80crkraq7xwqqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqw4faj9q9p05m9jmrvvuumvaxdrr5ry40vp8me89ctcp3ex9ms5g5q3gkwegnqkzvzmmfdc6kepgyvqn6dssl87k2pc6rdv5pjxvwv8gqh2w9dc"}
+    `("invalid invoice: $error", async ({ error, invoice }) => {
+        try {
+            validateInvoice(invoice);
+        } catch (e) {
+            expect(e.message).toEqual(t(error));
+        }
+    });
+    test.each`
+        invoice
+        ${"lnbcrt10u1pjkepsqsp5lqav47x6j8e9flvg6fmghgut9rtlzxxnmud4n6v46xvvg79z0mdspp5xkeqqmhz7xws3yvmj9cm0tmz0wj0u7ntv2ecxstth2v7r4768qgqdq5g9kxy7fqd9h8vmmfvdjsxqr9mscqp2rzjqfvckvedaaankysf067nfn3pnapxc5jgruymhjy2ef80crkraq7xwqqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqla9upqr2v0pz8a59l4ztjxjmrz3m826mx7z77ttsw8jml7yde2qpgurfl7g5t30fmttfn807p9cltzddk4cs4h3xeesf4p44jdzd9hgq0kmh4a"}
+    `("valid invoice", async ({ invoice }) => {
+        const sats = validateInvoice(invoice);
+        expect(sats).toBeGreaterThan(0);
     });
 });

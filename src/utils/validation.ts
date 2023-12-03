@@ -2,14 +2,20 @@ import { crypto, script } from "bitcoinjs-lib";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
 import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { Buffer, Buffer as BufferBrowser } from "buffer";
-import { Contract } from "ethers";
+import { BaseContract } from "ethers";
 import log from "loglevel";
 
-import { decodeAddress } from "../compat";
+import { decodeAddress, getAddress, getNetwork } from "../compat";
 import { RBTC } from "../consts";
 import { ECPair, ecc } from "../ecpair/ecpair";
+import t from "../i18n";
 import { denominations, formatAmountDenomination } from "./denomination";
-import { decodeInvoice } from "./invoice";
+import {
+    decodeInvoice,
+    isInvoice,
+    isLnurl,
+    trimLightningPrefix,
+} from "./invoice";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -39,7 +45,7 @@ type SwapResponseLiquid = SwapResponse & {
     blindingKey: string;
 };
 
-type ContractGetter = () => Promise<Contract>;
+type ContractGetter = () => Promise<BaseContract>;
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
     const code = await (await getEtherSwap()).getDeployedCode();
@@ -198,4 +204,25 @@ export const validateResponse = async (
         log.warn("swap validation threw", e);
         return false;
     }
+};
+
+export const validateOnchainAddress = (inputValue: string, asset: string) => {
+    const address = getAddress(asset);
+    address.toOutputScript(inputValue, getNetwork(asset));
+};
+
+export const validateInvoice = (inputValue: string) => {
+    inputValue = trimLightningPrefix(inputValue);
+    const isInputInvoice = isInvoice(inputValue);
+    if (isLnurl(inputValue) || isInputInvoice) {
+        // set receive/send when invoice differs from the amounts
+        if (isInputInvoice) {
+            const decoded = decodeInvoice(inputValue);
+            if (decoded.satoshis === null || decoded.satoshis === 0) {
+                throw new Error(t("invalid_0_amount"));
+            }
+            return decoded.satoshis;
+        }
+    }
+    throw new Error(t("invalid_invoice"));
 };

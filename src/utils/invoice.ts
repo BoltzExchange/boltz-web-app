@@ -4,6 +4,7 @@ import log from "loglevel";
 
 import { bolt11_prefix } from "../config";
 import { errorHandler } from "../helper";
+import t from "../i18n";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {
@@ -36,13 +37,18 @@ export const getExpiryEtaHours = (invoice: string): number => {
 export const decodeInvoice = (
     invoice: string,
 ): { satoshis: number; preimageHash: string; expiry?: number } => {
-    const decoded = bolt11.decode(invoice);
-    return {
-        satoshis: decoded.satoshis,
-        expiry: decoded.timeExpireDate,
-        preimageHash: decoded.tags.find((tag) => tag.tagName === "payment_hash")
-            .data as string,
-    };
+    try {
+        const decoded = bolt11.decode(invoice);
+        return {
+            satoshis: decoded.satoshis,
+            expiry: decoded.timeExpireDate,
+            preimageHash: decoded.tags.find(
+                (tag) => tag.tagName === "payment_hash",
+            ).data as string,
+        };
+    } catch (e) {
+        throw new Error(t("invalid_invoice"));
+    }
 };
 
 export const fetchLnurl = (
