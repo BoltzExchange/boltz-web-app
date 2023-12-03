@@ -33,8 +33,11 @@ const InvoiceInput = () => {
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
-                setReceiveAmount(sats);
-                setSendAmount(calculateSendAmount(sats));
+                const amount = Number(receiveAmount());
+                if (sats !== amount) {
+                    setReceiveAmount(sats);
+                    setSendAmount(calculateSendAmount(sats));
+                }
                 setInvoice(inputValue);
                 setLnurl(false);
             }
@@ -63,7 +66,7 @@ const InvoiceInput = () => {
 
     // reset invoice if amount is changed
     createEffect(() => {
-        if (sendAmount() > 0 && receiveAmount()) {
+        if (sendAmount() > 0) {
             setInvoice("");
         }
     });
