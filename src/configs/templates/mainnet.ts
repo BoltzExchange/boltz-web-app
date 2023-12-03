@@ -16,7 +16,7 @@ const blockExplorerUrlLiquid = isTor
 export const torUrl =
     "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/";
 
-export const network: string = "main";
+export const network = "main";
 export const bolt11_prefix = "lnbc";
 export const loglevel = "info";
 
