@@ -5,10 +5,13 @@ import { defaultLanguage } from "../config";
 import { i18n, i18nConfigured, setI18n } from "../signals";
 import dict from "./i18n";
 
-let dictLocale;
+let dictLocale: any;
 createRoot(() => {
     createMemo(() => setI18n(i18nConfigured()));
     dictLocale = createMemo(() => flatten(dict[i18n() || defaultLanguage]));
 });
 
-export default translator(dictLocale, resolveTemplate);
+export default translator(dictLocale, resolveTemplate) as (
+    key: string,
+    values?: Record<string, any>,
+) => string;
