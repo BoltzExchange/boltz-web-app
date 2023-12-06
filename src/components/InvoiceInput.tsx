@@ -51,7 +51,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([sendAmountValid, invoice], () => {
-            if (sendAmountValid() && !reverse() && asset() !== RBTC) {
+            if (!reverse() && asset() !== RBTC) {
                 validateAddress(inputRef);
             }
         }),
@@ -60,8 +60,10 @@ const InvoiceInput = () => {
     // reset invoice if amount is changed
     createEffect(
         on([receiveAmount, sendAmount, invoice], () => {
+            const amount = Number(receiveAmount());
+            // do not reset when amount is 0 and created webln
+            if (amount === 0) return;
             if (invoice() !== "" && !isLnurl(invoice())) {
-                const amount = Number(receiveAmount());
                 try {
                     const inv = decodeInvoice(invoice());
                     if (inv.satoshis !== amount) {
