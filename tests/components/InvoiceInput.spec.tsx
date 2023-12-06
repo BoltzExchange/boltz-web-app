@@ -2,11 +2,12 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { describe, expect, test, vi } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
-// import { Web3SignerProvider } from "../../src/context/Web3";
 import * as signals from "../../src/signals";
 import {
     invoiceValid,
+    receiveAmount,
     sendAmount,
+    setReceiveAmount,
     setReverse,
     setSendAmount,
 } from "../../src/signals";
@@ -15,8 +16,8 @@ import { decodeInvoice } from "../../src/utils/invoice";
 describe("InvoiceInput", () => {
     test.each`
         expected | invoice
-        ${true}  | ${"m@some.domain"}
-        ${true}  | ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
+        ${false} | ${"m@some.domain"}
+        ${false} | ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
         ${true}  | ${"lnbcrt10m1pjn8atkpp5l9le9e3mjsen75y552rsxv69m9jt6qe5l3qxx6k0nf4wu7kzfmtsdqqcqzzsxqyz5vqsp5w5k3t96h56qzsstcjv9rnrfhme3hccun464qc2gkqep6yszn3a6s9qyyssqg50u7zdppzcuvepkp53udce8azayp44h3y8nuppt077zplx79ua5tx9s498qswxqyuqzp9ns3a4uzzuuf39vmd3yfc65qpu4wpsagrqpqxyeyh"}
         ${true}  | ${"lnbcrt10m1pjn8atkpp5l9le9e3mjsen75y552rsxv69m9jt6qe5l3qxx6k0nf4wu7kzfmtsdqqcqzzsxqyz5vqsp5w5k3t96h56qzsstcjv9rnrfhme3hccun464qc2gkqep6yszn3a6s9qyyssqg50u7zdppzcuvepkp53udce8azayp44h3y8nuppt077zplx79ua5tx9s498qswxqyuqzp9ns3a4uzzuuf39vmd3yfc65qpu4wpsagrqpqxyeyh".toUpperCase()}
         ${true}  | ${"lightning:lnbcrt10m1pjn8atkpp5l9le9e3mjsen75y552rsxv69m9jt6qe5l3qxx6k0nf4wu7kzfmtsdqqcqzzsxqyz5vqsp5w5k3t96h56qzsstcjv9rnrfhme3hccun464qc2gkqep6yszn3a6s9qyyssqg50u7zdppzcuvepkp53udce8azayp44h3y8nuppt077zplx79ua5tx9s498qswxqyuqzp9ns3a4uzzuuf39vmd3yfc65qpu4wpsagrqpqxyeyh"}
@@ -66,12 +67,12 @@ describe("InvoiceInput", () => {
             target: { value: invoice },
         });
 
-        expect(setInvoice).toHaveBeenCalledTimes(2);
+        expect(setInvoice).toHaveBeenCalledTimes(1);
         expect(setInvoice).toHaveBeenCalledWith(invoice);
 
-        setSendAmount(sendAmount() + 1);
+        setReceiveAmount(receiveAmount() + 1);
 
-        expect(setInvoice).toHaveBeenCalledTimes(3);
+        expect(setInvoice).toHaveBeenCalledTimes(2);
         expect(setInvoice).toHaveBeenCalledWith("");
     });
 
@@ -81,13 +82,14 @@ describe("InvoiceInput", () => {
         ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
     `("should not clear lnurl $lnurl on amount change", async ({ lnurl }) => {
         setReverse(false);
-        const setLnurl = vi.spyOn(signals, "setLnurl");
 
         render(() => <InvoiceInput />);
 
         const input = (await screen.findByTestId(
             "invoice",
         )) as HTMLTextAreaElement;
+
+        const setLnurl = vi.spyOn(signals, "setLnurl");
 
         fireEvent.input(input, {
             target: { value: lnurl },

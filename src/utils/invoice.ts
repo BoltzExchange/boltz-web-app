@@ -125,9 +125,13 @@ const isValidBech32 = (data: string) => {
     }
 };
 
+const emailRegex =
+    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
 export const isLnurl = (data: string) => {
+    data = data.toLowerCase();
     return (
-        data.includes("@") ||
-        (data.toLowerCase().startsWith("lnurl") && isValidBech32(data))
+        (data.includes("@") && emailRegex.test(data)) ||
+        (data.startsWith("lnurl") && isValidBech32(data))
     );
 };

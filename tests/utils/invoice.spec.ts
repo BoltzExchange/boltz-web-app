@@ -10,11 +10,15 @@ import {
 
 describe("invoice", () => {
     test.each`
-        data                                                                             | expected
-        ${"m@lnurl.some.domain"}                                                         | ${true}
-        ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"} | ${true}
-        ${"lnurl.some.domain"}                                                           | ${false}
-        ${"LNURL1DP6fasdklfjasdf"}                                                       | ${false}
+        expected | data
+        ${true}  | ${"m@lnurl.some.domain"}
+        ${true}  | ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
+        ${true}  | ${"m@boltz.exchange"}
+        ${false} | ${"m@lnurl@bol.tz"}
+        ${false} | ${"m@lnurl"}
+        ${false} | ${"m@lnurl."}
+        ${false} | ${"lnurl.some.domain"}
+        ${false} | ${"LNURL1DP6fasdklfjasdf"}
     `(
         "should determine if $data is lnurl ($expected)",
         ({ data, expected }) => {

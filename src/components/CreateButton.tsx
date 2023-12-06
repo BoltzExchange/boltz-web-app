@@ -19,6 +19,7 @@ import {
     receiveAmount,
     reverse,
     sendAmount,
+    sendAmountValid,
     setAddressValid,
     setInvoice,
     setInvoiceValid,
@@ -43,8 +44,15 @@ export const CreateButton = () => {
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [buttonClass, setButtonClass] = createSignal("btn");
 
+    const validateButtonDisable = () => {
+        return (
+            !valid() &&
+            !(lnurl() !== "" && lnurl() !== false && sendAmountValid())
+        );
+    };
+
     createEffect(() => {
-        setButtonDisable(!valid());
+        setButtonDisable(validateButtonDisable());
     });
 
     createMemo(() => {
@@ -70,6 +78,24 @@ export const CreateButton = () => {
     });
 
     const create = async () => {
+        if (
+            sendAmountValid() &&
+            !reverse() &&
+            lnurl() !== "" &&
+            lnurl() !== false
+        ) {
+            try {
+                const inv = await fetchLnurl(lnurl(), Number(receiveAmount()));
+                setInvoice(inv);
+                setLnurl(false);
+            } catch (e) {
+                setNotificationType("error");
+                setNotification(e);
+                log.warn("fetch lnurl failed", e);
+            }
+            return;
+        }
+
         if (!valid()) return;
 
         const assetName = asset();
@@ -98,20 +124,6 @@ export const CreateButton = () => {
                 params.claimPublicKey = keyPair.publicKey.toString("hex");
             }
         } else {
-            if (lnurl()) {
-                try {
-                    const inv = await fetchLnurl(
-                        lnurl(),
-                        Number(receiveAmount()),
-                    );
-                    setInvoice(inv);
-                    setLnurl(false);
-                } catch (e) {
-                    setButtonDisable(false);
-                    log.warn("fetch lnurl failed", e);
-                }
-                return;
-            }
             params = {
                 type: "submarine",
                 pairId: assetName + "/BTC",
@@ -194,13 +206,8 @@ export const CreateButton = () => {
             .catch((e) => {
                 log.warn("create failed", e);
             })
-            // Because we disable the button before calling create,
-            // we have to enable it again afterward.
-            // The validation logic is not triggered,
-            // because both, the LNURL and the invoice that was fetched,
-            // are considered valid -> signal didn't change -> no rerender in effects
             .then(() => {
-                setButtonDisable(!valid());
+                setButtonDisable(validateButtonDisable());
             });
     };
 

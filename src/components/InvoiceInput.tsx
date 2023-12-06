@@ -1,4 +1,4 @@
-import { createEffect } from "solid-js";
+import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
 import t from "../i18n";
@@ -18,7 +18,7 @@ import {
     setSendAmount,
 } from "../signals";
 import { calculateSendAmount } from "../utils/calculate";
-import { isLnurl } from "../utils/invoice";
+import { decodeInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 import { setButtonLabel } from "./CreateButton";
 
@@ -37,36 +37,43 @@ const InvoiceInput = () => {
                 setSendAmount(calculateSendAmount(sats));
                 setInvoice(inputValue);
                 setLnurl(false);
+                setInvoiceValid(true);
             }
-            setInvoiceValid(true);
             input.setCustomValidity("");
             input.classList.remove("invalid");
         } catch (e) {
             setInvoiceValid(false);
+            setLnurl(false);
             input.setCustomValidity(e.message);
             setButtonLabel(e.message);
             input.classList.add("invalid");
         }
     };
 
-    createEffect(() => {
-        if (sendAmountValid() && !reverse() && asset() !== RBTC) {
-            validateAddress(inputRef);
-        }
-    });
-
-    createEffect(() => {
-        if (invoice()) {
-            validateAddress(inputRef);
-        }
-    });
+    createEffect(
+        on([sendAmountValid, invoice], () => {
+            if (!reverse() && asset() !== RBTC) {
+                validateAddress(inputRef);
+            }
+        }),
+    );
 
     // reset invoice if amount is changed
-    createEffect(() => {
-        if (sendAmount() > 0 && receiveAmount()) {
-            setInvoice("");
-        }
-    });
+    createEffect(
+        on([receiveAmount, sendAmount, invoice], () => {
+            const amount = Number(receiveAmount());
+            if (invoice() !== "" && !isLnurl(invoice())) {
+                try {
+                    const inv = decodeInvoice(invoice());
+                    if (inv.satoshis !== amount) {
+                        setInvoice("");
+                    }
+                } catch (e) {
+                    return;
+                }
+            }
+        }),
+    );
 
     return (
         <textarea
