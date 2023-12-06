@@ -44,16 +44,20 @@ export const CreateButton = () => {
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [buttonClass, setButtonClass] = createSignal("btn");
 
-    createEffect(() => {
+    const validateButtonDisable = () => {
         if (!valid()) {
             if (lnurl() !== "" && lnurl() !== false) {
-                setButtonDisable(false);
+                return false;
             } else {
-                setButtonDisable(true);
+                return true;
             }
         } else {
-            setButtonDisable(false);
+            return false;
         }
+    };
+
+    createEffect(() => {
+        setButtonDisable(validateButtonDisable());
     });
 
     createMemo(() => {
@@ -90,7 +94,8 @@ export const CreateButton = () => {
                 setInvoice(inv);
                 setLnurl(false);
             } catch (e) {
-                setButtonDisable(false);
+                setNotificationType("error");
+                setNotification(e);
                 log.warn("fetch lnurl failed", e);
             }
             return;
@@ -206,13 +211,8 @@ export const CreateButton = () => {
             .catch((e) => {
                 log.warn("create failed", e);
             })
-            // Because we disable the button before calling create,
-            // we have to enable it again afterward.
-            // The validation logic is not triggered,
-            // because both, the LNURL and the invoice that was fetched,
-            // are considered valid -> signal didn't change -> no rerender in effects
             .then(() => {
-                setButtonDisable(!valid());
+                setButtonDisable(validateButtonDisable());
             });
     };
 
