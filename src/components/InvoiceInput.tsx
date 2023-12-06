@@ -1,4 +1,4 @@
-import { createEffect } from "solid-js";
+import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
 import t from "../i18n";
@@ -6,10 +6,10 @@ import {
     asset,
     denomination,
     invoice,
-    invoiceValid,
     receiveAmount,
     receiveAmountFormatted,
     reverse,
+    sendAmount,
     sendAmountValid,
     setInvoice,
     setInvoiceValid,
@@ -37,8 +37,8 @@ const InvoiceInput = () => {
                 setSendAmount(calculateSendAmount(sats));
                 setInvoice(inputValue);
                 setLnurl(false);
+                setInvoiceValid(true);
             }
-            setInvoiceValid(true);
             input.setCustomValidity("");
             input.classList.remove("invalid");
         } catch (e) {
@@ -49,28 +49,30 @@ const InvoiceInput = () => {
         }
     };
 
-    createEffect(() => {
-        if (sendAmountValid() && !reverse() && asset() !== RBTC) {
-            validateAddress(inputRef);
-        }
-    });
-
-    createEffect(() => {
-        if (invoice() !== "") {
-            validateAddress(inputRef);
-        }
-    });
+    createEffect(
+        on([sendAmount, invoice], () => {
+            if (sendAmountValid() && !reverse() && asset() !== RBTC) {
+                validateAddress(inputRef);
+            }
+        }),
+    );
 
     // reset invoice if amount is changed
-    createEffect(() => {
-        if (invoice() !== "" && invoiceValid() && !reverse()) {
-            const amount = Number(receiveAmount());
-            const inv = decodeInvoice(invoice());
-            if (inv.satoshis !== amount) {
-                setInvoice("");
+    createEffect(
+        on([receiveAmount, invoice], () => {
+            if (invoice() !== "") {
+                const amount = Number(receiveAmount());
+                try {
+                    const inv = decodeInvoice(invoice());
+                    if (inv.satoshis !== amount) {
+                        setInvoice("");
+                    }
+                } catch (e) {
+                    return;
+                }
             }
-        }
-    });
+        }),
+    );
 
     return (
         <textarea

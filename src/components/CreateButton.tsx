@@ -19,6 +19,7 @@ import {
     receiveAmount,
     reverse,
     sendAmount,
+    sendAmountValid,
     setAddressValid,
     setInvoice,
     setInvoiceValid,
@@ -44,7 +45,15 @@ export const CreateButton = () => {
     const [buttonClass, setButtonClass] = createSignal("btn");
 
     createEffect(() => {
-        setButtonDisable(!valid());
+        if (!valid()) {
+            if (lnurl() !== "" && lnurl() !== false) {
+                setButtonDisable(false);
+            } else {
+                setButtonDisable(true);
+            }
+        } else {
+            setButtonDisable(false);
+        }
     });
 
     createMemo(() => {
@@ -70,6 +79,23 @@ export const CreateButton = () => {
     });
 
     const create = async () => {
+        if (
+            sendAmountValid() &&
+            !reverse() &&
+            lnurl() !== "" &&
+            lnurl() !== false
+        ) {
+            try {
+                const inv = await fetchLnurl(lnurl(), Number(receiveAmount()));
+                setInvoice(inv);
+                setLnurl(false);
+            } catch (e) {
+                setButtonDisable(false);
+                log.warn("fetch lnurl failed", e);
+            }
+            return;
+        }
+
         if (!valid()) return;
 
         const assetName = asset();
@@ -98,20 +124,6 @@ export const CreateButton = () => {
                 params.claimPublicKey = keyPair.publicKey.toString("hex");
             }
         } else {
-            if (lnurl()) {
-                try {
-                    const inv = await fetchLnurl(
-                        lnurl(),
-                        Number(receiveAmount()),
-                    );
-                    setInvoice(inv);
-                    setLnurl(false);
-                } catch (e) {
-                    setButtonDisable(false);
-                    log.warn("fetch lnurl failed", e);
-                }
-                return;
-            }
             params = {
                 type: "submarine",
                 pairId: assetName + "/BTC",
