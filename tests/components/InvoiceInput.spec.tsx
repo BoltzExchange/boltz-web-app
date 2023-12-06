@@ -2,11 +2,12 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { describe, expect, test, vi } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
-// import { Web3SignerProvider } from "../../src/context/Web3";
 import * as signals from "../../src/signals";
 import {
     invoiceValid,
+    receiveAmount,
     sendAmount,
+    setReceiveAmount,
     setReverse,
     setSendAmount,
 } from "../../src/signals";
@@ -69,7 +70,7 @@ describe("InvoiceInput", () => {
         expect(setInvoice).toHaveBeenCalledTimes(1);
         expect(setInvoice).toHaveBeenCalledWith(invoice);
 
-        setSendAmount(sendAmount() + 1);
+        setReceiveAmount(receiveAmount() + 1);
 
         expect(setInvoice).toHaveBeenCalledTimes(2);
         expect(setInvoice).toHaveBeenCalledWith("");

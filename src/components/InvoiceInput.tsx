@@ -59,7 +59,7 @@ const InvoiceInput = () => {
 
     // reset invoice if amount is changed
     createEffect(
-        on([receiveAmount, invoice], () => {
+        on([receiveAmount, sendAmount, invoice], () => {
             if (invoice() !== "") {
                 const amount = Number(receiveAmount());
                 try {
