@@ -45,15 +45,7 @@ export const CreateButton = () => {
     const [buttonClass, setButtonClass] = createSignal("btn");
 
     const validateButtonDisable = () => {
-        if (!valid()) {
-            if (lnurl() !== "" && lnurl() !== false) {
-                return false;
-            } else {
-                return true;
-            }
-        } else {
-            return false;
-        }
+        return !valid() && !(lnurl() !== "" && lnurl() !== false);
     };
 
     createEffect(() => {
