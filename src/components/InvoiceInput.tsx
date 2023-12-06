@@ -62,8 +62,6 @@ const InvoiceInput = () => {
     createEffect(
         on([receiveAmount, sendAmount, invoice], () => {
             const amount = Number(receiveAmount());
-            // do not reset when amount is 0 and created webln
-            if (amount === 0) return;
             if (invoice() !== "" && !isLnurl(invoice())) {
                 try {
                     const inv = decodeInvoice(invoice());
