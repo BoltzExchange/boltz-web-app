@@ -43,6 +43,7 @@ const InvoiceInput = () => {
             input.classList.remove("invalid");
         } catch (e) {
             setInvoiceValid(false);
+            setLnurl(false);
             input.setCustomValidity(e.message);
             setButtonLabel(e.message);
             input.classList.add("invalid");
