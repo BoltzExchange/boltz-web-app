@@ -3,9 +3,11 @@ import { describe, expect, test } from "vitest";
 
 import {
     decodeInvoice,
+    extractAddress,
+    extractInvoice,
     getExpiryEtaHours,
+    isBip21,
     isLnurl,
-    trimLightningPrefix,
 } from "../../src/utils/invoice";
 
 describe("invoice", () => {
@@ -32,9 +34,38 @@ describe("invoice", () => {
     test("should trim lightning: prefix of invoices", () => {
         const invoice = "lnbcrt4986620n1pjgkj07pp5zl";
 
-        expect(trimLightningPrefix(invoice)).toEqual(invoice);
-        expect(trimLightningPrefix(`lightning:${invoice}`)).toEqual(invoice);
-        expect(trimLightningPrefix(`LIGHTNING:${invoice}`)).toEqual(invoice);
+        expect(extractInvoice(invoice)).toEqual(invoice);
+        expect(extractInvoice(`lightning:${invoice}`)).toEqual(invoice);
+        expect(extractInvoice(`LIGHTNING:${invoice}`)).toEqual(invoice);
+        expect(extractInvoice(`lightning:${invoice}?label=test`)).toEqual(
+            invoice,
+        );
+    });
+
+    test.each`
+        result   | prefix
+        ${true}  | ${"bitcoin:"}
+        ${true}  | ${"liquidnetwork:"}
+        ${false} | ${"liquid:"}
+        ${false} | ${"boltz:"}
+    `("should be bip21 $prefix -> $result", ({ result, prefix }) => {
+        expect(isBip21(prefix)).toEqual(result);
+    });
+
+    test.each`
+        bip21                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | invoice
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday&lightning=LNBC10U1P3PJ257PP5YZTKWJCZ5FTL5LAXKAV23ZMZEKAW37ZK6KMV80PK4XAEV5QHTZ7QDPDWD3XGER9WD5KWM36YPRX7U3QD36KUCMGYP282ETNV3SHJCQZPGXQYZ5VQSP5USYC4LK9CHSFP53KVCNVQ456GANH60D89REYKDNGSMTJ6YW3NHVQ9QYYSSQJCEWM5CJWZ4A6RFJX77C490YCED6PEMK0UPKXHY89CMM7SCT66K8GNEANWYKZGDRWRFJE69H9U5U0W57RRCSYSAS7GADWMZXC8C6T0SPJAZUP6"}                                                                                                                          | ${"lnbc10u1p3pj257pp5yztkwjcz5ftl5laxkav23zmzekaw37zk6kmv80pk4xaev5qhtz7qdpdwd3xger9wd5kwm36yprx7u3qd36kucmgyp282etnv3shjcqzpgxqyz5vqsp5usyc4lk9chsfp53kvcnvq456ganh60d89reykdngsmtj6yw3nhvq9qyyssqjcewm5cjwz4a6rfjx77c490yced6pemk0upkxhy89cmm7sct66k8gneanwykzgdrwrfje69h9u5u0w57rrcsysas7gadwmzxc8c6t0spjazup6"}
+        ${"liquidnetwork:el1qq2hwpl8uvskkjrznyltjlamk86nh7r69amjmj2kvfwe7pxmfjxl5wjnhvd5am8s7mnv5rtnwflkcgfwesnz2gz8qau0ghppzehf4grt89szq8tex5keq?amount=0.00100135&label=Send%20to%20BTC%20lightning&assetid=5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225&lightning=lnbc10u1p3pj257pp5yztkwjcz5ftl5laxkav23zmzekaw37zk6kmv80pk4xaev5qhtz7qdpdwd3xger9wd5kwm36yprx7u3qd36kucmgyp282etnv3shjcqzpgxqyz5vqsp5usyc4lk9chsfp53kvcnvq456ganh60d89reykdngsmtj6yw3nhvq9qyyssqjcewm5cjwz4a6rfjx77c490yced6pemk0upkxhy89cmm7sct66k8gneanwykzgdrwrfje69h9u5u0w57rrcsysas7gadwmzxc8c6t0spjazup6"} | ${"lnbc10u1p3pj257pp5yztkwjcz5ftl5laxkav23zmzekaw37zk6kmv80pk4xaev5qhtz7qdpdwd3xger9wd5kwm36yprx7u3qd36kucmgyp282etnv3shjcqzpgxqyz5vqsp5usyc4lk9chsfp53kvcnvq456ganh60d89reykdngsmtj6yw3nhvq9qyyssqjcewm5cjwz4a6rfjx77c490yced6pemk0upkxhy89cmm7sct66k8gneanwykzgdrwrfje69h9u5u0w57rrcsysas7gadwmzxc8c6t0spjazup6"}
+    `("should trim bip21 lightning invoice", ({ bip21, invoice }) => {
+        expect(extractInvoice(bip21)).toEqual(invoice);
+    });
+
+    test.each`
+        bip21                                                                                                                                                                                                                                                                    | address
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday"}                                                                                                                          | ${"bc1qylh3u67j673h6y6alv70m0pl2yz53tzhvxgg7u"}
+        ${"liquidnetwork:el1qq2hwpl8uvskkjrznyltjlamk86nh7r69amjmj2kvfwe7pxmfjxl5wjnhvd5am8s7mnv5rtnwflkcgfwesnz2gz8qau0ghppzehf4grt89szq8tex5keq?amount=0.00100135&label=Send%20to%20BTC%20lightning&assetid=5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225"} | ${"el1qq2hwpl8uvskkjrznyltjlamk86nh7r69amjmj2kvfwe7pxmfjxl5wjnhvd5am8s7mnv5rtnwflkcgfwesnz2gz8qau0ghppzehf4grt89szq8tex5keq"}
+    `("should trim bip21 address: $bip21", ({ bip21, address }) => {
+        expect(extractAddress(bip21)).toEqual(address);
     });
 
     describe("decode invoices", () => {

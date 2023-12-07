@@ -18,6 +18,9 @@ type LnurlCallbackResponse = {
 };
 
 export const invoicePrefix = "lightning:";
+export const bitcoinPrefix = "bitcoin:";
+export const liquidPrefix = "liquidnetwork:";
+
 export const maxExpiryHours = 24;
 
 export const getExpiryEtaHours = (invoice: string): number => {
@@ -104,12 +107,31 @@ export const fetchLnurl = (
     });
 };
 
-export const trimLightningPrefix = (invoice: string) => {
-    if (invoice.toLowerCase().startsWith(invoicePrefix)) {
-        return invoice.slice(invoicePrefix.length);
-    }
+export const isBip21 = (data: string) => {
+    return (
+        data.toLowerCase().startsWith(bitcoinPrefix) ||
+        data.toLowerCase().startsWith(liquidPrefix)
+    );
+};
 
-    return invoice;
+export const extractInvoice = (data: string) => {
+    if (data.toLowerCase().startsWith(invoicePrefix)) {
+        const url = new URL(data);
+        return url.pathname.toLowerCase();
+    }
+    if (isBip21(data)) {
+        const url = new URL(data);
+        return url.searchParams.get("lightning").toLowerCase();
+    }
+    return data;
+};
+
+export const extractAddress = (data: string) => {
+    if (isBip21(data)) {
+        const url = new URL(data);
+        return url.pathname.toLowerCase();
+    }
+    return data;
 };
 
 export const isInvoice = (data: string) => {
