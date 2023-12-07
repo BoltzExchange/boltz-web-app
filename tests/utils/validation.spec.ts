@@ -3,6 +3,8 @@ import { Contract } from "ethers";
 import log from "loglevel";
 import { beforeAll, describe, expect, test, vitest } from "vitest";
 
+import { decodeAddress } from "../../src/compat";
+import { BTC, LBTC } from "../../src/consts";
 import t from "../../src/i18n";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
@@ -186,5 +188,17 @@ describe("validate invoices", () => {
     `("valid invoice", async ({ invoice }) => {
         const sats = validateInvoice(invoice);
         expect(sats).toBeGreaterThan(0);
+    });
+});
+
+describe("validate onchain addresses", () => {
+    test.each`
+        asset   | address
+        ${BTC}  | ${"bcrt1q78qtnjrt53gauk6h2w32wane62jjg2gvval6w5"}
+        ${BTC}  | ${"2NFjs5VkEHkX65QrZHwCgwXdphBvKPr6trL"}
+        ${LBTC} | ${"VJL8BMWCv7HUq4dgCBJAQA1gHTWibWXPTjP1vXF92doTmpnD7a6b24t7epT3fXNi8nJfW2vYdLLf15vo"}
+        ${LBTC} | ${"el1qqdmeywy40z2aasvaydsnmgqqqcgk92cvd9p9h4mpeh2x83dy79mhltd4al45ylxu33qsyu5l4z0srhagm5krl2n2cgxra5n88chxle7ctnpml5s983jr"}
+    `("invalid address: $address", async ({ asset, address }) => {
+        decodeAddress(asset, address);
     });
 });
