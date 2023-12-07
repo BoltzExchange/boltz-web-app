@@ -28,7 +28,6 @@ const AddressInput = () => {
             setAddressValid(true);
             setOnchainAddress(address);
         } catch (e) {
-            console.log("invalid address", e.message);
             const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);
             input.classList.add("invalid");

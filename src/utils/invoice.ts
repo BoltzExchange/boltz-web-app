@@ -108,22 +108,18 @@ export const fetchLnurl = (
 };
 
 export const isBip21 = (data: string) => {
-    return (
-        data.toLowerCase().startsWith(bitcoinPrefix) ||
-        data.toLowerCase().startsWith(liquidPrefix)
-    );
+    return data.startsWith(bitcoinPrefix) || data.startsWith(liquidPrefix);
 };
 
 export const extractInvoice = (data: string) => {
-    if (data.toLowerCase().startsWith(invoicePrefix)) {
+    data = data.toLowerCase();
+    if (data.startsWith(invoicePrefix)) {
         const url = new URL(data);
-        return url.pathname.toLowerCase();
+        return url.pathname;
     }
     if (isBip21(data)) {
         const url = new URL(data);
-        const param = url.searchParams.get("lightning");
-        if (!param) return "";
-        return param.toLowerCase();
+        return url.searchParams.get("lightning") || "";
     }
     return data;
 };
@@ -131,7 +127,7 @@ export const extractInvoice = (data: string) => {
 export const extractAddress = (data: string) => {
     if (isBip21(data)) {
         const url = new URL(data);
-        return url.pathname.toLowerCase();
+        return url.pathname;
     }
     return data;
 };
