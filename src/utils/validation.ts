@@ -5,7 +5,7 @@ import { Buffer, Buffer as BufferBrowser } from "buffer";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
-import { decodeAddress, getAddress, getNetwork } from "../compat";
+import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
 import { ECPair, ecc } from "../ecpair/ecpair";
 import t from "../i18n";
