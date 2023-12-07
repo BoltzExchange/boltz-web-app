@@ -68,6 +68,14 @@ describe("invoice", () => {
         expect(extractAddress(bip21)).toEqual(address);
     });
 
+    test.each`
+        bip21
+        ${"bitcoin:BC1QYLH3U67J673H6Y6ALV70M0PL2YZ53TZHVXGG7U?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday"}
+        ${"liquidnetwork:el1qq2hwpl8uvskkjrznyltjlamk86nh7r69amjmj2kvfwe7pxmfjxl5wjnhvd5am8s7mnv5rtnwflkcgfwesnz2gz8qau0ghppzehf4grt89szq8tex5keq?amount=0.00100135&label=Send%20to%20BTC%20lightning&assetid=5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225"}
+    `("should not return invoice on bip21 address: $bip21", ({ bip21 }) => {
+        expect(extractInvoice(bip21)).toEqual("");
+    });
+
     describe("decode invoices", () => {
         test.each`
             network      | invoice

@@ -121,7 +121,9 @@ export const extractInvoice = (data: string) => {
     }
     if (isBip21(data)) {
         const url = new URL(data);
-        return url.searchParams.get("lightning").toLowerCase();
+        const param = url.searchParams.get("lightning");
+        if (!param) return "";
+        return param.toLowerCase();
     }
     return data;
 };
