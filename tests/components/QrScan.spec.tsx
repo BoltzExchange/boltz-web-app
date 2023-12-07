@@ -1,5 +1,5 @@
 import { render, screen } from "@solidjs/testing-library";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import QrScan from "../../src/components/QrScan";
 import t from "../../src/i18n";
