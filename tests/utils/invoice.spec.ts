@@ -12,8 +12,11 @@ describe("invoice", () => {
     test.each`
         expected | data
         ${true}  | ${"m@lnurl.some.domain"}
+        ${true}  | ${"lightning:m@lnurl.some.domain"}
         ${true}  | ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
+        ${true}  | ${"lightning:LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
         ${true}  | ${"m@boltz.exchange"}
+        ${true}  | ${"lightning:m@boltz.exchange"}
         ${false} | ${"m@lnurl@bol.tz"}
         ${false} | ${"m@lnurl"}
         ${false} | ${"m@lnurl."}
