@@ -55,66 +55,6 @@ import { enableWebln } from "./utils/webln";
 const Create = () => {
     let receiveAmountRef, sendAmountRef;
 
-    onMount(() => {
-        sendAmountRef.focus();
-    });
-
-    createEffect(
-        on([boltzFee, minerFee, reverse, asset], () => {
-            if (amountChanged() === sideReceive) {
-                setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
-            } else {
-                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
-            }
-            validateAmount();
-        }),
-    );
-
-    createEffect(() => {
-        if (assetSelect()) {
-            return;
-        }
-
-        const ref =
-            assetSelected() === sideSend ? sendAmountRef : receiveAmountRef;
-        ref.focus();
-    });
-
-    createMemo(() => {
-        const rAmount = Number(receiveAmount());
-        if (rAmount > 0) {
-            setReceiveAmountFormatted(formatAmount(rAmount).toString());
-        }
-        const sAmount = Number(sendAmount());
-        if (sAmount > 0) {
-            setSendAmountFormatted(formatAmount(sAmount).toString());
-        }
-    });
-
-    // validation swap
-    createMemo(() => {
-        if (sendAmountValid()) {
-            if (
-                (reverse() && addressValid()) ||
-                (!reverse() &&
-                    invoiceValid() &&
-                    (asset() !== RBTC || addressValid()))
-            ) {
-                setValid(true);
-                return;
-            }
-        }
-        setValid(false);
-    });
-
-    // validate amounts when invoice is valid, because we
-    // set the amount based on invoice amount if amount is 0
-    createMemo(() => {
-        if (invoiceValid()) {
-            validateAmount();
-        }
-    });
-
     const changeReceiveAmount = (e) => {
         const amount = e.currentTarget.value.trim();
         const satAmount = convertAmount(Number(amount), denominations.sat);
@@ -210,6 +150,66 @@ const Create = () => {
         validateAmount();
         sendAmountRef.focus();
     };
+
+    onMount(() => {
+        sendAmountRef.focus();
+    });
+
+    createEffect(
+        on([boltzFee, minerFee, reverse, asset], () => {
+            if (amountChanged() === sideReceive) {
+                setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
+            } else {
+                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+            }
+            validateAmount();
+        }),
+    );
+
+    createEffect(() => {
+        if (assetSelect()) {
+            return;
+        }
+
+        const ref =
+            assetSelected() === sideSend ? sendAmountRef : receiveAmountRef;
+        ref.focus();
+    });
+
+    createMemo(() => {
+        const rAmount = Number(receiveAmount());
+        if (rAmount > 0) {
+            setReceiveAmountFormatted(formatAmount(rAmount).toString());
+        }
+        const sAmount = Number(sendAmount());
+        if (sAmount > 0) {
+            setSendAmountFormatted(formatAmount(sAmount).toString());
+        }
+    });
+
+    // validation swap
+    createMemo(() => {
+        if (sendAmountValid()) {
+            if (
+                (reverse() && addressValid()) ||
+                (!reverse() &&
+                    invoiceValid() &&
+                    (asset() !== RBTC || addressValid()))
+            ) {
+                setValid(true);
+                return;
+            }
+        }
+        setValid(false);
+    });
+
+    // validate amounts when invoice is valid, because we
+    // set the amount based on invoice amount if amount is 0
+    createMemo(() => {
+        if (invoiceValid()) {
+            validateAmount();
+        }
+    });
 
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
