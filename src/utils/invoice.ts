@@ -20,6 +20,7 @@ type LnurlCallbackResponse = {
 export const invoicePrefix = "lightning:";
 export const bitcoinPrefix = "bitcoin:";
 export const liquidPrefix = "liquidnetwork:";
+export const liquidTestnetPrefix = "liquidtestnet:";
 
 export const maxExpiryHours = 24;
 
@@ -108,7 +109,12 @@ export const fetchLnurl = (
 };
 
 export const isBip21 = (data: string) => {
-    return data.startsWith(bitcoinPrefix) || data.startsWith(liquidPrefix);
+    data = data.toLowerCase();
+    return (
+        data.startsWith(bitcoinPrefix) ||
+        data.startsWith(liquidPrefix) ||
+        data.startsWith(liquidTestnetPrefix)
+    );
 };
 
 export const extractInvoice = (data: string) => {

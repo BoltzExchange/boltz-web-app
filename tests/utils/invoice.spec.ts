@@ -45,6 +45,7 @@ describe("invoice", () => {
     test.each`
         result   | prefix
         ${true}  | ${"bitcoin:"}
+        ${true}  | ${"BITCOIN:"}
         ${true}  | ${"liquidnetwork:"}
         ${false} | ${"liquid:"}
         ${false} | ${"boltz:"}
