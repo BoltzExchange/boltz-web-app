@@ -9,6 +9,7 @@ import {
     setAddressValid,
     setOnchainAddress,
 } from "../signals";
+import { extractAddress } from "../utils/invoice";
 import { validateOnchainAddress } from "../utils/validation";
 import { setButtonLabel } from "./CreateButton";
 
@@ -17,15 +18,18 @@ const AddressInput = () => {
 
     const validateAddress = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
+        const address = extractAddress(inputValue);
+        console.log("address", address);
 
         try {
             const assetName = asset();
-            validateOnchainAddress(inputValue, assetName);
+            validateOnchainAddress(address, assetName);
             input.setCustomValidity("");
             input.classList.remove("invalid");
             setAddressValid(true);
-            setOnchainAddress(inputValue);
+            setOnchainAddress(address);
         } catch (e) {
+            console.log("invalid address", e.message);
             const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);
             input.classList.add("invalid");
