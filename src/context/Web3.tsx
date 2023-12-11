@@ -4,7 +4,6 @@ import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
 import {
     Accessor,
     ResolvedChildren,
-    Setter,
     createContext,
     createSignal,
     useContext,
@@ -16,7 +15,7 @@ import { getApiUrl } from "../helper";
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
 
-const ethereumInitEvent = "ethereum#initialized";
+const initEvent = "ethereum#initialized";
 
 const Web3SignerContext = createContext<{
     getSigner: () => Promise<JsonRpcSigner>;
@@ -32,16 +31,16 @@ const Web3SignerProvider = (props: {
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
     const [hasMetamask, setHasMetamask] = createSignal<boolean>(false);
 
-    const handleEthereum = () => {
-        window.removeEventListener(ethereumInitEvent, handleEthereum);
+    const handleMetamask = () => {
+        window.removeEventListener(initEvent, handleMetamask);
         setProvider(new BrowserProvider((window as any).ethereum));
         setHasMetamask(true);
     };
 
     if ((window as any).ethereum) {
-        handleEthereum();
+        handleMetamask();
     } else {
-        window.addEventListener(ethereumInitEvent, handleEthereum);
+        window.addEventListener(initEvent, handleMetamask);
     }
 
     const getContracts = new Promise(async (resolve) => {
