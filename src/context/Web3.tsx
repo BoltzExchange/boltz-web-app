@@ -22,7 +22,6 @@ const Web3SignerContext = createContext<{
     getSigner: () => Promise<JsonRpcSigner>;
     getEtherSwap: () => Promise<EtherSwap>;
     hasMetamask: Accessor<boolean>;
-    setHasMetamask: Setter<boolean>;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -78,7 +77,6 @@ const Web3SignerProvider = (props: {
                 getSigner,
                 getEtherSwap,
                 hasMetamask,
-                setHasMetamask,
             }}>
             {props.children}
         </Web3SignerContext.Provider>
