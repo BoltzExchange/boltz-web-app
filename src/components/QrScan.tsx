@@ -2,6 +2,7 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 
+import { isMobile } from "../helper";
 import t from "../i18n";
 import {
     camera,
@@ -24,7 +25,7 @@ const QrScan = () => {
         if (!hasCamera) {
             return;
         }
-        setCamera(hasCamera);
+        setCamera(hasCamera && isMobile);
     });
 
     const startScan = () => {
