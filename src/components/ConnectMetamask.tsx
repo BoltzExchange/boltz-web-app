@@ -29,7 +29,7 @@ const ConnectMetamask = ({ showAddress }) => {
 
     createEffect(() => {
         if (sendAmountValid() && !addressValid()) {
-            setButtonLabel(t("connect_metamask"));
+            setButtonLabel("connect_metamask");
         }
     });
 

@@ -64,16 +64,16 @@ export const CreateButton = () => {
     createEffect(() => {
         if (valid()) {
             if (reverse() && lnurl()) {
-                setButtonLabel(t("fetch_lnurl"));
+                setButtonLabel("fetch_lnurl");
             } else {
-                setButtonLabel(t("create_swap"));
+                setButtonLabel("create_swap");
             }
         }
         if (!online()) {
-            setButtonLabel(t("api_offline"));
+            setButtonLabel("api_offline");
         }
         if (!wasmSupported()) {
-            setButtonLabel(t("wasm_not_supported"));
+            setButtonLabel("wasm_not_supported");
         }
     });
 
@@ -217,7 +217,7 @@ export const CreateButton = () => {
             class={buttonClass()}
             disabled={buttonDisable()}
             onClick={buttonClick}>
-            {buttonLabel()}
+            {t(buttonLabel())}
         </button>
     );
 };
