@@ -32,7 +32,7 @@ import {
     valid,
     wasmSupported,
 } from "../signals";
-import { fetchLnurl } from "../utils/invoice";
+import { extractInvoice, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
 export const [buttonLabel, setButtonLabel] = createSignal("");
@@ -128,7 +128,7 @@ export const CreateButton = () => {
                 type: "submarine",
                 pairId: assetName + "/BTC",
                 orderSide: "sell",
-                invoice: invoice(),
+                invoice: extractInvoice(invoice()),
             };
 
             if (!isRsk) {
