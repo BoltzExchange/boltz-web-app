@@ -5,6 +5,7 @@ import { RBTC } from "../consts";
 import t from "../i18n";
 import {
     asset,
+    onchainAddress,
     reverse,
     sendAmountValid,
     setAddressValid,
@@ -53,6 +54,7 @@ const AddressInput = () => {
             id="onchainAddress"
             name="onchainAddress"
             placeholder={t("onchain_address", { asset: asset() })}
+            value={onchainAddress()}
         />
     );
 };
