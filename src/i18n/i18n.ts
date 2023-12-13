@@ -387,7 +387,7 @@ const dict = {
         send_to: "Enviar {{ amount }} {{ denomination }} a",
         pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
-        no_metamask: "MetaMask no instalado",
+        no_metamask: "MetaMask no está instalado",
         connect_metamask: "Conectar MetaMask",
         connect_to_address:
             "Conectar con MetaMask para establecer la dirección",
