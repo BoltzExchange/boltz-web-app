@@ -196,7 +196,6 @@ describe("validate onchain addresses", () => {
         asset   | address
         ${BTC}  | ${"bcrt1q78qtnjrt53gauk6h2w32wane62jjg2gvval6w5"}
         ${BTC}  | ${"2NFjs5VkEHkX65QrZHwCgwXdphBvKPr6trL"}
-        ${LBTC} | ${"VJL8BMWCv7HUq4dgCBJAQA1gHTWibWXPTjP1vXF92doTmpnD7a6b24t7epT3fXNi8nJfW2vYdLLf15vo"}
         ${LBTC} | ${"el1qqdmeywy40z2aasvaydsnmgqqqcgk92cvd9p9h4mpeh2x83dy79mhltd4al45ylxu33qsyu5l4z0srhagm5krl2n2cgxra5n88chxle7ctnpml5s983jr"}
     `("invalid address: $address", async ({ asset, address }) => {
         decodeAddress(asset, address);

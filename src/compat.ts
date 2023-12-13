@@ -77,6 +77,9 @@ const decodeAddress = (
                 addr,
             );
 
+            // validate network
+            address.toOutputScript(addr, getNetwork(asset));
+
             return {
                 script: decoded.scriptPubKey,
                 blindingKey: decoded.blindingKey,
