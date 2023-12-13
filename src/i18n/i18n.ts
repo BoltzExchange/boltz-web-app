@@ -62,6 +62,7 @@ const dict = {
         send_to: "Send {{ amount }} {{ denomination }} to",
         pay_invoice_to: "Pay this invoice for {{ amount }} {{ denomination }}",
         pay_address: "Address",
+        no_metamask: "MetaMask not installed",
         connect_metamask: "Connect MetaMask",
         connect_to_address: "Connect to MetaMask to set address",
         disconnect_address: "Disconnect MetaMask",
@@ -220,6 +221,7 @@ const dict = {
         send_to: "Sende {{ amount }} {{ denomination }} an",
         pay_invoice_to: "Zahle Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
+        no_metamask: "MetaMask ist nicht installiert",
         connect_metamask: "MetaMask verbinden",
         connect_to_address: "Mit MetaMask verbinden um Adresse zu setzen",
         disconnect_address: "MetaMask trennen",
@@ -385,6 +387,7 @@ const dict = {
         send_to: "Enviar {{ amount }} {{ denomination }} a",
         pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
+        no_metamask: "MetaMask no instalado",
         connect_metamask: "Conectar MetaMask",
         connect_to_address:
             "Conectar con MetaMask para establecer la dirección",

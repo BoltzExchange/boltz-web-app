@@ -2,8 +2,8 @@ import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json
 import { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
 import {
+    Accessor,
     ResolvedChildren,
-    Setter,
     createContext,
     createSignal,
     useContext,
@@ -15,24 +15,12 @@ import { getApiUrl } from "../helper";
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
 
-const ethereumInitEvent = "ethereum#initialized";
-
-const detectInjection = (setProvider: Setter<BrowserProvider>) => {
-    const handleEthereum = () => {
-        window.removeEventListener(ethereumInitEvent, handleEthereum);
-        setProvider(new BrowserProvider((window as any).ethereum));
-    };
-
-    if ((window as any).ethereum) {
-        handleEthereum();
-    } else {
-        window.addEventListener(ethereumInitEvent, handleEthereum);
-    }
-};
+const initEvent = "ethereum#initialized";
 
 const Web3SignerContext = createContext<{
     getSigner: () => Promise<JsonRpcSigner>;
     getEtherSwap: () => Promise<EtherSwap>;
+    hasMetamask: Accessor<boolean>;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -41,8 +29,19 @@ const Web3SignerProvider = (props: {
 }) => {
     const [provider, setProvider] = createSignal<BrowserProvider | undefined>();
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
+    const [hasMetamask, setHasMetamask] = createSignal<boolean>(false);
 
-    detectInjection(setProvider);
+    const handleMetamask = () => {
+        window.removeEventListener(initEvent, handleMetamask);
+        setProvider(new BrowserProvider((window as any).ethereum));
+        setHasMetamask(true);
+    };
+
+    if ((window as any).ethereum) {
+        handleMetamask();
+    } else {
+        window.addEventListener(initEvent, handleMetamask);
+    }
 
     const getContracts = new Promise(async (resolve) => {
         if (props.noFetch) {
@@ -76,6 +75,7 @@ const Web3SignerProvider = (props: {
             value={{
                 getSigner,
                 getEtherSwap,
+                hasMetamask,
             }}>
             {props.children}
         </Web3SignerContext.Provider>
