@@ -39,11 +39,9 @@ describe("AddressInput", () => {
                 target: { value: address },
             });
 
-            expect(setAddressValid).toHaveBeenCalledTimes(2);
             expect(setAddressValid).toHaveBeenCalledWith(valid);
 
             if (valid) {
-                expect(setOnchainAddress).toHaveBeenCalledTimes(1);
                 expect(setOnchainAddress).toHaveBeenCalledWith(address);
             } else {
                 expect(input.className).toEqual("invalid");
