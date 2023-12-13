@@ -1,4 +1,4 @@
-import { createEffect } from "solid-js";
+import { createEffect, on } from "solid-js";
 
 import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
@@ -40,11 +40,13 @@ const AddressInput = () => {
         }
     };
 
-    createEffect(() => {
-        if (sendAmountValid() && reverse() && asset() !== RBTC) {
-            validateAddress(inputRef);
-        }
-    });
+    createEffect(
+        on([sendAmountValid, onchainAddress], () => {
+            if (reverse() && asset() !== RBTC) {
+                validateAddress(inputRef);
+            }
+        }),
+    );
 
     return (
         <input
