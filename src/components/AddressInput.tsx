@@ -1,5 +1,6 @@
 import { createEffect } from "solid-js";
 
+import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
 import t from "../i18n";
 import {
@@ -9,7 +10,7 @@ import {
     setAddressValid,
     setOnchainAddress,
 } from "../signals";
-import { validateOnchainAddress } from "../utils/validation";
+import { extractAddress } from "../utils/invoice";
 import { setButtonLabel } from "./CreateButton";
 
 const AddressInput = () => {
@@ -17,14 +18,15 @@ const AddressInput = () => {
 
     const validateAddress = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
+        const address = extractAddress(inputValue);
 
         try {
             const assetName = asset();
-            validateOnchainAddress(inputValue, assetName);
+            decodeAddress(assetName, address);
             input.setCustomValidity("");
             input.classList.remove("invalid");
             setAddressValid(true);
-            setOnchainAddress(inputValue);
+            setOnchainAddress(address);
         } catch (e) {
             const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);

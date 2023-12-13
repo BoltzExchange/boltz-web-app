@@ -3,6 +3,8 @@ import { Contract } from "ethers";
 import log from "loglevel";
 import { beforeAll, describe, expect, test, vitest } from "vitest";
 
+import { decodeAddress } from "../../src/compat";
+import { BTC, LBTC } from "../../src/consts";
 import t from "../../src/i18n";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
@@ -186,5 +188,30 @@ describe("validate invoices", () => {
     `("valid invoice", async ({ invoice }) => {
         const sats = validateInvoice(invoice);
         expect(sats).toBeGreaterThan(0);
+    });
+});
+
+describe("validate onchain addresses", () => {
+    test.each`
+        asset   | address
+        ${BTC}  | ${"moEsJRFF6y3d5oSjHj6GBocVPw2GEeQ6WY"}
+        ${BTC}  | ${"bcrt1q78qtnjrt53gauk6h2w32wane62jjg2gvval6w5"}
+        ${LBTC} | ${"XaGQJMVzMDn7DNwKtRA9fJVEVkxVE1FjgW"}
+        ${LBTC} | ${"2dsdhiFYQADKEEkcdafMXcGtSL96HSmsr16"}
+        ${LBTC} | ${"CTEr9psVs76yrPL9PNrcSNx3Es1tC4EyboR4rtXYJguB6oFZWAUy3Kw7jSLTLee3xoiZc3fjsCi93Kfg"}
+        ${LBTC} | ${"AzpoeCb1nyd1D3SWHCvDJsbYDPtA6ith4uGRYz9RdjHttsDG7HhCrshphLYtApYBtzxy6rsXYZeS9h6a"}
+        ${LBTC} | ${"ert1q4k67l66z0nwgcsgzw20638cpm75d6tpl4f4vyrp76fnnutn0ulvqwe7ahr"}
+        ${LBTC} | ${"el1qqdmeywy40z2aasvaydsnmgqqqcgk92cvd9p9h4mpeh2x83dy79mhltd4al45ylxu33qsyu5l4z0srhagm5krl2n2cgxra5n88chxle7ctnpml5s983jr"}
+    `("should validate $address", async ({ asset, address }) => {
+        decodeAddress(asset, address);
+    });
+
+    test.each`
+        asset   | address
+        ${LBTC} | ${"VJL8BMWCv7HUq4dgCBJAQA1gHTWibWXPTjP1vXF92doTmpnD7a6b24t7epT3fXNi8nJfW2vYdLLf15vo"}
+        ${LBTC} | ${"ex1qdy58yy5vu4uq9yfwrnrhakhljnsx5zd4exs094"}
+        ${LBTC} | ${"lq1qqwdhep7uhzuav78mteywmt6h4lqeu6mq952kj92jvm6t2j3jz2w9j6fgwgfgeetcq2gju8x80md0l98qdgym2cakgvj5qlgjh"}
+    `("should throw $address", ({ asset, address }) => {
+        expect(() => decodeAddress(asset, address)).toThrow();
     });
 });

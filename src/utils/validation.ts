@@ -5,17 +5,12 @@ import { Buffer, Buffer as BufferBrowser } from "buffer";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
-import { decodeAddress, getAddress, getNetwork } from "../compat";
+import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
 import { ECPair, ecc } from "../ecpair/ecpair";
 import t from "../i18n";
 import { denominations, formatAmountDenomination } from "./denomination";
-import {
-    decodeInvoice,
-    isInvoice,
-    isLnurl,
-    trimLightningPrefix,
-} from "./invoice";
+import { decodeInvoice, extractInvoice, isInvoice, isLnurl } from "./invoice";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -206,13 +201,8 @@ export const validateResponse = async (
     }
 };
 
-export const validateOnchainAddress = (inputValue: string, asset: string) => {
-    const address = getAddress(asset);
-    address.toOutputScript(inputValue, getNetwork(asset));
-};
-
 export const validateInvoice = (inputValue: string) => {
-    inputValue = trimLightningPrefix(inputValue);
+    inputValue = extractInvoice(inputValue);
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
         // set receive/send when invoice differs from the amounts

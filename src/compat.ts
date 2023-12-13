@@ -70,6 +70,9 @@ const decodeAddress = (
 ): { script: Buffer; blindingKey?: Buffer } => {
     const address = getAddress(asset);
 
+    // We always do this to validate the network
+    const script = address.toOutputScript(addr, getNetwork(asset));
+
     if (asset === LBTC) {
         // This throws for unconfidential addresses -> fallback to output script decoding
         try {
@@ -78,14 +81,14 @@ const decodeAddress = (
             );
 
             return {
-                script: decoded.scriptPubKey,
+                script,
                 blindingKey: decoded.blindingKey,
             };
         } catch (e) {}
     }
 
     return {
-        script: address.toOutputScript(addr, getNetwork(asset)),
+        script,
     };
 };
 

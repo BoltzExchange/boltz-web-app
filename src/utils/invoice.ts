@@ -18,6 +18,10 @@ type LnurlCallbackResponse = {
 };
 
 export const invoicePrefix = "lightning:";
+export const bitcoinPrefix = "bitcoin:";
+export const liquidPrefix = "liquidnetwork:";
+export const liquidTestnetPrefix = "liquidtestnet:";
+
 export const maxExpiryHours = 24;
 
 export const getExpiryEtaHours = (invoice: string): number => {
@@ -104,12 +108,34 @@ export const fetchLnurl = (
     });
 };
 
-export const trimLightningPrefix = (invoice: string) => {
-    if (invoice.toLowerCase().startsWith(invoicePrefix)) {
-        return invoice.slice(invoicePrefix.length);
-    }
+export const isBip21 = (data: string) => {
+    data = data.toLowerCase();
+    return (
+        data.startsWith(bitcoinPrefix) ||
+        data.startsWith(liquidPrefix) ||
+        data.startsWith(liquidTestnetPrefix)
+    );
+};
 
-    return invoice;
+export const extractInvoice = (data: string) => {
+    data = data.toLowerCase();
+    if (data.startsWith(invoicePrefix)) {
+        const url = new URL(data);
+        return url.pathname;
+    }
+    if (isBip21(data)) {
+        const url = new URL(data);
+        return url.searchParams.get("lightning") || "";
+    }
+    return data;
+};
+
+export const extractAddress = (data: string) => {
+    if (isBip21(data)) {
+        const url = new URL(data);
+        return url.pathname;
+    }
+    return data;
 };
 
 export const isInvoice = (data: string) => {
@@ -129,7 +155,7 @@ const emailRegex =
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 export const isLnurl = (data: string) => {
-    data = trimLightningPrefix(data.toLowerCase());
+    data = data.toLowerCase().replace(invoicePrefix, "");
     return (
         (data.includes("@") && emailRegex.test(data)) ||
         (data.startsWith("lnurl") && isValidBech32(data))
