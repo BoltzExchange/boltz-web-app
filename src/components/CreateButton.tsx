@@ -32,7 +32,7 @@ import {
     valid,
     wasmSupported,
 } from "../signals";
-import { extractAddress, extractInvoice, fetchLnurl } from "../utils/invoice";
+import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
 export const [buttonLabel, setButtonLabel] = createSignal("");
@@ -128,7 +128,7 @@ export const CreateButton = () => {
                 type: "submarine",
                 pairId: assetName + "/BTC",
                 orderSide: "sell",
-                invoice: extractInvoice(invoice()),
+                invoice: invoice(),
             };
 
             if (!isRsk) {
@@ -162,7 +162,7 @@ export const CreateButton = () => {
                     }
 
                     if (!data.reverse) {
-                        data.invoice = extractInvoice(invoice());
+                        data.invoice = invoice();
                     }
 
                     validateResponse(data, getEtherSwap).then((success) => {

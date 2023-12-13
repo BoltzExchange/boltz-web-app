@@ -18,15 +18,15 @@ import {
     setSendAmount,
 } from "../signals";
 import { calculateSendAmount } from "../utils/calculate";
-import { decodeInvoice, isLnurl } from "../utils/invoice";
+import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 import { setButtonLabel } from "./CreateButton";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const validateAddress = (input: HTMLTextAreaElement) => {
-        const inputValue = input.value.trim();
+    const validate = (input: HTMLTextAreaElement) => {
+        const inputValue = extractInvoice(input.value.trim());
         try {
             if (isLnurl(inputValue)) {
                 setButtonLabel(t("fetch_lnurl"));
@@ -53,7 +53,7 @@ const InvoiceInput = () => {
     createEffect(
         on([sendAmountValid, invoice], () => {
             if (!reverse() && asset() !== RBTC) {
-                validateAddress(inputRef);
+                validate(inputRef);
             }
         }),
     );
@@ -79,9 +79,9 @@ const InvoiceInput = () => {
         <textarea
             required
             ref={inputRef}
-            onInput={(e) => validateAddress(e.currentTarget)}
-            onKeyUp={(e) => validateAddress(e.currentTarget)}
-            onPaste={(e) => validateAddress(e.currentTarget)}
+            onInput={(e) => validate(e.currentTarget)}
+            onKeyUp={(e) => validate(e.currentTarget)}
+            onPaste={(e) => validate(e.currentTarget)}
             id="invoice"
             data-testid="invoice"
             name="invoice"

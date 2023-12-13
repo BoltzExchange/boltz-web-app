@@ -11,7 +11,11 @@ import {
     setReverse,
     setSendAmount,
 } from "../../src/signals";
-import { decodeInvoice } from "../../src/utils/invoice";
+import {
+    decodeInvoice,
+    extractInvoice,
+    invoicePrefix,
+} from "../../src/utils/invoice";
 
 describe("InvoiceInput", () => {
     test.each`
@@ -96,10 +100,53 @@ describe("InvoiceInput", () => {
         });
 
         expect(setLnurl).toHaveBeenCalledTimes(1);
-        expect(setLnurl).toHaveBeenCalledWith(lnurl);
+        expect(setLnurl).toHaveBeenCalledWith(lnurl.toLowerCase());
 
         setSendAmount(sendAmount() + 1);
 
         expect(input.value).toEqual(lnurl);
+    });
+
+    test("should remove prefix of invoices", async () => {
+        const invoice =
+            "lightning:lnbcrt235565340n1pjn87jmpp53jk5vw5z7n43wqyvv5ypma89xvkgahgdrvzxfn922485w2guxjasdqqcqzzsxqyz5vqsp5npwtpwa76526wcqxp66lzt43jdeqdxkud2j6ypjt2kyqscd6q4eq9qyyssquwlyf0vjsdyeck79mg5726llxxzv674xyr8ct5qgv28k62pmlr35kc2z8j96lc7ph403mgjxt9q8hzaeywmsrh4lg88uslyytvsnf5sp3lulnq";
+
+        setReverse(false);
+
+        render(() => <InvoiceInput />);
+
+        const input = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        const setInvoice = vi.spyOn(signals, "setInvoice");
+
+        fireEvent.input(input, {
+            target: { value: invoice },
+        });
+
+        expect(setInvoice).toHaveBeenCalledWith(extractInvoice(invoice));
+    });
+
+    test.each`
+        lnurl
+        ${`${invoicePrefix}m@some.domain`}
+        ${`${invoicePrefix}LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH`}
+    `("should remove prefix of lnurl $lnurl", async ({ lnurl }) => {
+        setReverse(false);
+
+        render(() => <InvoiceInput />);
+
+        const input = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        const setLnurl = vi.spyOn(signals, "setLnurl");
+
+        fireEvent.input(input, {
+            target: { value: lnurl },
+        });
+
+        expect(setLnurl).toHaveBeenCalledWith(extractInvoice(lnurl));
     });
 });
