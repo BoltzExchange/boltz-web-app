@@ -153,7 +153,7 @@ export const Hero = () => {
                             class="fuji"></a>
                     </div>
                 </div>
-                <h2 class="headline">{t("partners")}</h2>
+                <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
                     <div>
                         <a
