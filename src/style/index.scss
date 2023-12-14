@@ -2,7 +2,7 @@
 
 * {
     box-sizing: border-box;
-    font-family: "Alexandria", sans;
+    font-family: "Noto Sans", sans;
 }
 
 body {
@@ -10,7 +10,6 @@ body {
     margin: 0;
     background: $background;
     color: $color;
-    font-family: sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
@@ -33,6 +32,7 @@ a:hover {
 .headline,
 h1 {
     color: rgba(255, 255, 255, 0.3);
+    font-weight: 800;
 }
 
 h2 {
@@ -296,7 +296,7 @@ textarea.invalid {
 }
 #receiveAmount,
 #sendAmount {
-    font-size: 36px;
+    font-size: 33px;
     text-align: right;
 }
 @media (max-width: 488px) {
@@ -381,6 +381,7 @@ textarea {
 @media (min-width: 488px) {
     .frame {
         margin-top: 74px;
+        margin-bottom: 56px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
     }

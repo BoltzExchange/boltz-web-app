@@ -1,5 +1,6 @@
 /* @refresh reload */
-import "@fontsource/alexandria";
+import "@fontsource/noto-sans";
+import "@fontsource/noto-sans/800.css";
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
 import { createRoot, createSignal } from "solid-js";

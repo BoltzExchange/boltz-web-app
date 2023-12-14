@@ -10,7 +10,7 @@ h1 {
         rgb(0, 88, 255) 100%
     );
     -webkit-background-clip: text;
-    margin: 74px 12px 12px;
+    margin: 24px 12px 12px;
 }
 h2.headline {
     font-size: 42px;
@@ -19,7 +19,7 @@ h2.headline {
 
 .headline small,
 h1 small {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: normal;
     display: block;
     color: rgba(255, 255, 255, 0.9);
@@ -106,7 +106,7 @@ h3 {
     background: transparent;
 }
 .number {
-    font-size: 42px;
+    font-size: 36px;
     font-weight: bold;
     margin-bottom: 16px;
 }
@@ -252,7 +252,7 @@ h3 {
 #partners > div > a,
 #integrations > div > a:before,
 #integrations > div > a {
-    opacity: 0.5;
+    opacity: 0.8;
     // filter: brightness(1000) grayscale(1);
     transition: opacity 0.4s ease-in-out;
 }
@@ -266,13 +266,13 @@ h3 {
 
 #create-overlay.glow {
     transition: all 0.8s ease-in-out;
-    height: 280px;
+    // height: 280px;
     overflow: hidden;
     opacity: 0.42;
 }
 #create-overlay.glow:hover {
     transition: all 0.8s ease-in-out;
-    height: 290px;
+    // height: 290px;
     opacity: 0.8;
 }
 #create-overlay.glow .frame {
