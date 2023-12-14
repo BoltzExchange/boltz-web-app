@@ -236,8 +236,7 @@ const dict = {
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
-        invalid_invoice:
-            "Bitte gültige LN-Rechnung, LNAdresse or LNURL eingeben",
+        invalid_invoice: "Bitte gültige Rechnung, LNAdresse/LNURL eingeben",
         invalid_0_amount: "Lightning Rechnungen ohne Betrag nicht unterstützt",
         copy_invoice: "Lightning-Rechnung kopieren",
         copy_address: "Adresse kopieren",
