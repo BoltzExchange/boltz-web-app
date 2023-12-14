@@ -1,6 +1,6 @@
 import ContractTransaction from "../components/ContractTransaction";
 import QrCode from "../components/QrCode";
-import { RBTC } from "../consts";
+import { BTC, RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import { clipboard, cropString } from "../helper";
 import t from "../i18n";
@@ -62,8 +62,10 @@ const InvoiceSet = () => {
                 {cropString(swap().address)}
             </p>
             <hr />
-            <h3>{t("warning_expiry")}</h3>
-            <hr />
+            <Show when={swap().asset === BTC}>
+                <h3>{t("warning_expiry")}</h3>
+                <hr />
+            </Show>
             <div class="btns">
                 <span
                     class="btn"
