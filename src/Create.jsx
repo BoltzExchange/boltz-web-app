@@ -137,7 +137,7 @@ const Create = () => {
                 },
             );
             setCustomValidity(errorMsg, amount === 0);
-            setButtonLabel(errorMsg);
+            setButtonLabel(lessThanMin ? "minimum_amount" : "maximum_amount");
             setSendAmountValid(false);
             return;
         }

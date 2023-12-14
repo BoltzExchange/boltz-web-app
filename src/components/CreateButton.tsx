@@ -12,8 +12,11 @@ import t from "../i18n";
 import {
     asset,
     config,
+    denomination,
     invoice,
     lnurl,
+    maximum,
+    minimum,
     onchainAddress,
     online,
     receiveAmount,
@@ -32,6 +35,7 @@ import {
     valid,
     wasmSupported,
 } from "../signals";
+import { formatAmount } from "../utils/denomination";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
@@ -211,13 +215,32 @@ export const CreateButton = () => {
             });
     };
 
+    const languageParams = () => {
+        if (buttonLabel() === "minimum_amount") {
+            return {
+                amount: formatAmount(minimum()),
+                denomination: denomination(),
+            };
+        } else if (buttonLabel() === "maximum_amount") {
+            return {
+                amount: formatAmount(maximum()),
+                denomination: denomination(),
+            };
+        } else if (buttonLabel() === "invalid_invoice") {
+            return {
+                asset: asset(),
+            };
+        }
+        return {};
+    };
+
     return (
         <button
             id="create-swap-button"
             class={buttonClass()}
             disabled={buttonDisable()}
             onClick={buttonClick}>
-            {t(buttonLabel())}
+            {t(buttonLabel(), languageParams())}
         </button>
     );
 };
