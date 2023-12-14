@@ -31,8 +31,8 @@ const AddressInput = () => {
             const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);
             input.classList.add("invalid");
-            input.setCustomValidity("invalid_address");
-            setButtonLabel(msg);
+            input.setCustomValidity(msg);
+            setButtonLabel("invalid_address");
         }
     };
 

@@ -51,7 +51,7 @@ export const decodeInvoice = (
             ).data as string,
         };
     } catch (e) {
-        throw new Error(t("invalid_invoice"));
+        throw new Error("invalid_invoice");
     }
 };
 
