@@ -75,8 +75,8 @@ const dict = {
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
-        invalid_invoice: "Not a valid Lightning invoice, LNAddress or LNURL",
-        invalid_0_amount: "0 amount invoices are not allowed",
+        invalid_invoice: "Please provide a valid LN invoice, LNAddress or LNURL",
+        invalid_0_amount: "Invoices without amount are not supported",
         copy_invoice: "Copy lightning invoice",
         copy_address: "Copy address",
         copy_amount: "Copy amount",
@@ -154,7 +154,7 @@ const dict = {
         back_to_home: "Back to Home",
         transaction_prompt:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
-        fetch_lnurl: "Fetch invoice from LNURL / LNAddress",
+        fetch_lnurl: "Fetch invoice from LNURL/LNAddress",
         invalid_address: "Invalid {{ asset }} address",
     },
     de: {
@@ -235,8 +235,8 @@ const dict = {
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
-        invalid_invoice: "Not a valid Lightning invoice, LNAddress or LNURL",
-        invalid_0_amount: "0 amount invoices are not allowed",
+        invalid_invoice: "Bitte gültige LN-Rechnung, LNAdresse or LNURL eingeben",
+        invalid_0_amount: "Lightning Rechnungen ohne Betrag nicht unterstützt",
         copy_invoice: "Lightning-Rechnung kopieren",
         copy_address: "Adresse kopieren",
         copy_amount: "Betrag kopieren",
@@ -320,8 +320,8 @@ const dict = {
         back_to_home: "Zurück zur Startseite",
         transaction_prompt:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
-        fetch_lnurl: "Hole Rechnung von LNURL / LNAddress",
-        invalid_address: "Invalid {{ asset }} address",
+        fetch_lnurl: "Hole Rechnung von LNURL/LNAdresse",
+        invalid_address: "Ungültige {{ asset }} Adresse",
     },
     es: {
         language: "Español",
@@ -401,8 +401,8 @@ const dict = {
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
-        invalid_invoice: "Not a valid Lightning invoice, LNAddress or LNURL",
-        invalid_0_amount: "0 amount invoices are not allowed",
+        invalid_invoice: "Por favor, pegue una factura, LNAddress o LNURL válida",
+        invalid_0_amount: "No se admiten facturas sin importe",
         copy_invoice: "Copiar factura Lightning",
         copy_address: "Copiar dirección",
         copy_amount: "Copiar monto",
@@ -485,8 +485,8 @@ const dict = {
         back_to_home: "Volver al inicio",
         transaction_prompt:
             'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
-        fetch_lnurl: "Fetch invoice from LNURL / LNdAdress",
-        invalid_address: "Invalid {{ asset }} address",
+        fetch_lnurl: "Obtener factura de LNURL/LNAddress",
+        invalid_address: "Dirección {{ asset }} inválida",
     },
 };
 
