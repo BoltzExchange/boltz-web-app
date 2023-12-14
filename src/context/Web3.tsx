@@ -32,14 +32,14 @@ const Web3SignerProvider = (props: {
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
     const [hasMetamask, setHasMetamask] = createSignal<boolean>(false);
 
+    const hasRsk = pairs[`${RBTC}/BTC`] !== undefined;
+
     const handleMetamask = () => {
         window.removeEventListener(initEvent, handleMetamask);
-        if (pairs[`${RBTC}/BTC`]) {
+        if (hasRsk) {
             setProvider(new BrowserProvider((window as any).ethereum));
-            setHasMetamask(true);
-        } else {
-            setHasMetamask(false);
         }
+        setHasMetamask(true);
     };
 
     if ((window as any).ethereum) {
@@ -49,7 +49,7 @@ const Web3SignerProvider = (props: {
     }
 
     const getContracts = new Promise(async (resolve) => {
-        if (props.noFetch || !hasMetamask()) {
+        if (props.noFetch || !hasRsk) {
             return;
         }
 
