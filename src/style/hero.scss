@@ -268,14 +268,12 @@ h3 {
 
 #create-overlay.glow {
     transition: all 0.8s ease-in-out;
-    // height: 280px;
     overflow: hidden;
-    opacity: 0.42;
+    opacity: 0.8;
 }
 #create-overlay.glow:hover {
     transition: all 0.8s ease-in-out;
-    // height: 290px;
-    opacity: 0.8;
+    opacity: 1;
 }
 #create-overlay.glow .frame {
     transition: all 0.8s ease-in-out;
@@ -284,6 +282,9 @@ h3 {
 
 @media (min-width: 488px) {
     #create-overlay.glow .frame {
+        box-shadow: 0 0 40px transparentize($primary, 0.7);
+    }
+    #create-overlay.glow .frame:hover {
         box-shadow: 0 0 60px transparentize($primary, 0.7);
     }
 }
