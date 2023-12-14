@@ -79,7 +79,7 @@ export const Hero = () => {
                         <img src={liquid} alt="Liquid Bitcoin" />
                     </div>
                 </div>
-                <h2 class="headline" onclick={openNodeInfo}>
+                <h2 class="headline pointer" onclick={openNodeInfo}>
                     {t("node")}
                 </h2>
                 <div id="numbers">
