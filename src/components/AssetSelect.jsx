@@ -13,6 +13,9 @@ import {
     setAssetSend,
 } from "../signals";
 
+const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
+assets.push(LN);
+
 const SelectAsset = () => {
     const setSelectAsset = (isSend, asset) => {
         const setter = isSend ? setAssetSend : setAssetReceive;
@@ -50,14 +53,6 @@ const SelectAsset = () => {
         );
     };
 
-    const assets = () => {
-        const names = Object.keys(pairs).map((pair) => {
-            return pair.split("/")[0];
-        });
-        names.push(LN);
-        return names;
-    };
-
     return (
         <div
             class="frame assets-select"
@@ -84,7 +79,7 @@ const SelectAsset = () => {
                 />
             </svg>
             <hr />
-            {assets().map((asset) => (
+            {assets.map((asset) => (
                 <div
                     class={`asset-select asset-${asset}`}
                     data-selected={isSelected(asset)}
