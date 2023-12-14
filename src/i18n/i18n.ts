@@ -402,8 +402,7 @@ const dict = {
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
-        invalid_invoice:
-            "Por favor, pegue una factura, LNAddress o LNURL válida",
+        invalid_invoice: "Por favor, pegue una factura, LNAddress/LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
         copy_invoice: "Copiar factura Lightning",
         copy_address: "Copiar dirección",
