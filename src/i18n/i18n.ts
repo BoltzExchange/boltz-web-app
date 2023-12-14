@@ -75,7 +75,8 @@ const dict = {
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
-        invalid_invoice: "Please provide a valid LN invoice, LNAddress or LNURL",
+        invalid_invoice:
+            "Please provide a valid LN invoice, LNAddress or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
         copy_invoice: "Copy lightning invoice",
         copy_address: "Copy address",
@@ -235,7 +236,8 @@ const dict = {
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
-        invalid_invoice: "Bitte gültige LN-Rechnung, LNAdresse or LNURL eingeben",
+        invalid_invoice:
+            "Bitte gültige LN-Rechnung, LNAdresse or LNURL eingeben",
         invalid_0_amount: "Lightning Rechnungen ohne Betrag nicht unterstützt",
         copy_invoice: "Lightning-Rechnung kopieren",
         copy_address: "Adresse kopieren",
@@ -401,7 +403,8 @@ const dict = {
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
-        invalid_invoice: "Por favor, pegue una factura, LNAddress o LNURL válida",
+        invalid_invoice:
+            "Por favor, pegue una factura, LNAddress o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
         copy_invoice: "Copiar factura Lightning",
         copy_address: "Copiar dirección",

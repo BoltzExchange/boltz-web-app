@@ -22,7 +22,7 @@
         "eventsource": "^2.0.2",
         "git-cliff": "^1.4.0",
         "jsdom": "^22.1.0",
-        "prettier": "^3.1.0",
+        "prettier": "^3.1.1",
         "sass": "^1.69.5",
         "typescript": "^5.2.2",
         "vite": "^4.5.1",
