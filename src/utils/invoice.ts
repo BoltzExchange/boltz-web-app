@@ -4,7 +4,6 @@ import log from "loglevel";
 
 import { bolt11_prefix } from "../config";
 import { errorHandler } from "../helper";
-import t from "../i18n";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {
