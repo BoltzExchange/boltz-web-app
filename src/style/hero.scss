@@ -13,8 +13,10 @@ h1 {
     margin: 24px 12px 12px;
 }
 h2.headline {
-    font-size: 42px;
+    font-size: 28px;
     margin: 62px 12px 12px;
+    opacity: 0.5;
+    background: none;
 }
 
 .headline small,
@@ -56,7 +58,7 @@ h3 {
 }
 
 .hero-boxes {
-    margin: 72px 0 142px;
+    margin: 72px 0 122px;
     display: flex;
 }
 .hero-box {
@@ -83,7 +85,7 @@ h3 {
 #numbers {
     display: flex;
     justify-content: space-between;
-    margin: 50px 0 142px;
+    margin: 50px 0 122px;
     padding: 0 42px;
 }
 
@@ -241,7 +243,7 @@ h3 {
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    margin: 40px 0 142px;
+    margin: 40px 0 122px;
 }
 
 #partners > div,
