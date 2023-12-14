@@ -81,7 +81,6 @@ export const Hero = () => {
                 </div>
                 <h2 class="headline" onclick={openNodeInfo}>
                     {t("node")}
-                    <small>{t("node_subline")}</small>
                 </h2>
                 <div id="numbers">
                     <div class="number">
@@ -99,10 +98,7 @@ export const Hero = () => {
                     </div>
                 </div>
 
-                <h2 class="headline">
-                    {t("integrations")}
-                    <small>{t("integrations_subline")}</small>
-                </h2>
+                <h2 class="headline">{t("integrations")}</h2>
                 <div id="integrations">
                     <div>
                         <a
@@ -157,10 +153,7 @@ export const Hero = () => {
                             class="fuji"></a>
                     </div>
                 </div>
-                <h2 class="headline">
-                    {t("partners")}
-                    <small>{t("partners_subline")}</small>
-                </h2>
+                <h2 class="headline">{t("partners")}</h2>
                 <div id="partners">
                     <div>
                         <a

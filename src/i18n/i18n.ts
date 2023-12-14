@@ -12,8 +12,6 @@ const dict = {
         non_custodial_sub:
             "Swaps on Boltz are non-custodial; cryptography ensures that users are always in control of their money",
         node: "Lightning Node",
-        node_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         lightningnode: "view lightning node",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",
@@ -141,11 +139,7 @@ const dict = {
         subline: "Can't be evil. You are in control of your money. Always.",
         start_swapping: "Start Swapping",
         partners: "Partners",
-        partners_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         integrations: "Integrations",
-        integrations_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         oldest_channel_years: "{{ years }} yrs",
         oldest_channel: "Oldest Channel",
         capacity: "Capacity (sats)",
@@ -176,8 +170,6 @@ const dict = {
         non_custodial_sub:
             "Swaps auf Boltz sind non-custodial; Kryptografie stellt sicher, dass du stets die Kontrolle über deine Bitcoin behältst",
         node: "Knoten",
-        node_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         lightningnode: "Knoten anzeigen",
         error: "Fehler",
         error_subline:
@@ -312,11 +304,7 @@ const dict = {
         subline: "Du hast volle Kontrolle über deine Bitcoin. Zu jeder Zeit.",
         start_swapping: "Starte Swap",
         partners: "Partner",
-        partners_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         integrations: "Integrationen",
-        integrations_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         oldest_channel_years: "{{ years }} Jahre",
         oldest_channel: "Ältester Kanal",
         capacity: "Kapazität (Sats)",
@@ -348,8 +336,6 @@ const dict = {
         non_custodial_sub:
             "Los intercambios en Boltz son sin custodia; la criptografía garantiza que los usuarios siempre tienen el control de su Bitcoin",
         node: "Nodo",
-        node_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         lightningnode: "Ver nodo Lightning",
         error: "Error",
         error_subline: "Respuesta inválida de la API, algo está mal :/",
@@ -483,11 +469,7 @@ const dict = {
         subline: "Tienes el control de tu dinero. Siempre.",
         start_swapping: "Comenzar a intercambiar",
         partners: "Socios",
-        partners_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         integrations: "Integraciones",
-        integrations_subline:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         oldest_channel_years: "{{ years }} años",
         oldest_channel: "Canal más antiguo",
         capacity: "Capacidad (sats)",
