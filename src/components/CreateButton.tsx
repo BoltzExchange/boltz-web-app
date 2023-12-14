@@ -12,11 +12,8 @@ import t from "../i18n";
 import {
     asset,
     config,
-    denomination,
     invoice,
     lnurl,
-    maximum,
-    minimum,
     onchainAddress,
     online,
     receiveAmount,
@@ -35,11 +32,17 @@ import {
     valid,
     wasmSupported,
 } from "../signals";
-import { formatAmount } from "../utils/denomination";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
-export const [buttonLabel, setButtonLabel] = createSignal("");
+type buttonLabelParams = {
+    key: string;
+    params?: Record<string, string>;
+};
+
+export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
+    key: "create_swap",
+});
 
 export const CreateButton = () => {
     const navigate = useNavigate();
@@ -68,16 +71,16 @@ export const CreateButton = () => {
     createEffect(() => {
         if (valid()) {
             if (reverse() && lnurl()) {
-                setButtonLabel("fetch_lnurl");
+                setButtonLabel({ key: "fetch_lnurl" });
             } else {
-                setButtonLabel("create_swap");
+                setButtonLabel({ key: "create_swap" });
             }
         }
         if (!online()) {
-            setButtonLabel("api_offline");
+            setButtonLabel({ key: "api_offline" });
         }
         if (!wasmSupported()) {
-            setButtonLabel("wasm_not_supported");
+            setButtonLabel({ key: "wasm_not_supported" });
         }
     });
 
@@ -215,23 +218,8 @@ export const CreateButton = () => {
             });
     };
 
-    const languageParams = () => {
-        if (buttonLabel() === "minimum_amount") {
-            return {
-                amount: formatAmount(minimum()),
-                denomination: denomination(),
-            };
-        } else if (buttonLabel() === "maximum_amount") {
-            return {
-                amount: formatAmount(maximum()),
-                denomination: denomination(),
-            };
-        } else if (buttonLabel() === "invalid_invoice") {
-            return {
-                asset: asset(),
-            };
-        }
-        return {};
+    const getButtonLabel = (label: buttonLabelParams) => {
+        return t(label.key, label.params);
     };
 
     return (
@@ -240,7 +228,7 @@ export const CreateButton = () => {
             class={buttonClass()}
             disabled={buttonDisable()}
             onClick={buttonClick}>
-            {t(buttonLabel(), languageParams())}
+            {getButtonLabel(buttonLabel())}
         </button>
     );
 };

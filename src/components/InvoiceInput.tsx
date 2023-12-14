@@ -29,7 +29,7 @@ const InvoiceInput = () => {
         const inputValue = extractInvoice(input.value.trim());
         try {
             if (isLnurl(inputValue)) {
-                setButtonLabel("fetch_lnurl");
+                setButtonLabel({ key: "fetch_lnurl" });
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
@@ -45,7 +45,7 @@ const InvoiceInput = () => {
             setInvoiceValid(false);
             setLnurl(false);
             input.setCustomValidity(t(e.message));
-            setButtonLabel(e.message);
+            setButtonLabel({ key: e.message });
             input.classList.add("invalid");
         }
     };
