@@ -9,6 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
+import { pairs } from "../config";
 import { RBTC } from "../consts";
 import { getApiUrl } from "../helper";
 
@@ -33,8 +34,12 @@ const Web3SignerProvider = (props: {
 
     const handleMetamask = () => {
         window.removeEventListener(initEvent, handleMetamask);
-        setProvider(new BrowserProvider((window as any).ethereum));
-        setHasMetamask(true);
+        if (pairs[`${RBTC}/BTC`]) {
+            setProvider(new BrowserProvider((window as any).ethereum));
+            setHasMetamask(true);
+        } else {
+            setHasMetamask(false);
+        }
     };
 
     if ((window as any).ethereum) {
@@ -44,7 +49,7 @@ const Web3SignerProvider = (props: {
     }
 
     const getContracts = new Promise(async (resolve) => {
-        if (props.noFetch) {
+        if (props.noFetch || !hasMetamask()) {
             return;
         }
 
