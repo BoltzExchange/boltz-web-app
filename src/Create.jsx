@@ -269,14 +269,13 @@ const Create = () => {
                 </div>
             </div>
             <Fees />
-            <hr />
+            <hr class="spacer" />
             <Show when={asset() === RBTC}>
                 <ConnectMetamask showAddress={true} />
-                <hr />
+                <hr class="spacer" />
             </Show>
             <Show when={reverse() && asset() !== RBTC}>
                 <AddressInput />
-                <hr />
             </Show>
             <Show when={!reverse()}>
                 <Show when={webln()}>
@@ -286,10 +285,9 @@ const Create = () => {
                         onClick={() => createWeblnInvoice()}>
                         {t("create_invoice_webln")}
                     </button>
-                    <hr />
+                    <hr class="spacer" />
                 </Show>
                 <InvoiceInput />
-                <hr />
             </Show>
             <CreateButton />
             <AssetSelect />
