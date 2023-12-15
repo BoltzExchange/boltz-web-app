@@ -151,7 +151,6 @@ export const CreateButton = () => {
                     data.asset = asset();
                     data.receiveAmount = Number(receiveAmount());
                     data.sendAmount = Number(sendAmount());
-                    data.onchainAddress = extractAddress(onchainAddress());
 
                     if (keyPair !== null) {
                         data.privateKey = keyPair.privateKey.toString("hex");
@@ -161,7 +160,12 @@ export const CreateButton = () => {
                         data.preimage = preimage.toString("hex");
                     }
 
-                    if (!data.reverse) {
+                    if (data.reverse) {
+                        const addr = onchainAddress();
+                        if (addr) {
+                            data.onchainAddress = extractAddress(addr);
+                        }
+                    } else {
                         data.invoice = invoice();
                     }
 
