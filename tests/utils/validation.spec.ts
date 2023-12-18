@@ -5,7 +5,6 @@ import { beforeAll, describe, expect, test, vitest } from "vitest";
 
 import { decodeAddress } from "../../src/compat";
 import { BTC, LBTC } from "../../src/consts";
-import t from "../../src/i18n";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
@@ -179,7 +178,7 @@ describe("validate invoices", () => {
         try {
             validateInvoice(invoice);
         } catch (e) {
-            expect(e.message).toEqual(t(error));
+            expect(e.message).toEqual(error);
         }
     });
     test.each`

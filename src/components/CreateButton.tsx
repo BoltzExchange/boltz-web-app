@@ -35,7 +35,14 @@ import {
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
-export const [buttonLabel, setButtonLabel] = createSignal("");
+type buttonLabelParams = {
+    key: string;
+    params?: Record<string, string>;
+};
+
+export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
+    key: "create_swap",
+});
 
 export const CreateButton = () => {
     const navigate = useNavigate();
@@ -64,16 +71,16 @@ export const CreateButton = () => {
     createEffect(() => {
         if (valid()) {
             if (reverse() && lnurl()) {
-                setButtonLabel(t("fetch_lnurl"));
+                setButtonLabel({ key: "fetch_lnurl" });
             } else {
-                setButtonLabel(t("create_swap"));
+                setButtonLabel({ key: "create_swap" });
             }
         }
         if (!online()) {
-            setButtonLabel(t("api_offline"));
+            setButtonLabel({ key: "api_offline" });
         }
         if (!wasmSupported()) {
-            setButtonLabel(t("wasm_not_supported"));
+            setButtonLabel({ key: "wasm_not_supported" });
         }
     });
 
@@ -215,13 +222,17 @@ export const CreateButton = () => {
             });
     };
 
+    const getButtonLabel = (label: buttonLabelParams) => {
+        return t(label.key, label.params);
+    };
+
     return (
         <button
             id="create-swap-button"
             class={buttonClass()}
             disabled={buttonDisable()}
             onClick={buttonClick}>
-            {buttonLabel()}
+            {getButtonLabel(buttonLabel())}
         </button>
     );
 };

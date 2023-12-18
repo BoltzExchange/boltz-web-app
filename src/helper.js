@@ -19,7 +19,6 @@ import {
     asset,
     ref,
     refundAddress,
-    setAsset,
     setConfig,
     setFailureReason,
     setNotification,

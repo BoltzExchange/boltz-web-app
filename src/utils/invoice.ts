@@ -4,7 +4,6 @@ import log from "loglevel";
 
 import { bolt11_prefix } from "../config";
 import { errorHandler } from "../helper";
-import t from "../i18n";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {
@@ -51,7 +50,7 @@ export const decodeInvoice = (
             ).data as string,
         };
     } catch (e) {
-        throw new Error(t("invalid_invoice"));
+        throw new Error("invalid_invoice");
     }
 };
 

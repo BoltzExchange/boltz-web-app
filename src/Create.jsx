@@ -129,15 +129,14 @@ const Create = () => {
         const lessThanMin = amount < minimum();
 
         if (lessThanMin || amount > maximum()) {
-            const errorMsg = t(
-                lessThanMin ? "minimum_amount" : "maximum_amount",
-                {
-                    amount: formatAmount(lessThanMin ? minimum() : maximum()),
-                    denomination: denomination(),
-                },
-            );
+            const params = {
+                amount: formatAmount(lessThanMin ? minimum() : maximum()),
+                denomination: denomination(),
+            };
+            const label = lessThanMin ? "minimum_amount" : "maximum_amount";
+            const errorMsg = t(label, params);
             setCustomValidity(errorMsg, amount === 0);
-            setButtonLabel(errorMsg);
+            setButtonLabel({ key: label, params: params });
             setSendAmountValid(false);
             return;
         }

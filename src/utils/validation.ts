@@ -8,7 +8,6 @@ import log from "loglevel";
 import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
 import { ECPair, ecc } from "../ecpair/ecpair";
-import t from "../i18n";
 import { denominations, formatAmountDenomination } from "./denomination";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
 
@@ -208,10 +207,10 @@ export const validateInvoice = (inputValue: string) => {
         if (isInputInvoice) {
             const decoded = decodeInvoice(inputValue);
             if (decoded.satoshis === null || decoded.satoshis === 0) {
-                throw new Error(t("invalid_0_amount"));
+                throw new Error("invalid_0_amount");
             }
             return decoded.satoshis;
         }
     }
-    throw new Error(t("invalid_invoice"));
+    throw new Error("invalid_invoice");
 };

@@ -32,7 +32,10 @@ const AddressInput = () => {
             setAddressValid(false);
             input.classList.add("invalid");
             input.setCustomValidity(msg);
-            setButtonLabel(msg);
+            setButtonLabel({
+                key: "invalid_address",
+                params: { asset: asset() },
+            });
         }
     };
 
