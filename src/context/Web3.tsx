@@ -9,6 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
+import { pairs } from "../config";
 import { RBTC } from "../consts";
 import { getApiUrl } from "../helper";
 
@@ -31,9 +32,13 @@ const Web3SignerProvider = (props: {
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
     const [hasMetamask, setHasMetamask] = createSignal<boolean>(false);
 
+    const hasRsk = pairs[`${RBTC}/BTC`] !== undefined;
+
     const handleMetamask = () => {
         window.removeEventListener(initEvent, handleMetamask);
-        setProvider(new BrowserProvider((window as any).ethereum));
+        if (hasRsk) {
+            setProvider(new BrowserProvider((window as any).ethereum));
+        }
         setHasMetamask(true);
     };
 
@@ -44,7 +49,7 @@ const Web3SignerProvider = (props: {
     }
 
     const getContracts = new Promise(async (resolve) => {
-        if (props.noFetch) {
+        if (props.noFetch || !hasRsk) {
             return;
         }
 

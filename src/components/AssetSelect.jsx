@@ -1,4 +1,5 @@
-import { LN, assets, sideSend } from "../consts";
+import { pairs } from "../config";
+import { LN, sideSend } from "../consts";
 import { fetchPairs } from "../helper";
 import t from "../i18n";
 import {
@@ -11,6 +12,9 @@ import {
     setAssetSelect,
     setAssetSend,
 } from "../signals";
+
+const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
+assets.push(LN);
 
 const SelectAsset = () => {
     const setSelectAsset = (isSend, asset) => {
