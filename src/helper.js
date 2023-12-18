@@ -176,7 +176,7 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
         claim(currentSwap);
     }
     checkForFailed(currentSwap, data);
-    setFailureReason(data.failureReason);
+    if (data.failureReason) setFailureReason(data.failureReason);
 };
 
 export async function refund(swap, t) {
