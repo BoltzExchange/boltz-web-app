@@ -2,6 +2,7 @@
 
 * {
     box-sizing: border-box;
+    font-family: "Noto Sans", sans;
 }
 
 body {
@@ -9,7 +10,6 @@ body {
     margin: 0;
     background: $background;
     color: $color;
-    font-family: sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
@@ -29,8 +29,10 @@ a:hover {
     color: $primary;
 }
 
+.headline,
 h1 {
     color: rgba(255, 255, 255, 0.3);
+    font-weight: 800;
 }
 
 h2 {
@@ -46,6 +48,10 @@ hr {
     border: none;
     height: 1px;
     background: rgba(255, 255, 255, 0.08);
+}
+hr.spacer {
+    margin: 4px 0;
+    opacity: 0;
 }
 
 .icon-reload {
@@ -134,8 +140,7 @@ hr {
 .btn {
     cursor: pointer;
     display: block;
-    margin: 3px 3px;
-    margin-top: 5px;
+    margin-top: 10px;
     padding: 8px 12px;
     text-decoration: none;
     border-radius: 16px;
@@ -231,6 +236,7 @@ hr {
 .btns > * {
     display: inline-block;
     width: auto;
+    margin: 3px;
 }
 
 .fee {
@@ -294,7 +300,7 @@ textarea.invalid {
 }
 #receiveAmount,
 #sendAmount {
-    font-size: 36px;
+    font-size: 33px;
     text-align: right;
 }
 @media (max-width: 488px) {
@@ -308,7 +314,7 @@ textarea {
 }
 
 #refundAddress {
-    margin: 16px 0 0;
+    margin: 8px 0 0;
 }
 
 #steps {
@@ -379,11 +385,9 @@ textarea {
 @media (min-width: 488px) {
     .frame {
         margin-top: 74px;
+        margin-bottom: 56px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
-    }
-    #create-overlay.glow .frame {
-        box-shadow: 0 0 60px transparentize($primary, 0.7);
     }
 }
 
@@ -552,4 +556,8 @@ textarea {
     text-align: left;
     display: inline-block;
     margin: 0;
+}
+
+.pointer {
+    cursor: pointer;
 }

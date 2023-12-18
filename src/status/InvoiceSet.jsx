@@ -61,7 +61,7 @@ const InvoiceSet = () => {
                 class="address-box break-word">
                 {cropString(swap().address)}
             </p>
-            <hr />
+            <hr class="spacer" />
             <Show when={swap().asset === BTC}>
                 <h3>{t("warning_expiry")}</h3>
                 <hr />

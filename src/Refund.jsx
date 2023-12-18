@@ -208,7 +208,6 @@ const Refund = () => {
                     name="refundAddress"
                     placeholder={t("refund_address_placeholder")}
                 />
-                <hr />
                 <button
                     class="btn"
                     disabled={valid() && refundTx() === "" ? "" : "disabled"}

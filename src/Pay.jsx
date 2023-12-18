@@ -105,7 +105,6 @@ const Pay = () => {
                     </span>
                 </Show>
             </h2>
-            <p>{t("pay_invoice_subline")}</p>
             <Show when={swap()}>
                 <Show when={swap().refundTx}>
                     <p>

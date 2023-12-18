@@ -1,5 +1,6 @@
 @import "vars";
 
+.headline,
 h1 {
     font-size: 64px;
     line-height: 1.05;
@@ -9,11 +10,19 @@ h1 {
         rgb(0, 88, 255) 100%
     );
     -webkit-background-clip: text;
-    margin: 74px 12px 12px;
+    margin: 24px 12px 12px;
+}
+h2.headline {
+    font-size: 26px;
+    margin: 62px 12px 12px;
+    background: none;
+    text-transform: uppercase;
+    font-weight: 400;
 }
 
+.headline small,
 h1 small {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: normal;
     display: block;
     color: rgba(255, 255, 255, 0.9);
@@ -21,11 +30,20 @@ h1 small {
     margin: 21px auto 34px;
     line-height: 1.2;
 }
+h2.headline small {
+    font-size: 16px;
+    margin: 12px auto;
+}
 @media (max-width: 768px) {
+    .headline,
     h1 {
         font-size: 36px;
         margin: 62px 12px 12px;
     }
+    h2.headline {
+        font-size: 28px;
+    }
+    .headline small,
     h1 small {
         font-size: 20px;
     }
@@ -35,28 +53,13 @@ h3 {
     color: $primary;
 }
 
-h2.special {
-    line-height: 1;
-    color: rgba(255, 255, 255, 0.3);
-    background: linear-gradient(
-        20deg,
-        rgb(255, 197, 0) 10%,
-        rgb(0, 88, 255) 100%
-    );
-    -webkit-background-clip: text;
-}
-#hero h2.special {
-    margin: 0;
-    font-size: 20px;
-}
-
 .inner-wrap {
     margin: auto;
     max-width: 1024px;
 }
 
 .hero-boxes {
-    margin: 72px 0 52px;
+    margin: 72px 0 122px;
     display: flex;
 }
 .hero-box {
@@ -83,9 +86,10 @@ h2.special {
 #numbers {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 46px;
+    margin: 50px 0 122px;
     padding: 0 42px;
 }
+
 @media (max-width: 768px) {
     #numbers {
         display: block;
@@ -105,7 +109,7 @@ h2.special {
     background: transparent;
 }
 .number {
-    font-size: 30px;
+    font-size: 36px;
     font-weight: bold;
     margin-bottom: 16px;
 }
@@ -240,6 +244,7 @@ h2.special {
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
+    margin: 40px 0 122px;
 }
 
 #partners > div,
@@ -250,8 +255,8 @@ h2.special {
 #partners > div > a,
 #integrations > div > a:before,
 #integrations > div > a {
-    opacity: 0.4;
-    filter: brightness(1000) grayscale(1);
+    opacity: 0.8;
+    // filter: brightness(1000) grayscale(1);
     transition: opacity 0.4s ease-in-out;
 }
 
@@ -263,9 +268,24 @@ h2.special {
 }
 
 #create-overlay.glow {
-    position: relative;
-    transition: opacity 0.4s ease-in-out;
+    transition: all 0.8s ease-in-out;
+    overflow: hidden;
+    opacity: 0.8;
 }
 #create-overlay.glow:hover {
+    transition: all 0.8s ease-in-out;
     opacity: 1;
+}
+#create-overlay.glow .frame {
+    transition: all 0.8s ease-in-out;
+    box-shadow: 0 0 0 transparentize($primary, 0.7);
+}
+
+@media (min-width: 488px) {
+    #create-overlay.glow .frame {
+        box-shadow: 0 0 40px transparentize($primary, 0.7);
+    }
+    #create-overlay.glow .frame:hover {
+        box-shadow: 0 0 60px transparentize($primary, 0.7);
+    }
 }

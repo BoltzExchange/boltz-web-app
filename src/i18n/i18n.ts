@@ -11,7 +11,7 @@ const dict = {
         non_custodial: "Non-Custodial",
         non_custodial_sub:
             "Swaps on Boltz are non-custodial; cryptography ensures that users are always in control of their money",
-        node: "Node",
+        node: "Lightning Node",
         lightningnode: "view lightning node",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",
