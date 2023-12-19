@@ -12,6 +12,7 @@ import InvoiceInput from "./components/InvoiceInput";
 import QrScan from "./components/QrScan";
 import Reverse from "./components/Reverse";
 import { RBTC, sideReceive, sideSend } from "./consts";
+import { isMobile } from "./helper";
 import t from "./i18n";
 import {
     addressValid,
@@ -294,7 +295,9 @@ const Create = () => {
                 </Show>
                 <InvoiceInput />
             </Show>
-            <QrScan />
+            <Show when={isMobile}>
+                <QrScan />
+            </Show>
             <CreateButton />
             <AssetSelect />
         </div>
