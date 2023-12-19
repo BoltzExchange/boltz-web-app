@@ -499,7 +499,8 @@ const dict = {
         assets_sub: "闪电/比特币/Liquid",
         safe: "安全",
         non_custodial: "非托管",
-        non_custodial_sub: "Boltz上的交换是非托管的;密码学确保用户始终掌握自己的资金",
+        non_custodial_sub:
+            "Boltz上的交换是非托管的;密码学确保用户始终掌握自己的资金",
         node: "闪电节点",
         lightningnode: "查看闪电节点",
         error: "错误",
@@ -538,7 +539,8 @@ const dict = {
         new_swap: "新的交换",
         success_swap: "交换成功",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
-        create_and_paste: "粘贴一个bolt11闪电发票\n或闪电地址\n或LNURL支付链接\n\n金额:{{ amount }}{{ denomination }}",
+        create_and_paste:
+            "粘贴一个bolt11闪电发票\n或闪电地址\n或LNURL支付链接\n\n金额:{{ amount }}{{ denomination }}",
         congrats: "恭喜！",
         successfully_swapped: "您的交换已成功完成",
         timeout_eta: "超时估计时间",
@@ -570,7 +572,8 @@ const dict = {
         copied: "已复制到剪贴板！",
         backup_skip: "跳过下载",
         backup_refund: "下载退款文件",
-        backup_refund_subline: "如果此交换失败，您将不得不使用退款密钥退还链上的比特币。默认情况下，此密钥存储在浏览器的本地存储中，但如果您",
+        backup_refund_subline:
+            "如果此交换失败，您将不得不使用退款密钥退还链上的比特币。默认情况下，此密钥存储在浏览器的本地存储中，但如果您",
         backup_refund_list_incognito: "正在使用隐身模式",
         backup_refund_list_tor: "正在使用Tor浏览器",
         backup_refund_list_clear_history: "清除浏览历史记录",
@@ -585,8 +588,10 @@ const dict = {
         refund_import: "导入备份",
         refund_clear: "删除本地存储",
         delete_swap: "从本地存储中删除交换",
-        delete_localstorage: "您确定要清除本地存储吗？\n您的交换信息和您的退款/索赔私钥将丢失。",
-        delete_localstorage_single_swap: "您确定要从本地存储中清除交换{{ id }}吗",
+        delete_localstorage:
+            "您确定要清除本地存储吗？\n您的交换信息和您的退款/索赔私钥将丢失。",
+        delete_localstorage_single_swap:
+            "您确定要从本地存储中清除交换{{ id }}吗",
         tx_in_mempool: "事务在内存池中",
         tx_in_mempool_subline: "等待确认以完成交换",
         expired: "交换已过期！",
@@ -629,7 +634,8 @@ const dict = {
         not_found: "404 - 页面未找到",
         not_found_subline: "您要查找的页面不存在。",
         back_to_home: "返回首页",
-        transaction_prompt: '按 "{{ button }}" 以打开已连接的钱包并确认显示的交易。',
+        transaction_prompt:
+            '按 "{{ button }}" 以打开已连接的钱包并确认显示的交易。',
         fetch_lnurl: "从LNURL/LNAddress获取发票",
         invalid_address: "无效的{{ asset }地址",
     },
