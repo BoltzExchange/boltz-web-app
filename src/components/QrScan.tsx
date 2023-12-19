@@ -35,8 +35,10 @@ const QrScan = () => {
                 (result) => {
                     log.debug("scanned qr code:", result.data);
                     if (reverse()) {
+                        setOnchainAddress("");
                         setOnchainAddress(result.data);
                     } else {
+                        setInvoice("");
                         setInvoice(result.data);
                     }
                     stopScan();
