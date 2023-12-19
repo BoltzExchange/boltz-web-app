@@ -186,8 +186,10 @@ const Refund = () => {
                 <h2>{t("refund_a_swap")}</h2>
                 <p>{t("refund_a_swap_subline")}</p>
                 <hr />
-                <SwapList swapsSignal={refundableSwaps} />
-                <hr />
+                <Show when={refundableSwaps().length > 0}>
+                    <SwapList swapsSignal={refundableSwaps} />
+                    <hr />
+                </Show>
                 <input
                     required
                     type="file"
