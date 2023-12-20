@@ -549,7 +549,7 @@ const dict = {
         pay_timeout_blockheight: "超时区块高度",
         pay_expected_amount: "预期金额",
         send_to:
-            "请确保将准确的金额{{ amount }}{{ denomination }}发送到下面显示的地址。否则，交换将失败。最好使用“复制BIP21”按钮，并将其粘贴到您钱包的发送屏幕中。",
+            "请确保将准确的金额{{ amount }}{{ denomination }}发送到下面显示的地址。否则,交换将失败。最好使用“复制BIP21”按钮,并将其粘贴到您钱包的发送屏幕中。",
         pay_invoice_to: "支付金额为{{ amount }}{{ denomination }}的发票",
         pay_address: "地址",
         no_metamask: "未安装MetaMask",
