@@ -9,7 +9,6 @@ import { fetcher } from "./helper";
 import t from "./i18n";
 import {
     setFailureReason,
-    setReverse,
     setSwap,
     setSwapStatus,
     setSwapStatusTransaction,
@@ -47,7 +46,6 @@ const Pay = () => {
             if (currentSwap) {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);
-                setReverse(currentSwap.reverse);
                 fetcher(
                     "/swapstatus",
                     (data) => {
