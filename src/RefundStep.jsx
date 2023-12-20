@@ -42,7 +42,7 @@ const RefundStep = () => {
                 <hr />
                 <div class="btns btns-space-between">
                     <button
-                        class="btn btn-light"
+                        class="btn btn-light no-grow"
                         onClick={() => navigate("/swap/" + params.id)}>
                         {t("backup_skip")}
                     </button>

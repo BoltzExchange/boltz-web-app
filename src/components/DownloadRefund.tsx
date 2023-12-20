@@ -48,17 +48,13 @@ const DownloadRefund = () => {
     };
 
     return (
-        <div class="download-refund">
-            <button
-                class="btn btn-success"
-                onclick={() =>
-                    isMobile
-                        ? downloadRefundQr(swap())
-                        : downloadRefundJson(swap())
-                }>
-                {t("download_refund_file")}
-            </button>
-        </div>
+        <button
+            class="btn btn-success"
+            onclick={() =>
+                isMobile ? downloadRefundQr(swap()) : downloadRefundJson(swap())
+            }>
+            {t("download_refund_file")}
+        </button>
     );
 };
 
