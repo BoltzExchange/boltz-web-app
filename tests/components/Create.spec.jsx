@@ -12,6 +12,7 @@ import { cfg } from "../config";
 
 describe("Create", () => {
     beforeAll(() => {
+        signals.setDenomination("sat");
         signals.setConfig(cfg);
         signals.setMinimum(cfg["BTC/BTC"].limits.minimal);
         signals.setReverse(true);
