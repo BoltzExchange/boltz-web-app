@@ -70,10 +70,12 @@ const QrScan = () => {
                     </button>
                 </Show>
                 <Show when={scanning()}>
-                    <video
-                        id="qr-scanner"
-                        ref={qrRef}
-                        onClick={stopScan}></video>
+                    <div id="video-wrapper">
+                        <video id="qr-scanner" ref={qrRef}></video>
+                        <span class="close" onClick={stopScan}>
+                            X
+                        </span>
+                    </div>
                 </Show>
                 <hr />
             </Show>
