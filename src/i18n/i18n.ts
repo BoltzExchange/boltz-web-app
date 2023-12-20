@@ -548,7 +548,7 @@ const dict = {
         pay_swap_404: "找不到交换！",
         pay_timeout_blockheight: "超时区块高度",
         pay_expected_amount: "预期金额",
-        send_to: "发送{{ amount }}{{ denomination }}到",
+        send_to: "请确保将准确的{{ amount }}{{ denomination }}发送到下面显示的地址。否则，交换将失败。最好使用“复制 BIP21”按钮,并将其粘贴到您钱包的发送屏幕中。",
         pay_invoice_to: "支付这个{{ amount }}{{ denomination }}发票",
         pay_address: "地址",
         no_metamask: "未安装MetaMask",
