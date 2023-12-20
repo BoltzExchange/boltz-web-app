@@ -160,6 +160,7 @@ const dict = {
         scan_qr_code: "Scan QR Code",
         version: "Version",
         commithash: "Commit Hash",
+        open_in_wallet: "Open in Wallet",
     },
     de: {
         language: "Deutsch",
@@ -329,6 +330,7 @@ const dict = {
         scan_qr_code: "QR Code scannen",
         version: "Version",
         commithash: "Commit Hash",
+        open_in_wallet: "Im Wallet öffnen",
     },
     es: {
         language: "Español",
@@ -497,6 +499,7 @@ const dict = {
         scan_qr_code: "Escanear código QR",
         version: "Versión",
         commithash: "Commit Hash",
+        open_in_wallet: "Abrir en monedero",
     },
     zh: {
         language: "中文",
@@ -651,6 +654,7 @@ const dict = {
         scan_qr_code: "扫描 QR 码",
         version: "版本",
         commithash: "提交哈希",
+        open_in_wallet: "在钱包中打开",
     },
 };
 

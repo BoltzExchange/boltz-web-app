@@ -9,7 +9,7 @@ import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { denominations, formatAmount } from "../utils/denomination";
-import { clipboard, cropString } from "../utils/helper";
+import { clipboard, cropString, isMobile } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
@@ -64,7 +64,9 @@ const InvoiceSet = () => {
                 })}
             </h2>
             <hr />
-            <QrCode data={swap().reverse ? swap().invoice : swap().bip21} />
+            <a href={swap().bip21}>
+                <QrCode data={swap().bip21} />
+            </a>
             <hr />
             <p
                 onclick={() => clipboard(swap().address)}
@@ -77,9 +79,6 @@ const InvoiceSet = () => {
                 <hr />
             </Show>
             <div class="btns">
-                <span class="btn" onclick={() => clipboard(swap().bip21)}>
-                    {t("copy_bip21")}
-                </span>
                 <span
                     class="btn"
                     onclick={() =>
@@ -92,9 +91,19 @@ const InvoiceSet = () => {
                     }>
                     {t("copy_amount")}
                 </span>
-                <span class="btn" onclick={() => clipboard(swap().address)}>
-                    {t("copy_address")}
+                <Show when={!isMobile}>
+                    <span class="btn" onclick={() => clipboard(swap().address)}>
+                        {t("copy_address")}
+                    </span>
+                </Show>
+                <span class="btn" onclick={() => clipboard(swap().bip21)}>
+                    {t("copy_bip21")}
                 </span>
+                <Show when={isMobile}>
+                    <a href={swap().bip21} class="btn">
+                        {t("open_in_wallet")}
+                    </a>
+                </Show>
             </div>
             <hr />
         </div>

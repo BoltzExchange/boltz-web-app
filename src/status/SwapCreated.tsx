@@ -7,7 +7,8 @@ import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { denominations, formatAmount } from "../utils/denomination";
-import { clipboard, cropString } from "../utils/helper";
+import { clipboard, cropString, isMobile } from "../utils/helper";
+import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
@@ -33,7 +34,9 @@ const SwapCreated = () => {
                 })}
             </h2>
             <hr />
-            <QrCode data={swap().reverse ? swap().invoice : swap().bip21} />
+            <a href={invoicePrefix + swap().invoice}>
+                <QrCode data={swap().invoice} />
+            </a>
             <hr />
             <p
                 onclick={() => clipboard(swap().invoice)}
@@ -50,9 +53,17 @@ const SwapCreated = () => {
                     {t("pay_invoice_webln")}
                 </span>
             </Show>
-            <span class="btn" onclick={() => clipboard(swap().invoice)}>
-                {t("copy_invoice")}
-            </span>
+            <hr class="spacer" />
+            <div class="btns">
+                <span class="btn" onclick={() => clipboard(swap().invoice)}>
+                    {t("copy_invoice")}
+                </span>
+                <Show when={isMobile}>
+                    <a href={invoicePrefix + swap().invoice} class="btn">
+                        {t("open_in_wallet")}
+                    </a>
+                </Show>
+            </div>
         </div>
     );
 };
