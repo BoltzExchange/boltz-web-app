@@ -1,3 +1,5 @@
+import QRCode from "qrcode/lib/server";
+
 import { isIos, isMobile } from "../helper";
 import t from "../i18n";
 import { swap } from "../signals";
