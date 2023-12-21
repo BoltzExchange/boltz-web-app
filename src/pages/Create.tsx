@@ -21,6 +21,7 @@ import {
 import {
     calculateDigits,
     convertAmount,
+    denominations,
     formatAmount,
     getValidationRegex,
 } from "../utils/denomination";
@@ -31,7 +32,8 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
-    const { webln, denomination, wasmSupported, t } = useGlobalContext();
+    const { setDenomination, webln, denomination, wasmSupported, t } =
+        useGlobalContext();
     const {
         reverse,
         asset,
@@ -61,9 +63,29 @@ const Create = () => {
         minerFee,
     } = useCreateContext();
 
+    // if btc and amount > 9, switch to sat
+    // user failed to notice the non satoshi denomination
+    const changeDenomination = (amount: string) => {
+        if (amount === "") return;
+        if (denomination() === denominations.btc && Number(amount) > 9) {
+            setDenomination(denominations.sat);
+        } else if (denomination() === denominations.sat && Number(amount) < 1) {
+            setDenomination(denominations.btc);
+        }
+    };
+
+    const checkEmptyAmount = (amount: string) => {
+        if (amount === "") {
+            setReceiveAmount(BigNumber(0));
+            setSendAmount(BigNumber(0));
+        }
+    };
+
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
+        checkEmptyAmount(amount);
+        changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
         const sendAmount = calculateSendAmount(
             satAmount,
@@ -82,6 +104,8 @@ const Create = () => {
     const changeSendAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
+        checkEmptyAmount(amount);
+        changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
         const receiveAmount = calculateReceiveAmount(
             satAmount,
@@ -110,6 +134,10 @@ const Create = () => {
     const validateInput = (evt: KeyboardEvent) => {
         const input = evt.currentTarget as HTMLInputElement;
         const keycode = evt.key;
+        // switch to sat denomination if keypress .
+        if (denomination() == "sat" && keycode === ".") {
+            setDenomination(denominations.btc);
+        }
         const hasDot = input.value.includes(".");
         const regex = denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\./;
         if (!regex.test(keycode)) {
@@ -121,6 +149,7 @@ const Create = () => {
     const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
+        changeDenomination(pastedData);
         if (!getValidationRegex(maximum(), denomination()).test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
@@ -221,12 +250,16 @@ const Create = () => {
             setReceiveAmountFormatted(
                 formatAmount(BigNumber(rAmount), denomination()).toString(),
             );
+        } else {
+            setReceiveAmountFormatted("");
         }
         const sAmount = Number(sendAmount());
         if (sAmount > 0) {
             setSendAmountFormatted(
                 formatAmount(BigNumber(sAmount), denomination()).toString(),
             );
+        } else {
+            setSendAmountFormatted("");
         }
     });
 
