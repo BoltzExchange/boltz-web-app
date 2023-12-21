@@ -217,12 +217,12 @@ const Create = () => {
                 {t("create_swap_subline")} <br />
                 {t("send")}{" "}
                 <ClickableAmount
-                    label={t("min")}
+                    label={"min"}
                     onClick={setAmount}
                     amount={minimum}
                 />{" "}
                 <ClickableAmount
-                    label={t("max")}
+                    label={"max"}
                     onClick={setAmount}
                     amount={maximum}
                 />

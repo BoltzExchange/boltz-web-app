@@ -2,16 +2,17 @@ import { fireEvent, render } from "@solidjs/testing-library";
 import { describe, expect, vitest } from "vitest";
 
 import ClickableAmount from "../../src/components/ClickableAmount";
+import t from "../../src/i18n";
 import { setDenomination } from "../../src/signals";
 import { denominations, formatAmount } from "../../src/utils/denomination";
 
 describe("ClickableAmount", () => {
-    test("should not show label defined", async () => {
-        const label = "test";
+    test("should show label when defined", async () => {
+        const label = "min";
         const { container } = render(() => (
             <ClickableAmount label={label} amount={() => 1} />
         ));
-        expect(container.innerHTML.startsWith(label)).toBeTruthy();
+        expect(container.innerHTML.startsWith(t(label))).toBeTruthy();
     });
 
     test("should not show label when undefined", async () => {
