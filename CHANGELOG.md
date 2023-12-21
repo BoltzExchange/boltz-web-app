@@ -2,6 +2,75 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2023-12-20
+
+### Bug Fixes
+
+- Handling of LNURLs
+- Order of swap history
+- Fixes scrollbar jump when clicking into swapbox (#311)
+- Alignment past swaps (#310)
+- Alignment past swaps (#315)
+- Out of context execution of effects/memos (#322)
+- Missing space in Create (#326)
+- Remove timeout blockheight from swap flow (#309)
+- Handle js error when asset is missing on api (#329)
+- Disable contract code match check
+- Skip refund step for RSK
+- ES translations (#333)
+- Es lang typo (#336)
+- LNURL fetching error handling (#345)
+- Webln paste invoice gets deleted (#343)
+- Uncaught (in promise) ReferenceError: can't access lexical declaration 'validateAmount' (#350)
+- Node.js version in CI (#356)
+- Small ES lang fix (#362)
+- Only show expiry warning for mainchain (#367)
+- Only set onchain address for Reverse Swaps (#371)
+- Failure reason gets overwritten (#365)
+- Create button label on language change (#364)
+- Asset select based on available pairs (#369)
+- Empty swaplist on `/refund` (#373)
+
+### Features
+
+- Make min and max clickable (#303)
+- Browser language detection (#301)
+- Use swapbox on `/` (#289)
+- RSK swaps (#306)
+- Refund step for normal swaps (#258)
+- Embedded swap box for iframes (#328)
+- Add Boltz icon to QR codes (#330)
+- Improved create swap button (#317)
+- Extract from bip21 follow up (#349)
+- Add zh (#375)
+
+### Miscellaneous Tasks
+
+- V1.1.2 changelog
+- Dependency updates
+- Bump browserify-sign from 4.2.1 to 4.2.2 (#295)
+- Update dependencies (#314)
+- Add pre commit config (#319)
+- Prettier import order (#320)
+- Remove unused test snapshot
+- Optimize hr css (#331)
+- Update vite security fix (#347)
+- Default to BTC denomination (#384)
+- V1.2.0 release prep
+
+### Refactor
+
+- Add social urls and onion into config (#312)
+- Move signals into components (#324)
+- Convert configs to typscript (#340)
+- I18n to TypeScript (#342)
+- Invoice extraction (#361)
+- Refine homepage design (#325)
+
+### Testing
+
+- Comment RSK contract verification tests
+
 ## [1.1.2] - 2023-10-20
 
 ### Bug Fixes
@@ -22,7 +91,7 @@ All notable changes to this project will be documented in this file.
 - Remove unused i18n check
 - Update i18n
 - Decimals handling for 0.000 (#287)
-- Release v1.1.2 preparation
+- Release v1.1.2 preparation (#292)
 
 ### Refactor
 
