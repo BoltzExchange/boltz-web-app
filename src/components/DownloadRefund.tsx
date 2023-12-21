@@ -1,3 +1,6 @@
+import log from "loglevel";
+import QRCode from "qrcode/lib/server";
+
 import { isIos, isMobile } from "../helper";
 import t from "../i18n";
 import { swap } from "../signals";
@@ -25,7 +28,7 @@ const downloadRefundJson = (swap) => {
 const DownloadRefund = () => {
     const downloadRefundQr = (swap) => {
         QRCode.toDataURL(JSON.stringify(createRefundData(swap)), { width: 400 })
-            .then((url) => {
+            .then((url: string) => {
                 if (isIos) {
                     // Compatibility with third party iOS browsers
                     const newTab = window.open();
@@ -39,13 +42,13 @@ const DownloadRefund = () => {
                     download(`${getRefundFileName(swap)}.png`, url);
                 }
             })
-            .catch((err) => {
+            .catch((err: Error) => {
                 log.error("qr code generation error", err);
             });
     };
 
     return (
-        <div className="download-refund">
+        <div class="download-refund">
             <button
                 class="btn btn-success"
                 onclick={() =>
