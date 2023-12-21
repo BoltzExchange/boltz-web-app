@@ -209,6 +209,11 @@ const Create = () => {
             validateAmount();
         }
     });
+    createMemo(() => {
+        if (addressValid()) {
+            validateAmount();
+        }
+    });
 
     return (
         <div class="frame" data-reverse={reverse()} data-asset={asset()}>
