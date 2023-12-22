@@ -10,6 +10,14 @@
     }
 }
 
+.swaplist-item {
+    display: flex;
+}
+
+.swaplist-asset-id {
+    flex-grow: 1;
+}
+
 .swaplist-asset-date,
 .swaplist-asset-id {
     padding: 0 9px 0 0;
