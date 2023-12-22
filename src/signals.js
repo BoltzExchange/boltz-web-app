@@ -74,7 +74,7 @@ export const [i18nConfigured, setI18nConfigured] = makePersisted(
     },
 );
 export const [denomination, setDenomination] = makePersisted(
-    createSignal("btc"),
+    createSignal("sat"),
     { name: "denomination", ...stringSerializer },
 );
 export const [swaps, setSwaps] = makePersisted(
