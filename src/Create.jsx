@@ -42,6 +42,7 @@ import {
     setSendAmountFormatted,
     setSendAmountValid,
     setValid,
+    wasmSupported,
     webln,
 } from "./signals";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
@@ -295,7 +296,7 @@ const Create = () => {
                 </Show>
                 <InvoiceInput />
             </Show>
-            <Show when={isMobile}>
+            <Show when={isMobile && wasmSupported()}>
                 <QrScan />
             </Show>
             <CreateButton />
