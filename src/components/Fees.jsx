@@ -2,7 +2,7 @@ import { Show, createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
-import { fetchPairs, isMobile } from "../helper";
+import { fetchPairs } from "../helper";
 import t from "../i18n";
 import {
     asset,
@@ -22,7 +22,7 @@ import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
-import { formatAmount } from "../utils/denomination";
+import { denominations, formatAmount } from "../utils/denomination";
 
 const Fees = () => {
     createEffect(() => {
@@ -49,23 +49,26 @@ const Fees = () => {
         }
     });
 
+    const toggleDenomination = () => {
+        setDenomination(
+            denomination() === denominations.btc
+                ? denominations.sat
+                : denominations.btc,
+        );
+    };
+
     fetchPairs();
 
     return (
         <div class="fees-dyn">
-            <div class="denomination">
-                <Show when={!isMobile}>
-                    <label>{t("denomination")}: </label>
-                </Show>
+            <div class="denomination" onClick={() => toggleDenomination()}>
                 <img
                     src={btcSvg}
-                    onClick={() => setDenomination("btc")}
                     class={denomination() == "btc" ? "active" : ""}
                     alt="denominator"
                 />
                 <img
                     src={satSvg}
-                    onClick={() => setDenomination("sat")}
                     class={denomination() == "sat" ? "active" : ""}
                     alt="denominator"
                 />
