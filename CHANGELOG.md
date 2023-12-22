@@ -2,7 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] - 2023-12-20
+## [1.2.1] - 2023-12-22
+
+### Bug Fixes
+
+- Revalidate amounts when address is valid (#393)
+- Missing qrcode import (#392)
+- Do not setReverse in Pay.jsx (#376)
+
+### Features
+
+- Denomination toggle (#398)
+
+### Misc
+
+- Revert to sat as default denomination (#397)
+
+## [1.2.0] - 2023-12-21
 
 ### Bug Fixes
 
@@ -57,6 +73,7 @@ All notable changes to this project will be documented in this file.
 - Update vite security fix (#347)
 - Default to BTC denomination (#384)
 - V1.2.0 release prep
+- Changelog
 
 ### Refactor
 
