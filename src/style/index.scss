@@ -356,23 +356,25 @@ textarea {
     background-image: url(../assets/sat.svg);
 }
 
-.denomination label {
-    display: none;
-}
-.denomination > * {
-    margin: 0 4px;
+.denomination > :first-child {
+    margin-right: 5px;
 }
 .denomination {
+    cursor: pointer;
     flex-grow: 0;
     background: rgba(0, 0, 0, 0.3);
     border-radius: 18px;
     border: 1px dashed rgba(255, 255, 255, 0.3);
+    padding: 0 5px;
+    &:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
 }
 .denomination .active {
     filter: none;
     border-radius: 50%;
     background-color: rgb(23, 34, 46);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .hidden {
