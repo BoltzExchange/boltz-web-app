@@ -4,7 +4,6 @@ import { createEffect, createRoot, createSignal } from "solid-js";
 import { pairs } from "./config";
 import { LN, sideSend } from "./consts";
 import { isMobile } from "./helper";
-import { denominations } from "./utils/denomination";
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
@@ -75,7 +74,7 @@ export const [i18nConfigured, setI18nConfigured] = makePersisted(
     },
 );
 export const [denomination, setDenomination] = makePersisted(
-    createSignal(denominations.sat),
+    createSignal("sat"),
     { name: "denomination", ...stringSerializer },
 );
 export const [swaps, setSwaps] = makePersisted(
