@@ -92,10 +92,6 @@ hr.spacer {
     padding-right: 8px;
 }
 
-.denomination {
-    margin-left: 5px;
-}
-
 .fees-dyn {
     display: flex;
     justify-content: center;
@@ -361,13 +357,22 @@ textarea {
 }
 
 .denomination label {
-    margin-right: 5px;
+    display: none;
+}
+.denomination > * {
+    margin: 0 5px;
+}
+.denomination {
+    flex-grow: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 18px;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
 }
 .denomination .active {
     filter: none;
-    background: rgba(0, 0, 0, 0.3);
     border-radius: 50%;
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    background-color: rgb(23, 34, 46);
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .hidden {
