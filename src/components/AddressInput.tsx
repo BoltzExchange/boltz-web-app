@@ -55,6 +55,7 @@ const AddressInput = () => {
             type="text"
             id="onchainAddress"
             name="onchainAddress"
+            autocomplete="off"
             placeholder={t("onchain_address", { asset: asset() })}
         />
     );

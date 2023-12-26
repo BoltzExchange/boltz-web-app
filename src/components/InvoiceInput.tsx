@@ -86,6 +86,7 @@ const InvoiceInput = () => {
             data-testid="invoice"
             name="invoice"
             value={invoice()}
+            autocomplete="off"
             placeholder={t("create_and_paste", {
                 amount: receiveAmountFormatted(),
                 denomination: denomination(),
