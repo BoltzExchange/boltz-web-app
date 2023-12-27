@@ -44,7 +44,7 @@ const Refund = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
             />
             <button
                 class="btn"
-                disabled={valid()}
+                disabled={!valid()}
                 onclick={() => refund(swap(), t)}>
                 {t("refund")}
             </button>
