@@ -197,7 +197,27 @@ export async function refund(swap, t) {
     log.info("refunding swap: ", swap.id);
     let [_, fees] = await Promise.all([setup(), getfeeestimation(swap)]);
 
-    const txToRefund = transactionToRefund();
+    let txToRefund = transactionToRefund();
+
+    if (txToRefund === null) {
+        txToRefund = await new Promise((resolve, reject) => {
+            fetcher(
+                "/getswaptransaction",
+                (res) => {
+                    log.debug(`got swap transaction for ${swap.id}`);
+                    resolve(res);
+                },
+                {
+                    id: swap.id,
+                },
+                () => {
+                    log.warn(`no swap transaction for: ${swap.id}`);
+                    reject();
+                },
+            );
+        });
+    }
+
     const Transaction = getTransaction(asset_name);
     const constructRefundTransaction =
         getConstructRefundTransaction(asset_name);
