@@ -1,6 +1,7 @@
 import { Router } from "@solidjs/router";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { beforeAll, beforeEach, expect, vi } from "vitest";
+import { BigNumber } from "bignumber.js";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
 import Create from "../../src/Create";
 import { sideReceive, sideSend } from "../../src/consts";
@@ -45,17 +46,17 @@ describe("Create", () => {
             </Router>
         ));
 
-        signals.setSendAmount(50_000n);
+        signals.setSendAmount(BigNumber(50_000));
 
         // To force trigger a recalculation
         signals.setAsset("L-BTC");
         signals.setAsset("BTC");
 
-        expect(setReceiveAmount).toHaveBeenCalledWith(38110n);
+        expect(setReceiveAmount).toHaveBeenCalledWith(BigNumber(38110));
 
         signals.setAsset("L-BTC");
 
-        expect(setReceiveAmount).toHaveBeenLastCalledWith(49447n);
+        expect(setReceiveAmount).toHaveBeenLastCalledWith(BigNumber(49447));
     });
 
     test("should update receive amount on miner fee change", async () => {
@@ -69,13 +70,13 @@ describe("Create", () => {
             </Router>
         ));
 
-        expect(setReceiveAmount).toHaveBeenCalledWith(38110n);
+        expect(setReceiveAmount).toHaveBeenCalledWith(BigNumber(38110));
 
         const updatedCfg = { ...cfg };
         cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
         signals.setConfig(updatedCfg);
 
-        expect(setReceiveAmount).toHaveBeenLastCalledWith(38110n - 1n);
+        expect(setReceiveAmount).toHaveBeenLastCalledWith(BigNumber(38110 - 1));
     });
 
     test("should update calculated value on fee change", async () => {
@@ -105,9 +106,9 @@ describe("Create", () => {
         expect(setAmountChanged).toHaveBeenCalledWith(sideReceive);
 
         expect(setSendAmount).toHaveBeenCalledTimes(1);
-        expect(setSendAmount).not.toHaveBeenCalledWith(BigInt(amount));
+        expect(setSendAmount).not.toHaveBeenCalledWith(BigNumber(amount));
         expect(setReceiveAmount).toHaveBeenCalledTimes(1);
-        expect(setReceiveAmount).toHaveBeenCalledWith(BigInt(amount));
+        expect(setReceiveAmount).toHaveBeenCalledWith(BigNumber(amount));
 
         updateConfig();
 
@@ -151,11 +152,11 @@ describe("Create", () => {
         fireEvent.click(await screen.findByText(amount));
 
         expect(setSendAmount).toHaveBeenCalledTimes(1);
-        expect(setSendAmount).toHaveBeenCalledWith(amount);
+        expect(setSendAmount).toHaveBeenCalledWith(BigNumber(amount));
 
         expect(setReceiveAmount).toHaveBeenCalledTimes(1);
         expect(setReceiveAmount).toHaveBeenCalledWith(
-            calculateReceiveAmount(amount),
+            BigNumber(calculateReceiveAmount(amount)),
         );
     });
 });

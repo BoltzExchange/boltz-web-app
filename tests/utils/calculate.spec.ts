@@ -103,7 +103,7 @@ describe("Calculate amounts", () => {
 
                 expect(calculateBoltzFeeOnSend(sendAmount)).toEqual(fee);
                 expect(
-                    BigNumber(sendAmount)
+                    sendAmount
                         .minus(calculateBoltzFeeOnSend(sendAmount))
                         .minus(minerFee())
                         .toNumber(),
