@@ -8,6 +8,7 @@ import { cfg } from "../config";
 
 describe("Fees component", () => {
     beforeAll(() => {
+        // @ts-ignore
         signals.setConfig(cfg);
         signals.setReverse(true);
     });
