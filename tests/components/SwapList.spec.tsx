@@ -30,9 +30,15 @@ describe("SwapList", () => {
             </Router>
         ));
 
-        expect(firstChild.childNodes.length).toEqual(swapsSignal().length);
+        const childNodes = [];
+        firstChild.childNodes.forEach((node) => {
+            if (node.nodeName === "HR") return;
+            childNodes.push(node);
+        });
 
-        for (const [i, swap] of firstChild.childNodes.entries()) {
+        expect(childNodes.length).toEqual(swapsSignal().length);
+
+        for (const [i, swap] of childNodes.entries()) {
             expect(swap.textContent.includes(swapsSorted[i].id)).toEqual(true);
         }
     });
