@@ -20,3 +20,14 @@
 .socials img {
     width: 100%;
 }
+.version {
+    font-size: 10px;
+    a {
+        color: #fff;
+        opacity: 0.4;
+        text-decoration: none;
+        &:hover {
+            opacity: 1;
+        }
+    }
+}

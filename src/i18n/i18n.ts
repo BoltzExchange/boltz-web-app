@@ -158,6 +158,9 @@ const dict = {
         fetch_lnurl: "Fetch invoice from LNURL/LNAddress",
         invalid_address: "Invalid {{ asset }} address",
         scan_qr_code: "Scan QR Code",
+        version: "Version",
+        commithash: "Commit Hash",
+        network: "Network",
     },
     de: {
         language: "Deutsch",
@@ -325,6 +328,9 @@ const dict = {
         fetch_lnurl: "Hole Rechnung von LNURL/LNAdresse",
         invalid_address: "Ungültige {{ asset }} Adresse",
         scan_qr_code: "QR Code scannen",
+        version: "Version",
+        commithash: "Commit Hash",
+        network: "Netzwerk",
     },
     es: {
         language: "Español",
@@ -491,6 +497,9 @@ const dict = {
         fetch_lnurl: "Obtener factura de LNURL/LNAddress",
         invalid_address: "Dirección {{ asset }} inválida",
         scan_qr_code: "Escanear código QR",
+        version: "Versión",
+        commithash: "Commit Hash",
+        network: "Network",
     },
     zh: {
         language: "中文",
@@ -643,6 +652,9 @@ const dict = {
         fetch_lnurl: "从LNURL/LNAddress获取发票",
         invalid_address: "无效的{{ asset }}地址",
         scan_qr_code: "扫描 QR 码",
+        version: "版本",
+        commithash: "提交哈希",
+        network: "网络",
     },
 };
 

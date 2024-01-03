@@ -7,6 +7,7 @@ export const ambossUrl =
 export const discordUrl = "https://discord.gg/QBvZGcW";
 export const twitterUrl = "https://twitter.com/boltzhq";
 export const githubUrl = "https://github.com/BoltzExchange";
+export const repoUrl = githubUrl + "/boltz-web-app";
 export const docsUrl = "https://docs.boltz.exchange";
 export const blogUrl = "https://blog.boltz.exchange";
 export const nostrUrl =
