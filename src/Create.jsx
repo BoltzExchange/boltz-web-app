@@ -9,8 +9,10 @@ import ConnectMetamask from "./components/ConnectMetamask";
 import { CreateButton, setButtonLabel } from "./components/CreateButton";
 import Fees from "./components/Fees";
 import InvoiceInput from "./components/InvoiceInput";
+import QrScan from "./components/QrScan";
 import Reverse from "./components/Reverse";
 import { RBTC, sideReceive, sideSend } from "./consts";
+import { isMobile } from "./helper";
 import t from "./i18n";
 import {
     addressValid,
@@ -40,6 +42,7 @@ import {
     setSendAmountFormatted,
     setSendAmountValid,
     setValid,
+    wasmSupported,
     webln,
 } from "./signals";
 import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
@@ -292,6 +295,9 @@ const Create = () => {
                     <hr class="spacer" />
                 </Show>
                 <InvoiceInput />
+            </Show>
+            <Show when={isMobile && wasmSupported()}>
+                <QrScan />
             </Show>
             <CreateButton />
             <AssetSelect />

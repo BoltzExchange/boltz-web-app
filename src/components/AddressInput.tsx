@@ -1,10 +1,11 @@
-import { createEffect } from "solid-js";
+import { createEffect, on } from "solid-js";
 
 import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
 import t from "../i18n";
 import {
     asset,
+    onchainAddress,
     reverse,
     sendAmountValid,
     setAddressValid,
@@ -39,11 +40,13 @@ const AddressInput = () => {
         }
     };
 
-    createEffect(() => {
-        if (sendAmountValid() && reverse() && asset() !== RBTC) {
-            validateAddress(inputRef);
-        }
-    });
+    createEffect(
+        on([sendAmountValid, onchainAddress], () => {
+            if (reverse() && asset() !== RBTC) {
+                validateAddress(inputRef);
+            }
+        }),
+    );
 
     return (
         <input
@@ -57,6 +60,7 @@ const AddressInput = () => {
             name="onchainAddress"
             autocomplete="off"
             placeholder={t("onchain_address", { asset: asset() })}
+            value={onchainAddress()}
         />
     );
 };
