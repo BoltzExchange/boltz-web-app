@@ -2,11 +2,11 @@ import { BigNumber } from "bignumber.js";
 
 import { boltzFee, minerFee, reverse } from "../signals";
 
-const bigRound = (big) => {
+const bigRound = (big: BigNumber): BigNumber => {
     return big.integerValue(BigNumber.ROUND_CEIL);
 };
 
-export const calculateReceiveAmount = (sendAmount) => {
+export const calculateReceiveAmount = (sendAmount: number): number => {
     const receiveAmount = reverse()
         ? BigNumber(sendAmount)
               .minus(bigRound(BigNumber(sendAmount).times(boltzFee()).div(100)))
@@ -17,8 +17,8 @@ export const calculateReceiveAmount = (sendAmount) => {
     return Math.max(Math.floor(receiveAmount.toNumber()), 0);
 };
 
-export const calculateBoltzFeeOnSend = (sendAmount) => {
-    let fee;
+export const calculateBoltzFeeOnSend = (sendAmount: number): number => {
+    let fee: BigNumber;
 
     if (reverse()) {
         fee = bigRound(BigNumber(sendAmount).times(boltzFee()).div(100));
@@ -35,7 +35,7 @@ export const calculateBoltzFeeOnSend = (sendAmount) => {
     return Math.ceil(fee.toNumber());
 };
 
-export const calculateSendAmount = (receiveAmount) => {
+export const calculateSendAmount = (receiveAmount: number): number => {
     return reverse()
         ? Math.ceil(
               BigNumber(receiveAmount)

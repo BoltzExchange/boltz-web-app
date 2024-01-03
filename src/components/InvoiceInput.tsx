@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
@@ -33,17 +34,17 @@ const InvoiceInput = () => {
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
-                setReceiveAmount(sats);
-                setSendAmount(calculateSendAmount(sats));
+                setReceiveAmount(BigNumber(sats));
+                setSendAmount(BigNumber(calculateSendAmount(sats)));
                 setInvoice(inputValue);
-                setLnurl(false);
+                setLnurl("");
                 setInvoiceValid(true);
             }
             input.setCustomValidity("");
             input.classList.remove("invalid");
         } catch (e) {
             setInvoiceValid(false);
-            setLnurl(false);
+            setLnurl("");
             input.setCustomValidity(t(e.message));
             setButtonLabel({ key: e.message });
             input.classList.add("invalid");

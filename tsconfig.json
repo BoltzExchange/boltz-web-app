@@ -1,17 +1,18 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "types": ["vite/client"],
-    "baseUrl": ".",
-    "outDir": "ts-out",
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-  }
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "moduleResolution": "node",
+        "jsx": "preserve",
+        "jsxImportSource": "solid-js",
+        "types": ["vite/client", "bignumber.js"],
+        "baseUrl": ".",
+        "outDir": "ts-out",
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "skipLibCheck": true
+    }
 }
