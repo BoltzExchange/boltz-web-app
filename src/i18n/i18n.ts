@@ -642,6 +642,7 @@ const dict = {
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易。",
         fetch_lnurl: "从LNURL/LNAddress获取发票",
         invalid_address: "无效的{{ asset }}地址",
+        scan_qr_code: "扫描 QR 码",
     },
 };
 
