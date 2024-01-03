@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 
@@ -56,35 +57,38 @@ import {
 import { enableWebln } from "./utils/webln";
 
 const Create = () => {
-    let receiveAmountRef, sendAmountRef;
+    let receiveAmountRef: HTMLInputElement, sendAmountRef: HTMLInputElement;
 
-    const changeReceiveAmount = (e) => {
-        const amount = e.currentTarget.value.trim();
+    const changeReceiveAmount = (evt: InputEvent) => {
+        const target = evt.currentTarget as HTMLInputElement;
+        const amount = target.value.trim();
         const satAmount = convertAmount(Number(amount), denominations.sat);
         const sendAmount = calculateSendAmount(satAmount);
         setAmountChanged(sideReceive);
-        setReceiveAmount(BigInt(satAmount));
-        setSendAmount(sendAmount);
+        setReceiveAmount(BigNumber(satAmount));
+        setSendAmount(BigNumber(sendAmount));
         validateAmount();
-        e.currentTarget.setCustomValidity("");
-        e.currentTarget.classList.remove("invalid");
+        target.setCustomValidity("");
+        target.classList.remove("invalid");
     };
 
-    const changeSendAmount = (e) => {
-        const amount = e.currentTarget.value.trim();
+    const changeSendAmount = (evt: InputEvent) => {
+        const target = evt.currentTarget as HTMLInputElement;
+        const amount = target.value.trim();
         const satAmount = convertAmount(Number(amount), denominations.sat);
         const receiveAmount = calculateReceiveAmount(satAmount);
         setAmountChanged(sideSend);
-        setSendAmount(BigInt(satAmount));
-        setReceiveAmount(BigInt(receiveAmount));
+        setSendAmount(BigNumber(satAmount));
+        setReceiveAmount(BigNumber(receiveAmount));
         validateAmount();
-        e.currentTarget.setCustomValidity("");
-        e.currentTarget.classList.remove("invalid");
+        target.setCustomValidity("");
+        target.classList.remove("invalid");
     };
 
     const createWeblnInvoice = async () => {
         enableWebln(async () => {
             const amount = Number(receiveAmount());
+            // @ts-ignore
             const invoice = await window.webln.makeInvoice({ amount: amount });
             validateAmount();
             log.debug("created webln invoice", invoice);
@@ -92,20 +96,18 @@ const Create = () => {
         });
     };
 
-    const validateInput = (evt) => {
-        const theEvent = evt || window.event;
-        const input = evt.currentTarget;
-        let keycode = theEvent.keyCode || theEvent.which;
-        keycode = String.fromCharCode(keycode);
+    const validateInput = (evt: KeyboardEvent) => {
+        const input = evt.currentTarget as HTMLInputElement;
+        const keycode = evt.key;
         const hasDot = input.value.includes(".");
         const regex = denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\./;
         if (!regex.test(keycode)) {
-            theEvent.returnValue = false;
-            if (theEvent.preventDefault) theEvent.preventDefault();
+            evt.stopPropagation();
+            evt.preventDefault();
         }
     };
 
-    const validatePaste = (evt) => {
+    const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
         if (!getValidationRegex().test(pastedData)) {
@@ -115,7 +117,7 @@ const Create = () => {
     };
 
     const validateAmount = () => {
-        const setCustomValidity = (val, isZero) => {
+        const setCustomValidity = (val: string, isZero: boolean) => {
             [sendAmountRef, receiveAmountRef].forEach((ref) => {
                 ref.setCustomValidity(val);
                 if (!isZero && val !== "") {
@@ -126,7 +128,7 @@ const Create = () => {
             });
         };
 
-        setCustomValidity("");
+        setCustomValidity("", false);
 
         const amount = Number(sendAmount());
         const lessThanMin = amount < minimum();
@@ -146,9 +148,9 @@ const Create = () => {
         setSendAmountValid(true);
     };
 
-    const setAmount = (amount) => {
-        setSendAmount(amount);
-        setReceiveAmount(calculateReceiveAmount(amount));
+    const setAmount = (amount: number) => {
+        setSendAmount(BigNumber(amount));
+        setReceiveAmount(BigNumber(calculateReceiveAmount(amount)));
         validateAmount();
         sendAmountRef.focus();
     };
@@ -160,9 +162,13 @@ const Create = () => {
     createEffect(
         on([boltzFee, minerFee, reverse, asset], () => {
             if (amountChanged() === sideReceive) {
-                setSendAmount(BigInt(calculateSendAmount(receiveAmount())));
+                setSendAmount(
+                    BigNumber(calculateSendAmount(receiveAmount().toNumber())),
+                );
             } else {
-                setReceiveAmount(BigInt(calculateReceiveAmount(sendAmount())));
+                setReceiveAmount(
+                    BigNumber(calculateReceiveAmount(sendAmount().toNumber())),
+                );
             }
             validateAmount();
         }),
@@ -251,7 +257,7 @@ const Create = () => {
                         data-testid="sendAmount"
                         value={sendAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
-                        onKeypress={(e) => validateInput(e)}
+                        onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
                     />
                 </div>
@@ -270,7 +276,7 @@ const Create = () => {
                         data-testid="receiveAmount"
                         value={receiveAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
-                        onKeypress={(e) => validateInput(e)}
+                        onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}
                     />
                 </div>

@@ -17,12 +17,12 @@ const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
 assets.push(LN);
 
 const SelectAsset = () => {
-    const setSelectAsset = (isSend, asset) => {
+    const setSelectAsset = (isSend: boolean, asset: string) => {
         const setter = isSend ? setAssetSend : setAssetReceive;
         setter(asset);
     };
 
-    const changeAsset = (newAsset) => {
+    const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) return;
 
         // set main asset only if it is not LN
@@ -46,7 +46,7 @@ const SelectAsset = () => {
         fetchPairs();
     };
 
-    const isSelected = (asset) => {
+    const isSelected = (asset: string) => {
         return (
             asset ===
             (assetSelected() === sideSend ? assetSend() : assetReceive())

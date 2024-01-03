@@ -1,4 +1,4 @@
-import { Show, createEffect } from "solid-js";
+import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
@@ -40,7 +40,7 @@ const Fees = () => {
                 setMinerFee(fee);
             }
 
-            const calculateLimit = (limit) => {
+            const calculateLimit = (limit: number) => {
                 return reverse() ? limit : calculateSendAmount(limit);
             };
 

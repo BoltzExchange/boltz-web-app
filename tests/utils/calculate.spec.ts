@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import {
     minerFee,
@@ -89,12 +90,12 @@ describe("Calculate amounts", () => {
 
     describe("should calculate Boltz fee based on send amount", () => {
         test.each`
-            sendAmount | receiveAmount | fee
-            ${10157}   | ${10000}      | ${10}
-            ${12473}   | ${12313}      | ${13}
-            ${4299409} | ${4294967}    | ${4295}
-            ${62531}   | ${62321}      | ${63}
-            ${100}     | ${-47}        | ${0}
+            sendAmount            | receiveAmount | fee
+            ${BigNumber(10157)}   | ${10000}      | ${10}
+            ${BigNumber(12473)}   | ${12313}      | ${13}
+            ${BigNumber(4299409)} | ${4294967}    | ${4295}
+            ${BigNumber(62531)}   | ${62321}      | ${63}
+            ${BigNumber(100)}     | ${-47}        | ${0}
         `(
             "should calculate fee for Swaps $sendAmount -> $fee",
             ({ sendAmount, receiveAmount, fee }) => {
@@ -102,7 +103,7 @@ describe("Calculate amounts", () => {
 
                 expect(calculateBoltzFeeOnSend(sendAmount)).toEqual(fee);
                 expect(
-                    BigNumber(sendAmount)
+                    sendAmount
                         .minus(calculateBoltzFeeOnSend(sendAmount))
                         .minus(minerFee())
                         .toNumber(),
@@ -111,11 +112,11 @@ describe("Calculate amounts", () => {
         );
 
         test.each`
-            sendAmount | receiveAmount | fee
-            ${1000000} | ${997072}     | ${2500}
-            ${10000}   | ${9547}       | ${25}
-            ${122344}  | ${121610}     | ${306}
-            ${4294967} | ${4283801}    | ${10738}
+            sendAmount            | receiveAmount | fee
+            ${BigNumber(1000000)} | ${997072}     | ${2500}
+            ${BigNumber(10000)}   | ${9547}       | ${25}
+            ${BigNumber(122344)}  | ${121610}     | ${306}
+            ${BigNumber(4294967)} | ${4283801}    | ${10738}
         `(
             "should calculate fee for Reverse Swaps $sendAmount -> $fee",
             ({ sendAmount, receiveAmount, fee }) => {
@@ -134,15 +135,21 @@ describe("Calculate amounts", () => {
         test("should calculate negative fees", () => {
             setSwapFees();
             setBoltzFee(-0.1);
-            expect(calculateBoltzFeeOnSend(1_000_000)).toEqual(-1000);
+            expect(calculateBoltzFeeOnSend(BigNumber(1_000_000))).toEqual(
+                -1000,
+            );
         });
 
         test("should return correct types", () => {
             setReverse(true);
-            expect(typeof calculateBoltzFeeOnSend(1000000)).toEqual("number");
+            expect(typeof calculateBoltzFeeOnSend(BigNumber(1000000))).toEqual(
+                "number",
+            );
 
             setReverse(false);
-            expect(typeof calculateBoltzFeeOnSend(1000000)).toEqual("number");
+            expect(typeof calculateBoltzFeeOnSend(BigNumber(1000000))).toEqual(
+                "number",
+            );
         });
     });
 });

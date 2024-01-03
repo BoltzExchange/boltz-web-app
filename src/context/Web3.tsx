@@ -3,7 +3,7 @@ import { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
 import {
     Accessor,
-    ResolvedChildren,
+    JSXElement,
     createContext,
     createSignal,
     useContext,
@@ -25,7 +25,7 @@ const Web3SignerContext = createContext<{
 }>();
 
 const Web3SignerProvider = (props: {
-    children: ResolvedChildren;
+    children: JSXElement;
     noFetch?: boolean;
 }) => {
     const [provider, setProvider] = createSignal<BrowserProvider | undefined>();
