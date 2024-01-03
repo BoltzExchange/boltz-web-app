@@ -51,35 +51,37 @@ const SwapList = ({
         <div id="swaplist">
             <For each={sortedSwaps()}>
                 {(swap) => (
-                    <div class="swaplist-item">
-                        <span
-                            class="btn-small"
-                            onClick={() => navigate("/swap/" + swap.id)}>
-                            {t("view")}
-                        </span>
-                        <span
-                            data-reverse={swap.reverse}
-                            data-asset={swap.asset}
-                            class="swaplist-asset">
-                            -&gt;
-                        </span>
-                        <span class="swaplist-asset-id">
-                            {t("id")}:&nbsp;{swap.id}
-                        </span>
-                        <span class="swaplist-asset-date">
-                            {t("created")}:&nbsp;{formatDate(swap.date)}
-                        </span>
-                        <Show when={deleteButton}>
+                    <>
+                        <div class="swaplist-item">
                             <span
-                                class="btn-small btn-danger"
-                                onClick={() => deleteSwap(swap.id)}>
-                                {t("delete")}
+                                class="btn-small"
+                                onClick={() => navigate("/swap/" + swap.id)}>
+                                {t("view")}
                             </span>
-                        </Show>
+                            <span
+                                data-reverse={swap.reverse}
+                                data-asset={swap.asset}
+                                class="swaplist-asset">
+                                -&gt;
+                            </span>
+                            <span class="swaplist-asset-id">
+                                {t("id")}:&nbsp;{swap.id}
+                            </span>
+                            <span class="swaplist-asset-date">
+                                {t("created")}:&nbsp;{formatDate(swap.date)}
+                            </span>
+                            <Show when={deleteButton}>
+                                <span
+                                    class="btn-small btn-danger"
+                                    onClick={() => deleteSwap(swap.id)}>
+                                    {t("delete")}
+                                </span>
+                            </Show>
+                        </div>
                         <Show when={lastSwap() !== swap}>
                             <hr />
                         </Show>
-                    </div>
+                    </>
                 )}
             </For>
         </div>

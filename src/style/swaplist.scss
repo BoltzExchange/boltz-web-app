@@ -9,6 +9,14 @@
         line-height: 1.66;
     }
 }
+@media (min-width: 468px) {
+    .swaplist-item {
+        display: flex;
+    }
+    .swaplist-asset-id {
+        flex-grow: 1;
+    }
+}
 
 .swaplist-asset-date,
 .swaplist-asset-id {
