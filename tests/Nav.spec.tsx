@@ -1,6 +1,6 @@
 import { Router } from "@solidjs/router";
 import { render, screen } from "@solidjs/testing-library";
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import Nav from "../src/Nav";
 

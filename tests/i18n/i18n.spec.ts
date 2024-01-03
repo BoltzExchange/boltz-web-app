@@ -1,4 +1,4 @@
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { rawDict } from "../../src/i18n/i18n";
 

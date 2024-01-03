@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
