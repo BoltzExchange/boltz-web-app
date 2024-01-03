@@ -12,6 +12,7 @@
         "baseUrl": ".",
         "outDir": "ts-out",
         "noImplicitReturns": true,
-        "noUnusedLocals": true
+        "noUnusedLocals": true,
+        "skipLibCheck": true
     }
 }
