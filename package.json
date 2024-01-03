@@ -13,7 +13,7 @@
         "testnet": "cp src/configs/config.testnet.ts src/config.ts; vite build; cp dist/index.html dist/404.html",
         "prettier": "prettier --write src tests",
         "prettier-check": "prettier --check src tests",
-        "tsc": "tsc",
+        "tsc": "tsc --skipLibCheck",
         "changelog": "git-cliff -o CHANGELOG.md"
     },
     "devDependencies": {

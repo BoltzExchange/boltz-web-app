@@ -33,17 +33,17 @@ const InvoiceInput = () => {
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
-                setReceiveAmount(sats);
+                setReceiveAmount(BigInt(sats));
                 setSendAmount(calculateSendAmount(sats));
                 setInvoice(inputValue);
-                setLnurl(false);
+                setLnurl("");
                 setInvoiceValid(true);
             }
             input.setCustomValidity("");
             input.classList.remove("invalid");
         } catch (e) {
             setInvoiceValid(false);
-            setLnurl(false);
+            setLnurl("");
             input.setCustomValidity(t(e.message));
             setButtonLabel({ key: e.message });
             input.classList.add("invalid");

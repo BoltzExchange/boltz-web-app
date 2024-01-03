@@ -74,7 +74,7 @@ describe("InvoiceInput", () => {
         expect(setInvoice).toHaveBeenCalledTimes(1);
         expect(setInvoice).toHaveBeenCalledWith(invoice);
 
-        setReceiveAmount(receiveAmount() + 1);
+        setReceiveAmount(receiveAmount() + 1n);
 
         expect(setInvoice).toHaveBeenCalledTimes(2);
         expect(setInvoice).toHaveBeenCalledWith("");
@@ -102,7 +102,7 @@ describe("InvoiceInput", () => {
         expect(setLnurl).toHaveBeenCalledTimes(1);
         expect(setLnurl).toHaveBeenCalledWith(lnurl.toLowerCase());
 
-        setSendAmount(sendAmount() + 1);
+        setSendAmount(sendAmount() + 1n);
 
         expect(input.value).toEqual(lnurl);
     });
