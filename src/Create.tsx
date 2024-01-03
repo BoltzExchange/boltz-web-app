@@ -88,7 +88,6 @@ const Create = () => {
     const createWeblnInvoice = async () => {
         enableWebln(async () => {
             const amount = Number(receiveAmount());
-            // @ts-ignore
             const invoice = await window.webln.makeInvoice({ amount: amount });
             validateAmount();
             log.debug("created webln invoice", invoice);

@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { beforeEach, describe, expect, vitest } from "vitest";
+import { beforeEach, describe, expect, test, vitest } from "vitest";
 
 import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 
@@ -14,19 +14,19 @@ describe("WebLN", () => {
     });
 
     test("should detect WebLN when provider is present", async () => {
-        window.webln = {};
+        window.webln = {} as any;
         expect(await detectWebLNProvider()).toEqual(true);
     });
 
     test("should detect WebLN when provider is present after 200ms", async () => {
-        setTimeout(() => (window.webln = {}), 1);
+        setTimeout(() => (window.webln = {} as any), 1);
         expect(await detectWebLNProvider()).toEqual(true);
     });
 
     test("should call WebLN callback if enable call succeeds", async () => {
         window.webln = {
             enable: vitest.fn().mockResolvedValue(undefined),
-        };
+        } as any;
         const cb = vitest.fn();
 
         expect(await enableWebln(cb));
@@ -41,7 +41,7 @@ describe("WebLN", () => {
     test("should not call WebLN callback if enable call fails", async () => {
         window.webln = {
             enable: vitest.fn().mockRejectedValue("unauthorized"),
-        };
+        } as any;
         const cb = vitest.fn();
 
         expect(await enableWebln(cb));
