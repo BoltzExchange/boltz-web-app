@@ -70,16 +70,10 @@ const Footer = () => {
                     href={`${repoUrl}/releases/tag/v${__APP_VERSION__}`}>
                     {__APP_VERSION__}
                 </a>
-                , {"Branch"}:{" "}
-                <a target="_blank" href={`${repoUrl}/tree/${__GIT_BRANCH__}`}>
-                    {__GIT_BRANCH__}
-                </a>
-                <br />
-                {t("commithash")}:{" "}
+                , {t("commithash")}:{" "}
                 <a target="_blank" href={`${repoUrl}/commit/${__GIT_COMMIT__}`}>
                     {__GIT_COMMIT__}
                 </a>
-                , {t("network")}: {network}
             </p>
         </footer>
     );

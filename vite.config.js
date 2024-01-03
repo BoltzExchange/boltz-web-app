@@ -8,10 +8,6 @@ const commitHash = child
     .execSync("git rev-parse --short HEAD")
     .toString()
     .trim();
-const branchName = child
-    .execSync("git branch --show-current")
-    .toString()
-    .trim();
 
 export default defineConfig({
     plugins: [solidPlugin(), nodePolyfills(), mkcert()],
@@ -27,6 +23,5 @@ export default defineConfig({
     define: {
         __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
         __GIT_COMMIT__: JSON.stringify(commitHash),
-        __GIT_BRANCH__: JSON.stringify(branchName),
     },
 });

@@ -160,7 +160,6 @@ const dict = {
         scan_qr_code: "Scan QR Code",
         version: "Version",
         commithash: "Commit Hash",
-        network: "Network",
     },
     de: {
         language: "Deutsch",
@@ -330,7 +329,6 @@ const dict = {
         scan_qr_code: "QR Code scannen",
         version: "Version",
         commithash: "Commit Hash",
-        network: "Netzwerk",
     },
     es: {
         language: "Español",
@@ -499,7 +497,6 @@ const dict = {
         scan_qr_code: "Escanear código QR",
         version: "Versión",
         commithash: "Commit Hash",
-        network: "Network",
     },
     zh: {
         language: "中文",
@@ -654,7 +651,6 @@ const dict = {
         scan_qr_code: "扫描 QR 码",
         version: "版本",
         commithash: "提交哈希",
-        network: "网络",
     },
 };
 
