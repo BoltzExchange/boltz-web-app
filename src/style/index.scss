@@ -229,10 +229,14 @@ hr.spacer {
 .btns-space-between {
     justify-content: space-between;
 }
-.btns > * {
+.btns .btn {
     display: inline-block;
     width: auto;
     margin: 3px;
+    flex-grow: 1;
+}
+.btns .no-grow {
+    flex-grow: 0;
 }
 
 .fee {
