@@ -17,17 +17,17 @@ export const calculateReceiveAmount = (sendAmount: number): number => {
     return Math.max(Math.floor(receiveAmount.toNumber()), 0);
 };
 
-export const calculateBoltzFeeOnSend = (sendAmount: number): number => {
+export const calculateBoltzFeeOnSend = (sendAmount: BigNumber): number => {
     let fee: BigNumber;
 
     if (reverse()) {
-        fee = bigRound(BigNumber(sendAmount).times(boltzFee()).div(100));
+        fee = bigRound(sendAmount.times(boltzFee()).div(100));
     } else {
-        fee = BigNumber(sendAmount)
-            .minus(calculateReceiveAmount(sendAmount))
+        fee = sendAmount
+            .minus(calculateReceiveAmount(sendAmount.toNumber()))
             .minus(minerFee());
 
-        if (sendAmount < minerFee()) {
+        if (sendAmount.toNumber() < minerFee()) {
             fee = BigNumber(0);
         }
     }
