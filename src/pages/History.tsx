@@ -93,7 +93,6 @@ const History = () => {
                         setSwapSignal={setSwaps}
                         deleteButton={true}
                     />
-                    <hr />
                     <Show when={swaps().length > 0}>
                         <Show when={!isIos}>
                             <button

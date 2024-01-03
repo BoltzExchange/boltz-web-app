@@ -27,19 +27,8 @@ const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 const Refund = () => {
     const navigate = useNavigate();
 
-    const [valid, setValid] = createSignal(false);
-    const [addressValid, setAddressValid] = createSignal(false);
     const [refundJsonValid, setRefundJsonValid] = createSignal(false);
-    const [refundable, setRefundable] = createSignal(true);
     const [refundJson, setRefundJson] = createSignal(null);
-
-    createEffect(() => {
-        if (addressValid() && refundJsonValid()) {
-            setValid(true);
-        } else {
-            setValid(false);
-        }
-    });
 
     const checkRefundJsonKeys = (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
@@ -68,8 +57,8 @@ const Refund = () => {
         }
     };
 
-    const uploadChange = (e: Event) => {
-        const input = e.currentTarget as HTMLInputElement;
+    const uploadChange = (evt: Event) => {
+        const input = evt.currentTarget as HTMLInputElement;
         const inputFile = input.files[0];
         input.setCustomValidity("");
         setRefundJson("");
@@ -93,29 +82,6 @@ const Refund = () => {
                     input.setCustomValidity(t("invalid_refund_file"));
                 });
         }
-    };
-
-    const startRefund = () => {
-        if (!valid()) return;
-        const refundInfo = refundJson();
-        fetcher(
-            "/getswaptransaction",
-            async (data: any) => {
-                if (data.timeoutEta) {
-                    setTimeoutEta(data.timeoutEta * 1000);
-                    setTimeoutBlockheight(data.timeoutBlockHeight);
-                    setRefundable(false);
-                    return;
-                }
-
-                setRefundable(true);
-                setTransactionToRefund(data);
-                await refund(refundJson(), t);
-            },
-            {
-                id: refundInfo.id,
-            },
-        );
     };
 
     const refundSwapsSanityFilter = (swap: any) =>
@@ -148,10 +114,14 @@ const Refund = () => {
             )
             .map((swap) => {
                 fetcher(
-                    "/swapstatus",
-                    (status: any) => {
+                    getApiUrl("/swapstatus", swap.asset),
+                    (status) => {
                         if (
-                            !updateSwapStatus(swap.id, status.status) &&
+                            !updateSwapStatusIfRefundable(
+                                swap.id,
+                                swap.status,
+                                status.status,
+                            ) &&
                             Object.values(swapStatusFailed).includes(
                                 status.status,
                             )
@@ -165,7 +135,7 @@ const Refund = () => {
 
                             // Make sure coins were locked for the swap with status "swap.expired"
                             fetcher(
-                                "/getswaptransaction",
+                                getApiUrl("/getswaptransaction", swap.asset),
                                 () => {
                                     addToRefundableSwaps(swap);
                                 },
@@ -188,7 +158,6 @@ const Refund = () => {
                 <hr />
                 <Show when={refundableSwaps().length > 0}>
                     <SwapList swapsSignal={refundableSwaps} />
-                    <hr />
                 </Show>
                 <input
                     required
@@ -197,30 +166,8 @@ const Refund = () => {
                     accept="application/json,image/png"
                     onChange={(e) => uploadChange(e)}
                 />
-                <input
-                    required
-                    disabled={!refundJsonValid()}
-                    onInput={(e) =>
-                        setAddressValid(
-                            refundAddressChange(e, refundJson().asset),
-                        )
-                    }
-                    type="text"
-                    id="refundAddress"
-                    name="refundAddress"
-                    placeholder={t("refund_address_placeholder")}
-                />
-                <button
-                    class="btn"
-                    disabled={valid() && refundTx() === ""}
-                    onClick={startRefund}>
-                    {t("refund")}
-                </button>
-                <Show when={!refundable()}>
-                    <hr />
-                    <RefundEta />
-                </Show>
-                <Show when={refundTx() !== ""}>
+                <RefundCreate swap={refundJson} refundValid={refundJsonValid} />
+                <Show when={refundJson() !== null && refundTx() !== ""}>
                     <hr />
                     <p>{t("refunded")}</p>
                     <hr />

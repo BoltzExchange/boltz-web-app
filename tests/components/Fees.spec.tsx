@@ -3,33 +3,35 @@ import { BigNumber } from "bignumber.js";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
 import Fees from "../../src/components/Fees";
-import * as signals from "../../src/signals";
+import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { setConfig } from "../../src/signals";
 import { calculateSendAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
 
 describe("Fees component", () => {
-    beforeAll(() => {
-        // @ts-ignore
-        signals.setConfig(cfg);
-        signals.setReverse(true);
-    });
+    let signals: any;
 
-    beforeEach(() => {
-        signals.setAsset("BTC");
-    });
-
-    test("should render", async () => {
-        render(() => <Fees />);
-    });
+    const TestComponent = () => {
+        signals = useCreateContext();
+        return "";
+    };
 
     test("should recalculate limits on direction switch", () => {
-        const setMinimum = vi.spyOn(signals, "setMinimum");
-        const setMaximum = vi.spyOn(signals, "setMaximum");
+        render(() => (
+            <CreateProvider>
+                <TestComponent />
+                <Fees />
+            </CreateProvider>
+        ));
 
-        render(() => <Fees />);
+        setConfig(cfg);
+        signals.setReverse(true);
+        signals.setAsset("BTC");
 
-        expect(setMinimum).toHaveBeenCalledWith(cfg["BTC/BTC"].limits.minimal);
-        expect(setMaximum).toHaveBeenCalledWith(cfg["BTC/BTC"].limits.maximal);
+        const limits = cfg["BTC/BTC"].limits;
+
+        expect(signals.minimum()).toEqual(limits.minimal);
+        expect(signals.maximum()).toEqual(limits.maximal);
 
         signals.setReverse(false);
 

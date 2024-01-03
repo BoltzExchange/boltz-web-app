@@ -1,25 +1,9 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
-import { RBTC } from "../consts";
+import { useCreateContext } from "../context/Create";
 import t from "../i18n";
-import {
-    asset,
-    boltzFee,
-    denomination,
-    invoice,
-    minerFee,
-    receiveAmount,
-    receiveAmountFormatted,
-    reverse,
-    sendAmount,
-    sendAmountValid,
-    setInvoice,
-    setInvoiceValid,
-    setLnurl,
-    setReceiveAmount,
-    setSendAmount,
-} from "../signals";
+import { denomination } from "../signals";
 import { calculateSendAmount } from "../utils/calculate";
 import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
@@ -27,6 +11,20 @@ import { setButtonLabel } from "./CreateButton";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
+
+    const {
+        invoice,
+        reverse,
+        setInvoice,
+        receiveAmount,
+        setReceiveAmount,
+        sendAmount,
+        setSendAmount,
+        setLnurl,
+        setInvoiceValid,
+        receiveAmountFormatted,
+        sendAmountValid,
+    } = useCreateContext();
 
     const validate = (input: HTMLTextAreaElement) => {
         const inputValue = extractInvoice(input.value.trim());
@@ -62,7 +60,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([sendAmountValid, invoice], () => {
-            if (!reverse() && asset() !== RBTC) {
+            if (!reverse()) {
                 validate(inputRef);
             }
         }),

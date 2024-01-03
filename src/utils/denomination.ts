@@ -52,6 +52,8 @@ export const formatAmountDenomination = (
 
         default:
             return amount.toString();
+        default:
+            return amount.toString();
     }
 };
 

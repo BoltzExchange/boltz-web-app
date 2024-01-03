@@ -12,38 +12,9 @@ import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import { RBTC, sideReceive, sideSend } from "../consts";
+import { useCreateContext } from "../context/Create";
 import t from "../i18n";
-import {
-    addressValid,
-    amountChanged,
-    asset,
-    assetReceive,
-    assetSelect,
-    assetSelected,
-    assetSend,
-    boltzFee,
-    denomination,
-    invoiceValid,
-    maximum,
-    minerFee,
-    minimum,
-    receiveAmount,
-    receiveAmountFormatted,
-    reverse,
-    sendAmount,
-    sendAmountFormatted,
-    sendAmountValid,
-    setAmountChanged,
-    setInvoice,
-    setReceiveAmount,
-    setReceiveAmountFormatted,
-    setSendAmount,
-    setSendAmountFormatted,
-    setSendAmountValid,
-    setValid,
-    wasmSupported,
-    webln,
-} from "../signals";
+import { boltzFee, denomination, minerFee, webln } from "../signals";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
@@ -60,6 +31,33 @@ import { enableWebln } from "../utils/webln";
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
+
+    const {
+        asset,
+        assetReceive,
+        assetSend,
+        addressValid,
+        reverse,
+        setInvoice,
+        invoiceValid,
+        receiveAmount,
+        receiveAmountFormatted,
+        sendAmount,
+        sendAmountFormatted,
+        sendAmountValid,
+        setReceiveAmount,
+        setReceiveAmountFormatted,
+        setSendAmount,
+        setSendAmountFormatted,
+        setSendAmountValid,
+        setValid,
+        assetSelect,
+        assetSelected,
+        amountChanged,
+        setAmountChanged,
+        minimum,
+        maximum,
+    } = useCreateContext();
 
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
@@ -100,6 +98,7 @@ const Create = () => {
     const createWeblnInvoice = async () => {
         enableWebln(async () => {
             const amount = Number(receiveAmount());
+            // @ts-ignore
             const invoice = await window.webln.makeInvoice({ amount: amount });
             validateAmount();
             log.debug("created webln invoice", invoice);
@@ -113,7 +112,6 @@ const Create = () => {
         const hasDot = input.value.includes(".");
         const regex = denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\./;
         if (!regex.test(keycode)) {
-            evt.stopPropagation();
             evt.preventDefault();
         }
     };
@@ -128,10 +126,10 @@ const Create = () => {
     };
 
     const validateAmount = () => {
-        const setCustomValidity = (val: string, isZero: boolean) => {
+        const setCustomValidity = (msg: string, isZero: boolean = true) => {
             [sendAmountRef, receiveAmountRef].forEach((ref) => {
-                ref.setCustomValidity(val);
-                if (!isZero && val !== "") {
+                ref.setCustomValidity(msg);
+                if (!isZero && msg !== "") {
                     ref.classList.add("invalid");
                 } else {
                     ref.classList.remove("invalid");
@@ -206,10 +204,7 @@ const Create = () => {
     );
 
     createEffect(() => {
-        if (assetSelect()) {
-            return;
-        }
-
+        if (assetSelect()) return;
         const ref =
             assetSelected() === sideSend ? sendAmountRef : receiveAmountRef;
         ref.focus();
@@ -301,7 +296,7 @@ const Create = () => {
                                 : sendAmountFormatted()
                         }
                         onpaste={(e) => validatePaste(e)}
-                        onkeypress={(e) => validateInput(e)}
+                        onKeyPress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
                     />
                 </div>
@@ -333,7 +328,7 @@ const Create = () => {
                                 : receiveAmountFormatted()
                         }
                         onpaste={(e) => validatePaste(e)}
-                        onkeypress={(e) => validateInput(e)}
+                        onKeyPress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}
                     />
                 </div>

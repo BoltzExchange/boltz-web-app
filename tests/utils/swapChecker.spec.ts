@@ -13,6 +13,7 @@ import {
     swapStatusSuccess,
 } from "../../src/utils/swapStatus";
 
+// @ts-ignore
 global.EventSource = EventSource;
 
 let apiUrl: string;
@@ -23,11 +24,16 @@ vi.mock("../../src/utils/helper", async () => {
     return {
         isMobile: () => false,
         getApiUrl: () => apiUrl,
-        fetcher: (_path, cb, data) => {
+        fetcher: (_path: any, cb: any, data: any) => {
             fetcherCallData.push(data);
             cb();
         },
-        setSwapStatusAndClaim: vi.fn(),
+    };
+});
+
+vi.mock("../../src/utils/claim", async () => {
+    return {
+        claim: vi.fn(),
     };
 });
 
@@ -38,10 +44,9 @@ class Server {
     public address: string | undefined;
     private server: HttpsServer | undefined;
 
-    public start = () => {
-        this.server = createServer((req, res) => {
+    public start = (id: string) => {
+        this.server = createServer((_, res) => {
             this.connectCount += 1;
-            const id = req.url.split("=")[1];
             this.connections[id] = res;
 
             res.on("close", () => {
@@ -65,7 +70,7 @@ class Server {
     public sendMessage = (id: string, message: string) => {
         const con = this.connections[id];
         if (con === undefined) {
-            throw "no connection for ID";
+            throw `no connection for ID: ${id}`;
         }
 
         con.write(`data: ${message}\n\n`);
@@ -78,7 +83,7 @@ describe("swapChecker", () => {
     const server = new Server();
 
     beforeEach(() => {
-        server.start();
+        server.start(swaps[0].id);
         vi.resetAllMocks();
         apiUrl = server.address;
     });
@@ -94,11 +99,13 @@ describe("swapChecker", () => {
             id: "pending",
             asset: "BTC",
             status: swapStatusPending.TransactionMempool,
+            transaction: "some tx",
         },
         {
             id: "failed",
             asset: "BTC",
             status: swapStatusFailed.InvoiceFailedToPay,
+            transaction: "some tx",
         },
         {
             id: "success",
@@ -112,7 +119,7 @@ describe("swapChecker", () => {
         createRoot(() => {
             swapChecker();
         });
-        await wait(100);
+        await wait(200);
 
         expect(fetcherCallData).toHaveLength(2);
         expect(fetcherCallData).toEqual([
@@ -132,15 +139,17 @@ describe("swapChecker", () => {
         setSwap(swaps[0]);
         await wait();
 
-        const message = { status: "some update" };
+        const message = {
+            status: swapStatusPending.TransactionMempool,
+            transaction: "some tx",
+        };
         server.sendMessage(swaps[0].id, JSON.stringify(message));
         await wait();
 
         expect(Object.keys(server.connections).length).toEqual(1);
         expect(server.connections[swaps[0].id]).not.toBeUndefined();
 
-        expect(setSwapStatusAndClaim).toHaveBeenCalledTimes(3);
-        expect(setSwapStatusAndClaim).toHaveBeenCalledWith(message, swaps[0]);
+        expect(claim).toHaveBeenCalledWith(swaps[0], message.transaction);
     });
 
     test("should close SSE when active swap changes", async () => {

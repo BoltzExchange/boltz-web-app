@@ -6,13 +6,43 @@ import { fetcher, getApiUrl, setSwapStatusAndClaim } from "./helper";
 import { swapStatusFinal } from "./swapStatus";
 
 const swapCheckInterval = 3000;
-
 let activeStreamId = undefined;
 let activeSwapStream = undefined;
 
 export const [checkInterval, setCheckInterval] = createSignal<
     NodeJS.Timer | undefined
 >(undefined);
+
+export const checkForFailed = (swapId: string, asset: string, data: any) => {
+    if (
+        data.status == "transaction.lockupFailed" ||
+        data.status == "invoice.failedToPay"
+    ) {
+        fetcher(
+            getApiUrl("/getswaptransaction", asset),
+            (data) => {
+                if (asset !== RBTC && !data.transactionHex) {
+                    return log.error("no mempool tx found");
+                }
+                if (!data.timeoutEta) {
+                    return log.error("no timeout eta");
+                }
+                if (!data.timeoutBlockHeight) {
+                    return log.error("no timeout blockheight");
+                }
+                const timestamp = data.timeoutEta * 1000;
+                const eta = new Date(timestamp);
+                log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
+                setTimeoutEta(timestamp);
+                setTimeoutBlockheight(data.timeoutBlockHeight);
+                setTransactionToRefund(data.transaction);
+            },
+            {
+                id: swapId,
+            },
+        );
+    }
+};
 
 export const swapChecker = () => {
     createEffect(() => {
@@ -34,11 +64,22 @@ export const swapChecker = () => {
         log.debug(`subscribing to SSE of swap`, activeSwap.id);
         activeStreamId = activeSwap.id;
         activeSwapStream = handleStream(
-            `${getApiUrl(activeSwap.asset)}/streamswapstatus?id=${
-                activeSwap.id
-            }`,
-            (data) => {
-                setSwapStatusAndClaim(data, activeSwap);
+            getApiUrl(
+                `/streamswapstatus?id=${activeSwap.id}`,
+                activeSwap.asset,
+            ),
+            async (data) => {
+                updateSwapStatus(activeSwap.id, data.status);
+                checkForFailed(activeSwap.id, activeSwap.asset, data);
+                if (
+                    checkClaimStatus(
+                        data?.status,
+                        data?.transaction,
+                        activeSwap?.claimTx,
+                    )
+                ) {
+                    await claim(activeSwap, data.transaction);
+                }
             },
         );
     });
@@ -77,9 +118,17 @@ const runSwapCheck = async () => {
     for (const swap of swapsToCheck) {
         await new Promise<void>((resolve) => {
             fetcher(
-                "/swapstatus",
-                (data) => {
-                    setSwapStatusAndClaim(data, swap);
+                getApiUrl("/swapstatus", swap.asset),
+                async (data: any) => {
+                    if (
+                        checkClaimStatus(
+                            data?.status,
+                            data?.transaction,
+                            swap?.claimTx,
+                        )
+                    ) {
+                        await claim(swap, data.transaction);
+                    }
                     resolve();
                 },
                 { id: swap.id },

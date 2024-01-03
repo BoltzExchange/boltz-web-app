@@ -1,22 +1,24 @@
 import { pairs } from "../config";
 import { LN, sideSend } from "../consts";
-import t from "../i18n";
-import {
-    assetReceive,
-    assetSelect,
-    assetSelected,
-    assetSend,
-    setAsset,
-    setAssetReceive,
-    setAssetSelect,
-    setAssetSend,
-} from "../signals";
+import { useCreateContext } from "../context/Create";
 import { fetchPairs } from "../utils/helper";
+import t from "../i18n";
 
 const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
 assets.push(LN);
 
 const SelectAsset = () => {
+    const {
+        assetSelected,
+        assetSelect,
+        setAssetSelect,
+        assetReceive,
+        setAssetReceive,
+        assetSend,
+        setAssetSend,
+        setAsset,
+    } = useCreateContext();
+
     const setSelectAsset = (isSend: boolean, asset: string) => {
         const setter = isSend ? setAssetSend : setAssetReceive;
         setter(asset);

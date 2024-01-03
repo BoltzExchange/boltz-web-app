@@ -12,8 +12,7 @@ import "../style/nav.scss";
 
 const Nav = ({ network }) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
-
-    const [hamburger, setHamburger] = createSignal(false);
+    const [hamburger, setHamburger] = createSignal<boolean>(false);
     return (
         <nav>
             <Warnings />

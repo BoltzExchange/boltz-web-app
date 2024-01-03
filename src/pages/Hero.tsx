@@ -16,10 +16,10 @@ export const [hideHero, setHideHero] = createSignal(false);
 export const Hero = () => {
     const navigate = useNavigate();
     const [nodeStats, setNodeStats] = createSignal(null);
-    const [numChannel, setNumChannel] = createSignal("0");
-    const [numPeers, setNumPeers] = createSignal("0");
-    const [capacity, setCapacity] = createSignal("0");
-    const [oldestChannel, setOldestChannel] = createSignal("0");
+    const [numChannel, setNumChannel] = createSignal<string>("0");
+    const [numPeers, setNumPeers] = createSignal<string>("0");
+    const [capacity, setCapacity] = createSignal<string>("0");
+    const [oldestChannel, setOldestChannel] = createSignal<string>("0");
 
     createMemo(() => {
         const stats = nodeStats();
@@ -36,7 +36,7 @@ export const Hero = () => {
         window.open(ambossUrl, "_blank");
     };
 
-    fetcher("/nodestats", (data: any) => {
+    fetcher(getApiUrl("/nodestats", BTC), (data: any) => {
         log.debug("nodestats", data);
         setNodeStats(data.nodes.BTC);
     });

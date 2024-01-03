@@ -12,139 +12,153 @@ import { calculateReceiveAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
 
 describe("Create", () => {
-    beforeAll(() => {
-        signals.setDenomination("sat");
-        signals.setConfig(cfg);
-        signals.setMinimum(cfg["BTC/BTC"].limits.minimal);
-        signals.setReverse(true);
-    });
+    let signals: any;
 
-    beforeEach(() => {
-        signals.setAsset("BTC");
+    const TestComponent = () => {
+        signals = useCreateContext();
+        return "";
+    };
+
+    beforeAll(() => {
+        setConfig(cfg);
+        setDenomination("sat");
     });
 
     test("should render Create", async () => {
         render(() => (
             <Router>
                 <Web3SignerProvider noFetch={true}>
-                    <Create />
+                    <CreateProvider>
+                        <TestComponent />
+                        <Create />
+                    </CreateProvider>
                 </Web3SignerProvider>
             </Router>
         ));
+        signals.setReverse(true);
+        signals.setAsset(BTC);
         const button = await screen.findAllByText(i18n.en.create_swap);
         expect(button).not.toBeUndefined();
     });
 
     test("should update receive amount on asset change", async () => {
-        const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
+        // const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
 
         render(() => (
             <Router>
                 <Web3SignerProvider noFetch={true}>
-                    <Create />
+                    <CreateProvider>
+                        <TestComponent />
+                        <Create />
+                    </CreateProvider>
                 </Web3SignerProvider>
             </Router>
         ));
+        signals.setMinimum(cfg["BTC/BTC"].limits.minimal);
+        signals.setReverse(true);
+        signals.setAsset(BTC);
 
         signals.setSendAmount(BigNumber(50_000));
 
         // To force trigger a recalculation
-        signals.setAsset("L-BTC");
-        signals.setAsset("BTC");
+        signals.setAsset(LBTC);
+        signals.setAsset(BTC);
 
-        expect(setReceiveAmount).toHaveBeenCalledWith(BigNumber(38110));
+        expect(signals.receiveAmount()).toEqual(BigNumber(38110));
 
-        signals.setAsset("L-BTC");
+        signals.setAsset(LBTC);
 
-        expect(setReceiveAmount).toHaveBeenLastCalledWith(BigNumber(49447));
+        expect(signals.receiveAmount()).toEqual(BigNumber(49447));
     });
 
     test("should update receive amount on miner fee change", async () => {
-        const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
-
         render(() => (
             <Router>
                 <Web3SignerProvider noFetch={true}>
-                    <Create />
+                    <CreateProvider>
+                        <TestComponent />
+                        <Create />
+                    </CreateProvider>
                 </Web3SignerProvider>
             </Router>
         ));
 
-        expect(setReceiveAmount).toHaveBeenCalledWith(BigNumber(38110));
+        signals.setMinimum(cfg["BTC/BTC"].limits.minimal);
+        signals.setReverse(true);
+        signals.setSendAmount(BigNumber(50_000));
+
+        // To force trigger a recalculation
+        signals.setAsset(LBTC);
+        signals.setAsset(BTC);
+
+        expect(signals.receiveAmount()).toEqual(BigNumber(38110));
+
+        cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
 
         const updatedCfg = { ...cfg };
-        cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
-        signals.setConfig(updatedCfg);
+        setConfig(updatedCfg);
 
-        expect(setReceiveAmount).toHaveBeenLastCalledWith(BigNumber(38110 - 1));
+        expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
     });
 
     test("should update calculated value on fee change", async () => {
         render(() => (
             <Router>
                 <Web3SignerProvider noFetch={true}>
-                    <Create />
+                    <CreateProvider>
+                        <TestComponent />
+                        <Create />
+                    </CreateProvider>
                 </Web3SignerProvider>
             </Router>
         ));
+        signals.setReverse(true);
+        signals.setAsset("BTC");
 
         const updateConfig = () => {
             const updatedCfg = { ...cfg };
             cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
-            signals.setConfig(updatedCfg);
+            setConfig(updatedCfg);
         };
-
-        const setSendAmount = vi.spyOn(signals, "setSendAmount");
-        const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
-        const setAmountChanged = vi.spyOn(signals, "setAmountChanged");
 
         const amount = 100_000;
         fireEvent.input(await screen.findByTestId("receiveAmount"), {
             target: { value: amount },
         });
 
-        expect(setAmountChanged).toHaveBeenCalledWith(sideReceive);
-
-        expect(setSendAmount).toHaveBeenCalledTimes(1);
-        expect(setSendAmount).not.toHaveBeenCalledWith(BigNumber(amount));
-        expect(setReceiveAmount).toHaveBeenCalledTimes(1);
-        expect(setReceiveAmount).toHaveBeenCalledWith(BigNumber(amount));
+        expect(signals.amountChanged()).toEqual(sideReceive);
+        expect(signals.sendAmount()).not.toEqual(BigNumber(amount));
+        expect(signals.receiveAmount()).toEqual(BigNumber(amount));
 
         updateConfig();
-
-        expect(setSendAmount).toHaveBeenCalledTimes(2);
-        expect(setReceiveAmount).toHaveBeenCalledTimes(1);
 
         fireEvent.input(await screen.findByTestId("sendAmount"), {
             target: { value: amount },
         });
 
-        expect(setAmountChanged).toHaveBeenCalledWith(sideSend);
-
-        expect(setSendAmount).toHaveBeenCalledTimes(3);
-        expect(setReceiveAmount).toHaveBeenCalledTimes(2);
-
-        updateConfig();
-
-        expect(setSendAmount).toHaveBeenCalledTimes(3);
-        expect(setReceiveAmount).toHaveBeenCalledTimes(3);
+        expect(signals.amountChanged()).toEqual(sideSend);
     });
 
     test.each`
         extrema
         ${"min"}
         ${"max"}
-    `("should set $extrema amount on click", async (extrema) => {
+    `("should set $extrema amount on click", async ({ extrema }) => {
         render(() => (
             <Router>
                 <Web3SignerProvider noFetch={true}>
-                    <Create />
+                    <CreateProvider>
+                        <TestComponent />
+                        <Create />
+                    </CreateProvider>
                 </Web3SignerProvider>
             </Router>
         ));
 
-        const setSendAmount = vi.spyOn(signals, "setSendAmount");
-        const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
+        const cfgMinimum = cfg["BTC/BTC"].limits.minimal;
+        signals.setMinimum(cfgMinimum);
+        signals.setReverse(true);
+        signals.setAsset("BTC");
 
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();

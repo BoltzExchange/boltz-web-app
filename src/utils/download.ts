@@ -1,7 +1,7 @@
-export const download = (file: string, content: string) => {
+export const download = (filename: string, uri: string) => {
     const hidden = document.createElement("a");
-    hidden.download = file;
-    hidden.href = content;
+    hidden.download = filename;
+    hidden.href = uri;
     hidden.target = "_blank";
     hidden.click();
 };

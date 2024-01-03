@@ -1,7 +1,9 @@
-import { setAssetSelect, setAssetSelected } from "../signals";
+import { useCreateContext } from "../context/Create";
 import "../style/asset.scss";
 
 const Asset = ({ side, signal }) => {
+    const { setAssetSelect, setAssetSelected } = useCreateContext();
+
     const openSelect = () => {
         setAssetSelected(side);
         setAssetSelect(true);

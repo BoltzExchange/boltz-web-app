@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, test } from "vitest";
 
 import { BTC, LBTC } from "../../src/consts";
-import { setAsset, setConfig } from "../../src/signals";
 import { feeChecker } from "../../src/utils/feeChecker";
 
 const cfg = {
@@ -65,13 +64,8 @@ const cfg = {
 const deepCopy = (value: object) => JSON.parse(JSON.stringify(value));
 
 describe("feeChecker", () => {
-    beforeAll(() => {
-        setConfig(cfg);
-    });
-
     test("same config should be valid", () => {
-        setAsset(BTC);
-        expect(feeChecker(cfg)).toEqual(true);
+        expect(feeChecker(cfg, cfg, BTC)).toEqual(true);
     });
 
     test.each`
@@ -81,23 +75,18 @@ describe("feeChecker", () => {
     `("should handle changed $fee fee", ({ fee, newValue }) => {
         const changedCfg = deepCopy(cfg);
         changedCfg["BTC/BTC"].fees[fee] = newValue;
-
-        expect(feeChecker(changedCfg)).toEqual(false);
+        expect(feeChecker(cfg, changedCfg, BTC)).toEqual(false);
     });
 
     test("should ignore irrelevant miner fee", () => {
-        setAsset(LBTC);
         const changedCfg = deepCopy(cfg);
         changedCfg["L-BTC/BTC"].fees.minerFees.quoteAsset.normal += 1;
-
-        expect(feeChecker(changedCfg)).toEqual(true);
+        expect(feeChecker(cfg, changedCfg, LBTC)).toEqual(true);
     });
 
     test("should handle relevant miner fee", () => {
-        setAsset(LBTC);
         const changedCfg = deepCopy(cfg);
         changedCfg["L-BTC/BTC"].fees.minerFees.baseAsset.normal += 1;
-
-        expect(feeChecker(changedCfg)).toEqual(false);
+        expect(feeChecker(cfg, changedCfg, LBTC)).toEqual(false);
     });
 });

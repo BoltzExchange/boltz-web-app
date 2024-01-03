@@ -3,20 +3,16 @@ import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
+import { useCreateContext } from "../context/Create";
 import t from "../i18n";
 import {
-    asset,
     boltzFee,
     config,
     denomination,
     minerFee,
-    reverse,
-    sendAmount,
     setBoltzFee,
     setDenomination,
-    setMaximum,
     setMinerFee,
-    setMinimum,
 } from "../signals";
 import {
     calculateBoltzFeeOnSend,
@@ -26,6 +22,9 @@ import { denominations, formatAmount } from "../utils/denomination";
 import { fetchPairs } from "../utils/helper";
 
 const Fees = () => {
+    const { asset, reverse, sendAmount, setMinimum, setMaximum } =
+        useCreateContext();
+
     createEffect(() => {
         const cfg = config()[`${asset()}/BTC`];
 

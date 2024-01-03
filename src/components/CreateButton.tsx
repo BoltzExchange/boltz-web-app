@@ -5,29 +5,16 @@ import log from "loglevel";
 import { createEffect, createMemo, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useCreateContext } from "../context/Create";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
 import {
-    asset,
     config,
-    invoice,
-    lnurl,
-    onchainAddress,
     online,
-    receiveAmount,
-    reverse,
-    sendAmount,
-    sendAmountValid,
-    setAddressValid,
-    setInvoice,
-    setInvoiceValid,
-    setLnurl,
     setNotification,
     setNotificationType,
-    setOnchainAddress,
     setSwaps,
     swaps,
-    valid,
     wasmSupported,
 } from "../signals";
 import { ECPair } from "../utils/ecpair";
@@ -47,6 +34,22 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 export const CreateButton = () => {
     const navigate = useNavigate();
     const { getEtherSwap } = useWeb3Signer();
+    const {
+        asset,
+        invoice,
+        lnurl,
+        reverse,
+        setInvoice,
+        setLnurl,
+        receiveAmount,
+        sendAmountValid,
+        setOnchainAddress,
+        valid,
+        sendAmount,
+        onchainAddress,
+        setInvoiceValid,
+        setAddressValid,
+    } = useCreateContext();
 
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -135,7 +138,7 @@ export const CreateButton = () => {
             }
         }
 
-        if (!(await feeCheck(t("feecheck")))) {
+        if (!(await feeCheck(t("feecheck"), assetName))) {
             return;
         }
 
@@ -143,8 +146,8 @@ export const CreateButton = () => {
 
         await new Promise((resolve) => {
             fetcher(
-                "/createswap",
-                (data) => {
+                getApiUrl("/createswap", assetName),
+                (data: any) => {
                     data.date = new Date().getTime();
                     data.reverse = reverse();
                     data.asset = asset();
@@ -192,7 +195,7 @@ export const CreateButton = () => {
                 async (err: Response) => {
                     const res = await err.json();
                     if (res.error === "invalid pair hash") {
-                        await feeCheck(t("feecheck"));
+                        await feeCheck(t("feecheck"), assetName);
                     } else {
                         setNotificationType("error");
                         setNotification(res.error);

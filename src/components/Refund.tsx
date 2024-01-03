@@ -3,10 +3,11 @@ import { Accessor, createSignal } from "solid-js";
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
-import { refund, refundAddressChange, updateSwaps } from "../utils/helper";
+import {  updateSwaps } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
+import RefundCreate from "./RefundCreate";
 
 const Refund = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
     if (swap().asset === RBTC) {
@@ -30,24 +31,13 @@ const Refund = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         );
     }
 
-    const [valid, setValid] = createSignal<boolean>(false);
+    // a swap not from refundjson is always valid
+    const [valid, _] = createSignal<boolean>(true);
 
     return (
         <>
             <h2>{t("refund")}</h2>
-            <input
-                id="refundAddress"
-                onInput={(e) => setValid(refundAddressChange(e, swap().asset))}
-                type="text"
-                name="refundAddress"
-                placeholder={t("refund_address_placeholder")}
-            />
-            <button
-                class="btn"
-                disabled={!valid()}
-                onclick={() => refund(swap(), t)}>
-                {t("refund")}
-            </button>
+            <RefundCreate swap={swap} refundValid={valid} />
         </>
     );
 };

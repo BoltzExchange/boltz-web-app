@@ -1,4 +1,4 @@
-import { setSwaps, swaps } from "../signals";
+import { setSwapStatus, setSwaps, swaps } from "../signals";
 
 export const swapStatusPending = {
     TransactionConfirmed: "transaction.confirmed",
@@ -24,15 +24,38 @@ export const swapStatusFinal = [
 ].concat(Object.values(swapStatusSuccess));
 
 export const updateSwapStatus = (id: string, newStatus: string) => {
-    if (swapStatusFinal.includes(newStatus)) {
-        const swapsTmp = swaps();
-        const swap = swapsTmp.find((swap) => swap.id === id);
+    const swapsTmp = swaps();
+    const swap = swapsTmp.find((swap) => swap.id === id);
 
-        if (swap.status !== newStatus) {
-            swap.status = newStatus;
-            setSwaps(swapsTmp);
-            return true;
-        }
+    if (swap.status !== newStatus) {
+        swap.status = newStatus;
+        setSwaps(swapsTmp);
+        setSwapStatus(newStatus);
+        return true;
     }
     return false;
+};
+
+export const updateSwapStatusIfRefundable = (
+    id: string,
+    status: string,
+    newStatus: string,
+) => {
+    if (swapStatusFinal.includes(status)) {
+        return updateSwapStatus(id, newStatus);
+    }
+    return false;
+};
+
+export const checkClaimStatus = (
+    status?: string,
+    transaction?: string,
+    claimTx?: string,
+) => {
+    return (
+        claimTx === undefined &&
+        transaction !== undefined &&
+        (status === swapStatusPending.TransactionConfirmed ||
+            status === swapStatusPending.TransactionMempool)
+    );
 };

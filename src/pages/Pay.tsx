@@ -10,10 +10,8 @@ import {
     setFailureReason,
     setSwap,
     setSwapStatus,
-    setSwapStatusTransaction,
     swap,
     swapStatus,
-    swapStatusTransaction,
     swaps,
 } from "../signals";
 import InvoiceExpired from "../status/InvoiceExpired";
@@ -32,6 +30,7 @@ import { swapStatusFailed } from "../utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
+    const [swapStatusTransaction, setSwapStatusTransaction] = createSignal("");
     const [contractTransaction, setContractTransaction] =
         createSignal(undefined);
     const [contractTransactionType, setContractTransactionType] =
@@ -47,8 +46,8 @@ const Pay = () => {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);
                 fetcher(
-                    "/swapstatus",
-                    (data: any) => {
+                    getApiUrl("/swapstatus", currentSwap.asset),
+                    (data) => {
                         setSwapStatus(data.status);
                         setSwapStatusTransaction(data.transaction);
                         setFailureReason(data.failureReason);

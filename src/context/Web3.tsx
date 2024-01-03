@@ -54,7 +54,7 @@ const Web3SignerProvider = (props: {
         }
 
         const res = await (
-            await fetch(`${getApiUrl(RBTC)}/getcontracts`)
+            await fetch(getApiUrl("/getcontracts", RBTC))
         ).json();
         resolve(res["rsk"]);
     });
