@@ -3,7 +3,15 @@ import github from "./assets/github.svg";
 import nostr from "./assets/nostr.svg";
 import substack from "./assets/substack.svg";
 import twitter from "./assets/twitter.svg";
-import { blogUrl, discordUrl, githubUrl, nostrUrl, twitterUrl } from "./config";
+import {
+    blogUrl,
+    discordUrl,
+    githubUrl,
+    network,
+    nostrUrl,
+    repoUrl,
+    twitterUrl,
+} from "./config";
 import t from "./i18n";
 import "./style/footer.scss";
 
@@ -55,6 +63,18 @@ const Footer = () => {
                 </a>
             </div>
             <p>{t("footer")}</p>
+            <p class="version">
+                {t("version")}:{" "}
+                <a
+                    target="_blank"
+                    href={`${repoUrl}/releases/tag/v${__APP_VERSION__}`}>
+                    {__APP_VERSION__}
+                </a>
+                , {t("commithash")}:{" "}
+                <a target="_blank" href={`${repoUrl}/commit/${__GIT_COMMIT__}`}>
+                    {__GIT_COMMIT__}
+                </a>
+            </p>
         </footer>
     );
 };
