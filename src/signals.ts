@@ -1,4 +1,5 @@
 import { makePersisted } from "@solid-primitives/storage";
+import { BigNumber } from "bignumber.js";
 import { createEffect, createRoot, createSignal } from "solid-js";
 
 import { pairs } from "./config";
@@ -26,8 +27,8 @@ export const [maximum, setMaximum] = createSignal(0);
 
 // swaps
 export const [amountChanged, setAmountChanged] = createSignal(sideSend);
-export const [sendAmount, setSendAmount] = createSignal(BigInt(0));
-export const [receiveAmount, setReceiveAmount] = createSignal(BigInt(0));
+export const [sendAmount, setSendAmount] = createSignal(BigNumber(0));
+export const [receiveAmount, setReceiveAmount] = createSignal(BigNumber(0));
 export const [sendAmountFormatted, setSendAmountFormatted] = createSignal(0);
 export const [receiveAmountFormatted, setReceiveAmountFormatted] =
     createSignal(0);

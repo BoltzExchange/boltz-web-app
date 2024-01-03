@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { BigNumber } from "bignumber.js";
 import { describe, expect, test, vi } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
@@ -53,7 +54,7 @@ describe("InvoiceInput", () => {
         });
 
         expect(setReceiveAmount).toHaveBeenLastCalledWith(
-            decodeInvoice(invoice).satoshis,
+            BigNumber(decodeInvoice(invoice).satoshis),
         );
     });
 
@@ -74,7 +75,7 @@ describe("InvoiceInput", () => {
         expect(setInvoice).toHaveBeenCalledTimes(1);
         expect(setInvoice).toHaveBeenCalledWith(invoice);
 
-        setReceiveAmount(receiveAmount() + 1n);
+        setReceiveAmount(receiveAmount().plus(1));
 
         expect(setInvoice).toHaveBeenCalledTimes(2);
         expect(setInvoice).toHaveBeenCalledWith("");
@@ -102,7 +103,7 @@ describe("InvoiceInput", () => {
         expect(setLnurl).toHaveBeenCalledTimes(1);
         expect(setLnurl).toHaveBeenCalledWith(lnurl.toLowerCase());
 
-        setSendAmount(sendAmount() + 1n);
+        setSendAmount(sendAmount().plus(1));
 
         expect(input.value).toEqual(lnurl);
     });
