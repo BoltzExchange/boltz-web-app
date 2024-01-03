@@ -6,6 +6,8 @@ import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 describe("WebLN", () => {
     beforeEach(() => {
         log.error = vitest.fn();
+        // @ts-ignore
+        window.webln = undefined;
     });
 
     test("should not detect WebLN when no injected provider is present", async () => {
@@ -23,6 +25,7 @@ describe("WebLN", () => {
     });
 
     test("should call WebLN callback if enable call succeeds", async () => {
+        // @ts-ignore
         window.webln = {
             enable: vitest.fn().mockResolvedValue(undefined),
         } as any;
@@ -30,7 +33,9 @@ describe("WebLN", () => {
 
         expect(await enableWebln(cb));
 
+        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledTimes(1);
+        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledWith();
 
         expect(cb).toHaveBeenCalledTimes(1);
@@ -38,6 +43,7 @@ describe("WebLN", () => {
     });
 
     test("should not call WebLN callback if enable call fails", async () => {
+        // @ts-ignore
         window.webln = {
             enable: vitest.fn().mockRejectedValue("unauthorized"),
         } as any;
@@ -45,7 +51,9 @@ describe("WebLN", () => {
 
         expect(await enableWebln(cb));
 
+        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledTimes(1);
+        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledWith();
 
         expect(cb).toHaveBeenCalledTimes(0);
