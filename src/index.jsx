@@ -1,7 +1,7 @@
 /* @refresh reload */
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
-import { Navigate, Route, Router, Routes } from "@solidjs/router";
+import { Navigate, Route, Router } from "@solidjs/router";
 import log from "loglevel";
 import { createRoot, createSignal } from "solid-js";
 import { render } from "solid-js/web";
@@ -57,33 +57,36 @@ if ("serviceWorker" in navigator) {
 
 document.body.classList.remove("loading");
 
+const App = (props) => (
+    <>
+        <Show when={!embedded()}>
+            <Nav network={network} />
+        </Show>
+        {props.children}
+        <Show when={!embedded()}>
+            <Notification />
+            <Footer />
+        </Show>
+    </>
+);
+
 const cleanup = render(
     () => (
-        <Router>
-            <Web3SignerProvider>
-                <Show when={!embedded()}>
-                    <Nav network={network} />
-                </Show>
-                <Routes>
-                    <Route path="*" element={<Navigate href={"/404"} />} />
-                    <Route path="/404" component={NotFound} />
-                    <Route path="/" component={Hero} />
-                    <Route path="/swap" component={Create} />
-                    {/* Compatibility with link in Breez:
+        <Web3SignerProvider>
+            <Router root={App}>
+                <Route path="/" component={Hero} />
+                <Route path="/swap" component={Create} />
+                {/* Compatibility with link in Breez:
                         https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
-                    <Route path="/swapbox" component={Create} />
-                    <Route path="/swap/:id" component={Pay} />
-                    <Route path="/swap/refund/:id" component={RefundStep} />
-                    <Route path="/error" component={Error} />
-                    <Route path="/refund" component={Refund} />
-                    <Route path="/history" component={History} />
-                </Routes>
-                <Show when={!embedded()}>
-                    <Notification />
-                    <Footer />
-                </Show>
-            </Web3SignerProvider>
-        </Router>
+                <Route path="/swapbox" component={Create} />
+                <Route path="/swap/:id" component={Pay} />
+                <Route path="/swap/refund/:id" component={RefundStep} />
+                <Route path="/error" component={Error} />
+                <Route path="/refund" component={Refund} />
+                <Route path="/history" component={History} />
+                <Route path="*404" component={NotFound} />
+            </Router>
+        </Web3SignerProvider>
     ),
     document.getElementById("root"),
 );

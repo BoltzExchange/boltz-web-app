@@ -25,11 +25,9 @@ describe("Create", () => {
 
     test("should render Create", async () => {
         render(() => (
-            <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <Create />
-                </Web3SignerProvider>
-            </Router>
+            <Web3SignerProvider noFetch={true}>
+                <Router root={Create} />
+            </Web3SignerProvider>
         ));
         const button = await screen.findAllByText(i18n.en.create_swap);
         expect(button).not.toBeUndefined();
@@ -39,11 +37,9 @@ describe("Create", () => {
         const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
 
         render(() => (
-            <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <Create />
-                </Web3SignerProvider>
-            </Router>
+            <Web3SignerProvider noFetch={true}>
+                <Router root={Create} />
+            </Web3SignerProvider>
         ));
 
         signals.setSendAmount(BigNumber(50_000));
@@ -63,11 +59,9 @@ describe("Create", () => {
         const setReceiveAmount = vi.spyOn(signals, "setReceiveAmount");
 
         render(() => (
-            <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <Create />
-                </Web3SignerProvider>
-            </Router>
+            <Web3SignerProvider noFetch={true}>
+                <Router root={Create} />
+            </Web3SignerProvider>
         ));
 
         expect(setReceiveAmount).toHaveBeenCalledWith(BigNumber(38110));
@@ -81,11 +75,9 @@ describe("Create", () => {
 
     test("should update calculated value on fee change", async () => {
         render(() => (
-            <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <Create />
-                </Web3SignerProvider>
-            </Router>
+            <Web3SignerProvider noFetch={true}>
+                <Router root={Create} />
+            </Web3SignerProvider>
         ));
 
         const updateConfig = () => {
@@ -136,11 +128,9 @@ describe("Create", () => {
         ${"max"}
     `("should set $extrema amount on click", async (extrema) => {
         render(() => (
-            <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <Create />
-                </Web3SignerProvider>
-            </Router>
+            <Web3SignerProvider noFetch={true}>
+                <Router root={Create} />
+            </Web3SignerProvider>
         ));
 
         const setSendAmount = vi.spyOn(signals, "setSendAmount");

@@ -38,7 +38,7 @@
         "@scure/base": "^1.1.5",
         "@solid-primitives/i18n": "^2.0.0",
         "@solid-primitives/storage": "^2.1.1",
-        "@solidjs/router": "^0.9.1",
+        "@solidjs/router": "^0.10.5",
         "@vulpemventures/secp256k1-zkp": "^3.1.0",
         "bignumber.js": "^9.1.2 ",
         "bitcoinjs-lib": "^6.1.5",

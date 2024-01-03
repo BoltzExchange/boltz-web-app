@@ -20,14 +20,16 @@ describe("SwapList", () => {
         const {
             container: { firstChild: firstChild },
         } = render(() => (
-            <Router>
-                <SwapList
-                    swapsSignal={swapsSignal}
-                    setSwapSignal={() => {
-                        return undefined;
-                    }}
-                />
-            </Router>
+            <Router
+                root={() => (
+                    <SwapList
+                        swapsSignal={swapsSignal}
+                        setSwapSignal={() => {
+                            return undefined;
+                        }}
+                    />
+                )}
+            />
         ));
 
         const childNodes = [];
