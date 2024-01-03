@@ -8,6 +8,8 @@
         text-align: center;
         line-height: 1.66;
     }
+}
+@media (min-width: 468px) {
     .swaplist-item {
         display: flex;
     }
