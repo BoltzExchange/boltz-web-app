@@ -8,7 +8,7 @@ import {
     swapTree,
 } from "boltz-core";
 import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
-import { Buffer, Buffer as BufferBrowser } from "buffer";
+import { default as BufferBrowser } from "buffer";
 import { ECPairInterface } from "ecpair";
 import { BaseContract } from "ethers";
 import log from "loglevel";
@@ -19,6 +19,7 @@ import { denominations, formatAmountDenomination } from "./denomination";
 import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
 import { createMusig, tweakMusig } from "./taproot/musig";
+
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -179,7 +180,7 @@ const validateReverseSwap = async (
 const validateSwap = async (
     swap: SwapResponse,
     getEtherSwap: ContractGetter,
-    buffer: BufferConstructor,
+    buffer: any,
 ) => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
@@ -240,7 +241,7 @@ const validateSwap = async (
 export const validateResponse = async (
     swap: SwapResponse,
     getEtherSwap: ContractGetter,
-    buffer: BufferConstructor = BufferBrowser,
+    buffer: any = BufferBrowser,
 ) => {
     try {
         return await (swap.reverse
