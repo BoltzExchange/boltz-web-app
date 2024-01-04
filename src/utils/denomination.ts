@@ -58,6 +58,7 @@ export const convertAmount = (amount: number, denom: string): number => {
         case denominations.btc:
             const amountBig = new BigNumber(amount).multipliedBy(satFactor);
             return amountBig.toNumber();
+
         default:
             return Number(amount);
     }

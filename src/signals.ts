@@ -6,6 +6,11 @@ import { pairs } from "./config";
 import { LN, sideSend } from "./consts";
 import { isMobile } from "./helper";
 
+type SwapStatusTransaction = {
+    hex?: string;
+    id?: string;
+};
+
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
 // ui
@@ -42,7 +47,7 @@ export const [swap, setSwap] = createSignal(null, {
 });
 export const [swapStatus, setSwapStatus] = createSignal(null);
 export const [swapStatusTransaction, setSwapStatusTransaction] =
-    createSignal("");
+    createSignal<SwapStatusTransaction>({});
 export const [failureReason, setFailureReason] = createSignal("");
 export const [timeoutEta, setTimeoutEta] = createSignal(0);
 export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
@@ -55,8 +60,8 @@ export const [i18n, setI18n] = createSignal(null);
 
 // To support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
-    serialize: (value) => value,
-    deserialize: (value) => value,
+    serialize: (value: any) => value,
+    deserialize: (value: any) => value,
 };
 
 export const [ref, setRef] = makePersisted(

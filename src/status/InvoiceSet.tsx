@@ -1,3 +1,5 @@
+import { Show } from "solid-js";
+
 import ContractTransaction from "../components/ContractTransaction";
 import QrCode from "../components/QrCode";
 import { BTC, RBTC } from "../consts";

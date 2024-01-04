@@ -15,7 +15,7 @@ const InvoiceFailedToPay = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <Show when={!timeoutEta()} fallback={RefundEta}>
+            <Show when={!timeoutEta()} fallback={RefundEta()}>
                 <Refund swap={swap} />
             </Show>
             <Show when={swap().asset !== RBTC}>

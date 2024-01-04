@@ -20,7 +20,7 @@ const SwapExpired = () => {
         setTransactionToRefund(null);
         fetcher(
             "/getswaptransaction",
-            (res) => {
+            (res: any) => {
                 log.debug(`got swap transaction for ${swap().id}`);
                 setTransactionToRefund(res);
             },
@@ -51,7 +51,7 @@ const SwapExpired = () => {
                 />
                 <button
                     class="btn"
-                    disabled={valid() ? "" : "disabled"}
+                    disabled={!valid()}
                     onclick={() => refund(swap(), t)}>
                     {t("refund")}
                 </button>
