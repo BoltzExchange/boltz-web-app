@@ -10,7 +10,7 @@ import { denominations, formatAmount } from "../utils/denomination";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
-    const payWeblnInvoice = async (pr) => {
+    const payWeblnInvoice = async (pr: string) => {
         enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);
             log.debug("webln payment result:", result);
