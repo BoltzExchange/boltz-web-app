@@ -255,7 +255,7 @@ const Create = () => {
                         id="sendAmount"
                         data-testid="sendAmount"
                         value={
-                            sendAmountFormatted() === 0
+                            sendAmountFormatted() === "0"
                                 ? ""
                                 : sendAmountFormatted()
                         }
@@ -281,7 +281,7 @@ const Create = () => {
                         id="receiveAmount"
                         data-testid="receiveAmount"
                         value={
-                            receiveAmountFormatted() === 0
+                            receiveAmountFormatted() === "0"
                                 ? ""
                                 : receiveAmountFormatted()
                         }
