@@ -14,7 +14,7 @@ import {
 import { downloadJson } from "./utils/download";
 
 // Throws when the file is invalid
-const validateBackupFile = (file) => {
+const validateBackupFile = (file: any) => {
     // Check if the object is an array and all elements have at least the id property
     if (!(file instanceof Array)) {
         throw "not an Array";
@@ -28,7 +28,7 @@ const validateBackupFile = (file) => {
 const History = () => {
     const navigate = useNavigate();
 
-    let importRef;
+    let importRef: HTMLInputElement;
 
     const deleteLocalStorage = () => {
         if (confirm(t("delete_localstorage"))) {
@@ -40,8 +40,8 @@ const History = () => {
         downloadJson(`boltz-backup-${Math.floor(Date.now() / 1000)}`, swaps());
     };
 
-    const importLocalStorage = (e) => {
-        const input = e.currentTarget;
+    const importLocalStorage = (e: Event) => {
+        const input = e.currentTarget as HTMLInputElement;
         const inputFile = input.files[0];
         input.setCustomValidity("");
         new Response(inputFile)

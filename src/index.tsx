@@ -3,7 +3,7 @@ import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
-import { createRoot, createSignal } from "solid-js";
+import { Show, createRoot, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 
 import Create from "./Create";
@@ -33,7 +33,7 @@ export const [embedded, setEmbedded] = createSignal(false);
 
 log.setLevel(loglevel);
 
-detectWebLNProvider().then((state) => setWebln(state));
+detectWebLNProvider().then((state: boolean) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
 detectLanguage();
