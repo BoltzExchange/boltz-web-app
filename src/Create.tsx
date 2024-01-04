@@ -247,13 +247,18 @@ const Create = () => {
                         autofocus
                         required
                         type="text"
+                        placeholder={formatAmount(minimum())}
                         maxlength={calculateDigits()}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="sendAmount"
                         data-testid="sendAmount"
-                        value={sendAmountFormatted()}
+                        value={
+                            sendAmountFormatted() === "0"
+                                ? ""
+                                : sendAmountFormatted()
+                        }
                         onpaste={(e) => validatePaste(e)}
                         onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
@@ -266,13 +271,20 @@ const Create = () => {
                         ref={receiveAmountRef}
                         required
                         type="text"
+                        placeholder={formatAmount(
+                            calculateReceiveAmount(minimum()),
+                        )}
                         maxlength={calculateDigits()}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="receiveAmount"
                         data-testid="receiveAmount"
-                        value={receiveAmountFormatted()}
+                        value={
+                            receiveAmountFormatted() === "0"
+                                ? ""
+                                : receiveAmountFormatted()
+                        }
                         onpaste={(e) => validatePaste(e)}
                         onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}

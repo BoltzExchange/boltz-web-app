@@ -48,8 +48,6 @@ export const formatAmountDenomination = (
 
             return amountBig.toString();
 
-        case denominations.sat:
-            return amount.toString();
         default:
             return amount.toString();
     }
@@ -60,8 +58,7 @@ export const convertAmount = (amount: number, denom: string): number => {
         case denominations.btc:
             const amountBig = new BigNumber(amount).multipliedBy(satFactor);
             return amountBig.toNumber();
-        case denominations.sat:
-            return Number(amount);
+
         default:
             return Number(amount);
     }
