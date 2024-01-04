@@ -46,7 +46,7 @@ interface SwapStatusTransaction {
     id?: string;
 }
 export const [swapStatusTransaction, setSwapStatusTransaction] =
-    createSignal<SwapStatusTransaction>({ hex: "", id: "" });
+    createSignal<SwapStatusTransaction>({});
 export const [failureReason, setFailureReason] = createSignal("");
 export const [timeoutEta, setTimeoutEta] = createSignal(0);
 export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
