@@ -1,8 +1,13 @@
-import { detectSwap } from "boltz-core";
+import { ClaimDetails, RefundDetails, detectSwap } from "boltz-core";
+import {
+    LiquidClaimDetails,
+    LiquidRefundDetails,
+} from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
 import log from "loglevel";
 
 import {
+    DecodedAddress,
     decodeAddress,
     getAddress,
     getConstructClaimTransaction,
@@ -46,11 +51,11 @@ export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
     isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
-const parseBlindingKey = (swap: any) => {
+const parseBlindingKey = (swap: { blindingKey: string | undefined }) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
 };
 
-export const cropString = (str: any) => {
+export const cropString = (str: string) => {
     if (str.length < 40) {
         return str;
     }
@@ -58,9 +63,9 @@ export const cropString = (str: any) => {
 };
 
 export const checkReferralId = () => {
-    const ref_param = new URLSearchParams(window.location.search).get("ref");
-    if (ref_param && ref_param !== "") {
-        setRef(ref_param);
+    const refParam = new URLSearchParams(window.location.search).get("ref");
+    if (refParam && refParam !== "") {
+        setRef(refParam);
         window.history.replaceState(
             {},
             document.title,
@@ -69,7 +74,7 @@ export const checkReferralId = () => {
     }
 };
 
-export const startInterval = (cb: any, interval: number) => {
+export const startInterval = (cb: () => any, interval: number) => {
     cb();
     return setInterval(cb, interval);
 };
@@ -110,8 +115,8 @@ export const getApiUrl = (asset: string) => {
 
 export const fetcher = (
     url: string,
-    cb: any,
-    params = null,
+    cb: (value: any) => void,
+    params: any | undefined = null,
     errorCb = errorHandler,
 ) => {
     let opts = {};
@@ -184,13 +189,12 @@ export const setSwapStatusAndClaim = (data: any, activeSwap: any) => {
 };
 
 export async function refund(swap: any, t: any) {
-    let output: any;
-    setRefundTx("");
-
     log.debug("starting to refund swap", swap);
+    setRefundTx("");
 
     const asset_name = swap.asset;
 
+    let output: DecodedAddress;
     try {
         output = decodeAddress(asset_name, refundAddress());
     } catch (e) {
@@ -238,17 +242,16 @@ export async function refund(swap: any, t: any) {
         Buffer.from(swap.privateKey, "hex"),
     );
     log.debug("privkey", private_key);
-    // TODO: @michael1011 whats up here?
     const refundTransaction = constructRefundTransaction(
-        // @ts-ignore
         [
             {
                 ...swapOutput,
+                value: 0,
                 txHash: tx.getHash(),
                 redeemScript: script,
                 keys: private_key,
                 blindingPrivateKey: parseBlindingKey(swap),
-            },
+            } as RefundDetails & LiquidRefundDetails,
         ],
         output.script,
         txToRefund.timeoutBlockHeight,
@@ -320,7 +323,7 @@ export async function refund(swap: any, t: any) {
     return true;
 }
 
-export async function getfeeestimation(swap: any) {
+export async function getfeeestimation(swap: any): Promise<number> {
     return new Promise((resolve) => {
         fetcher("/getfeeestimation", (data: any) => {
             log.debug("getfeeestimation: ", data);
@@ -330,27 +333,29 @@ export async function getfeeestimation(swap: any) {
     });
 }
 
-const createAdjustedClaim = (
+const createAdjustedClaim = <
+    T extends
+        | (ClaimDetails & { blindingPrivateKey?: Buffer })
+        | LiquidClaimDetails,
+>(
     swap: any,
-    claimDetails: any,
-    destination: any,
-    assetHash: any,
-    blindingKey: any,
+    claimDetails: T[],
+    destination: Buffer,
+    assetHash?: string,
+    blindingKey?: Buffer,
 ) => {
     const inputSum = claimDetails.reduce(
-        (total: any, input: any) => total + getOutputAmount(swap.asset, input),
+        (total: number, input: T) => total + getOutputAmount(swap.asset, input),
         0,
     );
     const feeBudget = Math.floor(inputSum - swap.receiveAmount);
 
     const constructClaimTransaction = getConstructClaimTransaction(swap.asset);
     return constructClaimTransaction(
-        claimDetails,
+        claimDetails as ClaimDetails[] | LiquidClaimDetails[],
         destination,
         feeBudget,
         true,
-        // TODO: help me
-        // @ts-ignore
         assetHash,
         blindingKey,
     );

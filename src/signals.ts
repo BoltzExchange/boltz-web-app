@@ -6,6 +6,11 @@ import { pairs } from "./config";
 import { LN, sideSend } from "./consts";
 import { isMobile } from "./helper";
 
+type SwapStatusTransaction = {
+    hex?: string;
+    id?: string;
+};
+
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
 // ui
@@ -41,10 +46,6 @@ export const [swap, setSwap] = createSignal(null, {
     equals: () => false,
 });
 export const [swapStatus, setSwapStatus] = createSignal(null);
-interface SwapStatusTransaction {
-    hex?: string;
-    id?: string;
-}
 export const [swapStatusTransaction, setSwapStatusTransaction] =
     createSignal<SwapStatusTransaction>({});
 export const [failureReason, setFailureReason] = createSignal("");

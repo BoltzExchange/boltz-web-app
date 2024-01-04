@@ -8,6 +8,7 @@ import zkp, {
 } from "@vulpemventures/secp256k1-zkp";
 import { Transaction, address, networks } from "bitcoinjs-lib";
 import {
+    ClaimDetails,
     RefundDetails,
     TransactionOutput,
     constructClaimTransaction,
@@ -15,6 +16,7 @@ import {
     targetFee,
 } from "boltz-core";
 import {
+    LiquidClaimDetails,
     LiquidRefundDetails,
     init,
     constructClaimTransaction as lcCT,
@@ -33,8 +35,10 @@ import { network } from "./config";
 import { LBTC } from "./consts";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
-    blindingPrivateKey: Buffer;
+    blindingPrivateKey?: Buffer;
 };
+
+type DecodedAddress = { script: Buffer; blindingKey?: Buffer };
 
 export let secp: {
     ecdh: Ecdh;
@@ -64,10 +68,7 @@ const getAddress = (asset: string): typeof address | typeof LiquidAddress => {
     }
 };
 
-const decodeAddress = (
-    asset: string,
-    addr: string,
-): { script: Buffer; blindingKey?: Buffer } => {
+const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     const address = getAddress(asset);
 
     // We always do this to validate the network
@@ -110,13 +111,38 @@ const getTransaction = (asset: string) => {
 };
 
 const getConstructClaimTransaction = (asset: string) => {
-    return asset === LBTC ? lcCT : constructClaimTransaction;
+    return (
+        utxos: ClaimDetails[] | LiquidClaimDetails[],
+        destinationScript: Buffer,
+        fee: number,
+        isRbf?: boolean,
+        assetHash?: string,
+        blindingKey?: Buffer,
+    ) => {
+        if (asset === LBTC) {
+            return lcCT(
+                utxos as LiquidClaimDetails[],
+                destinationScript,
+                fee,
+                isRbf,
+                assetHash,
+                blindingKey,
+            );
+        } else {
+            return constructClaimTransaction(
+                utxos as ClaimDetails[],
+                destinationScript,
+                fee,
+                isRbf,
+            );
+        }
+    };
 };
 
 const getConstructRefundTransaction = (asset: string) => {
     const fn = asset === LBTC ? lcRT : constructRefundTransaction;
     return (
-        refundDetails: RefundDetails | LiquidRefundDetails,
+        refundDetails: RefundDetails[] | LiquidRefundDetails[],
         outputScript: Buffer,
         timeoutBlockHeight: number,
         feePerVbyte: number,
@@ -126,7 +152,7 @@ const getConstructRefundTransaction = (asset: string) => {
     ) =>
         targetFee(feePerVbyte, (fee) =>
             fn(
-                refundDetails as any,
+                refundDetails as any[],
                 outputScript,
                 timeoutBlockHeight,
                 fee,
@@ -164,7 +190,9 @@ export {
     getNetwork,
     decodeAddress,
     getTransaction,
+    DecodedAddress,
     getOutputAmount,
     getConstructClaimTransaction,
     getConstructRefundTransaction,
+    LiquidTransactionOutputWithKey,
 };
