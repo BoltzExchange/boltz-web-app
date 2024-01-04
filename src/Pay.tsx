@@ -63,7 +63,6 @@ const Pay = () => {
         const tx = swapStatusTransaction();
 
         if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
-            // @ts-ignore
             setContractTransaction(tx.id);
         }
     });

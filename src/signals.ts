@@ -41,8 +41,12 @@ export const [swap, setSwap] = createSignal(null, {
     equals: () => false,
 });
 export const [swapStatus, setSwapStatus] = createSignal(null);
+interface SwapStatusTransaction {
+    hex?: string;
+    id?: string;
+}
 export const [swapStatusTransaction, setSwapStatusTransaction] =
-    createSignal("");
+    createSignal<SwapStatusTransaction>({ hex: "", id: "" });
 export const [failureReason, setFailureReason] = createSignal("");
 export const [timeoutEta, setTimeoutEta] = createSignal(0);
 export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
@@ -55,8 +59,8 @@ export const [i18n, setI18n] = createSignal(null);
 
 // To support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
-    serialize: (value) => value,
-    deserialize: (value) => value,
+    serialize: (value: any) => value,
+    deserialize: (value: any) => value,
 };
 
 export const [ref, setRef] = makePersisted(
