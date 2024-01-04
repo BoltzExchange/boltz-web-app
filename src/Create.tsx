@@ -50,7 +50,6 @@ import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
 import {
     calculateDigits,
     convertAmount,
-    denominations,
     formatAmount,
     getValidationRegex,
 } from "./utils/denomination";
@@ -62,7 +61,7 @@ const Create = () => {
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
-        const satAmount = convertAmount(Number(amount), denominations.sat);
+        const satAmount = convertAmount(Number(amount), denomination());
         const sendAmount = calculateSendAmount(satAmount);
         setAmountChanged(sideReceive);
         setReceiveAmount(BigNumber(satAmount));
@@ -75,7 +74,7 @@ const Create = () => {
     const changeSendAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
-        const satAmount = convertAmount(Number(amount), denominations.sat);
+        const satAmount = convertAmount(Number(amount), denomination());
         const receiveAmount = calculateReceiveAmount(satAmount);
         setAmountChanged(sideSend);
         setSendAmount(BigNumber(satAmount));

@@ -29,9 +29,9 @@ export const [maximum, setMaximum] = createSignal(0);
 export const [amountChanged, setAmountChanged] = createSignal(sideSend);
 export const [sendAmount, setSendAmount] = createSignal(BigNumber(0));
 export const [receiveAmount, setReceiveAmount] = createSignal(BigNumber(0));
-export const [sendAmountFormatted, setSendAmountFormatted] = createSignal(0);
+export const [sendAmountFormatted, setSendAmountFormatted] = createSignal("0");
 export const [receiveAmountFormatted, setReceiveAmountFormatted] =
-    createSignal(0);
+    createSignal("0");
 export const [refundAddress, setRefundAddress] = createSignal(null);
 export const [onchainAddress, setOnchainAddress] = createSignal("");
 export const [lnurl, setLnurl] = createSignal("");
