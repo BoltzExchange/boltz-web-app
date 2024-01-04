@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import { crypto, script } from "bitcoinjs-lib";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
 import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
@@ -180,7 +181,7 @@ const validateSwap = async (
 
     return (
         new URLSearchParams(bip21Split[1]).get("amount") ===
-        formatAmountDenomination(denominations.btc, swap.sendAmount)
+        formatAmountDenomination(BigNumber(swap.sendAmount), denominations.btc)
     );
 };
 

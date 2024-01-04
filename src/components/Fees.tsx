@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
@@ -76,7 +77,7 @@ const Fees = () => {
             <label>
                 {t("network_fee")}:{" "}
                 <span class="network-fee">
-                    {formatAmount(minerFee(), true)}
+                    {formatAmount(BigNumber(minerFee()), denomination(), true)}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>
@@ -84,7 +85,11 @@ const Fees = () => {
                 <br />
                 {t("fee")} ({boltzFee()}%):{" "}
                 <span class="boltz-fee">
-                    {formatAmount(calculateBoltzFeeOnSend(sendAmount()), true)}
+                    {formatAmount(
+                        BigNumber(calculateBoltzFeeOnSend(sendAmount())),
+                        denomination(),
+                        true,
+                    )}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>
