@@ -48,8 +48,6 @@ export const formatAmountDenomination = (
 
             return amountBig.toString();
 
-        case denominations.sat:
-            return amount.toString();
         default:
             return amount.toString();
     }
