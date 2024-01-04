@@ -1,8 +1,13 @@
-import { detectSwap } from "boltz-core";
+import { ClaimDetails, RefundDetails, detectSwap } from "boltz-core";
+import {
+    LiquidClaimDetails,
+    LiquidRefundDetails,
+} from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
 import log from "loglevel";
 
 import {
+    DecodedAddress,
     decodeAddress,
     getAddress,
     getConstructClaimTransaction,
@@ -46,11 +51,11 @@ export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
     isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
-const parseBlindingKey = (swap) => {
+const parseBlindingKey = (swap: { blindingKey: string | undefined }) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
 };
 
-export const cropString = (str) => {
+export const cropString = (str: string) => {
     if (str.length < 40) {
         return str;
     }
@@ -58,9 +63,9 @@ export const cropString = (str) => {
 };
 
 export const checkReferralId = () => {
-    const ref_param = new URLSearchParams(window.location.search).get("ref");
-    if (ref_param && ref_param !== "") {
-        setRef(ref_param);
+    const refParam = new URLSearchParams(window.location.search).get("ref");
+    if (refParam && refParam !== "") {
+        setRef(refParam);
         window.history.replaceState(
             {},
             document.title,
@@ -69,27 +74,27 @@ export const checkReferralId = () => {
     }
 };
 
-export const startInterval = (cb, interval) => {
+export const startInterval = (cb: () => any, interval: number) => {
     cb();
     return setInterval(cb, interval);
 };
 
-export const clipboard = (text, message) => {
+export const clipboard = (text: string, message: string) => {
     navigator.clipboard.writeText(text);
     setNotificationType("success");
     setNotification(message);
 };
 
-export const errorHandler = (error) => {
+export const errorHandler = (error: any) => {
     log.error(error);
     setNotificationType("error");
     if (typeof error.json === "function") {
         error
             .json()
-            .then((jsonError) => {
+            .then((jsonError: any) => {
                 setNotification(jsonError.error);
             })
-            .catch((genericError) => {
+            .catch((genericError: any) => {
                 log.error(genericError);
                 setNotification(error.statusText);
             });
@@ -98,7 +103,7 @@ export const errorHandler = (error) => {
     }
 };
 
-export const getApiUrl = (asset) => {
+export const getApiUrl = (asset: string) => {
     const pair = pairs[`${asset}/BTC`];
     if (pair) {
         return pair.apiUrl;
@@ -108,7 +113,12 @@ export const getApiUrl = (asset) => {
     return getApiUrl(BTC);
 };
 
-export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
+export const fetcher = (
+    url: string,
+    cb: (value: any) => void,
+    params: any | undefined = null,
+    errorCb = errorHandler,
+) => {
     let opts = {};
     if (params) {
         params.referralId = ref();
@@ -124,7 +134,7 @@ export const fetcher = (url, cb, params = null, errorCb = errorHandler) => {
     fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
 };
 
-export const checkForFailed = (swap, data) => {
+export const checkForFailed = (swap: any, data: any) => {
     if (
         data.status == "transaction.lockupFailed" ||
         data.status == "invoice.failedToPay"
@@ -133,7 +143,7 @@ export const checkForFailed = (swap, data) => {
 
         fetcher(
             "/getswaptransaction",
-            (data) => {
+            (data: any) => {
                 if (swap.asset !== RBTC && !data.transactionHex) {
                     log.error("no mempool tx found");
                 }
@@ -156,7 +166,7 @@ export const checkForFailed = (swap, data) => {
     }
 };
 
-export const setSwapStatusAndClaim = (data, activeSwap) => {
+export const setSwapStatusAndClaim = (data: any, activeSwap: any) => {
     const currentSwap = swaps().find((s) => activeSwap.id === s.id);
 
     if (swap() && swap().id === currentSwap.id) {
@@ -178,14 +188,13 @@ export const setSwapStatusAndClaim = (data, activeSwap) => {
     if (data.failureReason) setFailureReason(data.failureReason);
 };
 
-export async function refund(swap, t) {
-    let output = "";
-    setRefundTx("");
-
+export async function refund(swap: any, t: any) {
     log.debug("starting to refund swap", swap);
+    setRefundTx("");
 
     const asset_name = swap.asset;
 
+    let output: DecodedAddress;
     try {
         output = decodeAddress(asset_name, refundAddress());
     } catch (e) {
@@ -203,7 +212,7 @@ export async function refund(swap, t) {
         txToRefund = await new Promise((resolve, reject) => {
             fetcher(
                 "/getswaptransaction",
-                (res) => {
+                (res: any) => {
                     log.debug(`got swap transaction for ${swap.id}`);
                     resolve(res);
                 },
@@ -237,11 +246,12 @@ export async function refund(swap, t) {
         [
             {
                 ...swapOutput,
+                value: 0,
                 txHash: tx.getHash(),
                 redeemScript: script,
                 keys: private_key,
                 blindingPrivateKey: parseBlindingKey(swap),
-            },
+            } as RefundDetails & LiquidRefundDetails,
         ],
         output.script,
         txToRefund.timeoutBlockHeight,
@@ -254,7 +264,7 @@ export async function refund(swap, t) {
     log.debug("refund_tx", refundTransaction);
     fetcher(
         "/broadcasttransaction",
-        (data) => {
+        (data: any) => {
             log.debug("refund result:", data);
             if (data.transactionId) {
                 // save refundTx into swaps json and set it to the current swap
@@ -286,7 +296,7 @@ export async function refund(swap, t) {
             if (typeof error.json === "function") {
                 error
                     .json()
-                    .then((jsonError) => {
+                    .then((jsonError: any) => {
                         let msg = jsonError.error;
                         if (
                             msg === "bad-txns-inputs-missingorspent" ||
@@ -300,7 +310,7 @@ export async function refund(swap, t) {
                         }
                         setNotification(msg);
                     })
-                    .catch((genericError) => {
+                    .catch((genericError: any) => {
                         log.debug("generic error", genericError);
                         log.error(genericError);
                         setNotification(error.statusText);
@@ -310,11 +320,12 @@ export async function refund(swap, t) {
             }
         },
     );
+    return true;
 }
 
-export async function getfeeestimation(swap) {
+export async function getfeeestimation(swap: any): Promise<number> {
     return new Promise((resolve) => {
-        fetcher("/getfeeestimation", (data) => {
+        fetcher("/getfeeestimation", (data: any) => {
             log.debug("getfeeestimation: ", data);
             let asset = swap.asset;
             resolve(data[asset]);
@@ -322,22 +333,26 @@ export async function getfeeestimation(swap) {
     });
 }
 
-const createAdjustedClaim = (
-    swap,
-    claimDetails,
-    destination,
-    assetHash,
-    blindingKey,
+const createAdjustedClaim = <
+    T extends
+        | (ClaimDetails & { blindingPrivateKey?: Buffer })
+        | LiquidClaimDetails,
+>(
+    swap: any,
+    claimDetails: T[],
+    destination: Buffer,
+    assetHash?: string,
+    blindingKey?: Buffer,
 ) => {
     const inputSum = claimDetails.reduce(
-        (total, input) => total + getOutputAmount(swap.asset, input),
+        (total: number, input: T) => total + getOutputAmount(swap.asset, input),
         0,
     );
     const feeBudget = Math.floor(inputSum - swap.receiveAmount);
 
     const constructClaimTransaction = getConstructClaimTransaction(swap.asset);
     return constructClaimTransaction(
-        claimDetails,
+        claimDetails as ClaimDetails[] | LiquidClaimDetails[],
         destination,
         feeBudget,
         true,
@@ -346,7 +361,7 @@ const createAdjustedClaim = (
     );
 };
 
-export const claim = async (swap) => {
+export const claim = async (swap: any) => {
     if (swap.asset === RBTC) {
         return;
     }
@@ -401,7 +416,7 @@ export const claim = async (swap) => {
     log.debug("claim_tx", claimTransaction);
     fetcher(
         "/broadcasttransaction",
-        (data) => {
+        (data: any) => {
             log.debug("claim result:", data);
             if (data.transactionId) {
                 const swapsTmp = swaps();
@@ -420,7 +435,7 @@ export const claim = async (swap) => {
 export const fetchPairs = () => {
     fetcher(
         "/getpairs",
-        (data) => {
+        (data: any) => {
             log.debug("getpairs", data);
             setOnline(true);
             setConfig(data.pairs);
@@ -434,11 +449,11 @@ export const fetchPairs = () => {
     return false;
 };
 
-export const feeCheck = async (notification) => {
+export const feeCheck = async (notification: any) => {
     return new Promise((resolve) => {
         fetcher(
             "/getpairs",
-            (data) => {
+            (data: any) => {
                 log.debug("getpairs", data);
                 if (feeChecker(data.pairs)) {
                     // amounts matches and fees are ok
@@ -463,8 +478,8 @@ export const feeCheck = async (notification) => {
     });
 };
 
-export const refundAddressChange = (e, asset) => {
-    const input = e.currentTarget;
+export const refundAddressChange = (evt: InputEvent, asset: string) => {
+    const input = evt.currentTarget as HTMLInputElement;
     const inputValue = input.value.trim();
     try {
         getAddress(asset).toOutputScript(inputValue, getNetwork(asset));
@@ -479,7 +494,7 @@ export const refundAddressChange = (e, asset) => {
     return false;
 };
 
-export const updateSwaps = (cb) => {
+export const updateSwaps = (cb: any) => {
     const swapsTmp = swaps();
     const currentSwap = swapsTmp.find((s) => swap().id === s.id);
     cb(currentSwap);
