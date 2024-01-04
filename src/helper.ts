@@ -246,7 +246,6 @@ export async function refund(swap: any, t: any) {
         [
             {
                 ...swapOutput,
-                value: 0,
                 txHash: tx.getHash(),
                 redeemScript: script,
                 keys: private_key,
