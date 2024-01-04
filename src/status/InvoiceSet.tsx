@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import { Show } from "solid-js";
 
 import ContractTransaction from "../components/ContractTransaction";
@@ -48,7 +49,10 @@ const InvoiceSet = () => {
         <div>
             <h2>
                 {t("send_to", {
-                    amount: formatAmount(swap().expectedAmount),
+                    amount: formatAmount(
+                        BigNumber(swap().expectedAmount),
+                        denomination(),
+                    ),
                     denomination:
                         denomination() === denominations.sat
                             ? "sats"
@@ -78,7 +82,7 @@ const InvoiceSet = () => {
                     class="btn"
                     onclick={() =>
                         clipboard(
-                            formatAmount(swap().expectedAmount),
+                            formatAmount(swap().expectedAmount, denomination()),
                             t("copied"),
                         )
                     }>

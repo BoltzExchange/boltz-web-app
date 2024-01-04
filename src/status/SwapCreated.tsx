@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show } from "solid-js";
 
@@ -21,7 +22,10 @@ const SwapCreated = () => {
         <div>
             <h2>
                 {t("pay_invoice_to", {
-                    amount: formatAmount(swap().sendAmount),
+                    amount: formatAmount(
+                        BigNumber(swap().sendAmount),
+                        denomination(),
+                    ),
                     denomination:
                         denomination() === denominations.sat ? "sats" : BTC,
                 })}
