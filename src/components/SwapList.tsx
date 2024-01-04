@@ -17,7 +17,7 @@ const SwapList = ({
     deleteButton,
 }: {
     swapsSignal: Accessor<any[]>;
-    setSwapSignal: Setter<any[]>;
+    setSwapSignal?: Setter<any[]>;
     deleteButton?: boolean;
 }) => {
     const navigate = useNavigate();
