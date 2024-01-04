@@ -1,3 +1,5 @@
+import { beforeAll, describe, expect, test } from "vitest";
+
 import { BTC, LBTC } from "../../src/consts";
 import { setAsset, setConfig } from "../../src/signals";
 import { feeChecker } from "../../src/utils/feeChecker";
@@ -60,7 +62,7 @@ const cfg = {
     },
 };
 
-const deepCopy = (value) => JSON.parse(JSON.stringify(value));
+const deepCopy = (value: object) => JSON.parse(JSON.stringify(value));
 
 describe("feeChecker", () => {
     beforeAll(() => {
