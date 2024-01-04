@@ -48,7 +48,7 @@ const Pay = () => {
                 setSwap(currentSwap);
                 fetcher(
                     "/swapstatus",
-                    (data) => {
+                    (data: any) => {
                         setSwapStatus(data.status);
                         setSwapStatusTransaction(data.transaction);
                         setFailureReason(data.failureReason);

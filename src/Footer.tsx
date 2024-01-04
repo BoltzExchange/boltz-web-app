@@ -7,7 +7,6 @@ import {
     blogUrl,
     discordUrl,
     githubUrl,
-    network,
     nostrUrl,
     repoUrl,
     twitterUrl,
