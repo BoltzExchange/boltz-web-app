@@ -23,7 +23,7 @@ export const swapStatusFinal = [
     swapStatusFailed.InvoiceFailedToPay,
 ].concat(Object.values(swapStatusSuccess));
 
-export const updateSwapStatus = (id, newStatus) => {
+export const updateSwapStatus = (id: string, newStatus: string) => {
     if (swapStatusFinal.includes(newStatus)) {
         const swapsTmp = swaps();
         const swap = swapsTmp.find((swap) => swap.id === id);
@@ -34,6 +34,5 @@ export const updateSwapStatus = (id, newStatus) => {
             return true;
         }
     }
-
     return false;
 };
