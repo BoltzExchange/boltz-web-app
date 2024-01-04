@@ -1,5 +1,5 @@
 import { detectSwap } from "boltz-core";
-import { Buffer } from "buffer";
+import Buffer from "buffer";
 import log from "loglevel";
 
 import {

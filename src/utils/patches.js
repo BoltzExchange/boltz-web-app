@@ -1,4 +1,4 @@
-import { Buffer } from "buffer";
+import Buffer from "buffer";
 
 // liquidjs-lib node buffer patch for writeBigUInt64BE
 Uint8Array.prototype.writeBigUInt64BE = function (int64, offset) {
