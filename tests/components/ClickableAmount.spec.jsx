@@ -1,5 +1,5 @@
 import { fireEvent, render } from "@solidjs/testing-library";
-import { describe, expect, vitest } from "vitest";
+import { describe, expect, test, vitest } from "vitest";
 
 import ClickableAmount from "../../src/components/ClickableAmount";
 import t from "../../src/i18n";

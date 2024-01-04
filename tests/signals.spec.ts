@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { BTC, LBTC, LN } from "../src/consts";
 import {

@@ -1,4 +1,4 @@
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { defaultLanguage } from "../../src/config";
 import { getNavigatorLanguage } from "../../src/i18n/detect";

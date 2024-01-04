@@ -1,5 +1,5 @@
 import { render } from "@solidjs/testing-library";
-import { beforeAll, beforeEach, expect, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
 import Fees from "../../src/components/Fees";
 import * as signals from "../../src/signals";

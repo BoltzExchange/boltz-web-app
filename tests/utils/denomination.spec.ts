@@ -1,3 +1,5 @@
+import { beforeAll, describe, expect, test } from "vitest";
+
 import { setDenomination, setMaximum } from "../../src/signals";
 import {
     calculateDigits,

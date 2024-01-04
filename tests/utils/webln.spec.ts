@@ -6,7 +6,6 @@ import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 describe("WebLN", () => {
     beforeEach(() => {
         log.error = vitest.fn();
-        window.webln = undefined;
     });
 
     test("should not detect WebLN when no injected provider is present", async () => {
