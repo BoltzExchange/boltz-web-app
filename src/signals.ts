@@ -14,7 +14,7 @@ export const [assetSelected, setAssetSelected] = createSignal(null);
 export const [asset, setAsset] = createSignal(defaultSelection);
 export const [reverse, setReverse] = createSignal(true);
 
-export const [config, setConfig] = createSignal(0);
+export const [config, setConfig] = createSignal({});
 
 export const [online, setOnline] = createSignal(true);
 export const [wasmSupported, setWasmSupported] = createSignal(true);
