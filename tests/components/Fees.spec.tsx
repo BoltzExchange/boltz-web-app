@@ -1,4 +1,5 @@
 import { render } from "@solidjs/testing-library";
+import { BigNumber } from "bignumber.js";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
 import Fees from "../../src/components/Fees";
@@ -33,10 +34,20 @@ describe("Fees component", () => {
         signals.setReverse(false);
 
         expect(setMinimum).toHaveBeenLastCalledWith(
-            calculateSendAmount(cfg["BTC/BTC"].limits.minimal),
+            calculateSendAmount(
+                BigNumber(cfg["BTC/BTC"].limits.minimal),
+                signals.boltzFee(),
+                signals.minerFee(),
+                signals.reverse(),
+            ).toNumber(),
         );
         expect(setMaximum).toHaveBeenLastCalledWith(
-            calculateSendAmount(cfg["BTC/BTC"].limits.maximal),
+            calculateSendAmount(
+                BigNumber(cfg["BTC/BTC"].limits.maximal),
+                signals.boltzFee(),
+                signals.minerFee(),
+                signals.reverse(),
+            ).toNumber(),
         );
     });
 });

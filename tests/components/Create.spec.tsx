@@ -156,7 +156,12 @@ describe("Create", () => {
 
         expect(setReceiveAmount).toHaveBeenCalledTimes(1);
         expect(setReceiveAmount).toHaveBeenCalledWith(
-            BigNumber(calculateReceiveAmount(amount)),
+            calculateReceiveAmount(
+                BigNumber(amount),
+                signals.boltzFee(),
+                signals.minerFee(),
+                signals.reverse(),
+            ),
         );
     });
 });
