@@ -2,18 +2,18 @@ import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 
-import AddressInput from "../components/AddressInput";
-import Asset from "../components/Asset";
-import AssetSelect from "../components/AssetSelect";
-import ClickableAmount from "../components/ClickableAmount";
-import ConnectMetamask from "../components/ConnectMetamask";
-import { CreateButton, setButtonLabel } from "../components/CreateButton";
-import Fees from "../components/Fees";
-import InvoiceInput from "../components/InvoiceInput";
-import QrScan from "../components/QrScan";
-import Reverse from "../components/Reverse";
-import { RBTC, sideReceive, sideSend } from "../consts";
-import t from "../i18n";
+import AddressInput from "./components/AddressInput";
+import Asset from "./components/Asset";
+import AssetSelect from "./components/AssetSelect";
+import ConnectMetamask from "./components/ConnectMetamask";
+import { CreateButton, setButtonLabel } from "./components/CreateButton";
+import Fees from "./components/Fees";
+import InvoiceInput from "./components/InvoiceInput";
+import QrScan from "./components/QrScan";
+import Reverse from "./components/Reverse";
+import { RBTC, sideReceive, sideSend } from "./consts";
+import { isMobile } from "./helper";
+import t from "./i18n";
 import {
     addressValid,
     amountChanged,
@@ -230,17 +230,18 @@ const Create = () => {
             <h2>{t("create_swap")}</h2>
             <p>
                 {t("create_swap_subline")} <br />
-                {t("send")}{" "}
-                <ClickableAmount
-                    label={"min"}
-                    onClick={setAmount}
-                    amount={minimum}
-                />{" "}
-                <ClickableAmount
-                    label={"max"}
-                    onClick={setAmount}
-                    amount={maximum}
-                />
+                {t("send")} {t("min")}:{" "}
+                <span
+                    onClick={() => setAmount(minimum())}
+                    class="btn-small btn-light">
+                    {formatAmount(minimum())}
+                </span>{" "}
+                {t("max")}:{" "}
+                <span
+                    onClick={() => setAmount(maximum())}
+                    class="btn-small btn-light">
+                    {formatAmount(maximum())}
+                </span>{" "}
             </p>
             <div class="icons">
                 <div>
