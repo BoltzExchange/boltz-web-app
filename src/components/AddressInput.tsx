@@ -1,6 +1,5 @@
 import { createEffect, on } from "solid-js";
 
-import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
 import t from "../i18n";
 import {
@@ -11,6 +10,7 @@ import {
     setAddressValid,
     setOnchainAddress,
 } from "../signals";
+import { decodeAddress } from "../utils/compat";
 import { extractAddress } from "../utils/invoice";
 import { setButtonLabel } from "./CreateButton";
 

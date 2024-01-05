@@ -1,8 +1,8 @@
-import discord from "./assets/discord.svg";
-import github from "./assets/github.svg";
-import nostr from "./assets/nostr.svg";
-import substack from "./assets/substack.svg";
-import twitter from "./assets/twitter.svg";
+import discord from "../assets/discord.svg";
+import github from "../assets/github.svg";
+import nostr from "../assets/nostr.svg";
+import substack from "../assets/substack.svg";
+import twitter from "../assets/twitter.svg";
 import {
     blogUrl,
     discordUrl,
@@ -10,9 +10,9 @@ import {
     nostrUrl,
     repoUrl,
     twitterUrl,
-} from "./config";
-import t from "./i18n";
-import "./style/footer.scss";
+} from "../config";
+import t from "../i18n";
+import "../style/footer.scss";
 
 const Footer = () => {
     return (

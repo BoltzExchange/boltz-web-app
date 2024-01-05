@@ -2,14 +2,14 @@ import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createMemo, createSignal } from "solid-js";
 
-import Create from "./Create";
-import bitcoin from "./assets/bitcoin-icon.svg";
-import lightning from "./assets/lightning-icon.svg";
-import liquid from "./assets/liquid-icon.svg";
-import { ambossUrl } from "./config";
-import { fetcher } from "./helper";
-import t from "./i18n";
-import "./style/hero.scss";
+import bitcoin from "../assets/bitcoin-icon.svg";
+import lightning from "../assets/lightning-icon.svg";
+import liquid from "../assets/liquid-icon.svg";
+import { ambossUrl } from "../config";
+import t from "../i18n";
+import Create from "../pages/Create";
+import "../style/hero.scss";
+import { fetcher } from "../utils/helper";
 
 export const [hideHero, setHideHero] = createSignal(false);
 

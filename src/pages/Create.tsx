@@ -2,19 +2,18 @@ import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 
-import AddressInput from "./components/AddressInput";
-import Asset from "./components/Asset";
-import AssetSelect from "./components/AssetSelect";
-import ClickableAmount from "./components/ClickableAmount";
-import ConnectMetamask from "./components/ConnectMetamask";
-import { CreateButton, setButtonLabel } from "./components/CreateButton";
-import Fees from "./components/Fees";
-import InvoiceInput from "./components/InvoiceInput";
-import QrScan from "./components/QrScan";
-import Reverse from "./components/Reverse";
-import { RBTC, sideReceive, sideSend } from "./consts";
-import { isMobile } from "./helper";
-import t from "./i18n";
+import AddressInput from "../components/AddressInput";
+import Asset from "../components/Asset";
+import AssetSelect from "../components/AssetSelect";
+import ClickableAmount from "../components/ClickableAmount";
+import ConnectMetamask from "../components/ConnectMetamask";
+import { CreateButton, setButtonLabel } from "../components/CreateButton";
+import Fees from "../components/Fees";
+import InvoiceInput from "../components/InvoiceInput";
+import QrScan from "../components/QrScan";
+import Reverse from "../components/Reverse";
+import { RBTC, sideReceive, sideSend } from "../consts";
+import t from "../i18n";
 import {
     addressValid,
     amountChanged,
@@ -45,15 +44,19 @@ import {
     setValid,
     wasmSupported,
     webln,
-} from "./signals";
-import { calculateReceiveAmount, calculateSendAmount } from "./utils/calculate";
+} from "../signals";
+import {
+    calculateReceiveAmount,
+    calculateSendAmount,
+} from "../utils/calculate";
 import {
     calculateDigits,
     convertAmount,
     formatAmount,
     getValidationRegex,
-} from "./utils/denomination";
-import { enableWebln } from "./utils/webln";
+} from "../utils/denomination";
+import { isMobile } from "../utils/helper";
+import { enableWebln } from "../utils/webln";
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement, sendAmountRef: HTMLInputElement;

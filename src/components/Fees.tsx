@@ -2,7 +2,6 @@ import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
-import { fetchPairs } from "../helper";
 import t from "../i18n";
 import {
     asset,
@@ -23,6 +22,7 @@ import {
     calculateSendAmount,
 } from "../utils/calculate";
 import { denominations, formatAmount } from "../utils/denomination";
+import { fetchPairs } from "../utils/helper";
 
 const Fees = () => {
     createEffect(() => {

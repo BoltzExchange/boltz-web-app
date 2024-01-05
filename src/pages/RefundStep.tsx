@@ -2,9 +2,9 @@ import { useNavigate, useParams } from "@solidjs/router";
 import log from "loglevel";
 import { For, createEffect } from "solid-js";
 
-import DownloadRefund from "./components/DownloadRefund";
-import t from "./i18n";
-import { setSwap, swaps } from "./signals";
+import DownloadRefund from "../components/DownloadRefund";
+import t from "../i18n";
+import { setSwap, swaps } from "../signals";
 
 const RefundStep = () => {
     const params = useParams();

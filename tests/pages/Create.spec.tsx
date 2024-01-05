@@ -3,10 +3,10 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
-import Create from "../../src/Create";
 import { sideReceive, sideSend } from "../../src/consts";
 import { Web3SignerProvider } from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
+import Create from "../../src/pages/Create";
 import * as signals from "../../src/signals";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";

@@ -3,23 +3,23 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createEffect, createSignal } from "solid-js";
 
-import BlockExplorer from "./components/BlockExplorer";
-import RefundEta from "./components/RefundEta";
-import SwapList from "./components/SwapList";
-import { fetcher, refund, refundAddressChange } from "./helper";
-import t from "./i18n";
+import BlockExplorer from "../components/BlockExplorer";
+import RefundEta from "../components/RefundEta";
+import SwapList from "../components/SwapList";
+import t from "../i18n";
 import {
     refundTx,
     setTimeoutBlockheight,
     setTimeoutEta,
     setTransactionToRefund,
     swaps,
-} from "./signals";
+} from "../signals";
+import { fetcher, refund, refundAddressChange } from "../utils/helper";
 import {
     swapStatusFailed,
     swapStatusSuccess,
     updateSwapStatus,
-} from "./utils/swapStatus";
+} from "../utils/swapStatus";
 
 const refundJsonKeys = ["id", "asset", "privateKey", "redeemScript"];
 const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");

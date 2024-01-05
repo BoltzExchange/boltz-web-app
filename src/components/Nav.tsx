@@ -1,14 +1,14 @@
 import { A } from "@solidjs/router";
 import { For, Show, createSignal } from "solid-js";
 
-import { setHideHero } from "./Hero";
-import logo from "./assets/boltz.svg";
-import Warnings from "./components/Warnings";
-import { blogUrl, discordUrl, docsUrl, torUrl } from "./config";
-import t from "./i18n";
-import locales from "./i18n/i18n";
-import { setI18nConfigured } from "./signals";
-import "./style/nav.scss";
+import logo from "../assets/boltz.svg";
+import Warnings from "../components/Warnings";
+import { blogUrl, discordUrl, docsUrl, torUrl } from "../config";
+import t from "../i18n";
+import locales from "../i18n/i18n";
+import { setHideHero } from "../pages/Hero";
+import { setI18nConfigured } from "../signals";
+import "../style/nav.scss";
 
 const Nav = ({ network }) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;

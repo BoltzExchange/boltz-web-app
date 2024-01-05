@@ -2,8 +2,8 @@ import { Accessor, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
-import { refund, refundAddressChange, updateSwaps } from "../helper";
 import t from "../i18n";
+import { refund, refundAddressChange, updateSwaps } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";

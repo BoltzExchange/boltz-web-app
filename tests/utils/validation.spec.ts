@@ -3,8 +3,8 @@ import { Contract } from "ethers";
 import log from "loglevel";
 import { beforeAll, describe, expect, test, vitest } from "vitest";
 
-import { decodeAddress } from "../../src/compat";
 import { BTC, LBTC } from "../../src/consts";
+import { decodeAddress } from "../../src/utils/compat";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {

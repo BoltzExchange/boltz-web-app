@@ -3,10 +3,10 @@ import { Show } from "solid-js";
 
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts";
-import { clipboard, cropString } from "../helper";
 import t from "../i18n";
 import { denomination, swap, webln } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
+import { clipboard, cropString } from "../utils/helper";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {

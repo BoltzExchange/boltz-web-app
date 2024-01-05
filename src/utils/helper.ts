@@ -6,20 +6,8 @@ import {
 import { Buffer } from "buffer";
 import log from "loglevel";
 
-import {
-    DecodedAddress,
-    decodeAddress,
-    getAddress,
-    getConstructClaimTransaction,
-    getConstructRefundTransaction,
-    getNetwork,
-    getOutputAmount,
-    getTransaction,
-    setup,
-} from "./compat";
-import { pairs } from "./config";
-import { BTC, RBTC } from "./consts";
-import { ECPair } from "./ecpair/ecpair";
+import { pairs } from "../config";
+import { BTC, RBTC } from "../consts";
 import {
     asset,
     ref,
@@ -42,10 +30,22 @@ import {
     swapStatusTransaction,
     swaps,
     transactionToRefund,
-} from "./signals";
-import { feeChecker } from "./utils/feeChecker";
-import { checkResponse } from "./utils/http";
-import { swapStatusPending, updateSwapStatus } from "./utils/swapStatus";
+} from "../signals";
+import { feeChecker } from "../utils/feeChecker";
+import { checkResponse } from "../utils/http";
+import { swapStatusPending, updateSwapStatus } from "../utils/swapStatus";
+import {
+    DecodedAddress,
+    decodeAddress,
+    getAddress,
+    getConstructClaimTransaction,
+    getConstructRefundTransaction,
+    getNetwork,
+    getOutputAmount,
+    getTransaction,
+    setup,
+} from "./compat";
+import { ECPair } from "./ecpair";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
