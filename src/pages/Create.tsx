@@ -58,7 +58,8 @@ import { isMobile } from "../utils/helper";
 import { enableWebln } from "../utils/webln";
 
 const Create = () => {
-    let receiveAmountRef: HTMLInputElement, sendAmountRef: HTMLInputElement;
+    let receiveAmountRef: HTMLInputElement | undefined = undefined;
+    let sendAmountRef: HTMLInputElement | undefined = undefined;
 
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
@@ -213,12 +214,12 @@ const Create = () => {
 
     // validate amounts when invoice is valid, because we
     // set the amount based on invoice amount if amount is 0
-    createMemo(() => {
+    createEffect(() => {
         if (invoiceValid()) {
             validateAmount();
         }
     });
-    createMemo(() => {
+    createEffect(() => {
         if (addressValid()) {
             validateAmount();
         }
