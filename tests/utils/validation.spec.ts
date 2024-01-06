@@ -193,7 +193,7 @@ describe("validate invoices", () => {
         ${"lnbcrt111110p1pjejeznsp52ryrltrdpamsf77vplvwgugpphv6vep5qanxkm0t8asvnnrjrtnspp5gjw9yquvg97dhyl02x03x7ntyk89lutccjdzc72en7zksad2pjssdqvd45kc6tnv96qxqyjw5qcqp2rzjq203yew34yu5y7vfad2n27k5pnw735m46g92huev0rcqeadrvyup2qqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqhzpymzfgcvym7lkzszr7a036almdcl26h7kq76hcur5488etrr5jqr65g23phhgl4v3wsjrkwc0pwmtugtfmqq4dgcmetgxuzjxytgsq8ah759"}
     `("valid millisatoshis invoice", async ({ invoice }) => {
         const sats = validateInvoice(invoice);
-        expect(sats).toBeGreaterThan(0);
+        expect(sats).toEqual(12);
     });
 });
 
