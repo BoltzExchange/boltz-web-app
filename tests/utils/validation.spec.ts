@@ -190,7 +190,7 @@ describe("validate invoices", () => {
     });
     test.each`
         invoice
-        ${"lnbc125137810p1pjejfuwpp5c9vfhtv7k0c8grvlsmg5ud03lawx0qn2grxyzn9edlhsaz0m6wnqcqpjsp5khrmh5c58p99vlwn2k2mvqnj4j5sdz5r4qr2a8gaywe0achghtss9q7sqqqqqqqqqqqqqqqqqqqsqqqqqysgqdqqmqz9gxqyjw5qrzjqwryaup9lh50kkranzgcdnn2fgvx390wgj5jd07rwr3vxeje0glcllmjgmhuwtf3msqqqqlgqqqqqeqqjqp0ltcljh9sj7ens78u3kp3jzcctafkdp2fe9vdsd0zrshdxaavwy02hg8tjq5fwfw94rdcuu4c0g4wkjq42qyqal5w3ygql4jv9j7xsprv2haw"}
+        ${"lnbcrt111110p1pjejeznsp52ryrltrdpamsf77vplvwgugpphv6vep5qanxkm0t8asvnnrjrtnspp5gjw9yquvg97dhyl02x03x7ntyk89lutccjdzc72en7zksad2pjssdqvd45kc6tnv96qxqyjw5qcqp2rzjq203yew34yu5y7vfad2n27k5pnw735m46g92huev0rcqeadrvyup2qqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqhzpymzfgcvym7lkzszr7a036almdcl26h7kq76hcur5488etrr5jqr65g23phhgl4v3wsjrkwc0pwmtugtfmqq4dgcmetgxuzjxytgsq8ah759"}
     `("valid millisatoshis invoice", async ({ invoice }) => {
         const sats = validateInvoice(invoice);
         expect(sats).toBeGreaterThan(0);
