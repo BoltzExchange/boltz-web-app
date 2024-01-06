@@ -4,10 +4,10 @@ import ContractTransaction from "../components/ContractTransaction";
 import QrCode from "../components/QrCode";
 import { BTC, RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
-import { clipboard, cropString } from "../helper";
 import t from "../i18n";
 import { asset, denomination, setSwaps, swap, swaps } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
+import { clipboard, cropString } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 

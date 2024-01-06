@@ -2,7 +2,6 @@ import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createEffect, createSignal } from "solid-js";
 
-import fetcher, { refund, refundAddressChange } from "../helper";
 import t from "../i18n";
 import {
     failureReason,
@@ -10,6 +9,7 @@ import {
     swap,
     transactionToRefund,
 } from "../signals";
+import fetcher, { refund, refundAddressChange } from "../utils/helper";
 
 const SwapExpired = () => {
     const navigate = useNavigate();

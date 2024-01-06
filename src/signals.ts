@@ -4,7 +4,7 @@ import { createEffect, createRoot, createSignal } from "solid-js";
 
 import { pairs } from "./config";
 import { LN, sideSend } from "./consts";
-import { isMobile } from "./helper";
+import { isMobile } from "./utils/helper";
 
 type SwapStatusTransaction = {
     hex?: string;

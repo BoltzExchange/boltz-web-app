@@ -5,10 +5,10 @@ import { Buffer, Buffer as BufferBrowser } from "buffer";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
-import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
-import { ECPair, ecc } from "../ecpair/ecpair";
+import { decodeAddress } from "./compat";
 import { denominations, formatAmountDenomination } from "./denomination";
+import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
 
 // TODO: sanity check timeout block height?

@@ -4,7 +4,7 @@ import bolt11 from "bolt11";
 import log from "loglevel";
 
 import { bolt11_prefix } from "../config";
-import { errorHandler } from "../helper";
+import { errorHandler } from "./helper";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {

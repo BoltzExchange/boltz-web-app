@@ -2,11 +2,10 @@ import { useParams } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
-import BlockExplorer from "./components/BlockExplorer";
-import LoadingSpinner from "./components/LoadingSpinner";
-import { RBTC } from "./consts";
-import { fetcher } from "./helper";
-import t from "./i18n";
+import BlockExplorer from "../components/BlockExplorer";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { RBTC } from "../consts";
+import t from "../i18n";
 import {
     setFailureReason,
     setSwap,
@@ -16,19 +15,20 @@ import {
     swapStatus,
     swapStatusTransaction,
     swaps,
-} from "./signals";
-import InvoiceExpired from "./status/InvoiceExpired";
-import InvoiceFailedToPay from "./status/InvoiceFailedToPay";
-import InvoicePending from "./status/InvoicePending";
-import InvoiceSet from "./status/InvoiceSet";
-import SwapCreated from "./status/SwapCreated";
-import SwapExpired from "./status/SwapExpired";
-import SwapRefunded from "./status/SwapRefunded";
-import TransactionClaimed from "./status/TransactionClaimed";
-import TransactionConfirmed from "./status/TransactionConfirmed";
-import TransactionLockupFailed from "./status/TransactionLockupFailed";
-import TransactionMempool from "./status/TransactionMempool";
-import { swapStatusFailed } from "./utils/swapStatus";
+} from "../signals";
+import InvoiceExpired from "../status/InvoiceExpired";
+import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
+import InvoicePending from "../status/InvoicePending";
+import InvoiceSet from "../status/InvoiceSet";
+import SwapCreated from "../status/SwapCreated";
+import SwapExpired from "../status/SwapExpired";
+import SwapRefunded from "../status/SwapRefunded";
+import TransactionClaimed from "../status/TransactionClaimed";
+import TransactionConfirmed from "../status/TransactionConfirmed";
+import TransactionLockupFailed from "../status/TransactionLockupFailed";
+import TransactionMempool from "../status/TransactionMempool";
+import { fetcher } from "../utils/helper";
+import { swapStatusFailed } from "../utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();

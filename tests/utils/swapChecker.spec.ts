@@ -4,8 +4,8 @@ import { AddressInfo } from "net";
 import { createRoot } from "solid-js";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { setSwapStatusAndClaim } from "../../src/helper";
 import { setSwap, setSwaps } from "../../src/signals";
+import { setSwapStatusAndClaim } from "../../src/utils/helper";
 import { checkInterval, swapChecker } from "../../src/utils/swapChecker";
 import {
     swapStatusFailed,
@@ -19,7 +19,7 @@ let apiUrl: string;
 
 const fetcherCallData = [];
 
-vi.mock("../../src/helper", async () => {
+vi.mock("../../src/utils/helper", async () => {
     return {
         isMobile: () => false,
         getApiUrl: () => apiUrl,
