@@ -188,6 +188,13 @@ describe("validate invoices", () => {
         const sats = validateInvoice(invoice);
         expect(sats).toBeGreaterThan(0);
     });
+    test.each`
+        invoice
+        ${"lnbc125137810p1pjejfuwpp5c9vfhtv7k0c8grvlsmg5ud03lawx0qn2grxyzn9edlhsaz0m6wnqcqpjsp5khrmh5c58p99vlwn2k2mvqnj4j5sdz5r4qr2a8gaywe0achghtss9q7sqqqqqqqqqqqqqqqqqqqsqqqqqysgqdqqmqz9gxqyjw5qrzjqwryaup9lh50kkranzgcdnn2fgvx390wgj5jd07rwr3vxeje0glcllmjgmhuwtf3msqqqqlgqqqqqeqqjqp0ltcljh9sj7ens78u3kp3jzcctafkdp2fe9vdsd0zrshdxaavwy02hg8tjq5fwfw94rdcuu4c0g4wkjq42qyqal5w3ygql4jv9j7xsprv2haw"}
+    `("valid millisatoshis invoice", async ({ invoice }) => {
+        const sats = validateInvoice(invoice);
+        expect(sats).toBeGreaterThan(0);
+    });
 });
 
 describe("validate onchain addresses", () => {
