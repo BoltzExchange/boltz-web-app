@@ -241,13 +241,13 @@ const Create = () => {
                 <span
                     onClick={() => setAmount(minimum())}
                     class="btn-small btn-light">
-                    {formatAmount(minimum())}
+                    {formatAmount(BigNumber(minimum()), denomination())}
                 </span>{" "}
                 {t("max")}:{" "}
                 <span
                     onClick={() => setAmount(maximum())}
                     class="btn-small btn-light">
-                    {formatAmount(maximum())}
+                    {formatAmount(BigNumber(maximum()), denomination())}
                 </span>{" "}
             </p>
             <div class="icons">
