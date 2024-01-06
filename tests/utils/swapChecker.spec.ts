@@ -19,7 +19,7 @@ let apiUrl: string;
 
 const fetcherCallData = [];
 
-vi.mock("../../src/helper", async () => {
+vi.mock("../../src/utils/helper", async () => {
     return {
         isMobile: () => false,
         getApiUrl: () => apiUrl,
