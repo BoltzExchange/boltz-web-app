@@ -5,29 +5,16 @@ import log from "loglevel";
 import { createEffect, createMemo, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useCreateContext } from "../context/Create";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
 import {
-    asset,
     config,
-    invoice,
-    lnurl,
-    onchainAddress,
     online,
-    receiveAmount,
-    reverse,
-    sendAmount,
-    sendAmountValid,
-    setAddressValid,
-    setInvoice,
-    setInvoiceValid,
-    setLnurl,
     setNotification,
     setNotificationType,
-    setOnchainAddress,
     setSwaps,
     swaps,
-    valid,
     wasmSupported,
 } from "../signals";
 import { ECPair } from "../utils/ecpair";
@@ -46,6 +33,22 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 
 export const CreateButton = () => {
     const navigate = useNavigate();
+    const {
+        asset,
+        invoice,
+        lnurl,
+        onchainAddress,
+        receiveAmount,
+        reverse,
+        sendAmount,
+        sendAmountValid,
+        setInvoice,
+        setInvoiceValid,
+        setLnurl,
+        setOnchainAddress,
+        valid,
+        setAddressValid,
+    } = useCreateContext();
     const { getEtherSwap } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(true);

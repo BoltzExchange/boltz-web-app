@@ -3,28 +3,35 @@ import { describe, expect, test } from "vitest";
 
 import Reverse from "../../src/components/Reverse";
 import { BTC, LN } from "../../src/consts";
-import {
-    assetReceive,
-    assetSend,
-    reverse,
-    setAssetReceive,
-    setAssetSend,
-} from "../../src/signals";
+import { CreateProvider, useCreateContext } from "../../src/context/Create";
 
 describe("Reverse", () => {
+    let signals: any;
+
+    const TestComponent = () => {
+        signals = useCreateContext();
+        return "";
+    };
+
     test("should reverse assets", async () => {
-        setAssetSend(BTC);
-        setAssetReceive(LN);
-
-        expect(reverse()).toEqual(false);
-
         const {
             container: { firstChild: flip },
-        } = render(() => <Reverse />);
+        } = render(() => (
+            <CreateProvider>
+                <Reverse />
+                <TestComponent />
+            </CreateProvider>
+        ));
+
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
+
+        expect(signals.reverse()).toEqual(false);
+
         fireEvent.click(flip);
 
-        expect(reverse()).toEqual(true);
-        expect(assetSend()).toEqual(LN);
-        expect(assetReceive()).toEqual(BTC);
+        expect(signals.reverse()).toEqual(true);
+        expect(signals.assetSend()).toEqual(LN);
+        expect(signals.assetReceive()).toEqual(BTC);
     });
 });

@@ -1,21 +1,23 @@
 import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useCreateContext } from "../context/Create";
 import t from "../i18n";
-import {
-    asset,
-    onchainAddress,
-    reverse,
-    sendAmountValid,
-    setAddressValid,
-    setOnchainAddress,
-} from "../signals";
 import { decodeAddress } from "../utils/compat";
 import { extractAddress } from "../utils/invoice";
 import { setButtonLabel } from "./CreateButton";
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
+
+    const {
+        asset,
+        reverse,
+        sendAmountValid,
+        onchainAddress,
+        setAddressValid,
+        setOnchainAddress,
+    } = useCreateContext();
 
     const validateAddress = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();

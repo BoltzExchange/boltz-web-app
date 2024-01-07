@@ -2,19 +2,16 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 
+import { useCreateContext } from "../context/Create";
 import t from "../i18n";
-import {
-    camera,
-    reverse,
-    setCamera,
-    setInvoice,
-    setOnchainAddress,
-} from "../signals";
+import { camera, setCamera } from "../signals";
 import "../style/qrscan.scss";
 
 const QrScan = () => {
     let qrRef: HTMLVideoElement;
     let qrScanner: QrScanner;
+
+    const { reverse, setInvoice, setOnchainAddress } = useCreateContext();
 
     const [scanning, setScanning] = createSignal(false);
 
