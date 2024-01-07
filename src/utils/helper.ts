@@ -354,7 +354,10 @@ const claimTaproot = async (
     privateKey: ECPairInterface,
     preimage: Buffer,
     decodedAddress: DecodedAddress,
+    cooperative = true,
 ) => {
+    log.info(`Claiming Taproot swap cooperatively: ${cooperative}`);
+
     const boltzPublicKey = Buffer.from(swap.refundPublicKey, "hex");
     const musig = createMusig(privateKey, boltzPublicKey);
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
@@ -365,12 +368,14 @@ const claimTaproot = async (
     const details = [
         {
             ...swapOutput,
+            cooperative,
+            swapTree: tree,
             keys: privateKey,
-            cooperative: true,
             preimage: preimage,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
             blindingPrivateKey: parseBlindingKey(swap),
+            internalKey: musig.getAggregatedPublicKey(),
         },
     ] as (ClaimDetails & { blindingPrivateKey: Buffer })[];
     const claimTx = createAdjustedClaim(
@@ -383,29 +388,46 @@ const claimTaproot = async (
         decodedAddress.blindingKey,
     );
 
-    const boltzSig = await getPartialReverseClaimSignature(
-        swap.id,
-        preimage,
-        Buffer.from(musig.getPublicNonce()),
-        claimTx,
-        0,
-    );
-    musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
-    musig.initializeSession(
-        hashForWitnessV1(
-            swap.asset,
-            getNetwork(swap.asset),
-            details,
+    if (!cooperative) {
+        return claimTx;
+    }
+
+    try {
+        const boltzSig = await getPartialReverseClaimSignature(
+            swap.id,
+            preimage,
+            Buffer.from(musig.getPublicNonce()),
             claimTx,
             0,
-        ),
-    );
-    musig.signPartial();
-    musig.addPartial(boltzPublicKey, boltzSig.signature);
+        );
 
-    claimTx.ins[0].witness = [musig.aggregatePartials()];
+        musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
+        musig.initializeSession(
+            hashForWitnessV1(
+                swap.asset,
+                getNetwork(swap.asset),
+                details,
+                claimTx,
+                0,
+            ),
+        );
+        musig.signPartial();
+        musig.addPartial(boltzPublicKey, boltzSig.signature);
 
-    return claimTx;
+        claimTx.ins[0].witness = [musig.aggregatePartials()];
+
+        return claimTx;
+    } catch (e) {
+        log.warn("Uncooperative Taproot claim because", e);
+        return claimTaproot(
+            swap,
+            lockupTx,
+            privateKey,
+            preimage,
+            decodedAddress,
+            false,
+        );
+    }
 };
 
 const refundTaproot = async (
