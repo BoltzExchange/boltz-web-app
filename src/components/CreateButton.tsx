@@ -135,7 +135,7 @@ export const CreateButton = () => {
             }
         }
 
-        if (!(await feeCheck(t("feecheck")))) {
+        if (!(await feeCheck(t("feecheck"), asset()))) {
             return;
         }
 
@@ -192,7 +192,7 @@ export const CreateButton = () => {
                 async (err: Response) => {
                     const res = await err.json();
                     if (res.error === "invalid pair hash") {
-                        await feeCheck(t("feecheck"));
+                        await feeCheck(t("feecheck"), asset());
                     } else {
                         setNotificationType("error");
                         setNotification(res.error);
