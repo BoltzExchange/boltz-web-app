@@ -41,8 +41,15 @@ const Fees = () => {
                 setMinerFee(fee);
             }
 
-            const calculateLimit = (limit: number) => {
-                return reverse() ? limit : calculateSendAmount(limit);
+            const calculateLimit = (limit: number): number => {
+                return reverse()
+                    ? limit
+                    : calculateSendAmount(
+                          BigNumber(limit),
+                          boltzFee(),
+                          minerFee(),
+                          reverse(),
+                      ).toNumber();
             };
 
             setMinimum(calculateLimit(cfg.limits.minimal));
@@ -86,7 +93,12 @@ const Fees = () => {
                 {t("fee")} ({boltzFee()}%):{" "}
                 <span class="boltz-fee">
                     {formatAmount(
-                        BigNumber(calculateBoltzFeeOnSend(sendAmount())),
+                        calculateBoltzFeeOnSend(
+                            sendAmount(),
+                            boltzFee(),
+                            minerFee(),
+                            reverse(),
+                        ),
                         denomination(),
                         true,
                     )}

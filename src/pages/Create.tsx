@@ -65,10 +65,15 @@ const Create = () => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
         const satAmount = convertAmount(BigNumber(amount), denomination());
-        const sendAmount = calculateSendAmount(satAmount.toNumber());
+        const sendAmount = calculateSendAmount(
+            satAmount,
+            boltzFee(),
+            minerFee(),
+            reverse(),
+        );
         setAmountChanged(sideReceive);
-        setReceiveAmount(BigNumber(satAmount));
-        setSendAmount(BigNumber(sendAmount));
+        setReceiveAmount(satAmount);
+        setSendAmount(sendAmount);
         validateAmount();
         target.setCustomValidity("");
         target.classList.remove("invalid");
@@ -78,10 +83,15 @@ const Create = () => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
         const satAmount = convertAmount(BigNumber(amount), denomination());
-        const receiveAmount = calculateReceiveAmount(satAmount.toNumber());
+        const receiveAmount = calculateReceiveAmount(
+            satAmount,
+            boltzFee(),
+            minerFee(),
+            reverse(),
+        );
         setAmountChanged(sideSend);
-        setSendAmount(BigNumber(satAmount));
-        setReceiveAmount(BigNumber(receiveAmount));
+        setSendAmount(satAmount);
+        setReceiveAmount(receiveAmount);
         validateAmount();
         target.setCustomValidity("");
         target.classList.remove("invalid");
@@ -154,7 +164,14 @@ const Create = () => {
 
     const setAmount = (amount: number) => {
         setSendAmount(BigNumber(amount));
-        setReceiveAmount(BigNumber(calculateReceiveAmount(amount)));
+        setReceiveAmount(
+            calculateReceiveAmount(
+                BigNumber(amount),
+                boltzFee(),
+                minerFee(),
+                reverse(),
+            ),
+        );
         validateAmount();
         sendAmountRef.focus();
     };
@@ -167,11 +184,21 @@ const Create = () => {
         on([boltzFee, minerFee, reverse, asset], () => {
             if (amountChanged() === sideReceive) {
                 setSendAmount(
-                    BigNumber(calculateSendAmount(receiveAmount().toNumber())),
+                    calculateSendAmount(
+                        receiveAmount(),
+                        boltzFee(),
+                        minerFee(),
+                        reverse(),
+                    ),
                 );
             } else {
                 setReceiveAmount(
-                    BigNumber(calculateReceiveAmount(sendAmount().toNumber())),
+                    calculateReceiveAmount(
+                        sendAmount(),
+                        boltzFee(),
+                        minerFee(),
+                        reverse(),
+                    ),
                 );
             }
             validateAmount();
@@ -286,7 +313,12 @@ const Create = () => {
                         required
                         type="text"
                         placeholder={formatAmount(
-                            BigNumber(calculateReceiveAmount(minimum())),
+                            calculateReceiveAmount(
+                                BigNumber(minimum()),
+                                boltzFee(),
+                                minerFee(),
+                                reverse(),
+                            ),
                             denomination(),
                         )}
                         maxlength={calculateDigits(maximum(), denomination())}

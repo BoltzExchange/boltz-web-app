@@ -1,12 +1,6 @@
 import { BigNumber } from "bignumber.js";
-import { beforeAll, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import {
-    minerFee,
-    setBoltzFee,
-    setMinerFee,
-    setReverse,
-} from "../../src/signals";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,
@@ -14,142 +8,175 @@ import {
 } from "../../src/utils/calculate";
 
 describe("Calculate amounts", () => {
-    const setSwapFees = () => {
-        setReverse(false);
-        setMinerFee(147);
-        setBoltzFee(0.1);
+    const swapFees = {
+        reverse: false,
+        minerFee: 147,
+        boltzFee: 0.1,
     };
 
-    const setReverseSwapFees = () => {
-        setReverse(true);
-        setMinerFee(428);
-        setBoltzFee(0.25);
+    const reverseSwapFees = {
+        reverse: true,
+        minerFee: 428,
+        boltzFee: 0.25,
     };
 
     describe("should calculate Swap amounts", () => {
-        beforeAll(() => {
-            setSwapFees();
-        });
-
         test.each`
-            sendAmount | receiveAmount
-            ${10157}   | ${10000}
-            ${12473}   | ${12313}
-            ${4299409} | ${4294967}
-            ${62531}   | ${62321}
+            sendAmount            | receiveAmount
+            ${BigNumber(10157)}   | ${BigNumber(10000)}
+            ${BigNumber(12473)}   | ${BigNumber(12313)}
+            ${BigNumber(4299409)} | ${BigNumber(4294967)}
+            ${BigNumber(62531)}   | ${BigNumber(62321)}
         `(
             "calculate amounts $sendAmount <-> $receiveAmount",
             ({ sendAmount, receiveAmount }) => {
-                expect(calculateReceiveAmount(sendAmount)).toEqual(
-                    receiveAmount,
-                );
-                expect(calculateSendAmount(receiveAmount)).toEqual(sendAmount);
+                expect(
+                    calculateReceiveAmount(
+                        sendAmount,
+                        swapFees.boltzFee,
+                        swapFees.minerFee,
+                        swapFees.reverse,
+                    ),
+                ).toEqual(receiveAmount);
+                expect(
+                    calculateSendAmount(
+                        receiveAmount,
+                        swapFees.boltzFee,
+                        swapFees.minerFee,
+                        swapFees.reverse,
+                    ),
+                ).toEqual(sendAmount);
             },
         );
 
-        test("should return correct types", () => {
-            expect(typeof calculateReceiveAmount(1000000)).toEqual("number");
-            expect(typeof calculateSendAmount(1000000)).toEqual("number");
-        });
-
         test("should not return negative numbers", () => {
-            expect(calculateReceiveAmount(0)).toEqual(0);
+            expect(
+                calculateReceiveAmount(
+                    BigNumber(0),
+                    swapFees.boltzFee,
+                    swapFees.minerFee,
+                    swapFees.reverse,
+                ),
+            ).toEqual(BigNumber(0));
         });
     });
 
     describe("should calculate Reverse Swap amounts", () => {
-        beforeAll(() => {
-            setReverseSwapFees();
-        });
-
         test.each`
-            sendAmount | receiveAmount
-            ${1000000} | ${997072}
-            ${10000}   | ${9547}
-            ${122344}  | ${121610}
-            ${4294967} | ${4283801}
+            sendAmount            | receiveAmount
+            ${BigNumber(1000000)} | ${BigNumber(997072)}
+            ${BigNumber(10000)}   | ${BigNumber(9547)}
+            ${BigNumber(122344)}  | ${BigNumber(121610)}
+            ${BigNumber(4294967)} | ${BigNumber(4283801)}
         `(
             "calculate amounts $sendAmount <-> $receiveAmount",
             ({ sendAmount, receiveAmount }) => {
-                expect(calculateReceiveAmount(sendAmount)).toEqual(
-                    receiveAmount,
-                );
-                expect(calculateSendAmount(receiveAmount)).toEqual(sendAmount);
+                expect(
+                    calculateReceiveAmount(
+                        sendAmount,
+                        reverseSwapFees.boltzFee,
+                        reverseSwapFees.minerFee,
+                        reverseSwapFees.reverse,
+                    ),
+                ).toEqual(receiveAmount);
+                expect(
+                    calculateSendAmount(
+                        receiveAmount,
+                        reverseSwapFees.boltzFee,
+                        reverseSwapFees.minerFee,
+                        reverseSwapFees.reverse,
+                    ),
+                ).toEqual(sendAmount);
             },
         );
 
-        test("should return correct types", () => {
-            expect(typeof calculateReceiveAmount(1000000)).toEqual("number");
-            expect(typeof calculateSendAmount(1000000)).toEqual("number");
-        });
-
         test("should not return negative numbers", () => {
-            expect(calculateReceiveAmount(0)).toEqual(0);
+            expect(
+                calculateReceiveAmount(
+                    BigNumber(0),
+                    reverseSwapFees.boltzFee,
+                    reverseSwapFees.minerFee,
+                    reverseSwapFees.reverse,
+                ),
+            ).toEqual(BigNumber(0));
         });
     });
 
     describe("should calculate Boltz fee based on send amount", () => {
         test.each`
-            sendAmount            | receiveAmount | fee
-            ${BigNumber(10157)}   | ${10000}      | ${10}
-            ${BigNumber(12473)}   | ${12313}      | ${13}
-            ${BigNumber(4299409)} | ${4294967}    | ${4295}
-            ${BigNumber(62531)}   | ${62321}      | ${63}
-            ${BigNumber(100)}     | ${-47}        | ${0}
+            sendAmount            | receiveAmount         | fee
+            ${BigNumber(10157)}   | ${BigNumber(10000)}   | ${BigNumber(10)}
+            ${BigNumber(12473)}   | ${BigNumber(12313)}   | ${BigNumber(13)}
+            ${BigNumber(4299409)} | ${BigNumber(4294967)} | ${BigNumber(4295)}
+            ${BigNumber(62531)}   | ${BigNumber(62321)}   | ${BigNumber(63)}
+            ${BigNumber(100)}     | ${BigNumber(-47)}     | ${BigNumber(0)}
         `(
             "should calculate fee for Swaps $sendAmount -> $fee",
             ({ sendAmount, receiveAmount, fee }) => {
-                setSwapFees();
-
-                expect(calculateBoltzFeeOnSend(sendAmount)).toEqual(fee);
+                expect(
+                    calculateBoltzFeeOnSend(
+                        sendAmount,
+                        swapFees.boltzFee,
+                        swapFees.minerFee,
+                        swapFees.reverse,
+                    ),
+                ).toEqual(fee);
                 expect(
                     sendAmount
-                        .minus(calculateBoltzFeeOnSend(sendAmount))
-                        .minus(minerFee())
-                        .toNumber(),
+                        .minus(
+                            calculateBoltzFeeOnSend(
+                                sendAmount,
+                                swapFees.boltzFee,
+                                swapFees.minerFee,
+                                swapFees.reverse,
+                            ),
+                        )
+                        .minus(swapFees.minerFee),
                 ).toEqual(receiveAmount);
             },
         );
 
         test.each`
-            sendAmount            | receiveAmount | fee
-            ${BigNumber(1000000)} | ${997072}     | ${2500}
-            ${BigNumber(10000)}   | ${9547}       | ${25}
-            ${BigNumber(122344)}  | ${121610}     | ${306}
-            ${BigNumber(4294967)} | ${4283801}    | ${10738}
+            sendAmount            | receiveAmount         | fee
+            ${BigNumber(1000000)} | ${BigNumber(997072)}  | ${BigNumber(2500)}
+            ${BigNumber(10000)}   | ${BigNumber(9547)}    | ${BigNumber(25)}
+            ${BigNumber(122344)}  | ${BigNumber(121610)}  | ${BigNumber(306)}
+            ${BigNumber(4294967)} | ${BigNumber(4283801)} | ${BigNumber(10738)}
         `(
             "should calculate fee for Reverse Swaps $sendAmount -> $fee",
             ({ sendAmount, receiveAmount, fee }) => {
-                setReverseSwapFees();
-
-                expect(calculateBoltzFeeOnSend(sendAmount)).toEqual(fee);
                 expect(
-                    BigNumber(sendAmount)
-                        .minus(calculateBoltzFeeOnSend(sendAmount))
-                        .minus(minerFee())
-                        .toNumber(),
+                    calculateBoltzFeeOnSend(
+                        sendAmount,
+                        reverseSwapFees.boltzFee,
+                        reverseSwapFees.minerFee,
+                        reverseSwapFees.reverse,
+                    ),
+                ).toEqual(fee);
+                expect(
+                    sendAmount
+                        .minus(
+                            calculateBoltzFeeOnSend(
+                                sendAmount,
+                                reverseSwapFees.boltzFee,
+                                reverseSwapFees.minerFee,
+                                reverseSwapFees.reverse,
+                            ),
+                        )
+                        .minus(reverseSwapFees.minerFee),
                 ).toEqual(receiveAmount);
             },
         );
 
         test("should calculate negative fees", () => {
-            setSwapFees();
-            setBoltzFee(-0.1);
-            expect(calculateBoltzFeeOnSend(BigNumber(1_000_000))).toEqual(
-                -1000,
-            );
-        });
-
-        test("should return correct types", () => {
-            setReverse(true);
-            expect(typeof calculateBoltzFeeOnSend(BigNumber(1000000))).toEqual(
-                "number",
-            );
-
-            setReverse(false);
-            expect(typeof calculateBoltzFeeOnSend(BigNumber(1000000))).toEqual(
-                "number",
-            );
+            expect(
+                calculateBoltzFeeOnSend(
+                    BigNumber(1_000_000),
+                    -0.1,
+                    swapFees.minerFee,
+                    swapFees.reverse,
+                ),
+            ).toEqual(BigNumber(-1000));
         });
     });
 });
