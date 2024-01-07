@@ -36,7 +36,7 @@ export const Hero = () => {
         window.open(ambossUrl, "_blank");
     };
 
-    fetcher("/nodestats", (data: any) => {
+    fetcher("/nodestats", "BTC", (data: any) => {
         log.debug("nodestats", data);
         setNodeStats(data.nodes.BTC);
     });

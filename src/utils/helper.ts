@@ -9,7 +9,6 @@ import log from "loglevel";
 import { pairs } from "../config";
 import { BTC, RBTC } from "../consts";
 import {
-    asset,
     ref,
     refundAddress,
     setConfig,
@@ -115,6 +114,7 @@ export const getApiUrl = (asset: string) => {
 
 export const fetcher = (
     url: string,
+    asset: string = BTC,
     cb: (value: any) => void,
     params: any | undefined = null,
     errorCb = errorHandler,
@@ -130,7 +130,7 @@ export const fetcher = (
             body: JSON.stringify(params),
         };
     }
-    const apiUrl = getApiUrl(asset()) + url;
+    const apiUrl = getApiUrl(asset) + url;
     fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
 };
 
@@ -143,6 +143,7 @@ export const checkForFailed = (swap: any, data: any) => {
 
         fetcher(
             "/getswaptransaction",
+            swap.asset,
             (data: any) => {
                 if (swap.asset !== RBTC && !data.transactionHex) {
                     log.error("no mempool tx found");
@@ -192,11 +193,11 @@ export async function refund(swap: any, t: any) {
     log.debug("starting to refund swap", swap);
     setRefundTx("");
 
-    const asset_name = swap.asset;
+    const assetName = swap.asset;
 
     let output: DecodedAddress;
     try {
-        output = decodeAddress(asset_name, refundAddress());
+        output = decodeAddress(assetName, refundAddress());
     } catch (e) {
         log.error(e);
         setNotificationType("error");
@@ -212,6 +213,7 @@ export async function refund(swap: any, t: any) {
         txToRefund = await new Promise((resolve, reject) => {
             fetcher(
                 "/getswaptransaction",
+                swap.asset,
                 (res: any) => {
                     log.debug(`got swap transaction for ${swap.id}`);
                     resolve(res);
@@ -227,11 +229,10 @@ export async function refund(swap: any, t: any) {
         });
     }
 
-    const Transaction = getTransaction(asset_name);
-    const constructRefundTransaction =
-        getConstructRefundTransaction(asset_name);
-    const net = getNetwork(asset_name);
-    const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
+    const Transaction = getTransaction(assetName);
+    const constructRefundTransaction = getConstructRefundTransaction(assetName);
+    const net = getNetwork(assetName);
+    const assetHash = assetName === "L-BTC" ? net.assetHash : undefined;
 
     let tx = Transaction.fromHex(txToRefund.transactionHex);
     let script = Buffer.from(swap.redeemScript, "hex");
@@ -263,6 +264,7 @@ export async function refund(swap: any, t: any) {
     log.debug("refund_tx", refundTransaction);
     fetcher(
         "/broadcasttransaction",
+        assetName,
         (data: any) => {
             log.debug("refund result:", data);
             if (data.transactionId) {
@@ -286,7 +288,7 @@ export async function refund(swap: any, t: any) {
             }
         },
         {
-            currency: asset_name,
+            currency: assetName,
             transactionHex: refundTransaction,
         },
         (error) => {
@@ -324,7 +326,7 @@ export async function refund(swap: any, t: any) {
 
 export async function getfeeestimation(swap: any): Promise<number> {
     return new Promise((resolve) => {
-        fetcher("/getfeeestimation", (data: any) => {
+        fetcher("/getfeeestimation", swap.asset, (data: any) => {
             log.debug("getfeeestimation: ", data);
             let asset = swap.asset;
             resolve(data[asset]);
@@ -366,7 +368,7 @@ export const claim = async (swap: any) => {
     }
 
     await setup();
-    const asset_name = swap.asset;
+    const assetName = swap.asset;
 
     log.info("claiming swap: ", swap.id);
     let mempool_tx = swapStatusTransaction();
@@ -378,9 +380,9 @@ export const claim = async (swap: any) => {
     }
     log.debug("mempool_tx", mempool_tx.hex);
 
-    const Transaction = getTransaction(asset_name);
-    const net = getNetwork(asset_name);
-    const assetHash = asset_name === "L-BTC" ? net.assetHash : undefined;
+    const Transaction = getTransaction(assetName);
+    const net = getNetwork(assetName);
+    const assetHash = assetName === "L-BTC" ? net.assetHash : undefined;
 
     let tx = Transaction.fromHex(mempool_tx.hex);
     let redeemScript = Buffer.from(swap.redeemScript, "hex");
@@ -393,7 +395,7 @@ export const claim = async (swap: any) => {
     let preimage = Buffer.from(swap.preimage, "hex");
     log.debug("preimage: ", preimage);
     const { script, blindingKey } = decodeAddress(
-        asset_name,
+        assetName,
         swap.onchainAddress,
     );
     const claimTransaction = createAdjustedClaim(
@@ -415,6 +417,7 @@ export const claim = async (swap: any) => {
     log.debug("claim_tx", claimTransaction);
     fetcher(
         "/broadcasttransaction",
+        assetName,
         (data: any) => {
             log.debug("claim result:", data);
             if (data.transactionId) {
@@ -425,7 +428,7 @@ export const claim = async (swap: any) => {
             }
         },
         {
-            currency: asset_name,
+            currency: assetName,
             transactionHex: claimTransaction,
         },
     );
@@ -434,6 +437,7 @@ export const claim = async (swap: any) => {
 export const fetchPairs = () => {
     fetcher(
         "/getpairs",
+        BTC,
         (data: any) => {
             log.debug("getpairs", data);
             setOnline(true);
@@ -452,6 +456,7 @@ export const feeCheck = async (notification: any) => {
     return new Promise((resolve) => {
         fetcher(
             "/getpairs",
+            BTC,
             (data: any) => {
                 log.debug("getpairs", data);
                 if (feeChecker(data.pairs)) {

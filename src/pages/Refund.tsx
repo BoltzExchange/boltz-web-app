@@ -100,6 +100,7 @@ const Refund = () => {
         const refundInfo = refundJson();
         fetcher(
             "/getswaptransaction",
+            refundInfo.asset,
             async (data: any) => {
                 if (data.timeoutEta) {
                     setTimeoutEta(data.timeoutEta * 1000);
@@ -149,6 +150,7 @@ const Refund = () => {
             .map((swap) => {
                 fetcher(
                     "/swapstatus",
+                    swap.asset,
                     (status: any) => {
                         if (
                             !updateSwapStatus(swap.id, status.status) &&
@@ -166,6 +168,7 @@ const Refund = () => {
                             // Make sure coins were locked for the swap with status "swap.expired"
                             fetcher(
                                 "/getswaptransaction",
+                                swap.asset,
                                 () => {
                                     addToRefundableSwaps(swap);
                                 },

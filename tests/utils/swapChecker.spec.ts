@@ -23,7 +23,7 @@ vi.mock("../../src/utils/helper", async () => {
     return {
         isMobile: () => false,
         getApiUrl: () => apiUrl,
-        fetcher: (_path, cb, data) => {
+        fetcher: (_path, _asset, cb, data) => {
             fetcherCallData.push(data);
             cb();
         },
