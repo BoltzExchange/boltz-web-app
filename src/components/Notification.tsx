@@ -5,8 +5,8 @@ import {
     notificationType,
     setNotification,
     setNotificationType,
-} from "./signals";
-import "./style/notification.scss";
+} from "../signals";
+import "../style/notification.scss";
 
 const Notification = () => {
     createEffect(() => {

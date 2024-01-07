@@ -2,7 +2,7 @@ import { Router } from "@solidjs/router";
 import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, test } from "vitest";
 
-import Nav from "../src/Nav";
+import Nav from "../../src/components/Nav";
 
 describe("Nav", () => {
     test.each(["testnet", "regtest", "random"])(

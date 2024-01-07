@@ -31,8 +31,8 @@ import {
     confidential,
 } from "liquidjs-lib";
 
-import { network } from "./config";
-import { LBTC } from "./consts";
+import { network } from "../config";
+import { LBTC } from "../consts";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
     blindingPrivateKey?: Buffer;

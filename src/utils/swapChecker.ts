@@ -1,8 +1,8 @@
 import log from "loglevel";
 import { createEffect, createSignal } from "solid-js";
 
-import { fetcher, getApiUrl, setSwapStatusAndClaim } from "../helper";
 import { swap, swaps } from "../signals";
+import { fetcher, getApiUrl, setSwapStatusAndClaim } from "./helper";
 import { swapStatusFinal } from "./swapStatus";
 
 const swapCheckInterval = 3000;

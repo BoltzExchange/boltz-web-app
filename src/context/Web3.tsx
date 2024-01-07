@@ -11,7 +11,7 @@ import {
 
 import { pairs } from "../config";
 import { RBTC } from "../consts";
-import { getApiUrl } from "../helper";
+import { getApiUrl } from "../utils/helper";
 
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
