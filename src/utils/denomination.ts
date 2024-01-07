@@ -1,7 +1,5 @@
 import { BigNumber } from "bignumber.js";
 
-import { denomination, maximum } from "../signals";
-
 export const satFactor = 100_000_000;
 
 export const denominations = {
@@ -9,30 +7,34 @@ export const denominations = {
     btc: "btc",
 };
 
-export const getValidationRegex = (): RegExp => {
-    const digits = calculateDigits();
+export const getValidationRegex = (
+    maximum: number,
+    denomination: string,
+): RegExp => {
+    const digits = calculateDigits(maximum, denomination);
     const regex =
-        denomination() === denominations.sat
+        denomination === denominations.sat
             ? `^[0-9]{1,${digits}}$`
             : `^[0-9](.[0-9]{1,${digits}}){0,1}$`;
     return new RegExp(regex);
 };
 
 export const formatAmount = (
-    amount: number,
+    amount: BigNumber,
+    denomination: string,
     fixed: boolean = false,
 ): string => {
-    return formatAmountDenomination(denomination(), amount, fixed);
+    return formatAmountDenomination(amount, denomination, fixed);
 };
 
 export const formatAmountDenomination = (
-    denom: string,
-    amount: number,
+    amount: BigNumber,
+    denomination: string,
     fixed: boolean = false,
 ): string => {
-    switch (denom) {
+    switch (denomination) {
         case denominations.btc:
-            const amountBig = new BigNumber(amount).div(satFactor);
+            const amountBig = amount.div(satFactor);
             if (fixed) {
                 return amountBig.toFixed(8);
             }
@@ -53,20 +55,22 @@ export const formatAmountDenomination = (
     }
 };
 
-export const convertAmount = (amount: number, denom: string): number => {
+export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
     switch (denom) {
         case denominations.btc:
-            const amountBig = new BigNumber(amount).multipliedBy(satFactor);
-            return amountBig.toNumber();
-
+            const amountBig = amount.multipliedBy(satFactor);
+            return amountBig;
         default:
-            return Number(amount);
+            return amount;
     }
 };
 
-export const calculateDigits = () => {
-    let digits = maximum().toString().length;
-    if (denomination() === denominations.btc && digits < 10) {
+export const calculateDigits = (
+    maximum: number,
+    denomination: string,
+): number => {
+    let digits = maximum.toString().length;
+    if (denomination === denominations.btc && digits < 10) {
         digits = 10;
     } else {
         digits += 1;

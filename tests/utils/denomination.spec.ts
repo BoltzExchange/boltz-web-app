@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import { setDenomination, setMaximum } from "../../src/signals";
@@ -21,7 +22,9 @@ describe("denomination utils", () => {
         `(
             "convert $amount in $denomination",
             ({ denomination, amount, converted }) => {
-                expect(convertAmount(amount, denomination)).toEqual(converted);
+                expect(
+                    convertAmount(BigNumber(amount), denomination).toNumber(),
+                ).toEqual(converted);
             },
         );
     });
@@ -42,7 +45,9 @@ describe("denomination utils", () => {
             "format $amount in $denomination",
             ({ denomination, amount, formatted }) => {
                 setDenomination(denomination);
-                expect(formatAmount(amount)).toEqual(formatted);
+                expect(formatAmount(BigNumber(amount), denomination)).toEqual(
+                    formatted,
+                );
             },
         );
     });
@@ -67,7 +72,7 @@ describe("denomination utils", () => {
             ({ denomination, digits, amount }) => {
                 setMaximum(amount);
                 setDenomination(denomination);
-                expect(calculateDigits()).toEqual(digits);
+                expect(calculateDigits(amount, denomination)).toEqual(digits);
             },
         );
     });
@@ -98,7 +103,7 @@ describe("denomination utils", () => {
             "validating regex for $amount in $denomination",
             ({ denomination, amount, valid }) => {
                 setDenomination(denomination);
-                let regex = getValidationRegex();
+                let regex = getValidationRegex(max, denomination);
                 expect(regex.test(amount)).toEqual(valid);
             },
         );

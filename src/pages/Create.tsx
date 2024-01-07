@@ -64,8 +64,8 @@ const Create = () => {
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
-        const satAmount = convertAmount(Number(amount), denomination());
-        const sendAmount = calculateSendAmount(satAmount);
+        const satAmount = convertAmount(BigNumber(amount), denomination());
+        const sendAmount = calculateSendAmount(satAmount.toNumber());
         setAmountChanged(sideReceive);
         setReceiveAmount(BigNumber(satAmount));
         setSendAmount(BigNumber(sendAmount));
@@ -77,8 +77,8 @@ const Create = () => {
     const changeSendAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
-        const satAmount = convertAmount(Number(amount), denomination());
-        const receiveAmount = calculateReceiveAmount(satAmount);
+        const satAmount = convertAmount(BigNumber(amount), denomination());
+        const receiveAmount = calculateReceiveAmount(satAmount.toNumber());
         setAmountChanged(sideSend);
         setSendAmount(BigNumber(satAmount));
         setReceiveAmount(BigNumber(receiveAmount));
@@ -111,7 +111,7 @@ const Create = () => {
     const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
-        if (!getValidationRegex().test(pastedData)) {
+        if (!getValidationRegex(maximum(), denomination()).test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
         }
@@ -136,7 +136,10 @@ const Create = () => {
 
         if (lessThanMin || amount > maximum()) {
             const params = {
-                amount: formatAmount(lessThanMin ? minimum() : maximum()),
+                amount: formatAmount(
+                    BigNumber(lessThanMin ? minimum() : maximum()),
+                    denomination(),
+                ),
                 denomination: denomination(),
             };
             const label = lessThanMin ? "minimum_amount" : "maximum_amount";
@@ -188,11 +191,15 @@ const Create = () => {
     createMemo(() => {
         const rAmount = Number(receiveAmount());
         if (rAmount > 0) {
-            setReceiveAmountFormatted(formatAmount(rAmount).toString());
+            setReceiveAmountFormatted(
+                formatAmount(BigNumber(rAmount), denomination()).toString(),
+            );
         }
         const sAmount = Number(sendAmount());
         if (sAmount > 0) {
-            setSendAmountFormatted(formatAmount(sAmount).toString());
+            setSendAmountFormatted(
+                formatAmount(BigNumber(sAmount), denomination()).toString(),
+            );
         }
     });
 
@@ -234,13 +241,13 @@ const Create = () => {
                 <span
                     onClick={() => setAmount(minimum())}
                     class="btn-small btn-light">
-                    {formatAmount(minimum())}
+                    {formatAmount(BigNumber(minimum()), denomination())}
                 </span>{" "}
                 {t("max")}:{" "}
                 <span
                     onClick={() => setAmount(maximum())}
                     class="btn-small btn-light">
-                    {formatAmount(maximum())}
+                    {formatAmount(BigNumber(maximum()), denomination())}
                 </span>{" "}
             </p>
             <div class="icons">
@@ -251,8 +258,11 @@ const Create = () => {
                         autofocus
                         required
                         type="text"
-                        placeholder={formatAmount(minimum())}
-                        maxlength={calculateDigits()}
+                        placeholder={formatAmount(
+                            BigNumber(minimum()),
+                            denomination(),
+                        )}
+                        maxlength={calculateDigits(maximum(), denomination())}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
@@ -276,9 +286,10 @@ const Create = () => {
                         required
                         type="text"
                         placeholder={formatAmount(
-                            calculateReceiveAmount(minimum()),
+                            BigNumber(calculateReceiveAmount(minimum())),
+                            denomination(),
                         )}
-                        maxlength={calculateDigits()}
+                        maxlength={calculateDigits(maximum(), denomination())}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
