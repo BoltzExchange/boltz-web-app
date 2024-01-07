@@ -71,7 +71,7 @@ describe("feeChecker", () => {
 
     test("same config should be valid", () => {
         setAsset(BTC);
-        expect(feeChecker(cfg)).toEqual(true);
+        expect(feeChecker(cfg, BTC)).toEqual(true);
     });
 
     test.each`
@@ -82,7 +82,7 @@ describe("feeChecker", () => {
         const changedCfg = deepCopy(cfg);
         changedCfg["BTC/BTC"].fees[fee] = newValue;
 
-        expect(feeChecker(changedCfg)).toEqual(false);
+        expect(feeChecker(changedCfg, BTC)).toEqual(false);
     });
 
     test("should ignore irrelevant miner fee", () => {
@@ -90,7 +90,7 @@ describe("feeChecker", () => {
         const changedCfg = deepCopy(cfg);
         changedCfg["L-BTC/BTC"].fees.minerFees.quoteAsset.normal += 1;
 
-        expect(feeChecker(changedCfg)).toEqual(true);
+        expect(feeChecker(changedCfg, LBTC)).toEqual(true);
     });
 
     test("should handle relevant miner fee", () => {
@@ -98,6 +98,6 @@ describe("feeChecker", () => {
         const changedCfg = deepCopy(cfg);
         changedCfg["L-BTC/BTC"].fees.minerFees.baseAsset.normal += 1;
 
-        expect(feeChecker(changedCfg)).toEqual(false);
+        expect(feeChecker(changedCfg, LBTC)).toEqual(false);
     });
 });

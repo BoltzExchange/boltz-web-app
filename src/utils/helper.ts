@@ -452,14 +452,14 @@ export const fetchPairs = () => {
     return false;
 };
 
-export const feeCheck = async (notification: any) => {
+export const feeCheck = async (notification: any, asset: string) => {
     return new Promise((resolve) => {
         fetcher(
             "/getpairs",
             BTC,
             (data: any) => {
                 log.debug("getpairs", data);
-                if (feeChecker(data.pairs)) {
+                if (feeChecker(data.pairs, asset)) {
                     // amounts matches and fees are ok
                     resolve(true);
                 } else {
