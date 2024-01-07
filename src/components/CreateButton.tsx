@@ -144,6 +144,7 @@ export const CreateButton = () => {
         await new Promise((resolve) => {
             fetcher(
                 "/createswap",
+                assetName,
                 (data) => {
                     data.date = new Date().getTime();
                     data.reverse = reverse();

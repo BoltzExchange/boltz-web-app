@@ -78,6 +78,7 @@ const runSwapCheck = async () => {
         await new Promise<void>((resolve) => {
             fetcher(
                 "/swapstatus",
+                swap.asset,
                 (data) => {
                     setSwapStatusAndClaim(data, swap);
                     resolve();

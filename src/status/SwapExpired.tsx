@@ -20,6 +20,7 @@ const SwapExpired = () => {
         setTransactionToRefund(null);
         fetcher(
             "/getswaptransaction",
+            swap().asset,
             (res: any) => {
                 log.debug(`got swap transaction for ${swap().id}`);
                 setTransactionToRefund(res);

@@ -48,6 +48,7 @@ const Pay = () => {
                 setSwap(currentSwap);
                 fetcher(
                     "/swapstatus",
+                    currentSwap.asset,
                     (data: any) => {
                         setSwapStatus(data.status);
                         setSwapStatusTransaction(data.transaction);
