@@ -302,6 +302,9 @@ textarea.invalid {
 #sendAmount {
     font-size: 33px;
     text-align: right;
+    &::placeholder {
+        color: rgba(255, 255, 255, 0.1);
+    }
 }
 @media (max-width: 488px) {
     #receiveAmount,

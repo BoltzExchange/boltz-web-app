@@ -6,8 +6,6 @@ import { createEffect, createMemo, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
-import { ECPair } from "../ecpair/ecpair";
-import { feeCheck, fetcher } from "../helper";
 import t from "../i18n";
 import {
     asset,
@@ -32,6 +30,8 @@ import {
     valid,
     wasmSupported,
 } from "../signals";
+import { ECPair } from "../utils/ecpair";
+import { feeCheck, fetcher } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 

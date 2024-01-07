@@ -1,12 +1,12 @@
 import log from "loglevel";
 import QRCode from "qrcode/lib/server";
 
-import { isIos, isMobile } from "../helper";
 import t from "../i18n";
 import { swap } from "../signals";
 import { download, downloadJson } from "../utils/download";
+import { isIos, isMobile } from "../utils/helper";
 
-const createRefundData = (swap) => {
+const createRefundData = (swap: any) => {
     return {
         id: swap.id,
         asset: swap.asset,
@@ -17,16 +17,16 @@ const createRefundData = (swap) => {
     };
 };
 
-const getRefundFileName = (swap) => {
+const getRefundFileName = (swap: any): string => {
     return `boltz-refund-${swap.id}`;
 };
 
-const downloadRefundJson = (swap) => {
+const downloadRefundJson = (swap: any) => {
     downloadJson(getRefundFileName(swap), createRefundData(swap));
 };
 
 const DownloadRefund = () => {
-    const downloadRefundQr = (swap) => {
+    const downloadRefundQr = (swap: any) => {
         QRCode.toDataURL(JSON.stringify(createRefundData(swap)), { width: 400 })
             .then((url: string) => {
                 if (isIos) {

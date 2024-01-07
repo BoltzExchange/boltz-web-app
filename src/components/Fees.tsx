@@ -1,8 +1,8 @@
+import { BigNumber } from "bignumber.js";
 import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
-import { fetchPairs } from "../helper";
 import t from "../i18n";
 import {
     asset,
@@ -23,6 +23,7 @@ import {
     calculateSendAmount,
 } from "../utils/calculate";
 import { denominations, formatAmount } from "../utils/denomination";
+import { fetchPairs } from "../utils/helper";
 
 const Fees = () => {
     createEffect(() => {
@@ -40,8 +41,15 @@ const Fees = () => {
                 setMinerFee(fee);
             }
 
-            const calculateLimit = (limit: number) => {
-                return reverse() ? limit : calculateSendAmount(limit);
+            const calculateLimit = (limit: number): number => {
+                return reverse()
+                    ? limit
+                    : calculateSendAmount(
+                          BigNumber(limit),
+                          boltzFee(),
+                          minerFee(),
+                          reverse(),
+                      ).toNumber();
             };
 
             setMinimum(calculateLimit(cfg.limits.minimal));
@@ -76,7 +84,7 @@ const Fees = () => {
             <label>
                 {t("network_fee")}:{" "}
                 <span class="network-fee">
-                    {formatAmount(minerFee(), true)}
+                    {formatAmount(BigNumber(minerFee()), denomination(), true)}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>
@@ -84,7 +92,16 @@ const Fees = () => {
                 <br />
                 {t("fee")} ({boltzFee()}%):{" "}
                 <span class="boltz-fee">
-                    {formatAmount(calculateBoltzFeeOnSend(sendAmount()), true)}
+                    {formatAmount(
+                        calculateBoltzFeeOnSend(
+                            sendAmount(),
+                            boltzFee(),
+                            minerFee(),
+                            reverse(),
+                        ),
+                        denomination(),
+                        true,
+                    )}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>

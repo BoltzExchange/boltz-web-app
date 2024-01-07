@@ -5,8 +5,10 @@ import { RBTC } from "../consts";
 import t from "../i18n";
 import {
     asset,
+    boltzFee,
     denomination,
     invoice,
+    minerFee,
     receiveAmount,
     receiveAmountFormatted,
     reverse,
@@ -35,7 +37,14 @@ const InvoiceInput = () => {
             } else {
                 const sats = validateInvoice(inputValue);
                 setReceiveAmount(BigNumber(sats));
-                setSendAmount(BigNumber(calculateSendAmount(sats)));
+                setSendAmount(
+                    calculateSendAmount(
+                        BigNumber(sats),
+                        boltzFee(),
+                        minerFee(),
+                        reverse(),
+                    ),
+                );
                 setInvoice(inputValue);
                 setLnurl("");
                 setInvoiceValid(true);

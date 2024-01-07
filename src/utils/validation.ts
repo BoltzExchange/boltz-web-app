@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import { crypto, script } from "bitcoinjs-lib";
 import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
 import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
@@ -5,14 +6,11 @@ import { default as BufferBrowser } from "buffer";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
-
-
-import { decodeAddress } from "../compat";
 import { RBTC } from "../consts";
-import { ECPair, ecc } from "../ecpair/ecpair";
+import { decodeAddress } from "./compat";
 import { denominations, formatAmountDenomination } from "./denomination";
+import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
-
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -183,7 +181,7 @@ const validateSwap = async (
 
     return (
         new URLSearchParams(bip21Split[1]).get("amount") ===
-        formatAmountDenomination(denominations.btc, swap.sendAmount)
+        formatAmountDenomination(BigNumber(swap.sendAmount), denominations.btc)
     );
 };
 
