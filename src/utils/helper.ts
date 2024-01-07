@@ -1,9 +1,25 @@
+import {
+    ClaimDetails,
+    OutputType,
+    RefundDetails,
+    SwapTreeSerializer,
+    detectSwap,
+} from "boltz-core";
+import {
+    LiquidClaimDetails,
+    LiquidRefundDetails,
+} from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
+import { ECPairInterface } from "ecpair";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { pairs } from "../config";
-import { BTC, LBTC, RBTC } from "../consts";
+import { LBTC, RBTC } from "../consts";
+import {
+    TransactionInterface,
+    getPartialRefundSignature,
+    getPartialReverseClaimSignature,
+} from "./boltzClient";
 import {
     DecodedAddress,
     decodeAddress,
@@ -17,8 +33,10 @@ import {
 } from "./compat";
 import { ECPair } from "./ecpair";
 import { feeChecker } from "./feeChecker";
-import { checkResponse } from "./http";
 import { swapStatusPending, updateSwapStatus } from "./swapStatus";
+import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
+import { pairs } from "../config";
+
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
@@ -68,7 +86,6 @@ export const fetcher = async (
     const response = await fetch(apiUrl, opts);
     if (!response.ok) {
         return Promise.reject(response);
-    }
     return response.json();
 };
 
@@ -112,39 +129,53 @@ export async function refund(swap: any, t: any) {
     }
 
     const Transaction = getTransaction(asset_name);
-    const constructRefundTransaction =
-        getConstructRefundTransaction(asset_name);
 
-    let tx = Transaction.fromHex(txToRefund.transactionHex);
-    let script = Buffer.from(swap.redeemScript, "hex");
-    log.debug("script", script);
-    let swapOutput = detectSwap(script, tx);
-    log.debug("swapoutput", swapOutput);
-    let private_key = ECPair.fromPrivateKey(
+    const tx = Transaction.fromHex(txToRefund.transactionHex);
+    const privateKey = ECPair.fromPrivateKey(
         Buffer.from(swap.privateKey, "hex"),
     );
-    log.debug("privkey", private_key);
-    const refundTransaction = constructRefundTransaction(
-        [
-            {
-                ...swapOutput,
-                txHash: tx.getHash(),
-                redeemScript: script,
-                keys: private_key,
-                blindingPrivateKey: parseBlindingKey(swap),
-            } as RefundDetails & LiquidRefundDetails,
-        ],
-        output.script,
-        txToRefund.timeoutBlockHeight,
-        fees,
-        true, // rbf
-        asset_name === LBTC
-            ? (getNetwork(asset_name) as LiquidNetwork)
-            : undefined,
-        output.blindingKey,
-    ).toHex();
+    log.debug("privateKey", privateKey);
 
-    log.debug("refund_tx", refundTransaction);
+    let refundTransaction: TransactionInterface;
+
+    if (swap.version === OutputType.Taproot) {
+        refundTransaction = await refundTaproot(
+            swap,
+            tx,
+            privateKey,
+            output,
+            fees,
+        );
+    } else {
+        const redeemScript = Buffer.from(swap.redeemScript, "hex");
+        log.debug("redeemScript", redeemScript);
+        const swapOutput = detectSwap(redeemScript, tx);
+        log.debug("swapOutput", swapOutput);
+
+        const constructRefundTransaction =
+            getConstructRefundTransaction(asset_name);
+        refundTransaction = constructRefundTransaction(
+            [
+                {
+                    ...swapOutput,
+                    txHash: tx.getHash(),
+                    redeemScript: redeemScript,
+                    keys: privateKey,
+                    blindingPrivateKey: parseBlindingKey(swap),
+                } as RefundDetails & LiquidRefundDetails,
+            ],
+            output.script,
+            txToRefund.timeoutBlockHeight,
+            fees,
+            true, // rbf
+            asset_name === LBTC
+                ? (getNetwork(asset_name) as LiquidNetwork)
+                : undefined,
+            output.blindingKey,
+        );
+    }
+
+    log.debug("refundTransaction", refundTransaction.toHex());
     fetcher(
         "/broadcasttransaction",
         (data: any) => {
@@ -171,7 +202,7 @@ export async function refund(swap: any, t: any) {
         },
         {
             currency: asset_name,
-            transactionHex: refundTransaction,
+            transactionHex: refundTransaction.toHex(),
         },
         (error) => {
             console.log(error);
@@ -243,50 +274,62 @@ export const claim = async (swap: any) => {
     const asset_name = swap.asset;
 
     log.info("claiming swap: ", swap.id);
-    let mempool_tx = swapStatusTransaction();
-    if (!mempool_tx) {
+    let rawTx = swapStatusTransaction();
+    if (!rawTx) {
         return log.debug("no mempool tx found");
     }
-    if (!mempool_tx.hex) {
+    if (!rawTx.hex) {
         return log.debug("mempool tx hex not found");
     }
-    log.debug("mempool_tx", mempool_tx.hex);
+    log.debug("rawTx", rawTx.hex);
 
     const Transaction = getTransaction(asset_name);
 
-    let tx = Transaction.fromHex(mempool_tx.hex);
-    let redeemScript = Buffer.from(swap.redeemScript, "hex");
+    const tx = Transaction.fromHex(rawTx.hex);
 
-    let swapOutput = detectSwap(redeemScript, tx);
-    let private_key = ECPair.fromPrivateKey(
+    const privateKey = ECPair.fromPrivateKey(
         Buffer.from(swap.privateKey, "hex"),
     );
-    log.debug("private_key: ", private_key);
-    let preimage = Buffer.from(swap.preimage, "hex");
+    log.debug("privateKey: ", privateKey);
+    const preimage = Buffer.from(swap.preimage, "hex");
     log.debug("preimage: ", preimage);
-    const { script, blindingKey } = decodeAddress(
-        asset_name,
-        swap.onchainAddress,
-    );
-    const claimTransaction = createAdjustedClaim(
-        swap,
-        [
-            {
-                ...swapOutput,
-                redeemScript,
-                txHash: tx.getHash(),
-                preimage: preimage,
-                keys: private_key,
-                blindingPrivateKey: parseBlindingKey(swap),
-            },
-        ],
-        script,
-        asset_name === LBTC
-            ? (getNetwork(asset_name) as LiquidNetwork)
-            : undefined,
-        blindingKey,
-    ).toHex();
-    log.debug("claim_tx", claimTransaction);
+    const decodedAddress = decodeAddress(asset_name, swap.onchainAddress);
+
+    let claimTransaction: TransactionInterface;
+
+    if (swap.version === OutputType.Taproot) {
+        claimTransaction = await claimTaproot(
+            swap,
+            tx,
+            privateKey,
+            preimage,
+            decodedAddress,
+        );
+    } else {
+        const redeemScript = Buffer.from(swap.redeemScript, "hex");
+        const swapOutput = detectSwap(redeemScript, tx);
+
+        claimTransaction = createAdjustedClaim(
+            swap,
+            [
+                {
+                    ...swapOutput,
+                    redeemScript,
+                    txHash: tx.getHash(),
+                    preimage: preimage,
+                    keys: privateKey,
+                    blindingPrivateKey: parseBlindingKey(swap),
+                },
+            ],
+            decodedAddress.script,
+            asset_name === LBTC
+                ? (getNetwork(asset_name) as LiquidNetwork)
+                : undefined,
+            decodedAddress.blindingKey,
+        );
+    }
+
+    log.debug("claim_tx", claimTransaction.toHex());
     fetcher(
         "/broadcasttransaction",
         (data: any) => {
@@ -300,7 +343,129 @@ export const claim = async (swap: any) => {
         },
         {
             currency: asset_name,
-            transactionHex: claimTransaction,
+            transactionHex: claimTransaction.toHex(),
         },
     );
+};
+
+const claimTaproot = async (
+    swap: any,
+    lockupTx: TransactionInterface,
+    privateKey: ECPairInterface,
+    preimage: Buffer,
+    decodedAddress: DecodedAddress,
+) => {
+    const boltzPublicKey = Buffer.from(swap.refundPublicKey, "hex");
+    const musig = createMusig(privateKey, boltzPublicKey);
+    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
+    const tweakedKey = tweakMusig(swap.asset, musig, tree.tree);
+
+    const swapOutput = detectSwap(tweakedKey, lockupTx);
+
+    const details = [
+        {
+            ...swapOutput,
+            keys: privateKey,
+            cooperative: true,
+            preimage: preimage,
+            type: OutputType.Taproot,
+            txHash: lockupTx.getHash(),
+            blindingPrivateKey: parseBlindingKey(swap),
+        },
+    ] as (ClaimDetails & { blindingPrivateKey: Buffer })[];
+    const claimTx = createAdjustedClaim(
+        swap,
+        details,
+        decodedAddress.script,
+        swap.asset === LBTC
+            ? (getNetwork(swap.asset) as LiquidNetwork)
+            : undefined,
+        decodedAddress.blindingKey,
+    );
+
+    const boltzSig = await getPartialReverseClaimSignature(
+        swap.id,
+        preimage,
+        Buffer.from(musig.getPublicNonce()),
+        claimTx,
+        0,
+    );
+    musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
+    musig.initializeSession(
+        hashForWitnessV1(
+            swap.asset,
+            getNetwork(swap.asset),
+            details,
+            claimTx,
+            0,
+        ),
+    );
+    musig.signPartial();
+    musig.addPartial(boltzPublicKey, boltzSig.signature);
+
+    claimTx.ins[0].witness = [musig.aggregatePartials()];
+
+    return claimTx;
+};
+
+const refundTaproot = async (
+    swap: any,
+    lockupTx: TransactionInterface,
+    privateKey: ECPairInterface,
+    decodedAddress: DecodedAddress,
+    fees: number,
+) => {
+    const boltzPublicKey = Buffer.from(swap.claimPublicKey, "hex");
+    const musig = createMusig(privateKey, boltzPublicKey);
+    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
+    const tweakedKey = tweakMusig(swap.asset, musig, tree.tree);
+
+    const swapOutput = detectSwap(tweakedKey, lockupTx);
+
+    const details = [
+        {
+            ...swapOutput,
+            keys: privateKey,
+            cooperative: true,
+            type: OutputType.Taproot,
+            txHash: lockupTx.getHash(),
+            blindingPrivateKey: parseBlindingKey(swap),
+        } as RefundDetails & LiquidRefundDetails,
+    ];
+
+    const constructRefundTransaction = getConstructRefundTransaction(
+        swap.asset,
+    );
+    const claimTx = constructRefundTransaction(
+        details,
+        decodedAddress.script,
+        0,
+        fees,
+        true,
+        getNetwork(swap.asset) as LiquidNetwork,
+        decodedAddress.blindingKey,
+    );
+
+    const boltzSig = await getPartialRefundSignature(
+        swap.id,
+        Buffer.from(musig.getPublicNonce()),
+        claimTx,
+        0,
+    );
+    musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
+    musig.initializeSession(
+        hashForWitnessV1(
+            swap.asset,
+            getNetwork(swap.asset),
+            details,
+            claimTx,
+            0,
+        ),
+    );
+    musig.signPartial();
+    musig.addPartial(boltzPublicKey, boltzSig.signature);
+
+    claimTx.ins[0].witness = [musig.aggregatePartials()];
+
+    return claimTx;
 };

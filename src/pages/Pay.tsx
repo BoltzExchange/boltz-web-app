@@ -18,7 +18,7 @@ import TransactionClaimed from "../status/TransactionClaimed";
 import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
-import { fetcher } from "../utils/helper";
+import { fetcher } from "../utils/apiClient";
 import { swapStatusFailed } from "../utils/swapStatus";
 
 const Pay = () => {

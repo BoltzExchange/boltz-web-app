@@ -1,16 +1,24 @@
 import { BigNumber } from "bignumber.js";
-import { crypto, script } from "bitcoinjs-lib";
-import { Scripts, reverseSwapScript, swapScript } from "boltz-core";
+import { crypto } from "bitcoinjs-lib";
+import {
+    Scripts,
+    SwapTreeSerializer,
+    Types,
+    reverseSwapTree,
+    swapTree,
+} from "boltz-core";
 import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { Buffer, Buffer as BufferBrowser } from "buffer";
+import { ECPairInterface } from "ecpair";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
 import { RBTC } from "../consts";
-import { decodeAddress } from "./compat";
+import { decodeAddress, setup } from "./compat";
 import { denominations, formatAmountDenomination } from "./denomination";
 import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { createMusig, tweakMusig } from "./taproot/musig";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
@@ -32,8 +40,11 @@ type SwapResponse = {
     address?: string;
     preimage?: string;
     privateKey?: string;
-    redeemScript?: string;
+    swapTree?: string;
     lockupAddress?: string;
+
+    claimPublicKey?: string;
+    refundPublicKey?: string;
 };
 
 type SwapResponseLiquid = SwapResponse & {
@@ -41,6 +52,19 @@ type SwapResponseLiquid = SwapResponse & {
 };
 
 type ContractGetter = () => Promise<BaseContract>;
+
+const compareTrees = (
+    tree: Types.SwapTree,
+    compare: Types.SwapTree,
+): boolean => {
+    const compareLeaf = (leaf: Types.Tapleaf, compareLeaf: Types.Tapleaf) =>
+        leaf.version === compareLeaf.version &&
+        leaf.output.equals(compareLeaf.output);
+
+    return (tree.tree as Types.Tapleaf[]).every((leaf, i) =>
+        compareLeaf(leaf, compare.tree[i] as Types.Tapleaf),
+    );
+};
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
     const code = await (await getEtherSwap()).getDeployedCode();
@@ -55,21 +79,26 @@ const validateContract = async (getEtherSwap: ContractGetter) => {
     return true;
 };
 
-const getScriptHashFunction = (isNativeSegwit: boolean) =>
-    isNativeSegwit ? Scripts.p2wshOutput : Scripts.p2shP2wshOutput;
-
-const validateAddress = (
+const validateAddress = async (
     swap: SwapResponse,
-    isNativeSegwit: boolean,
+    tree: Types.SwapTree,
+    ourKeys: ECPairInterface,
+    theirPublicKey: Buffer,
     address: string,
     buffer: BufferConstructor,
 ) => {
-    const compareScript = getScriptHashFunction(isNativeSegwit)(
-        buffer.from(swap.redeemScript, "hex"),
+    await setup();
+    const tweakedKey = tweakMusig(
+        swap.asset,
+        createMusig(ourKeys, theirPublicKey),
+        tree.tree,
     );
+
+    const compareScript = Scripts.p2trOutput(tweakedKey);
     const decodedAddress = decodeAddress(swap.asset, address);
 
     if (!decodedAddress.script.equals(compareScript)) {
+        log.warn("address validation: invalid script");
         return false;
     }
 
@@ -83,7 +112,7 @@ const validateAddress = (
         );
 
         if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
-            log.warn("swap address validation: invalid Liquid blinding key");
+            log.warn("address validation: invalid Liquid blinding key");
             return false;
         }
     }
@@ -118,21 +147,33 @@ const validateReverseSwap = async (
         return await validateContract(getEtherSwap);
     }
 
-    // Redeem script
-    const redeemScript = buffer.from(swap.redeemScript, "hex");
-    const compareRedeemScript = reverseSwapScript(
+    // SwapTree
+    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
+
+    const ourKeys = ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex"));
+    const theirPublicKey = buffer.from(swap.refundPublicKey, "hex");
+
+    const compareTree = reverseSwapTree(
+        swap.asset === "L-BTC",
         preimageHash,
-        ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
-        script.decompile(redeemScript)[13] as Buffer,
+        ourKeys.publicKey,
+        theirPublicKey,
         swap.timeoutBlockHeight,
     );
 
-    if (!redeemScript.equals(compareRedeemScript)) {
-        log.warn("reverse swap validation: redeem script");
+    if (!compareTrees(tree, compareTree)) {
+        log.warn("reverse swap validation: swap tree mismatch");
         return false;
     }
 
-    return validateAddress(swap, true, swap.lockupAddress, buffer);
+    return validateAddress(
+        swap,
+        tree,
+        ourKeys,
+        theirPublicKey,
+        swap.lockupAddress,
+        buffer,
+    );
 };
 
 const validateSwap = async (
@@ -149,27 +190,37 @@ const validateSwap = async (
         return await validateContract(getEtherSwap);
     }
 
-    // Redeem script
+    // Swap tree
     const invoiceData = decodeInvoice(swap.invoice);
 
-    const redeemScript = buffer.from(swap.redeemScript, "hex");
-    const compareRedeemScript = swapScript(
+    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
+
+    const ourKeys = ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex"));
+    const theirPublicKey = buffer.from(swap.claimPublicKey, "hex");
+
+    const compareTree = swapTree(
+        swap.asset === "L-BTC",
         buffer.from(invoiceData.preimageHash, "hex"),
-        script.decompile(redeemScript)[4] as Buffer,
-        ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex")).publicKey,
+        theirPublicKey,
+        ourKeys.publicKey,
         swap.timeoutBlockHeight,
     );
 
-    if (!redeemScript.equals(compareRedeemScript)) {
+    if (!compareTrees(tree, compareTree)) {
         return false;
     }
 
     // Address
-    const addressComparisons = [true, false].map((isNativeSegwit) =>
-        validateAddress(swap, isNativeSegwit, swap.address, buffer),
-    );
-    if (addressComparisons.every((val) => !val)) {
-        log.warn("swap address validation: address script mismatch");
+    if (
+        !(await validateAddress(
+            swap,
+            tree,
+            ourKeys,
+            theirPublicKey,
+            swap.address,
+            buffer,
+        ))
+    ) {
         return false;
     }
 

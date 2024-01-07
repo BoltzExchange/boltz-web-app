@@ -1,5 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import { crypto } from "bitcoinjs-lib";
+import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 import log from "loglevel";
 import { createEffect, createMemo, createSignal } from "solid-js";
@@ -127,7 +128,7 @@ export const CreateButton = () => {
         const keyPair = !isRsk ? ECPair.makeRandom() : null;
 
         let params = null;
-        let preimage = null;
+        let preimage: Buffer | null = null;
 
         if (reverse()) {
             preimage = randomBytes(32);
@@ -168,7 +169,10 @@ export const CreateButton = () => {
 
         // create swap
         try {
-            const data = await fetcher("/createswap", assetName, params);
+            const endpoint = isRsk
+                ? "/createswap"
+                : `/v2/swap/${reverse() ? "reverse" : "submarine"}`;
+            const data = await fetcher(endpoint, assetName, params);
             data.date = new Date().getTime();
             data.reverse = reverse();
             data.asset = asset();
