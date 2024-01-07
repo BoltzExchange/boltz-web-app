@@ -4,13 +4,15 @@ import { Show } from "solid-js";
 
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts";
+import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import { denomination, swap, webln } from "../signals";
+import { denomination, webln } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
 import { clipboard, cropString } from "../utils/helper";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
+    const { swap } = usePayContext();
     const payWeblnInvoice = async (pr: string) => {
         enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);

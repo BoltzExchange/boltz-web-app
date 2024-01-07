@@ -2,15 +2,8 @@ import log from "loglevel";
 import { createEffect, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
-import {
-    setFailureReason,
-    setSwapStatus,
-    setSwapStatusTransaction,
-    setTimeoutBlockheight,
-    setTimeoutEta,
-    swap,
-    swaps,
-} from "../signals";
+import { usePayContext } from "../context/Pay";
+import { setTimeoutBlockheight, setTimeoutEta, swaps } from "../signals";
 import { claim, fetcher, getApiUrl } from "../utils/helper";
 import {
     swapStatusFinal,
@@ -24,6 +17,9 @@ export const [checkInterval, setCheckInterval] = createSignal<
 
 export const SwapChecker = () => {
     const swapCheckInterval = 3000;
+
+    const { swap, setSwapStatus, setSwapStatusTransaction, setFailureReason } =
+        usePayContext();
 
     let activeStreamId = undefined;
     let activeSwapStream = undefined;
@@ -79,7 +75,7 @@ export const SwapChecker = () => {
             (data.status === swapStatusPending.TransactionConfirmed ||
                 data.status === swapStatusPending.TransactionMempool)
         ) {
-            claim(currentSwap);
+            claim(currentSwap, data.transaction);
         }
         checkForFailed(currentSwap, data);
         if (data.failureReason) setFailureReason(data.failureReason);

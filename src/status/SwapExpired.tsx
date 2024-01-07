@@ -2,17 +2,14 @@ import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createEffect, createSignal } from "solid-js";
 
+import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import {
-    failureReason,
-    setTransactionToRefund,
-    swap,
-    transactionToRefund,
-} from "../signals";
+import { setTransactionToRefund, transactionToRefund } from "../signals";
 import fetcher, { refund, refundAddressChange } from "../utils/helper";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
+    const { failureReason, swap } = usePayContext();
 
     const [valid, setValid] = createSignal(false);
 

@@ -18,10 +18,7 @@ import {
     setRef,
     setRefundAddress,
     setRefundTx,
-    setSwap,
     setSwaps,
-    swap,
-    swapStatusTransaction,
     swaps,
     transactionToRefund,
 } from "../signals";
@@ -214,9 +211,6 @@ export async function refund(swap: any, t: any) {
                     const currentSwap = tmpSwaps.find((s) => s.id === swap.id);
                     currentSwap.refundTx = data.transactionId;
                     setSwaps(tmpSwaps);
-                    setSwap(currentSwap);
-                    log.debug("current_swap", currentSwap);
-                    log.debug("swaps", tmpSwaps);
                 } else {
                     setRefundTx(data.transactionId);
                 }
@@ -300,7 +294,7 @@ const createAdjustedClaim = <
     );
 };
 
-export const claim = async (swap: any) => {
+export const claim = async (swap: any, swapStatusTransaction: any) => {
     if (swap.asset === RBTC) {
         return;
     }
@@ -309,20 +303,19 @@ export const claim = async (swap: any) => {
     const assetName = swap.asset;
 
     log.info("claiming swap: ", swap.id);
-    let mempool_tx = swapStatusTransaction();
-    if (!mempool_tx) {
+    if (!swapStatusTransaction) {
         return log.debug("no mempool tx found");
     }
-    if (!mempool_tx.hex) {
+    if (!swapStatusTransaction.hex) {
         return log.debug("mempool tx hex not found");
     }
-    log.debug("mempool_tx", mempool_tx.hex);
+    log.debug("swapStatusTransaction", swapStatusTransaction.hex);
 
     const Transaction = getTransaction(assetName);
     const net = getNetwork(assetName);
     const assetHash = assetName === "L-BTC" ? net.assetHash : undefined;
 
-    let tx = Transaction.fromHex(mempool_tx.hex);
+    let tx = Transaction.fromHex(swapStatusTransaction.hex);
     let redeemScript = Buffer.from(swap.redeemScript, "hex");
 
     let swapOutput = detectSwap(redeemScript, tx);
@@ -404,13 +397,6 @@ export const refundAddressChange = (evt: InputEvent, asset: string) => {
     }
 
     return false;
-};
-
-export const updateSwaps = (cb: any) => {
-    const swapsTmp = swaps();
-    const currentSwap = swapsTmp.find((s) => swap().id === s.id);
-    cb(currentSwap);
-    setSwaps(swapsTmp);
 };
 
 export default fetcher;
