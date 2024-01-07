@@ -70,6 +70,14 @@ vi.mock("../../src/utils/claim", async (importOriginal) => {
     };
 });
 
+vi.mock("../../src/utils/apiClient", () => ({
+    getApiUrl: () => apiUrl,
+    fetcher: (_path: string, cb: () => void, data: any) => {
+        fetcherCallData.push(data);
+        cb();
+    },
+}));
+
 class Server {
     public connectCount = 0;
     public connections = {};

@@ -190,7 +190,7 @@ const validateSwap = async (
         return await validateContract(getEtherSwap);
     }
 
-    // Swap tree
+    // SwapTree
     const invoiceData = decodeInvoice(swap.invoice);
 
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
