@@ -3,14 +3,6 @@ import log from "loglevel";
 
 import { pairs } from "../config";
 import { BTC } from "../consts";
-import {
-    ref,
-    setConfig,
-    setNotification,
-    setNotificationType,
-    setOnline,
-    setRef,
-} from "../signals";
 import { checkResponse } from "../utils/http";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
@@ -28,44 +20,27 @@ export const cropString = (str: string) => {
     return str.substring(0, 19) + "..." + str.substring(str.length - 19);
 };
 
-export const checkReferralId = () => {
-    const refParam = new URLSearchParams(window.location.search).get("ref");
-    if (refParam && refParam !== "") {
-        setRef(refParam);
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname,
-        );
-    }
-};
-
 export const startInterval = (cb: () => any, interval: number) => {
     cb();
     return setInterval(cb, interval);
 };
 
-export const clipboard = (text: string, message: string) => {
+export const clipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    setNotificationType("success");
-    setNotification(message);
 };
 
 export const errorHandler = (error: any) => {
-    log.error(error);
-    setNotificationType("error");
     if (typeof error.json === "function") {
         error
             .json()
             .then((jsonError: any) => {
-                setNotification(jsonError.error);
+                log.error(jsonError);
             })
             .catch((genericError: any) => {
                 log.error(genericError);
-                setNotification(error.statusText);
             });
     } else {
-        setNotification(error.message);
+        log.error(error.message);
     }
 };
 
@@ -88,7 +63,8 @@ export const fetcher = (
 ) => {
     let opts = {};
     if (params) {
-        params.referralId = ref();
+        // TODO: add referralId
+        // params.referralId = ref();
         opts = {
             method: "POST",
             headers: {
@@ -117,13 +93,14 @@ export const fetchPairs = () => {
         BTC,
         (data: any) => {
             log.debug("getpairs", data);
-            setOnline(true);
-            setConfig(data.pairs);
+            // setOnline(true);
+            // setConfig(data.pairs);
         },
         null,
         (error) => {
             log.debug(error);
-            setOnline(false);
+            // TODO
+            // setOnline(false);
         },
     );
     return false;

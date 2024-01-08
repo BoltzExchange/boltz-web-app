@@ -2,16 +2,9 @@ import log from "loglevel";
 import { Accessor, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
-import { setSwaps, swaps } from "../signals";
-import {
-    refundAddress,
-    setNotification,
-    setNotificationType,
-    setRefundAddress,
-    setRefundTx,
-} from "../signals";
 import { getAddress, getNetwork } from "../utils/compat";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
@@ -19,6 +12,15 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
 
 const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
+    const {
+        setNotificationType,
+        setNotification,
+        swaps,
+        setSwaps,
+        setRefundAddress,
+        refundAddress,
+        setRefundTx,
+    } = useGlobalContext();
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 

@@ -7,12 +7,11 @@ import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import { ambossUrl } from "../config";
 import { BTC } from "../consts";
+import { useGlobalContext } from "../context/Global";
 import t from "../i18n";
 import Create from "../pages/Create";
 import "../style/hero.scss";
 import { fetcher } from "../utils/helper";
-
-export const [hideHero, setHideHero] = createSignal(false);
 
 export const Hero = () => {
     const navigate = useNavigate();
@@ -21,6 +20,8 @@ export const Hero = () => {
     const [numPeers, setNumPeers] = createSignal("0");
     const [capacity, setCapacity] = createSignal("0");
     const [oldestChannel, setOldestChannel] = createSignal("0");
+
+    const { hideHero, setHideHero } = useGlobalContext();
 
     createMemo(() => {
         const stats = nodeStats();

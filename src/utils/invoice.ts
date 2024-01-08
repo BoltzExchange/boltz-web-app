@@ -99,15 +99,9 @@ export const fetchLnurl = (
                         log.debug("fetched invoice", data);
                         resolve(data.pr);
                     })
-                    .catch((e) => {
-                        errorHandler(e);
-                        reject(e);
-                    });
+                    .catch(reject);
             })
-            .catch((e) => {
-                errorHandler(e);
-                reject(e);
-            });
+            .catch(reject);
     });
 };
 

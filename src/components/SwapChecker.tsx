@@ -2,20 +2,11 @@ import log from "loglevel";
 import { createEffect, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import {
-    setSwaps,
-    setTimeoutBlockheight,
-    setTimeoutEta,
-    swaps,
-} from "../signals";
 import { claim } from "../utils/claim";
 import { fetcher, getApiUrl } from "../utils/helper";
-import {
-    swapStatusFinal,
-    swapStatusPending,
-    updateSwapStatus,
-} from "../utils/swapStatus";
+import { swapStatusFinal, swapStatusPending } from "../utils/swapStatus";
 
 export const [checkInterval, setCheckInterval] = createSignal<
     NodeJS.Timer | undefined
@@ -24,8 +15,15 @@ export const [checkInterval, setCheckInterval] = createSignal<
 export const SwapChecker = () => {
     const swapCheckInterval = 3000;
 
-    const { swap, setSwapStatus, setSwapStatusTransaction, setFailureReason } =
-        usePayContext();
+    const {
+        swap,
+        setSwapStatus,
+        setSwapStatusTransaction,
+        setFailureReason,
+        setTimeoutEta,
+        setTimeoutBlockheight,
+    } = usePayContext();
+    const { updateSwapStatus, swaps, setSwaps } = useGlobalContext();
 
     let activeStreamId = undefined;
     let activeSwapStream = undefined;

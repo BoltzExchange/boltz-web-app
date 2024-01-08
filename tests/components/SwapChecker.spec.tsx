@@ -5,8 +5,8 @@ import { AddressInfo } from "net";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { SwapChecker, checkInterval } from "../../src/components/SwapChecker";
+import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import { PayProvider, usePayContext } from "../../src/context/Pay";
-import { setSwaps } from "../../src/signals";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -113,8 +113,10 @@ describe("swapChecker", () => {
     const server = new Server();
 
     let signals: any;
+    let globalSignals: any;
     const TestComponent = () => {
         signals = usePayContext();
+        globalSignals = useGlobalContext();
         return "";
     };
 
@@ -132,12 +134,14 @@ describe("swapChecker", () => {
     });
 
     test("should poll status of pending swaps", async () => {
-        setSwaps(swaps);
+        globalSignals.setSwaps(swaps);
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
         await wait(100);
 
@@ -153,12 +157,14 @@ describe("swapChecker", () => {
     });
 
     test("should connect and handle SSE for active swap", async () => {
-        setSwaps(swaps);
+        globalSignals.setSwaps(swaps);
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
         signals.setSwap(swaps[0]);
         await wait();
@@ -175,10 +181,12 @@ describe("swapChecker", () => {
 
     test("should close SSE when active swap changes", async () => {
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
         signals.setSwap(swaps[0]);
         await wait();
@@ -194,10 +202,12 @@ describe("swapChecker", () => {
 
     test("should not reconnect SSE when change swap has same id", async () => {
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
         signals.setSwap(swaps[0]);
         await wait();

@@ -1,9 +1,10 @@
 import { Show } from "solid-js";
 
+import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import { timeoutBlockHeight, timeoutEta } from "../signals";
 
 const RefundEta = () => {
+    const { timeoutEta, timeoutBlockHeight } = usePayContext();
     return (
         <Show when={timeoutEta()}>
             <div>

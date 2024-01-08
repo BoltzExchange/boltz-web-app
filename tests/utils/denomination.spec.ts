@@ -1,7 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { describe, expect, test } from "vitest";
 
-import { setDenomination } from "../../src/signals";
 import {
     calculateDigits,
     convertAmount,
@@ -44,7 +43,6 @@ describe("denomination utils", () => {
         `(
             "format $amount in $denomination",
             ({ denomination, amount, formatted }) => {
-                setDenomination(denomination);
                 expect(formatAmount(BigNumber(amount), denomination)).toEqual(
                     formatted,
                 );
@@ -70,7 +68,6 @@ describe("denomination utils", () => {
         `(
             "calculate digits for $amount in $denomination",
             ({ denomination, digits, amount }) => {
-                setDenomination(denomination);
                 expect(calculateDigits(amount, denomination)).toEqual(digits);
             },
         );
@@ -97,7 +94,6 @@ describe("denomination utils", () => {
         `(
             "validating regex for $amount in $denomination",
             ({ denomination, amount, valid }) => {
-                setDenomination(denomination);
                 let regex = getValidationRegex(max, denomination);
                 expect(regex.test(amount)).toEqual(valid);
             },

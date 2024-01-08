@@ -7,23 +7,17 @@ import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SwapList from "../components/SwapList";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import {
-    refundTx,
-    setTimeoutBlockheight,
-    setTimeoutEta,
-    swaps,
-} from "../signals";
 import { fetcher } from "../utils/helper";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
-import {
-    swapStatusFailed,
-    swapStatusSuccess,
-    updateSwapStatus,
-} from "../utils/swapStatus";
+import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
 
 const Refund = () => {
     const navigate = useNavigate();
+    const { updateSwapStatus, swaps, refundTx } = useGlobalContext();
+    const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
 

@@ -3,17 +3,25 @@ import { describe, expect, test } from "vitest";
 
 import QrScan from "../../src/components/QrScan";
 import { CreateProvider } from "../../src/context/Create";
+import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import t from "../../src/i18n";
-import { setCamera } from "../../src/signals";
 
 describe("QrScan", () => {
     test("should render the QrScan component", async () => {
+        let globalSignals: any;
+        const TestComponent = () => {
+            globalSignals = useGlobalContext();
+            return "";
+        };
         render(() => (
-            <CreateProvider>
-                <QrScan />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <QrScan />
+                </CreateProvider>
+            </GlobalProvider>
         ));
-        setCamera(true);
+        globalSignals.setCamera(true);
         const button = await screen.findByText(t("scan_qr_code"));
         expect(button).not.toBeUndefined();
     });

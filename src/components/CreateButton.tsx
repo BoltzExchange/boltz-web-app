@@ -6,18 +6,9 @@ import { createEffect, createMemo, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
-import {
-    config,
-    online,
-    setConfig,
-    setNotification,
-    setNotificationType,
-    setSwaps,
-    swaps,
-    wasmSupported,
-} from "../signals";
 import { ECPair } from "../utils/ecpair";
 import { feeChecker } from "../utils/feeChecker";
 import { fetcher } from "../utils/helper";
@@ -35,6 +26,15 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 
 export const CreateButton = () => {
     const navigate = useNavigate();
+    const {
+        config,
+        setConfig,
+        online,
+        wasmSupported,
+        swaps,
+        setSwaps,
+        notify,
+    } = useGlobalContext();
     const {
         asset,
         invoice,
@@ -93,12 +93,11 @@ export const CreateButton = () => {
                 asset(),
                 (data: any) => {
                     log.debug("getpairs", data);
-                    if (feeChecker(data.pairs, asset())) {
+                    if (feeChecker(data.pairs, config(), asset())) {
                         // amounts matches and fees are ok
                         resolve(true);
                     } else {
-                        setNotificationType("error");
-                        setNotification(t("feecheck"));
+                        notify("error", t("feecheck"));
                         resolve(false);
                     }
 
@@ -108,8 +107,7 @@ export const CreateButton = () => {
                 null,
                 (error) => {
                     log.debug(error);
-                    setNotificationType("error");
-                    setNotification(error);
+                    notify("error", error);
                     resolve(false);
                 },
             );
@@ -123,8 +121,7 @@ export const CreateButton = () => {
                 setInvoice(inv);
                 setLnurl("");
             } catch (e) {
-                setNotificationType("error");
-                setNotification(e);
+                notify("error", e);
                 log.warn("fetch lnurl failed", e);
             }
             return;
@@ -230,8 +227,7 @@ export const CreateButton = () => {
                     if (res.error === "invalid pair hash") {
                         await feeCheck();
                     } else {
-                        setNotificationType("error");
-                        setNotification(res.error);
+                        notify("error", res.error);
                     }
                     resolve(false);
                 },

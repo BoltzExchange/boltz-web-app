@@ -3,8 +3,8 @@ import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import t from "../i18n";
-import { denomination } from "../signals";
 import { calculateSendAmount } from "../utils/calculate";
 import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
@@ -13,6 +13,7 @@ import { setButtonLabel } from "./CreateButton";
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
+    const { denomination } = useGlobalContext();
     const {
         asset,
         boltzFee,

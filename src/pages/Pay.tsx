@@ -5,9 +5,9 @@ import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import { swaps } from "../signals";
 import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
@@ -29,6 +29,7 @@ const Pay = () => {
     const [contractTransactionType, setContractTransactionType] =
         createSignal("lockup_tx");
 
+    const { swaps } = useGlobalContext();
     const {
         swap,
         setSwap,
