@@ -1,7 +1,7 @@
 import { Show } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
-import Refund from "../components/Refund";
+import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts";
 import { usePayContext } from "../context/Pay";
@@ -18,7 +18,7 @@ const InvoiceFailedToPay = () => {
             </p>
             <hr />
             <Show when={!timeoutEta()} fallback={RefundEta()}>
-                <Refund swap={swap} />
+                <RefundButton swap={swap} />
             </Show>
             <Show when={swap().asset !== RBTC}>
                 <DownloadRefund />

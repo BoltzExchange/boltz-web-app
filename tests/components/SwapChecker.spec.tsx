@@ -54,6 +54,12 @@ vi.mock("../../src/utils/helper", async (importOriginal) => {
             cb({ ...data, status: status, transaction: "mocked" });
             fetcherCallData.push(data);
         },
+    };
+});
+vi.mock("../../src/utils/claim", async (importOriginal) => {
+    const mod = await importOriginal<typeof import("../../src/utils/claim")>();
+    return {
+        ...mod,
         claim: (swap) => {
             claimData.push(swap);
         },

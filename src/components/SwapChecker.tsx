@@ -3,8 +3,14 @@ import { createEffect, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { usePayContext } from "../context/Pay";
-import { setTimeoutBlockheight, setTimeoutEta, swaps } from "../signals";
-import { claim, fetcher, getApiUrl } from "../utils/helper";
+import {
+    setSwaps,
+    setTimeoutBlockheight,
+    setTimeoutEta,
+    swaps,
+} from "../signals";
+import { claim } from "../utils/claim";
+import { fetcher, getApiUrl } from "../utils/helper";
 import {
     swapStatusFinal,
     swapStatusPending,
@@ -60,25 +66,32 @@ export const SwapChecker = () => {
         }
     };
 
-    const setSwapStatusAndClaim = (data: any, activeSwap: any) => {
+    const prepareSwap = (data: any, activeSwap: any) => {
         const currentSwap = swaps().find((s) => activeSwap.id === s.id);
         if (swap() && swap().id === currentSwap.id) {
             setSwapStatus(data.status);
         }
-
         if (data.transaction) setSwapStatusTransaction(data.transaction);
         if (data.status) updateSwapStatus(currentSwap.id, data.status);
+        checkForFailed(currentSwap, data);
+        if (data.failureReason) setFailureReason(data.failureReason);
+    };
 
+    const claimSwap = (data: any, activeSwap: any) => {
+        const currentSwap = swaps().find((s) => activeSwap.id === s.id);
         if (
             currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
             (data.status === swapStatusPending.TransactionConfirmed ||
                 data.status === swapStatusPending.TransactionMempool)
         ) {
-            claim(currentSwap, data.transaction);
+            claim(currentSwap, data.transaction, (swap) => {
+                const swapsTmp = swaps();
+                const currentSwap = swapsTmp.find((s) => swap.id === s.id);
+                currentSwap.claimTx = swap.claimTx;
+                setSwaps(swapsTmp);
+            });
         }
-        checkForFailed(currentSwap, data);
-        if (data.failureReason) setFailureReason(data.failureReason);
     };
 
     const runSwapCheck = async () => {
@@ -92,7 +105,7 @@ export const SwapChecker = () => {
                     "/swapstatus",
                     swap.asset,
                     (data: any) => {
-                        setSwapStatusAndClaim(data, swap);
+                        claimSwap(data, swap);
                         resolve();
                     },
                     { id: swap.id },
@@ -124,7 +137,8 @@ export const SwapChecker = () => {
                 activeSwap.id
             }`,
             (data) => {
-                setSwapStatusAndClaim(data, activeSwap);
+                prepareSwap(data, activeSwap);
+                claimSwap(data, activeSwap);
             },
         );
     });

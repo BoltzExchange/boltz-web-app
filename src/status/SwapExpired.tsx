@@ -1,17 +1,16 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show, createEffect } from "solid-js";
 
+import RefundButton from "../components/RefundButton";
 import { usePayContext } from "../context/Pay";
 import t from "../i18n";
 import { setTransactionToRefund, transactionToRefund } from "../signals";
-import fetcher, { refund, refundAddressChange } from "../utils/helper";
+import { fetcher } from "../utils/helper";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
     const { failureReason, swap } = usePayContext();
-
-    const [valid, setValid] = createSignal(false);
 
     createEffect(() => {
         setTransactionToRefund(null);
@@ -38,21 +37,7 @@ const SwapExpired = () => {
             </p>
             <hr />
             <Show when={transactionToRefund() !== null}>
-                <input
-                    onInput={(e) =>
-                        setValid(refundAddressChange(e, swap().asset))
-                    }
-                    type="text"
-                    id="refundAddress"
-                    name="refundAddress"
-                    placeholder={t("refund_address_placeholder")}
-                />
-                <button
-                    class="btn"
-                    disabled={!valid()}
-                    onclick={() => refund(swap(), t)}>
-                    {t("refund")}
-                </button>
+                <RefundButton swap={swap} />
                 <hr />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>
