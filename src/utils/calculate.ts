@@ -30,6 +30,10 @@ export const calculateBoltzFeeOnSend = (
     minerFee: number,
     reverse: boolean,
 ): BigNumber => {
+    if (sendAmount.isNaN()) {
+        return BigNumber(0);
+    }
+
     let fee: BigNumber;
 
     if (reverse) {

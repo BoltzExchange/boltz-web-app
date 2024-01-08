@@ -168,6 +168,19 @@ describe("Calculate amounts", () => {
             },
         );
 
+        test.each`
+            reverse
+            ${false}
+            ${true}
+        `(
+            "should coalesce Boltz fee to 0 when sendAmount is NaN",
+            ({ reverse }) => {
+                expect(
+                    calculateBoltzFeeOnSend(BigNumber(NaN), 0.1, 123, reverse),
+                ).toEqual(BigNumber(0));
+            },
+        );
+
         test("should calculate negative fees", () => {
             expect(
                 calculateBoltzFeeOnSend(
