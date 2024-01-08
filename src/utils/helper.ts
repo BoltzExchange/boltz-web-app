@@ -12,7 +12,6 @@ import {
     ref,
     refundAddress,
     setConfig,
-    setFailureReason,
     setNotification,
     setNotificationType,
     setOnline,
@@ -20,11 +19,7 @@ import {
     setRefundAddress,
     setRefundTx,
     setSwap,
-    setSwapStatus,
-    setSwapStatusTransaction,
     setSwaps,
-    setTimeoutBlockheight,
-    setTimeoutEta,
     swap,
     swapStatusTransaction,
     swaps,
@@ -32,7 +27,6 @@ import {
 } from "../signals";
 import { feeChecker } from "../utils/feeChecker";
 import { checkResponse } from "../utils/http";
-import { swapStatusPending, updateSwapStatus } from "../utils/swapStatus";
 import {
     DecodedAddress,
     decodeAddress,
@@ -132,61 +126,6 @@ export const fetcher = (
     }
     const apiUrl = getApiUrl(asset) + url;
     fetch(apiUrl, opts).then(checkResponse).then(cb).catch(errorCb);
-};
-
-export const checkForFailed = (swap: any, data: any) => {
-    if (
-        data.status == "transaction.lockupFailed" ||
-        data.status == "invoice.failedToPay"
-    ) {
-        const id = swap.id;
-
-        fetcher(
-            "/getswaptransaction",
-            swap.asset,
-            (data: any) => {
-                if (swap.asset !== RBTC && !data.transactionHex) {
-                    log.error("no mempool tx found");
-                }
-                if (!data.timeoutEta) {
-                    log.error("no timeout eta");
-                }
-                if (!data.timeoutBlockHeight) {
-                    log.error("no timeout blockheight");
-                }
-                const timestamp = data.timeoutEta * 1000;
-                const eta = new Date(timestamp);
-                log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
-                setTimeoutEta(timestamp);
-                setTimeoutBlockheight(data.timeoutBlockHeight);
-            },
-            {
-                id,
-            },
-        );
-    }
-};
-
-export const setSwapStatusAndClaim = (data: any, activeSwap: any) => {
-    const currentSwap = swaps().find((s) => activeSwap.id === s.id);
-
-    if (swap() && swap().id === currentSwap.id) {
-        setSwapStatus(data.status);
-    }
-
-    setSwapStatusTransaction(data.transaction);
-    updateSwapStatus(currentSwap.id, data.status);
-
-    if (
-        currentSwap.claimTx === undefined &&
-        data.transaction !== undefined &&
-        (data.status === swapStatusPending.TransactionConfirmed ||
-            data.status === swapStatusPending.TransactionMempool)
-    ) {
-        claim(currentSwap);
-    }
-    checkForFailed(currentSwap, data);
-    if (data.failureReason) setFailureReason(data.failureReason);
 };
 
 export async function refund(swap: any, t: any) {

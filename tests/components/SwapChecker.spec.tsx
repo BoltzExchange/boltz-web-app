@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { SwapChecker, checkInterval } from "../../src/components/SwapChecker";
 import { setSwap, setSwaps } from "../../src/signals";
-import { setSwapStatusAndClaim } from "../../src/utils/helper";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -17,17 +16,46 @@ global.EventSource = EventSource;
 
 let apiUrl: string;
 
-const fetcherCallData = [];
+let fetcherCallData = [];
+let claimData = [];
 
-vi.mock("../../src/utils/helper", async () => {
+const swaps = [
+    {
+        id: "noStatus",
+        asset: "BTC",
+    },
+    {
+        id: "pending",
+        asset: "BTC",
+        status: swapStatusPending.TransactionMempool,
+        transaction: "TXHEX",
+    },
+    {
+        id: "failed",
+        asset: "BTC",
+        status: swapStatusFailed.InvoiceFailedToPay,
+    },
+    {
+        id: "success",
+        asset: "BTC",
+        status: swapStatusSuccess.InvoiceSettled,
+    },
+];
+
+vi.mock("../../src/utils/helper", async (importOriginal) => {
+    const mod = await importOriginal<typeof import("../../src/utils/helper")>();
     return {
+        ...mod,
         isMobile: () => false,
         getApiUrl: () => apiUrl,
         fetcher: (_path, _asset, cb, data) => {
+            const status = swaps.find((s) => s.id === data.id).status;
+            cb({ ...data, status: status, transaction: "mocked" });
             fetcherCallData.push(data);
-            cb();
         },
-        setSwapStatusAndClaim: vi.fn(),
+        claim: (swap) => {
+            claimData.push(swap);
+        },
     };
 });
 
@@ -85,27 +113,10 @@ describe("swapChecker", () => {
 
     afterEach(() => {
         clearInterval(checkInterval());
+        claimData = [];
+        fetcherCallData = [];
         server.close();
     });
-
-    const swaps = [
-        { id: "noStatus", asset: "BTC" },
-        {
-            id: "pending",
-            asset: "BTC",
-            status: swapStatusPending.TransactionMempool,
-        },
-        {
-            id: "failed",
-            asset: "BTC",
-            status: swapStatusFailed.InvoiceFailedToPay,
-        },
-        {
-            id: "success",
-            asset: "BTC",
-            status: swapStatusSuccess.InvoiceSettled,
-        },
-    ];
 
     test("should poll status of pending swaps", async () => {
         setSwaps(swaps);
@@ -124,6 +135,7 @@ describe("swapChecker", () => {
     });
 
     test("should connect and handle SSE for active swap", async () => {
+        setSwaps(swaps);
         render(() => <SwapChecker />);
         setSwap(swaps[0]);
         await wait();
@@ -134,9 +146,8 @@ describe("swapChecker", () => {
 
         expect(Object.keys(server.connections).length).toEqual(1);
         expect(server.connections[swaps[0].id]).not.toBeUndefined();
-
-        expect(setSwapStatusAndClaim).toHaveBeenCalledTimes(3);
-        expect(setSwapStatusAndClaim).toHaveBeenCalledWith(message, swaps[0]);
+        expect(claimData).toHaveLength(1);
+        expect(claimData[0].id).toEqual("pending");
     });
 
     test("should close SSE when active swap changes", async () => {
