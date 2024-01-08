@@ -32,7 +32,7 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
-    let {
+    const {
         reverse,
         asset,
         assetSend,
