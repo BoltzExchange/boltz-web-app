@@ -11,6 +11,7 @@ import t from "../i18n";
 import {
     config,
     online,
+    setConfig,
     setNotification,
     setNotificationType,
     setSwaps,
@@ -18,7 +19,8 @@ import {
     wasmSupported,
 } from "../signals";
 import { ECPair } from "../utils/ecpair";
-import { feeCheck, fetcher } from "../utils/helper";
+import { feeChecker } from "../utils/feeChecker";
+import { fetcher } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
@@ -84,6 +86,36 @@ export const CreateButton = () => {
         }
     });
 
+    const feeCheck = async () => {
+        return new Promise((resolve) => {
+            fetcher(
+                "/getpairs",
+                asset(),
+                (data: any) => {
+                    log.debug("getpairs", data);
+                    if (feeChecker(data.pairs, asset())) {
+                        // amounts matches and fees are ok
+                        resolve(true);
+                    } else {
+                        setNotificationType("error");
+                        setNotification(t("feecheck"));
+                        resolve(false);
+                    }
+
+                    // Always update the pairs to make sure the pairHash for the next request is up to date
+                    setConfig(data.pairs);
+                },
+                null,
+                (error) => {
+                    log.debug(error);
+                    setNotificationType("error");
+                    setNotification(error);
+                    resolve(false);
+                },
+            );
+        });
+    };
+
     const create = async () => {
         if (sendAmountValid() && !reverse() && lnurl() !== "") {
             try {
@@ -138,7 +170,7 @@ export const CreateButton = () => {
             }
         }
 
-        if (!(await feeCheck(t("feecheck"), asset()))) {
+        if (!(await feeCheck())) {
             return;
         }
 
@@ -196,7 +228,7 @@ export const CreateButton = () => {
                 async (err: Response) => {
                     const res = await err.json();
                     if (res.error === "invalid pair hash") {
-                        await feeCheck(t("feecheck"), asset());
+                        await feeCheck();
                     } else {
                         setNotificationType("error");
                         setNotification(res.error);

@@ -3,12 +3,13 @@ import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createRoot, createSignal } from "solid-js";
+import { Show, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
+import { SwapChecker } from "./components/SwapChecker";
 import { loglevel, network } from "./config";
 import { CreateProvider } from "./context/Create";
 import { Web3SignerProvider } from "./context/Web3";
@@ -26,7 +27,6 @@ import "./style/index.scss";
 import { detectEmbedded } from "./utils/embed";
 import { checkReferralId } from "./utils/helper";
 import "./utils/patches";
-import { swapChecker } from "./utils/swapChecker";
 import { checkWasmSupported } from "./utils/wasmSupport";
 import { detectWebLNProvider } from "./utils/webln";
 
@@ -38,10 +38,6 @@ detectWebLNProvider().then((state: boolean) => setWebln(state));
 setWasmSupported(checkWasmSupported());
 checkReferralId();
 detectLanguage();
-
-createRoot(() => {
-    swapChecker();
-});
 
 if (detectEmbedded()) {
     setHideHero(true);
@@ -63,6 +59,7 @@ const cleanup = render(
         <Router>
             <Web3SignerProvider>
                 <CreateProvider>
+                    <SwapChecker />
                     <Show when={!embedded()}>
                         <Nav network={network} />
                     </Show>

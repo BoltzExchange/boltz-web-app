@@ -84,7 +84,10 @@ const InvoiceSet = () => {
                     class="btn"
                     onclick={() =>
                         clipboard(
-                            formatAmount(swap().expectedAmount, denomination()),
+                            formatAmount(
+                                BigNumber(swap().expectedAmount),
+                                denomination(),
+                            ),
                             t("copied"),
                         )
                     }>
