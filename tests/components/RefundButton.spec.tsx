@@ -4,6 +4,7 @@ import { createSignal } from "solid-js";
 import { describe, expect, test } from "vitest";
 
 import RefundButton from "../../src/components/RefundButton";
+import { GlobalProvider } from "../../src/context/Global";
 import { Web3SignerProvider } from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 
@@ -12,9 +13,11 @@ describe("RefundButton", () => {
         const [swap] = createSignal(null);
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <RefundButton swap={swap} />
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <RefundButton swap={swap} />
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
         const input = (await screen.findByTestId(
@@ -36,9 +39,11 @@ describe("RefundButton", () => {
         });
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <RefundButton swap={swap} />
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <RefundButton swap={swap} />
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
         const input = (await screen.findByTestId(
@@ -65,9 +70,11 @@ describe("RefundButton", () => {
         });
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <RefundButton swap={swap} />
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <RefundButton swap={swap} />
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
         const input = (await screen.findByTestId(

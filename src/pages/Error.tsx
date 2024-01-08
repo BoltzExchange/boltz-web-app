@@ -1,6 +1,7 @@
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 
 const Error = () => {
+    const { t } = useGlobalContext();
     return (
         <div class="frame">
             <p style="font-size: 46px; margin:0;">⚠️</p>

@@ -1,18 +1,16 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createMemo, createSignal } from "solid-js";
+import { Show, createMemo, createSignal, onMount } from "solid-js";
 
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import { ambossUrl } from "../config";
 import { BTC } from "../consts";
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
 import { fetcher } from "../utils/helper";
-
-export const [hideHero, setHideHero] = createSignal(false);
 
 export const Hero = () => {
     const navigate = useNavigate();
@@ -21,6 +19,8 @@ export const Hero = () => {
     const [numPeers, setNumPeers] = createSignal("0");
     const [capacity, setCapacity] = createSignal("0");
     const [oldestChannel, setOldestChannel] = createSignal("0");
+
+    const { hideHero, setHideHero, t } = useGlobalContext();
 
     createMemo(() => {
         const stats = nodeStats();
@@ -37,9 +37,14 @@ export const Hero = () => {
         window.open(ambossUrl, "_blank");
     };
 
-    fetcher("/nodestats", BTC, (data: any) => {
-        log.debug("nodestats", data);
-        setNodeStats(data.nodes.BTC);
+    onMount(async () => {
+        try {
+            const res = await fetcher("/nodestats", BTC);
+            log.debug("nodestats", res);
+            setNodeStats(res.nodes.BTC);
+        } catch (error) {
+            log.error("nodestats error", error);
+        }
     });
 
     return (

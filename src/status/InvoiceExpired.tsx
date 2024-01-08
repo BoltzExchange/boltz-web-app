@@ -1,9 +1,10 @@
 import { useNavigate } from "@solidjs/router";
 
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 
 const InvoiceExpired = () => {
     const navigate = useNavigate();
+    const { t } = useGlobalContext();
 
     return (
         <div>

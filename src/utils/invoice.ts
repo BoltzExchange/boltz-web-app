@@ -4,7 +4,6 @@ import bolt11 from "bolt11";
 import log from "loglevel";
 
 import { bolt11_prefix } from "../config";
-import { errorHandler } from "./helper";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {
@@ -79,36 +78,33 @@ export const fetchLnurl = (
         log.debug("fetching lnurl:", url);
         fetch(url)
             .then(checkResponse<LnurlResponse>)
-            .then((data) => {
-                log.debug(
-                    "amount check: (x, min, max)",
-                    amount,
-                    data.minSendable,
-                    data.maxSendable,
-                );
-                if (amount < data.minSendable || amount > data.maxSendable) {
-                    return reject("Amount not in LNURL range.");
-                }
-                log.debug(
-                    "fetching invoice",
-                    `${data.callback}?amount=${amount}`,
-                );
-                fetch(`${data.callback}?amount=${amount}`)
-                    .then(checkResponse<LnurlCallbackResponse>)
-                    .then((data) => {
-                        log.debug("fetched invoice", data);
-                        resolve(data.pr);
-                    })
-                    .catch((e) => {
-                        errorHandler(e);
-                        reject(e);
-                    });
-            })
-            .catch((e) => {
-                errorHandler(e);
-                reject(e);
-            });
+            .then((data) => checkLnurlResponse(amount, data))
+            .then((data) => fetchLnurlInvoice(amount, data))
+            .then(resolve)
+            .catch(reject);
     });
+};
+
+const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
+    log.debug(
+        "amount check: (x, min, max)",
+        amount,
+        data.minSendable,
+        data.maxSendable,
+    );
+    if (amount < data.minSendable || amount > data.maxSendable) {
+        throw new Error("Amount not in LNURL range.");
+    }
+    return data;
+};
+
+const fetchLnurlInvoice = async (amount: number, data: LnurlResponse) => {
+    log.debug("fetching invoice", `${data.callback}?amount=${amount}`);
+    const res = await fetch(`${data.callback}?amount=${amount}`).then(
+        checkResponse<LnurlCallbackResponse>,
+    );
+    log.debug("fetched invoice", res);
+    return res.pr;
 };
 
 export const isBip21 = (data: string) => {

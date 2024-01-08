@@ -3,13 +3,7 @@ import log from "loglevel";
 import { Show } from "solid-js";
 
 import SwapList from "../components/SwapList";
-import t from "../i18n";
-import {
-    setNotification,
-    setNotificationType,
-    setSwaps,
-    swaps,
-} from "../signals";
+import { useGlobalContext } from "../context/Global";
 import { downloadJson } from "../utils/download";
 import { isIos } from "../utils/helper";
 
@@ -29,6 +23,9 @@ const History = () => {
     const navigate = useNavigate();
 
     let importRef: HTMLInputElement;
+
+    const { swaps, setSwaps, setNotification, setNotificationType, t } =
+        useGlobalContext();
 
     const deleteLocalStorage = () => {
         if (confirm(t("delete_localstorage"))) {

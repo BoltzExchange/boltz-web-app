@@ -4,16 +4,16 @@ import { createEffect } from "solid-js";
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
 import { useCreateContext } from "../context/Create";
-import t from "../i18n";
-import { config, denomination, setDenomination } from "../signals";
+import { useGlobalContext } from "../context/Global";
 import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
 import { denominations, formatAmount } from "../utils/denomination";
-import { fetchPairs } from "../utils/helper";
 
 const Fees = () => {
+    const { t, config, fetchPairs, denomination, setDenomination } =
+        useGlobalContext();
     const {
         asset,
         reverse,

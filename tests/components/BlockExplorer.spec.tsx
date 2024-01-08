@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import BlockExplorer from "../../src/components/BlockExplorer";
 import { pairs } from "../../src/config";
+import { GlobalProvider } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
 
 describe("BlockExplorer", () => {
@@ -13,7 +14,11 @@ describe("BlockExplorer", () => {
     `(
         "should link to $asset addresses",
         async ({ asset, baseLink, address }) => {
-            render(() => <BlockExplorer asset={asset} address={address} />);
+            render(() => (
+                <GlobalProvider>
+                    <BlockExplorer asset={asset} address={address} />
+                </GlobalProvider>
+            ));
 
             const button = await screen.findByText(
                 i18n.en.blockexplorer.replace(
@@ -35,7 +40,11 @@ describe("BlockExplorer", () => {
     `(
         "should link to $asset transactions",
         async ({ asset, baseLink, txId }) => {
-            render(() => <BlockExplorer asset={asset} txId={txId} />);
+            render(() => (
+                <GlobalProvider>
+                    <BlockExplorer asset={asset} txId={txId} />
+                </GlobalProvider>
+            ));
 
             const button = await screen.findByText(
                 i18n.en.blockexplorer.replace(

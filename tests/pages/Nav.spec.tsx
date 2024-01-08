@@ -3,6 +3,7 @@ import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, test } from "vitest";
 
 import Nav from "../../src/components/Nav";
+import { GlobalProvider } from "../../src/context/Global";
 
 describe("Nav", () => {
     test.each(["testnet", "regtest", "random"])(
@@ -10,7 +11,9 @@ describe("Nav", () => {
         async (network) => {
             render(() => (
                 <Router>
-                    <Nav network={network} />
+                    <GlobalProvider>
+                        <Nav network={network} />
+                    </GlobalProvider>
                 </Router>
             ));
 
@@ -24,7 +27,9 @@ describe("Nav", () => {
 
         render(() => (
             <Router>
-                <Nav network={network} />
+                <GlobalProvider>
+                    <Nav network={network} />
+                </GlobalProvider>
             </Router>
         ));
 

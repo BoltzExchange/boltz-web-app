@@ -5,29 +5,33 @@ import { describe, expect, test } from "vitest";
 
 import { sideReceive, sideSend } from "../../src/consts";
 import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import { Web3SignerProvider } from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
-import { setConfig } from "../../src/signals";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
 
 describe("Create", () => {
     let signals: any;
+    let globalSignals: any;
     const TestComponent = () => {
         signals = useCreateContext();
+        globalSignals = useGlobalContext();
         return "";
     };
 
     test("should render Create", async () => {
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <CreateProvider>
-                        <TestComponent />
-                        <Create />
-                    </CreateProvider>
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <CreateProvider>
+                            <TestComponent />
+                            <Create />
+                        </CreateProvider>
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
         const button = await screen.findAllByText(i18n.en.create_swap);
@@ -37,16 +41,18 @@ describe("Create", () => {
     test("should update receive amount on asset change", async () => {
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <CreateProvider>
-                        <TestComponent />
-                        <Create />
-                    </CreateProvider>
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <CreateProvider>
+                            <TestComponent />
+                            <Create />
+                        </CreateProvider>
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
 
-        setConfig(cfg);
+        globalSignals.setConfig(cfg);
         signals.setReverse(true);
         signals.setAsset("BTC");
         signals.setSendAmount(BigNumber(50_000));
@@ -65,16 +71,18 @@ describe("Create", () => {
     test("should update receive amount on miner fee change", async () => {
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <CreateProvider>
-                        <TestComponent />
-                        <Create />
-                    </CreateProvider>
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <CreateProvider>
+                            <TestComponent />
+                            <Create />
+                        </CreateProvider>
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
 
-        setConfig(cfg);
+        globalSignals.setConfig(cfg);
         signals.setReverse(true);
         signals.setAsset("BTC");
         signals.setSendAmount(BigNumber(50_000));
@@ -87,7 +95,7 @@ describe("Create", () => {
 
         const updatedCfg = { ...cfg };
         cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
-        setConfig(updatedCfg);
+        globalSignals.setConfig(updatedCfg);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
     });
@@ -95,18 +103,18 @@ describe("Create", () => {
     test("should update calculated value on fee change", async () => {
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <CreateProvider>
-                        signals.setReverse(true); signals.setAsset("BTC");
-                        signals.setSendAmount(BigNumber(50_000));
-                        <TestComponent />
-                        <Create />
-                    </CreateProvider>
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <CreateProvider>
+                            <TestComponent />
+                            <Create />
+                        </CreateProvider>
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
 
-        setConfig(cfg);
+        globalSignals.setConfig(cfg);
         signals.setMinimum(cfg["BTC/BTC"].limits.minimal);
         signals.setReverse(true);
         signals.setAsset("BTC");
@@ -114,7 +122,7 @@ describe("Create", () => {
         const updateConfig = () => {
             const updatedCfg = { ...cfg };
             cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
-            setConfig(updatedCfg);
+            globalSignals.setConfig(updatedCfg);
         };
 
         const amount = 100_000;
@@ -154,14 +162,18 @@ describe("Create", () => {
     `("should set $extrema amount on click", async (extrema) => {
         render(() => (
             <Router>
-                <Web3SignerProvider noFetch={true}>
-                    <CreateProvider>
-                        <TestComponent />
-                        <Create />
-                    </CreateProvider>
-                </Web3SignerProvider>
+                <GlobalProvider>
+                    <Web3SignerProvider noFetch={true}>
+                        <CreateProvider>
+                            <TestComponent />
+                            <Create />
+                        </CreateProvider>
+                    </Web3SignerProvider>
+                </GlobalProvider>
             </Router>
         ));
+
+        globalSignals.setConfig(cfg);
 
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();

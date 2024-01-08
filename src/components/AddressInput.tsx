@@ -2,7 +2,7 @@ import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 import { decodeAddress } from "../utils/compat";
 import { extractAddress } from "../utils/invoice";
 import { setButtonLabel } from "./CreateButton";
@@ -10,6 +10,7 @@ import { setButtonLabel } from "./CreateButton";
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
+    const { t } = useGlobalContext();
     const {
         asset,
         reverse,

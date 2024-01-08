@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from "vitest";
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
 import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { GlobalProvider } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
 
 describe("AssetSelect", () => {
@@ -21,10 +22,12 @@ describe("AssetSelect", () => {
         ${LBTC}
     `("should highlight selected asset $asset", ({ asset }) => {
         const res = render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <SelectAsset />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <SelectAsset />
+                </CreateProvider>
+            </GlobalProvider>
         ));
 
         signals.setAssetSend(asset);
@@ -49,10 +52,12 @@ describe("AssetSelect", () => {
         ${sideReceive}
     `("should set header text for $side", async ({ side }) => {
         render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <SelectAsset />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <SelectAsset />
+                </CreateProvider>
+            </GlobalProvider>
         ));
 
         signals.setAssetSelect(true);
@@ -69,10 +74,12 @@ describe("AssetSelect", () => {
 
     test("should ignore same asset selection", () => {
         const { container } = render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <SelectAsset />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <SelectAsset />
+                </CreateProvider>
+            </GlobalProvider>
         ));
 
         signals.setAssetSend(BTC);
@@ -110,10 +117,12 @@ describe("AssetSelect", () => {
             expectedOther,
         }) => {
             render(() => (
-                <CreateProvider>
-                    <TestComponent />
-                    <SelectAsset />
-                </CreateProvider>
+                <GlobalProvider>
+                    <CreateProvider>
+                        <TestComponent />
+                        <SelectAsset />
+                    </CreateProvider>
+                </GlobalProvider>
             ));
 
             signals.setAsset(prevAsset);

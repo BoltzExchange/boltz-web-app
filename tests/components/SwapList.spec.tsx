@@ -3,6 +3,7 @@ import { render } from "@solidjs/testing-library";
 import { describe, expect, it } from "vitest";
 
 import SwapList from "../../src/components/SwapList";
+import { GlobalProvider } from "../../src/context/Global";
 
 describe("SwapList", () => {
     it("should sort correctly", async () => {
@@ -21,12 +22,14 @@ describe("SwapList", () => {
             container: { firstChild: firstChild },
         } = render(() => (
             <Router>
-                <SwapList
-                    swapsSignal={swapsSignal}
-                    setSwapSignal={() => {
-                        return undefined;
-                    }}
-                />
+                <GlobalProvider>
+                    <SwapList
+                        swapsSignal={swapsSignal}
+                        setSwapSignal={() => {
+                            return undefined;
+                        }}
+                    />
+                </GlobalProvider>
             </Router>
         ));
 

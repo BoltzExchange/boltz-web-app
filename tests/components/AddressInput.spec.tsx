@@ -4,12 +4,14 @@ import { describe, expect, test } from "vitest";
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC } from "../../src/consts";
 import { CreateProvider, useCreateContext } from "../../src/context/Create";
-import t from "../../src/i18n";
+import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 
 describe("AddressInput", () => {
     let signals: any;
+    let globalSignals: any;
     const TestComponent = () => {
         signals = useCreateContext();
+        globalSignals = useGlobalContext();
         return "";
     };
 
@@ -31,16 +33,18 @@ describe("AddressInput", () => {
         "should validate address $network $address -> $valid",
         async ({ valid, network, address }) => {
             render(() => (
-                <CreateProvider>
-                    <TestComponent />
-                    <AddressInput />
-                </CreateProvider>
+                <GlobalProvider>
+                    <CreateProvider>
+                        <TestComponent />
+                        <AddressInput />
+                    </CreateProvider>
+                </GlobalProvider>
             ));
 
             signals.setAsset(network);
 
             const input = (await screen.findByPlaceholderText(
-                t("onchain_address", { asset: network }),
+                globalSignals.t("onchain_address", { asset: network }),
             )) as HTMLInputElement;
 
             fireEvent.input(input, {

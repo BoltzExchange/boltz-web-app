@@ -3,8 +3,7 @@ import QrScanner from "qr-scanner";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 
 import { useCreateContext } from "../context/Create";
-import t from "../i18n";
-import { camera, setCamera } from "../signals";
+import { useGlobalContext } from "../context/Global";
 import "../style/qrscan.scss";
 
 const QrScan = () => {
@@ -12,6 +11,7 @@ const QrScan = () => {
     let qrScanner: QrScanner;
 
     const { reverse, setInvoice, setOnchainAddress } = useCreateContext();
+    const { t, camera, setCamera } = useGlobalContext();
 
     const [scanning, setScanning] = createSignal(false);
 
