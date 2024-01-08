@@ -3,21 +3,33 @@ import { describe, expect, test, vi } from "vitest";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
+import { CreateProvider, useCreateContext } from "../../src/context/Create";
 import i18n from "../../src/i18n/i18n";
-import * as signals from "../../src/signals";
 
 describe("AssetSelect", () => {
+    let signals: any;
+
+    const TestComponent = () => {
+        signals = useCreateContext();
+        return "";
+    };
+
     test.each`
         asset
         ${LN}
         ${BTC}
         ${LBTC}
     `("should highlight selected asset $asset", ({ asset }) => {
+        const res = render(() => (
+            <CreateProvider>
+                <TestComponent />
+                <SelectAsset />
+            </CreateProvider>
+        ));
+
         signals.setAssetSend(asset);
         signals.setAssetSelect(true);
         signals.setAssetSelected(sideSend);
-
-        const res = render(() => <SelectAsset />);
 
         for (const elem of res.container.children[0].children) {
             const classes = Array.from(elem.classList.values());
@@ -36,10 +48,15 @@ describe("AssetSelect", () => {
         ${sideSend}
         ${sideReceive}
     `("should set header text for $side", async ({ side }) => {
+        render(() => (
+            <CreateProvider>
+                <TestComponent />
+                <SelectAsset />
+            </CreateProvider>
+        ));
+
         signals.setAssetSelect(true);
         signals.setAssetSelected(side);
-
-        render(() => <SelectAsset />);
 
         const header = await screen.findByText(
             i18n.en.select_asset.replace(
@@ -51,6 +68,13 @@ describe("AssetSelect", () => {
     });
 
     test("should ignore same asset selection", () => {
+        const { container } = render(() => (
+            <CreateProvider>
+                <TestComponent />
+                <SelectAsset />
+            </CreateProvider>
+        ));
+
         signals.setAssetSend(BTC);
         signals.setAssetSelect(true);
         signals.setAssetSelected(sideSend);
@@ -58,8 +82,6 @@ describe("AssetSelect", () => {
         const setAsset = vi.spyOn(signals, "setAsset");
         const setAssetSend = vi.spyOn(signals, "setAssetSend");
         const setAssetReceive = vi.spyOn(signals, "setAssetReceive");
-
-        const { container } = render(() => <SelectAsset />);
 
         const btcButton = container.children[0].children[3];
         fireEvent.click(btcButton);
@@ -87,13 +109,19 @@ describe("AssetSelect", () => {
             prevReceive,
             expectedOther,
         }) => {
+            render(() => (
+                <CreateProvider>
+                    <TestComponent />
+                    <SelectAsset />
+                </CreateProvider>
+            ));
+
             signals.setAsset(prevAsset);
             signals.setAssetSelect(true);
             signals.setAssetSelected(side);
             signals.setAssetSend(prevSend);
             signals.setAssetReceive(prevReceive);
 
-            render(() => <SelectAsset />);
             fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
             expect(signals.asset()).toEqual(asset);

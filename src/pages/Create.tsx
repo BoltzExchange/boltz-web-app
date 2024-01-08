@@ -12,38 +12,9 @@ import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import { RBTC, sideReceive, sideSend } from "../consts";
+import { useCreateContext } from "../context/Create";
 import t from "../i18n";
-import {
-    addressValid,
-    amountChanged,
-    asset,
-    assetReceive,
-    assetSelect,
-    assetSelected,
-    assetSend,
-    boltzFee,
-    denomination,
-    invoiceValid,
-    maximum,
-    minerFee,
-    minimum,
-    receiveAmount,
-    receiveAmountFormatted,
-    reverse,
-    sendAmount,
-    sendAmountFormatted,
-    sendAmountValid,
-    setAmountChanged,
-    setInvoice,
-    setReceiveAmount,
-    setReceiveAmountFormatted,
-    setSendAmount,
-    setSendAmountFormatted,
-    setSendAmountValid,
-    setValid,
-    wasmSupported,
-    webln,
-} from "../signals";
+import { denomination, wasmSupported, webln } from "../signals";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
@@ -60,6 +31,35 @@ import { enableWebln } from "../utils/webln";
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
+
+    const {
+        reverse,
+        asset,
+        assetSend,
+        assetReceive,
+        assetSelect,
+        assetSelected,
+        invoiceValid,
+        addressValid,
+        sendAmountValid,
+        sendAmount,
+        setSendAmount,
+        receiveAmount,
+        setReceiveAmount,
+        sendAmountFormatted,
+        setSendAmountFormatted,
+        receiveAmountFormatted,
+        setReceiveAmountFormatted,
+        amountChanged,
+        setAmountChanged,
+        minimum,
+        maximum,
+        setInvoice,
+        setValid,
+        setSendAmountValid,
+        boltzFee,
+        minerFee,
+    } = useCreateContext();
 
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;

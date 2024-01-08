@@ -1,12 +1,9 @@
 import arrowSvg from "../assets/arrow.svg";
-import {
-    assetReceive,
-    assetSend,
-    setAssetReceive,
-    setAssetSend,
-} from "../signals";
+import { useCreateContext } from "../context/Create";
 
 const Reverse = () => {
+    const { assetReceive, assetSend, setAssetSend, setAssetReceive } =
+        useCreateContext();
     const setDirection = () => {
         const sendOld = assetSend();
         setAssetSend(assetReceive());

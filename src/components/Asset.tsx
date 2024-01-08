@@ -1,4 +1,4 @@
-import { setAssetSelect, setAssetSelected } from "../signals";
+import { useCreateContext } from "../context/Create";
 import "../style/asset.scss";
 
 const Asset = ({ side, signal }) => {
@@ -6,6 +6,8 @@ const Asset = ({ side, signal }) => {
         setAssetSelected(side);
         setAssetSelect(true);
     };
+
+    const { setAssetSelected, setAssetSelect } = useCreateContext();
 
     return (
         <div class="asset-wrap" onClick={openSelect}>

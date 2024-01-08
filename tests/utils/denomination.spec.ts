@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
-import { beforeAll, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import { setDenomination, setMaximum } from "../../src/signals";
+import { setDenomination } from "../../src/signals";
 import {
     calculateDigits,
     convertAmount,
@@ -70,7 +70,6 @@ describe("denomination utils", () => {
         `(
             "calculate digits for $amount in $denomination",
             ({ denomination, digits, amount }) => {
-                setMaximum(amount);
                 setDenomination(denomination);
                 expect(calculateDigits(amount, denomination)).toEqual(digits);
             },
@@ -79,10 +78,6 @@ describe("denomination utils", () => {
 
     describe("check paste validation regex", () => {
         const max = 100000000;
-
-        beforeAll(() => {
-            setMaximum(max);
-        });
 
         test.each`
             denomination         | amount                  | valid

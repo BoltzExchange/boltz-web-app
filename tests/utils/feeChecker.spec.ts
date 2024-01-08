@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, test } from "vitest";
 
 import { BTC, LBTC } from "../../src/consts";
-import { setAsset, setConfig } from "../../src/signals";
+import { setConfig } from "../../src/signals";
 import { feeChecker } from "../../src/utils/feeChecker";
 
 const cfg = {
@@ -70,7 +70,6 @@ describe("feeChecker", () => {
     });
 
     test("same config should be valid", () => {
-        setAsset(BTC);
         expect(feeChecker(cfg, BTC)).toEqual(true);
     });
 
@@ -86,7 +85,6 @@ describe("feeChecker", () => {
     });
 
     test("should ignore irrelevant miner fee", () => {
-        setAsset(LBTC);
         const changedCfg = deepCopy(cfg);
         changedCfg["L-BTC/BTC"].fees.minerFees.quoteAsset.normal += 1;
 
@@ -94,7 +92,6 @@ describe("feeChecker", () => {
     });
 
     test("should handle relevant miner fee", () => {
-        setAsset(LBTC);
         const changedCfg = deepCopy(cfg);
         changedCfg["L-BTC/BTC"].fees.minerFees.baseAsset.normal += 1;
 

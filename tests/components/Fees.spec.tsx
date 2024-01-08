@@ -1,39 +1,48 @@
 import { render } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 
 import Fees from "../../src/components/Fees";
-import * as signals from "../../src/signals";
+import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { setConfig } from "../../src/signals";
 import { calculateSendAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
 
 describe("Fees component", () => {
-    beforeAll(() => {
-        // @ts-ignore
-        signals.setConfig(cfg);
-        signals.setReverse(true);
-    });
+    let signals: any;
 
-    beforeEach(() => {
-        signals.setAsset("BTC");
+    const TestComponent = () => {
+        signals = useCreateContext();
+        return "";
+    };
+
+    beforeAll(() => {
+        setConfig(cfg);
     });
 
     test("should render", async () => {
-        render(() => <Fees />);
+        render(() => (
+            <CreateProvider>
+                <TestComponent />
+                <Fees />
+            </CreateProvider>
+        ));
     });
 
     test("should recalculate limits on direction switch", () => {
-        const setMinimum = vi.spyOn(signals, "setMinimum");
-        const setMaximum = vi.spyOn(signals, "setMaximum");
+        render(() => (
+            <CreateProvider>
+                <TestComponent />
+                <Fees />
+            </CreateProvider>
+        ));
 
-        render(() => <Fees />);
-
-        expect(setMinimum).toHaveBeenCalledWith(cfg["BTC/BTC"].limits.minimal);
-        expect(setMaximum).toHaveBeenCalledWith(cfg["BTC/BTC"].limits.maximal);
+        expect(signals.minimum()).toEqual(cfg["BTC/BTC"].limits.minimal);
+        expect(signals.maximum()).toEqual(cfg["BTC/BTC"].limits.maximal);
 
         signals.setReverse(false);
 
-        expect(setMinimum).toHaveBeenLastCalledWith(
+        expect(signals.minimum()).toEqual(
             calculateSendAmount(
                 BigNumber(cfg["BTC/BTC"].limits.minimal),
                 signals.boltzFee(),
@@ -41,7 +50,7 @@ describe("Fees component", () => {
                 signals.reverse(),
             ).toNumber(),
         );
-        expect(setMaximum).toHaveBeenLastCalledWith(
+        expect(signals.maximum()).toEqual(
             calculateSendAmount(
                 BigNumber(cfg["BTC/BTC"].limits.maximal),
                 signals.boltzFee(),

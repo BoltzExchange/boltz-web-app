@@ -1,12 +1,14 @@
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
+import { useCreateContext } from "../context/Create";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
-import { asset, setSwaps, swap, swaps } from "../signals";
+import { setSwaps, swap, swaps } from "../signals";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 const TransactionConfirmed = () => {
+    const { asset } = useCreateContext();
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
