@@ -1,12 +1,12 @@
+import { render } from "@solidjs/testing-library";
 import EventSource from "eventsource";
 import { Server as HttpsServer, createServer } from "https";
 import { AddressInfo } from "net";
-import { createRoot } from "solid-js";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import { SwapChecker, checkInterval } from "../../src/components/SwapChecker";
 import { setSwap, setSwaps } from "../../src/signals";
 import { setSwapStatusAndClaim } from "../../src/utils/helper";
-import { checkInterval, swapChecker } from "../../src/utils/swapChecker";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -109,9 +109,7 @@ describe("swapChecker", () => {
 
     test("should poll status of pending swaps", async () => {
         setSwaps(swaps);
-        createRoot(() => {
-            swapChecker();
-        });
+        render(() => <SwapChecker />);
         await wait(100);
 
         expect(fetcherCallData).toHaveLength(2);
@@ -126,9 +124,7 @@ describe("swapChecker", () => {
     });
 
     test("should connect and handle SSE for active swap", async () => {
-        createRoot(() => {
-            swapChecker();
-        });
+        render(() => <SwapChecker />);
         setSwap(swaps[0]);
         await wait();
 
@@ -144,9 +140,7 @@ describe("swapChecker", () => {
     });
 
     test("should close SSE when active swap changes", async () => {
-        createRoot(() => {
-            swapChecker();
-        });
+        render(() => <SwapChecker />);
         setSwap(swaps[0]);
         await wait();
 
@@ -160,6 +154,7 @@ describe("swapChecker", () => {
     });
 
     test("should not reconnect SSE when change swap has same id", async () => {
+        render(() => <SwapChecker />);
         setSwap(swaps[0]);
         await wait();
 

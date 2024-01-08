@@ -2,8 +2,8 @@ import log from "loglevel";
 import { createEffect, createSignal } from "solid-js";
 
 import { swap, swaps } from "../signals";
-import { fetcher, getApiUrl, setSwapStatusAndClaim } from "./helper";
-import { swapStatusFinal } from "./swapStatus";
+import { fetcher, getApiUrl, setSwapStatusAndClaim } from "../utils/helper";
+import { swapStatusFinal } from "../utils/swapStatus";
 
 const swapCheckInterval = 3000;
 
@@ -14,7 +14,7 @@ export const [checkInterval, setCheckInterval] = createSignal<
     NodeJS.Timer | undefined
 >(undefined);
 
-export const swapChecker = () => {
+export const SwapChecker = () => {
     createEffect(() => {
         const activeSwap = swap();
         if (swap()?.id === activeStreamId) {
@@ -67,6 +67,8 @@ export const swapChecker = () => {
             checkRunning = false;
         }, swapCheckInterval),
     );
+
+    return "";
 };
 
 const runSwapCheck = async () => {
@@ -79,7 +81,7 @@ const runSwapCheck = async () => {
             fetcher(
                 "/swapstatus",
                 swap.asset,
-                (data) => {
+                (data: any) => {
                     setSwapStatusAndClaim(data, swap);
                     resolve();
                 },
