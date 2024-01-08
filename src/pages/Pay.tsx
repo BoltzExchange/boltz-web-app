@@ -5,17 +5,9 @@ import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
+import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import {
-    setFailureReason,
-    setSwap,
-    setSwapStatus,
-    setSwapStatusTransaction,
-    swap,
-    swapStatus,
-    swapStatusTransaction,
-    swaps,
-} from "../signals";
+import { swaps } from "../signals";
 import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
@@ -36,6 +28,16 @@ const Pay = () => {
         createSignal(undefined);
     const [contractTransactionType, setContractTransactionType] =
         createSignal("lockup_tx");
+
+    const {
+        swap,
+        setSwap,
+        swapStatus,
+        setSwapStatus,
+        swapStatusTransaction,
+        setSwapStatusTransaction,
+        setFailureReason,
+    } = usePayContext();
 
     createEffect(() => {
         let tmpSwaps = swaps();

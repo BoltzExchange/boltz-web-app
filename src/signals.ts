@@ -3,26 +3,11 @@ import { createSignal } from "solid-js";
 
 import { isMobile } from "./utils/helper";
 
-type SwapStatusTransaction = {
-    hex?: string;
-    id?: string;
-};
-
 export const [config, setConfig] = createSignal({});
-
 export const [online, setOnline] = createSignal(true);
 export const [wasmSupported, setWasmSupported] = createSignal(true);
-
 export const [refundAddress, setRefundAddress] = createSignal(null);
 
-export const [swap, setSwap] = createSignal(null, {
-    // To allow updating properties of the swap object without replacing it completely
-    equals: () => false,
-});
-export const [swapStatus, setSwapStatus] = createSignal(null);
-export const [swapStatusTransaction, setSwapStatusTransaction] =
-    createSignal<SwapStatusTransaction>({});
-export const [failureReason, setFailureReason] = createSignal("");
 export const [timeoutEta, setTimeoutEta] = createSignal(0);
 export const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal(0);
 export const [refundTx, setRefundTx] = createSignal("");
@@ -30,9 +15,7 @@ export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
 export const [i18n, setI18n] = createSignal(null);
 
-// local storage
-
-// To support the values created by the deprecated "createStorageSignal"
+// local storage to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
     serialize: (value: any) => value,
     deserialize: (value: any) => value,

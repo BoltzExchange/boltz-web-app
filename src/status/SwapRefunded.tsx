@@ -1,11 +1,12 @@
 import { useNavigate } from "@solidjs/router";
 
 import BlockExplorer from "../components/BlockExplorer";
+import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import { swap } from "../signals";
 
 const SwapRefunded = () => {
     const navigate = useNavigate();
+    const { swap } = usePayContext();
 
     return (
         <div>

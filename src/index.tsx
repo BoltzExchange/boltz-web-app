@@ -12,6 +12,7 @@ import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
 import { loglevel, network } from "./config";
 import { CreateProvider } from "./context/Create";
+import { PayProvider } from "./context/Pay";
 import { Web3SignerProvider } from "./context/Web3";
 import { detectLanguage } from "./i18n/detect";
 import Create from "./pages/Create";
@@ -59,28 +60,36 @@ const cleanup = render(
         <Router>
             <Web3SignerProvider>
                 <CreateProvider>
-                    <SwapChecker />
-                    <Show when={!embedded()}>
-                        <Nav network={network} />
-                    </Show>
-                    <Routes>
-                        <Route path="*" element={<Navigate href={"/404"} />} />
-                        <Route path="/404" component={NotFound} />
-                        <Route path="/" component={Hero} />
-                        <Route path="/swap" component={Create} />
-                        {/* Compatibility with link in Breez:
-                            https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
-                        <Route path="/swapbox" component={Create} />
-                        <Route path="/swap/:id" component={Pay} />
-                        <Route path="/swap/refund/:id" component={RefundStep} />
-                        <Route path="/error" component={Error} />
-                        <Route path="/refund" component={Refund} />
-                        <Route path="/history" component={History} />
-                    </Routes>
-                    <Show when={!embedded()}>
-                        <Notification />
-                        <Footer />
-                    </Show>
+                    <PayProvider>
+                        <SwapChecker />
+                        <Show when={!embedded()}>
+                            <Nav network={network} />
+                        </Show>
+                        <Routes>
+                            <Route
+                                path="*"
+                                element={<Navigate href={"/404"} />}
+                            />
+                            <Route path="/404" component={NotFound} />
+                            <Route path="/" component={Hero} />
+                            <Route path="/swap" component={Create} />
+                            {/* Compatibility with link in Breez:
+                                https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
+                            <Route path="/swapbox" component={Create} />
+                            <Route path="/swap/:id" component={Pay} />
+                            <Route
+                                path="/swap/refund/:id"
+                                component={RefundStep}
+                            />
+                            <Route path="/error" component={Error} />
+                            <Route path="/refund" component={Refund} />
+                            <Route path="/history" component={History} />
+                        </Routes>
+                        <Show when={!embedded()}>
+                            <Notification />
+                            <Footer />
+                        </Show>
+                    </PayProvider>
                 </CreateProvider>
             </Web3SignerProvider>
         </Router>

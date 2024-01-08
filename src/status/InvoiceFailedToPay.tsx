@@ -4,10 +4,12 @@ import DownloadRefund from "../components/DownloadRefund";
 import Refund from "../components/Refund";
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts";
+import { usePayContext } from "../context/Pay";
 import t from "../i18n";
-import { failureReason, swap, timeoutEta } from "../signals";
+import { timeoutEta } from "../signals";
 
 const InvoiceFailedToPay = () => {
+    const { failureReason, swap } = usePayContext();
     return (
         <div>
             <h2>{t("invoice_payment_failure")}</h2>

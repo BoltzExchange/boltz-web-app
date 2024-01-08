@@ -5,7 +5,8 @@ import { AddressInfo } from "net";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { SwapChecker, checkInterval } from "../../src/components/SwapChecker";
-import { setSwap, setSwaps } from "../../src/signals";
+import { PayProvider, usePayContext } from "../../src/context/Pay";
+import { setSwaps } from "../../src/signals";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -105,6 +106,12 @@ const wait = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms));
 describe("swapChecker", () => {
     const server = new Server();
 
+    let signals: any;
+    const TestComponent = () => {
+        signals = usePayContext();
+        return "";
+    };
+
     beforeEach(() => {
         server.start();
         vi.resetAllMocks();
@@ -120,7 +127,12 @@ describe("swapChecker", () => {
 
     test("should poll status of pending swaps", async () => {
         setSwaps(swaps);
-        render(() => <SwapChecker />);
+        render(() => (
+            <PayProvider>
+                <TestComponent />
+                <SwapChecker />
+            </PayProvider>
+        ));
         await wait(100);
 
         expect(fetcherCallData).toHaveLength(2);
@@ -136,8 +148,13 @@ describe("swapChecker", () => {
 
     test("should connect and handle SSE for active swap", async () => {
         setSwaps(swaps);
-        render(() => <SwapChecker />);
-        setSwap(swaps[0]);
+        render(() => (
+            <PayProvider>
+                <TestComponent />
+                <SwapChecker />
+            </PayProvider>
+        ));
+        signals.setSwap(swaps[0]);
         await wait();
 
         const message = { status: "some update" };
@@ -151,29 +168,39 @@ describe("swapChecker", () => {
     });
 
     test("should close SSE when active swap changes", async () => {
-        render(() => <SwapChecker />);
-        setSwap(swaps[0]);
+        render(() => (
+            <PayProvider>
+                <TestComponent />
+                <SwapChecker />
+            </PayProvider>
+        ));
+        signals.setSwap(swaps[0]);
         await wait();
 
         expect(Object.keys(server.connections).length).toEqual(1);
         expect(server.connections[swaps[0].id]).not.toBeUndefined();
 
-        setSwap(null);
+        signals.setSwap(null);
         await wait();
 
         expect(Object.keys(server.connections).length).toEqual(0);
     });
 
     test("should not reconnect SSE when change swap has same id", async () => {
-        render(() => <SwapChecker />);
-        setSwap(swaps[0]);
+        render(() => (
+            <PayProvider>
+                <TestComponent />
+                <SwapChecker />
+            </PayProvider>
+        ));
+        signals.setSwap(swaps[0]);
         await wait();
 
         const consCount = server.connectCount;
 
-        setSwap({ id: swaps[0].id, some: "other data" });
+        signals.setSwap({ id: swaps[0].id, some: "other data" });
 
-        setSwap(swaps[0]);
+        signals.setSwap(swaps[0]);
         await wait();
 
         expect(server.connectCount).toEqual(consCount);

@@ -3,7 +3,8 @@ import { Accessor, createSignal } from "solid-js";
 import { RBTC } from "../consts";
 import { useWeb3Signer } from "../context/Web3";
 import t from "../i18n";
-import { refund, refundAddressChange, updateSwaps } from "../utils/helper";
+import { setSwaps, swaps } from "../signals";
+import { refund, refundAddressChange } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
@@ -11,6 +12,13 @@ import ContractTransaction from "./ContractTransaction";
 const Refund = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
     if (swap().asset === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
+
+        const updateSwaps = (cb: any) => {
+            const swapsTmp = swaps();
+            const currentSwap = swapsTmp.find((s) => swap().id === s.id);
+            cb(currentSwap);
+            setSwaps(swapsTmp);
+        };
 
         return (
             <ContractTransaction
