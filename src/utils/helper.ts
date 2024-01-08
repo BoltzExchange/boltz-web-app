@@ -294,7 +294,10 @@ const createAdjustedClaim = <
     );
 };
 
-export const claim = async (swap: any, swapStatusTransaction: any) => {
+export const claim = async (
+    swap: any,
+    swapStatusTransaction: { hex: string },
+) => {
     if (swap.asset === RBTC) {
         return;
     }

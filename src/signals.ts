@@ -15,7 +15,7 @@ export const [transactionToRefund, setTransactionToRefund] = createSignal(null);
 
 export const [i18n, setI18n] = createSignal(null);
 
-// local storage To support the values created by the deprecated "createStorageSignal"
+// local storage to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
     serialize: (value: any) => value,
     deserialize: (value: any) => value,
