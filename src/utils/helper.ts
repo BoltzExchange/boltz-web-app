@@ -30,7 +30,6 @@ import {
     swaps,
     transactionToRefund,
 } from "../signals";
-import { feeChecker } from "../utils/feeChecker";
 import { checkResponse } from "../utils/http";
 import { swapStatusPending, updateSwapStatus } from "../utils/swapStatus";
 import {
@@ -450,36 +449,6 @@ export const fetchPairs = () => {
         },
     );
     return false;
-};
-
-export const feeCheck = async (notification: any, asset: string) => {
-    return new Promise((resolve) => {
-        fetcher(
-            "/getpairs",
-            BTC,
-            (data: any) => {
-                log.debug("getpairs", data);
-                if (feeChecker(data.pairs, asset)) {
-                    // amounts matches and fees are ok
-                    resolve(true);
-                } else {
-                    setNotificationType("error");
-                    setNotification(notification);
-                    resolve(false);
-                }
-
-                // Always update the pairs to make sure the pairHash for the next request is up to date
-                setConfig(data.pairs);
-            },
-            null,
-            (error) => {
-                log.debug(error);
-                setNotificationType("error");
-                setNotification(error);
-                resolve(false);
-            },
-        );
-    });
 };
 
 export const refundAddressChange = (evt: InputEvent, asset: string) => {
