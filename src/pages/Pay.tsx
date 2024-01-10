@@ -5,17 +5,8 @@ import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
-import t from "../i18n";
-import {
-    setFailureReason,
-    setSwap,
-    setSwapStatus,
-    setSwapStatusTransaction,
-    swap,
-    swapStatus,
-    swapStatusTransaction,
-    swaps,
-} from "../signals";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
@@ -23,12 +14,13 @@ import InvoiceSet from "../status/InvoiceSet";
 import SwapCreated from "../status/SwapCreated";
 import SwapExpired from "../status/SwapExpired";
 import SwapRefunded from "../status/SwapRefunded";
+import TransactionClaimPending from "../status/TransactionClaimPending";
 import TransactionClaimed from "../status/TransactionClaimed";
 import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
-import { fetcher } from "../utils/helper";
-import { swapStatusFailed } from "../utils/swapStatus";
+import { getSwapStatus } from "../utils/boltzClient";
+import { swapStatusFailed, swapStatusPending } from "../utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
@@ -37,7 +29,18 @@ const Pay = () => {
     const [contractTransactionType, setContractTransactionType] =
         createSignal("lockup_tx");
 
-    createEffect(() => {
+    const { swaps, t } = useGlobalContext();
+    const {
+        swap,
+        setSwap,
+        swapStatus,
+        setSwapStatus,
+        swapStatusTransaction,
+        setSwapStatusTransaction,
+        setFailureReason,
+    } = usePayContext();
+
+    createEffect(async () => {
         let tmpSwaps = swaps();
         if (tmpSwaps) {
             const currentSwap = tmpSwaps
@@ -46,15 +49,13 @@ const Pay = () => {
             if (currentSwap) {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);
-                fetcher(
-                    "/swapstatus",
-                    (data: any) => {
-                        setSwapStatus(data.status);
-                        setSwapStatusTransaction(data.transaction);
-                        setFailureReason(data.failureReason);
-                    },
-                    { id: currentSwap.id },
+                const res = await getSwapStatus(
+                    currentSwap.asset,
+                    currentSwap.id,
                 );
+                setSwapStatus(res.status);
+                setSwapStatusTransaction(res.transaction);
+                setFailureReason(res.failureReason);
             }
         }
     });
@@ -63,7 +64,6 @@ const Pay = () => {
         const tx = swapStatusTransaction();
 
         if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
-            // @ts-ignore
             setContractTransaction(tx.id);
         }
     });
@@ -157,6 +157,13 @@ const Pay = () => {
                     <Show when={swapStatus() == "invoice.pending"}>
                         <InvoicePending />
                     </Show>
+                    <Show
+                        when={
+                            swapStatus() ===
+                            swapStatusPending.TransactionClaimPending
+                        }>
+                        <TransactionClaimPending />
+                    </Show>
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />
                     </Show>
@@ -165,6 +172,7 @@ const Pay = () => {
                         when={
                             swap().asset !== RBTC &&
                             swapStatus() !== null &&
+                            swapStatus() !== "invoice.set" &&
                             swapStatus() !== "swap.created"
                         }>
                         <BlockExplorer

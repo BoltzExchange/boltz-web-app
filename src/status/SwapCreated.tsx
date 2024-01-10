@@ -4,13 +4,16 @@ import { Show } from "solid-js";
 
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts";
-import t from "../i18n";
-import { denomination, swap, webln } from "../signals";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import { denominations, formatAmount } from "../utils/denomination";
-import { clipboard, cropString } from "../utils/helper";
+import { clipboard, cropString, isMobile } from "../utils/helper";
+import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
+    const { swap } = usePayContext();
+    const { t, denomination, webln } = useGlobalContext();
     const payWeblnInvoice = async (pr: string) => {
         enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);
@@ -31,26 +34,32 @@ const SwapCreated = () => {
                 })}
             </h2>
             <hr />
-            <QrCode data={swap().reverse ? swap().invoice : swap().bip21} />
+            <a href={invoicePrefix + swap().invoice}>
+                <QrCode data={swap().invoice} />
+            </a>
             <hr />
             <p
-                onclick={() => clipboard(swap().invoice, t("copied"))}
+                onclick={() => clipboard(swap().invoice)}
                 class="address-box break-word">
                 {cropString(swap().invoice)}
             </p>
             <hr />
             <h3>{t("warning_return")}</h3>
             <hr />
-            <Show when={webln()}>
+            <Show when={webln() && !isMobile}>
                 <span
                     class="btn btn-light"
                     onClick={() => payWeblnInvoice(swap().invoice)}>
                     {t("pay_invoice_webln")}
                 </span>
             </Show>
-            <span
-                class="btn"
-                onclick={() => clipboard(swap().invoice, t("copied"))}>
+            <Show when={isMobile}>
+                <a href={invoicePrefix + swap().invoice} class="btn btn-light">
+                    {t("open_in_wallet")}
+                </a>
+            </Show>
+            <hr class="spacer" />
+            <span class="btn" onclick={() => clipboard(swap().invoice)}>
                 {t("copy_invoice")}
             </span>
         </div>

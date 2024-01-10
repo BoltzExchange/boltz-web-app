@@ -2,19 +2,16 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 
-import t from "../i18n";
-import {
-    camera,
-    reverse,
-    setCamera,
-    setInvoice,
-    setOnchainAddress,
-} from "../signals";
+import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import "../style/qrscan.scss";
 
 const QrScan = () => {
     let qrRef: HTMLVideoElement;
     let qrScanner: QrScanner;
+
+    const { reverse, setInvoice, setOnchainAddress } = useCreateContext();
+    const { t, camera, setCamera } = useGlobalContext();
 
     const [scanning, setScanning] = createSignal(false);
 
@@ -43,10 +40,14 @@ const QrScan = () => {
                     }
                     stopScan();
                 },
-                {},
+                {
+                    maxScansPerSecond: 1000,
+                    highlightScanRegion: true,
+                    onDecodeError: () => {},
+                },
             );
         }
-        qrScanner.start();
+        qrScanner.start().then();
     };
 
     const stopScan = () => {

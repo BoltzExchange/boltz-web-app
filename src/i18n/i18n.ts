@@ -72,6 +72,7 @@ const dict = {
         failure_reason: "Failure reason",
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
+        onchain_address_no_asset: "Enter address",
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
@@ -99,7 +100,10 @@ const dict = {
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
-        refund_address_placeholder: "Refund address",
+        refund_address_header:
+            "Enter address of your {{ asset }} wallet to refund",
+        refund_address_header_no_asset:
+            "Enter address of your wallet to refund",
         refund_backup: "Backup",
         refund_import: "Import Backup",
         refund_clear: "Delete localstorage",
@@ -120,7 +124,7 @@ const dict = {
         tx_confirmed: "Transaction confirmed",
         tx_ready_to_claim: "Claiming transaction now...",
         transaction_refunded: "Boltz has refunded the Transaction",
-        refunded: "Swap has been refunded",
+        refunded: "Swap has been successfully refunded!",
         broadcasted: "Refund broadcasted",
         locktime_not_satisfied: "Locktime requirement not satisfied",
         already_refunded: "Swap already refunded",
@@ -160,6 +164,9 @@ const dict = {
         scan_qr_code: "Scan QR Code",
         version: "Version",
         commithash: "Commit Hash",
+        open_in_wallet: "Open in Wallet",
+        invoice_paid: "Invoice paid",
+        creating_coop_claim: "Creating cooperative claim transaction.",
     },
     de: {
         language: "Deutsch",
@@ -236,6 +243,7 @@ const dict = {
         invoice_payment_failure:
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
         onchain_address: "{{ asset }}-Adresse eingeben",
+        onchain_address_no_asset: "Adresse",
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
@@ -263,7 +271,8 @@ const dict = {
             "Swaps, die in deinem Browser gespeichert wurden",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
-        refund_address_placeholder: "Rückerstattungsadresse",
+        refund_address_header: "Adresse deines {{ asset }} Wallet eingeben",
+        refund_address_header_no_asset: "Adresse deines Wallet eingeben",
         refund_backup: "Backup",
         refund_import: "Backup importieren",
         refund_clear: "Lokalen Speicher löschen",
@@ -285,7 +294,7 @@ const dict = {
         tx_confirmed: "Transaktion bestätigt!",
         tx_ready_to_claim: "Claime die Transaktion jetzt...",
         transaction_refunded: "Boltz hat die Transaktion erstattet.",
-        refunded: "Swap wurde erstattet.",
+        refunded: "Swap wurde erfolgreich erstattet!",
         broadcasted: "Rückerstattung gesendet.",
         locktime_not_satisfied: "Locktime-Anforderung nicht erfüllt.",
         already_refunded: "Swap wurde bereits erstattet!",
@@ -329,6 +338,9 @@ const dict = {
         scan_qr_code: "QR Code scannen",
         version: "Version",
         commithash: "Commit Hash",
+        open_in_wallet: "Im Wallet öffnen",
+        invoice_paid: "Rechnung bezahlt",
+        creating_coop_claim: "Erstelle kooperative Claim-Transaktion.",
     },
     es: {
         language: "Español",
@@ -405,6 +417,7 @@ const dict = {
         failure_reason: "Motivo del fallo",
         invoice_payment_failure: "No se pudo pagar su factura Lightning",
         onchain_address: "Ingrese la dirección de {{ asset }}",
+        onchain_address_no_asset: "Ingrese la dirección",
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
@@ -431,7 +444,10 @@ const dict = {
         refund_past_swaps_subline:
             "Intercambios que se guardaron en el almacenamiento del navegador",
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
-        refund_address_placeholder: "Dirección de reembolso",
+        refund_address_header:
+            "Introduzca la dirección de tu monedero {{ asset }} para reembolsar",
+        refund_address_header_no_asset:
+            "Introduzca la dirección de tu monedero para reembolsar",
         refund_backup: "Backup",
         refund_import: "Importar Backup",
         refund_clear: "Borrar almacenamiento local",
@@ -497,6 +513,10 @@ const dict = {
         scan_qr_code: "Escanear código QR",
         version: "Versión",
         commithash: "Commit Hash",
+        open_in_wallet: "Abrir en monedero",
+        invoice_paid: "Factura pagada",
+        creating_coop_claim:
+            "Creación de una transacción de reclamación cooperativa.",
     },
     zh: {
         language: "中文",
@@ -570,6 +590,7 @@ const dict = {
         failure_reason: "失败原因",
         invoice_payment_failure: "无法支付您的闪电发票",
         onchain_address: "输入{{ asset }}地址",
+        onchain_address_no_asset: "地址",
         download_refund_file: "下载退款文件",
         invalid_refund_file: "无效的退款文件",
         invalid_backup_file: "无效的备份文件",
@@ -593,7 +614,8 @@ const dict = {
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         history_no_swaps: "看起来您还没有进行任何交换。",
-        refund_address_placeholder: "退款地址",
+        refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
+        refund_address_header_no_asset: "输入要退款的钱包地址",
         refund_backup: "备份",
         refund_import: "导入备份",
         refund_clear: "删除本地存储",
@@ -613,7 +635,7 @@ const dict = {
         select_asset: "选择{{ direction }}资产",
         tx_confirmed: "交易已确认",
         tx_ready_to_claim: "现在要求交换……",
-        transaction_refunded: "Boltz已退款交易",
+        transaction_refunded: "Boltz已退款交易!",
         refunded: "交换已退还",
         broadcasted: "退款已广播",
         locktime_not_satisfied: "未满足锁定时间要求",
@@ -651,6 +673,9 @@ const dict = {
         scan_qr_code: "扫描 QR 码",
         version: "版本",
         commithash: "提交哈希",
+        open_in_wallet: "在钱包中打开",
+        invoice_paid: "发票已支付",
+        creating_coop_claim: "创建合作索赔交易。",
     },
 };
 

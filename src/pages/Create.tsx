@@ -12,38 +12,8 @@ import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import { RBTC, sideReceive, sideSend } from "../consts";
-import t from "../i18n";
-import {
-    addressValid,
-    amountChanged,
-    asset,
-    assetReceive,
-    assetSelect,
-    assetSelected,
-    assetSend,
-    boltzFee,
-    denomination,
-    invoiceValid,
-    maximum,
-    minerFee,
-    minimum,
-    receiveAmount,
-    receiveAmountFormatted,
-    reverse,
-    sendAmount,
-    sendAmountFormatted,
-    sendAmountValid,
-    setAmountChanged,
-    setInvoice,
-    setReceiveAmount,
-    setReceiveAmountFormatted,
-    setSendAmount,
-    setSendAmountFormatted,
-    setSendAmountValid,
-    setValid,
-    wasmSupported,
-    webln,
-} from "../signals";
+import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
@@ -51,6 +21,7 @@ import {
 import {
     calculateDigits,
     convertAmount,
+    denominations,
     formatAmount,
     getValidationRegex,
 } from "../utils/denomination";
@@ -61,9 +32,61 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
+    const { setDenomination, webln, denomination, wasmSupported, t } =
+        useGlobalContext();
+    const {
+        reverse,
+        asset,
+        assetSend,
+        assetReceive,
+        assetSelect,
+        assetSelected,
+        invoiceValid,
+        addressValid,
+        sendAmountValid,
+        sendAmount,
+        setSendAmount,
+        receiveAmount,
+        setReceiveAmount,
+        sendAmountFormatted,
+        setSendAmountFormatted,
+        receiveAmountFormatted,
+        setReceiveAmountFormatted,
+        amountChanged,
+        setAmountChanged,
+        minimum,
+        maximum,
+        setInvoice,
+        setInvoiceValid,
+        setValid,
+        setSendAmountValid,
+        boltzFee,
+        minerFee,
+    } = useCreateContext();
+
+    // if btc and amount > 10, switch to sat
+    // user failed to notice the non satoshi denomination
+    const changeDenomination = (amount: string) => {
+        if (amount === "") return;
+        if (denomination() === denominations.btc && Number(amount) >= 10) {
+            setDenomination(denominations.sat);
+        } else if (denomination() === denominations.sat && Number(amount) < 1) {
+            setDenomination(denominations.btc);
+        }
+    };
+
+    const checkEmptyAmount = (amount: string) => {
+        if (amount === "") {
+            setReceiveAmount(BigNumber(0));
+            setSendAmount(BigNumber(0));
+        }
+    };
+
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
+        checkEmptyAmount(amount);
+        changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
         const sendAmount = calculateSendAmount(
             satAmount,
@@ -82,6 +105,8 @@ const Create = () => {
     const changeSendAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value.trim();
+        checkEmptyAmount(amount);
+        changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
         const receiveAmount = calculateReceiveAmount(
             satAmount,
@@ -104,12 +129,17 @@ const Create = () => {
             validateAmount();
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
+            setInvoiceValid(true);
         });
     };
 
     const validateInput = (evt: KeyboardEvent) => {
         const input = evt.currentTarget as HTMLInputElement;
         const keycode = evt.key;
+        // switch to sat denomination if keypress .
+        if (denomination() == "sat" && keycode === ".") {
+            setDenomination(denominations.btc);
+        }
         const hasDot = input.value.includes(".");
         const regex = denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\./;
         if (!regex.test(keycode)) {
@@ -121,6 +151,7 @@ const Create = () => {
     const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
+        changeDenomination(pastedData);
         if (!getValidationRegex(maximum(), denomination()).test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
@@ -221,12 +252,16 @@ const Create = () => {
             setReceiveAmountFormatted(
                 formatAmount(BigNumber(rAmount), denomination()).toString(),
             );
+        } else {
+            setReceiveAmountFormatted("");
         }
         const sAmount = Number(sendAmount());
         if (sAmount > 0) {
             setSendAmountFormatted(
                 formatAmount(BigNumber(sAmount), denomination()).toString(),
             );
+        } else {
+            setSendAmountFormatted("");
         }
     });
 
@@ -285,21 +320,14 @@ const Create = () => {
                         autofocus
                         required
                         type="text"
-                        placeholder={formatAmount(
-                            BigNumber(minimum()),
-                            denomination(),
-                        )}
+                        placeholder="0"
                         maxlength={calculateDigits(maximum(), denomination())}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="sendAmount"
                         data-testid="sendAmount"
-                        value={
-                            sendAmountFormatted() === "0"
-                                ? ""
-                                : sendAmountFormatted()
-                        }
+                        value={sendAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
@@ -312,26 +340,14 @@ const Create = () => {
                         ref={receiveAmountRef}
                         required
                         type="text"
-                        placeholder={formatAmount(
-                            calculateReceiveAmount(
-                                BigNumber(minimum()),
-                                boltzFee(),
-                                minerFee(),
-                                reverse(),
-                            ),
-                            denomination(),
-                        )}
+                        placeholder="0"
                         maxlength={calculateDigits(maximum(), denomination())}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="receiveAmount"
                         data-testid="receiveAmount"
-                        value={
-                            receiveAmountFormatted() === "0"
-                                ? ""
-                                : receiveAmountFormatted()
-                        }
+                        value={receiveAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}

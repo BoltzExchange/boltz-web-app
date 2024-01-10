@@ -4,15 +4,20 @@ import { Show } from "solid-js";
 import ContractTransaction from "../components/ContractTransaction";
 import QrCode from "../components/QrCode";
 import { BTC, RBTC } from "../consts";
+import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
-import t from "../i18n";
-import { asset, denomination, setSwaps, swap, swaps } from "../signals";
 import { denominations, formatAmount } from "../utils/denomination";
-import { clipboard, cropString } from "../utils/helper";
+import { clipboard, cropString, isMobile } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 const InvoiceSet = () => {
+    const { swap } = usePayContext();
+    const { asset } = useCreateContext();
+    const { t, swaps, setSwaps, denomination } = useGlobalContext();
+
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
@@ -60,10 +65,12 @@ const InvoiceSet = () => {
                 })}
             </h2>
             <hr />
-            <QrCode data={swap().reverse ? swap().invoice : swap().bip21} />
+            <a href={swap().bip21}>
+                <QrCode data={swap().bip21} />
+            </a>
             <hr />
             <p
-                onclick={() => clipboard(swap().address, t("copied"))}
+                onclick={() => clipboard(swap().address)}
                 class="address-box break-word">
                 {cropString(swap().address)}
             </p>
@@ -72,29 +79,32 @@ const InvoiceSet = () => {
                 <h3>{t("warning_expiry")}</h3>
                 <hr />
             </Show>
+            <Show when={isMobile}>
+                <a href={swap().bip21} class="btn btn-light">
+                    {t("open_in_wallet")}
+                </a>
+            </Show>
+            <hr />
             <div class="btns">
-                <span
-                    class="btn"
-                    onclick={() => clipboard(swap().bip21, t("copied"))}>
-                    {t("copy_bip21")}
-                </span>
                 <span
                     class="btn"
                     onclick={() =>
                         clipboard(
-                            formatAmount(swap().expectedAmount, denomination()),
-                            t("copied"),
+                            formatAmount(
+                                BigNumber(swap().expectedAmount),
+                                denomination(),
+                            ),
                         )
                     }>
                     {t("copy_amount")}
                 </span>
-                <span
-                    class="btn"
-                    onclick={() => clipboard(swap().address, t("copied"))}>
+                <span class="btn" onclick={() => clipboard(swap().address)}>
                     {t("copy_address")}
                 </span>
+                <span class="btn" onclick={() => clipboard(swap().bip21)}>
+                    {t("copy_bip21")}
+                </span>
             </div>
-            <hr />
         </div>
     );
 };

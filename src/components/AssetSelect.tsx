@@ -1,17 +1,7 @@
 import { pairs } from "../config";
 import { LN, sideSend } from "../consts";
-import t from "../i18n";
-import {
-    assetReceive,
-    assetSelect,
-    assetSelected,
-    assetSend,
-    setAsset,
-    setAssetReceive,
-    setAssetSelect,
-    setAssetSend,
-} from "../signals";
-import { fetchPairs } from "../utils/helper";
+import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 
 const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
 assets.push(LN);
@@ -21,6 +11,19 @@ const SelectAsset = () => {
         const setter = isSend ? setAssetSend : setAssetReceive;
         setter(asset);
     };
+
+    const { t, fetchPairs } = useGlobalContext();
+
+    const {
+        assetReceive,
+        assetSelect,
+        assetSelected,
+        assetSend,
+        setAsset,
+        setAssetReceive,
+        setAssetSelect,
+        setAssetSend,
+    } = useCreateContext();
 
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) return;

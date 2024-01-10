@@ -1,49 +1,67 @@
 import { render } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import Fees from "../../src/components/Fees";
-import * as signals from "../../src/signals";
+import { BTC } from "../../src/consts";
+import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import { calculateSendAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
 
 describe("Fees component", () => {
-    beforeAll(() => {
-        // @ts-ignore
-        signals.setConfig(cfg);
-        signals.setReverse(true);
-    });
+    let signals: any;
+    let globalSignals: any;
 
-    beforeEach(() => {
-        signals.setAsset("BTC");
-    });
+    const TestComponent = () => {
+        signals = useCreateContext();
+        globalSignals = useGlobalContext();
+        return "";
+    };
 
     test("should render", async () => {
-        render(() => <Fees />);
+        render(() => (
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <Fees />
+                </CreateProvider>
+            </GlobalProvider>
+        ));
+        globalSignals.setConfig(cfg);
     });
 
     test("should recalculate limits on direction switch", () => {
-        const setMinimum = vi.spyOn(signals, "setMinimum");
-        const setMaximum = vi.spyOn(signals, "setMaximum");
+        render(() => (
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <Fees />
+                </CreateProvider>
+            </GlobalProvider>
+        ));
+        globalSignals.setConfig(cfg);
 
-        render(() => <Fees />);
-
-        expect(setMinimum).toHaveBeenCalledWith(cfg["BTC/BTC"].limits.minimal);
-        expect(setMaximum).toHaveBeenCalledWith(cfg["BTC/BTC"].limits.maximal);
+        expect(signals.minimum()).toEqual(
+            cfg.submarine[BTC][BTC].limits.minimal,
+        );
+        expect(signals.maximum()).toEqual(
+            cfg.submarine[BTC][BTC].limits.maximal,
+        );
 
         signals.setReverse(false);
 
-        expect(setMinimum).toHaveBeenLastCalledWith(
+        expect(signals.minimum()).toEqual(
             calculateSendAmount(
-                BigNumber(cfg["BTC/BTC"].limits.minimal),
+                BigNumber(cfg.submarine[BTC][BTC].limits.minimal),
                 signals.boltzFee(),
                 signals.minerFee(),
                 signals.reverse(),
             ).toNumber(),
         );
-        expect(setMaximum).toHaveBeenLastCalledWith(
+        expect(signals.maximum()).toEqual(
             calculateSendAmount(
-                BigNumber(cfg["BTC/BTC"].limits.maximal),
+                BigNumber(cfg.submarine[BTC][BTC].limits.maximal),
                 signals.boltzFee(),
                 signals.minerFee(),
                 signals.reverse(),

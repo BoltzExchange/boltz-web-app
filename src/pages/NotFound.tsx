@@ -1,9 +1,10 @@
 import { useNavigate } from "@solidjs/router";
 
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 
 const NotFound = () => {
     const navigate = useNavigate();
+    const { t } = useGlobalContext();
 
     return (
         <div id="notfound" class="inner-wrap">

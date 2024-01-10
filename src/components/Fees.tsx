@@ -3,42 +3,50 @@ import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
-import t from "../i18n";
+import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import {
-    asset,
-    boltzFee,
-    config,
-    denomination,
-    minerFee,
-    reverse,
-    sendAmount,
-    setBoltzFee,
-    setDenomination,
-    setMaximum,
-    setMinerFee,
-    setMinimum,
-} from "../signals";
+    ReversePairTypeTaproot,
+    SubmarinePairTypeTaproot,
+} from "../utils/boltzClient";
 import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
 import { denominations, formatAmount } from "../utils/denomination";
-import { fetchPairs } from "../utils/helper";
+import { getPair } from "../utils/helper";
 
 const Fees = () => {
-    createEffect(() => {
-        const cfg = config()[`${asset()}/BTC`];
+    const { t, config, fetchPairs, denomination, setDenomination } =
+        useGlobalContext();
+    const {
+        asset,
+        reverse,
+        sendAmount,
+        setMaximum,
+        setMinimum,
+        minerFee,
+        setMinerFee,
+        boltzFee,
+        setBoltzFee,
+    } = useCreateContext();
 
-        if (cfg) {
+    createEffect(() => {
+        if (config()) {
+            const cfg = getPair(config(), asset(), reverse());
+
             if (reverse()) {
-                const rev = cfg.fees.minerFees.baseAsset.reverse;
-                const fee = rev.claim + rev.lockup;
-                setBoltzFee(cfg.fees.percentage);
+                const reverseCfg = cfg as ReversePairTypeTaproot;
+
+                const fee =
+                    reverseCfg.fees.minerFees.claim +
+                    reverseCfg.fees.minerFees.lockup;
+
+                setBoltzFee(reverseCfg.fees.percentage);
                 setMinerFee(fee);
             } else {
-                let fee = cfg.fees.minerFees.baseAsset.normal;
-                setBoltzFee(cfg.fees.percentageSwapIn);
-                setMinerFee(fee);
+                setBoltzFee(cfg.fees.percentage);
+                setMinerFee((cfg as SubmarinePairTypeTaproot).fees.minerFees);
             }
 
             const calculateLimit = (limit: number): number => {

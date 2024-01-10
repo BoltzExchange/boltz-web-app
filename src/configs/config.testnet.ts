@@ -2,9 +2,11 @@
 export * from "./configs/templates/defaults";
 
 const apiUrl = "https://testnet.boltz.exchange/api";
-const blockExplorerUrl = "https://mempool.space/testnet";
-const blockExplorerUrlLiquid = "https://liquid.network/testnet";
+const blockExplorerUrl = "https://blockstream.info/testnet";
+const blockExplorerUrlLiquid = "https://blockstream.info/liquidtestnet";
 const blockExplorerUrlRsk = "https://explorer.testnet.rsk.co";
+
+export const lightningExplorerUrl = "https://1ml.com/testnet/node";
 
 export const network: string = "testnet";
 export const bolt11_prefix = "lntb";

@@ -166,13 +166,21 @@ h3 {
     width: 96px;
     height: 37px;
 }
-.electrum {
+.marina {
     display: inline-block;
-    background: url(../assets/electrum.png);
+    background: url(../assets/marina.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 42px;
+    height: 42px;
+}
+.aqua {
+    display: inline-block;
+    background: url(../assets/aqua.svg);
     background-size: 100%;
     background-repeat: no-repeat;
     width: 153px;
-    height: 42px;
+    height: 32px;
 }
 .cln {
     display: inline-block;

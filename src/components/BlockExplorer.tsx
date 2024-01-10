@@ -1,5 +1,5 @@
 import { pairs } from "../config";
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 
 const blockExplorerLink = (asset: string, isTxId: boolean, val: string) => {
     const basePath = pairs[`${asset}/BTC`].blockExplorerUrl;
@@ -13,6 +13,7 @@ const BlockExplorer = (props: {
     address?: string;
     typeLabel?: string;
 }) => {
+    const { t } = useGlobalContext();
     const href = () =>
         props.txId !== undefined
             ? blockExplorerLink(props.asset, true, props.txId)

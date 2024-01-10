@@ -3,12 +3,19 @@ import { render, screen } from "@solidjs/testing-library";
 import { describe, expect, test } from "vitest";
 
 import Nav from "../../src/components/Nav";
+import { GlobalProvider } from "../../src/context/Global";
 
 describe("Nav", () => {
     test.each(["testnet", "regtest", "random"])(
         "should show network on network %s",
         async (network) => {
-            render(() => <Router root={() => <Nav network={network} />} />);
+            render(() => (
+                <Router>
+                    <GlobalProvider>
+                        <Nav network={network} />
+                    </GlobalProvider>
+                </Router>
+            ));
 
             const networkLabel = screen.queryAllByText(network);
             expect(networkLabel.length).toBe(1);
@@ -17,7 +24,14 @@ describe("Nav", () => {
 
     test("should not show network on mainnet", async () => {
         const network = "main";
-        render(() => <Router root={() => <Nav network={network} />} />);
+
+        render(() => (
+            <Router>
+                <GlobalProvider>
+                    <Nav network={network} />
+                </GlobalProvider>
+            </Router>
+        ));
 
         const networkLabel = screen.queryAllByText(network);
         expect(networkLabel.length).toBe(0);

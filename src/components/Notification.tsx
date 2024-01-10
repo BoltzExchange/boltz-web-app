@@ -1,31 +1,35 @@
-import { createEffect } from "solid-js";
+import { createEffect, on } from "solid-js";
 
-import {
-    notification,
-    notificationType,
-    setNotification,
-    setNotificationType,
-} from "../signals";
+import { useGlobalContext } from "../context/Global";
 import "../style/notification.scss";
 
 const Notification = () => {
-    createEffect(() => {
-        var new_notication = notification();
-        if (new_notication) {
-            var target = document.getElementById("notification");
-            target.classList.add("show");
-            target.classList.add(notificationType());
-            setTimeout(() => {
-                target.classList.remove("show");
-                target.classList.remove(notificationType());
-                setNotification("");
-                setNotificationType("");
-            }, 4000);
-        }
-    });
+    let notificationRef: HTMLDivElement;
+    const {
+        notification,
+        setNotification,
+        notificationType,
+        setNotificationType,
+    } = useGlobalContext();
+
+    createEffect(
+        on([notification], () => {
+            const newNotification = notification();
+            if (newNotification) {
+                notificationRef.classList.add("show");
+                notificationRef.classList.add(notificationType());
+                setTimeout(() => {
+                    notificationRef.classList.remove("show");
+                    notificationRef.classList.remove(notificationType());
+                    setNotification("");
+                    setNotificationType("");
+                }, 4000);
+            }
+        }),
+    );
 
     return (
-        <div id="notification" class={notificationType()}>
+        <div ref={notificationRef} id="notification">
             <span>{notification()}</span>
         </div>
     );

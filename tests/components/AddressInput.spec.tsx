@@ -1,12 +1,20 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC } from "../../src/consts";
-import t from "../../src/i18n";
-import * as signals from "../../src/signals";
+import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 
 describe("AddressInput", () => {
+    let signals: any;
+    let globalSignals: any;
+    const TestComponent = () => {
+        signals = useCreateContext();
+        globalSignals = useGlobalContext();
+        return "";
+    };
+
     test.each`
         valid    | network | address
         ${true}  | ${BTC}  | ${"mv5v8C3e1SySwqe6r2fq9Fh6DbZr8ddjsX"}
@@ -24,25 +32,29 @@ describe("AddressInput", () => {
     `(
         "should validate address $network $address -> $valid",
         async ({ valid, network, address }) => {
-            const setAddressValid = vi.spyOn(signals, "setAddressValid");
-            const setOnchainAddress = vi.spyOn(signals, "setOnchainAddress");
+            render(() => (
+                <GlobalProvider>
+                    <CreateProvider>
+                        <TestComponent />
+                        <AddressInput />
+                    </CreateProvider>
+                </GlobalProvider>
+            ));
 
             signals.setAsset(network);
 
-            render(() => <AddressInput />);
-
             const input = (await screen.findByPlaceholderText(
-                t("onchain_address", { asset: network }),
+                globalSignals.t("onchain_address", { asset: network }),
             )) as HTMLInputElement;
 
             fireEvent.input(input, {
                 target: { value: address },
             });
 
-            expect(setAddressValid).toHaveBeenCalledWith(valid);
+            expect(signals.addressValid()).toEqual(valid);
 
             if (valid) {
-                expect(setOnchainAddress).toHaveBeenCalledWith(address);
+                expect(signals.onchainAddress()).toEqual(address);
             } else {
                 expect(input.className).toEqual("invalid");
             }

@@ -1,36 +1,27 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show, createEffect } from "solid-js";
 
-import t from "../i18n";
-import {
-    failureReason,
-    setTransactionToRefund,
-    swap,
-    transactionToRefund,
-} from "../signals";
-import fetcher, { refund, refundAddressChange } from "../utils/helper";
+import RefundButton from "../components/RefundButton";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
+import { getSubmarineTransaction } from "../utils/boltzClient";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
+    const { failureReason, swap } = usePayContext();
+    const { t, setTransactionToRefund, transactionToRefund } =
+        useGlobalContext();
 
-    const [valid, setValid] = createSignal(false);
-
-    createEffect(() => {
+    createEffect(async () => {
         setTransactionToRefund(null);
-        fetcher(
-            "/getswaptransaction",
-            (res: any) => {
-                log.debug(`got swap transaction for ${swap().id}`);
-                setTransactionToRefund(res);
-            },
-            {
-                id: swap().id,
-            },
-            () => {
-                log.warn(`no swap transaction for: ${swap().id}`);
-            },
-        );
+        try {
+            const res = await getSubmarineTransaction(swap().asset, swap().id);
+            log.debug(`got swap transaction for ${swap().id}`);
+            setTransactionToRefund(res.hex);
+        } catch (error: any) {
+            log.warn(`no swap transaction for: ${swap().id}`, error);
+        }
     });
 
     return (
@@ -40,21 +31,7 @@ const SwapExpired = () => {
             </p>
             <hr />
             <Show when={transactionToRefund() !== null}>
-                <input
-                    onInput={(e) =>
-                        setValid(refundAddressChange(e, swap().asset))
-                    }
-                    type="text"
-                    id="refundAddress"
-                    name="refundAddress"
-                    placeholder={t("refund_address_placeholder")}
-                />
-                <button
-                    class="btn"
-                    disabled={!valid()}
-                    onclick={() => refund(swap(), t)}>
-                    {t("refund")}
-                </button>
+                <RefundButton swap={swap} />
                 <hr />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>

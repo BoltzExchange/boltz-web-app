@@ -2,24 +2,8 @@ import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
 import { RBTC } from "../consts";
-import t from "../i18n";
-import {
-    asset,
-    boltzFee,
-    denomination,
-    invoice,
-    minerFee,
-    receiveAmount,
-    receiveAmountFormatted,
-    reverse,
-    sendAmount,
-    sendAmountValid,
-    setInvoice,
-    setInvoiceValid,
-    setLnurl,
-    setReceiveAmount,
-    setSendAmount,
-} from "../signals";
+import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
 import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
@@ -27,6 +11,24 @@ import { setButtonLabel } from "./CreateButton";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
+
+    const { t, denomination } = useGlobalContext();
+    const {
+        asset,
+        boltzFee,
+        minerFee,
+        invoice,
+        receiveAmount,
+        receiveAmountFormatted,
+        reverse,
+        sendAmount,
+        sendAmountValid,
+        setInvoice,
+        setInvoiceValid,
+        setLnurl,
+        setReceiveAmount,
+        setSendAmount,
+    } = useCreateContext();
 
     const validate = (input: HTMLTextAreaElement) => {
         const inputValue = extractInvoice(input.value.trim());

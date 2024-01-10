@@ -3,12 +3,14 @@ import log from "loglevel";
 import { For, createEffect } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
-import t from "../i18n";
-import { setSwap, swaps } from "../signals";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 
 const RefundStep = () => {
     const params = useParams();
     const navigate = useNavigate();
+    const { setSwap } = usePayContext();
+    const { swaps, t } = useGlobalContext();
 
     createEffect(() => {
         let tmpSwaps = swaps();
