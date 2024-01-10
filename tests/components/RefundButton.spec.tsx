@@ -59,7 +59,7 @@ describe("RefundButton", () => {
         expect(button.disabled).not.toBeTruthy();
     });
 
-    test("button should be inactive after pasting in address", async () => {
+    test("button should be inactive after pasting an invalid address", async () => {
         const [swap] = createSignal({
             asset: "BTC",
         });
