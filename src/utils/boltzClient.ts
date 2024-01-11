@@ -3,7 +3,8 @@ import { Musig } from "boltz-core";
 import { Buffer } from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 
-import { fetcher } from "./apiClient";
+import { BTC } from "../consts";
+import { fetcher } from "./helper";
 
 type PartialSignature = {
     pubNonce: Buffer;
@@ -12,58 +13,42 @@ type PartialSignature = {
 
 type TransactionInterface = Transaction | LiquidTransaction;
 
-export const getPartialRefundSignature = (
+export const getPartialRefundSignature = async (
     id: string,
     pubNonce: Buffer,
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    return new Promise<PartialSignature>((resolve, reject) => {
-        fetcher(
-            "/v2/swap/submarine/refund",
-            (data) => {
-                resolve({
-                    pubNonce: Musig.parsePubNonce(data.pubNonce),
-                    signature: Buffer.from(data.partialSignature, "hex"),
-                });
-            },
-            {
-                id,
-                index,
-                pubNonce: pubNonce.toString("hex"),
-                transaction: transaction.toHex(),
-            },
-            reject,
-        );
+    const res = await fetcher("/v2/swap/submarine/refund", BTC, {
+        id,
+        index,
+        pubNonce: pubNonce.toString("hex"),
+        transaction: transaction.toHex(),
     });
+    return {
+        pubNonce: Musig.parsePubNonce(res.pubNonce),
+        signature: Buffer.from(res.partialSignature, "hex"),
+    };
 };
 
-export const getPartialReverseClaimSignature = (
+export const getPartialReverseClaimSignature = async (
     id: string,
     preimage: Buffer,
     pubNonce: Buffer,
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    return new Promise<PartialSignature>((resolve, reject) => {
-        fetcher(
-            "/v2/swap/reverse/claim",
-            (data) => {
-                resolve({
-                    pubNonce: Musig.parsePubNonce(data.pubNonce),
-                    signature: Buffer.from(data.partialSignature, "hex"),
-                });
-            },
-            {
-                id,
-                index,
-                preimage: preimage.toString("hex"),
-                pubNonce: pubNonce.toString("hex"),
-                transaction: transaction.toHex(),
-            },
-            reject,
-        );
+    const res = await fetcher("/v2/swap/reverse/claim", BTC, {
+        id,
+        index,
+        preimage: preimage.toString("hex"),
+        pubNonce: pubNonce.toString("hex"),
+        transaction: transaction.toHex(),
     });
+    return {
+        pubNonce: Musig.parsePubNonce(res.pubNonce),
+        signature: Buffer.from(res.partialSignature, "hex"),
+    };
 };
 
 export { TransactionInterface, PartialSignature };

@@ -11,7 +11,7 @@ import {
 
 import { pairs } from "../config";
 import { RBTC } from "../consts";
-import { getApiUrl } from "../utils/apiClient";
+import { fetcher } from "../utils/helper";
 
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
@@ -53,9 +53,7 @@ const Web3SignerProvider = (props: {
             return;
         }
 
-        const res = await (
-            await fetch(`${getApiUrl(RBTC)}/getcontracts`)
-        ).json();
+        const res = await fetcher("/getcontracts", RBTC);
         resolve(res["rsk"]);
     });
 

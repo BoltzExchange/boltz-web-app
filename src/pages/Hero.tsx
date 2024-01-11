@@ -10,7 +10,7 @@ import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
-import { fetcher } from "../utils/apiClient";
+import { fetcher } from "../utils/helper";
 
 export const Hero = () => {
     const navigate = useNavigate();

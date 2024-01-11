@@ -1,6 +1,5 @@
 import { useNavigate } from "@solidjs/router";
 import { crypto } from "bitcoinjs-lib";
-import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 import log from "loglevel";
 import { createEffect, createMemo, createSignal } from "solid-js";
