@@ -102,7 +102,8 @@ export async function refund(
     output = decodeAddress(assetName, refundAddress);
     log.info("refunding swap: ", swap.id);
     await setup();
-    const fees = await fetcher("/getfeeestimation", swap.asset);
+    const resFees = await fetcher("/getfeeestimation", swap.asset);
+    const fees = resFees[swap.asset];
 
     const Transaction = getTransaction(assetName);
 
