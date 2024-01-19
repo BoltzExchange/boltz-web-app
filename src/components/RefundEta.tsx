@@ -1,9 +1,11 @@
 import { Show } from "solid-js";
 
-import t from "../i18n";
-import { timeoutBlockHeight, timeoutEta } from "../signals";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 
 const RefundEta = () => {
+    const { timeoutEta, timeoutBlockHeight } = usePayContext();
+    const { t } = useGlobalContext();
     return (
         <Show when={timeoutEta()}>
             <div>

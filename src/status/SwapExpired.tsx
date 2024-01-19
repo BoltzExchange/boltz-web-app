@@ -3,31 +3,27 @@ import log from "loglevel";
 import { Show, createEffect } from "solid-js";
 
 import RefundButton from "../components/RefundButton";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import t from "../i18n";
-import { setTransactionToRefund, transactionToRefund } from "../signals";
 import { fetcher } from "../utils/helper";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
     const { failureReason, swap } = usePayContext();
+    const { t, setTransactionToRefund, transactionToRefund } =
+        useGlobalContext();
 
-    createEffect(() => {
+    createEffect(async () => {
         setTransactionToRefund(null);
-        fetcher(
-            "/getswaptransaction",
-            swap().asset,
-            (res: any) => {
-                log.debug(`got swap transaction for ${swap().id}`);
-                setTransactionToRefund(res);
-            },
-            {
+        try {
+            const res = await fetcher("/getswaptransaction", swap().asset, {
                 id: swap().id,
-            },
-            () => {
-                log.warn(`no swap transaction for: ${swap().id}`);
-            },
-        );
+            });
+            log.debug(`got swap transaction for ${swap().id}`);
+            setTransactionToRefund(res);
+        } catch (error: any) {
+            log.warn(`no swap transaction for: ${swap().id}`, error);
+        }
     });
 
     return (

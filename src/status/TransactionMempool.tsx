@@ -1,7 +1,8 @@
 import LoadingSpinner from "../components/LoadingSpinner";
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 
 const TransactionMempool = () => {
+    const { t } = useGlobalContext();
     return (
         <div>
             <h2>{t("tx_in_mempool")}</h2>

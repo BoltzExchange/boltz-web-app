@@ -1,10 +1,11 @@
 import DownloadRefund from "../components/DownloadRefund";
 import RefundEta from "../components/RefundEta";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import t from "../i18n";
 
 const TransactionLockupFailed = () => {
     const { failureReason } = usePayContext();
+    const { t } = useGlobalContext();
     return (
         <div>
             <h2>{t("lockup_failed")}</h2>

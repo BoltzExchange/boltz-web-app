@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
 import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { GlobalProvider } from "../../src/context/Global";
 import {
     decodeInvoice,
     extractInvoice,
@@ -28,10 +29,12 @@ describe("InvoiceInput", () => {
         ${false} | ${""}
     `("should validate invoice $invoice", async ({ invoice, expected }) => {
         render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <InvoiceInput />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <InvoiceInput />
+                </CreateProvider>
+            </GlobalProvider>
         ));
         signals.setReverse(false);
         fireEvent.input(await screen.findByTestId("invoice"), {
@@ -43,10 +46,12 @@ describe("InvoiceInput", () => {
 
     test("should set amount based on invoice", async () => {
         render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <InvoiceInput />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <InvoiceInput />
+                </CreateProvider>
+            </GlobalProvider>
         ));
         signals.setReverse(false);
         const invoice =
@@ -62,10 +67,12 @@ describe("InvoiceInput", () => {
 
     test("should clear invoice on amount change", async () => {
         render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <InvoiceInput />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <InvoiceInput />
+                </CreateProvider>
+            </GlobalProvider>
         ));
         signals.setReverse(false);
 
@@ -89,10 +96,12 @@ describe("InvoiceInput", () => {
         ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
     `("should not clear lnurl $lnurl on amount change", async ({ lnurl }) => {
         render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <InvoiceInput />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <InvoiceInput />
+                </CreateProvider>
+            </GlobalProvider>
         ));
         signals.setReverse(false);
 
@@ -116,10 +125,12 @@ describe("InvoiceInput", () => {
             "lightning:lnbcrt235565340n1pjn87jmpp53jk5vw5z7n43wqyvv5ypma89xvkgahgdrvzxfn922485w2guxjasdqqcqzzsxqyz5vqsp5npwtpwa76526wcqxp66lzt43jdeqdxkud2j6ypjt2kyqscd6q4eq9qyyssquwlyf0vjsdyeck79mg5726llxxzv674xyr8ct5qgv28k62pmlr35kc2z8j96lc7ph403mgjxt9q8hzaeywmsrh4lg88uslyytvsnf5sp3lulnq";
 
         render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <InvoiceInput />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <InvoiceInput />
+                </CreateProvider>
+            </GlobalProvider>
         ));
         signals.setReverse(false);
 
@@ -140,10 +151,12 @@ describe("InvoiceInput", () => {
         ${`${invoicePrefix}LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH`}
     `("should remove prefix of lnurl $lnurl", async ({ lnurl }) => {
         render(() => (
-            <CreateProvider>
-                <TestComponent />
-                <InvoiceInput />
-            </CreateProvider>
+            <GlobalProvider>
+                <CreateProvider>
+                    <TestComponent />
+                    <InvoiceInput />
+                </CreateProvider>
+            </GlobalProvider>
         ));
         signals.setReverse(false);
 

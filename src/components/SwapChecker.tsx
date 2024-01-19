@@ -2,67 +2,54 @@ import log from "loglevel";
 import { createEffect, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import {
-    setSwaps,
-    setTimeoutBlockheight,
-    setTimeoutEta,
-    swaps,
-} from "../signals";
 import { claim } from "../utils/claim";
 import { fetcher, getApiUrl } from "../utils/helper";
-import {
-    swapStatusFinal,
-    swapStatusPending,
-    updateSwapStatus,
-} from "../utils/swapStatus";
+import { swapStatusFinal, swapStatusPending } from "../utils/swapStatus";
 
 export const [checkInterval, setCheckInterval] = createSignal<
     NodeJS.Timer | undefined
 >(undefined);
 
+export const swapCheckInterval = 3000;
 export const SwapChecker = () => {
-    const swapCheckInterval = 3000;
-
-    const { swap, setSwapStatus, setSwapStatusTransaction, setFailureReason } =
-        usePayContext();
+    const {
+        swap,
+        setSwapStatus,
+        setSwapStatusTransaction,
+        setFailureReason,
+        setTimeoutEta,
+        setTimeoutBlockheight,
+    } = usePayContext();
+    const { notify, updateSwapStatus, swaps, setSwaps } = useGlobalContext();
 
     let activeStreamId = undefined;
     let activeSwapStream = undefined;
 
-    const checkForFailed = (swap: any, data: any) => {
+    const checkForFailed = async (swap: any, data: any) => {
         if (
             data.status == "transaction.lockupFailed" ||
             data.status == "invoice.failedToPay"
         ) {
             const id = swap.id;
-
-            fetcher(
-                "/getswaptransaction",
-                swap.asset,
-                (data: any) => {
-                    if (swap.asset !== RBTC && !data.transactionHex) {
-                        log.error("no mempool tx found");
-                    }
-                    if (!data.timeoutEta) {
-                        log.error("no timeout eta");
-                    }
-                    if (!data.timeoutBlockHeight) {
-                        log.error("no timeout blockheight");
-                    }
-                    const timestamp = data.timeoutEta * 1000;
-                    const eta = new Date(timestamp);
-                    log.debug(
-                        "Timeout ETA: \n " + eta.toLocaleString(),
-                        timestamp,
-                    );
-                    setTimeoutEta(timestamp);
-                    setTimeoutBlockheight(data.timeoutBlockHeight);
-                },
-                {
-                    id,
-                },
-            );
+            const res = await fetcher("/getswaptransaction", swap.asset, {
+                id,
+            });
+            if (swap.asset !== RBTC && !res.transactionHex) {
+                log.error("no mempool tx found");
+            }
+            if (!res.timeoutEta) {
+                log.error("no timeout eta");
+            }
+            if (!res.timeoutBlockHeight) {
+                log.error("no timeout blockheight");
+            }
+            const timestamp = res.timeoutEta * 1000;
+            const eta = new Date(timestamp);
+            log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
+            setTimeoutEta(timestamp);
+            setTimeoutBlockheight(res.timeoutBlockHeight);
         }
     };
 
@@ -77,7 +64,7 @@ export const SwapChecker = () => {
         if (data.failureReason) setFailureReason(data.failureReason);
     };
 
-    const claimSwap = (data: any, activeSwap: any) => {
+    const claimSwap = async (data: any, activeSwap: any) => {
         const currentSwap = swaps().find((s) => activeSwap.id === s.id);
         if (
             currentSwap.claimTx === undefined &&
@@ -85,12 +72,16 @@ export const SwapChecker = () => {
             (data.status === swapStatusPending.TransactionConfirmed ||
                 data.status === swapStatusPending.TransactionMempool)
         ) {
-            claim(currentSwap, data.transaction, (swap) => {
+            try {
+                const res = await claim(currentSwap, data.transaction);
                 const swapsTmp = swaps();
-                const currentSwap = swapsTmp.find((s) => swap.id === s.id);
-                currentSwap.claimTx = swap.claimTx;
+                const claimedSwap = swapsTmp.find((s) => res.id === s.id);
+                claimedSwap.claimTx = res.claimTx;
                 setSwaps(swapsTmp);
-            });
+                notify("success", `swap ${res.id} claimed`);
+            } catch (e) {
+                log.debug("swapchecker failed to claim swap", e);
+            }
         }
     };
 
@@ -100,17 +91,14 @@ export const SwapChecker = () => {
             .filter((s) => s.id !== swap()?.id);
 
         for (const swap of swapsToCheck) {
-            await new Promise<void>((resolve) => {
-                fetcher(
-                    "/swapstatus",
-                    swap.asset,
-                    (data: any) => {
-                        claimSwap(data, swap);
-                        resolve();
-                    },
-                    { id: swap.id },
-                );
-            });
+            try {
+                const res = await fetcher("/swapstatus", swap.asset, {
+                    id: swap.id,
+                });
+                await claimSwap(res, swap);
+            } catch (e) {
+                log.debug("swapchecker failed to claim swap", e);
+            }
         }
     };
 

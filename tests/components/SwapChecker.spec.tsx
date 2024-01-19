@@ -4,9 +4,13 @@ import { Server as HttpsServer, createServer } from "https";
 import { AddressInfo } from "net";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import { SwapChecker, checkInterval } from "../../src/components/SwapChecker";
+import {
+    SwapChecker,
+    checkInterval,
+    swapCheckInterval,
+} from "../../src/components/SwapChecker";
+import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import { PayProvider, usePayContext } from "../../src/context/Pay";
-import { setSwaps } from "../../src/signals";
 import {
     swapStatusFailed,
     swapStatusPending,
@@ -49,10 +53,10 @@ vi.mock("../../src/utils/helper", async (importOriginal) => {
         ...mod,
         isMobile: () => false,
         getApiUrl: () => apiUrl,
-        fetcher: (_path, _asset, cb, data) => {
-            const status = swaps.find((s) => s.id === data.id).status;
-            cb({ ...data, status: status, transaction: "mocked" });
+        fetcher: (_path, _asset, data) => {
             fetcherCallData.push(data);
+            const status = swaps.find((s) => s.id === data.id).status;
+            return { ...data, status: status, transaction: "mocked" };
         },
     };
 });
@@ -113,8 +117,10 @@ describe("swapChecker", () => {
     const server = new Server();
 
     let signals: any;
+    let globalSignals: any;
     const TestComponent = () => {
         signals = usePayContext();
+        globalSignals = useGlobalContext();
         return "";
     };
 
@@ -132,14 +138,18 @@ describe("swapChecker", () => {
     });
 
     test("should poll status of pending swaps", async () => {
-        setSwaps(swaps);
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
-        await wait(100);
+
+        globalSignals.setSwaps(swaps);
+
+        await wait(swapCheckInterval + 100);
 
         expect(fetcherCallData).toHaveLength(2);
         expect(fetcherCallData).toEqual([
@@ -153,13 +163,15 @@ describe("swapChecker", () => {
     });
 
     test("should connect and handle SSE for active swap", async () => {
-        setSwaps(swaps);
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
+        globalSignals.setSwaps(swaps);
         signals.setSwap(swaps[0]);
         await wait();
 
@@ -175,10 +187,12 @@ describe("swapChecker", () => {
 
     test("should close SSE when active swap changes", async () => {
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
         signals.setSwap(swaps[0]);
         await wait();
@@ -194,10 +208,12 @@ describe("swapChecker", () => {
 
     test("should not reconnect SSE when change swap has same id", async () => {
         render(() => (
-            <PayProvider>
-                <TestComponent />
-                <SwapChecker />
-            </PayProvider>
+            <GlobalProvider>
+                <PayProvider>
+                    <TestComponent />
+                    <SwapChecker />
+                </PayProvider>
+            </GlobalProvider>
         ));
         signals.setSwap(swaps[0]);
         await wait();

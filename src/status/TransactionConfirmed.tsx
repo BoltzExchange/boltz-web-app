@@ -2,15 +2,15 @@ import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
-import t from "../i18n";
-import { setSwaps, swaps } from "../signals";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 const TransactionConfirmed = () => {
     const { swap } = usePayContext();
     const { asset } = useCreateContext();
+    const { t, swaps, setSwaps } = useGlobalContext();
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 

@@ -13,8 +13,7 @@ import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import { RBTC, sideReceive, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
-import t from "../i18n";
-import { denomination, wasmSupported, webln } from "../signals";
+import { useGlobalContext } from "../context/Global";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
@@ -32,6 +31,7 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
+    const { webln, denomination, wasmSupported, t } = useGlobalContext();
     const {
         reverse,
         asset,

@@ -8,7 +8,7 @@ import {
     createSignal,
 } from "solid-js";
 
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 
 const SwapList = ({
@@ -21,6 +21,7 @@ const SwapList = ({
     deleteButton?: boolean;
 }) => {
     const navigate = useNavigate();
+    const { t } = useGlobalContext();
     const [sortedSwaps, setSortedSwaps] = createSignal([]);
     const [lastSwap, setLastSwap] = createSignal();
 

@@ -5,9 +5,8 @@ import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import t from "../i18n";
-import { swaps } from "../signals";
 import InvoiceExpired from "../status/InvoiceExpired";
 import InvoiceFailedToPay from "../status/InvoiceFailedToPay";
 import InvoicePending from "../status/InvoicePending";
@@ -29,6 +28,7 @@ const Pay = () => {
     const [contractTransactionType, setContractTransactionType] =
         createSignal("lockup_tx");
 
+    const { swaps, t } = useGlobalContext();
     const {
         swap,
         setSwap,
@@ -39,7 +39,7 @@ const Pay = () => {
         setFailureReason,
     } = usePayContext();
 
-    createEffect(() => {
+    createEffect(async () => {
         let tmpSwaps = swaps();
         if (tmpSwaps) {
             const currentSwap = tmpSwaps
@@ -48,16 +48,12 @@ const Pay = () => {
             if (currentSwap) {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);
-                fetcher(
-                    "/swapstatus",
-                    currentSwap.asset,
-                    (data: any) => {
-                        setSwapStatus(data.status);
-                        setSwapStatusTransaction(data.transaction);
-                        setFailureReason(data.failureReason);
-                    },
-                    { id: currentSwap.id },
-                );
+                const res = await fetcher("/swapstatus", currentSwap.asset, {
+                    id: currentSwap.id,
+                });
+                setSwapStatus(res.status);
+                setSwapStatusTransaction(res.transaction);
+                setFailureReason(res.failureReason);
             }
         }
     });
@@ -66,7 +62,6 @@ const Pay = () => {
         const tx = swapStatusTransaction();
 
         if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
-            // @ts-ignore
             setContractTransaction(tx.id);
         }
     });

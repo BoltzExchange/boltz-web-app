@@ -1,8 +1,7 @@
 import { pairs } from "../config";
 import { LN, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
-import t from "../i18n";
-import { fetchPairs } from "../utils/helper";
+import { useGlobalContext } from "../context/Global";
 
 const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
 assets.push(LN);
@@ -12,6 +11,8 @@ const SelectAsset = () => {
         const setter = isSend ? setAssetSend : setAssetReceive;
         setter(asset);
     };
+
+    const { t, fetchPairs } = useGlobalContext();
 
     const {
         assetReceive,

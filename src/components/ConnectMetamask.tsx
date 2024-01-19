@@ -1,14 +1,15 @@
 import { Show, createEffect, createSignal } from "solid-js";
 
 import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import t from "../i18n";
 import { setButtonLabel } from "./CreateButton";
 
 const ConnectMetamask = ({ showAddress }) => {
     const [address, setAddress] = createSignal<string | undefined>();
     const [buttonText, setButtonText] = createSignal<string | undefined>();
 
+    const { t } = useGlobalContext();
     const {
         addressValid,
         sendAmountValid,
@@ -25,8 +26,9 @@ const ConnectMetamask = ({ showAddress }) => {
     });
 
     createEffect(() => {
-        setAddressValid(address() !== undefined);
-        setOnchainAddress(address());
+        const addr = address();
+        setAddressValid(addr !== undefined);
+        setOnchainAddress(addr ? addr : "");
     });
 
     createEffect(() => {

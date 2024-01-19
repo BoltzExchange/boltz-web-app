@@ -2,17 +2,17 @@ import { Show } from "solid-js";
 
 import reload_svg from "../assets/reload.svg";
 import { isBeta } from "../config";
-import t from "../i18n";
-import { online, wasmSupported } from "../signals";
-import { fetchPairs } from "../utils/helper";
+import { useGlobalContext } from "../context/Global";
 
 const Warnings = () => {
+    const { t, online, fetchPairs, wasmSupported } = useGlobalContext();
+
     return (
         <div>
             <Show when={!online()}>
                 <div id="offline" class="banner">
                     {t("api_offline_msg")}
-                    <span class="icon-reload" onClick={fetchPairs}>
+                    <span class="icon-reload" onClick={() => fetchPairs()}>
                         <img src={reload_svg} />
                     </span>
                 </div>

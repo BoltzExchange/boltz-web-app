@@ -11,10 +11,11 @@ import {
     repoUrl,
     twitterUrl,
 } from "../config";
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
 
 const Footer = () => {
+    const { t } = useGlobalContext();
     return (
         <footer>
             <h4>

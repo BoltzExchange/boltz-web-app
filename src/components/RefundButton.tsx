@@ -2,23 +2,26 @@ import log from "loglevel";
 import { Accessor, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import t from "../i18n";
-import { setSwaps, swaps } from "../signals";
-import {
-    refundAddress,
-    setNotification,
-    setNotificationType,
-    setRefundAddress,
-    setRefundTx,
-} from "../signals";
 import { getAddress, getNetwork } from "../utils/compat";
+import { fetcher } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
 
 const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
+    const {
+        setNotificationType,
+        setNotification,
+        swaps,
+        setSwaps,
+        setRefundAddress,
+        refundAddress,
+        setRefundTx,
+        t,
+    } = useGlobalContext();
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
@@ -66,26 +69,66 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
     };
 
     const refundAction = async () => {
-        await refund(swap(), refundAddress(), (swap, error) => {
-            if (swap === null && error !== undefined) {
-                log.debug("refund failed", error);
-                setNotificationType("error");
-                setNotification(error);
-                return;
-            }
+        try {
+            const transactionToRefund = await fetcher(
+                "/getswaptransaction",
+                swap().asset,
+                {
+                    id: swap().id,
+                },
+            );
+            log.debug(
+                `got swap transaction for ${swap().id}`,
+                transactionToRefund,
+            );
+            const res = await refund(
+                swap(),
+                refundAddress(),
+                transactionToRefund,
+            );
 
             // save refundTx into swaps json and set it to the current swap
             // only if the swaps was not initiated with the refund json
             // refundjson has no date
-            if (swap.date !== undefined) {
+            if (res.date !== undefined) {
                 const swapsTmp = swaps();
-                const currentSwap = swapsTmp.find((s) => swap.id === s.id);
-                currentSwap.refundTx = swap.refundTx;
+                const currentSwap = swapsTmp.find((s) => res.id === s.id);
+                currentSwap.refundTx = res.refundTx;
                 setSwaps(swapsTmp);
             } else {
-                setRefundTx(swap.refundTx);
+                setRefundTx(res.refundTx);
             }
-        });
+        } catch (error) {
+            log.debug("refund failed", error);
+            setNotificationType("error");
+            if (typeof error.json === "function") {
+                error
+                    .json()
+                    .then((jsonError: any) => {
+                        let msg = jsonError.error;
+                        if (
+                            msg === "bad-txns-inputs-missingorspent" ||
+                            msg === "Transaction already in block chain" ||
+                            msg.startsWith("insufficient fee")
+                        ) {
+                            msg = t("already_refunded");
+                        } else if (
+                            msg === "mandatory-script-verify-flag-failed"
+                        ) {
+                            msg = t("locktime_not_satisfied");
+                        }
+                        log.error(msg);
+                        setNotification(msg);
+                    })
+                    .catch((genericError: any) => {
+                        log.error(genericError);
+                        setNotification(genericError);
+                    });
+            } else {
+                log.error(error.message);
+                setNotification(error.message);
+            }
+        }
     };
 
     return (

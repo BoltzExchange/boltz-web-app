@@ -1,7 +1,8 @@
 import LoadingSpinner from "../components/LoadingSpinner";
-import t from "../i18n";
+import { useGlobalContext } from "../context/Global";
 
 const InvoicePending = () => {
+    const { t } = useGlobalContext();
     return (
         <div>
             <p>{t("invoice_pending")}</p>

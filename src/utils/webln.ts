@@ -13,7 +13,7 @@ export const detectWebLNProvider = (timeout: number = 3000) => {
         } else {
             let i = 0;
             const checkInterval = setInterval(function () {
-                if (window.webln || i >= timeout / interval) {
+                if (globalThis.webln || i >= timeout / interval) {
                     handleWebLn();
                     clearInterval(checkInterval);
                 }
@@ -27,7 +27,7 @@ export const enableWebln = async (
     cb: () => Promise<void> | void,
 ): Promise<void> => {
     try {
-        await window.webln.enable();
+        await globalThis.webln.enable();
         await cb();
     } catch (error) {
         log.error("webln call failed", error);

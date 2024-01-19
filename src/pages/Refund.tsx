@@ -7,23 +7,16 @@ import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SwapList from "../components/SwapList";
-import t from "../i18n";
-import {
-    refundTx,
-    setTimeoutBlockheight,
-    setTimeoutEta,
-    swaps,
-} from "../signals";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import { fetcher } from "../utils/helper";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
-import {
-    swapStatusFailed,
-    swapStatusSuccess,
-    updateSwapStatus,
-} from "../utils/swapStatus";
+import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
 
 const Refund = () => {
     const navigate = useNavigate();
+    const { updateSwapStatus, swaps, refundTx, t } = useGlobalContext();
+    const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
 
@@ -109,39 +102,25 @@ const Refund = () => {
                     swapsToRefund.find((found) => found.id === swap.id) ===
                         undefined,
             )
-            .map((swap) => {
-                fetcher(
-                    "/swapstatus",
-                    swap.asset,
-                    (status: any) => {
-                        if (
-                            !updateSwapStatus(swap.id, status.status) &&
-                            Object.values(swapStatusFailed).includes(
-                                status.status,
-                            )
-                        ) {
-                            if (
-                                status.status !== swapStatusFailed.SwapExpired
-                            ) {
-                                addToRefundableSwaps(swap);
-                                return;
-                            }
+            .map(async (swap) => {
+                const res = await fetcher("/swapstatus", swap.asset, {
+                    id: swap.id,
+                });
+                if (
+                    !updateSwapStatus(swap.id, res.status) &&
+                    Object.values(swapStatusFailed).includes(res.status)
+                ) {
+                    if (res.status !== swapStatusFailed.SwapExpired) {
+                        addToRefundableSwaps(swap);
+                        return;
+                    }
 
-                            // Make sure coins were locked for the swap with status "swap.expired"
-                            fetcher(
-                                "/getswaptransaction",
-                                swap.asset,
-                                () => {
-                                    addToRefundableSwaps(swap);
-                                },
-                                { id: swap.id },
-                                () => {},
-                            );
-                        }
-                    },
-                    { id: swap.id },
-                    () => {},
-                );
+                    // Make sure coins were locked for the swap with status "swap.expired"
+                    await fetcher("/getswaptransaction", swap.asset, {
+                        id: swap.id,
+                    });
+                    addToRefundableSwaps(swap);
+                }
             });
     });
 

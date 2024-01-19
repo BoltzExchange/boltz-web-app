@@ -6,18 +6,8 @@ import { createEffect, createMemo, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import t from "../i18n";
-import {
-    config,
-    online,
-    setConfig,
-    setNotification,
-    setNotificationType,
-    setSwaps,
-    swaps,
-    wasmSupported,
-} from "../signals";
 import { ECPair } from "../utils/ecpair";
 import { feeChecker } from "../utils/feeChecker";
 import { fetcher } from "../utils/helper";
@@ -35,6 +25,17 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 
 export const CreateButton = () => {
     const navigate = useNavigate();
+    const {
+        config,
+        setConfig,
+        online,
+        wasmSupported,
+        swaps,
+        setSwaps,
+        notify,
+        ref,
+        t,
+    } = useGlobalContext();
     const {
         asset,
         invoice,
@@ -87,33 +88,21 @@ export const CreateButton = () => {
     });
 
     const feeCheck = async () => {
-        return new Promise((resolve) => {
-            fetcher(
-                "/getpairs",
-                asset(),
-                (data: any) => {
-                    log.debug("getpairs", data);
-                    if (feeChecker(data.pairs, asset())) {
-                        // amounts matches and fees are ok
-                        resolve(true);
-                    } else {
-                        setNotificationType("error");
-                        setNotification(t("feecheck"));
-                        resolve(false);
-                    }
-
-                    // Always update the pairs to make sure the pairHash for the next request is up to date
-                    setConfig(data.pairs);
-                },
-                null,
-                (error) => {
-                    log.debug(error);
-                    setNotificationType("error");
-                    setNotification(error);
-                    resolve(false);
-                },
-            );
-        });
+        try {
+            const res = await fetcher("/getpairs", asset(), null);
+            log.debug("getpairs", res);
+            if (feeChecker(res.pairs, config(), asset())) {
+                return true;
+            } else {
+                notify("error", t("feecheck"));
+            }
+            // Always update the pairs to make sure the pairHash for the next request is up to date
+            setConfig(res.pairs);
+        } catch (error) {
+            log.debug(error);
+            notify("feeCheck error", error);
+        }
+        return false;
     };
 
     const create = async () => {
@@ -123,8 +112,7 @@ export const CreateButton = () => {
                 setInvoice(inv);
                 setLnurl("");
             } catch (e) {
-                setNotificationType("error");
-                setNotification(e);
+                notify("error", e);
                 log.warn("fetch lnurl failed", e);
             }
             return;
@@ -175,79 +163,63 @@ export const CreateButton = () => {
         }
 
         params.pairHash = config()[`${assetName}/BTC`]["hash"];
+        params.refId = ref();
 
-        await new Promise((resolve) => {
-            fetcher(
-                "/createswap",
-                assetName,
-                (data) => {
-                    data.date = new Date().getTime();
-                    data.reverse = reverse();
-                    data.asset = asset();
-                    data.receiveAmount = Number(receiveAmount());
-                    data.sendAmount = Number(sendAmount());
+        // create swap
+        try {
+            const data = await fetcher("/createswap", assetName, params);
+            data.date = new Date().getTime();
+            data.reverse = reverse();
+            data.asset = asset();
+            data.receiveAmount = Number(receiveAmount());
+            data.sendAmount = Number(sendAmount());
 
-                    if (keyPair !== null) {
-                        data.privateKey = keyPair.privateKey.toString("hex");
-                    }
+            if (keyPair !== null) {
+                data.privateKey = keyPair.privateKey.toString("hex");
+            }
 
-                    if (preimage !== null) {
-                        data.preimage = preimage.toString("hex");
-                    }
+            if (preimage !== null) {
+                data.preimage = preimage.toString("hex");
+            }
 
-                    if (data.reverse) {
-                        const addr = onchainAddress();
-                        if (addr) {
-                            data.onchainAddress = extractAddress(addr);
-                        }
-                    } else {
-                        data.invoice = invoice();
-                    }
+            if (data.reverse) {
+                const addr = onchainAddress();
+                if (addr) {
+                    data.onchainAddress = extractAddress(addr);
+                }
+            } else {
+                data.invoice = invoice();
+            }
 
-                    validateResponse(data, getEtherSwap).then((success) => {
-                        if (!success) {
-                            resolve(false);
-                            navigate("/error/");
-                            return;
-                        }
-
-                        setSwaps(swaps().concat(data));
-                        setInvoice("");
-                        setInvoiceValid(false);
-                        setOnchainAddress("");
-                        setAddressValid(false);
-                        resolve(true);
-                        if (reverse() || isRsk) {
-                            navigate("/swap/" + data.id);
-                        } else {
-                            navigate("/swap/refund/" + data.id);
-                        }
-                    });
-                },
-                params,
-                async (err: Response) => {
-                    const res = await err.json();
-                    if (res.error === "invalid pair hash") {
-                        await feeCheck();
-                    } else {
-                        setNotificationType("error");
-                        setNotification(res.error);
-                    }
-                    resolve(false);
-                },
-            );
-        });
+            // validate response
+            const success = await validateResponse(data, getEtherSwap);
+            if (!success) {
+                navigate("/error/");
+                return;
+            }
+            setSwaps(swaps().concat(data));
+            setInvoice("");
+            setInvoiceValid(false);
+            setOnchainAddress("");
+            setAddressValid(false);
+            if (reverse() || isRsk) {
+                navigate("/swap/" + data.id);
+            } else {
+                navigate("/swap/refund/" + data.id);
+            }
+        } catch (err) {
+            if (err.error === "invalid pair hash") {
+                await feeCheck();
+            } else {
+                notify("error", err.error);
+            }
+        }
     };
 
-    const buttonClick = () => {
+    const buttonClick = async () => {
         setButtonDisable(true);
-        create()
-            .catch((e) => {
-                log.warn("create failed", e);
-            })
-            .then(() => {
-                setButtonDisable(validateButtonDisable());
-            });
+        await create();
+        setButtonDisable(validateButtonDisable());
     };
 
     const getButtonLabel = (label: buttonLabelParams) => {

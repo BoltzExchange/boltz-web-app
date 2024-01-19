@@ -45,7 +45,6 @@ const createAdjustedClaim = <
 export const claim = async (
     swap: any,
     swapStatusTransaction: { hex: string },
-    callback: (swap: any) => any,
 ) => {
     if (swap.asset === RBTC) {
         return;
@@ -98,19 +97,13 @@ export const claim = async (
         blindingKey,
     ).toHex();
     log.debug("claim_tx", claimTransaction);
-    fetcher(
-        "/broadcasttransaction",
-        assetName,
-        (data: any) => {
-            log.debug("claim result:", data);
-            if (data.transactionId) {
-                swap.claimTx = data.transactionId;
-                callback(swap);
-            }
-        },
-        {
-            currency: assetName,
-            transactionHex: claimTransaction,
-        },
-    );
+    const res = await fetcher("/broadcasttransaction", assetName, {
+        currency: assetName,
+        transactionHex: claimTransaction,
+    });
+    log.debug("claim result:", res);
+    if (res.transactionId) {
+        swap.claimTx = res.transactionId;
+    }
+    return swap;
 };
