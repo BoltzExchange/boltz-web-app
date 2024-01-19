@@ -14,8 +14,8 @@ const Notification = () => {
 
     createEffect(
         on([notification], () => {
-            const new_notication = notification();
-            if (new_notication) {
+            const newNotification = notification();
+            if (newNotification) {
                 notificationRef.classList.add("show");
                 notificationRef.classList.add(notificationType());
                 setTimeout(() => {

@@ -20,7 +20,7 @@ import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
-// local storage To support the values created by the deprecated "createStorageSignal"
+// Local storage serializer to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
     serialize: (value: any) => value,
     deserialize: (value: any) => value,
