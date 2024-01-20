@@ -102,13 +102,15 @@ export async function refund(
     output = decodeAddress(assetName, refundAddress);
     log.info("refunding swap: ", swap.id);
     await setup();
+
     const resFees = await fetcher("/getfeeestimation", swap.asset);
     const fees = resFees[swap.asset];
 
     const Transaction = getTransaction(assetName);
-
-    let tx = Transaction.fromHex(transactionToRefund.transactionHex);
-    let privateKey = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
+    const tx = Transaction.fromHex(transactionToRefund.transactionHex);
+    const privateKey = ECPair.fromPrivateKey(
+        Buffer.from(swap.privateKey, "hex"),
+    );
     log.debug("privkey", privateKey);
 
     let refundTransaction: TransactionInterface;

@@ -3,7 +3,7 @@ import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import { Navigate, Route, Router, Routes } from "@solidjs/router";
 import log from "loglevel";
-import { render } from "solid-js/web";
+import { Show, render } from "solid-js/web";
 
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
@@ -11,7 +11,7 @@ import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
 import { loglevel, network } from "./config";
 import { CreateProvider } from "./context/Create";
-import { GlobalProvider } from "./context/Global";
+import { GlobalProvider, useGlobalContext } from "./context/Global";
 import { PayProvider } from "./context/Pay";
 import { Web3SignerProvider } from "./context/Web3";
 import Create from "./pages/Create";
@@ -37,6 +37,10 @@ if ("serviceWorker" in navigator) {
 
 document.body.classList.remove("loading");
 
+const isEmbedded = () => {
+    return useGlobalContext().embedded();
+};
+
 const cleanup = render(
     () => (
         <Router>
@@ -45,7 +49,9 @@ const cleanup = render(
                     <CreateProvider>
                         <PayProvider>
                             <SwapChecker />
-                            <Nav network={network} />
+                            <Show when={!isEmbedded()}>
+                                <Nav network={network} />
+                            </Show>
                             <Routes>
                                 <Route
                                     path="*"
@@ -67,7 +73,9 @@ const cleanup = render(
                                 <Route path="/history" component={History} />
                             </Routes>
                             <Notification />
-                            <Footer />
+                            <Show when={!isEmbedded()}>
+                                <Footer />
+                            </Show>
                         </PayProvider>
                     </CreateProvider>
                 </Web3SignerProvider>

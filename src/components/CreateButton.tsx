@@ -89,12 +89,11 @@ export const CreateButton = () => {
     });
 
     const feeCheck = async () => {
-        let valid = false;
         try {
             const res = await fetcher("/getpairs", asset(), null);
             log.debug("getpairs", res);
             if (feeChecker(res.pairs, config(), asset())) {
-                valid = true;
+                return true;
             } else {
                 notify("error", t("feecheck"));
             }
@@ -104,7 +103,8 @@ export const CreateButton = () => {
             log.debug(error);
             notify("feeCheck error", error);
         }
-        return valid;
+
+        return false;
     };
 
     const create = async () => {
@@ -202,7 +202,8 @@ export const CreateButton = () => {
             }
 
             // validate response
-            const success = validateResponse(data, getEtherSwap);
+            const success = await validateResponse(data, getEtherSwap);
+
             if (!success) {
                 navigate("/error/");
                 return;
@@ -240,7 +241,7 @@ export const CreateButton = () => {
         <button
             id="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable()}
+            disabled={buttonDisable() || !wasmSupported() || !online()}
             onClick={buttonClick}>
             {getButtonLabel(buttonLabel())}
         </button>
