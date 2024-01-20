@@ -159,12 +159,14 @@ export const claim = async (
 
     const Transaction = getTransaction(assetName);
 
-    let tx = Transaction.fromHex(swapStatusTransaction.hex);
+    const tx = Transaction.fromHex(swapStatusTransaction.hex);
 
-    let privateKey = ECPair.fromPrivateKey(Buffer.from(swap.privateKey, "hex"));
+    const privateKey = ECPair.fromPrivateKey(
+        Buffer.from(swap.privateKey, "hex"),
+    );
     log.debug("privateKey: ", privateKey);
 
-    let preimage = Buffer.from(swap.preimage, "hex");
+    const preimage = Buffer.from(swap.preimage, "hex");
     log.debug("preimage: ", preimage);
 
     const decodedAddress = decodeAddress(assetName, swap.onchainAddress);

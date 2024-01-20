@@ -173,7 +173,11 @@ export const CreateButton = () => {
                 ? "/createswap"
                 : `/v2/swap/${reverse() ? "reverse" : "submarine"}`;
             const data = await fetcher(endpoint, assetName, params);
-            data.version = OutputType.Taproot;
+
+            if (!isRsk) {
+                data.version = OutputType.Taproot;
+            }
+
             data.date = new Date().getTime();
             data.reverse = reverse();
             data.asset = asset();
