@@ -3,6 +3,11 @@ import log from "loglevel";
 
 import { pairs } from "../config";
 import { BTC } from "../consts";
+import {
+    Pairs,
+    ReversePairTypeTaproot,
+    SubmarinePairTypeTaproot,
+} from "./boltzClient";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
@@ -33,11 +38,30 @@ export const getApiUrl = (asset: string) => {
     return getApiUrl(BTC);
 };
 
-export const fetcher = async (
+export const getPair = <
+    T extends SubmarinePairTypeTaproot | ReversePairTypeTaproot,
+>(
+    pairs: Pairs,
+    asset: string,
+    isReverse: boolean,
+): T | undefined => {
+    try {
+        if (isReverse) {
+            return pairs.reverse[BTC][asset] as T;
+        }
+
+        return pairs.submarine[asset][BTC] as T;
+    } catch (e) {
+        log.debug(`could not get pair ${asset} (reverse ${isReverse}): ${e}`);
+        return undefined;
+    }
+};
+
+export const fetcher = async <T = any>(
     url: string,
     asset: string = BTC,
     params: any | undefined = null,
-) => {
+): Promise<T> => {
     let opts = {};
     if (params) {
         opts = {

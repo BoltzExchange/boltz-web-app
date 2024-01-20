@@ -5,13 +5,12 @@ import { randomBytes } from "crypto";
 import log from "loglevel";
 import { createEffect, createMemo, createSignal } from "solid-js";
 
-import { RBTC } from "../consts";
+import { BTC, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { ECPair } from "../utils/ecpair";
-import { feeChecker } from "../utils/feeChecker";
-import { fetcher } from "../utils/helper";
+import { fetcher, getPair } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
@@ -26,17 +25,8 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 
 export const CreateButton = () => {
     const navigate = useNavigate();
-    const {
-        config,
-        setConfig,
-        online,
-        wasmSupported,
-        swaps,
-        setSwaps,
-        notify,
-        ref,
-        t,
-    } = useGlobalContext();
+    const { config, online, wasmSupported, swaps, setSwaps, notify, ref, t } =
+        useGlobalContext();
     const {
         asset,
         invoice,
@@ -87,25 +77,6 @@ export const CreateButton = () => {
             setButtonLabel({ key: "wasm_not_supported" });
         }
     });
-
-    const feeCheck = async () => {
-        try {
-            const res = await fetcher("/getpairs", asset(), null);
-            log.debug("getpairs", res);
-            if (feeChecker(res.pairs, config(), asset())) {
-                return true;
-            } else {
-                notify("error", t("feecheck"));
-            }
-            // Always update the pairs to make sure the pairHash for the next request is up to date
-            setConfig(res.pairs);
-        } catch (error) {
-            log.debug(error);
-            notify("feeCheck error", error);
-        }
-
-        return false;
-    };
 
     const create = async () => {
         if (sendAmountValid() && !reverse() && lnurl() !== "") {
@@ -160,12 +131,18 @@ export const CreateButton = () => {
             }
         }
 
-        if (!(await feeCheck())) {
-            return;
-        }
-
-        params.pairHash = config()[`${assetName}/BTC`]["hash"];
+        params.pairHash = getPair(config(), assetName, reverse()).hash;
         params.refId = ref();
+
+        if (!isRsk) {
+            if (reverse()) {
+                params.to = assetName;
+                params.from = BTC;
+            } else {
+                params.to = BTC;
+                params.from = assetName;
+            }
+        }
 
         // create swap
         try {
@@ -220,7 +197,7 @@ export const CreateButton = () => {
             }
         } catch (err) {
             if (err.error === "invalid pair hash") {
-                await feeCheck();
+                notify("error", t("feecheck"));
             } else {
                 notify("error", err.error);
             }

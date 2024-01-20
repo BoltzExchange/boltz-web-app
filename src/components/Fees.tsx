@@ -6,10 +6,15 @@ import satSvg from "../assets/sat.svg";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
+    ReversePairTypeTaproot,
+    SubmarinePairTypeTaproot,
+} from "../utils/boltzClient";
+import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
 import { denominations, formatAmount } from "../utils/denomination";
+import { getPair } from "../utils/helper";
 
 const Fees = () => {
     const { t, config, fetchPairs, denomination, setDenomination } =
@@ -25,19 +30,23 @@ const Fees = () => {
         boltzFee,
         setBoltzFee,
     } = useCreateContext();
-    createEffect(() => {
-        const cfg = config()[`${asset()}/BTC`];
 
-        if (cfg) {
+    createEffect(() => {
+        if (config()) {
+            const cfg = getPair(config(), asset(), reverse());
+
             if (reverse()) {
-                const rev = cfg.fees.minerFees.baseAsset.reverse;
-                const fee = rev.claim + rev.lockup;
-                setBoltzFee(cfg.fees.percentage);
+                const reverseCfg = cfg as ReversePairTypeTaproot;
+
+                const fee =
+                    reverseCfg.fees.minerFees.claim +
+                    reverseCfg.fees.minerFees.lockup;
+
+                setBoltzFee(reverseCfg.fees.percentage);
                 setMinerFee(fee);
             } else {
-                let fee = cfg.fees.minerFees.baseAsset.normal;
-                setBoltzFee(cfg.fees.percentageSwapIn);
-                setMinerFee(fee);
+                setBoltzFee(cfg.fees.percentage);
+                setMinerFee((cfg as SubmarinePairTypeTaproot).fees.minerFees);
             }
 
             const calculateLimit = (limit: number): number => {

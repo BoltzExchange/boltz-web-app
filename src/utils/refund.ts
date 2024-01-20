@@ -66,6 +66,7 @@ const refundTaproot = async (
     );
 
     const boltzSig = await getPartialRefundSignature(
+        swap.asset,
         swap.id,
         Buffer.from(musig.getPublicNonce()),
         claimTx,
@@ -111,7 +112,6 @@ export async function refund(
     const privateKey = ECPair.fromPrivateKey(
         Buffer.from(swap.privateKey, "hex"),
     );
-    log.debug("privkey", privateKey);
 
     let refundTransaction: TransactionInterface;
 

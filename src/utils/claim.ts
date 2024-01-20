@@ -101,6 +101,7 @@ const claimTaproot = async (
 
     try {
         const boltzSig = await getPartialReverseClaimSignature(
+            swap.asset,
             swap.id,
             preimage,
             Buffer.from(musig.getPublicNonce()),

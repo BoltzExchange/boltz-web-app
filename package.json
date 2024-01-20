@@ -43,7 +43,7 @@
         "bignumber.js": "^9.1.2 ",
         "bitcoinjs-lib": "^6.1.5",
         "bolt11": "^1.4.1",
-        "boltz-core": "^2.0.1",
+        "boltz-core": "^2.0.2",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
         "ecpair": "^2.1.0",
