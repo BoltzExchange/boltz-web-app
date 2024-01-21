@@ -9,6 +9,7 @@ import { BTC, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import { getPairs } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import { fetcher, getPair } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
@@ -25,8 +26,17 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 
 export const CreateButton = () => {
     const navigate = useNavigate();
-    const { config, online, wasmSupported, swaps, setSwaps, notify, ref, t } =
-        useGlobalContext();
+    const {
+        config,
+        setConfig,
+        online,
+        wasmSupported,
+        swaps,
+        setSwaps,
+        notify,
+        ref,
+        t,
+    } = useGlobalContext();
     const {
         asset,
         invoice,
@@ -196,10 +206,17 @@ export const CreateButton = () => {
                 navigate("/swap/refund/" + data.id);
             }
         } catch (err) {
-            if (err.error === "invalid pair hash") {
+            let msg = err;
+
+            if (typeof err.json === "function") {
+                msg = (await err.json()).error;
+            }
+
+            if (msg === "invalid pair hash") {
+                setConfig(await getPairs(assetName));
                 notify("error", t("feecheck"));
             } else {
-                notify("error", err.error);
+                notify("error", msg);
             }
         }
     };

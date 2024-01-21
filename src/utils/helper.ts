@@ -2,8 +2,9 @@ import { Buffer } from "buffer";
 import log from "loglevel";
 
 import { pairs } from "../config";
-import { BTC } from "../consts";
+import { BTC, RBTC } from "../consts";
 import {
+    PairLegacy,
     Pairs,
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
@@ -38,14 +39,20 @@ export const getApiUrl = (asset: string) => {
     return getApiUrl(BTC);
 };
 
+export const isLegacy = (asset: string) => asset === RBTC;
+
 export const getPair = <
-    T extends SubmarinePairTypeTaproot | ReversePairTypeTaproot,
+    T extends SubmarinePairTypeTaproot | ReversePairTypeTaproot | PairLegacy,
 >(
     pairs: Pairs,
     asset: string,
     isReverse: boolean,
 ): T | undefined => {
     try {
+        if (isLegacy(asset)) {
+            return pairs.legacy.pairs[`${asset}/${BTC}`] as T;
+        }
+
         if (isReverse) {
             return pairs.reverse[BTC][asset] as T;
         }

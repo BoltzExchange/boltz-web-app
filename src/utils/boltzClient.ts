@@ -10,17 +10,39 @@ type ReverseMinerFees = {
     claim: number;
 };
 
+type LegacyMinerFees = {
+    normal: number;
+    reverse: ReverseMinerFees;
+};
+
 type PairLimits = {
     minimal: number;
     maximal: number;
 };
 
-type PairTypeTaproot = {
+type PairType = {
     hash: string;
     rate: number;
 };
 
-type SubmarinePairTypeTaproot = PairTypeTaproot & {
+type PairLegacy = PairType & {
+    limits: PairLimits & {
+        maximalZeroConf: {
+            baseAsset: number;
+            quoteAsset: number;
+        };
+    };
+    fees: {
+        percentage: number;
+        percentageSwapIn: number;
+        minerFees: {
+            baseAsset: LegacyMinerFees;
+            quoteAsset: LegacyMinerFees;
+        };
+    };
+};
+
+type SubmarinePairTypeTaproot = PairType & {
     limits: PairLimits & {
         maximalZeroConf: number;
     };
@@ -30,12 +52,18 @@ type SubmarinePairTypeTaproot = PairTypeTaproot & {
     };
 };
 
-type ReversePairTypeTaproot = PairTypeTaproot & {
+type ReversePairTypeTaproot = PairType & {
     limits: PairLimits;
     fees: {
         percentage: number;
         minerFees: ReverseMinerFees;
     };
+};
+
+type PairsLegacy = {
+    info: string[];
+    warnings: string[];
+    pairs: Record<string, PairLegacy>;
 };
 
 type SubmarinePairsTaproot = Record<
@@ -49,6 +77,7 @@ type ReversePairsTaproot = Record<
 >;
 
 type Pairs = {
+    legacy: PairsLegacy;
     submarine: SubmarinePairsTaproot;
     reverse: ReversePairsTaproot;
 };
@@ -61,14 +90,16 @@ type PartialSignature = {
 type TransactionInterface = Transaction | LiquidTransaction;
 
 export const getPairs = async (asset: string): Promise<Pairs> => {
-    const [submarine, reverse] = await Promise.all([
+    const [legacy, submarine, reverse] = await Promise.all([
+        fetcher<PairsLegacy>("/getpairs", asset),
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", asset),
         fetcher<ReversePairsTaproot>("/v2/swap/reverse", asset),
     ]);
 
     return {
-        submarine,
+        legacy,
         reverse,
+        submarine,
     };
 };
 
@@ -114,6 +145,7 @@ export const getPartialReverseClaimSignature = async (
 
 export {
     Pairs,
+    PairLegacy,
     PartialSignature,
     TransactionInterface,
     ReversePairTypeTaproot,
