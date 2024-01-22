@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 import { describe, expect, test } from "vitest";
 
-import { sideReceive, sideSend } from "../../src/consts";
+import { BTC, sideReceive, sideSend } from "../../src/consts";
 import { CreateProvider, useCreateContext } from "../../src/context/Create";
 import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import { Web3SignerProvider } from "../../src/context/Web3";
@@ -94,7 +94,7 @@ describe("Create", () => {
         expect(signals.receiveAmount()).toEqual(BigNumber(38110));
 
         const updatedCfg = { ...cfg };
-        cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
+        cfg.reverse[BTC][BTC].fees.minerFees.claim += 1;
         globalSignals.setConfig(updatedCfg);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
@@ -115,13 +115,13 @@ describe("Create", () => {
         ));
 
         globalSignals.setConfig(cfg);
-        signals.setMinimum(cfg["BTC/BTC"].limits.minimal);
+        signals.setMinimum(cfg.reverse[BTC][BTC].limits.minimal);
         signals.setReverse(true);
         signals.setAsset("BTC");
 
         const updateConfig = () => {
             const updatedCfg = { ...cfg };
-            cfg["BTC/BTC"].fees.minerFees.baseAsset.reverse.claim += 1;
+            cfg.reverse[BTC][BTC].fees.minerFees.claim += 1;
             globalSignals.setConfig(updatedCfg);
         };
 

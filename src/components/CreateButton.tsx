@@ -1,16 +1,17 @@
 import { useNavigate } from "@solidjs/router";
 import { crypto } from "bitcoinjs-lib";
+import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 import log from "loglevel";
 import { createEffect, createMemo, createSignal } from "solid-js";
 
-import { RBTC } from "../consts";
+import { BTC, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import { getPairs } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
-import { feeChecker } from "../utils/feeChecker";
-import { fetcher } from "../utils/helper";
+import { fetcher, getPair } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
 
@@ -87,24 +88,6 @@ export const CreateButton = () => {
         }
     });
 
-    const feeCheck = async () => {
-        try {
-            const res = await fetcher("/getpairs", asset(), null);
-            log.debug("getpairs", res);
-            if (feeChecker(res.pairs, config(), asset())) {
-                return true;
-            } else {
-                notify("error", t("feecheck"));
-            }
-            // Always update the pairs to make sure the pairHash for the next request is up to date
-            setConfig(res.pairs);
-        } catch (error) {
-            log.debug(error);
-            notify("feeCheck error", error);
-        }
-        return false;
-    };
-
     const create = async () => {
         if (sendAmountValid() && !reverse() && lnurl() !== "") {
             try {
@@ -126,7 +109,7 @@ export const CreateButton = () => {
         const keyPair = !isRsk ? ECPair.makeRandom() : null;
 
         let params = null;
-        let preimage = null;
+        let preimage: Buffer | null = null;
 
         if (reverse()) {
             preimage = randomBytes(32);
@@ -158,16 +141,30 @@ export const CreateButton = () => {
             }
         }
 
-        if (!(await feeCheck())) {
-            return;
-        }
-
-        params.pairHash = config()[`${assetName}/BTC`]["hash"];
+        params.pairHash = getPair(config(), assetName, reverse()).hash;
         params.refId = ref();
+
+        if (!isRsk) {
+            if (reverse()) {
+                params.to = assetName;
+                params.from = BTC;
+            } else {
+                params.to = BTC;
+                params.from = assetName;
+            }
+        }
 
         // create swap
         try {
-            const data = await fetcher("/createswap", assetName, params);
+            const endpoint = isRsk
+                ? "/createswap"
+                : `/v2/swap/${reverse() ? "reverse" : "submarine"}`;
+            const data = await fetcher(endpoint, assetName, params);
+
+            if (!isRsk) {
+                data.version = OutputType.Taproot;
+            }
+
             data.date = new Date().getTime();
             data.reverse = reverse();
             data.asset = asset();
@@ -193,6 +190,7 @@ export const CreateButton = () => {
 
             // validate response
             const success = await validateResponse(data, getEtherSwap);
+
             if (!success) {
                 navigate("/error/");
                 return;
@@ -208,10 +206,17 @@ export const CreateButton = () => {
                 navigate("/swap/refund/" + data.id);
             }
         } catch (err) {
-            if (err.error === "invalid pair hash") {
-                await feeCheck();
+            let msg = err;
+
+            if (typeof err.json === "function") {
+                msg = (await err.json()).error;
+            }
+
+            if (msg === "invalid pair hash") {
+                setConfig(await getPairs(assetName));
+                notify("error", t("feecheck"));
             } else {
-                notify("error", err.error);
+                notify("error", msg);
             }
         }
     };

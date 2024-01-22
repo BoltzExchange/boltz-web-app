@@ -5,17 +5,18 @@ import {
     Accessor,
     Setter,
     createContext,
+    createMemo,
     createSignal,
     useContext,
 } from "solid-js";
-import { createMemo } from "solid-js";
 
 import { defaultLanguage } from "../config";
 import { BTC } from "../consts";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
+import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
-import { fetcher, isMobile } from "../utils/helper";
+import { isMobile } from "../utils/helper";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
@@ -29,8 +30,8 @@ const stringSerializer = {
 const GlobalContext = createContext<{
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
-    config: Accessor<any>;
-    setConfig: Setter<any>;
+    config: Accessor<Pairs | undefined>;
+    setConfig: Setter<Pairs | undefined>;
     wasmSupported: Accessor<boolean>;
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
@@ -70,7 +71,7 @@ const GlobalContext = createContext<{
 
 const GlobalProvider = (props: { children: any }) => {
     const [online, setOnline] = createSignal<boolean>(true);
-    const [config, setConfig] = createSignal({});
+    const [config, setConfig] = createSignal<Pairs | undefined>(undefined);
 
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
@@ -128,11 +129,11 @@ const GlobalProvider = (props: { children: any }) => {
     };
 
     const fetchPairs = (asset: string = BTC) => {
-        fetcher("/getpairs", asset)
-            .then((data: any) => {
+        getPairs(asset)
+            .then((data) => {
                 log.debug("getpairs", data);
                 setOnline(true);
-                setConfig(data.pairs);
+                setConfig(data);
             })
             .catch((error) => {
                 log.debug(error);

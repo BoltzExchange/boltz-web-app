@@ -1,3 +1,4 @@
+import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { Accessor, createSignal } from "solid-js";
 
@@ -56,7 +57,10 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         const input = evt.currentTarget as HTMLInputElement;
         const inputValue = input.value.trim();
         try {
-            getAddress(asset).toOutputScript(inputValue, getNetwork(asset));
+            getAddress(asset).toOutputScript(
+                inputValue,
+                getNetwork(asset) as LiquidNetwork,
+            );
             input.setCustomValidity("");
             setRefundAddress(inputValue);
             return true;

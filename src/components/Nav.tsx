@@ -13,6 +13,7 @@ const Nav = ({ network }) => {
 
     const { t, setHideHero, setI18nConfigured } = useGlobalContext();
     const [hamburger, setHamburger] = createSignal(false);
+
     return (
         <nav>
             <Warnings />

@@ -1,3 +1,4 @@
+import { OutputType } from "boltz-core";
 import { Show } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
@@ -10,6 +11,8 @@ import { usePayContext } from "../context/Pay";
 const InvoiceFailedToPay = () => {
     const { failureReason, swap, timeoutEta } = usePayContext();
     const { t } = useGlobalContext();
+    const isTaproot = swap().version === OutputType.Taproot;
+
     return (
         <div>
             <h2>{t("invoice_payment_failure")}</h2>
@@ -17,10 +20,10 @@ const InvoiceFailedToPay = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <Show when={!timeoutEta()} fallback={<RefundEta />}>
+            <Show when={!timeoutEta() || isTaproot} fallback={<RefundEta />}>
                 <RefundButton swap={swap} />
             </Show>
-            <Show when={swap().asset !== RBTC}>
+            <Show when={swap().asset !== RBTC && !isTaproot}>
                 <DownloadRefund />
             </Show>
             <hr />

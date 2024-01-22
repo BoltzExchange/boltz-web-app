@@ -16,6 +16,7 @@ import "../style/footer.scss";
 
 const Footer = () => {
     const { t } = useGlobalContext();
+
     return (
         <footer>
             <h4>

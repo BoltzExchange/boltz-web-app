@@ -1,12 +1,5 @@
-import zkp, {
-    Ecc,
-    Ecdh,
-    Generator,
-    Pedersen,
-    RangeProof,
-    SurjectionProof,
-} from "@vulpemventures/secp256k1-zkp";
-import { Transaction, address, networks } from "bitcoinjs-lib";
+import zkp, { Secp256k1ZKP } from "@vulpemventures/secp256k1-zkp";
+import { Network, Transaction, address, networks } from "bitcoinjs-lib";
 import {
     ClaimDetails,
     RefundDetails,
@@ -30,6 +23,7 @@ import {
     TxOutput as LiquidTransactionOutput,
     confidential,
 } from "liquidjs-lib";
+import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { network } from "../config";
 import { LBTC } from "../consts";
@@ -40,14 +34,7 @@ type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
 
 type DecodedAddress = { script: Buffer; blindingKey?: Buffer };
 
-export let secp: {
-    ecdh: Ecdh;
-    ecc: Ecc;
-    generator: Generator;
-    pedersen: Pedersen;
-    rangeproof: RangeProof;
-    surjectionproof: SurjectionProof;
-};
+export let secp: Secp256k1ZKP;
 let confi: confidential.Confidential;
 
 const setup = async () => {
@@ -72,7 +59,10 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     const address = getAddress(asset);
 
     // We always do this to validate the network
-    const script = address.toOutputScript(addr, getNetwork(asset));
+    const script = address.toOutputScript(
+        addr,
+        getNetwork(asset) as LiquidNetwork,
+    );
 
     if (asset === LBTC) {
         // This throws for unconfidential addresses -> fallback to output script decoding
@@ -93,7 +83,7 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     };
 };
 
-const getNetwork = (asset: string) => {
+const getNetwork = (asset: string): Network | LiquidNetwork => {
     if (asset === LBTC) {
         const liquidNet = network === "main" ? "liquid" : network;
         return LiquidNetworks[liquidNet];
@@ -116,7 +106,7 @@ const getConstructClaimTransaction = (asset: string) => {
         destinationScript: Buffer,
         fee: number,
         isRbf?: boolean,
-        assetHash?: string,
+        liquidNetwork?: LiquidNetwork,
         blindingKey?: Buffer,
     ) => {
         if (asset === LBTC) {
@@ -125,7 +115,7 @@ const getConstructClaimTransaction = (asset: string) => {
                 destinationScript,
                 fee,
                 isRbf,
-                assetHash,
+                liquidNetwork,
                 blindingKey,
             );
         } else {
@@ -147,7 +137,7 @@ const getConstructRefundTransaction = (asset: string) => {
         timeoutBlockHeight: number,
         feePerVbyte: number,
         isRbf: boolean,
-        assetHash?: string,
+        liquidNetwork?: LiquidNetwork,
         blindingKey?: Buffer,
     ) =>
         targetFee(feePerVbyte, (fee) =>
@@ -157,7 +147,7 @@ const getConstructRefundTransaction = (asset: string) => {
                 timeoutBlockHeight,
                 fee,
                 isRbf,
-                assetHash,
+                liquidNetwork,
                 blindingKey,
             ),
         );
