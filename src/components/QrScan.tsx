@@ -40,10 +40,14 @@ const QrScan = () => {
                     }
                     stopScan();
                 },
-                {},
+                {
+                    maxScansPerSecond: 1000,
+                    highlightScanRegion: true,
+                    onDecodeError: () => {},
+                },
             );
         }
-        qrScanner.start();
+        qrScanner.start().then();
     };
 
     const stopScan = () => {
