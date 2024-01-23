@@ -95,7 +95,7 @@ export const CreateButton = () => {
                 setInvoice(inv);
                 setLnurl("");
             } catch (e) {
-                notify("error", e);
+                notify("error", e.message);
                 log.warn("fetch lnurl failed", e);
             }
             return;
