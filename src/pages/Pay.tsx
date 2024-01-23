@@ -163,6 +163,7 @@ const Pay = () => {
                         when={
                             swap().asset !== RBTC &&
                             swapStatus() !== null &&
+                            swapStatus() !== "invoice.set" &&
                             swapStatus() !== "swap.created"
                         }>
                         <BlockExplorer

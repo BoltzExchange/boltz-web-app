@@ -53,17 +53,15 @@ const SwapCreated = () => {
                     {t("pay_invoice_webln")}
                 </span>
             </Show>
+            <Show when={isMobile}>
+                <a href={invoicePrefix + swap().invoice} class="btn btn-light">
+                    {t("open_in_wallet")}
+                </a>
+            </Show>
             <hr class="spacer" />
-            <div class="btns">
-                <span class="btn" onclick={() => clipboard(swap().invoice)}>
-                    {t("copy_invoice")}
-                </span>
-                <Show when={isMobile}>
-                    <a href={invoicePrefix + swap().invoice} class="btn">
-                        {t("open_in_wallet")}
-                    </a>
-                </Show>
-            </div>
+            <span class="btn" onclick={() => clipboard(swap().invoice)}>
+                {t("copy_invoice")}
+            </span>
         </div>
     );
 };

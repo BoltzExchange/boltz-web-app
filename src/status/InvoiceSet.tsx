@@ -78,6 +78,12 @@ const InvoiceSet = () => {
                 <h3>{t("warning_expiry")}</h3>
                 <hr />
             </Show>
+            <Show when={isMobile}>
+                <a href={swap().bip21} class="btn btn-light">
+                    {t("open_in_wallet")}
+                </a>
+            </Show>
+            <hr />
             <div class="btns">
                 <span
                     class="btn"
@@ -91,21 +97,13 @@ const InvoiceSet = () => {
                     }>
                     {t("copy_amount")}
                 </span>
-                <Show when={!isMobile}>
-                    <span class="btn" onclick={() => clipboard(swap().address)}>
-                        {t("copy_address")}
-                    </span>
-                </Show>
+                <span class="btn" onclick={() => clipboard(swap().address)}>
+                    {t("copy_address")}
+                </span>
                 <span class="btn" onclick={() => clipboard(swap().bip21)}>
                     {t("copy_bip21")}
                 </span>
-                <Show when={isMobile}>
-                    <a href={swap().bip21} class="btn">
-                        {t("open_in_wallet")}
-                    </a>
-                </Show>
             </div>
-            <hr />
         </div>
     );
 };
