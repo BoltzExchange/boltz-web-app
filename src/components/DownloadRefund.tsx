@@ -1,3 +1,4 @@
+import { SwapTreeSerializer } from "boltz-core";
 import log from "loglevel";
 import QRCode from "qrcode/lib/server";
 
@@ -10,10 +11,13 @@ const createRefundData = (swap: any) => {
     return {
         id: swap.id,
         asset: swap.asset,
+        version: swap.version,
         privateKey: swap.privateKey,
         blindingKey: swap.blindingKey,
         redeemScript: swap.redeemScript,
+        claimPublicKey: swap.claimPublicKey,
         timeoutBlockHeight: swap.timeoutBlockHeight,
+        swapTree: SwapTreeSerializer.serializeSwapTree(swap.swapTree),
     };
 };
 

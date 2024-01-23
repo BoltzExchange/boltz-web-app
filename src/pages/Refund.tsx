@@ -141,6 +141,7 @@ const Refund = () => {
                     accept="application/json,image/png"
                     onChange={(e) => uploadChange(e)}
                 />
+                <hr />
                 <Show when={refundTx() === ""}>
                     <RefundButton swap={refundJson} />
                     <RefundEta />
@@ -150,6 +151,7 @@ const Refund = () => {
                     <p>{t("refunded")}</p>
                     <hr />
                     <BlockExplorer
+                        typeLabel={"refund_tx"}
                         asset={refundJson().asset}
                         txId={refundTx()}
                     />

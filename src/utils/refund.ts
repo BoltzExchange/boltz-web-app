@@ -24,7 +24,7 @@ import { ECPair } from "./ecpair";
 import { fetcher, parseBlindingKey } from "./helper";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
-export const refundJsonKeys = ["id", "asset", "privateKey", "redeemScript"];
+export const refundJsonKeys = ["id", "asset", "privateKey"];
 export const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 
 const refundTaproot = async (
