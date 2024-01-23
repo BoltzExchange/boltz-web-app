@@ -158,13 +158,14 @@ hr.spacer {
 
 [data-status="swap.expired"] .btn-small,
 [data-status="invoice.expired"] .btn-small,
-[data-status="invoice.failedToPay"] .btn-small,
 [data-status="transaction.refunded"] .btn-small,
+[data-status="invoice.failedToPay"] .btn-small,
 [data-status="transaction.lockupFailed"] .btn-small {
     background-color: $error;
     color: #fff;
 }
 [data-status="swap.expired"] .btn-success,
+[data-status="swap.refunded"] .btn-small,
 [data-status="invoice.settled"] .btn-small,
 [data-status="transaction.confirmed"] .btn-small,
 [data-status="transaction.claimed"] .btn-small {
