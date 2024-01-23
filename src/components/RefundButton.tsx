@@ -143,6 +143,9 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
 
     return (
         <>
+            <h3 style={"color: #fff"}>
+                {t("refund_address_header", { asset: swap()?.asset })}
+            </h3>
             <input
                 data-testid="refundAddress"
                 id="refundAddress"
@@ -150,7 +153,7 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
                 onInput={(e) => setValid(refundAddressChange(e, swap()?.asset))}
                 type="text"
                 name="refundAddress"
-                placeholder={t("refund_address_placeholder")}
+                placeholder={t("onchain_address", { asset: swap()?.asset })}
             />
             <button
                 data-testid="refundButton"
