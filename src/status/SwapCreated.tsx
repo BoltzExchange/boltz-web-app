@@ -46,7 +46,7 @@ const SwapCreated = () => {
             <hr />
             <h3>{t("warning_return")}</h3>
             <hr />
-            <Show when={webln()}>
+            <Show when={webln() && !isMobile}>
                 <span
                     class="btn btn-light"
                     onClick={() => payWeblnInvoice(swap().invoice)}>
