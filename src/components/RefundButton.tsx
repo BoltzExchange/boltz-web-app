@@ -23,6 +23,7 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         setRefundTx,
         t,
     } = useGlobalContext();
+
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
@@ -51,6 +52,7 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         );
     }
 
+    const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
     const [valid, setValid] = createSignal<boolean>(false);
 
     const refundAddressChange = (evt: InputEvent, asset: string) => {
@@ -73,6 +75,8 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
     };
 
     const refundAction = async () => {
+        setRefundRunning(true);
+
         try {
             const transactionToRefund = await fetcher(
                 "/getswaptransaction",
@@ -133,6 +137,8 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
                 setNotification(error.message);
             }
         }
+
+        setRefundRunning(false);
     };
 
     return (
@@ -149,7 +155,7 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
             <button
                 data-testid="refundButton"
                 class="btn"
-                disabled={!valid()}
+                disabled={!valid() || refundRunning()}
                 onclick={() => refundAction()}>
                 {t("refund")}
             </button>
