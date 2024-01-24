@@ -72,6 +72,7 @@ const dict = {
         failure_reason: "Failure reason",
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
+        onchain_address_no_asset: "Enter address",
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
@@ -101,6 +102,8 @@ const dict = {
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
             "Enter address of your {{ asset }} wallet to refund",
+        refund_address_header_no_asset:
+            "Enter address of your wallet to refund",
         refund_backup: "Backup",
         refund_import: "Import Backup",
         refund_clear: "Delete localstorage",
@@ -238,6 +241,7 @@ const dict = {
         invoice_payment_failure:
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
         onchain_address: "{{ asset }}-Adresse eingeben",
+        onchain_address_no_asset: "Adresse",
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
@@ -266,6 +270,7 @@ const dict = {
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallet eingeben",
+        refund_address_header_no_asset: "Adresse deines Wallet eingeben",
         refund_backup: "Backup",
         refund_import: "Backup importieren",
         refund_clear: "Lokalen Speicher löschen",
@@ -408,6 +413,7 @@ const dict = {
         failure_reason: "Motivo del fallo",
         invoice_payment_failure: "No se pudo pagar su factura Lightning",
         onchain_address: "Ingrese la dirección de {{ asset }}",
+        onchain_address_no_asset: "Ingrese la dirección",
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
@@ -436,6 +442,8 @@ const dict = {
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_header:
             "Introduzca la dirección de tu monedero {{ asset }} para reembolsar",
+        refund_address_header_no_asset:
+            "Introduzca la dirección de tu monedero para reembolsar",
         refund_backup: "Backup",
         refund_import: "Importar Backup",
         refund_clear: "Borrar almacenamiento local",
@@ -575,6 +583,7 @@ const dict = {
         failure_reason: "失败原因",
         invoice_payment_failure: "无法支付您的闪电发票",
         onchain_address: "输入{{ asset }}地址",
+        onchain_address_no_asset: "地址",
         download_refund_file: "下载退款文件",
         invalid_refund_file: "无效的退款文件",
         invalid_backup_file: "无效的备份文件",
@@ -599,6 +608,7 @@ const dict = {
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
+        refund_address_header_no_asset: "输入要退款的钱包地址",
         refund_backup: "备份",
         refund_import: "导入备份",
         refund_clear: "删除本地存储",
