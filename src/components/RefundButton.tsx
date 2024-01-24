@@ -144,7 +144,9 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
     return (
         <>
             <h3 style={"color: #fff"}>
-                {t("refund_address_header", { asset: swap()?.asset })}
+                {swap()
+                    ? t("refund_address_header", { asset: swap()?.asset })
+                    : t("refund_address_header_no_asset")}
             </h3>
             <input
                 data-testid="refundAddress"

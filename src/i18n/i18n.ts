@@ -101,6 +101,8 @@ const dict = {
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
             "Enter address of your {{ asset }} wallet to refund",
+        refund_address_header_no_asset:
+            "Enter address of your wallet to refund",
         refund_backup: "Backup",
         refund_import: "Import Backup",
         refund_clear: "Delete localstorage",
@@ -266,6 +268,7 @@ const dict = {
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallet eingeben",
+        refund_address_header_no_asset: "Adresse deines Wallet eingeben",
         refund_backup: "Backup",
         refund_import: "Backup importieren",
         refund_clear: "Lokalen Speicher löschen",
@@ -436,6 +439,8 @@ const dict = {
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_header:
             "Introduzca la dirección de tu monedero {{ asset }} para reembolsar",
+        refund_address_header_no_asset:
+            "Introduzca la dirección de tu monedero para reembolsar",
         refund_backup: "Backup",
         refund_import: "Importar Backup",
         refund_clear: "Borrar almacenamiento local",
@@ -599,6 +604,7 @@ const dict = {
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
+        refund_address_header_no_asset: "输入要退款的钱包地址",
         refund_backup: "备份",
         refund_import: "导入备份",
         refund_clear: "删除本地存储",
