@@ -155,9 +155,11 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
                 onInput={(e) => setValid(refundAddressChange(e, swap()?.asset))}
                 type="text"
                 name="refundAddress"
-                placeholder={swap()
-                    ? t("onchain_address", { asset: swap()?.asset })
-                    : t("onchain_address_no_asset")}
+                placeholder={
+                    swap()
+                        ? t("onchain_address", { asset: swap()?.asset })
+                        : t("onchain_address_no_asset")
+                }
             />
             <button
                 data-testid="refundButton"
