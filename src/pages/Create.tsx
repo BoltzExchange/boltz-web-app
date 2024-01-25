@@ -318,21 +318,14 @@ const Create = () => {
                         autofocus
                         required
                         type="text"
-                        placeholder={formatAmount(
-                            BigNumber(minimum()),
-                            denomination(),
-                        )}
+                        placeholder="0"
                         maxlength={calculateDigits(maximum(), denomination())}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="sendAmount"
                         data-testid="sendAmount"
-                        value={
-                            sendAmountFormatted() === "0"
-                                ? ""
-                                : sendAmountFormatted()
-                        }
+                        value={sendAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeSendAmount(e)}
@@ -345,26 +338,14 @@ const Create = () => {
                         ref={receiveAmountRef}
                         required
                         type="text"
-                        placeholder={formatAmount(
-                            calculateReceiveAmount(
-                                BigNumber(minimum()),
-                                boltzFee(),
-                                minerFee(),
-                                reverse(),
-                            ),
-                            denomination(),
-                        )}
+                        placeholder="0"
                         maxlength={calculateDigits(maximum(), denomination())}
                         inputmode={
                             denomination() == "btc" ? "decimal" : "numeric"
                         }
                         id="receiveAmount"
                         data-testid="receiveAmount"
-                        value={
-                            receiveAmountFormatted() === "0"
-                                ? ""
-                                : receiveAmountFormatted()
-                        }
+                        value={receiveAmountFormatted()}
                         onpaste={(e) => validatePaste(e)}
                         onkeypress={(e) => validateInput(e)}
                         onInput={(e) => changeReceiveAmount(e)}
