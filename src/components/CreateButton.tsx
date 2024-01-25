@@ -142,7 +142,7 @@ export const CreateButton = () => {
         }
 
         params.pairHash = getPair(config(), assetName, reverse()).hash;
-        params.refId = ref();
+        params.referralId = ref();
 
         if (!isRsk) {
             if (reverse()) {
