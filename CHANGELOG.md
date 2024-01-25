@@ -2,10 +2,83 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2024-01-25
+
+### Bug Fixes
+
+- Refunds on invoice payment failure (#406)
+- Network button margin (#407)
+- Swap list alignment (#400)
+- Invoice with millisats precision amount (#425)
+- Use of DOM element references after component cleanup (#421)
+- Copy onchain amount (#433)
+- Coalesce Boltz fee with 0
+- Do not create swap when WASM is not available (#446)
+- Pair hash of RSK
+- Disable refund button while transaction is being created (#453)
+- Refunded status button green (#454)
+- Refunds strings (#455)
+- Lnurl error message (#457)
+- Tweak QR code scanner options (#458)
+- Taproot swap refund files
+- Undefined asset on refund page (#459)
+
+### Features
+
+- QR code scanner (#323)
+- Add version footer (#410)
+- Placeholders for amounts instead of 0 on load (#394)
+- Taproot swaps
+- Uncooperative claim fallback
+- Use API v2 to fetch pairs
+- Automatic denom switcher (#395)
+- Deeplinks for wallets (#378)
+
+### Miscellaneous Tasks
+
+- Disable address input autocomplete (#404)
+- Move tests to TypeScript (#413)
+- Move main components to ts (#415)
+- Move utils to TypeScript (#416)
+- Move status pages to TypeScript (#417)
+- Cleanup src file structure (#424)
+- Use blockstream.info on testnet (#429)
+- Bump boltz-core version
+- Bump follow-redirects from 1.15.3 to 1.15.5 (#449)
+- Update vite (#450)
+- Clarify wording on refund page (#456)
+- Prepare release v1.3.0
+
+### Refactor
+
+- Buttons width 100% (#379)
+- Move signals and ecpair to TypeScript (#408)
+- Move components to TypeScript (#409)
+- Use strong types for window.webln (#412)
+- Remove clickable amount component (#423)
+- Amount conversion (#420)
+- Amount calculations (#422)
+- Fetcher not using global signals (#427)
+- FeeChecker not using global signals (#428)
+- SwapChecker into component (#431)
+- Move feeCheck from helper (#432)
+- Use create context for signals (#430)
+- Use PayContext for signals (#434)
+- Claim and refund logic (#435)
+- Use globalcontext remove signals
+- Update boltz-core
+- Use globalcontext remove signals and fetcher (#439)
+- Revert to 0 as placeholder for amounts
+
+### Testing
+
+- Fix validation test for Taproot
+
 ## [1.2.1] - 2023-12-22
 
 ### Bug Fixes
 
+- Reactive clickable amount label
 - Revalidate amounts when address is valid (#393)
 - Missing qrcode import (#392)
 - Do not setReverse in Pay.jsx (#376)
@@ -13,6 +86,10 @@ All notable changes to this project will be documented in this file.
 ### Features
 
 - Denomination toggle (#398)
+
+### Miscellaneous Tasks
+
+- Release v1.2.1 (#401)
 
 ### Misc
 
