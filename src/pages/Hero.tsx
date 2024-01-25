@@ -120,12 +120,6 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://electrum.org/"
-                            target="_blank"
-                            class="electrum"></a>
-                    </div>
-                    <div>
-                        <a
                             href="https://lnbits.com/"
                             target="_blank"
                             class="lnbits"></a>
@@ -157,6 +151,18 @@ export const Hero = () => {
                             href="https://fuji.money/"
                             target="_blank"
                             class="fuji"></a>
+                    </div>
+                    <div>
+                        <a
+                            href="https://aquawallet.io/"
+                            target="_blank"
+                            class="aqua"></a>
+                    </div>
+                    <div>
+                        <a
+                            href="https://vulpem.com/marina.html"
+                            target="_blank"
+                            class="marina"></a>
                     </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
