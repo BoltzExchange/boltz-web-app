@@ -23,8 +23,7 @@ import {
     getTransaction,
     setup,
 } from "./compat";
-import { ECPair } from "./ecpair";
-import { fetcher, parseBlindingKey } from "./helper";
+import { fetcher, parseBlindingKey, parsePrivateKey } from "./helper";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 const createAdjustedClaim = <
@@ -162,9 +161,7 @@ export const claim = async (
 
     const tx = Transaction.fromHex(swapStatusTransaction.hex);
 
-    const privateKey = ECPair.fromPrivateKey(
-        Buffer.from(swap.privateKey, "hex"),
-    );
+    const privateKey = parsePrivateKey(swap.privateKey);
     log.debug("privateKey: ", privateKey);
 
     const preimage = Buffer.from(swap.preimage, "hex");

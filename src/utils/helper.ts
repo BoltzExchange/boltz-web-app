@@ -1,4 +1,5 @@
 import { Buffer } from "buffer";
+import { ECPairInterface } from "ecpair";
 import log from "loglevel";
 
 import { pairs } from "../config";
@@ -9,6 +10,7 @@ import {
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
 } from "./boltzClient";
+import { ECPair } from "./ecpair";
 
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
@@ -85,4 +87,13 @@ export const fetcher = async <T = any>(
         return Promise.reject(response);
     }
     return response.json();
+};
+
+export const parsePrivateKey = (privateKey: string): ECPairInterface => {
+    try {
+        return ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+    } catch (e) {
+        // When the private key is not HEX, we try to decode it as WIF
+        return ECPair.fromWIF(privateKey);
+    }
 };
