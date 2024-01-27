@@ -20,8 +20,7 @@ import {
     getTransaction,
     setup,
 } from "./compat";
-import { ECPair } from "./ecpair";
-import { fetcher, parseBlindingKey } from "./helper";
+import { fetcher, parseBlindingKey, parsePrivateKey } from "./helper";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export const refundJsonKeys = ["id", "asset", "privateKey"];
@@ -109,9 +108,7 @@ export async function refund(
 
     const Transaction = getTransaction(assetName);
     const tx = Transaction.fromHex(transactionToRefund.transactionHex);
-    const privateKey = ECPair.fromPrivateKey(
-        Buffer.from(swap.privateKey, "hex"),
-    );
+    const privateKey = parsePrivateKey(swap.privateKey);
 
     let refundTransaction: TransactionInterface;
 
