@@ -46,7 +46,7 @@ const Fees = () => {
                         legacyCfg.fees.minerFees.baseAsset.reverse;
 
                     setMinerFee(
-                        reverseMinerFees.lockup + reverseMinerFees.lockup,
+                        reverseMinerFees.lockup + reverseMinerFees.claim,
                     );
                 } else {
                     setBoltzFee(legacyCfg.fees.percentageSwapIn);
