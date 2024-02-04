@@ -1,3 +1,4 @@
+import { crypto } from "bitcoinjs-lib";
 import {
     ClaimDetails,
     OutputType,
@@ -13,6 +14,8 @@ import { LBTC, RBTC } from "../consts";
 import {
     TransactionInterface,
     getPartialReverseClaimSignature,
+    getSubmarineClaimDetails,
+    postSubmarineClaimDetails,
 } from "./boltzClient";
 import {
     DecodedAddress,
@@ -24,6 +27,7 @@ import {
     setup,
 } from "./compat";
 import { fetcher, parseBlindingKey, parsePrivateKey } from "./helper";
+import { decodeInvoice } from "./invoice";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 const createAdjustedClaim = <
@@ -212,4 +216,36 @@ export const claim = async (
         swap.claimTx = res.transactionId;
     }
     return swap;
+};
+
+export const createSubmarineSignature = async (swap) => {
+    if (swap.asset === RBTC) {
+        return;
+    }
+
+    await setup();
+    log.info(`creating cooperative claim signature for`, swap.id);
+
+    const claimDetails = await getSubmarineClaimDetails(swap.asset, swap.id);
+    if (
+        crypto.sha256(claimDetails.preimage).toString("hex") !==
+        decodeInvoice(swap.invoice).preimageHash
+    ) {
+        throw "invalid preimage";
+    }
+
+    const boltzPublicKey = Buffer.from(swap.claimPublicKey, "hex");
+    const musig = createMusig(parsePrivateKey(swap.privateKey), boltzPublicKey);
+    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
+    tweakMusig(swap.asset, musig, tree.tree);
+
+    musig.aggregateNonces([[boltzPublicKey, claimDetails.pubNonce]]);
+    musig.initializeSession(claimDetails.transactionHash);
+
+    await postSubmarineClaimDetails(
+        swap.asset,
+        swap.id,
+        musig.getPublicNonce(),
+        musig.signPartial(),
+    );
 };

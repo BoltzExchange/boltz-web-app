@@ -143,6 +143,26 @@ export const getPartialReverseClaimSignature = async (
     };
 };
 
+export const getSubmarineClaimDetails = async (asset: string, id: string) => {
+    const res = await fetcher(`/v2/swap/submarine/${id}/claim`, asset);
+    return {
+        pubNonce: Musig.parsePubNonce(res.pubNonce),
+        preimage: Buffer.from(res.preimage, "hex"),
+        transactionHash: Buffer.from(res.transactionHash, "hex"),
+    };
+};
+
+export const postSubmarineClaimDetails = async (
+    asset: string,
+    id: string,
+    pubNonce: Buffer | Uint8Array,
+    partialSignature: Buffer | Uint8Array,
+) =>
+    fetcher(`/v2/swap/submarine/${id}/claim`, asset, {
+        pubNonce: Buffer.from(pubNonce).toString("hex"),
+        partialSignature: Buffer.from(partialSignature).toString("hex"),
+    });
+
 export {
     Pairs,
     PairLegacy,

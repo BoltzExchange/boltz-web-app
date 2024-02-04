@@ -4,7 +4,7 @@ import { createEffect, createSignal } from "solid-js";
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { claim } from "../utils/claim";
+import { claim, createSubmarineSignature } from "../utils/claim";
 import { fetcher, getApiUrl } from "../utils/helper";
 import { swapStatusFinal, swapStatusPending } from "../utils/swapStatus";
 
@@ -80,7 +80,16 @@ export const SwapChecker = () => {
                 setSwaps(swapsTmp);
                 notify("success", `swap ${res.id} claimed`);
             } catch (e) {
-                log.debug("swapchecker failed to claim swap", e);
+                log.warn("swapchecker failed to claim swap", e);
+            }
+        } else if (data.status === swapStatusPending.TransactionClaimPending) {
+            try {
+                await createSubmarineSignature(currentSwap);
+            } catch (e) {
+                log.warn(
+                    "swapchecker failed to sign cooperative submarine claim",
+                    e,
+                );
             }
         }
     };
@@ -124,9 +133,9 @@ export const SwapChecker = () => {
             `${getApiUrl(activeSwap.asset)}/streamswapstatus?id=${
                 activeSwap.id
             }`,
-            (data) => {
+            async (data) => {
                 prepareSwap(data, activeSwap);
-                claimSwap(data, activeSwap);
+                await claimSwap(data, activeSwap);
             },
         );
     });
