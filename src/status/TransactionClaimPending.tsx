@@ -1,11 +1,12 @@
 import LoadingSpinner from "../components/LoadingSpinner";
+import { useGlobalContext } from "../context/Global";
 
 const TransactionClaimPending = () => {
-    // TODO: translations
+    const { t } = useGlobalContext();
     return (
         <div>
-            <h2>Invoice paid</h2>
-            <p>Creating cooperative claim transaction</p>
+            <h2>{t("invoice_paid")}</h2>
+            <p>{t("creating_coop_claim")}</p>
             <LoadingSpinner />
         </div>
     );
