@@ -14,12 +14,13 @@ import InvoiceSet from "../status/InvoiceSet";
 import SwapCreated from "../status/SwapCreated";
 import SwapExpired from "../status/SwapExpired";
 import SwapRefunded from "../status/SwapRefunded";
+import TransactionClaimPending from "../status/TransactionClaimPending";
 import TransactionClaimed from "../status/TransactionClaimed";
 import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { fetcher } from "../utils/helper";
-import { swapStatusFailed } from "../utils/swapStatus";
+import { swapStatusFailed, swapStatusPending } from "../utils/swapStatus";
 
 const Pay = () => {
     const params = useParams();
@@ -154,6 +155,13 @@ const Pay = () => {
                     </Show>
                     <Show when={swapStatus() == "invoice.pending"}>
                         <InvoicePending />
+                    </Show>
+                    <Show
+                        when={
+                            swapStatus() ===
+                            swapStatusPending.TransactionClaimPending
+                        }>
+                        <TransactionClaimPending />
                     </Show>
                     <Show when={swapStatus() == "swap.created"}>
                         <SwapCreated />

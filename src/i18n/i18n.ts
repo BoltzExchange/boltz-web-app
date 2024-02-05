@@ -165,6 +165,8 @@ const dict = {
         version: "Version",
         commithash: "Commit Hash",
         open_in_wallet: "Open in Wallet",
+        invoice_paid: "Invoice paid",
+        creating_coop_claim: "Creating cooperative claim transaction.",
     },
     de: {
         language: "Deutsch",
@@ -337,6 +339,8 @@ const dict = {
         version: "Version",
         commithash: "Commit Hash",
         open_in_wallet: "Im Wallet öffnen",
+        invoice_paid: "Rechnung bezahlt",
+        creating_coop_claim: "Erstelle kooperative Claim-Transaktion.",
     },
     es: {
         language: "Español",
@@ -510,6 +514,9 @@ const dict = {
         version: "Versión",
         commithash: "Commit Hash",
         open_in_wallet: "Abrir en monedero",
+        invoice_paid: "Factura pagada",
+        creating_coop_claim:
+            "Creación de una transacción de reclamación cooperativa.",
     },
     zh: {
         language: "中文",
@@ -667,6 +674,8 @@ const dict = {
         version: "版本",
         commithash: "提交哈希",
         open_in_wallet: "在钱包中打开",
+        invoice_paid: "发票已支付",
+        creating_coop_claim: "创建合作索赔交易。",
     },
 };
 
