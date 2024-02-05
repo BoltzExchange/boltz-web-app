@@ -31,7 +31,7 @@ export const clipboard = (text: string) => {
     navigator.clipboard.writeText(text);
 };
 
-export const getApiUrl = (asset: string) => {
+export const getApiUrl = (asset: string): string => {
     const pair = pairs[`${asset}/BTC`];
     if (pair) {
         return pair.apiUrl;

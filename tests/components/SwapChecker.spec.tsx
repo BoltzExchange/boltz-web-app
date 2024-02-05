@@ -4,11 +4,7 @@ import { Server as HttpsServer, createServer } from "https";
 import { AddressInfo } from "net";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-import {
-    SwapChecker,
-    checkInterval,
-    swapCheckInterval,
-} from "../../src/components/SwapChecker";
+import { SwapChecker } from "../../src/components/SwapChecker";
 import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import { PayProvider, usePayContext } from "../../src/context/Pay";
 import {
@@ -131,7 +127,6 @@ describe("swapChecker", () => {
     });
 
     afterEach(() => {
-        clearInterval(checkInterval());
         claimData = [];
         fetcherCallData = [];
         server.close();
@@ -148,8 +143,6 @@ describe("swapChecker", () => {
         ));
 
         globalSignals.setSwaps(swaps);
-
-        await wait(swapCheckInterval + 100);
 
         expect(fetcherCallData).toHaveLength(2);
         expect(fetcherCallData).toEqual([
