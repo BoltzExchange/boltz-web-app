@@ -19,7 +19,7 @@ import TransactionClaimed from "../status/TransactionClaimed";
 import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
-import { fetcher } from "../utils/helper";
+import { getSwapStatus } from "../utils/boltzClient";
 import { swapStatusFailed, swapStatusPending } from "../utils/swapStatus";
 
 const Pay = () => {
@@ -49,9 +49,10 @@ const Pay = () => {
             if (currentSwap) {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);
-                const res = await fetcher("/swapstatus", currentSwap.asset, {
-                    id: currentSwap.id,
-                });
+                const res = await getSwapStatus(
+                    currentSwap.asset,
+                    currentSwap.id,
+                );
                 setSwapStatus(res.status);
                 setSwapStatusTransaction(res.transaction);
                 setFailureReason(res.failureReason);

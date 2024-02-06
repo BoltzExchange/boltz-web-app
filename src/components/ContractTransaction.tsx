@@ -16,6 +16,7 @@ const ContractTransaction = ({
     waitingText?: string;
 }) => {
     const [txSent, setTxSent] = createSignal(false);
+    const [clicked, setClicked] = createSignal(false);
 
     return (
         <>
@@ -25,9 +26,15 @@ const ContractTransaction = ({
                 </Show>
                 <button
                     class="btn"
+                    disabled={clicked()}
                     onClick={async () => {
-                        await onClick();
-                        setTxSent(true);
+                        setClicked(true);
+                        try {
+                            await onClick();
+                            setTxSent(true);
+                        } finally {
+                            setClicked(false);
+                        }
                     }}>
                     {buttonText}
                 </button>

@@ -11,7 +11,12 @@ import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { LBTC } from "../consts";
-import { TransactionInterface, getPartialRefundSignature } from "./boltzClient";
+import {
+    TransactionInterface,
+    broadcastTransaction,
+    getFeeEstimations,
+    getPartialRefundSignature,
+} from "./boltzClient";
 import {
     DecodedAddress,
     decodeAddress,
@@ -20,7 +25,7 @@ import {
     getTransaction,
     setup,
 } from "./compat";
-import { fetcher, parseBlindingKey, parsePrivateKey } from "./helper";
+import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export const refundJsonKeys = ["id", "asset", "privateKey"];
@@ -92,7 +97,7 @@ const refundTaproot = async (
 export async function refund(
     swap: any,
     refundAddress: string,
-    transactionToRefund: any,
+    transactionToRefund: { hex: string; timeoutBlockHeight: number },
 ) {
     log.debug("starting to refund swap", swap);
 
@@ -103,11 +108,11 @@ export async function refund(
     log.info("refunding swap: ", swap.id);
     await setup();
 
-    const resFees = await fetcher("/getfeeestimation", swap.asset);
+    const resFees = await getFeeEstimations(assetName);
     const fees = resFees[swap.asset];
 
     const Transaction = getTransaction(assetName);
-    const tx = Transaction.fromHex(transactionToRefund.transactionHex);
+    const tx = Transaction.fromHex(transactionToRefund.hex);
     const privateKey = parsePrivateKey(swap.privateKey);
 
     let refundTransaction: TransactionInterface;
@@ -150,13 +155,14 @@ export async function refund(
     }
 
     log.debug("refundTransaction", refundTransaction.toHex());
-    const res = await fetcher("/broadcasttransaction", assetName, {
-        currency: assetName,
-        transactionHex: refundTransaction.toHex(),
-    });
+
+    const res = await broadcastTransaction(
+        assetName,
+        refundTransaction.toHex(),
+    );
     log.debug("refund result:", res);
-    if (res.transactionId) {
-        swap.refundTx = res.transactionId;
+    if (res.id) {
+        swap.refundTx = res.id;
     }
     return swap;
 }

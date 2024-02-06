@@ -6,9 +6,11 @@ import { Accessor, createSignal } from "solid-js";
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import { getSubmarineEipSignature } from "../utils/boltzClient";
+import {
+    getSubmarineEipSignature,
+    getSubmarineTransaction,
+} from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
-import { fetcher } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
@@ -113,12 +115,9 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         setRefundRunning(true);
 
         try {
-            const transactionToRefund = await fetcher(
-                "/getswaptransaction",
+            const transactionToRefund = await getSubmarineTransaction(
                 swap().asset,
-                {
-                    id: swap().id,
-                },
+                swap().id,
             );
             log.debug(
                 `got swap transaction for ${swap().id}`,

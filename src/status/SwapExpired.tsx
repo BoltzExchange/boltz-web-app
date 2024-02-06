@@ -5,7 +5,7 @@ import { Show, createEffect } from "solid-js";
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { fetcher } from "../utils/helper";
+import { getSubmarineTransaction } from "../utils/boltzClient";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
@@ -16,11 +16,9 @@ const SwapExpired = () => {
     createEffect(async () => {
         setTransactionToRefund(null);
         try {
-            const res = await fetcher("/getswaptransaction", swap().asset, {
-                id: swap().id,
-            });
+            const res = await getSubmarineTransaction(swap().asset, swap().id);
             log.debug(`got swap transaction for ${swap().id}`);
-            setTransactionToRefund(res);
+            setTransactionToRefund(res.hex);
         } catch (error: any) {
             log.warn(`no swap transaction for: ${swap().id}`, error);
         }

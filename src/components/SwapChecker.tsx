@@ -4,8 +4,9 @@ import { createEffect, onCleanup, onMount } from "solid-js";
 import { BTC, LBTC, RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { getSubmarineTransaction } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
-import { fetcher, getApiUrl } from "../utils/helper";
+import { getApiUrl } from "../utils/helper";
 import { swapStatusFinal, swapStatusPending } from "../utils/swapStatus";
 
 const reconnectInterval = 5_000;
@@ -24,6 +25,7 @@ class BoltzWebSocket {
 
     public connect = () => {
         this.isClosed = false;
+        clearTimeout(this.reconnectTimeout);
         this.ws?.close();
         this.ws = new WebSocket(
             `${BoltzWebSocket.formatWsUrl(this.url)}/v2/ws`,
@@ -34,10 +36,6 @@ class BoltzWebSocket {
         };
         this.ws.onclose = () => {
             log.warn(`ws ${this.url} closed`);
-            this.handleClose();
-        };
-        this.ws.onerror = (error) => {
-            log.warn(`ws ${this.url} errored`, error);
             this.handleClose();
         };
         this.ws.onmessage = async (msg) => {
@@ -120,11 +118,8 @@ export const SwapChecker = () => {
             data.status == "transaction.lockupFailed" ||
             data.status == "invoice.failedToPay"
         ) {
-            const id = swap.id;
-            const res = await fetcher("/getswaptransaction", swap.asset, {
-                id,
-            });
-            if (swap.asset !== RBTC && !res.transactionHex) {
+            const res = await getSubmarineTransaction(swap.asset, swap.id);
+            if (swap.asset !== RBTC && !res.hex) {
                 log.error("no mempool tx found");
             }
             if (!res.timeoutEta) {
@@ -155,6 +150,7 @@ export const SwapChecker = () => {
     const claimSwap = async (swapId: string, data: any) => {
         const currentSwap = swaps().find((s) => swapId === s.id);
         if (
+            currentSwap.asset !== RBTC &&
             currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
             (data.status === swapStatusPending.TransactionConfirmed ||

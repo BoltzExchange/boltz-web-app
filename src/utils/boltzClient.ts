@@ -60,12 +60,6 @@ type ReversePairTypeTaproot = PairType & {
     };
 };
 
-type PairsLegacy = {
-    info: string[];
-    warnings: string[];
-    pairs: Record<string, PairLegacy>;
-};
-
 type SubmarinePairsTaproot = Record<
     string,
     Record<string, SubmarinePairTypeTaproot>
@@ -77,7 +71,6 @@ type ReversePairsTaproot = Record<
 >;
 
 type Pairs = {
-    legacy: PairsLegacy;
     submarine: SubmarinePairsTaproot;
     reverse: ReversePairsTaproot;
 };
@@ -87,17 +80,26 @@ type PartialSignature = {
     signature: Buffer;
 };
 
+type Contracts = {
+    network: {
+        chainId: number;
+    };
+    tokens: Record<string, string>;
+    swapContracts: {
+        EtherSwap: string;
+        ERC20Swap: string;
+    };
+};
+
 type TransactionInterface = Transaction | LiquidTransaction;
 
 export const getPairs = async (asset: string): Promise<Pairs> => {
-    const [legacy, submarine, reverse] = await Promise.all([
-        fetcher<PairsLegacy>("/getpairs", asset),
+    const [submarine, reverse] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", asset),
         fetcher<ReversePairsTaproot>("/v2/swap/reverse", asset),
     ]);
 
     return {
-        legacy,
         reverse,
         submarine,
     };
@@ -152,7 +154,7 @@ export const getSubmarineClaimDetails = async (asset: string, id: string) => {
     };
 };
 
-export const postSubmarineClaimDetails = async (
+export const postSubmarineClaimDetails = (
     asset: string,
     id: string,
     pubNonce: Buffer | Uint8Array,
@@ -163,11 +165,54 @@ export const postSubmarineClaimDetails = async (
         partialSignature: Buffer.from(partialSignature).toString("hex"),
     });
 
-export const getSubmarineEipSignature = async (asset: string, id: string) =>
+export const getSubmarineEipSignature = (asset: string, id: string) =>
     fetcher<{ signature: string }>(`/v2/swap/submarine/${id}/refund`, asset);
+
+export const getFeeEstimations = (asset: string) =>
+    fetcher<Record<string, number>>("/v2/chain/fees", asset);
+
+export const getNodeStats = (asset: string) =>
+    fetcher<{
+        BTC: {
+            total: {
+                capacity: number;
+                channels: number;
+                peers: number;
+                oldestChannel: number;
+            };
+        };
+    }>("/v2/nodes/stats", asset);
+
+export const getContracts = (asset: string) =>
+    fetcher<Record<string, Contracts>>("/v2/chain/contracts", asset);
+
+export const broadcastTransaction = (asset: string, txHex: string) =>
+    fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, asset, {
+        hex: txHex,
+    });
+
+export const getSubmarineTransaction = (asset: string, id: string) =>
+    fetcher<{
+        id: string;
+        hex: string;
+        timeoutBlockHeight: number;
+        timeoutEta?: number;
+    }>(`/v2/swap/submarine/${id}/transaction`, asset);
+
+export const getSwapStatus = (asset: string, id: string) =>
+    fetcher<{
+        status: string;
+        failureReason?: string;
+        zeroConfRejected?: boolean;
+        transaction?: {
+            id: string;
+            hex: string;
+        };
+    }>(`/v2/swap/${id}`, asset);
 
 export {
     Pairs,
+    Contracts,
     PairLegacy,
     PartialSignature,
     TransactionInterface,

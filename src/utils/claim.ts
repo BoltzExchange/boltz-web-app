@@ -13,6 +13,7 @@ import log from "loglevel";
 import { LBTC, RBTC } from "../consts";
 import {
     TransactionInterface,
+    broadcastTransaction,
     getPartialReverseClaimSignature,
     getSubmarineClaimDetails,
     postSubmarineClaimDetails,
@@ -26,7 +27,7 @@ import {
     getTransaction,
     setup,
 } from "./compat";
-import { fetcher, parseBlindingKey, parsePrivateKey } from "./helper";
+import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
@@ -207,13 +208,12 @@ export const claim = async (
     }
 
     log.debug("claim_tx", claimTransaction);
-    const res = await fetcher("/broadcasttransaction", assetName, {
-        currency: assetName,
-        transactionHex: claimTransaction.toHex(),
-    });
+
+    const res = await broadcastTransaction(assetName, claimTransaction.toHex());
     log.debug("claim result:", res);
-    if (res.transactionId) {
-        swap.claimTx = res.transactionId;
+
+    if (res.id) {
+        swap.claimTx = res.id;
     }
     return swap;
 };

@@ -57,6 +57,7 @@ const Create = () => {
         minimum,
         maximum,
         setInvoice,
+        setInvoiceValid,
         setValid,
         setSendAmountValid,
         boltzFee,
@@ -128,6 +129,7 @@ const Create = () => {
             validateAmount();
             log.debug("created webln invoice", invoice);
             setInvoice(invoice.paymentRequest);
+            setInvoiceValid(true);
         });
     };
 
