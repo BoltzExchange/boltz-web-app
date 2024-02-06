@@ -19,7 +19,9 @@ const TransactionConfirmed = () => {
                 onClick={async () => {
                     const contract = await getEtherSwap();
 
-                    const tx = await contract.claim(
+                    const tx = await contract[
+                        "claim(bytes32,uint256,address,uint256)"
+                    ](
                         prefix0x(swap().preimage),
                         satoshiToWei(swap().onchainAmount),
                         swap().refundAddress,

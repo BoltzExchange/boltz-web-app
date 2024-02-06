@@ -41,7 +41,6 @@ const ContractTransaction = ({
                     <p>{waitingText}</p>
                 </Show>
                 <LoadingSpinner />
-                <hr />
             </Show>
         </>
     );

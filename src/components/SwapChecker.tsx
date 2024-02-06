@@ -73,6 +73,9 @@ class BoltzWebSocket {
 
     public subscribeUpdates = (ids: string[]) => {
         ids.forEach((id) => this.relevantIds.add(id));
+        if (this.ws.readyState !== WebSocket.OPEN) {
+            return;
+        }
 
         this.ws.send(
             JSON.stringify({

@@ -163,6 +163,9 @@ export const postSubmarineClaimDetails = async (
         partialSignature: Buffer.from(partialSignature).toString("hex"),
     });
 
+export const getSubmarineEipSignature = async (asset: string, id: string) =>
+    fetcher<{ signature: string }>(`/v2/swap/submarine/${id}/refund`, asset);
+
 export {
     Pairs,
     PairLegacy,
