@@ -91,6 +91,11 @@ type Contracts = {
     };
 };
 
+type NodeInfo = {
+    publicKey: string;
+    uris: string[];
+};
+
 type TransactionInterface = Transaction | LiquidTransaction;
 
 export const getPairs = async (asset: string): Promise<Pairs> => {
@@ -170,6 +175,14 @@ export const getSubmarineEipSignature = (asset: string, id: string) =>
 
 export const getFeeEstimations = (asset: string) =>
     fetcher<Record<string, number>>("/v2/chain/fees", asset);
+
+export const getNodes = (asset: string) =>
+    fetcher<{
+        BTC: {
+            LND: NodeInfo;
+            CLN: NodeInfo;
+        };
+    }>("/v2/nodes", asset);
 
 export const getNodeStats = (asset: string) =>
     fetcher<{
