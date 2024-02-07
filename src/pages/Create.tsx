@@ -63,11 +63,11 @@ const Create = () => {
         minerFee,
     } = useCreateContext();
 
-    // if btc and amount > 9, switch to sat
+    // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
     const changeDenomination = (amount: string) => {
         if (amount === "") return;
-        if (denomination() === denominations.btc && Number(amount) > 9) {
+        if (denomination() === denominations.btc && Number(amount) >= 10) {
             setDenomination(denominations.sat);
         } else if (denomination() === denominations.sat && Number(amount) < 1) {
             setDenomination(denominations.btc);
