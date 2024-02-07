@@ -1,3 +1,4 @@
+import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { Accessor, createSignal } from "solid-js";
@@ -5,8 +6,11 @@ import { Accessor, createSignal } from "solid-js";
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import {
+    getSubmarineEipSignature,
+    getSubmarineTransaction,
+} from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
-import { fetcher } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
@@ -25,7 +29,7 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
     } = useGlobalContext();
 
     if (swap() && swap().asset === RBTC) {
-        const { getEtherSwap } = useWeb3Signer();
+        const { getEtherSwap, getSigner } = useWeb3Signer();
 
         const updateSwaps = (cb: any) => {
             const swapsTmp = swaps();
@@ -37,13 +41,46 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         return (
             <ContractTransaction
                 onClick={async () => {
-                    const contract = await getEtherSwap();
-                    const tx = await contract.refund(
-                        prefix0x(decodeInvoice(swap().invoice).preimageHash),
-                        satoshiToWei(swap().expectedAmount),
-                        swap().claimAddress,
-                        swap().timeoutBlockHeight,
+                    const [contract, signer] = await Promise.all([
+                        getEtherSwap(),
+                        getSigner(),
+                    ]);
+
+                    const currentSwap = swap();
+                    const preimageHash = prefix0x(
+                        decodeInvoice(currentSwap.invoice).preimageHash,
                     );
+
+                    let tx: TransactionResponse;
+
+                    if (
+                        currentSwap.timeoutBlockHeight <
+                        (await signer.provider.getBlockNumber())
+                    ) {
+                        tx = await contract.refund(
+                            preimageHash,
+                            satoshiToWei(currentSwap.expectedAmount),
+                            currentSwap.claimAddress,
+                            currentSwap.timeoutBlockHeight,
+                        );
+                    } else {
+                        const { signature } = await getSubmarineEipSignature(
+                            currentSwap.asset,
+                            currentSwap.id,
+                        );
+                        const decSignature = Signature.from(signature);
+
+                        tx = await contract.refundCooperative(
+                            preimageHash,
+                            satoshiToWei(currentSwap.expectedAmount),
+                            currentSwap.claimAddress,
+                            currentSwap.timeoutBlockHeight,
+                            decSignature.v,
+                            decSignature.r,
+                            decSignature.s,
+                        );
+                    }
+
                     updateSwaps((current: any) => (current.refundTx = tx.hash));
                     await tx.wait(1);
                 }}
@@ -78,12 +115,9 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         setRefundRunning(true);
 
         try {
-            const transactionToRefund = await fetcher(
-                "/getswaptransaction",
+            const transactionToRefund = await getSubmarineTransaction(
                 swap().asset,
-                {
-                    id: swap().id,
-                },
+                swap().id,
             );
             log.debug(
                 `got swap transaction for ${swap().id}`,

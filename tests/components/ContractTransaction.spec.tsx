@@ -70,11 +70,10 @@ describe("ContractTransaction", () => {
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        expect(container.childNodes.length).toEqual(2);
+        expect(container.childNodes.length).toEqual(1);
         expect(container.childNodes[0]).toEqual(
             render(() => <LoadingSpinner />).container.childNodes[0],
         );
-        expect(container.childNodes[1].nodeName).toEqual("HR");
     });
 
     test("should show waiting text above loading spinner after tx has been sent", async () => {
@@ -94,7 +93,7 @@ describe("ContractTransaction", () => {
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
-        expect(container.childNodes.length).toEqual(3);
+        expect(container.childNodes.length).toEqual(2);
         expect(container.childNodes[0].textContent).toEqual(waitingText);
     });
 });

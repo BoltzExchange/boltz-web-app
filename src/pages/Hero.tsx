@@ -1,20 +1,21 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createMemo, createSignal, onMount } from "solid-js";
+import { Show, createSignal, onMount } from "solid-js";
 
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
-import { ambossUrl } from "../config";
+import { lightningExplorerUrl } from "../config";
 import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
-import { fetcher } from "../utils/helper";
+import { getNodeStats, getNodes } from "../utils/boltzClient";
 
 export const Hero = () => {
     const navigate = useNavigate();
-    const [nodeStats, setNodeStats] = createSignal(null);
+
+    const [nodePubkey, setNodePubkey] = createSignal<string | null>(null);
     const [numChannel, setNumChannel] = createSignal("0");
     const [numPeers, setNumPeers] = createSignal("0");
     const [capacity, setCapacity] = createSignal("0");
@@ -22,26 +23,29 @@ export const Hero = () => {
 
     const { hideHero, setHideHero, t } = useGlobalContext();
 
-    createMemo(() => {
-        const stats = nodeStats();
-        if (!stats) return;
-        setNumChannel(Number(stats.channels).toLocaleString());
-        setNumPeers(Number(stats.peers).toLocaleString());
-        setCapacity(Number(stats.capacity).toLocaleString());
-        const difference = Date.now() - stats.oldestChannel * 1000;
-        const years = (difference / 1000 / 60 / 60 / 24 / 365).toFixed(2);
-        setOldestChannel(years);
-    });
-
     const openNodeInfo = async () => {
-        window.open(ambossUrl, "_blank");
+        window.open(`${lightningExplorerUrl}/${nodePubkey()}`, "_blank");
     };
 
     onMount(async () => {
         try {
-            const res = await fetcher("/nodestats", BTC);
-            log.debug("nodestats", res);
-            setNodeStats(res.nodes.BTC);
+            const [nodesRes, statsRes] = await Promise.all([
+                getNodes(BTC),
+                getNodeStats(BTC),
+            ]);
+            log.debug("node", nodesRes);
+            setNodePubkey(nodesRes.BTC.LND.publicKey);
+
+            log.debug("node stats", statsRes);
+            const stats = statsRes.BTC.total;
+
+            setNumChannel(Number(stats.channels).toLocaleString());
+            setNumPeers(Number(stats.peers).toLocaleString());
+            setCapacity(Number(stats.capacity).toLocaleString());
+
+            const difference = Date.now() - stats.oldestChannel * 1000;
+            const years = (difference / 1000 / 60 / 60 / 24 / 365).toFixed(2);
+            setOldestChannel(years);
         } catch (error) {
             log.error("nodestats error", error);
         }

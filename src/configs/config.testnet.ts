@@ -6,6 +6,8 @@ const blockExplorerUrl = "https://blockstream.info/testnet";
 const blockExplorerUrlLiquid = "https://blockstream.info/liquidtestnet";
 const blockExplorerUrlRsk = "https://explorer.testnet.rsk.co";
 
+export const lightningExplorerUrl = "https://1ml.com/testnet/node";
+
 export const network: string = "testnet";
 export const bolt11_prefix = "lntb";
 export const loglevel = "debug";

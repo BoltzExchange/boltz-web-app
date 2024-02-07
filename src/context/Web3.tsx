@@ -11,7 +11,7 @@ import {
 
 import { pairs } from "../config";
 import { RBTC } from "../consts";
-import { fetcher } from "../utils/helper";
+import { Contracts, getContracts } from "../utils/boltzClient";
 
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
@@ -48,14 +48,17 @@ const Web3SignerProvider = (props: {
         window.addEventListener(initEvent, handleMetamask);
     }
 
-    const getContracts = new Promise(async (resolve) => {
-        if (props.noFetch || !hasRsk) {
-            return;
-        }
+    const fetchContracts = new Promise<Contracts | undefined>(
+        async (resolve) => {
+            if (props.noFetch || !hasRsk) {
+                resolve(undefined);
+                return;
+            }
 
-        const res = await fetcher("/getcontracts", RBTC);
-        resolve(res["rsk"]);
-    });
+            const res = await getContracts(RBTC);
+            resolve(res["rsk"]);
+        },
+    );
 
     const getSigner = async () => {
         const signer = await provider().getSigner();
@@ -66,7 +69,7 @@ const Web3SignerProvider = (props: {
     const getEtherSwap = async () => {
         await getSigner();
         return new Contract(
-            (await getContracts)["swapContracts"]["EtherSwap"],
+            (await fetchContracts).swapContracts.EtherSwap,
             EtherSwapAbi,
             signer(),
         ) as unknown as EtherSwap;

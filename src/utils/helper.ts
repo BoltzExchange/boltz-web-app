@@ -3,7 +3,7 @@ import { ECPairInterface } from "ecpair";
 import log from "loglevel";
 
 import { pairs } from "../config";
-import { BTC, RBTC } from "../consts";
+import { BTC } from "../consts";
 import {
     PairLegacy,
     Pairs,
@@ -31,7 +31,7 @@ export const clipboard = (text: string) => {
     navigator.clipboard.writeText(text);
 };
 
-export const getApiUrl = (asset: string) => {
+export const getApiUrl = (asset: string): string => {
     const pair = pairs[`${asset}/BTC`];
     if (pair) {
         return pair.apiUrl;
@@ -41,8 +41,6 @@ export const getApiUrl = (asset: string) => {
     return getApiUrl(BTC);
 };
 
-export const isLegacy = (asset: string) => asset === RBTC;
-
 export const getPair = <
     T extends SubmarinePairTypeTaproot | ReversePairTypeTaproot | PairLegacy,
 >(
@@ -51,10 +49,6 @@ export const getPair = <
     isReverse: boolean,
 ): T | undefined => {
     try {
-        if (isLegacy(asset)) {
-            return pairs.legacy.pairs[`${asset}/${BTC}`] as T;
-        }
-
         if (isReverse) {
             return pairs.reverse[BTC][asset] as T;
         }

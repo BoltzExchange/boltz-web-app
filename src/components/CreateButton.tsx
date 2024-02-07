@@ -108,7 +108,7 @@ export const CreateButton = () => {
 
         const keyPair = !isRsk ? ECPair.makeRandom() : null;
 
-        let params = null;
+        let params: any;
         let preimage: Buffer | null = null;
 
         if (reverse()) {
@@ -116,9 +116,6 @@ export const CreateButton = () => {
             const preimageHash = crypto.sha256(preimage).toString("hex");
 
             params = {
-                type: "reversesubmarine",
-                pairId: assetName + "/BTC",
-                orderSide: "buy",
                 invoiceAmount: Number(sendAmount()),
                 preimageHash: preimageHash,
             };
@@ -130,9 +127,6 @@ export const CreateButton = () => {
             }
         } else {
             params = {
-                type: "submarine",
-                pairId: assetName + "/BTC",
-                orderSide: "sell",
                 invoice: invoice(),
             };
 
@@ -144,22 +138,21 @@ export const CreateButton = () => {
         params.pairHash = getPair(config(), assetName, reverse()).hash;
         params.referralId = ref();
 
-        if (!isRsk) {
-            if (reverse()) {
-                params.to = assetName;
-                params.from = BTC;
-            } else {
-                params.to = BTC;
-                params.from = assetName;
-            }
+        if (reverse()) {
+            params.to = assetName;
+            params.from = BTC;
+        } else {
+            params.to = BTC;
+            params.from = assetName;
         }
 
         // create swap
         try {
-            const endpoint = isRsk
-                ? "/createswap"
-                : `/v2/swap/${reverse() ? "reverse" : "submarine"}`;
-            const data = await fetcher(endpoint, assetName, params);
+            const data = await fetcher(
+                `/v2/swap/${reverse() ? "reverse" : "submarine"}`,
+                assetName,
+                params,
+            );
 
             if (!isRsk) {
                 data.version = OutputType.Taproot;

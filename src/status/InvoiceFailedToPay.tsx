@@ -20,7 +20,9 @@ const InvoiceFailedToPay = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <Show when={!timeoutEta() || isTaproot} fallback={<RefundEta />}>
+            <Show
+                when={!timeoutEta() || isTaproot || swap().asset === RBTC}
+                fallback={<RefundEta />}>
                 <RefundButton swap={swap} />
             </Show>
             <Show when={swap().asset !== RBTC && !isTaproot}>

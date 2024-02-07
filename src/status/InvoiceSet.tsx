@@ -17,6 +17,7 @@ const InvoiceSet = () => {
     const { swap } = usePayContext();
     const { asset } = useCreateContext();
     const { t, swaps, setSwaps, denomination } = useGlobalContext();
+
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
