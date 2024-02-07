@@ -12,3 +12,4 @@ export const docsUrl = "https://docs.boltz.exchange";
 export const blogUrl = "https://blog.boltz.exchange";
 export const nostrUrl =
     "https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970";
+export const statusUrl = "https://status.boltz.exchange";

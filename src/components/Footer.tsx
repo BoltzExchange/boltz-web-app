@@ -1,3 +1,4 @@
+import betterstack from "../assets/betterstack.svg";
 import discord from "../assets/discord.svg";
 import github from "../assets/github.svg";
 import nostr from "../assets/nostr.svg";
@@ -9,6 +10,7 @@ import {
     githubUrl,
     nostrUrl,
     repoUrl,
+    statusUrl,
     twitterUrl,
 } from "../config";
 import { useGlobalContext } from "../context/Global";
@@ -61,6 +63,13 @@ const Footer = () => {
                 </a>
                 <a title="Nostr" class="nostr" target="_blank" href={nostrUrl}>
                     <img src={nostr} alt="Nostr Logo" />
+                </a>
+                <a
+                    title="Boltz API Status"
+                    class="betterstack"
+                    target="_blank"
+                    href={statusUrl}>
+                    <img src={betterstack} alt="Better Stack Logo" />
                 </a>
             </div>
             <p>{t("footer")}</p>
