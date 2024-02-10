@@ -1,7 +1,7 @@
 /* @refresh reload */
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
-import { Navigate, Route, Router, Routes } from "@solidjs/router";
+import { Navigate, Route, Router } from "@solidjs/router";
 import log from "loglevel";
 import { Show, render } from "solid-js/web";
 
@@ -41,6 +41,20 @@ const isEmbedded = () => {
     return useGlobalContext().embedded();
 };
 
+const App = (props: any) => (
+    <>
+        <SwapChecker />
+        <Show when={!isEmbedded()}>
+            <Nav network={network} />
+        </Show>
+        {props.children}
+        <Notification />
+        <Show when={!isEmbedded()}>
+            <Footer />
+        </Show>
+    </>
+);
+
 const cleanup = render(
     () => (
         <Router>
@@ -48,16 +62,7 @@ const cleanup = render(
                 <Web3SignerProvider>
                     <CreateProvider>
                         <PayProvider>
-                            <SwapChecker />
-                            <Show when={!isEmbedded()}>
-                                <Nav network={network} />
-                            </Show>
-                            <Routes>
-                                <Route
-                                    path="*"
-                                    element={<Navigate href={"/404"} />}
-                                />
-                                <Route path="/404" component={NotFound} />
+                            <Router root={App}>
                                 <Route path="/" component={Hero} />
                                 <Route path="/swap" component={Create} />
                                 {/* Compatibility with link in Breez:
@@ -71,11 +76,8 @@ const cleanup = render(
                                 <Route path="/error" component={Error} />
                                 <Route path="/refund" component={Refund} />
                                 <Route path="/history" component={History} />
-                            </Routes>
-                            <Notification />
-                            <Show when={!isEmbedded()}>
-                                <Footer />
-                            </Show>
+                                <Route path="*404" component={NotFound} />
+                            </Router>
                         </PayProvider>
                     </CreateProvider>
                 </Web3SignerProvider>

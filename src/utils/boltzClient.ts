@@ -1,6 +1,6 @@
 import { Transaction } from "bitcoinjs-lib";
 import { Musig } from "boltz-core";
-import { Buffer } from "buffer";
+import Buffer from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 
 import { fetcher } from "./helper";
