@@ -1,7 +1,7 @@
 /* @refresh reload */
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
-import { Navigate, Route, Router } from "@solidjs/router";
+import { Route, Router } from "@solidjs/router";
 import log from "loglevel";
 import { Show, render } from "solid-js/web";
 
@@ -57,32 +57,29 @@ const App = (props: any) => (
 
 const cleanup = render(
     () => (
-        <Router>
-            <GlobalProvider>
-                <Web3SignerProvider>
-                    <CreateProvider>
-                        <PayProvider>
-                            <Router root={App}>
-                                <Route path="/" component={Hero} />
-                                <Route path="/swap" component={Create} />
-                                {/* Compatibility with link in Breez:
-                                    https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
-                                <Route path="/swapbox" component={Create} />
-                                <Route path="/swap/:id" component={Pay} />
-                                <Route
-                                    path="/swap/refund/:id"
-                                    component={RefundStep}
-                                />
-                                <Route path="/error" component={Error} />
-                                <Route path="/refund" component={Refund} />
-                                <Route path="/history" component={History} />
-                                <Route path="*404" component={NotFound} />
-                            </Router>
-                        </PayProvider>
-                    </CreateProvider>
-                </Web3SignerProvider>
-            </GlobalProvider>
-        </Router>
+        <GlobalProvider>
+            <Web3SignerProvider>
+                <CreateProvider>
+                    <PayProvider>
+                        <Router root={App}>
+                            <Route path="/" component={Hero} />
+                            <Route path="/swap" component={Create} />
+                            {/* Compatibility with link in Breez:
+                                https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
+                            <Route path="/swapbox" component={Create} />
+                            <Route path="/swap/:id" component={Pay} />
+                            <Route
+                                path="/swap/refund/:id"
+                                component={RefundStep}
+                            />
+                            <Route path="/error" component={Error} />
+                            <Route path="/refund" component={Refund} />
+                            <Route path="/history" component={History} />
+                        </Router>
+                    </PayProvider>
+                </CreateProvider>
+            </Web3SignerProvider>
+        </GlobalProvider>
     ),
     document.getElementById("root"),
 );
