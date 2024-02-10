@@ -1,7 +1,7 @@
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import { Accessor, createSignal } from "solid-js";
+import { Accessor, Setter, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
@@ -16,7 +16,13 @@ import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
 
-const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
+const RefundButton = ({
+    swap,
+    setRefundTx,
+}: {
+    swap: Accessor<Record<string, any>>;
+    setRefundTx?: Setter<string>;
+}) => {
     const {
         setNotificationType,
         setNotification,
@@ -24,7 +30,6 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
         setSwaps,
         setRefundAddress,
         refundAddress,
-        setRefundTx,
         t,
     } = useGlobalContext();
 
@@ -33,7 +38,7 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
 
         const updateSwaps = (cb: any) => {
             const swapsTmp = swaps();
-            const currentSwap = swapsTmp.find((s) => swap().id === s.id);
+            const currentSwap = swapsTmp.find((s: any) => swap().id === s.id);
             cb(currentSwap);
             setSwaps(swapsTmp);
         };
@@ -134,11 +139,13 @@ const RefundButton = ({ swap }: { swap: Accessor<Record<string, any>> }) => {
             // refundjson has no date
             if (res.date !== undefined) {
                 const swapsTmp = swaps();
-                const currentSwap = swapsTmp.find((s) => res.id === s.id);
+                const currentSwap = swapsTmp.find((s: any) => res.id === s.id);
                 currentSwap.refundTx = res.refundTx;
                 setSwaps(swapsTmp);
             } else {
-                setRefundTx(res.refundTx);
+                if (setRefundTx) {
+                    setRefundTx(res.refundTx);
+                }
             }
         } catch (error) {
             log.debug("refund failed", error);

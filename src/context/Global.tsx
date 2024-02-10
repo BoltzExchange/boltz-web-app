@@ -30,8 +30,6 @@ export type GlobalContextType = {
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
     setRefundAddress: Setter<string | null>;
-    refundTx: Accessor<string>;
-    setRefundTx: Setter<string>;
     transactionToRefund: Accessor<string | null>;
     setTransactionToRefund: Setter<string | null>;
     i18n: Accessor<string | null>;
@@ -78,7 +76,6 @@ const GlobalProvider = (props: { children: any }) => {
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
 
-    const [refundTx, setRefundTx] = createSignal<string>("");
     const [transactionToRefund, setTransactionToRefund] = createSignal<
         string | null
     >(null);
@@ -197,8 +194,6 @@ const GlobalProvider = (props: { children: any }) => {
                 setWasmSupported,
                 refundAddress,
                 setRefundAddress,
-                refundTx,
-                setRefundTx,
                 transactionToRefund,
                 setTransactionToRefund,
                 i18n,

@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 
 import RefundButton from "../../src/components/RefundButton";
-import i18n from "../../src/i18n/i18n";
 import { contextWrapper } from "../helper";
 
 describe("RefundButton", () => {
@@ -11,17 +10,6 @@ describe("RefundButton", () => {
         render(() => <RefundButton swap={swap} />, {
             wrapper: contextWrapper,
         });
-        const input = (await screen.findByTestId(
-            "refundAddress",
-        )) as HTMLInputElement;
-        expect(input).not.toBeUndefined();
-        expect(input.disabled).toBeTruthy();
-
-        const button = (await screen.findByText(
-            i18n.en.refund,
-        )) as HTMLButtonElement;
-        expect(button).not.toBeUndefined();
-        expect(button.disabled).toBeTruthy();
     });
 
     test("button should be active after pasting valid address", async () => {

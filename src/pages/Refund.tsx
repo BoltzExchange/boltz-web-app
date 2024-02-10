@@ -16,11 +16,11 @@ import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { updateSwapStatus, swaps, refundTx, t, wasmSupported } =
-        useGlobalContext();
+    const { updateSwapStatus, wasmSupported, swaps, t } = useGlobalContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
+    const [refundTx, setRefundTx] = createSignal<string>("");
 
     setTimeoutBlockheight(null);
     setTimeoutEta(null);
@@ -29,7 +29,7 @@ const Refund = () => {
         log.debug("checking refund json", json);
 
         // Redirect to normal flow if swap is in local storage
-        const localStorageSwap = swaps().find((s) => s.id === json.id);
+        const localStorageSwap = swaps().find((s: any) => s.id === json.id);
         if (localStorageSwap !== undefined) {
             navigate("/swap/" + json.id);
         }
@@ -140,9 +140,12 @@ const Refund = () => {
                         accept="application/json,image/png"
                         onChange={(e) => uploadChange(e)}
                     />
-                    <hr />
-                    <Show when={refundTx() === ""}>
-                        <RefundButton swap={refundJson} />
+                    <Show when={refundTx() === "" && refundJson() !== null}>
+                        <hr />
+                        <RefundButton
+                            swap={refundJson}
+                            setRefundTx={setRefundTx}
+                        />
                         <RefundEta />
                     </Show>
                     <Show when={refundTx() !== ""}>
