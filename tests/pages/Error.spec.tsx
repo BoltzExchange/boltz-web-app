@@ -1,5 +1,4 @@
 import { render, screen } from "@solidjs/testing-library";
-import { describe, expect, test } from "vitest";
 
 import { GlobalProvider } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";

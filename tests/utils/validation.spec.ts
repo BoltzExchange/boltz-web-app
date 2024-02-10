@@ -1,7 +1,5 @@
-// import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { Contract } from "ethers";
 import log from "loglevel";
-import { beforeAll, describe, expect, test, vitest } from "vitest";
 
 import { BTC, LBTC } from "../../src/consts";
 import { decodeAddress, setup } from "../../src/utils/compat";
@@ -9,8 +7,8 @@ import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
     const getEtherSwap = (code: string): (() => Promise<Contract>) => {
-        const getDeployedCode = vitest.fn().mockResolvedValue(code);
-        return vitest.fn(() => ({
+        const getDeployedCode = jest.fn().mockResolvedValue(code);
+        return jest.fn(() => ({
             getDeployedCode,
         })) as any;
     };

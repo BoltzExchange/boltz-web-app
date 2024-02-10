@@ -1,7 +1,6 @@
 import { Router } from "@solidjs/router";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
-import { describe, expect, test } from "vitest";
 
 import RefundButton from "../../src/components/RefundButton";
 import { GlobalProvider } from "../../src/context/Global";

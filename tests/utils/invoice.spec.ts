@@ -1,5 +1,4 @@
 import bolt11 from "bolt11";
-import { describe, expect, test } from "vitest";
 
 import {
     decodeInvoice,

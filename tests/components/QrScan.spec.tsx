@@ -1,5 +1,4 @@
 import { render, screen } from "@solidjs/testing-library";
-import { describe, expect, test } from "vitest";
 
 import QrScan from "../../src/components/QrScan";
 import { CreateProvider } from "../../src/context/Create";

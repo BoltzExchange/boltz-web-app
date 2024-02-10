@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "noEmit": true,
         "target": "ESNext",
         "module": "ESNext",
         "allowSyntheticDefaultImports": true,
@@ -8,7 +9,7 @@
         "moduleResolution": "node",
         "jsx": "preserve",
         "jsxImportSource": "solid-js",
-        "types": ["vite/client", "bignumber.js"],
+        "types": ["vite/client", "bignumber.js", "jest"],
         "baseUrl": ".",
         "outDir": "ts-out",
         "noImplicitReturns": true,

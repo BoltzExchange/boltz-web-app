@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import { validateBackupFile } from "../../src/pages/History";
 
 describe("History", () => {

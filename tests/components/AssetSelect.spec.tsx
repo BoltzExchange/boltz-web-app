@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { describe, expect, test, vi } from "vitest";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
@@ -86,9 +85,9 @@ describe("AssetSelect", () => {
         signals.setAssetSelect(true);
         signals.setAssetSelected(sideSend);
 
-        const setAsset = vi.spyOn(signals, "setAsset");
-        const setAssetSend = vi.spyOn(signals, "setAssetSend");
-        const setAssetReceive = vi.spyOn(signals, "setAssetReceive");
+        const setAsset = jest.spyOn(signals, "setAsset");
+        const setAssetSend = jest.spyOn(signals, "setAssetSend");
+        const setAssetReceive = jest.spyOn(signals, "setAssetReceive");
 
         const btcButton = container.children[0].children[3];
         fireEvent.click(btcButton);

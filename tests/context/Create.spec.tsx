@@ -1,5 +1,4 @@
 import { render } from "@solidjs/testing-library";
-import { describe, expect, test } from "vitest";
 
 import { BTC, LBTC, LN } from "../../src/consts";
 import { CreateProvider, useCreateContext } from "../../src/context/Create";

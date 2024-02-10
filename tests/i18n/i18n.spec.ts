@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import { rawDict } from "../../src/i18n/i18n";
 
 describe("i18n", () => {
@@ -17,14 +15,19 @@ describe("i18n", () => {
 
                 compSet.forEach((val) => langSet.delete(val));
 
-                expect(
-                    Array.from(langSet.values()),
+                const missing = Array.from(langSet.values());
+                if (missing.length === 0) {
+                    return;
+                }
+
+                console.log(
                     `${JSON.stringify(
-                        Array.from(langSet.values()),
+                        missing,
                         undefined,
                         2,
                     )} missing from ${comp}`,
-                ).toEqual([]);
+                );
+                expect(missing).toEqual([]);
             }
         }
     });

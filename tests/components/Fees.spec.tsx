@@ -1,6 +1,5 @@
 import { render } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
-import { describe, expect, test } from "vitest";
 
 import Fees from "../../src/components/Fees";
 import { BTC } from "../../src/consts";
