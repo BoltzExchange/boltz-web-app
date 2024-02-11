@@ -1,24 +1,16 @@
-import { Router } from "@solidjs/router";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 
 import RefundButton from "../../src/components/RefundButton";
-import { GlobalProvider } from "../../src/context/Global";
-import { Web3SignerProvider } from "../../src/context/Web3";
 import i18n from "../../src/i18n/i18n";
+import { contextWrapper } from "../helper";
 
 describe("RefundButton", () => {
     test("should render RefundButton", async () => {
         const [swap] = createSignal(null);
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <RefundButton swap={swap} />
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(() => <RefundButton swap={swap} />, {
+            wrapper: contextWrapper,
+        });
         const input = (await screen.findByTestId(
             "refundAddress",
         )) as HTMLInputElement;
@@ -36,15 +28,9 @@ describe("RefundButton", () => {
         const [swap] = createSignal({
             asset: "BTC",
         });
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <RefundButton swap={swap} />
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(() => <RefundButton swap={swap} />, {
+            wrapper: contextWrapper,
+        });
         const input = (await screen.findByTestId(
             "refundAddress",
         )) as HTMLInputElement;
@@ -67,15 +53,9 @@ describe("RefundButton", () => {
         const [swap] = createSignal({
             asset: "BTC",
         });
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <RefundButton swap={swap} />
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(() => <RefundButton swap={swap} />, {
+            wrapper: contextWrapper,
+        });
         const input = (await screen.findByTestId(
             "refundAddress",
         )) as HTMLInputElement;

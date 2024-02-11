@@ -75,6 +75,7 @@ const cleanup = render(
                             <Route path="/error" component={Error} />
                             <Route path="/refund" component={Refund} />
                             <Route path="/history" component={History} />
+                            <Route path="*404" component={NotFound} />
                         </Router>
                     </PayProvider>
                 </CreateProvider>

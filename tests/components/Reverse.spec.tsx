@@ -2,7 +2,8 @@ import { fireEvent, render } from "@solidjs/testing-library";
 
 import Reverse from "../../src/components/Reverse";
 import { BTC, LN } from "../../src/consts";
-import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { useCreateContext } from "../../src/context/Create";
+import { contextWrapper } from "../helper";
 
 describe("Reverse", () => {
     let signals: any;
@@ -15,12 +16,17 @@ describe("Reverse", () => {
     test("should reverse assets", async () => {
         const {
             container: { firstChild: flip },
-        } = render(() => (
-            <CreateProvider>
-                <Reverse />
-                <TestComponent />
-            </CreateProvider>
-        ));
+        } = render(
+            () => (
+                <>
+                    <Reverse />
+                    <TestComponent />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         signals.setAssetSend(BTC);
         signals.setAssetReceive(LN);

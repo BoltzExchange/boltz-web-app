@@ -7,6 +7,7 @@ import { CreateProvider, useCreateContext } from "../../src/context/Create";
 import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
 import { calculateSendAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
+import { contextWrapper } from "../helper";
 
 describe("Fees component", () => {
     let signals: any;
@@ -19,26 +20,28 @@ describe("Fees component", () => {
     };
 
     test("should render", async () => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <Fees />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         globalSignals.setConfig(cfg);
     });
 
     test("should recalculate limits on direction switch", () => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <Fees />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         globalSignals.setConfig(cfg);
 
         expect(signals.minimum()).toEqual(

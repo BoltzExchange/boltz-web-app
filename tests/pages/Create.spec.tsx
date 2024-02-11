@@ -1,15 +1,14 @@
-import { Router } from "@solidjs/router";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import { BTC, sideReceive, sideSend } from "../../src/consts";
-import { CreateProvider, useCreateContext } from "../../src/context/Create";
-import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
-import { Web3SignerProvider } from "../../src/context/Web3";
+import { useCreateContext } from "../../src/context/Create";
+import { useGlobalContext } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
+import { contextWrapper } from "../helper";
 
 describe("Create", () => {
     let signals: any;
@@ -21,35 +20,33 @@ describe("Create", () => {
     };
 
     test("should render Create", async () => {
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <CreateProvider>
-                            <TestComponent />
-                            <Create />
-                        </CreateProvider>
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
         const button = await screen.findAllByText(i18n.en.create_swap);
         expect(button).not.toBeUndefined();
     });
 
     test("should update receive amount on asset change", async () => {
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <CreateProvider>
-                            <TestComponent />
-                            <Create />
-                        </CreateProvider>
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         globalSignals.setConfig(cfg);
         signals.setReverse(true);
@@ -68,18 +65,17 @@ describe("Create", () => {
     });
 
     test("should update receive amount on miner fee change", async () => {
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <CreateProvider>
-                            <TestComponent />
-                            <Create />
-                        </CreateProvider>
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         globalSignals.setConfig(cfg);
         signals.setReverse(true);
@@ -100,18 +96,17 @@ describe("Create", () => {
     });
 
     test("should update calculated value on fee change", async () => {
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <CreateProvider>
-                            <TestComponent />
-                            <Create />
-                        </CreateProvider>
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         globalSignals.setConfig(cfg);
         signals.setMinimum(cfg.reverse[BTC][BTC].limits.minimal);
@@ -159,18 +154,17 @@ describe("Create", () => {
         ${"min"}
         ${"max"}
     `("should set $extrema amount on click", async (extrema) => {
-        render(() => (
-            <Router>
-                <GlobalProvider>
-                    <Web3SignerProvider noFetch={true}>
-                        <CreateProvider>
-                            <TestComponent />
-                            <Create />
-                        </CreateProvider>
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Router>
-        ));
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         globalSignals.setConfig(cfg);
 
