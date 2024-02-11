@@ -5,7 +5,7 @@ import {
     LiquidRefundDetails,
     TaprootUtils as LiquidTaprootUtils,
 } from "boltz-core/dist/lib/liquid";
-import Buffer from "buffer";
+import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
 import { ECPairInterface } from "ecpair";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";

@@ -15,7 +15,7 @@ import {
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
 } from "boltz-core/dist/lib/liquid";
-import Buffer from "buffer";
+import { Buffer } from "buffer";
 import {
     address as LiquidAddress,
     networks as LiquidNetworks,

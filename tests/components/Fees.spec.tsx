@@ -3,8 +3,8 @@ import { BigNumber } from "bignumber.js";
 
 import Fees from "../../src/components/Fees";
 import { BTC } from "../../src/consts";
-import { CreateProvider, useCreateContext } from "../../src/context/Create";
-import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
+import { useCreateContext } from "../../src/context/Create";
+import { useGlobalContext } from "../../src/context/Global";
 import { calculateSendAmount } from "../../src/utils/calculate";
 import { cfg } from "../config";
 import { contextWrapper } from "../helper";

@@ -5,7 +5,7 @@ import {
     detectSwap,
 } from "boltz-core";
 import { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
-import Buffer from "buffer";
+import { Buffer } from "buffer";
 import { ECPairInterface } from "ecpair";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
