@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { describe, expect, test, vi } from "vitest";
 
 import ContractTransaction from "../../src/components/ContractTransaction";
 import LoadingSpinner from "../../src/components/LoadingSpinner";
@@ -58,7 +57,7 @@ describe("ContractTransaction", () => {
     });
 
     test("should show loading spinner after tx has been sent", async () => {
-        const onClick = vi.fn().mockResolvedValue(undefined);
+        const onClick = jest.fn().mockResolvedValue(undefined);
         const buttonText = "button";
 
         const { container } = render(() => (
@@ -77,7 +76,7 @@ describe("ContractTransaction", () => {
     });
 
     test("should show waiting text above loading spinner after tx has been sent", async () => {
-        const onClick = vi.fn().mockResolvedValue(undefined);
+        const onClick = jest.fn().mockResolvedValue(undefined);
         const buttonText = "button";
         const waitingText = "waiting";
 

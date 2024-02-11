@@ -1,7 +1,6 @@
 import { Router } from "@solidjs/router";
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
-import { describe, expect, test } from "vitest";
 
 import { BTC, sideReceive, sideSend } from "../../src/consts";
 import { CreateProvider, useCreateContext } from "../../src/context/Create";

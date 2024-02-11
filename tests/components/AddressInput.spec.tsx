@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
-import { describe, expect, test } from "vitest";
 
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC } from "../../src/consts";

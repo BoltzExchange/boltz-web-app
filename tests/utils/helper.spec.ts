@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import { getPair } from "../../src/utils/helper";
 
 describe("helper", () => {

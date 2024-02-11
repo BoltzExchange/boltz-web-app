@@ -1,5 +1,3 @@
-import { describe, expect, test } from "vitest";
-
 import { prefix0x, satoshiToWei } from "../../src/utils/rootstock";
 
 describe("rootstock", () => {

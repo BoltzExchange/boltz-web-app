@@ -1,5 +1,4 @@
 import { render, screen } from "@solidjs/testing-library";
-import { describe, expect, test } from "vitest";
 
 import BlockExplorer from "../../src/components/BlockExplorer";
 import { pairs } from "../../src/config";

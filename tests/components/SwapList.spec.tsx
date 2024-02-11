@@ -1,6 +1,5 @@
 import { Router } from "@solidjs/router";
 import { render } from "@solidjs/testing-library";
-import { describe, expect, it } from "vitest";
 
 import SwapList from "../../src/components/SwapList";
 import { GlobalProvider } from "../../src/context/Global";
