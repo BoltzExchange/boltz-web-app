@@ -13,6 +13,7 @@ const AddressInput = () => {
     const { t } = useGlobalContext();
     const {
         asset,
+        assetReceive,
         reverse,
         sendAmountValid,
         onchainAddress,
@@ -44,7 +45,7 @@ const AddressInput = () => {
     };
 
     createEffect(
-        on([sendAmountValid, onchainAddress], () => {
+        on([sendAmountValid, onchainAddress, assetReceive], () => {
             if (reverse() && asset() !== RBTC) {
                 validateAddress(inputRef);
             }
