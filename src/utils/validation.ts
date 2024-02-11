@@ -20,7 +20,6 @@ import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
 import { createMusig, tweakMusig } from "./taproot/musig";
 
-
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
 
