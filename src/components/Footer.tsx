@@ -1,13 +1,18 @@
+import { Show } from "solid-js";
+
 import discord from "../assets/discord.svg";
 import github from "../assets/github.svg";
 import nostr from "../assets/nostr.svg";
 import twitter from "../assets/twitter.svg";
 import youtube from "../assets/youtube.svg";
 import {
+    blogUrl,
+    brandingUrl,
     discordUrl,
     githubUrl,
     nostrUrl,
     repoUrl,
+    statusUrl,
     twitterUrl,
     youtubeUrl,
 } from "../config";
@@ -29,7 +34,6 @@ const Footer = () => {
                     Discord
                 </a>
             </h4>
-            <h2 class="special">{t("socialmedia")}</h2>
             <div class="socials">
                 <a
                     title="Github"
@@ -63,6 +67,25 @@ const Footer = () => {
                     <img src={youtube} alt="Youtube Logo" />
                 </a>
             </div>
+            <h4 class="footer-nav">
+                <Show when={blogUrl}>
+                    <a target="_blank" href={blogUrl}>
+                        {t("blog")}
+                    </a>
+                </Show>{" "}
+                |{" "}
+                <Show when={statusUrl}>
+                    <a target="_blank" href={statusUrl}>
+                        {t("status")}
+                    </a>
+                </Show>{" "}
+                |{" "}
+                <Show when={brandingUrl}>
+                    <a target="_blank" href={brandingUrl}>
+                        {t("branding")}
+                    </a>
+                </Show>
+            </h4>
             <p>{t("footer")}</p>
             <p class="version">
                 {t("version")}:{" "}
