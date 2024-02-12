@@ -117,8 +117,7 @@ export const getPartialRefundSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    const res = await fetcher("/v2/swap/submarine/refund", asset, {
-        id,
+    const res = await fetcher(`/v2/swap/submarine/${id}/refund`, asset, {
         index,
         pubNonce: pubNonce.toString("hex"),
         transaction: transaction.toHex(),
@@ -137,8 +136,7 @@ export const getPartialReverseClaimSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    const res = await fetcher("/v2/swap/reverse/claim", asset, {
-        id,
+    const res = await fetcher(`/v2/swap/reverse/${id}/claim`, asset, {
         index,
         preimage: preimage.toString("hex"),
         pubNonce: pubNonce.toString("hex"),
