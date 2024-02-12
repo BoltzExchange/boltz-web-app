@@ -42,11 +42,15 @@ export const decodeInvoice = (
 ): { satoshis: number; preimageHash: string; expiry?: number } => {
     try {
         const decoded = bolt11.decode(invoice);
-        const sats = BigNumber(decoded.millisatoshis)
-            .dividedBy(1000)
-            .integerValue(BigNumber.ROUND_CEIL);
+        let sats = 0;
+        if (decoded.millisatoshis !== null) {
+            sats = BigNumber(decoded.millisatoshis)
+                .dividedBy(1000)
+                .integerValue(BigNumber.ROUND_CEIL)
+                .toNumber();
+        }
         return {
-            satoshis: sats.toNumber(),
+            satoshis: sats,
             expiry: decoded.timeExpireDate,
             preimageHash: decoded.tags.find(
                 (tag) => tag.tagName === "payment_hash",
