@@ -1,17 +1,15 @@
-import betterstack from "../assets/betterstack.svg";
 import discord from "../assets/discord.svg";
 import github from "../assets/github.svg";
 import nostr from "../assets/nostr.svg";
-import substack from "../assets/substack.svg";
 import twitter from "../assets/twitter.svg";
+import youtube from "../assets/youtube.svg";
 import {
-    blogUrl,
     discordUrl,
     githubUrl,
     nostrUrl,
     repoUrl,
-    statusUrl,
     twitterUrl,
+    youtubeUrl,
 } from "../config";
 import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
@@ -41,13 +39,6 @@ const Footer = () => {
                     <img src={github} alt="Github Logo" />
                 </a>
                 <a
-                    title="Substack"
-                    class="substack"
-                    target="_blank"
-                    href={blogUrl}>
-                    <img src={substack} alt="Substack Logo" />
-                </a>
-                <a
                     title="Discord"
                     class="discord"
                     target="_blank"
@@ -65,11 +56,11 @@ const Footer = () => {
                     <img src={nostr} alt="Nostr Logo" />
                 </a>
                 <a
-                    title="Boltz API Status"
-                    class="betterstack"
+                    title="Youtube"
+                    class="youtube"
                     target="_blank"
-                    href={statusUrl}>
-                    <img src={betterstack} alt="Better Stack Logo" />
+                    href={youtubeUrl}>
+                    <img src={youtube} alt="Youtube Logo" />
                 </a>
             </div>
             <p>{t("footer")}</p>
