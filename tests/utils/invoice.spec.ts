@@ -78,6 +78,14 @@ describe("invoice", () => {
         expect(extractInvoice(bip21)).toEqual("");
     });
 
+    test("should coalesce null invoice amount", () => {
+        expect(
+            decodeInvoice(
+                "lnbc1pju362upp5ah2vx45gwx2tafgrpducjh60cytf53jf2tarwstyntamhjm6m7sscqpjsp5ecndxet53f8f2cmwcg4md5776dy4qhcmaga538lpvmr26r50svqq9q7sqqqqqqqqqqqqqqqqqqqsqqqqqysgqdqqmqz9gxqyjw5qrzjqwryaup9lh50kkranzgcdnn2fgvx390wgj5jd07rwr3vxeje0glclllkjfxe6ccyfsqqqqlgqqqqqeqqjqx73yrwsnw4qrgq3cv7q3pl7lqyl3c3xyxht0d4v3xfvwsvhlgu0n02zzcgvgt5ndkxl4tel5ae00ffmxd2kta8jnfw4e47ppjys7sgcpp90pnr",
+            ).satoshis,
+        ).toEqual(0);
+    });
+
     describe("decode invoices", () => {
         test.each`
             network      | invoice
