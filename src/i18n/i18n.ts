@@ -39,7 +39,6 @@ const dict = {
         minimum_amount: "Minimum amount is {{ amount }} {{ denomination }}",
         maximum_amount: "Maximum amount is {{ amount }} {{ denomination }}",
         assets: "Multi-Layer",
-        socialmedia: "Follow us on",
         footer: "Made with ❤️ by Team Boltz",
         create_channel: "Create Lightning Channel",
         create_channel_subline: "Channel Inbound or Outbound Capacity",
@@ -167,6 +166,7 @@ const dict = {
         open_in_wallet: "Open in Wallet",
         invoice_paid: "Invoice paid",
         creating_coop_claim: "Creating cooperative claim transaction.",
+        branding: "Branding",
     },
     de: {
         language: "Deutsch",
@@ -209,7 +209,6 @@ const dict = {
         minimum_amount: "Mindestbetrag ist {{ amount }} {{ denomination }}",
         maximum_amount: "Höchstbetrag ist {{ amount }} {{ denomination }}",
         assets: "Multi-layer",
-        socialmedia: "Folge uns auf",
         footer: "Gemacht mit ❤️ von Team Boltz",
         create_channel: "Erstelle Lightning-Kanal",
         create_channel_subline: "Eingehende oder ausgehende Kapazität",
@@ -341,6 +340,7 @@ const dict = {
         open_in_wallet: "Im Wallet öffnen",
         invoice_paid: "Rechnung bezahlt",
         creating_coop_claim: "Erstelle kooperative Claim-Transaktion.",
+        branding: "Branding",
     },
     es: {
         language: "Español",
@@ -382,7 +382,6 @@ const dict = {
         minimum_amount: "La cantidad mínima es {{ amount }} {{ denomination }}",
         maximum_amount: "La cantidad máxima es {{ amount }} {{ denomination }}",
         assets: "Multicapa",
-        socialmedia: "Síguenos en",
         footer: "Hecho con ❤️ por el equipo de Boltz",
         create_channel: "Crear canal Lightning",
         create_channel_subline: "Capacidad del canal entrante o saliente",
@@ -517,6 +516,7 @@ const dict = {
         invoice_paid: "Factura pagada",
         creating_coop_claim:
             "Creación de una transacción de reclamación cooperativa.",
+        branding: "Branding",
     },
     zh: {
         language: "中文",
@@ -558,7 +558,6 @@ const dict = {
         minimum_amount: "最小金额为{{ amount }}{{ denomination }}",
         maximum_amount: "最大金额为{{ amount }}{{ denomination }}",
         assets: "多层",
-        socialmedia: "在以下社交媒体上关注我们",
         footer: "Boltz团队倾情 ❤️ 制作",
         create_channel: "创建闪电网络通道",
         create_channel_subline: "通道入站或出站容量",
@@ -676,6 +675,7 @@ const dict = {
         open_in_wallet: "在钱包中打开",
         invoice_paid: "发票已支付",
         creating_coop_claim: "创建合作索赔交易。",
+        branding: "品牌",
     },
 };
 

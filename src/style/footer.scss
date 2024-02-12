@@ -34,3 +34,14 @@
         }
     }
 }
+
+.footer-nav {
+    a {
+        color: #fff;
+        padding: 0 2px;
+        opacity: 0.4;
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
