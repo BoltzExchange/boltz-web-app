@@ -1,5 +1,4 @@
 import { BigNumber } from "bignumber.js";
-import log from "loglevel";
 import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 
 import AddressInput from "../components/AddressInput";
@@ -11,6 +10,7 @@ import Fees from "../components/Fees";
 import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
+import WeblnButton from "../components/WeblnButton";
 import { RBTC, sideReceive, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -26,13 +26,12 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import { enableWebln } from "../utils/webln";
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
-    const { setDenomination, webln, denomination, wasmSupported, t } =
+    const { setDenomination, denomination, wasmSupported, t } =
         useGlobalContext();
     const {
         reverse,
@@ -56,8 +55,6 @@ const Create = () => {
         setAmountChanged,
         minimum,
         maximum,
-        setInvoice,
-        setInvoiceValid,
         setValid,
         setSendAmountValid,
         boltzFee,
@@ -120,17 +117,6 @@ const Create = () => {
         validateAmount();
         target.setCustomValidity("");
         target.classList.remove("invalid");
-    };
-
-    const createWeblnInvoice = async () => {
-        enableWebln(async () => {
-            const amount = Number(receiveAmount());
-            const invoice = await window.webln.makeInvoice({ amount: amount });
-            validateAmount();
-            log.debug("created webln invoice", invoice);
-            setInvoice(invoice.paymentRequest);
-            setInvoiceValid(true);
-        });
     };
 
     const validateInput = (evt: KeyboardEvent) => {
@@ -364,15 +350,7 @@ const Create = () => {
                 <AddressInput />
             </Show>
             <Show when={!reverse()}>
-                <Show when={webln()}>
-                    <button
-                        id="webln"
-                        class="btn btn-light"
-                        onClick={() => createWeblnInvoice()}>
-                        {t("create_invoice_webln")}
-                    </button>
-                    <hr class="spacer" />
-                </Show>
+                <WeblnButton />
                 <InvoiceInput />
             </Show>
             <Show when={isMobile && wasmSupported()}>
