@@ -2,9 +2,9 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
-import { CreateProvider, useCreateContext } from "../../src/context/Create";
-import { GlobalProvider } from "../../src/context/Global";
+import { useCreateContext } from "../../src/context/Create";
 import i18n from "../../src/i18n/i18n";
+import { contextWrapper } from "../helper";
 
 describe("AssetSelect", () => {
     let signals: any;
@@ -20,14 +20,15 @@ describe("AssetSelect", () => {
         ${BTC}
         ${LBTC}
     `("should highlight selected asset $asset", ({ asset }) => {
-        const res = render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        const res = render(
+            () => (
+                <>
                     <TestComponent />
                     <SelectAsset />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
 
         signals.setAssetSend(asset);
         signals.setAssetSelect(true);
@@ -50,14 +51,15 @@ describe("AssetSelect", () => {
         ${sideSend}
         ${sideReceive}
     `("should set header text for $side", async ({ side }) => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <SelectAsset />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
 
         signals.setAssetSelect(true);
         signals.setAssetSelected(side);
@@ -72,14 +74,15 @@ describe("AssetSelect", () => {
     });
 
     test("should ignore same asset selection", () => {
-        const { container } = render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        const { container } = render(
+            () => (
+                <>
                     <TestComponent />
                     <SelectAsset />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
 
         signals.setAssetSend(BTC);
         signals.setAssetSelect(true);
@@ -115,14 +118,15 @@ describe("AssetSelect", () => {
             prevReceive,
             expectedOther,
         }) => {
-            render(() => (
-                <GlobalProvider>
-                    <CreateProvider>
+            render(
+                () => (
+                    <>
                         <TestComponent />
                         <SelectAsset />
-                    </CreateProvider>
-                </GlobalProvider>
-            ));
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
 
             signals.setAsset(prevAsset);
             signals.setAssetSelect(true);

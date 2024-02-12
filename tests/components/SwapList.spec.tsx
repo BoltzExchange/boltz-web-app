@@ -1,8 +1,7 @@
-import { Router } from "@solidjs/router";
 import { render } from "@solidjs/testing-library";
 
 import SwapList from "../../src/components/SwapList";
-import { GlobalProvider } from "../../src/context/Global";
+import { contextWrapper } from "../helper";
 
 describe("SwapList", () => {
     it("should sort correctly", async () => {
@@ -19,18 +18,17 @@ describe("SwapList", () => {
 
         const {
             container: { firstChild: firstChild },
-        } = render(() => (
-            <Router>
-                <GlobalProvider>
-                    <SwapList
-                        swapsSignal={swapsSignal}
-                        setSwapSignal={() => {
-                            return undefined;
-                        }}
-                    />
-                </GlobalProvider>
-            </Router>
-        ));
+        } = render(
+            () => (
+                <SwapList
+                    swapsSignal={swapsSignal}
+                    setSwapSignal={() => {
+                        return undefined;
+                    }}
+                />
+            ),
+            { wrapper: contextWrapper },
+        );
 
         const childNodes = [];
         firstChild.childNodes.forEach((node) => {

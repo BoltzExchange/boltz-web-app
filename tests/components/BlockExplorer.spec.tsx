@@ -2,8 +2,8 @@ import { render, screen } from "@solidjs/testing-library";
 
 import BlockExplorer from "../../src/components/BlockExplorer";
 import { pairs } from "../../src/config";
-import { GlobalProvider } from "../../src/context/Global";
 import i18n from "../../src/i18n/i18n";
+import { contextWrapper } from "../helper";
 
 describe("BlockExplorer", () => {
     test.each`
@@ -13,11 +13,9 @@ describe("BlockExplorer", () => {
     `(
         "should link to $asset addresses",
         async ({ asset, baseLink, address }) => {
-            render(() => (
-                <GlobalProvider>
-                    <BlockExplorer asset={asset} address={address} />
-                </GlobalProvider>
-            ));
+            render(() => <BlockExplorer asset={asset} address={address} />, {
+                wrapper: contextWrapper,
+            });
 
             const button = await screen.findByText(
                 i18n.en.blockexplorer.replace(
@@ -39,11 +37,9 @@ describe("BlockExplorer", () => {
     `(
         "should link to $asset transactions",
         async ({ asset, baseLink, txId }) => {
-            render(() => (
-                <GlobalProvider>
-                    <BlockExplorer asset={asset} txId={txId} />
-                </GlobalProvider>
-            ));
+            render(() => <BlockExplorer asset={asset} txId={txId} />, {
+                wrapper: contextWrapper,
+            });
 
             const button = await screen.findByText(
                 i18n.en.blockexplorer.replace(

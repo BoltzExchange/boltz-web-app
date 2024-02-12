@@ -1,7 +1,8 @@
 import { render } from "@solidjs/testing-library";
 
 import { BTC, LBTC, LN } from "../../src/consts";
-import { CreateProvider, useCreateContext } from "../../src/context/Create";
+import { useCreateContext } from "../../src/context/Create";
+import { contextWrapper } from "../helper";
 
 describe("signals", () => {
     let signals: any;
@@ -20,11 +21,7 @@ describe("signals", () => {
     `(
         "should set reverse to $expected based on assetReceive $value",
         ({ value, expected }) => {
-            render(() => (
-                <CreateProvider>
-                    <TestComponent />
-                </CreateProvider>
-            ));
+            render(() => <TestComponent />, { wrapper: contextWrapper });
             signals.setReverse(undefined);
             signals.setAssetReceive(value);
             expect(signals.reverse()).toEqual(expected);
@@ -44,11 +41,7 @@ describe("signals", () => {
     `(
         "should set asset based on assetSend and assetReceive selection",
         ({ func, value, expectedAsset }) => {
-            render(() => (
-                <CreateProvider>
-                    <TestComponent />
-                </CreateProvider>
-            ));
+            render(() => <TestComponent />, { wrapper: contextWrapper });
             signals.setAsset(undefined);
             if (func === "send") {
                 signals.setAssetSend(value);

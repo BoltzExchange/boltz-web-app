@@ -1,8 +1,8 @@
 import { render, screen } from "@solidjs/testing-library";
 
 import QrScan from "../../src/components/QrScan";
-import { CreateProvider } from "../../src/context/Create";
-import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
+import { useGlobalContext } from "../../src/context/Global";
+import { contextWrapper } from "../helper";
 
 describe("QrScan", () => {
     test("should render the QrScan component", async () => {
@@ -11,14 +11,15 @@ describe("QrScan", () => {
             globalSignals = useGlobalContext();
             return "";
         };
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <QrScan />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         globalSignals.setCamera(true);
         const button = await screen.findByText(globalSignals.t("scan_qr_code"));
         expect(button).not.toBeUndefined();

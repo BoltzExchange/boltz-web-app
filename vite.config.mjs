@@ -1,7 +1,7 @@
 import * as child from "child_process";
 import { defineConfig } from "vite";
-import { nodePolyfills } from "vite-plugin-node-polyfills";
 import mkcert from "vite-plugin-mkcert";
+import { nodePolyfills } from "vite-plugin-node-polyfills";
 import solidPlugin from "vite-plugin-solid";
 
 const commitHash = child
@@ -10,7 +10,7 @@ const commitHash = child
     .trim();
 
 export default defineConfig({
-    plugins: [solidPlugin(), nodePolyfills(), mkcert()],
+    plugins: [solidPlugin(), mkcert(), nodePolyfills()],
     server: {
         https: true,
         cors: { origin: "*" },

@@ -2,13 +2,13 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
-import { CreateProvider, useCreateContext } from "../../src/context/Create";
-import { GlobalProvider } from "../../src/context/Global";
+import { useCreateContext } from "../../src/context/Create";
 import {
     decodeInvoice,
     extractInvoice,
     invoicePrefix,
 } from "../../src/utils/invoice";
+import { contextWrapper } from "../helper";
 
 describe("InvoiceInput", () => {
     let signals: any;
@@ -27,14 +27,15 @@ describe("InvoiceInput", () => {
         ${false} | ${"invalid"}
         ${false} | ${""}
     `("should validate invoice $invoice", async ({ invoice, expected }) => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <InvoiceInput />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         signals.setReverse(false);
         fireEvent.input(await screen.findByTestId("invoice"), {
             target: { value: invoice },
@@ -44,14 +45,15 @@ describe("InvoiceInput", () => {
     });
 
     test("should set amount based on invoice", async () => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <InvoiceInput />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         signals.setReverse(false);
         const invoice =
             "lnbcrt235565340n1pjn87jmpp53jk5vw5z7n43wqyvv5ypma89xvkgahgdrvzxfn922485w2guxjasdqqcqzzsxqyz5vqsp5npwtpwa76526wcqxp66lzt43jdeqdxkud2j6ypjt2kyqscd6q4eq9qyyssquwlyf0vjsdyeck79mg5726llxxzv674xyr8ct5qgv28k62pmlr35kc2z8j96lc7ph403mgjxt9q8hzaeywmsrh4lg88uslyytvsnf5sp3lulnq";
@@ -65,14 +67,15 @@ describe("InvoiceInput", () => {
     });
 
     test("should clear invoice on amount change", async () => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <InvoiceInput />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         signals.setReverse(false);
 
         const invoice =
@@ -94,14 +97,15 @@ describe("InvoiceInput", () => {
         ${"m@some.domain"}
         ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
     `("should not clear lnurl $lnurl on amount change", async ({ lnurl }) => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <InvoiceInput />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         signals.setReverse(false);
 
         const input = (await screen.findByTestId(
@@ -122,15 +126,15 @@ describe("InvoiceInput", () => {
     test("should remove prefix of invoices", async () => {
         const invoice =
             "lightning:lnbcrt235565340n1pjn87jmpp53jk5vw5z7n43wqyvv5ypma89xvkgahgdrvzxfn922485w2guxjasdqqcqzzsxqyz5vqsp5npwtpwa76526wcqxp66lzt43jdeqdxkud2j6ypjt2kyqscd6q4eq9qyyssquwlyf0vjsdyeck79mg5726llxxzv674xyr8ct5qgv28k62pmlr35kc2z8j96lc7ph403mgjxt9q8hzaeywmsrh4lg88uslyytvsnf5sp3lulnq";
-
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <InvoiceInput />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         signals.setReverse(false);
 
         const input = (await screen.findByTestId(
@@ -149,14 +153,15 @@ describe("InvoiceInput", () => {
         ${`${invoicePrefix}m@some.domain`}
         ${`${invoicePrefix}LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH`}
     `("should remove prefix of lnurl $lnurl", async ({ lnurl }) => {
-        render(() => (
-            <GlobalProvider>
-                <CreateProvider>
+        render(
+            () => (
+                <>
                     <TestComponent />
                     <InvoiceInput />
-                </CreateProvider>
-            </GlobalProvider>
-        ));
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
         signals.setReverse(false);
 
         const input = (await screen.findByTestId(

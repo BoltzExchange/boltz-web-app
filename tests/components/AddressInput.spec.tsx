@@ -2,8 +2,9 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC } from "../../src/consts";
-import { CreateProvider, useCreateContext } from "../../src/context/Create";
-import { GlobalProvider, useGlobalContext } from "../../src/context/Global";
+import { useCreateContext } from "../../src/context/Create";
+import { useGlobalContext } from "../../src/context/Global";
+import { contextWrapper } from "../helper";
 
 describe("AddressInput", () => {
     let signals: any;
@@ -31,14 +32,15 @@ describe("AddressInput", () => {
     `(
         "should validate address $network $address -> $valid",
         async ({ valid, network, address }) => {
-            render(() => (
-                <GlobalProvider>
-                    <CreateProvider>
+            render(
+                () => (
+                    <>
                         <TestComponent />
                         <AddressInput />
-                    </CreateProvider>
-                </GlobalProvider>
-            ));
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
 
             signals.setAsset(network);
 
