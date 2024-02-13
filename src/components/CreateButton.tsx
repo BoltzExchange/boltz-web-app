@@ -26,17 +26,8 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 
 export const CreateButton = () => {
     const navigate = useNavigate();
-    const {
-        config,
-        setConfig,
-        online,
-        wasmSupported,
-        swaps,
-        setSwaps,
-        notify,
-        ref,
-        t,
-    } = useGlobalContext();
+    const { config, setConfig, online, swaps, setSwaps, notify, ref, t } =
+        useGlobalContext();
     const {
         asset,
         invoice,
@@ -67,9 +58,7 @@ export const CreateButton = () => {
     });
 
     createMemo(() => {
-        setButtonClass(
-            !wasmSupported() || !online() ? "btn btn-danger" : "btn",
-        );
+        setButtonClass(!online() ? "btn btn-danger" : "btn");
     });
 
     createEffect(() => {
@@ -82,9 +71,6 @@ export const CreateButton = () => {
         }
         if (!online()) {
             setButtonLabel({ key: "api_offline" });
-        }
-        if (!wasmSupported()) {
-            setButtonLabel({ key: "wasm_not_supported" });
         }
     });
 
@@ -228,7 +214,7 @@ export const CreateButton = () => {
         <button
             id="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable() || !wasmSupported() || !online()}
+            disabled={buttonDisable() || !online()}
             onClick={buttonClick}>
             {getButtonLabel(buttonLabel())}
         </button>
