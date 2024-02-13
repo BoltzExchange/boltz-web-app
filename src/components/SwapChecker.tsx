@@ -137,7 +137,11 @@ export const SwapChecker = () => {
     };
 
     const prepareSwap = (swapId: string, data: any) => {
-        const currentSwap = swaps().find((s) => swapId === s.id);
+        const currentSwap = swaps().find((s: any) => swapId === s.id);
+        if (currentSwap === undefined) {
+            log.warn(`prepareSwap: swap ${swapId} not found`);
+            return;
+        }
         if (swap() && swap().id === currentSwap.id) {
             setSwapStatus(data.status);
         }
@@ -149,6 +153,10 @@ export const SwapChecker = () => {
 
     const claimSwap = async (swapId: string, data: any) => {
         const currentSwap = swaps().find((s) => swapId === s.id);
+        if (currentSwap === undefined) {
+            log.warn(`claimSwap: swap ${swapId} not found`);
+            return;
+        }
         if (
             currentSwap.asset !== RBTC &&
             currentSwap.claimTx === undefined &&
