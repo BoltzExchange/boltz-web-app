@@ -10,12 +10,8 @@ const ConnectMetamask = ({ showAddress }) => {
     const [buttonText, setButtonText] = createSignal<string | undefined>();
 
     const { t } = useGlobalContext();
-    const {
-        addressValid,
-        sendAmountValid,
-        setAddressValid,
-        setOnchainAddress,
-    } = useCreateContext();
+    const { addressValid, amountValid, setAddressValid, setOnchainAddress } =
+        useCreateContext();
 
     const setButtonTextAddress = () => {
         setButtonText(address() || t("connect_to_address"));
@@ -32,7 +28,7 @@ const ConnectMetamask = ({ showAddress }) => {
     });
 
     createEffect(() => {
-        if (sendAmountValid() && !addressValid()) {
+        if (amountValid() && !addressValid()) {
             setButtonLabel({ key: "connect_metamask" });
         }
     });

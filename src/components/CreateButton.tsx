@@ -36,7 +36,7 @@ export const CreateButton = () => {
         receiveAmount,
         reverse,
         sendAmount,
-        sendAmountValid,
+        amountValid,
         setInvoice,
         setInvoiceValid,
         setLnurl,
@@ -50,7 +50,7 @@ export const CreateButton = () => {
     const [buttonClass, setButtonClass] = createSignal("btn");
 
     const validateButtonDisable = () => {
-        return !valid() && !(lnurl() !== "" && sendAmountValid());
+        return !valid() && !(lnurl() !== "" && amountValid());
     };
 
     createEffect(() => {
@@ -75,7 +75,7 @@ export const CreateButton = () => {
     });
 
     const create = async () => {
-        if (sendAmountValid() && !reverse() && lnurl() !== "") {
+        if (amountValid() && !reverse() && lnurl() !== "") {
             try {
                 const inv = await fetchLnurl(lnurl(), Number(receiveAmount()));
                 setInvoice(inv);
