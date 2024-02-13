@@ -12,13 +12,20 @@ import { usePayContext } from "../context/Pay";
 import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
 import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
+import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { updateSwapStatus, swaps, refundTx, t } = useGlobalContext();
+    const { updateSwapStatus, swaps, refundTx, t, wasmSupported } =
+        useGlobalContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
+
+    // bail refund and throw wasm error
+    if (!wasmSupported()) {
+        return <ErrorWasm />;
+    }
 
     setTimeoutBlockheight(null);
     setTimeoutEta(null);

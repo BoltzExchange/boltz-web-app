@@ -27,6 +27,7 @@ import {
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
 import { enableWebln } from "../utils/webln";
+import ErrorWasm from "./ErrorWasm";
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
@@ -63,6 +64,11 @@ const Create = () => {
         boltzFee,
         minerFee,
     } = useCreateContext();
+
+    // bail create and throw wasm error
+    if (!wasmSupported()) {
+        return <ErrorWasm />;
+    }
 
     // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
