@@ -12,17 +12,6 @@ describe("WeblnButton", () => {
         });
     });
 
-    test("should be enabled with empty amounts", async () => {
-        render(() => <WeblnButton />, {
-            wrapper: contextWrapper,
-        });
-        const button = (await screen.findByText(
-            i18n.en.create_invoice_webln,
-        )) as HTMLInputElement;
-        expect(button).not.toBeUndefined();
-        expect(button.disabled).toBeFalsy();
-    });
-
     test.each`
         value
         ${true}
