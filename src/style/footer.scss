@@ -36,10 +36,12 @@
 }
 
 .footer-nav {
+    color: #727e8c;
     a {
         color: #fff;
         padding: 0 2px;
         opacity: 0.4;
+        text-decoration: none;
         &:hover {
             opacity: 1;
         }
