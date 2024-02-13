@@ -31,7 +31,7 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
-    const { setDenomination, denomination, wasmSupported, t } =
+    const { setDenomination, denomination, wasmSupported, webln, t } =
         useGlobalContext();
     const {
         reverse,
@@ -350,7 +350,10 @@ const Create = () => {
                 <AddressInput />
             </Show>
             <Show when={!reverse()}>
-                <WeblnButton />
+                <Show when={webln()}>
+                    <WeblnButton />
+                    <hr class="spacer" />
+                </Show>
                 <InvoiceInput />
             </Show>
             <Show when={isMobile && wasmSupported()}>

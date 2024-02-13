@@ -1,12 +1,11 @@
 import log from "loglevel";
-import { Show } from "solid-js";
 
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { enableWebln } from "../utils/webln";
 
 const WeblnButton = () => {
-    const { t, webln } = useGlobalContext();
+    const { t } = useGlobalContext();
     const { receiveAmount, sendAmountValid, setInvoice } = useCreateContext();
 
     const createWeblnInvoice = async () => {
@@ -18,16 +17,13 @@ const WeblnButton = () => {
         });
     };
     return (
-        <Show when={webln()}>
-            <button
-                id="webln"
-                disabled={!sendAmountValid()}
-                class="btn btn-light"
-                onClick={() => createWeblnInvoice()}>
-                {t("create_invoice_webln")}
-            </button>
-            <hr class="spacer" />
-        </Show>
+        <button
+            id="webln"
+            disabled={!sendAmountValid()}
+            class="btn btn-light"
+            onClick={() => createWeblnInvoice()}>
+            {t("create_invoice_webln")}
+        </button>
     );
 };
 
