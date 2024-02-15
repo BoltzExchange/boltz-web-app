@@ -16,11 +16,11 @@ import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { updateSwapStatus, swaps, refundTx, t, wasmSupported } =
-        useGlobalContext();
+    const { updateSwapStatus, wasmSupported, swaps, t } = useGlobalContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
+    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     setTimeoutBlockheight(null);
     setTimeoutEta(null);
@@ -29,7 +29,7 @@ const Refund = () => {
         log.debug("checking refund json", json);
 
         // Redirect to normal flow if swap is in local storage
-        const localStorageSwap = swaps().find((s) => s.id === json.id);
+        const localStorageSwap = swaps().find((s: any) => s.id === json.id);
         if (localStorageSwap !== undefined) {
             navigate("/swap/" + json.id);
         }
@@ -66,9 +66,11 @@ const Refund = () => {
                     input.setCustomValidity(t("invalid_refund_file"));
                 });
         } else {
-            new Response(inputFile)
-                .json()
-                .then((result) => checkRefundJsonKeys(input, result))
+            inputFile
+                .text()
+                .then((result) => {
+                    checkRefundJsonKeys(input, JSON.parse(result));
+                })
                 .catch((e) => {
                     log.error("invalid file upload", e);
                     input.setCustomValidity(t("invalid_refund_file"));
@@ -125,7 +127,7 @@ const Refund = () => {
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
-                <div class="frame">
+                <div class="frame" data-testid="refundFrame">
                     <h2>{t("refund_a_swap")}</h2>
                     <p>{t("refund_a_swap_subline")}</p>
                     <hr />
@@ -137,22 +139,26 @@ const Refund = () => {
                         required
                         type="file"
                         id="refundUpload"
+                        data-testid="refundUpload"
                         accept="application/json,image/png"
                         onChange={(e) => uploadChange(e)}
                     />
-                    <hr />
-                    <Show when={refundTx() === ""}>
-                        <RefundButton swap={refundJson} />
+                    <Show when={refundTxId() === "" && refundJson() !== null}>
+                        <hr />
+                        <RefundButton
+                            swap={refundJson}
+                            setRefundTxId={setRefundTxId}
+                        />
                         <RefundEta />
                     </Show>
-                    <Show when={refundTx() !== ""}>
+                    <Show when={refundTxId() !== ""}>
                         <hr />
                         <p>{t("refunded")}</p>
                         <hr />
                         <BlockExplorer
                             typeLabel={"refund_tx"}
                             asset={refundJson().asset}
-                            txId={refundTx()}
+                            txId={refundTxId()}
                         />
                     </Show>
                 </div>

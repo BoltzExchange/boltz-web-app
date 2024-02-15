@@ -1,7 +1,7 @@
 # HEADER
 # |<----  Using a Maximum Of 50 Characters  ---->|
 <type>(<scope>): <subject>
-# Type can be 
+# Type can be
 #    feat     (A new feature)
 #    fix      (A bug fix)
 #    docs     (Documentation only changes)
