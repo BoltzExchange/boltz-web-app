@@ -169,6 +169,7 @@ const dict = {
         creating_coop_claim: "Creating cooperative claim transaction.",
         branding: "Branding",
         testnet: "Testnet",
+        broadcasting_claim: "Broadcasting claim transaction...",
     },
     de: {
         language: "Deutsch",
@@ -345,6 +346,7 @@ const dict = {
         creating_coop_claim: "Erstelle kooperative Claim-Transaktion.",
         branding: "Branding",
         testnet: "Testnet",
+        broadcasting_claim: "Sende claim transaction...",
     },
     es: {
         language: "Español",
@@ -523,6 +525,7 @@ const dict = {
             "Creación de una transacción de reclamación cooperativa.",
         branding: "Branding",
         testnet: "Testnet",
+        broadcasting_claim: "Enviando transacción de reclamación...",
     },
     zh: {
         language: "中文",
@@ -684,6 +687,7 @@ const dict = {
         creating_coop_claim: "创建合作索赔交易。",
         branding: "品牌",
         testnet: "测试网",
+        broadcasting_claim: "正在发送索赔交易...",
     },
 };
 

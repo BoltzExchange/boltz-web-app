@@ -17,7 +17,7 @@ describe("i18n", () => {
 
                 const missing = Array.from(langSet.values());
                 if (missing.length === 0) {
-                    return;
+                    continue;
                 }
 
                 console.log(
