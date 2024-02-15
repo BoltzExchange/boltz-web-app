@@ -12,10 +12,12 @@ import { usePayContext } from "../context/Pay";
 import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
 import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
+import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { updateSwapStatus, swaps, refundTx, t } = useGlobalContext();
+    const { updateSwapStatus, swaps, refundTx, t, wasmSupported } =
+        useGlobalContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
@@ -121,39 +123,41 @@ const Refund = () => {
     });
 
     return (
-        <div id="refund">
-            <div class="frame">
-                <h2>{t("refund_a_swap")}</h2>
-                <p>{t("refund_a_swap_subline")}</p>
-                <hr />
-                <Show when={refundableSwaps().length > 0}>
-                    <SwapList swapsSignal={refundableSwaps} />
+        <Show when={wasmSupported()} fallback={<ErrorWasm />}>
+            <div id="refund">
+                <div class="frame">
+                    <h2>{t("refund_a_swap")}</h2>
+                    <p>{t("refund_a_swap_subline")}</p>
                     <hr />
-                </Show>
-                <input
-                    required
-                    type="file"
-                    id="refundUpload"
-                    accept="application/json,image/png"
-                    onChange={(e) => uploadChange(e)}
-                />
-                <hr />
-                <Show when={refundTx() === ""}>
-                    <RefundButton swap={refundJson} />
-                    <RefundEta />
-                </Show>
-                <Show when={refundTx() !== ""}>
-                    <hr />
-                    <p>{t("refunded")}</p>
-                    <hr />
-                    <BlockExplorer
-                        typeLabel={"refund_tx"}
-                        asset={refundJson().asset}
-                        txId={refundTx()}
+                    <Show when={refundableSwaps().length > 0}>
+                        <SwapList swapsSignal={refundableSwaps} />
+                        <hr />
+                    </Show>
+                    <input
+                        required
+                        type="file"
+                        id="refundUpload"
+                        accept="application/json,image/png"
+                        onChange={(e) => uploadChange(e)}
                     />
-                </Show>
+                    <hr />
+                    <Show when={refundTx() === ""}>
+                        <RefundButton swap={refundJson} />
+                        <RefundEta />
+                    </Show>
+                    <Show when={refundTx() !== ""}>
+                        <hr />
+                        <p>{t("refunded")}</p>
+                        <hr />
+                        <BlockExplorer
+                            typeLabel={"refund_tx"}
+                            asset={refundJson().asset}
+                            txId={refundTx()}
+                        />
+                    </Show>
+                </div>
             </div>
-        </div>
+        </Show>
     );
 };
 
