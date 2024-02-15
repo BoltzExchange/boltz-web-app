@@ -20,7 +20,7 @@ const Refund = () => {
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
-    const [refundTx, setRefundTx] = createSignal<string>("");
+    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     setTimeoutBlockheight(null);
     setTimeoutEta(null);
@@ -66,9 +66,11 @@ const Refund = () => {
                     input.setCustomValidity(t("invalid_refund_file"));
                 });
         } else {
-            new Response(inputFile)
-                .json()
-                .then((result) => checkRefundJsonKeys(input, result))
+            inputFile
+                .text()
+                .then((result) => {
+                    checkRefundJsonKeys(input, JSON.parse(result));
+                })
                 .catch((e) => {
                     log.error("invalid file upload", e);
                     input.setCustomValidity(t("invalid_refund_file"));
@@ -125,7 +127,7 @@ const Refund = () => {
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
-                <div class="frame">
+                <div class="frame" data-testid="refundFrame">
                     <h2>{t("refund_a_swap")}</h2>
                     <p>{t("refund_a_swap_subline")}</p>
                     <hr />
@@ -137,25 +139,26 @@ const Refund = () => {
                         required
                         type="file"
                         id="refundUpload"
+                        data-testid="refundUpload"
                         accept="application/json,image/png"
                         onChange={(e) => uploadChange(e)}
                     />
-                    <Show when={refundTx() === "" && refundJson() !== null}>
+                    <Show when={refundTxId() === "" && refundJson() !== null}>
                         <hr />
                         <RefundButton
                             swap={refundJson}
-                            setRefundTx={setRefundTx}
+                            setRefundTxId={setRefundTxId}
                         />
                         <RefundEta />
                     </Show>
-                    <Show when={refundTx() !== ""}>
+                    <Show when={refundTxId() !== ""}>
                         <hr />
                         <p>{t("refunded")}</p>
                         <hr />
                         <BlockExplorer
                             typeLabel={"refund_tx"}
                             asset={refundJson().asset}
-                            txId={refundTx()}
+                            txId={refundTxId()}
                         />
                     </Show>
                 </div>

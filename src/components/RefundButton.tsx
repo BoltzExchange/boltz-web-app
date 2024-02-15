@@ -18,10 +18,10 @@ import ContractTransaction from "./ContractTransaction";
 
 const RefundButton = ({
     swap,
-    setRefundTx,
+    setRefundTxId,
 }: {
     swap: Accessor<Record<string, any>>;
-    setRefundTx?: Setter<string>;
+    setRefundTxId?: Setter<string>;
 }) => {
     const {
         setNotificationType,
@@ -143,8 +143,8 @@ const RefundButton = ({
                 currentSwap.refundTx = res.refundTx;
                 setSwaps(swapsTmp);
             } else {
-                if (setRefundTx) {
-                    setRefundTx(res.refundTx);
+                if (setRefundTxId) {
+                    setRefundTxId(res.refundTx);
                 }
             }
         } catch (error) {
