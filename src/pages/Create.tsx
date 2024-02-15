@@ -65,11 +65,6 @@ const Create = () => {
         minerFee,
     } = useCreateContext();
 
-    // bail create and throw wasm error
-    if (!wasmSupported()) {
-        return <ErrorWasm />;
-    }
-
     // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
     const changeDenomination = (amount: string) => {
@@ -301,92 +296,100 @@ const Create = () => {
     });
 
     return (
-        <div class="frame" data-reverse={reverse()} data-asset={asset()}>
-            <h2>{t("create_swap")}</h2>
-            <p>
-                {t("create_swap_subline")} <br />
-                {t("send")} {t("min")}:{" "}
-                <span
-                    onClick={() => setAmount(minimum())}
-                    class="btn-small btn-light">
-                    {formatAmount(BigNumber(minimum()), denomination())}
-                </span>{" "}
-                {t("max")}:{" "}
-                <span
-                    onClick={() => setAmount(maximum())}
-                    class="btn-small btn-light">
-                    {formatAmount(BigNumber(maximum()), denomination())}
-                </span>{" "}
-            </p>
-            <div class="icons">
-                <div>
-                    <Asset side={sideSend} signal={assetSend} />
-                    <input
-                        ref={sendAmountRef}
-                        autofocus
-                        required
-                        type="text"
-                        placeholder="0"
-                        maxlength={calculateDigits(maximum(), denomination())}
-                        inputmode={
-                            denomination() == "btc" ? "decimal" : "numeric"
-                        }
-                        id="sendAmount"
-                        data-testid="sendAmount"
-                        value={sendAmountFormatted()}
-                        onpaste={(e) => validatePaste(e)}
-                        onkeypress={(e) => validateInput(e)}
-                        onInput={(e) => changeSendAmount(e)}
-                    />
+        <Show when={wasmSupported()} fallback={<ErrorWasm />}>
+            <div class="frame" data-reverse={reverse()} data-asset={asset()}>
+                <h2>{t("create_swap")}</h2>
+                <p>
+                    {t("create_swap_subline")} <br />
+                    {t("send")} {t("min")}:{" "}
+                    <span
+                        onClick={() => setAmount(minimum())}
+                        class="btn-small btn-light">
+                        {formatAmount(BigNumber(minimum()), denomination())}
+                    </span>{" "}
+                    {t("max")}:{" "}
+                    <span
+                        onClick={() => setAmount(maximum())}
+                        class="btn-small btn-light">
+                        {formatAmount(BigNumber(maximum()), denomination())}
+                    </span>{" "}
+                </p>
+                <div class="icons">
+                    <div>
+                        <Asset side={sideSend} signal={assetSend} />
+                        <input
+                            ref={sendAmountRef}
+                            autofocus
+                            required
+                            type="text"
+                            placeholder="0"
+                            maxlength={calculateDigits(
+                                maximum(),
+                                denomination(),
+                            )}
+                            inputmode={
+                                denomination() == "btc" ? "decimal" : "numeric"
+                            }
+                            id="sendAmount"
+                            data-testid="sendAmount"
+                            value={sendAmountFormatted()}
+                            onpaste={(e) => validatePaste(e)}
+                            onkeypress={(e) => validateInput(e)}
+                            onInput={(e) => changeSendAmount(e)}
+                        />
+                    </div>
+                    <Reverse />
+                    <div>
+                        <Asset side={sideReceive} signal={assetReceive} />
+                        <input
+                            ref={receiveAmountRef}
+                            required
+                            type="text"
+                            placeholder="0"
+                            maxlength={calculateDigits(
+                                maximum(),
+                                denomination(),
+                            )}
+                            inputmode={
+                                denomination() == "btc" ? "decimal" : "numeric"
+                            }
+                            id="receiveAmount"
+                            data-testid="receiveAmount"
+                            value={receiveAmountFormatted()}
+                            onpaste={(e) => validatePaste(e)}
+                            onkeypress={(e) => validateInput(e)}
+                            onInput={(e) => changeReceiveAmount(e)}
+                        />
+                    </div>
                 </div>
-                <Reverse />
-                <div>
-                    <Asset side={sideReceive} signal={assetReceive} />
-                    <input
-                        ref={receiveAmountRef}
-                        required
-                        type="text"
-                        placeholder="0"
-                        maxlength={calculateDigits(maximum(), denomination())}
-                        inputmode={
-                            denomination() == "btc" ? "decimal" : "numeric"
-                        }
-                        id="receiveAmount"
-                        data-testid="receiveAmount"
-                        value={receiveAmountFormatted()}
-                        onpaste={(e) => validatePaste(e)}
-                        onkeypress={(e) => validateInput(e)}
-                        onInput={(e) => changeReceiveAmount(e)}
-                    />
-                </div>
-            </div>
-            <Fees />
-            <hr class="spacer" />
-            <Show when={asset() === RBTC}>
-                <ConnectMetamask showAddress={true} />
+                <Fees />
                 <hr class="spacer" />
-            </Show>
-            <Show when={reverse() && asset() !== RBTC}>
-                <AddressInput />
-            </Show>
-            <Show when={!reverse()}>
-                <Show when={webln()}>
-                    <button
-                        id="webln"
-                        class="btn btn-light"
-                        onClick={() => createWeblnInvoice()}>
-                        {t("create_invoice_webln")}
-                    </button>
+                <Show when={asset() === RBTC}>
+                    <ConnectMetamask showAddress={true} />
                     <hr class="spacer" />
                 </Show>
-                <InvoiceInput />
-            </Show>
-            <Show when={isMobile && wasmSupported()}>
-                <QrScan />
-            </Show>
-            <CreateButton />
-            <AssetSelect />
-        </div>
+                <Show when={reverse() && asset() !== RBTC}>
+                    <AddressInput />
+                </Show>
+                <Show when={!reverse()}>
+                    <Show when={webln()}>
+                        <button
+                            id="webln"
+                            class="btn btn-light"
+                            onClick={() => createWeblnInvoice()}>
+                            {t("create_invoice_webln")}
+                        </button>
+                        <hr class="spacer" />
+                    </Show>
+                    <InvoiceInput />
+                </Show>
+                <Show when={isMobile}>
+                    <QrScan />
+                </Show>
+                <CreateButton />
+                <AssetSelect />
+            </div>
+        </Show>
     );
 };
 

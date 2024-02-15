@@ -22,11 +22,6 @@ const Refund = () => {
 
     const [refundJson, setRefundJson] = createSignal(null);
 
-    // bail refund and throw wasm error
-    if (!wasmSupported()) {
-        return <ErrorWasm />;
-    }
-
     setTimeoutBlockheight(null);
     setTimeoutEta(null);
 
@@ -128,39 +123,41 @@ const Refund = () => {
     });
 
     return (
-        <div id="refund">
-            <div class="frame">
-                <h2>{t("refund_a_swap")}</h2>
-                <p>{t("refund_a_swap_subline")}</p>
-                <hr />
-                <Show when={refundableSwaps().length > 0}>
-                    <SwapList swapsSignal={refundableSwaps} />
+        <Show when={wasmSupported()} fallback={<ErrorWasm />}>
+            <div id="refund">
+                <div class="frame">
+                    <h2>{t("refund_a_swap")}</h2>
+                    <p>{t("refund_a_swap_subline")}</p>
                     <hr />
-                </Show>
-                <input
-                    required
-                    type="file"
-                    id="refundUpload"
-                    accept="application/json,image/png"
-                    onChange={(e) => uploadChange(e)}
-                />
-                <hr />
-                <Show when={refundTx() === ""}>
-                    <RefundButton swap={refundJson} />
-                    <RefundEta />
-                </Show>
-                <Show when={refundTx() !== ""}>
-                    <hr />
-                    <p>{t("refunded")}</p>
-                    <hr />
-                    <BlockExplorer
-                        typeLabel={"refund_tx"}
-                        asset={refundJson().asset}
-                        txId={refundTx()}
+                    <Show when={refundableSwaps().length > 0}>
+                        <SwapList swapsSignal={refundableSwaps} />
+                        <hr />
+                    </Show>
+                    <input
+                        required
+                        type="file"
+                        id="refundUpload"
+                        accept="application/json,image/png"
+                        onChange={(e) => uploadChange(e)}
                     />
-                </Show>
+                    <hr />
+                    <Show when={refundTx() === ""}>
+                        <RefundButton swap={refundJson} />
+                        <RefundEta />
+                    </Show>
+                    <Show when={refundTx() !== ""}>
+                        <hr />
+                        <p>{t("refunded")}</p>
+                        <hr />
+                        <BlockExplorer
+                            typeLabel={"refund_tx"}
+                            asset={refundJson().asset}
+                            txId={refundTx()}
+                        />
+                    </Show>
+                </div>
             </div>
-        </div>
+        </Show>
     );
 };
 
