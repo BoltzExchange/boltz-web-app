@@ -1,9 +1,9 @@
 import { render, screen } from "@solidjs/testing-library";
+import { BigNumber } from "bignumber.js";
 
 import WeblnButton from "../../src/components/WeblnButton";
-import { useCreateContext } from "../../src/context/Create";
 import i18n from "../../src/i18n/i18n";
-import { contextWrapper } from "../helper";
+import { TestComponent, contextWrapper, signals } from "../helper";
 
 describe("WeblnButton", () => {
     test("should render WeblnButton", async () => {
@@ -19,12 +19,6 @@ describe("WeblnButton", () => {
     `(
         "should be enabled = $value with valid= $value amount",
         async ({ value }) => {
-            const TestComponent = () => {
-                const signals = useCreateContext();
-                signals.setAmountValid(value);
-                return "";
-            };
-
             render(
                 () => (
                     <>
@@ -37,6 +31,9 @@ describe("WeblnButton", () => {
                 },
             );
 
+            signals.setReceiveAmount(BigNumber(1));
+            signals.setAmountValid(value);
+
             const button = (await screen.findByText(
                 i18n.en.create_invoice_webln,
             )) as HTMLButtonElement;
@@ -44,4 +41,27 @@ describe("WeblnButton", () => {
             expect(button.disabled).toEqual(!value);
         },
     );
+
+    test("should be enabled for 0 amount", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <WeblnButton />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        signals.setAmountValid(false);
+        signals.setReceiveAmount(BigNumber(0));
+
+        const button = (await screen.findByText(
+            i18n.en.create_invoice_webln,
+        )) as HTMLButtonElement;
+
+        expect(button.disabled).toEqual(false);
+    });
 });

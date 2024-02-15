@@ -76,7 +76,11 @@ const InvoiceInput = () => {
     createEffect(
         on([receiveAmount, sendAmount, invoice], () => {
             const amount = Number(receiveAmount());
-            if (invoice() !== "" && !isLnurl(invoice())) {
+            if (
+                invoice() !== "" &&
+                !isLnurl(invoice()) &&
+                !receiveAmount().isZero()
+            ) {
                 try {
                     const inv = decodeInvoice(invoice());
                     if (inv.satoshis !== amount) {

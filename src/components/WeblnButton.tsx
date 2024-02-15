@@ -19,7 +19,7 @@ const WeblnButton = () => {
     return (
         <button
             id="webln"
-            disabled={!amountValid()}
+            disabled={!amountValid() && !receiveAmount().isZero()}
             class="btn btn-light"
             onClick={() => createWeblnInvoice()}>
             {t("create_invoice_webln")}
