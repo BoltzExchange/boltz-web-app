@@ -213,6 +213,7 @@ export const CreateButton = () => {
     return (
         <button
             id="create-swap-button"
+            data-testid="create-swap-button"
             class={buttonClass()}
             disabled={buttonDisable() || !online()}
             onClick={buttonClick}>

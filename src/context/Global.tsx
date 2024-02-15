@@ -21,13 +21,7 @@ import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
-// Local storage serializer to support the values created by the deprecated "createStorageSignal"
-const stringSerializer = {
-    serialize: (value: any) => value,
-    deserialize: (value: any) => value,
-};
-
-const GlobalContext = createContext<{
+export type GlobalContextType = {
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
     config: Accessor<Pairs | undefined>;
@@ -67,7 +61,15 @@ const GlobalContext = createContext<{
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
     updateSwapStatus: (id: string, newStatus: string) => boolean;
-}>();
+};
+
+// Local storage serializer to support the values created by the deprecated "createStorageSignal"
+const stringSerializer = {
+    serialize: (value: any) => value,
+    deserialize: (value: any) => value,
+};
+
+const GlobalContext = createContext<GlobalContextType>();
 
 const GlobalProvider = (props: { children: any }) => {
     const [online, setOnline] = createSignal<boolean>(true);

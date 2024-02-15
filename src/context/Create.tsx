@@ -12,9 +12,7 @@ import {
 import { pairs } from "../config";
 import { LN, sideSend } from "../consts";
 
-const defaultSelection = Object.keys(pairs)[0].split("/")[0];
-
-const CreateContext = createContext<{
+export type CreateContextType = {
     reverse: Accessor<boolean>;
     setReverse: Setter<boolean>;
     invoice: Accessor<string>;
@@ -59,7 +57,11 @@ const CreateContext = createContext<{
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-}>();
+};
+
+const defaultSelection = Object.keys(pairs)[0].split("/")[0];
+
+const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: any }) => {
     const [asset, setAsset] = createSignal<string>(defaultSelection);

@@ -63,6 +63,7 @@ const AddressInput = () => {
             onPaste={(e) => validateAddress(e.currentTarget)}
             type="text"
             id="onchainAddress"
+            data-testid="onchainAddress"
             name="onchainAddress"
             autocomplete="off"
             placeholder={t("onchain_address", { asset: asset() })}
