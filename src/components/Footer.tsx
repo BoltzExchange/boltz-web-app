@@ -1,17 +1,19 @@
-import betterstack from "../assets/betterstack.svg";
 import discord from "../assets/discord.svg";
 import github from "../assets/github.svg";
 import nostr from "../assets/nostr.svg";
-import substack from "../assets/substack.svg";
 import twitter from "../assets/twitter.svg";
+import youtube from "../assets/youtube.svg";
 import {
     blogUrl,
+    brandingUrl,
     discordUrl,
     githubUrl,
     nostrUrl,
     repoUrl,
     statusUrl,
+    testnetUrl,
     twitterUrl,
+    youtubeUrl,
 } from "../config";
 import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
@@ -31,7 +33,6 @@ const Footer = () => {
                     Discord
                 </a>
             </h4>
-            <h2 class="special">{t("socialmedia")}</h2>
             <div class="socials">
                 <a
                     title="Github"
@@ -39,13 +40,6 @@ const Footer = () => {
                     target="_blank"
                     href={githubUrl}>
                     <img src={github} alt="Github Logo" />
-                </a>
-                <a
-                    title="Substack"
-                    class="substack"
-                    target="_blank"
-                    href={blogUrl}>
-                    <img src={substack} alt="Substack Logo" />
                 </a>
                 <a
                     title="Discord"
@@ -65,13 +59,30 @@ const Footer = () => {
                     <img src={nostr} alt="Nostr Logo" />
                 </a>
                 <a
-                    title="Boltz API Status"
-                    class="betterstack"
+                    title="Youtube"
+                    class="youtube"
                     target="_blank"
-                    href={statusUrl}>
-                    <img src={betterstack} alt="Better Stack Logo" />
+                    href={youtubeUrl}>
+                    <img src={youtube} alt="Youtube Logo" />
                 </a>
             </div>
+            <p class="footer-nav">
+                <a target="_blank" href={blogUrl}>
+                    {t("blog")}
+                </a>{" "}
+                |{" "}
+                <a target="_blank" href={brandingUrl}>
+                    {t("branding")}
+                </a>{" "}
+                |{" "}
+                <a target="_blank" href={statusUrl}>
+                    {t("status")}
+                </a>{" "}
+                |{" "}
+                <a target="_blank" href={testnetUrl}>
+                    {t("testnet")}
+                </a>
+            </p>
             <p>{t("footer")}</p>
             <p class="version">
                 {t("version")}:{" "}

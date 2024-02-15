@@ -6,10 +6,10 @@ import { enableWebln } from "../utils/webln";
 
 const WeblnButton = () => {
     const { t } = useGlobalContext();
-    const { receiveAmount, sendAmountValid, setInvoice } = useCreateContext();
+    const { receiveAmount, amountValid, setInvoice } = useCreateContext();
 
     const createWeblnInvoice = async () => {
-        enableWebln(async () => {
+        await enableWebln(async () => {
             const amount = Number(receiveAmount());
             const invoice = await window.webln.makeInvoice({ amount: amount });
             log.debug("created webln invoice", invoice);
@@ -19,7 +19,7 @@ const WeblnButton = () => {
     return (
         <button
             id="webln"
-            disabled={!sendAmountValid()}
+            disabled={!amountValid()}
             class="btn btn-light"
             onClick={() => createWeblnInvoice()}>
             {t("create_invoice_webln")}

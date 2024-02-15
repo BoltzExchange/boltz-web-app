@@ -16,29 +16,32 @@ describe("WeblnButton", () => {
         value
         ${true}
         ${false}
-    `("should be enabled/disabled with in/valid amount", async ({ value }) => {
-        const TestComponent = () => {
-            const signals = useCreateContext();
-            signals.setSendAmountValid(value);
-            return "";
-        };
+    `(
+        "should be enabled = $value with valid= $value amount",
+        async ({ value }) => {
+            const TestComponent = () => {
+                const signals = useCreateContext();
+                signals.setAmountValid(value);
+                return "";
+            };
 
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <WeblnButton />
-                </>
-            ),
-            {
-                wrapper: contextWrapper,
-            },
-        );
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <WeblnButton />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
 
-        const button = (await screen.findByText(
-            i18n.en.create_invoice_webln,
-        )) as HTMLInputElement;
+            const button = (await screen.findByText(
+                i18n.en.create_invoice_webln,
+            )) as HTMLButtonElement;
 
-        expect(button.disabled).toEqual(!value);
-    });
+            expect(button.disabled).toEqual(!value);
+        },
+    );
 });

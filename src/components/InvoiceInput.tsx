@@ -22,7 +22,7 @@ const InvoiceInput = () => {
         receiveAmountFormatted,
         reverse,
         sendAmount,
-        sendAmountValid,
+        amountValid,
         setInvoice,
         setInvoiceValid,
         setLnurl,
@@ -57,13 +57,15 @@ const InvoiceInput = () => {
             setInvoiceValid(false);
             setLnurl("");
             input.setCustomValidity(t(e.message));
-            setButtonLabel({ key: e.message });
+            if (amountValid()) {
+                setButtonLabel({ key: e.message });
+            }
             input.classList.add("invalid");
         }
     };
 
     createEffect(
-        on([sendAmountValid, invoice], () => {
+        on([amountValid, invoice], () => {
             if (!reverse() && asset() !== RBTC) {
                 validate(inputRef);
             }

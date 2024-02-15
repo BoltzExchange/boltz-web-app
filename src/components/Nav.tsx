@@ -3,7 +3,7 @@ import { For, Show, createSignal } from "solid-js";
 
 import logo from "../assets/boltz.svg";
 import Warnings from "../components/Warnings";
-import { blogUrl, discordUrl, docsUrl, torUrl } from "../config";
+import { discordUrl, docsUrl, torUrl } from "../config";
 import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
 import "../style/nav.scss";
@@ -62,11 +62,6 @@ const Nav = ({ network }) => {
                     <A href="/history" onClick={() => setHamburger(false)}>
                         {t("history")}
                     </A>
-                    <Show when={blogUrl}>
-                        <a class="external" target="_blank" href={blogUrl}>
-                            {t("blog")}
-                        </a>
-                    </Show>
                     <Show when={docsUrl}>
                         <a class="external" target="_blank" href={docsUrl}>
                             {t("documentation")}

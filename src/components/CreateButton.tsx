@@ -26,17 +26,8 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 
 export const CreateButton = () => {
     const navigate = useNavigate();
-    const {
-        config,
-        setConfig,
-        online,
-        wasmSupported,
-        swaps,
-        setSwaps,
-        notify,
-        ref,
-        t,
-    } = useGlobalContext();
+    const { config, setConfig, online, swaps, setSwaps, notify, ref, t } =
+        useGlobalContext();
     const {
         asset,
         invoice,
@@ -45,7 +36,7 @@ export const CreateButton = () => {
         receiveAmount,
         reverse,
         sendAmount,
-        sendAmountValid,
+        amountValid,
         setInvoice,
         setInvoiceValid,
         setLnurl,
@@ -59,7 +50,7 @@ export const CreateButton = () => {
     const [buttonClass, setButtonClass] = createSignal("btn");
 
     const validateButtonDisable = () => {
-        return !valid() && !(lnurl() !== "" && sendAmountValid());
+        return !valid() && !(lnurl() !== "" && amountValid());
     };
 
     createEffect(() => {
@@ -67,9 +58,7 @@ export const CreateButton = () => {
     });
 
     createMemo(() => {
-        setButtonClass(
-            !wasmSupported() || !online() ? "btn btn-danger" : "btn",
-        );
+        setButtonClass(!online() ? "btn btn-danger" : "btn");
     });
 
     createEffect(() => {
@@ -83,13 +72,10 @@ export const CreateButton = () => {
         if (!online()) {
             setButtonLabel({ key: "api_offline" });
         }
-        if (!wasmSupported()) {
-            setButtonLabel({ key: "wasm_not_supported" });
-        }
     });
 
     const create = async () => {
-        if (sendAmountValid() && !reverse() && lnurl() !== "") {
+        if (amountValid() && !reverse() && lnurl() !== "") {
             try {
                 const inv = await fetchLnurl(lnurl(), Number(receiveAmount()));
                 setInvoice(inv);
@@ -227,8 +213,9 @@ export const CreateButton = () => {
     return (
         <button
             id="create-swap-button"
+            data-testid="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable() || !wasmSupported() || !online()}
+            disabled={buttonDisable() || !online()}
             onClick={buttonClick}>
             {getButtonLabel(buttonLabel())}
         </button>

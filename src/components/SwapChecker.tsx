@@ -47,14 +47,14 @@ class BoltzWebSocket {
             log.debug(`ws ${this.url} message`, data);
 
             if (data.event === "update" && data.channel === "swap.update") {
-                const swapUpdates = data.args as [
-                    string,
-                    Record<string, any>,
-                ][];
-                for (const [id, status] of swapUpdates) {
-                    this.relevantIds.add(id);
-                    this.prepareSwap(id, status);
-                    await this.claimSwap(id, status);
+                const swapUpdates = data.args as {
+                    id: string;
+                    status: string;
+                }[];
+                for (const status of swapUpdates) {
+                    this.relevantIds.add(status.id);
+                    this.prepareSwap(status.id, status);
+                    await this.claimSwap(status.id, status);
                 }
             }
         };
@@ -137,7 +137,11 @@ export const SwapChecker = () => {
     };
 
     const prepareSwap = (swapId: string, data: any) => {
-        const currentSwap = swaps().find((s) => swapId === s.id);
+        const currentSwap = swaps().find((s: any) => swapId === s.id);
+        if (currentSwap === undefined) {
+            log.warn(`prepareSwap: swap ${swapId} not found`);
+            return;
+        }
         if (swap() && swap().id === currentSwap.id) {
             setSwapStatus(data.status);
         }
@@ -149,6 +153,10 @@ export const SwapChecker = () => {
 
     const claimSwap = async (swapId: string, data: any) => {
         const currentSwap = swaps().find((s) => swapId === s.id);
+        if (currentSwap === undefined) {
+            log.warn(`claimSwap: swap ${swapId} not found`);
+            return;
+        }
         if (
             currentSwap.asset !== RBTC &&
             currentSwap.claimTx === undefined &&
