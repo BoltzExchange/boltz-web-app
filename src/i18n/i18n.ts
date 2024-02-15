@@ -167,6 +167,7 @@ const dict = {
         invoice_paid: "Invoice paid",
         creating_coop_claim: "Creating cooperative claim transaction.",
         branding: "Branding",
+        testnet: "Testnet",
     },
     de: {
         language: "Deutsch",
@@ -341,6 +342,7 @@ const dict = {
         invoice_paid: "Rechnung bezahlt",
         creating_coop_claim: "Erstelle kooperative Claim-Transaktion.",
         branding: "Branding",
+        testnet: "Testnet",
     },
     es: {
         language: "Español",
@@ -517,6 +519,7 @@ const dict = {
         creating_coop_claim:
             "Creación de una transacción de reclamación cooperativa.",
         branding: "Branding",
+        testnet: "Testnet",
     },
     zh: {
         language: "中文",
@@ -676,6 +679,7 @@ const dict = {
         invoice_paid: "发票已支付",
         creating_coop_claim: "创建合作索赔交易。",
         branding: "品牌",
+        testnet: "测试网",
     },
 };
 

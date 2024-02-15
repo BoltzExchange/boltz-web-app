@@ -11,6 +11,7 @@ import {
     nostrUrl,
     repoUrl,
     statusUrl,
+    testnetUrl,
     twitterUrl,
     youtubeUrl,
 } from "../config";
@@ -65,19 +66,23 @@ const Footer = () => {
                     <img src={youtube} alt="Youtube Logo" />
                 </a>
             </div>
-            <h4 class="footer-nav">
+            <p class="footer-nav">
                 <a target="_blank" href={blogUrl}>
                     {t("blog")}
+                </a>{" "}
+                |{" "}
+                <a target="_blank" href={brandingUrl}>
+                    {t("branding")}
                 </a>{" "}
                 |{" "}
                 <a target="_blank" href={statusUrl}>
                     {t("status")}
                 </a>{" "}
                 |{" "}
-                <a target="_blank" href={brandingUrl}>
-                    {t("branding")}
+                <a target="_blank" href={testnetUrl}>
+                    {t("testnet")}
                 </a>
-            </h4>
+            </p>
             <p>{t("footer")}</p>
             <p class="version">
                 {t("version")}:{" "}

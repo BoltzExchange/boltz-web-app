@@ -14,3 +14,4 @@ export const nostrUrl =
 export const statusUrl = "https://status.boltz.exchange";
 export const youtubeUrl = "https://www.youtube.com/@boltzhq";
 export const brandingUrl = "https://github.com/BoltzExchange/logo";
+export const testnetUrl = "https://testnet.boltz.exchange";
