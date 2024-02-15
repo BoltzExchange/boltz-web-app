@@ -210,6 +210,13 @@ export const getSubmarineTransaction = (asset: string, id: string) =>
         timeoutEta?: number;
     }>(`/v2/swap/submarine/${id}/transaction`, asset);
 
+export const getReverseTransaction = (asset: string, id: string) =>
+    fetcher<{
+        id: string;
+        hex: string;
+        timeoutBlockHeight: number;
+    }>(`/v2/swap/reverse/${id}/transaction`, asset);
+
 export const getSwapStatus = (asset: string, id: string) =>
     fetcher<{
         status: string;

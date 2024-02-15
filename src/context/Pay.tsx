@@ -6,7 +6,7 @@ import {
     useContext,
 } from "solid-js";
 
-const PayContext = createContext<{
+export type PayContextType = {
     failureReason: Accessor<string>;
     setFailureReason: Setter<string>;
     swap: Accessor<any>;
@@ -19,7 +19,9 @@ const PayContext = createContext<{
     setTimeoutEta: Setter<number>;
     timeoutBlockHeight: Accessor<number>;
     setTimeoutBlockheight: Setter<number>;
-}>();
+};
+
+const PayContext = createContext<PayContextType>();
 
 type SwapStatusTransaction = {
     hex?: string;

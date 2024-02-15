@@ -4,10 +4,17 @@ import { createEffect, onCleanup, onMount } from "solid-js";
 import { BTC, LBTC, RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getSubmarineTransaction } from "../utils/boltzClient";
+import {
+    getReverseTransaction,
+    getSubmarineTransaction,
+} from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
 import { getApiUrl } from "../utils/helper";
-import { swapStatusFinal, swapStatusPending } from "../utils/swapStatus";
+import {
+    swapStatusFinal,
+    swapStatusPending,
+    swapStatusSuccess,
+} from "../utils/swapStatus";
 
 const reconnectInterval = 5_000;
 
@@ -157,12 +164,23 @@ export const SwapChecker = () => {
             log.warn(`claimSwap: swap ${swapId} not found`);
             return;
         }
+
+        if (data.status === swapStatusSuccess.InvoiceSettled) {
+            data.transaction = await getReverseTransaction(
+                currentSwap.asset,
+                currentSwap.id,
+            );
+        }
+
         if (
             currentSwap.asset !== RBTC &&
             currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
-            (data.status === swapStatusPending.TransactionConfirmed ||
-                data.status === swapStatusPending.TransactionMempool)
+            [
+                swapStatusPending.TransactionConfirmed,
+                swapStatusPending.TransactionMempool,
+                swapStatusSuccess.InvoiceSettled,
+            ].includes(data.status)
         ) {
             try {
                 const res = await claim(currentSwap, data.transaction);
@@ -196,7 +214,12 @@ export const SwapChecker = () => {
         }
 
         const swapsToCheck = swaps()
-            .filter((s) => !swapStatusFinal.includes(s.status))
+            .filter(
+                (s) =>
+                    !swapStatusFinal.includes(s.status) ||
+                    (s.status === swapStatusSuccess.InvoiceSettled &&
+                        s.claimTx === undefined),
+            )
             .filter((s) => s.id !== swap()?.id);
 
         for (const [url, assets] of urlsToAsset.entries()) {

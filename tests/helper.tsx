@@ -10,14 +10,16 @@ import {
     GlobalProvider,
     useGlobalContext,
 } from "../src/context/Global";
-import { PayProvider } from "../src/context/Pay";
+import { PayContextType, PayProvider, usePayContext } from "../src/context/Pay";
 import { Web3SignerProvider } from "../src/context/Web3";
 
 export let signals: CreateContextType;
 export let globalSignals: GlobalContextType;
+export let payContext: PayContextType;
 
 export const TestComponent = () => {
     signals = useCreateContext();
+    payContext = usePayContext();
     globalSignals = useGlobalContext();
     return "";
 };
