@@ -44,7 +44,7 @@ const Create = () => {
         assetSelected,
         invoiceValid,
         addressValid,
-        sendAmountValid,
+        amountValid,
         sendAmount,
         setSendAmount,
         receiveAmount,
@@ -60,7 +60,7 @@ const Create = () => {
         setInvoice,
         setInvoiceValid,
         setValid,
-        setSendAmountValid,
+        setAmountValid,
         boltzFee,
         minerFee,
     } = useCreateContext();
@@ -99,8 +99,6 @@ const Create = () => {
         setReceiveAmount(satAmount);
         setSendAmount(sendAmount);
         validateAmount();
-        target.setCustomValidity("");
-        target.classList.remove("invalid");
     };
 
     const changeSendAmount = (evt: InputEvent) => {
@@ -119,8 +117,6 @@ const Create = () => {
         setSendAmount(satAmount);
         setReceiveAmount(receiveAmount);
         validateAmount();
-        target.setCustomValidity("");
-        target.classList.remove("invalid");
     };
 
     const createWeblnInvoice = async () => {
@@ -188,10 +184,10 @@ const Create = () => {
             const errorMsg = t(label, params);
             setCustomValidity(errorMsg, amount === 0);
             setButtonLabel({ key: label, params: params });
-            setSendAmountValid(false);
+            setAmountValid(false);
             return;
         }
-        setSendAmountValid(true);
+        setAmountValid(true);
     };
 
     const setAmount = (amount: number) => {
@@ -268,7 +264,7 @@ const Create = () => {
 
     // validation swap
     createMemo(() => {
-        if (sendAmountValid()) {
+        if (amountValid()) {
             if (
                 (reverse() && addressValid()) ||
                 (!reverse() &&

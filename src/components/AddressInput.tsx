@@ -15,7 +15,7 @@ const AddressInput = () => {
         asset,
         assetReceive,
         reverse,
-        sendAmountValid,
+        amountValid,
         onchainAddress,
         setAddressValid,
         setOnchainAddress,
@@ -37,15 +37,17 @@ const AddressInput = () => {
             setAddressValid(false);
             input.classList.add("invalid");
             input.setCustomValidity(msg);
-            setButtonLabel({
-                key: "invalid_address",
-                params: { asset: asset() },
-            });
+            if (amountValid()) {
+                setButtonLabel({
+                    key: "invalid_address",
+                    params: { asset: asset() },
+                });
+            }
         }
     };
 
     createEffect(
-        on([sendAmountValid, onchainAddress, assetReceive], () => {
+        on([amountValid, onchainAddress, assetReceive], () => {
             if (reverse() && asset() !== RBTC) {
                 validateAddress(inputRef);
             }
@@ -61,6 +63,7 @@ const AddressInput = () => {
             onPaste={(e) => validateAddress(e.currentTarget)}
             type="text"
             id="onchainAddress"
+            data-testid="onchainAddress"
             name="onchainAddress"
             autocomplete="off"
             placeholder={t("onchain_address", { asset: asset() })}

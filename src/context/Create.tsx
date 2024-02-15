@@ -12,9 +12,7 @@ import {
 import { pairs } from "../config";
 import { LN, sideSend } from "../consts";
 
-const defaultSelection = Object.keys(pairs)[0].split("/")[0];
-
-const CreateContext = createContext<{
+export type CreateContextType = {
     reverse: Accessor<boolean>;
     setReverse: Setter<boolean>;
     invoice: Accessor<string>;
@@ -39,8 +37,8 @@ const CreateContext = createContext<{
     setInvoiceValid: Setter<boolean>;
     addressValid: Accessor<boolean>;
     setAddressValid: Setter<boolean>;
-    sendAmountValid: Accessor<boolean>;
-    setSendAmountValid: Setter<boolean>;
+    amountValid: Accessor<boolean>;
+    setAmountValid: Setter<boolean>;
     sendAmount: Accessor<BigNumber>;
     setSendAmount: Setter<BigNumber>;
     receiveAmount: Accessor<BigNumber>;
@@ -59,7 +57,11 @@ const CreateContext = createContext<{
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-}>();
+};
+
+const defaultSelection = Object.keys(pairs)[0].split("/")[0];
+
+const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: any }) => {
     const [asset, setAsset] = createSignal<string>(defaultSelection);
@@ -95,7 +97,7 @@ const CreateProvider = (props: { children: any }) => {
     const [valid, setValid] = createSignal(false);
     const [invoiceValid, setInvoiceValid] = createSignal(false);
     const [addressValid, setAddressValid] = createSignal(false);
-    const [sendAmountValid, setSendAmountValid] = createSignal(true);
+    const [amountValid, setAmountValid] = createSignal(true);
 
     // amounts
     const [sendAmount, setSendAmount] = createSignal(BigNumber(0));
@@ -139,8 +141,8 @@ const CreateProvider = (props: { children: any }) => {
                 setInvoiceValid,
                 addressValid,
                 setAddressValid,
-                sendAmountValid,
-                setSendAmountValid,
+                amountValid,
+                setAmountValid,
                 sendAmount,
                 setSendAmount,
                 receiveAmount,
