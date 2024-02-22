@@ -4,6 +4,7 @@ import { Show } from "solid-js";
 
 import SwapList from "../components/SwapList";
 import { useGlobalContext } from "../context/Global";
+import { useSwapContext } from "../context/Swap";
 import { downloadJson } from "../utils/download";
 import { isIos } from "../utils/helper";
 
@@ -24,8 +25,8 @@ const History = () => {
 
     let importRef: HTMLInputElement;
 
-    const { swaps, setSwaps, setNotification, setNotificationType, t } =
-        useGlobalContext();
+    const { setNotification, setNotificationType, t } = useGlobalContext();
+    const { swaps, setSwaps } = useSwapContext();
 
     const deleteLocalStorage = () => {
         if (confirm(t("delete_localstorage"))) {

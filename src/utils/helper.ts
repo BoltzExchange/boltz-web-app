@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 import { ECPairInterface } from "ecpair";
 import log from "loglevel";
 
-import { pairs } from "../config";
+import { boltzClientApiUrl, pairs } from "../config";
 import { BTC } from "../consts";
 import {
     PairLegacy,
@@ -12,6 +12,7 @@ import {
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
 
+export const isBoltzClient = boltzClientApiUrl !== "";
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
     isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
@@ -77,6 +78,28 @@ export const fetcher = async <T = any>(
     }
     const apiUrl = getApiUrl(asset) + url;
     const response = await fetch(apiUrl, opts);
+    if (!response.ok) {
+        return Promise.reject(response);
+    }
+    return response.json();
+};
+
+export const clientFetcher = async <T = any>(
+    url: string,
+    params: any | undefined = null,
+): Promise<T> => {
+    let opts = {};
+    if (params) {
+        opts = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Grpc-Metadata-macaroon": "",
+            },
+            body: JSON.stringify(params),
+        };
+    }
+    const response = await fetch(boltzClientApiUrl + url, opts);
     if (!response.ok) {
         return Promise.reject(response);
     }

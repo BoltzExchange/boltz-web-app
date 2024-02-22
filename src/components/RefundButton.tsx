@@ -5,6 +5,7 @@ import { Accessor, Setter, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
+import { useSwapContext } from "../context/Swap";
 import { useWeb3Signer } from "../context/Web3";
 import {
     getSubmarineEipSignature,
@@ -26,12 +27,12 @@ const RefundButton = ({
     const {
         setNotificationType,
         setNotification,
-        swaps,
-        setSwaps,
         setRefundAddress,
         refundAddress,
         t,
     } = useGlobalContext();
+
+    const { swaps, setSwaps } = useSwapContext();
 
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap, getSigner } = useWeb3Signer();

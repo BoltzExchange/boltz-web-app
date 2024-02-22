@@ -5,12 +5,7 @@ import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
 import { getReverseTransaction } from "../../src/utils/boltzClient";
 import { claim } from "../../src/utils/claim";
-import {
-    TestComponent,
-    contextWrapper,
-    globalSignals,
-    payContext,
-} from "../helper";
+import { TestComponent, contextWrapper, swapContext } from "../helper";
 
 let claimPromiseResolve: (() => void) | undefined = undefined;
 
@@ -57,7 +52,7 @@ describe("TransactionClaimed", () => {
                 wrapper: contextWrapper,
             },
         );
-        payContext.setSwap(swap);
+        swapContext.setSwap(swap);
 
         await expect(
             screen.findByText(i18n.en.congrats),
@@ -89,8 +84,8 @@ describe("TransactionClaimed", () => {
                 reverse: true,
             };
 
-            globalSignals.setSwaps([JSON.parse(JSON.stringify(swap))]);
-            payContext.setSwap(swap);
+            swapContext.setSwaps([JSON.parse(JSON.stringify(swap))]);
+            swapContext.setSwap(swap);
 
             await expect(
                 screen.findByText(i18n.en.broadcasting_claim),
@@ -109,8 +104,8 @@ describe("TransactionClaimed", () => {
             );
             expect(claim).toHaveBeenCalledTimes(1);
 
-            expect(payContext.swap().claimTx).toEqual("claimedTxId");
-            expect(globalSignals.swaps()[0].claimTx).toEqual("claimedTxId");
+            expect(swapContext.swap().claimTx).toEqual("claimedTxId");
+            expect(swapContext.swaps()[0].claimTx).toEqual("claimedTxId");
         },
     );
 });

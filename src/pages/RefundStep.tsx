@@ -4,13 +4,13 @@ import { For, createEffect } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
+import { useSwapContext } from "../context/Swap";
 
 const RefundStep = () => {
     const params = useParams();
     const navigate = useNavigate();
-    const { setSwap } = usePayContext();
-    const { swaps, t } = useGlobalContext();
+    const { swaps, setSwap } = useSwapContext();
+    const { t } = useGlobalContext();
 
     createEffect(() => {
         let tmpSwaps = swaps();

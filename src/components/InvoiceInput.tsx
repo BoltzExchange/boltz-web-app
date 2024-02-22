@@ -5,6 +5,7 @@ import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
+import { isBoltzClient } from "../utils/helper";
 import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 import { setButtonLabel } from "./CreateButton";
@@ -33,23 +34,27 @@ const InvoiceInput = () => {
     const validate = (input: HTMLTextAreaElement) => {
         const inputValue = extractInvoice(input.value.trim());
         try {
-            if (isLnurl(inputValue)) {
-                setButtonLabel({ key: "fetch_lnurl" });
-                setLnurl(inputValue);
-            } else {
-                const sats = validateInvoice(inputValue);
-                setReceiveAmount(BigNumber(sats));
-                setSendAmount(
-                    calculateSendAmount(
-                        BigNumber(sats),
-                        boltzFee(),
-                        minerFee(),
-                        reverse(),
-                    ),
-                );
-                setInvoice(inputValue);
-                setLnurl("");
+            if (isBoltzClient && inputValue == "") {
                 setInvoiceValid(true);
+            } else {
+                if (isLnurl(inputValue)) {
+                    setButtonLabel({ key: "fetch_lnurl" });
+                    setLnurl(inputValue);
+                } else {
+                    const sats = validateInvoice(inputValue);
+                    setReceiveAmount(BigNumber(sats));
+                    setSendAmount(
+                        calculateSendAmount(
+                            BigNumber(sats),
+                            boltzFee(),
+                            minerFee(),
+                            reverse(),
+                        ),
+                    );
+                    setInvoice(inputValue);
+                    setLnurl("");
+                    setInvoiceValid(true);
+                }
             }
             input.setCustomValidity("");
             input.classList.remove("invalid");

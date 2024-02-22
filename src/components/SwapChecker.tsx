@@ -4,6 +4,7 @@ import { createEffect, onCleanup, onMount } from "solid-js";
 import { BTC, LBTC, RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { useSwapContext } from "../context/Swap";
 import {
     getReverseTransaction,
     getSubmarineTransaction,
@@ -109,14 +110,19 @@ class BoltzWebSocket {
 
 export const SwapChecker = () => {
     const {
-        swap,
         setSwapStatus,
-        setSwapStatusTransaction,
         setFailureReason,
         setTimeoutEta,
         setTimeoutBlockheight,
     } = usePayContext();
-    const { notify, updateSwapStatus, swaps, setSwaps } = useGlobalContext();
+    const {
+        swap,
+        setSwapStatusTransaction,
+        updateSwapStatus,
+        swaps,
+        setSwaps,
+    } = useSwapContext();
+    const { notify } = useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
 

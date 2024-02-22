@@ -7,6 +7,7 @@ import { discordUrl, docsUrl, torUrl } from "../config";
 import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
 import "../style/nav.scss";
+import { isBoltzClient } from "../utils/helper";
 
 const Nav = ({ network }) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -56,9 +57,11 @@ const Nav = ({ network }) => {
                     <A href="/swap" onClick={() => setHamburger(false)}>
                         {t("swap")}
                     </A>
-                    <A href="/refund" onClick={() => setHamburger(false)}>
-                        {t("refund")}
-                    </A>
+                    <Show when={!isBoltzClient}>
+                        <A href="/refund" onClick={() => setHamburger(false)}>
+                            {t("refund")}
+                        </A>
+                    </Show>
                     <A href="/history" onClick={() => setHamburger(false)}>
                         {t("history")}
                     </A>

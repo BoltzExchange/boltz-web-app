@@ -5,14 +5,12 @@ import { Show } from "solid-js";
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
 import { denominations, formatAmount } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
-import { invoicePrefix } from "../utils/invoice";
+import { decodeInvoice, invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
 
-const SwapCreated = () => {
-    const { swap } = usePayContext();
+const SwapCreated = ({ invoice }: { invoice: string }) => {
     const { t, denomination, webln } = useGlobalContext();
     const payWeblnInvoice = async (pr: string) => {
         enableWebln(async () => {
@@ -26,7 +24,7 @@ const SwapCreated = () => {
             <h2>
                 {t("pay_invoice_to", {
                     amount: formatAmount(
-                        BigNumber(swap().sendAmount),
+                        BigNumber(decodeInvoice(invoice).satoshis),
                         denomination(),
                     ),
                     denomination:
@@ -34,14 +32,14 @@ const SwapCreated = () => {
                 })}
             </h2>
             <hr />
-            <a href={invoicePrefix + swap().invoice}>
-                <QrCode data={swap().invoice} />
+            <a href={invoicePrefix + invoice}>
+                <QrCode data={invoice} />
             </a>
             <hr />
             <p
-                onclick={() => clipboard(swap().invoice)}
+                onclick={() => clipboard(invoice)}
                 class="address-box break-word">
-                {cropString(swap().invoice)}
+                {cropString(invoice)}
             </p>
             <hr />
             <h3>{t("warning_return")}</h3>
@@ -49,17 +47,17 @@ const SwapCreated = () => {
             <Show when={webln() && !isMobile}>
                 <span
                     class="btn btn-light"
-                    onClick={() => payWeblnInvoice(swap().invoice)}>
+                    onClick={() => payWeblnInvoice(invoice)}>
                     {t("pay_invoice_webln")}
                 </span>
             </Show>
             <Show when={isMobile}>
-                <a href={invoicePrefix + swap().invoice} class="btn btn-light">
+                <a href={invoicePrefix + invoice} class="btn btn-light">
                     {t("open_in_wallet")}
                 </a>
             </Show>
             <hr class="spacer" />
-            <span class="btn" onclick={() => clipboard(swap().invoice)}>
+            <span class="btn" onclick={() => clipboard(invoice)}>
                 {t("copy_invoice")}
             </span>
         </div>

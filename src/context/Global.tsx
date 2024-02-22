@@ -17,7 +17,6 @@ import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
-import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -48,8 +47,6 @@ export type GlobalContextType = {
     setI18nConfigured: Setter<string | null>;
     denomination: Accessor<string>;
     setDenomination: Setter<string>;
-    swaps: Accessor<any>;
-    setSwaps: Setter<any>;
     hideHero: Accessor<boolean>;
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
@@ -58,7 +55,6 @@ export type GlobalContextType = {
     t: (key: string, values?: Record<string, any>) => string;
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
-    updateSwapStatus: (id: string, newStatus: string) => boolean;
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -111,23 +107,13 @@ const GlobalProvider = (props: { children: any }) => {
         ...stringSerializer,
     });
 
-    const [swaps, setSwaps] = makePersisted(
-        createSignal([], {
-            // Because arrays are the same object when changed,
-            // we have to override the equality checker
-            equals: () => false,
-        }),
-        {
-            name: "swaps",
-        },
-    );
-
     const notify = (type: string, message: string) => {
         setNotificationType(type);
         setNotification(message);
     };
 
     const fetchPairs = (asset: string = BTC) => {
+        // TODO: fetch pairs from boltz-client aswell
         getPairs(asset)
             .then((data) => {
                 log.debug("getpairs", data);
@@ -138,20 +124,6 @@ const GlobalProvider = (props: { children: any }) => {
                 log.debug(error);
                 setOnline(false);
             });
-    };
-
-    const updateSwapStatus = (id: string, newStatus: string) => {
-        if (swapStatusFinal.includes(newStatus)) {
-            const swapsTmp = swaps();
-            const swap = swapsTmp.find((swap) => swap.id === id);
-
-            if (swap.status !== newStatus) {
-                swap.status = newStatus;
-                setSwaps(swapsTmp);
-                return true;
-            }
-        }
-        return false;
     };
 
     setI18n(detectLanguage(i18nConfigured()));
@@ -212,8 +184,6 @@ const GlobalProvider = (props: { children: any }) => {
                 setI18nConfigured,
                 denomination,
                 setDenomination,
-                swaps,
-                setSwaps,
                 hideHero,
                 setHideHero,
                 embedded,
@@ -222,7 +192,6 @@ const GlobalProvider = (props: { children: any }) => {
                 t,
                 notify,
                 fetchPairs,
-                updateSwapStatus,
             }}>
             {props.children}
         </GlobalContext.Provider>

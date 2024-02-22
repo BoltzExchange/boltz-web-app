@@ -9,6 +9,7 @@ import RefundEta from "../components/RefundEta";
 import SwapList from "../components/SwapList";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { useSwapContext } from "../context/Swap";
 import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
 import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
@@ -16,7 +17,8 @@ import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { updateSwapStatus, wasmSupported, swaps, t } = useGlobalContext();
+    const { wasmSupported, t } = useGlobalContext();
+    const { swaps, updateSwapStatus } = useSwapContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);

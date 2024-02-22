@@ -13,6 +13,7 @@ import { loglevel, network } from "./config";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider, useGlobalContext } from "./context/Global";
 import { PayProvider } from "./context/Pay";
+import { SwapProvider } from "./context/Swap";
 import { Web3SignerProvider } from "./context/Web3";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
@@ -23,6 +24,7 @@ import Pay from "./pages/Pay";
 import Refund from "./pages/Refund";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
+import { isBoltzClient } from "./utils/helper";
 import "./utils/patches";
 
 log.setLevel(loglevel);
@@ -41,46 +43,49 @@ const isEmbedded = () => {
     return useGlobalContext().embedded();
 };
 
-const App = (props: any) => (
-    <>
-        <SwapChecker />
-        <Show when={!isEmbedded()}>
-            <Nav network={network} />
-        </Show>
-        {props.children}
-        <Notification />
-        <Show when={!isEmbedded()}>
-            <Footer />
-        </Show>
-    </>
-);
+const App = (props: any) => {
+    return (
+        <GlobalProvider>
+            <Web3SignerProvider>
+                <PayProvider>
+                    <SwapProvider>
+                        <CreateProvider>
+                            <Show when={!isBoltzClient}>
+                                <SwapChecker />
+                            </Show>
+                            <Show when={!isEmbedded()}>
+                                <Nav network={network} />
+                            </Show>
+                            {props.children}
+                            <Notification />
+                            <Show when={!isEmbedded()}>
+                                <Footer />
+                            </Show>
+                        </CreateProvider>
+                    </SwapProvider>
+                </PayProvider>
+            </Web3SignerProvider>
+        </GlobalProvider>
+    );
+};
 
 const cleanup = render(
     () => (
-        <GlobalProvider>
-            <Web3SignerProvider>
-                <CreateProvider>
-                    <PayProvider>
-                        <Router root={App}>
-                            <Route path="/" component={Hero} />
-                            <Route path="/swap" component={Create} />
-                            {/* Compatibility with link in Breez:
+        <Router root={App}>
+            <Route path="/" component={Hero} />
+            <Route path="/swap" component={Create} />
+            {/* Compatibility with link in Breez:
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
-                            <Route path="/swapbox" component={Create} />
-                            <Route path="/swap/:id" component={Pay} />
-                            <Route
-                                path="/swap/refund/:id"
-                                component={RefundStep}
-                            />
-                            <Route path="/error" component={Error} />
-                            <Route path="/refund" component={Refund} />
-                            <Route path="/history" component={History} />
-                            <Route path="*404" component={NotFound} />
-                        </Router>
-                    </PayProvider>
-                </CreateProvider>
-            </Web3SignerProvider>
-        </GlobalProvider>
+            <Route path="/swapbox" component={Create} />
+            <Route path="/swap/:id" component={Pay} />
+            <Route path="/swap/refund/:id" component={RefundStep} />
+            <Route path="/error" component={Error} />
+            <Show when={!isBoltzClient}>
+                <Route path="/refund" component={Refund} />
+            </Show>
+            <Route path="/history" component={History} />
+            <Route path="*404" component={NotFound} />
+        </Router>
     ),
     document.getElementById("root"),
 );
