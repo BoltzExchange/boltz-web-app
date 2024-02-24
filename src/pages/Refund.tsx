@@ -19,6 +19,7 @@ const Refund = () => {
     const { updateSwapStatus, wasmSupported, swaps, t } = useGlobalContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
+    const [swapFound, setSwapFound] = createSignal(null);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
@@ -27,11 +28,13 @@ const Refund = () => {
 
     const checkRefundJsonKeys = (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
+        setSwapFound(null);
 
         // Redirect to normal flow if swap is in local storage
         const localStorageSwap = swaps().find((s: any) => s.id === json.id);
         if (localStorageSwap !== undefined) {
-            navigate("/swap/" + json.id);
+            setSwapFound(json.id);
+            return;
         }
 
         // Compatibility with the old refund files
@@ -143,6 +146,15 @@ const Refund = () => {
                         accept="application/json,image/png"
                         onChange={(e) => uploadChange(e)}
                     />
+                    <Show when={swapFound() !== null}>
+                        <hr />
+                        <p>{t("swap_in_progress")}</p>
+                        <button
+                            class="btn btn-success"
+                            onClick={() => navigate(`/swap/${swapFound()}`)}>
+                            {t("open_swap")}
+                        </button>
+                    </Show>
                     <Show when={refundTxId() === "" && refundJson() !== null}>
                         <hr />
                         <RefundButton
