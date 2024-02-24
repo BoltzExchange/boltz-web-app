@@ -74,12 +74,12 @@ const InvoiceSet = () => {
                 class="address-box break-word">
                 {cropString(swap().address)}
             </p>
-            <hr class="spacer" />
             <Show when={swap().asset === BTC}>
+                <hr class="spacer" />
                 <h3>{t("warning_expiry")}</h3>
-                <hr />
             </Show>
             <Show when={isMobile}>
+                <hr />
                 <a href={swap().bip21} class="btn btn-light">
                     {t("open_in_wallet")}
                 </a>
