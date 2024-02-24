@@ -20,6 +20,7 @@ const Refund = () => {
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [swapFound, setSwapFound] = createSignal(null);
+    const [refundInvalid, setRefundInvalid] = createSignal(false);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
@@ -28,7 +29,6 @@ const Refund = () => {
 
     const checkRefundJsonKeys = (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
-        setSwapFound(null);
 
         // Redirect to normal flow if swap is in local storage
         const localStorageSwap = swaps().find((s: any) => s.id === json.id);
@@ -49,6 +49,7 @@ const Refund = () => {
         if (valid) {
             setRefundJson(json);
         } else {
+            setRefundInvalid(true);
             input.setCustomValidity(t("invalid_refund_file"));
         }
     };
@@ -58,6 +59,8 @@ const Refund = () => {
         const inputFile = input.files[0];
         input.setCustomValidity("");
         setRefundJson(null);
+        setSwapFound(null);
+        setRefundInvalid(false);
 
         if (inputFile.type === "image/png") {
             QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
@@ -66,6 +69,7 @@ const Refund = () => {
                 )
                 .catch((e) => {
                     log.error("invalid QR code upload", e);
+                    setRefundInvalid(true);
                     input.setCustomValidity(t("invalid_refund_file"));
                 });
         } else {
@@ -76,6 +80,7 @@ const Refund = () => {
                 })
                 .catch((e) => {
                     log.error("invalid file upload", e);
+                    setRefundInvalid(true);
                     input.setCustomValidity(t("invalid_refund_file"));
                 });
         }
@@ -153,6 +158,13 @@ const Refund = () => {
                             class="btn btn-success"
                             onClick={() => navigate(`/swap/${swapFound()}`)}>
                             {t("open_swap")}
+                        </button>
+                    </Show>
+                    <Show when={refundInvalid()}>
+                        <hr />
+                        <p>{t("refund_in")}</p>
+                        <button class="btn btn-danger" disabled={true}>
+                            {t("invalid_refund_file")}
                         </button>
                     </Show>
                     <Show when={refundTxId() === "" && refundJson() !== null}>
