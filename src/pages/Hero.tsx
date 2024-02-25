@@ -1,16 +1,16 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createSignal, onMount } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
-import { lightningExplorerUrl } from "../config";
+import { config } from "../config";
 import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
-import { getNodeStats, getNodes } from "../utils/boltzClient";
+import { getNodeStats, getNodes } from "../utils/boltzApi";
 
 export const Hero = () => {
     const navigate = useNavigate();
@@ -24,30 +24,37 @@ export const Hero = () => {
     const { hideHero, setHideHero, t } = useGlobalContext();
 
     const openNodeInfo = async () => {
-        window.open(`${lightningExplorerUrl}/${nodePubkey()}`, "_blank");
+        window.open(
+            `${config().lightningExplorerUrl}/${nodePubkey()}`,
+            "_blank",
+        );
     };
 
-    onMount(async () => {
-        try {
-            const [nodesRes, statsRes] = await Promise.all([
-                getNodes(BTC),
-                getNodeStats(BTC),
-            ]);
-            log.debug("node", nodesRes);
-            setNodePubkey(nodesRes.BTC.LND.publicKey);
+    createEffect(async () => {
+        if (config().apiUrl) {
+            try {
+                const [nodesRes, statsRes] = await Promise.all([
+                    getNodes(BTC),
+                    getNodeStats(BTC),
+                ]);
+                log.debug("node", nodesRes);
+                setNodePubkey(nodesRes.BTC.LND.publicKey);
 
-            log.debug("node stats", statsRes);
-            const stats = statsRes.BTC.total;
+                log.debug("node stats", statsRes);
+                const stats = statsRes.BTC.total;
 
-            setNumChannel(Number(stats.channels).toLocaleString());
-            setNumPeers(Number(stats.peers).toLocaleString());
-            setCapacity(Number(stats.capacity).toLocaleString());
+                setNumChannel(Number(stats.channels).toLocaleString());
+                setNumPeers(Number(stats.peers).toLocaleString());
+                setCapacity(Number(stats.capacity).toLocaleString());
 
-            const difference = Date.now() - stats.oldestChannel * 1000;
-            const years = (difference / 1000 / 60 / 60 / 24 / 365).toFixed(2);
-            setOldestChannel(years);
-        } catch (error) {
-            log.error("nodestats error", error);
+                const difference = Date.now() - stats.oldestChannel * 1000;
+                const years = (difference / 1000 / 60 / 60 / 24 / 365).toFixed(
+                    2,
+                );
+                setOldestChannel(years);
+            } catch (error) {
+                log.error("nodestats error", error);
+            }
         }
     });
 

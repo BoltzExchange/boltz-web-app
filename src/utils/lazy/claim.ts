@@ -10,7 +10,8 @@ import { ECPairInterface } from "ecpair";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { LBTC, RBTC } from "../consts";
+import { LBTC, RBTC } from "../../consts";
+import { DecodedAddress, decodeAddress, getNetwork } from "./address";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -19,10 +20,7 @@ import {
     postSubmarineClaimDetails,
 } from "./boltzClient";
 import {
-    DecodedAddress,
-    decodeAddress,
     getConstructClaimTransaction,
-    getNetwork,
     getOutputAmount,
     getTransaction,
     setup,

@@ -3,21 +3,22 @@ import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
+import { config } from "../config";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import {
-    ReversePairTypeTaproot,
-    SubmarinePairTypeTaproot,
-} from "../utils/boltzClient";
 import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
 import { denominations, formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
+import type {
+    ReversePairTypeTaproot,
+    SubmarinePairTypeTaproot,
+} from "../utils/types";
 
 const Fees = () => {
-    const { t, config, fetchPairs, denomination, setDenomination } =
+    const { t, pairs, fetchPairs, denomination, setDenomination } =
         useGlobalContext();
     const {
         asset,
@@ -32,8 +33,14 @@ const Fees = () => {
     } = useCreateContext();
 
     createEffect(() => {
-        if (config()) {
-            const cfg = getPair(config(), asset(), reverse());
+        if (config().apiUrl) {
+            fetchPairs(asset());
+        }
+    });
+
+    createEffect(() => {
+        if (pairs()) {
+            const cfg = getPair(pairs(), asset(), reverse());
 
             if (reverse()) {
                 const reverseCfg = cfg as ReversePairTypeTaproot;
@@ -72,8 +79,6 @@ const Fees = () => {
                 : denominations.btc,
         );
     };
-
-    fetchPairs();
 
     return (
         <div class="fees-dyn">

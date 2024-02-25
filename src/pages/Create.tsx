@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createMemo, on, onMount } from "solid-js";
+import { Show, createEffect, createMemo, lazy, on, onMount } from "solid-js";
 
 import AddressInput from "../components/AddressInput";
 import Asset from "../components/Asset";
@@ -8,7 +8,6 @@ import ConnectMetamask from "../components/ConnectMetamask";
 import { CreateButton, setButtonLabel } from "../components/CreateButton";
 import Fees from "../components/Fees";
 import InvoiceInput from "../components/InvoiceInput";
-import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import WeblnButton from "../components/WeblnButton";
 import { RBTC, sideReceive, sideSend } from "../consts";
@@ -27,6 +26,8 @@ import {
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
 import ErrorWasm from "./ErrorWasm";
+
+const QrScan = lazy(() => import("../components/QrScan"));
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;

@@ -1,24 +1,61 @@
-import { Buffer } from "buffer";
-import { ECPairInterface } from "ecpair";
 import log from "loglevel";
 
-import { boltzClientApiUrl, pairs } from "../config";
-import { BTC } from "../consts";
-import {
+import { config } from "../config";
+import { BTC, LBTC } from "../consts";
+import type {
     PairLegacy,
     Pairs,
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
-} from "./boltzClient";
-import { ECPair } from "./ecpair";
+} from "./types";
 
-export const isBoltzClient = boltzClientApiUrl !== "";
+export const isBoltzClient = () => config().boltzClientApiUrl !== "";
+export const isBoltzClientEnabled = true;
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =
     isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
-export const parseBlindingKey = (swap: { blindingKey: string | undefined }) => {
-    return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
+export const clientFetcher = async <T = any>(
+    url: string,
+    params: any | undefined = null,
+): Promise<T> => {
+    let opts = {};
+    if (params) {
+        opts = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Grpc-Metadata-macaroon": "",
+            },
+            body: JSON.stringify(params),
+        };
+    }
+    const response = await fetch(config().boltzClientApiUrl + url, opts);
+    if (!response.ok) {
+        return Promise.reject(response);
+    }
+    return response.json();
+};
+
+export const getPairs = async (): Promise<any> => {
+    const pairs = await clientFetcher("/v1/pairs");
+
+    const parseCurrency = (currency: string) =>
+        currency == "BTC" ? BTC : LBTC;
+
+    const transform = (pairs: any[]) =>
+        pairs.reduce((acc, pair) => {
+            const from = parseCurrency(pair.pair.from);
+            const to = parseCurrency(pair.pair.to);
+            acc[from] = acc[from] || {};
+            acc[from][to] = pair;
+            return acc;
+        }, {});
+
+    return {
+        reverse: transform(pairs.reverse),
+        submarine: transform(pairs.submarine),
+    };
 };
 
 export const cropString = (str: string) => {
@@ -30,16 +67,6 @@ export const cropString = (str: string) => {
 
 export const clipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-};
-
-export const getApiUrl = (asset: string): string => {
-    const pair = pairs[`${asset}/BTC`];
-    if (pair) {
-        return pair.apiUrl;
-    }
-
-    log.error(`no pair found for ${asset}; falling back to ${BTC}`);
-    return getApiUrl(BTC);
 };
 
 export const getPair = <
@@ -58,59 +85,5 @@ export const getPair = <
     } catch (e) {
         log.debug(`could not get pair ${asset} (reverse ${isReverse}): ${e}`);
         return undefined;
-    }
-};
-
-export const fetcher = async <T = any>(
-    url: string,
-    asset: string = BTC,
-    params: any | undefined = null,
-): Promise<T> => {
-    let opts = {};
-    if (params) {
-        opts = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(params),
-        };
-    }
-    const apiUrl = getApiUrl(asset) + url;
-    const response = await fetch(apiUrl, opts);
-    if (!response.ok) {
-        return Promise.reject(response);
-    }
-    return response.json();
-};
-
-export const clientFetcher = async <T = any>(
-    url: string,
-    params: any | undefined = null,
-): Promise<T> => {
-    let opts = {};
-    if (params) {
-        opts = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Grpc-Metadata-macaroon": "",
-            },
-            body: JSON.stringify(params),
-        };
-    }
-    const response = await fetch(boltzClientApiUrl + url, opts);
-    if (!response.ok) {
-        return Promise.reject(response);
-    }
-    return response.json();
-};
-
-export const parsePrivateKey = (privateKey: string): ECPairInterface => {
-    try {
-        return ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
-    } catch (e) {
-        // When the private key is not HEX, we try to decode it as WIF
-        return ECPair.fromWIF(privateKey);
     }
 };

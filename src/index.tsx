@@ -2,18 +2,20 @@
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import { Route, Router } from "@solidjs/router";
+import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import log from "loglevel";
+import { onMount } from "solid-js";
 import { Show, render } from "solid-js/web";
 
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
-import { SwapChecker } from "./components/SwapChecker";
-import { loglevel, network } from "./config";
+import { config, updateConfig } from "./config";
+import { AppProvider } from "./context/App";
+import { ClientProvider } from "./context/Client";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider, useGlobalContext } from "./context/Global";
 import { PayProvider } from "./context/Pay";
-import { SwapProvider } from "./context/Swap";
 import { Web3SignerProvider } from "./context/Web3";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
@@ -25,9 +27,8 @@ import Refund from "./pages/Refund";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
 import { isBoltzClient } from "./utils/helper";
+import { loadLazyModules } from "./utils/lazy";
 import "./utils/patches";
-
-log.setLevel(loglevel);
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
@@ -37,41 +38,49 @@ if ("serviceWorker" in navigator) {
         });
 }
 
-document.body.classList.remove("loading");
-
 const isEmbedded = () => {
     return useGlobalContext().embedded();
 };
 
+const queryClient = new QueryClient();
+
 const App = (props: any) => {
+    onMount(async () => {
+        document.body.classList.remove("loading");
+        const response = await fetch("/config.json");
+        const data = await response.json();
+        updateConfig(data);
+        await loadLazyModules();
+    });
+    const Provider = isBoltzClient() ? ClientProvider : AppProvider;
     return (
-        <GlobalProvider>
-            <Web3SignerProvider>
-                <PayProvider>
-                    <SwapProvider>
+        <QueryClientProvider client={queryClient}>
+            <GlobalProvider>
+                <Web3SignerProvider>
+                    <PayProvider>
                         <CreateProvider>
-                            <Show when={!isBoltzClient}>
-                                <SwapChecker />
-                            </Show>
-                            <Show when={!isEmbedded()}>
-                                <Nav network={network} />
-                            </Show>
-                            {props.children}
-                            <Notification />
-                            <Show when={!isEmbedded()}>
-                                <Footer />
-                            </Show>
+                            <Provider>
+                                <Show when={!isEmbedded()}>
+                                    <Nav network={config().network} />
+                                </Show>
+                                {props.children}
+                                <Notification />
+                                <Show when={!isEmbedded()}>
+                                    <Footer />
+                                </Show>
+                            </Provider>
                         </CreateProvider>
-                    </SwapProvider>
-                </PayProvider>
-            </Web3SignerProvider>
-        </GlobalProvider>
+                    </PayProvider>
+                </Web3SignerProvider>
+            </GlobalProvider>
+        </QueryClientProvider>
     );
 };
 
 const cleanup = render(
     () => (
         <Router root={App}>
+            wtf?
             <Route path="/" component={Hero} />
             <Route path="/swap" component={Create} />
             {/* Compatibility with link in Breez:
@@ -80,7 +89,7 @@ const cleanup = render(
             <Route path="/swap/:id" component={Pay} />
             <Route path="/swap/refund/:id" component={RefundStep} />
             <Route path="/error" component={Error} />
-            <Show when={!isBoltzClient}>
+            <Show when={!isBoltzClient()}>
                 <Route path="/refund" component={Refund} />
             </Show>
             <Route path="/history" component={History} />

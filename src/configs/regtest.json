@@ -1,0 +1,27 @@
+{
+    "network": "regtest",
+    "defaultLanguage": "en",
+    "loglevel": "debug",
+    "apiUrl": {
+        "normal": "http://localhost:9001"
+    },
+    "boltzClientApiUrl": "",
+    "assets": {
+        "BTC": {
+            "blockExplorerUrl": {
+                "normal": "http://localhost:8090"
+            }
+        },
+        "L-BTC": {
+            "blockExplorerUrl": {
+                "normal": "http://localhost:8091",
+                "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion"
+            }
+        },
+        "RBTC": {
+            "blockExplorerUrl": {
+                "normal": "https://explorer.rsk.co"
+            }
+        }
+    }
+}

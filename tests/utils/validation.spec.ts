@@ -2,8 +2,10 @@ import { Contract } from "ethers";
 import log from "loglevel";
 
 import { BTC, LBTC } from "../../src/consts";
-import { decodeAddress, setup } from "../../src/utils/compat";
-import { validateInvoice, validateResponse } from "../../src/utils/validation";
+import { decodeAddress } from "../../src/utils/lazy/address";
+import { setup } from "../../src/utils/lazy/compat";
+import { validateInvoice } from "../../src/utils/lazy/invoice";
+import { validateResponse } from "../../src/utils/lazy/validation";
 
 describe("validate responses", () => {
     const getEtherSwap = (code: string): (() => Promise<Contract>) => {

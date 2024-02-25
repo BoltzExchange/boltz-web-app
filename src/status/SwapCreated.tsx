@@ -7,7 +7,7 @@ import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { denominations, formatAmount } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
-import { decodeInvoice, invoicePrefix } from "../utils/invoice";
+import { invoice as util } from "../utils/lazy";
 import { enableWebln } from "../utils/webln";
 
 const SwapCreated = ({ invoice }: { invoice: string }) => {
@@ -24,7 +24,7 @@ const SwapCreated = ({ invoice }: { invoice: string }) => {
             <h2>
                 {t("pay_invoice_to", {
                     amount: formatAmount(
-                        BigNumber(decodeInvoice(invoice).satoshis),
+                        BigNumber(util.decodeInvoice(invoice).satoshis),
                         denomination(),
                     ),
                     denomination:
@@ -32,7 +32,7 @@ const SwapCreated = ({ invoice }: { invoice: string }) => {
                 })}
             </h2>
             <hr />
-            <a href={invoicePrefix + invoice}>
+            <a href={util.invoicePrefix + invoice}>
                 <QrCode data={invoice} />
             </a>
             <hr />
@@ -52,7 +52,7 @@ const SwapCreated = ({ invoice }: { invoice: string }) => {
                 </span>
             </Show>
             <Show when={isMobile}>
-                <a href={invoicePrefix + invoice} class="btn btn-light">
+                <a href={util.invoicePrefix + invoice} class="btn btn-light">
                     {t("open_in_wallet")}
                 </a>
             </Show>

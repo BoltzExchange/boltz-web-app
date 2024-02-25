@@ -1,24 +1,26 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import QrScanner from "qr-scanner";
 import { Show, createEffect, createSignal } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SwapList from "../components/SwapList";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { useSwapContext } from "../context/Swap";
-import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
-import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
+import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzApi";
+import { QrScanner, moduleLoaded } from "../utils/lazy";
 import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
 import ErrorWasm from "./ErrorWasm";
+
+const refundJsonKeys = ["id", "asset", "privateKey"];
+const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 
 const Refund = () => {
     const navigate = useNavigate();
     const { wasmSupported, t } = useGlobalContext();
-    const { swaps, updateSwapStatus } = useSwapContext();
+    const { swaps, updateSwapStatus } = useAppContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);
@@ -59,7 +61,8 @@ const Refund = () => {
         setRefundJson(null);
 
         if (inputFile.type === "image/png") {
-            QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
+            QrScanner.default
+                .scanImage(inputFile, { returnDetailedScanResult: true })
                 .then((result) =>
                     checkRefundJsonKeys(input, JSON.parse(result.data)),
                 )
@@ -143,6 +146,7 @@ const Refund = () => {
                         id="refundUpload"
                         data-testid="refundUpload"
                         accept="application/json,image/png"
+                        disabled={moduleLoaded(QrScanner)()}
                         onChange={(e) => uploadChange(e)}
                     />
                     <Show when={refundTxId() === "" && refundJson() !== null}>

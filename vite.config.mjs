@@ -19,6 +19,22 @@ export default defineConfig({
         commonjsOptions: {
             transformMixedEsModules: true,
         },
+        // rollupOptions: {
+        //     output: {
+        //         manualChunks: {
+        //             bitcoin: [
+        //                 "bitcoinjs-lib",
+        //                 "liquidjs-lib",
+        //                 "boltz-core",
+        //                 "ethers",
+        //                 "@vulpemventures/secp256k1-zkp",
+        //                 "@bitcoinerlab/secp256k1",
+        //                 "ecpair",
+        //                 "create-hmac",
+        //             ],
+        //         },
+        //     },
+        // },
     },
     define: {
         __APP_VERSION__: JSON.stringify(process.env.npm_package_version),

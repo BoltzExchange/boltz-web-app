@@ -3,11 +3,11 @@ import { Show, createEffect, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
-import { useSwapContext } from "../context/Swap";
-import { getReverseTransaction } from "../utils/boltzClient";
-import { claim } from "../utils/claim";
+import { getReverseTransaction } from "../utils/boltzApi";
 import { isBoltzClient } from "../utils/helper";
+import { claim } from "../utils/lazy";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -24,10 +24,10 @@ const TransactionClaimed = () => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
 
-    const [claimBroadcast, setClaimBroadcast] = createSignal(isBoltzClient);
+    const [claimBroadcast, setClaimBroadcast] = createSignal(isBoltzClient());
 
-    if (!isBoltzClient) {
-        const { swap, setSwap, swaps, setSwaps } = useSwapContext();
+    if (!isBoltzClient()) {
+        const { swap, setSwap, swaps, setSwaps } = useAppContext();
 
         createEffect(() => {
             const s = swap();
@@ -44,7 +44,7 @@ const TransactionClaimed = () => {
             const toClaim = swap();
 
             if (toClaim && claimBroadcast() === false) {
-                await claim(
+                await claim.claim(
                     toClaim,
                     await getReverseTransaction(toClaim.asset, toClaim.id),
                 );

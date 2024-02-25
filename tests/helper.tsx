@@ -1,5 +1,8 @@
 import { Route, Router } from "@solidjs/router";
+import { readFileSync } from "fs";
 
+import { updateConfig } from "../src/config";
+import { AppContextType, AppProvider, useAppContext } from "../src/context/App";
 import {
     CreateContextType,
     CreateProvider,
@@ -11,45 +14,51 @@ import {
     useGlobalContext,
 } from "../src/context/Global";
 import { PayContextType, PayProvider, usePayContext } from "../src/context/Pay";
-import {
-    SwapContextType,
-    SwapProvider,
-    useSwapContext,
-} from "../src/context/Swap";
 import { Web3SignerProvider } from "../src/context/Web3";
+import { loadLazyModules } from "../src/utils/lazy";
 
 export let signals: CreateContextType;
 export let globalSignals: GlobalContextType;
 export let payContext: PayContextType;
-export let swapContext: SwapContextType;
+export let swapContext: AppContextType;
+export let createContext: CreateContextType;
 
 export const TestComponent = () => {
     signals = useCreateContext();
     payContext = usePayContext();
     globalSignals = useGlobalContext();
-    swapContext = useSwapContext();
+    swapContext = useAppContext();
+    createContext = useCreateContext();
     return "";
 };
 
+const config = JSON.parse(readFileSync("public/config.json", "utf-8"));
+updateConfig(config);
+
+loadLazyModules();
+
 export const contextWrapper = (props: any) => {
+    const Provider = AppProvider;
     return (
-        <Router>
-            <Route
-                path="/"
-                component={() => (
-                    <GlobalProvider>
+        <GlobalProvider>
+            <Router>
+                <Route
+                    path="/"
+                    component={() => (
                         <Web3SignerProvider noFetch={true}>
-                            <SwapProvider>
-                                <PayProvider>
-                                    <CreateProvider>
-                                        {props.children}
-                                    </CreateProvider>
-                                </PayProvider>
-                            </SwapProvider>
+                            <PayProvider>
+                                <CreateProvider>
+                                    <Provider>
+                                        <PayProvider>
+                                            {props.children}
+                                        </PayProvider>
+                                    </Provider>
+                                </CreateProvider>
+                            </PayProvider>
                         </Web3SignerProvider>
-                    </GlobalProvider>
-                )}
-            />
-        </Router>
+                    )}
+                />
+            </Router>
+        </GlobalProvider>
     );
 };

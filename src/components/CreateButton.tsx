@@ -3,7 +3,7 @@ import { createEffect, createSignal } from "solid-js";
 
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { fetchLnurl } from "../utils/invoice";
+import { invoice, modulesLoaded } from "../utils/lazy";
 
 type buttonLabelParams = {
     key: string;
@@ -15,7 +15,7 @@ export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
 });
 
 export const CreateButton = () => {
-    const { online, notify, t } = useGlobalContext();
+    const { online, notify, t, backend } = useGlobalContext();
 
     const {
         lnurl,
@@ -25,7 +25,6 @@ export const CreateButton = () => {
         setInvoice,
         setLnurl,
         valid,
-        createSwap,
     } = useCreateContext();
 
     const [buttonDisable, setButtonDisable] = createSignal(true);
@@ -52,10 +51,15 @@ export const CreateButton = () => {
         }
     });
 
+    const b = backend();
+
     const buttonClick = async () => {
         if (amountValid() && !reverse() && lnurl() !== "") {
             try {
-                const inv = await fetchLnurl(lnurl(), Number(receiveAmount()));
+                const inv = await invoice.fetchLnurl(
+                    lnurl(),
+                    Number(receiveAmount()),
+                );
                 setInvoice(inv);
                 setLnurl("");
             } catch (e) {
@@ -67,7 +71,7 @@ export const CreateButton = () => {
 
         if (!valid()) return;
         setButtonDisable(true);
-        await createSwap();
+        await b.createSwap();
         setButtonDisable(validateButtonDisable());
     };
 
@@ -76,9 +80,11 @@ export const CreateButton = () => {
             id="create-swap-button"
             data-testid="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable() || !online()}
+            disabled={buttonDisable() || !online() || modulesLoaded()}
             onClick={buttonClick}>
             {t(buttonLabel().key, buttonLabel().params)}
         </button>
     );
 };
+
+export default CreateButton;

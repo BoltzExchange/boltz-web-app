@@ -6,8 +6,7 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
 import { isBoltzClient } from "../utils/helper";
-import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
-import { validateInvoice } from "../utils/validation";
+import { moduleLoaded, invoice as util } from "../utils/lazy";
 import { setButtonLabel } from "./CreateButton";
 
 const InvoiceInput = () => {
@@ -31,17 +30,20 @@ const InvoiceInput = () => {
         setSendAmount,
     } = useCreateContext();
 
+    const loaded = moduleLoaded(util);
+
     const validate = (input: HTMLTextAreaElement) => {
-        const inputValue = extractInvoice(input.value.trim());
+        if (!loaded()) return;
+        const inputValue = util.extractInvoice(input.value.trim());
         try {
-            if (isBoltzClient && inputValue == "") {
+            if (isBoltzClient() && inputValue == "") {
                 setInvoiceValid(true);
             } else {
-                if (isLnurl(inputValue)) {
+                if (util.isLnurl(inputValue)) {
                     setButtonLabel({ key: "fetch_lnurl" });
                     setLnurl(inputValue);
                 } else {
-                    const sats = validateInvoice(inputValue);
+                    const sats = util.validateInvoice(inputValue);
                     setReceiveAmount(BigNumber(sats));
                     setSendAmount(
                         calculateSendAmount(
@@ -83,11 +85,11 @@ const InvoiceInput = () => {
             const amount = Number(receiveAmount());
             if (
                 invoice() !== "" &&
-                !isLnurl(invoice()) &&
+                !util.isLnurl(invoice()) &&
                 !receiveAmount().isZero()
             ) {
                 try {
-                    const inv = decodeInvoice(invoice());
+                    const inv = util.decodeInvoice(invoice());
                     if (inv.satoshis !== amount) {
                         setInvoice("");
                     }
@@ -105,6 +107,7 @@ const InvoiceInput = () => {
             onInput={(e) => validate(e.currentTarget)}
             onKeyUp={(e) => validate(e.currentTarget)}
             onPaste={(e) => validate(e.currentTarget)}
+            disabled={!loaded()}
             id="invoice"
             data-testid="invoice"
             name="invoice"

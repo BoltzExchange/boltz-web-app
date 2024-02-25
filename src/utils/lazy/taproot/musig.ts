@@ -11,7 +11,7 @@ import { ECPairInterface } from "ecpair";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
-import { LBTC } from "../../consts";
+import { LBTC } from "../../../consts";
 import { TransactionInterface } from "../boltzClient";
 import { secp } from "../compat";
 

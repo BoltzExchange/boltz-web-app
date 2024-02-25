@@ -3,8 +3,8 @@ tags
 .vscode/
 
 *.log
+public/config.json
 dist/
 ts-out/
 coverage/
 node_modules/
-src/config.ts

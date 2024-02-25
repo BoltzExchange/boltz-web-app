@@ -1,9 +1,6 @@
 import { makePersisted } from "@solid-primitives/storage";
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import { crypto } from "bitcoinjs-lib";
-import { OutputType } from "boltz-core";
-import { randomBytes } from "crypto";
 import {
     Accessor,
     Setter,
@@ -13,21 +10,9 @@ import {
     useContext,
 } from "solid-js";
 
-import { pairs } from "../config";
-import { BTC, LN, RBTC, sideSend } from "../consts";
-import { useWeb3Signer } from "../context/Web3";
-import { getPairs } from "../utils/boltzClient";
-import { ECPair } from "../utils/ecpair";
-import {
-    clientFetcher,
-    fetcher,
-    getPair,
-    isBoltzClient,
-} from "../utils/helper";
-import { extractAddress } from "../utils/invoice";
-import { validateResponse } from "../utils/validation";
-import { useGlobalContext } from "./Global";
-import { useSwapContext } from "./Swap";
+import { config } from "../config";
+import { BTC, LN, sideSend } from "../consts";
+import { clientFetcher } from "../utils/helper";
 
 export type CreateContextType = {
     reverse: Accessor<boolean>;
@@ -74,14 +59,14 @@ export type CreateContextType = {
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-    createSwap: () => Promise<void>;
+    createSwap: Accessor<() => Promise<any>>;
+    setCreateSwap: Setter<() => Promise<any>>;
 };
-
-const defaultSelection = Object.keys(pairs)[0].split("/")[0];
 
 const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: any }) => {
+    const defaultSelection = Object.keys(config().assets)[0];
     const [asset, setAsset] = createSignal<string>(defaultSelection);
     const [reverse, setReverse] = createSignal<boolean>(true);
     const [invoice, setInvoice] = createSignal<string>("");
@@ -134,11 +119,11 @@ const CreateProvider = (props: { children: any }) => {
 
     const navigate = useNavigate();
 
-    let createSwap = async () => {
-        let params: any = {
+    const clientCreate = async () => {
+        const params: any = {
             amount: Number(sendAmount()),
             address: onchainAddress(),
-            autoSend: false,
+            autoSend: true,
             acceptZeroConf: false,
             pair: {},
         };
@@ -158,124 +143,7 @@ const CreateProvider = (props: { children: any }) => {
         navigate("/swap/" + data.id);
     };
 
-    if (!isBoltzClient) {
-        const { config, setConfig, notify, ref, t } = useGlobalContext();
-
-        const { getEtherSwap } = useWeb3Signer();
-
-        const { swaps, setSwaps } = useSwapContext();
-        createSwap = async () => {
-            const assetName = asset();
-            const isRsk = assetName === RBTC;
-
-            const keyPair = !isRsk ? ECPair.makeRandom() : null;
-
-            let params: any;
-            let preimage: Buffer | null = null;
-
-            if (reverse()) {
-                preimage = randomBytes(32);
-                const preimageHash = crypto.sha256(preimage).toString("hex");
-
-                params = {
-                    invoiceAmount: Number(sendAmount()),
-                    preimageHash: preimageHash,
-                };
-
-                if (isRsk) {
-                    params.claimAddress = onchainAddress();
-                } else {
-                    params.claimPublicKey = keyPair.publicKey.toString("hex");
-                }
-            } else {
-                params = {
-                    invoice: invoice(),
-                };
-
-                if (!isRsk) {
-                    params.refundPublicKey = keyPair.publicKey.toString("hex");
-                }
-            }
-
-            params.pairHash = getPair(config(), assetName, reverse()).hash;
-            params.referralId = ref();
-
-            if (reverse()) {
-                params.to = assetName;
-                params.from = BTC;
-            } else {
-                params.to = BTC;
-                params.from = assetName;
-            }
-
-            // create swap
-            try {
-                const data = await fetcher(
-                    `/v2/swap/${reverse() ? "reverse" : "submarine"}`,
-                    assetName,
-                    params,
-                );
-
-                if (!isRsk) {
-                    data.version = OutputType.Taproot;
-                }
-
-                data.date = new Date().getTime();
-                data.reverse = reverse();
-                data.asset = asset();
-                data.receiveAmount = Number(receiveAmount());
-                data.sendAmount = Number(sendAmount());
-
-                if (keyPair !== null) {
-                    data.privateKey = keyPair.privateKey.toString("hex");
-                }
-
-                if (preimage !== null) {
-                    data.preimage = preimage.toString("hex");
-                }
-
-                if (data.reverse) {
-                    const addr = onchainAddress();
-                    if (addr) {
-                        data.onchainAddress = extractAddress(addr);
-                    }
-                } else {
-                    data.invoice = invoice();
-                }
-
-                // validate response
-                const success = await validateResponse(data, getEtherSwap);
-
-                if (!success) {
-                    navigate("/error/");
-                    return;
-                }
-                setSwaps(swaps().concat(data));
-                setInvoice("");
-                setInvoiceValid(false);
-                setOnchainAddress("");
-                setAddressValid(false);
-                if (reverse() || isRsk) {
-                    navigate("/swap/" + data.id);
-                } else {
-                    navigate("/swap/refund/" + data.id);
-                }
-            } catch (err) {
-                let msg = err;
-
-                if (typeof err.json === "function") {
-                    msg = (await err.json()).error;
-                }
-
-                if (msg === "invalid pair hash") {
-                    setConfig(await getPairs(assetName));
-                    notify("error", t("feecheck"));
-                } else {
-                    notify("error", msg);
-                }
-            }
-        };
-    }
+    const [createSwap, setCreateSwap] = createSignal(clientCreate);
 
     return (
         <CreateContext.Provider
@@ -325,6 +193,7 @@ const CreateProvider = (props: { children: any }) => {
                 minerFee,
                 setMinerFee,
                 createSwap,
+                setCreateSwap,
             }}>
             {props.children}
         </CreateContext.Provider>

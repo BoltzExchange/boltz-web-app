@@ -1,24 +1,15 @@
 import { useNavigate } from "@solidjs/router";
-import {
-    Accessor,
-    For,
-    Setter,
-    Show,
-    createMemo,
-    createSignal,
-} from "solid-js";
+import { Accessor, For, Show, createMemo, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 
 const SwapList = ({
     swapsSignal,
-    setSwapSignal,
-    deleteButton,
+    deleteSwap,
 }: {
     swapsSignal: Accessor<any[]>;
-    setSwapSignal?: Setter<any[]>;
-    deleteButton?: boolean;
+    deleteSwap?: (swapId: string) => void;
 }) => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
@@ -34,18 +25,9 @@ const SwapList = ({
     });
 
     const formatDate = (d: number) => {
-        let date = new Date();
+        const date = new Date();
         date.setTime(d);
         return date.toLocaleDateString();
-    };
-
-    const deleteSwap = (swapId: string) => {
-        if (
-            setSwapSignal !== undefined &&
-            confirm(t("delete_localstorage_single_swap", { id: swapId }))
-        ) {
-            setSwapSignal(swapsSignal().filter((s: any) => s.id !== swapId));
-        }
     };
 
     return (
@@ -71,7 +53,7 @@ const SwapList = ({
                             <span class="swaplist-asset-date">
                                 {t("created")}:&nbsp;{formatDate(swap.date)}
                             </span>
-                            <Show when={deleteButton}>
+                            <Show when={deleteSwap}>
                                 <span
                                     class="btn-small btn-danger"
                                     onClick={() => deleteSwap(swap.id)}>

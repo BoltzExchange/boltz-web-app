@@ -4,9 +4,9 @@ import { Show } from "solid-js";
 import ContractTransaction from "../components/ContractTransaction";
 import QrCode from "../components/QrCode";
 import { BTC, RBTC } from "../consts";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { useSwapContext } from "../context/Swap";
 import { useWeb3Signer } from "../context/Web3";
 import { denominations, formatAmount } from "../utils/denomination";
 import {
@@ -15,11 +15,10 @@ import {
     isBoltzClient,
     isMobile,
 } from "../utils/helper";
-import { decodeInvoice } from "../utils/invoice";
-import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { invoice, rootstock } from "../utils/lazy";
 
 const ClaimRootstock = () => {
-    const { swap, swaps, setSwaps } = useSwapContext();
+    const { swap, swaps, setSwaps } = useAppContext();
     const { t } = useGlobalContext();
     const { getEtherSwap } = useWeb3Signer();
 
@@ -29,11 +28,13 @@ const ClaimRootstock = () => {
                 const contract = await getEtherSwap();
 
                 const tx = await contract.lock(
-                    prefix0x(decodeInvoice(swap().invoice).preimageHash),
+                    rootstock.prefix0x(
+                        invoice.decodeInvoice(swap().invoice).preimageHash,
+                    ),
                     swap().claimAddress,
                     swap().timeoutBlockHeight,
                     {
-                        value: satoshiToWei(swap().expectedAmount),
+                        value: rootstock.satoshiToWei(swap().expectedAmount),
                     },
                 );
 
@@ -62,7 +63,7 @@ const InvoiceSet = ({
     const { asset } = usePayContext();
     const { t, denomination } = useGlobalContext();
 
-    if (asset() === RBTC && !isBoltzClient) {
+    if (asset() === RBTC && !isBoltzClient()) {
         return <ClaimRootstock />;
     }
 

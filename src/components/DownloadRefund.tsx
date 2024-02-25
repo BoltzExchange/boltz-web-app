@@ -1,11 +1,12 @@
-import { SwapTreeSerializer } from "boltz-core";
 import log from "loglevel";
-import QRCode from "qrcode/lib/server";
 
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
-import { useSwapContext } from "../context/Swap";
 import { download, downloadJson } from "../utils/download";
 import { isIos, isMobile } from "../utils/helper";
+import { boltzCore, createLazyModule } from "../utils/lazy";
+
+const QRCode = createLazyModule(() => import("qrcode/lib/server"));
 
 const createRefundData = (swap: any) => {
     return {
@@ -17,7 +18,7 @@ const createRefundData = (swap: any) => {
         redeemScript: swap.redeemScript,
         claimPublicKey: swap.claimPublicKey,
         timeoutBlockHeight: swap.timeoutBlockHeight,
-        swapTree: SwapTreeSerializer.serializeSwapTree(swap.swapTree),
+        swapTree: boltzCore.SwapTreeSerializer.serializeSwapTree(swap.swapTree),
     };
 };
 
@@ -30,7 +31,7 @@ const downloadRefundJson = (swap: any) => {
 };
 
 const DownloadRefund = () => {
-    const { swap } = useSwapContext();
+    const { swap } = useAppContext();
     const { t } = useGlobalContext();
     const downloadRefundQr = (swap: any) => {
         QRCode.toDataURL(JSON.stringify(createRefundData(swap)), { width: 400 })

@@ -1,16 +1,16 @@
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { useSwapContext } from "../context/Swap";
 import { useWeb3Signer } from "../context/Web3";
 import { isBoltzClient } from "../utils/helper";
-import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { rootstock } from "../utils/lazy";
 
 const ClaimRootstock = () => {
     const { t } = useGlobalContext();
-    const { swap, swaps, setSwaps } = useSwapContext();
+    const { swap, swaps, setSwaps } = useAppContext();
     const { getEtherSwap } = useWeb3Signer();
 
     return (
@@ -21,8 +21,8 @@ const ClaimRootstock = () => {
                 const tx = await contract[
                     "claim(bytes32,uint256,address,uint256)"
                 ](
-                    prefix0x(swap().preimage),
-                    satoshiToWei(swap().onchainAmount),
+                    rootstock.prefix0x(swap().preimage),
+                    rootstock.satoshiToWei(swap().onchainAmount),
                     swap().refundAddress,
                     swap().timeoutBlockHeight,
                 );
@@ -45,7 +45,7 @@ const ClaimRootstock = () => {
 const TransactionConfirmed = () => {
     const { asset } = usePayContext();
     const { t } = useGlobalContext();
-    if (asset() === RBTC && !isBoltzClient) {
+    if (asset() === RBTC && !isBoltzClient()) {
         return <ClaimRootstock />;
     }
 

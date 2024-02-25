@@ -1,20 +1,21 @@
-import { Signature, TransactionResponse } from "ethers";
-import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import type { TransactionResponse } from "ethers";
 import log from "loglevel";
 import { Accessor, Setter, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
-import { useSwapContext } from "../context/Swap";
 import { useWeb3Signer } from "../context/Web3";
+import { getSubmarineTransaction } from "../utils/boltzApi";
 import {
-    getSubmarineEipSignature,
-    getSubmarineTransaction,
-} from "../utils/boltzClient";
-import { getAddress, getNetwork } from "../utils/compat";
-import { decodeInvoice } from "../utils/invoice";
-import { refund } from "../utils/refund";
-import { prefix0x, satoshiToWei } from "../utils/rootstock";
+    address,
+    client,
+    ethers,
+    invoice,
+    refund,
+    rootstock,
+} from "../utils/lazy";
+import { LiquidNetwork } from "../utils/types";
 import ContractTransaction from "./ContractTransaction";
 
 const RefundButton = ({
@@ -32,7 +33,7 @@ const RefundButton = ({
         t,
     } = useGlobalContext();
 
-    const { swaps, setSwaps } = useSwapContext();
+    const { swaps, setSwaps } = useAppContext();
 
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap, getSigner } = useWeb3Signer();
@@ -53,8 +54,8 @@ const RefundButton = ({
                     ]);
 
                     const currentSwap = swap();
-                    const preimageHash = prefix0x(
-                        decodeInvoice(currentSwap.invoice).preimageHash,
+                    const preimageHash = rootstock.prefix0x(
+                        invoice.decodeInvoice(currentSwap.invoice).preimageHash,
                     );
 
                     let tx: TransactionResponse;
@@ -65,20 +66,21 @@ const RefundButton = ({
                     ) {
                         tx = await contract.refund(
                             preimageHash,
-                            satoshiToWei(currentSwap.expectedAmount),
+                            rootstock.satoshiToWei(currentSwap.expectedAmount),
                             currentSwap.claimAddress,
                             currentSwap.timeoutBlockHeight,
                         );
                     } else {
-                        const { signature } = await getSubmarineEipSignature(
-                            currentSwap.asset,
-                            currentSwap.id,
-                        );
-                        const decSignature = Signature.from(signature);
+                        const { signature } =
+                            await client.getSubmarineEipSignature(
+                                currentSwap.asset,
+                                currentSwap.id,
+                            );
+                        const decSignature = ethers.Signature.from(signature);
 
                         tx = await contract.refundCooperative(
                             preimageHash,
-                            satoshiToWei(currentSwap.expectedAmount),
+                            rootstock.satoshiToWei(currentSwap.expectedAmount),
                             currentSwap.claimAddress,
                             currentSwap.timeoutBlockHeight,
                             decSignature.v,
@@ -102,10 +104,12 @@ const RefundButton = ({
         const input = evt.currentTarget as HTMLInputElement;
         const inputValue = input.value.trim();
         try {
-            getAddress(asset).toOutputScript(
-                inputValue,
-                getNetwork(asset) as LiquidNetwork,
-            );
+            address
+                .getAddress(asset)
+                .toOutputScript(
+                    inputValue,
+                    address.getNetwork(asset) as LiquidNetwork,
+                );
             input.setCustomValidity("");
             setRefundAddress(inputValue);
             return true;
@@ -129,7 +133,7 @@ const RefundButton = ({
                 `got swap transaction for ${swap().id}`,
                 transactionToRefund,
             );
-            const res = await refund(
+            const res = await refund.refund(
                 swap(),
                 refundAddress(),
                 transactionToRefund,

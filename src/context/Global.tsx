@@ -3,6 +3,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import log from "loglevel";
 import {
     Accessor,
+    JSX,
     Setter,
     createContext,
     createMemo,
@@ -10,21 +11,30 @@ import {
     useContext,
 } from "solid-js";
 
-import { defaultLanguage } from "../config";
+import { config } from "../config";
 import { BTC } from "../consts";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
-import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
+import { Pairs } from "../utils/types";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
+
+export interface SwapBackend {
+    createSwap: () => Promise<any>;
+    fetchPairs: (asset?: string) => any;
+    SwapStatusPage: (params: { id: string }) => JSX.Element;
+    SwapHistory: () => JSX.Element;
+}
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
-    config: Accessor<Pairs | undefined>;
-    setConfig: Setter<Pairs | undefined>;
+    backend: Accessor<SwapBackend | undefined>;
+    setBackend: Setter<SwapBackend | undefined>;
+    pairs: Accessor<Pairs | undefined>;
+    setPairs: Setter<Pairs | undefined>;
     wasmSupported: Accessor<boolean>;
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
@@ -67,7 +77,10 @@ const GlobalContext = createContext<GlobalContextType>();
 
 const GlobalProvider = (props: { children: any }) => {
     const [online, setOnline] = createSignal<boolean>(true);
-    const [config, setConfig] = createSignal<Pairs | undefined>(undefined);
+    const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
+    const [backend, setBackend] = createSignal<SwapBackend | undefined>(
+        undefined,
+    );
 
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
@@ -114,11 +127,12 @@ const GlobalProvider = (props: { children: any }) => {
 
     const fetchPairs = (asset: string = BTC) => {
         // TODO: fetch pairs from boltz-client aswell
-        getPairs(asset)
+        backend()
+            ?.fetchPairs(asset)
             .then((data) => {
                 log.debug("getpairs", data);
                 setOnline(true);
-                setConfig(data);
+                setPairs(data);
             })
             .catch((error) => {
                 log.debug(error);
@@ -146,9 +160,10 @@ const GlobalProvider = (props: { children: any }) => {
     }
 
     // i18n
-    let dictLocale: any;
     createMemo(() => setI18n(i18nConfigured()));
-    dictLocale = createMemo(() => flatten(dict[i18n() || defaultLanguage]));
+    const dictLocale = createMemo(() =>
+        flatten(dict[i18n() || config().defaultLanguage || "en"]),
+    );
 
     const t = translator(dictLocale, resolveTemplate) as (
         key: string,
@@ -160,8 +175,10 @@ const GlobalProvider = (props: { children: any }) => {
             value={{
                 online,
                 setOnline,
-                config,
-                setConfig,
+                backend,
+                setBackend,
+                pairs,
+                setPairs,
                 wasmSupported,
                 setWasmSupported,
                 refundAddress,

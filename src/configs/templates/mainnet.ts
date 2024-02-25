@@ -16,21 +16,22 @@ const blockExplorerUrlLiquid = isTor
 export const torUrl =
     "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/";
 
+export const boltzClientApiUrl = "";
 export const network: string = "main";
 export const bolt11_prefix = "lnbc";
 export const loglevel = "info";
 
-export const pairs = {
-    "BTC/BTC": {
+export const assets = {
+    BTC: {
         apiUrl: apiUrl,
         blockExplorerUrl: blockExplorerUrl,
     },
-    "L-BTC/BTC": {
+    "L-BTC": {
         apiUrl: apiUrl,
         blockExplorerUrl: blockExplorerUrlLiquid,
     },
-    // "RBTC/BTC": {
-    //     apiUrl: apiUrl,
-    //     blockExplorerUrl: blockExplorerUrlRsk,
-    // },
+    RBTC: {
+        apiUrl: apiUrl,
+        //blockExplorerUrl: blockExplorerUrlRsk,
+    },
 };

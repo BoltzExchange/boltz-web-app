@@ -3,13 +3,14 @@ import { render, screen } from "@solidjs/testing-library";
 import { BTC, LBTC, RBTC } from "../../src/consts";
 import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
-import { getReverseTransaction } from "../../src/utils/boltzClient";
-import { claim } from "../../src/utils/claim";
+import { getReverseTransaction } from "../../src/utils/boltzApi";
+import { loadLazyModules } from "../../src/utils/lazy";
+import { claim } from "../../src/utils/lazy/claim";
 import { TestComponent, contextWrapper, swapContext } from "../helper";
 
 let claimPromiseResolve: (() => void) | undefined = undefined;
 
-jest.mock("../../src/utils/claim", () => ({
+jest.mock("../../src/utils/lazy/claim", () => ({
     claim: jest.fn().mockImplementation(
         async (swap) =>
             new Promise<void>((resolve) => {
@@ -20,15 +21,17 @@ jest.mock("../../src/utils/claim", () => ({
             }),
     ),
 }));
-jest.mock("../../src/utils/boltzClient", () => ({
+jest.mock("../../src/utils/boltzApi", () => ({
     getReverseTransaction: jest.fn().mockResolvedValue({
         hex: "txHex",
     }),
+    getApiUrl: jest.fn().mockReturnValue("https://api.boltz.exchange"),
 }));
 
 describe("TransactionClaimed", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.clearAllMocks();
+        await loadLazyModules();
     });
 
     test.each`

@@ -1,4 +1,4 @@
-import { validateBackupFile } from "../../src/pages/History";
+import { validateBackupFile } from "../../src/components/WebHistory";
 
 describe("History", () => {
     test.each`

@@ -13,11 +13,12 @@ import { ECPairInterface } from "ecpair";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
-import { RBTC } from "../consts";
-import { decodeAddress, setup } from "./compat";
-import { denominations, formatAmountDenomination } from "./denomination";
+import { RBTC } from "../../consts";
+import { denominations, formatAmountDenomination } from "../denomination";
+import { decodeAddress } from "./address";
+import { setup } from "./compat";
 import { ECPair, ecc } from "./ecpair";
-import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { decodeInvoice } from "./invoice";
 import { createMusig, tweakMusig } from "./taproot/musig";
 
 // TODO: sanity check timeout block height?
@@ -51,7 +52,7 @@ type SwapResponseLiquid = SwapResponse & {
     blindingKey: string;
 };
 
-type ContractGetter = () => Promise<BaseContract>;
+export type ContractGetter = () => Promise<BaseContract>;
 
 const compareTrees = (
     tree: Types.SwapTree,
@@ -250,19 +251,4 @@ export const validateResponse = async (
         log.warn("swap validation threw", e);
         return false;
     }
-};
-
-export const validateInvoice = (inputValue: string) => {
-    const isInputInvoice = isInvoice(inputValue);
-    if (isLnurl(inputValue) || isInputInvoice) {
-        // set receive/send when invoice differs from the amounts
-        if (isInputInvoice) {
-            const decoded = decodeInvoice(inputValue);
-            if (decoded.satoshis === 0) {
-                throw new Error("invalid_0_amount");
-            }
-            return decoded.satoshis;
-        }
-    }
-    throw new Error("invalid_invoice");
 };

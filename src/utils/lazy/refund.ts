@@ -10,21 +10,15 @@ import { ECPairInterface } from "ecpair";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { LBTC } from "../consts";
+import { LBTC } from "../../consts";
+import { DecodedAddress, decodeAddress, getNetwork } from "./address";
 import {
     TransactionInterface,
     broadcastTransaction,
     getFeeEstimations,
     getPartialRefundSignature,
 } from "./boltzClient";
-import {
-    DecodedAddress,
-    decodeAddress,
-    getConstructRefundTransaction,
-    getNetwork,
-    getTransaction,
-    setup,
-} from "./compat";
+import { getConstructRefundTransaction, getTransaction, setup } from "./compat";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
@@ -103,8 +97,7 @@ export async function refund(
 
     const assetName = swap.asset;
 
-    let output: DecodedAddress;
-    output = decodeAddress(assetName, refundAddress);
+    const output = decodeAddress(assetName, refundAddress);
     log.info("refunding swap: ", swap.id);
     await setup();
 
