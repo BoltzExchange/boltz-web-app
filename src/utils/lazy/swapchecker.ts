@@ -1,6 +1,7 @@
 import log from "loglevel";
-import { createEffect, onCleanup, onMount } from "solid-js";
+import { createEffect, onCleanup } from "solid-js";
 
+import { config, configReady } from "../../config";
 import { BTC, LBTC, RBTC } from "../../consts";
 import { AppContextType } from "../../context/App";
 import { GlobalContextType } from "../../context/Global";
@@ -214,39 +215,46 @@ export const createSwapChecker = (
         }
     };
 
-    onMount(() => {
-        const urlsToAsset = new Map<string, string[]>();
-        for (const [asset, url] of [BTC, LBTC, RBTC].map((asset) => [
-            asset,
-            getApiUrl(asset),
-        ])) {
-            urlsToAsset.set(url, (urlsToAsset.get(url) || []).concat(asset));
-        }
+    createEffect(() => {
+        if (configReady()) {
+            const urlsToAsset = new Map<string, string[]>();
+            for (const [asset, url] of [BTC, LBTC, RBTC].map((asset) => [
+                asset,
+                getApiUrl(asset),
+            ])) {
+                urlsToAsset.set(
+                    url,
+                    (urlsToAsset.get(url) || []).concat(asset),
+                );
+            }
 
-        const swapsToCheck = swaps()
-            .filter(
-                (s) =>
-                    !swapStatusFinal.includes(s.status) ||
-                    (s.status === swapStatusSuccess.InvoiceSettled &&
-                        s.claimTx === undefined),
-            )
-            .filter((s) => s.id !== swap()?.id);
+            const swapsToCheck = swaps()
+                .filter(
+                    (s) =>
+                        !swapStatusFinal.includes(s.status) ||
+                        (s.status === swapStatusSuccess.InvoiceSettled &&
+                            s.claimTx === undefined),
+                )
+                .filter((s) => s.id !== swap()?.id);
 
-        for (const [url, assets] of urlsToAsset.entries()) {
-            log.debug(`opening ws for assets [${assets.join(", ")}]: ${url}`);
-            const ws = new BoltzWebSocket(
-                url,
-                new Set<string>(
-                    swapsToCheck
-                        .filter((s) => assets.includes(s.asset))
-                        .map((s) => s.id),
-                ),
-                prepareSwap,
-                claimSwap,
-            );
-            ws.connect();
-            for (const asset of assets) {
-                assetWebsocket.set(asset, ws);
+            for (const [url, assets] of urlsToAsset.entries()) {
+                log.debug(
+                    `opening ws for assets [${assets.join(", ")}]: ${url}`,
+                );
+                const ws = new BoltzWebSocket(
+                    url,
+                    new Set<string>(
+                        swapsToCheck
+                            .filter((s) => assets.includes(s.asset))
+                            .map((s) => s.id),
+                    ),
+                    prepareSwap,
+                    claimSwap,
+                );
+                ws.connect();
+                for (const asset of assets) {
+                    assetWebsocket.set(asset, ws);
+                }
             }
         }
     });

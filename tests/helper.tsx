@@ -1,7 +1,7 @@
 import { Route, Router } from "@solidjs/router";
 import { readFileSync } from "fs";
 
-import { updateConfig } from "../src/config";
+import { config, updateConfig } from "../src/config";
 import { AppContextType, AppProvider, useAppContext } from "../src/context/App";
 import {
     CreateContextType,
@@ -32,8 +32,13 @@ export const TestComponent = () => {
     return "";
 };
 
-const config = JSON.parse(readFileSync("public/config.json", "utf-8"));
-updateConfig(config);
+export const initConfig = () => {
+    const config = JSON.parse(readFileSync("public/config.json", "utf-8"));
+    updateConfig(config);
+};
+
+initConfig();
+export { config };
 
 loadLazyModules();
 

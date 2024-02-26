@@ -5,7 +5,7 @@ import { Show, createEffect, createSignal } from "solid-js";
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
-import { config } from "../config";
+import { config, configReady } from "../config";
 import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
@@ -31,7 +31,7 @@ export const Hero = () => {
     };
 
     createEffect(async () => {
-        if (config().apiUrl) {
+        if (configReady()) {
             try {
                 const [nodesRes, statsRes] = await Promise.all([
                     getNodes(BTC),

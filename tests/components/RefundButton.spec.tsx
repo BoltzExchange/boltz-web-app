@@ -2,9 +2,11 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 
 import RefundButton from "../../src/components/RefundButton";
-import { contextWrapper } from "../helper";
+import { contextWrapper, initConfig } from "../helper";
 
 describe("RefundButton", () => {
+    initConfig();
+
     test("should render RefundButton", async () => {
         const [swap] = createSignal(null);
         render(() => <RefundButton swap={swap} />, {

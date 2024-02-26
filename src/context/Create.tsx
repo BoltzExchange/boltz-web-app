@@ -1,5 +1,4 @@
 import { makePersisted } from "@solid-primitives/storage";
-import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import {
     Accessor,
@@ -10,9 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { config } from "../config";
 import { BTC, LN, sideSend } from "../consts";
-import { clientFetcher } from "../utils/helper";
 
 export type CreateContextType = {
     reverse: Accessor<boolean>;
@@ -59,14 +56,12 @@ export type CreateContextType = {
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-    createSwap: Accessor<() => Promise<any>>;
-    setCreateSwap: Setter<() => Promise<any>>;
 };
 
 const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: any }) => {
-    const defaultSelection = Object.keys(config().assets)[0];
+    const defaultSelection = BTC;
     const [asset, setAsset] = createSignal<string>(defaultSelection);
     const [reverse, setReverse] = createSignal<boolean>(true);
     const [invoice, setInvoice] = createSignal<string>("");
@@ -117,34 +112,6 @@ const CreateProvider = (props: { children: any }) => {
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
 
-    const navigate = useNavigate();
-
-    const clientCreate = async () => {
-        const params: any = {
-            amount: Number(sendAmount()),
-            address: onchainAddress(),
-            autoSend: true,
-            acceptZeroConf: false,
-            pair: {},
-        };
-        if (reverse()) {
-            params.pair.to = asset();
-            params.pair.from = BTC;
-        } else {
-            params.pair.to = BTC;
-            params.pair.from = asset();
-        }
-
-        const data = await clientFetcher(
-            `/v1/${reverse() ? "createreverseswap" : "createswap"}`,
-            params,
-        );
-
-        navigate("/swap/" + data.id);
-    };
-
-    const [createSwap, setCreateSwap] = createSignal(clientCreate);
-
     return (
         <CreateContext.Provider
             value={{
@@ -192,8 +159,6 @@ const CreateProvider = (props: { children: any }) => {
                 setBoltzFee,
                 minerFee,
                 setMinerFee,
-                createSwap,
-                setCreateSwap,
             }}>
             {props.children}
         </CreateContext.Provider>

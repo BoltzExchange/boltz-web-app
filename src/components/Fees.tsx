@@ -3,7 +3,7 @@ import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
-import { config } from "../config";
+import { configReady } from "../config";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
@@ -33,7 +33,7 @@ const Fees = () => {
     } = useCreateContext();
 
     createEffect(() => {
-        if (config().apiUrl) {
+        if (configReady()) {
             fetchPairs(asset());
         }
     });

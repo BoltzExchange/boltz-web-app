@@ -1,18 +1,15 @@
 import log from "loglevel";
 import { createSignal } from "solid-js";
 
-// @ts-ignore
-export * from "./configs/templates/mainnet";
-
 export const [config, setConfig] = createSignal({
     defaultLanguage: "en",
     apiUrl: "",
-    network: "mainnet",
+    network: "main",
     boltzClientApiUrl: "",
     loglevel: "debug",
     isBeta: false,
     assets: [],
-    torUrl: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
+    torUrl: "",
 
     lightningExplorerUrl: "https://amboss.space/node",
     discordUrl: "https://discord.gg/QBvZGcW",
@@ -28,6 +25,8 @@ export const [config, setConfig] = createSignal({
     brandingUrl: "https://github.com/BoltzExchange/logo",
     testnetUrl: "https://testnet.boltz.exchange",
 });
+
+export const configReady = () => config().apiUrl != "";
 
 export function updateConfig(data: any) {
     const isTor = window.location.hostname.endsWith(".onion");

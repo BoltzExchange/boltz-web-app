@@ -6,6 +6,7 @@ import { decodeAddress } from "../../src/utils/lazy/address";
 import { setup } from "../../src/utils/lazy/compat";
 import { validateInvoice } from "../../src/utils/lazy/invoice";
 import { validateResponse } from "../../src/utils/lazy/validation";
+import { initConfig } from "../helper";
 
 describe("validate responses", () => {
     const getEtherSwap = (code: string): (() => Promise<Contract>) => {
@@ -14,6 +15,8 @@ describe("validate responses", () => {
             getDeployedCode,
         })) as any;
     };
+
+    initConfig();
 
     beforeAll(async () => {
         log.disableAll();
@@ -117,10 +120,10 @@ describe("validate responses", () => {
             ${"L-BTC invalid blinding key"}        | ${false} | ${""}        | ${{ ...swapLbtc, blindingKey: "e5d35d6e263249d1defe206a41dc969df61b1b64347a655fb575421f0369b321" }}
         `(
             /*
-            ${"RBTC valid"}                        | ${true}  | ${EtherSwapBytecode.object} | ${{ ...swapBtc, asset: RBTC }}
-            ${"RBTC invalid send amount"}          | ${false} | ${""}                       | ${{ ...swapBtc, asset: RBTC, sendAmount: 12313123 }}
-            ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...swapBtc, asset: RBTC }}
-        `*/
+                    ${"RBTC valid"}                        | ${true}  | ${EtherSwapBytecode.object} | ${{ ...swapBtc, asset: RBTC }}
+                    ${"RBTC invalid send amount"}          | ${false} | ${""}                       | ${{ ...swapBtc, asset: RBTC, sendAmount: 12313123 }}
+                    ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...swapBtc, asset: RBTC }}
+                `*/
             "$desc",
             async ({ valid, contractCode, swap }) => {
                 const contract = getEtherSwap(contractCode);
@@ -217,9 +220,9 @@ describe("validate responses", () => {
             ${"L-BTC invalid blinding key"}        | ${false} | ${""}        | ${{ ...reverseSwapLbtc, blindingKey: "6aa614e75363a597e2fc093503856a5371ee198751a632305a434e9de72d800d" }}
         `(
             /*
-            ${"RBTC valid"}                                 | ${true}  | ${EtherSwapBytecode.object} | ${{ ...reverseSwapBtc, asset: RBTC }}
-            ${"RBTC invalid contract code"}                 | ${false} | ${"not correct"}            | ${{ ...reverseSwapBtc, asset: RBTC }}
-        */
+                    ${"RBTC valid"}                                 | ${true}  | ${EtherSwapBytecode.object} | ${{ ...reverseSwapBtc, asset: RBTC }}
+                    ${"RBTC invalid contract code"}                 | ${false} | ${"not correct"}            | ${{ ...reverseSwapBtc, asset: RBTC }}
+                */
             "$desc",
             async ({ valid, contractCode, swap }) => {
                 const contract = getEtherSwap(contractCode);

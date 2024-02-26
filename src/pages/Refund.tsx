@@ -1,5 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
+import QrScanner from "qr-scanner";
 import { Show, createEffect, createSignal } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
@@ -10,7 +11,6 @@ import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzApi";
-import { QrScanner, moduleLoaded } from "../utils/lazy";
 import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
 import ErrorWasm from "./ErrorWasm";
 
@@ -61,8 +61,7 @@ const Refund = () => {
         setRefundJson(null);
 
         if (inputFile.type === "image/png") {
-            QrScanner.default
-                .scanImage(inputFile, { returnDetailedScanResult: true })
+            QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
                 .then((result) =>
                     checkRefundJsonKeys(input, JSON.parse(result.data)),
                 )
@@ -146,7 +145,6 @@ const Refund = () => {
                         id="refundUpload"
                         data-testid="refundUpload"
                         accept="application/json,image/png"
-                        disabled={moduleLoaded(QrScanner)()}
                         onChange={(e) => uploadChange(e)}
                     />
                     <Show when={refundTxId() === "" && refundJson() !== null}>

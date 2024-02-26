@@ -1,5 +1,7 @@
-import { defaultLanguage } from "../../src/config";
+import { config } from "../../src/config";
 import { getNavigatorLanguage } from "../../src/i18n/detect";
+
+const defaultLanguage = config().defaultLanguage;
 
 describe("detect", () => {
     test.each`

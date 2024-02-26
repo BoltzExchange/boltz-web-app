@@ -1,5 +1,6 @@
 {
     "torUrl": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
+    "isBeta": true,
     "network": "main",
     "defaultLanguage": "en",
     "loglevel": "info",

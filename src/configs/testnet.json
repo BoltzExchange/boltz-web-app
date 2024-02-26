@@ -1,25 +1,24 @@
 {
-    "network": "regtest",
+    "network": "testnet",
     "defaultLanguage": "en",
     "loglevel": "debug",
     "apiUrl": {
-        "normal": "http://localhost:9001"
+        "normal": "https://testnet.boltz.exchange/api"
     },
-    "boltzClientApiUrl": "",
     "assets": {
         "BTC": {
             "blockExplorerUrl": {
-                "normal": "http://localhost:8090"
+                "normal": "https://blockstream.info/testnet"
             }
         },
         "L-BTC": {
             "blockExplorerUrl": {
-                "normal": "http://localhost:8091"
+                "normal": "https://blockstream.info/liquidtestnet"
             }
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "http://localhost:8092"
+                "normal": "https://explorer.testnet.rsk.co"
             }
         }
     }
