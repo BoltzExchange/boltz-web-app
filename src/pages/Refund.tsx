@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show, createSignal, onMount } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
@@ -30,7 +30,8 @@ const Refund = () => {
     const checkRefundJsonKeys = (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
 
-        // Redirect to normal flow if swap is in local storage
+        // When the swap id is found in the local storage, there is no need for the validation,
+        // all relevant data is there already and we just need to show the button to redirect
         const localStorageSwap = swaps().find((s: any) => s.id === json.id);
         if (localStorageSwap !== undefined) {
             setSwapFound(json.id);
@@ -95,7 +96,7 @@ const Refund = () => {
         setRefundableSwaps(refundableSwaps().concat(swap));
     };
 
-    createEffect(() => {
+    onMount(() => {
         const swapsToRefund = swaps()
             .filter(refundSwapsSanityFilter)
             .filter((swap) =>
