@@ -2,14 +2,17 @@
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import { Route, Router } from "@solidjs/router";
+import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import log from "loglevel";
+import { onMount } from "solid-js";
 import { Show, render } from "solid-js/web";
 
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
-import { SwapChecker } from "./components/SwapChecker";
-import { loglevel, network } from "./config";
+import { config, updateConfig } from "./config";
+import { AppProvider } from "./context/App";
+import { ClientProvider } from "./context/Client";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider, useGlobalContext } from "./context/Global";
 import { PayProvider } from "./context/Pay";
@@ -23,9 +26,9 @@ import Pay from "./pages/Pay";
 import Refund from "./pages/Refund";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
+import { isBoltzClient } from "./utils/helper";
+import { loadLazyModules } from "./utils/lazy";
 import "./utils/patches";
-
-log.setLevel(loglevel);
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
@@ -35,52 +38,68 @@ if ("serviceWorker" in navigator) {
         });
 }
 
-document.body.classList.remove("loading");
-
 const isEmbedded = () => {
     return useGlobalContext().embedded();
 };
 
-const App = (props: any) => (
-    <>
-        <SwapChecker />
-        <Show when={!isEmbedded()}>
-            <Nav network={network} />
-        </Show>
-        {props.children}
-        <Notification />
-        <Show when={!isEmbedded()}>
-            <Footer />
-        </Show>
-    </>
-);
+const queryClient = new QueryClient();
+
+const init = async () => {
+    const config = window["config"];
+    if (config) {
+        updateConfig(config);
+        delete window["config"];
+        await loadLazyModules();
+    }
+};
+window.addEventListener("config", init);
+
+const App = (props: any) => {
+    onMount(init);
+    document.body.classList.remove("loading");
+    const Provider = isBoltzClient() ? ClientProvider : AppProvider;
+    return (
+        <QueryClientProvider client={queryClient}>
+            <GlobalProvider>
+                <Web3SignerProvider>
+                    <PayProvider>
+                        <CreateProvider>
+                            <Provider>
+                                <Show when={!isEmbedded()}>
+                                    <Nav network={config().network} />
+                                </Show>
+                                {props.children}
+                                <Notification />
+                                <Show when={!isEmbedded()}>
+                                    <Footer />
+                                </Show>
+                            </Provider>
+                        </CreateProvider>
+                    </PayProvider>
+                </Web3SignerProvider>
+            </GlobalProvider>
+        </QueryClientProvider>
+    );
+};
 
 const cleanup = render(
     () => (
-        <GlobalProvider>
-            <Web3SignerProvider>
-                <CreateProvider>
-                    <PayProvider>
-                        <Router root={App}>
-                            <Route path="/" component={Hero} />
-                            <Route path="/swap" component={Create} />
-                            {/* Compatibility with link in Breez:
+        <Router root={App}>
+            wtf?
+            <Route path="/" component={Hero} />
+            <Route path="/swap" component={Create} />
+            {/* Compatibility with link in Breez:
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
-                            <Route path="/swapbox" component={Create} />
-                            <Route path="/swap/:id" component={Pay} />
-                            <Route
-                                path="/swap/refund/:id"
-                                component={RefundStep}
-                            />
-                            <Route path="/error" component={Error} />
-                            <Route path="/refund" component={Refund} />
-                            <Route path="/history" component={History} />
-                            <Route path="*404" component={NotFound} />
-                        </Router>
-                    </PayProvider>
-                </CreateProvider>
-            </Web3SignerProvider>
-        </GlobalProvider>
+            <Route path="/swapbox" component={Create} />
+            <Route path="/swap/:id" component={Pay} />
+            <Route path="/swap/refund/:id" component={RefundStep} />
+            <Route path="/error" component={Error} />
+            <Show when={!isBoltzClient()}>
+                <Route path="/refund" component={Refund} />
+            </Show>
+            <Route path="/history" component={History} />
+            <Route path="*404" component={NotFound} />
+        </Router>
     ),
     document.getElementById("root"),
 );

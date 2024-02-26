@@ -1,4 +1,4 @@
-import { Pairs } from "../src/utils/boltzClient";
+import { Pairs } from "../src/utils/types";
 
 export const cfg: Pairs = {
     submarine: {

@@ -3,8 +3,8 @@ import { createEffect, on } from "solid-js";
 import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { decodeAddress } from "../utils/compat";
-import { extractAddress } from "../utils/invoice";
+import { isBoltzClient } from "../utils/helper";
+import { invoice, moduleLoaded, address as util } from "../utils/lazy";
 import { setButtonLabel } from "./CreateButton";
 
 const AddressInput = () => {
@@ -21,17 +21,24 @@ const AddressInput = () => {
         setOnchainAddress,
     } = useCreateContext();
 
+    const loaded = moduleLoaded(util, invoice);
+
     const validateAddress = (input: HTMLInputElement) => {
+        if (!loaded()) return;
         const inputValue = input.value.trim();
-        const address = extractAddress(inputValue);
+        const address = invoice.extractAddress(inputValue);
 
         try {
-            const assetName = asset();
-            decodeAddress(assetName, address);
-            input.setCustomValidity("");
-            input.classList.remove("invalid");
-            setAddressValid(true);
-            setOnchainAddress(address);
+            if (address == "" && isBoltzClient()) {
+                setAddressValid(true);
+            } else {
+                const assetName = asset();
+                util.decodeAddress(assetName, address);
+                input.setCustomValidity("");
+                input.classList.remove("invalid");
+                setAddressValid(true);
+                setOnchainAddress(address);
+            }
         } catch (e) {
             const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);
@@ -61,6 +68,7 @@ const AddressInput = () => {
             onInput={(e) => validateAddress(e.currentTarget)}
             onKeyUp={(e) => validateAddress(e.currentTarget)}
             onPaste={(e) => validateAddress(e.currentTarget)}
+            disabled={!loaded()}
             type="text"
             id="onchainAddress"
             data-testid="onchainAddress"

@@ -1,10 +1,7 @@
-import { pairs } from "../config";
+import { config } from "../config";
 import { LN, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-
-const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
-assets.push(LN);
 
 const SelectAsset = () => {
     const setSelectAsset = (isSend: boolean, asset: string) => {
@@ -12,9 +9,10 @@ const SelectAsset = () => {
         setter(asset);
     };
 
-    const { t, fetchPairs } = useGlobalContext();
+    const { t, fetchPairs, pairs } = useGlobalContext();
 
     const {
+        reverse,
         assetReceive,
         assetSelect,
         assetSelected,
@@ -56,6 +54,30 @@ const SelectAsset = () => {
         );
     };
 
+    const assets = () => {
+        return Object.keys(config().assets).concat(LN);
+        const availablePairs = pairs()
+            ? reverse()
+                ? pairs().reverse
+                : pairs().submarine
+            : {};
+
+        const assets = Object.keys(availablePairs);
+        Object.keys(availablePairs).forEach((from) =>
+            Object.keys(availablePairs[from]).forEach((to) => {
+                if (!assets.includes(to)) {
+                    assets.push(to);
+                }
+            }),
+        );
+        return assets;
+        return assetSelected() === sideSend
+            ? Object.keys(availablePairs)
+            : Object.keys(availablePairs).flatMap((from) =>
+                  Object.keys(availablePairs[from]),
+              );
+    };
+
     return (
         <div
             class="frame assets-select"
@@ -82,7 +104,7 @@ const SelectAsset = () => {
                 />
             </svg>
             <hr />
-            {assets.map((asset) => (
+            {assets().map((asset) => (
                 <div
                     class={`asset-select asset-${asset}`}
                     data-selected={isSelected(asset)}

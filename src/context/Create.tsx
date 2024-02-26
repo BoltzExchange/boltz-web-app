@@ -9,8 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { pairs } from "../config";
-import { LN, sideSend } from "../consts";
+import { BTC, LN, sideSend } from "../consts";
 
 export type CreateContextType = {
     reverse: Accessor<boolean>;
@@ -59,11 +58,10 @@ export type CreateContextType = {
     setMinerFee: Setter<number>;
 };
 
-const defaultSelection = Object.keys(pairs)[0].split("/")[0];
-
 const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: any }) => {
+    const defaultSelection = BTC;
     const [asset, setAsset] = createSignal<string>(defaultSelection);
     const [reverse, setReverse] = createSignal<boolean>(true);
     const [invoice, setInvoice] = createSignal<string>("");

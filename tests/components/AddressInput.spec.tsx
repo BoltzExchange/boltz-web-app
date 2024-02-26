@@ -2,19 +2,14 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC } from "../../src/consts";
-import { useCreateContext } from "../../src/context/Create";
-import { useGlobalContext } from "../../src/context/Global";
-import { contextWrapper } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 
 describe("AddressInput", () => {
-    let signals: any;
-    let globalSignals: any;
-    const TestComponent = () => {
-        signals = useCreateContext();
-        globalSignals = useGlobalContext();
-        return "";
-    };
-
     test.each`
         valid    | network | address
         ${true}  | ${BTC}  | ${"mv5v8C3e1SySwqe6r2fq9Fh6DbZr8ddjsX"}
@@ -47,6 +42,8 @@ describe("AddressInput", () => {
             const input = (await screen.findByPlaceholderText(
                 globalSignals.t("onchain_address", { asset: network }),
             )) as HTMLInputElement;
+
+            //expect(input.disabled).toBeTruthy()
 
             fireEvent.input(input, {
                 target: { value: address },

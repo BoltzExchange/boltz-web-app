@@ -1,17 +1,19 @@
-import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
-import { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
+import type { BrowserProvider, JsonRpcSigner } from "ethers";
 import {
     Accessor,
     JSXElement,
     createContext,
+    createEffect,
     createSignal,
     useContext,
 } from "solid-js";
 
-import { pairs } from "../config";
+import { config } from "../config";
 import { RBTC } from "../consts";
-import { Contracts, getContracts } from "../utils/boltzClient";
+import { getContracts } from "../utils/boltzApi";
+import { isBoltzClient } from "../utils/helper";
+import { ethers, moduleLoaded, rootstock } from "../utils/lazy";
+import type { Contracts, EtherSwap } from "../utils/types";
 
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
@@ -28,27 +30,35 @@ const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
+    if (isBoltzClient()) {
+        return props.children;
+    }
     const [provider, setProvider] = createSignal<BrowserProvider | undefined>();
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
     const [hasMetamask, setHasMetamask] = createSignal<boolean>(false);
+    const hasRsk = config().assets[RBTC] !== undefined;
 
-    const hasRsk = pairs[`${RBTC}/BTC`] !== undefined;
+    createEffect(() => {
+        if (moduleLoaded(ethers)()) {
+            if ((window as any).ethereum) {
+                handleMetamask();
+            } else {
+                window.addEventListener(initEvent, handleMetamask);
+            }
+        }
+    });
 
     const handleMetamask = () => {
         window.removeEventListener(initEvent, handleMetamask);
         if (hasRsk) {
-            setProvider(new BrowserProvider((window as any).ethereum));
+            console.log(ethers.BrowserProvider);
+            setProvider(new ethers.BrowserProvider((window as any).ethereum));
         }
         setHasMetamask(true);
     };
 
-    if ((window as any).ethereum) {
-        handleMetamask();
-    } else {
-        window.addEventListener(initEvent, handleMetamask);
-    }
-
     const fetchContracts = new Promise<Contracts | undefined>(
+        // eslint-disable-next-line
         async (resolve) => {
             if (props.noFetch || !hasRsk) {
                 resolve(undefined);
@@ -68,9 +78,9 @@ const Web3SignerProvider = (props: {
 
     const getEtherSwap = async () => {
         await getSigner();
-        return new Contract(
+        return new ethers.Contract(
             (await fetchContracts).swapContracts.EtherSwap,
-            EtherSwapAbi,
+            rootstock.EtherSwapAbi,
             signer(),
         ) as unknown as EtherSwap;
     };

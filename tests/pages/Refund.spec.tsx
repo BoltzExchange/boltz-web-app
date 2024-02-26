@@ -3,9 +3,16 @@ import { userEvent } from "@testing-library/user-event";
 
 import i18n from "../../src/i18n/i18n";
 import Refund from "../../src/pages/Refund";
-import { TestComponent, contextWrapper, globalSignals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    initConfig,
+} from "../helper";
 
 describe("Refund", () => {
+    initConfig();
+
     test("should render WASM error", async () => {
         render(
             () => (

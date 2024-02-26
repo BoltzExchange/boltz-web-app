@@ -1,4 +1,4 @@
-import { prefix0x, satoshiToWei } from "../../src/utils/rootstock";
+import { prefix0x, satoshiToWei } from "../../src/utils/lazy/rootstock";
 
 describe("rootstock", () => {
     test.each`

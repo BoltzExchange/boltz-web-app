@@ -1,20 +1,21 @@
 import log from "loglevel";
-import { createEffect, onCleanup, onMount } from "solid-js";
+import { createEffect, onCleanup } from "solid-js";
 
-import { BTC, LBTC, RBTC } from "../consts";
-import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
+import { configReady } from "../../config";
+import { BTC, LBTC, RBTC } from "../../consts";
+import { AppContextType } from "../../context/App";
+import { GlobalContextType } from "../../context/Global";
+import { PayContextType } from "../../context/Pay";
 import {
+    getApiUrl,
     getReverseTransaction,
     getSubmarineTransaction,
-} from "../utils/boltzClient";
-import { claim, createSubmarineSignature } from "../utils/claim";
-import { getApiUrl } from "../utils/helper";
+} from "../boltzApi";
 import {
     swapStatusFinal,
     swapStatusPending,
     swapStatusSuccess,
-} from "../utils/swapStatus";
+} from "../swapStatus";
 
 const reconnectInterval = 5_000;
 
@@ -107,16 +108,25 @@ class BoltzWebSocket {
         url.replace("http://", "ws://").replace("https://", "wss://");
 }
 
-export const SwapChecker = () => {
+export const createSwapChecker = (
+    payContext: PayContextType,
+    globalContext: GlobalContextType,
+    context: AppContextType,
+) => {
     const {
-        swap,
         setSwapStatus,
-        setSwapStatusTransaction,
         setFailureReason,
         setTimeoutEta,
         setTimeoutBlockheight,
-    } = usePayContext();
-    const { notify, updateSwapStatus, swaps, setSwaps } = useGlobalContext();
+    } = payContext;
+    const {
+        swap,
+        setSwapStatusTransaction,
+        updateSwapStatus,
+        swaps,
+        setSwaps,
+    } = context;
+    const { notify } = globalContext;
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
 
@@ -159,6 +169,7 @@ export const SwapChecker = () => {
     };
 
     const claimSwap = async (swapId: string, data: any) => {
+        const { claim, createSubmarineSignature } = await import("./claim");
         const currentSwap = swaps().find((s) => swapId === s.id);
         if (currentSwap === undefined) {
             log.warn(`claimSwap: swap ${swapId} not found`);
@@ -204,39 +215,46 @@ export const SwapChecker = () => {
         }
     };
 
-    onMount(() => {
-        const urlsToAsset = new Map<string, string[]>();
-        for (const [asset, url] of [BTC, LBTC, RBTC].map((asset) => [
-            asset,
-            getApiUrl(asset),
-        ])) {
-            urlsToAsset.set(url, (urlsToAsset.get(url) || []).concat(asset));
-        }
+    createEffect(() => {
+        if (configReady()) {
+            const urlsToAsset = new Map<string, string[]>();
+            for (const [asset, url] of [BTC, LBTC, RBTC].map((asset) => [
+                asset,
+                getApiUrl(asset),
+            ])) {
+                urlsToAsset.set(
+                    url,
+                    (urlsToAsset.get(url) || []).concat(asset),
+                );
+            }
 
-        const swapsToCheck = swaps()
-            .filter(
-                (s) =>
-                    !swapStatusFinal.includes(s.status) ||
-                    (s.status === swapStatusSuccess.InvoiceSettled &&
-                        s.claimTx === undefined),
-            )
-            .filter((s) => s.id !== swap()?.id);
+            const swapsToCheck = swaps()
+                .filter(
+                    (s) =>
+                        !swapStatusFinal.includes(s.status) ||
+                        (s.status === swapStatusSuccess.InvoiceSettled &&
+                            s.claimTx === undefined),
+                )
+                .filter((s) => s.id !== swap()?.id);
 
-        for (const [url, assets] of urlsToAsset.entries()) {
-            log.debug(`opening ws for assets [${assets.join(", ")}]: ${url}`);
-            const ws = new BoltzWebSocket(
-                url,
-                new Set<string>(
-                    swapsToCheck
-                        .filter((s) => assets.includes(s.asset))
-                        .map((s) => s.id),
-                ),
-                prepareSwap,
-                claimSwap,
-            );
-            ws.connect();
-            for (const asset of assets) {
-                assetWebsocket.set(asset, ws);
+            for (const [url, assets] of urlsToAsset.entries()) {
+                log.debug(
+                    `opening ws for assets [${assets.join(", ")}]: ${url}`,
+                );
+                const ws = new BoltzWebSocket(
+                    url,
+                    new Set<string>(
+                        swapsToCheck
+                            .filter((s) => assets.includes(s.asset))
+                            .map((s) => s.id),
+                    ),
+                    prepareSwap,
+                    claimSwap,
+                );
+                ws.connect();
+                for (const asset of assets) {
+                    assetWebsocket.set(asset, ws);
+                }
             }
         }
     });
@@ -262,6 +280,4 @@ export const SwapChecker = () => {
 
         ws.subscribeUpdates([activeSwap.id]);
     });
-
-    return "";
 };

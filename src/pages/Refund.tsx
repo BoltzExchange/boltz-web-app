@@ -7,16 +7,20 @@ import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SwapList from "../components/SwapList";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
-import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
+import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzApi";
 import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
 import ErrorWasm from "./ErrorWasm";
 
+const refundJsonKeys = ["id", "asset", "privateKey"];
+const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
+
 const Refund = () => {
     const navigate = useNavigate();
-    const { updateSwapStatus, wasmSupported, swaps, t } = useGlobalContext();
+    const { wasmSupported, t } = useGlobalContext();
+    const { swaps, updateSwapStatus } = useAppContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [refundJson, setRefundJson] = createSignal(null);

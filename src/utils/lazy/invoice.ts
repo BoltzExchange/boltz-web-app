@@ -3,8 +3,8 @@ import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
 import log from "loglevel";
 
-import { bolt11_prefix } from "../config";
-import { checkResponse } from "./http";
+import { config } from "../../config";
+import { checkResponse } from "../http";
 
 type LnurlResponse = {
     minSendable: number;
@@ -139,7 +139,14 @@ export const extractAddress = (data: string) => {
 };
 
 export const isInvoice = (data: string) => {
-    return data.toLowerCase().startsWith(bolt11_prefix);
+    const network = config().network;
+    const prefix =
+        network == "mainnet"
+            ? "lnbc"
+            : network == "testnet"
+              ? "lntb"
+              : "lnbcrt";
+    return data.toLowerCase().startsWith(prefix);
 };
 
 const isValidBech32 = (data: string) => {
@@ -160,4 +167,19 @@ export const isLnurl = (data: string) => {
         (data.includes("@") && emailRegex.test(data)) ||
         (data.startsWith("lnurl") && isValidBech32(data))
     );
+};
+
+export const validateInvoice = (inputValue: string) => {
+    const isInputInvoice = isInvoice(inputValue);
+    if (isLnurl(inputValue) || isInputInvoice) {
+        // set receive/send when invoice differs from the amounts
+        if (isInputInvoice) {
+            const decoded = decodeInvoice(inputValue);
+            if (decoded.satoshis === 0) {
+                throw new Error("invalid_0_amount");
+            }
+            return decoded.satoshis;
+        }
+    }
+    throw new Error("invalid_invoice");
 };

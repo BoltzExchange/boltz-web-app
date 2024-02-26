@@ -1,25 +1,22 @@
-import { OutputType } from "boltz-core";
 import { Show } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { isBoltzClient } from "../utils/helper";
+import { boltzCore } from "../utils/lazy";
 
-const InvoiceFailedToPay = () => {
-    const { failureReason, swap, timeoutEta } = usePayContext();
-    const { t } = useGlobalContext();
-    const isTaproot = swap().version === OutputType.Taproot;
+const Refund = () => {
+    const { timeoutEta } = usePayContext();
+    const { swap } = useAppContext();
+    const isTaproot = swap().version === boltzCore.OutputType.Taproot;
 
     return (
-        <div>
-            <h2>{t("invoice_payment_failure")}</h2>
-            <p>
-                {t("failure_reason")}: {failureReason()}
-            </p>
-            <hr />
+        <>
             <Show
                 when={!timeoutEta() || isTaproot || swap().asset === RBTC}
                 fallback={<RefundEta />}>
@@ -29,6 +26,24 @@ const InvoiceFailedToPay = () => {
                 <DownloadRefund />
             </Show>
             <hr />
+        </>
+    );
+};
+
+const InvoiceFailedToPay = () => {
+    const { failureReason } = usePayContext();
+    const { t } = useGlobalContext();
+
+    return (
+        <div>
+            <h2>{t("invoice_payment_failure")}</h2>
+            <p>
+                {t("failure_reason")}: {failureReason()}
+            </p>
+            <hr />
+            <Show when={!isBoltzClient()}>
+                <Refund />
+            </Show>
         </div>
     );
 };

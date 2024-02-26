@@ -1,5 +1,5 @@
 import zkp, { Secp256k1ZKP } from "@vulpemventures/secp256k1-zkp";
-import { Network, Transaction, address, networks } from "bitcoinjs-lib";
+import { Transaction } from "bitcoinjs-lib";
 import {
     ClaimDetails,
     RefundDetails,
@@ -17,22 +17,17 @@ import {
 } from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
 import {
-    address as LiquidAddress,
-    networks as LiquidNetworks,
     Transaction as LiquidTransaction,
     TxOutput as LiquidTransactionOutput,
     confidential,
 } from "liquidjs-lib";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
-import { network } from "../config";
-import { LBTC } from "../consts";
+import { LBTC } from "../../consts";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
     blindingPrivateKey?: Buffer;
 };
-
-type DecodedAddress = { script: Buffer; blindingKey?: Buffer };
 
 export let secp: Secp256k1ZKP;
 let confi: confidential.Confidential;
@@ -45,51 +40,6 @@ const setup = async () => {
     secp = await zkp();
     init(secp);
     confi = new confidential.Confidential(secp);
-};
-
-const getAddress = (asset: string): typeof address | typeof LiquidAddress => {
-    if (asset === LBTC) {
-        return LiquidAddress;
-    } else {
-        return address;
-    }
-};
-
-const decodeAddress = (asset: string, addr: string): DecodedAddress => {
-    const address = getAddress(asset);
-
-    // We always do this to validate the network
-    const script = address.toOutputScript(
-        addr,
-        getNetwork(asset) as LiquidNetwork,
-    );
-
-    if (asset === LBTC) {
-        // This throws for unconfidential addresses -> fallback to output script decoding
-        try {
-            const decoded = (address as typeof LiquidAddress).fromConfidential(
-                addr,
-            );
-
-            return {
-                script,
-                blindingKey: decoded.blindingKey,
-            };
-        } catch (e) {}
-    }
-
-    return {
-        script,
-    };
-};
-
-const getNetwork = (asset: string): Network | LiquidNetwork => {
-    if (asset === LBTC) {
-        const liquidNet = network === "main" ? "liquid" : network;
-        return LiquidNetworks[liquidNet];
-    } else {
-        return networks[network];
-    }
 };
 
 const getTransaction = (asset: string) => {
@@ -176,11 +126,7 @@ const getOutputAmount = (
 
 export {
     setup,
-    getAddress,
-    getNetwork,
-    decodeAddress,
     getTransaction,
-    DecodedAddress,
     getOutputAmount,
     getConstructClaimTransaction,
     getConstructRefundTransaction,

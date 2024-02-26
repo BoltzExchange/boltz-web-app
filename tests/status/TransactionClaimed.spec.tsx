@@ -3,18 +3,13 @@ import { render, screen } from "@solidjs/testing-library";
 import { BTC, LBTC, RBTC } from "../../src/consts";
 import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
-import { getReverseTransaction } from "../../src/utils/boltzClient";
-import { claim } from "../../src/utils/claim";
-import {
-    TestComponent,
-    contextWrapper,
-    globalSignals,
-    payContext,
-} from "../helper";
+import { getReverseTransaction } from "../../src/utils/boltzApi";
+import { claim } from "../../src/utils/lazy/claim";
+import { TestComponent, contextWrapper, swapContext } from "../helper";
 
 let claimPromiseResolve: (() => void) | undefined = undefined;
 
-jest.mock("../../src/utils/claim", () => ({
+jest.mock("../../src/utils/lazy/claim", () => ({
     claim: jest.fn().mockImplementation(
         async (swap) =>
             new Promise<void>((resolve) => {
@@ -25,14 +20,15 @@ jest.mock("../../src/utils/claim", () => ({
             }),
     ),
 }));
-jest.mock("../../src/utils/boltzClient", () => ({
+jest.mock("../../src/utils/boltzApi", () => ({
     getReverseTransaction: jest.fn().mockResolvedValue({
         hex: "txHex",
     }),
+    getApiUrl: jest.fn().mockReturnValue("https://api.boltz.exchange"),
 }));
 
 describe("TransactionClaimed", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.clearAllMocks();
     });
 
@@ -57,7 +53,7 @@ describe("TransactionClaimed", () => {
                 wrapper: contextWrapper,
             },
         );
-        payContext.setSwap(swap);
+        swapContext.setSwap(swap);
 
         await expect(
             screen.findByText(i18n.en.congrats),
@@ -89,8 +85,8 @@ describe("TransactionClaimed", () => {
                 reverse: true,
             };
 
-            globalSignals.setSwaps([JSON.parse(JSON.stringify(swap))]);
-            payContext.setSwap(swap);
+            swapContext.setSwaps([JSON.parse(JSON.stringify(swap))]);
+            swapContext.setSwap(swap);
 
             await expect(
                 screen.findByText(i18n.en.broadcasting_claim),
@@ -109,8 +105,8 @@ describe("TransactionClaimed", () => {
             );
             expect(claim).toHaveBeenCalledTimes(1);
 
-            expect(payContext.swap().claimTx).toEqual("claimedTxId");
-            expect(globalSignals.swaps()[0].claimTx).toEqual("claimedTxId");
+            expect(swapContext.swap().claimTx).toEqual("claimedTxId");
+            expect(swapContext.swaps()[0].claimTx).toEqual("claimedTxId");
         },
     );
 });

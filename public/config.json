@@ -1,0 +1,30 @@
+{
+    "torUrl": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
+    "boltzClientApiUrl": "",
+    "network": "main",
+    "defaultLanguage": "en",
+    "loglevel": "info",
+    "apiUrl": {
+        "normal": "https://api.boltz.exchange",
+        "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
+    },
+    "assets": {
+        "BTC": {
+            "blockExplorerUrl": {
+                "normal": "https://mempool.space",
+                "tor": "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion"
+            }
+        },
+        "L-BTC": {
+            "blockExplorerUrl": {
+                "normal": "https://liquid.network",
+                "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion"
+            }
+        },
+        "RBTC": {
+            "blockExplorerUrl": {
+                "normal": "https://explorer.rsk.co"
+            }
+        }
+    }
+}

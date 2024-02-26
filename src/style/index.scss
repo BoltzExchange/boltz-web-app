@@ -14,6 +14,7 @@ body {
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
 }
+
 body::-webkit-scrollbar {
     display: none;
 }
@@ -39,6 +40,7 @@ h2 {
     margin-bottom: 0;
     margin-top: 6px;
 }
+
 h2 + p {
     margin-top: 0;
 }
@@ -49,6 +51,7 @@ hr {
     height: 1px;
     background: rgba(255, 255, 255, 0.08);
 }
+
 hr.spacer {
     margin: 4px 0;
     opacity: 0;
@@ -60,6 +63,7 @@ hr.spacer {
     display: inline-block;
     padding: 0 6px;
 }
+
 .icon-reload img {
     width: 20px;
 }
@@ -80,6 +84,7 @@ hr.spacer {
     top: 10px;
     left: 10px;
     cursor: pointer;
+
     &:hover {
         background-color: rgba(255, 255, 255, 0.25);
     }
@@ -96,17 +101,20 @@ hr.spacer {
     display: flex;
     justify-content: center;
 }
+
 .fees-dyn > * {
     flex-grow: 1;
     display: flex;
     align-items: center;
     justify-content: start;
 }
+
 .fees-dyn,
 .icons > div {
     position: relative;
     text-align: right;
 }
+
 .icons > div {
     margin: 9px 0;
 }
@@ -164,6 +172,7 @@ hr.spacer {
     background-color: $error;
     color: #fff;
 }
+
 [data-status="swap.expired"] .btn-success,
 [data-status="swap.refunded"] .btn-small,
 [data-status="invoice.settled"] .btn-small,
@@ -196,13 +205,16 @@ hr.spacer {
     color: white;
     background-color: rgb(11, 22, 35);
 }
+
 .btn-light:hover {
     background-color: $primary;
 }
+
 .btn-explorer {
     background: #533180;
     color: white;
 }
+
 .btn-explorer:hover {
     background: white;
     color: #533180;
@@ -212,31 +224,38 @@ hr.spacer {
     background-color: #246c24;
     color: white;
 }
+
 .btn-success:hover {
     background-color: #fff;
 }
+
 .btn-danger:disabled,
 .btn-danger {
     background-color: transparentize($error, 0.42);
     color: white;
 }
+
 .btn-danger:hover {
     background: $error;
 }
+
 .btns {
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
 .btns-space-between {
     justify-content: space-between;
 }
+
 .btns .btn {
     display: inline-block;
     width: auto;
     margin: 3px;
     flex-grow: 1;
 }
+
 .btns .no-grow {
     flex-grow: 0;
 }
@@ -249,6 +268,7 @@ hr.spacer {
     display: flex;
     justify-content: space-between;
 }
+
 .tags {
     display: flex;
     flex-wrap: wrap;
@@ -285,32 +305,38 @@ textarea {
     padding: 7px 8px;
     box-sizing: border-box;
 }
+
 input:focus,
 textarea:focus {
     outline: none;
     color: #ddd;
     border-color: $primary;
 }
+
 input.invalid,
 textarea.invalid {
     outline: none;
     color: #ddd;
     border-color: $error;
 }
+
 .fees-dyn label {
     display: block;
 }
+
 #receiveAmount,
 #sendAmount {
     font-size: 33px;
     text-align: right;
 }
+
 @media (max-width: 488px) {
     #receiveAmount,
     #sendAmount {
         font-size: 30px;
     }
 }
+
 textarea {
     min-height: 198px;
 }
@@ -322,6 +348,7 @@ textarea {
 #steps {
     padding: 0 12px;
 }
+
 #steps > .frame > div {
     display: none;
 }
@@ -334,11 +361,13 @@ textarea {
     background: black;
     color: white;
 }
+
 .denomination img {
     filter: brightness(10);
     cursor: pointer;
     width: 28px;
 }
+
 .denominator {
     filter: brightness(10);
     width: 15px;
@@ -349,6 +378,7 @@ textarea {
     transform: scale(2.1);
     background-position: right;
 }
+
 .denominator-big {
     width: 33px;
     height: 30px;
@@ -358,6 +388,7 @@ textarea {
 [data-denominator="btc"] {
     background-image: url(../assets/btc.svg);
 }
+
 [data-denominator="sat"] {
     background-image: url(../assets/sat.svg);
 }
@@ -365,6 +396,7 @@ textarea {
 .denomination > :first-child {
     margin-right: 5px;
 }
+
 .denomination {
     cursor: pointer;
     flex-grow: 0;
@@ -372,10 +404,12 @@ textarea {
     border-radius: 18px;
     border: 1px dashed rgba(255, 255, 255, 0.3);
     padding: 0 5px;
+
     &:hover {
         background: rgb(20, 40, 63);
     }
 }
+
 .denomination .active {
     filter: none;
     border-radius: 50%;
@@ -429,6 +463,7 @@ textarea {
     z-index: 1;
     box-shadow: 0 0 7px rgba(0, 0, 0, 0.4);
 }
+
 #flip-assets:hover {
     background: rgb(20, 40, 63);
 }
@@ -464,13 +499,16 @@ textarea {
     text-transform: uppercase;
     margin: 5px;
 }
+
 [data-selected="true"],
 .asset-select:hover {
     background-color: rgba(255, 255, 255, 0.25);
 }
+
 [data-selected="true"] {
     cursor: default;
 }
+
 .assets-select {
     background: #102032;
     position: absolute;
@@ -481,9 +519,11 @@ textarea {
     display: none;
     box-shadow: 0 0 12px black;
 }
+
 .assets-select.active {
     display: block;
 }
+
 .assets-select:after {
     content: "";
     display: block;
@@ -510,6 +550,7 @@ textarea {
     top: 8px;
     right: 8px;
 }
+
 #close .line {
     fill: none;
     transition:
@@ -519,18 +560,22 @@ textarea {
     stroke-width: 5.5;
     stroke-linecap: round;
 }
+
 #close .top {
     stroke-dashoffset: -68px;
     stroke-dasharray: 40 121;
 }
+
 #close .bottom {
     stroke-dashoffset: -68px;
     stroke-dasharray: 40 121;
 }
+
 .btn-inline {
     display: inline-block;
     width: auto;
 }
+
 .network-fee,
 .boltz-fee {
     margin-right: 4px;

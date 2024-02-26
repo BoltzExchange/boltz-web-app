@@ -3,19 +3,21 @@ import log from "loglevel";
 import { For, createEffect } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
+import { useAppContext } from "../context/App";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
 
 const RefundStep = () => {
     const params = useParams();
     const navigate = useNavigate();
-    const { setSwap } = usePayContext();
-    const { swaps, t } = useGlobalContext();
+    const { swaps, setSwap } = useAppContext();
+    const { t } = useGlobalContext();
 
     createEffect(() => {
-        let tmpSwaps = swaps();
+        const tmpSwaps = swaps();
         if (tmpSwaps) {
-            let currentSwap = tmpSwaps.filter((s) => s.id === params.id).pop();
+            const currentSwap = tmpSwaps
+                .filter((s) => s.id === params.id)
+                .pop();
             if (currentSwap) {
                 log.debug("selecting swap", currentSwap);
                 setSwap(currentSwap);

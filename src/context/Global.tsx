@@ -3,6 +3,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import log from "loglevel";
 import {
     Accessor,
+    JSX,
     Setter,
     createContext,
     createMemo,
@@ -10,22 +11,30 @@ import {
     useContext,
 } from "solid-js";
 
-import { defaultLanguage } from "../config";
+import { config } from "../config";
 import { BTC } from "../consts";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
-import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
-import { swapStatusFinal } from "../utils/swapStatus";
+import { Pairs } from "../utils/types";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
+
+export interface SwapBackend {
+    createSwap: () => Promise<any>;
+    fetchPairs: (asset?: string) => any;
+    SwapStatusPage: (params: { id: string }) => JSX.Element;
+    SwapHistory: () => JSX.Element;
+}
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
-    config: Accessor<Pairs | undefined>;
-    setConfig: Setter<Pairs | undefined>;
+    backend: Accessor<SwapBackend | undefined>;
+    setBackend: Setter<SwapBackend | undefined>;
+    pairs: Accessor<Pairs | undefined>;
+    setPairs: Setter<Pairs | undefined>;
     wasmSupported: Accessor<boolean>;
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
@@ -48,8 +57,6 @@ export type GlobalContextType = {
     setI18nConfigured: Setter<string | null>;
     denomination: Accessor<string>;
     setDenomination: Setter<string>;
-    swaps: Accessor<any>;
-    setSwaps: Setter<any>;
     hideHero: Accessor<boolean>;
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
@@ -58,7 +65,6 @@ export type GlobalContextType = {
     t: (key: string, values?: Record<string, any>) => string;
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
-    updateSwapStatus: (id: string, newStatus: string) => boolean;
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -71,7 +77,10 @@ const GlobalContext = createContext<GlobalContextType>();
 
 const GlobalProvider = (props: { children: any }) => {
     const [online, setOnline] = createSignal<boolean>(true);
-    const [config, setConfig] = createSignal<Pairs | undefined>(undefined);
+    const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
+    const [backend, setBackend] = createSignal<SwapBackend | undefined>(
+        undefined,
+    );
 
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
@@ -111,47 +120,24 @@ const GlobalProvider = (props: { children: any }) => {
         ...stringSerializer,
     });
 
-    const [swaps, setSwaps] = makePersisted(
-        createSignal([], {
-            // Because arrays are the same object when changed,
-            // we have to override the equality checker
-            equals: () => false,
-        }),
-        {
-            name: "swaps",
-        },
-    );
-
     const notify = (type: string, message: string) => {
         setNotificationType(type);
         setNotification(message);
     };
 
     const fetchPairs = (asset: string = BTC) => {
-        getPairs(asset)
+        // TODO: fetch pairs from boltz-client aswell
+        backend()
+            ?.fetchPairs(asset)
             .then((data) => {
                 log.debug("getpairs", data);
                 setOnline(true);
-                setConfig(data);
+                setPairs(data);
             })
             .catch((error) => {
                 log.debug(error);
                 setOnline(false);
             });
-    };
-
-    const updateSwapStatus = (id: string, newStatus: string) => {
-        if (swapStatusFinal.includes(newStatus)) {
-            const swapsTmp = swaps();
-            const swap = swapsTmp.find((swap) => swap.id === id);
-
-            if (swap.status !== newStatus) {
-                swap.status = newStatus;
-                setSwaps(swapsTmp);
-                return true;
-            }
-        }
-        return false;
     };
 
     setI18n(detectLanguage(i18nConfigured()));
@@ -174,9 +160,10 @@ const GlobalProvider = (props: { children: any }) => {
     }
 
     // i18n
-    let dictLocale: any;
     createMemo(() => setI18n(i18nConfigured()));
-    dictLocale = createMemo(() => flatten(dict[i18n() || defaultLanguage]));
+    const dictLocale = createMemo(() =>
+        flatten(dict[i18n() || config().defaultLanguage || "en"]),
+    );
 
     const t = translator(dictLocale, resolveTemplate) as (
         key: string,
@@ -188,8 +175,10 @@ const GlobalProvider = (props: { children: any }) => {
             value={{
                 online,
                 setOnline,
-                config,
-                setConfig,
+                backend,
+                setBackend,
+                pairs,
+                setPairs,
                 wasmSupported,
                 setWasmSupported,
                 refundAddress,
@@ -212,8 +201,6 @@ const GlobalProvider = (props: { children: any }) => {
                 setI18nConfigured,
                 denomination,
                 setDenomination,
-                swaps,
-                setSwaps,
                 hideHero,
                 setHideHero,
                 embedded,
@@ -222,7 +209,6 @@ const GlobalProvider = (props: { children: any }) => {
                 t,
                 notify,
                 fetchPairs,
-                updateSwapStatus,
             }}>
             {props.children}
         </GlobalContext.Provider>

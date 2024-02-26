@@ -9,53 +9,40 @@ import {
 export type PayContextType = {
     failureReason: Accessor<string>;
     setFailureReason: Setter<string>;
-    swap: Accessor<any>;
-    setSwap: Setter<any>;
     swapStatus: Accessor<string>;
     setSwapStatus: Setter<string>;
-    swapStatusTransaction: Accessor<SwapStatusTransaction>;
-    setSwapStatusTransaction: Setter<SwapStatusTransaction>;
     timeoutEta: Accessor<number>;
     setTimeoutEta: Setter<number>;
     timeoutBlockHeight: Accessor<number>;
     setTimeoutBlockheight: Setter<number>;
+    asset: Accessor<string>;
+    setAsset: Setter<string>;
 };
 
 const PayContext = createContext<PayContextType>();
 
-type SwapStatusTransaction = {
-    hex?: string;
-    id?: string;
-};
-
 const PayProvider = (props: { children: any }) => {
     const [failureReason, setFailureReason] = createSignal<string>("");
-    const [swap, setSwap] = createSignal(null, {
-        // To allow updating properties of the swap object without replacing it completely
-        equals: () => false,
-    });
     const [swapStatus, setSwapStatus] = createSignal<string>("");
-    const [swapStatusTransaction, setSwapStatusTransaction] =
-        createSignal<SwapStatusTransaction>({});
 
     const [timeoutEta, setTimeoutEta] = createSignal<number>(0);
     const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal<number>(0);
+
+    const [asset, setAsset] = createSignal<string>("");
 
     return (
         <PayContext.Provider
             value={{
                 failureReason,
                 setFailureReason,
-                swap,
-                setSwap,
                 swapStatus,
                 setSwapStatus,
-                swapStatusTransaction,
-                setSwapStatusTransaction,
                 timeoutEta,
                 setTimeoutEta,
                 timeoutBlockHeight,
                 setTimeoutBlockheight,
+                asset,
+                setAsset,
             }}>
             {props.children}
         </PayContext.Provider>
