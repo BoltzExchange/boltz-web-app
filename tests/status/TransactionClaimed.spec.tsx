@@ -4,7 +4,6 @@ import { BTC, LBTC, RBTC } from "../../src/consts";
 import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
 import { getReverseTransaction } from "../../src/utils/boltzApi";
-import { loadLazyModules } from "../../src/utils/lazy";
 import { claim } from "../../src/utils/lazy/claim";
 import { TestComponent, contextWrapper, swapContext } from "../helper";
 
@@ -31,7 +30,6 @@ jest.mock("../../src/utils/boltzApi", () => ({
 describe("TransactionClaimed", () => {
     beforeEach(async () => {
         jest.clearAllMocks();
-        await loadLazyModules();
     });
 
     test.each`

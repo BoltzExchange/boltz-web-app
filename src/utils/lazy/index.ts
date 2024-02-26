@@ -58,3 +58,4 @@ export const claim = createLazyModule(() => import("./claim"));
 export const ethers = createLazyModule(() => import("ethers"));
 export const boltzCore = createLazyModule(() => import("boltz-core"));
 export const QrScanner = createLazyModule(() => import("qr-scanner"));
+export const swapChecker = createLazyModule(() => import("./swapchecker"));

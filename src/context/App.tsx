@@ -4,6 +4,7 @@ import {
     Accessor,
     Setter,
     createContext,
+    createEffect,
     createSignal,
     lazy,
     useContext,
@@ -12,6 +13,7 @@ import {
 import { RBTC } from "../consts";
 import { getPairs } from "../utils/boltzApi";
 import { isBoltzClient } from "../utils/helper";
+import { moduleLoaded, swapChecker } from "../utils/lazy";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { useCreateContext } from "./Create";
 import { useGlobalContext } from "./Global";
@@ -129,8 +131,10 @@ const AppProvider = (props: { children: any }) => {
 
     const payContext = usePayContext();
 
-    import("../utils/lazy/swapchecker").then((swapchecker) => {
-        swapchecker.createSwapChecker(payContext, globalContext, value);
+    createEffect(() => {
+        if (moduleLoaded(swapChecker)()) {
+            swapChecker.createSwapChecker(payContext, globalContext, value);
+        }
     });
 
     return (

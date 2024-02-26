@@ -38,6 +38,16 @@
     <body class="loading">
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root"></div>
+        <script>
+            fetch("/config.json")
+                .then((response) => {
+                    return response.json();
+                })
+                .then((config) => {
+                    window.config = config;
+                    window.dispatchEvent(new Event("config"));
+                });
+        </script>
         <script src="/src/index.tsx" type="module"></script>
         <script
             src="/node_modules/iframe-resizer/js/iframeResizer.contentWindow.js"

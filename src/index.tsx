@@ -44,14 +44,19 @@ const isEmbedded = () => {
 
 const queryClient = new QueryClient();
 
-const App = (props: any) => {
-    onMount(async () => {
-        document.body.classList.remove("loading");
-        const response = await fetch("/config.json");
-        const data = await response.json();
-        updateConfig(data);
+const init = async () => {
+    const config = window["config"];
+    if (config) {
+        updateConfig(config);
+        delete window["config"];
         await loadLazyModules();
-    });
+    }
+};
+window.addEventListener("config", init);
+
+const App = (props: any) => {
+    onMount(init);
+    document.body.classList.remove("loading");
     const Provider = isBoltzClient() ? ClientProvider : AppProvider;
     return (
         <QueryClientProvider client={queryClient}>

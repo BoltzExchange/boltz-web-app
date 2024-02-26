@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { createEffect, onCleanup } from "solid-js";
 
-import { config, configReady } from "../../config";
+import { configReady } from "../../config";
 import { BTC, LBTC, RBTC } from "../../consts";
 import { AppContextType } from "../../context/App";
 import { GlobalContextType } from "../../context/Global";
