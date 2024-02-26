@@ -65,6 +65,7 @@
         "create-hmac": "^1.1.7",
         "ecpair": "^2.1.0",
         "ethers": "^6.11.1",
+        "fets": "^0.7.1",
         "iframe-resizer": "^4.3.9",
         "liquidjs-lib": "^6.0.2-liquid.34",
         "loglevel": "^1.9.1",

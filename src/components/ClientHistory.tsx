@@ -1,9 +1,9 @@
 import { useNavigate } from "@solidjs/router";
 import { createQuery } from "@tanstack/solid-query";
 import { Match, Show, Switch } from "solid-js";
+import { client } from "src/utils/client/api";
 
 import { useGlobalContext } from "../context/Global";
-import { clientFetcher } from "../utils/helper";
 import SwapList from "./SwapList";
 
 const ClientHistory = () => {
@@ -14,7 +14,7 @@ const ClientHistory = () => {
     const query = createQuery(() => ({
         queryKey: ["swaps"],
         queryFn: async () => {
-            const data = await clientFetcher("/v1/listswaps");
+            const data = await client()["/v1/listswaps"].get();
 
             const transform = (swap, reverse) => {
                 return {

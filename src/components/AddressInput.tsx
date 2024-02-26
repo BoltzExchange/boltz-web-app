@@ -3,11 +3,10 @@ import { createEffect, on } from "solid-js";
 import { RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { isBoltzClient } from "../utils/helper";
 import { invoice, moduleLoaded, address as util } from "../utils/lazy";
 import { setButtonLabel } from "./CreateButton";
 
-const AddressInput = () => {
+const AddressInput = ({ allowEmpty }: { allowEmpty?: boolean }) => {
     let inputRef: HTMLInputElement;
 
     const { t } = useGlobalContext();
@@ -29,7 +28,7 @@ const AddressInput = () => {
         const address = invoice.extractAddress(inputValue);
 
         try {
-            if (address == "" && isBoltzClient()) {
+            if (address == "" && allowEmpty) {
                 setAddressValid(true);
             } else {
                 const assetName = asset();

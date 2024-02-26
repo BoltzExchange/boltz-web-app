@@ -1,5 +1,13 @@
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createMemo, lazy, on, onMount } from "solid-js";
+import {
+    For,
+    Show,
+    createEffect,
+    createMemo,
+    lazy,
+    on,
+    onMount,
+} from "solid-js";
 
 import AddressInput from "../components/AddressInput";
 import Asset from "../components/Asset";
@@ -11,6 +19,7 @@ import InvoiceInput from "../components/InvoiceInput";
 import Reverse from "../components/Reverse";
 import WeblnButton from "../components/WeblnButton";
 import { RBTC, sideReceive, sideSend } from "../consts";
+import { currencyToAsset, useClientContext } from "../context/Client";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
@@ -24,10 +33,63 @@ import {
     formatAmount,
     getValidationRegex,
 } from "../utils/denomination";
-import { isMobile } from "../utils/helper";
+import { isBoltzClient, isMobile } from "../utils/helper";
 import ErrorWasm from "./ErrorWasm";
 
 const QrScan = lazy(() => import("../components/QrScan"));
+
+const ClientInputs = () => {
+    const { wallets, acceptZeroConf, setAcceptZeroConf } = useClientContext();
+    const { reverse, asset } = useCreateContext();
+    const { webln } = useGlobalContext();
+
+    const availableWallets = () =>
+        wallets.data?.filter(
+            (w) =>
+                (!w.readonly || reverse()) &&
+                currencyToAsset(w.currency) == asset(),
+        );
+
+    const allowEmpty = () => availableWallets()?.length > 0;
+
+    return (
+        <>
+            <Show when={availableWallets()?.length > 0}>
+                <select>
+                    <For each={availableWallets()}>
+                        {(wallet: any) => (
+                            <option value={wallet.id}>{wallet.name}</option>
+                        )}
+                    </For>
+                </select>
+            </Show>
+            <Show when={reverse()}>
+                <Show when={webln()}>
+                    <WeblnButton />
+                    <hr class="spacer" />
+                </Show>
+                <InvoiceInput />
+                <input
+                    type="checkbox"
+                    checked={acceptZeroConf()}
+                    onchange={(e) => setAcceptZeroConf(e.currentTarget.checked)}
+                />
+            </Show>
+            <Show when={!reverse()}>
+                <div>
+                    <input
+                        type="checkbox"
+                        checked={acceptZeroConf()}
+                        onChange={(e) =>
+                            setAcceptZeroConf(e.currentTarget.checked)
+                        }
+                    />
+                </div>
+                <AddressInput allowEmpty={allowEmpty()} />
+            </Show>
+        </>
+    );
+};
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
@@ -346,21 +408,26 @@ const Create = () => {
                     </div>
                 </div>
                 <Fees />
-                <hr class="spacer" />
-                <Show when={asset() === RBTC}>
-                    <ConnectMetamask showAddress={true} />
-                    <hr class="spacer" />
+                <Show when={isBoltzClient()}>
+                    <ClientInputs />
                 </Show>
-                <Show when={reverse() && asset() !== RBTC}>
-                    <AddressInput />
-                </Show>
-                <Show when={!reverse()}>
-                    <Show when={webln()}>
-                        <WeblnButton />
+                <Show when={!isBoltzClient()}>
+                    <Show when={asset() === RBTC}>
+                        <ConnectMetamask showAddress={true} />
                         <hr class="spacer" />
                     </Show>
-                    <InvoiceInput />
+                    <Show when={reverse() && asset() !== RBTC}>
+                        <AddressInput />
+                    </Show>
+                    <Show when={!reverse()}>
+                        <Show when={webln()}>
+                            <WeblnButton />
+                            <hr class="spacer" />
+                        </Show>
+                        <InvoiceInput />
+                    </Show>
                 </Show>
+                <hr class="spacer" />
                 <Show when={isMobile}>
                     <QrScan />
                 </Show>

@@ -4,7 +4,7 @@
     "apiUrl": {
         "normal": "http://localhost:9001"
     },
-    "boltzClientApiUrl": "",
+    "boltzClientApiUrl": "http://localhost:9003",
     "assets": {
         "BTC": {
             "blockExplorerUrl": {

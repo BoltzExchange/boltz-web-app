@@ -22,6 +22,7 @@ import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
 export interface SwapBackend {
+    availableAssets: Accessor<string[]>;
     createSwap: () => Promise<any>;
     fetchPairs: (asset?: string) => any;
     SwapStatusPage: (params: { id: string }) => JSX.Element;
