@@ -9,7 +9,8 @@ import type {
     SubmarinePairTypeTaproot,
 } from "./types";
 
-export const isBoltzClient = () => config().boltzClientApiUrl !== "";
+export const isBoltzClient = () =>
+    !!config().boltzClientApiUrl || config().isBoltzClient;
 export const isBoltzClientEnabled = true;
 export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile =

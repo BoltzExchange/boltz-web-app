@@ -1,4 +1,4 @@
-import { config } from "../config";
+import { config, getUrl } from "../config";
 import { BTC } from "../consts";
 import type {
     Contracts,
@@ -10,11 +10,7 @@ import type {
 
 export const getApiUrl = (asset: string): string => {
     const found = config().assets[asset];
-    if (found && found.apiUrl) {
-        return found.apiUrl;
-    }
-
-    return config().apiUrl;
+    return getUrl(found?.apiUrl ?? config().apiUrl);
 };
 export const fetcher = async <T = any>(
     url: string,

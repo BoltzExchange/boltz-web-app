@@ -1,7 +1,6 @@
 {
     "torUrl": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
-    "network": "main",
-    "defaultLanguage": "en",
+    "network": "mainnet",
     "loglevel": "info",
     "apiUrl": {
         "normal": "https://api.boltz.exchange",

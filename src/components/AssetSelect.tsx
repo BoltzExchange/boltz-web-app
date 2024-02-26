@@ -1,4 +1,4 @@
-import { config } from "../config";
+import { config, configReady } from "../config";
 import { LN, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -9,10 +9,9 @@ const SelectAsset = () => {
         setter(asset);
     };
 
-    const { t, fetchPairs, pairs } = useGlobalContext();
+    const { t, fetchPairs } = useGlobalContext();
 
     const {
-        reverse,
         assetReceive,
         assetSelect,
         assetSelected,
@@ -55,27 +54,7 @@ const SelectAsset = () => {
     };
 
     const assets = () => {
-        return Object.keys(config().assets).concat(LN);
-        const availablePairs = pairs()
-            ? reverse()
-                ? pairs().reverse
-                : pairs().submarine
-            : {};
-
-        const assets = Object.keys(availablePairs);
-        Object.keys(availablePairs).forEach((from) =>
-            Object.keys(availablePairs[from]).forEach((to) => {
-                if (!assets.includes(to)) {
-                    assets.push(to);
-                }
-            }),
-        );
-        return assets;
-        return assetSelected() === sideSend
-            ? Object.keys(availablePairs)
-            : Object.keys(availablePairs).flatMap((from) =>
-                  Object.keys(availablePairs[from]),
-              );
+        return configReady() ? Object.keys(config().assets).concat(LN) : [];
     };
 
     return (

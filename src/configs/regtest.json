@@ -1,6 +1,5 @@
 {
     "network": "regtest",
-    "defaultLanguage": "en",
     "loglevel": "debug",
     "apiUrl": {
         "normal": "http://localhost:9001"

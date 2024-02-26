@@ -8,7 +8,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { config } from "../config";
+import { config, configReady } from "../config";
 import { RBTC } from "../consts";
 import { getContracts } from "../utils/boltzApi";
 import { isBoltzClient } from "../utils/helper";
@@ -36,7 +36,7 @@ const Web3SignerProvider = (props: {
     const [provider, setProvider] = createSignal<BrowserProvider | undefined>();
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
     const [hasMetamask, setHasMetamask] = createSignal<boolean>(false);
-    const hasRsk = config().assets[RBTC] !== undefined;
+    const hasRsk = () => configReady() && config().assets[RBTC] !== undefined;
 
     createEffect(() => {
         if (moduleLoaded(ethers)()) {
@@ -50,7 +50,7 @@ const Web3SignerProvider = (props: {
 
     const handleMetamask = () => {
         window.removeEventListener(initEvent, handleMetamask);
-        if (hasRsk) {
+        if (hasRsk()) {
             console.log(ethers.BrowserProvider);
             setProvider(new ethers.BrowserProvider((window as any).ethereum));
         }
@@ -60,7 +60,7 @@ const Web3SignerProvider = (props: {
     const fetchContracts = new Promise<Contracts | undefined>(
         // eslint-disable-next-line
         async (resolve) => {
-            if (props.noFetch || !hasRsk) {
+            if (props.noFetch || !hasRsk()) {
                 resolve(undefined);
                 return;
             }

@@ -31,7 +31,7 @@ export const Hero = () => {
     };
 
     createEffect(async () => {
-        if (configReady()) {
+        if (configReady() && !hideHero()) {
             try {
                 const [nodesRes, statsRes] = await Promise.all([
                     getNodes(BTC),

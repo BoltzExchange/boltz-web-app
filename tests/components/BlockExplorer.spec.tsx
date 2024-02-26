@@ -22,7 +22,7 @@ describe("BlockExplorer", () => {
             ),
         );
 
-        const baseLink = config().assets[asset].blockExplorerUrl;
+        const baseLink = config().assets[asset].blockExplorerUrl.normal;
         expect(baseLink).toBeDefined();
         expect(button).not.toBeUndefined();
         expect((button as any).href).toEqual(`${baseLink}/address/${address}`);
@@ -44,7 +44,7 @@ describe("BlockExplorer", () => {
             ),
         );
 
-        const baseLink = config().assets[asset].blockExplorerUrl;
+        const baseLink = config().assets[asset].blockExplorerUrl.normal;
         expect(baseLink).toBeDefined();
         expect(button).not.toBeUndefined();
         expect((button as any).href).toEqual(`${baseLink}/tx/${txId}`);

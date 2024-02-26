@@ -1,6 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import { CreateQueryResult, createQuery } from "@tanstack/solid-query";
-import { createContext, lazy, useContext } from "solid-js";
+import { createContext, createEffect, lazy, useContext } from "solid-js";
 
 import { BTC } from "../consts";
 import { clientFetcher, getPairs } from "../utils/helper";
@@ -9,12 +9,14 @@ import { useGlobalContext } from "./Global";
 
 export type ClientContextType = {
     wallets: CreateQueryResult<any>;
+    info: CreateQueryResult<any>;
 };
 
 const ClientContext = createContext<ClientContextType>();
 
 const ClientProvider = (props: { children: any }) => {
-    const { setBackend } = useGlobalContext();
+    const { setHideHero, setBackend, setOnline } = useGlobalContext();
+    setHideHero(true);
 
     const { sendAmount, onchainAddress, asset, reverse } = useCreateContext();
 
@@ -50,13 +52,27 @@ const ClientProvider = (props: { children: any }) => {
         SwapStatusPage: lazy(() => import("../pages/ClientPay")),
         SwapHistory: lazy(() => import("../components/ClientHistory")),
     });
+
+    const info = createQuery(() => ({
+        queryKey: ["info"],
+        queryFn: () => clientFetcher("/v1/info"),
+    }));
+    createEffect(() => {
+        if (info.isError) {
+            setOnline(false);
+        }
+        if (info.isSuccess) {
+            setOnline(true);
+        }
+    });
     return (
         <ClientContext.Provider
             value={{
                 wallets: createQuery(() => ({
                     queryKey: ["wallets"],
-                    queryFn: () => clientFetcher("/wallets"),
+                    queryFn: () => clientFetcher("/v1/wallets"),
                 })),
+                info,
             }}>
             {props.children}
         </ClientContext.Provider>

@@ -1,6 +1,5 @@
 {
     "network": "testnet",
-    "defaultLanguage": "en",
     "loglevel": "debug",
     "apiUrl": {
         "normal": "https://testnet.boltz.exchange/api"

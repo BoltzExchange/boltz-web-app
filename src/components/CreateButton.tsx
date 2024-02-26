@@ -80,7 +80,7 @@ export const CreateButton = () => {
             id="create-swap-button"
             data-testid="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable() || !online() || modulesLoaded()}
+            disabled={buttonDisable() || !online() || !modulesLoaded()}
             onClick={buttonClick}>
             {t(buttonLabel().key, buttonLabel().params)}
         </button>
