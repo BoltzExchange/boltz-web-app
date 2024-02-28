@@ -82,7 +82,7 @@ const Create = () => {
 
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
-        const amount = target.value.trim();
+        const amount = target.value.trim().replaceAll(' ', '');
         checkEmptyAmount(amount);
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
