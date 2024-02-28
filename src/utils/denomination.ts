@@ -84,7 +84,7 @@ export const calculateDigits = (
     if (denomination === denominations.btc && digits < 10) {
         digits = 10;
     } else {
-        digits += 1;
+        digits += 2;
     }
 
     return digits;
