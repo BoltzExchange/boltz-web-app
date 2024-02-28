@@ -51,9 +51,20 @@ export const formatAmountDenomination = (
             return amountBig.toString();
 
         default:
-            return amount.toString();
+            return satsComma(amount.toString());
     }
 };
+
+function satsComma(sats: string): string {
+    const chars = sats.split('').reverse();
+    const formattedSats: string = chars
+        .reduce((acc, char, i) => i % 3 === 0 ? acc + ' ' + char : acc + char, '')
+        .trim()
+        .split('')
+        .reverse()
+        .join('');
+    return formattedSats;
+}
 
 export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
     switch (denom) {
