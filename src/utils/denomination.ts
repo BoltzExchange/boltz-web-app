@@ -55,16 +55,19 @@ export const formatAmountDenomination = (
     }
 };
 
-function satsComma(sats: string): string {
-    const chars = sats.split('').reverse();
+const satsComma = (sats: string): string => {
+    const chars = sats.split("").reverse();
     const formattedSats: string = chars
-        .reduce((acc, char, i) => i % 3 === 0 ? acc + ' ' + char : acc + char, '')
+        .reduce(
+            (acc, char, i) => (i % 3 === 0 ? acc + " " + char : acc + char),
+            "",
+        )
         .trim()
-        .split('')
+        .split("")
         .reverse()
-        .join('');
+        .join("");
     return formattedSats;
-}
+};
 
 export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
     switch (denom) {
