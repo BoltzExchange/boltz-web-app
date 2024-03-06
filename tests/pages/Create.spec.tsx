@@ -12,6 +12,7 @@ import {
     globalSignals,
     signals,
 } from "../helper";
+import { satsComma } from "../../src/utils/denomination";
 
 describe("Create", () => {
     test("should render Create", async () => {
@@ -184,7 +185,7 @@ describe("Create", () => {
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();
 
-        fireEvent.click(await screen.findByText(amount));
+        fireEvent.click(await screen.findByText(satsComma(amount.toString())));
 
         expect(signals.sendAmount()).toEqual(BigNumber(amount));
         expect(signals.receiveAmount()).toEqual(
@@ -240,6 +241,6 @@ describe("Create", () => {
         });
 
         expect(createButton.disabled).toEqual(true);
-        expect(createButton.innerHTML).toEqual("Minimum amount is 50000 sat");
+        expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sat");
     });
 });

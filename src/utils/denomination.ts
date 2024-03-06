@@ -55,7 +55,7 @@ export const formatAmountDenomination = (
     }
 };
 
-const satsComma = (sats: string): string => {
+export const satsComma = (sats: string): string => {
     const chars = sats.split("").reverse();
     const formattedSats: string = chars
         .reduce(
