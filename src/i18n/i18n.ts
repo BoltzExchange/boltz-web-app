@@ -350,7 +350,7 @@ const dict = {
         testnet: "Testnet",
         broadcasting_claim: "Sende claim transaction...",
         open_swap: "Swap öffnen",
-        swap_in_progress: "Dieser Swap ist noch in Bearbeitung.",
+        swap_in_progress: "Dieser Swap ist noch im Gange.",
     },
     es: {
         language: "Español",
@@ -531,7 +531,7 @@ const dict = {
         testnet: "Testnet",
         broadcasting_claim: "Enviando transacción de reclamación...",
         open_swap: "Abrir intercambio",
-        swap_in_progress: "Este intercambio aún está en progreso.",
+        swap_in_progress: "Este intercambio aún está en curso.",
     },
     zh: {
         language: "中文",
