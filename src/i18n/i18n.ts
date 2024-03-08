@@ -350,7 +350,7 @@ const dict = {
         testnet: "Testnet",
         broadcasting_claim: "Sende claim transaction...",
         open_swap: "Swap öffnen",
-        swap_in_progress: "Dieser Swap ist noch im Gange.",
+        swap_in_progress: "Dieser Swap ist noch nicht abgeschlossen.",
     },
     es: {
         language: "Español",
