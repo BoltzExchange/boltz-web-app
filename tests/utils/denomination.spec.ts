@@ -52,18 +52,18 @@ describe("denomination utils", () => {
     describe("calculate allowed digits", () => {
         test.each`
             denomination         | digits | amount
-            ${denominations.sat} | ${6}   | ${1000}
-            ${denominations.sat} | ${8}   | ${100000}
-            ${denominations.sat} | ${11}  | ${100000000}
-            ${denominations.sat} | ${12}  | ${1000000000}
-            ${denominations.sat} | ${13}  | ${10000000000}
-            ${denominations.btc} | ${10}  | ${1000}
-            ${denominations.btc} | ${10}  | ${100000}
-            ${denominations.btc} | ${10}  | ${10000000}
-            ${denominations.btc} | ${10}  | ${100000000}
-            ${denominations.btc} | ${12}  | ${1000000000}
-            ${denominations.btc} | ${13}  | ${10000000000}
-            ${denominations.btc} | ${14}  | ${100000000000}
+            ${denominations.sat} | ${5}   | ${1_000}
+            ${denominations.sat} | ${7}   | ${100_000}
+            ${denominations.sat} | ${11}  | ${100_000_000}
+            ${denominations.sat} | ${13}  | ${1_000_000_000}
+            ${denominations.sat} | ${14}  | ${10_000_000_000}
+            ${denominations.btc} | ${10}  | ${1_000}
+            ${denominations.btc} | ${10}  | ${100_000}
+            ${denominations.btc} | ${10}  | ${10_000_000}
+            ${denominations.btc} | ${10}  | ${100_000_000}
+            ${denominations.btc} | ${11}  | ${1_000_000_000}
+            ${denominations.btc} | ${12}  | ${10_000_000_000}
+            ${denominations.btc} | ${13}  | ${100_000_000_000}
         `(
             "calculate digits for $amount in $denomination",
             ({ denomination, digits, amount }) => {
