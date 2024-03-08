@@ -167,7 +167,7 @@ describe("Create", () => {
         extrema
         ${"min"}
         ${"max"}
-    `("should set $extrema amount on click", async (extrema) => {
+    `("should set $extrema amount on click", async ({ extrema }) => {
         render(
             () => (
                 <>
