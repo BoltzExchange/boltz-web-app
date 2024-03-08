@@ -5,6 +5,7 @@ import { BTC, LN, sideReceive, sideSend } from "../../src/consts";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
+import { denominations, formatAmount } from "../../src/utils/denomination";
 import { cfg } from "../config";
 import {
     TestComponent,
@@ -166,7 +167,7 @@ describe("Create", () => {
         extrema
         ${"min"}
         ${"max"}
-    `("should set $extrema amount on click", async (extrema) => {
+    `("should set $extrema amount on click", async ({ extrema }) => {
         render(
             () => (
                 <>
@@ -184,7 +185,11 @@ describe("Create", () => {
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();
 
-        fireEvent.click(await screen.findByText(amount));
+        const formattedAmount = formatAmount(
+            BigNumber(amount),
+            denominations.sat,
+        );
+        fireEvent.click(await screen.findByText(formattedAmount));
 
         expect(signals.sendAmount()).toEqual(BigNumber(amount));
         expect(signals.receiveAmount()).toEqual(
@@ -240,6 +245,6 @@ describe("Create", () => {
         });
 
         expect(createButton.disabled).toEqual(true);
-        expect(createButton.innerHTML).toEqual("Minimum amount is 50000 sat");
+        expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sat");
     });
 });

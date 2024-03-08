@@ -11,11 +11,10 @@ export const getValidationRegex = (
     maximum: number,
     denomination: string,
 ): RegExp => {
-    const digits = calculateDigits(maximum, denomination);
     const regex =
         denomination === denominations.sat
-            ? `^[0-9]{1,${digits}}$`
-            : `^[0-9](.[0-9]{1,${digits}}){0,1}$`;
+            ? `^[0-9]{1,${maximum.toString().length}}$`
+            : `^[0-9](.[0-9]{1,10}){0,1}$`;
     return new RegExp(regex);
 };
 
@@ -51,7 +50,18 @@ export const formatAmountDenomination = (
             return amountBig.toString();
 
         default:
-            return amount.toString();
+            const chars = amount.toString().split("").reverse();
+            const formattedSats: string = chars
+                .reduce(
+                    (acc, char, i) =>
+                        i % 3 === 0 ? acc + " " + char : acc + char,
+                    "",
+                )
+                .trim()
+                .split("")
+                .reverse()
+                .join("");
+            return formattedSats;
     }
 };
 
@@ -72,8 +82,12 @@ export const calculateDigits = (
     let digits = maximum.toString().length;
     if (denomination === denominations.btc && digits < 10) {
         digits = 10;
-    } else {
+    } else if (denomination === denominations.btc) {
+        // account for decimal point
         digits += 1;
+    } else {
+        // account for spaces
+        digits += Math.floor((digits - 1) / 3);
     }
 
     return digits;
