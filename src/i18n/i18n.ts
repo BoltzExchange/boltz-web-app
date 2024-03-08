@@ -170,6 +170,8 @@ const dict = {
         branding: "Branding",
         testnet: "Testnet",
         broadcasting_claim: "Broadcasting claim transaction...",
+        open_swap: "Open Swap",
+        swap_in_progress: "This swap is still in progress.",
     },
     de: {
         language: "Deutsch",
@@ -347,6 +349,8 @@ const dict = {
         branding: "Branding",
         testnet: "Testnet",
         broadcasting_claim: "Sende claim transaction...",
+        open_swap: "Swap öffnen",
+        swap_in_progress: "Dieser Swap ist noch nicht abgeschlossen.",
     },
     es: {
         language: "Español",
@@ -526,6 +530,8 @@ const dict = {
         branding: "Branding",
         testnet: "Testnet",
         broadcasting_claim: "Enviando transacción de reclamación...",
+        open_swap: "Abrir intercambio",
+        swap_in_progress: "Este intercambio aún está en curso.",
     },
     zh: {
         language: "中文",
@@ -688,6 +694,8 @@ const dict = {
         branding: "品牌",
         testnet: "测试网",
         broadcasting_claim: "正在发送索赔交易...",
+        open_swap: "打开交换",
+        swap_in_progress: "此交换仍在进行中。",
     },
 };
 

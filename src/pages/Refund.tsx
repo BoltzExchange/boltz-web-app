@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show, createSignal, onMount } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
@@ -19,6 +19,8 @@ const Refund = () => {
     const { updateSwapStatus, wasmSupported, swaps, t } = useGlobalContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
+    const [swapFound, setSwapFound] = createSignal(null);
+    const [refundInvalid, setRefundInvalid] = createSignal(false);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
@@ -28,10 +30,12 @@ const Refund = () => {
     const checkRefundJsonKeys = (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
 
-        // Redirect to normal flow if swap is in local storage
+        // When the swap id is found in the local storage, there is no need for the validation,
+        // all relevant data is there already and we just need to show the button to redirect
         const localStorageSwap = swaps().find((s: any) => s.id === json.id);
         if (localStorageSwap !== undefined) {
-            navigate("/swap/" + json.id);
+            setSwapFound(json.id);
+            return;
         }
 
         // Compatibility with the old refund files
@@ -46,6 +50,7 @@ const Refund = () => {
         if (valid) {
             setRefundJson(json);
         } else {
+            setRefundInvalid(true);
             input.setCustomValidity(t("invalid_refund_file"));
         }
     };
@@ -55,6 +60,8 @@ const Refund = () => {
         const inputFile = input.files[0];
         input.setCustomValidity("");
         setRefundJson(null);
+        setSwapFound(null);
+        setRefundInvalid(false);
 
         if (inputFile.type === "image/png") {
             QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
@@ -63,6 +70,7 @@ const Refund = () => {
                 )
                 .catch((e) => {
                     log.error("invalid QR code upload", e);
+                    setRefundInvalid(true);
                     input.setCustomValidity(t("invalid_refund_file"));
                 });
         } else {
@@ -73,6 +81,7 @@ const Refund = () => {
                 })
                 .catch((e) => {
                     log.error("invalid file upload", e);
+                    setRefundInvalid(true);
                     input.setCustomValidity(t("invalid_refund_file"));
                 });
         }
@@ -87,7 +96,7 @@ const Refund = () => {
         setRefundableSwaps(refundableSwaps().concat(swap));
     };
 
-    createEffect(() => {
+    onMount(() => {
         const swapsToRefund = swaps()
             .filter(refundSwapsSanityFilter)
             .filter((swap) =>
@@ -143,6 +152,21 @@ const Refund = () => {
                         accept="application/json,image/png"
                         onChange={(e) => uploadChange(e)}
                     />
+                    <Show when={swapFound() !== null}>
+                        <hr />
+                        <p>{t("swap_in_progress")}</p>
+                        <button
+                            class="btn btn-success"
+                            onClick={() => navigate(`/swap/${swapFound()}`)}>
+                            {t("open_swap")}
+                        </button>
+                    </Show>
+                    <Show when={refundInvalid()}>
+                        <hr />
+                        <button class="btn" disabled={true}>
+                            {t("invalid_refund_file")}
+                        </button>
+                    </Show>
                     <Show when={refundTxId() === "" && refundJson() !== null}>
                         <hr />
                         <RefundButton
