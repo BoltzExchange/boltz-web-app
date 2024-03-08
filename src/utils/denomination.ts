@@ -51,22 +51,19 @@ export const formatAmountDenomination = (
             return amountBig.toString();
 
         default:
-            return satsComma(amount.toString());
+            const chars = amount.toString().split("").reverse();
+            const formattedSats: string = chars
+                .reduce(
+                    (acc, char, i) =>
+                        i % 3 === 0 ? acc + " " + char : acc + char,
+                    "",
+                )
+                .trim()
+                .split("")
+                .reverse()
+                .join("");
+            return formattedSats;
     }
-};
-
-export const satsComma = (sats: string): string => {
-    const chars = sats.split("").reverse();
-    const formattedSats: string = chars
-        .reduce(
-            (acc, char, i) => (i % 3 === 0 ? acc + " " + char : acc + char),
-            "",
-        )
-        .trim()
-        .split("")
-        .reverse()
-        .join("");
-    return formattedSats;
 };
 
 export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
@@ -86,8 +83,12 @@ export const calculateDigits = (
     let digits = maximum.toString().length;
     if (denomination === denominations.btc && digits < 10) {
         digits = 10;
+    } else if (denomination === denominations.btc) {
+        // account for decimal point
+        digits += 1;
     } else {
-        digits += 2;
+        // account for spaces
+        digits += Math.floor((digits - 1) / 3);
     }
 
     return digits;

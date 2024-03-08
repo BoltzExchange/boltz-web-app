@@ -5,7 +5,7 @@ import { BTC, LN, sideReceive, sideSend } from "../../src/consts";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
-import { satsComma } from "../../src/utils/denomination";
+import { denominations, formatAmount } from "../../src/utils/denomination";
 import { cfg } from "../config";
 import {
     TestComponent,
@@ -185,7 +185,11 @@ describe("Create", () => {
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();
 
-        fireEvent.click(await screen.findByText(satsComma(amount.toString())));
+        const formattedAmount = formatAmount(
+            BigNumber(amount),
+            denominations.sat,
+        );
+        fireEvent.click(await screen.findByText(formattedAmount));
 
         expect(signals.sendAmount()).toEqual(BigNumber(amount));
         expect(signals.receiveAmount()).toEqual(
