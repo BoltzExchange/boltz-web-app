@@ -163,7 +163,7 @@ const Refund = () => {
                     </Show>
                     <Show when={refundInvalid()}>
                         <hr />
-                        <button class="btn btn-danger" disabled={true}>
+                        <button class="btn" disabled={true}>
                             {t("invalid_refund_file")}
                         </button>
                     </Show>
