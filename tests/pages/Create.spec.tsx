@@ -5,6 +5,7 @@ import { BTC, LN, sideReceive, sideSend } from "../../src/consts";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
+import { satsComma } from "../../src/utils/denomination";
 import { cfg } from "../config";
 import {
     TestComponent,
@@ -12,7 +13,6 @@ import {
     globalSignals,
     signals,
 } from "../helper";
-import { satsComma } from "../../src/utils/denomination";
 
 describe("Create", () => {
     test("should render Create", async () => {
