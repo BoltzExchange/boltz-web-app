@@ -78,8 +78,8 @@ describe("denomination utils", () => {
         test.each`
             denomination         | amount                  | valid
             ${denominations.sat} | ${"123123"}             | ${true}
-            ${denominations.sat} | ${"12312300000"}        | ${true}
             ${denominations.sat} | ${max}                  | ${true}
+            ${denominations.sat} | ${max * 10}             | ${false}
             ${denominations.sat} | ${"lol"}                | ${false}
             ${denominations.btc} | ${"lol"}                | ${false}
             ${denominations.btc} | ${"123123"}             | ${true}
