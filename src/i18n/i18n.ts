@@ -172,8 +172,8 @@ const dict = {
         broadcasting_claim: "Broadcasting claim transaction...",
         open_swap: "Open Swap",
         swap_in_progress: "This swap is still in progress.",
-        paste_invalid_chars:
-            "Could not paste, clipboard contains invalid characters",
+        paste_invalid:
+            "Clipboard contains invalid characters or maximum amount is exceeded",
     },
     de: {
         language: "Deutsch",
@@ -353,6 +353,8 @@ const dict = {
         broadcasting_claim: "Sende claim transaction...",
         open_swap: "Swap öffnen",
         swap_in_progress: "Dieser Swap ist noch nicht abgeschlossen.",
+        paste_invalid:
+            "Zwischenablage enthält ungültige Zeichen oder der maximale Betrag wurde überschritten",
     },
     es: {
         language: "Español",
@@ -534,6 +536,8 @@ const dict = {
         broadcasting_claim: "Enviando transacción de reclamación...",
         open_swap: "Abrir intercambio",
         swap_in_progress: "Este intercambio aún está en curso.",
+        paste_invalid:
+            "El portapapeles contiene caracteres no válidos o se ha excedido el monto máximo",
     },
     zh: {
         language: "中文",
@@ -698,6 +702,7 @@ const dict = {
         broadcasting_claim: "正在发送索赔交易...",
         open_swap: "打开交换",
         swap_in_progress: "此交换仍在进行中。",
+        paste_invalid: "剪贴板包含无效字符或超出最大金额",
     },
 };
 

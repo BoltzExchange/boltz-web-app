@@ -134,10 +134,10 @@ const Create = () => {
     const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
-        if (!getValidationRegex(maximum(), denomination()).test(pastedData)) {
+        if (!getValidationRegex(maximum()).test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
-            notify("error", t("paste_invalid_chars"));
+            notify("error", t("paste_invalid"));
         }
     };
 
