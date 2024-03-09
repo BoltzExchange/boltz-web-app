@@ -32,7 +32,7 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
-    const { setDenomination, denomination, wasmSupported, webln, t } =
+    const { setDenomination, denomination, wasmSupported, webln, t, notify } =
         useGlobalContext();
     const {
         reverse,
@@ -134,10 +134,10 @@ const Create = () => {
     const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
-        changeDenomination(pastedData);
         if (!getValidationRegex(maximum(), denomination()).test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
+            notify("error", t("paste_invalid_chars"));
         }
     };
 

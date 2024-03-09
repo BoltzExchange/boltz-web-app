@@ -172,6 +172,8 @@ const dict = {
         broadcasting_claim: "Broadcasting claim transaction...",
         open_swap: "Open Swap",
         swap_in_progress: "This swap is still in progress.",
+        paste_invalid_chars:
+            "Could not paste, clipboard contains invalid characters",
     },
     de: {
         language: "Deutsch",

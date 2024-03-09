@@ -7,14 +7,9 @@ export const denominations = {
     btc: "btc",
 };
 
-export const getValidationRegex = (
-    maximum: number,
-    denomination: string,
-): RegExp => {
-    const regex =
-        denomination === denominations.sat
-            ? `^[0-9]{1,${maximum.toString().length}}$`
-            : `^[0-9](.[0-9]{1,10}){0,1}$`;
+export const getValidationRegex = (maximum: number): RegExp => {
+    const digits = maximum.toString().length;
+    const regex = `^[0-9]{1,${digits}}$|^[0-9](\\.[0-9]{1,8}){0,1}$`;
     return new RegExp(regex);
 };
 

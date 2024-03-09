@@ -76,26 +76,20 @@ describe("denomination utils", () => {
         const max = 100000000;
 
         test.each`
-            denomination         | amount                  | valid
-            ${denominations.sat} | ${"123123"}             | ${true}
-            ${denominations.sat} | ${max}                  | ${true}
-            ${denominations.sat} | ${max * 10}             | ${false}
-            ${denominations.sat} | ${"lol"}                | ${false}
-            ${denominations.btc} | ${"lol"}                | ${false}
-            ${denominations.btc} | ${"123123"}             | ${true}
-            ${denominations.btc} | ${"0.123123"}           | ${true}
-            ${denominations.btc} | ${"0.1231.23"}          | ${false}
-            ${denominations.btc} | ${"1.12321"}            | ${true}
-            ${denominations.btc} | ${"10.12300011"}        | ${false}
-            ${denominations.btc} | ${max / 10 ** 8}        | ${true}
-            ${denominations.btc} | ${(max / 10 ** 8) * 10} | ${false}
-            ${denominations.btc} | ${"0.12312313123131"}   | ${false}
-        `(
-            "validating regex for $amount in $denomination",
-            ({ denomination, amount, valid }) => {
-                let regex = getValidationRegex(max, denomination);
-                expect(regex.test(amount)).toEqual(valid);
-            },
-        );
+            amount           | valid
+            ${"123123"}      | ${true}
+            ${max}           | ${true}
+            ${max * 10}      | ${false}
+            ${"lol"}         | ${false}
+            ${"0.12312333"}  | ${true}
+            ${"0.1231.23"}   | ${false}
+            ${"1.12321"}     | ${true}
+            ${"10.12300011"} | ${false}
+            ${"0.123123131"} | ${false}
+            ${"0,123"}       | ${false}
+        `("validating regex for $amount", ({ amount, valid }) => {
+            let regex = getValidationRegex(max);
+            expect(regex.test(amount)).toEqual(valid);
+        });
     });
 });
