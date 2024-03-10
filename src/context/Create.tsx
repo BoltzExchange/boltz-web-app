@@ -10,8 +10,7 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { LN, sideSend } from "../consts";
-import { ButtonLabelParams } from "../types";
+import { LN, RBTC, sideSend } from "../consts";
 
 export type CreateContextType = {
     reverse: Accessor<boolean>;
@@ -58,8 +57,8 @@ export type CreateContextType = {
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-    buttonLabel: Accessor<ButtonLabelParams>;
-    setButtonLabel: Setter<ButtonLabelParams>;
+    setInvoiceError: Setter<string>;
+    invoiceError: Accessor<string>;
 };
 
 const CreateContext = createContext<CreateContextType>();
@@ -100,7 +99,23 @@ const CreateProvider = (props: { children: any }) => {
     const [valid, setValid] = createSignal(false);
     const [invoiceValid, setInvoiceValid] = createSignal(false);
     const [addressValid, setAddressValid] = createSignal(false);
-    const [amountValid, setAmountValid] = createSignal(true);
+    const [amountValid, setAmountValid] = createSignal(false);
+    const [invoiceError, setInvoiceError] = createSignal<string>("");
+
+    createEffect(() => {
+        if (amountValid()) {
+            if (
+                (reverse() && addressValid()) ||
+                (!reverse() &&
+                    invoiceValid() &&
+                    (asset() !== RBTC || addressValid()))
+            ) {
+                setValid(true);
+                return;
+            }
+        }
+        setValid(false);
+    });
 
     // amounts
     const [sendAmount, setSendAmount] = createSignal(BigNumber(0));
@@ -116,10 +131,6 @@ const CreateProvider = (props: { children: any }) => {
     // fees
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
-
-    const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
-        key: "create_swap",
-    });
 
     return (
         <CreateContext.Provider
@@ -168,8 +179,8 @@ const CreateProvider = (props: { children: any }) => {
                 setBoltzFee,
                 minerFee,
                 setMinerFee,
-                buttonLabel,
-                setButtonLabel,
+                invoiceError,
+                setInvoiceError,
             }}>
             {props.children}
         </CreateContext.Provider>

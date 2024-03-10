@@ -11,30 +11,28 @@ import { validateInvoice } from "../utils/validation";
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t, denomination } = useGlobalContext();
+    const { t } = useGlobalContext();
     const {
         asset,
         boltzFee,
         minerFee,
         invoice,
         receiveAmount,
-        receiveAmountFormatted,
         reverse,
         sendAmount,
         amountValid,
         setInvoice,
         setInvoiceValid,
+        setInvoiceError,
         setLnurl,
         setReceiveAmount,
         setSendAmount,
-        setButtonLabel,
     } = useCreateContext();
 
     const validate = (input: HTMLTextAreaElement) => {
         const inputValue = extractInvoice(input.value.trim());
         try {
             if (isLnurl(inputValue)) {
-                setButtonLabel({ key: "fetch_lnurl" });
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
@@ -52,14 +50,15 @@ const InvoiceInput = () => {
                 setInvoiceValid(true);
             }
             input.setCustomValidity("");
+            setInvoiceError("");
             input.classList.remove("invalid");
         } catch (e) {
+            // if amount is zero, don't show error
+            if (sendAmount().isZero()) return;
             setInvoiceValid(false);
             setLnurl("");
             input.setCustomValidity(t(e.message));
-            if (amountValid()) {
-                setButtonLabel({ key: e.message });
-            }
+            setInvoiceError(e.message);
             input.classList.add("invalid");
         }
     };
@@ -105,10 +104,7 @@ const InvoiceInput = () => {
             name="invoice"
             value={invoice()}
             autocomplete="off"
-            placeholder={t("create_and_paste", {
-                amount: receiveAmountFormatted(),
-                denomination: denomination(),
-            })}></textarea>
+            placeholder={t("create_and_paste")}></textarea>
     );
 };
 

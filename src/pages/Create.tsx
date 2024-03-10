@@ -43,7 +43,6 @@ const Create = () => {
         assetSelected,
         invoiceValid,
         addressValid,
-        amountValid,
         sendAmount,
         setSendAmount,
         receiveAmount,
@@ -56,11 +55,9 @@ const Create = () => {
         setAmountChanged,
         minimum,
         maximum,
-        setValid,
         setAmountValid,
         boltzFee,
         minerFee,
-        setButtonLabel,
     } = useCreateContext();
 
     // if btc and amount > 10, switch to sat
@@ -174,7 +171,6 @@ const Create = () => {
             const label = lessThanMin ? "minimum_amount" : "maximum_amount";
             const errorMsg = t(label, params);
             setCustomValidity(errorMsg, amount === 0);
-            setButtonLabel({ key: label, params: params });
             setAmountValid(false);
             return;
         }
@@ -220,7 +216,7 @@ const Create = () => {
                     ),
                 );
             }
-            validateAmount();
+            if (receiveAmount().isGreaterThan(0)) validateAmount();
         }),
     );
 
@@ -251,22 +247,6 @@ const Create = () => {
         } else {
             setSendAmountFormatted("");
         }
-    });
-
-    // validation swap
-    createMemo(() => {
-        if (amountValid()) {
-            if (
-                (reverse() && addressValid()) ||
-                (!reverse() &&
-                    invoiceValid() &&
-                    (asset() !== RBTC || addressValid()))
-            ) {
-                setValid(true);
-                return;
-            }
-        }
-        setValid(false);
     });
 
     // validate amounts when invoice is valid, because we

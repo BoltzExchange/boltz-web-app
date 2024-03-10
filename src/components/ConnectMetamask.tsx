@@ -9,13 +9,7 @@ const ConnectMetamask = ({ showAddress }) => {
     const [buttonText, setButtonText] = createSignal<string | undefined>();
 
     const { t } = useGlobalContext();
-    const {
-        addressValid,
-        amountValid,
-        setAddressValid,
-        setOnchainAddress,
-        setButtonLabel,
-    } = useCreateContext();
+    const { setAddressValid, setOnchainAddress } = useCreateContext();
 
     const setButtonTextAddress = () => {
         setButtonText(address() || t("connect_to_address"));
@@ -29,12 +23,6 @@ const ConnectMetamask = ({ showAddress }) => {
         const addr = address();
         setAddressValid(addr !== undefined);
         setOnchainAddress(addr ? addr : "");
-    });
-
-    createEffect(() => {
-        if (amountValid() && !addressValid()) {
-            setButtonLabel({ key: "connect_metamask" });
-        }
     });
 
     const { getSigner, hasMetamask } = useWeb3Signer();
