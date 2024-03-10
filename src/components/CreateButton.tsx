@@ -9,20 +9,12 @@ import { BTC, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import { buttonLabelParams } from "../types";
 import { getPairs } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import { fetcher, getPair } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
 import { validateResponse } from "../utils/validation";
-
-type buttonLabelParams = {
-    key: string;
-    params?: Record<string, string>;
-};
-
-export const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
-    key: "create_swap",
-});
 
 export const CreateButton = () => {
     const navigate = useNavigate();
@@ -43,6 +35,8 @@ export const CreateButton = () => {
         setOnchainAddress,
         valid,
         setAddressValid,
+        buttonLabel,
+        setButtonLabel,
     } = useCreateContext();
     const { getEtherSwap } = useWeb3Signer();
 

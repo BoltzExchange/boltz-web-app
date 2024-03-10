@@ -5,7 +5,7 @@ import AddressInput from "../components/AddressInput";
 import Asset from "../components/Asset";
 import AssetSelect from "../components/AssetSelect";
 import ConnectMetamask from "../components/ConnectMetamask";
-import { CreateButton, setButtonLabel } from "../components/CreateButton";
+import { CreateButton } from "../components/CreateButton";
 import Fees from "../components/Fees";
 import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";
@@ -60,6 +60,7 @@ const Create = () => {
         setAmountValid,
         boltzFee,
         minerFee,
+        setButtonLabel,
     } = useCreateContext();
 
     // if btc and amount > 10, switch to sat
