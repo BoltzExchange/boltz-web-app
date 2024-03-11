@@ -138,6 +138,10 @@ const Create = () => {
             evt.stopPropagation();
             evt.preventDefault();
             notify("error", t("paste_invalid"));
+        } else {
+            // replace values from input before pasting
+            const input = evt.currentTarget as HTMLInputElement;
+            input.value = "";
         }
     };
 
