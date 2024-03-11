@@ -5,7 +5,6 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { decodeAddress } from "../utils/compat";
 import { extractAddress } from "../utils/invoice";
-import { setButtonLabel } from "./CreateButton";
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
@@ -19,6 +18,7 @@ const AddressInput = () => {
         onchainAddress,
         setAddressValid,
         setOnchainAddress,
+        setButtonLabel,
     } = useCreateContext();
 
     const validateAddress = (input: HTMLInputElement) => {

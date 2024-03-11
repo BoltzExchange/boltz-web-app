@@ -7,7 +7,6 @@ import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
 import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
-import { setButtonLabel } from "./CreateButton";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
@@ -28,6 +27,7 @@ const InvoiceInput = () => {
         setLnurl,
         setReceiveAmount,
         setSendAmount,
+        setButtonLabel,
     } = useCreateContext();
 
     const validate = (input: HTMLTextAreaElement) => {
