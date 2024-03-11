@@ -11,7 +11,7 @@ import {
 
 import { pairs } from "../config";
 import { LN, sideSend } from "../consts";
-import { buttonLabelParams } from "../types";
+import { ButtonLabelParams } from "../types";
 
 export type CreateContextType = {
     reverse: Accessor<boolean>;
@@ -58,8 +58,8 @@ export type CreateContextType = {
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-    buttonLabel: Accessor<buttonLabelParams>;
-    setButtonLabel: Setter<buttonLabelParams>;
+    buttonLabel: Accessor<ButtonLabelParams>;
+    setButtonLabel: Setter<ButtonLabelParams>;
 };
 
 const defaultSelection = Object.keys(pairs)[0].split("/")[0];
@@ -117,7 +117,7 @@ const CreateProvider = (props: { children: any }) => {
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
 
-    const [buttonLabel, setButtonLabel] = createSignal<buttonLabelParams>({
+    const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
         key: "create_swap",
     });
 

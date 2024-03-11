@@ -1,4 +1,4 @@
-export type buttonLabelParams = {
+export type ButtonLabelParams = {
     key: string;
     params?: Record<string, string>;
 };

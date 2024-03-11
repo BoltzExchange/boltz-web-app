@@ -9,7 +9,7 @@ import { BTC, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import { buttonLabelParams } from "../types";
+import { ButtonLabelParams } from "../types";
 import { getPairs } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import { fetcher, getPair } from "../utils/helper";
@@ -200,7 +200,7 @@ export const CreateButton = () => {
         setButtonDisable(validateButtonDisable());
     };
 
-    const getButtonLabel = (label: buttonLabelParams) => {
+    const getButtonLabel = (label: ButtonLabelParams) => {
         return t(label.key, label.params);
     };
 
