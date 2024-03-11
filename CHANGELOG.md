@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2024-03-11
+
+### Bug Fixes
+
+- Autoswitch off by 1 (#467)
+- Catch error on 0 amount invoices (#477)
+- Safety check if swap was found (#484)
+- Disable WebLN invoice button on invalid amount (#479)
+- Retry Taproot claims (#487)
+- Remove duplicate spacer for BTC swaps (#490)
+- Improve pasting (#496)
+- Address was not validated after assets switch (#475)
+
+### Features
+
+- Handle WIF encoded private keys (#462)
+- Cooperative submarine claims (#463)
+- Switch from SSE to WS (#464)
+- Cooperative EVM refunds
+- Migrate all endpoints to API v2
+- Fetch node public key
+- Add boltz status page to footer (#466)
+- Add youtube link and create footer nav (#476)
+- Add testnet link (#486)
+- Show WASM error page if not supported (#485)
+- Amount max/min error should have prio over other errors (#483)
+- Only show refund button when file is uploaded (#471)
+- Add loading animation (#493)
+- Implement Satcomma formatting for sats amounts (#494)
+- Intermediate step when uploading refund json and proper error (#489)
+
+### Miscellaneous Tasks
+
+- Add aqua and marina as integrations (#461)
+- Update dependencies (#472)
+- Remove unused dependencies
+- Bump CI Node version
+- Bump @openzeppelin/contracts from 5.0.1 to 5.0.2 (#495)
+
+### Refactor
+
+- Switch tests to jest (#473)
+- Consistent API V2 endpoint usage (#480)
+
+
 ## [1.3.0] - 2024-01-25
 
 ### Bug Fixes
