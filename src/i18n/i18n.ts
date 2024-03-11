@@ -407,16 +407,16 @@ const dict = {
         new_swap: "Nuevo intercambio",
         success_swap: "Intercambio realizado con éxito!",
         feecheck:
-            "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos montos y continúa con el intercambio.",
+            "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
         create_and_paste:
-            "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay\n\nMonto: {{ amount }} {{ denomination }}",
+            "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay\n\nImporte: {{ amount }} {{ denomination }}",
         congrats: "¡Felicitaciones!",
         successfully_swapped: "Su intercambio se realizó con éxito!",
         timeout_eta: "Tiempo de espera estimado",
         pay_invoice: "Intercambio: {{ id }}",
         pay_swap_404: "¡Intercambio no encontrado!",
         pay_timeout_blockheight: "Altura del bloque de tiempo de espera",
-        pay_expected_amount: "Monto esperado",
+        pay_expected_amount: "Importe esperado",
         send_to: "Enviar {{ amount }} {{ denomination }} a",
         pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
@@ -439,7 +439,7 @@ const dict = {
         invalid_0_amount: "No se admiten facturas sin importe",
         copy_invoice: "Copiar factura Lightning",
         copy_address: "Copiar dirección",
-        copy_amount: "Copiar monto",
+        copy_amount: "Copiar importe",
         copy_bip21: "Copiar BIP21",
         copied: "Copiado",
         backup_skip: "Saltar",
@@ -537,7 +537,7 @@ const dict = {
         open_swap: "Abrir intercambio",
         swap_in_progress: "Este intercambio aún está en curso.",
         paste_invalid:
-            "El portapapeles contiene caracteres no válidos o se ha excedido el monto máximo",
+            "El portapapeles contiene caracteres no válidos o se ha excedido el importe máximo",
     },
     zh: {
         language: "中文",
