@@ -73,7 +73,7 @@ describe("denomination utils", () => {
     });
 
     describe("check paste validation regex", () => {
-        const max = 100000000;
+        const max = 40_000_000;
 
         test.each`
             amount           | valid
@@ -83,7 +83,7 @@ describe("denomination utils", () => {
             ${"lol"}         | ${false}
             ${"0.12312333"}  | ${true}
             ${"0.1231.23"}   | ${false}
-            ${"1.12321"}     | ${true}
+            ${"1.12321"}     | ${false}
             ${"10.12300011"} | ${false}
             ${"0.123123131"} | ${false}
             ${"0,123"}       | ${false}

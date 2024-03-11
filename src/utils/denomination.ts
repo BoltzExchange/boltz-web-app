@@ -9,7 +9,9 @@ export const denominations = {
 
 export const getValidationRegex = (maximum: number): RegExp => {
     const digits = maximum.toString().length;
-    const regex = `^[0-9]{1,${digits}}$|^[0-9](\\.[0-9]{1,8}){0,1}$`;
+    const firstDigit = BigNumber(maximum).div(satFactor).toString().charAt(0);
+    const firstDigitRegex = firstDigit === "0" ? `0` : `0-${firstDigit}`;
+    const regex = `^[0-9]{1,${digits}}$|^[${firstDigitRegex}](\\.[0-9]{1,8}){0,1}$`;
     return new RegExp(regex);
 };
 
