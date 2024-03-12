@@ -7,6 +7,7 @@ import {
     blogUrl,
     brandingUrl,
     discordUrl,
+    email,
     githubUrl,
     nostrUrl,
     repoUrl,
@@ -81,6 +82,10 @@ const Footer = () => {
                 |{" "}
                 <a target="_blank" href={testnetUrl}>
                     {t("testnet")}
+                </a>
+                |{" "}
+                <a target="_blank" href={"mailto:" + email}>
+                    {t("email")}
                 </a>
             </p>
             <p>{t("footer")}</p>
