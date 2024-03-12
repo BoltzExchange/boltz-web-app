@@ -1,4 +1,5 @@
 import discord from "../assets/discord.svg";
+import envelope from "../assets/envelope.svg";
 import github from "../assets/github.svg";
 import nostr from "../assets/nostr.svg";
 import twitter from "../assets/twitter.svg";
@@ -7,6 +8,7 @@ import {
     blogUrl,
     brandingUrl,
     discordUrl,
+    email,
     githubUrl,
     nostrUrl,
     repoUrl,
@@ -64,6 +66,13 @@ const Footer = () => {
                     target="_blank"
                     href={youtubeUrl}>
                     <img src={youtube} alt="Youtube Logo" />
+                </a>
+                <a
+                    title={t("email")}
+                    class="email"
+                    target="_blank"
+                    href={"mailto:" + email}>
+                    <img src={envelope} alt={t("email")} />
                 </a>
             </div>
             <p class="footer-nav">

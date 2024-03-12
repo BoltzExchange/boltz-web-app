@@ -174,6 +174,7 @@ const dict = {
         swap_in_progress: "This swap is still in progress.",
         paste_invalid:
             "Clipboard contains invalid characters or maximum amount is exceeded",
+        email: "Email",
     },
     de: {
         language: "Deutsch",
@@ -355,6 +356,7 @@ const dict = {
         swap_in_progress: "Dieser Swap ist noch nicht abgeschlossen.",
         paste_invalid:
             "Zwischenablage enthält ungültige Zeichen oder der maximale Betrag wurde überschritten",
+        email: "Email",
     },
     es: {
         language: "Español",
@@ -538,6 +540,7 @@ const dict = {
         swap_in_progress: "Este intercambio aún está en curso.",
         paste_invalid:
             "El portapapeles contiene caracteres no válidos o se ha excedido el importe máximo",
+        email: "Email",
     },
     zh: {
         language: "中文",
@@ -703,6 +706,7 @@ const dict = {
         open_swap: "打开交换",
         swap_in_progress: "此交换仍在进行中。",
         paste_invalid: "剪贴板包含无效字符或超出最大金额",
+        email: "邮箱",
     },
 };
 
