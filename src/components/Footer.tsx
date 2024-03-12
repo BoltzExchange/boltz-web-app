@@ -1,4 +1,5 @@
 import discord from "../assets/discord.svg";
+import envelope from "../assets/envelope.svg";
 import github from "../assets/github.svg";
 import nostr from "../assets/nostr.svg";
 import twitter from "../assets/twitter.svg";
@@ -66,6 +67,13 @@ const Footer = () => {
                     href={youtubeUrl}>
                     <img src={youtube} alt="Youtube Logo" />
                 </a>
+                <a
+                    title={t("email")}
+                    class="email"
+                    target="_blank"
+                    href={"mailto:" + email}>
+                    <img src={envelope} alt={t("email")} />
+                </a>
             </div>
             <p class="footer-nav">
                 <a target="_blank" href={blogUrl}>
@@ -82,10 +90,6 @@ const Footer = () => {
                 |{" "}
                 <a target="_blank" href={testnetUrl}>
                     {t("testnet")}
-                </a>
-                |{" "}
-                <a target="_blank" href={"mailto:" + email}>
-                    {t("email")}
                 </a>
             </p>
             <p>{t("footer")}</p>
