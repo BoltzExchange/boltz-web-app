@@ -25,8 +25,17 @@ import {
 } from "liquidjs-lib";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
-import { config } from "../config";
-import { LBTC } from "../consts";
+import { network } from "../config";
+import { BTC, LBTC } from "../consts";
+
+const btcPrefixes = Object.keys(networks).map((n) => networks[n].bech32);
+const liquidPrefixesBech32 = Object.keys(LiquidNetworks).map(
+    (n) => LiquidNetworks[n].bech32,
+);
+const liquidPrefixesBlech32 = Object.keys(LiquidNetworks).map(
+    (n) => LiquidNetworks[n].blech32,
+);
+const liquidPrefixes = liquidPrefixesBech32.concat(liquidPrefixesBlech32);
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
     blindingPrivateKey?: Buffer;
@@ -83,11 +92,34 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     };
 };
 
-const getNetwork = (
-    asset: string,
-    network?: string,
-): Network | LiquidNetwork => {
-    network = network ?? config.network;
+const probeAddress = (address: string): string | null => {
+    let asset: string | null = null;
+    btcPrefixes.forEach((prefix: string) => {
+        if (address.startsWith(prefix)) {
+            asset = BTC;
+        }
+    });
+    liquidPrefixes.forEach((prefix: string) => {
+        if (address.startsWith(prefix)) {
+            asset = LBTC;
+        }
+    });
+    if (asset !== null) {
+        return asset;
+    }
+    // fallback to more costly decoding
+    try {
+        decodeAddress(BTC, address);
+        return BTC;
+    } catch (e) {}
+    try {
+        decodeAddress(LBTC, address);
+        return LBTC;
+    } catch (e) {}
+    return null;
+};
+
+const getNetwork = (asset: string): Network | LiquidNetwork => {
     if (asset === LBTC) {
         const liquidNet = network === "mainnet" ? "liquid" : network;
         return LiquidNetworks[liquidNet];
@@ -190,4 +222,5 @@ export {
     getConstructClaimTransaction,
     getConstructRefundTransaction,
     LiquidTransactionOutputWithKey,
+    probeAddress,
 };

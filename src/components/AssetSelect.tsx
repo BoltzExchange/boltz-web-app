@@ -23,10 +23,16 @@ const SelectAsset = () => {
         setAssetReceive,
         setAssetSelect,
         setAssetSend,
+        setInvoice,
+        setOnchainAddress,
     } = useCreateContext();
 
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) return;
+
+        // clear invoice and address
+        setInvoice("");
+        setOnchainAddress("");
 
         // set main asset only if it is not LN
         if (newAsset !== LN) {

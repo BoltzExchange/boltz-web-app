@@ -1,11 +1,17 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
-import { RBTC } from "../consts";
+import { LN, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
-import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
+import { probeAddress } from "../utils/compat";
+import {
+    decodeInvoice,
+    extractAddress,
+    extractInvoice,
+    isLnurl,
+} from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 
 const InvoiceInput = () => {
@@ -28,10 +34,23 @@ const InvoiceInput = () => {
         setReceiveAmount,
         setSendAmount,
         setButtonLabel,
+        setAssetSend,
+        setAssetReceive,
+        setOnchainAddress,
     } = useCreateContext();
 
     const validate = (input: HTMLTextAreaElement) => {
-        const inputValue = extractInvoice(input.value.trim());
+        const val = input.value.trim();
+        const inputValue = extractInvoice(val);
+        const address = extractAddress(val);
+        const probe = probeAddress(address);
+        // auto switch direction based on address
+        if (probe !== null) {
+            setAssetSend(LN);
+            setAssetReceive(probe);
+            setOnchainAddress(address);
+            return;
+        }
         try {
             if (isLnurl(inputValue)) {
                 setButtonLabel({ key: "fetch_lnurl" });
