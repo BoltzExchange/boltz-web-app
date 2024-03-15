@@ -10,7 +10,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { defaultLanguage } from "../config";
+import { defaultLanguage, isClient } from "../config";
 import { BTC } from "../consts";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
@@ -54,6 +54,8 @@ export type GlobalContextType = {
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
     setEmbedded: Setter<boolean>;
+    clientConfig: Accessor<any | null>;
+    setClientConfig: Setter<any | null>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
     notify: (type: string, message: string) => void;
@@ -183,6 +185,15 @@ const GlobalProvider = (props: { children: any }) => {
         values?: Record<string, any>,
     ) => string;
 
+    const [clientConfig, setClientConfig] = createSignal<any | null>(null);
+    if (isClient) {
+        // fetch config
+        // replace pairs / api urls
+        // replace network
+        // replace bolt11 prefix
+        // setClientConfig(config);
+    }
+
     return (
         <GlobalContext.Provider
             value={{
@@ -223,6 +234,8 @@ const GlobalProvider = (props: { children: any }) => {
                 notify,
                 fetchPairs,
                 updateSwapStatus,
+                clientConfig,
+                setClientConfig,
             }}>
             {props.children}
         </GlobalContext.Provider>

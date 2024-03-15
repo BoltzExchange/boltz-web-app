@@ -32,6 +32,7 @@ export const clipboard = (text: string) => {
 };
 
 export const getApiUrl = (asset: string): string => {
+    // get api urls differently for client if needed
     const pair = pairs[`${asset}/BTC`];
     if (pair) {
         return pair.apiUrl;

@@ -10,6 +10,7 @@
         "mainnet": "cp src/configs/config.mainnet.ts src/config.ts; vite build; cp dist/index.html dist/404.html",
         "beta": "cp src/configs/config.beta.ts src/config.ts; vite build; cp dist/index.html dist/404.html",
         "testnet": "cp src/configs/config.testnet.ts src/config.ts; vite build; cp dist/index.html dist/404.html",
+        "client": "cp src/configs/config.client.ts src/config.ts; vite build; cp dist/index.html dist/404.html",
         "prettier": "prettier --write src tests",
         "prettier-check": "prettier --check src tests",
         "tsc": "tsc",

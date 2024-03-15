@@ -1,5 +1,6 @@
 export const defaultLanguage = "en";
 export const isBeta = false;
+export const isClient = false;
 
 export const torUrl = "";
 export const lightningExplorerUrl = "https://amboss.space/node";
