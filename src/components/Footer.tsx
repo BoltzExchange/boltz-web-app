@@ -2,6 +2,7 @@ import discord from "../assets/discord.svg";
 import envelope from "../assets/envelope.svg";
 import github from "../assets/github.svg";
 import nostr from "../assets/nostr.svg";
+import telegram from "../assets/telegram.svg";
 import twitter from "../assets/twitter.svg";
 import youtube from "../assets/youtube.svg";
 import {
@@ -13,6 +14,7 @@ import {
     nostrUrl,
     repoUrl,
     statusUrl,
+    telegramUrl,
     testnetUrl,
     twitterUrl,
     youtubeUrl,
@@ -49,6 +51,13 @@ const Footer = () => {
                     target="_blank"
                     href={discordUrl}>
                     <img src={discord} alt="Discord Logo" />
+                </a>
+                <a
+                    title="Telegram"
+                    class="telegram"
+                    target="_blank"
+                    href={telegramUrl}>
+                    <img src={telegram} alt="Telegram Logo" />
                 </a>
                 <a
                     title="Twitter"
