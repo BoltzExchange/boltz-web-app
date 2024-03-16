@@ -14,6 +14,6 @@ Make sure to have the latest [Node.js LTS and NPM](https://docs.npmjs.com/downlo
 
 ## Run
 
-Clone the repository, change to the project folder and run `npm install` to install all dependencies. Then `npm run mainnet` and `npx serve dist` to bring it up.
+Clone the repository, change to the project folder and run `npm install` to install all dependencies. Then `npm run mainnet && npm run build` and `npx serve dist` to bring it up.
 
 Open [http://localhost:3000](http://localhost:3000) in your browser and start swapping!
