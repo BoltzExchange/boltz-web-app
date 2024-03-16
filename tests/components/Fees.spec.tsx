@@ -29,7 +29,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setConfig(cfg);
+        globalSignals.setPairs(cfg);
     });
 
     test("should recalculate limits on direction switch", () => {
@@ -42,7 +42,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setConfig(cfg);
+        globalSignals.setPairs(cfg);
 
         expect(signals.minimum()).toEqual(
             cfg.submarine[BTC][BTC].limits.minimal,

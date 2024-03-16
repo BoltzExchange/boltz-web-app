@@ -3,7 +3,7 @@ import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
 import log from "loglevel";
 
-import { bolt11_prefix } from "../config";
+import { config } from "../config";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {
@@ -22,6 +22,12 @@ export const liquidPrefix = "liquidnetwork:";
 export const liquidTestnetPrefix = "liquidtestnet:";
 
 export const maxExpiryHours = 24;
+
+const bolt11Prefixes = {
+    mainnet: "lnbc",
+    testnet: "lntb",
+    regtest: "lnbcrt",
+};
 
 export const getExpiryEtaHours = (invoice: string): number => {
     const decoded = decodeInvoice(invoice);
@@ -139,7 +145,8 @@ export const extractAddress = (data: string) => {
 };
 
 export const isInvoice = (data: string) => {
-    return data.toLowerCase().startsWith(bolt11_prefix);
+    const prefix = bolt11Prefixes[config.network];
+    return data.toLowerCase().startsWith(prefix);
 };
 
 const isValidBech32 = (data: string) => {

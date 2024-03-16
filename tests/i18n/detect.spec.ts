@@ -1,4 +1,4 @@
-import { defaultLanguage } from "../../src/config";
+import { config } from "../../src/config";
 import { getNavigatorLanguage } from "../../src/i18n/detect";
 
 describe("detect", () => {
@@ -12,9 +12,9 @@ describe("detect", () => {
         ${"de-LUX"}       | ${"de"}
         ${"es-ES"}        | ${"es"}
         ${"de"}           | ${"de"}
-        ${"none-DE"}      | ${defaultLanguage}
-        ${"ro-RO"}        | ${defaultLanguage}
-        ${undefined}      | ${defaultLanguage}
+        ${"none-DE"}      | ${config.defaultLanguage}
+        ${"ro-RO"}        | ${config.defaultLanguage}
+        ${undefined}      | ${config.defaultLanguage}
     `(
         "getNavigatorLanguage $navigatorLanguage <=> $expected",
         ({ navigatorLanguage, expected }) => {

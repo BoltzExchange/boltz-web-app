@@ -1,9 +1,10 @@
 import log from "loglevel";
 
-import { defaultLanguage } from "../config";
+import { config } from "../config";
 import locales from "./i18n";
 
 export const getNavigatorLanguage = (language: string): string => {
+    const defaultLanguage = config.defaultLanguage;
     if (language === undefined) {
         log.info(
             `browser language undefined; using default: ${defaultLanguage}`,

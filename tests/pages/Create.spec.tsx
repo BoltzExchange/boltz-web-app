@@ -62,7 +62,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setConfig(cfg);
+        globalSignals.setPairs(cfg);
         signals.setReverse(true);
         signals.setAsset("BTC");
         signals.setSendAmount(BigNumber(50_000));
@@ -91,7 +91,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setConfig(cfg);
+        globalSignals.setPairs(cfg);
         signals.setReverse(true);
         signals.setAsset("BTC");
         signals.setSendAmount(BigNumber(50_000));
@@ -104,7 +104,7 @@ describe("Create", () => {
 
         const updatedCfg = { ...cfg };
         cfg.reverse[BTC][BTC].fees.minerFees.claim += 1;
-        globalSignals.setConfig(updatedCfg);
+        globalSignals.setPairs(updatedCfg);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
     });
@@ -122,7 +122,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setConfig(cfg);
+        globalSignals.setPairs(cfg);
         signals.setMinimum(cfg.reverse[BTC][BTC].limits.minimal);
         signals.setReverse(true);
         signals.setAsset("BTC");
@@ -130,7 +130,7 @@ describe("Create", () => {
         const updateConfig = () => {
             const updatedCfg = { ...cfg };
             cfg.reverse[BTC][BTC].fees.minerFees.claim += 1;
-            globalSignals.setConfig(updatedCfg);
+            globalSignals.setPairs(updatedCfg);
         };
 
         const amount = 100_000;
@@ -180,7 +180,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setConfig(cfg);
+        globalSignals.setPairs(cfg);
 
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();
@@ -214,7 +214,7 @@ describe("Create", () => {
                 wrapper: contextWrapper,
             },
         );
-        globalSignals.setConfig(cfg);
+        globalSignals.setPairs(cfg);
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
 

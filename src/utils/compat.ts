@@ -25,7 +25,7 @@ import {
 } from "liquidjs-lib";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
-import { network } from "../config";
+import { config } from "../config";
 import { LBTC } from "../consts";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
@@ -84,6 +84,7 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
 };
 
 const getNetwork = (asset: string): Network | LiquidNetwork => {
+    const network = config.network;
     if (asset === LBTC) {
         const liquidNet = network === "main" ? "liquid" : network;
         return LiquidNetworks[liquidNet];

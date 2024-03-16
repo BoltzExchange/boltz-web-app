@@ -5,7 +5,7 @@ import { Show, createSignal, onMount } from "solid-js";
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
-import { lightningExplorerUrl } from "../config";
+import { config } from "../config";
 import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
@@ -24,7 +24,7 @@ export const Hero = () => {
     const { hideHero, setHideHero, t } = useGlobalContext();
 
     const openNodeInfo = async () => {
-        window.open(`${lightningExplorerUrl}/${nodePubkey()}`, "_blank");
+        window.open(`${config.lightningExplorerUrl}/${nodePubkey()}`, "_blank");
     };
 
     onMount(async () => {

@@ -1,0 +1,24 @@
+{
+    "network": "testnet",
+    "loglevel": "debug",
+    "apiUrl": {
+        "normal": "https://testnet.boltz.exchange/api"
+    },
+    "assets": {
+        "BTC": {
+            "blockExplorerUrl": {
+                "normal": "https://blockstream.info/testnet"
+            }
+        },
+        "L-BTC": {
+            "blockExplorerUrl": {
+                "normal": "https://blockstream.info/liquidtestnet"
+            }
+        },
+        "RBTC": {
+            "blockExplorerUrl": {
+                "normal": "https://explorer.testnet.rsk.co"
+            }
+        }
+    }
+}

@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 import { ECPairInterface } from "ecpair";
 import log from "loglevel";
 
-import { pairs } from "../config";
+import { chooseUrl, config } from "../config";
 import { BTC } from "../consts";
 import {
     PairLegacy,
@@ -32,13 +32,8 @@ export const clipboard = (text: string) => {
 };
 
 export const getApiUrl = (asset: string): string => {
-    const pair = pairs[`${asset}/BTC`];
-    if (pair) {
-        return pair.apiUrl;
-    }
-
-    log.error(`no pair found for ${asset}; falling back to ${BTC}`);
-    return getApiUrl(BTC);
+    const found = config.assets[asset];
+    return chooseUrl(found.apiUrl ?? config.apiUrl);
 };
 
 export const getPair = <
