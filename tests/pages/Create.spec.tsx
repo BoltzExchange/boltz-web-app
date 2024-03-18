@@ -6,7 +6,7 @@ import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
 import { denominations, formatAmount } from "../../src/utils/denomination";
-import { cfg } from "../config";
+import { pairs } from "../pairs";
 import {
     TestComponent,
     contextWrapper,
@@ -62,7 +62,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(cfg);
+        globalSignals.setPairs(pairs);
         signals.setReverse(true);
         signals.setAsset("BTC");
         signals.setSendAmount(BigNumber(50_000));
@@ -91,7 +91,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(cfg);
+        globalSignals.setPairs(pairs);
         signals.setReverse(true);
         signals.setAsset("BTC");
         signals.setSendAmount(BigNumber(50_000));
@@ -102,8 +102,8 @@ describe("Create", () => {
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110));
 
-        const updatedCfg = { ...cfg };
-        cfg.reverse[BTC][BTC].fees.minerFees.claim += 1;
+        const updatedCfg = { ...pairs };
+        pairs.reverse[BTC][BTC].fees.minerFees.claim += 1;
         globalSignals.setPairs(updatedCfg);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
@@ -122,14 +122,14 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(cfg);
-        signals.setMinimum(cfg.reverse[BTC][BTC].limits.minimal);
+        globalSignals.setPairs(pairs);
+        signals.setMinimum(pairs.reverse[BTC][BTC].limits.minimal);
         signals.setReverse(true);
         signals.setAsset("BTC");
 
         const updateConfig = () => {
-            const updatedCfg = { ...cfg };
-            cfg.reverse[BTC][BTC].fees.minerFees.claim += 1;
+            const updatedCfg = { ...pairs };
+            pairs.reverse[BTC][BTC].fees.minerFees.claim += 1;
             globalSignals.setPairs(updatedCfg);
         };
 
@@ -180,7 +180,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(cfg);
+        globalSignals.setPairs(pairs);
 
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();
@@ -214,14 +214,14 @@ describe("Create", () => {
                 wrapper: contextWrapper,
             },
         );
-        globalSignals.setPairs(cfg);
+        globalSignals.setPairs(pairs);
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
 
         const sendAmountInput = await screen.findByTestId("sendAmount");
         fireEvent.input(sendAmountInput, {
             target: {
-                value: `${cfg.reverse["BTC"]["BTC"].limits.minimal}`,
+                value: `${pairs.reverse["BTC"]["BTC"].limits.minimal}`,
             },
         });
 

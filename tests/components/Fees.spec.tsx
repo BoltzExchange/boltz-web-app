@@ -6,7 +6,7 @@ import { BTC } from "../../src/consts";
 import { useCreateContext } from "../../src/context/Create";
 import { useGlobalContext } from "../../src/context/Global";
 import { calculateSendAmount } from "../../src/utils/calculate";
-import { cfg } from "../config";
+import { pairs } from "../pairs";
 import { contextWrapper } from "../helper";
 
 describe("Fees component", () => {
@@ -29,7 +29,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(cfg);
+        globalSignals.setPairs(pairs);
     });
 
     test("should recalculate limits on direction switch", () => {
@@ -42,20 +42,20 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(cfg);
+        globalSignals.setPairs(pairs);
 
         expect(signals.minimum()).toEqual(
-            cfg.submarine[BTC][BTC].limits.minimal,
+            pairs.submarine[BTC][BTC].limits.minimal,
         );
         expect(signals.maximum()).toEqual(
-            cfg.submarine[BTC][BTC].limits.maximal,
+            pairs.submarine[BTC][BTC].limits.maximal,
         );
 
         signals.setReverse(false);
 
         expect(signals.minimum()).toEqual(
             calculateSendAmount(
-                BigNumber(cfg.submarine[BTC][BTC].limits.minimal),
+                BigNumber(pairs.submarine[BTC][BTC].limits.minimal),
                 signals.boltzFee(),
                 signals.minerFee(),
                 signals.reverse(),
@@ -63,7 +63,7 @@ describe("Fees component", () => {
         );
         expect(signals.maximum()).toEqual(
             calculateSendAmount(
-                BigNumber(cfg.submarine[BTC][BTC].limits.maximal),
+                BigNumber(pairs.submarine[BTC][BTC].limits.maximal),
                 signals.boltzFee(),
                 signals.minerFee(),
                 signals.reverse(),
