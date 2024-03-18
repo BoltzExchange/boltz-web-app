@@ -6,13 +6,13 @@ import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
 import { denominations, formatAmount } from "../../src/utils/denomination";
-import { pairs } from "../pairs";
 import {
     TestComponent,
     contextWrapper,
     globalSignals,
     signals,
 } from "../helper";
+import { pairs } from "../pairs";
 
 describe("Create", () => {
     test("should render Create", async () => {

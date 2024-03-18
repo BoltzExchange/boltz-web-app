@@ -6,8 +6,8 @@ import { BTC } from "../../src/consts";
 import { useCreateContext } from "../../src/context/Create";
 import { useGlobalContext } from "../../src/context/Global";
 import { calculateSendAmount } from "../../src/utils/calculate";
-import { pairs } from "../pairs";
 import { contextWrapper } from "../helper";
+import { pairs } from "../pairs";
 
 describe("Fees component", () => {
     let signals: any;
