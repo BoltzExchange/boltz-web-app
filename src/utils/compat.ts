@@ -83,8 +83,11 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     };
 };
 
-const getNetwork = (asset: string): Network | LiquidNetwork => {
-    const network = config.network;
+const getNetwork = (
+    asset: string,
+    network?: string,
+): Network | LiquidNetwork => {
+    network = network ?? config.network;
     if (asset === LBTC) {
         const liquidNet = network === "mainnet" ? "liquid" : network;
         return LiquidNetworks[liquidNet];
