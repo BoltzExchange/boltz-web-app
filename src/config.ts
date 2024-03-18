@@ -53,28 +53,3 @@ export const setConfig = (data: any) => {
     config = { ...defaults, ...data };
     log.setLevel(config.loglevel!);
 };
-
-setConfig({
-    network: "regtest",
-    loglevel: "debug",
-    apiUrl: {
-        normal: "http://localhost:9001",
-    },
-    assets: {
-        BTC: {
-            blockExplorerUrl: {
-                normal: "http://localhost:8090",
-            },
-        },
-        "L-BTC": {
-            blockExplorerUrl: {
-                normal: "http://localhost:8091",
-            },
-        },
-        RBTC: {
-            blockExplorerUrl: {
-                normal: "http://localhost:8092",
-            },
-        },
-    },
-});
