@@ -32,7 +32,7 @@ type Url = {
 
 export type Config = {
     apiUrl?: Url;
-    network?: string;
+    network?: "mainnet" | "testnet" | "regtest";
     isBoltzClient?: boolean;
     boltzClientApiUrl?: string;
     isBeta?: boolean;

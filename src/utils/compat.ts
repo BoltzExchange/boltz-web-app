@@ -86,10 +86,11 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
 const getNetwork = (asset: string): Network | LiquidNetwork => {
     const network = config.network;
     if (asset === LBTC) {
-        const liquidNet = network === "main" ? "liquid" : network;
+        const liquidNet = network === "mainnet" ? "liquid" : network;
         return LiquidNetworks[liquidNet];
     } else {
-        return networks[network];
+        const bitcoinNet = network === "mainnet" ? "bitcoin" : network;
+        return networks[bitcoinNet];
     }
 };
 
