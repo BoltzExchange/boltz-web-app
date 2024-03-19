@@ -1,22 +1,19 @@
-import { BTC, LBTC } from "../../src/consts";
-import { probeAddress } from "../../src/utils/compat";
+import { networks } from "bitcoinjs-lib";
+import { networks as LiquidNetworks } from "liquidjs-lib";
 
-describe("compat", () => {
+import { BTC, LBTC } from "../../src/consts";
+import { getNetwork } from "../../src/utils/compat";
+
+describe("parse network correctly", () => {
     test.each`
-        address                                  | asset
-        ${"bcrt1asda"}                           | ${BTC}
-        ${"bc1asda"}                             | ${BTC}
-        ${"tb1asda"}                             | ${BTC}
-        ${"lq1asda"}                             | ${LBTC}
-        ${"ex1asda"}                             | ${LBTC}
-        ${"tlq1asd"}                             | ${LBTC}
-        ${"tex1asd"}                             | ${LBTC}
-        ${"el1asda"}                             | ${LBTC}
-        ${"ert1asda"}                            | ${LBTC}
-        ${"2N17VNGbi4yUHtkD7vhrc8cpi9JGVmC8scn"} | ${BTC}
-        ${"XUWfSHgUE1G72X9oGHXfecgzgf1N5A7WD2"}  | ${LBTC}
-    `("should probe $address as $asset", ({ address, asset }) => {
-        const result = probeAddress(address);
-        expect(result).toBe(asset);
+        asset   | network      | expected
+        ${BTC}  | ${"mainnet"} | ${networks.bitcoin}
+        ${BTC}  | ${"testnet"} | ${networks.testnet}
+        ${BTC}  | ${"regtest"} | ${networks.regtest}
+        ${LBTC} | ${"mainnet"} | ${LiquidNetworks.liquid}
+        ${LBTC} | ${"testnet"} | ${LiquidNetworks.testnet}
+        ${LBTC} | ${"regtest"} | ${LiquidNetworks.regtest}
+    `("$asset $network", ({ asset, network, expected }) => {
+        expect(getNetwork(asset, network)).toEqual(expected);
     });
 });

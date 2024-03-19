@@ -29,15 +29,6 @@ import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts";
 import { isInvoice, isLnurl } from "./invoice";
 
-const btcPrefixes = Object.keys(networks).map((n) => networks[n].bech32);
-const liquidPrefixesBech32 = Object.keys(LiquidNetworks).map(
-    (n) => LiquidNetworks[n].bech32,
-);
-const liquidPrefixesBlech32 = Object.keys(LiquidNetworks).map(
-    (n) => LiquidNetworks[n].blech32,
-);
-const liquidPrefixes = liquidPrefixesBech32.concat(liquidPrefixesBlech32);
-
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
     blindingPrivateKey?: Buffer;
 };
@@ -129,7 +120,11 @@ const probeUserInput = (
     return null;
 };
 
-const getNetwork = (asset: string): Network | LiquidNetwork => {
+const getNetwork = (
+    asset: string,
+    network?: string,
+): Network | LiquidNetwork => {
+    network = network ?? config.network;
     if (asset === LBTC) {
         const liquidNet = network === "mainnet" ? "liquid" : network;
         return LiquidNetworks[liquidNet];
