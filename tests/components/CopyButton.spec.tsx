@@ -13,7 +13,7 @@ Object.defineProperty(navigator, "clipboard", {
 });
 
 describe("CopyButton", () => {
-    test("should show copied! for 1 seconds and go back", async () => {
+    test("should stay active for 1 second and copy into clipboard", async () => {
         const {
             container: { firstChild: button },
         } = render(() => <CopyButton label="copy_bip21" data="clipboard" />, {
