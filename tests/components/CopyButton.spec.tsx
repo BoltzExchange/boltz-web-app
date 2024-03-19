@@ -14,9 +14,11 @@ Object.defineProperty(navigator, "clipboard", {
 
 describe("CopyButton", () => {
     test("should stay active for 1 second and copy into clipboard", async () => {
+        const textToCopy = 'clipboard';
+
         const {
             container: { firstChild: button },
-        } = render(() => <CopyButton label="copy_bip21" data="clipboard" />, {
+        } = render(() => <CopyButton label="copy_bip21" data={textToCopy} />, {
             wrapper: contextWrapper,
         });
 
@@ -28,6 +30,6 @@ describe("CopyButton", () => {
         expect(btn.classList.contains("btn-active")).toBeTruthy();
         await new Promise((resolve) => setTimeout(resolve, 700));
         expect(btn.classList.contains("btn-active")).toBeFalsy();
-        expect(navigator.clipboard.writeText).toHaveBeenCalledWith("clipboard");
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
     });
 });
