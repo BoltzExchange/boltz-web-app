@@ -3,8 +3,8 @@ import { createEffect, on } from "solid-js";
 import { LN, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { decodeAddress, probeAddress } from "../utils/compat";
-import { extractAddress, extractInvoice, isInvoice } from "../utils/invoice";
+import { probeUserInput } from "../utils/compat";
+import { extractAddress, extractInvoice } from "../utils/invoice";
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
@@ -29,31 +29,34 @@ const AddressInput = () => {
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
 
-        // auto switch direction based on invoice
-        if (isInvoice(invoice)) {
-            setAssetReceive(LN);
-            setAssetSend(asset());
-            setInvoice(invoice);
-            notify("success", t("switch_paste"));
-            return;
-        }
-
         try {
             const assetName = asset();
-            const probe = probeAddress(address);
-            if (probe === null) {
-                throw new Error();
+
+            const actualAsset = probeUserInput(assetName, address);
+
+            switch (actualAsset) {
+                case LN:
+                    setAssetReceive(LN);
+                    setAssetSend(asset());
+                    setInvoice(invoice);
+                    notify("success", t("switch_paste"));
+                    break;
+
+                case null:
+                    throw new Error();
+
+                default:
+                    if (assetName !== actualAsset) {
+                        setAssetReceive(actualAsset);
+                        notify("success", t("switch_paste"));
+                    }
+
+                    input.setCustomValidity("");
+                    input.classList.remove("invalid");
+                    setAddressValid(true);
+                    setOnchainAddress(address);
+                    break;
             }
-            // auto switch asset based on address
-            if (probe !== assetName) {
-                setAssetReceive(probe);
-                notify("success", t("switch_paste"));
-            }
-            decodeAddress(assetName, address);
-            input.setCustomValidity("");
-            input.classList.remove("invalid");
-            setAddressValid(true);
-            setOnchainAddress(address);
         } catch (e) {
             const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);

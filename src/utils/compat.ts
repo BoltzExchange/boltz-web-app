@@ -25,8 +25,9 @@ import {
 } from "liquidjs-lib";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
-import { network } from "../config";
-import { BTC, LBTC } from "../consts";
+import { config } from "../config";
+import { BTC, LBTC, LN } from "../consts";
+import { isInvoice, isLnurl } from "./invoice";
 
 const btcPrefixes = Object.keys(networks).map((n) => networks[n].bech32);
 const liquidPrefixesBech32 = Object.keys(LiquidNetworks).map(
@@ -45,6 +46,8 @@ type DecodedAddress = { script: Buffer; blindingKey?: Buffer };
 
 export let secp: Secp256k1ZKP;
 let confi: confidential.Confidential;
+
+const possibleUserInputTypes = [LN, LBTC, BTC];
 
 const setup = async () => {
     if (confi !== undefined) {
@@ -92,30 +95,37 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     };
 };
 
-const probeAddress = (address: string): string | null => {
-    let asset: string | null = null;
-    btcPrefixes.forEach((prefix: string) => {
-        if (address.startsWith(prefix)) {
-            asset = BTC;
-        }
-    });
-    liquidPrefixes.forEach((prefix: string) => {
-        if (address.startsWith(prefix)) {
-            asset = LBTC;
-        }
-    });
-    if (asset !== null) {
-        return asset;
+const probeUserInputOption = (asset: string, input: string): boolean => {
+    switch (asset) {
+        case LN:
+            return isLnurl(input) || isInvoice(input);
+
+        default:
+            try {
+                decodeAddress(asset, input);
+                return true;
+            } catch (e) {
+                return false;
+            }
     }
-    // fallback to more costly decoding
-    try {
-        decodeAddress(BTC, address);
-        return BTC;
-    } catch (e) {}
-    try {
-        decodeAddress(LBTC, address);
-        return LBTC;
-    } catch (e) {}
+};
+
+const probeUserInput = (
+    expectedAsset: string,
+    input: string,
+): string | null => {
+    if (probeUserInputOption(expectedAsset, input)) {
+        return expectedAsset;
+    }
+
+    for (const asset of possibleUserInputTypes.filter(
+        (type) => type !== expectedAsset,
+    )) {
+        if (probeUserInputOption(asset, input)) {
+            return asset;
+        }
+    }
+
     return null;
 };
 
@@ -222,5 +232,5 @@ export {
     getConstructClaimTransaction,
     getConstructRefundTransaction,
     LiquidTransactionOutputWithKey,
-    probeAddress,
+    probeUserInput,
 };

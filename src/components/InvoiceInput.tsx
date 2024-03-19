@@ -5,7 +5,7 @@ import { LN, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
-import { probeAddress } from "../utils/compat";
+import { probeUserInput } from "../utils/compat";
 import {
     decodeInvoice,
     extractAddress,
@@ -41,16 +41,20 @@ const InvoiceInput = () => {
 
     const validate = (input: HTMLTextAreaElement) => {
         const val = input.value.trim();
-        const inputValue = extractInvoice(val);
+
         const address = extractAddress(val);
-        const probe = probeAddress(address);
-        // auto switch direction based on address
-        if (probe !== null) {
+        const actualAsset = probeUserInput(LN, address);
+
+        // Auto switch direction based on address
+        if (actualAsset !== LN && actualAsset !== null) {
             setAssetSend(LN);
-            setAssetReceive(probe);
+            setAssetReceive(actualAsset);
             setOnchainAddress(address);
             return;
         }
+
+        const inputValue = extractInvoice(val);
+
         try {
             if (isLnurl(inputValue)) {
                 setButtonLabel({ key: "fetch_lnurl" });
