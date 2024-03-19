@@ -88,6 +88,7 @@ export const CreateButton = () => {
                 lnurl,
                 online,
                 minimum,
+                asset,
             ],
             () => {
                 if (!online()) {
