@@ -61,6 +61,10 @@ const Pay = () => {
     });
 
     createEffect(() => {
+        if (swap() === null) {
+            return;
+        }
+
         const tx = swapStatusTransaction();
 
         if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
@@ -69,6 +73,10 @@ const Pay = () => {
     });
 
     createEffect(() => {
+        if (swap() === null) {
+            return;
+        }
+
         const claimTx = swap().claimTx;
 
         if (swap().asset === RBTC && claimTx) {
@@ -78,6 +86,10 @@ const Pay = () => {
     });
 
     createEffect(() => {
+        if (swap() === null) {
+            return;
+        }
+
         const lockupTx = swap().lockupTx;
 
         if (swap().asset === RBTC && lockupTx) {
