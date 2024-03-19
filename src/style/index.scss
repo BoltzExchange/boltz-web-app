@@ -433,7 +433,7 @@ textarea {
     background: rgb(20, 40, 63);
 }
 
-#flip-assets img {
+#flip-assets svg {
     width: 100%;
     opacity: 0.5;
 }
@@ -538,21 +538,14 @@ textarea {
 
 .globe {
     cursor: pointer;
-    background-image: url(../assets/globe.svg);
-    background-repeat: no-repeat;
-    background-position: 12px 6px;
-    background-size: 18px;
-    height: 25px;
-    padding-left: 40px !important;
+    padding-left: 20px !important;
+    padding-top: 6px;
     display: inline-block;
 }
 
-.external {
-    padding-right: 25px;
-    background-image: url(../assets/external_link.svg);
-    background-repeat: no-repeat;
-    background-position: right;
-    background-size: 17px;
+.external svg {
+    padding-left: 6px;
+    float: right;
 }
 
 .break-word {

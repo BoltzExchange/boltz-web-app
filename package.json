@@ -66,6 +66,7 @@
         "loglevel": "^1.9.1",
         "qr-scanner": "^1.4.2",
         "qrcode": "^1.5.3",
+        "solid-icons": "^1.1.0",
         "solid-js": "^1.8.15"
     }
 }
