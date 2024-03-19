@@ -9,7 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { pairs } from "../config";
+import { config } from "../config";
 import { RBTC } from "../consts";
 import { Contracts, getContracts } from "../utils/boltzClient";
 
@@ -32,7 +32,7 @@ const Web3SignerProvider = (props: {
     const [signer, setSigner] = createSignal<JsonRpcSigner | undefined>();
     const [hasMetamask, setHasMetamask] = createSignal<boolean>(false);
 
-    const hasRsk = pairs[`${RBTC}/BTC`] !== undefined;
+    const hasRsk = config.assets[RBTC] !== undefined;
 
     const handleMetamask = () => {
         window.removeEventListener(initEvent, handleMetamask);

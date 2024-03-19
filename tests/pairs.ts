@@ -1,6 +1,6 @@
 import { Pairs } from "../src/utils/boltzClient";
 
-export const cfg: Pairs = {
+export const pairs: Pairs = {
     submarine: {
         BTC: {
             BTC: {

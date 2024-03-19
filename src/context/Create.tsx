@@ -9,7 +9,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { pairs } from "../config";
+import { config } from "../config";
 import { LN, sideSend } from "../consts";
 import { ButtonLabelParams } from "../types";
 
@@ -62,11 +62,11 @@ export type CreateContextType = {
     setButtonLabel: Setter<ButtonLabelParams>;
 };
 
-const defaultSelection = Object.keys(pairs)[0].split("/")[0];
-
 const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: any }) => {
+    const defaultSelection = Object.keys(config.assets)[0];
+
     const [asset, setAsset] = createSignal<string>(defaultSelection);
     const [reverse, setReverse] = createSignal<boolean>(true);
     const [invoice, setInvoice] = createSignal<string>("");

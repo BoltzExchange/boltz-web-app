@@ -1,7 +1,7 @@
 import { Show } from "solid-js";
 
 import reload_svg from "../assets/reload.svg";
-import { isBeta } from "../config";
+import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 
 const Warnings = () => {
@@ -22,7 +22,7 @@ const Warnings = () => {
                     {t("wasm_not_supported")}
                 </div>
             </Show>
-            <Show when={isBeta}>
+            <Show when={config.isBeta}>
                 <div class="banner banner-yellow">{t("beta_caution")}</div>
             </Show>
         </div>

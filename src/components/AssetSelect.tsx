@@ -1,12 +1,12 @@
-import { pairs } from "../config";
+import { config } from "../config";
 import { LN, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 
-const assets = Object.keys(pairs).map((pair) => pair.split("/")[0]);
-assets.push(LN);
-
 const SelectAsset = () => {
+    const assets = Object.keys(config.assets);
+    assets.push(LN);
+
     const setSelectAsset = (isSend: boolean, asset: string) => {
         const setter = isSend ? setAssetSend : setAssetReceive;
         setter(asset);

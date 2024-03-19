@@ -18,7 +18,7 @@ import { validateResponse } from "../utils/validation";
 
 export const CreateButton = () => {
     const navigate = useNavigate();
-    const { config, setConfig, online, swaps, setSwaps, notify, ref, t } =
+    const { pairs, setPairs, online, swaps, setSwaps, notify, ref, t } =
         useGlobalContext();
     const {
         asset,
@@ -115,7 +115,7 @@ export const CreateButton = () => {
             }
         }
 
-        params.pairHash = getPair(config(), assetName, reverse()).hash;
+        params.pairHash = getPair(pairs(), assetName, reverse()).hash;
         params.referralId = ref();
 
         if (reverse()) {
@@ -186,7 +186,7 @@ export const CreateButton = () => {
             }
 
             if (msg === "invalid pair hash") {
-                setConfig(await getPairs(assetName));
+                setPairs(await getPairs(assetName));
                 notify("error", t("feecheck"));
             } else {
                 notify("error", msg);

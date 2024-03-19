@@ -5,20 +5,7 @@ import nostr from "../assets/nostr.svg";
 import telegram from "../assets/telegram.svg";
 import twitter from "../assets/twitter.svg";
 import youtube from "../assets/youtube.svg";
-import {
-    blogUrl,
-    brandingUrl,
-    discordUrl,
-    email,
-    githubUrl,
-    nostrUrl,
-    repoUrl,
-    statusUrl,
-    telegramUrl,
-    testnetUrl,
-    twitterUrl,
-    youtubeUrl,
-} from "../config";
+import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
 
@@ -33,7 +20,7 @@ const Footer = () => {
                     title="Discord"
                     class="discord"
                     target="_blank"
-                    href={discordUrl}>
+                    href={config.discordUrl}>
                     Discord
                 </a>
             </h4>
@@ -42,62 +29,66 @@ const Footer = () => {
                     title="Github"
                     class="github"
                     target="_blank"
-                    href={githubUrl}>
+                    href={config.githubUrl}>
                     <img src={github} alt="Github Logo" />
                 </a>
                 <a
                     title="Discord"
                     class="discord"
                     target="_blank"
-                    href={discordUrl}>
+                    href={config.discordUrl}>
                     <img src={discord} alt="Discord Logo" />
                 </a>
                 <a
                     title="Telegram"
                     class="telegram"
                     target="_blank"
-                    href={telegramUrl}>
+                    href={config.telegramUrl}>
                     <img src={telegram} alt="Telegram Logo" />
                 </a>
                 <a
                     title="Twitter"
                     class="twitter"
                     target="_blank"
-                    href={twitterUrl}>
+                    href={config.twitterUrl}>
                     <img src={twitter} alt="Twitter Logo" />
                 </a>
-                <a title="Nostr" class="nostr" target="_blank" href={nostrUrl}>
+                <a
+                    title="Nostr"
+                    class="nostr"
+                    target="_blank"
+                    href={config.nostrUrl}>
                     <img src={nostr} alt="Nostr Logo" />
                 </a>
                 <a
                     title="Youtube"
                     class="youtube"
                     target="_blank"
-                    href={youtubeUrl}>
+                    href={config.youtubeUrl}>
                     <img src={youtube} alt="Youtube Logo" />
                 </a>
                 <a
                     title={t("email")}
                     class="email"
                     target="_blank"
-                    href={"mailto:" + email}>
+                    href={"mailto:" + config.email}>
                     <img src={envelope} alt={t("email")} />
                 </a>
             </div>
             <p class="footer-nav">
-                <a target="_blank" href={blogUrl}>
+                <a target="_blank" href={config.blogUrl}>
                     {t("blog")}
                 </a>{" "}
                 |{" "}
-                <a target="_blank" href={brandingUrl}>
+                <a target="_blank" href={config.brandingUrl}>
                     {t("branding")}
                 </a>{" "}
                 |{" "}
-                <a target="_blank" href={statusUrl}>
+                <a target="_blank" href={config.statusUrl}>
                     {t("status")}
                 </a>{" "}
                 |{" "}
-                <a target="_blank" href={testnetUrl}>
+                <a target="_blank" href={config.testnetUrl}>
                     {t("testnet")}
                 </a>
             </p>
@@ -106,11 +97,13 @@ const Footer = () => {
                 {t("version")}:{" "}
                 <a
                     target="_blank"
-                    href={`${repoUrl}/releases/tag/v${__APP_VERSION__}`}>
+                    href={`${config.repoUrl}/releases/tag/v${__APP_VERSION__}`}>
                     {__APP_VERSION__}
                 </a>
                 , {t("commithash")}:{" "}
-                <a target="_blank" href={`${repoUrl}/commit/${__GIT_COMMIT__}`}>
+                <a
+                    target="_blank"
+                    href={`${config.repoUrl}/commit/${__GIT_COMMIT__}`}>
                     {__GIT_COMMIT__}
                 </a>
             </p>

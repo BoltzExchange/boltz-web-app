@@ -17,7 +17,7 @@ import { denominations, formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 
 const Fees = () => {
-    const { t, config, fetchPairs, denomination, setDenomination } =
+    const { t, pairs, fetchPairs, denomination, setDenomination } =
         useGlobalContext();
     const {
         asset,
@@ -32,8 +32,8 @@ const Fees = () => {
     } = useCreateContext();
 
     createEffect(() => {
-        if (config()) {
-            const cfg = getPair(config(), asset(), reverse());
+        if (pairs()) {
+            const cfg = getPair(pairs(), asset(), reverse());
 
             if (reverse()) {
                 const reverseCfg = cfg as ReversePairTypeTaproot;

@@ -221,7 +221,6 @@ export const SwapChecker = () => {
                         s.claimTx === undefined),
             )
             .filter((s) => s.id !== swap()?.id);
-
         for (const [url, assets] of urlsToAsset.entries()) {
             log.debug(`opening ws for assets [${assets.join(", ")}]: ${url}`);
             const ws = new BoltzWebSocket(

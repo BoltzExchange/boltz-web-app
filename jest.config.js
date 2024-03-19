@@ -12,4 +12,5 @@ module.exports = {
         Uint8Array: Uint8Array,
         ArrayBuffer: ArrayBuffer,
     },
+    setupFiles: ["./tests/setup.ts"],
 };

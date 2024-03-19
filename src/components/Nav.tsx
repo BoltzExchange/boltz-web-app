@@ -3,7 +3,7 @@ import { For, Show, createSignal } from "solid-js";
 
 import logo from "../assets/boltz.svg";
 import Warnings from "../components/Warnings";
-import { discordUrl, docsUrl, torUrl } from "../config";
+import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
 import "../style/nav.scss";
@@ -62,18 +62,28 @@ const Nav = ({ network }) => {
                     <A href="/history" onClick={() => setHamburger(false)}>
                         {t("history")}
                     </A>
-                    <Show when={docsUrl}>
-                        <a class="external" target="_blank" href={docsUrl}>
+
+                    <Show when={config.docsUrl}>
+                        <a
+                            class="external"
+                            target="_blank"
+                            href={config.docsUrl}>
                             {t("documentation")}
                         </a>
                     </Show>
-                    <Show when={discordUrl}>
-                        <a class="external" target="_blank" href={discordUrl}>
+                    <Show when={config.discordUrl}>
+                        <a
+                            class="external"
+                            target="_blank"
+                            href={config.discordUrl}>
                             {t("help")}
                         </a>
                     </Show>
-                    <Show when={torUrl}>
-                        <a class="external" target="_blank" href={torUrl}>
+                    <Show when={config.torUrl}>
+                        <a
+                            class="external"
+                            target="_blank"
+                            href={config.torUrl}>
                             {t("onion")}
                         </a>
                     </Show>

@@ -10,7 +10,7 @@ import {
     useContext,
 } from "solid-js";
 
-import { defaultLanguage } from "../config";
+import { config } from "../config";
 import { BTC } from "../consts";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
@@ -24,8 +24,8 @@ import { detectWebLNProvider } from "../utils/webln";
 export type GlobalContextType = {
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
-    config: Accessor<Pairs | undefined>;
-    setConfig: Setter<Pairs | undefined>;
+    pairs: Accessor<Pairs | undefined>;
+    setPairs: Setter<Pairs | undefined>;
     wasmSupported: Accessor<boolean>;
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
@@ -71,7 +71,7 @@ const GlobalContext = createContext<GlobalContextType>();
 
 const GlobalProvider = (props: { children: any }) => {
     const [online, setOnline] = createSignal<boolean>(true);
-    const [config, setConfig] = createSignal<Pairs | undefined>(undefined);
+    const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
 
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
@@ -132,7 +132,7 @@ const GlobalProvider = (props: { children: any }) => {
             .then((data) => {
                 log.debug("getpairs", data);
                 setOnline(true);
-                setConfig(data);
+                setPairs(data);
             })
             .catch((error) => {
                 log.debug(error);
@@ -176,7 +176,9 @@ const GlobalProvider = (props: { children: any }) => {
     // i18n
     let dictLocale: any;
     createMemo(() => setI18n(i18nConfigured()));
-    dictLocale = createMemo(() => flatten(dict[i18n() || defaultLanguage]));
+    dictLocale = createMemo(() =>
+        flatten(dict[i18n() || config.defaultLanguage]),
+    );
 
     const t = translator(dictLocale, resolveTemplate) as (
         key: string,
@@ -188,8 +190,8 @@ const GlobalProvider = (props: { children: any }) => {
             value={{
                 online,
                 setOnline,
-                config,
-                setConfig,
+                pairs,
+                setPairs,
                 wasmSupported,
                 setWasmSupported,
                 refundAddress,
