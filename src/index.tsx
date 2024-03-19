@@ -102,6 +102,6 @@ const cleanup = render(
 );
 
 if (import.meta.hot) {
-    console.log("Hot reload");
+    log.info("Hot reload");
     import.meta.hot.dispose(cleanup);
 }
