@@ -19,11 +19,6 @@
                 "normal": "https://liquid.network",
                 "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion"
             }
-        },
-        "RBTC": {
-            "blockExplorerUrl": {
-                "normal": "https://explorer.rsk.co"
-            }
         }
     }
 }
