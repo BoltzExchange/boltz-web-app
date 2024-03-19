@@ -28,7 +28,7 @@ import "./utils/patches";
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
-        .register("./service-worker.js", { scope: "./" })
+        .register("/service-worker.js", { scope: "/" })
         .then((reg) => {
             log.info(`Registration succeeded. Scope is ${reg.scope}`);
         });
