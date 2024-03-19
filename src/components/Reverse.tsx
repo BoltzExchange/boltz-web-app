@@ -1,4 +1,5 @@
-import arrowSvg from "../assets/arrow.svg";
+import { ImArrowDown } from "solid-icons/im";
+
 import { useCreateContext } from "../context/Create";
 
 const Reverse = () => {
@@ -12,7 +13,7 @@ const Reverse = () => {
 
     return (
         <div id="flip-assets" onClick={() => setDirection()}>
-            <img src={arrowSvg} alt="flip assets" />
+            <ImArrowDown size={14} />
         </div>
     );
 };

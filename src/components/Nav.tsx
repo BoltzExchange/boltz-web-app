@@ -1,4 +1,6 @@
 import { A } from "@solidjs/router";
+import { BsGlobe } from "solid-icons/bs";
+import { OcLinkexternal2 } from "solid-icons/oc";
 import { For, Show, createSignal } from "solid-js";
 
 import logo from "../assets/boltz.svg";
@@ -39,7 +41,9 @@ const Nav = ({ network }) => {
                             e.target.classList.remove("active");
                         }, 300);
                     }}>
-                    <span class="globe"></span>
+                    <span class="globe">
+                        <BsGlobe size={19} />
+                    </span>
                     <div class="dropdown">
                         <For each={Object.keys(locales)}>
                             {(lang) => (
@@ -69,6 +73,7 @@ const Nav = ({ network }) => {
                             target="_blank"
                             href={config.docsUrl}>
                             {t("documentation")}
+                            <OcLinkexternal2 size={23} />
                         </a>
                     </Show>
                     <Show when={config.discordUrl}>
@@ -77,6 +82,7 @@ const Nav = ({ network }) => {
                             target="_blank"
                             href={config.discordUrl}>
                             {t("help")}
+                            <OcLinkexternal2 size={23} />
                         </a>
                     </Show>
                     <Show when={config.torUrl}>
@@ -85,6 +91,7 @@ const Nav = ({ network }) => {
                             target="_blank"
                             href={config.torUrl}>
                             {t("onion")}
+                            <OcLinkexternal2 size={23} />
                         </a>
                     </Show>
                 </div>

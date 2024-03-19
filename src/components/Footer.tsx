@@ -1,10 +1,13 @@
-import discord from "../assets/discord.svg";
-import envelope from "../assets/envelope.svg";
-import github from "../assets/github.svg";
+import {
+    BsDiscord,
+    BsEnvelopeFill,
+    BsGithub,
+    BsTelegram,
+    BsTwitter,
+    BsYoutube,
+} from "solid-icons/bs";
+
 import nostr from "../assets/nostr.svg";
-import telegram from "../assets/telegram.svg";
-import twitter from "../assets/twitter.svg";
-import youtube from "../assets/youtube.svg";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
@@ -30,28 +33,28 @@ const Footer = () => {
                     class="github"
                     target="_blank"
                     href={config.githubUrl}>
-                    <img src={github} alt="Github Logo" />
+                    <BsGithub size={22} color="#22374F" />
                 </a>
                 <a
                     title="Discord"
                     class="discord"
                     target="_blank"
                     href={config.discordUrl}>
-                    <img src={discord} alt="Discord Logo" />
+                    <BsDiscord size={22} color="#22374F" />
                 </a>
                 <a
                     title="Telegram"
                     class="telegram"
                     target="_blank"
                     href={config.telegramUrl}>
-                    <img src={telegram} alt="Telegram Logo" />
+                    <BsTelegram size={22} color="#22374F" />
                 </a>
                 <a
                     title="Twitter"
                     class="twitter"
                     target="_blank"
                     href={config.twitterUrl}>
-                    <img src={twitter} alt="Twitter Logo" />
+                    <BsTwitter size={22} color="#22374F" />
                 </a>
                 <a
                     title="Nostr"
@@ -65,14 +68,14 @@ const Footer = () => {
                     class="youtube"
                     target="_blank"
                     href={config.youtubeUrl}>
-                    <img src={youtube} alt="Youtube Logo" />
+                    <BsYoutube size={22} color="#22374F" />
                 </a>
                 <a
                     title={t("email")}
                     class="email"
                     target="_blank"
                     href={"mailto:" + config.email}>
-                    <img src={envelope} alt={t("email")} />
+                    <BsEnvelopeFill size={22} color="#22374F" />
                 </a>
             </div>
             <p class="footer-nav">
