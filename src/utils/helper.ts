@@ -33,7 +33,7 @@ export const clipboard = (text: string) => {
 
 export const getApiUrl = (asset: string): string => {
     const found = config.assets[asset];
-    return chooseUrl(found.apiUrl ?? config.apiUrl);
+    return chooseUrl(found?.apiUrl ?? config.apiUrl);
 };
 
 export const getPair = <
