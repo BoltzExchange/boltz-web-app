@@ -135,7 +135,6 @@ hr.spacer {
 
 .btn {
     cursor: pointer;
-    display: block;
     margin-top: 10px;
     padding: 8px 12px;
     text-decoration: none;
@@ -146,6 +145,11 @@ hr.spacer {
     text-transform: uppercase;
     border: none;
     width: 100%;
+    display: flex;
+    justify-content: center;
+    svg {
+        margin-right: 3px;
+    }
 }
 
 .btn-small {
@@ -233,14 +237,9 @@ hr.spacer {
     justify-content: space-between;
 }
 .btns .btn {
-    display: flex;
-    justify-content: center;
     width: auto;
     margin: 3px;
     flex-grow: 1;
-    svg {
-        margin-right: 3px;
-    }
 }
 .btns .no-grow {
     flex-grow: 0;
