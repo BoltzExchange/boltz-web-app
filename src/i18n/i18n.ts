@@ -80,10 +80,10 @@ const dict = {
             "Please provide a valid LN invoice, LNAddress or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
         copy_invoice: "Copy lightning invoice",
-        copy_address: "Copy address",
-        copy_amount: "Copy amount",
-        copy_bip21: "Copy BIP21",
-        copied: "Copied to clipboard!",
+        copy_address: "address",
+        copy_amount: "amount",
+        copy_bip21: "BIP21",
+        copied: "Copied!",
         backup_skip: "Skip download",
         backup_refund: "Download Refund File",
         backup_refund_subline:
@@ -261,7 +261,7 @@ const dict = {
         copy_address: "Adresse kopieren",
         copy_amount: "Betrag kopieren",
         copy_bip21: "BIP21 kopieren",
-        copied: "In die Zwischenablage kopiert!",
+        copied: "kopiert!",
         backup_skip: "Überspringen",
         backup_refund: "Rückerstattungsdatei herunterladen",
         backup_refund_subline:
@@ -624,7 +624,7 @@ const dict = {
         copy_address: "复制地址",
         copy_amount: "复制金额",
         copy_bip21: "复制BIP21",
-        copied: "已复制到剪贴板！",
+        copied: "已复制",
         backup_skip: "跳过下载",
         backup_refund: "下载退款文件",
         backup_refund_subline:

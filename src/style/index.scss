@@ -185,6 +185,7 @@ hr.spacer {
     cursor: not-allowed;
 }
 
+.btn-active,
 .btn-small:hover,
 .btn:hover,
 .tag .btn:hover {
@@ -232,10 +233,14 @@ hr.spacer {
     justify-content: space-between;
 }
 .btns .btn {
-    display: inline-block;
+    display: flex;
+    justify-content: center;
     width: auto;
     margin: 3px;
     flex-grow: 1;
+    svg {
+        margin-right: 3px;
+    }
 }
 .btns .no-grow {
     flex-grow: 0;
