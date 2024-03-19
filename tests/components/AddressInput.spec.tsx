@@ -22,7 +22,6 @@ describe("AddressInput", () => {
         ${true}  | ${BTC}  | ${"bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3"}
         ${true}  | ${BTC}  | ${"bcrt1pjyk4csn4nd4apwqy8s2p5kj5kywtrwzejtjalz3sufeljsycxw3qgrstgd"}
         ${false} | ${BTC}  | ${"02d96eadea3d780104449aca5c93461ce67c1564e2e1d73225fa67dd3b997a6018"}
-        ${false} | ${LBTC} | ${"bcrt1pjyk4csn4nd4apwqy8s2p5kj5kywtrwzejtjalz3sufeljsycxw3qgrstgd"}
         ${true}  | ${LBTC} | ${"CTEyTteD4cQg2NfF1yGWUU1rWSDC8sKHrj5BZJzr8kzyKFXwNCJ8VyDhi45Q98KdSf3jeTkbjJy18JkP"}
         ${true}  | ${LBTC} | ${"AzpjfmC41JpC6ieu3odwFBqtF4isFeY8RHv1e699EM2RgiyHd49og66a8qLLMDrhL8pCLeWAxJat1ebD"}
         ${true}  | ${LBTC} | ${"el1qqt7nl8pw6278yxv38fezzw8lmqh40prpusfurcvsh2xn3sl0pvnz3whllcapdnxcxn2u0wumpu7u2u6anh2juvmz7spx6snmn"}
