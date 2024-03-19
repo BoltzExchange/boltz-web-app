@@ -20,8 +20,8 @@ const AddressInput = () => {
         setAssetReceive,
         setAssetSend,
         setOnchainAddress,
-        setButtonLabel,
         setInvoice,
+        sendAmount,
     } = useCreateContext();
 
     const validateAddress = (input: HTMLInputElement) => {
@@ -58,22 +58,22 @@ const AddressInput = () => {
                     break;
             }
         } catch (e) {
-            const msg = t("invalid_address", { asset: asset() });
             setAddressValid(false);
-            input.classList.add("invalid");
-            input.setCustomValidity(msg);
-            if (amountValid()) {
-                setButtonLabel({
-                    key: "invalid_address",
-                    params: { asset: asset() },
-                });
+            if (inputValue.length !== 0) {
+                const msg = t("invalid_address", { asset: asset() });
+                input.classList.add("invalid");
+                input.setCustomValidity(msg);
             }
         }
     };
 
     createEffect(
         on([amountValid, onchainAddress, assetReceive], () => {
-            if (reverse() && asset() !== RBTC) {
+            if (
+                sendAmount().isGreaterThan(0) &&
+                reverse() &&
+                asset() !== RBTC
+            ) {
                 validateAddress(inputRef);
             }
         }),

@@ -17,23 +17,22 @@ import { validateInvoice } from "../utils/validation";
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t, denomination } = useGlobalContext();
+    const { t } = useGlobalContext();
     const {
         asset,
         boltzFee,
         minerFee,
         invoice,
         receiveAmount,
-        receiveAmountFormatted,
         reverse,
         sendAmount,
         amountValid,
         setInvoice,
         setInvoiceValid,
+        setInvoiceError,
         setLnurl,
         setReceiveAmount,
         setSendAmount,
-        setButtonLabel,
         setAssetSend,
         setAssetReceive,
         setOnchainAddress,
@@ -56,8 +55,10 @@ const InvoiceInput = () => {
         const inputValue = extractInvoice(val);
 
         try {
+            input.setCustomValidity("");
+            setInvoiceError("");
+            input.classList.remove("invalid");
             if (isLnurl(inputValue)) {
-                setButtonLabel({ key: "fetch_lnurl" });
                 setLnurl(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
@@ -74,16 +75,14 @@ const InvoiceInput = () => {
                 setLnurl("");
                 setInvoiceValid(true);
             }
-            input.setCustomValidity("");
-            input.classList.remove("invalid");
         } catch (e) {
             setInvoiceValid(false);
             setLnurl("");
-            input.setCustomValidity(t(e.message));
-            if (amountValid()) {
-                setButtonLabel({ key: e.message });
+            setInvoiceError(e.message);
+            if (inputValue.length !== 0) {
+                input.setCustomValidity(t(e.message));
+                input.classList.add("invalid");
             }
-            input.classList.add("invalid");
         }
     };
 
@@ -128,10 +127,7 @@ const InvoiceInput = () => {
             name="invoice"
             value={invoice()}
             autocomplete="off"
-            placeholder={t("create_and_paste", {
-                amount: receiveAmountFormatted(),
-                denomination: denomination(),
-            })}></textarea>
+            placeholder={t("create_and_paste")}></textarea>
     );
 };
 

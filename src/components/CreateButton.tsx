@@ -1,9 +1,10 @@
 import { useNavigate } from "@solidjs/router";
+import BigNumber from "bignumber.js";
 import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 import log from "loglevel";
-import { createEffect, createMemo, createSignal } from "solid-js";
+import { createEffect, createMemo, createSignal, on } from "solid-js";
 
 import { BTC, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
@@ -11,6 +12,7 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { ButtonLabelParams } from "../types";
 import { getPairs } from "../utils/boltzClient";
+import { formatAmount } from "../utils/denomination";
 import { ECPair } from "../utils/ecpair";
 import { fetcher, getPair } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
@@ -18,8 +20,17 @@ import { validateResponse } from "../utils/validation";
 
 export const CreateButton = () => {
     const navigate = useNavigate();
-    const { pairs, setPairs, online, swaps, setSwaps, notify, ref, t } =
-        useGlobalContext();
+    const {
+        denomination,
+        pairs,
+        setPairs,
+        online,
+        swaps,
+        setSwaps,
+        notify,
+        ref,
+        t,
+    } = useGlobalContext();
     const {
         asset,
         invoice,
@@ -34,42 +45,104 @@ export const CreateButton = () => {
         setLnurl,
         setOnchainAddress,
         valid,
+        addressValid,
         setAddressValid,
-        buttonLabel,
-        setButtonLabel,
+        minimum,
+        maximum,
+        invoiceValid,
+        invoiceError,
     } = useCreateContext();
     const { getEtherSwap } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(true);
     const [buttonClass, setButtonClass] = createSignal("btn");
+    const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
+        key: "create_swap",
+    });
 
-    const validateButtonDisable = () => {
-        return !valid() && !(lnurl() !== "" && amountValid());
+    const validLnurl = () => {
+        return (
+            !reverse() &&
+            lnurl() !== "" &&
+            amountValid() &&
+            sendAmount().isGreaterThan(0)
+        );
     };
 
     createEffect(() => {
-        setButtonDisable(validateButtonDisable());
+        setButtonDisable(!online() || !(valid() || validLnurl()));
     });
 
     createMemo(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
     });
 
-    createEffect(() => {
-        if (valid()) {
-            if (reverse() && lnurl()) {
-                setButtonLabel({ key: "fetch_lnurl" });
-            } else {
+    createEffect(
+        on(
+            [
+                valid,
+                amountValid,
+                addressValid,
+                invoiceValid,
+                reverse,
+                lnurl,
+                online,
+                minimum,
+                asset,
+            ],
+            () => {
+                if (!online()) {
+                    setButtonLabel({ key: "api_offline" });
+                    return;
+                }
+                if (!amountValid()) {
+                    const lessThanMin = Number(sendAmount()) < minimum();
+                    setButtonLabel({
+                        key: lessThanMin ? "minimum_amount" : "maximum_amount",
+                        params: {
+                            amount: formatAmount(
+                                BigNumber(lessThanMin ? minimum() : maximum()),
+                                denomination(),
+                            ),
+                            denomination: denomination(),
+                        },
+                    });
+                    return;
+                }
+                if (asset() === RBTC && !addressValid()) {
+                    setButtonLabel({ key: "connect_metamask" });
+                    return;
+                }
+                if (reverse()) {
+                    if (!addressValid()) {
+                        setButtonLabel({
+                            key: "invalid_address",
+                            params: { asset: asset() },
+                        });
+                        return;
+                    }
+                } else {
+                    if (validLnurl()) {
+                        setButtonLabel({ key: "fetch_lnurl" });
+                        return;
+                    }
+                    if (!invoiceValid()) {
+                        setButtonLabel({
+                            key:
+                                invoiceError() === ""
+                                    ? "invalid_invoice"
+                                    : invoiceError(),
+                        });
+                        return;
+                    }
+                }
                 setButtonLabel({ key: "create_swap" });
-            }
-        }
-        if (!online()) {
-            setButtonLabel({ key: "api_offline" });
-        }
-    });
+            },
+        ),
+    );
 
     const create = async () => {
-        if (amountValid() && !reverse() && lnurl() !== "") {
+        if (validLnurl()) {
             try {
                 const inv = await fetchLnurl(lnurl(), Number(receiveAmount()));
                 setInvoice(inv);
@@ -197,7 +270,7 @@ export const CreateButton = () => {
     const buttonClick = async () => {
         setButtonDisable(true);
         await create();
-        setButtonDisable(validateButtonDisable());
+        setButtonDisable(false);
     };
 
     const getButtonLabel = (label: ButtonLabelParams) => {
@@ -209,7 +282,7 @@ export const CreateButton = () => {
             id="create-swap-button"
             data-testid="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable() || !online()}
+            disabled={buttonDisable()}
             onClick={buttonClick}>
             {getButtonLabel(buttonLabel())}
         </button>
