@@ -14,7 +14,7 @@ Object.defineProperty(navigator, "clipboard", {
 
 describe("CopyButton", () => {
     test("should stay active for 1 second and copy into clipboard", async () => {
-        const textToCopy = 'clipboard';
+        const textToCopy = "clipboard";
 
         const {
             container: { firstChild: button },
