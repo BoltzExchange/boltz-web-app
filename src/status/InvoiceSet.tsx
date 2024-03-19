@@ -2,6 +2,7 @@ import { BigNumber } from "bignumber.js";
 import { Show } from "solid-js";
 
 import ContractTransaction from "../components/ContractTransaction";
+import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
 import { BTC, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
@@ -86,24 +87,15 @@ const InvoiceSet = () => {
             </Show>
             <hr />
             <div class="btns">
-                <span
-                    class="btn"
-                    onclick={() =>
-                        clipboard(
-                            formatAmount(
-                                BigNumber(swap().expectedAmount),
-                                denomination(),
-                            ),
-                        )
-                    }>
-                    {t("copy_amount")}
-                </span>
-                <span class="btn" onclick={() => clipboard(swap().address)}>
-                    {t("copy_address")}
-                </span>
-                <span class="btn" onclick={() => clipboard(swap().bip21)}>
-                    {t("copy_bip21")}
-                </span>
+                <CopyButton
+                    label="copy_amount"
+                    data={formatAmount(
+                        BigNumber(swap().expectedAmount),
+                        denomination(),
+                    )}
+                />
+                <CopyButton label="copy_address" data={swap().address} />
+                <CopyButton label="copy_bip21" data={swap().bip21} />
             </div>
         </div>
     );

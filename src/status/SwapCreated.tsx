@@ -2,6 +2,7 @@ import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show } from "solid-js";
 
+import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
@@ -59,9 +60,7 @@ const SwapCreated = () => {
                 </a>
             </Show>
             <hr class="spacer" />
-            <span class="btn" onclick={() => clipboard(swap().invoice)}>
-                {t("copy_invoice")}
-            </span>
+            <CopyButton label="copy_invoice" data={swap().invoice} />
         </div>
     );
 };
