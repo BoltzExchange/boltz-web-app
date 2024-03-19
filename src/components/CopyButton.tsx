@@ -16,7 +16,7 @@ const CopyButton = ({ data, label }) => {
         setTimeout(() => {
             setButtonClass("btn");
             setButtonActive(false);
-        }, 1000);
+        }, 600);
     };
 
     return (

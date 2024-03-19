@@ -26,7 +26,7 @@ describe("CopyButton", () => {
         expect(btn.textContent).toEqual(i18n.en.copy_bip21);
         fireEvent.click(btn);
         expect(btn.classList.contains("btn-active")).toBeTruthy();
-        await new Promise((resolve) => setTimeout(resolve, 1100));
+        await new Promise((resolve) => setTimeout(resolve, 700));
         expect(btn.classList.contains("btn-active")).toBeFalsy();
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith("clipboard");
     });
