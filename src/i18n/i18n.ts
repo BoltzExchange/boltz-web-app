@@ -51,7 +51,7 @@ const dict = {
         feecheck:
             "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
         create_and_paste:
-            "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink\n\nAmount: {{ amount }} {{ denomination }}",
+            "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink",
         congrats: "Congratulations!",
         successfully_swapped: "Your swap completed successfully",
         timeout_eta: "Timeout ETA",
@@ -229,7 +229,7 @@ const dict = {
         feecheck:
             "Die Netzwerkgebühr wurde aufgrund der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
         create_and_paste:
-            "Füge eine bolt11 Lightning-Rechnung\n eine Lightning-Adresse\n oder einen LNURL Paylink hier ein\n\nBetrag: {{ amount }} {{ denomination }}",
+            "Füge eine bolt11 Lightning-Rechnung\n eine Lightning-Adresse\n oder einen LNURL Paylink hier ein",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped: "Swap erfolgreich!",
         timeout_eta: "Timeout-ETA",
@@ -411,7 +411,7 @@ const dict = {
         feecheck:
             "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
         create_and_paste:
-            "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay\n\nImporte: {{ amount }} {{ denomination }}",
+            "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay",
         congrats: "¡Felicitaciones!",
         successfully_swapped: "Su intercambio se realizó con éxito!",
         timeout_eta: "Tiempo de espera estimado",
@@ -593,7 +593,7 @@ const dict = {
         success_swap: "交换成功",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
         create_and_paste:
-            "粘贴一个bolt11闪电发票\n或闪电网络地址\n或LNURL支付链接\n\n金额：{{ amount }}{{ denomination }}",
+            "粘贴一个bolt11闪电发票\n或闪电网络地址\n或LNURL支付链接",
         congrats: "恭喜！",
         successfully_swapped: "您的交换已成功完成",
         timeout_eta: "超过预期时间",
