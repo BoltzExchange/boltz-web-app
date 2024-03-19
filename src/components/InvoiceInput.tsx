@@ -32,6 +32,9 @@ const InvoiceInput = () => {
     const validate = (input: HTMLTextAreaElement) => {
         const inputValue = extractInvoice(input.value.trim());
         try {
+            input.setCustomValidity("");
+            setInvoiceError("");
+            input.classList.remove("invalid");
             if (isLnurl(inputValue)) {
                 setLnurl(inputValue);
             } else {
@@ -49,17 +52,14 @@ const InvoiceInput = () => {
                 setLnurl("");
                 setInvoiceValid(true);
             }
-            input.setCustomValidity("");
-            setInvoiceError("");
-            input.classList.remove("invalid");
         } catch (e) {
-            // if amount is zero, don't show error
-            if (sendAmount().isZero()) return;
             setInvoiceValid(false);
             setLnurl("");
-            input.setCustomValidity(t(e.message));
             setInvoiceError(e.message);
-            input.classList.add("invalid");
+            if (inputValue.length !== 0) {
+                input.setCustomValidity(t(e.message));
+                input.classList.add("invalid");
+            }
         }
     };
 
