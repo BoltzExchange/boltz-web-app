@@ -251,8 +251,7 @@ hr.spacer {
 }
 
 .fees {
-    display: flex;
-    justify-content: space-between;
+    justify-content: end;
 }
 .tags {
     display: flex;
@@ -370,6 +369,8 @@ textarea {
 .denomination > :first-child {
     margin-right: 5px;
 }
+
+.toggler,
 .denomination {
     cursor: pointer;
     flex-grow: 0;
@@ -381,11 +382,39 @@ textarea {
         background: rgb(20, 40, 63);
     }
 }
+
+.toggle-circle,
 .denomination .active {
     filter: none;
     border-radius: 50%;
     background-color: rgb(23, 34, 46);
     border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.toggler {
+    width: 58px;
+    margin-left: 10px;
+    height: 40px;
+    margin-right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggler-active .toggle-circle {
+    color: #f7931a;
+    opacity: 1;
+}
+
+.toggle-circle {
+    opacity: 0.35;
+    display: flex;
+    height: 28px;
+    font-size: 11px;
+    width: 47px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 26px;
 }
 
 .hidden {

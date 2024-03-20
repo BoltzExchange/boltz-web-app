@@ -6,11 +6,13 @@ import Asset from "../components/Asset";
 import AssetSelect from "../components/AssetSelect";
 import ConnectMetamask from "../components/ConnectMetamask";
 import { CreateButton } from "../components/CreateButton";
+import Denomination from "../components/Denomination";
 import Fees from "../components/Fees";
 import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import WeblnButton from "../components/WeblnButton";
+import Zeroconf from "../components/Zeroconf";
 import { RBTC, sideReceive, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -364,7 +366,11 @@ const Create = () => {
                         />
                     </div>
                 </div>
-                <Fees />
+                <div class="fees-dyn">
+                    <Denomination />
+                    <Zeroconf />
+                    <Fees />
+                </div>
                 <hr class="spacer" />
                 <Show when={asset() === RBTC}>
                     <ConnectMetamask showAddress={true} />

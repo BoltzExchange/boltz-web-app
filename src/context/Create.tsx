@@ -59,6 +59,8 @@ export type CreateContextType = {
     setMinerFee: Setter<number>;
     setInvoiceError: Setter<string>;
     invoiceError: Accessor<string>;
+    zeroconf: Accessor<boolean>;
+    setZeroconf: Setter<boolean>;
 };
 
 const CreateContext = createContext<CreateContextType>();
@@ -132,6 +134,8 @@ const CreateProvider = (props: { children: any }) => {
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
 
+    const [zeroconf, setZeroconf] = createSignal(false);
+
     return (
         <CreateContext.Provider
             value={{
@@ -181,6 +185,8 @@ const CreateProvider = (props: { children: any }) => {
                 setMinerFee,
                 invoiceError,
                 setInvoiceError,
+                zeroconf,
+                setZeroconf,
             }}>
             {props.children}
         </CreateContext.Provider>

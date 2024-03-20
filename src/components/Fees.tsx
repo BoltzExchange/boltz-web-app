@@ -1,8 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect } from "solid-js";
 
-import btcSvg from "../assets/btc.svg";
-import satSvg from "../assets/sat.svg";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
@@ -13,12 +11,11 @@ import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
-import { denominations, formatAmount } from "../utils/denomination";
+import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 
 const Fees = () => {
-    const { t, pairs, fetchPairs, denomination, setDenomination, separator } =
-        useGlobalContext();
+    const { t, pairs, fetchPairs, denomination, separator } = useGlobalContext();
     const {
         asset,
         reverse,
@@ -65,30 +62,10 @@ const Fees = () => {
         }
     });
 
-    const toggleDenomination = () => {
-        setDenomination(
-            denomination() === denominations.btc
-                ? denominations.sat
-                : denominations.btc,
-        );
-    };
-
     fetchPairs();
 
     return (
-        <div class="fees-dyn">
-            <div class="denomination" onClick={() => toggleDenomination()}>
-                <img
-                    src={btcSvg}
-                    class={denomination() == "btc" ? "active" : ""}
-                    alt="denominator"
-                />
-                <img
-                    src={satSvg}
-                    class={denomination() == "sat" ? "active" : ""}
-                    alt="denominator"
-                />
-            </div>
+        <div class="fees">
             <label>
                 {t("network_fee")}:{" "}
                 <span class="network-fee">
