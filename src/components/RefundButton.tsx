@@ -100,6 +100,11 @@ const RefundButton = ({
     const refundAddressChange = (evt: InputEvent, asset: string) => {
         const input = evt.currentTarget as HTMLInputElement;
         const inputValue = input.value.trim();
+        if (inputValue === swap().address) {
+            log.debug("don't refund to lock address");
+            input.setCustomValidity("lockup address");
+            return false;
+        }
         try {
             getAddress(asset).toOutputScript(
                 inputValue,
