@@ -101,7 +101,7 @@ const RefundButton = ({
         const input = evt.currentTarget as HTMLInputElement;
         const inputValue = input.value.trim();
         if (inputValue === swap().address) {
-            log.debug("don't refund to lock address");
+            log.debug("refunds to lockup address are blocked");
             input.setCustomValidity("lockup address");
             return false;
         }
