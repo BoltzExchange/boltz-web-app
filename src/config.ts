@@ -13,7 +13,7 @@ const defaults = {
     nostrUrl:
         "https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970",
     statusUrl: "https://status.boltz.exchange",
-    youtubeUrl: "https://www.youtube.com/@boltzhq",
+    youtubeUrl: "https://www.youtube.com/playlist?list=PLkqOa9SGBeZfAEHvKkGKjeRIASeu6bNO3",
     brandingUrl: "https://github.com/BoltzExchange/logo",
     testnetUrl: "https://testnet.boltz.exchange",
     telegramUrl: "https://t.me/boltzhq",
