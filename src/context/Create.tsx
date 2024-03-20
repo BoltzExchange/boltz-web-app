@@ -134,7 +134,7 @@ const CreateProvider = (props: { children: any }) => {
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
 
-    const [zeroconf, setZeroconf] = createSignal(false);
+    const [zeroconf, setZeroconf] = createSignal<boolean>(true);
 
     return (
         <CreateContext.Provider
