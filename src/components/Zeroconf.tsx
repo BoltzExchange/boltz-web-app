@@ -14,7 +14,7 @@ const Zeroconf = () => {
             title={t("zeroconf")}
             class={zeroconf() ? "toggler toggler-active" : "toggler"}
             onClick={() => toggleZeroconf()}>
-            <span class="toggle-circle">0-conf</span>
+            <span class="toggle-circle">instant</span>
         </div>
     );
 };
