@@ -401,7 +401,7 @@ textarea {
 }
 
 .toggler-active .toggle-circle {
-    color: #f7931a;
+    color: $primary;
     opacity: 1;
 }
 
@@ -414,6 +414,10 @@ textarea {
     justify-content: center;
     align-items: center;
     border-radius: 26px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .hidden {
