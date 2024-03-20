@@ -172,15 +172,22 @@ export const SwapChecker = () => {
             );
         }
 
+        let claimStatus = [
+            swapStatusPending.TransactionConfirmed,
+            swapStatusSuccess.InvoiceSettled,
+            // will be popped if zeroconf
+            swapStatusPending.TransactionMempool,
+        ];
+
+        if (currentSwap.zeroconf === true) {
+            claimStatus.pop();
+        }
+
         if (
             currentSwap.asset !== RBTC &&
             currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
-            [
-                swapStatusPending.TransactionConfirmed,
-                swapStatusPending.TransactionMempool,
-                swapStatusSuccess.InvoiceSettled,
-            ].includes(data.status)
+            claimStatus.includes(data.status)
         ) {
             try {
                 const res = await claim(currentSwap, data.transaction);
