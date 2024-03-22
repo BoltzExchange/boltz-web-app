@@ -105,7 +105,7 @@ const probeUserInput = (
     expectedAsset: string,
     input: string,
 ): string | null => {
-    if (probeUserInputOption(expectedAsset, input)) {
+    if (expectedAsset !== "" && probeUserInputOption(expectedAsset, input)) {
         return expectedAsset;
     }
 

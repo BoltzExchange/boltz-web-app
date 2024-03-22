@@ -1,20 +1,15 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import AddressInput from "../../src/components/AddressInput";
-import { BTC, LBTC } from "../../src/consts";
-import { useCreateContext } from "../../src/context/Create";
-import { useGlobalContext } from "../../src/context/Global";
-import { contextWrapper } from "../helper";
+import { BTC, LBTC, LN } from "../../src/consts";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 
 describe("AddressInput", () => {
-    let signals: any;
-    let globalSignals: any;
-    const TestComponent = () => {
-        signals = useCreateContext();
-        globalSignals = useGlobalContext();
-        return "";
-    };
-
     test.each`
         valid    | network | address
         ${true}  | ${BTC}  | ${"mv5v8C3e1SySwqe6r2fq9Fh6DbZr8ddjsX"}
@@ -57,6 +52,43 @@ describe("AddressInput", () => {
                 expect(signals.onchainAddress()).toEqual(address);
             } else {
                 expect(input.className).toEqual("invalid");
+            }
+        },
+    );
+
+    test.each`
+        asset   | input
+        ${BTC}  | ${"bcrt1p89lvl3e6e8sxmjryqx80p7cmd3l0eeh6cr48ht948wa2a0l68szqljype5"}
+        ${LBTC} | ${"el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu"}
+        ${LN}   | ${"admin@bol.tz"}
+    `(
+        "should switch to $asset based on input $input",
+        async ({ asset, input }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <AddressInput />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            const addressInput = (await screen.findByTestId(
+                "onchainAddress",
+            )) as HTMLInputElement;
+
+            fireEvent.input(addressInput, {
+                target: { value: input },
+            });
+
+            expect(signals.assetReceive()).toEqual(asset);
+
+            if (asset === LN) {
+                expect(signals.invoice()).toEqual(input);
+            } else {
+                expect(signals.addressValid()).toEqual(true);
+                expect(signals.onchainAddress()).toEqual(input);
             }
         },
     );
