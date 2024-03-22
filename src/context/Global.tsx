@@ -17,6 +17,7 @@ import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
+import { registerNotifications } from "../utils/notification";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
@@ -54,9 +55,11 @@ export type GlobalContextType = {
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
     setEmbedded: Setter<boolean>;
+    browserNotification: Accessor<boolean>;
+    setBrowserNotification: Setter<boolean>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
-    notify: (type: string, message: string) => void;
+    notify: (type: string, message: string, browser?: boolean) => void;
     fetchPairs: (asset?: string) => void;
     updateSwapStatus: (id: string, newStatus: string) => boolean;
 };
@@ -122,11 +125,6 @@ const GlobalProvider = (props: { children: any }) => {
         },
     );
 
-    const notify = (type: string, message: string) => {
-        setNotificationType(type);
-        setNotification(message);
-    };
-
     const fetchPairs = (asset: string = BTC) => {
         getPairs(asset)
             .then((data) => {
@@ -173,6 +171,14 @@ const GlobalProvider = (props: { children: any }) => {
         setEmbedded(true);
     }
 
+    // browser notification
+
+    const [browserNotification, setBrowserNotification] =
+        createSignal<boolean>(false);
+    registerNotifications().then((state: boolean) =>
+        setBrowserNotification(state),
+    );
+
     // i18n
     let dictLocale: any;
     createMemo(() => setI18n(i18nConfigured()));
@@ -184,6 +190,21 @@ const GlobalProvider = (props: { children: any }) => {
         key: string,
         values?: Record<string, any>,
     ) => string;
+
+    const notify = (
+        type: string,
+        message: string,
+        browser: boolean = false,
+    ) => {
+        setNotificationType(type);
+        setNotification(message);
+        if (browser && browserNotification()) {
+            new Notification(t("notification_header"), {
+                body: message,
+                icon: "/boltz-icon.svg",
+            });
+        }
+    };
 
     return (
         <GlobalContext.Provider
@@ -220,6 +241,8 @@ const GlobalProvider = (props: { children: any }) => {
                 setHideHero,
                 embedded,
                 setEmbedded,
+                browserNotification,
+                setBrowserNotification,
                 // functions
                 t,
                 notify,

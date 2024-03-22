@@ -177,6 +177,7 @@ const dict = {
         email: "Email",
         switch_paste: "Switched swap direction/asset based on pasted content",
         canary: "Canary",
+        notification_header: "Boltz Exchange",
     },
     de: {
         language: "Deutsch",
@@ -362,6 +363,7 @@ const dict = {
         switch_paste:
             "Swap-Richtung/Asset basierend auf eingefügtem Inhalt gewechselt",
         canary: "Canary",
+        notification_header: "Boltz Exchange",
     },
     es: {
         language: "Español",
@@ -549,6 +551,7 @@ const dict = {
         switch_paste:
             "Cambiado de dirección/activo de intercambio basado en el contenido pegado",
         canary: "Canary",
+        notification_header: "Boltz Exchange",
     },
     zh: {
         language: "中文",
@@ -717,6 +720,7 @@ const dict = {
         email: "邮箱",
         switch_paste: "根据粘贴的内容切换交换方向/资产",
         canary: "金丝雀搜查令",
+        notification_header: "Boltz Exchange",
     },
 };
 

@@ -3,3 +3,8 @@ import regtest from "../src/configs/regtest.json";
 
 regtest.loglevel = "error";
 setConfig(regtest);
+
+globalThis.Notification = {
+    requestPermission: () => new Promise(() => jest.fn()),
+    permission: "granted",
+} as unknown as jest.Mocked<typeof Notification>;

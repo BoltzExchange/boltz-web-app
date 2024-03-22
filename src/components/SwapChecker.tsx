@@ -195,7 +195,7 @@ export const SwapChecker = () => {
                 const claimedSwap = swapsTmp.find((s) => res.id === s.id);
                 claimedSwap.claimTx = res.claimTx;
                 setSwaps(swapsTmp);
-                notify("success", `swap ${res.id} claimed`);
+                notify("success", `swap ${res.id} claimed`, true);
             } catch (e) {
                 log.warn("swapchecker failed to claim swap", e);
             }
