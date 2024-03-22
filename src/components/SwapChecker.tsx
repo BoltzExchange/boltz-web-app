@@ -1,3 +1,4 @@
+import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
@@ -165,6 +166,13 @@ export const SwapChecker = () => {
             return;
         }
 
+        if (
+            currentSwap.version !== OutputType.Taproot ||
+            currentSwap.asset === RBTC
+        ) {
+            return;
+        }
+
         if (data.status === swapStatusSuccess.InvoiceSettled) {
             data.transaction = await getReverseTransaction(
                 currentSwap.asset,
@@ -173,7 +181,6 @@ export const SwapChecker = () => {
         }
 
         if (
-            currentSwap.asset !== RBTC &&
             currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
             [
