@@ -17,7 +17,7 @@ import { validateInvoice } from "../utils/validation";
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t } = useGlobalContext();
+    const { t, notify } = useGlobalContext();
     const {
         asset,
         boltzFee,
@@ -49,6 +49,7 @@ const InvoiceInput = () => {
             setAssetSend(LN);
             setAssetReceive(actualAsset);
             setOnchainAddress(address);
+            notify("success", t("switch_paste"));
             return;
         }
 
