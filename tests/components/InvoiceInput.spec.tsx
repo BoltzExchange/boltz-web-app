@@ -2,21 +2,15 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
-import { useCreateContext } from "../../src/context/Create";
+import { BTC, LBTC, LN } from "../../src/consts";
 import {
     decodeInvoice,
     extractInvoice,
     invoicePrefix,
 } from "../../src/utils/invoice";
-import { contextWrapper } from "../helper";
+import { TestComponent, contextWrapper, signals } from "../helper";
 
 describe("InvoiceInput", () => {
-    let signals: any;
-    const TestComponent = () => {
-        signals = useCreateContext();
-        return "";
-    };
-
     test.each`
         expected | invoice
         ${false} | ${"m@some.domain"}
@@ -173,5 +167,33 @@ describe("InvoiceInput", () => {
         });
 
         expect(signals.lnurl()).toEqual(extractInvoice(lnurl));
+    });
+
+    test.each`
+        asset   | input
+        ${BTC}  | ${"bcrt1p89lvl3e6e8sxmjryqx80p7cmd3l0eeh6cr48ht948wa2a0l68szqljype5"}
+        ${LBTC} | ${"el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu"}
+    `("should switch asset based on input $input", async ({ asset, input }) => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const invoiceInput = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        fireEvent.input(invoiceInput, {
+            target: { value: input },
+        });
+
+        expect(signals.assetSend()).toEqual(LN);
+        expect(signals.assetReceive()).toEqual(asset);
+        expect(signals.onchainAddress()).toEqual(input);
     });
 });

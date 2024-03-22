@@ -1,17 +1,23 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
-import { RBTC } from "../consts";
+import { LN, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
-import { decodeInvoice, extractInvoice, isLnurl } from "../utils/invoice";
+import { probeUserInput } from "../utils/compat";
+import {
+    decodeInvoice,
+    extractAddress,
+    extractInvoice,
+    isLnurl,
+} from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t } = useGlobalContext();
+    const { t, notify } = useGlobalContext();
     const {
         asset,
         boltzFee,
@@ -27,10 +33,28 @@ const InvoiceInput = () => {
         setLnurl,
         setReceiveAmount,
         setSendAmount,
+        setAssetSend,
+        setAssetReceive,
+        setOnchainAddress,
     } = useCreateContext();
 
     const validate = (input: HTMLTextAreaElement) => {
-        const inputValue = extractInvoice(input.value.trim());
+        const val = input.value.trim();
+
+        const address = extractAddress(val);
+        const actualAsset = probeUserInput(LN, address);
+
+        // Auto switch direction based on address
+        if (actualAsset !== LN && actualAsset !== null) {
+            setAssetSend(LN);
+            setAssetReceive(actualAsset);
+            setOnchainAddress(address);
+            notify("success", t("switch_paste"));
+            return;
+        }
+
+        const inputValue = extractInvoice(val);
+
         try {
             input.setCustomValidity("");
             setInvoiceError("");

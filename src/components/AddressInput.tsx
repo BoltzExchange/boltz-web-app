@@ -1,15 +1,15 @@
 import { createEffect, on } from "solid-js";
 
-import { RBTC } from "../consts";
+import { LN, RBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { decodeAddress } from "../utils/compat";
-import { extractAddress } from "../utils/invoice";
+import { probeUserInput } from "../utils/compat";
+import { extractAddress, extractInvoice } from "../utils/invoice";
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
-    const { t } = useGlobalContext();
+    const { t, notify } = useGlobalContext();
     const {
         asset,
         assetReceive,
@@ -17,21 +17,46 @@ const AddressInput = () => {
         amountValid,
         onchainAddress,
         setAddressValid,
+        setAssetReceive,
+        setAssetSend,
         setOnchainAddress,
+        setInvoice,
         sendAmount,
     } = useCreateContext();
 
     const validateAddress = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
         const address = extractAddress(inputValue);
+        const invoice = extractInvoice(inputValue);
 
         try {
-            input.setCustomValidity("");
-            input.classList.remove("invalid");
             const assetName = asset();
-            decodeAddress(assetName, address);
-            setAddressValid(true);
-            setOnchainAddress(address);
+
+            const actualAsset = probeUserInput(assetName, address);
+
+            switch (actualAsset) {
+                case LN:
+                    setAssetReceive(LN);
+                    setAssetSend(asset());
+                    setInvoice(invoice);
+                    notify("success", t("switch_paste"));
+                    break;
+
+                case null:
+                    throw new Error();
+
+                default:
+                    if (assetName !== actualAsset) {
+                        setAssetReceive(actualAsset);
+                        notify("success", t("switch_paste"));
+                    }
+
+                    input.setCustomValidity("");
+                    input.classList.remove("invalid");
+                    setAddressValid(true);
+                    setOnchainAddress(address);
+                    break;
+            }
         } catch (e) {
             setAddressValid(false);
             if (inputValue.length !== 0) {

@@ -26,7 +26,8 @@ import {
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { config } from "../config";
-import { LBTC } from "../consts";
+import { BTC, LBTC, LN } from "../consts";
+import { isInvoice, isLnurl } from "./invoice";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
     blindingPrivateKey?: Buffer;
@@ -36,6 +37,8 @@ type DecodedAddress = { script: Buffer; blindingKey?: Buffer };
 
 export let secp: Secp256k1ZKP;
 let confi: confidential.Confidential;
+
+const possibleUserInputTypes = [LN, LBTC, BTC];
 
 const setup = async () => {
     if (confi !== undefined) {
@@ -81,6 +84,40 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     return {
         script,
     };
+};
+
+const probeUserInputOption = (asset: string, input: string): boolean => {
+    switch (asset) {
+        case LN:
+            return isLnurl(input) || isInvoice(input);
+
+        default:
+            try {
+                decodeAddress(asset, input);
+                return true;
+            } catch (e) {
+                return false;
+            }
+    }
+};
+
+const probeUserInput = (
+    expectedAsset: string,
+    input: string,
+): string | null => {
+    if (expectedAsset !== "" && probeUserInputOption(expectedAsset, input)) {
+        return expectedAsset;
+    }
+
+    for (const asset of possibleUserInputTypes.filter(
+        (type) => type !== expectedAsset,
+    )) {
+        if (probeUserInputOption(asset, input)) {
+            return asset;
+        }
+    }
+
+    return null;
 };
 
 const getNetwork = (
@@ -190,4 +227,5 @@ export {
     getConstructClaimTransaction,
     getConstructRefundTransaction,
     LiquidTransactionOutputWithKey,
+    probeUserInput,
 };
