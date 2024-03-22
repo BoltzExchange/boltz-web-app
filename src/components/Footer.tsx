@@ -87,6 +87,10 @@ const Footer = () => {
                     {t("branding")}
                 </a>{" "}
                 |{" "}
+                <a target="_blank" href={config.canaryUrl}>
+                    {t("canary")}
+                </a>{" "}
+                |{" "}
                 <a target="_blank" href={config.statusUrl}>
                     {t("status")}
                 </a>{" "}

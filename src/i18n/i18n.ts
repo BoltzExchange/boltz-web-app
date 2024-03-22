@@ -175,6 +175,7 @@ const dict = {
         paste_invalid:
             "Clipboard contains invalid characters or maximum amount is exceeded",
         email: "Email",
+        canary: "Canary",
     },
     de: {
         language: "Deutsch",
@@ -357,6 +358,7 @@ const dict = {
         paste_invalid:
             "Zwischenablage enthält ungültige Zeichen oder der maximale Betrag wurde überschritten",
         email: "Email",
+        canary: "Canary",
     },
     es: {
         language: "Español",
@@ -541,6 +543,7 @@ const dict = {
         paste_invalid:
             "El portapapeles contiene caracteres no válidos o se ha excedido el importe máximo",
         email: "Email",
+        canary: "Canary",
     },
     zh: {
         language: "中文",
@@ -707,6 +710,7 @@ const dict = {
         swap_in_progress: "此交换仍在进行中。",
         paste_invalid: "剪贴板包含无效字符或超出最大金额",
         email: "邮箱",
+        canary: "金丝雀搜查令",
     },
 };
 
