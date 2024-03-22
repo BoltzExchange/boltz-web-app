@@ -25,11 +25,11 @@ const RefundButton = ({
     setRefundTxId?: Setter<string>;
 }) => {
     const {
-        notify,
         getSwap,
         setSwapStorage,
         setRefundAddress,
         refundAddress,
+        notify,
         t,
     } = useGlobalContext();
     const { setSwap } = usePayContext();
@@ -148,6 +148,7 @@ const RefundButton = ({
                     setRefundTxId(res.refundTx);
                 }
             }
+            notify("success", t("refunded"), true, true);
         } catch (error) {
             log.warn("refund failed", error);
             if (typeof error.json === "function") {

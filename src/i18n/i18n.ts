@@ -191,6 +191,10 @@ const dict = {
             "Enable or disable audio notifications",
         on: "on",
         off: "off",
+        notification_header: "Boltz Swap",
+        browsernotification: "Browser Notifications",
+        browsernotification_tooltip:
+            "Enable browser notifications, requires permissions",
     },
     de: {
         language: "Deutsch",
@@ -391,6 +395,10 @@ const dict = {
             "Aktiviere oder deaktiviere Audio-Benachrichtigungen",
         on: "an",
         off: "aus",
+        notification_header: "Boltz Swap",
+        browsernotification: "Browser Benachrichtigungen",
+        browsernotification_tooltip:
+            "Aktiviere Browser Benachrichtigungen, benötigt Berechtigungen",
     },
     es: {
         language: "Español",
@@ -592,6 +600,10 @@ const dict = {
             "Activar o desactivar notificaciones de audio",
         on: "on",
         off: "off",
+        notification_header: "Boltz Swap",
+        browsernotification: "Notificaciones del navegador",
+        browsernotification_tooltip:
+            "Habilitar notificaciones del navegador, requiere permisos",
     },
     zh: {
         language: "中文",
@@ -770,6 +782,9 @@ const dict = {
         enable_audio_notifications_tooltip: "启用或禁用音频通知",
         on: "开",
         off: "关",
+        notification_header: "Boltz Swap",
+        browsernotification: "浏览器通知",
+        browsernotification_tooltip: "启用浏览器通知，需要权限",
     },
 };
 

@@ -63,9 +63,16 @@ export type GlobalContextType = {
     setSettingsMenu: Setter<boolean>;
     audioNotification: Accessor<boolean>;
     setAudioNotification: Setter<boolean>;
+    browserNotification: Accessor<boolean>;
+    setBrowserNotification: Setter<boolean>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
-    notify: (type: string, message: string, audio?: boolean) => void;
+    notify: (
+        type: string,
+        message: string,
+        browser?: boolean,
+        audio?: boolean,
+    ) => void;
     playNotificationSound: () => void;
     fetchPairs: (asset?: string) => void;
 
@@ -171,10 +178,21 @@ const GlobalProvider = (props: { children: any }) => {
         },
     );
 
-    const notify = (type: string, message: string, audio: boolean = false) => {
+    const notify = (
+        type: string,
+        message: string,
+        browser: boolean = false,
+        audio: boolean = false,
+    ) => {
         setNotificationType(type);
         setNotification(message);
         if (audio && audioNotification()) playNotificationSound();
+        if (browser && browserNotification()) {
+            new Notification(t("notification_header"), {
+                body: message,
+                icon: "/boltz-icon.svg",
+            });
+        }
     };
 
     const playNotificationSound = () => {
@@ -294,6 +312,14 @@ const GlobalProvider = (props: { children: any }) => {
         setEmbedded(true);
     }
 
+    // browser notification
+    const [browserNotification, setBrowserNotification] = makePersisted(
+        createSignal<boolean>(false),
+        {
+            name: "browserNotification",
+        },
+    );
+
     // i18n
     let dictLocale: any;
     createMemo(() => setI18n(i18nConfigured()));
@@ -345,6 +371,8 @@ const GlobalProvider = (props: { children: any }) => {
                 setSettingsMenu,
                 audioNotification,
                 setAudioNotification,
+                browserNotification,
+                setBrowserNotification,
                 // functions
                 t,
                 notify,
