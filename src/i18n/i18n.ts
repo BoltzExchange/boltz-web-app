@@ -710,7 +710,7 @@ const dict = {
         swap_in_progress: "此交换仍在进行中。",
         paste_invalid: "剪贴板包含无效字符或超出最大金额",
         email: "邮箱",
-        canary: "Canary",
+        canary: "金丝雀搜查令",
     },
 };
 
