@@ -19,7 +19,7 @@ import {
 const reconnectInterval = 5_000;
 
 class BoltzWebSocket {
-    private ws?: WebSocket;
+    private worker?: Worker;
     private reconnectTimeout?: any;
     private isClosed: boolean = false;
 
@@ -33,38 +33,33 @@ class BoltzWebSocket {
     public connect = () => {
         this.isClosed = false;
         clearTimeout(this.reconnectTimeout);
-        this.ws?.close();
-        this.ws = new WebSocket(
-            `${BoltzWebSocket.formatWsUrl(this.url)}/v2/ws`,
-        );
-
-        this.ws.onopen = () => {
-            this.subscribeUpdates(Array.from(this.relevantIds.values()));
-        };
-        this.ws.onclose = () => {
-            log.warn(`ws ${this.url} closed`);
-            this.handleClose();
-        };
-        this.ws.onmessage = async (msg) => {
-            const data = JSON.parse(msg.data);
-            if (data.event === "pong" || data.event === "ping") {
-                return;
+        this.worker?.terminate();
+        this.worker = new Worker("/websocket-worker.js");
+        this.worker.addEventListener("message", (event) => {
+            const { event: workerEvent, data } = event.data;
+            switch (workerEvent) {
+                case "open":
+                    log.debug(`ws ${this.url} connected`);
+                    this.subscribeUpdates(
+                        Array.from(this.relevantIds.values()),
+                    );
+                    break;
+                case "message":
+                    this.handleMessage(data);
+                    break;
+                case "close":
+                    log.warn(`ws ${this.url} closed`);
+                    this.handleClose();
+                    break;
+                case "error":
+                    log.error("ws error:", data.error);
+                    break;
             }
-
-            log.debug(`ws ${this.url} message`, data);
-
-            if (data.event === "update" && data.channel === "swap.update") {
-                const swapUpdates = data.args as {
-                    id: string;
-                    status: string;
-                }[];
-                for (const status of swapUpdates) {
-                    this.relevantIds.add(status.id);
-                    this.prepareSwap(status.id, status);
-                    await this.claimSwap(status.id, status);
-                }
-            }
-        };
+        });
+        this.worker.postMessage({
+            action: "connect",
+            data: { url: `${BoltzWebSocket.formatWsUrl(this.url)}/v2/ws` },
+        });
     };
 
     public close = () => {
@@ -72,23 +67,44 @@ class BoltzWebSocket {
         if (this.reconnectTimeout) {
             clearTimeout(this.reconnectTimeout);
         }
-
-        this.ws?.close();
+        this.worker?.terminate();
     };
 
     public subscribeUpdates = (ids: string[]) => {
         ids.forEach((id) => this.relevantIds.add(id));
-        if (this.ws.readyState !== WebSocket.OPEN) {
-            return;
-        }
+        // if (this.ws.readyState !== WebSocket.OPEN) {
+        //     return;
+        // }
 
-        this.ws.send(
-            JSON.stringify({
+        this.worker.postMessage({
+            action: "send",
+            data: JSON.stringify({
                 op: "subscribe",
                 channel: "swap.update",
                 args: ids,
             }),
-        );
+        });
+    };
+
+    private handleMessage = async (msg: string) => {
+        const data = JSON.parse(msg);
+        if (data.event === "pong" || data.event === "ping") {
+            return;
+        }
+
+        log.debug(`ws ${this.url} message`, data);
+
+        if (data.event === "update" && data.channel === "swap.update") {
+            const swapUpdates = data.args as {
+                id: string;
+                status: string;
+            }[];
+            for (const status of swapUpdates) {
+                this.relevantIds.add(status.id);
+                this.prepareSwap(status.id, status);
+                await this.claimSwap(status.id, status);
+            }
+        }
     };
 
     private handleClose = () => {
