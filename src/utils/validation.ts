@@ -4,6 +4,7 @@ import {
     Scripts,
     SwapTreeSerializer,
     Types,
+    compareTrees,
     reverseSwapTree,
     swapTree,
 } from "boltz-core";
@@ -52,19 +53,6 @@ type SwapResponseLiquid = SwapResponse & {
 };
 
 type ContractGetter = () => Promise<BaseContract>;
-
-const compareTrees = (
-    tree: Types.SwapTree,
-    compare: Types.SwapTree,
-): boolean => {
-    const compareLeaf = (leaf: Types.Tapleaf, compareLeaf: Types.Tapleaf) =>
-        leaf.version === compareLeaf.version &&
-        leaf.output.equals(compareLeaf.output);
-
-    return (tree.tree as Types.Tapleaf[]).every((leaf, i) =>
-        compareLeaf(leaf, compare.tree[i] as Types.Tapleaf),
-    );
-};
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
     const code = await (await getEtherSwap()).getDeployedCode();
