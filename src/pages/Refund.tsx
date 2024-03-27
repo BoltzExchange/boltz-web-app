@@ -131,8 +131,8 @@ const Refund = () => {
                         await getSubmarineTransaction(swap.asset, swap.id);
                         addToRefundableSwaps(swap);
                     }
-                } catch (_) {
-                    log.warn("failed to get swap status", swap.id);
+                } catch (e) {
+                    log.warn("failed to get swap status", swap.id, e);
                 }
             });
     });
