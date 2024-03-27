@@ -116,19 +116,23 @@ const Refund = () => {
                         undefined,
             )
             .map(async (swap) => {
-                const res = await getSwapStatus(swap.asset, swap.id);
-                if (
-                    !updateSwapStatus(swap.id, res.status) &&
-                    Object.values(swapStatusFailed).includes(res.status)
-                ) {
-                    if (res.status !== swapStatusFailed.SwapExpired) {
-                        addToRefundableSwaps(swap);
-                        return;
-                    }
+                try {
+                    const res = await getSwapStatus(swap.asset, swap.id);
+                    if (
+                        !updateSwapStatus(swap.id, res.status) &&
+                        Object.values(swapStatusFailed).includes(res.status)
+                    ) {
+                        if (res.status !== swapStatusFailed.SwapExpired) {
+                            addToRefundableSwaps(swap);
+                            return;
+                        }
 
-                    // Make sure coins were locked for the swap with status "swap.expired"
-                    await getSubmarineTransaction(swap.asset, swap.id);
-                    addToRefundableSwaps(swap);
+                        // Make sure coins were locked for the swap with status "swap.expired"
+                        await getSubmarineTransaction(swap.asset, swap.id);
+                        addToRefundableSwaps(swap);
+                    }
+                } catch (e) {
+                    log.warn("failed to get swap status", swap.id, e);
                 }
             });
     });
