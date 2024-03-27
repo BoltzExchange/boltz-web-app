@@ -132,7 +132,7 @@ const Refund = () => {
                         addToRefundableSwaps(swap);
                     }
                 } catch (_) {
-                    // do nothing, there is already a request error in the console
+                    log.warn("failed to get swap status", swap.id);
                 }
             });
     });
