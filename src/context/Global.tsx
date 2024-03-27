@@ -125,6 +125,9 @@ const GlobalProvider = (props: { children: any }) => {
     const notify = (type: string, message: string) => {
         setNotificationType(type);
         setNotification(message);
+        const audio = new Audio("/sound.mp3");
+        audio.volume = 0.2;
+        audio.play();
     };
 
     const fetchPairs = (asset: string = BTC) => {
