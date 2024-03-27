@@ -14,7 +14,7 @@ import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
     const { swap } = usePayContext();
-    const { t, denomination, webln } = useGlobalContext();
+    const { t, denomination, separator, webln } = useGlobalContext();
     const payWeblnInvoice = async (pr: string) => {
         enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);
@@ -29,6 +29,7 @@ const SwapCreated = () => {
                     amount: formatAmount(
                         BigNumber(swap().sendAmount),
                         denomination(),
+                        separator(),
                     ),
                     denomination:
                         denomination() === denominations.sat ? "sats" : BTC,
