@@ -34,7 +34,9 @@ export const Hero = () => {
                 getNodeStats(BTC),
             ]);
             log.debug("node", nodesRes);
-            setNodePubkey(nodesRes.BTC.LND.publicKey);
+            setNodePubkey(
+                nodesRes.BTC.LND?.publicKey || nodesRes.BTC.CLN?.publicKey,
+            );
 
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;
