@@ -159,7 +159,6 @@ const dict = {
         back_to_home: "Back to Home",
         transaction_prompt:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
-        fetch_lnurl: "Fetch invoice from LNURL/LNAddress",
         invalid_address: "Invalid {{ asset }} address",
         scan_qr_code: "Scan QR Code",
         version: "Version",
@@ -343,7 +342,6 @@ const dict = {
         back_to_home: "Zurück zur Startseite",
         transaction_prompt:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
-        fetch_lnurl: "Hole Rechnung von LNURL/LNAdresse",
         invalid_address: "Ungültige {{ asset }} Adresse",
         scan_qr_code: "QR Code scannen",
         version: "Version",
@@ -529,7 +527,6 @@ const dict = {
         back_to_home: "Volver al inicio",
         transaction_prompt:
             'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
-        fetch_lnurl: "Obtener factura de LNURL/LNAddress",
         invalid_address: "Dirección {{ asset }} inválida",
         scan_qr_code: "Escanear código QR",
         version: "Versión",
@@ -700,7 +697,6 @@ const dict = {
         back_to_home: "返回首页",
         transaction_prompt:
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易。",
-        fetch_lnurl: "从LNURL/LNAddress获取发票",
         invalid_address: "无效的{{ asset }}地址",
         scan_qr_code: "扫描 QR 码",
         version: "版本",
