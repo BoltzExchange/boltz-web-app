@@ -11,40 +11,47 @@ export const getValidationRegex = (maximum: number): RegExp => {
     const digits = maximum.toString().length;
     const firstDigit = BigNumber(maximum).div(satFactor).toString().charAt(0);
     const firstDigitRegex = firstDigit === "0" ? `0` : `0-${firstDigit}`;
-    const regex = `^[0-9]{1,${digits}}$|^[${firstDigitRegex}](\\.[0-9]{1,8}){0,1}$`;
+    const regex = `^[0-9]{1,${digits}}$|^[${firstDigitRegex}]((\\.|,)[0-9]{1,8}){0,1}$`;
     return new RegExp(regex);
 };
 
 export const formatAmount = (
     amount: BigNumber,
     denomination: string,
+    separator: string,
     fixed: boolean = false,
 ): string => {
-    return formatAmountDenomination(amount, denomination, fixed);
+    return formatAmountDenomination(amount, denomination, separator, fixed);
 };
 
 export const formatAmountDenomination = (
     amount: BigNumber,
     denomination: string,
+    separator: string,
     fixed: boolean = false,
 ): string => {
     switch (denomination) {
         case denominations.btc:
             const amountBig = amount.div(satFactor);
+            let amountString = amountBig.toString();
             if (fixed) {
-                return amountBig.toFixed(8);
+                amountString = amountBig.toFixed(8);
             }
             if (amountBig.isZero()) {
-                return amountBig.toFixed(1);
+                amountString = amountBig.toFixed(1);
             }
             // 0.00000001.toString() returns "1e-8"
             // 0.0000001.toString() returns "1e-7"
             if (amountBig.toString().indexOf("-") !== -1) {
                 const digits = amountBig.toString().slice(-1);
-                return amountBig.toFixed(Number(digits));
+                amountString = amountBig.toFixed(Number(digits));
             }
 
-            return amountBig.toString();
+            if (separator === ",") {
+                amountString = amountString.replace(".", ",");
+            }
+
+            return amountString;
 
         default:
             const chars = amount.toString().split("").reverse();

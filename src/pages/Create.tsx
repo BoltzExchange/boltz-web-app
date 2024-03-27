@@ -32,8 +32,16 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
     let sendAmountRef: HTMLInputElement | undefined = undefined;
 
-    const { setDenomination, denomination, wasmSupported, webln, t, notify } =
-        useGlobalContext();
+    const {
+        separator,
+        setSeparator,
+        setDenomination,
+        denomination,
+        wasmSupported,
+        webln,
+        t,
+        notify,
+    } = useGlobalContext();
     const {
         reverse,
         asset,
@@ -80,7 +88,10 @@ const Create = () => {
 
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
-        const amount = target.value.trim().replaceAll(" ", "");
+        const amount = target.value
+            .trim()
+            .replaceAll(" ", "")
+            .replaceAll(",", ".");
         checkEmptyAmount(amount);
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
@@ -98,7 +109,10 @@ const Create = () => {
 
     const changeSendAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
-        const amount = target.value.trim().replaceAll(" ", "");
+        const amount = target.value
+            .trim()
+            .replaceAll(" ", "")
+            .replaceAll(",", ".");
         checkEmptyAmount(amount);
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
@@ -117,12 +131,14 @@ const Create = () => {
     const validateInput = (evt: KeyboardEvent) => {
         const input = evt.currentTarget as HTMLInputElement;
         const keycode = evt.key;
-        // switch to sat denomination if keypress .
-        if (denomination() == "sat" && keycode === ".") {
+        const hasDot = input.value.includes(".") || input.value.includes(",");
+        // switch to sat denomination and separator
+        if (denomination() == "sat" && hasDot) {
             setDenomination(denominations.btc);
+            setSeparator(input.value);
         }
-        const hasDot = input.value.includes(".");
-        const regex = denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\./;
+        const regex =
+            denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\.|\,/;
         if (!regex.test(keycode)) {
             evt.stopPropagation();
             evt.preventDefault();
@@ -165,6 +181,7 @@ const Create = () => {
                 amount: formatAmount(
                     BigNumber(lessThanMin ? minimum() : maximum()),
                     denomination(),
+                    separator(),
                 ),
                 denomination: denomination(),
             };
@@ -234,7 +251,11 @@ const Create = () => {
         const rAmount = Number(receiveAmount());
         if (rAmount > 0) {
             setReceiveAmountFormatted(
-                formatAmount(BigNumber(rAmount), denomination()).toString(),
+                formatAmount(
+                    BigNumber(rAmount),
+                    denomination(),
+                    separator(),
+                ).toString(),
             );
         } else {
             setReceiveAmountFormatted("");
@@ -242,7 +263,11 @@ const Create = () => {
         const sAmount = Number(sendAmount());
         if (sAmount > 0) {
             setSendAmountFormatted(
-                formatAmount(BigNumber(sAmount), denomination()).toString(),
+                formatAmount(
+                    BigNumber(sAmount),
+                    denomination(),
+                    separator(),
+                ).toString(),
             );
         } else {
             setSendAmountFormatted("");
@@ -272,13 +297,21 @@ const Create = () => {
                     <span
                         onClick={() => setAmount(minimum())}
                         class="btn-small btn-light">
-                        {formatAmount(BigNumber(minimum()), denomination())}
+                        {formatAmount(
+                            BigNumber(minimum()),
+                            denomination(),
+                            separator(),
+                        )}
                     </span>{" "}
                     {t("max")}:{" "}
                     <span
                         onClick={() => setAmount(maximum())}
                         class="btn-small btn-light">
-                        {formatAmount(BigNumber(maximum()), denomination())}
+                        {formatAmount(
+                            BigNumber(maximum()),
+                            denomination(),
+                            separator(),
+                        )}
                     </span>{" "}
                 </p>
                 <div class="icons">
