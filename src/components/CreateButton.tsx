@@ -123,7 +123,7 @@ export const CreateButton = () => {
                     }
                 } else {
                     if (validLnurl()) {
-                        setButtonLabel({ key: "fetch_lnurl" });
+                        setButtonLabel({ key: "create_swap" });
                         return;
                     }
                     if (!invoiceValid()) {
@@ -150,8 +150,8 @@ export const CreateButton = () => {
             } catch (e) {
                 notify("error", e.message);
                 log.warn("fetch lnurl failed", e);
+                return;
             }
-            return;
         }
 
         if (!valid()) return;
