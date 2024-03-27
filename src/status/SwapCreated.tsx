@@ -45,8 +45,10 @@ const SwapCreated = () => {
                 {cropString(swap().invoice)}
             </p>
             <hr />
-            <h3>{t("warning_return")}</h3>
-            <hr />
+            <Show when={isMobile}>
+                <h3>{t("warning_return")}</h3>
+                <hr />
+            </Show>
             <Show when={webln() && !isMobile}>
                 <span
                     class="btn btn-light"
