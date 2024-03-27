@@ -363,6 +363,9 @@ textarea {
         height: 28px;
         border-radius: 50%;
         user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     > :first-child {
         margin-right: 5px;
