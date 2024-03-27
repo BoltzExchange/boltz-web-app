@@ -1,4 +1,5 @@
 import { useNavigate } from "@solidjs/router";
+import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show, createSignal, onMount } from "solid-js";
 
@@ -11,21 +12,27 @@ import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
 import { getNodeStats, getNodes } from "../utils/boltzClient";
+import { denominations, formatAmountDenomination } from "../utils/denomination";
 
 export const Hero = () => {
     const navigate = useNavigate();
 
     const [nodePubkey, setNodePubkey] = createSignal<string | null>(null);
-    const [numChannel, setNumChannel] = createSignal("0");
-    const [numPeers, setNumPeers] = createSignal("0");
-    const [capacity, setCapacity] = createSignal("0");
+    const [numChannel, setNumChannel] = createSignal(0);
+    const [numPeers, setNumPeers] = createSignal(0);
+    const [capacity, setCapacity] = createSignal(0);
     const [oldestChannel, setOldestChannel] = createSignal("0");
 
-    const { hideHero, setHideHero, t } = useGlobalContext();
+    const { hideHero, setHideHero, t, denomination } = useGlobalContext();
 
     const openNodeInfo = async () => {
         window.open(`${config.lightningExplorerUrl}/${nodePubkey()}`, "_blank");
     };
+
+    const formatStatsAmount = (
+        value: number,
+        denom: string = denominations.sat,
+    ) => formatAmountDenomination(new BigNumber(value), denom);
 
     onMount(async () => {
         try {
@@ -41,9 +48,9 @@ export const Hero = () => {
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;
 
-            setNumChannel(Number(stats.channels).toLocaleString());
-            setNumPeers(Number(stats.peers).toLocaleString());
-            setCapacity(Number(stats.capacity).toLocaleString());
+            setNumChannel(stats.channels);
+            setNumPeers(stats.peers);
+            setCapacity(stats.capacity);
 
             const difference = Date.now() - stats.oldestChannel * 1000;
             const years = (difference / 1000 / 60 / 60 / 24 / 365).toFixed(2);
@@ -96,13 +103,23 @@ export const Hero = () => {
                 </h2>
                 <div id="numbers">
                     <div class="number">
-                        {numChannel()} <small>{t("num_channels")}</small>
+                        {formatStatsAmount(numChannel())}{" "}
+                        <small>{t("num_channels")}</small>
                     </div>
                     <div class="number">
-                        {numPeers()} <small>{t("peers")}</small>
+                        {formatStatsAmount(numPeers())}{" "}
+                        <small>{t("peers")}</small>
                     </div>
                     <div class="number">
-                        {capacity()} <small>{t("capacity")}</small>
+                        {formatStatsAmount(capacity(), denomination())}{" "}
+                        <small>
+                            {t("capacity", {
+                                denomination:
+                                    denomination() === denominations.sat
+                                        ? "sats"
+                                        : "BTC",
+                            })}
+                        </small>
                     </div>
                     <div class="number">
                         {t("oldest_channel_years", { years: oldestChannel() })}
