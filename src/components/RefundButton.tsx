@@ -12,6 +12,7 @@ import {
 } from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
 import { decodeInvoice } from "../utils/invoice";
+import { registerNotifications } from "../utils/notification";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
@@ -24,12 +25,12 @@ const RefundButton = ({
     setRefundTxId?: Setter<string>;
 }) => {
     const {
-        setNotificationType,
-        setNotification,
+        setBrowserNotification,
         swaps,
         setSwaps,
         setRefundAddress,
         refundAddress,
+        notify,
         t,
     } = useGlobalContext();
 
@@ -122,6 +123,9 @@ const RefundButton = ({
     };
 
     const refundAction = async () => {
+        registerNotifications().then((state: boolean) =>
+            setBrowserNotification(state),
+        );
         setRefundRunning(true);
 
         try {
@@ -139,6 +143,8 @@ const RefundButton = ({
                 transactionToRefund,
             );
 
+            notify("success", t("refunded"), true);
+
             // save refundTx into swaps json and set it to the current swap
             // only if the swaps was not initiated with the refund json
             // refundjson has no date
@@ -154,7 +160,6 @@ const RefundButton = ({
             }
         } catch (error) {
             log.debug("refund failed", error);
-            setNotificationType("error");
             if (typeof error.json === "function") {
                 error
                     .json()
@@ -172,15 +177,15 @@ const RefundButton = ({
                             msg = t("locktime_not_satisfied");
                         }
                         log.error(msg);
-                        setNotification(msg);
+                        notify("error", msg);
                     })
                     .catch((genericError: any) => {
                         log.error(genericError);
-                        setNotification(genericError);
+                        notify("error", genericError);
                     });
             } else {
                 log.error(error.message);
-                setNotification(error.message);
+                notify("error", error.message);
             }
         }
 

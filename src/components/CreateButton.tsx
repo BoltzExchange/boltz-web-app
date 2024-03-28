@@ -16,6 +16,7 @@ import { formatAmount } from "../utils/denomination";
 import { ECPair } from "../utils/ecpair";
 import { fetcher, getPair } from "../utils/helper";
 import { extractAddress, fetchLnurl } from "../utils/invoice";
+import { registerNotifications } from "../utils/notification";
 import { validateResponse } from "../utils/validation";
 
 export const CreateButton = () => {
@@ -27,6 +28,7 @@ export const CreateButton = () => {
         online,
         swaps,
         setSwaps,
+        setBrowserNotification,
         notify,
         ref,
         t,
@@ -268,6 +270,9 @@ export const CreateButton = () => {
     };
 
     const buttonClick = async () => {
+        registerNotifications().then((state: boolean) =>
+            setBrowserNotification(state),
+        );
         setButtonDisable(true);
         await create();
         setButtonDisable(false);
