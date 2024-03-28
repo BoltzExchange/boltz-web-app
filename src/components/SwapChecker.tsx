@@ -19,7 +19,44 @@ import {
 
 const reconnectInterval = 5_000;
 
+type SwapStatus = {
+    id: string;
+    status: string;
+};
+
+class Queue {
+    private elements: SwapStatus[];
+    private head: number;
+    private tail: number;
+
+    constructor() {
+        this.elements = [];
+        this.head = 0;
+        this.tail = 0;
+    }
+    enqueue(element: SwapStatus) {
+        this.elements[this.tail] = element;
+        this.tail++;
+    }
+    dequeue() {
+        const item = this.elements[this.head];
+        delete this.elements[this.head];
+        this.head++;
+        return item;
+    }
+    peek() {
+        return this.elements[this.head];
+    }
+    get length() {
+        return this.tail - this.head;
+    }
+    get isEmpty() {
+        return this.length === 0;
+    }
+}
+
 class BoltzWebSocket {
+    private claimQueue: Queue;
     private ws?: WebSocket;
     private reconnectTimeout?: any;
     private isClosed: boolean = false;
@@ -29,7 +66,19 @@ class BoltzWebSocket {
         private readonly relevantIds: Set<string>,
         private readonly prepareSwap: (id: string, status: any) => void,
         private readonly claimSwap: (id: string, status: any) => Promise<void>,
-    ) {}
+    ) {
+        this.claimQueue = new Queue();
+        const runLoop = () => {
+            setTimeout(async () => {
+                if (!this.claimQueue.isEmpty) {
+                    const status = this.claimQueue.dequeue();
+                    await this.claimSwap(status.id, status);
+                }
+                runLoop();
+            }, 400);
+        };
+        runLoop();
+    }
 
     public connect = () => {
         this.isClosed = false;
@@ -55,14 +104,11 @@ class BoltzWebSocket {
             log.debug(`ws ${this.url} message`, data);
 
             if (data.event === "update" && data.channel === "swap.update") {
-                const swapUpdates = data.args as {
-                    id: string;
-                    status: string;
-                }[];
+                const swapUpdates = data.args as SwapStatus[];
                 for (const status of swapUpdates) {
                     this.relevantIds.add(status.id);
                     this.prepareSwap(status.id, status);
-                    await this.claimSwap(status.id, status);
+                    this.claimQueue.enqueue(status);
                 }
             }
         };

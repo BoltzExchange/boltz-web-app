@@ -5,8 +5,6 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getReverseTransaction } from "../utils/boltzClient";
-import { claim } from "../utils/claim";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -21,8 +19,8 @@ const Broadcasting = () => {
 
 const TransactionClaimed = () => {
     const navigate = useNavigate();
-    const { swap, setSwap } = usePayContext();
-    const { t, swaps, setSwaps } = useGlobalContext();
+    const { swap } = usePayContext();
+    const { t } = useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
@@ -39,22 +37,6 @@ const TransactionClaimed = () => {
         setClaimBroadcast(
             !s.reverse || s.asset === RBTC || s.claimTx !== undefined,
         );
-    });
-
-    createEffect(async () => {
-        const toClaim = swap();
-
-        if (claimBroadcast() === false) {
-            await claim(
-                toClaim,
-                await getReverseTransaction(toClaim.asset, toClaim.id),
-            );
-            const allSwaps = swaps();
-            allSwaps.find((swap) => swap.id === toClaim.id).claimTx =
-                toClaim.claimTx;
-            setSwaps(allSwaps);
-            setSwap(toClaim);
-        }
     });
 
     return (
