@@ -60,18 +60,18 @@ class BoltzWebSocket {
                 return;
             }
 
-            this.messageHandlerLock.acquire(async () => {
-                log.debug(`ws ${this.url} message`, data);
+            log.debug(`ws ${this.url} message`, data);
 
-                if (data.event === "update" && data.channel === "swap.update") {
-                    const swapUpdates = data.args as SwapStatus[];
-                    for (const status of swapUpdates) {
-                        this.relevantIds.add(status.id);
-                        this.prepareSwap(status.id, status);
+            if (data.event === "update" && data.channel === "swap.update") {
+                const swapUpdates = data.args as SwapStatus[];
+                for (const status of swapUpdates) {
+                    this.relevantIds.add(status.id);
+                    this.prepareSwap(status.id, status);
+                    this.messageHandlerLock.acquire(async () => {
                         await this.claimSwap(status.id, status);
-                    }
+                    });
                 }
-            });
+            }
         };
     };
 
