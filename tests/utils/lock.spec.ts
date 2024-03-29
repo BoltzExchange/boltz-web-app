@@ -1,7 +1,7 @@
 import Lock from "../../src/utils/lock";
 
 describe("Lock", () => {
-    test("should not run promises sequentially", async () => {
+    test("should run promises sequentially", async () => {
         const lock = new Lock();
 
         let value = 0;
