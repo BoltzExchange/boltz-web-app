@@ -103,7 +103,8 @@ const Fees = () => {
                         data-denominator={denomination()}></span>
                 </span>
                 <br />
-                {t("fee")} ({boltzFee().toLocaleString()}%):{" "}
+                {t("fee")} ({boltzFee().toString().replaceAll(".", separator())}
+                %):{" "}
                 <span class="boltz-fee">
                     {formatAmount(
                         calculateBoltzFeeOnSend(
