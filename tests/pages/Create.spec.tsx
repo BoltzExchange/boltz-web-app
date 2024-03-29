@@ -188,6 +188,7 @@ describe("Create", () => {
         const formattedAmount = formatAmount(
             BigNumber(amount),
             denominations.sat,
+            globalSignals.separator(),
         );
         fireEvent.click(await screen.findByText(formattedAmount));
 
