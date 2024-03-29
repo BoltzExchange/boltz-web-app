@@ -131,12 +131,14 @@ const Create = () => {
     const validateInput = (evt: KeyboardEvent) => {
         const input = evt.currentTarget as HTMLInputElement;
         const keycode = evt.key;
-        const hasDot = input.value.includes(".") || input.value.includes(",");
-        // switch to sat denomination and separator
-        if (denomination() == "sat" && hasDot) {
-            setDenomination(denominations.btc);
-            setSeparator(input.value);
+        if (keycode === "." || keycode === ",") {
+            setSeparator(keycode);
+            // switch to sat denomination
+            if (denomination() == "sat") {
+                setDenomination(denominations.btc);
+            }
         }
+        const hasDot = input.value.includes(".") || input.value.includes(",");
         const regex =
             denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\.|\,/;
         if (!regex.test(keycode)) {
