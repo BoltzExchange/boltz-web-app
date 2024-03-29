@@ -11,15 +11,23 @@ import {
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
 import { getApiUrl } from "../utils/helper";
+import Lock from "../utils/lock";
 import {
     swapStatusFinal,
     swapStatusPending,
     swapStatusSuccess,
 } from "../utils/swapStatus";
 
+type SwapStatus = {
+    id: string;
+    status: string;
+};
+
 const reconnectInterval = 5_000;
 
 class BoltzWebSocket {
+    private readonly swapClaimLock = new Lock();
+
     private ws?: WebSocket;
     private reconnectTimeout?: any;
     private isClosed: boolean = false;
@@ -55,14 +63,13 @@ class BoltzWebSocket {
             log.debug(`ws ${this.url} message`, data);
 
             if (data.event === "update" && data.channel === "swap.update") {
-                const swapUpdates = data.args as {
-                    id: string;
-                    status: string;
-                }[];
+                const swapUpdates = data.args as SwapStatus[];
                 for (const status of swapUpdates) {
                     this.relevantIds.add(status.id);
                     this.prepareSwap(status.id, status);
-                    await this.claimSwap(status.id, status);
+                    this.swapClaimLock.acquire(() =>
+                        this.claimSwap(status.id, status),
+                    );
                 }
             }
         };
