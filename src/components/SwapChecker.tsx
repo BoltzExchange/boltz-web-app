@@ -26,7 +26,7 @@ type SwapStatus = {
 const reconnectInterval = 5_000;
 
 class BoltzWebSocket {
-    private readonly messageHandlerLock = new Lock();
+    private readonly swapClaimLock = new Lock();
 
     private ws?: WebSocket;
     private reconnectTimeout?: any;
@@ -67,9 +67,9 @@ class BoltzWebSocket {
                 for (const status of swapUpdates) {
                     this.relevantIds.add(status.id);
                     this.prepareSwap(status.id, status);
-                    this.messageHandlerLock.acquire(async () => {
-                        await this.claimSwap(status.id, status);
-                    });
+                    this.swapClaimLock.acquire(() =>
+                        this.claimSwap(status.id, status),
+                    );
                 }
             }
         };

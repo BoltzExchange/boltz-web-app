@@ -8,12 +8,14 @@ class Lock {
         }
 
         this.locked = true;
-        await promise();
-
-        this.locked = false;
-        if (this.waiting.length > 0) {
-            const nextResolve = this.waiting.shift();
-            nextResolve();
+        try {
+            await promise();
+        } finally {
+            this.locked = false;
+            if (this.waiting.length > 0) {
+                const nextResolve = this.waiting.shift();
+                nextResolve();
+            }
         }
     };
 }
