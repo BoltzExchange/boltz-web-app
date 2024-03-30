@@ -248,4 +248,33 @@ describe("Create", () => {
         expect(createButton.disabled).toEqual(true);
         expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sat");
     });
+
+    test("should switch separator when pasting amount", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setPairs(pairs);
+        globalSignals.setSeparator(".");
+        globalSignals.setDenomination(denominations.sat);
+        signals.setAssetSend(LN);
+        signals.setAssetReceive(BTC);
+
+        const sendAmountInput = await screen.findByTestId("sendAmount");
+        fireEvent.input(sendAmountInput, {
+            target: {
+                value: `0,01`,
+            },
+        });
+
+        expect(globalSignals.denomination()).toEqual(denominations.btc);
+        expect(globalSignals.separator()).toEqual(",");
+    });
 });
