@@ -249,7 +249,7 @@ describe("Create", () => {
         expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sat");
     });
 
-    test("should switch separator when pasting amount", async () => {
+    test("should allow comma in pasted amounts", async () => {
         render(
             () => (
                 <>
