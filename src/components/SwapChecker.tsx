@@ -124,7 +124,8 @@ export const SwapChecker = () => {
         setTimeoutEta,
         setTimeoutBlockheight,
     } = usePayContext();
-    const { notify, updateSwapStatus, swaps, setSwaps } = useGlobalContext();
+    const { notify, updateSwapStatus, getSwap, getSwaps, updateSwap } =
+        useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
 
@@ -152,7 +153,7 @@ export const SwapChecker = () => {
     };
 
     const prepareSwap = (swapId: string, data: any) => {
-        const currentSwap = swaps().find((s: any) => swapId === s.id);
+        const currentSwap = getSwap(swapId);
         if (currentSwap === undefined) {
             log.warn(`prepareSwap: swap ${swapId} not found`);
             return;
@@ -167,7 +168,7 @@ export const SwapChecker = () => {
     };
 
     const claimSwap = async (swapId: string, data: any) => {
-        const currentSwap = swaps().find((s) => swapId === s.id);
+        const currentSwap = getSwap(swapId);
         if (currentSwap === undefined) {
             log.warn(`claimSwap: swap ${swapId} not found`);
             return;
@@ -198,10 +199,9 @@ export const SwapChecker = () => {
         ) {
             try {
                 const res = await claim(currentSwap, data.transaction);
-                const swapsTmp = swaps();
-                const claimedSwap = swapsTmp.find((s) => res.id === s.id);
+                const claimedSwap = getSwap(res.id);
                 claimedSwap.claimTx = res.claimTx;
-                setSwaps(swapsTmp);
+                updateSwap(claimedSwap);
                 notify("success", `swap ${res.id} claimed`);
             } catch (e) {
                 log.warn("swapchecker failed to claim swap", e);
@@ -227,7 +227,7 @@ export const SwapChecker = () => {
             urlsToAsset.set(url, (urlsToAsset.get(url) || []).concat(asset));
         }
 
-        const swapsToCheck = swaps()
+        const swapsToCheck = getSwaps()
             .filter(
                 (s) =>
                     !swapStatusFinal.includes(s.status) ||

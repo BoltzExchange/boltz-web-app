@@ -48,12 +48,12 @@ export type GlobalContextType = {
     setI18nConfigured: Setter<string | null>;
     denomination: Accessor<string>;
     setDenomination: Setter<string>;
-    swaps: Accessor<any>;
-    setSwaps: Setter<any>;
     hideHero: Accessor<boolean>;
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
     setEmbedded: Setter<boolean>;
+    swaps: Accessor<any[]>;
+    setSwaps: Setter<any[]>;
     separator: Accessor<string>;
     setSeparator: Setter<string>;
     // functions
@@ -61,6 +61,11 @@ export type GlobalContextType = {
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
     updateSwapStatus: (id: string, newStatus: string) => boolean;
+    addSwap: (swap: any) => void;
+    updateSwap: (swap: any) => void;
+    getSwap: (id: string) => any;
+    getSwaps: () => any[];
+    deleteSwap: (id: string) => void;
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -150,14 +155,45 @@ const GlobalProvider = (props: { children: any }) => {
             });
     };
 
+    const addSwap = (swap: any) => {
+        setSwaps(getSwaps().concat(swap));
+    };
+
+    const deleteSwap = (id: string) => {
+        setSwaps(getSwaps().filter((s: any) => s.id !== id));
+    };
+
+    const updateSwap = (swap: any) => {
+        const swapsTmp = getSwaps();
+        const index = swapsTmp.findIndex((s: any) => s.id === swap.id);
+        swapsTmp[index] = swap;
+        setSwaps(swapsTmp);
+    };
+
+    const getSwap = (id: string) => {
+        return getSwaps().find((s: any) => s.id === id);
+    };
+
+    const getSwaps = () => {
+        const tmpSwaps = swaps();
+        try {
+            // check if the local storage is different
+            const localSwapsJson = localStorage.getItem("swaps");
+            if (localSwapsJson && localSwapsJson !== JSON.stringify(tmpSwaps)) {
+                const localSwaps = JSON.parse(localSwapsJson);
+                setSwaps(localSwaps);
+                return localSwaps;
+            }
+        } catch {}
+        return tmpSwaps;
+    };
+
     const updateSwapStatus = (id: string, newStatus: string) => {
         if (swapStatusFinal.includes(newStatus)) {
-            const swapsTmp = swaps();
-            const swap = swapsTmp.find((swap) => swap.id === id);
-
+            const swap = getSwap(id);
             if (swap.status !== newStatus) {
                 swap.status = newStatus;
-                setSwaps(swapsTmp);
+                updateSwap(swap);
                 return true;
             }
         }
@@ -224,12 +260,12 @@ const GlobalProvider = (props: { children: any }) => {
                 setI18nConfigured,
                 denomination,
                 setDenomination,
-                swaps,
-                setSwaps,
                 hideHero,
                 setHideHero,
                 embedded,
                 setEmbedded,
+                swaps,
+                setSwaps,
                 separator,
                 setSeparator,
                 // functions
@@ -237,6 +273,11 @@ const GlobalProvider = (props: { children: any }) => {
                 notify,
                 fetchPairs,
                 updateSwapStatus,
+                addSwap,
+                updateSwap,
+                getSwap,
+                deleteSwap,
+                getSwaps,
             }}>
             {props.children}
         </GlobalContext.Provider>

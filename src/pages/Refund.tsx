@@ -16,7 +16,8 @@ import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { updateSwapStatus, wasmSupported, swaps, t } = useGlobalContext();
+    const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t } =
+        useGlobalContext();
     const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [swapFound, setSwapFound] = createSignal(null);
@@ -32,7 +33,7 @@ const Refund = () => {
 
         // When the swap id is found in the local storage, there is no need for the validation,
         // all relevant data is there already and we just need to show the button to redirect
-        const localStorageSwap = swaps().find((s: any) => s.id === json.id);
+        const localStorageSwap = getSwap(json.id);
         if (localStorageSwap !== undefined) {
             setSwapFound(json.id);
             return;
@@ -97,7 +98,7 @@ const Refund = () => {
     };
 
     onMount(() => {
-        const swapsToRefund = swaps()
+        const swapsToRefund = getSwaps()
             .filter(refundSwapsSanityFilter)
             .filter((swap) =>
                 [
@@ -107,7 +108,7 @@ const Refund = () => {
             );
         setRefundableSwaps(swapsToRefund);
 
-        swaps()
+        getSwaps()
             .filter(refundSwapsSanityFilter)
             .filter(
                 (swap) =>

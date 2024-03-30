@@ -10,16 +10,13 @@ const RefundStep = () => {
     const params = useParams();
     const navigate = useNavigate();
     const { setSwap } = usePayContext();
-    const { swaps, t } = useGlobalContext();
+    const { getSwap, t } = useGlobalContext();
 
     createEffect(() => {
-        let tmpSwaps = swaps();
-        if (tmpSwaps) {
-            let currentSwap = tmpSwaps.filter((s) => s.id === params.id).pop();
-            if (currentSwap) {
-                log.debug("selecting swap", currentSwap);
-                setSwap(currentSwap);
-            }
+        const currentSwap = getSwap(params.id);
+        if (currentSwap) {
+            log.debug("selecting swap", currentSwap);
+            setSwap(currentSwap);
         }
     });
 

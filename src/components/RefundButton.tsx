@@ -26,8 +26,8 @@ const RefundButton = ({
     const {
         setNotificationType,
         setNotification,
-        swaps,
-        setSwaps,
+        getSwap,
+        updateSwap,
         setRefundAddress,
         refundAddress,
         t,
@@ -35,13 +35,6 @@ const RefundButton = ({
 
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap, getSigner } = useWeb3Signer();
-
-        const updateSwaps = (cb: any) => {
-            const swapsTmp = swaps();
-            const currentSwap = swapsTmp.find((s: any) => swap().id === s.id);
-            cb(currentSwap);
-            setSwaps(swapsTmp);
-        };
 
         return (
             <ContractTransaction
@@ -86,7 +79,8 @@ const RefundButton = ({
                         );
                     }
 
-                    updateSwaps((current: any) => (current.refundTx = tx.hash));
+                    currentSwap.refundTx = tx.hash;
+                    updateSwap(currentSwap);
                     await tx.wait(1);
                 }}
                 buttonText={t("refund")}
@@ -143,10 +137,9 @@ const RefundButton = ({
             // only if the swaps was not initiated with the refund json
             // refundjson has no date
             if (res.date !== undefined) {
-                const swapsTmp = swaps();
-                const currentSwap = swapsTmp.find((s: any) => res.id === s.id);
+                const currentSwap = getSwap(res.id);
                 currentSwap.refundTx = res.refundTx;
-                setSwaps(swapsTmp);
+                updateSwap(currentSwap);
             } else {
                 if (setRefundTxId) {
                     setRefundTxId(res.refundTx);

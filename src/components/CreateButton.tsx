@@ -21,13 +21,12 @@ import { validateResponse } from "../utils/validation";
 export const CreateButton = () => {
     const navigate = useNavigate();
     const {
+        addSwap,
         denomination,
         pairs,
+        separator,
         setPairs,
         online,
-        swaps,
-        setSwaps,
-        separator,
         notify,
         ref,
         t,
@@ -243,7 +242,7 @@ export const CreateButton = () => {
                 navigate("/error/");
                 return;
             }
-            setSwaps(swaps().concat(data));
+            addSwap(data);
             setInvoice("");
             setInvoiceValid(false);
             setOnchainAddress("");

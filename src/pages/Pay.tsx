@@ -29,7 +29,7 @@ const Pay = () => {
     const [contractTransactionType, setContractTransactionType] =
         createSignal("lockup_tx");
 
-    const { swaps, t } = useGlobalContext();
+    const { getSwap, t } = useGlobalContext();
     const {
         swap,
         setSwap,
@@ -41,22 +41,14 @@ const Pay = () => {
     } = usePayContext();
 
     createEffect(async () => {
-        let tmpSwaps = swaps();
-        if (tmpSwaps) {
-            const currentSwap = tmpSwaps
-                .filter((s) => s.id === params.id)
-                .pop();
-            if (currentSwap) {
-                log.debug("selecting swap", currentSwap);
-                setSwap(currentSwap);
-                const res = await getSwapStatus(
-                    currentSwap.asset,
-                    currentSwap.id,
-                );
-                setSwapStatus(res.status);
-                setSwapStatusTransaction(res.transaction);
-                setFailureReason(res.failureReason);
-            }
+        const currentSwap = getSwap(params.id);
+        if (currentSwap) {
+            log.debug("selecting swap", currentSwap);
+            setSwap(currentSwap);
+            const res = await getSwapStatus(currentSwap.asset, currentSwap.id);
+            setSwapStatus(res.status);
+            setSwapStatusTransaction(res.transaction);
+            setFailureReason(res.failureReason);
         }
     });
 

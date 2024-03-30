@@ -17,7 +17,8 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 const InvoiceSet = () => {
     const { swap } = usePayContext();
     const { asset } = useCreateContext();
-    const { t, separator, swaps, setSwaps, denomination } = useGlobalContext();
+    const { t, getSwap, updateSwap, denomination, separator } =
+        useGlobalContext();
 
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
@@ -36,12 +37,9 @@ const InvoiceSet = () => {
                         },
                     );
 
-                    const swapsTmp = swaps();
-                    const currentSwap = swapsTmp.find(
-                        (s) => swap().id === s.id,
-                    );
+                    const currentSwap = getSwap(swap().id);
                     currentSwap.lockupTx = tx.hash;
-                    setSwaps(swapsTmp);
+                    updateSwap(currentSwap);
                 }}
                 buttonText={t("send")}
                 promptText={t("transaction_prompt", { button: t("send") })}

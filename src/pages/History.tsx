@@ -24,8 +24,14 @@ const History = () => {
 
     let importRef: HTMLInputElement;
 
-    const { swaps, setSwaps, setNotification, setNotificationType, t } =
-        useGlobalContext();
+    const {
+        swaps,
+        setSwaps,
+        getSwaps,
+        setNotification,
+        setNotificationType,
+        t,
+    } = useGlobalContext();
 
     const deleteLocalStorage = () => {
         if (confirm(t("delete_localstorage"))) {
@@ -34,7 +40,10 @@ const History = () => {
     };
 
     const backupLocalStorage = () => {
-        downloadJson(`boltz-backup-${Math.floor(Date.now() / 1000)}`, swaps());
+        downloadJson(
+            `boltz-backup-${Math.floor(Date.now() / 1000)}`,
+            getSwaps(),
+        );
     };
 
     const importLocalStorage = (e: Event) => {
@@ -85,11 +94,7 @@ const History = () => {
                             </button>
                         </div>
                     }>
-                    <SwapList
-                        swapsSignal={swaps}
-                        setSwapSignal={setSwaps}
-                        deleteButton={true}
-                    />
+                    <SwapList swapsSignal={swaps} deleteButton={true} />
                     <hr />
                     <Show when={swaps().length > 0}>
                         <Show when={!isIos}>
