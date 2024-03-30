@@ -10,7 +10,7 @@ const CopyButton = ({ data, label }) => {
     const [buttonClass, setButtonClass] = createSignal<string>("btn");
     const [buttonActive, setButtonActive] = createSignal<boolean>(false);
     const onClick = () => {
-        clipboard(data);
+        clipboard(data.replaceAll(" ", ""));
         setButtonClass("btn btn-active");
         setButtonActive(true);
         setTimeout(() => {
