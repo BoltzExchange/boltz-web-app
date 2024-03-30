@@ -17,7 +17,7 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 const InvoiceSet = () => {
     const { swap } = usePayContext();
     const { asset } = useCreateContext();
-    const { t, swaps, setSwaps, denomination } = useGlobalContext();
+    const { t, separator, swaps, setSwaps, denomination } = useGlobalContext();
 
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
@@ -58,6 +58,7 @@ const InvoiceSet = () => {
                     amount: formatAmount(
                         BigNumber(swap().expectedAmount),
                         denomination(),
+                        separator(),
                     ),
                     denomination:
                         denomination() === denominations.sat
@@ -92,6 +93,7 @@ const InvoiceSet = () => {
                     data={formatAmount(
                         BigNumber(swap().expectedAmount),
                         denomination(),
+                        separator(),
                     )}
                 />
                 <CopyButton label="copy_address" data={swap().address} />

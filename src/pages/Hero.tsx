@@ -23,7 +23,8 @@ export const Hero = () => {
     const [capacity, setCapacity] = createSignal(0);
     const [oldestChannel, setOldestChannel] = createSignal("0");
 
-    const { hideHero, setHideHero, t, denomination } = useGlobalContext();
+    const { hideHero, setHideHero, t, denomination, separator } =
+        useGlobalContext();
 
     const openNodeInfo = async () => {
         window.open(`${config.lightningExplorerUrl}/${nodePubkey()}`, "_blank");
@@ -32,7 +33,7 @@ export const Hero = () => {
     const formatStatsAmount = (
         value: number,
         denom: string = denominations.sat,
-    ) => formatAmountDenomination(new BigNumber(value), denom);
+    ) => formatAmountDenomination(new BigNumber(value), denom, separator());
 
     onMount(async () => {
         try {

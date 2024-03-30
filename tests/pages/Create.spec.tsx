@@ -188,6 +188,7 @@ describe("Create", () => {
         const formattedAmount = formatAmount(
             BigNumber(amount),
             denominations.sat,
+            globalSignals.separator(),
         );
         fireEvent.click(await screen.findByText(formattedAmount));
 
@@ -246,5 +247,37 @@ describe("Create", () => {
 
         expect(createButton.disabled).toEqual(true);
         expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sat");
+    });
+
+    test("should allow comma in pasted amounts", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setPairs(pairs);
+        globalSignals.setSeparator(".");
+        globalSignals.setDenomination(denominations.sat);
+        signals.setAssetSend(LN);
+        signals.setAssetReceive(BTC);
+
+        const sendAmountInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
+        fireEvent.input(sendAmountInput, {
+            target: {
+                value: `0,01`,
+            },
+        });
+
+        expect(globalSignals.denomination()).toEqual(denominations.btc);
+        expect(globalSignals.separator()).toEqual(".");
+        expect(sendAmountInput.value).toEqual("0.01");
     });
 });

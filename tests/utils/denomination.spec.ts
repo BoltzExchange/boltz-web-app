@@ -29,22 +29,23 @@ describe("denomination utils", () => {
 
     describe("format amount", () => {
         test.each`
-            denomination         | amount         | formatted
-            ${denominations.sat} | ${123123}      | ${"123 123"}
-            ${denominations.sat} | ${12312300000} | ${"12 312 300 000"}
-            ${denominations.btc} | ${100123123}   | ${"1.00123123"}
-            ${denominations.btc} | ${123123}      | ${"0.00123123"}
-            ${denominations.btc} | ${1}           | ${"0.00000001"}
-            ${denominations.btc} | ${10}          | ${"0.0000001"}
-            ${denominations.btc} | ${100}         | ${"0.000001"}
-            ${denominations.btc} | ${1000}        | ${"0.00001"}
-            ${denominations.btc} | ${10000}       | ${"0.0001"}
+            denomination         | amount         | separator | formatted
+            ${denominations.sat} | ${123123}      | ${"."}    | ${"123 123"}
+            ${denominations.sat} | ${12312300000} | ${"."}    | ${"12 312 300 000"}
+            ${denominations.btc} | ${100123123}   | ${"."}    | ${"1.00123123"}
+            ${denominations.btc} | ${123123}      | ${"."}    | ${"0.00123123"}
+            ${denominations.btc} | ${1}           | ${"."}    | ${"0.00000001"}
+            ${denominations.btc} | ${10}          | ${"."}    | ${"0.0000001"}
+            ${denominations.btc} | ${100}         | ${"."}    | ${"0.000001"}
+            ${denominations.btc} | ${1000}        | ${"."}    | ${"0.00001"}
+            ${denominations.btc} | ${10000}       | ${"."}    | ${"0.0001"}
+            ${denominations.btc} | ${10000}       | ${","}    | ${"0,0001"}
         `(
-            "format $amount in $denomination",
-            ({ denomination, amount, formatted }) => {
-                expect(formatAmount(BigNumber(amount), denomination)).toEqual(
-                    formatted,
-                );
+            "format $amount in $denomination with `$separator` separator",
+            ({ denomination, amount, formatted, separator }) => {
+                expect(
+                    formatAmount(BigNumber(amount), denomination, separator),
+                ).toEqual(formatted);
             },
         );
     });
@@ -86,7 +87,7 @@ describe("denomination utils", () => {
             ${"1.12321"}     | ${false}
             ${"10.12300011"} | ${false}
             ${"0.123123131"} | ${false}
-            ${"0,123"}       | ${false}
+            ${"0,123"}       | ${true}
         `("validating regex for $amount", ({ amount, valid }) => {
             let regex = getValidationRegex(max);
             expect(regex.test(amount)).toEqual(valid);

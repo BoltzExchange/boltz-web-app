@@ -54,6 +54,8 @@ export type GlobalContextType = {
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
     setEmbedded: Setter<boolean>;
+    separator: Accessor<string>;
+    setSeparator: Setter<string>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
     notify: (type: string, message: string) => void;
@@ -110,6 +112,14 @@ const GlobalProvider = (props: { children: any }) => {
         name: "denomination",
         ...stringSerializer,
     });
+
+    const localeSeparator = (0.1).toLocaleString().charAt(1);
+    const [separator, setSeparator] = makePersisted(
+        createSignal(localeSeparator),
+        {
+            name: "separator",
+        },
+    );
 
     const [swaps, setSwaps] = makePersisted(
         createSignal([], {
@@ -220,6 +230,8 @@ const GlobalProvider = (props: { children: any }) => {
                 setHideHero,
                 embedded,
                 setEmbedded,
+                separator,
+                setSeparator,
                 // functions
                 t,
                 notify,

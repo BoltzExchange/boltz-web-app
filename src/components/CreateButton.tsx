@@ -27,6 +27,7 @@ export const CreateButton = () => {
         online,
         swaps,
         setSwaps,
+        separator,
         notify,
         ref,
         t,
@@ -103,6 +104,7 @@ export const CreateButton = () => {
                             amount: formatAmount(
                                 BigNumber(lessThanMin ? minimum() : maximum()),
                                 denomination(),
+                                separator(),
                             ),
                             denomination: denomination(),
                         },

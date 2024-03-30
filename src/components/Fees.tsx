@@ -17,7 +17,7 @@ import { denominations, formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 
 const Fees = () => {
-    const { t, pairs, fetchPairs, denomination, setDenomination } =
+    const { t, pairs, fetchPairs, denomination, setDenomination, separator } =
         useGlobalContext();
     const {
         asset,
@@ -92,13 +92,19 @@ const Fees = () => {
             <label>
                 {t("network_fee")}:{" "}
                 <span class="network-fee">
-                    {formatAmount(BigNumber(minerFee()), denomination(), true)}
+                    {formatAmount(
+                        BigNumber(minerFee()),
+                        denomination(),
+                        separator(),
+                        true,
+                    )}
                     <span
                         class="denominator"
                         data-denominator={denomination()}></span>
                 </span>
                 <br />
-                {t("fee")} ({boltzFee()}%):{" "}
+                {t("fee")} ({boltzFee().toString().replaceAll(".", separator())}
+                %):{" "}
                 <span class="boltz-fee">
                     {formatAmount(
                         calculateBoltzFeeOnSend(
@@ -108,6 +114,7 @@ const Fees = () => {
                             reverse(),
                         ),
                         denomination(),
+                        separator(),
                         true,
                     )}
                     <span
