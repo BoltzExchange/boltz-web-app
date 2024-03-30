@@ -22,7 +22,7 @@ describe("CopyButton", () => {
             wrapper: contextWrapper,
         });
 
-        let btn = button as HTMLSpanElement;
+        const btn = button as HTMLSpanElement;
 
         expect(btn).not.toBeUndefined();
         expect(btn.textContent).toEqual(i18n.en.copy_bip21);
@@ -32,7 +32,8 @@ describe("CopyButton", () => {
         expect(btn.classList.contains("btn-active")).toBeFalsy();
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
     });
-    test("dont copy spaces", async () => {
+
+    test("should not copy spaces", async () => {
         const textToCopy = "50 000";
         const expectedCopy = "50000";
 
@@ -42,7 +43,7 @@ describe("CopyButton", () => {
             wrapper: contextWrapper,
         });
 
-        let btn = button as HTMLSpanElement;
+        const btn = button as HTMLSpanElement;
         fireEvent.click(btn);
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
             expectedCopy,
