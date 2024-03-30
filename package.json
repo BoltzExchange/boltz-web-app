@@ -63,6 +63,7 @@
         "ethers": "^6.11.1",
         "iframe-resizer": "^4.3.9",
         "liquidjs-lib": "^6.0.2-liquid.35",
+        "localforage": "^1.10.0",
         "loglevel": "^1.9.1",
         "qr-scanner": "^1.4.2",
         "qrcode": "^1.5.3",

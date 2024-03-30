@@ -17,7 +17,7 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 const InvoiceSet = () => {
     const { swap } = usePayContext();
     const { asset } = useCreateContext();
-    const { t, getSwap, updateSwap, denomination, separator } =
+    const { t, getSwap, setSwapStorage, denomination, separator } =
         useGlobalContext();
 
     if (asset() === RBTC) {
@@ -37,9 +37,9 @@ const InvoiceSet = () => {
                         },
                     );
 
-                    const currentSwap = getSwap(swap().id);
+                    const currentSwap = await getSwap(swap().id);
                     currentSwap.lockupTx = tx.hash;
-                    updateSwap(currentSwap);
+                    await setSwapStorage(currentSwap);
                 }}
                 buttonText={t("send")}
                 promptText={t("transaction_prompt", { button: t("send") })}

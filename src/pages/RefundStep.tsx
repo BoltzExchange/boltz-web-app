@@ -12,8 +12,8 @@ const RefundStep = () => {
     const { setSwap } = usePayContext();
     const { getSwap, t } = useGlobalContext();
 
-    createEffect(() => {
-        const currentSwap = getSwap(params.id);
+    createEffect(async () => {
+        const currentSwap = await getSwap(params.id);
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
             setSwap(currentSwap);

@@ -41,10 +41,10 @@ const Pay = () => {
     } = usePayContext();
 
     createEffect(async () => {
-        const currentSwap = getSwap(params.id);
+        const currentSwap = await getSwap(params.id);
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
-            setSwap(currentSwap);
+            await setSwap(currentSwap);
             const res = await getSwapStatus(currentSwap.asset, currentSwap.id);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);

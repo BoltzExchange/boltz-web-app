@@ -28,32 +28,35 @@ const Refund = () => {
     setTimeoutBlockheight(null);
     setTimeoutEta(null);
 
-    const checkRefundJsonKeys = (input: HTMLInputElement, json: any) => {
+    const checkRefundJsonKeys = async (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
 
-        // When the swap id is found in the local storage, there is no need for the validation,
-        // all relevant data is there already and we just need to show the button to redirect
-        const localStorageSwap = getSwap(json.id);
-        if (localStorageSwap !== undefined) {
-            setSwapFound(json.id);
-            return;
+        if ("id" in json && json.id !== undefined) {
+            // When the swap id is found in the local storage, there is no need for the validation,
+            // all relevant data is there already, and we just need to show the button to redirect
+            const localStorageSwap = await getSwap(json.id);
+            if (localStorageSwap !== null) {
+                setSwapFound(json.id);
+                return;
+            }
+
+            // Compatibility with the old refund files
+            if (json.asset === undefined && json.currency) {
+                json.asset = json.currency;
+            }
+
+            const requiredKeys =
+                json.asset !== "L-BTC" ? refundJsonKeys : refundJsonKeysLiquid;
+            const valid = requiredKeys.every((key) => key in json);
+
+            if (valid) {
+                setRefundJson(json);
+                return;
+            }
         }
 
-        // Compatibility with the old refund files
-        if (json.asset === undefined && json.currency) {
-            json.asset = json.currency;
-        }
-
-        const requiredKeys =
-            json.asset !== "L-BTC" ? refundJsonKeys : refundJsonKeysLiquid;
-        const valid = requiredKeys.every((key) => key in json);
-
-        if (valid) {
-            setRefundJson(json);
-        } else {
-            setRefundInvalid(true);
-            input.setCustomValidity(t("invalid_refund_file"));
-        }
+        setRefundInvalid(true);
+        input.setCustomValidity(t("invalid_refund_file"));
     };
 
     const uploadChange = (e: Event) => {
@@ -77,8 +80,8 @@ const Refund = () => {
         } else {
             inputFile
                 .text()
-                .then((result) => {
-                    checkRefundJsonKeys(input, JSON.parse(result));
+                .then(async (result) => {
+                    await checkRefundJsonKeys(input, JSON.parse(result));
                 })
                 .catch((e) => {
                     log.error("invalid file upload", e);
@@ -97,8 +100,8 @@ const Refund = () => {
         setRefundableSwaps(refundableSwaps().concat(swap));
     };
 
-    onMount(() => {
-        const swapsToRefund = getSwaps()
+    onMount(async () => {
+        const swapsToRefund = (await getSwaps())
             .filter(refundSwapsSanityFilter)
             .filter((swap) =>
                 [
@@ -108,7 +111,7 @@ const Refund = () => {
             );
         setRefundableSwaps(swapsToRefund);
 
-        getSwaps()
+        (await getSwaps())
             .filter(refundSwapsSanityFilter)
             .filter(
                 (swap) =>
@@ -120,7 +123,7 @@ const Refund = () => {
                 try {
                     const res = await getSwapStatus(swap.asset, swap.id);
                     if (
-                        !updateSwapStatus(swap.id, res.status) &&
+                        !(await updateSwapStatus(swap.id, res.status)) &&
                         Object.values(swapStatusFailed).includes(res.status)
                     ) {
                         if (res.status !== swapStatusFailed.SwapExpired) {

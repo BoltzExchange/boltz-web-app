@@ -21,10 +21,10 @@ import { validateResponse } from "../utils/validation";
 export const CreateButton = () => {
     const navigate = useNavigate();
     const {
-        addSwap,
+        separator,
+        setSwapStorage,
         denomination,
         pairs,
-        separator,
         setPairs,
         online,
         notify,
@@ -242,7 +242,7 @@ export const CreateButton = () => {
                 navigate("/error/");
                 return;
             }
-            addSwap(data);
+            await setSwapStorage(data);
             setInvoice("");
             setInvoiceValid(false);
             setOnchainAddress("");
