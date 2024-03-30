@@ -79,14 +79,6 @@ const Create = () => {
         }
     };
 
-    const changeSeparator = (amount: string) => {
-        [".", ","].forEach((sep) => {
-            if (amount.includes(sep)) {
-                setSeparator(sep);
-            }
-        });
-    };
-
     const checkEmptyAmount = (amount: string) => {
         if (amount === "") {
             setReceiveAmount(BigNumber(0));
@@ -96,7 +88,6 @@ const Create = () => {
 
     const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
-        changeSeparator(target.value);
         const amount = target.value
             .trim()
             .replaceAll(" ", "")
@@ -118,7 +109,6 @@ const Create = () => {
 
     const changeSendAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
-        changeSeparator(target.value);
         const amount = target.value
             .trim()
             .replaceAll(" ", "")

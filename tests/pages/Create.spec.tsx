@@ -267,7 +267,9 @@ describe("Create", () => {
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
 
-        const sendAmountInput = await screen.findByTestId("sendAmount");
+        const sendAmountInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
         fireEvent.input(sendAmountInput, {
             target: {
                 value: `0,01`,
@@ -275,6 +277,7 @@ describe("Create", () => {
         });
 
         expect(globalSignals.denomination()).toEqual(denominations.btc);
-        expect(globalSignals.separator()).toEqual(",");
+        expect(globalSignals.separator()).toEqual(".");
+        expect(sendAmountInput.value).toEqual("0.01");
     });
 });
