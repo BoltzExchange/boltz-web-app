@@ -32,4 +32,20 @@ describe("CopyButton", () => {
         expect(btn.classList.contains("btn-active")).toBeFalsy();
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
     });
+    test("dont copy spaces", async () => {
+        const textToCopy = "50 000";
+        const expectedCopy = "50000";
+
+        const {
+            container: { firstChild: button },
+        } = render(() => <CopyButton label="copy_bip21" data={textToCopy} />, {
+            wrapper: contextWrapper,
+        });
+
+        let btn = button as HTMLSpanElement;
+        fireEvent.click(btn);
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+            expectedCopy,
+        );
+    });
 });
