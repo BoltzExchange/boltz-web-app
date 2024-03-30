@@ -133,7 +133,7 @@ const Create = () => {
         const keycode = evt.key;
         if (keycode === "." || keycode === ",") {
             setSeparator(keycode);
-            // switch to sat denomination
+            // switch to BTC denomination
             if (denomination() == "sat") {
                 setDenomination(denominations.btc);
             }
