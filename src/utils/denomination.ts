@@ -18,7 +18,7 @@ export const getValidationRegex = (maximum: number): RegExp => {
 export const formatAmount = (
     amount: BigNumber,
     denomination: string,
-    separator: string = ".",
+    separator: string,
     fixed: boolean = false,
 ): string => {
     return formatAmountDenomination(amount, denomination, separator, fixed);
@@ -27,7 +27,7 @@ export const formatAmount = (
 export const formatAmountDenomination = (
     amount: BigNumber,
     denomination: string,
-    separator: string = ".",
+    separator: string,
     fixed: boolean = false,
 ): string => {
     switch (denomination) {

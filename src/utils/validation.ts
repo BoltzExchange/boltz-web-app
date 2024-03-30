@@ -220,7 +220,11 @@ const validateSwap = async (
 
     return (
         new URLSearchParams(bip21Split[1]).get("amount") ===
-        formatAmountDenomination(BigNumber(swap.sendAmount), denominations.btc)
+        formatAmountDenomination(
+            BigNumber(swap.sendAmount),
+            denominations.btc,
+            ".",
+        )
     );
 };
 
