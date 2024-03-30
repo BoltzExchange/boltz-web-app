@@ -112,12 +112,12 @@ const GlobalProvider = (props: { children: any }) => {
         name: "denomination",
         ...stringSerializer,
     });
+
     const localeSeparator = (0.1).toLocaleString().charAt(1);
     const [separator, setSeparator] = makePersisted(
         createSignal(localeSeparator),
         {
             name: "separator",
-            ...stringSerializer,
         },
     );
 
