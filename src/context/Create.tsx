@@ -1,5 +1,6 @@
 import { makePersisted } from "@solid-primitives/storage";
 import BigNumber from "bignumber.js";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import {
     Accessor,
     Setter,
@@ -10,9 +11,113 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { LN, RBTC } from "../consts/Assets";
+import { BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { DictKey } from "../i18n/i18n";
+import { getAddress, getNetwork } from "../utils/compat";
+import { getUrlParam, urlParamIsSet } from "../utils/urlParams";
+
+const setDestination = (
+    setAssetReceive: Setter<string>,
+    setInvoice: Setter<string>,
+    setOnchainAddress: Setter<string>,
+) => {
+    const isValidForAsset = (
+        asset: typeof BTC | typeof LBTC,
+        address: string,
+    ) => {
+        try {
+            getAddress(asset).toOutputScript(
+                address,
+                getNetwork(asset) as LiquidNetwork,
+            );
+            return true;
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const destination = getUrlParam("destination");
+    if (urlParamIsSet(destination)) {
+        if (isValidForAsset(BTC, destination)) {
+            setAssetReceive(BTC);
+            setOnchainAddress(destination);
+            return BTC;
+        } else if (isValidForAsset(LBTC, destination)) {
+            setAssetReceive(LBTC);
+            setOnchainAddress(destination);
+            return LBTC;
+        } else {
+            setAssetReceive(LN);
+            setInvoice(destination);
+            return LN;
+        }
+    }
+
+    return undefined;
+};
+
+const isValidAsset = (asset: string) =>
+    urlParamIsSet(asset) && assets.includes(asset);
+
+const parseAmount = (amount: string): BigNumber | undefined => {
+    if (!urlParamIsSet(amount)) {
+        return undefined;
+    }
+
+    const parsedAmount = new BigNumber(amount);
+    if (parsedAmount.isNaN()) {
+        return undefined;
+    }
+    return parsedAmount;
+};
+
+const handleUrlParams = (
+    setAssetSend: Setter<string>,
+    setAssetReceive: Setter<string>,
+    setInvoice: Setter<string>,
+    setOnchainAddress: Setter<string>,
+    setAmountChanged: Setter<Side>,
+    setSendAmount: Setter<BigNumber>,
+    setReceiveAmount: Setter<BigNumber>,
+) => {
+    const destinationAsset = setDestination(
+        setAssetReceive,
+        setInvoice,
+        setOnchainAddress,
+    );
+
+    const sendAsset = getUrlParam("sendAsset");
+    if (isValidAsset(sendAsset)) {
+        setAssetSend(sendAsset);
+    }
+
+    // The type of the destination takes precedence
+    if (destinationAsset === undefined) {
+        const receiveAsset = getUrlParam("receiveAsset");
+        if (isValidAsset(receiveAsset)) {
+            setAssetReceive(receiveAsset);
+        }
+    }
+
+    // Lightning invoice amounts take precedence
+    if (destinationAsset !== LN) {
+        const sendAmount = parseAmount(getUrlParam("sendAmount"));
+        if (sendAmount) {
+            setAmountChanged(Side.Send);
+            setSendAmount(sendAmount);
+        }
+
+        if (sendAmount === undefined) {
+            const receiveAmount = parseAmount(getUrlParam("receiveAmount"));
+
+            if (receiveAmount) {
+                setAmountChanged(Side.Receive);
+                setReceiveAmount(BigNumber(receiveAmount));
+            }
+        }
+    }
+};
 
 export type CreateContextType = {
     swapType: Accessor<SwapType>;
@@ -134,6 +239,16 @@ const CreateProvider = (props: { children: any }) => {
     // fees
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
+
+    handleUrlParams(
+        setAssetSend,
+        setAssetReceive,
+        setInvoice,
+        setOnchainAddress,
+        setAmountChanged,
+        setSendAmount,
+        setReceiveAmount,
+    );
 
     return (
         <CreateContext.Provider
