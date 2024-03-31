@@ -10,7 +10,8 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { LN, RBTC, sideSend } from "../consts";
+import { BTC, LBTC, LN, RBTC, sideSend } from "../consts";
+import { detectUrlParam } from "../utils/urlparams";
 
 export type CreateContextType = {
     reverse: Accessor<boolean>;
@@ -131,6 +132,38 @@ const CreateProvider = (props: { children: any }) => {
     // fees
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
+
+    // embed
+    const invoiceParam = detectUrlParam("invoice");
+    if (invoiceParam && invoiceParam !== "") {
+        setInvoice(invoiceParam);
+        setReverse(false);
+    }
+    const addressParam = detectUrlParam("address");
+    if (addressParam && addressParam !== "") {
+        setOnchainAddress(addressParam);
+        setReverse(true);
+    }
+    const assetParam = detectUrlParam("asset");
+    if (
+        assetParam &&
+        assetParam !== "" &&
+        [BTC, LBTC, RBTC].includes(assetParam)
+    ) {
+        setAsset(assetParam);
+    }
+    const sendAmountParam = detectUrlParam("sendAmount");
+    if (sendAmountParam && sendAmountParam !== "") {
+        setSendAmount(BigNumber(sendAmountParam));
+    }
+    const receiveAmountParam = detectUrlParam("receiveAmount");
+    if (receiveAmountParam && receiveAmountParam !== "") {
+        setReceiveAmount(BigNumber(receiveAmountParam));
+    }
+    const bip21Param = detectUrlParam("bip21");
+    if (bip21Param && bip21Param !== "") {
+        // handle bip21
+    }
 
     return (
         <CreateContext.Provider
