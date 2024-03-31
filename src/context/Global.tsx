@@ -15,9 +15,9 @@ import { BTC } from "../consts";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
-import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
 import { swapStatusFinal } from "../utils/swapStatus";
+import { detectEmbedParam, detectUrlParam } from "../utils/urlparams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -169,18 +169,14 @@ const GlobalProvider = (props: { children: any }) => {
     setWasmSupported(checkWasmSupported());
 
     // check referal
-    const refParam = new URLSearchParams(window.location.search).get("ref");
+    const refParam = detectUrlParam("ref");
     if (refParam && refParam !== "") {
         setRef(refParam);
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname,
-        );
     }
 
-    if (detectEmbedded()) {
+    if (detectEmbedParam()) {
         setEmbedded(true);
+        setHideHero(true);
     }
 
     // i18n
