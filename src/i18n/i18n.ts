@@ -178,9 +178,18 @@ const dict = {
         canary: "Canary",
         settings: "Settings",
         decimal_separator: "Decimal Separator",
-        denomination_tooltip: "Choose your preferred denomination: BTC or sats",
-        decimal_tooltip:
-            "Choose your preferred decimal separator: dot or comma",
+        denomination_tooltip: "Choose your preferred denomination: btc or sat",
+        decimal_tooltip: "Choose your preferred decimal separator: dot or coma",
+        claim_success: "Swap {{ id }} claimed successfully!",
+        claim_fail: "Failed to claim swap: {{ id }}",
+        claim_fail_coop: "Failed to sign cooperative claim for swap: {{ id }}",
+        no_errors: "No errors",
+        error_log: "Error logging",
+        error_log_tooltip:
+            "Saves error on claims and refunds to local storage for debugging",
+        clear: "clear",
+        download: "download",
+        copy: "copy",
     },
     de: {
         language: "Deutsch",
@@ -368,9 +377,20 @@ const dict = {
         settings: "Einstellungen",
         decimal_separator: "Dezimaltrennzeichen",
         denomination_tooltip:
-            "Wähle deine bevorzugte Denomination: BTC oder sats",
+            "Wähle deine bevorzugte Denomination: btc oder sat",
         decimal_tooltip:
-            "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Komma",
+            "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Beistrich",
+        claim_success: "Swap {{ id }} erfolgreich geclaimed!",
+        claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
+        claim_fail_coop:
+            "Kooperativer Claim für Swap {{ id }} konnte nicht signiert werden!",
+        no_errors: "Keine Fehler",
+        error_log: "Fehlerprotokoll",
+        error_log_tooltip:
+            "Speichert Fehler bei Claims und Rückerstattungen im lokalen Speicher zum debuggen",
+        clear: "leeren",
+        download: "herunterladen",
+        copy: "kopieren",
     },
     es: {
         language: "Español",
@@ -559,8 +579,19 @@ const dict = {
         canary: "Canary",
         settings: "Ajustes",
         decimal_separator: "Separador decimal",
-        denomination_tooltip: "Elige tu denominación preferida: BTC o sats",
+        denomination_tooltip: "Elige tu denominación preferida: btc o sat",
         decimal_tooltip: "Elige tu separador decimal preferido: punto o coma",
+        claim_success: "¡Intercambio {{ id }} reclamado con éxito!",
+        claim_fail: "¡Error al reclamar el intercambio {{ id }}!",
+        claim_fail_coop:
+            "¡Error al firmar la reclamación cooperativa para el intercambio {{ id }}!",
+        no_errors: "Sin errores",
+        error_log: "Registro de errores",
+        error_log_tooltip:
+            "Guarda errores en reclamaciones y reembolsos en el almacenamiento local para depuración",
+        clear: "limpiar",
+        download: "descargar",
+        copy: "copiar",
     },
     zh: {
         language: "中文",
@@ -729,8 +760,17 @@ const dict = {
         canary: "金丝雀搜查令",
         settings: "设置",
         decimal_separator: "小数分隔符",
-        denomination_tooltip: "选择您的首选面额：BTC 或 sats",
+        denomination_tooltip: "选择您的首选面额：btc 或 sat",
         decimal_tooltip: "选择您的首选小数分隔符：点或逗号",
+        claim_success: "交换{{ id }}成功索赔！",
+        claim_fail: "交换{{ id }}索赔失败！",
+        claim_fail_coop: "交换{{ id }}合作索赔签名失败！",
+        no_errors: "无错误",
+        error_log: "错误日志",
+        error_log_tooltip: "将索赔和退款错误保存在本地存储中以进行调试",
+        clear: "清除",
+        download: "下载",
+        copy: "复制",
     },
 };
 

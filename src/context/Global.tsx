@@ -65,6 +65,10 @@ export type GlobalContextType = {
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
 
+    report: (swapId: string, msg: string, error: Error) => void;
+    getReports: <T = any>() => Promise<T[]>;
+    clearReports: () => Promise<void>;
+
     setSwapStorage: (swap: SwapWithId) => Promise<any>;
     getSwap: <T = any>(id: string) => Promise<T>;
     getSwaps: <T = any>() => Promise<T[]>;
@@ -175,8 +179,33 @@ const GlobalProvider = (props: { children: any }) => {
 
     // Use IndexedDB if available; fallback to LocalStorage
     localforage.config({
-        name: "swaps",
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
+    });
+
+    const errorForage = localforage.createInstance({
+        name: "errors",
+    });
+
+    const report = (swapId: string, msg: string, error: Error) => {
+        errorForage.setItem(swapId, {
+            message: msg,
+            error: error.message,
+            stack: error.stack,
+        });
+    };
+
+    const getReports = async () => {
+        const errors = [];
+        await errorForage.iterate((error) => {
+            errors.push(error);
+        });
+        return errors;
+    };
+
+    const clearReports = () => errorForage.clear();
+
+    const swapsForage = localforage.createInstance({
+        name: "swaps",
     });
 
     migrateSwapsFromLocalStorage()
@@ -197,16 +226,16 @@ const GlobalProvider = (props: { children: any }) => {
         });
 
     const setSwapStorage = (swap: SwapWithId) =>
-        localforage.setItem(swap.id, swap);
+        swapsForage.setItem(swap.id, swap);
 
-    const deleteSwap = (id: string) => localforage.removeItem(id);
+    const deleteSwap = (id: string) => swapsForage.removeItem(id);
 
-    const getSwap = <T = SwapWithId,>(id: string) => localforage.getItem<T>(id);
+    const getSwap = <T = SwapWithId,>(id: string) => swapsForage.getItem<T>(id);
 
     const getSwaps = async <T = SwapWithId,>(): Promise<T[]> => {
         const swaps: T[] = [];
 
-        await localforage.iterate<T, any>((swap) => {
+        await swapsForage.iterate<T, any>((swap) => {
             swaps.push(swap);
         });
 
@@ -227,7 +256,7 @@ const GlobalProvider = (props: { children: any }) => {
         return false;
     };
 
-    const clearSwaps = () => localforage.clear();
+    const clearSwaps = () => swapsForage.clear();
 
     setI18n(detectLanguage(i18nConfigured()));
     detectWebLNProvider().then((state: boolean) => setWebln(state));
@@ -301,6 +330,9 @@ const GlobalProvider = (props: { children: any }) => {
                 t,
                 notify,
                 fetchPairs,
+                report,
+                getReports,
+                clearReports,
                 updateSwapStatus,
                 setSwapStorage,
                 getSwap,
