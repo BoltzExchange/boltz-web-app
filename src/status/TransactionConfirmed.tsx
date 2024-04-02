@@ -10,7 +10,8 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 const TransactionConfirmed = () => {
     const { swap } = usePayContext();
     const { asset } = useCreateContext();
-    const { t, getSwap, updateSwap } = useGlobalContext();
+    const { t, getSwap, setSwapStorage } = useGlobalContext();
+
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
@@ -27,9 +28,9 @@ const TransactionConfirmed = () => {
                         swap().refundAddress,
                         swap().timeoutBlockHeight,
                     );
-                    const currentSwap = getSwap(swap().id);
+                    const currentSwap = await getSwap(swap().id);
                     currentSwap.claimTx = tx.hash;
-                    updateSwap(currentSwap);
+                    await setSwapStorage(currentSwap);
                 }}
                 buttonText={t("claim")}
                 promptText={t("transaction_prompt", { button: t("claim") })}

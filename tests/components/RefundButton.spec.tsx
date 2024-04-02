@@ -14,6 +14,7 @@ describe("RefundButton", () => {
 
     test("button should be active after pasting valid address", async () => {
         const [swap] = createSignal({
+            id: "swap",
             asset: "BTC",
         });
         render(() => <RefundButton swap={swap} />, {
@@ -39,6 +40,7 @@ describe("RefundButton", () => {
     test("button should be inactive after pasting the lock address", async () => {
         const lockupAddress = "2N4Q5FhU2497BryFfUgbqkAJE87aKHUhXMp";
         const [swap] = createSignal({
+            id: "swap",
             asset: "BTC",
             address: lockupAddress,
         });
@@ -64,6 +66,7 @@ describe("RefundButton", () => {
 
     test("button should be inactive after pasting an invalid address", async () => {
         const [swap] = createSignal({
+            id: "swap",
             asset: "BTC",
         });
         render(() => <RefundButton swap={swap} />, {

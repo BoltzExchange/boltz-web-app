@@ -1,6 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Show } from "solid-js";
+import { Show, createSignal, onMount } from "solid-js";
 
 import SwapList from "../components/SwapList";
 import { useGlobalContext } from "../context/Global";
@@ -25,24 +25,27 @@ const History = () => {
     let importRef: HTMLInputElement;
 
     const {
-        swaps,
-        setSwaps,
         getSwaps,
+        clearSwaps,
+        setSwapStorage,
         setNotification,
         setNotificationType,
         t,
     } = useGlobalContext();
 
-    const deleteLocalStorage = () => {
-        if (confirm(t("delete_localstorage"))) {
-            setSwaps([]);
+    const [swaps, setSwaps] = createSignal<any[]>([]);
+
+    const deleteLocalStorage = async () => {
+        if (confirm(t("delete_storage"))) {
+            await clearSwaps();
+            setSwaps(await getSwaps());
         }
     };
 
-    const backupLocalStorage = () => {
+    const backupLocalStorage = async () => {
         downloadJson(
             `boltz-backup-${Math.floor(Date.now() / 1000)}`,
-            getSwaps(),
+            await getSwaps(),
         );
     };
 
@@ -52,8 +55,12 @@ const History = () => {
         input.setCustomValidity("");
         new Response(inputFile)
             .json()
-            .then((result) => {
+            .then(async (result) => {
                 validateBackupFile(result);
+                await clearSwaps();
+                for (const swap of result) {
+                    await setSwapStorage(swap);
+                }
                 setSwaps(result);
             })
             .catch((e) => {
@@ -62,6 +69,10 @@ const History = () => {
                 setNotification(t("invalid_backup_file"));
             });
     };
+
+    onMount(async () => {
+        setSwaps(await getSwaps());
+    });
 
     return (
         <div id="history">
@@ -94,7 +105,12 @@ const History = () => {
                             </button>
                         </div>
                     }>
-                    <SwapList swapsSignal={swaps} deleteButton={true} />
+                    <SwapList
+                        swapsSignal={swaps}
+                        onDelete={async () => {
+                            setSwaps(await getSwaps());
+                        }}
+                    />
                     <hr />
                     <Show when={swaps().length > 0}>
                         <Show when={!isIos}>

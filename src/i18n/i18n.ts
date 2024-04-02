@@ -87,7 +87,7 @@ const dict = {
         backup_skip: "Skip download",
         backup_refund: "Download Refund File",
         backup_refund_subline:
-            "If this swap fails, you'll have to refund your chain bitcoin using your refund key. This key is stored in your browser's local storage by default, but can be lost if you",
+            "If this swap fails, you'll have to refund your chain bitcoin using your refund key. This key is stored in your browser's storage by default, but can be lost if you",
         backup_refund_list_incognito: "are using incognito mode",
         backup_refund_list_tor: "are using Tor browser",
         backup_refund_list_clear_history: "clear your browsing history",
@@ -106,12 +106,12 @@ const dict = {
             "Enter address of your wallet to refund",
         refund_backup: "Backup",
         refund_import: "Import Backup",
-        refund_clear: "Delete localstorage",
-        delete_swap: "Delete swap from localstorage",
-        delete_localstorage:
-            "Are you sure you want to clear your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
-        delete_localstorage_single_swap:
-            "Are you sure you want to clear Swap {{ id }} from your localstorage?\nYour swap information and you refund / claim privatekeys will be lost.",
+        refund_clear: "Delete storage",
+        delete_swap: "Delete swap from storage",
+        delete_storage:
+            "Are you sure you want to clear your storage?\nYour swap information and you refund / claim private keys will be lost.",
+        delete_storage_single_swap:
+            "Are you sure you want to clear Swap {{ id }} from your storage?\nYour swap information and you refund / claim private keys will be lost.",
         tx_in_mempool: "Transaction is in mempool",
         tx_in_mempool_subline: "Waiting for confirmation to complete the swap",
         expired: "Swap expired!",
@@ -266,7 +266,7 @@ const dict = {
         backup_skip: "Überspringen",
         backup_refund: "Rückerstattungsdatei herunterladen",
         backup_refund_subline:
-            "Falls dieser Swap fehlschlagen sollte, musst du dir deine Bitcoin mit deinem Rückerstattungsschlüssel zurückholen. Dieser Schlüssel wird standardmäßig lokal in dein Browser gespeichert, kann aber verloren gehen wenn",
+            "Falls dieser Swap fehlschlagen sollte, musst du dir deine Bitcoin mit deinem Rückerstattungsschlüssel zurückholen. Dieser Schlüssel wird standardmäßig in dein Browser gespeichert, kann aber verloren gehen wenn",
         backup_refund_list_incognito: "du ein Inkognito Fenster verwendest",
         backup_refund_list_tor: "du Tor Browser verwendest",
         backup_refund_list_clear_history: "die Browser Daten gelöscht werden",
@@ -284,12 +284,12 @@ const dict = {
         refund_address_header_no_asset: "Adresse deines Wallet eingeben",
         refund_backup: "Backup",
         refund_import: "Backup importieren",
-        refund_clear: "Lokalen Speicher löschen",
-        delete_swap: "Swap aus dem lokalen Speicher löschen",
-        delete_localstorage:
-            "Bist du sicher, dass du deinen lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
-        delete_localstorage_single_swap:
-            "Bist du sicher, dass du den Swap {{ id }} aus deinem lokalen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
+        refund_clear: "Speicher löschen",
+        delete_swap: "Swap aus dem Speicher löschen",
+        delete_storage:
+            "Bist du sicher, dass du deinen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
+        delete_storage_single_swap:
+            "Bist du sicher, dass du den Swap {{ id }} aus deinem Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
         tx_in_mempool: "Transaktion befindet sich im Mempool.",
         tx_in_mempool_subline:
             "Warte auf Bestätigung, um den Swap abzuschließen.",
@@ -450,7 +450,7 @@ const dict = {
         backup_skip: "Saltar",
         backup_refund: "Descargar archivo de reembolso",
         backup_refund_subline:
-            "Si este intercambio falla, tendrás que reembolsar tu bitcoin utilizando tu clave de reembolso. Esta clave se guarda por defecto en el almacenamiento local de tu navegador, pero puede perderse si",
+            "Si este intercambio falla, tendrás que reembolsar tu bitcoin utilizando tu clave de reembolso. Esta clave se guarda por defecto en el almacenamiento de tu navegador, pero puede perderse si",
         backup_refund_list_incognito: "utiliza el modo incógnito",
         backup_refund_list_tor: "utiliza el navegador Tor",
         backup_refund_list_clear_history: "borra tu historial de navegación",
@@ -469,12 +469,12 @@ const dict = {
             "Introduzca la dirección de tu monedero para reembolsar",
         refund_backup: "Backup",
         refund_import: "Importar Backup",
-        refund_clear: "Borrar almacenamiento local",
-        delete_swap: "Eliminar intercambio del almacenamiento local",
-        delete_localstorage:
-            "¿Estás seguro de que deseas borrar tu almacenamiento local?\nSe perderán la información de su intercambio y sus claves de reembolso.",
-        delete_localstorage_single_swap:
-            "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento local?\nSe perderán la información de su intercambio y sus claves privadas de reembolso.",
+        refund_clear: "Borrar almacenamiento",
+        delete_swap: "Eliminar intercambio del almacenamiento",
+        delete_storage:
+            "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de su intercambio y sus claves de reembolso.",
+        delete_storage_single_swap:
+            "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento?\nSe perderán la información de su intercambio y sus claves privadas de reembolso.",
         tx_in_mempool: "La transacción está en el mempool.",
         tx_in_mempool_subline:
             "Esperando confirmación para completar el intercambio",
@@ -649,10 +649,9 @@ const dict = {
         refund_import: "导入备份",
         refund_clear: "删除本地存储",
         delete_swap: "从本地存储中删除交换",
-        delete_localstorage:
+        delete_storage:
             "您确定要清除本地存储吗？\n您的交换信息和您的退款/索赔私钥将丢失。",
-        delete_localstorage_single_swap:
-            "您确定要从本地存储中清除交换{{ id }}吗",
+        delete_storage_single_swap: "您确定要从本地存储中清除交换{{ id }}吗",
         tx_in_mempool: "事务在内存池中",
         tx_in_mempool_subline: "等待确认以完成交换",
         expired: "交换已过期！",

@@ -14,11 +14,11 @@ import "../style/swaplist.scss";
 const SwapList = ({
     swapsSignal,
     setSwapSignal,
-    deleteButton,
+    onDelete,
 }: {
     swapsSignal: Accessor<any[]>;
     setSwapSignal?: Setter<any[]>;
-    deleteButton?: boolean;
+    onDelete?: () => Promise<any>;
 }) => {
     const navigate = useNavigate();
     const { deleteSwap, t } = useGlobalContext();
@@ -39,9 +39,10 @@ const SwapList = ({
         return date.toLocaleDateString();
     };
 
-    const deleteSwapAction = (swapId: string) => {
-        if (confirm(t("delete_localstorage_single_swap", { id: swapId }))) {
-            deleteSwap(swapId);
+    const deleteSwapAction = async (swapId: string) => {
+        if (confirm(t("delete_storage_single_swap", { id: swapId }))) {
+            await deleteSwap(swapId);
+            await onDelete();
         }
     };
 
@@ -68,7 +69,7 @@ const SwapList = ({
                             <span class="swaplist-asset-date">
                                 {t("created")}:&nbsp;{formatDate(swap.date)}
                             </span>
-                            <Show when={deleteButton}>
+                            <Show when={onDelete !== undefined}>
                                 <span
                                     class="btn-small btn-danger"
                                     onClick={() => deleteSwapAction(swap.id)}>

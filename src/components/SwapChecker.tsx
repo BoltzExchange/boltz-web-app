@@ -118,13 +118,14 @@ class BoltzWebSocket {
 export const SwapChecker = () => {
     const {
         swap,
+        setSwap,
         setSwapStatus,
         setSwapStatusTransaction,
         setFailureReason,
         setTimeoutEta,
         setTimeoutBlockheight,
     } = usePayContext();
-    const { notify, updateSwapStatus, getSwap, getSwaps, updateSwap } =
+    const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage } =
         useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
@@ -152,9 +153,9 @@ export const SwapChecker = () => {
         }
     };
 
-    const prepareSwap = (swapId: string, data: any) => {
-        const currentSwap = getSwap(swapId);
-        if (currentSwap === undefined) {
+    const prepareSwap = async (swapId: string, data: any) => {
+        const currentSwap = await getSwap(swapId);
+        if (currentSwap === null) {
             log.warn(`prepareSwap: swap ${swapId} not found`);
             return;
         }
@@ -162,14 +163,18 @@ export const SwapChecker = () => {
             setSwapStatus(data.status);
         }
         if (data.transaction) setSwapStatusTransaction(data.transaction);
-        if (data.status) updateSwapStatus(currentSwap.id, data.status);
-        checkForFailed(currentSwap, data);
-        if (data.failureReason) setFailureReason(data.failureReason);
+        if (data.status) {
+            await updateSwapStatus(currentSwap.id, data.status);
+        }
+        await checkForFailed(currentSwap, data);
+        if (data.failureReason) {
+            setFailureReason(data.failureReason);
+        }
     };
 
     const claimSwap = async (swapId: string, data: any) => {
-        const currentSwap = getSwap(swapId);
-        if (currentSwap === undefined) {
+        const currentSwap = await getSwap(swapId);
+        if (currentSwap === null) {
             log.warn(`claimSwap: swap ${swapId} not found`);
             return;
         }
@@ -199,9 +204,14 @@ export const SwapChecker = () => {
         ) {
             try {
                 const res = await claim(currentSwap, data.transaction);
-                const claimedSwap = getSwap(res.id);
+                const claimedSwap = await getSwap(res.id);
                 claimedSwap.claimTx = res.claimTx;
-                updateSwap(claimedSwap);
+                await setSwapStorage(claimedSwap);
+
+                if (claimedSwap.id === swap().id) {
+                    setSwap(claimedSwap);
+                }
+
                 notify("success", `swap ${res.id} claimed`);
             } catch (e) {
                 log.warn("swapchecker failed to claim swap", e);
@@ -218,7 +228,7 @@ export const SwapChecker = () => {
         }
     };
 
-    onMount(() => {
+    onMount(async () => {
         const urlsToAsset = new Map<string, string[]>();
         for (const [asset, url] of [BTC, LBTC, RBTC].map((asset) => [
             asset,
@@ -227,7 +237,7 @@ export const SwapChecker = () => {
             urlsToAsset.set(url, (urlsToAsset.get(url) || []).concat(asset));
         }
 
-        const swapsToCheck = getSwaps()
+        const swapsToCheck = (await getSwaps())
             .filter(
                 (s) =>
                     !swapStatusFinal.includes(s.status) ||
