@@ -1,3 +1,5 @@
+import { IoClose } from "solid-icons/io";
+
 import { config } from "../config";
 import { LN, sideSend } from "../consts";
 import { useCreateContext } from "../context/Create";
@@ -73,20 +75,9 @@ const SelectAsset = () => {
                         assetSelected() === sideSend ? t("send") : t("receive"),
                 })}
             </h2>
-            <svg
-                id="close"
-                viewBox="0 0 100 100"
-                width="50"
-                onClick={() => setAssetSelect(!assetSelect())}>
-                <path
-                    class="line top"
-                    d="m 70,33 h -40 c 0,0 -8.5,-0.149796 -8.5,8.5 0,8.649796 8.5,8.5 8.5,8.5 h 20 v -20"
-                />
-                <path
-                    class="line bottom"
-                    d="m 30,67 h 40 c 0,0 8.5,0.149796 8.5,-8.5 0,-8.649796 -8.5,-8.5 -8.5,-8.5 h -20 v 20"
-                />
-            </svg>
+            <span class="close" onClick={() => setAssetSelect(!assetSelect())}>
+                <IoClose />
+            </span>
             <hr />
             {assets.map((asset) => (
                 <div

@@ -339,6 +339,35 @@ textarea {
     background: black;
     color: white;
 }
+.toggle {
+    cursor: pointer;
+    flex-grow: 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 18px;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    padding: 0 5px;
+    align-items: center;
+    display: flex;
+    justify-content: start;
+    height: 36px;
+    &:hover {
+        background: rgb(20, 40, 63);
+    }
+    > * {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        user-select: none;
+    }
+    > :first-child {
+        margin-right: 5px;
+    }
+    .active {
+        color: rgb(247, 147, 26);
+        background-color: rgb(23, 34, 46);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+}
 .denomination img {
     filter: brightness(10);
     cursor: pointer;
@@ -365,21 +394,6 @@ textarea {
 }
 [data-denominator="sat"] {
     background-image: url(../assets/sat.svg);
-}
-
-.denomination > :first-child {
-    margin-right: 5px;
-}
-.denomination {
-    cursor: pointer;
-    flex-grow: 0;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 18px;
-    border: 1px dashed rgba(255, 255, 255, 0.3);
-    padding: 0 5px;
-    &:hover {
-        background: rgb(20, 40, 63);
-    }
 }
 .denomination .active {
     filter: none;
@@ -485,6 +499,7 @@ textarea {
     z-index: 9999;
     display: none;
     box-shadow: 0 0 12px black;
+    margin: 0;
 }
 .assets-select.active {
     display: block;
@@ -499,6 +514,17 @@ textarea {
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     z-index: -1;
+}
+
+.close {
+    cursor: pointer;
+    user-select: none;
+    z-index: 1000;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 30px;
+    margin-top: 5px;
 }
 
 #close {

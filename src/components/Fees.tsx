@@ -1,8 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect } from "solid-js";
 
-import btcSvg from "../assets/btc.svg";
-import satSvg from "../assets/sat.svg";
 import { LBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -15,11 +13,12 @@ import {
     calculateSendAmount,
 } from "../utils/calculate";
 import { isConfidentialAddress } from "../utils/compat";
-import { denominations, formatAmount } from "../utils/denomination";
+import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
+import Denomination from "./Denomination";
 
 const Fees = () => {
-    const { t, pairs, fetchPairs, denomination, setDenomination, separator } =
+    const { t, pairs, fetchPairs, denomination, separator } =
         useGlobalContext();
     const {
         asset,
@@ -77,30 +76,11 @@ const Fees = () => {
         }
     });
 
-    const toggleDenomination = () => {
-        setDenomination(
-            denomination() === denominations.btc
-                ? denominations.sat
-                : denominations.btc,
-        );
-    };
-
     fetchPairs();
 
     return (
         <div class="fees-dyn">
-            <div class="denomination" onClick={() => toggleDenomination()}>
-                <img
-                    src={btcSvg}
-                    class={denomination() == "btc" ? "active" : ""}
-                    alt="denominator"
-                />
-                <img
-                    src={satSvg}
-                    class={denomination() == "sat" ? "active" : ""}
-                    alt="denominator"
-                />
-            </div>
+            <Denomination />
             <label>
                 {t("network_fee")}:{" "}
                 <span class="network-fee">
