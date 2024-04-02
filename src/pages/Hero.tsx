@@ -128,6 +128,22 @@ export const Hero = () => {
                     </div>
                 </div>
 
+                <h2 class="headline">Use cases</h2>
+                <div id="cases">
+                    <div class="case">
+                        🫰
+                        <small>Reliably cheap LN channel rebalancing</small>
+                    </div>
+                    <div class="case">
+                        ❄️
+                        <small>DCAing from LN into cold storage</small>
+                    </div>
+                    <div class="case">
+                        👨‍💻
+                        <small>Increase coin privacy from CEX purchases</small>
+                    </div>
+                </div>
+
                 <h2 class="headline">{t("integrations")}</h2>
                 <div id="integrations">
                     <div>

@@ -83,6 +83,7 @@ h3 {
     }
 }
 
+#cases,
 #numbers {
     display: flex;
     justify-content: space-between;
@@ -91,6 +92,7 @@ h3 {
 }
 
 @media (max-width: 768px) {
+    #cases,
     #numbers {
         display: block;
     }
@@ -118,6 +120,21 @@ h3 {
     display: block;
     font-weight: normal;
     color: $primary;
+}
+
+.case small {
+    font-size: 16px;
+    display: block;
+}
+.case {
+    font-size: 60px;
+    margin-bottom: 16px;
+    max-width: 190px;
+}
+@media (max-width: 768px) {
+    .case {
+        max-width: 100%;
+    }
 }
 
 .thunderhub:before {
