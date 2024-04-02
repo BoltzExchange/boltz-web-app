@@ -125,8 +125,15 @@ export const SwapChecker = () => {
         setTimeoutEta,
         setTimeoutBlockheight,
     } = usePayContext();
-    const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage } =
-        useGlobalContext();
+    const {
+        notify,
+        report,
+        updateSwapStatus,
+        getSwap,
+        getSwaps,
+        setSwapStorage,
+        t,
+    } = useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
 
@@ -211,19 +218,21 @@ export const SwapChecker = () => {
                 if (claimedSwap.id === swap().id) {
                     setSwap(claimedSwap);
                 }
-
-                notify("success", `swap ${res.id} claimed`);
+                notify("success", t("claim_success", { id: res.id }));
             } catch (e) {
-                log.warn("swapchecker failed to claim swap", e);
+                const msg = t("claim_fail", { id: currentSwap.id });
+                report(currentSwap.id, msg, e);
+                log.warn(msg, e);
+                notify("error", msg);
             }
         } else if (data.status === swapStatusPending.TransactionClaimPending) {
             try {
                 await createSubmarineSignature(currentSwap);
             } catch (e) {
-                log.warn(
-                    "swapchecker failed to sign cooperative submarine claim",
-                    e,
-                );
+                const msg = t("claim_fail_coop", { id: currentSwap.id });
+                report(currentSwap.id, msg, e);
+                log.warn(msg, e);
+                notify("error", msg);
             }
         }
     };

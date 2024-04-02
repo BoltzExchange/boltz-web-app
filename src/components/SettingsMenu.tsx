@@ -3,6 +3,7 @@ import { IoClose } from "solid-icons/io";
 import { useGlobalContext } from "../context/Global";
 import "../style/settings.scss";
 import Denominaton from "./Denomination";
+import ErrorLog from "./ErrorLog";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
 
@@ -32,6 +33,12 @@ const SettingsMenu = () => {
                     <Tooltip label="decimal_tooltip" />
                     <div class="spacer"></div>
                     <Separator />
+                </span>
+                <span class="setting">
+                    <label>{t("error_log")}: </label>
+                    <Tooltip label="error_log_tooltip" />
+                    <div class="spacer"></div>
+                    <ErrorLog />
                 </span>
             </div>
         </div>
