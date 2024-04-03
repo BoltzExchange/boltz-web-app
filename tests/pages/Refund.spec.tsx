@@ -108,7 +108,7 @@ describe("Refund", () => {
             id: "123",
             privateKey: "",
         };
-        globalSignals.setSwaps([swap]);
+        await globalSignals.setSwapStorage(swap);
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;

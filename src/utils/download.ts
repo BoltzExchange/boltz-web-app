@@ -6,7 +6,10 @@ export const download = (file: string, content: string) => {
     hidden.click();
 };
 
-export const downloadJson = (file: string, content: any) => {
+export const downloadJson = <T>(
+    file: string,
+    content: T extends Promise<any> ? never : T,
+) => {
     download(
         `${file}.json`,
         `data:application/json;charset=utf-8,${encodeURI(

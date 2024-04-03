@@ -5,6 +5,7 @@ import { Accessor, Setter, createSignal } from "solid-js";
 
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import {
     getSubmarineEipSignature,
@@ -20,28 +21,22 @@ const RefundButton = ({
     swap,
     setRefundTxId,
 }: {
-    swap: Accessor<Record<string, any>>;
+    swap: Accessor<{ id: string } & Record<string, any>>;
     setRefundTxId?: Setter<string>;
 }) => {
     const {
         setNotificationType,
         setNotification,
-        swaps,
-        setSwaps,
+        getSwap,
+        setSwapStorage,
         setRefundAddress,
         refundAddress,
         t,
     } = useGlobalContext();
+    const { setSwap } = usePayContext();
 
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap, getSigner } = useWeb3Signer();
-
-        const updateSwaps = (cb: any) => {
-            const swapsTmp = swaps();
-            const currentSwap = swapsTmp.find((s: any) => swap().id === s.id);
-            cb(currentSwap);
-            setSwaps(swapsTmp);
-        };
 
         return (
             <ContractTransaction
@@ -86,7 +81,9 @@ const RefundButton = ({
                         );
                     }
 
-                    updateSwaps((current: any) => (current.refundTx = tx.hash));
+                    currentSwap.refundTx = tx.hash;
+                    await setSwapStorage(currentSwap);
+                    setSwap(currentSwap);
                     await tx.wait(1);
                 }}
                 buttonText={t("refund")}
@@ -143,10 +140,10 @@ const RefundButton = ({
             // only if the swaps was not initiated with the refund json
             // refundjson has no date
             if (res.date !== undefined) {
-                const swapsTmp = swaps();
-                const currentSwap = swapsTmp.find((s: any) => res.id === s.id);
+                const currentSwap = await getSwap(res.id);
                 currentSwap.refundTx = res.refundTx;
-                setSwaps(swapsTmp);
+                await setSwapStorage(currentSwap);
+                setSwap(currentSwap);
             } else {
                 if (setRefundTxId) {
                     setRefundTxId(res.refundTx);

@@ -1,5 +1,6 @@
 import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
+import localforage from "localforage";
 import log from "loglevel";
 import {
     Accessor,
@@ -20,6 +21,8 @@ import { isMobile } from "../utils/helper";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
+
+type SwapWithId = { id: string };
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
@@ -48,8 +51,6 @@ export type GlobalContextType = {
     setI18nConfigured: Setter<string | null>;
     denomination: Accessor<string>;
     setDenomination: Setter<string>;
-    swaps: Accessor<any>;
-    setSwaps: Setter<any>;
     hideHero: Accessor<boolean>;
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
@@ -60,13 +61,41 @@ export type GlobalContextType = {
     t: (key: string, values?: Record<string, any>) => string;
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
-    updateSwapStatus: (id: string, newStatus: string) => boolean;
+
+    setSwapStorage: (swap: SwapWithId) => Promise<any>;
+    getSwap: <T = any>(id: string) => Promise<T>;
+    getSwaps: <T = any>() => Promise<T[]>;
+    deleteSwap: (id: string) => Promise<void>;
+    clearSwaps: () => Promise<any>;
+    updateSwapStatus: (id: string, newStatus: string) => Promise<boolean>;
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
     serialize: (value: any) => value,
     deserialize: (value: any) => value,
+};
+
+const migrateSwapsFromLocalStorage = async () => {
+    const [localStorageSwaps, setLocalStorageSwaps] = makePersisted(
+        createSignal([], {
+            // Because arrays are the same object when changed,
+            // we have to override the equality checker
+            equals: () => false,
+        }),
+        {
+            name: "swaps",
+        },
+    );
+
+    for (const swap of localStorageSwaps()) {
+        await localforage.setItem(swap.id, swap);
+    }
+
+    const migratedSwapCount = localStorageSwaps().length;
+    setLocalStorageSwaps([]);
+
+    return migratedSwapCount;
 };
 
 const GlobalContext = createContext<GlobalContextType>();
@@ -121,17 +150,6 @@ const GlobalProvider = (props: { children: any }) => {
         },
     );
 
-    const [swaps, setSwaps] = makePersisted(
-        createSignal([], {
-            // Because arrays are the same object when changed,
-            // we have to override the equality checker
-            equals: () => false,
-        }),
-        {
-            name: "swaps",
-        },
-    );
-
     const notify = (type: string, message: string) => {
         setNotificationType(type);
         setNotification(message);
@@ -150,25 +168,67 @@ const GlobalProvider = (props: { children: any }) => {
             });
     };
 
-    const updateSwapStatus = (id: string, newStatus: string) => {
+    // Use IndexedDB if available; fallback to LocalStorage
+    localforage.config({
+        name: "swaps",
+        driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
+    });
+
+    migrateSwapsFromLocalStorage()
+        .then((migratedSwapCount) => {
+            if (migratedSwapCount === 0) {
+                return;
+            }
+
+            log.debug(
+                `migrated ${migratedSwapCount} from local storage to localforage`,
+            );
+        })
+        .catch((e) => {
+            log.error(
+                "could not migrate swaps from local storage to localforage",
+                e,
+            );
+        });
+
+    const setSwapStorage = (swap: SwapWithId) =>
+        localforage.setItem(swap.id, swap);
+
+    const deleteSwap = (id: string) => localforage.removeItem(id);
+
+    const getSwap = <T = SwapWithId,>(id: string) => localforage.getItem<T>(id);
+
+    const getSwaps = async <T = SwapWithId,>(): Promise<T[]> => {
+        const swaps: T[] = [];
+
+        await localforage.iterate<T, any>((swap) => {
+            swaps.push(swap);
+        });
+
+        return swaps;
+    };
+
+    const updateSwapStatus = async (id: string, newStatus: string) => {
         if (swapStatusFinal.includes(newStatus)) {
-            const swapsTmp = swaps();
-            const swap = swapsTmp.find((swap) => swap.id === id);
+            const swap = await getSwap<SwapWithId & { status: string }>(id);
 
             if (swap.status !== newStatus) {
                 swap.status = newStatus;
-                setSwaps(swapsTmp);
+                await setSwapStorage(swap);
                 return true;
             }
         }
+
         return false;
     };
+
+    const clearSwaps = () => localforage.clear();
 
     setI18n(detectLanguage(i18nConfigured()));
     detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
-    // check referal
+    // check referral
     const refParam = new URLSearchParams(window.location.search).get("ref");
     if (refParam && refParam !== "") {
         setRef(refParam);
@@ -224,8 +284,6 @@ const GlobalProvider = (props: { children: any }) => {
                 setI18nConfigured,
                 denomination,
                 setDenomination,
-                swaps,
-                setSwaps,
                 hideHero,
                 setHideHero,
                 embedded,
@@ -237,6 +295,11 @@ const GlobalProvider = (props: { children: any }) => {
                 notify,
                 fetchPairs,
                 updateSwapStatus,
+                setSwapStorage,
+                getSwap,
+                deleteSwap,
+                getSwaps,
+                clearSwaps,
             }}>
             {props.children}
         </GlobalContext.Provider>
