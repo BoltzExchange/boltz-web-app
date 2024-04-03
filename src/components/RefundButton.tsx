@@ -143,6 +143,7 @@ const RefundButton = ({
                 const currentSwap = await getSwap(res.id);
                 currentSwap.refundTx = res.refundTx;
                 await setSwapStorage(currentSwap);
+                setSwap(currentSwap);
             } else {
                 if (setRefundTxId) {
                     setRefundTxId(res.refundTx);
