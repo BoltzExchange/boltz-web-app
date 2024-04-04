@@ -23,7 +23,7 @@ const Nav = ({ network }) => {
                 <A id="logo" href="/" onClick={() => setHideHero(false)}>
                     <img src={logo} alt="boltz.exchange logo" />
                 </A>
-                <Show when={network !== "main"}>
+                <Show when={network !== "mainnet"}>
                     <div id="network" class="btn btn-small">
                         {network}
                     </div>
