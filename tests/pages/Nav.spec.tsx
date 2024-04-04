@@ -1,6 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
 
 import Nav from "../../src/components/Nav";
+import mainnetConfig from "../../src/configs/mainnet.json";
 import { contextWrapper } from "../helper";
 
 describe("Nav", () => {
@@ -17,7 +18,7 @@ describe("Nav", () => {
     );
 
     test("should not show network on mainnet", async () => {
-        const network = "main";
+        const network = mainnetConfig.network;
 
         render(() => <Nav network={network} />, { wrapper: contextWrapper });
 
