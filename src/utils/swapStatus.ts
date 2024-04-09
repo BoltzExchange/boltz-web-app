@@ -2,6 +2,8 @@ export const swapStatusPending = {
     TransactionConfirmed: "transaction.confirmed",
     TransactionMempool: "transaction.mempool",
     TransactionClaimPending: "transaction.claim.pending",
+    TransactionServerMempool: "transaction.server.mempool",
+    TransactionServerConfirmed: "transaction.server.confirmed",
 };
 
 export const swapStatusFailed = {

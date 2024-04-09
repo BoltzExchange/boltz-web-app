@@ -57,7 +57,7 @@ export type ChainSwap = SwapBase &
 
 export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
 
-export const getRelevantAssetForSwap = (swap: SomeSwap) => {
+export const getRelevantAssetForSwap = (swap: SwapBase) => {
     switch (swap.type) {
         case SwapType.Submarine:
             return swap.assetSend;

@@ -3,16 +3,23 @@ import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
 import { BTC, LBTC, RBTC } from "../consts";
+import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
+    getChainSwapTransactions,
     getReverseTransaction,
     getSubmarineTransaction,
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
 import { getApiUrl } from "../utils/helper";
 import Lock from "../utils/lock";
-import { getRelevantAssetForSwap } from "../utils/swapCreator";
+import {
+    ChainSwap,
+    ReverseSwap,
+    SubmarineSwap,
+    getRelevantAssetForSwap,
+} from "../utils/swapCreator";
 import {
     swapStatusFinal,
     swapStatusPending,
@@ -189,23 +196,42 @@ export const SwapChecker = () => {
 
         if (data.status === swapStatusSuccess.InvoiceSettled) {
             data.transaction = await getReverseTransaction(
-                currentSwap.asset,
+                getRelevantAssetForSwap(currentSwap),
                 currentSwap.id,
             );
+        } else if (data.status === swapStatusSuccess.TransactionClaimed) {
+            data.transaction = (
+                await getChainSwapTransactions(
+                    getRelevantAssetForSwap(currentSwap),
+                    currentSwap.id,
+                )
+            ).serverLock.transaction;
         }
 
         if (
-            currentSwap.claimTx === undefined &&
+            currentSwap["claimTx"] === undefined &&
             data.transaction !== undefined &&
-            [
-                swapStatusPending.TransactionConfirmed,
-                swapStatusPending.TransactionMempool,
-                swapStatusSuccess.InvoiceSettled,
-            ].includes(data.status)
+            ((currentSwap.type === SwapType.Reverse &&
+                [
+                    swapStatusPending.TransactionConfirmed,
+                    swapStatusPending.TransactionMempool,
+                    swapStatusSuccess.InvoiceSettled,
+                ].includes(data.status)) ||
+                (currentSwap.type === SwapType.Chain &&
+                    [
+                        swapStatusSuccess.TransactionClaimed,
+                        swapStatusPending.TransactionServerConfirmed,
+                        swapStatusPending.TransactionServerMempool,
+                    ].includes(data.status)))
         ) {
             try {
-                const res = await claim(currentSwap, data.transaction);
-                const claimedSwap = await getSwap(res.id);
+                const res = await claim(
+                    currentSwap as ReverseSwap | ChainSwap,
+                    data.transaction,
+                );
+                const claimedSwap = (await getSwap(res.id)) as
+                    | ReverseSwap
+                    | ChainSwap;
                 claimedSwap.claimTx = res.claimTx;
                 await setSwapStorage(claimedSwap);
 
@@ -225,7 +251,7 @@ export const SwapChecker = () => {
             }
         } else if (data.status === swapStatusPending.TransactionClaimPending) {
             try {
-                await createSubmarineSignature(currentSwap);
+                await createSubmarineSignature(currentSwap as SubmarineSwap);
                 notify(
                     "success",
                     t("swap_completed", { id: currentSwap.id }),
@@ -253,8 +279,10 @@ export const SwapChecker = () => {
         const swapsToCheck = (await getSwaps()).filter(
             (s) =>
                 !swapStatusFinal.includes(s.status) ||
-                (s.status === swapStatusSuccess.InvoiceSettled &&
-                    s.claimTx === undefined),
+                ((s.status === swapStatusSuccess.InvoiceSettled ||
+                    (s.type === SwapType.Chain &&
+                        s.status === swapStatusSuccess.TransactionClaimed)) &&
+                    s["claimTx"] === undefined),
         );
 
         for (const [url, assets] of urlsToAsset.entries()) {

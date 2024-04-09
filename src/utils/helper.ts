@@ -12,7 +12,7 @@ import {
     SubmarinePairTypeTaproot,
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
-import { SomeSwap } from "./swapCreator";
+import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
@@ -20,7 +20,18 @@ export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
 export const parseBlindingKey = (swap: SomeSwap) => {
-    return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
+    let blindingKey: string | undefined;
+
+    switch (swap.type) {
+        case SwapType.Chain:
+            blindingKey = (swap as ChainSwap).claimDetails.blindingKey;
+            break;
+
+        default:
+            blindingKey = (swap as SubmarineSwap | ReverseSwap).blindingKey;
+    }
+
+    return blindingKey ? Buffer.from(blindingKey, "hex") : undefined;
 };
 
 export const cropString = (str: string) => {

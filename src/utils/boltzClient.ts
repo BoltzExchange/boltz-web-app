@@ -145,6 +145,14 @@ type ChainSwapCreatedResponse = {
     lockupDetails: ChainSwapDetails;
 };
 
+type ChainSwapTransaction = {
+    timeoutBlockHeight: number;
+    transaction: {
+        id: string;
+        hex: string;
+    };
+};
+
 type TransactionInterface = Transaction | LiquidTransaction;
 
 export const getPairs = async (asset: string): Promise<Pairs> => {
@@ -335,6 +343,35 @@ export const getSwapStatus = (asset: string, id: string) =>
             hex: string;
         };
     }>(`/v2/swap/${id}`, asset);
+
+export const getChainSwapClaimDetails = (asset: string, id: string) =>
+    fetcher<{
+        pubNonce: string;
+        publicKey: string;
+        transactionHash: string;
+    }>(`/v2/swap/chain/${id}/claim`, asset);
+
+export const postChainSwapDetails = (
+    asset: string,
+    id: string,
+    preimage: string,
+    signature: { pubNonce: string; partialSignature: string },
+    toSign: { pubNonce: string; transaction: string; index: number },
+) =>
+    fetcher<{
+        pubNonce: string;
+        partialSignature: string;
+    }>(`/v2/swap/chain/${id}/claim`, asset, {
+        preimage,
+        signature,
+        toSign,
+    });
+
+export const getChainSwapTransactions = (asset: string, id: string) =>
+    fetcher<{
+        userLock: ChainSwapTransaction;
+        serverLock: ChainSwapTransaction;
+    }>(`/v2/swap/chain/${id}/transactions`, asset);
 
 export {
     Pairs,
