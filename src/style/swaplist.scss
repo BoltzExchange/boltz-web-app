@@ -22,8 +22,7 @@
 .swaplist-asset-id {
     padding: 0 9px 0 0;
 }
-.swaplist-asset:after,
-.swaplist-asset:before {
+.swaplist-asset span {
     content: " ";
     display: inline-block;
     width: 17px;
@@ -33,23 +32,16 @@
     transform: scale(1.5);
     margin: 0 6px;
 }
-.swaplist-asset[data-reverse="false"]:after,
-.swaplist-asset[data-reverse="true"]:before {
+
+.swaplist-asset span[data-asset="LN"] {
     background-image: url(../assets/lightning-icon.svg);
 }
-.swaplist-asset[data-asset="BTC"][data-reverse="true"]:after,
-.swaplist-asset[data-asset="BTC"][data-reverse="false"]:before {
+.swaplist-asset span[data-asset="BTC"] {
     background-image: url(../assets/bitcoin-icon.svg);
 }
-.swaplist-asset[data-asset="L-BTC"][data-reverse="true"]:after,
-.swaplist-asset[data-asset="L-BTC"][data-reverse="false"]:before {
+.swaplist-asset span[data-asset="L-BTC"] {
     background-image: url(../assets/liquid-icon.svg);
 }
-.swaplist-asset[data-asset="RBTC"][data-reverse="true"]:after,
-.swaplist-asset[data-asset="RBTC"][data-reverse="false"]:before {
+.swaplist-asset span[data-asset="RBTC"] {
     background-image: url(../assets/rootstock-icon.svg);
-}
-
-.swaplist-asset {
-    display: inline-block;
 }

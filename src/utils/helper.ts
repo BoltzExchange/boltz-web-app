@@ -3,21 +3,23 @@ import { ECPairInterface } from "ecpair";
 import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
-import { BTC } from "../consts";
+import { BTC, LN } from "../consts";
+import { SwapType } from "../consts/Enums";
 import {
-    PairLegacy,
+    ChainPairTypeTaproot,
     Pairs,
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
+import { SomeSwap } from "./swapCreator";
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
-export const parseBlindingKey = (swap: { blindingKey: string | undefined }) => {
+export const parseBlindingKey = (swap: SomeSwap) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
 };
 
@@ -37,21 +39,28 @@ export const getApiUrl = (asset: string): string => {
     return chooseUrl(found?.apiUrl ?? config.apiUrl);
 };
 
+export const coalesceLn = (asset: string) => (asset === LN ? BTC : asset);
+
 export const getPair = <
-    T extends SubmarinePairTypeTaproot | ReversePairTypeTaproot | PairLegacy,
+    T extends
+        | SubmarinePairTypeTaproot
+        | ReversePairTypeTaproot
+        | ChainPairTypeTaproot,
 >(
     pairs: Pairs,
-    asset: string,
-    isReverse: boolean,
+    swapType: SwapType,
+    assetSend: string,
+    assetReceive: string,
 ): T | undefined => {
     try {
-        if (isReverse) {
-            return pairs.reverse[BTC][asset] as T;
-        }
-
-        return pairs.submarine[asset][BTC] as T;
+        console.log(pairs);
+        return pairs[swapType][coalesceLn(assetSend)][
+            coalesceLn(assetReceive)
+        ] as T;
     } catch (e) {
-        log.debug(`could not get pair ${asset} (reverse ${isReverse}): ${e}`);
+        log.debug(
+            `could not get pair ${assetSend}/${assetReceive} (type ${swapType}): ${e}`,
+        );
         return undefined;
     }
 };

@@ -20,11 +20,10 @@ import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
+import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
-
-type SwapWithId = { id: string };
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
@@ -79,9 +78,9 @@ export type GlobalContextType = {
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
 
-    setSwapStorage: (swap: SwapWithId) => Promise<any>;
-    getSwap: <T = any>(id: string) => Promise<T>;
-    getSwaps: <T = any>() => Promise<T[]>;
+    setSwapStorage: (swap: SomeSwap) => Promise<any>;
+    getSwap: <T = SomeSwap>(id: string) => Promise<T>;
+    getSwaps: <T = SomeSwap>() => Promise<T[]>;
     deleteSwap: (id: string) => Promise<void>;
     clearSwaps: () => Promise<any>;
     updateSwapStatus: (id: string, newStatus: string) => Promise<boolean>;
@@ -260,14 +259,14 @@ const GlobalProvider = (props: { children: any }) => {
             );
         });
 
-    const setSwapStorage = (swap: SwapWithId) =>
-        swapsForage.setItem(swap.id, swap);
+    const setSwapStorage = (swap: SomeSwap) =>
+        localforage.setItem(swap.id, swap);
 
     const deleteSwap = (id: string) => swapsForage.removeItem(id);
 
-    const getSwap = <T = SwapWithId,>(id: string) => swapsForage.getItem<T>(id);
+    const getSwap = <T = SomeSwap,>(id: string) => localforage.getItem<T>(id);
 
-    const getSwaps = async <T = SwapWithId,>(): Promise<T[]> => {
+    const getSwaps = async <T = SomeSwap,>(): Promise<T[]> => {
         const swaps: T[] = [];
 
         await swapsForage.iterate<T, any>((swap) => {
@@ -279,7 +278,7 @@ const GlobalProvider = (props: { children: any }) => {
 
     const updateSwapStatus = async (id: string, newStatus: string) => {
         if (swapStatusFinal.includes(newStatus)) {
-            const swap = await getSwap<SwapWithId & { status: string }>(id);
+            const swap = await getSwap<SubmarineSwap & { status: string }>(id);
 
             if (swap.status !== newStatus) {
                 swap.status = newStatus;

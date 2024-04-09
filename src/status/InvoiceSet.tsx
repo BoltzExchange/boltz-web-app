@@ -5,22 +5,25 @@ import ContractTransaction from "../components/ContractTransaction";
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
 import { BTC, RBTC } from "../consts";
+import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
+import { ChainSwapCreatedResponse } from "../utils/boltzClient";
 import { denominations, formatAmount } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
 import { decodeInvoice } from "../utils/invoice";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { ChainSwap, getRelevantAssetForSwap } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
     const { swap } = usePayContext();
-    const { asset } = useCreateContext();
+    const { assetReceive } = useCreateContext();
     const { t, getSwap, setSwapStorage, denomination, separator } =
         useGlobalContext();
 
-    if (asset() === RBTC) {
+    if (assetReceive() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
         return (
@@ -61,7 +64,7 @@ const InvoiceSet = () => {
                     denomination:
                         denomination() === denominations.sat
                             ? "sats"
-                            : swap().asset,
+                            : getRelevantAssetForSwap(swap()),
                 })}
             </h2>
             <hr />
@@ -74,7 +77,7 @@ const InvoiceSet = () => {
                 class="address-box break-word">
                 {cropString(swap().address)}
             </p>
-            <Show when={swap().asset === BTC}>
+            <Show when={getRelevantAssetForSwap(swap()) === BTC}>
                 <hr class="spacer" />
                 <h3>{t("warning_expiry")}</h3>
             </Show>

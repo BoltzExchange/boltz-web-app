@@ -1,5 +1,7 @@
 import { BigNumber } from "bignumber.js";
 
+import { SwapType } from "../consts/Enums";
+
 const bigCeil = (big: BigNumber): BigNumber => {
     return big.integerValue(BigNumber.ROUND_CEIL);
 };
@@ -12,15 +14,16 @@ export const calculateReceiveAmount = (
     sendAmount: BigNumber,
     boltzFee: number,
     minerFee: number,
-    reverse: boolean,
+    swapType: SwapType,
 ): BigNumber => {
-    const receiveAmount = reverse
-        ? sendAmount
-              .minus(bigCeil(sendAmount.times(boltzFee).div(100)))
-              .minus(minerFee)
-        : sendAmount
-              .minus(minerFee)
-              .div(BigNumber(1).plus(BigNumber(boltzFee).div(100)));
+    const receiveAmount =
+        swapType !== SwapType.Submarine
+            ? sendAmount
+                  .minus(bigCeil(sendAmount.times(boltzFee).div(100)))
+                  .minus(minerFee)
+            : sendAmount
+                  .minus(minerFee)
+                  .div(BigNumber(1).plus(BigNumber(boltzFee).div(100)));
     return BigNumber.maximum(bigFloor(receiveAmount), 0);
 };
 
@@ -28,7 +31,7 @@ export const calculateBoltzFeeOnSend = (
     sendAmount: BigNumber,
     boltzFee: number,
     minerFee: number,
-    reverse: boolean,
+    swapType: SwapType,
 ): BigNumber => {
     if (sendAmount.isNaN()) {
         return BigNumber(0);
@@ -36,12 +39,17 @@ export const calculateBoltzFeeOnSend = (
 
     let fee: BigNumber;
 
-    if (reverse) {
+    if (swapType !== SwapType.Submarine) {
         fee = bigCeil(sendAmount.times(boltzFee).div(100));
     } else {
         fee = sendAmount
             .minus(
-                calculateReceiveAmount(sendAmount, boltzFee, minerFee, reverse),
+                calculateReceiveAmount(
+                    sendAmount,
+                    boltzFee,
+                    minerFee,
+                    swapType,
+                ),
             )
             .minus(minerFee);
 
@@ -57,9 +65,9 @@ export const calculateSendAmount = (
     receiveAmount: BigNumber,
     boltzFee: number,
     minerFee: number,
-    reverse: boolean,
+    swapType: SwapType,
 ): BigNumber => {
-    return reverse
+    return swapType !== SwapType.Submarine
         ? bigCeil(
               receiveAmount
                   .plus(minerFee)

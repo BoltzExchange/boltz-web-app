@@ -3,16 +3,12 @@ import { Musig } from "boltz-core";
 import { Buffer } from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 
+import { SwapType } from "../consts/Enums";
 import { fetcher } from "./helper";
 
 type ReverseMinerFees = {
     lockup: number;
     claim: number;
-};
-
-type LegacyMinerFees = {
-    normal: number;
-    reverse: ReverseMinerFees;
 };
 
 type PairLimits = {
@@ -23,23 +19,6 @@ type PairLimits = {
 type PairType = {
     hash: string;
     rate: number;
-};
-
-type PairLegacy = PairType & {
-    limits: PairLimits & {
-        maximalZeroConf: {
-            baseAsset: number;
-            quoteAsset: number;
-        };
-    };
-    fees: {
-        percentage: number;
-        percentageSwapIn: number;
-        minerFees: {
-            baseAsset: LegacyMinerFees;
-            quoteAsset: LegacyMinerFees;
-        };
-    };
 };
 
 type SubmarinePairTypeTaproot = PairType & {
@@ -60,6 +39,22 @@ type ReversePairTypeTaproot = PairType & {
     };
 };
 
+type ChainPairTypeTaproot = PairType & {
+    limits: PairLimits & {
+        maximalZeroConf: number;
+    };
+    fees: {
+        percentage: number;
+        minerFees: {
+            server: number;
+            user: {
+                claim: number;
+                lockup: number;
+            };
+        };
+    };
+};
+
 type SubmarinePairsTaproot = Record<
     string,
     Record<string, SubmarinePairTypeTaproot>
@@ -70,9 +65,12 @@ type ReversePairsTaproot = Record<
     Record<string, ReversePairTypeTaproot>
 >;
 
+type ChainPairsTaproot = Record<string, Record<string, ChainPairTypeTaproot>>;
+
 type Pairs = {
-    submarine: SubmarinePairsTaproot;
-    reverse: ReversePairsTaproot;
+    [SwapType.Submarine]: SubmarinePairsTaproot;
+    [SwapType.Reverse]: ReversePairsTaproot;
+    [SwapType.Chain]: ChainPairsTaproot;
 };
 
 type PartialSignature = {
@@ -96,19 +94,129 @@ type NodeInfo = {
     uris: string[];
 };
 
+type SwapTreeLeaf = {
+    output: string;
+    version: number;
+};
+
+type SwapTree = {
+    claimLeaf: SwapTreeLeaf;
+    refundLeaf: SwapTreeLeaf;
+};
+
+type SubmarineCreatedResponse = {
+    id: string;
+    address: string;
+    bip21: string;
+    swapTree: SwapTree;
+    acceptZeroConf: boolean;
+    expectedAmount: number;
+    claimPublicKey: string;
+    timeoutBlockHeight: number;
+    blindingKey?: string;
+    claimAddress?: string;
+};
+
+type ReverseCreatedResponse = {
+    id: string;
+    invoice: string;
+    swapTree: SwapTree;
+    lockupAddress: string;
+    timeoutBlockHeight: number;
+    onchainAmount: number;
+    refundPublicKey?: string;
+    blindingKey?: string;
+};
+
+type ChainSwapDetails = {
+    swapTree: SwapTree;
+    lockupAddress: string;
+    serverPublicKey: string;
+    timeoutBlockHeight: number;
+    amount: number;
+    blindingKey?: string;
+    refundAddress?: string;
+    bip21?: string;
+};
+
+type ChainSwapCreatedResponse = {
+    id: string;
+    claimDetails: ChainSwapDetails;
+    lockupDetails: ChainSwapDetails;
+};
+
 type TransactionInterface = Transaction | LiquidTransaction;
 
 export const getPairs = async (asset: string): Promise<Pairs> => {
-    const [submarine, reverse] = await Promise.all([
+    const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", asset),
         fetcher<ReversePairsTaproot>("/v2/swap/reverse", asset),
+        fetcher<ChainPairsTaproot>("/v2/swap/chain", asset),
     ]);
 
     return {
-        reverse,
-        submarine,
+        [SwapType.Chain]: chain,
+        [SwapType.Reverse]: reverse,
+        [SwapType.Submarine]: submarine,
     };
 };
+
+export const createSubmarineSwap = (
+    from: string,
+    to: string,
+    invoice: string,
+    pairHash: string,
+    referralId: string,
+    refundPublicKey?: string,
+): Promise<SubmarineCreatedResponse> =>
+    fetcher("/v2/swap/submarine", to, {
+        from,
+        to,
+        invoice,
+        refundPublicKey,
+        pairHash,
+        referralId,
+    });
+
+export const createReverseSwap = (
+    from: string,
+    to: string,
+    invoiceAmount: number,
+    preimageHash: string,
+    pairHash: string,
+    referralId: string,
+    claimPublicKey?: string,
+): Promise<ReverseCreatedResponse> =>
+    fetcher("/v2/swap/reverse", to, {
+        from,
+        to,
+        invoiceAmount,
+        preimageHash,
+        claimPublicKey,
+        referralId,
+        pairHash,
+    });
+
+export const createChainSwap = (
+    from: string,
+    to: string,
+    userLockAmount: number,
+    preimageHash: string,
+    claimPublicKey: string,
+    refundPublicKey: string,
+    pairHash: string,
+    referralId: string,
+): Promise<ChainSwapCreatedResponse> =>
+    fetcher("/v2/swap/chain", to, {
+        from,
+        to,
+        userLockAmount,
+        preimageHash,
+        claimPublicKey,
+        refundPublicKey,
+        pairHash,
+        referralId,
+    });
 
 export const getPartialRefundSignature = async (
     asset: string,
@@ -231,9 +339,12 @@ export const getSwapStatus = (asset: string, id: string) =>
 export {
     Pairs,
     Contracts,
-    PairLegacy,
     PartialSignature,
+    ChainPairTypeTaproot,
     TransactionInterface,
     ReversePairTypeTaproot,
+    SubmarineCreatedResponse,
     SubmarinePairTypeTaproot,
+    ReverseCreatedResponse,
+    ChainSwapCreatedResponse,
 };

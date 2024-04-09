@@ -3,6 +3,7 @@ import { Accessor, For, Show, createMemo, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
+import { SwapIcons } from "./SwapIcons";
 
 const SwapList = ({
     swapsSignal,
@@ -45,12 +46,7 @@ const SwapList = ({
                             <a class="btn-small" href={`/swap/${swap.id}`}>
                                 {t("view")}
                             </a>
-                            <span
-                                data-reverse={swap.reverse}
-                                data-asset={swap.asset}
-                                class="swaplist-asset">
-                                -&gt;
-                            </span>
+                            <SwapIcons swap={swap} />
                             <span class="swaplist-asset-id">
                                 {t("id")}:&nbsp;{swap.id}
                             </span>

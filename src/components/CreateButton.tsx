@@ -1,22 +1,23 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import { crypto } from "bitcoinjs-lib";
-import { OutputType } from "boltz-core";
-import { randomBytes } from "crypto";
 import log from "loglevel";
 import { createEffect, createMemo, createSignal, on } from "solid-js";
 
-import { BTC, RBTC } from "../consts";
+import { RBTC } from "../consts";
+import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
 import { ButtonLabelParams } from "../types";
 import { getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
-import { ECPair } from "../utils/ecpair";
-import { fetcher, getPair } from "../utils/helper";
-import { extractAddress, fetchLnurl } from "../utils/invoice";
-import { validateResponse } from "../utils/validation";
+import { coalesceLn } from "../utils/helper";
+import { fetchLnurl } from "../utils/invoice";
+import {
+    SomeSwap,
+    createChain,
+    createReverse,
+    createSubmarine,
+} from "../utils/swapCreator";
 
 export const CreateButton = () => {
     const navigate = useNavigate();
@@ -32,12 +33,13 @@ export const CreateButton = () => {
         t,
     } = useGlobalContext();
     const {
-        asset,
         invoice,
         lnurl,
+        assetSend,
+        assetReceive,
         onchainAddress,
         receiveAmount,
-        reverse,
+        swapType,
         sendAmount,
         amountValid,
         setInvoice,
@@ -52,7 +54,6 @@ export const CreateButton = () => {
         invoiceValid,
         invoiceError,
     } = useCreateContext();
-    const { getEtherSwap } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -62,7 +63,7 @@ export const CreateButton = () => {
 
     const validLnurl = () => {
         return (
-            !reverse() &&
+            swapType() === SwapType.Submarine &&
             lnurl() !== "" &&
             amountValid() &&
             sendAmount().isGreaterThan(0)
@@ -80,11 +81,11 @@ export const CreateButton = () => {
                 amountValid,
                 addressValid,
                 invoiceValid,
-                reverse,
+                swapType,
                 lnurl,
                 online,
                 minimum,
-                asset,
+                assetReceive,
             ],
             () => {
                 if (!online()) {
@@ -106,15 +107,15 @@ export const CreateButton = () => {
                     });
                     return;
                 }
-                if (asset() === RBTC && !addressValid()) {
+                if (assetReceive() === RBTC && !addressValid()) {
                     setButtonLabel({ key: "connect_metamask" });
                     return;
                 }
-                if (reverse()) {
+                if (swapType() !== SwapType.Submarine) {
                     if (!addressValid()) {
                         setButtonLabel({
                             key: "invalid_address",
-                            params: { asset: asset() },
+                            params: { asset: assetReceive() },
                         });
                         return;
                     }
@@ -153,97 +154,55 @@ export const CreateButton = () => {
 
         if (!valid()) return;
 
-        const assetName = asset();
-        const isRsk = assetName === RBTC;
-
-        const keyPair = !isRsk ? ECPair.makeRandom() : null;
-
-        let params: any;
-        let preimage: Buffer | null = null;
-
-        if (reverse()) {
-            preimage = randomBytes(32);
-            const preimageHash = crypto.sha256(preimage).toString("hex");
-
-            params = {
-                invoiceAmount: Number(sendAmount()),
-                preimageHash: preimageHash,
-            };
-
-            if (isRsk) {
-                params.claimAddress = onchainAddress();
-            } else {
-                params.claimPublicKey = keyPair.publicKey.toString("hex");
-            }
-        } else {
-            params = {
-                invoice: invoice(),
-            };
-
-            if (!isRsk) {
-                params.refundPublicKey = keyPair.publicKey.toString("hex");
-            }
-        }
-
-        params.pairHash = getPair(pairs(), assetName, reverse()).hash;
-        params.referralId = ref();
-
-        if (reverse()) {
-            params.to = assetName;
-            params.from = BTC;
-        } else {
-            params.to = BTC;
-            params.from = assetName;
-        }
-
-        // create swap
         try {
-            const data = await fetcher(
-                `/v2/swap/${reverse() ? "reverse" : "submarine"}`,
-                assetName,
-                params,
-            );
+            // TODO: validation
 
-            if (!isRsk) {
-                data.version = OutputType.Taproot;
+            let data: SomeSwap;
+            switch (swapType()) {
+                case SwapType.Submarine:
+                    data = await createSubmarine(
+                        pairs(),
+                        coalesceLn(assetSend()),
+                        coalesceLn(assetReceive()),
+                        sendAmount(),
+                        receiveAmount(),
+                        invoice(),
+                        ref(),
+                    );
+                    break;
+
+                case SwapType.Reverse:
+                    data = await createReverse(
+                        pairs(),
+                        coalesceLn(assetSend()),
+                        coalesceLn(assetReceive()),
+                        sendAmount(),
+                        receiveAmount(),
+                        onchainAddress(),
+                        ref(),
+                    );
+                    break;
+
+                case SwapType.Chain:
+                    data = await createChain(
+                        pairs(),
+                        assetSend(),
+                        assetReceive(),
+                        sendAmount(),
+                        receiveAmount(),
+                        onchainAddress(),
+                        ref(),
+                    );
+                    break;
             }
 
-            data.date = new Date().getTime();
-            data.reverse = reverse();
-            data.asset = asset();
-            data.receiveAmount = Number(receiveAmount());
-            data.sendAmount = Number(sendAmount());
-
-            if (keyPair !== null) {
-                data.privateKey = keyPair.privateKey.toString("hex");
-            }
-
-            if (preimage !== null) {
-                data.preimage = preimage.toString("hex");
-            }
-
-            if (data.reverse) {
-                const addr = onchainAddress();
-                if (addr) {
-                    data.onchainAddress = extractAddress(addr);
-                }
-            } else {
-                data.invoice = invoice();
-            }
-
-            // validate response
-            const success = await validateResponse(data, getEtherSwap);
-
-            if (!success) {
-                navigate("/error/");
-                return;
-            }
             await setSwapStorage(data);
             setInvoice("");
             setInvoiceValid(false);
             setOnchainAddress("");
             setAddressValid(false);
-            if (reverse() || isRsk) {
+
+            if (swapType() !== SwapType.Submarine || assetReceive() === RBTC) {
                 navigate("/swap/" + data.id);
             } else {
                 navigate("/swap/refund/" + data.id);
@@ -256,7 +215,7 @@ export const CreateButton = () => {
             }
 
             if (msg === "invalid pair hash") {
-                setPairs(await getPairs(assetName));
+                setPairs(await getPairs(assetReceive()));
                 notify("error", t("feecheck"));
             } else {
                 notify("error", msg);

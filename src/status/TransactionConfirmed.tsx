@@ -9,10 +9,10 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 const TransactionConfirmed = () => {
     const { swap } = usePayContext();
-    const { asset } = useCreateContext();
+    const { assetReceive } = useCreateContext();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
 
-    if (asset() === RBTC) {
+    if (assetReceive() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
         return (

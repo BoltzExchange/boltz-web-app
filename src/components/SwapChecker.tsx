@@ -12,6 +12,7 @@ import {
 import { claim, createSubmarineSignature } from "../utils/claim";
 import { getApiUrl } from "../utils/helper";
 import Lock from "../utils/lock";
+import { getRelevantAssetForSwap } from "../utils/swapCreator";
 import {
     swapStatusFinal,
     swapStatusPending,
@@ -181,7 +182,7 @@ export const SwapChecker = () => {
 
         if (
             currentSwap.version !== OutputType.Taproot ||
-            currentSwap.asset === RBTC
+            getRelevantAssetForSwap(currentSwap) === RBTC
         ) {
             return;
         }
@@ -262,7 +263,9 @@ export const SwapChecker = () => {
                 url,
                 new Set<string>(
                     swapsToCheck
-                        .filter((s) => assets.includes(s.asset))
+                        .filter((s) =>
+                            assets.includes(getRelevantAssetForSwap(s)),
+                        )
                         .map((s) => s.id),
                 ),
                 prepareSwap,
@@ -290,7 +293,7 @@ export const SwapChecker = () => {
             return;
         }
         // on page reload assetWebsocket is not yet initialized
-        const ws = assetWebsocket.get(activeSwap.asset);
+        const ws = assetWebsocket.get(getRelevantAssetForSwap(activeSwap));
         if (ws === undefined) {
             return;
         }

@@ -6,6 +6,7 @@ import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
+import { SwapIcons } from "../components/SwapIcons";
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -22,6 +23,7 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getSwapStatus } from "../utils/boltzClient";
+import { getRelevantAssetForSwap } from "../utils/swapCreator";
 import { swapStatusFailed, swapStatusPending } from "../utils/swapStatus";
 
 const Pay = () => {
@@ -46,7 +48,7 @@ const Pay = () => {
         const currentSwap = await getSwap(params.id);
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
-            await setSwap(currentSwap);
+            setSwap(currentSwap);
             const res = await getSwapStatus(currentSwap.asset, currentSwap.id);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
@@ -103,12 +105,7 @@ const Pay = () => {
             <h2>
                 {t("pay_invoice", { id: params.id })}
                 <Show when={swap()}>
-                    <span
-                        data-reverse={swap().reverse}
-                        data-asset={swap().asset}
-                        class="swaplist-asset">
-                        -
-                    </span>
+                    <SwapIcons swap={swap()} />
                 </Show>
             </h2>
             <Show when={swap()}>
@@ -177,13 +174,13 @@ const Pay = () => {
 
                     <Show
                         when={
-                            swap().asset !== RBTC &&
+                            getRelevantAssetForSwap(swap()) !== RBTC &&
                             swapStatus() !== null &&
                             swapStatus() !== "invoice.set" &&
                             swapStatus() !== "swap.created"
                         }>
                         <BlockExplorer
-                            asset={swap().asset}
+                            asset={getRelevantAssetForSwap(swap())}
                             txId={swap().claimTx}
                             address={
                                 !swap().reverse

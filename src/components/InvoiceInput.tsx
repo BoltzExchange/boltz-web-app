@@ -2,6 +2,7 @@ import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
 import { LN, RBTC } from "../consts";
+import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
@@ -19,12 +20,12 @@ const InvoiceInput = () => {
 
     const { t, notify } = useGlobalContext();
     const {
-        asset,
         boltzFee,
+        assetReceive,
         minerFee,
         invoice,
         receiveAmount,
-        reverse,
+        swapType,
         sendAmount,
         amountValid,
         setInvoice,
@@ -69,7 +70,7 @@ const InvoiceInput = () => {
                         BigNumber(sats),
                         boltzFee(),
                         minerFee(),
-                        reverse(),
+                        swapType(),
                     ),
                 );
                 setInvoice(inputValue);
@@ -89,7 +90,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([amountValid, invoice], () => {
-            if (!reverse() && asset() !== RBTC) {
+            if (swapType() === SwapType.Submarine && assetReceive() !== RBTC) {
                 validate(inputRef);
             }
         }),

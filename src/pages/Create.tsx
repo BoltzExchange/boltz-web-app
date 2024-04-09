@@ -14,6 +14,7 @@ import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import WeblnButton from "../components/WeblnButton";
 import { RBTC, sideReceive, sideSend } from "../consts";
+import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
@@ -45,8 +46,7 @@ const Create = () => {
         notify,
     } = useGlobalContext();
     const {
-        reverse,
-        asset,
+        swapType,
         assetSend,
         assetReceive,
         assetSelect,
@@ -101,7 +101,7 @@ const Create = () => {
             satAmount,
             boltzFee(),
             minerFee(),
-            reverse(),
+            swapType(),
         );
         setAmountChanged(sideReceive);
         setReceiveAmount(satAmount);
@@ -122,7 +122,7 @@ const Create = () => {
             satAmount,
             boltzFee(),
             minerFee(),
-            reverse(),
+            swapType(),
         );
         setAmountChanged(sideSend);
         setSendAmount(satAmount);
@@ -205,7 +205,7 @@ const Create = () => {
                 BigNumber(amount),
                 boltzFee(),
                 minerFee(),
-                reverse(),
+                swapType(),
             ),
         );
         validateAmount();
@@ -217,14 +217,14 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, reverse, asset], () => {
+        on([boltzFee, minerFee, swapType, assetReceive], () => {
             if (amountChanged() === sideReceive) {
                 setSendAmount(
                     calculateSendAmount(
                         receiveAmount(),
                         boltzFee(),
                         minerFee(),
-                        reverse(),
+                        swapType(),
                     ),
                 );
             } else {
@@ -233,7 +233,7 @@ const Create = () => {
                         sendAmount(),
                         boltzFee(),
                         minerFee(),
-                        reverse(),
+                        swapType(),
                     ),
                 );
             }
@@ -293,7 +293,7 @@ const Create = () => {
 
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
-            <div class="frame" data-reverse={reverse()} data-asset={asset()}>
+            <div class="frame">
                 <SettingsCog />
                 <h2>{t("create_swap")}</h2>
                 <p>
@@ -369,14 +369,18 @@ const Create = () => {
                 </div>
                 <Fees />
                 <hr class="spacer" />
-                <Show when={asset() === RBTC}>
+                <Show when={assetReceive() === RBTC}>
                     <ConnectMetamask showAddress={true} />
                     <hr class="spacer" />
                 </Show>
-                <Show when={reverse() && asset() !== RBTC}>
+                <Show
+                    when={
+                        swapType() !== SwapType.Submarine &&
+                        assetReceive() !== RBTC
+                    }>
                     <AddressInput />
                 </Show>
-                <Show when={!reverse()}>
+                <Show when={swapType() === SwapType.Submarine}>
                     <Show when={webln()}>
                         <WeblnButton />
                         <hr class="spacer" />

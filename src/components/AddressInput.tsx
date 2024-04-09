@@ -1,6 +1,7 @@
 import { createEffect, on } from "solid-js";
 
 import { LN, RBTC } from "../consts";
+import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { probeUserInput } from "../utils/compat";
@@ -11,9 +12,8 @@ const AddressInput = () => {
 
     const { t, notify } = useGlobalContext();
     const {
-        asset,
         assetReceive,
-        reverse,
+        swapType,
         amountValid,
         onchainAddress,
         setAddressValid,
@@ -30,14 +30,13 @@ const AddressInput = () => {
         const invoice = extractInvoice(inputValue);
 
         try {
-            const assetName = asset();
-
+            const assetName = assetReceive();
             const actualAsset = probeUserInput(assetName, address);
 
             switch (actualAsset) {
                 case LN:
                     setAssetReceive(LN);
-                    setAssetSend(asset());
+                    setAssetSend(assetName);
                     setInvoice(invoice);
                     notify("success", t("switch_paste"));
                     break;
@@ -60,7 +59,7 @@ const AddressInput = () => {
         } catch (e) {
             setAddressValid(false);
             if (inputValue.length !== 0) {
-                const msg = t("invalid_address", { asset: asset() });
+                const msg = t("invalid_address", { asset: assetReceive() });
                 input.classList.add("invalid");
                 input.setCustomValidity(msg);
             }
@@ -71,8 +70,8 @@ const AddressInput = () => {
         on([amountValid, onchainAddress, assetReceive], () => {
             if (
                 sendAmount().isGreaterThan(0) &&
-                reverse() &&
-                asset() !== RBTC
+                swapType() !== SwapType.Submarine &&
+                assetReceive() !== RBTC
             ) {
                 validateAddress(inputRef);
             }
@@ -91,7 +90,7 @@ const AddressInput = () => {
             data-testid="onchainAddress"
             name="onchainAddress"
             autocomplete="off"
-            placeholder={t("onchain_address", { asset: asset() })}
+            placeholder={t("onchain_address", { asset: assetReceive() })}
             value={onchainAddress()}
         />
     );

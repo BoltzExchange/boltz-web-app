@@ -6,11 +6,13 @@ import {
     useContext,
 } from "solid-js";
 
+import { SomeSwap } from "../utils/swapCreator";
+
 export type PayContextType = {
     failureReason: Accessor<string>;
     setFailureReason: Setter<string>;
-    swap: Accessor<any>;
-    setSwap: Setter<any>;
+    swap: Accessor<SomeSwap | null>;
+    setSwap: Setter<SomeSwap | null>;
     swapStatus: Accessor<string>;
     setSwapStatus: Setter<string>;
     swapStatusTransaction: Accessor<SwapStatusTransaction>;
@@ -30,7 +32,7 @@ type SwapStatusTransaction = {
 
 const PayProvider = (props: { children: any }) => {
     const [failureReason, setFailureReason] = createSignal<string>("");
-    const [swap, setSwap] = createSignal(null, {
+    const [swap, setSwap] = createSignal<SomeSwap | null>(null, {
         // To allow updating properties of the swap object without replacing it completely
         equals: () => false,
     });
