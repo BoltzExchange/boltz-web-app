@@ -146,7 +146,11 @@ const Pay = () => {
                     <Show when={swapStatus() == "transaction.confirmed"}>
                         <TransactionConfirmed />
                     </Show>
-                    <Show when={swapStatus() == "transaction.mempool"}>
+                    <Show
+                        when={
+                            swapStatus() === "transaction.mempool" ||
+                            swapStatus() === "transaction.server.mempool"
+                        }>
                         <TransactionMempool />
                     </Show>
                     <Show when={swapStatus() == "invoice.failedToPay"}>
