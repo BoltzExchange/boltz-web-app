@@ -46,6 +46,8 @@ const Fees = () => {
                 assetReceive(),
             );
 
+            if (!cfg) return;
+
             setBoltzFee(cfg.fees.percentage);
 
             switch (swapType()) {

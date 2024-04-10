@@ -9,11 +9,6 @@ const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const setSelectAsset = (isSend: boolean, asset: string) => {
-        const setter = isSend ? setAssetSend : setAssetReceive;
-        setter(asset);
-    };
-
     const { t, fetchPairs } = useGlobalContext();
 
     const {
@@ -35,7 +30,19 @@ const SelectAsset = () => {
         setInvoice("");
         setOnchainAddress("");
 
-        setSelectAsset(assetSelected() === sideSend, newAsset);
+        // set new asset and swap assets if the other asset is the same
+        if (assetSelected() === sideSend) {
+            if (assetReceive() === newAsset) {
+                setAssetReceive(assetSend());
+            }
+            setAssetSend(newAsset);
+        } else {
+            if (assetSend() === newAsset) {
+                setAssetSend(assetReceive());
+            }
+            setAssetReceive(newAsset);
+        }
+
         fetchPairs();
     };
 

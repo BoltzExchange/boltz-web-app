@@ -63,17 +63,13 @@ export const getPair = <
     assetSend: string,
     assetReceive: string,
 ): T | undefined => {
-    try {
-        console.log(pairs);
-        return pairs[swapType][coalesceLn(assetSend)][
-            coalesceLn(assetReceive)
-        ] as T;
-    } catch (e) {
-        log.debug(
-            `could not get pair ${assetSend}/${assetReceive} (type ${swapType}): ${e}`,
-        );
-        return undefined;
-    }
+    const pairSwapType = pairs[swapType];
+    if (pairSwapType === undefined) return undefined;
+    const pairAssetSend = pairSwapType[coalesceLn(assetSend)];
+    if (pairAssetSend === undefined) return undefined;
+    const pairAssetReceive = pairAssetSend[coalesceLn(assetReceive)];
+    if (pairAssetReceive === undefined) return undefined;
+    return pairAssetReceive as T;
 };
 
 export const fetcher = async <T = any>(
