@@ -32,15 +32,14 @@ export type SubmarineSwap = SwapBase &
     SubmarineCreatedResponse & {
         invoice: string;
         refundPrivateKey?: string;
+        refundTx?: string;
     };
 
 export type ReverseSwap = SwapBase &
     ReverseCreatedResponse & {
         preimage: string;
         claimAddress: string;
-
         claimTx?: string;
-
         claimPrivateKey?: string;
     };
 
@@ -48,11 +47,10 @@ export type ChainSwap = SwapBase &
     ChainSwapCreatedResponse & {
         preimage: string;
         claimAddress: string;
-
         claimTx?: string;
-
         claimPrivateKey: string;
         refundPrivateKey: string;
+        refundTx?: string;
     };
 
 export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;

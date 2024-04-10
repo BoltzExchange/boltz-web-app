@@ -49,47 +49,26 @@ const Pay = () => {
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
             setSwap(currentSwap);
-            const res = await getSwapStatus(currentSwap.asset, currentSwap.id);
+            const asset = getRelevantAssetForSwap(currentSwap);
+            const res = await getSwapStatus(asset, currentSwap.id);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
             setFailureReason(res.failureReason);
-        }
-    });
-
-    createEffect(() => {
-        if (swap() === null) {
-            return;
-        }
-
-        const tx = swapStatusTransaction();
-
-        if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
-            setContractTransaction(tx.id);
-        }
-    });
-
-    createEffect(() => {
-        if (swap() === null) {
-            return;
-        }
-
-        const claimTx = swap().claimTx;
-
-        if (swap().asset === RBTC && claimTx) {
-            setContractTransaction(claimTx);
-            setContractTransactionType("claim_tx");
-        }
-    });
-
-    createEffect(() => {
-        if (swap() === null) {
-            return;
-        }
-
-        const lockupTx = swap().lockupTx;
-
-        if (swap().asset === RBTC && lockupTx) {
-            setContractTransaction(lockupTx);
+            // RSK
+            if (
+                asset === RBTC &&
+                res.transaction &&
+                currentSwap.claimTx === undefined
+            ) {
+                setContractTransaction(tx.id);
+            }
+            if (asset === RBTC && currentSwap.claimTx) {
+                setContractTransaction(currentSwap.claimTx);
+                setContractTransactionType("claim_tx");
+            }
+            if (asset === RBTC && currentSwap.lockupTx) {
+                setContractTransaction(currentSwap.lockupTx);
+            }
         }
     });
 

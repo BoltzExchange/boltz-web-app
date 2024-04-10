@@ -2,6 +2,7 @@ import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { Accessor, Setter, createSignal } from "solid-js";
+import { SubmarineSwap } from "src/utils/swapCreator";
 
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
@@ -139,7 +140,7 @@ const RefundButton = ({
             // only if the swaps was not initiated with the refund json
             // refundjson has no date
             if (res.date !== undefined) {
-                const currentSwap = await getSwap(res.id);
+                const currentSwap = (await getSwap(res.id)) as SubmarineSwap;
                 currentSwap.refundTx = res.refundTx;
                 await setSwapStorage(currentSwap);
                 setSwap(currentSwap);
