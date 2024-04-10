@@ -16,7 +16,10 @@ const SwapExpired = () => {
     createEffect(async () => {
         setTransactionToRefund(null);
         try {
-            const res = await getSubmarineTransaction(swap().asset, swap().id);
+            const res = await getSubmarineTransaction(
+                swap().assetSend,
+                swap().id,
+            );
             log.debug(`got swap transaction for ${swap().id}`);
             setTransactionToRefund(res.hex);
         } catch (error: any) {

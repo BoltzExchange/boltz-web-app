@@ -30,7 +30,8 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setReverse(false);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
         fireEvent.input(await screen.findByTestId("invoice"), {
             target: { value: invoice },
         });
@@ -48,7 +49,8 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setReverse(false);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
         const invoice =
             "lnbcrt235565340n1pjn87jmpp53jk5vw5z7n43wqyvv5ypma89xvkgahgdrvzxfn922485w2guxjasdqqcqzzsxqyz5vqsp5npwtpwa76526wcqxp66lzt43jdeqdxkud2j6ypjt2kyqscd6q4eq9qyyssquwlyf0vjsdyeck79mg5726llxxzv674xyr8ct5qgv28k62pmlr35kc2z8j96lc7ph403mgjxt9q8hzaeywmsrh4lg88uslyytvsnf5sp3lulnq";
         fireEvent.input(await screen.findByTestId("invoice"), {
@@ -70,7 +72,8 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setReverse(false);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
 
         const invoice =
             "lnbcrt235565340n1pjn87jmpp53jk5vw5z7n43wqyvv5ypma89xvkgahgdrvzxfn922485w2guxjasdqqcqzzsxqyz5vqsp5npwtpwa76526wcqxp66lzt43jdeqdxkud2j6ypjt2kyqscd6q4eq9qyyssquwlyf0vjsdyeck79mg5726llxxzv674xyr8ct5qgv28k62pmlr35kc2z8j96lc7ph403mgjxt9q8hzaeywmsrh4lg88uslyytvsnf5sp3lulnq";
@@ -100,7 +103,8 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setReverse(false);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
 
         const input = (await screen.findByTestId(
             "invoice",
@@ -129,7 +133,8 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setReverse(false);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
 
         const input = (await screen.findByTestId(
             "invoice",
@@ -156,7 +161,8 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setReverse(false);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
 
         const input = (await screen.findByTestId(
             "invoice",

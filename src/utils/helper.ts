@@ -1,6 +1,5 @@
 import { Buffer } from "buffer";
 import { ECPairInterface } from "ecpair";
-import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
 import { BTC, LN } from "../consts";

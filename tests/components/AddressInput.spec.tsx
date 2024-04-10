@@ -36,7 +36,7 @@ describe("AddressInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAsset(network);
+            signals.setAssetReceive(network);
 
             const input = (await screen.findByPlaceholderText(
                 globalSignals.t("onchain_address", { asset: network }),

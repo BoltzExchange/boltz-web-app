@@ -1,5 +1,6 @@
 import { BigNumber } from "bignumber.js";
 
+import { SwapType } from "../../src/consts/Enums";
 import {
     calculateBoltzFeeOnSend,
     calculateReceiveAmount,
@@ -8,13 +9,13 @@ import {
 
 describe("Calculate amounts", () => {
     const swapFees = {
-        reverse: false,
+        swapType: SwapType.Submarine,
         minerFee: 147,
         boltzFee: 0.1,
     };
 
     const reverseSwapFees = {
-        reverse: true,
+        swapType: SwapType.Reverse,
         minerFee: 428,
         boltzFee: 0.25,
     };
@@ -34,7 +35,7 @@ describe("Calculate amounts", () => {
                         sendAmount,
                         swapFees.boltzFee,
                         swapFees.minerFee,
-                        swapFees.reverse,
+                        swapFees.swapType,
                     ),
                 ).toEqual(receiveAmount);
                 expect(
@@ -42,7 +43,7 @@ describe("Calculate amounts", () => {
                         receiveAmount,
                         swapFees.boltzFee,
                         swapFees.minerFee,
-                        swapFees.reverse,
+                        swapFees.swapType,
                     ),
                 ).toEqual(sendAmount);
             },
@@ -54,7 +55,7 @@ describe("Calculate amounts", () => {
                     BigNumber(0),
                     swapFees.boltzFee,
                     swapFees.minerFee,
-                    swapFees.reverse,
+                    swapFees.swapType,
                 ),
             ).toEqual(BigNumber(0));
         });
@@ -75,7 +76,7 @@ describe("Calculate amounts", () => {
                         sendAmount,
                         reverseSwapFees.boltzFee,
                         reverseSwapFees.minerFee,
-                        reverseSwapFees.reverse,
+                        reverseSwapFees.swapType,
                     ),
                 ).toEqual(receiveAmount);
                 expect(
@@ -83,7 +84,7 @@ describe("Calculate amounts", () => {
                         receiveAmount,
                         reverseSwapFees.boltzFee,
                         reverseSwapFees.minerFee,
-                        reverseSwapFees.reverse,
+                        reverseSwapFees.swapType,
                     ),
                 ).toEqual(sendAmount);
             },
@@ -95,7 +96,7 @@ describe("Calculate amounts", () => {
                     BigNumber(0),
                     reverseSwapFees.boltzFee,
                     reverseSwapFees.minerFee,
-                    reverseSwapFees.reverse,
+                    reverseSwapFees.swapType,
                 ),
             ).toEqual(BigNumber(0));
         });
@@ -117,7 +118,7 @@ describe("Calculate amounts", () => {
                         sendAmount,
                         swapFees.boltzFee,
                         swapFees.minerFee,
-                        swapFees.reverse,
+                        swapFees.swapType,
                     ),
                 ).toEqual(fee);
                 expect(
@@ -127,7 +128,7 @@ describe("Calculate amounts", () => {
                                 sendAmount,
                                 swapFees.boltzFee,
                                 swapFees.minerFee,
-                                swapFees.reverse,
+                                swapFees.swapType,
                             ),
                         )
                         .minus(swapFees.minerFee),
@@ -149,7 +150,7 @@ describe("Calculate amounts", () => {
                         sendAmount,
                         reverseSwapFees.boltzFee,
                         reverseSwapFees.minerFee,
-                        reverseSwapFees.reverse,
+                        reverseSwapFees.swapType,
                     ),
                 ).toEqual(fee);
                 expect(
@@ -159,7 +160,7 @@ describe("Calculate amounts", () => {
                                 sendAmount,
                                 reverseSwapFees.boltzFee,
                                 reverseSwapFees.minerFee,
-                                reverseSwapFees.reverse,
+                                reverseSwapFees.swapType,
                             ),
                         )
                         .minus(reverseSwapFees.minerFee),
@@ -186,7 +187,7 @@ describe("Calculate amounts", () => {
                     BigNumber(1_000_000),
                     -0.1,
                     swapFees.minerFee,
-                    swapFees.reverse,
+                    swapFees.swapType,
                 ),
             ).toEqual(BigNumber(-1000));
         });
