@@ -1,13 +1,13 @@
 import { OutputType } from "boltz-core";
-import { Show } from "solid-js";
+import { Accessor, Show } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import NotFound from "../pages/NotFound";
+import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const ShowTimeout = () => (
     <>
@@ -29,12 +29,11 @@ const TransactionLockupFailed = () => {
                 </p>
                 <hr />
                 <Show
-                    when={
-                        swap().version === OutputType.Taproot ||
-                        swap().asset === RBTC
-                    }
+                    when={swap().version === OutputType.Taproot}
                     fallback={<ShowTimeout />}>
-                    <RefundButton swap={swap} />
+                    <RefundButton
+                        swap={swap as Accessor<SubmarineSwap | ChainSwap>}
+                    />
                 </Show>
                 <hr />
             </div>

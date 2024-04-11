@@ -1,28 +1,20 @@
-import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { Accessor, Setter, createSignal } from "solid-js";
-import { SubmarineSwap } from "src/utils/swapCreator";
+import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
-import { RBTC } from "../consts";
+import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { useWeb3Signer } from "../context/Web3";
-import {
-    getSubmarineEipSignature,
-    getSubmarineTransaction,
-} from "../utils/boltzClient";
+import { getSubmarineTransaction } from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
-import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
-import { prefix0x, satoshiToWei } from "../utils/rootstock";
-import ContractTransaction from "./ContractTransaction";
 
 const RefundButton = ({
     swap,
     setRefundTxId,
 }: {
-    swap: Accessor<{ id: string } & Record<string, any>>;
+    swap: Accessor<SubmarineSwap | ChainSwap>;
     setRefundTxId?: Setter<string>;
 }) => {
     const {
@@ -35,6 +27,8 @@ const RefundButton = ({
     } = useGlobalContext();
     const { setSwap } = usePayContext();
 
+    /*
+    TODO
     if (swap() && swap().asset === RBTC) {
         const { getEtherSwap, getSigner } = useWeb3Signer();
 
@@ -90,6 +84,7 @@ const RefundButton = ({
             />
         );
     }
+     */
 
     const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
     const [valid, setValid] = createSignal<boolean>(false);
@@ -97,7 +92,13 @@ const RefundButton = ({
     const refundAddressChange = (evt: InputEvent, asset: string) => {
         const input = evt.currentTarget as HTMLInputElement;
         const inputValue = input.value.trim();
-        if (inputValue === swap().address) {
+
+        const lockupAddress =
+            swap().type === SwapType.Submarine
+                ? (swap() as SubmarineSwap).address
+                : (swap() as ChainSwap).lockupDetails.lockupAddress;
+
+        if (inputValue === lockupAddress) {
             log.debug("refunds to lockup address are blocked");
             input.setCustomValidity("lockup address");
             return false;
@@ -123,7 +124,7 @@ const RefundButton = ({
 
         try {
             const transactionToRefund = await getSubmarineTransaction(
-                swap().asset,
+                swap().assetSend,
                 swap().id,
             );
             log.debug(
@@ -187,19 +188,21 @@ const RefundButton = ({
         <>
             <h3 style={"color: #fff"}>
                 {swap()
-                    ? t("refund_address_header", { asset: swap()?.asset })
+                    ? t("refund_address_header", { asset: swap()?.assetSend })
                     : t("refund_address_header_no_asset")}
             </h3>
             <input
                 data-testid="refundAddress"
                 id="refundAddress"
                 disabled={swap() === null}
-                onInput={(e) => setValid(refundAddressChange(e, swap()?.asset))}
+                onInput={(e) =>
+                    setValid(refundAddressChange(e, swap()?.assetSend))
+                }
                 type="text"
                 name="refundAddress"
                 placeholder={
                     swap()
-                        ? t("onchain_address", { asset: swap()?.asset })
+                        ? t("onchain_address", { asset: swap()?.assetSend })
                         : t("onchain_address_no_asset")
                 }
             />

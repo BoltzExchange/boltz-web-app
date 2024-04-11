@@ -7,7 +7,9 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import { SwapIcons } from "../components/SwapIcons";
-import { RBTC } from "../consts";
+import { RBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
+import { swapStatusFailed, swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import InvoiceExpired from "../status/InvoiceExpired";
@@ -23,13 +25,16 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getSwapStatus } from "../utils/boltzClient";
-import { getRelevantAssetForSwap } from "../utils/swapCreator";
-import { swapStatusFailed, swapStatusPending } from "../utils/swapStatus";
+import {
+    ReverseSwap,
+    SubmarineSwap,
+    getRelevantAssetForSwap,
+} from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
     const [contractTransaction, setContractTransaction] =
-        createSignal(undefined);
+        createSignal<string>(undefined);
     const [contractTransactionType, setContractTransactionType] =
         createSignal("lockup_tx");
 
@@ -39,7 +44,6 @@ const Pay = () => {
         setSwap,
         swapStatus,
         setSwapStatus,
-        swapStatusTransaction,
         setSwapStatusTransaction,
         setFailureReason,
     } = usePayContext();
@@ -54,20 +58,23 @@ const Pay = () => {
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
             setFailureReason(res.failureReason);
+
             // RSK
             if (
                 asset === RBTC &&
                 res.transaction &&
                 currentSwap.claimTx === undefined
             ) {
-                setContractTransaction(tx.id);
+                setContractTransaction(res.transaction.id);
             }
+
+            if (asset === RBTC && currentSwap["lockupTx"]) {
+                setContractTransaction(currentSwap["lockupTx"]);
+            }
+
             if (asset === RBTC && currentSwap.claimTx) {
                 setContractTransaction(currentSwap.claimTx);
                 setContractTransactionType("claim_tx");
-            }
-            if (asset === RBTC && currentSwap.lockupTx) {
-                setContractTransaction(currentSwap.lockupTx);
             }
         }
     });
@@ -155,33 +162,38 @@ const Pay = () => {
                         <SwapCreated />
                     </Show>
 
-                    <Show
-                        when={
-                            getRelevantAssetForSwap(swap()) !== RBTC &&
-                            swapStatus() !== null &&
-                            swapStatus() !== "invoice.set" &&
-                            swapStatus() !== "swap.created"
-                        }>
-                        <BlockExplorer
-                            asset={getRelevantAssetForSwap(swap())}
-                            txId={swap().claimTx}
-                            address={
-                                !swap().reverse
-                                    ? swap().address
-                                    : swap().lockupAddress
-                            }
-                        />
-                    </Show>
-                    <Show
-                        when={
-                            swap().asset === RBTC &&
-                            contractTransaction() !== undefined
-                        }>
-                        <BlockExplorer
-                            asset={swap().asset}
-                            txId={contractTransaction()}
-                            typeLabel={contractTransactionType()}
-                        />
+                    {
+                        // TODO: block explorer link for chain swaps
+                    }
+                    <Show when={swap().type !== SwapType.Chain}>
+                        <Show
+                            when={
+                                getRelevantAssetForSwap(swap()) &&
+                                swapStatus() !== null &&
+                                swapStatus() !== "invoice.set" &&
+                                swapStatus() !== "swap.created"
+                            }>
+                            <BlockExplorer
+                                asset={getRelevantAssetForSwap(swap())}
+                                txId={swap().claimTx}
+                                address={
+                                    swap().type === SwapType.Submarine
+                                        ? (swap() as SubmarineSwap).address
+                                        : (swap() as ReverseSwap).lockupAddress
+                                }
+                            />
+                        </Show>
+                        <Show
+                            when={
+                                getRelevantAssetForSwap(swap()) &&
+                                contractTransaction() !== undefined
+                            }>
+                            <BlockExplorer
+                                asset={getRelevantAssetForSwap(swap())}
+                                txId={contractTransaction()}
+                                typeLabel={contractTransactionType()}
+                            />
+                        </Show>
                     </Show>
                 </Show>
             </Show>

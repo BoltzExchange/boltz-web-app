@@ -92,7 +92,7 @@ const cleanup = render(
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
             <Route path="/swap/refund/:id" component={RefundStep} />
-            <Route path="/error" component={Error} />
+            <Route path="/error" component={() => <Error />} />
             <Route path="/refund" component={Refund} />
             <Route path="/history" component={History} />
             <Route path="*404" component={NotFound} />

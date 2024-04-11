@@ -3,9 +3,10 @@ import { Show } from "solid-js";
 
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
-import { BTC } from "../consts";
+import { BTC } from "../consts/Assets";
+import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { denominations, formatAmount } from "../utils/denomination";
+import { formatAmount } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
 
 const PayOnchain = ({
@@ -31,7 +32,7 @@ const PayOnchain = ({
                         separator(),
                     ),
                     denomination:
-                        denomination() === denominations.sat ? "sats" : asset,
+                        denomination() === Denomination.Sat ? "sats" : asset,
                 })}
             </h2>
             <hr />

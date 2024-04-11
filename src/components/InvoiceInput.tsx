@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
-import { LN, RBTC } from "../consts";
+import { LN, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";

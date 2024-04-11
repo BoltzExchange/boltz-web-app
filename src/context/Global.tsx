@@ -13,7 +13,9 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC } from "../consts";
+import { BTC } from "../consts/Assets";
+import { Denomination } from "../consts/Enums";
+import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
@@ -21,7 +23,6 @@ import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -50,8 +51,8 @@ export type GlobalContextType = {
     setRef: Setter<string>;
     i18nConfigured: Accessor<string | null>;
     setI18nConfigured: Setter<string | null>;
-    denomination: Accessor<string>;
-    setDenomination: Setter<string>;
+    denomination: Accessor<Denomination>;
+    setDenomination: Setter<Denomination>;
     hideHero: Accessor<boolean>;
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
@@ -155,10 +156,13 @@ const GlobalProvider = (props: { children: any }) => {
             ...stringSerializer,
         },
     );
-    const [denomination, setDenomination] = makePersisted(createSignal("sat"), {
-        name: "denomination",
-        ...stringSerializer,
-    });
+    const [denomination, setDenomination] = makePersisted<Denomination>(
+        createSignal<Denomination>(Denomination.Sat),
+        {
+            name: "denomination",
+            ...stringSerializer,
+        },
+    );
 
     const [settingsMenu, setSettingsMenu] = createSignal<boolean>(false);
 

@@ -14,9 +14,10 @@ import { ECPairInterface } from "ecpair";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
-import { RBTC } from "../consts";
+import { RBTC } from "../consts/Assets";
+import { Denomination } from "../consts/Enums";
 import { decodeAddress, setup } from "./compat";
-import { denominations, formatAmountDenomination } from "./denomination";
+import { formatAmountDenomination } from "./denomination";
 import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
 import { createMusig, tweakMusig } from "./taproot/musig";
@@ -222,7 +223,7 @@ const validateSwap = async (
         new URLSearchParams(bip21Split[1]).get("amount") ===
         formatAmountDenomination(
             BigNumber(swap.sendAmount),
-            denominations.btc,
+            Denomination.Btc,
             ".",
         )
     );

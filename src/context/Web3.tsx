@@ -10,7 +10,7 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { RBTC } from "../consts";
+import { RBTC } from "../consts/Assets";
 import { Contracts, getContracts } from "../utils/boltzClient";
 
 // TODO: check network and add option to add RSK as network

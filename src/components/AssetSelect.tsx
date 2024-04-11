@@ -1,11 +1,13 @@
 import { IoClose } from "solid-icons/io";
 
 import { config } from "../config";
-import { LN, sideSend } from "../consts";
+import { LN } from "../consts/Assets";
+import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 
 const SelectAsset = () => {
+    // TODO: only show possible pairs
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
@@ -31,7 +33,7 @@ const SelectAsset = () => {
         setOnchainAddress("");
 
         // set new asset and swap assets if the other asset is the same
-        if (assetSelected() === sideSend) {
+        if (assetSelected() === Side.Send) {
             if (assetReceive() === newAsset) {
                 setAssetReceive(assetSend());
             }
@@ -49,7 +51,7 @@ const SelectAsset = () => {
     const isSelected = (asset: string) => {
         return (
             asset ===
-            (assetSelected() === sideSend ? assetSend() : assetReceive())
+            (assetSelected() === Side.Send ? assetSend() : assetReceive())
         );
     };
 
@@ -61,7 +63,9 @@ const SelectAsset = () => {
             <h2>
                 {t("select_asset", {
                     direction:
-                        assetSelected() === sideSend ? t("send") : t("receive"),
+                        assetSelected() === Side.Send
+                            ? t("send")
+                            : t("receive"),
                 })}
             </h2>
             <span class="close" onClick={() => setAssetSelect(!assetSelect())}>

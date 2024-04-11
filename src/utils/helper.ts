@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 import { ECPairInterface } from "ecpair";
 
 import { chooseUrl, config } from "../config";
-import { BTC, LN } from "../consts";
+import { BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     ChainPairTypeTaproot,

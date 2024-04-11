@@ -26,7 +26,7 @@ import {
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { config } from "../config";
-import { BTC, LBTC, LN } from "../consts";
+import { BTC, LBTC, LN } from "../consts/Assets";
 import { isInvoice, isLnurl } from "./invoice";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {

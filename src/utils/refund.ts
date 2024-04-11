@@ -26,6 +26,7 @@ import {
     setup,
 } from "./compat";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
+import { ChainSwap, SubmarineSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export const refundJsonKeys = ["id", "asset", "privateKey"];
@@ -95,11 +96,11 @@ const refundTaproot = async (
     return claimTx;
 };
 
-export async function refund(
-    swap: any,
+export const refund = async (
+    swap: SubmarineSwap | ChainSwap,
     refundAddress: string,
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
-) {
+) => {
     log.debug("starting to refund swap", swap);
 
     const assetName = swap.asset;
@@ -164,4 +165,4 @@ export async function refund(
         swap.refundTx = res.id;
     }
     return swap;
-}
+};

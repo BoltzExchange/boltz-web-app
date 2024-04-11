@@ -9,11 +9,11 @@ import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
+import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
-import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
 import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
@@ -123,7 +123,7 @@ const Refund = () => {
             )
             .map(async (swap) => {
                 try {
-                    const res = await getSwapStatus(swap.asset, swap.id);
+                    const res = await getSwapStatus(swap.assetSend, swap.id);
                     if (
                         !(await updateSwapStatus(swap.id, res.status)) &&
                         Object.values(swapStatusFailed).includes(res.status)
@@ -134,7 +134,7 @@ const Refund = () => {
                         }
 
                         // Make sure coins were locked for the swap with status "swap.expired"
-                        await getSubmarineTransaction(swap.asset, swap.id);
+                        await getSubmarineTransaction(swap.assetSend, swap.id);
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {

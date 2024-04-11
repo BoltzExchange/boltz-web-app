@@ -10,8 +10,8 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { LN, RBTC, sideSend } from "../consts";
-import { SwapType } from "../consts/Enums";
+import { LN, RBTC } from "../consts/Assets";
+import { Side, SwapType } from "../consts/Enums";
 
 export type CreateContextType = {
     swapType: Accessor<SwapType>;
@@ -45,8 +45,8 @@ export type CreateContextType = {
     setSendAmountFormatted: Setter<string>;
     receiveAmountFormatted: Accessor<string>;
     setReceiveAmountFormatted: Setter<string>;
-    amountChanged: Accessor<string>;
-    setAmountChanged: Setter<string>;
+    amountChanged: Accessor<Side>;
+    setAmountChanged: Setter<Side>;
     minimum: Accessor<number>;
     setMinimum: Setter<number>;
     maximum: Accessor<number>;
@@ -121,7 +121,7 @@ const CreateProvider = (props: { children: any }) => {
     const [receiveAmountFormatted, setReceiveAmountFormatted] =
         createSignal("0");
 
-    const [amountChanged, setAmountChanged] = createSignal(sideSend);
+    const [amountChanged, setAmountChanged] = createSignal(Side.Send);
     const [minimum, setMinimum] = createSignal<number>(0);
     const [maximum, setMaximum] = createSignal<number>(0);
 

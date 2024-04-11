@@ -4,9 +4,10 @@ import { Show } from "solid-js";
 
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
-import { BTC } from "../consts";
+import { BTC } from "../consts/Assets";
+import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { denominations, formatAmount } from "../utils/denomination";
+import { formatAmount } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
 import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
@@ -36,7 +37,7 @@ const PayInvoice = ({
                         separator(),
                     ),
                     denomination:
-                        denomination() === denominations.sat ? "sats" : BTC,
+                        denomination() === Denomination.Sat ? "sats" : BTC,
                 })}
             </h2>
             <hr />

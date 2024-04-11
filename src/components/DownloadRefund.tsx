@@ -32,6 +32,7 @@ const downloadRefundJson = (swap: any) => {
 const DownloadRefund = () => {
     const { swap } = usePayContext();
     const { t } = useGlobalContext();
+
     const downloadRefundQr = (swap: any) => {
         QRCode.toDataURL(JSON.stringify(createRefundData(swap)), { width: 400 })
             .then((url: string) => {

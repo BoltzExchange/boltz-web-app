@@ -3,7 +3,8 @@ import { BigNumber } from "bignumber.js";
 import { Show, createEffect, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
-import { RBTC } from "../consts";
+import { RBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { formatAmount } from "../utils/denomination";
@@ -35,9 +36,11 @@ const TransactionClaimed = () => {
         }
 
         // If it is a normal swap or a reverse one to RBTC we don't need to check for the claim transaction
-        // Else make sure the transaction was actually broadcasted
+        // Else make sure the transaction was actually broadcast
         setClaimBroadcast(
-            !s.reverse || s.asset === RBTC || s.claimTx !== undefined,
+            s.type !== SwapType.Reverse ||
+                s.assetReceive === RBTC ||
+                s.claimTx !== undefined,
         );
     });
 

@@ -3,7 +3,7 @@ import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 
-import { RBTC } from "../consts";
+import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     ChainSwapCreatedResponse,
@@ -26,20 +26,22 @@ export type SwapBase = {
     receiveAmount: number;
     version: number;
     date: number;
+
+    // Not set for submarine swaps; but set for interface compatibility
+    claimTx?: string;
+    refundTx?: string;
 };
 
 export type SubmarineSwap = SwapBase &
     SubmarineCreatedResponse & {
         invoice: string;
         refundPrivateKey?: string;
-        refundTx?: string;
     };
 
 export type ReverseSwap = SwapBase &
     ReverseCreatedResponse & {
         preimage: string;
         claimAddress: string;
-        claimTx?: string;
         claimPrivateKey?: string;
     };
 
@@ -47,10 +49,8 @@ export type ChainSwap = SwapBase &
     ChainSwapCreatedResponse & {
         preimage: string;
         claimAddress: string;
-        claimTx?: string;
         claimPrivateKey: string;
         refundPrivateKey: string;
-        refundTx?: string;
     };
 
 export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;

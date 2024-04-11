@@ -1,11 +1,12 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createEffect } from "solid-js";
+import { Accessor, Show, createEffect } from "solid-js";
 
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { getSubmarineTransaction } from "../utils/boltzClient";
+import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
@@ -34,7 +35,9 @@ const SwapExpired = () => {
             </p>
             <hr />
             <Show when={transactionToRefund() !== null}>
-                <RefundButton swap={swap} />
+                <RefundButton
+                    swap={swap as Accessor<SubmarineSwap | ChainSwap>}
+                />
                 <hr />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>

@@ -3,11 +3,11 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 import { createEffect, createMemo, createSignal, on } from "solid-js";
 
-import { RBTC } from "../consts";
+import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { ButtonLabelParams } from "../types";
 import { getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { coalesceLn } from "../utils/helper";
@@ -202,7 +202,8 @@ export const CreateButton = () => {
             setOnchainAddress("");
             setAddressValid(false);
 
-            if (swapType() !== SwapType.Submarine || assetReceive() === RBTC) {
+            // No backups needed for Reverse Swaps
+            if (swapType() === SwapType.Reverse || assetReceive() === RBTC) {
                 navigate("/swap/" + data.id);
             } else {
                 navigate("/swap/refund/" + data.id);

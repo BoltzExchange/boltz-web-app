@@ -7,12 +7,13 @@ import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import { config } from "../config";
-import { BTC } from "../consts";
+import { BTC } from "../consts/Assets";
+import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
 import { getNodeStats, getNodes } from "../utils/boltzClient";
-import { denominations, formatAmountDenomination } from "../utils/denomination";
+import { formatAmountDenomination } from "../utils/denomination";
 
 export const Hero = () => {
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ export const Hero = () => {
 
     const formatStatsAmount = (
         value: number,
-        denom: string = denominations.sat,
+        denom: Denomination = Denomination.Sat,
     ) => formatAmountDenomination(new BigNumber(value), denom, separator());
 
     onMount(async () => {
@@ -116,7 +117,7 @@ export const Hero = () => {
                         <small>
                             {t("capacity", {
                                 denomination:
-                                    denomination() === denominations.sat
+                                    denomination() === Denomination.Sat
                                         ? "sats"
                                         : "BTC",
                             })}

@@ -2,8 +2,13 @@ import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
-import { BTC, LBTC, RBTC } from "../consts";
+import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import {
+    swapStatusFinal,
+    swapStatusPending,
+    swapStatusSuccess,
+} from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
@@ -20,11 +25,6 @@ import {
     SubmarineSwap,
     getRelevantAssetForSwap,
 } from "../utils/swapCreator";
-import {
-    swapStatusFinal,
-    swapStatusPending,
-    swapStatusSuccess,
-} from "../utils/swapStatus";
 
 type SwapStatus = {
     id: string;
@@ -75,7 +75,7 @@ class BoltzWebSocket {
                 for (const status of swapUpdates) {
                     this.relevantIds.add(status.id);
                     this.prepareSwap(status.id, status);
-                    this.swapClaimLock.acquire(() =>
+                    await this.swapClaimLock.acquire(() =>
                         this.claimSwap(status.id, status),
                     );
                 }
@@ -209,7 +209,7 @@ export const SwapChecker = () => {
         }
 
         if (
-            currentSwap["claimTx"] === undefined &&
+            currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
             ((currentSwap.type === SwapType.Reverse &&
                 [
@@ -282,7 +282,7 @@ export const SwapChecker = () => {
                 ((s.status === swapStatusSuccess.InvoiceSettled ||
                     (s.type === SwapType.Chain &&
                         s.status === swapStatusSuccess.TransactionClaimed)) &&
-                    s["claimTx"] === undefined),
+                    s.claimTx === undefined),
         );
 
         for (const [url, assets] of urlsToAsset.entries()) {

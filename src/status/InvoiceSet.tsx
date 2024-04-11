@@ -1,16 +1,11 @@
-import ContractTransaction from "../components/ContractTransaction";
 import PayOnchain from "../components/PayOnchain";
-import { RBTC } from "../consts";
-import { useCreateContext } from "../context/Create";
-import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { useWeb3Signer } from "../context/Web3";
-import { decodeInvoice } from "../utils/invoice";
-import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import { SubmarineSwap, getRelevantAssetForSwap } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
     const { swap } = usePayContext();
+
+    // TODO
     // const { assetReceive } = useCreateContext();
     // const { t, getSwap, setSwapStorage } = useGlobalContext();
 

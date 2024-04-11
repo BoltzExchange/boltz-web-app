@@ -13,8 +13,8 @@ import Reverse from "../components/Reverse";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import WeblnButton from "../components/WeblnButton";
-import { RBTC, sideReceive, sideSend } from "../consts";
-import { SwapType } from "../consts/Enums";
+import { RBTC } from "../consts/Assets";
+import { Denomination, Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
@@ -24,7 +24,6 @@ import {
 import {
     calculateDigits,
     convertAmount,
-    denominations,
     formatAmount,
     getValidationRegex,
 } from "../utils/denomination";
@@ -74,10 +73,10 @@ const Create = () => {
     // user failed to notice the non satoshi denomination
     const changeDenomination = (amount: string) => {
         if (amount === "") return;
-        if (denomination() === denominations.btc && Number(amount) >= 10) {
-            setDenomination(denominations.sat);
-        } else if (denomination() === denominations.sat && Number(amount) < 1) {
-            setDenomination(denominations.btc);
+        if (denomination() === Denomination.Btc && Number(amount) >= 10) {
+            setDenomination(Denomination.Sat);
+        } else if (denomination() === Denomination.Sat && Number(amount) < 1) {
+            setDenomination(Denomination.Btc);
         }
     };
 
@@ -103,7 +102,7 @@ const Create = () => {
             minerFee(),
             swapType(),
         );
-        setAmountChanged(sideReceive);
+        setAmountChanged(Side.Receive);
         setReceiveAmount(satAmount);
         setSendAmount(sendAmount);
         validateAmount();
@@ -124,7 +123,7 @@ const Create = () => {
             minerFee(),
             swapType(),
         );
-        setAmountChanged(sideSend);
+        setAmountChanged(Side.Send);
         setSendAmount(satAmount);
         setReceiveAmount(receiveAmount);
         validateAmount();
@@ -137,7 +136,7 @@ const Create = () => {
             setSeparator(keycode);
             // switch to BTC denomination
             if (denomination() == "sat") {
-                setDenomination(denominations.btc);
+                setDenomination(Denomination.Btc);
             }
         }
         const hasDot = input.value.includes(".") || input.value.includes(",");
@@ -209,16 +208,16 @@ const Create = () => {
             ),
         );
         validateAmount();
-        sendAmountRef.focus();
+        sendAmountRef?.focus();
     };
 
     onMount(() => {
-        sendAmountRef.focus();
+        sendAmountRef?.focus();
     });
 
     createEffect(
         on([boltzFee, minerFee, swapType, assetReceive], () => {
-            if (amountChanged() === sideReceive) {
+            if (amountChanged() === Side.Receive) {
                 setSendAmount(
                     calculateSendAmount(
                         receiveAmount(),
@@ -247,8 +246,8 @@ const Create = () => {
         }
 
         const ref =
-            assetSelected() === sideSend ? sendAmountRef : receiveAmountRef;
-        ref.focus();
+            assetSelected() === Side.Send ? sendAmountRef : receiveAmountRef;
+        ref?.focus();
     });
 
     createMemo(() => {
@@ -321,7 +320,7 @@ const Create = () => {
                 </p>
                 <div class="icons">
                     <div>
-                        <Asset side={sideSend} signal={assetSend} />
+                        <Asset side={Side.Send} signal={assetSend} />
                         <input
                             ref={sendAmountRef}
                             autofocus
@@ -345,7 +344,7 @@ const Create = () => {
                     </div>
                     <Reverse />
                     <div>
-                        <Asset side={sideReceive} signal={assetReceive} />
+                        <Asset side={Side.Receive} signal={assetReceive} />
                         <input
                             ref={receiveAmountRef}
                             required

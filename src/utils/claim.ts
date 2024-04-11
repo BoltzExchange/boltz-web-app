@@ -10,7 +10,7 @@ import { ECPairInterface } from "ecpair";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { LBTC, RBTC } from "../consts";
+import { LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     TransactionInterface,

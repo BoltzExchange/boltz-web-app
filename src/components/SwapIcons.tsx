@@ -1,4 +1,4 @@
-import { LN } from "../consts";
+import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { SomeSwap } from "../utils/swapCreator";
 

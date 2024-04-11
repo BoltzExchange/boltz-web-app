@@ -22,7 +22,7 @@ const ConnectMetamask = ({ showAddress }) => {
     createEffect(() => {
         const addr = address();
         setAddressValid(addr !== undefined);
-        setOnchainAddress(addr ? addr : "");
+        setOnchainAddress(addr || "");
     });
 
     const { getSigner, hasMetamask } = useWeb3Signer();
