@@ -155,7 +155,6 @@ export const SwapChecker = () => {
             await updateSwapStatus(currentSwap.id, data.status);
         }
 
-        console.log(data);
         if (data.failureReason) {
             setFailureReason(data.failureReason);
         }

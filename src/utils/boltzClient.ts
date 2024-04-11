@@ -412,5 +412,6 @@ export {
     SubmarineCreatedResponse,
     SubmarinePairTypeTaproot,
     ReverseCreatedResponse,
+    ChainSwapDetails,
     ChainSwapCreatedResponse,
 };

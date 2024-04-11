@@ -8,6 +8,7 @@ import { SwapType } from "../consts/Enums";
 import { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import { getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { coalesceLn } from "../utils/helper";
@@ -18,6 +19,7 @@ import {
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
+import { validateResponse } from "../utils/validation";
 
 export const CreateButton = () => {
     const navigate = useNavigate();
@@ -54,6 +56,7 @@ export const CreateButton = () => {
         invoiceValid,
         invoiceError,
     } = useCreateContext();
+    const { getEtherSwap } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -155,8 +158,6 @@ export const CreateButton = () => {
         if (!valid()) return;
 
         try {
-            // TODO: validation
-
             let data: SomeSwap;
             switch (swapType()) {
                 case SwapType.Submarine:
@@ -194,6 +195,11 @@ export const CreateButton = () => {
                         ref(),
                     );
                     break;
+            }
+
+            if (!(await validateResponse(data, getEtherSwap))) {
+                navigate("/error");
+                return;
             }
 
             await setSwapStorage(data);
