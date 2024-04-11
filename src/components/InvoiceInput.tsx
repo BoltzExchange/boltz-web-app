@@ -35,6 +35,7 @@ const InvoiceInput = () => {
         setReceiveAmount,
         setSendAmount,
         setAssetSend,
+        assetSend,
         setAssetReceive,
         setOnchainAddress,
     } = useCreateContext();
@@ -47,7 +48,7 @@ const InvoiceInput = () => {
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
-            setAssetSend(LN);
+            setAssetSend(assetSend() === actualAsset ? LN : assetSend());
             setAssetReceive(actualAsset);
             setOnchainAddress(address);
             notify("success", t("switch_paste"));

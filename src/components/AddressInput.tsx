@@ -19,6 +19,7 @@ const AddressInput = () => {
         setAddressValid,
         setAssetReceive,
         setAssetSend,
+        assetSend,
         setOnchainAddress,
         setInvoice,
         sendAmount,
@@ -36,7 +37,9 @@ const AddressInput = () => {
             switch (actualAsset) {
                 case LN:
                     setAssetReceive(LN);
-                    setAssetSend(assetName);
+                    if (assetSend() === LN) {
+                        setAssetSend(assetName);
+                    }
                     setInvoice(invoice);
                     notify("success", t("switch_paste"));
                     break;
@@ -46,6 +49,7 @@ const AddressInput = () => {
 
                 default:
                     if (assetName !== actualAsset) {
+                        setAssetSend(assetReceive());
                         setAssetReceive(actualAsset);
                         notify("success", t("switch_paste"));
                     }
