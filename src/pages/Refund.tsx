@@ -9,10 +9,12 @@ import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
+import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
+import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
@@ -93,12 +95,12 @@ const Refund = () => {
         }
     };
 
-    const refundSwapsSanityFilter = (swap: any) =>
-        !swap.reverse && swap.refundTx === undefined;
+    const refundSwapsSanityFilter = (swap: SomeSwap) =>
+        swap.type !== SwapType.Reverse && swap.refundTx === undefined;
 
     const [refundableSwaps, setRefundableSwaps] = createSignal([]);
 
-    const addToRefundableSwaps = (swap: any) => {
+    const addToRefundableSwaps = (swap: SomeSwap) => {
         setRefundableSwaps(refundableSwaps().concat(swap));
     };
 
@@ -134,7 +136,11 @@ const Refund = () => {
                         }
 
                         // Make sure coins were locked for the swap with status "swap.expired"
-                        await getLockupTransaction(swap.assetSend, swap.id);
+                        await getLockupTransaction(
+                            swap.assetSend,
+                            swap.id,
+                            swap.type,
+                        );
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {
