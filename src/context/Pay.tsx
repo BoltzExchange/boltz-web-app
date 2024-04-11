@@ -17,10 +17,6 @@ export type PayContextType = {
     setSwapStatus: Setter<string>;
     swapStatusTransaction: Accessor<SwapStatusTransaction>;
     setSwapStatusTransaction: Setter<SwapStatusTransaction>;
-    timeoutEta: Accessor<number>;
-    setTimeoutEta: Setter<number>;
-    timeoutBlockHeight: Accessor<number>;
-    setTimeoutBlockheight: Setter<number>;
 };
 
 const PayContext = createContext<PayContextType>();
@@ -40,9 +36,6 @@ const PayProvider = (props: { children: any }) => {
     const [swapStatusTransaction, setSwapStatusTransaction] =
         createSignal<SwapStatusTransaction>({});
 
-    const [timeoutEta, setTimeoutEta] = createSignal<number>(0);
-    const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal<number>(0);
-
     return (
         <PayContext.Provider
             value={{
@@ -54,10 +47,6 @@ const PayProvider = (props: { children: any }) => {
                 setSwapStatus,
                 swapStatusTransaction,
                 setSwapStatusTransaction,
-                timeoutEta,
-                setTimeoutEta,
-                timeoutBlockHeight,
-                setTimeoutBlockheight,
             }}>
             {props.children}
         </PayContext.Provider>

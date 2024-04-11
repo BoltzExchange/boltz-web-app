@@ -6,7 +6,7 @@ import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getSubmarineTransaction } from "../utils/boltzClient";
+import { getLockupTransaction } from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
 import { refund } from "../utils/refund";
 
@@ -86,8 +86,8 @@ const RefundButton = ({
     }
      */
 
-    const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
     const [valid, setValid] = createSignal<boolean>(false);
+    const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
 
     const refundAddressChange = (evt: InputEvent, asset: string) => {
         const input = evt.currentTarget as HTMLInputElement;
@@ -123,9 +123,10 @@ const RefundButton = ({
         setRefundRunning(true);
 
         try {
-            const transactionToRefund = await getSubmarineTransaction(
+            const transactionToRefund = await getLockupTransaction(
                 swap().assetSend,
                 swap().id,
+                swap().type,
             );
             log.debug(
                 `got swap transaction for ${swap().id}`,

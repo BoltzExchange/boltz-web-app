@@ -229,15 +229,20 @@ export const createChainSwap = (
 export const getPartialRefundSignature = async (
     asset: string,
     id: string,
+    type: SwapType,
     pubNonce: Buffer,
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    const res = await fetcher(`/v2/swap/submarine/${id}/refund`, asset, {
-        index,
-        pubNonce: pubNonce.toString("hex"),
-        transaction: transaction.toHex(),
-    });
+    const res = await fetcher(
+        `/v2/swap/${type === SwapType.Submarine ? "submarine" : "chain"}/${id}/refund`,
+        asset,
+        {
+            index,
+            pubNonce: pubNonce.toString("hex"),
+            transaction: transaction.toHex(),
+        },
+    );
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         signature: Buffer.from(res.partialSignature, "hex"),
@@ -318,13 +323,37 @@ export const broadcastTransaction = (asset: string, txHex: string) =>
         hex: txHex,
     });
 
-export const getSubmarineTransaction = (asset: string, id: string) =>
-    fetcher<{
-        id: string;
-        hex: string;
-        timeoutBlockHeight: number;
-        timeoutEta?: number;
-    }>(`/v2/swap/submarine/${id}/transaction`, asset);
+export const getLockupTransaction = async (
+    asset: string,
+    id: string,
+    type: SwapType,
+): Promise<{
+    id: string;
+    hex: string;
+    timeoutBlockHeight: number;
+    timeoutEta?: number;
+}> => {
+    switch (type) {
+        case SwapType.Submarine:
+            return fetcher<{
+                id: string;
+                hex: string;
+                timeoutBlockHeight: number;
+                timeoutEta?: number;
+            }>(`/v2/swap/submarine/${id}/transaction`, asset);
+
+        case SwapType.Chain:
+            const res = await getChainSwapTransactions(asset, id);
+            return {
+                id: res.userLock.transaction.id,
+                hex: res.userLock.transaction.hex,
+                timeoutBlockHeight: res.userLock.timeoutBlockHeight,
+            };
+
+        default:
+            throw `cannot get lockup transaction for swap type ${type}`;
+    }
+};
 
 export const getReverseTransaction = (asset: string, id: string) =>
     fetcher<{

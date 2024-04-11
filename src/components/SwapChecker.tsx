@@ -14,7 +14,6 @@ import { usePayContext } from "../context/Pay";
 import {
     getChainSwapTransactions,
     getReverseTransaction,
-    getSubmarineTransaction,
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
 import { getApiUrl } from "../utils/helper";
@@ -130,36 +129,11 @@ export const SwapChecker = () => {
         setSwapStatus,
         setSwapStatusTransaction,
         setFailureReason,
-        setTimeoutEta,
-        setTimeoutBlockheight,
     } = usePayContext();
     const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t } =
         useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
-
-    const checkForFailed = async (swap: any, data: any) => {
-        if (
-            data.status == "transaction.lockupFailed" ||
-            data.status == "invoice.failedToPay"
-        ) {
-            const res = await getSubmarineTransaction(swap.asset, swap.id);
-            if (swap.asset !== RBTC && !res.hex) {
-                log.error("no mempool tx found");
-            }
-            if (!res.timeoutEta) {
-                log.error("no timeout eta");
-            }
-            if (!res.timeoutBlockHeight) {
-                log.error("no timeout blockheight");
-            }
-            const timestamp = res.timeoutEta * 1000;
-            const eta = new Date(timestamp);
-            log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
-            setTimeoutEta(timestamp);
-            setTimeoutBlockheight(res.timeoutBlockHeight);
-        }
-    };
 
     const prepareSwap = async (swapId: string, data: any) => {
         const currentSwap = await getSwap(swapId);
@@ -174,10 +148,17 @@ export const SwapChecker = () => {
                 setFailureReason(data.failureReason);
             }
         }
+        if (data.transaction) {
+            setSwapStatusTransaction(data.transaction);
+        }
         if (data.status) {
             await updateSwapStatus(currentSwap.id, data.status);
         }
-        await checkForFailed(currentSwap, data);
+
+        console.log(data);
+        if (data.failureReason) {
+            setFailureReason(data.failureReason);
+        }
     };
 
     const claimSwap = async (swapId: string, data: any) => {

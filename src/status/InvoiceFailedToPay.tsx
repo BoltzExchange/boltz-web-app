@@ -3,14 +3,13 @@ import { Accessor, Show } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
 import RefundButton from "../components/RefundButton";
-import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const InvoiceFailedToPay = () => {
-    const { failureReason, swap, timeoutEta } = usePayContext();
+    const { failureReason, swap } = usePayContext();
     const { t } = useGlobalContext();
     const isTaproot = swap().version === OutputType.Taproot;
 
@@ -21,13 +20,7 @@ const InvoiceFailedToPay = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <Show
-                when={!timeoutEta() || isTaproot || swap().assetSend === RBTC}
-                fallback={<RefundEta />}>
-                <RefundButton
-                    swap={swap as Accessor<SubmarineSwap | ChainSwap>}
-                />
-            </Show>
+            <RefundButton swap={swap as Accessor<SubmarineSwap | ChainSwap>} />
             <Show when={swap().assetSend !== RBTC && !isTaproot}>
                 <DownloadRefund />
             </Show>

@@ -11,8 +11,7 @@ import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
 import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
-import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
+import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
 import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
 import ErrorWasm from "./ErrorWasm";
 
@@ -20,16 +19,17 @@ const Refund = () => {
     const navigate = useNavigate();
     const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t } =
         useGlobalContext();
-    const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
+
+    // TODO: set these for legacy swap backwards compatibility
+    const [timeoutEta] = createSignal<number | null>(null);
+    const [timeoutBlockheight] = createSignal<number | null>(null);
 
     const [swapFound, setSwapFound] = createSignal(null);
     const [refundInvalid, setRefundInvalid] = createSignal(false);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
-    setTimeoutBlockheight(null);
-    setTimeoutEta(null);
-
+    // TODO: chain swaps
     const checkRefundJsonKeys = async (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
 
@@ -134,7 +134,7 @@ const Refund = () => {
                         }
 
                         // Make sure coins were locked for the swap with status "swap.expired"
-                        await getSubmarineTransaction(swap.assetSend, swap.id);
+                        await getLockupTransaction(swap.assetSend, swap.id);
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {
@@ -184,7 +184,10 @@ const Refund = () => {
                             swap={refundJson}
                             setRefundTxId={setRefundTxId}
                         />
-                        <RefundEta />
+                        <RefundEta
+                            timeoutEta={timeoutEta}
+                            timeoutBlockHeight={timeoutBlockheight}
+                        />
                     </Show>
                     <Show when={refundTxId() !== ""}>
                         <hr />

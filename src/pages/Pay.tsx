@@ -1,6 +1,12 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createEffect, createSignal, onCleanup } from "solid-js";
+import {
+    Accessor,
+    Show,
+    createEffect,
+    createSignal,
+    onCleanup,
+} from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -26,17 +32,93 @@ import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getSwapStatus } from "../utils/boltzClient";
 import {
+    ChainSwap,
     ReverseSwap,
+    SomeSwap,
     SubmarineSwap,
     getRelevantAssetForSwap,
 } from "../utils/swapCreator";
+
+enum TransactionType {
+    Lockup = "lockup_tx",
+    Claim = "claim_tx",
+}
+
+const BlockExplorerLink = ({
+    swap,
+    swapStatus,
+    contractTransaction,
+    contractTransactionType,
+}: {
+    swap: Accessor<SomeSwap>;
+    swapStatus: Accessor<string>;
+    contractTransaction: Accessor<string>;
+    contractTransactionType: Accessor<TransactionType>;
+}) => {
+    // Refund transactions are handled SwapRefunded
+
+    if (swap().type !== SwapType.Chain) {
+        return (
+            <Show when={swap().type !== SwapType.Chain}>
+                <Show
+                    when={
+                        getRelevantAssetForSwap(swap()) &&
+                        swapStatus() !== null &&
+                        swapStatus() !== "invoice.set" &&
+                        swapStatus() !== "swap.created"
+                    }>
+                    <BlockExplorer
+                        asset={getRelevantAssetForSwap(swap())}
+                        txId={swap().claimTx}
+                        address={
+                            swap().type === SwapType.Submarine
+                                ? (swap() as SubmarineSwap).address
+                                : (swap() as ReverseSwap).lockupAddress
+                        }
+                    />
+                </Show>
+                <Show
+                    when={
+                        getRelevantAssetForSwap(swap()) &&
+                        contractTransaction() !== undefined
+                    }>
+                    <BlockExplorer
+                        asset={getRelevantAssetForSwap(swap())}
+                        txId={contractTransaction()}
+                        typeLabel={contractTransactionType()}
+                    />
+                </Show>
+            </Show>
+        );
+    }
+
+    // TODO: RSK
+    // TODO: how to show server lockup?
+
+    const chainSwap = swap() as ChainSwap;
+    const hasBeenClaimed = chainSwap.claimTx !== undefined;
+    const asset = hasBeenClaimed ? chainSwap.assetReceive : chainSwap.assetSend;
+
+    return (
+        <BlockExplorer
+            asset={asset}
+            txId={chainSwap.claimTx}
+            address={
+                hasBeenClaimed
+                    ? undefined
+                    : chainSwap.lockupDetails.lockupAddress
+            }
+        />
+    );
+};
 
 const Pay = () => {
     const params = useParams();
     const [contractTransaction, setContractTransaction] =
         createSignal<string>(undefined);
-    const [contractTransactionType, setContractTransactionType] =
-        createSignal("lockup_tx");
+    const [contractTransactionType, setContractTransactionType] = createSignal(
+        TransactionType.Lockup,
+    );
 
     const { getSwap, t } = useGlobalContext();
     const {
@@ -74,7 +156,7 @@ const Pay = () => {
 
             if (asset === RBTC && currentSwap.claimTx) {
                 setContractTransaction(currentSwap.claimTx);
-                setContractTransactionType("claim_tx");
+                setContractTransactionType(TransactionType.Claim);
             }
         }
     });
@@ -105,6 +187,7 @@ const Pay = () => {
                     <hr />
                     <SwapRefunded />
                 </Show>
+
                 <Show when={!swap().refundTx}>
                     <Show when={swapStatus() === null}>
                         <LoadingSpinner />
@@ -162,39 +245,12 @@ const Pay = () => {
                         <SwapCreated />
                     </Show>
 
-                    {
-                        // TODO: block explorer link for chain swaps
-                    }
-                    <Show when={swap().type !== SwapType.Chain}>
-                        <Show
-                            when={
-                                getRelevantAssetForSwap(swap()) &&
-                                swapStatus() !== null &&
-                                swapStatus() !== "invoice.set" &&
-                                swapStatus() !== "swap.created"
-                            }>
-                            <BlockExplorer
-                                asset={getRelevantAssetForSwap(swap())}
-                                txId={swap().claimTx}
-                                address={
-                                    swap().type === SwapType.Submarine
-                                        ? (swap() as SubmarineSwap).address
-                                        : (swap() as ReverseSwap).lockupAddress
-                                }
-                            />
-                        </Show>
-                        <Show
-                            when={
-                                getRelevantAssetForSwap(swap()) &&
-                                contractTransaction() !== undefined
-                            }>
-                            <BlockExplorer
-                                asset={getRelevantAssetForSwap(swap())}
-                                txId={contractTransaction()}
-                                typeLabel={contractTransactionType()}
-                            />
-                        </Show>
-                    </Show>
+                    <BlockExplorerLink
+                        swap={swap}
+                        swapStatus={swapStatus}
+                        contractTransaction={contractTransaction}
+                        contractTransactionType={contractTransactionType}
+                    />
                 </Show>
             </Show>
             <Show when={!swap()}>

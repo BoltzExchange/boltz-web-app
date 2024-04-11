@@ -1,10 +1,14 @@
-import { Show } from "solid-js";
+import { Accessor, Show } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
 
-const RefundEta = () => {
-    const { timeoutEta, timeoutBlockHeight } = usePayContext();
+const RefundEta = ({
+    timeoutEta,
+    timeoutBlockHeight,
+}: {
+    timeoutEta: Accessor<number>;
+    timeoutBlockHeight: Accessor<number>;
+}) => {
     const { t } = useGlobalContext();
     return (
         <Show when={timeoutEta()}>
