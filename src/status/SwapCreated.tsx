@@ -1,5 +1,9 @@
+import { crypto } from "bitcoinjs-lib";
+
+import LockupEvm from "../components/LockupEvm";
 import PayInvoice from "../components/PayInvoice";
 import PayOnchain from "../components/PayOnchain";
+import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
 import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
@@ -9,6 +13,21 @@ const SwapCreated = () => {
 
     if (swap().type === SwapType.Chain) {
         const chain = swap() as ChainSwap;
+
+        if (chain.assetSend === RBTC) {
+            return (
+                <LockupEvm
+                    swapId={chain.id}
+                    amount={chain.lockupDetails.amount}
+                    claimAddress={chain.lockupDetails.claimAddress}
+                    timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}
+                    preimageHash={crypto
+                        .sha256(Buffer.from(chain.preimage, "hex"))
+                        .toString("hex")}
+                />
+            );
+        }
+
         return (
             <PayOnchain
                 asset={chain.assetSend}

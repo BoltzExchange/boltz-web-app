@@ -208,8 +208,8 @@ export const CreateButton = () => {
             setOnchainAddress("");
             setAddressValid(false);
 
-            // No backups needed for Reverse Swaps
-            if (swapType() === SwapType.Reverse || assetReceive() === RBTC) {
+            // No backups needed for Reverse Swaps or when we send RBTC
+            if (swapType() === SwapType.Reverse || assetSend() === RBTC) {
                 navigate("/swap/" + data.id);
             } else {
                 navigate("/swap/refund/" + data.id);

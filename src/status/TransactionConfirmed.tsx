@@ -1,40 +1,87 @@
+import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { RBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
+import { useWeb3Signer } from "../context/Web3";
+import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
+
+const ClaimRsk = ({
+    swapId,
+    preimage,
+    amount,
+    refundAddress,
+    timeoutBlockHeight,
+}: {
+    swapId: string;
+    preimage: string;
+    amount: number;
+    refundAddress: string;
+    timeoutBlockHeight: number;
+}) => {
+    const { getEtherSwap } = useWeb3Signer();
+    const { t, getSwap, setSwapStorage } = useGlobalContext();
+    const { setSwap } = usePayContext();
+
+    return (
+        <ContractTransaction
+            onClick={async () => {
+                const contract = await getEtherSwap();
+
+                const tx = await contract[
+                    "claim(bytes32,uint256,address,uint256)"
+                ](
+                    prefix0x(preimage),
+                    satoshiToWei(amount),
+                    refundAddress,
+                    timeoutBlockHeight,
+                );
+                const currentSwap = await getSwap(swapId);
+                currentSwap.claimTx = tx.hash;
+                setSwap(currentSwap);
+                await setSwapStorage(currentSwap);
+            }}
+            buttonText={t("claim")}
+            promptText={t("transaction_prompt", { button: t("claim") })}
+            waitingText={t("tx_ready_to_claim")}
+            showHr={true}
+        />
+    );
+};
 
 const TransactionConfirmed = () => {
     const { t } = useGlobalContext();
+    const { swap } = usePayContext();
 
-    // TODO
-    /*
-    if (assetReceive() === RBTC) {
-        const { getEtherSwap } = useWeb3Signer();
+    if (swap().assetReceive === RBTC) {
+        if (swap().type === SwapType.Chain) {
+            const chain = swap() as ChainSwap;
+
+            return (
+                <ClaimRsk
+                    swapId={chain.id}
+                    preimage={chain.preimage}
+                    amount={chain.claimDetails.amount}
+                    refundAddress={chain.claimDetails.refundAddress}
+                    timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
+                />
+            );
+        }
+
+        const reverse = swap() as ReverseSwap;
 
         return (
-            <ContractTransaction
-                onClick={async () => {
-                    const contract = await getEtherSwap();
-
-                    const tx = await contract[
-                        "claim(bytes32,uint256,address,uint256)"
-                    ](
-                        prefix0x(swap().preimage),
-                        satoshiToWei(swap().onchainAmount),
-                        swap().refundAddress,
-                        swap().timeoutBlockHeight,
-                    );
-                    const currentSwap = await getSwap(swap().id);
-                    currentSwap.claimTx = tx.hash;
-                    await setSwapStorage(currentSwap);
-                }}
-                buttonText={t("claim")}
-                promptText={t("transaction_prompt", { button: t("claim") })}
-                waitingText={t("tx_ready_to_claim")}
-                showHr={true}
+            <ClaimRsk
+                swapId={reverse.id}
+                timeoutBlockHeight={reverse.timeoutBlockHeight}
+                amount={reverse.onchainAmount}
+                preimage={reverse.preimage}
+                refundAddress={reverse.refundAddress}
             />
         );
     }
-
-     */
 
     return (
         <div>

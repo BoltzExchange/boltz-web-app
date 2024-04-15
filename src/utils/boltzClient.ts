@@ -126,6 +126,7 @@ type ReverseCreatedResponse = {
     onchainAmount: number;
     refundPublicKey?: string;
     blindingKey?: string;
+    refundAddress?: string;
 };
 
 type ChainSwapDetails = {
@@ -136,6 +137,7 @@ type ChainSwapDetails = {
     amount: number;
     blindingKey?: string;
     refundAddress?: string;
+    claimAddress?: string;
     bip21?: string;
 };
 
@@ -194,6 +196,7 @@ export const createReverseSwap = (
     pairHash: string,
     referralId: string,
     claimPublicKey?: string,
+    claimAddress?: string,
 ): Promise<ReverseCreatedResponse> =>
     fetcher("/v2/swap/reverse", to, {
         from,
@@ -201,6 +204,7 @@ export const createReverseSwap = (
         invoiceAmount,
         preimageHash,
         claimPublicKey,
+        claimAddress,
         referralId,
         pairHash,
     });
@@ -210,8 +214,9 @@ export const createChainSwap = (
     to: string,
     userLockAmount: number,
     preimageHash: string,
-    claimPublicKey: string,
-    refundPublicKey: string,
+    claimPublicKey: string | undefined,
+    refundPublicKey: string | undefined,
+    claimAddress: string | undefined,
     pairHash: string,
     referralId: string,
 ): Promise<ChainSwapCreatedResponse> =>
@@ -222,6 +227,7 @@ export const createChainSwap = (
         preimageHash,
         claimPublicKey,
         refundPublicKey,
+        claimAddress,
         pairHash,
         referralId,
     });
@@ -289,8 +295,11 @@ export const postSubmarineClaimDetails = (
         partialSignature: Buffer.from(partialSignature).toString("hex"),
     });
 
-export const getSubmarineEipSignature = (asset: string, id: string) =>
-    fetcher<{ signature: string }>(`/v2/swap/submarine/${id}/refund`, asset);
+export const getEipRefundSignature = (
+    asset: string,
+    id: string,
+    type: SwapType,
+) => fetcher<{ signature: string }>(`/v2/swap/${type}/${id}/refund`, asset);
 
 export const getFeeEstimations = (asset: string) =>
     fetcher<Record<string, number>>("/v2/chain/fees", asset);

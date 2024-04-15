@@ -1,14 +1,91 @@
+import { crypto } from "bitcoinjs-lib";
+import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { Accessor, Setter, createSignal } from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
+import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getLockupTransaction } from "../utils/boltzClient";
+import { useWeb3Signer } from "../context/Web3";
+import {
+    getEipRefundSignature,
+    getLockupTransaction,
+} from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
+import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
+import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import ContractTransaction from "./ContractTransaction";
+
+const RefundEvm = ({
+    swapId,
+    amount,
+    claimAddress,
+    preimageHash,
+    timeoutBlockHeight,
+}: {
+    swapId: string;
+    amount: number;
+    preimageHash: string;
+    claimAddress: string;
+    timeoutBlockHeight: number;
+}) => {
+    const { setSwap } = usePayContext();
+    const { getEtherSwap, getSigner } = useWeb3Signer();
+    const { setSwapStorage, getSwap, t } = useGlobalContext();
+
+    return (
+        <ContractTransaction
+            onClick={async () => {
+                const [contract, signer, currentSwap] = await Promise.all([
+                    getEtherSwap(),
+                    getSigner(),
+                    getSwap(swapId),
+                ]);
+
+                let tx: TransactionResponse;
+
+                if (
+                    timeoutBlockHeight <
+                    (await signer.provider.getBlockNumber())
+                ) {
+                    tx = await contract.refund(
+                        prefix0x(preimageHash),
+                        satoshiToWei(amount),
+                        claimAddress,
+                        timeoutBlockHeight,
+                    );
+                } else {
+                    const { signature } = await getEipRefundSignature(
+                        currentSwap.assetSend,
+                        currentSwap.id,
+                        currentSwap.type,
+                    );
+                    const decSignature = Signature.from(signature);
+
+                    tx = await contract.refundCooperative(
+                        prefix0x(preimageHash),
+                        satoshiToWei(amount),
+                        claimAddress,
+                        timeoutBlockHeight,
+                        decSignature.v,
+                        decSignature.r,
+                        decSignature.s,
+                    );
+                }
+
+                currentSwap.refundTx = tx.hash;
+                await setSwapStorage(currentSwap);
+                setSwap(currentSwap);
+                await tx.wait(1);
+            }}
+            buttonText={t("refund")}
+        />
+    );
+};
 
 const RefundButton = ({
     swap,
@@ -27,64 +104,35 @@ const RefundButton = ({
     } = useGlobalContext();
     const { setSwap } = usePayContext();
 
-    /*
-    TODO
-    if (swap() && swap().asset === RBTC) {
-        const { getEtherSwap, getSigner } = useWeb3Signer();
+    if (swap() && swap().assetSend === RBTC) {
+        if (swap().type === SwapType.Submarine) {
+            const submarine = swap() as SubmarineSwap;
 
-        return (
-            <ContractTransaction
-                onClick={async () => {
-                    const [contract, signer] = await Promise.all([
-                        getEtherSwap(),
-                        getSigner(),
-                    ]);
+            return (
+                <RefundEvm
+                    swapId={submarine.id}
+                    amount={submarine.expectedAmount}
+                    claimAddress={submarine.claimAddress}
+                    timeoutBlockHeight={submarine.timeoutBlockHeight}
+                    preimageHash={decodeInvoice(submarine.invoice).preimageHash}
+                />
+            );
+        } else {
+            const chain = swap() as ChainSwap;
 
-                    const currentSwap = swap();
-                    const preimageHash = prefix0x(
-                        decodeInvoice(currentSwap.invoice).preimageHash,
-                    );
-
-                    let tx: TransactionResponse;
-
-                    if (
-                        currentSwap.timeoutBlockHeight <
-                        (await signer.provider.getBlockNumber())
-                    ) {
-                        tx = await contract.refund(
-                            preimageHash,
-                            satoshiToWei(currentSwap.expectedAmount),
-                            currentSwap.claimAddress,
-                            currentSwap.timeoutBlockHeight,
-                        );
-                    } else {
-                        const { signature } = await getSubmarineEipSignature(
-                            currentSwap.asset,
-                            currentSwap.id,
-                        );
-                        const decSignature = Signature.from(signature);
-
-                        tx = await contract.refundCooperative(
-                            preimageHash,
-                            satoshiToWei(currentSwap.expectedAmount),
-                            currentSwap.claimAddress,
-                            currentSwap.timeoutBlockHeight,
-                            decSignature.v,
-                            decSignature.r,
-                            decSignature.s,
-                        );
-                    }
-
-                    currentSwap.refundTx = tx.hash;
-                    await setSwapStorage(currentSwap);
-                    setSwap(currentSwap);
-                    await tx.wait(1);
-                }}
-                buttonText={t("refund")}
-            />
-        );
+            return (
+                <RefundEvm
+                    swapId={chain.id}
+                    amount={chain.lockupDetails.amount}
+                    claimAddress={chain.lockupDetails.claimAddress}
+                    timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}
+                    preimageHash={crypto
+                        .sha256(Buffer.from(chain.preimage, "hex"))
+                        .toString("hex")}
+                />
+            );
+        }
     }
-     */
 
     const [valid, setValid] = createSignal<boolean>(false);
     const [refundRunning, setRefundRunning] = createSignal<boolean>(false);

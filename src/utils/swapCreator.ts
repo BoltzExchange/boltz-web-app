@@ -30,6 +30,7 @@ export type SwapBase = {
     // Not set for submarine swaps; but set for interface compatibility
     claimTx?: string;
     refundTx?: string;
+    lockupTx?: string;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -121,6 +122,7 @@ export const createReverse = async (
         getPair(pairs, SwapType.Reverse, assetSend, assetReceive).hash,
         referralId,
         claimKeys?.publicKey.toString("hex"),
+        claimAddress,
     );
 
     return {
@@ -148,16 +150,17 @@ export const createChain = async (
     referralId: string,
 ): Promise<ChainSwap> => {
     const preimage = randomBytes(32);
-    const claimKeys = ECPair.makeRandom();
-    const refundKeys = ECPair.makeRandom();
+    const claimKeys = assetReceive !== RBTC ? ECPair.makeRandom() : undefined;
+    const refundKeys = assetSend !== RBTC ? ECPair.makeRandom() : undefined;
 
     const res = await createChainSwap(
         assetSend,
         assetReceive,
         Number(sendAmount),
         crypto.sha256(preimage).toString("hex"),
-        claimKeys.publicKey.toString("hex"),
-        refundKeys.publicKey.toString("hex"),
+        claimKeys?.publicKey.toString("hex"),
+        refundKeys?.publicKey.toString("hex"),
+        claimAddress,
         getPair(pairs, SwapType.Chain, assetSend, assetReceive).hash,
         referralId,
     );
@@ -173,8 +176,8 @@ export const createChain = async (
         ),
         claimAddress,
         preimage: preimage.toString("hex"),
-        claimPrivateKey: claimKeys.privateKey.toString("hex"),
-        refundPrivateKey: refundKeys.privateKey.toString("hex"),
+        claimPrivateKey: claimKeys?.privateKey.toString("hex"),
+        refundPrivateKey: refundKeys?.privateKey.toString("hex"),
     };
 };
 

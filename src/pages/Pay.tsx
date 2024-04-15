@@ -216,7 +216,12 @@ const Pay = () => {
                         }>
                         <TransactionClaimed />
                     </Show>
-                    <Show when={swapStatus() == "transaction.confirmed"}>
+                    <Show
+                        when={
+                            swapStatus() == "transaction.confirmed" ||
+                            swapStatus() ===
+                                swapStatusPending.TransactionServerConfirmed
+                        }>
                         <TransactionConfirmed />
                     </Show>
                     <Show
