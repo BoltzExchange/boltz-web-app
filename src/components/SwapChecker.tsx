@@ -179,7 +179,10 @@ export const SwapChecker = () => {
                 getRelevantAssetForSwap(currentSwap),
                 currentSwap.id,
             );
-        } else if (data.status === swapStatusSuccess.TransactionClaimed) {
+        } else if (
+            currentSwap.type === SwapType.Chain ||
+            data.status === swapStatusSuccess.TransactionClaimed
+        ) {
             data.transaction = (
                 await getChainSwapTransactions(
                     getRelevantAssetForSwap(currentSwap),
