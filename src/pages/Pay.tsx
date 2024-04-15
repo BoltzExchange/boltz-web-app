@@ -95,18 +95,22 @@ const BlockExplorerLink = ({
     // TODO: RSK
     // TODO: how to show server lockup?
 
-    const chainSwap = swap() as ChainSwap;
-    const hasBeenClaimed = chainSwap.claimTx !== undefined;
-    const asset = hasBeenClaimed ? chainSwap.assetReceive : chainSwap.assetSend;
+    const [hasBeenClaimed, setHasBeenClaimed] = createSignal<boolean>(false);
+    const asset = () =>
+        hasBeenClaimed() ? swap().assetReceive : swap().assetSend;
+
+    createEffect(() => {
+        setHasBeenClaimed(swap().claimTx !== undefined);
+    });
 
     return (
         <BlockExplorer
-            asset={asset}
-            txId={chainSwap.claimTx}
+            asset={asset()}
+            txId={swap().claimTx}
             address={
                 hasBeenClaimed
                     ? undefined
-                    : chainSwap.lockupDetails.lockupAddress
+                    : (swap() as ChainSwap).lockupDetails.lockupAddress
             }
         />
     );

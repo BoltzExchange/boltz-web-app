@@ -180,7 +180,7 @@ export const SwapChecker = () => {
                 currentSwap.id,
             );
         } else if (
-            currentSwap.type === SwapType.Chain ||
+            currentSwap.type === SwapType.Chain &&
             data.status === swapStatusSuccess.TransactionClaimed
         ) {
             data.transaction = (
