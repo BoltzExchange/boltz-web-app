@@ -54,7 +54,7 @@ export const CreateButton = () => {
     } = useCreateContext();
     const { getEtherSwap } = useWeb3Signer();
 
-    const [buttonDisable, setButtonDisable] = createSignal(true);
+    const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
     const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
         key: "create_swap",
@@ -68,10 +68,6 @@ export const CreateButton = () => {
             sendAmount().isGreaterThan(0)
         );
     };
-
-    createEffect(() => {
-        setButtonDisable(!online() || !(valid() || validLnurl()));
-    });
 
     createMemo(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
@@ -283,7 +279,9 @@ export const CreateButton = () => {
             id="create-swap-button"
             data-testid="create-swap-button"
             class={buttonClass()}
-            disabled={buttonDisable()}
+            disabled={
+                !online() || !(valid() || validLnurl()) || buttonDisable()
+            }
             onClick={buttonClick}>
             {getButtonLabel(buttonLabel())}
         </button>
