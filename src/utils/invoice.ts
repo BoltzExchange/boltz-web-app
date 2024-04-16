@@ -146,7 +146,11 @@ export const extractAddress = (data: string) => {
 
 export const isInvoice = (data: string) => {
     const prefix = bolt11Prefixes[config.network];
-    return data.toLowerCase().startsWith(prefix);
+    const startsWithPrefix = data.toLowerCase().startsWith(prefix);
+    if (prefix === bolt11Prefixes.mainnet && startsWithPrefix) {
+        return !data.toLowerCase().startsWith(bolt11Prefixes.regtest);
+    }
+    return startsWithPrefix;
 };
 
 const isValidBech32 = (data: string) => {
