@@ -1,26 +1,15 @@
-import { useNavigate } from "@solidjs/router";
-import {
-    Accessor,
-    For,
-    Setter,
-    Show,
-    createMemo,
-    createSignal,
-} from "solid-js";
+import { Accessor, For, Show, createMemo, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 
 const SwapList = ({
     swapsSignal,
-    setSwapSignal,
     onDelete,
 }: {
     swapsSignal: Accessor<any[]>;
-    setSwapSignal?: Setter<any[]>;
     onDelete?: () => Promise<any>;
 }) => {
-    const navigate = useNavigate();
     const { deleteSwap, t } = useGlobalContext();
     const [sortedSwaps, setSortedSwaps] = createSignal([]);
     const [lastSwap, setLastSwap] = createSignal();
@@ -52,11 +41,9 @@ const SwapList = ({
                 {(swap) => (
                     <>
                         <div class="swaplist-item">
-                            <span
-                                class="btn-small"
-                                onClick={() => navigate("/swap/" + swap.id)}>
+                            <a class="btn-small" href={`/swap/${swap.id}`}>
                                 {t("view")}
-                            </span>
+                            </a>
                             <span
                                 data-reverse={swap.reverse}
                                 data-asset={swap.asset}
