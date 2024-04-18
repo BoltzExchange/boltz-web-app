@@ -18,17 +18,9 @@ describe("SwapList", () => {
 
         const {
             container: { firstChild: firstChild },
-        } = render(
-            () => (
-                <SwapList
-                    swapsSignal={swapsSignal}
-                    setSwapSignal={() => {
-                        return undefined;
-                    }}
-                />
-            ),
-            { wrapper: contextWrapper },
-        );
+        } = render(() => <SwapList swapsSignal={swapsSignal} />, {
+            wrapper: contextWrapper,
+        });
 
         const childNodes = [];
         firstChild.childNodes.forEach((node) => {
