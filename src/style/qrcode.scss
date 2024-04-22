@@ -10,10 +10,19 @@ $size: 40px;
         width: $size;
         height: $size;
         z-index: 1;
-        background: #ff0;
-        background-image: url(/boltz-icon.svg);
+        background: white;
+        background-image: $boltz_icon;
         background-size: 100%;
         border-radius: 50%;
+    }
+    &[data-asset="BTC"] span {
+        background-image: $bitcoin_icon;
+    }
+    &[data-asset="L-BTC"] span {
+        background-image: $liquid_icon;
+    }
+    &[data-asset="RBTC"] span {
+        background-image: $rootstock_icon;
     }
     img {
         width: 300px;

@@ -1,3 +1,4 @@
+@import "vars";
 .icon {
     display: inline-block;
     width: 36px;
@@ -15,7 +16,7 @@
 
 .asset-LN {
     .icon {
-        background-image: url(../assets/lightning-icon.svg);
+        background-image: $lightning_icon;
         background-size: 80%;
         background-position: center;
     }
@@ -26,7 +27,7 @@
 
 .asset-BTC {
     .icon {
-        background-image: url(../assets/bitcoin-icon.svg);
+        background-image: $bitcoin_icon;
     }
     .asset-text:before {
         content: "bitcoin";
@@ -35,7 +36,7 @@
 
 .asset-L-BTC {
     .icon {
-        background-image: url(../assets/liquid-icon.svg);
+        background-image: $liquid_icon;
     }
     .asset-text:before {
         content: "liquid";
@@ -44,7 +45,7 @@
 
 .asset-RBTC {
     .icon {
-        background-image: url(../assets/rootstock-icon.svg);
+        background-image: $rootstock_icon;
     }
     .asset-text:before {
         content: "rootstock";
