@@ -15,7 +15,8 @@ import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 
 const Fees = () => {
-    const { t, pairs, fetchPairs, denomination, separator } = useGlobalContext();
+    const { t, pairs, fetchPairs, denomination, separator } =
+        useGlobalContext();
     const {
         asset,
         reverse,
