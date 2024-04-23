@@ -2,8 +2,8 @@
 # This script is used to release a new version of the bolt-web-app
 # It will create a new branch with the tag name and update the version in package.json
 # It will also update the LICENSE file with the new date and licensed work
-# It will create a branch, commit the changes and push them to the remote repository
 # It will generate a changelog and release notes
+# It will create a branch, commit the changes and push them to the remote repository
 # It will create a pull request with the changes
 
 # check if gh is installed
@@ -39,30 +39,24 @@ sed -i \
   -e "s/Licensed Work:.*/Licensed Work:        boltz-web-app $tag/g" \
   LICENSE
 
-git add package.json package-lock.json LICENSE
+# generate changelog after we updated version
+git-cliff -o CHANGELOG.md -t $tag
+
+git add package.json package-lock.json LICENSE CHANGELOG.md
 
 # commit
-git commit -am "$commit_message"
+git commit -m "$commit_message"
 
-# generate changelog after we updated version
-git-cliff -o CHANGELOG.md
+git push origin $tag
+gh pr create --title "$commit_message" --base main --head $tag --body "$commit_message"
 
-# generate release notes only for latest tag
-git-cliff -o release.md -t $tag
-
-# squash the commit for changelog to be included
-git add CHANGELOG.md
-git commit -m "fixup!"
-git reset --soft HEAD~1
-git commit
-
-# git push origin $tag
-# gh pr create --title "$commit_message" --base main --head $tag
-
-cat release.md
+git tag -a $tag -m "$tag"
+git-cliff -o release.md --latest
+git tag -d $tag
 
 echo "1. Please review the release notes"
 echo "2. merge the pull request"
 echo "3. pull latest main"
-echo "4. run the following command to create the release"
+echo "4. run the following commands to create the release"
 echo "gh release create "$tag" -F release.md"
+echo "rm release.md"
