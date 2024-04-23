@@ -66,7 +66,7 @@ const InvoiceSet = () => {
             </h2>
             <hr />
             <a href={swap().bip21}>
-                <QrCode data={swap().bip21} />
+                <QrCode asset={swap().asset} data={swap().bip21} />
             </a>
             <hr />
             <p
