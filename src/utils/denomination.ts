@@ -40,11 +40,11 @@ export const formatAmountDenomination = (
             if (amountBig.isZero()) {
                 amountString = amountBig.toFixed(1);
             }
+
             // 0.00000001.toString() returns "1e-8"
             // 0.0000001.toString() returns "1e-7"
             if (amountBig.toString().indexOf("-") !== -1) {
-                const digits = amountBig.toString().slice(-1);
-                amountString = amountBig.toFixed(Number(digits));
+                amountString = amountBig.toFixed(Number(8)).replace(/0+$/, "");
             }
 
             if (separator === ",") {

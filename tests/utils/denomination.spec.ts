@@ -36,6 +36,7 @@ describe("denomination utils", () => {
             ${denominations.btc} | ${123123}      | ${"."}    | ${"0.00123123"}
             ${denominations.btc} | ${1}           | ${"."}    | ${"0.00000001"}
             ${denominations.btc} | ${10}          | ${"."}    | ${"0.0000001"}
+            ${denominations.btc} | ${14}          | ${"."}    | ${"0.00000014"}
             ${denominations.btc} | ${100}         | ${"."}    | ${"0.000001"}
             ${denominations.btc} | ${1000}        | ${"."}    | ${"0.00001"}
             ${denominations.btc} | ${10000}       | ${"."}    | ${"0.0001"}
