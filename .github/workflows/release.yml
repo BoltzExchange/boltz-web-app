@@ -1,0 +1,47 @@
+name: release
+
+on:
+    push:
+        tags:
+            - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: main
+
+            - name: update version in repo
+              env:
+                  tag: ${{ github.ref_name }}
+              run: |
+                  # make the changes
+                  sed -i "s/\"version\": \".*\"/\"version\": \"$tag\"/" package.json
+                  npm i
+                  new_date=$(date -d "+4 years"  +%Y-%m-%d)
+                  sed -i -e "s/Change Date:.*/Change Date:          $new_date/g" \
+                         -e "s/Licensed Work:.*/Licensed Work:        bolt-web-app $tag/g" LICENSE
+                  npm run changelog -- -t $tag
+
+                  # commit and push changes
+                  git config --global user.name 'Boltz'
+                  git config --global user.email 'hi@bol.tz'
+                  git commit -am "[CHORE] update version to $tag"
+                  git push
+
+                  # delete tag and recreate it
+                  git push --delete origin $tag
+                  git tag -fa $tag -m "update via workflow"
+                  git push --tags
+
+            - name: Create github release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  tag: ${{ github.ref_name }}
+              run: |
+                  gh release create "$tag" --draft -F CHANGELOG.md
