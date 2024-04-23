@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.3.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.3..v1.3.4) - 2024-04-23
+
+### Bug Fixes
+
+- small number BTC denomination (#560) - ([ed35055](https://github.com/BoltzExchange/boltz-web-app/commit/ed350551cb3284bd0a7e68cdce45e2c3355546c2))
+
+### Features
+
+- QR code icon depending on asset (#559) - ([dbf2d08](https://github.com/BoltzExchange/boltz-web-app/commit/dbf2d08c131a24f0776d288d4b328eeaaea4db8a))
+
+### Miscellaneous Chores
+
+- set mainnet log level to debug - ([7f37914](https://github.com/BoltzExchange/boltz-web-app/commit/7f3791406db4c042cdbe6b5f86528d0b5498423b))
+
+### Refactoring
+
+- use `<a>` for swap history links (#557) - ([186cd14](https://github.com/BoltzExchange/boltz-web-app/commit/186cd146ae278a45ed0795b5154f82bcef4a4df1))
+
+---
 ## [1.3.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.1..v1.3.3) - 2024-04-16
 
 ### Bug Fixes
@@ -50,6 +69,7 @@ All notable changes to this project will be documented in this file. See [conven
 - show return to page only on mobile (#537) - ([029ae81](https://github.com/BoltzExchange/boltz-web-app/commit/029ae812b14a6166979c8e0c737e81c79c904e05))
 - prepare release v1.3.2 - ([46561e2](https://github.com/BoltzExchange/boltz-web-app/commit/46561e2acb7a4d3eb5f366e0511ad3ff87496ca7))
 - bump vite from 5.2.4 to 5.2.6 (#552) - ([2b291d4](https://github.com/BoltzExchange/boltz-web-app/commit/2b291d423ed77ddc679f0e9eb1e4c4fee54a5d01))
+- prepare release v1.3.3 (#556) - ([89e901c](https://github.com/BoltzExchange/boltz-web-app/commit/89e901cd9bebb62495fd9e33705c5a31ccdd05a0))
 
 ### Refactoring
 
