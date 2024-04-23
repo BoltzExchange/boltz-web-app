@@ -13,9 +13,9 @@ then
     exit 1
 fi
 
-if ! command -v git-cliff &> /dev/null
+if ! command -v npx git-cliff &> /dev/null
 then
-    echo "git-cliff could not be found"
+    echo "npx git-cliff could not be found"
     exit 1
 fi
 
@@ -40,7 +40,7 @@ sed -i \
   LICENSE
 
 # generate changelog after we updated version
-git-cliff -o CHANGELOG.md -t $tag
+npx git-cliff -o CHANGELOG.md -t $tag
 
 git add package.json package-lock.json LICENSE CHANGELOG.md
 
@@ -51,7 +51,7 @@ git push origin $tag
 gh pr create --title "$commit_message" --base main --head $tag --body "$commit_message"
 
 git tag -a $tag -m "$tag"
-git-cliff -o release.md --latest
+npx git-cliff -o release.md --latest
 git tag -d $tag
 
 echo "1. Please review the release notes"
