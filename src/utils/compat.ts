@@ -68,17 +68,14 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     );
 
     if (asset === LBTC) {
-        // This throws for unconfidential addresses -> fallback to output script decoding
-        try {
-            const decoded = (address as typeof LiquidAddress).fromConfidential(
-                addr,
-            );
+        const decoded = (address as typeof LiquidAddress).fromConfidential(
+            addr,
+        );
 
-            return {
-                script,
-                blindingKey: decoded.blindingKey,
-            };
-        } catch (e) {}
+        return {
+            script,
+            blindingKey: decoded.blindingKey,
+        };
     }
 
     return {
