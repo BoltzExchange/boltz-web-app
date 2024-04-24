@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
-import { BTC, LBTC, LN } from "../../src/consts";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import {
     decodeInvoice,
     extractInvoice,

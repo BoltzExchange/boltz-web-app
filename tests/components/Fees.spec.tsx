@@ -2,7 +2,8 @@ import { render } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import Fees from "../../src/components/Fees";
-import { BTC, LBTC } from "../../src/consts";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { SwapType } from "../../src/consts/Enums";
 import { calculateSendAmount } from "../../src/utils/calculate";
 import {
     TestComponent,
@@ -38,21 +39,25 @@ describe("Fees component", () => {
         );
         globalSignals.setPairs(pairs);
 
-        expect(signals.minimum()).toEqual(
-            pairs.submarine[BTC][BTC].limits.minimal,
+        signals.setAssetReceive(BTC);
+        signals.setAssetSend(LN);
+
+        expect(pairs.submarine[BTC][BTC].limits.minimal).toEqual(
+            signals.minimum(),
         );
-        expect(signals.maximum()).toEqual(
-            pairs.submarine[BTC][BTC].limits.maximal,
+        expect(pairs.submarine[BTC][BTC].limits.maximal).toEqual(
+            signals.maximum(),
         );
 
-        signals.setReverse(false);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
 
         expect(signals.minimum()).toEqual(
             calculateSendAmount(
                 BigNumber(pairs.submarine[BTC][BTC].limits.minimal),
                 signals.boltzFee(),
                 signals.minerFee(),
-                signals.reverse(),
+                SwapType.Submarine,
             ).toNumber(),
         );
         expect(signals.maximum()).toEqual(
@@ -60,7 +65,7 @@ describe("Fees component", () => {
                 BigNumber(pairs.submarine[BTC][BTC].limits.maximal),
                 signals.boltzFee(),
                 signals.minerFee(),
-                signals.reverse(),
+                SwapType.Submarine,
             ).toNumber(),
         );
     });
@@ -76,8 +81,8 @@ describe("Fees component", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setPairs(pairs);
-        signals.setAsset(LBTC);
-        signals.setReverse(true);
+        signals.setAssetSend(LN);
+        signals.setAssetReceive(LBTC);
         signals.setAddressValid(true);
         signals.setOnchainAddress(
             "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",

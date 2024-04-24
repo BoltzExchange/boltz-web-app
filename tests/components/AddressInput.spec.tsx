@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import AddressInput from "../../src/components/AddressInput";
-import { BTC, LBTC, LN } from "../../src/consts";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import {
     TestComponent,
     contextWrapper,

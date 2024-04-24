@@ -309,6 +309,8 @@ export const validateResponse = async (
                     getEtherSwap,
                     buffer,
                 );
+            default:
+                throw new Error("unknown_swap_type");
         }
     } catch (e) {
         log.warn(`${swap.type} swap validation threw`, e);

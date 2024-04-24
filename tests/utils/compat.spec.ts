@@ -2,7 +2,7 @@ import ecc from "@bitcoinerlab/secp256k1";
 import { initEccLib, networks } from "bitcoinjs-lib";
 import { networks as LiquidNetworks } from "liquidjs-lib";
 
-import { BTC, LBTC, LN } from "../../src/consts";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import {
     getNetwork,
     isConfidentialAddress,

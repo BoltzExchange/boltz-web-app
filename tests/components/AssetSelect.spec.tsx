@@ -1,19 +1,12 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import SelectAsset from "../../src/components/AssetSelect";
-import { BTC, LBTC, LN, sideReceive, sideSend } from "../../src/consts";
-import { useCreateContext } from "../../src/context/Create";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
-import { contextWrapper } from "../helper";
+import { TestComponent, contextWrapper, signals } from "../helper";
 
 describe("AssetSelect", () => {
-    let signals: any;
-
-    const TestComponent = () => {
-        signals = useCreateContext();
-        return "";
-    };
-
     test.each`
         asset
         ${LN}
@@ -32,7 +25,7 @@ describe("AssetSelect", () => {
 
         signals.setAssetSend(asset);
         signals.setAssetSelect(true);
-        signals.setAssetSelected(sideSend);
+        signals.setAssetSelected(Side.Send);
 
         for (const elem of res.container.children[0].children) {
             const classes = Array.from(elem.classList.values());
@@ -48,8 +41,8 @@ describe("AssetSelect", () => {
 
     test.each`
         side
-        ${sideSend}
-        ${sideReceive}
+        ${Side.Send}
+        ${Side.Receive}
     `("should set header text for $side", async ({ side }) => {
         render(
             () => (
@@ -67,7 +60,7 @@ describe("AssetSelect", () => {
         const header = await screen.findByText(
             i18n.en.select_asset.replace(
                 "{{ direction }}",
-                side === sideSend ? i18n.en.send : i18n.en.receive,
+                side === Side.Send ? i18n.en.send : i18n.en.receive,
             ),
         );
         expect(header).not.toBeUndefined();
@@ -86,38 +79,28 @@ describe("AssetSelect", () => {
 
         signals.setAssetSend(BTC);
         signals.setAssetSelect(true);
-        signals.setAssetSelected(sideSend);
+        signals.setAssetSelected(Side.Send);
 
-        const setAsset = jest.spyOn(signals, "setAsset");
         const setAssetSend = jest.spyOn(signals, "setAssetSend");
         const setAssetReceive = jest.spyOn(signals, "setAssetReceive");
 
         const btcButton = container.children[0].children[3];
         fireEvent.click(btcButton);
 
-        expect(setAsset).toHaveBeenCalledTimes(0);
         expect(setAssetSend).toHaveBeenCalledTimes(0);
         expect(setAssetReceive).toHaveBeenCalledTimes(0);
     });
 
     test.each`
-        side           | newAsset | asset   | expectedOther | prevSend | prevReceive | prevAsset
-        ${sideSend}    | ${BTC}   | ${BTC}  | ${LN}         | ${LBTC}  | ${LN}       | ${LBTC}
-        ${sideSend}    | ${LBTC}  | ${LBTC} | ${LN}         | ${BTC}   | ${LN}       | ${BTC}
-        ${sideSend}    | ${BTC}   | ${BTC}  | ${LN}         | ${LN}    | ${BTC}      | ${BTC}
-        ${sideReceive} | ${LN}    | ${BTC}  | ${BTC}        | ${LN}    | ${BTC}      | ${BTC}
-        ${sideReceive} | ${LBTC}  | ${LBTC} | ${LN}         | ${LN}    | ${BTC}      | ${BTC}
+        side            | newAsset | expectedOther | prevSend | prevReceive
+        ${Side.Send}    | ${BTC}   | ${LN}         | ${LBTC}  | ${LN}
+        ${Side.Send}    | ${LBTC}  | ${LN}         | ${BTC}   | ${LN}
+        ${Side.Send}    | ${BTC}   | ${LN}         | ${LN}    | ${BTC}
+        ${Side.Receive} | ${LN}    | ${BTC}        | ${LN}    | ${BTC}
+        ${Side.Receive} | ${LBTC}  | ${LN}         | ${LN}    | ${BTC}
     `(
         "should change $side asset to $newAsset (prev $prevSend -> $prevReceive)",
-        async ({
-            side,
-            asset,
-            newAsset,
-            prevSend,
-            prevAsset,
-            prevReceive,
-            expectedOther,
-        }) => {
+        async ({ side, newAsset, prevSend, prevReceive, expectedOther }) => {
             render(
                 () => (
                     <>
@@ -128,7 +111,6 @@ describe("AssetSelect", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAsset(prevAsset);
             signals.setAssetSelect(true);
             signals.setAssetSelected(side);
             signals.setAssetSend(prevSend);
@@ -136,9 +118,7 @@ describe("AssetSelect", () => {
 
             fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
-            expect(signals.asset()).toEqual(asset);
-
-            const isSend = side === sideSend;
+            const isSend = side === Side.Send;
             expect(
                 isSend ? signals.assetSend() : signals.assetReceive(),
             ).toEqual(newAsset);

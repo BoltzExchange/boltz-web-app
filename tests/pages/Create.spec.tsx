@@ -1,11 +1,13 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
-import { BTC, LN, sideReceive, sideSend } from "../../src/consts";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { Side, SwapType } from "../../src/consts/Enums";
+import { Denomination } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
-import { denominations, formatAmount } from "../../src/utils/denomination";
+import { formatAmount } from "../../src/utils/denomination";
 import {
     TestComponent,
     contextWrapper,
@@ -63,17 +65,17 @@ describe("Create", () => {
         );
 
         globalSignals.setPairs(pairs);
-        signals.setReverse(true);
-        signals.setAsset("BTC");
+        signals.setAssetSend(LN);
+        signals.setAssetReceive(BTC);
         signals.setSendAmount(BigNumber(50_000));
 
         // To force trigger a recalculation
-        signals.setAsset("L-BTC");
-        signals.setAsset("BTC");
+        signals.setAssetReceive(LBTC);
+        signals.setAssetReceive(BTC);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110));
 
-        signals.setAsset("L-BTC");
+        signals.setAssetReceive(LBTC);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(49447));
     });
@@ -92,13 +94,13 @@ describe("Create", () => {
         );
 
         globalSignals.setPairs(pairs);
-        signals.setReverse(true);
-        signals.setAsset("BTC");
+        signals.setAssetSend(LN);
+        signals.setAssetReceive(BTC);
         signals.setSendAmount(BigNumber(50_000));
 
         // // To force trigger a recalculation
-        signals.setAsset("L-BTC");
-        signals.setAsset("BTC");
+        signals.setAssetReceive(LBTC);
+        signals.setAssetReceive(BTC);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110));
 
@@ -124,8 +126,8 @@ describe("Create", () => {
 
         globalSignals.setPairs(pairs);
         signals.setMinimum(pairs.reverse[BTC][BTC].limits.minimal);
-        signals.setReverse(true);
-        signals.setAsset("BTC");
+        signals.setAssetSend(LN);
+        signals.setAssetReceive(BTC);
 
         const updateConfig = () => {
             const updatedCfg = { ...pairs };
@@ -138,7 +140,7 @@ describe("Create", () => {
             target: { value: amount },
         });
 
-        expect(signals.amountChanged()).toEqual(sideReceive);
+        expect(signals.amountChanged()).toEqual(Side.Receive);
 
         expect(signals.sendAmount()).toEqual(BigNumber(112203));
         expect(signals.receiveAmount()).toEqual(BigNumber(amount));
@@ -152,7 +154,7 @@ describe("Create", () => {
             target: { value: amount },
         });
 
-        expect(signals.amountChanged()).toEqual(sideSend);
+        expect(signals.amountChanged()).toEqual(Side.Send);
 
         expect(signals.sendAmount()).toEqual(BigNumber(amount));
         expect(signals.receiveAmount()).toEqual(BigNumber(87858));
@@ -187,7 +189,7 @@ describe("Create", () => {
 
         const formattedAmount = formatAmount(
             BigNumber(amount),
-            denominations.sat,
+            Denomination.Sat,
             globalSignals.separator(),
         );
         fireEvent.click(await screen.findByText(formattedAmount));
@@ -198,7 +200,7 @@ describe("Create", () => {
                 BigNumber(amount),
                 signals.boltzFee(),
                 signals.minerFee(),
-                signals.reverse(),
+                SwapType.Reverse,
             ),
         );
     });
@@ -263,7 +265,7 @@ describe("Create", () => {
         );
         globalSignals.setPairs(pairs);
         globalSignals.setSeparator(".");
-        globalSignals.setDenomination(denominations.sat);
+        globalSignals.setDenomination(Denomination.Sat);
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
 
@@ -276,7 +278,7 @@ describe("Create", () => {
             },
         });
 
-        expect(globalSignals.denomination()).toEqual(denominations.btc);
+        expect(globalSignals.denomination()).toEqual(Denomination.Btc);
         expect(globalSignals.separator()).toEqual(".");
         expect(sendAmountInput.value).toEqual("0.01");
     });

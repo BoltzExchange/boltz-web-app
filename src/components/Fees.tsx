@@ -59,11 +59,9 @@ const Fees = () => {
 
                 case SwapType.Reverse:
                     const reverseCfg = cfg as ReversePairTypeTaproot;
-
                     let fee =
                         reverseCfg.fees.minerFees.claim +
                         reverseCfg.fees.minerFees.lockup;
-
                     if (
                         assetReceive() === LBTC &&
                         addressValid() &&

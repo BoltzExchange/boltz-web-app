@@ -2,17 +2,9 @@ import { render } from "@solidjs/testing-library";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
-import { CreateContextType, useCreateContext } from "../../src/context/Create";
-import { contextWrapper } from "../helper";
+import { TestComponent, contextWrapper, signals } from "../helper";
 
 describe("signals", () => {
-    let signals: CreateContextType;
-
-    const TestComponent = () => {
-        signals = useCreateContext();
-        return "";
-    };
-
     test.each`
         assetSend | assetReceive | expected
         ${LN}     | ${BTC}       | ${SwapType.Reverse}

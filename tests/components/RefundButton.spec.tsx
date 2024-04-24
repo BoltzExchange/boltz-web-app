@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 
 import RefundButton from "../../src/components/RefundButton";
+import { BTC, LN } from "../../src/consts/Assets";
+import { SwapType } from "../../src/consts/Enums";
 import { contextWrapper } from "../helper";
 
 describe("RefundButton", () => {
@@ -15,9 +17,11 @@ describe("RefundButton", () => {
     test("button should be active after pasting valid address", async () => {
         const [swap] = createSignal({
             id: "swap",
-            asset: "BTC",
+            assetSend: BTC,
+            assetReceive: LN,
+            type: SwapType.Submarine,
         });
-        render(() => <RefundButton swap={swap} />, {
+        render(() => <RefundButton swap={swap as any} />, {
             wrapper: contextWrapper,
         });
         const input = (await screen.findByTestId(
@@ -40,11 +44,19 @@ describe("RefundButton", () => {
     test("button should be inactive after pasting the lock address", async () => {
         const lockupAddress = "2N4Q5FhU2497BryFfUgbqkAJE87aKHUhXMp";
         const [swap] = createSignal({
+            version: 1,
+            date: 1620000000,
             id: "swap",
-            asset: "BTC",
+            assetSend: BTC,
+            assetReceive: BTC,
+            sendAmount: 10000,
+            receiveAmount: 10000,
+            type: SwapType.Submarine,
             address: lockupAddress,
+            bip21: `bitcoin:${lockupAddress}?amount=0.0001`,
+            swapTree: {},
         });
-        render(() => <RefundButton swap={swap} />, {
+        render(() => <RefundButton swap={swap as any} />, {
             wrapper: contextWrapper,
         });
         const input = (await screen.findByTestId(
@@ -67,9 +79,11 @@ describe("RefundButton", () => {
     test("button should be inactive after pasting an invalid address", async () => {
         const [swap] = createSignal({
             id: "swap",
-            asset: "BTC",
+            assetSend: BTC,
+            assetReceive: LN,
+            type: SwapType.Submarine,
         });
-        render(() => <RefundButton swap={swap} />, {
+        render(() => <RefundButton swap={swap as any} />, {
             wrapper: contextWrapper,
         });
         const input = (await screen.findByTestId(
