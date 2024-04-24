@@ -1,11 +1,12 @@
 import { render } from "@solidjs/testing-library";
 
-import { BTC, LBTC, LN } from "../../src/consts";
-import { useCreateContext } from "../../src/context/Create";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { SwapType } from "../../src/consts/Enums";
+import { CreateContextType, useCreateContext } from "../../src/context/Create";
 import { contextWrapper } from "../helper";
 
 describe("signals", () => {
-    let signals: any;
+    let signals: CreateContextType;
 
     const TestComponent = () => {
         signals = useCreateContext();
@@ -13,43 +14,37 @@ describe("signals", () => {
     };
 
     test.each`
-        value               | expected
-        ${LN}               | ${false}
-        ${BTC}              | ${true}
-        ${LBTC}             | ${true}
-        ${"something else"} | ${true}
+        assetSend | assetReceive | expected
+        ${LN}     | ${BTC}       | ${SwapType.Reverse}
+        ${LBTC}   | ${LN}        | ${SwapType.Submarine}
+        ${BTC}    | ${LBTC}      | ${SwapType.Chain}
     `(
-        "should set reverse to $expected based on assetReceive $value",
-        ({ value, expected }) => {
+        "should set swap_type to $expected based on $assetSend > $assetReceive",
+        ({ assetSend, assetReceive, expected }) => {
             render(() => <TestComponent />, { wrapper: contextWrapper });
-            signals.setReverse(undefined);
-            signals.setAssetReceive(value);
-            expect(signals.reverse()).toEqual(expected);
+            signals.setAssetSend(assetSend);
+            signals.setAssetReceive(assetReceive);
+            expect(signals.swapType()).toEqual(expected);
         },
     );
 
     test.each`
-        func         | value      | expectedAsset
-        ${"send"}    | ${LN}      | ${undefined}
-        ${"send"}    | ${BTC}     | ${BTC}
-        ${"send"}    | ${LBTC}    | ${LBTC}
-        ${"send"}    | ${"smthg"} | ${"smthg"}
-        ${"receive"} | ${LN}      | ${undefined}
-        ${"receive"} | ${BTC}     | ${BTC}
-        ${"receive"} | ${LBTC}    | ${LBTC}
-        ${"receive"} | ${"smthg"} | ${"smthg"}
+        assetSend | assetReceive | addressValid | invoiceValid | valid
+        ${LN}     | ${BTC}       | ${true}      | ${false}     | ${true}
+        ${BTC}    | ${LN}        | ${false}     | ${true}      | ${true}
+        ${BTC}    | ${LN}        | ${false}     | ${false}     | ${false}
+        ${BTC}    | ${LBTC}      | ${false}     | ${false}     | ${false}
+        ${BTC}    | ${LBTC}      | ${true}      | ${false}     | ${true}
     `(
-        "should set asset based on assetSend and assetReceive selection",
-        ({ func, value, expectedAsset }) => {
+        "should set valid to $valid based on $assetSend > $assetReceive",
+        ({ assetSend, assetReceive, addressValid, invoiceValid, valid }) => {
             render(() => <TestComponent />, { wrapper: contextWrapper });
-            signals.setAsset(undefined);
-            if (func === "send") {
-                signals.setAssetSend(value);
-            }
-            if (func === "receive") {
-                signals.setAssetReceive(value);
-            }
-            expect(signals.asset()).toEqual(expectedAsset);
+            signals.setAmountValid(true);
+            signals.setAddressValid(addressValid);
+            signals.setInvoiceValid(invoiceValid);
+            signals.setAssetSend(assetSend);
+            signals.setAssetReceive(assetReceive);
+            expect(signals.valid()).toEqual(valid);
         },
     );
 });
