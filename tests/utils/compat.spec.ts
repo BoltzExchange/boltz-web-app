@@ -31,6 +31,9 @@ describe("parse network correctly", () => {
         ${LBTC} | ${"el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu"}
         ${LBTC} | ${"AzppAMAawpcRLuVGJVec1EmDQPubCprhC8wTrKvLeYC9s73W4jpGN1sDaKs76y5ndvJ1k8ZBcNm8gtxo"}
         ${LBTC} | ${"CTEwXiS8q9to1ES8GifsLYkiv2FKmuMKMeHAiiyumH5DJzowybcEaAUyYtENoG9EKzgapFP3FhoMpbHs"}
+        ${LBTC} | ${"ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw"}
+        ${LBTC} | ${"XRPsyVYUGJpRhwoBLZAoqSdxLLqvdyoNN9"}
+        ${LBTC} | ${"2ddhmWyNVftuDm6o23hL8pxvmmCQUH2pN96"}
         ${LN}   | ${"lnbcrt4294u1pjlmqy7pp5g9tj83k3k54ajzktdv8dq5nqsc8336j4f0v3wphq37x8hklntsxsdqqcqzzsxqyz5vqsp53qupg459fzdhajwjmzs8vd3elge0rmkzkmrmnpeuwy6kme47ns4q9qyyssqvncgzrmmghmtxu9m7wvw0yvtgckz4078xwam7exjpka2c89ga0y3jenhv6hhzuccj9hkl7a7f20nuslh3wqa4lfduq76ycxaf3w56zcq32d5fv"}
         ${LN}   | ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
         ${LN}   | ${"admin@bol.tz"}
@@ -39,16 +42,4 @@ describe("parse network correctly", () => {
             expect(probeUserInput(expectedAsset, input)).toEqual(asset);
         }
     });
-
-    test.each`
-        input
-        ${"ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw"}
-        ${"XRPsyVYUGJpRhwoBLZAoqSdxLLqvdyoNN9"}
-        ${"2ddhmWyNVftuDm6o23hL8pxvmmCQUH2pN96"}
-    `(
-        "should not allow unconfidential Liquid address $input",
-        ({ input, asset }) => {
-            expect(probeUserInput(LBTC, input)).toEqual(null);
-        },
-    );
 });

@@ -263,24 +263,15 @@ describe("validate onchain addresses", () => {
         asset   | address
         ${BTC}  | ${"moEsJRFF6y3d5oSjHj6GBocVPw2GEeQ6WY"}
         ${BTC}  | ${"bcrt1q78qtnjrt53gauk6h2w32wane62jjg2gvval6w5"}
+        ${LBTC} | ${"XaGQJMVzMDn7DNwKtRA9fJVEVkxVE1FjgW"}
+        ${LBTC} | ${"2dsdhiFYQADKEEkcdafMXcGtSL96HSmsr16"}
         ${LBTC} | ${"CTEr9psVs76yrPL9PNrcSNx3Es1tC4EyboR4rtXYJguB6oFZWAUy3Kw7jSLTLee3xoiZc3fjsCi93Kfg"}
         ${LBTC} | ${"AzpoeCb1nyd1D3SWHCvDJsbYDPtA6ith4uGRYz9RdjHttsDG7HhCrshphLYtApYBtzxy6rsXYZeS9h6a"}
+        ${LBTC} | ${"ert1q4k67l66z0nwgcsgzw20638cpm75d6tpl4f4vyrp76fnnutn0ulvqwe7ahr"}
         ${LBTC} | ${"el1qqdmeywy40z2aasvaydsnmgqqqcgk92cvd9p9h4mpeh2x83dy79mhltd4al45ylxu33qsyu5l4z0srhagm5krl2n2cgxra5n88chxle7ctnpml5s983jr"}
     `("should validate $address", async ({ asset, address }) => {
         decodeAddress(asset, address);
     });
-
-    test.each`
-        asset   | address
-        ${LBTC} | ${"XaGQJMVzMDn7DNwKtRA9fJVEVkxVE1FjgW"}
-        ${LBTC} | ${"2dsdhiFYQADKEEkcdafMXcGtSL96HSmsr16"}
-        ${LBTC} | ${"ert1q4k67l66z0nwgcsgzw20638cpm75d6tpl4f4vyrp76fnnutn0ulvqwe7ahr"}
-    `(
-        "should not validate unconfidential Liquid address $address",
-        ({ asset, address }) => {
-            expect(() => decodeAddress(asset, address)).toThrow();
-        },
-    );
 
     test.each`
         asset   | address
