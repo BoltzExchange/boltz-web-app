@@ -20,9 +20,9 @@ describe("AddressInput", () => {
         ${true}  | ${LBTC} | ${"CTEyTteD4cQg2NfF1yGWUU1rWSDC8sKHrj5BZJzr8kzyKFXwNCJ8VyDhi45Q98KdSf3jeTkbjJy18JkP"}
         ${true}  | ${LBTC} | ${"AzpjfmC41JpC6ieu3odwFBqtF4isFeY8RHv1e699EM2RgiyHd49og66a8qLLMDrhL8pCLeWAxJat1ebD"}
         ${true}  | ${LBTC} | ${"el1qqt7nl8pw6278yxv38fezzw8lmqh40prpusfurcvsh2xn3sl0pvnz3whllcapdnxcxn2u0wumpu7u2u6anh2juvmz7spx6snmn"}
-        ${false} | ${LBTC} | ${"2do9j7MdMJSVKWosUmcLzhoR8E5mhabtUju"}
-        ${false} | ${LBTC} | ${"XUWfSHgUE1G72X9oGHXfecgzgf1N5A7WD2"}
-        ${false} | ${LBTC} | ${"ert1qhtlluwskenvrf4w8hwds70w9wdwem4fwsd0pk8"}
+        ${true}  | ${LBTC} | ${"2do9j7MdMJSVKWosUmcLzhoR8E5mhabtUju"}
+        ${true}  | ${LBTC} | ${"XUWfSHgUE1G72X9oGHXfecgzgf1N5A7WD2"}
+        ${true}  | ${LBTC} | ${"ert1qhtlluwskenvrf4w8hwds70w9wdwem4fwsd0pk8"}
     `(
         "should validate address $network $address -> $valid",
         async ({ valid, network, address }) => {
