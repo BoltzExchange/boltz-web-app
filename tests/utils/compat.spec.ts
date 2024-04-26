@@ -3,7 +3,11 @@ import { initEccLib, networks } from "bitcoinjs-lib";
 import { networks as LiquidNetworks } from "liquidjs-lib";
 
 import { BTC, LBTC, LN } from "../../src/consts";
-import { getNetwork, probeUserInput } from "../../src/utils/compat";
+import {
+    getNetwork,
+    isConfidentialAddress,
+    probeUserInput,
+} from "../../src/utils/compat";
 
 describe("parse network correctly", () => {
     beforeAll(() => {
@@ -42,4 +46,15 @@ describe("parse network correctly", () => {
             expect(probeUserInput(expectedAsset, input)).toEqual(asset);
         }
     });
+
+    test.each`
+        addr                                                                                                       | expected
+        ${"el1qqtwazfjrctweqy8lzg4k7as5y2c5ea3dqnvgqmrzd6s8yvmftn8v65cj0gl3pwrjmwex2vl7erry069tnl6l2u5junx22mnra"} | ${true}
+        ${"ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0"}                                                           | ${false}
+    `(
+        "should detect if Liquid address $addr is confidential",
+        ({ addr, expected }) => {
+            expect(isConfidentialAddress(addr)).toEqual(expected);
+        },
+    );
 });

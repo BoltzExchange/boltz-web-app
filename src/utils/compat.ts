@@ -86,6 +86,16 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
     };
 };
 
+export const isConfidentialAddress = (addr: string): boolean => {
+    try {
+        const address = getAddress(LBTC);
+        (address as typeof LiquidAddress).fromConfidential(addr);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
 const probeUserInputOption = (asset: string, input: string): boolean => {
     switch (asset) {
         case LN:
@@ -171,7 +181,10 @@ const getConstructClaimTransaction = (asset: string) => {
     };
 };
 
-const getConstructRefundTransaction = (asset: string) => {
+const getConstructRefundTransaction = (
+    asset: string,
+    addOneSatBuffer: boolean,
+) => {
     const fn = asset === LBTC ? lcRT : constructRefundTransaction;
     return (
         refundDetails: RefundDetails[] | LiquidRefundDetails[],
@@ -187,7 +200,7 @@ const getConstructRefundTransaction = (asset: string) => {
                 refundDetails as any[],
                 outputScript,
                 timeoutBlockHeight,
-                fee,
+                addOneSatBuffer ? fee + 1 : fee,
                 isRbf,
                 liquidNetwork,
                 blindingKey,

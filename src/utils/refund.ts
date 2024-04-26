@@ -58,6 +58,7 @@ const refundTaproot = async (
 
     const constructRefundTransaction = getConstructRefundTransaction(
         swap.asset,
+        swap.asset === LBTC && decodedAddress.blindingKey === undefined,
     );
     const claimTx = constructRefundTransaction(
         details,
@@ -103,8 +104,7 @@ export async function refund(
 
     const assetName = swap.asset;
 
-    let output: DecodedAddress;
-    output = decodeAddress(assetName, refundAddress);
+    const output = decodeAddress(assetName, refundAddress);
     log.info("refunding swap: ", swap.id);
     await setup();
 
@@ -131,8 +131,10 @@ export async function refund(
         const swapOutput = detectSwap(redeemScript, tx);
         log.debug("swapOutput", swapOutput);
 
-        const constructRefundTransaction =
-            getConstructRefundTransaction(assetName);
+        const constructRefundTransaction = getConstructRefundTransaction(
+            assetName,
+            swap.asset === LBTC && output.blindingKey === undefined,
+        );
         refundTransaction = constructRefundTransaction(
             [
                 {

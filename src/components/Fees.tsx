@@ -3,6 +3,7 @@ import { createEffect } from "solid-js";
 
 import btcSvg from "../assets/btc.svg";
 import satSvg from "../assets/sat.svg";
+import { LBTC } from "../consts";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
@@ -13,6 +14,7 @@ import {
     calculateBoltzFeeOnSend,
     calculateSendAmount,
 } from "../utils/calculate";
+import { isConfidentialAddress } from "../utils/compat";
 import { denominations, formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 
@@ -29,6 +31,8 @@ const Fees = () => {
         setMinerFee,
         boltzFee,
         setBoltzFee,
+        onchainAddress,
+        addressValid,
     } = useCreateContext();
 
     createEffect(() => {
@@ -38,9 +42,17 @@ const Fees = () => {
             if (reverse()) {
                 const reverseCfg = cfg as ReversePairTypeTaproot;
 
-                const fee =
+                let fee =
                     reverseCfg.fees.minerFees.claim +
                     reverseCfg.fees.minerFees.lockup;
+
+                if (
+                    asset() === LBTC &&
+                    addressValid() &&
+                    !isConfidentialAddress(onchainAddress())
+                ) {
+                    fee += 1;
+                }
 
                 setBoltzFee(reverseCfg.fees.percentage);
                 setMinerFee(fee);
