@@ -44,7 +44,7 @@ const dict = {
         create_channel: "Create Lightning Channel",
         create_channel_subline: "Channel Inbound or Outbound Capacity",
         create_swap: "Create Atomic Swap",
-        create_swap_subline: "Payment includes network and boltz service fees",
+        create_swap_subline: "Payment Includes Network and Boltz Fee",
         cancel_swap: "Cancel Swap",
         new_swap: "New Swap",
         success_swap: "Swap Success",
