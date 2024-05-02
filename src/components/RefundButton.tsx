@@ -187,10 +187,10 @@ const RefundButton = ({
             );
 
             // save refundTx into swaps json and set it to the current swap
-            // only if the swaps was not initiated with the refund json
-            // refundjson has no date
-            if (res.date !== undefined) {
-                const currentSwap = (await getSwap(res.id)) as SubmarineSwap;
+            // only if the swap exist in localstorage, else it is a refund json
+            // so we save it into the signal
+            const currentSwap = (await getSwap(res.id)) as SubmarineSwap;
+            if (currentSwap !== null) {
                 currentSwap.refundTx = res.refundTx;
                 await setSwapStorage(currentSwap);
                 setSwap(currentSwap);

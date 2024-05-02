@@ -9,13 +9,24 @@ import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
+import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
 import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
+
+const refundJsonKeys = [
+    "id",
+    "type",
+    "assetSend",
+    "assetReceive",
+    "refundPrivateKey",
+];
+const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
+const refundJsonKeys_old = ["id", "asset", "privateKey"];
+const refundJsonKeysLiquid_old = refundJsonKeys_old.concat("blindingKey");
 
 const Refund = () => {
     const navigate = useNavigate();
@@ -44,15 +55,26 @@ const Refund = () => {
                 return;
             }
 
-            // Compatibility with the old refund files
-            if (json.asset === undefined && json.currency) {
-                json.asset = json.currency;
+            let valid = false;
+            let requiredKeys = [];
+
+            // type was introduced with chain swaps and is a new
+            // format for the refund json
+            if ("type" in json) {
+                requiredKeys =
+                    json.asset !== LBTC ? refundJsonKeys : refundJsonKeysLiquid;
+            } else {
+                // Compatibility with even older refund files
+                if (json.asset === undefined && json.currency) {
+                    json.asset = json.currency;
+                }
+                requiredKeys =
+                    json.asset !== LBTC
+                        ? refundJsonKeys_old
+                        : refundJsonKeysLiquid_old;
             }
 
-            const requiredKeys =
-                json.asset !== "L-BTC" ? refundJsonKeys : refundJsonKeysLiquid;
-            const valid = requiredKeys.every((key) => key in json);
-
+            valid = requiredKeys.every((key: string) => key in json);
             if (valid) {
                 setRefundJson(json);
                 return;
@@ -201,7 +223,7 @@ const Refund = () => {
                         <hr />
                         <BlockExplorer
                             typeLabel={"refund_tx"}
-                            asset={refundJson().asset}
+                            asset={refundJson().asset || refundJson().assetSend}
                             txId={refundTxId()}
                         />
                     </Show>

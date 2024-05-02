@@ -30,10 +30,6 @@ import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { ChainSwap, SubmarineSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
-// TODO: update
-export const refundJsonKeys = ["id", "asset", "privateKey"];
-export const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
-
 const refundTaproot = async (
     swap: SubmarineSwap | ChainSwap,
     lockupTx: TransactionInterface,
