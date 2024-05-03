@@ -4,7 +4,7 @@ import { useGlobalContext } from "../context/Global";
 import { denominations } from "../utils/denomination";
 
 const Denomination = () => {
-    const { denomination, setDenomination } = useGlobalContext();
+    const { denomination, setDenomination, t } = useGlobalContext();
 
     const toggleDenomination = (evt: MouseEvent) => {
         setDenomination(
@@ -16,7 +16,10 @@ const Denomination = () => {
     };
 
     return (
-        <div class="denomination toggle" onClick={toggleDenomination}>
+        <div
+            class="denomination toggle"
+            title={t("denomination_tooltip")}
+            onClick={toggleDenomination}>
             <img
                 src={btcSvg}
                 class={denomination() == "btc" ? "active" : ""}

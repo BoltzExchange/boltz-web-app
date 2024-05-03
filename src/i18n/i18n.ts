@@ -177,9 +177,9 @@ const dict = {
         switch_paste: "Switched swap direction/asset based on pasted content",
         canary: "Canary",
         settings: "Settings",
+        decimal_separator: "Decimal Separator",
         denomination_tooltip: "Choose your preferred denomination: btc or sat",
-        decimal_tooltip:
-            "Choose your preferred decimal separator: dot or colon",
+        decimal_tooltip: "Choose your preferred decimal separator: dot or coma",
     },
     de: {
         language: "Deutsch",
@@ -365,6 +365,11 @@ const dict = {
             "Swap-Richtung/Asset basierend auf eingefügtem Inhalt gewechselt",
         canary: "Canary",
         settings: "Einstellungen",
+        decimal_separator: "Dezimaltrennzeichen",
+        denomination_tooltip:
+            "Wähle deine bevorzugte Denomination: btc oder sat",
+        decimal_tooltip:
+            "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Beistrich",
     },
     es: {
         language: "Español",
@@ -552,6 +557,9 @@ const dict = {
             "Cambiado de dirección/activo de intercambio basado en el contenido pegado",
         canary: "Canary",
         settings: "Ajustes",
+        decimal_separator: "Separador decimal",
+        denomination_tooltip: "Elige tu denominación preferida: btc o sat",
+        decimal_tooltip: "Elige tu separador decimal preferido: punto o coma",
     },
     zh: {
         language: "中文",
@@ -719,6 +727,9 @@ const dict = {
         switch_paste: "根据粘贴的内容切换交换方向/资产",
         canary: "金丝雀搜查令",
         settings: "设置",
+        decimal_separator: "小数分隔符",
+        denomination_tooltip: "选择您的首选面额：btc 或 sat",
+        decimal_tooltip: "选择您的首选小数分隔符：点或逗号",
     },
 };
 

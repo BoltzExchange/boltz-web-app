@@ -21,13 +21,13 @@ const SettingsMenu = () => {
             </span>
             <hr />
             <span class="setting">
-                <label>Denominaton: </label>
+                <label>{t("denomination")}: </label>
                 <Tooltip label="denomination_tooltip" />
                 <div class="spacer"></div>
                 <Denominaton />
             </span>
             <span class="setting">
-                <label>Decimal Separator: </label>
+                <label>{t("decimal_separator")}: </label>
                 <Tooltip label="decimal_tooltip" />
                 <div class="spacer"></div>
                 <Separator />
