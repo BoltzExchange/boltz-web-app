@@ -19,7 +19,7 @@ const SettingsMenu = () => {
             <span class="close" onClick={() => setSettingsMenu(false)}>
                 <IoClose />
             </span>
-            <hr />
+            <hr class="spacer" />
             <span class="setting">
                 <label>{t("denomination")}: </label>
                 <Tooltip label="denomination_tooltip" />
