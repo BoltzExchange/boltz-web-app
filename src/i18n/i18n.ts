@@ -178,8 +178,8 @@ const dict = {
         canary: "Canary",
         settings: "Settings",
         decimal_separator: "Decimal Separator",
-        denomination_tooltip: "Choose your preferred denomination: btc or sat",
-        decimal_tooltip: "Choose your preferred decimal separator: dot or coma",
+        denomination_tooltip: "Choose your preferred denomination: BTC or sats",
+        decimal_tooltip: "Choose your preferred decimal separator: dot or comma",
     },
     de: {
         language: "Deutsch",
@@ -367,9 +367,9 @@ const dict = {
         settings: "Einstellungen",
         decimal_separator: "Dezimaltrennzeichen",
         denomination_tooltip:
-            "Wähle deine bevorzugte Denomination: btc oder sat",
+            "Wähle deine bevorzugte Denomination: BTC oder sats",
         decimal_tooltip:
-            "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Beistrich",
+            "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Komma",
     },
     es: {
         language: "Español",
@@ -558,7 +558,7 @@ const dict = {
         canary: "Canary",
         settings: "Ajustes",
         decimal_separator: "Separador decimal",
-        denomination_tooltip: "Elige tu denominación preferida: btc o sat",
+        denomination_tooltip: "Elige tu denominación preferida: BTC o sats",
         decimal_tooltip: "Elige tu separador decimal preferido: punto o coma",
     },
     zh: {
@@ -728,7 +728,7 @@ const dict = {
         canary: "金丝雀搜查令",
         settings: "设置",
         decimal_separator: "小数分隔符",
-        denomination_tooltip: "选择您的首选面额：btc 或 sat",
+        denomination_tooltip: "选择您的首选面额：BTC 或 sats",
         decimal_tooltip: "选择您的首选小数分隔符：点或逗号",
     },
 };
