@@ -188,6 +188,12 @@ export const Hero = () => {
                             target="_blank"
                             class="marina"></a>
                     </div>
+                    <div>
+                        <a
+                            href="https://geyser.fund/"
+                            target="_blank"
+                            class="geyser"></a>
+                    </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
