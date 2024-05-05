@@ -39,7 +39,7 @@ class Voronoi {
         this.draw();
     }
     initRandomSpeed() {
-        const s = 0.1;
+        const s = 0.021;
         for (let i = 0; i < this.nbParticles; i++) {
             if (i % 2) {
                 this.speed[i].x = -Math.random() + 1;
