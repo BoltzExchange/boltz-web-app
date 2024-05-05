@@ -1,0 +1,26 @@
+.tooltip {
+    display: flex;
+    font-size: 22px;
+    align-items: center;
+    opacity: 0.5;
+    cursor: pointer;
+    position: relative;
+    .tooltip-text {
+        font-size: 14px;
+        position: absolute;
+        color: #fff;
+        display: none;
+        padding: 4px;
+        background: #111;
+        left: 30px;
+        width: 180px;
+        border-radius: 5px;
+        box-shadow: 0px 0 5px #000;
+    }
+    &.active {
+        opacity: 1;
+        .tooltip-text {
+            display: block;
+        }
+    }
+}

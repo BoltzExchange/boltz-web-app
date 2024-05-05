@@ -57,6 +57,8 @@ export type GlobalContextType = {
     setEmbedded: Setter<boolean>;
     separator: Accessor<string>;
     setSeparator: Setter<string>;
+    settingsMenu: Accessor<boolean>;
+    setSettingsMenu: Setter<boolean>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
     notify: (type: string, message: string) => void;
@@ -141,6 +143,8 @@ const GlobalProvider = (props: { children: any }) => {
         name: "denomination",
         ...stringSerializer,
     });
+
+    const [settingsMenu, setSettingsMenu] = createSignal<boolean>(false);
 
     const localeSeparator = (0.1).toLocaleString().charAt(1);
     const [separator, setSeparator] = makePersisted(
@@ -290,6 +294,8 @@ const GlobalProvider = (props: { children: any }) => {
                 setEmbedded,
                 separator,
                 setSeparator,
+                settingsMenu,
+                setSettingsMenu,
                 // functions
                 t,
                 notify,

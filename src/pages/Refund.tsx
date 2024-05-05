@@ -6,6 +6,8 @@ import { Show, createSignal, onMount } from "solid-js";
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
+import SettingsCog from "../components/SettingsCog";
+import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -145,6 +147,7 @@ const Refund = () => {
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
                 <div class="frame" data-testid="refundFrame">
+                    <SettingsCog />
                     <h2>{t("refund_a_swap")}</h2>
                     <p>{t("refund_a_swap_subline")}</p>
                     <hr />
@@ -193,6 +196,7 @@ const Refund = () => {
                             txId={refundTxId()}
                         />
                     </Show>
+                    <SettingsMenu />
                 </div>
             </div>
         </Show>

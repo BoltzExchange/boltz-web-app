@@ -4,6 +4,8 @@ import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
+import SettingsCog from "../components/SettingsCog";
+import SettingsMenu from "../components/SettingsMenu";
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -97,6 +99,7 @@ const Pay = () => {
 
     return (
         <div data-status={swapStatus()} class="frame">
+            <SettingsCog />
             <h2>
                 {t("pay_invoice", { id: params.id })}
                 <Show when={swap()}>
@@ -205,6 +208,7 @@ const Pay = () => {
             <Show when={!swap()}>
                 <p>{t("pay_swap_404")}</p>
             </Show>
+            <SettingsMenu />
         </div>
     );
 };

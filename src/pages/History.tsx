@@ -2,6 +2,8 @@ import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createSignal, onMount } from "solid-js";
 
+import SettingsCog from "../components/SettingsCog";
+import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
 import { useGlobalContext } from "../context/Global";
 import { downloadJson } from "../utils/download";
@@ -77,6 +79,7 @@ const History = () => {
     return (
         <div id="history">
             <div class="frame">
+                <SettingsCog />
                 <h2>{t("refund_past_swaps")}</h2>
                 <p>{t("refund_past_swaps_subline")}</p>
                 <hr />
@@ -127,6 +130,7 @@ const History = () => {
                         </button>
                     </Show>
                 </Show>
+                <SettingsMenu />
             </div>
         </div>
     );
