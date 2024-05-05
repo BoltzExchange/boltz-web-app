@@ -25,6 +25,7 @@ import Refund from "./pages/Refund";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
 import "./utils/patches";
+import { Voronoi } from "./utils/voronoi";
 
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
@@ -40,6 +41,7 @@ const isEmbedded = () => {
 
 const App = (props: any) => {
     const [configError, setConfigError] = createSignal<boolean>(null);
+    let canvasRef: HTMLCanvasElement;
 
     onMount(async () => {
         try {
@@ -52,6 +54,8 @@ const App = (props: any) => {
             console.error("Error loading config:", error);
         }
         document.body.classList.remove("loading");
+        const voronoi = new Voronoi(canvasRef);
+        voronoi.init(400);
     });
 
     return (
@@ -64,6 +68,7 @@ const App = (props: any) => {
                     <Web3SignerProvider>
                         <CreateProvider>
                             <PayProvider>
+                                <canvas id="canvas" ref={canvasRef}></canvas>
                                 <SwapChecker />
                                 <Show when={!isEmbedded()}>
                                     <Nav network={config.network} />

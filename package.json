@@ -59,6 +59,7 @@
         "boltz-core": "^2.1.2",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
+        "d3": "4.13.0",
         "ecpair": "^2.1.0",
         "ethers": "^6.11.1",
         "iframe-resizer": "^4.3.9",
