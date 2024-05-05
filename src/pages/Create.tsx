@@ -1,5 +1,4 @@
 import { BigNumber } from "bignumber.js";
-import { ImCog } from "solid-icons/im";
 import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 
 import AddressInput from "../components/AddressInput";
@@ -11,6 +10,7 @@ import Fees from "../components/Fees";
 import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
+import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import WeblnButton from "../components/WeblnButton";
 import { RBTC, sideReceive, sideSend } from "../consts";
@@ -43,7 +43,6 @@ const Create = () => {
         webln,
         t,
         notify,
-        setSettingsMenu,
     } = useGlobalContext();
     const {
         reverse,
@@ -295,9 +294,7 @@ const Create = () => {
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div class="frame" data-reverse={reverse()} data-asset={asset()}>
-                <span id="settings-cog" onClick={() => setSettingsMenu(true)}>
-                    <ImCog />
-                </span>
+                <SettingsCog />
                 <h2>{t("create_swap")}</h2>
                 <p>
                     {t("create_swap_subline")} <br />
