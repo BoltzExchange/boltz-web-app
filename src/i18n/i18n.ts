@@ -179,7 +179,8 @@ const dict = {
         settings: "Settings",
         decimal_separator: "Decimal Separator",
         denomination_tooltip: "Choose your preferred denomination: BTC or sats",
-        decimal_tooltip: "Choose your preferred decimal separator: dot or comma",
+        decimal_tooltip:
+            "Choose your preferred decimal separator: dot or comma",
     },
     de: {
         language: "Deutsch",
