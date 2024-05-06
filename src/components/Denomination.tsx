@@ -6,13 +6,12 @@ import { denominations } from "../utils/denomination";
 const Denomination = () => {
     const { denomination, setDenomination, t } = useGlobalContext();
 
-    const toggleDenomination = (evt: MouseEvent) => {
+    const toggleDenomination = () => {
         setDenomination(
             denomination() === denominations.btc
                 ? denominations.sat
                 : denominations.btc,
         );
-        evt.stopPropagation();
     };
 
     return (

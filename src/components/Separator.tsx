@@ -3,16 +3,15 @@ import { useGlobalContext } from "../context/Global";
 const Separator = () => {
     const { separator, setSeparator, t } = useGlobalContext();
 
-    const toggleSeparator = (evt: MouseEvent) => {
+    const toggle = () => {
         setSeparator(separator() === "." ? "," : ".");
-        evt.stopPropagation();
     };
 
     return (
         <div
             class="separator toggle"
             title={t("separator_tooltip")}
-            onClick={toggleSeparator}>
+            onClick={toggle}>
             <span class={separator() === "." ? "active" : ""}>.</span>
             <span class={separator() === "," ? "active" : ""}>,</span>
         </div>

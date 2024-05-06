@@ -15,23 +15,25 @@ const SettingsMenu = () => {
             class="frame assets-select"
             onClick={() => setSettingsMenu(false)}
             style={settingsMenu() ? "display: block;" : "display: none;"}>
-            <h2>{t("settings")}</h2>
-            <span class="close" onClick={() => setSettingsMenu(false)}>
-                <IoClose />
-            </span>
-            <hr class="spacer" />
-            <span class="setting">
-                <label>{t("denomination")}: </label>
-                <Tooltip label="denomination_tooltip" />
-                <div class="spacer"></div>
-                <Denominaton />
-            </span>
-            <span class="setting">
-                <label>{t("decimal_separator")}: </label>
-                <Tooltip label="decimal_tooltip" />
-                <div class="spacer"></div>
-                <Separator />
-            </span>
+            <div onClick={(e) => e.stopPropagation()}>
+                <h2>{t("settings")}</h2>
+                <span class="close" onClick={() => setSettingsMenu(false)}>
+                    <IoClose />
+                </span>
+                <hr class="spacer" />
+                <span class="setting">
+                    <label>{t("denomination")}: </label>
+                    <Tooltip label="denomination_tooltip" />
+                    <div class="spacer"></div>
+                    <Denominaton />
+                </span>
+                <span class="setting">
+                    <label>{t("decimal_separator")}: </label>
+                    <Tooltip label="decimal_tooltip" />
+                    <div class="spacer"></div>
+                    <Separator />
+                </span>
+            </div>
         </div>
     );
 };
