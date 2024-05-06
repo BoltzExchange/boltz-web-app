@@ -187,9 +187,6 @@ const dict = {
         error_log: "Error logging",
         error_log_tooltip:
             "Saves error on claims and refunds to local storage for debugging",
-        clear: "clear",
-        download: "download",
-        copy: "copy",
     },
     de: {
         language: "Deutsch",
@@ -388,9 +385,6 @@ const dict = {
         error_log: "Fehlerprotokoll",
         error_log_tooltip:
             "Speichert Fehler bei Claims und Rückerstattungen im lokalen Speicher zum debuggen",
-        clear: "leeren",
-        download: "herunterladen",
-        copy: "kopieren",
     },
     es: {
         language: "Español",
@@ -589,9 +583,6 @@ const dict = {
         error_log: "Registro de errores",
         error_log_tooltip:
             "Guarda errores en reclamaciones y reembolsos en el almacenamiento local para depuración",
-        clear: "limpiar",
-        download: "descargar",
-        copy: "copiar",
     },
     zh: {
         language: "中文",
@@ -768,9 +759,6 @@ const dict = {
         no_errors: "无错误",
         error_log: "错误日志",
         error_log_tooltip: "将索赔和退款错误保存在本地存储中以进行调试",
-        clear: "清除",
-        download: "下载",
-        copy: "复制",
     },
 };
 
