@@ -186,7 +186,16 @@ const GlobalProvider = (props: { children: any }) => {
         name: "errors",
     });
 
-    const report = (swapId: string, msg: string, error: Error) => {
+    const report = (swapId: string, msg: string, error: Error | Response) => {
+        if (error instanceof Response) {
+            error.json().then((jsonError) => {
+                errorForage.setItem(swapId, {
+                    message: msg,
+                    ...jsonError,
+                });
+            });
+            return;
+        }
         errorForage.setItem(swapId, {
             message: msg,
             error: error.message,
