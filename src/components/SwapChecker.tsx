@@ -237,14 +237,13 @@ export const SwapChecker = () => {
             urlsToAsset.set(url, (urlsToAsset.get(url) || []).concat(asset));
         }
 
-        const swapsToCheck = (await getSwaps())
-            .filter(
-                (s) =>
-                    !swapStatusFinal.includes(s.status) ||
-                    (s.status === swapStatusSuccess.InvoiceSettled &&
-                        s.claimTx === undefined),
-            )
-            .filter((s) => s.id !== swap()?.id);
+        const swapsToCheck = (await getSwaps()).filter(
+            (s) =>
+                !swapStatusFinal.includes(s.status) ||
+                (s.status === swapStatusSuccess.InvoiceSettled &&
+                    s.claimTx === undefined),
+        );
+
         for (const [url, assets] of urlsToAsset.entries()) {
             log.debug(`opening ws for assets [${assets.join(", ")}]: ${url}`);
             const ws = new BoltzWebSocket(
@@ -278,11 +277,11 @@ export const SwapChecker = () => {
         if (activeSwap === undefined || activeSwap === null) {
             return;
         }
+        // on page reload assetWebsocket is not yet initialized
         const ws = assetWebsocket.get(activeSwap.asset);
         if (ws === undefined) {
             return;
         }
-
         ws.subscribeUpdates([activeSwap.id]);
     });
 
