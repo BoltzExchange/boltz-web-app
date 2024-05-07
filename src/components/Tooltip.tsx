@@ -17,7 +17,6 @@ const Tooltip = ({ label }) => {
         timeout = setTimeout(() => {
             (target.parentNode as HTMLSpanElement).classList.remove("active");
         }, TIMEOUT_CLICK);
-        evt.stopPropagation();
     };
 
     const tooltipEnter = (evt: MouseEvent) => {
