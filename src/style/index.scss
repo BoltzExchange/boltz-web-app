@@ -486,7 +486,7 @@ textarea {
     cursor: pointer;
     display: inline-flex;
     text-transform: uppercase;
-    margin: 5px;
+    margin: 5px 12px;
 }
 [data-selected="true"],
 .asset-select:hover {
@@ -498,8 +498,8 @@ textarea {
 .assets-select {
     background: #102032;
     position: absolute;
-    max-width: 454px;
-    width: 93%;
+    width: 100%;
+    left: 0;
     top: 64px;
     z-index: 9999;
     display: none;
@@ -527,7 +527,7 @@ textarea {
     z-index: 1000;
     position: absolute;
     top: 8px;
-    right: 8px;
+    right: 15px;
     font-size: 30px;
     margin-top: 5px;
 }
