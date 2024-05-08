@@ -26,7 +26,6 @@ const RefundButton = ({
 }) => {
     const {
         notify,
-        report,
         getSwap,
         setSwapStorage,
         setRefundAddress,
@@ -169,17 +168,14 @@ const RefundButton = ({
                         }
                         log.error(msg);
                         notify("error", msg);
-                        report(swap().id, msg, jsonError);
                     })
                     .catch((genericError: any) => {
                         log.error(genericError);
                         notify("error", genericError);
-                        report(swap().id, genericError, genericError);
                     });
             } else {
                 log.error(error.message);
                 notify("error", error.message);
-                report(swap().id, error.message, error);
             }
         }
 
