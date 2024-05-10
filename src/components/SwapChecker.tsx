@@ -125,15 +125,8 @@ export const SwapChecker = () => {
         setTimeoutEta,
         setTimeoutBlockheight,
     } = usePayContext();
-    const {
-        notify,
-        report,
-        updateSwapStatus,
-        getSwap,
-        getSwaps,
-        setSwapStorage,
-        t,
-    } = useGlobalContext();
+    const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t } =
+        useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
 
@@ -221,7 +214,6 @@ export const SwapChecker = () => {
                 notify("success", t("claim_success", { id: res.id }));
             } catch (e) {
                 const msg = t("claim_fail", { id: currentSwap.id });
-                report(currentSwap.id, msg, e);
                 log.warn(msg, e);
                 notify("error", msg);
             }
@@ -230,7 +222,6 @@ export const SwapChecker = () => {
                 await createSubmarineSignature(currentSwap);
             } catch (e) {
                 const msg = t("claim_fail_coop", { id: currentSwap.id });
-                report(currentSwap.id, msg, e);
                 log.warn(msg, e);
                 notify("error", msg);
             }

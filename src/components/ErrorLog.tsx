@@ -13,7 +13,7 @@ const ErrorLog = () => {
     createEffect(async () => {
         if (settingsMenu()) {
             const reports = await getReports();
-            setCount(reports.length);
+            setCount(Object.keys(reports).length);
         }
     });
 

@@ -19,6 +19,7 @@ import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
+import Lock from "../utils/lock";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
@@ -65,8 +66,7 @@ export type GlobalContextType = {
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
 
-    report: (swapId: string, msg: string, error: Error) => void;
-    getReports: <T = any>() => Promise<T[]>;
+    getReports: () => Promise<Record<string, string[]>>;
     clearReports: () => Promise<void>;
 
     setSwapStorage: (swap: SwapWithId) => Promise<any>;
@@ -186,29 +186,80 @@ const GlobalProvider = (props: { children: any }) => {
         name: "errors",
     });
 
-    const report = (swapId: string, msg: string, error: Error | Response) => {
-        if (error instanceof Response) {
-            error.json().then((jsonError) => {
-                errorForage.setItem(swapId, {
-                    message: msg,
-                    ...jsonError,
-                });
-            });
-            return;
-        }
-        errorForage.setItem(swapId, {
-            message: msg,
-            error: error.message,
-            stack: error.stack,
-        });
+    const getDate = (): string => {
+        const date = new Date();
+        return `${date.getUTCFullYear()}/${date.getUTCMonth()}/${date.getUTCDate()}`;
     };
 
-    const getReports = async () => {
-        const errors = [];
-        await errorForage.iterate((error) => {
-            errors.push(error);
+    createMemo(async () => {
+        const currentDate = new Date();
+
+        errorForage.iterate<string[], any>((_, date) => {
+            const split = date.split("/").map((split) => Number(split));
+
+            const logDate = new Date();
+            logDate.setUTCFullYear(split[0]);
+            logDate.setUTCMonth(split[1]);
+            logDate.setUTCDate(split[2]);
+
+            // Delete logs after a week
+            if (
+                (currentDate.getTime() - logDate.getTime()) / 1000 <
+                60 * 60 * 24 * 7
+            ) {
+                return;
+            }
+
+            log.debug(`deleting logs of ${date}`);
+            errorForage.removeItem(date);
         });
-        return errors;
+    });
+
+    const originalLogFactory = log.methodFactory;
+
+    const logLock = new Lock();
+
+    log.methodFactory = (methodName, logLevel, loggerName) => {
+        const rawLogMethod = originalLogFactory(
+            methodName,
+            logLevel,
+            loggerName,
+        );
+
+        return (...message: any[]) => {
+            rawLogMethod(...message);
+
+            const msgString = message
+                .map((entry: any) => {
+                    if (typeof entry === "object") {
+                        return JSON.stringify(entry);
+                    }
+
+                    return entry;
+                })
+                .join(" ");
+            const currentDate = getDate();
+
+            logLock.acquire(async () => {
+                await errorForage.setItem(
+                    currentDate,
+                    (
+                        (await errorForage.getItem<string[]>(currentDate)) || []
+                    ).concat(msgString),
+                );
+            });
+        };
+    };
+    log.rebuild();
+
+    const getReports = async () => {
+        const logs: Record<string, string[]> = {};
+
+        await errorForage.iterate<string[], any>((logArray, date) => {
+            logs[date] = logArray;
+        });
+
+        return logs;
     };
 
     const clearReports = () => errorForage.clear();
@@ -339,7 +390,6 @@ const GlobalProvider = (props: { children: any }) => {
                 t,
                 notify,
                 fetchPairs,
-                report,
                 getReports,
                 clearReports,
                 updateSwapStatus,
