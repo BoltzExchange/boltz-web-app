@@ -20,7 +20,7 @@ const Broadcasting = () => {
 const TransactionClaimed = () => {
     const navigate = useNavigate();
     const { swap } = usePayContext();
-    const { t } = useGlobalContext();
+    const { t, denomination } = useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
@@ -43,7 +43,12 @@ const TransactionClaimed = () => {
         <div>
             <Show when={claimBroadcast() === true} fallback={<Broadcasting />}>
                 <h2>{t("congrats")}</h2>
-                <p>{t("successfully_swapped")}</p>
+                <p>
+                    {t("successfully_swapped", {
+                        amount: swap().receiveAmount,
+                        denomination: denomination(),
+                    })}
+                </p>
                 <hr />
                 <span class="btn" onClick={() => navigate("/swap")}>
                     {t("new_swap")}
