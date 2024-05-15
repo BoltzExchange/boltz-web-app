@@ -170,7 +170,7 @@ const dict = {
         testnet: "Testnet",
         broadcasting_claim: "Broadcasting claim transaction...",
         open_swap: "Open Swap",
-        swap_in_progress: "This swap is still in progress.",
+        swap_in_history: "Swap found in history.",
         paste_invalid:
             "Clipboard contains invalid characters or maximum amount is exceeded",
         email: "Email",
@@ -358,7 +358,7 @@ const dict = {
         testnet: "Testnet",
         broadcasting_claim: "Sende claim transaction...",
         open_swap: "Swap öffnen",
-        swap_in_progress: "Dieser Swap ist noch nicht abgeschlossen.",
+        swap_in_history: "Swap in Historie gefunden.",
         paste_invalid:
             "Zwischenablage enthält ungültige Zeichen oder der maximale Betrag wurde überschritten",
         email: "Email",
@@ -550,7 +550,7 @@ const dict = {
         testnet: "Testnet",
         broadcasting_claim: "Enviando transacción de reclamación...",
         open_swap: "Abrir intercambio",
-        swap_in_progress: "Este intercambio aún está en curso.",
+        swap_in_history: "Intercambio encontrado en historial.",
         paste_invalid:
             "El portapapeles contiene caracteres no válidos o se ha excedido el importe máximo",
         email: "Email",
@@ -722,7 +722,7 @@ const dict = {
         testnet: "测试网",
         broadcasting_claim: "正在发送索赔交易...",
         open_swap: "打开交换",
-        swap_in_progress: "此交换仍在进行中。",
+        swap_in_history: "在历史记录中找到交换。",
         paste_invalid: "剪贴板包含无效字符或超出最大金额",
         email: "邮箱",
         switch_paste: "根据粘贴的内容切换交换方向/资产",

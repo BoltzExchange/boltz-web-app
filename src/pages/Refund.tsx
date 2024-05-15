@@ -165,7 +165,7 @@ const Refund = () => {
                     />
                     <Show when={swapFound() !== null}>
                         <hr />
-                        <p>{t("swap_in_progress")}</p>
+                        <p>{t("swap_in_history")}</p>
                         <button
                             class="btn btn-success"
                             onClick={() => navigate(`/swap/${swapFound()}`)}>
