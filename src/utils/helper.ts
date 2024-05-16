@@ -12,9 +12,10 @@ import {
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
 
-export const isIos = !!navigator.userAgent.match(/iphone|ipad/gi) || false;
-export const isMobile =
-    isIos || !!navigator.userAgent.match(/android|blackberry/gi) || false;
+export const isIos = () =>
+    !!navigator.userAgent.match(/iphone|ipad/gi) || false;
+export const isMobile = () =>
+    isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
 export const parseBlindingKey = (swap: { blindingKey: string | undefined }) => {
     return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;

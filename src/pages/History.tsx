@@ -116,7 +116,7 @@ const History = () => {
                     />
                     <hr />
                     <Show when={swaps().length > 0}>
-                        <Show when={!isIos}>
+                        <Show when={!isIos()}>
                             <button
                                 class="btn btn-success"
                                 onClick={backupLocalStorage}>

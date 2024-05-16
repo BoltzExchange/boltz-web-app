@@ -46,18 +46,18 @@ const SwapCreated = () => {
                 {cropString(swap().invoice)}
             </p>
             <hr />
-            <Show when={isMobile}>
+            <Show when={isMobile()}>
                 <h3>{t("warning_return")}</h3>
                 <hr />
             </Show>
-            <Show when={webln() && !isMobile}>
+            <Show when={webln() && !isMobile()}>
                 <span
                     class="btn btn-light"
                     onClick={() => payWeblnInvoice(swap().invoice)}>
                     {t("pay_invoice_webln")}
                 </span>
             </Show>
-            <Show when={isMobile}>
+            <Show when={isMobile()}>
                 <a href={invoicePrefix + swap().invoice} class="btn btn-light">
                     {t("open_in_wallet")}
                 </a>

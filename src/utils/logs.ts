@@ -3,7 +3,7 @@ import log from "loglevel";
 import Lock from "./lock";
 
 // One week
-const logDeletionTime = 60 * 60 * 24 * 7;
+export const logDeletionTime = 60 * 60 * 24 * 7;
 
 export const getDate = (): string => {
     const date = new Date();
@@ -21,12 +21,12 @@ export const parseDate = (date: string): Date => {
     return parsed;
 };
 
-export const deleteOldLogs = async (errorForage: LocalForage) => {
+export const deleteOldLogs = async (logsForage: LocalForage) => {
     const currentDate = new Date();
-    await errorForage.iterate<string[], any>((_, date) => {
+    await logsForage.iterate<string[], any>((_, date) => {
         const logDate = parseDate(date);
 
-        // Delete logs after a week
+        // Delete logs older than logDeletionTime
         if (
             (currentDate.getTime() - logDate.getTime()) / 1000 <
             logDeletionTime
@@ -35,11 +35,22 @@ export const deleteOldLogs = async (errorForage: LocalForage) => {
         }
 
         log.debug(`deleting logs of ${date}`);
-        errorForage.removeItem(date);
+        logsForage.removeItem(date);
     });
 };
 
-export const injectLogWriter = (errorForage: LocalForage) => {
+export const formatLogLine = (message: any[]) =>
+    message
+        .map((entry: any) => {
+            if (typeof entry === "object") {
+                return JSON.stringify(entry);
+            }
+
+            return entry;
+        })
+        .join(" ");
+
+export const injectLogWriter = (logsForage: LocalForage) => {
     const originalLogFactory = log.methodFactory;
 
     const logLock = new Lock();
@@ -54,26 +65,16 @@ export const injectLogWriter = (errorForage: LocalForage) => {
         return (...message: any[]) => {
             rawLogMethod(...message);
 
-            const msgString = message
-                .map((entry: any) => {
-                    if (typeof entry === "object") {
-                        return JSON.stringify(entry);
-                    }
-
-                    return entry;
-                })
-                .join(" ");
             const currentDate = getDate();
 
             logLock
                 .acquire(async () => {
-                    await errorForage.setItem(
+                    await logsForage.setItem(
                         currentDate,
                         (
-                            (await errorForage.getItem<string[]>(
-                                currentDate,
-                            )) || []
-                        ).concat(msgString),
+                            (await logsForage.getItem<string[]>(currentDate)) ||
+                            []
+                        ).concat(formatLogLine(message)),
                     );
                 })
                 .then();

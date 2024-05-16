@@ -131,7 +131,9 @@ const GlobalProvider = (props: { children: any }) => {
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
     const [ref, setRef] = makePersisted(
-        createSignal(isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"),
+        createSignal(
+            isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop",
+        ),
         {
             name: "ref",
             ...stringSerializer,
@@ -182,25 +184,25 @@ const GlobalProvider = (props: { children: any }) => {
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
     });
 
-    const errorForage = localforage.createInstance({
-        name: "errors",
+    const logsForage = localforage.createInstance({
+        name: "logs",
     });
 
-    injectLogWriter(errorForage);
+    injectLogWriter(logsForage);
 
-    createMemo(() => deleteOldLogs(errorForage));
+    createMemo(() => deleteOldLogs(logsForage));
 
     const getLogs = async () => {
         const logs: Record<string, string[]> = {};
 
-        await errorForage.iterate<string[], any>((logArray, date) => {
+        await logsForage.iterate<string[], any>((logArray, date) => {
             logs[date] = logArray;
         });
 
         return logs;
     };
 
-    const clearLogs = () => errorForage.clear();
+    const clearLogs = () => logsForage.clear();
 
     const swapsForage = localforage.createInstance({
         name: "swaps",

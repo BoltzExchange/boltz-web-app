@@ -383,7 +383,7 @@ const Create = () => {
                     </Show>
                     <InvoiceInput />
                 </Show>
-                <Show when={isMobile}>
+                <Show when={isMobile()}>
                     <QrScan />
                 </Show>
                 <CreateButton />

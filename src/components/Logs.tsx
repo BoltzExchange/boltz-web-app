@@ -34,8 +34,11 @@ const Logs = () => {
                 <BiRegularCopy size={14} />
             </span>
             &nbsp;
-            <Show when={!isIos}>
-                <span onClick={download} class="btn-small">
+            <Show when={!isIos()}>
+                <span
+                    onClick={download}
+                    class="btn-small"
+                    data-testid="logs-download">
                     <BiRegularDownload size={14} />
                 </span>
                 &nbsp;
