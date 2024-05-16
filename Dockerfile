@@ -1,7 +1,7 @@
 FROM node
 WORKDIR /app
 COPY package.json .
-RUN npm i
+RUN npm ci
 COPY . .
 
 ENV NETWORK=mainnet
