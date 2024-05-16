@@ -1,11 +1,12 @@
 FROM node
 WORKDIR /app
 COPY package.json .
+COPY package-lock.json .
 RUN npm ci
 COPY . .
 
 ENV NETWORK=mainnet
-ENV NODE_ENV=docker
+ENV DOCKER=1
 
 RUN npm run $NETWORK
 RUN npm run build
