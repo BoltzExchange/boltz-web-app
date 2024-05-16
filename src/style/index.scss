@@ -161,21 +161,26 @@ hr.spacer {
     text-decoration: none;
 }
 
-[data-status="swap.expired"] .btn-small,
-[data-status="invoice.expired"] .btn-small,
-[data-status="transaction.refunded"] .btn-small,
-[data-status="invoice.failedToPay"] .btn-small,
-[data-status="transaction.lockupFailed"] .btn-small {
-    background-color: $error;
-    color: #fff;
+[data-status="swap.expired"],
+[data-status="invoice.expired"],
+[data-status="transaction.refunded"],
+[data-status="invoice.failedToPay"],
+[data-status="transaction.lockupFailed"] {
+    > p > .btn-small {
+        background-color: $error;
+        color: #fff;
+    }
 }
-[data-status="swap.expired"] .btn-success,
-[data-status="swap.refunded"] .btn-small,
-[data-status="invoice.settled"] .btn-small,
-[data-status="transaction.confirmed"] .btn-small,
-[data-status="transaction.claimed"] .btn-small {
-    background-color: #246c24;
-    color: #fff;
+
+[data-status="swap.expired"],
+[data-status="swap.refunded"],
+[data-status="invoice.settled"],
+[data-status="transaction.confirmed"],
+[data-status="transaction.claimed"] {
+    > p > .btn-small {
+        background-color: #246c24;
+        color: #fff;
+    }
 }
 
 .tag .btn {
@@ -481,7 +486,7 @@ textarea {
     cursor: pointer;
     display: inline-flex;
     text-transform: uppercase;
-    margin: 5px;
+    margin: 5px 12px;
 }
 [data-selected="true"],
 .asset-select:hover {
@@ -493,8 +498,8 @@ textarea {
 .assets-select {
     background: #102032;
     position: absolute;
-    max-width: 454px;
-    width: 93%;
+    width: 100%;
+    left: 0;
     top: 64px;
     z-index: 9999;
     display: none;
@@ -522,7 +527,7 @@ textarea {
     z-index: 1000;
     position: absolute;
     top: 8px;
-    right: 8px;
+    right: 15px;
     font-size: 30px;
     margin-top: 5px;
 }

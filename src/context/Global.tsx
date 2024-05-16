@@ -19,6 +19,7 @@ import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
+import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
@@ -64,6 +65,9 @@ export type GlobalContextType = {
     t: (key: string, values?: Record<string, any>) => string;
     notify: (type: string, message: string) => void;
     fetchPairs: (asset?: string) => void;
+
+    getLogs: () => Promise<Record<string, string[]>>;
+    clearLogs: () => Promise<void>;
 
     setSwapStorage: (swap: SwapWithId) => Promise<any>;
     getSwap: <T = any>(id: string) => Promise<T>;
@@ -127,7 +131,9 @@ const GlobalProvider = (props: { children: any }) => {
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
     const [ref, setRef] = makePersisted(
-        createSignal(isMobile ? "boltz_webapp_mobile" : "boltz_webapp_desktop"),
+        createSignal(
+            isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop",
+        ),
         {
             name: "ref",
             ...stringSerializer,
@@ -175,8 +181,31 @@ const GlobalProvider = (props: { children: any }) => {
 
     // Use IndexedDB if available; fallback to LocalStorage
     localforage.config({
-        name: "swaps",
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
+    });
+
+    const logsForage = localforage.createInstance({
+        name: "logs",
+    });
+
+    injectLogWriter(logsForage);
+
+    createMemo(() => deleteOldLogs(logsForage));
+
+    const getLogs = async () => {
+        const logs: Record<string, string[]> = {};
+
+        await logsForage.iterate<string[], any>((logArray, date) => {
+            logs[date] = logArray;
+        });
+
+        return logs;
+    };
+
+    const clearLogs = () => logsForage.clear();
+
+    const swapsForage = localforage.createInstance({
+        name: "swaps",
     });
 
     migrateSwapsFromLocalStorage()
@@ -197,16 +226,16 @@ const GlobalProvider = (props: { children: any }) => {
         });
 
     const setSwapStorage = (swap: SwapWithId) =>
-        localforage.setItem(swap.id, swap);
+        swapsForage.setItem(swap.id, swap);
 
-    const deleteSwap = (id: string) => localforage.removeItem(id);
+    const deleteSwap = (id: string) => swapsForage.removeItem(id);
 
-    const getSwap = <T = SwapWithId,>(id: string) => localforage.getItem<T>(id);
+    const getSwap = <T = SwapWithId,>(id: string) => swapsForage.getItem<T>(id);
 
     const getSwaps = async <T = SwapWithId,>(): Promise<T[]> => {
         const swaps: T[] = [];
 
-        await localforage.iterate<T, any>((swap) => {
+        await swapsForage.iterate<T, any>((swap) => {
             swaps.push(swap);
         });
 
@@ -227,7 +256,7 @@ const GlobalProvider = (props: { children: any }) => {
         return false;
     };
 
-    const clearSwaps = () => localforage.clear();
+    const clearSwaps = () => swapsForage.clear();
 
     setI18n(detectLanguage(i18nConfigured()));
     detectWebLNProvider().then((state: boolean) => setWebln(state));
@@ -301,6 +330,8 @@ const GlobalProvider = (props: { children: any }) => {
                 t,
                 notify,
                 fetchPairs,
+                getLogs,
+                clearLogs,
                 updateSwapStatus,
                 setSwapStorage,
                 getSwap,

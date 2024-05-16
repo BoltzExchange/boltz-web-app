@@ -78,7 +78,7 @@ const InvoiceSet = () => {
                 <hr class="spacer" />
                 <h3>{t("warning_expiry")}</h3>
             </Show>
-            <Show when={isMobile}>
+            <Show when={isMobile()}>
                 <hr />
                 <a href={swap().bip21} class="btn btn-light">
                     {t("open_in_wallet")}

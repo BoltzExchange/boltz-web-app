@@ -25,8 +25,7 @@ const RefundButton = ({
     setRefundTxId?: Setter<string>;
 }) => {
     const {
-        setNotificationType,
-        setNotification,
+        notify,
         getSwap,
         setSwapStorage,
         setRefundAddress,
@@ -150,8 +149,7 @@ const RefundButton = ({
                 }
             }
         } catch (error) {
-            log.debug("refund failed", error);
-            setNotificationType("error");
+            log.warn("refund failed", error);
             if (typeof error.json === "function") {
                 error
                     .json()
@@ -169,15 +167,15 @@ const RefundButton = ({
                             msg = t("locktime_not_satisfied");
                         }
                         log.error(msg);
-                        setNotification(msg);
+                        notify("error", msg);
                     })
                     .catch((genericError: any) => {
                         log.error(genericError);
-                        setNotification(genericError);
+                        notify("error", genericError);
                     });
             } else {
                 log.error(error.message);
-                setNotification(error.message);
+                notify("error", error.message);
             }
         }
 

@@ -181,6 +181,10 @@ const dict = {
         denomination_tooltip: "Choose your preferred denomination: BTC or sats",
         decimal_tooltip:
             "Choose your preferred decimal separator: dot or comma",
+        claim_success: "Swap {{ id }} claimed successfully!",
+        claim_fail: "Failed to claim swap: {{ id }}",
+        logs: "Logs",
+        logs_tooltip: "Logs of the web app, useful for debugging.",
     },
     de: {
         language: "Deutsch",
@@ -371,6 +375,10 @@ const dict = {
             "Wähle deine bevorzugte Denomination: BTC oder sats",
         decimal_tooltip:
             "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Komma",
+        claim_success: "Swap {{ id }} erfolgreich geclaimed!",
+        claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
+        logs: "Logs",
+        logs_tooltip: "Logs der Web App, nützlich für Debugging.",
     },
     es: {
         language: "Español",
@@ -561,6 +569,10 @@ const dict = {
         decimal_separator: "Separador decimal",
         denomination_tooltip: "Elige tu denominación preferida: BTC o sats",
         decimal_tooltip: "Elige tu separador decimal preferido: punto o coma",
+        claim_success: "¡Intercambio {{ id }} reclamado con éxito!",
+        claim_fail: "¡Error en reclamar el intercambio {{ id }}!",
+        logs: "Logs",
+        logs_tooltip: "Registros de la aplicación web, para depuración.",
     },
     zh: {
         language: "中文",
@@ -731,6 +743,10 @@ const dict = {
         decimal_separator: "小数分隔符",
         denomination_tooltip: "选择您的首选面额：BTC 或 sats",
         decimal_tooltip: "选择您的首选小数分隔符：点或逗号",
+        claim_success: "交换{{ id }}成功索赔！",
+        claim_fail: "交换{{ id }}索赔失败！",
+        logs: "日志",
+        logs_tooltip: "网络应用程序的日志，用于调试。",
     },
 };
 

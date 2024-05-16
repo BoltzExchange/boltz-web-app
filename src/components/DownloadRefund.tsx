@@ -35,7 +35,7 @@ const DownloadRefund = () => {
     const downloadRefundQr = (swap: any) => {
         QRCode.toDataURL(JSON.stringify(createRefundData(swap)), { width: 400 })
             .then((url: string) => {
-                if (isIos) {
+                if (isIos()) {
                     // Compatibility with third party iOS browsers
                     const newTab = window.open();
                     newTab.document.body.innerHTML = `
@@ -57,7 +57,9 @@ const DownloadRefund = () => {
         <button
             class="btn btn-success"
             onclick={() =>
-                isMobile ? downloadRefundQr(swap()) : downloadRefundJson(swap())
+                isMobile()
+                    ? downloadRefundQr(swap())
+                    : downloadRefundJson(swap())
             }>
             {t("download_refund_file")}
         </button>
