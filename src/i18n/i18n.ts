@@ -550,7 +550,7 @@ const dict = {
         testnet: "Testnet",
         broadcasting_claim: "Enviando transacción de reclamación...",
         open_swap: "Abrir intercambio",
-        swap_in_history: "Intercambio encontrado en historial.",
+        swap_in_history: "Intercambio encontrado en la historia.",
         paste_invalid:
             "El portapapeles contiene caracteres no válidos o se ha excedido el importe máximo",
         email: "Email",
