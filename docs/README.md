@@ -12,7 +12,7 @@ coverY: 0
 
 Make sure to have the latest [Node.js LTS and NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed. We recommend using [nvm](https://github.com/nvm-sh/nvm#install--update-script) to manage npm installs: `nvm install --lts`
 
-## with docker
+## With docker
 
 ```bash
 docker build -t boltz-webapp .
