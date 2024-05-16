@@ -221,9 +221,10 @@ export const SwapChecker = () => {
             try {
                 await createSubmarineSignature(currentSwap);
             } catch (e) {
-                const msg = t("claim_fail_coop", { id: currentSwap.id });
-                log.warn(msg, e);
-                notify("error", msg);
+                log.warn(
+                    `creating cooperative signature for submarine swap claim failed`,
+                    e,
+                );
             }
         }
     };

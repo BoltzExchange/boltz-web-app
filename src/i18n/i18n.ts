@@ -182,11 +182,8 @@ const dict = {
         decimal_tooltip: "Choose your preferred decimal separator: dot or coma",
         claim_success: "Swap {{ id }} claimed successfully!",
         claim_fail: "Failed to claim swap: {{ id }}",
-        claim_fail_coop: "Failed to sign cooperative claim for swap: {{ id }}",
-        no_errors: "No errors",
-        error_log: "Error Logs",
-        error_log_tooltip:
-            "Saves error on claims and refunds to local storage for debugging",
+        logs: "Logs",
+        logs_tooltip: "Logs of the web app. Useful for debugging",
     },
     de: {
         language: "Deutsch",
@@ -379,12 +376,6 @@ const dict = {
             "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Beistrich",
         claim_success: "Swap {{ id }} erfolgreich geclaimed!",
         claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
-        claim_fail_coop:
-            "Kooperativer Claim für Swap {{ id }} konnte nicht signiert werden!",
-        no_errors: "Keine Fehler",
-        error_log: "Fehlerprotokoll",
-        error_log_tooltip:
-            "Speichert Fehler bei Claims und Rückerstattungen im lokalen Speicher zum debuggen",
     },
     es: {
         language: "Español",
@@ -577,12 +568,6 @@ const dict = {
         decimal_tooltip: "Elige tu separador decimal preferido: punto o coma",
         claim_success: "¡Intercambio {{ id }} reclamado con éxito!",
         claim_fail: "¡Error al reclamar el intercambio {{ id }}!",
-        claim_fail_coop:
-            "¡Error al firmar la reclamación cooperativa para el intercambio {{ id }}!",
-        no_errors: "Sin errores",
-        error_log: "Registro de errores",
-        error_log_tooltip:
-            "Guarda errores en reclamaciones y reembolsos en el almacenamiento local para depuración",
     },
     zh: {
         language: "中文",
@@ -755,10 +740,6 @@ const dict = {
         decimal_tooltip: "选择您的首选小数分隔符：点或逗号",
         claim_success: "交换{{ id }}成功索赔！",
         claim_fail: "交换{{ id }}索赔失败！",
-        claim_fail_coop: "交换{{ id }}合作索赔签名失败！",
-        no_errors: "无错误",
-        error_log: "错误日志",
-        error_log_tooltip: "将索赔和退款错误保存在本地存储中以进行调试",
     },
 };
 
