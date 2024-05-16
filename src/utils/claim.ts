@@ -96,7 +96,7 @@ const claimReverseTaproot = async (
             preimage: preimage,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
-            blindingPrivateKey: parseBlindingKey(swap),
+            blindingPrivateKey: parseBlindingKey(swap, false),
             internalKey: musig.getAggregatedPublicKey(),
         },
     ] as (ClaimDetails & { blindingPrivateKey: Buffer })[];
@@ -295,7 +295,7 @@ const claimChainSwap = async (
             keys: claimPrivateKey,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
-            blindingPrivateKey: parseBlindingKey(swap),
+            blindingPrivateKey: parseBlindingKey(swap, false),
             internalKey: ourClaimMusig.getAggregatedPublicKey(),
             preimage: Buffer.from(swap.preimage, "hex"),
         },

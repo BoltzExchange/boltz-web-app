@@ -18,14 +18,17 @@ export const isIos = () =>
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
-export const parseBlindingKey = (swap: SomeSwap) => {
+export const parseBlindingKey = (swap: SomeSwap, isRefund: boolean) => {
     let blindingKey: string | undefined;
 
     switch (swap.type) {
         case SwapType.Chain:
-            blindingKey = (swap as ChainSwap).claimDetails.blindingKey;
+            if (isRefund) {
+                blindingKey = (swap as ChainSwap).lockupDetails.blindingKey;
+            } else {
+                blindingKey = (swap as ChainSwap).claimDetails.blindingKey;
+            }
             break;
-
         default:
             blindingKey = (swap as SubmarineSwap | ReverseSwap).blindingKey;
     }

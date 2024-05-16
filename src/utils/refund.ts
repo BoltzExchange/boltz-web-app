@@ -63,7 +63,7 @@ const refundTaproot = async (
             cooperative: true,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
-            blindingPrivateKey: parseBlindingKey(swap),
+            blindingPrivateKey: parseBlindingKey(swap, true),
         } as RefundDetails & LiquidRefundDetails,
     ];
 
@@ -155,7 +155,7 @@ export const refund = async (
                     txHash: lockupTransaction.getHash(),
                     redeemScript: redeemScript,
                     keys: privateKey,
-                    blindingPrivateKey: parseBlindingKey(swap),
+                    blindingPrivateKey: parseBlindingKey(swap, true),
                 } as RefundDetails & LiquidRefundDetails,
             ],
             output.script,
