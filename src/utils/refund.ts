@@ -155,9 +155,6 @@ export async function refund(
             output.blindingKey,
         );
     }
-
-    log.debug("refundTransaction", refundTransaction.toHex());
-
     const res = await broadcastTransaction(
         assetName,
         refundTransaction.toHex(),
