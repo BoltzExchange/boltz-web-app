@@ -4,8 +4,8 @@ import { useGlobalContext } from "../context/Global";
 import "../style/tooltip.scss";
 
 const Tooltip = ({ label }) => {
-    const TIMEOUT = 300;
-    const TIMEOUT_CLICK = 1000;
+    const timeout_delay = 300;
+    const timeout_delay_click = 2500;
 
     const { t } = useGlobalContext();
 
@@ -16,7 +16,7 @@ const Tooltip = ({ label }) => {
         (target.parentNode as HTMLSpanElement).classList.add("active");
         timeout = setTimeout(() => {
             (target.parentNode as HTMLSpanElement).classList.remove("active");
-        }, TIMEOUT_CLICK);
+        }, timeout_delay_click);
     };
 
     const tooltipEnter = (evt: MouseEvent) => {
@@ -29,7 +29,7 @@ const Tooltip = ({ label }) => {
         const target = evt.currentTarget as HTMLSpanElement;
         timeout = setTimeout(() => {
             (target.parentNode as HTMLSpanElement).classList.remove("active");
-        }, TIMEOUT);
+        }, timeout_delay);
     };
 
     return (
