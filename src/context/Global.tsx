@@ -118,6 +118,7 @@ const migrateSwapsFromLocalStorage = async (swapsForage: any) => {
 const GlobalContext = createContext<GlobalContextType>();
 
 const GlobalProvider = (props: { children: any }) => {
+    const [cooperative, setCooperative] = createSignal<boolean>(true);
     const [online, setOnline] = createSignal<boolean>(true);
     const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
 
