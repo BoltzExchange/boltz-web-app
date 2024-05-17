@@ -3,6 +3,35 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.3.5](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.4..1.3.5) - 2024-05-17
+
+### Bug Fixes
+
+- disable swaps to unconfidential addresses (#566) - ([55d87f7](https://github.com/BoltzExchange/boltz-web-app/commit/55d87f7f084c0a4963b30709d7f34c06bbc5897b))
+- add 1 sat to miner fee when swapping to unconfidential address - ([56ef80f](https://github.com/BoltzExchange/boltz-web-app/commit/56ef80fa7c93f846c120e7e075e5e99fea1ea586))
+- capitalize subline (#570) - ([55b4bb8](https://github.com/BoltzExchange/boltz-web-app/commit/55b4bb8d5a44cdda657da6a476add44e50ca0d3c))
+- hot reload issue (#577) - ([c4bde0c](https://github.com/BoltzExchange/boltz-web-app/commit/c4bde0c80756021ceed3ad9b22f537416b0ce0b7))
+- improve close of settings box (#580) - ([9029b0a](https://github.com/BoltzExchange/boltz-web-app/commit/9029b0abb9dfcb4c3162801d88c2527dd190af51))
+- retry claiming on reload (#582) - ([96c0268](https://github.com/BoltzExchange/boltz-web-app/commit/96c026868d60b22c59bc14dbe45dc0401db25242))
+
+### Features
+
+- add geyser integration (#574) - ([1efa4d2](https://github.com/BoltzExchange/boltz-web-app/commit/1efa4d21a07f6685056a0ee1dfbd3e3fbe3d9b6c))
+- add setting menu (#549) - ([1719ce0](https://github.com/BoltzExchange/boltz-web-app/commit/1719ce091fb06c02d50e7a34d3d46b58e50568e7))
+- change license to AGPL3 (#588) - ([77d96b8](https://github.com/BoltzExchange/boltz-web-app/commit/77d96b8cf5e7adb394d300271efe3bde7fe41fa6))
+- capture logs in browser storage (#576) - ([e8a9689](https://github.com/BoltzExchange/boltz-web-app/commit/e8a968978cba326c79c26184cc7bbcafdebe952c))
+- add `release.sh` for release chores (#565) - ([accef30](https://github.com/BoltzExchange/boltz-web-app/commit/accef302f864de7160b5d15b6f28946170b5ee67))
+
+### Miscellaneous Chores
+
+- blog link update (#568) - ([a0a9be8](https://github.com/BoltzExchange/boltz-web-app/commit/a0a9be828632e359216b016591993d50dbdc0858))
+- remove logging of refund transaction (#592) - ([cd9a76f](https://github.com/BoltzExchange/boltz-web-app/commit/cd9a76f5f5f2ab80ba5ee866c4e29dcb558fffeb))
+
+### Refactoring
+
+- swap found wording on refund page (#589) - ([b91498e](https://github.com/BoltzExchange/boltz-web-app/commit/b91498e2726741082e6a5af13a7165538fd25d3a))
+
+---
 ## [1.3.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.3..v1.3.4) - 2024-04-23
 
 ### Bug Fixes
@@ -16,10 +45,11 @@ All notable changes to this project will be documented in this file. See [conven
 ### Miscellaneous Chores
 
 - set mainnet log level to debug - ([7f37914](https://github.com/BoltzExchange/boltz-web-app/commit/7f3791406db4c042cdbe6b5f86528d0b5498423b))
+- prepare release v1.3.4 (#563) - ([39f22b9](https://github.com/BoltzExchange/boltz-web-app/commit/39f22b909972e8286787735da52e0c0f0ef70488))
 
 ### Refactoring
 
-- use `<a>` for swap history links (#557) - ([186cd14](https://github.com/BoltzExchange/boltz-web-app/commit/186cd146ae278a45ed0795b5154f82bcef4a4df1))
+- use <a> for swap history links (#557) - ([186cd14](https://github.com/BoltzExchange/boltz-web-app/commit/186cd146ae278a45ed0795b5154f82bcef4a4df1))
 
 ---
 ## [1.3.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.1..v1.3.3) - 2024-04-16
