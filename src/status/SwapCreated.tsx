@@ -1,70 +1,27 @@
-import { BigNumber } from "bignumber.js";
-import log from "loglevel";
-import { Show } from "solid-js";
-
-import CopyButton from "../components/CopyButton";
-import QrCode from "../components/QrCode";
-import { BTC } from "../consts";
-import { useGlobalContext } from "../context/Global";
+import PayInvoice from "../components/PayInvoice";
+import PayOnchain from "../components/PayOnchain";
+import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
-import { denominations, formatAmount } from "../utils/denomination";
-import { clipboard, cropString, isMobile } from "../utils/helper";
-import { invoicePrefix } from "../utils/invoice";
-import { enableWebln } from "../utils/webln";
+import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
 const SwapCreated = () => {
     const { swap } = usePayContext();
-    const { t, denomination, separator, webln } = useGlobalContext();
-    const payWeblnInvoice = async (pr: string) => {
-        enableWebln(async () => {
-            const result = await window.webln.sendPayment(pr);
-            log.debug("webln payment result:", result);
-        });
-    };
 
+    if (swap().type === SwapType.Chain) {
+        const chain = swap() as ChainSwap;
+        return (
+            <PayOnchain
+                asset={chain.assetSend}
+                expectedAmount={chain.lockupDetails.amount}
+                address={chain.lockupDetails.lockupAddress}
+                bip21={chain.lockupDetails.bip21}
+            />
+        );
+    }
+
+    const reverse = swap() as ReverseSwap;
     return (
-        <div>
-            <h2>
-                {t("pay_invoice_to", {
-                    amount: formatAmount(
-                        BigNumber(swap().sendAmount),
-                        denomination(),
-                        separator(),
-                    ),
-                    denomination:
-                        denomination() === denominations.sat ? "sats" : BTC,
-                })}
-            </h2>
-            <hr />
-            <a href={invoicePrefix + swap().invoice}>
-                <QrCode data={swap().invoice} />
-            </a>
-            <hr />
-            <p
-                onclick={() => clipboard(swap().invoice)}
-                class="address-box break-word">
-                {cropString(swap().invoice)}
-            </p>
-            <hr />
-            <Show when={isMobile()}>
-                <h3>{t("warning_return")}</h3>
-                <hr />
-            </Show>
-            <Show when={webln() && !isMobile()}>
-                <span
-                    class="btn btn-light"
-                    onClick={() => payWeblnInvoice(swap().invoice)}>
-                    {t("pay_invoice_webln")}
-                </span>
-            </Show>
-            <Show when={isMobile()}>
-                <a href={invoicePrefix + swap().invoice} class="btn btn-light">
-                    {t("open_in_wallet")}
-                </a>
-            </Show>
-            <hr class="spacer" />
-            <CopyButton label="copy_invoice" data={swap().invoice} />
-        </div>
+        <PayInvoice sendAmount={reverse.sendAmount} invoice={reverse.invoice} />
     );
 };
 
