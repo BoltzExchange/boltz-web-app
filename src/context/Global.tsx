@@ -93,7 +93,7 @@ const stringSerializer = {
     deserialize: (value: any) => value,
 };
 
-const migrateSwapsFromLocalStorage = async () => {
+const migrateSwapsFromLocalStorage = async (swapsForage: any) => {
     const [localStorageSwaps, setLocalStorageSwaps] = makePersisted(
         createSignal([], {
             // Because arrays are the same object when changed,
@@ -106,7 +106,7 @@ const migrateSwapsFromLocalStorage = async () => {
     );
 
     for (const swap of localStorageSwaps()) {
-        await localforage.setItem(swap.id, swap);
+        await swapsForage.setItem(swap.id, swap);
     }
 
     const migratedSwapCount = localStorageSwaps().length;
@@ -246,7 +246,7 @@ const GlobalProvider = (props: { children: any }) => {
         name: "swaps",
     });
 
-    migrateSwapsFromLocalStorage()
+    migrateSwapsFromLocalStorage(swapsForage)
         .then((migratedSwapCount) => {
             if (migratedSwapCount === 0) {
                 return;
@@ -264,11 +264,11 @@ const GlobalProvider = (props: { children: any }) => {
         });
 
     const setSwapStorage = (swap: SomeSwap) =>
-        localforage.setItem(swap.id, swap);
+        swapsForage.setItem(swap.id, swap);
 
     const deleteSwap = (id: string) => swapsForage.removeItem(id);
 
-    const getSwap = <T = SomeSwap,>(id: string) => localforage.getItem<T>(id);
+    const getSwap = <T = SomeSwap,>(id: string) => swapsForage.getItem<T>(id);
 
     const getSwaps = async <T = SomeSwap,>(): Promise<T[]> => {
         const swaps: T[] = [];
