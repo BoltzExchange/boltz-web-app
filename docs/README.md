@@ -1,7 +1,7 @@
 ---
 description: >-
-    We encourage our technical users to check the code and run the web app locally
-    from source following the instructions below.
+  We encourage our technical users to check the code and run the web app locally
+  from source following the instructions below.
 cover: .gitbook/assets/boltz-web_app_header.png
 coverY: 0
 ---
@@ -12,11 +12,11 @@ coverY: 0
 
 Make sure to have the latest [Node.js LTS and NPM](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed. We recommend using [nvm](https://github.com/nvm-sh/nvm#install--update-script) to manage npm installs: `nvm install --lts`
 
-## With docker
+## With Docker
 
 ```bash
 docker build -t boltz-webapp .
-docker run -d --rm -p 4173:4173 --name my-boltz-webapp boltz-webapp
+docker run -d --rm -p 4173:80 --name my-boltz-webapp boltz-webapp
 ```
 
 ## Run

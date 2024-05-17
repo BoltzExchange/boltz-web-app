@@ -8,7 +8,6 @@
         "dev": "vite",
         "regtest": "cp src/configs/regtest.json public/config.json",
         "preview": "vite preview",
-        "serve": "vite preview --host",
         "build": "vite build; cp dist/index.html dist/404.html",
         "mainnet": "cp src/configs/mainnet.json public/config.json",
         "beta": "cp src/configs/beta.json public/config.json",

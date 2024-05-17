@@ -4,8 +4,6 @@ import mkcert from "vite-plugin-mkcert";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import solidPlugin from "vite-plugin-solid";
 
-const isNotDocker = process.env.DOCKER !== 1;
-
 const commitHash = child
     .execSync("git rev-parse --short HEAD")
     .toString()
@@ -14,7 +12,7 @@ const commitHash = child
 export default defineConfig({
     plugins: [solidPlugin(), mkcert(), nodePolyfills()],
     server: {
-        https: isNotDocker,
+        https: true,
         cors: { origin: "*" },
     },
     build: {
