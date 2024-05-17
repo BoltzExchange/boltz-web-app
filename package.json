@@ -7,7 +7,7 @@
         "test": "jest --runInBand ./tests",
         "dev": "vite",
         "regtest": "cp src/configs/regtest.json public/config.json",
-        "serve": "vite preview",
+        "preview": "vite preview",
         "build": "vite build; cp dist/index.html dist/404.html",
         "mainnet": "cp src/configs/mainnet.json public/config.json",
         "beta": "cp src/configs/beta.json public/config.json",
