@@ -36,6 +36,7 @@ const refundTaproot = async (
     privateKey: ECPairInterface,
     decodedAddress: DecodedAddress,
     feePerVbyte: number,
+    timeoutBlockHeight: number,
     cooperative: boolean = true,
 ) => {
     log.info(
@@ -77,7 +78,7 @@ const refundTaproot = async (
     const claimTx = constructRefundTransaction(
         details,
         decodedAddress.script,
-        0,
+        cooperative ? 0 : timeoutBlockHeight,
         feePerVbyte,
         true,
         getNetwork(swap.assetSend) as LiquidNetwork,
@@ -121,6 +122,7 @@ const refundTaproot = async (
             privateKey,
             decodedAddress,
             feePerVbyte,
+            timeoutBlockHeight,
             false,
         );
     }
@@ -156,6 +158,7 @@ export const refund = async (
             privateKey,
             output,
             feePerVbyte,
+            transactionToRefund.timeoutBlockHeight,
             cooperative,
         );
     } else {
