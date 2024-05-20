@@ -35,8 +35,12 @@ const refundTaproot = async (
     lockupTx: TransactionInterface,
     privateKey: ECPairInterface,
     decodedAddress: DecodedAddress,
-    feesPerVbyte: number,
+    feePerVbyte: number,
+    cooperative: boolean = true,
 ) => {
+    log.info(
+        `starting to refund swap ${swap.id} cooperatively: ${cooperative}`,
+    );
     const theirPublicKey =
         swap.type === SwapType.Submarine
             ? (swap as SubmarineSwap).claimPublicKey
@@ -75,47 +79,63 @@ const refundTaproot = async (
         details,
         decodedAddress.script,
         0,
-        feesPerVbyte,
+        feePerVbyte,
         true,
         getNetwork(swap.assetSend) as LiquidNetwork,
         decodedAddress.blindingKey,
     );
 
-    const boltzSig = await getPartialRefundSignature(
-        swap.assetSend,
-        swap.id,
-        swap.type,
-        Buffer.from(musig.getPublicNonce()),
-        claimTx,
-        0,
-    );
-    musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
-    musig.initializeSession(
-        hashForWitnessV1(
+    if (!cooperative) {
+        return claimTx;
+    }
+
+    try {
+        const boltzSig = await getPartialRefundSignature(
             swap.assetSend,
-            getNetwork(swap.assetSend),
-            details,
+            swap.id,
+            swap.type,
+            Buffer.from(musig.getPublicNonce()),
             claimTx,
             0,
-        ),
-    );
-    musig.signPartial();
-    musig.addPartial(boltzPublicKey, boltzSig.signature);
+        );
+        musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
+        musig.initializeSession(
+            hashForWitnessV1(
+                swap.assetSend,
+                getNetwork(swap.assetSend),
+                details,
+                claimTx,
+                0,
+            ),
+        );
+        musig.signPartial();
+        musig.addPartial(boltzPublicKey, boltzSig.signature);
 
-    claimTx.ins[0].witness = [musig.aggregatePartials()];
+        claimTx.ins[0].witness = [musig.aggregatePartials()];
 
-    return claimTx;
+        return claimTx;
+    } catch (e) {
+        log.warn("Uncooperative Taproot refund because", e);
+        return await refundTaproot(
+            swap,
+            lockupTx,
+            privateKey,
+            decodedAddress,
+            feePerVbyte,
+            false,
+        );
+    }
 };
 
 export const refund = async (
     swap: SubmarineSwap | ChainSwap,
     refundAddress: string,
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
+    cooperative: boolean = true,
 ) => {
-    log.debug("starting to refund swap", swap);
+    log.info(`refunding swap ${swap.id}: `, swap);
 
     await setup();
-    log.info("refunding swap: ", swap.id);
 
     const output = decodeAddress(swap.assetSend, refundAddress);
 
@@ -137,6 +157,7 @@ export const refund = async (
             privateKey,
             output,
             feePerVbyte,
+            cooperative,
         );
     } else {
         const redeemScript = Buffer.from((swap as any).redeemScript, "hex");
