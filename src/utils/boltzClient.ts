@@ -3,6 +3,7 @@ import { Musig } from "boltz-core";
 import { Buffer } from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 
+import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import { fetcher } from "./helper";
 
@@ -240,7 +241,9 @@ export const getPartialRefundSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    throw new Error("Not implemented");
+    if (config.cooperative === false) {
+        throw new Error("cooperative swaps are disabled");
+    }
     const res = await fetcher(
         `/v2/swap/${
             type === SwapType.Submarine ? "submarine" : "chain"
@@ -266,7 +269,9 @@ export const getPartialReverseClaimSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    throw new Error("Not implemented");
+    if (config.cooperative === false) {
+        throw new Error("cooperative swaps are disabled");
+    }
     const res = await fetcher(`/v2/swap/reverse/${id}/claim`, asset, {
         index,
         preimage: preimage.toString("hex"),
