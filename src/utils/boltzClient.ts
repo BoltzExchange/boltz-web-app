@@ -7,6 +7,13 @@ import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import { fetcher } from "./helper";
 
+const cooperativeErrorMessage = "Cooperative swaps are disabled";
+const checkCooperative = () => {
+    if (config.cooperativeDisabled === true) {
+        throw new Error(cooperativeErrorMessage);
+    }
+};
+
 type ReverseMinerFees = {
     lockup: number;
     claim: number;
@@ -241,9 +248,7 @@ export const getPartialRefundSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    if (config.cooperative === false) {
-        throw new Error("cooperative swaps are disabled");
-    }
+    checkCooperative();
     const res = await fetcher(
         `/v2/swap/${
             type === SwapType.Submarine ? "submarine" : "chain"
@@ -269,9 +274,7 @@ export const getPartialReverseClaimSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
-    if (config.cooperative === false) {
-        throw new Error("cooperative swaps are disabled");
-    }
+    checkCooperative();
     const res = await fetcher(`/v2/swap/reverse/${id}/claim`, asset, {
         index,
         preimage: preimage.toString("hex"),
@@ -298,17 +301,22 @@ export const postSubmarineClaimDetails = (
     id: string,
     pubNonce: Buffer | Uint8Array,
     partialSignature: Buffer | Uint8Array,
-) =>
+) => {
+    checkCooperative();
     fetcher(`/v2/swap/submarine/${id}/claim`, asset, {
         pubNonce: Buffer.from(pubNonce).toString("hex"),
         partialSignature: Buffer.from(partialSignature).toString("hex"),
     });
+};
 
 export const getEipRefundSignature = (
     asset: string,
     id: string,
     type: SwapType,
-) => fetcher<{ signature: string }>(`/v2/swap/${type}/${id}/refund`, asset);
+) => {
+    checkCooperative();
+    fetcher<{ signature: string }>(`/v2/swap/${type}/${id}/refund`, asset);
+};
 
 export const getFeeEstimations = (asset: string) =>
     fetcher<Record<string, number>>("/v2/chain/fees", asset);
@@ -404,7 +412,8 @@ export const postChainSwapDetails = (
     preimage: string,
     signature: { pubNonce: string; partialSignature: string },
     toSign: { pubNonce: string; transaction: string; index: number },
-) =>
+) => {
+    checkCooperative();
     fetcher<{
         pubNonce: string;
         partialSignature: string;
@@ -413,6 +422,7 @@ export const postChainSwapDetails = (
         signature,
         toSign,
     });
+};
 
 export const getChainSwapTransactions = (asset: string, id: string) =>
     fetcher<{

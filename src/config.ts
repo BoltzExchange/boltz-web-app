@@ -1,6 +1,7 @@
 import log from "loglevel";
 
 const defaults = {
+    cooperativeDisabled: false,
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
     lightningExplorerUrl: "https://amboss.space/node",
