@@ -240,8 +240,11 @@ export const getPartialRefundSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
+    throw new Error("Not implemented");
     const res = await fetcher(
-        `/v2/swap/${type === SwapType.Submarine ? "submarine" : "chain"}/${id}/refund`,
+        `/v2/swap/${
+            type === SwapType.Submarine ? "submarine" : "chain"
+        }/${id}/refund`,
         asset,
         {
             index,
@@ -263,6 +266,7 @@ export const getPartialReverseClaimSignature = async (
     transaction: TransactionInterface,
     index: number,
 ): Promise<PartialSignature> => {
+    throw new Error("Not implemented");
     const res = await fetcher(`/v2/swap/reverse/${id}/claim`, asset, {
         index,
         preimage: preimage.toString("hex"),
