@@ -143,20 +143,15 @@ export const SwapChecker = () => {
         }
         if (swap() && swap().id === currentSwap.id) {
             setSwapStatus(data.status);
-            if (data.transaction) setSwapStatusTransaction(data.transaction);
+            if (data.transaction) {
+                setSwapStatusTransaction(data.transaction);
+            }
             if (data.failureReason) {
                 setFailureReason(data.failureReason);
             }
         }
-        if (data.transaction) {
-            setSwapStatusTransaction(data.transaction);
-        }
         if (data.status) {
             await updateSwapStatus(currentSwap.id, data.status);
-        }
-
-        if (data.failureReason) {
-            setFailureReason(data.failureReason);
         }
     };
 
