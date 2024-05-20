@@ -50,26 +50,25 @@ const refundTaproot = async (
             ? (swap as SubmarineSwap).swapTree
             : (swap as ChainSwap).lockupDetails.swapTree;
 
+    const swapTree = SwapTreeSerializer.deserializeSwapTree(lockupTree);
     const boltzPublicKey = Buffer.from(theirPublicKey, "hex");
     const musig = createMusig(privateKey, boltzPublicKey);
-    const tweakedKey = tweakMusig(
-        swap.assetSend,
-        musig,
-        SwapTreeSerializer.deserializeSwapTree(lockupTree).tree,
-    );
+    const tweakedKey = tweakMusig(swap.assetSend, musig, swapTree.tree);
 
     const swapOutput = detectSwap(tweakedKey, lockupTx);
 
     const details = [
         {
             ...swapOutput,
+            cooperative,
+            swapTree,
             keys: privateKey,
-            cooperative: true,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
             blindingPrivateKey: parseBlindingKey(swap, true),
-        } as RefundDetails & LiquidRefundDetails,
-    ];
+            internalKey: musig.getAggregatedPublicKey(),
+        },
+    ] as (RefundDetails & { blindingPrivateKey: Buffer })[];
 
     const constructRefundTransaction = getConstructRefundTransaction(
         swap.assetSend,
