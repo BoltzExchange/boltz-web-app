@@ -6,6 +6,17 @@ import i18n from "../../src/i18n/i18n";
 import TransactionLockupFailed from "../../src/status/TransactionLockupFailed";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
+jest.mock("../../src/utils/boltzClient", () => {
+    const originalModule = jest.requireActual("../../src/utils/boltzClient");
+    return {
+        __esModule: true,
+        ...originalModule,
+        getLockupTransaction: jest.fn(() => {
+            return { timeoutBlockHeight: 10, timeoutEta: 10 };
+        }),
+    };
+});
+
 describe("TransactionLockupFailed", () => {
     beforeEach(() => {
         jest.clearAllMocks();

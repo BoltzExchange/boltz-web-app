@@ -56,7 +56,9 @@ const Refund = () => {
             // format for the refund json
             if ("type" in json) {
                 requiredKeys =
-                    json.asset !== LBTC ? refundJsonKeys : refundJsonKeysLiquid;
+                    json.assetSend !== LBTC
+                        ? refundJsonKeys
+                        : refundJsonKeysLiquid;
             } else {
                 // Compatibility with even older refund files
                 if (json.asset === undefined && json.currency) {
@@ -70,6 +72,11 @@ const Refund = () => {
 
             valid = requiredKeys.every((key: string) => key in json);
             if (valid) {
+                // transform old format
+                if (!("type" in json)) {
+                    json.type = SwapType.Submarine;
+                    json.assetSend = json.asset;
+                }
                 setRefundJson(json);
                 return;
             }

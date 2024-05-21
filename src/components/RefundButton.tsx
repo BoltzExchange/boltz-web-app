@@ -1,8 +1,9 @@
 import { crypto } from "bitcoinjs-lib";
+import { OutputType } from "boltz-core";
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import { Accessor, Setter, Show, createSignal } from "solid-js";
+import { Accessor, Setter, Show, createSignal, onMount } from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
 import RefundEta from "../components/RefundEta";
@@ -180,7 +181,6 @@ const RefundButton = ({
             swap().id,
             swap().type,
         );
-        log.debug(`got swap transaction for ${swap().id}`, transactionToRefund);
 
         try {
             const res = await refund(
@@ -240,6 +240,22 @@ const RefundButton = ({
 
         setRefundRunning(false);
     };
+
+    onMount(async () => {
+        if (!swap()) return;
+
+        const transactionToRefund = await getLockupTransaction(
+            swap().assetSend,
+            swap().id,
+            swap().type,
+        );
+
+        // immediatly show refund eta on legacy swaps
+        if (swap().version !== OutputType.Taproot) {
+            setTimeoutEta(transactionToRefund.timeoutEta);
+            setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
+        }
+    });
 
     return (
         <>
