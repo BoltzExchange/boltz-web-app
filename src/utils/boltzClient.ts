@@ -303,7 +303,7 @@ export const postSubmarineClaimDetails = (
     partialSignature: Buffer | Uint8Array,
 ) => {
     checkCooperative();
-    fetcher(`/v2/swap/submarine/${id}/claim`, asset, {
+    return fetcher(`/v2/swap/submarine/${id}/claim`, asset, {
         pubNonce: Buffer.from(pubNonce).toString("hex"),
         partialSignature: Buffer.from(partialSignature).toString("hex"),
     });
@@ -315,7 +315,10 @@ export const getEipRefundSignature = (
     type: SwapType,
 ) => {
     checkCooperative();
-    fetcher<{ signature: string }>(`/v2/swap/${type}/${id}/refund`, asset);
+    return fetcher<{ signature: string }>(
+        `/v2/swap/${type}/${id}/refund`,
+        asset,
+    );
 };
 
 export const getFeeEstimations = (asset: string) =>
@@ -414,7 +417,7 @@ export const postChainSwapDetails = (
     toSign: { pubNonce: string; transaction: string; index: number },
 ) => {
     checkCooperative();
-    fetcher<{
+    return fetcher<{
         pubNonce: string;
         partialSignature: string;
     }>(`/v2/swap/chain/${id}/claim`, asset, {
