@@ -14,7 +14,7 @@ const SwapRefunded = () => {
             <p>{t("refunded")}</p>
             <hr />
             <BlockExplorer
-                asset={swap().assetReceive}
+                asset={swap().assetSend}
                 txId={swap().refundTx}
                 typeLabel="refund_tx"
             />
