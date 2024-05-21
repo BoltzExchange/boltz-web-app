@@ -10,17 +10,18 @@ const RefundEta = ({
     timeoutBlockHeight: Accessor<number>;
 }) => {
     const { t } = useGlobalContext();
+    const getDateString = (timestamp: number) =>
+        new Date(timestamp * 1000).toLocaleString();
     return (
-        <Show when={timeoutEta()}>
-            <div>
-                <h3>{t("refund_explainer")}</h3>
-                <p>
-                    {t("timeout_eta")}:{" "}
-                    {new Date(timeoutEta()).toLocaleString()} <br />
-                    {t("pay_timeout_blockheight")}: {timeoutBlockHeight()}
-                </p>
-            </div>
-        </Show>
+        <div>
+            <h3>{t("refund_explainer")}</h3>
+            <p>
+                <Show when={timeoutEta()}>
+                    {t("timeout_eta")}: {getDateString(timeoutEta())} <br />
+                </Show>
+                {t("pay_timeout_blockheight")}: {timeoutBlockHeight()}
+            </p>
+        </div>
     );
 };
 

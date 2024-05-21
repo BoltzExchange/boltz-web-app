@@ -5,7 +5,6 @@ import { Show, createSignal, onMount } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
-import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
@@ -32,10 +31,6 @@ const Refund = () => {
     const navigate = useNavigate();
     const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t } =
         useGlobalContext();
-
-    // TODO: set these for legacy swap backwards compatibility
-    const [timeoutEta] = createSignal<number | null>(null);
-    const [timeoutBlockheight] = createSignal<number | null>(null);
 
     const [swapFound, setSwapFound] = createSignal(null);
     const [refundInvalid, setRefundInvalid] = createSignal(false);
@@ -211,10 +206,6 @@ const Refund = () => {
                         <RefundButton
                             swap={refundJson}
                             setRefundTxId={setRefundTxId}
-                        />
-                        <RefundEta
-                            timeoutEta={timeoutEta}
-                            timeoutBlockHeight={timeoutBlockheight}
                         />
                     </Show>
                     <Show when={refundTxId() !== ""}>

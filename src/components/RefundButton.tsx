@@ -2,9 +2,10 @@ import { crypto } from "bitcoinjs-lib";
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import { Accessor, Setter, createSignal } from "solid-js";
+import { Accessor, Setter, Show, createSignal } from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
+import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -103,6 +104,10 @@ const RefundButton = ({
         t,
     } = useGlobalContext();
     const { setSwap } = usePayContext();
+    const [timeoutEta, setTimeoutEta] = createSignal<number | null>(null);
+    const [timeoutBlockheight, setTimeoutBlockheight] = createSignal<
+        number | null
+    >(null);
 
     if (swap() && swap().assetSend === RBTC) {
         if (swap().type === SwapType.Submarine) {
@@ -170,16 +175,14 @@ const RefundButton = ({
     const refundAction = async () => {
         setRefundRunning(true);
 
+        const transactionToRefund = await getLockupTransaction(
+            swap().assetSend,
+            swap().id,
+            swap().type,
+        );
+        log.debug(`got swap transaction for ${swap().id}`, transactionToRefund);
+
         try {
-            const transactionToRefund = await getLockupTransaction(
-                swap().assetSend,
-                swap().id,
-                swap().type,
-            );
-            log.debug(
-                `got swap transaction for ${swap().id}`,
-                transactionToRefund,
-            );
             const res = await refund(
                 swap(),
                 refundAddress(),
@@ -213,9 +216,14 @@ const RefundButton = ({
                         ) {
                             msg = t("already_refunded");
                         } else if (
-                            msg === "mandatory-script-verify-flag-failed"
+                            msg === "mandatory-script-verify-flag-failed" ||
+                            msg === "non-final"
                         ) {
                             msg = t("locktime_not_satisfied");
+                            setTimeoutEta(transactionToRefund.timeoutEta);
+                            setTimeoutBlockheight(
+                                transactionToRefund.timeoutBlockHeight,
+                            );
                         }
                         log.error(msg);
                         notify("error", msg);
@@ -235,6 +243,12 @@ const RefundButton = ({
 
     return (
         <>
+            <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
+                <RefundEta
+                    timeoutEta={timeoutEta}
+                    timeoutBlockHeight={timeoutBlockheight}
+                />
+            </Show>
             <h3 style={"color: #fff"}>
                 {swap()
                     ? t("refund_address_header", { asset: swap()?.assetSend })
