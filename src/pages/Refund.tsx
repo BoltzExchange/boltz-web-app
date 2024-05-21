@@ -37,7 +37,6 @@ const Refund = () => {
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
-    // TODO: chain swaps
     const checkRefundJsonKeys = async (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
 
