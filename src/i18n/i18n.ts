@@ -54,7 +54,7 @@ const dict = {
             "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink",
         congrats: "Congratulations!",
         successfully_swapped:
-            "You have succesfully swapped {{ amount }} {{ denomination }}",
+            "You successfully received {{ amount }} {{ denomination }}.",
         timeout_eta: "Timeout ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
@@ -239,7 +239,7 @@ const dict = {
             "Füge eine bolt11 Lightning-Rechnung\n eine Lightning-Adresse\n oder einen LNURL Paylink hier ein",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped:
-            "Du hast erfolgreich {{ amount }} {{ denomination }} getauscht",
+            "Du hast erfolgreich {{ amount }} {{ denomination }} empfangen.",
         timeout_eta: "Timeout-ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap nicht gefunden!",
@@ -430,7 +430,7 @@ const dict = {
             "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay",
         congrats: "¡Felicitaciones!",
         successfully_swapped:
-            "Has intercambiado con éxito {{ amount }} {{ denomination }}",
+            "Has recibido con éxito {{ amount }} {{ denomination }}.",
         timeout_eta: "Tiempo de espera estimado",
         pay_invoice: "Intercambio: {{ id }}",
         pay_swap_404: "¡Intercambio no encontrado!",
@@ -618,7 +618,7 @@ const dict = {
         create_and_paste:
             "粘贴一个bolt11闪电发票\n或闪电网络地址\n或LNURL支付链接",
         congrats: "恭喜！",
-        successfully_swapped: "您已成功交换{{ amount }}{{ denomination }}",
+        successfully_swapped: "您成功收到{{ amount }}{{ denomination }}。",
         timeout_eta: "超过预期时间",
         pay_invoice: "交换：{{ id }}",
         pay_swap_404: "找不到交换！",
