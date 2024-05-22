@@ -498,6 +498,10 @@ textarea {
 [data-selected="true"] {
     cursor: default;
 }
+[data-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
 .assets-select {
     background: #102032;
     position: absolute;
