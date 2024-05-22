@@ -1,20 +1,19 @@
+import { requestProvider } from "@getalby/bitcoin-connect";
 import log from "loglevel";
 
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { enableWebln } from "../utils/webln";
 
 const WeblnButton = () => {
     const { t } = useGlobalContext();
     const { receiveAmount, amountValid, setInvoice } = useCreateContext();
 
     const createWeblnInvoice = async () => {
-        await enableWebln(async () => {
-            const amount = Number(receiveAmount());
-            const invoice = await window.webln.makeInvoice({ amount: amount });
-            log.debug("created webln invoice", invoice);
-            setInvoice(invoice.paymentRequest);
-        });
+        const weblnProvider = await requestProvider();
+        const amount = Number(receiveAmount());
+        const invoice = await weblnProvider.makeInvoice({ amount: amount });
+        log.debug("created webln invoice", invoice);
+        setInvoice(invoice.paymentRequest);
     };
     return (
         <button
