@@ -32,7 +32,7 @@ const Logs = () => {
     };
 
     return (
-        <div>
+        <div class="flex">
             <span onClick={copy} class="btn-small">
                 <BiRegularCopy size={ICONSIZE} />
             </span>
