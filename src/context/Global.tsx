@@ -61,9 +61,12 @@ export type GlobalContextType = {
     setSeparator: Setter<string>;
     settingsMenu: Accessor<boolean>;
     setSettingsMenu: Setter<boolean>;
+    audioNotification: Accessor<boolean>;
+    setAudioNotification: Setter<boolean>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
-    notify: (type: string, message: string) => void;
+    notify: (type: string, message: string, audio?: boolean) => void;
+    playNotificationSound: () => void;
     fetchPairs: (asset?: string) => void;
 
     getLogs: () => Promise<Record<string, string[]>>;
@@ -153,6 +156,13 @@ const GlobalProvider = (props: { children: any }) => {
 
     const [settingsMenu, setSettingsMenu] = createSignal<boolean>(false);
 
+    const [audioNotification, setAudioNotification] = makePersisted(
+        createSignal<boolean>(false),
+        {
+            name: "audioNotification",
+        },
+    );
+
     const localeSeparator = (0.1).toLocaleString().charAt(1);
     const [separator, setSeparator] = makePersisted(
         createSignal(localeSeparator),
@@ -161,9 +171,16 @@ const GlobalProvider = (props: { children: any }) => {
         },
     );
 
-    const notify = (type: string, message: string) => {
+    const notify = (type: string, message: string, audio: boolean = false) => {
         setNotificationType(type);
         setNotification(message);
+        if (audio && audioNotification()) playNotificationSound();
+    };
+
+    const playNotificationSound = () => {
+        const audio = new Audio("/notification.mp3");
+        audio.volume = 0.3;
+        audio.play();
     };
 
     const fetchPairs = (asset: string = BTC) => {
@@ -326,9 +343,12 @@ const GlobalProvider = (props: { children: any }) => {
                 setSeparator,
                 settingsMenu,
                 setSettingsMenu,
+                audioNotification,
+                setAudioNotification,
                 // functions
                 t,
                 notify,
+                playNotificationSound,
                 fetchPairs,
                 getLogs,
                 clearLogs,
