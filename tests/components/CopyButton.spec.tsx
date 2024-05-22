@@ -1,4 +1,5 @@
 import { fireEvent, render } from "@solidjs/testing-library";
+import { createSignal } from "solid-js";
 
 import CopyButton from "../../src/components/CopyButton";
 import i18n from "../../src/i18n/i18n";
@@ -48,5 +49,20 @@ describe("CopyButton", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
             expectedCopy,
         );
+    });
+
+    test("should copy from a signal", async () => {
+        const textToCopy = "50000";
+        const [signal, _] = createSignal(textToCopy);
+
+        const {
+            container: { firstChild: button },
+        } = render(() => <CopyButton label="copy_bip21" signal={signal} />, {
+            wrapper: contextWrapper,
+        });
+
+        const btn = button as HTMLSpanElement;
+        fireEvent.click(btn);
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
     });
 });
