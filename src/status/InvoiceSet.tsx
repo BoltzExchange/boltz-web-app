@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createSignal } from "solid-js";
+import { Show } from "solid-js";
 
 import ContractTransaction from "../components/ContractTransaction";
 import CopyButton from "../components/CopyButton";
@@ -20,17 +20,6 @@ const InvoiceSet = () => {
     const { t, getSwap, setSwapStorage, denomination, separator } =
         useGlobalContext();
 
-    const [formattedAmount, setFormattedAmount] = createSignal("");
-
-    createEffect(() => {
-        setFormattedAmount(
-            formatAmount(
-                BigNumber(swap().expectedAmount),
-                denomination(),
-                separator(),
-            ),
-        );
-    });
     if (asset() === RBTC) {
         const { getEtherSwap } = useWeb3Signer();
 
@@ -97,7 +86,16 @@ const InvoiceSet = () => {
             </Show>
             <hr />
             <div class="btns">
-                <CopyButton label="copy_amount" signal={formattedAmount} />
+                <CopyButton
+                    label="copy_amount"
+                    data={() =>
+                        formatAmount(
+                            BigNumber(swap().expectedAmount),
+                            denomination(),
+                            separator(),
+                        )
+                    }
+                />
                 <CopyButton label="copy_address" data={swap().address} />
                 <CopyButton label="copy_bip21" data={swap().bip21} />
             </div>

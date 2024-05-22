@@ -51,13 +51,13 @@ describe("CopyButton", () => {
         );
     });
 
-    test("should copy from a signal", async () => {
+    test("should copy from a function", async () => {
         const textToCopy = "50000";
         const [signal, _] = createSignal(textToCopy);
 
         const {
             container: { firstChild: button },
-        } = render(() => <CopyButton label="copy_bip21" signal={signal} />, {
+        } = render(() => <CopyButton label="copy_bip21" data={signal} />, {
             wrapper: contextWrapper,
         });
 

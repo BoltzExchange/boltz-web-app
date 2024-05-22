@@ -8,12 +8,10 @@ import { clipboard } from "../utils/helper";
 const CopyButton = ({
     data,
     label,
-    signal,
     btnClass = "btn",
 }: {
     label: string;
-    data?: string;
-    signal?: Accessor<string>;
+    data: string | Accessor<string>;
     btnClass?: string;
 }) => {
     const { t } = useGlobalContext();
@@ -22,7 +20,7 @@ const CopyButton = ({
     const [buttonActive, setButtonActive] = createSignal<boolean>(false);
 
     const onClick = () => {
-        let copyData = data ? data : signal ? signal() : "";
+        const copyData = typeof data === "string" ? data : data();
         clipboard(copyData.replaceAll(" ", ""));
         setButtonClass(`${btnClass} btn-active`);
         setButtonActive(true);
