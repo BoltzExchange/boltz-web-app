@@ -1,7 +1,6 @@
 /* @refresh skip  */
 import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
-import { OutputType } from "boltz-core";
 import localforage from "localforage";
 import log from "loglevel";
 import {
