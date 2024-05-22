@@ -1,10 +1,12 @@
 import { useNavigate } from "@solidjs/router";
+import { BigNumber } from "bignumber.js";
 import { Show, createEffect, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { formatAmount } from "../utils/denomination";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -20,7 +22,7 @@ const Broadcasting = () => {
 const TransactionClaimed = () => {
     const navigate = useNavigate();
     const { swap } = usePayContext();
-    const { t, denomination } = useGlobalContext();
+    const { t, denomination, separator } = useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
@@ -45,7 +47,11 @@ const TransactionClaimed = () => {
                 <h2>{t("congrats")}</h2>
                 <p>
                     {t("successfully_swapped", {
-                        amount: swap().receiveAmount,
+                        amount: formatAmount(
+                            BigNumber(swap().receiveAmount),
+                            denomination(),
+                            separator(),
+                        ),
                         denomination: denomination(),
                     })}
                 </p>
