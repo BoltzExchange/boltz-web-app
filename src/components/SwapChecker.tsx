@@ -211,7 +211,12 @@ export const SwapChecker = () => {
                 if (claimedSwap.id === swap().id) {
                     setSwap(claimedSwap);
                 }
-                notify("success", t("claim_success", { id: res.id }), true);
+                notify(
+                    "success",
+                    t("claim_success", { id: res.id }),
+                    true,
+                    true,
+                );
             } catch (e) {
                 const msg = t("claim_fail", { id: currentSwap.id });
                 log.warn(msg, e);
