@@ -618,7 +618,7 @@ const dict = {
         create_and_paste:
             "粘贴一个bolt11闪电发票\n或闪电网络地址\n或LNURL支付链接",
         congrats: "恭喜！",
-        successfully_swapped: "您成功收到{{ amount }}{{ denomination }}。",
+        successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
         timeout_eta: "超过预期时间",
         pay_invoice: "交换：{{ id }}",
         pay_swap_404: "找不到交换！",
