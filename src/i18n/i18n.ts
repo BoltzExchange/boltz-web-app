@@ -582,7 +582,8 @@ const dict = {
         claim_success: "¡Intercambio {{ id }} reclamado con éxito!",
         claim_fail: "¡Error en reclamar el intercambio {{ id }}!",
         logs: "Logs",
-        logs_tooltip: "Registros de la aplicación web, para depuración.",
+        logs_tooltip:
+            "Registros de la aplicación web como herramienta de depuración.",
         enable_audio_notifications: "Activar notificaciones de audio",
         enable_audio_notifications_tooltip:
             "Activar o desactivar notificaciones de audio",
