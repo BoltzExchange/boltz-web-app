@@ -1,6 +1,7 @@
 /* @refresh skip  */
 import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
+import { OutputType } from "boltz-core";
 import localforage from "localforage";
 import log from "loglevel";
 import {
@@ -13,7 +14,8 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC } from "../consts/Assets";
+import { BTC, LN } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { Denomination } from "../consts/Enums";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
@@ -112,6 +114,29 @@ const migrateSwapsFromLocalStorage = async (swapsForage: any) => {
     const migratedSwapCount = localStorageSwaps().length;
     setLocalStorageSwaps([]);
 
+    return migratedSwapCount;
+};
+
+const migrateToChainSwaps = async (swapsForage: any) => {
+    const swaps = await swapsForage.keys();
+    let migratedSwapCount = 0;
+    for (const swapId of swaps) {
+        const swap = await swapsForage.getItem(swapId);
+        if (!("type" in swap)) {
+            if (swap.reverse) {
+                swap.type = SwapType.Reverse;
+                swap.assetSend = LN;
+                swap.assetReceive = swap.asset;
+            } else {
+                swap.type = SwapType.Submarine;
+                swap.assetSend = swap.asset;
+                swap.assetReceive = LN;
+            }
+            log.debug(`migrated swap to ${swap.id}`);
+            await swapsForage.setItem(swapId, swap);
+            migratedSwapCount++;
+        }
+    }
     return migratedSwapCount;
 };
 
@@ -261,6 +286,17 @@ const GlobalProvider = (props: { children: any }) => {
                 "could not migrate swaps from local storage to localforage",
                 e,
             );
+        });
+
+    migrateToChainSwaps(swapsForage)
+        .then((migratedSwapCount) => {
+            if (migratedSwapCount === 0) {
+                return;
+            }
+            log.debug(`migrated ${migratedSwapCount} to chainswaps`);
+        })
+        .catch((e) => {
+            log.error("could not migrate swaps to chain swaps", e);
         });
 
     const setSwapStorage = (swap: SomeSwap) =>
