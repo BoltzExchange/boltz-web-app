@@ -168,6 +168,14 @@ export const SwapChecker = () => {
         }
         if (data.status) {
             await updateSwapStatus(currentSwap.id, data.status);
+            if (data.status === swapStatusSuccess.TransactionClaimed) {
+                notify(
+                    "success",
+                    t("claim_success", { id: currentSwap.id }),
+                    true,
+                    true,
+                );
+            }
         }
         await checkForFailed(currentSwap, data);
     };
