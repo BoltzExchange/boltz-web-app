@@ -10,7 +10,7 @@ import { downloadJson } from "../utils/download";
 import { clipboard, isIos } from "../utils/helper";
 
 const Logs = () => {
-    const ICONSIZE = 16;
+    const iconSize = 16;
     const { getLogs, clearLogs, t } = useGlobalContext();
 
     const clear = async (evt: MouseEvent) => {
@@ -34,7 +34,7 @@ const Logs = () => {
     return (
         <div class="flex">
             <span onClick={copy} class="btn-small">
-                <BiRegularCopy size={ICONSIZE} />
+                <BiRegularCopy size={iconSize} />
             </span>
             &nbsp;
             <Show when={!isIos()}>
@@ -42,12 +42,12 @@ const Logs = () => {
                     onClick={download}
                     class="btn-small"
                     data-testid="logs-download">
-                    <BiRegularDownload size={ICONSIZE} />
+                    <BiRegularDownload size={iconSize} />
                 </span>
                 &nbsp;
             </Show>
             <span onClick={clear} class="btn-small btn-danger">
-                <BiRegularTrash size={ICONSIZE} />
+                <BiRegularTrash size={iconSize} />
             </span>
         </div>
     );
