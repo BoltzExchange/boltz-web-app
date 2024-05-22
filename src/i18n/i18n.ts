@@ -113,6 +113,7 @@ const dict = {
             "Are you sure you want to clear your storage?\nYour swap information and you refund / claim private keys will be lost.",
         delete_storage_single_swap:
             "Are you sure you want to clear Swap {{ id }} from your storage?\nYour swap information and you refund / claim private keys will be lost.",
+        delete_logs: "Are you sure you want to clear your logs?",
         tx_in_mempool: "Transaction is in mempool",
         tx_in_mempool_subline: "Waiting for confirmation to complete the swap",
         expired: "Swap expired!",
@@ -305,6 +306,7 @@ const dict = {
             "Bist du sicher, dass du deinen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
         delete_storage_single_swap:
             "Bist du sicher, dass du den Swap {{ id }} aus deinem Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
+        delete_logs: "Bist du sicher, dass du deine Logs löschen möchtest?",
         tx_in_mempool: "Transaktion befindet sich im Mempool.",
         tx_in_mempool_subline:
             "Warte auf Bestätigung, um den Swap abzuschließen.",
@@ -505,6 +507,7 @@ const dict = {
             "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de su intercambio y sus claves de reembolso.",
         delete_storage_single_swap:
             "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento?\nSe perderán la información de su intercambio y sus claves privadas de reembolso.",
+        delete_logs: "¿Estás seguro de que deseas borrar tus registros?",
         tx_in_mempool: "La transacción está en el mempool.",
         tx_in_mempool_subline:
             "Esperando confirmación para completar el intercambio",
@@ -695,6 +698,7 @@ const dict = {
         delete_storage:
             "您确定要清除本地存储吗？\n您的交换信息和您的退款/索赔私钥将丢失。",
         delete_storage_single_swap: "您确定要从本地存储中清除交换{{ id }}吗",
+        delete_logs: "您确定要删除日志吗？",
         tx_in_mempool: "事务在内存池中",
         tx_in_mempool_subline: "等待确认以完成交换",
         expired: "交换已过期！",
