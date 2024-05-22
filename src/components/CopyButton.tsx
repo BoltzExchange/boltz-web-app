@@ -1,6 +1,6 @@
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
-import { Show, createSignal } from "solid-js";
+import { Accessor, Show, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { clipboard } from "../utils/helper";
@@ -10,8 +10,8 @@ const CopyButton = ({
     label,
     btnClass = "btn",
 }: {
-    data: string;
     label: string;
+    data: string | Accessor<string>;
     btnClass?: string;
 }) => {
     const { t } = useGlobalContext();
@@ -20,7 +20,8 @@ const CopyButton = ({
     const [buttonActive, setButtonActive] = createSignal<boolean>(false);
 
     const onClick = () => {
-        clipboard(data.replaceAll(" ", ""));
+        const copyData = typeof data === "string" ? data : data();
+        clipboard(copyData.replaceAll(" ", ""));
         setButtonClass(`${btnClass} btn-active`);
         setButtonActive(true);
         setTimeout(() => {

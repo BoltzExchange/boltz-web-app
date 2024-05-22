@@ -88,11 +88,13 @@ const InvoiceSet = () => {
             <div class="btns">
                 <CopyButton
                     label="copy_amount"
-                    data={formatAmount(
-                        BigNumber(swap().expectedAmount),
-                        denomination(),
-                        separator(),
-                    )}
+                    data={() =>
+                        formatAmount(
+                            BigNumber(swap().expectedAmount),
+                            denomination(),
+                            separator(),
+                        )
+                    }
                 />
                 <CopyButton label="copy_address" data={swap().address} />
                 <CopyButton label="copy_bip21" data={swap().bip21} />
