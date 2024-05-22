@@ -1,3 +1,4 @@
+import { BiRegularTrash } from "solid-icons/bi";
 import { Accessor, For, Show, createMemo, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
@@ -60,7 +61,7 @@ const SwapList = ({
                                 <span
                                     class="btn-small btn-danger"
                                     onClick={() => deleteSwapAction(swap.id)}>
-                                    {t("delete")}
+                                    <BiRegularTrash size={14} />
                                 </span>
                             </Show>
                         </div>

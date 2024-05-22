@@ -138,7 +138,6 @@ const dict = {
         ios_image_download:
             'Long press and select "Save to Photos" to download refund file',
         created: "Created",
-        delete: "Delete",
         view: "View",
         id: "ID",
         headline: "Privacy First, Non-Custodial Bitcoin Exchange",
@@ -335,7 +334,6 @@ const dict = {
         ios_image_download:
             'Lange drücken und "In Fotos speichern" auswählen, um die Rückerstattungsdatei herunterzuladen',
         created: "Erstellt",
-        delete: "Löschen",
         view: "Anzeigen",
         id: "ID",
         headline: "Privacy First, Non-Custodial Bitcoin Exchange",
@@ -536,7 +534,6 @@ const dict = {
         ios_image_download:
             'Mantén presionado y selecciona "Guardar en Fotos" para descargar el archivo de reembolso.',
         created: "Creado",
-        delete: "Eliminar",
         view: "Ver",
         id: "ID",
         headline: "Intercambio de Bitcoin con privacidad y sin custodia",
@@ -721,7 +718,6 @@ const dict = {
         wasm_not_supported: "请在您的浏览器中激活WebAssembly",
         ios_image_download: "长按并选择“保存到照片”以下载退款文件",
         created: "已创建",
-        delete: "删除",
         view: "查看",
         id: "ID",
         headline: "隐私第一，非托管的比特币交易所",
