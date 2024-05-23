@@ -186,7 +186,7 @@ const dict = {
         swap_completed: "Swap {{ id }} completed successfully!",
         claim_fail: "Failed to claim swap: {{ id }}",
         logs: "Logs",
-        logs_tooltip: "Logs of the web app, useful for debugging.",
+        logs_tooltip: "Logs of the web app, useful for debugging",
         enable_audio_notifications: "Audio Notifications",
         enable_audio_notifications_tooltip:
             "Enable or disable audio notifications",
@@ -391,7 +391,7 @@ const dict = {
         swap_completed: "Swap {{ id }} erfolgreich abgeschlossen!",
         claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
         logs: "Logs",
-        logs_tooltip: "Logs der Web App, nützlich für Debugging.",
+        logs_tooltip: "Logs der Web App, nützlich für Debugging",
         enable_audio_notifications: "Audio Benachrichtigungen",
         enable_audio_notifications_tooltip:
             "Aktiviere oder deaktiviere Audio-Benachrichtigungen",
@@ -781,7 +781,7 @@ const dict = {
         swap_completed: "交换{{ id }} 已成功完成！",
         claim_fail: "交换{{ id }}索赔失败！",
         logs: "日志",
-        logs_tooltip: "网络应用程序的日志，用于调试。",
+        logs_tooltip: "网络应用程序的日志，用于调试",
         enable_audio_notifications: "音频通知",
         enable_audio_notifications_tooltip: "启用或禁用音频通知",
         on: "开",
