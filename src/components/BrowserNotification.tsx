@@ -2,15 +2,18 @@ import { useGlobalContext } from "../context/Global";
 import { registerNotifications } from "../utils/notification";
 
 const BrowserNotification = () => {
-    const { browserNotification, setBrowserNotification, t } =
+    const { browserNotification, setBrowserNotification, t, notify } =
         useGlobalContext();
 
     const toggle = (evt: MouseEvent) => {
         // if its false we try to enable it
         if (!browserNotification()) {
-            registerNotifications().then((state: boolean) =>
-                setBrowserNotification(state),
-            );
+            registerNotifications().then((state: boolean) => {
+                setBrowserNotification(state);
+                if (state === false) {
+                    notify("error", t("browsernotification_error"));
+                }
+            });
             evt.stopPropagation();
             return;
         }

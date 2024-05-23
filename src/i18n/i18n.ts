@@ -196,6 +196,7 @@ const dict = {
         browsernotification: "Browser Notifications",
         browsernotification_tooltip:
             "Enable browser notifications, requires permissions",
+        browsernotification_error: "Notification permissions denied.",
     },
     de: {
         language: "Deutsch",
@@ -400,6 +401,7 @@ const dict = {
         browsernotification: "Browser Benachrichtigungen",
         browsernotification_tooltip:
             "Aktiviere Browser Benachrichtigungen, benötigt Berechtigungen",
+        browsernotification_error: "Benachrichtigungsrechte verweigert.",
     },
     es: {
         language: "Español",
@@ -605,6 +607,7 @@ const dict = {
         browsernotification: "Notificaciones del navegador",
         browsernotification_tooltip:
             "Habilitar notificaciones del navegador, requiere permisos",
+        browsernotification_error: "Permisos de notificación denegados.",
     },
     zh: {
         language: "中文",
@@ -786,6 +789,7 @@ const dict = {
         notification_header: "Boltz Swap",
         browsernotification: "浏览器通知",
         browsernotification_tooltip: "启用浏览器通知，需要权限",
+        browsernotification_error: "通知权限被拒绝。",
     },
 };
 
