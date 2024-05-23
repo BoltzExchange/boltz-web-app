@@ -17,7 +17,7 @@ const BrowserNotification = () => {
             evt.stopPropagation();
             return;
         }
-        // if its true we disable it
+        // When enabled, we disable sending them
         setBrowserNotification(false);
         evt.stopPropagation();
     };
