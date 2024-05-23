@@ -194,8 +194,7 @@ const dict = {
         off: "off",
         notification_header: "Boltz Swap",
         browsernotification: "Browser Notifications",
-        browsernotification_tooltip:
-            "Enable or disable browser notifications",
+        browsernotification_tooltip: "Enable or disable browser notifications",
         browsernotification_error: "Notification permissions denied",
     },
     de: {
@@ -261,7 +260,8 @@ const dict = {
         pay_timeout_blockheight: "Timeout Blockhöhe",
         pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
-        pay_invoice_to: "Zahle diese Rechnung über {{ amount }} {{ denomination }}",
+        pay_invoice_to:
+            "Zahle diese Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
         no_metamask: "MetaMask ist nicht installiert",
         connect_metamask: "MetaMask verbinden",
