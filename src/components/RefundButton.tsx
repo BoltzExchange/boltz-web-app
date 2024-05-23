@@ -148,7 +148,6 @@ const RefundButton = ({
                     setRefundTxId(res.refundTx);
                 }
             }
-            notify("success", t("refunded"), true, true);
         } catch (error) {
             log.warn("refund failed", error);
             if (typeof error.json === "function") {
