@@ -312,7 +312,6 @@ const GlobalProvider = (props: { children: any }) => {
         setEmbedded(true);
     }
 
-    // browser notification
     const [browserNotification, setBrowserNotification] = makePersisted(
         createSignal<boolean>(false),
         {
