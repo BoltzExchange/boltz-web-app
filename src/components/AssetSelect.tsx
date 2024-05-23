@@ -1,4 +1,5 @@
 import { IoClose } from "solid-icons/io";
+import { createEffect } from "solid-js";
 
 import { config } from "../config";
 import { LN } from "../consts/Assets";
@@ -46,17 +47,6 @@ const SelectAsset = () => {
         }
 
         fetchPairs();
-        setPairValid(!isInvalidPair(newAsset));
-    };
-
-    const isInvalidPair = (newAsset: string) => {
-        const lookup = pairsLookup();
-        const assetFrom =
-            assetSelected() === Side.Send ? newAsset : assetSend();
-        const assetTo =
-            assetSelected() === Side.Send ? assetReceive() : newAsset;
-        if (!lookup[assetFrom]) return false;
-        return lookup[assetFrom].indexOf(assetTo) === -1;
     };
 
     const isSelected = (asset: string) => {
@@ -65,6 +55,11 @@ const SelectAsset = () => {
             (assetSelected() === Side.Send ? assetSend() : assetReceive())
         );
     };
+
+    createEffect(() => {
+        if (!("LN" in pairsLookup())) return;
+        setPairValid(pairsLookup()[assetSend()].indexOf(assetReceive()) !== -1);
+    });
 
     return (
         <div
