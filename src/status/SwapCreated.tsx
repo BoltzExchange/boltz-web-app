@@ -1,3 +1,4 @@
+import { requestProvider } from "@getalby/bitcoin-connect";
 import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show } from "solid-js";
@@ -10,16 +11,14 @@ import { usePayContext } from "../context/Pay";
 import { denominations, formatAmount } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
 import { invoicePrefix } from "../utils/invoice";
-import { enableWebln } from "../utils/webln";
 
 const SwapCreated = () => {
     const { swap } = usePayContext();
-    const { t, denomination, separator, webln } = useGlobalContext();
+    const { t, denomination, separator } = useGlobalContext();
     const payWeblnInvoice = async (pr: string) => {
-        enableWebln(async () => {
-            const result = await window.webln.sendPayment(pr);
-            log.debug("webln payment result:", result);
-        });
+        const weblnProvider = await requestProvider();
+        const result = await weblnProvider.sendPayment(pr);
+        log.debug("webln payment result:", result);
     };
 
     return (
@@ -50,7 +49,7 @@ const SwapCreated = () => {
                 <h3>{t("warning_return")}</h3>
                 <hr />
             </Show>
-            <Show when={webln() && !isMobile()}>
+            <Show when={!isMobile()}>
                 <span
                     class="btn btn-light"
                     onClick={() => payWeblnInvoice(swap().invoice)}>

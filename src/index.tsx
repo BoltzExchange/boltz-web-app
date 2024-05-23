@@ -26,6 +26,13 @@ import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
 import "./utils/patches";
 
+// import {
+//   init,
+//   launchModal,
+//   launchPaymentModal,
+//   requestProvider,
+// } from '@getalby/bitcoin-connect';
+
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker
         .register("/service-worker.js", { scope: "/" })
@@ -47,6 +54,14 @@ const App = (props: any) => {
             const data = await response.json();
             setConfig(data);
             setConfigError(false);
+
+            // // Initialize Bitcoin Connect
+            // init({
+            //   appName: 'My Lightning App', // your app name
+            // });
+
+            // // launch modal programmatically
+            // launchModal();
         } catch (error) {
             setConfigError(true);
             console.error("Error loading config:", error);

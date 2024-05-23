@@ -377,10 +377,8 @@ const Create = () => {
                     <AddressInput />
                 </Show>
                 <Show when={!reverse()}>
-                    <Show when={webln()}>
-                        <WeblnButton />
-                        <hr class="spacer" />
-                    </Show>
+                    <WeblnButton />
+                    <hr class="spacer" />
                     <InvoiceInput />
                 </Show>
                 <Show when={isMobile()}>

@@ -22,7 +22,8 @@ import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { swapStatusFinal } from "../utils/swapStatus";
 import { checkWasmSupported } from "../utils/wasmSupport";
-import { detectWebLNProvider } from "../utils/webln";
+
+// import { detectWebLNProvider } from "../utils/webln";
 
 type SwapWithId = { id: string };
 
@@ -43,8 +44,6 @@ export type GlobalContextType = {
     setNotification: Setter<string>;
     notificationType: Accessor<string>;
     setNotificationType: Setter<string>;
-    webln: Accessor<boolean>;
-    setWebln: Setter<boolean>;
     camera: Accessor<boolean>;
     setCamera: Setter<boolean>;
     ref: Accessor<string>;
@@ -133,7 +132,6 @@ const GlobalProvider = (props: { children: any }) => {
     const [notification, setNotification] = createSignal<string>("");
     const [notificationType, setNotificationType] = createSignal<string>("");
 
-    const [webln, setWebln] = createSignal<boolean>(false);
     const [camera, setCamera] = createSignal<boolean>(false);
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
@@ -294,7 +292,6 @@ const GlobalProvider = (props: { children: any }) => {
     const clearSwaps = () => swapsForage.clear();
 
     setI18n(detectLanguage(i18nConfigured()));
-    detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
     // check referral
@@ -350,8 +347,6 @@ const GlobalProvider = (props: { children: any }) => {
                 setNotification,
                 notificationType,
                 setNotificationType,
-                webln,
-                setWebln,
                 camera,
                 setCamera,
                 ref,
