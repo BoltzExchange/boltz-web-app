@@ -48,7 +48,7 @@
     "dependencies": {
         "@bitcoinerlab/secp256k1": "^1.1.1",
         "@fontsource/noto-sans": "^5.0.21",
-        "@getalby/bitcoin-connect": "^3.5.0",
+        "@getalby/bitcoin-connect": "^3.5.1",
         "@scure/base": "^1.1.6",
         "@solid-primitives/i18n": "^2.1.1",
         "@solid-primitives/storage": "^2.1.4",
