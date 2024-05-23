@@ -195,8 +195,8 @@ const dict = {
         notification_header: "Boltz Swap",
         browsernotification: "Browser Notifications",
         browsernotification_tooltip:
-            "Enable browser notifications, requires permissions",
-        browsernotification_error: "Notification permissions denied.",
+            "Enable or disable browser notifications",
+        browsernotification_error: "Notification permissions denied",
     },
     de: {
         language: "Deutsch",
@@ -261,7 +261,7 @@ const dict = {
         pay_timeout_blockheight: "Timeout Blockhöhe",
         pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
-        pay_invoice_to: "Zahle Rechnung über {{ amount }} {{ denomination }}",
+        pay_invoice_to: "Zahle diese Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
         no_metamask: "MetaMask ist nicht installiert",
         connect_metamask: "MetaMask verbinden",
@@ -400,8 +400,8 @@ const dict = {
         notification_header: "Boltz Swap",
         browsernotification: "Browser Benachrichtigungen",
         browsernotification_tooltip:
-            "Aktiviere Browser Benachrichtigungen, benötigt Berechtigungen",
-        browsernotification_error: "Benachrichtigungsrechte verweigert.",
+            "Aktiviere oder deaktiviere Browser Benachrichtigungen",
+        browsernotification_error: "Benachrichtigungsrechte verweigert",
     },
     es: {
         language: "Español",
@@ -603,11 +603,11 @@ const dict = {
             "Activar o desactivar notificaciones de audio",
         on: "on",
         off: "off",
-        notification_header: "Boltz Swap",
+        notification_header: "Boltz Intercambio",
         browsernotification: "Notificaciones del navegador",
         browsernotification_tooltip:
-            "Habilitar notificaciones del navegador, requiere permisos",
-        browsernotification_error: "Permisos de notificación denegados.",
+            "Activar o desactivar notificaciones del navegador",
+        browsernotification_error: "Permisos de notificación denegados",
     },
     zh: {
         language: "中文",
@@ -786,10 +786,10 @@ const dict = {
         enable_audio_notifications_tooltip: "启用或禁用音频通知",
         on: "开",
         off: "关",
-        notification_header: "Boltz Swap",
+        notification_header: "Boltz 交换",
         browsernotification: "浏览器通知",
-        browsernotification_tooltip: "启用浏览器通知，需要权限",
-        browsernotification_error: "通知权限被拒绝。",
+        browsernotification_tooltip: "启用或禁用浏览器通知",
+        browsernotification_error: "通知权限被拒绝",
     },
 };
 
