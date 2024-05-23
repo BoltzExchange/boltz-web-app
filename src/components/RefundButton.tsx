@@ -25,11 +25,11 @@ const RefundButton = ({
     setRefundTxId?: Setter<string>;
 }) => {
     const {
-        notify,
         getSwap,
         setSwapStorage,
         setRefundAddress,
         refundAddress,
+        notify,
         t,
     } = useGlobalContext();
     const { setSwap } = usePayContext();

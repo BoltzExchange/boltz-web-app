@@ -3,6 +3,7 @@ import { IoClose } from "solid-icons/io";
 import { useGlobalContext } from "../context/Global";
 import "../style/settings.scss";
 import AudioNotificationSetting from "./AudioNotificationSetting";
+import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
 import Logs from "./Logs";
 import Separator from "./Separator";
@@ -40,6 +41,12 @@ const SettingsMenu = () => {
                     <Tooltip label="enable_audio_notifications_tooltip" />
                     <div class="spacer"></div>
                     <AudioNotificationSetting />
+                </span>
+                <span class="setting">
+                    <label>{t("browsernotification")}: </label>
+                    <Tooltip label="browsernotification_tooltip" />
+                    <div class="spacer"></div>
+                    <BrowserNotification />
                 </span>
                 <span class="setting">
                     <label>{t("logs")}: </label>

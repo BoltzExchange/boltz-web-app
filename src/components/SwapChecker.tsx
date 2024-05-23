@@ -211,7 +211,12 @@ export const SwapChecker = () => {
                 if (claimedSwap.id === swap().id) {
                     setSwap(claimedSwap);
                 }
-                notify("success", t("claim_success", { id: res.id }), true);
+                notify(
+                    "success",
+                    t("swap_completed", { id: res.id }),
+                    true,
+                    true,
+                );
             } catch (e) {
                 const msg = t("claim_fail", { id: currentSwap.id });
                 log.warn(msg, e);
@@ -220,11 +225,17 @@ export const SwapChecker = () => {
         } else if (data.status === swapStatusPending.TransactionClaimPending) {
             try {
                 await createSubmarineSignature(currentSwap);
-            } catch (e) {
-                log.warn(
-                    `creating cooperative signature for submarine swap claim failed`,
-                    e,
+                notify(
+                    "success",
+                    t("swap_completed", { id: currentSwap.id }),
+                    true,
+                    true,
                 );
+            } catch (e) {
+                const msg =
+                    "creating cooperative signature for submarine swap claim failed";
+                log.warn(msg, e);
+                notify("error", msg);
             }
         }
     };

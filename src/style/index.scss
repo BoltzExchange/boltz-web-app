@@ -344,10 +344,6 @@ textarea {
     display: block;
 }
 
-#notification {
-    background: black;
-    color: white;
-}
 .toggle {
     cursor: pointer;
     flex-grow: 0;
@@ -508,7 +504,7 @@ textarea {
     width: 100%;
     left: 0;
     top: 64px;
-    z-index: 9999;
+    z-index: 999;
     display: none;
     box-shadow: 0 0 12px black;
     margin: 0;
