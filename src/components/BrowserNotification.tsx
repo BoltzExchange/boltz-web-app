@@ -6,7 +6,7 @@ const BrowserNotification = () => {
         useGlobalContext();
 
     const toggle = (evt: MouseEvent) => {
-        // if its false we try to enable it
+        // When disabled, we try to request permission and enable them
         if (!browserNotification()) {
             registerNotifications().then((state: boolean) => {
                 setBrowserNotification(state);
