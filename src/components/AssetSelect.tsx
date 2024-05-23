@@ -55,7 +55,7 @@ const SelectAsset = () => {
 
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) return;
-        if (isInvalidPair(newAsset)) return;
+        if (isInvalidPair(newAsset) && !isOtherAsset(newAsset)) return;
 
         // clear invoice and address
         setInvoice("");
@@ -84,6 +84,13 @@ const SelectAsset = () => {
             assetSelected() === Side.Send ? assetReceive() : newAsset;
         if (!lookup[assetFrom]) return false;
         return lookup[assetFrom].indexOf(assetTo) === -1;
+    };
+
+    const isOtherAsset = (asset: string) => {
+        return (
+            asset ===
+            (assetSelected() === Side.Send ? assetReceive() : assetSend())
+        );
     };
 
     const isSelected = (asset: string) => {
@@ -115,6 +122,7 @@ const SelectAsset = () => {
                     class={`asset-select asset-${asset}`}
                     data-selected={isSelected(asset)}
                     data-disabled={isInvalidPair(asset)}
+                    data-other={isOtherAsset(asset)}
                     data-testid={`select-${asset}`}
                     onClick={() => changeAsset(asset)}>
                     <span class="icon"></span>
