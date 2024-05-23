@@ -37,6 +37,8 @@ export type CreateContextType = {
     setAddressValid: Setter<boolean>;
     amountValid: Accessor<boolean>;
     setAmountValid: Setter<boolean>;
+    pairValid: Accessor<boolean>;
+    setPairValid: Setter<boolean>;
     sendAmount: Accessor<BigNumber>;
     setSendAmount: Setter<BigNumber>;
     receiveAmount: Accessor<BigNumber>;
@@ -97,10 +99,11 @@ const CreateProvider = (props: { children: any }) => {
     const [invoiceValid, setInvoiceValid] = createSignal(false);
     const [addressValid, setAddressValid] = createSignal(false);
     const [amountValid, setAmountValid] = createSignal(false);
+    const [pairValid, setPairValid] = createSignal(true);
     const [invoiceError, setInvoiceError] = createSignal<string>("");
 
     createEffect(() => {
-        if (amountValid()) {
+        if (amountValid() && pairValid()) {
             if (
                 (swapType() !== SwapType.Submarine && addressValid()) ||
                 (swapType() === SwapType.Submarine &&
@@ -155,6 +158,8 @@ const CreateProvider = (props: { children: any }) => {
                 setAddressValid,
                 amountValid,
                 setAmountValid,
+                pairValid,
+                setPairValid,
                 sendAmount,
                 setSendAmount,
                 receiveAmount,

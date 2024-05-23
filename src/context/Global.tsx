@@ -66,6 +66,7 @@ export type GlobalContextType = {
     setAudioNotification: Setter<boolean>;
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
+    pairsLookup: Accessor<any>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
     notify: (
@@ -228,12 +229,48 @@ const GlobalProvider = (props: { children: any }) => {
         audio.play();
     };
 
+    const [pairsLookup, setPairsLookup] = createSignal(
+        {},
+        {
+            equals: () => false,
+        },
+    );
+
+    const getPairsLookup = (pairs: Pairs) => {
+        const assets = Object.keys(config.assets);
+        assets.push(LN);
+        const swapTypes = Object.keys(pairs);
+        const lookup = {};
+        for (const asset of assets) {
+            lookup[asset] = [];
+        }
+        for (const swapType of swapTypes) {
+            const swapTypePairs = Object.keys(pairs[swapType]);
+            for (const pair of swapTypePairs) {
+                const pairData = Object.keys(pairs[swapType][pair]);
+                switch (swapType) {
+                    case "chain":
+                        lookup[pair] = lookup[pair].concat(pairData);
+                        break;
+                    case "reverse":
+                        lookup[LN] = lookup[LN].concat(pairData);
+                        break;
+                    case "submarine":
+                        lookup[pair].push(LN);
+                        break;
+                }
+            }
+        }
+        return lookup;
+    };
+
     const fetchPairs = (asset: string = BTC) => {
         getPairs(asset)
             .then((data) => {
                 log.debug("getpairs", data);
                 setOnline(true);
                 setPairs(data);
+                setPairsLookup(getPairsLookup(data));
             })
             .catch((error) => {
                 log.debug(error);
@@ -410,6 +447,7 @@ const GlobalProvider = (props: { children: any }) => {
                 setAudioNotification,
                 browserNotification,
                 setBrowserNotification,
+                pairsLookup,
                 // functions
                 t,
                 notify,

@@ -44,6 +44,7 @@ export const CreateButton = () => {
         swapType,
         sendAmount,
         amountValid,
+        pairValid,
         setInvoice,
         setInvoiceValid,
         setLnurl,
@@ -84,6 +85,7 @@ export const CreateButton = () => {
                 amountValid,
                 addressValid,
                 invoiceValid,
+                pairValid,
                 swapType,
                 lnurl,
                 online,
@@ -93,6 +95,10 @@ export const CreateButton = () => {
             () => {
                 if (!online()) {
                     setButtonLabel({ key: "api_offline" });
+                    return;
+                }
+                if (!pairValid()) {
+                    setButtonLabel({ key: "invalid_pair" });
                     return;
                 }
                 if (!amountValid()) {

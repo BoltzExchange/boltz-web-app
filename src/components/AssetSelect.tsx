@@ -1,5 +1,4 @@
 import { IoClose } from "solid-icons/io";
-import { createMemo } from "solid-js";
 
 import { config } from "../config";
 import { LN } from "../consts/Assets";
@@ -11,7 +10,7 @@ const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const { t, fetchPairs, pairs } = useGlobalContext();
+    const { t, fetchPairs } = useGlobalContext();
 
     const {
         assetReceive,
@@ -25,37 +24,9 @@ const SelectAsset = () => {
         setOnchainAddress,
     } = useCreateContext();
 
-    const lookup = {};
-
-    createMemo(() => {
-        if (pairs()) {
-            const swapTypes = Object.keys(pairs());
-            for (const asset of assets) {
-                lookup[asset] = [];
-            }
-            for (const swapType of swapTypes) {
-                const swapTypePairs = Object.keys(pairs()[swapType]);
-                for (const pair of swapTypePairs) {
-                    const pairData = Object.keys(pairs()[swapType][pair]);
-                    switch (swapType) {
-                        case "chain":
-                            lookup[pair] = lookup[pair].concat(pairData);
-                            break;
-                        case "reverse":
-                            lookup[LN] = lookup[LN].concat(pairData);
-                            break;
-                        case "submarine":
-                            lookup[pair].push(LN);
-                            break;
-                    }
-                }
-            }
-        }
-    });
-
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) return;
-        if (isInvalidPair(newAsset) && !isOtherAsset(newAsset)) return;
+        // if (isInvalidPair(newAsset) && !isOtherAsset(newAsset)) return;
 
         // clear invoice and address
         setInvoice("");
@@ -77,21 +48,21 @@ const SelectAsset = () => {
         fetchPairs();
     };
 
-    const isInvalidPair = (newAsset: string) => {
-        const assetFrom =
-            assetSelected() === Side.Send ? newAsset : assetSend();
-        const assetTo =
-            assetSelected() === Side.Send ? assetReceive() : newAsset;
-        if (!lookup[assetFrom]) return false;
-        return lookup[assetFrom].indexOf(assetTo) === -1;
-    };
+    // const isInvalidPair = (newAsset: string) => {
+    //     const assetFrom =
+    //         assetSelected() === Side.Send ? newAsset : assetSend();
+    //     const assetTo =
+    //         assetSelected() === Side.Send ? assetReceive() : newAsset;
+    //     if (!lookup[assetFrom]) return false;
+    //     return lookup[assetFrom].indexOf(assetTo) === -1;
+    // };
 
-    const isOtherAsset = (asset: string) => {
-        return (
-            asset ===
-            (assetSelected() === Side.Send ? assetReceive() : assetSend())
-        );
-    };
+    // const isOtherAsset = (asset: string) => {
+    //     return (
+    //         asset ===
+    //         (assetSelected() === Side.Send ? assetReceive() : assetSend())
+    //     );
+    // };
 
     const isSelected = (asset: string) => {
         return (
@@ -121,8 +92,6 @@ const SelectAsset = () => {
                 <div
                     class={`asset-select asset-${asset}`}
                     data-selected={isSelected(asset)}
-                    data-disabled={isInvalidPair(asset)}
-                    data-other={isOtherAsset(asset)}
                     data-testid={`select-${asset}`}
                     onClick={() => changeAsset(asset)}>
                     <span class="icon"></span>
