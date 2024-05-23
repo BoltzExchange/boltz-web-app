@@ -5,6 +5,6 @@ regtest.loglevel = "error";
 setConfig(regtest);
 
 globalThis.Notification = {
-    requestPermission: () => new Promise(() => jest.fn()),
+    requestPermission: jest.fn().mockResolvedValue(true),
     permission: "granted",
 } as unknown as jest.Mocked<typeof Notification>;
