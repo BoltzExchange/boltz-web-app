@@ -187,7 +187,7 @@ const dict = {
         claim_fail: "Failed to claim swap: {{ id }}",
         logs: "Logs",
         logs_tooltip: "Logs of the web app, useful for debugging.",
-        enable_audio_notifications: "Enable Audio Notifications",
+        enable_audio_notifications: "Audio Notifications",
         enable_audio_notifications_tooltip:
             "Enable or disable audio notifications",
         on: "on",
@@ -392,7 +392,7 @@ const dict = {
         claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
         logs: "Logs",
         logs_tooltip: "Logs der Web App, nützlich für Debugging.",
-        enable_audio_notifications: "Audio Benachrichtigungen aktivieren",
+        enable_audio_notifications: "Audio Benachrichtigungen",
         enable_audio_notifications_tooltip:
             "Aktiviere oder deaktiviere Audio-Benachrichtigungen",
         on: "an",
@@ -597,8 +597,8 @@ const dict = {
         claim_fail: "¡Error en reclamar el intercambio {{ id }}!",
         logs: "Logs",
         logs_tooltip:
-            "Registros de la aplicación web como herramienta de depuración.",
-        enable_audio_notifications: "Activar notificaciones de audio",
+            "Registros de la aplicación web como herramienta de depuración",
+        enable_audio_notifications: "Notificaciones de Audio",
         enable_audio_notifications_tooltip:
             "Activar o desactivar notificaciones de audio",
         on: "on",
@@ -782,7 +782,7 @@ const dict = {
         claim_fail: "交换{{ id }}索赔失败！",
         logs: "日志",
         logs_tooltip: "网络应用程序的日志，用于调试。",
-        enable_audio_notifications: "启用音频通知",
+        enable_audio_notifications: "音频通知",
         enable_audio_notifications_tooltip: "启用或禁用音频通知",
         on: "开",
         off: "关",
