@@ -793,7 +793,7 @@ const dict = {
         browsernotification: "浏览器通知",
         browsernotification_tooltip: "启用或禁用浏览器通知",
         browsernotification_error: "通知权限被拒绝",
-        invalid_pair: "无效的交换对",
+        invalid_pair: "无效交换对",
     },
 };
 
