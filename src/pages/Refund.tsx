@@ -23,6 +23,10 @@ const refundJsonKeys = [
     "assetReceive",
     "refundPrivateKey",
 ];
+const refundJsonKeysChain = refundJsonKeys.concat([
+    "claimDetails",
+    "lockupDetails",
+]);
 const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
 const refundJsonKeys_old = ["id", "asset", "privateKey"];
 const refundJsonKeysLiquid_old = refundJsonKeys_old.concat("blindingKey");
@@ -56,9 +60,11 @@ const Refund = () => {
             // format for the refund json
             if ("type" in json) {
                 requiredKeys =
-                    json.assetSend !== LBTC
-                        ? refundJsonKeys
-                        : refundJsonKeysLiquid;
+                    json.type === SwapType.Chain
+                        ? refundJsonKeysChain
+                        : json.assetSend !== LBTC
+                          ? refundJsonKeys
+                          : refundJsonKeysLiquid;
             } else {
                 // Compatibility with even older refund files
                 if (json.asset === undefined && json.currency) {
