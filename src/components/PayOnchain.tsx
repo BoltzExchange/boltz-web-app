@@ -59,11 +59,13 @@ const PayOnchain = ({
             <div class="btns">
                 <CopyButton
                     label="copy_amount"
-                    data={formatAmount(
-                        BigNumber(expectedAmount),
-                        denomination(),
-                        separator(),
-                    )}
+                    data={() =>
+                        formatAmount(
+                            BigNumber(expectedAmount),
+                            denomination(),
+                            separator(),
+                        )
+                    }
                 />
                 <CopyButton label="copy_address" data={address} />
                 <CopyButton label="copy_bip21" data={bip21} />
