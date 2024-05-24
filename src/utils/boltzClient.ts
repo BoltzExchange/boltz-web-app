@@ -156,10 +156,13 @@ type ChainSwapCreatedResponse = {
 };
 
 type ChainSwapTransaction = {
-    timeoutBlockHeight: number;
     transaction: {
         id: string;
-        hex: string;
+        hex?: string;
+    };
+    timeout: {
+        blockHeight: number;
+        eta?: number;
     };
 };
 
@@ -376,7 +379,8 @@ export const getLockupTransaction = async (
             return {
                 id: res.userLock.transaction.id,
                 hex: res.userLock.transaction.hex,
-                timeoutBlockHeight: res.userLock.timeoutBlockHeight,
+                timeoutEta: res.userLock.timeout.eta,
+                timeoutBlockHeight: res.userLock.timeout.blockHeight,
             };
 
         default:
