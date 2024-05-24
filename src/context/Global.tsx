@@ -248,6 +248,7 @@ const GlobalProvider = (props: { children: any }) => {
             const swapTypePairs = Object.keys(pairs[swapType]);
             for (const pair of swapTypePairs) {
                 const pairData = Object.keys(pairs[swapType][pair]);
+                if (!(pair in lookup)) continue;
                 switch (swapType) {
                     case "chain":
                         lookup[pair] = lookup[pair].concat(pairData);
