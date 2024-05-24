@@ -22,15 +22,17 @@
 .swaplist-asset-id {
     padding: 0 9px 0 0;
 }
+.swaplist-asset {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 10px;
+}
 .swaplist-asset span {
-    content: " ";
-    display: inline-block;
     width: 17px;
-    height: 15px;
+    height: 17px;
     background-repeat: no-repeat;
     background-size: 100%;
     transform: scale(1.5);
-    margin: 0 6px;
 }
 
 .swaplist-asset span[data-asset="LN"] {
