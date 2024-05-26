@@ -56,7 +56,7 @@ const PayOnchain = ({
                 </a>
             </Show>
             <hr />
-            <div class="btns">
+            <div class="btns" data-testid="pay-onchain-buttons">
                 <CopyButton
                     label="copy_amount"
                     data={() =>
