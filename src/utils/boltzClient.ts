@@ -7,7 +7,7 @@ import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import { fetcher } from "./helper";
 
-const cooperativeErrorMessage = "Cooperative swaps are disabled";
+const cooperativeErrorMessage = "cooperative signatures for swaps are disabled";
 const checkCooperative = () => {
     if (config.cooperativeDisabled === true) {
         throw new Error(cooperativeErrorMessage);
