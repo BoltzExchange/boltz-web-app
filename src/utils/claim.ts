@@ -145,8 +145,6 @@ const claimChainSwap = async (
     cooperative = true,
 ): Promise<TransactionInterface> => {
     log.info(`Claiming Chain swap cooperatively: ${cooperative}`);
-    //
-    // Create our claim transaction
     const boltzRefundPublicKey = Buffer.from(
         swap.claimDetails.serverPublicKey,
         "hex",
