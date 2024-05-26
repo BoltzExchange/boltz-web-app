@@ -250,7 +250,7 @@ const RefundButton = ({
             swap().type,
         );
 
-        // immediatly show refund eta on legacy swaps
+        // show refund ETA for legacy swaps
         if (swap().version !== OutputType.Taproot) {
             setTimeoutEta(transactionToRefund.timeoutEta);
             setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
