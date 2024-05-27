@@ -6,12 +6,13 @@ import { LN } from "../consts/Assets";
 import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { isPairValid } from "../utils/pairs";
 
 const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const { t, fetchPairs, pairsLookup } = useGlobalContext();
+    const { t, fetchPairs, pairs } = useGlobalContext();
 
     const {
         assetReceive,
@@ -57,8 +58,7 @@ const SelectAsset = () => {
     };
 
     createEffect(() => {
-        if (!("LN" in pairsLookup())) return;
-        setPairValid(pairsLookup()[assetSend()].indexOf(assetReceive()) !== -1);
+        setPairValid(isPairValid(pairs(), assetSend(), assetReceive()));
     });
 
     return (
