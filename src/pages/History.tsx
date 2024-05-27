@@ -8,16 +8,32 @@ import SwapList from "../components/SwapList";
 import { useGlobalContext } from "../context/Global";
 import { downloadJson } from "../utils/download";
 import { isIos } from "../utils/helper";
+import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
+import { SomeSwap } from "../utils/swapCreator";
+
+type BackupFileType = { version: number; swaps: SomeSwap[] };
 
 // Throws when the file is invalid
-const validateBackupFile = (file: any) => {
-    // Check if the object is an array and all elements have at least the id property
-    if (!(file instanceof Array)) {
-        throw "not an Array";
-    }
+// Returns the version of the backup file
+const validateBackupFile = (file: BackupFileType | any[]): BackupFileType => {
+    const allSwapsHaveId = (swaps: any[]) => {
+        if (swaps.some((swap) => swap.id === undefined || swap.id === null)) {
+            throw "not all elements have an id";
+        }
+    };
 
-    if (file.some((swap) => swap.id === undefined || swap.id === null)) {
-        throw "not all elements have an id";
+    if (file instanceof Array) {
+        allSwapsHaveId(file);
+        return { version: 0, swaps: file };
+    } else if (typeof file === "object") {
+        if (!["version", "swaps"].every((key) => key in file)) {
+            throw "invalid file";
+        }
+
+        allSwapsHaveId(file.swaps);
+        return file;
+    } else {
+        throw "invalid file";
     }
 };
 
@@ -45,10 +61,10 @@ const History = () => {
     };
 
     const backupLocalStorage = async () => {
-        downloadJson(
-            `boltz-backup-${Math.floor(Date.now() / 1000)}`,
-            await getSwaps(),
-        );
+        downloadJson(`boltz-backup-${Math.floor(Date.now() / 1000)}`, {
+            version: latestStorageVersion,
+            swaps: await getSwaps(),
+        });
     };
 
     const importLocalStorage = (e: Event) => {
@@ -57,13 +73,22 @@ const History = () => {
         input.setCustomValidity("");
         new Response(inputFile)
             .json()
-            .then(async (result) => {
-                validateBackupFile(result);
+            .then(async (result: BackupFileType) => {
+                const parsedFile = validateBackupFile(result);
+                log.debug(
+                    `Found backup file of version: ${parsedFile.version}`,
+                );
                 await clearSwaps();
-                for (const swap of result) {
+
+                const swaps = migrateBackupFile(
+                    parsedFile.version,
+                    parsedFile.swaps,
+                );
+
+                for (const swap of swaps) {
                     await setSwapStorage(swap);
                 }
-                setSwaps(result);
+                setSwaps(swaps);
             })
             .catch((e) => {
                 log.error("invalid file upload", e);

@@ -12,9 +12,9 @@ describe("History", () => {
 
     test.each`
         error                            | data
-        ${"not an Array"}                | ${{}}
-        ${"not an Array"}                | ${"test"}
-        ${"not an Array"}                | ${1}
+        ${"invalid file"}                | ${{}}
+        ${"invalid file"}                | ${"test"}
+        ${"invalid file"}                | ${1}
         ${"not all elements have an id"} | ${[{}]}
         ${"not all elements have an id"} | ${[{ id: undefined }]}
         ${"not all elements have an id"} | ${[{ id: null }]}
