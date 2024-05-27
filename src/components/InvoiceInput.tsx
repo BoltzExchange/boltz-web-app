@@ -21,7 +21,6 @@ const InvoiceInput = () => {
     const { t, notify } = useGlobalContext();
     const {
         boltzFee,
-        assetReceive,
         minerFee,
         invoice,
         receiveAmount,
@@ -91,7 +90,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([amountValid, invoice], () => {
-            if (swapType() === SwapType.Submarine && assetReceive() !== RBTC) {
+            if (swapType() === SwapType.Submarine && assetSend() !== RBTC) {
                 validate(inputRef);
             }
         }),
