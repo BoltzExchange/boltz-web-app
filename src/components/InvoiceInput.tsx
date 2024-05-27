@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
-import { LN, RBTC } from "../consts/Assets";
+import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -90,7 +90,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([amountValid, invoice], () => {
-            if (swapType() === SwapType.Submarine && assetSend() !== RBTC) {
+            if (swapType() === SwapType.Submarine) {
                 validate(inputRef);
             }
         }),
