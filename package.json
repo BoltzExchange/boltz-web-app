@@ -8,7 +8,7 @@
         "dev": "vite",
         "regtest": "cp src/configs/regtest.json public/config.json",
         "preview": "vite preview",
-        "build": "vite build; cp dist/index.html dist/404.html",
+        "build": "vite-node build.ts && vite build; cp dist/index.html dist/404.html",
         "mainnet": "cp src/configs/mainnet.json public/config.json",
         "beta": "cp src/configs/beta.json public/config.json",
         "testnet": "cp src/configs/testnet.json public/config.json",
@@ -41,6 +41,7 @@
         "solid-jest": "^0.2.0",
         "typescript": "^5.4.3",
         "vite": "^5.2.6",
+        "vite-node": "^1.6.0",
         "vite-plugin-mkcert": "^1.17.5",
         "vite-plugin-node-polyfills": "^0.21.0",
         "vite-plugin-solid": "^2.10.2"

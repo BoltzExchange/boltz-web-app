@@ -1,7 +1,11 @@
 import log from "loglevel";
 
 const defaults = {
+    // Disables API endpoints that create cooperative signatures for claim
+    // and refund transactions
+    // **Should only be enabled for testing purposes**
     cooperativeDisabled: false,
+
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
     lightningExplorerUrl: "https://amboss.space/node",
@@ -45,14 +49,14 @@ export type Config = {
 
 let config: Config = defaults;
 
-export { config };
-
-const isTor = window?.location.hostname.endsWith(".onion");
+const isTor = () => window?.location.hostname.endsWith(".onion");
 
 export const chooseUrl = (url?: Url) =>
-    url ? (isTor && url.tor ? url.tor : url.normal) : undefined;
+    url ? (isTor() && url.tor ? url.tor : url.normal) : undefined;
 
 export const setConfig = (data: any) => {
     config = { ...defaults, ...data };
     log.setLevel(config.loglevel!);
 };
+
+export { config };
