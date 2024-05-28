@@ -31,13 +31,13 @@ const migrateSwapsFromLocalStorage = async (swapsForage: LocalForage) => {
     return migratedSwapCount;
 };
 
-const migrateSwapToChainSwapFormat = (swap: any): any => {
+export const migrateSwapToChainSwapFormat = (swap: any): any => {
     if (swap.reverse) {
         return {
             ...swap,
             assetSend: LN,
-            assetReceive: swap.asset,
             type: SwapType.Reverse,
+            assetReceive: swap.asset,
             claimPrivateKey: swap.privateKey,
         };
     } else {

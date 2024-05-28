@@ -8,28 +8,13 @@ import RefundButton from "../components/RefundButton";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
-import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
+import { validateRefundFile } from "../utils/refundFile";
 import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
-
-const refundJsonKeys = [
-    "id",
-    "type",
-    "assetSend",
-    "assetReceive",
-    "refundPrivateKey",
-];
-const refundJsonKeysChain = refundJsonKeys.concat([
-    "claimDetails",
-    "lockupDetails",
-]);
-const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
-const refundJsonKeys_old = ["id", "asset", "privateKey"];
-const refundJsonKeysLiquid_old = refundJsonKeys_old.concat("blindingKey");
 
 const Refund = () => {
     const navigate = useNavigate();
@@ -44,52 +29,23 @@ const Refund = () => {
     const checkRefundJsonKeys = async (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
 
-        if ("id" in json && json.id !== undefined) {
-            // When the swap id is found in the local storage, there is no need for the validation,
-            // all relevant data is there already, and we just need to show the button to redirect
-            const localStorageSwap = await getSwap(json.id);
+        try {
+            const data = validateRefundFile(json);
+
+            // When the swap id is found in the local storage, show a redirect to it
+            const localStorageSwap = await getSwap(data.id);
             if (localStorageSwap !== null) {
-                setSwapFound(json.id);
+                setSwapFound(data.id);
                 return;
             }
 
-            let valid = false;
-            let requiredKeys = [];
-
-            // type was introduced with chain swaps and is a new
-            // format for the refund json
-            if ("type" in json) {
-                requiredKeys =
-                    json.type === SwapType.Chain
-                        ? refundJsonKeysChain
-                        : json.assetSend !== LBTC
-                          ? refundJsonKeys
-                          : refundJsonKeysLiquid;
-            } else {
-                // Compatibility with even older refund files
-                if (json.asset === undefined && json.currency) {
-                    json.asset = json.currency;
-                }
-                requiredKeys =
-                    json.asset !== LBTC
-                        ? refundJsonKeys_old
-                        : refundJsonKeysLiquid_old;
-            }
-
-            valid = requiredKeys.every((key: string) => key in json);
-            if (valid) {
-                // transform old format
-                if (!("type" in json)) {
-                    json.type = SwapType.Submarine;
-                    json.assetSend = json.asset;
-                }
-                setRefundJson(json);
-                return;
-            }
+            setRefundJson(data);
+            setRefundInvalid(false);
+        } catch (e) {
+            log.warn("Refund json validation failed", e);
+            setRefundInvalid(true);
+            input.setCustomValidity(t("invalid_refund_file"));
         }
-
-        setRefundInvalid(true);
-        input.setCustomValidity(t("invalid_refund_file"));
     };
 
     const uploadChange = (e: Event) => {
@@ -102,8 +58,12 @@ const Refund = () => {
 
         if (inputFile.type === "image/png") {
             QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
-                .then((result) =>
-                    checkRefundJsonKeys(input, JSON.parse(result.data)),
+                .then(
+                    async (result) =>
+                        await checkRefundJsonKeys(
+                            input,
+                            JSON.parse(result.data),
+                        ),
                 )
                 .catch((e) => {
                     log.error("invalid QR code upload", e);
