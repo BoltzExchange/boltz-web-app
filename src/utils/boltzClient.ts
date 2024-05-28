@@ -172,7 +172,14 @@ export const getPairs = async (asset: string): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", asset),
         fetcher<ReversePairsTaproot>("/v2/swap/reverse", asset),
-        fetcher<ChainPairsTaproot>("/v2/swap/chain", asset),
+        fetcher<ChainPairsTaproot>("/v2/swap/chain", asset).catch((error) => {
+            // Handle API endpoints that do not have chain swaps yet gracefully
+            if (error.status === 404) {
+                return {};
+            }
+
+            throw error;
+        }),
     ]);
 
     return {
