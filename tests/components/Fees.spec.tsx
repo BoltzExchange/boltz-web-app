@@ -70,7 +70,7 @@ describe("Fees component", () => {
         );
     });
 
-    test("should increase the miner fee by 1 when sending to an unconfidential Liquid address", () => {
+    test("should increase the miner fee for reverse swaps by 1 when sending to an unconfidential Liquid address", () => {
         render(
             () => (
                 <>
@@ -91,6 +91,34 @@ describe("Fees component", () => {
         const fees = pairs.reverse[BTC][LBTC].fees;
         expect(signals.minerFee()).toEqual(
             fees.minerFees.lockup + fees.minerFees.claim + 1,
+        );
+    });
+
+    test("should increase the miner fee for chain swaps by 1 when sending to an unconfidential Liquid address", () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LBTC);
+        signals.setAddressValid(true);
+        signals.setOnchainAddress(
+            "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",
+        );
+
+        const fees = pairs.chain[BTC][LBTC].fees;
+        expect(signals.minerFee()).toEqual(
+            fees.minerFees.server +
+                fees.minerFees.user.lockup +
+                fees.minerFees.user.claim +
+                1,
         );
     });
 });
