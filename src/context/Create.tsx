@@ -10,19 +10,17 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { LN, RBTC, sideSend } from "../consts";
+import { LN, RBTC } from "../consts/Assets";
+import { Side, SwapType } from "../consts/Enums";
 
 export type CreateContextType = {
-    reverse: Accessor<boolean>;
-    setReverse: Setter<boolean>;
+    swapType: Accessor<SwapType>;
     invoice: Accessor<string>;
     setInvoice: Setter<string>;
     lnurl: Accessor<string>;
     setLnurl: Setter<string>;
     onchainAddress: Accessor<string>;
     setOnchainAddress: Setter<string>;
-    asset: Accessor<string>;
-    setAsset: Setter<string>;
     assetSend: Accessor<string>;
     setAssetSend: Setter<string>;
     assetReceive: Accessor<string>;
@@ -39,6 +37,8 @@ export type CreateContextType = {
     setAddressValid: Setter<boolean>;
     amountValid: Accessor<boolean>;
     setAmountValid: Setter<boolean>;
+    pairValid: Accessor<boolean>;
+    setPairValid: Setter<boolean>;
     sendAmount: Accessor<BigNumber>;
     setSendAmount: Setter<BigNumber>;
     receiveAmount: Accessor<BigNumber>;
@@ -47,8 +47,8 @@ export type CreateContextType = {
     setSendAmountFormatted: Setter<string>;
     receiveAmountFormatted: Accessor<string>;
     setReceiveAmountFormatted: Setter<string>;
-    amountChanged: Accessor<string>;
-    setAmountChanged: Setter<string>;
+    amountChanged: Accessor<Side>;
+    setAmountChanged: Setter<Side>;
     minimum: Accessor<number>;
     setMinimum: Setter<number>;
     maximum: Accessor<number>;
@@ -66,8 +66,7 @@ const CreateContext = createContext<CreateContextType>();
 const CreateProvider = (props: { children: any }) => {
     const defaultSelection = Object.keys(config.assets)[0];
 
-    const [asset, setAsset] = createSignal<string>(defaultSelection);
-    const [reverse, setReverse] = createSignal<boolean>(true);
+    const [swapType, setSwapType] = createSignal<SwapType>(SwapType.Submarine);
     const [invoice, setInvoice] = createSignal<string>("");
     const [lnurl, setLnurl] = createSignal("");
     const [onchainAddress, setOnchainAddress] = createSignal("");
@@ -81,14 +80,14 @@ const CreateProvider = (props: { children: any }) => {
         name: "assetSend",
     });
 
-    createEffect(() => setReverse(assetReceive() !== LN));
-
-    [assetSend, assetReceive].forEach((signal) => {
-        createEffect(() => {
-            if (signal() !== LN) {
-                setAsset(signal());
-            }
-        });
+    createEffect(() => {
+        if (assetReceive() === LN) {
+            setSwapType(SwapType.Submarine);
+        } else if (assetSend() === LN) {
+            setSwapType(SwapType.Reverse);
+        } else {
+            setSwapType(SwapType.Chain);
+        }
     });
 
     // asset selection
@@ -100,15 +99,16 @@ const CreateProvider = (props: { children: any }) => {
     const [invoiceValid, setInvoiceValid] = createSignal(false);
     const [addressValid, setAddressValid] = createSignal(false);
     const [amountValid, setAmountValid] = createSignal(false);
+    const [pairValid, setPairValid] = createSignal(true);
     const [invoiceError, setInvoiceError] = createSignal<string>("");
 
     createEffect(() => {
-        if (amountValid()) {
+        if (amountValid() && pairValid()) {
             if (
-                (reverse() && addressValid()) ||
-                (!reverse() &&
+                (swapType() !== SwapType.Submarine && addressValid()) ||
+                (swapType() === SwapType.Submarine &&
                     invoiceValid() &&
-                    (asset() !== RBTC || addressValid()))
+                    (assetReceive() !== RBTC || addressValid()))
             ) {
                 setValid(true);
                 return;
@@ -124,7 +124,7 @@ const CreateProvider = (props: { children: any }) => {
     const [receiveAmountFormatted, setReceiveAmountFormatted] =
         createSignal("0");
 
-    const [amountChanged, setAmountChanged] = createSignal(sideSend);
+    const [amountChanged, setAmountChanged] = createSignal(Side.Send);
     const [minimum, setMinimum] = createSignal<number>(0);
     const [maximum, setMaximum] = createSignal<number>(0);
 
@@ -135,16 +135,13 @@ const CreateProvider = (props: { children: any }) => {
     return (
         <CreateContext.Provider
             value={{
-                reverse,
-                setReverse,
+                swapType,
                 invoice,
                 setInvoice,
                 lnurl,
                 setLnurl,
                 onchainAddress,
                 setOnchainAddress,
-                asset,
-                setAsset,
                 assetSend,
                 setAssetSend,
                 assetReceive,
@@ -161,6 +158,8 @@ const CreateProvider = (props: { children: any }) => {
                 setAddressValid,
                 amountValid,
                 setAmountValid,
+                pairValid,
+                setPairValid,
                 sendAmount,
                 setSendAmount,
                 receiveAmount,

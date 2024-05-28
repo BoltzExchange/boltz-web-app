@@ -1,16 +1,10 @@
 import { render, screen } from "@solidjs/testing-library";
 
 import QrScan from "../../src/components/QrScan";
-import { useGlobalContext } from "../../src/context/Global";
-import { contextWrapper } from "../helper";
+import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 describe("QrScan", () => {
     test("should render the QrScan component", async () => {
-        let globalSignals: any;
-        const TestComponent = () => {
-            globalSignals = useGlobalContext();
-            return "";
-        };
         render(
             () => (
                 <>

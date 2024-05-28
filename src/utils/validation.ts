@@ -8,99 +8,66 @@ import {
     reverseSwapTree,
     swapTree,
 } from "boltz-core";
-import { deployedBytecode as EtherSwapBytecode } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { default as BufferBrowser } from "buffer";
 import { ECPairInterface } from "ecpair";
 import { BaseContract } from "ethers";
 import log from "loglevel";
 
-import { RBTC } from "../consts";
+import { LBTC, RBTC } from "../consts/Assets";
+import { Denomination, Side, SwapType } from "../consts/Enums";
+import { ChainSwapDetails } from "./boltzClient";
 import { decodeAddress, setup } from "./compat";
-import { denominations, formatAmountDenomination } from "./denomination";
+import { formatAmountDenomination } from "./denomination";
 import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 import { createMusig, tweakMusig } from "./taproot/musig";
 
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
 
-type SwapResponse = {
-    reverse: boolean;
-
-    asset: string;
-    invoice: string;
-    timeoutBlockHeight: number;
-
-    sendAmount: number;
-    receiveAmount: number;
-
-    onchainAmount?: number;
-    expectedAmount?: number;
-
-    bip21?: string;
-    address?: string;
-    preimage?: string;
-    privateKey?: string;
-    swapTree?: string;
-    lockupAddress?: string;
-
-    claimPublicKey?: string;
-    refundPublicKey?: string;
-};
-
-type SwapResponseLiquid = SwapResponse & {
-    blindingKey: string;
-};
-
 type ContractGetter = () => Promise<BaseContract>;
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
+    /*
     const code = await (await getEtherSwap()).getDeployedCode();
     const codeMatches = code === EtherSwapBytecode.object;
-
-    if (!codeMatches) {
-        log.warn("contract validation: code mismatch");
-    }
-
+*/
     // TODO: actually verify the code match
     // This check is currently disabled, because it mismatches on RSK, because it was compiled for a different EVM target
     return true;
 };
 
 const validateAddress = async (
-    swap: SwapResponse,
+    chain: string,
     tree: Types.SwapTree,
     ourKeys: ECPairInterface,
     theirPublicKey: Buffer,
     address: string,
+    blindingKey: string | undefined,
     buffer: BufferConstructor,
 ) => {
     await setup();
     const tweakedKey = tweakMusig(
-        swap.asset,
+        chain,
         createMusig(ourKeys, theirPublicKey),
         tree.tree,
     );
 
     const compareScript = Scripts.p2trOutput(tweakedKey);
-    const decodedAddress = decodeAddress(swap.asset, address);
+    const decodedAddress = decodeAddress(chain, address);
 
     if (!decodedAddress.script.equals(compareScript)) {
-        log.warn("address validation: invalid script");
         return false;
     }
 
-    if (swap.asset === "L-BTC") {
-        const blindingPrivateKey = buffer.from(
-            (swap as SwapResponseLiquid).blindingKey,
-            "hex",
-        );
+    if (chain === "L-BTC") {
+        const blindingPrivateKey = buffer.from(blindingKey, "hex");
         const blindingPublicKey = buffer.from(
             ecc.pointFromScalar(blindingPrivateKey),
         );
 
         if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
-            log.warn("address validation: invalid Liquid blinding key");
             return false;
         }
     }
@@ -108,8 +75,28 @@ const validateAddress = async (
     return true;
 };
 
-const validateReverseSwap = async (
-    swap: SwapResponse,
+const validateBip21 = (
+    bip21: string,
+    address: string,
+    expectedAmount: number,
+) => {
+    const bip21Split = bip21.split("?");
+    if (bip21Split[0].split(":")[1] !== address) {
+        return false;
+    }
+
+    return (
+        new URLSearchParams(bip21Split[1]).get("amount") ===
+        formatAmountDenomination(
+            BigNumber(expectedAmount),
+            Denomination.Btc,
+            ".",
+        )
+    );
+};
+
+const validateReverse = async (
+    swap: ReverseSwap,
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
@@ -120,29 +107,29 @@ const validateReverseSwap = async (
         invoiceData.satoshis !== swap.sendAmount ||
         swap.onchainAmount <= swap.receiveAmount
     ) {
-        log.warn("reverse swap validation: amounts");
         return false;
     }
 
     // Invoice
     const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
     if (invoiceData.preimageHash !== preimageHash.toString("hex")) {
-        log.warn("reverse swap validation: preimage hash");
         return false;
     }
 
-    if (swap.asset === RBTC) {
+    if (swap.assetReceive === RBTC) {
         return await validateContract(getEtherSwap);
     }
 
     // SwapTree
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
-    const ourKeys = ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex"));
+    const ourKeys = ECPair.fromPrivateKey(
+        buffer.from(swap.claimPrivateKey, "hex"),
+    );
     const theirPublicKey = buffer.from(swap.refundPublicKey, "hex");
 
     const compareTree = reverseSwapTree(
-        swap.asset === "L-BTC",
+        swap.assetReceive === "L-BTC",
         preimageHash,
         ourKeys.publicKey,
         theirPublicKey,
@@ -150,22 +137,22 @@ const validateReverseSwap = async (
     );
 
     if (!compareTrees(tree, compareTree)) {
-        log.warn("reverse swap validation: swap tree mismatch");
         return false;
     }
 
     return validateAddress(
-        swap,
+        swap.assetReceive,
         tree,
         ourKeys,
         theirPublicKey,
         swap.lockupAddress,
+        swap.blindingKey,
         buffer,
     );
 };
 
-const validateSwap = async (
-    swap: SwapResponse,
+const validateSubmarine = async (
+    swap: SubmarineSwap,
     getEtherSwap: ContractGetter,
     buffer: any,
 ) => {
@@ -174,7 +161,7 @@ const validateSwap = async (
         return false;
     }
 
-    if (swap.asset === RBTC) {
+    if (swap.assetSend === RBTC) {
         return await validateContract(getEtherSwap);
     }
 
@@ -183,11 +170,13 @@ const validateSwap = async (
 
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
-    const ourKeys = ECPair.fromPrivateKey(buffer.from(swap.privateKey, "hex"));
+    const ourKeys = ECPair.fromPrivateKey(
+        buffer.from(swap.refundPrivateKey, "hex"),
+    );
     const theirPublicKey = buffer.from(swap.claimPublicKey, "hex");
 
     const compareTree = swapTree(
-        swap.asset === "L-BTC",
+        swap.assetSend === "L-BTC",
         buffer.from(invoiceData.preimageHash, "hex"),
         theirPublicKey,
         ourKeys.publicKey,
@@ -201,45 +190,130 @@ const validateSwap = async (
     // Address
     if (
         !(await validateAddress(
-            swap,
+            swap.assetSend,
             tree,
             ourKeys,
             theirPublicKey,
             swap.address,
+            swap.blindingKey,
             buffer,
         ))
     ) {
         return false;
     }
 
-    // BIP-21
-    const bip21Split = swap.bip21.split("?");
-    if (bip21Split[0].split(":")[1] !== swap.address) {
-        return false;
-    }
+    return validateBip21(swap.bip21, swap.address, swap.expectedAmount);
+};
+
+const validateChainSwap = async (
+    swap: ChainSwap,
+    getEtherSwap: ContractGetter,
+    buffer: BufferConstructor,
+) => {
+    const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
+
+    const validateSide = async (
+        side: Side,
+        asset: string,
+        details: ChainSwapDetails,
+    ) => {
+        if (side === Side.Send) {
+            if (details.amount !== swap.sendAmount) {
+                return false;
+            }
+        } else {
+            if (details.amount <= swap.receiveAmount) {
+                return false;
+            }
+        }
+
+        if (asset === RBTC) {
+            return await validateContract(getEtherSwap);
+        }
+
+        const ourKeys = ECPair.fromPrivateKey(
+            buffer.from(
+                side === Side.Send
+                    ? swap.refundPrivateKey
+                    : swap.claimPrivateKey,
+                "hex",
+            ),
+        );
+        const theirPublicKey = buffer.from(details.serverPublicKey, "hex");
+        const tree = SwapTreeSerializer.deserializeSwapTree(details.swapTree);
+        const compareTree = reverseSwapTree(
+            asset === LBTC,
+            preimageHash,
+            side === Side.Send ? theirPublicKey : ourKeys.publicKey,
+            side === Side.Send ? ourKeys.publicKey : theirPublicKey,
+            details.timeoutBlockHeight,
+        );
+
+        if (!compareTrees(tree, compareTree)) {
+            return false;
+        }
+
+        if (
+            !(await validateAddress(
+                asset,
+                tree,
+                ourKeys,
+                theirPublicKey,
+                details.lockupAddress,
+                details.blindingKey,
+                buffer,
+            ))
+        ) {
+            return false;
+        }
+
+        return (
+            side === Side.Receive ||
+            validateBip21(details.bip21, details.lockupAddress, details.amount)
+        );
+    };
 
     return (
-        new URLSearchParams(bip21Split[1]).get("amount") ===
-        formatAmountDenomination(
-            BigNumber(swap.sendAmount),
-            denominations.btc,
-            ".",
-        )
-    );
+        await Promise.all([
+            validateSide(Side.Send, swap.assetSend, swap.lockupDetails),
+            validateSide(Side.Receive, swap.assetReceive, swap.claimDetails),
+        ])
+    ).every((ok) => ok);
 };
 
 // To be able to use the Buffer from Node.js
 export const validateResponse = async (
-    swap: SwapResponse,
+    swap: SomeSwap,
     getEtherSwap: ContractGetter,
     buffer: any = BufferBrowser,
-) => {
+): Promise<boolean> => {
     try {
-        return await (swap.reverse
-            ? validateReverseSwap(swap, getEtherSwap, buffer)
-            : validateSwap(swap, getEtherSwap, buffer));
+        switch (swap.type) {
+            case SwapType.Submarine:
+                return validateSubmarine(
+                    swap as SubmarineSwap,
+                    getEtherSwap,
+                    buffer,
+                );
+
+            case SwapType.Reverse:
+                return validateReverse(
+                    swap as ReverseSwap,
+                    getEtherSwap,
+                    buffer,
+                );
+
+            case SwapType.Chain:
+                return validateChainSwap(
+                    swap as ChainSwap,
+                    getEtherSwap,
+                    buffer,
+                );
+            default:
+                throw new Error("unknown_swap_type");
+        }
     } catch (e) {
-        log.warn("swap validation threw", e);
+        log.warn(`${swap.type} swap validation threw`, e);
         return false;
     }
 };

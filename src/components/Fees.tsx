@@ -1,10 +1,12 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect } from "solid-js";
 
-import { LBTC } from "../consts";
+import { LBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
+    ChainPairTypeTaproot,
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
 } from "../utils/boltzClient";
@@ -21,8 +23,9 @@ const Fees = () => {
     const { t, pairs, fetchPairs, denomination, separator } =
         useGlobalContext();
     const {
-        asset,
-        reverse,
+        assetSend,
+        assetReceive,
+        swapType,
         sendAmount,
         setMaximum,
         setMinimum,
@@ -36,39 +39,59 @@ const Fees = () => {
 
     createEffect(() => {
         if (pairs()) {
-            const cfg = getPair(pairs(), asset(), reverse());
+            const cfg = getPair(
+                pairs(),
+                swapType(),
+                assetSend(),
+                assetReceive(),
+            );
 
-            if (reverse()) {
-                const reverseCfg = cfg as ReversePairTypeTaproot;
+            if (!cfg) return;
 
-                let fee =
-                    reverseCfg.fees.minerFees.claim +
-                    reverseCfg.fees.minerFees.lockup;
+            setBoltzFee(cfg.fees.percentage);
 
-                if (
-                    asset() === LBTC &&
-                    addressValid() &&
-                    !isConfidentialAddress(onchainAddress())
-                ) {
-                    fee += 1;
-                }
+            switch (swapType()) {
+                case SwapType.Submarine:
+                    setMinerFee(
+                        (cfg as SubmarinePairTypeTaproot).fees.minerFees,
+                    );
+                    break;
 
-                setBoltzFee(reverseCfg.fees.percentage);
-                setMinerFee(fee);
-            } else {
-                setBoltzFee(cfg.fees.percentage);
-                setMinerFee((cfg as SubmarinePairTypeTaproot).fees.minerFees);
+                case SwapType.Reverse:
+                    const reverseCfg = cfg as ReversePairTypeTaproot;
+                    let fee =
+                        reverseCfg.fees.minerFees.claim +
+                        reverseCfg.fees.minerFees.lockup;
+                    if (
+                        assetReceive() === LBTC &&
+                        addressValid() &&
+                        !isConfidentialAddress(onchainAddress())
+                    ) {
+                        fee += 1;
+                    }
+
+                    setMinerFee(fee);
+                    break;
+
+                case SwapType.Chain:
+                    const chainCfg = cfg as ChainPairTypeTaproot;
+                    setMinerFee(
+                        chainCfg.fees.minerFees.server +
+                            chainCfg.fees.minerFees.user.lockup +
+                            chainCfg.fees.minerFees.user.claim,
+                    );
+                    break;
             }
 
             const calculateLimit = (limit: number): number => {
-                return reverse()
-                    ? limit
-                    : calculateSendAmount(
+                return swapType() === SwapType.Submarine
+                    ? calculateSendAmount(
                           BigNumber(limit),
                           boltzFee(),
                           minerFee(),
-                          reverse(),
-                      ).toNumber();
+                          swapType(),
+                      ).toNumber()
+                    : limit;
             };
 
             setMinimum(calculateLimit(cfg.limits.minimal));
@@ -103,7 +126,7 @@ const Fees = () => {
                             sendAmount(),
                             boltzFee(),
                             minerFee(),
-                            reverse(),
+                            swapType(),
                         ),
                         denomination(),
                         separator(),

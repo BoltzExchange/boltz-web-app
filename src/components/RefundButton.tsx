@@ -1,15 +1,20 @@
+import { crypto } from "bitcoinjs-lib";
+import { OutputType } from "boltz-core";
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import { Accessor, Setter, createSignal } from "solid-js";
+import { Accessor, Setter, Show, createSignal, onMount } from "solid-js";
+import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
-import { RBTC } from "../consts";
+import RefundEta from "../components/RefundEta";
+import { RBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import {
-    getSubmarineEipSignature,
-    getSubmarineTransaction,
+    getEipRefundSignature,
+    getLockupTransaction,
 } from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
 import { decodeInvoice } from "../utils/invoice";
@@ -17,11 +22,78 @@ import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
 
+const RefundEvm = ({
+    swapId,
+    amount,
+    claimAddress,
+    preimageHash,
+    timeoutBlockHeight,
+}: {
+    swapId: string;
+    amount: number;
+    preimageHash: string;
+    claimAddress: string;
+    timeoutBlockHeight: number;
+}) => {
+    const { setSwap } = usePayContext();
+    const { getEtherSwap, getSigner } = useWeb3Signer();
+    const { setSwapStorage, getSwap, t } = useGlobalContext();
+
+    return (
+        <ContractTransaction
+            onClick={async () => {
+                const [contract, signer, currentSwap] = await Promise.all([
+                    getEtherSwap(),
+                    getSigner(),
+                    getSwap(swapId),
+                ]);
+
+                let tx: TransactionResponse;
+
+                if (
+                    timeoutBlockHeight <
+                    (await signer.provider.getBlockNumber())
+                ) {
+                    tx = await contract.refund(
+                        prefix0x(preimageHash),
+                        satoshiToWei(amount),
+                        claimAddress,
+                        timeoutBlockHeight,
+                    );
+                } else {
+                    const { signature } = await getEipRefundSignature(
+                        currentSwap.assetSend,
+                        currentSwap.id,
+                        currentSwap.type,
+                    );
+                    const decSignature = Signature.from(signature);
+
+                    tx = await contract.refundCooperative(
+                        prefix0x(preimageHash),
+                        satoshiToWei(amount),
+                        claimAddress,
+                        timeoutBlockHeight,
+                        decSignature.v,
+                        decSignature.r,
+                        decSignature.s,
+                    );
+                }
+
+                currentSwap.refundTx = tx.hash;
+                await setSwapStorage(currentSwap);
+                setSwap(currentSwap);
+                await tx.wait(1);
+            }}
+            buttonText={t("refund")}
+        />
+    );
+};
+
 const RefundButton = ({
     swap,
     setRefundTxId,
 }: {
-    swap: Accessor<{ id: string } & Record<string, any>>;
+    swap: Accessor<SubmarineSwap | ChainSwap>;
     setRefundTxId?: Setter<string>;
 }) => {
     const {
@@ -33,70 +105,54 @@ const RefundButton = ({
         t,
     } = useGlobalContext();
     const { setSwap } = usePayContext();
+    const [timeoutEta, setTimeoutEta] = createSignal<number | null>(null);
+    const [timeoutBlockheight, setTimeoutBlockheight] = createSignal<
+        number | null
+    >(null);
 
-    if (swap() && swap().asset === RBTC) {
-        const { getEtherSwap, getSigner } = useWeb3Signer();
+    if (swap() && swap().assetSend === RBTC) {
+        if (swap().type === SwapType.Submarine) {
+            const submarine = swap() as SubmarineSwap;
 
-        return (
-            <ContractTransaction
-                onClick={async () => {
-                    const [contract, signer] = await Promise.all([
-                        getEtherSwap(),
-                        getSigner(),
-                    ]);
+            return (
+                <RefundEvm
+                    swapId={submarine.id}
+                    amount={submarine.expectedAmount}
+                    claimAddress={submarine.claimAddress}
+                    timeoutBlockHeight={submarine.timeoutBlockHeight}
+                    preimageHash={decodeInvoice(submarine.invoice).preimageHash}
+                />
+            );
+        } else {
+            const chain = swap() as ChainSwap;
 
-                    const currentSwap = swap();
-                    const preimageHash = prefix0x(
-                        decodeInvoice(currentSwap.invoice).preimageHash,
-                    );
-
-                    let tx: TransactionResponse;
-
-                    if (
-                        currentSwap.timeoutBlockHeight <
-                        (await signer.provider.getBlockNumber())
-                    ) {
-                        tx = await contract.refund(
-                            preimageHash,
-                            satoshiToWei(currentSwap.expectedAmount),
-                            currentSwap.claimAddress,
-                            currentSwap.timeoutBlockHeight,
-                        );
-                    } else {
-                        const { signature } = await getSubmarineEipSignature(
-                            currentSwap.asset,
-                            currentSwap.id,
-                        );
-                        const decSignature = Signature.from(signature);
-
-                        tx = await contract.refundCooperative(
-                            preimageHash,
-                            satoshiToWei(currentSwap.expectedAmount),
-                            currentSwap.claimAddress,
-                            currentSwap.timeoutBlockHeight,
-                            decSignature.v,
-                            decSignature.r,
-                            decSignature.s,
-                        );
-                    }
-
-                    currentSwap.refundTx = tx.hash;
-                    await setSwapStorage(currentSwap);
-                    setSwap(currentSwap);
-                    await tx.wait(1);
-                }}
-                buttonText={t("refund")}
-            />
-        );
+            return (
+                <RefundEvm
+                    swapId={chain.id}
+                    amount={chain.lockupDetails.amount}
+                    claimAddress={chain.lockupDetails.claimAddress}
+                    timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}
+                    preimageHash={crypto
+                        .sha256(Buffer.from(chain.preimage, "hex"))
+                        .toString("hex")}
+                />
+            );
+        }
     }
 
-    const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
     const [valid, setValid] = createSignal<boolean>(false);
+    const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
 
     const refundAddressChange = (evt: InputEvent, asset: string) => {
         const input = evt.currentTarget as HTMLInputElement;
         const inputValue = input.value.trim();
-        if (inputValue === swap().address) {
+
+        const lockupAddress =
+            swap().type === SwapType.Submarine
+                ? (swap() as SubmarineSwap).address
+                : (swap() as ChainSwap).lockupDetails.lockupAddress;
+
+        if (inputValue === lockupAddress) {
             log.debug("refunds to lockup address are blocked");
             input.setCustomValidity("lockup address");
             return false;
@@ -120,15 +176,13 @@ const RefundButton = ({
     const refundAction = async () => {
         setRefundRunning(true);
 
+        const transactionToRefund = await getLockupTransaction(
+            swap().assetSend,
+            swap().id,
+            swap().type,
+        );
+
         try {
-            const transactionToRefund = await getSubmarineTransaction(
-                swap().asset,
-                swap().id,
-            );
-            log.debug(
-                `got swap transaction for ${swap().id}`,
-                transactionToRefund,
-            );
             const res = await refund(
                 swap(),
                 refundAddress(),
@@ -136,10 +190,10 @@ const RefundButton = ({
             );
 
             // save refundTx into swaps json and set it to the current swap
-            // only if the swaps was not initiated with the refund json
-            // refundjson has no date
-            if (res.date !== undefined) {
-                const currentSwap = await getSwap(res.id);
+            // only if the swap exist in localstorage, else it is a refund json
+            // so we save it into the signal
+            const currentSwap = (await getSwap(res.id)) as SubmarineSwap;
+            if (currentSwap !== null) {
                 currentSwap.refundTx = res.refundTx;
                 await setSwapStorage(currentSwap);
                 setSwap(currentSwap);
@@ -162,9 +216,14 @@ const RefundButton = ({
                         ) {
                             msg = t("already_refunded");
                         } else if (
-                            msg === "mandatory-script-verify-flag-failed"
+                            msg === "mandatory-script-verify-flag-failed" ||
+                            msg === "non-final"
                         ) {
                             msg = t("locktime_not_satisfied");
+                            setTimeoutEta(transactionToRefund.timeoutEta);
+                            setTimeoutBlockheight(
+                                transactionToRefund.timeoutBlockHeight,
+                            );
                         }
                         log.error(msg);
                         notify("error", msg);
@@ -182,23 +241,47 @@ const RefundButton = ({
         setRefundRunning(false);
     };
 
+    onMount(async () => {
+        if (!swap()) return;
+
+        const transactionToRefund = await getLockupTransaction(
+            swap().assetSend,
+            swap().id,
+            swap().type,
+        );
+
+        // show refund ETA for legacy swaps
+        if (swap().version !== OutputType.Taproot) {
+            setTimeoutEta(transactionToRefund.timeoutEta);
+            setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
+        }
+    });
+
     return (
         <>
+            <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
+                <RefundEta
+                    timeoutEta={timeoutEta}
+                    timeoutBlockHeight={timeoutBlockheight}
+                />
+            </Show>
             <h3 style={"color: #fff"}>
                 {swap()
-                    ? t("refund_address_header", { asset: swap()?.asset })
+                    ? t("refund_address_header", { asset: swap()?.assetSend })
                     : t("refund_address_header_no_asset")}
             </h3>
             <input
                 data-testid="refundAddress"
                 id="refundAddress"
                 disabled={swap() === null}
-                onInput={(e) => setValid(refundAddressChange(e, swap()?.asset))}
+                onInput={(e) =>
+                    setValid(refundAddressChange(e, swap()?.assetSend))
+                }
                 type="text"
                 name="refundAddress"
                 placeholder={
                     swap()
-                        ? t("onchain_address", { asset: swap()?.asset })
+                        ? t("onchain_address", { asset: swap()?.assetSend })
                         : t("onchain_address_no_asset")
                 }
             />

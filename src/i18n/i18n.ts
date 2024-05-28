@@ -196,6 +196,7 @@ const dict = {
         browsernotification: "Browser Notifications",
         browsernotification_tooltip: "Enable or disable browser notifications",
         browsernotification_error: "Notification permissions denied",
+        invalid_pair: "Invalid pair",
     },
     de: {
         language: "Deutsch",
@@ -402,6 +403,7 @@ const dict = {
         browsernotification_tooltip:
             "Aktiviere oder deaktiviere Browser Benachrichtigungen",
         browsernotification_error: "Benachrichtigungsrechte verweigert",
+        invalid_pair: "Ungültiges Paar",
     },
     es: {
         language: "Español",
@@ -608,6 +610,7 @@ const dict = {
         browsernotification_tooltip:
             "Activar o desactivar notificaciones del navegador",
         browsernotification_error: "Permisos de notificación denegados",
+        invalid_pair: "Par no válido",
     },
     zh: {
         language: "中文",
@@ -790,6 +793,7 @@ const dict = {
         browsernotification: "浏览器通知",
         browsernotification_tooltip: "启用或禁用浏览器通知",
         browsernotification_error: "通知权限被拒绝",
+        invalid_pair: "无效交换对",
     },
 };
 

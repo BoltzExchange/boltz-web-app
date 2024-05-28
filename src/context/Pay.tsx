@@ -6,19 +6,17 @@ import {
     useContext,
 } from "solid-js";
 
+import { SomeSwap } from "../utils/swapCreator";
+
 export type PayContextType = {
     failureReason: Accessor<string>;
     setFailureReason: Setter<string>;
-    swap: Accessor<any>;
-    setSwap: Setter<any>;
+    swap: Accessor<SomeSwap | null>;
+    setSwap: Setter<SomeSwap | null>;
     swapStatus: Accessor<string>;
     setSwapStatus: Setter<string>;
     swapStatusTransaction: Accessor<SwapStatusTransaction>;
     setSwapStatusTransaction: Setter<SwapStatusTransaction>;
-    timeoutEta: Accessor<number>;
-    setTimeoutEta: Setter<number>;
-    timeoutBlockHeight: Accessor<number>;
-    setTimeoutBlockheight: Setter<number>;
 };
 
 const PayContext = createContext<PayContextType>();
@@ -30,16 +28,13 @@ type SwapStatusTransaction = {
 
 const PayProvider = (props: { children: any }) => {
     const [failureReason, setFailureReason] = createSignal<string>("");
-    const [swap, setSwap] = createSignal(null, {
+    const [swap, setSwap] = createSignal<SomeSwap | null>(null, {
         // To allow updating properties of the swap object without replacing it completely
         equals: () => false,
     });
     const [swapStatus, setSwapStatus] = createSignal<string>("");
     const [swapStatusTransaction, setSwapStatusTransaction] =
         createSignal<SwapStatusTransaction>({});
-
-    const [timeoutEta, setTimeoutEta] = createSignal<number>(0);
-    const [timeoutBlockHeight, setTimeoutBlockheight] = createSignal<number>(0);
 
     return (
         <PayContext.Provider
@@ -52,10 +47,6 @@ const PayProvider = (props: { children: any }) => {
                 setSwapStatus,
                 swapStatusTransaction,
                 setSwapStatusTransaction,
-                timeoutEta,
-                setTimeoutEta,
-                timeoutBlockHeight,
-                setTimeoutBlockheight,
             }}>
             {props.children}
         </PayContext.Provider>

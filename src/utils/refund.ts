@@ -10,7 +10,8 @@ import { ECPairInterface } from "ecpair";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { LBTC } from "../consts";
+import { LBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -26,137 +27,172 @@ import {
     setup,
 } from "./compat";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
+import { ChainSwap, SubmarineSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
-export const refundJsonKeys = ["id", "asset", "privateKey"];
-export const refundJsonKeysLiquid = refundJsonKeys.concat("blindingKey");
-
 const refundTaproot = async (
-    swap: any,
+    swap: SubmarineSwap | ChainSwap,
     lockupTx: TransactionInterface,
     privateKey: ECPairInterface,
     decodedAddress: DecodedAddress,
-    fees: number,
+    feePerVbyte: number,
+    timeoutBlockHeight: number,
+    cooperative: boolean = true,
 ) => {
-    const boltzPublicKey = Buffer.from(swap.claimPublicKey, "hex");
+    log.info(
+        `starting to refund swap ${swap.id} cooperatively: ${cooperative}`,
+    );
+    const theirPublicKey =
+        swap.type === SwapType.Submarine
+            ? (swap as SubmarineSwap).claimPublicKey
+            : (swap as ChainSwap).lockupDetails.serverPublicKey;
+    const lockupTree =
+        swap.type === SwapType.Submarine
+            ? (swap as SubmarineSwap).swapTree
+            : (swap as ChainSwap).lockupDetails.swapTree;
+
+    const swapTree = SwapTreeSerializer.deserializeSwapTree(lockupTree);
+    const boltzPublicKey = Buffer.from(theirPublicKey, "hex");
     const musig = createMusig(privateKey, boltzPublicKey);
-    const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
-    const tweakedKey = tweakMusig(swap.asset, musig, tree.tree);
+    const tweakedKey = tweakMusig(swap.assetSend, musig, swapTree.tree);
 
     const swapOutput = detectSwap(tweakedKey, lockupTx);
 
     const details = [
         {
             ...swapOutput,
+            cooperative,
+            swapTree,
             keys: privateKey,
-            cooperative: true,
             type: OutputType.Taproot,
             txHash: lockupTx.getHash(),
-            blindingPrivateKey: parseBlindingKey(swap),
-        } as RefundDetails & LiquidRefundDetails,
-    ];
+            blindingPrivateKey: parseBlindingKey(swap, true),
+            internalKey: musig.getAggregatedPublicKey(),
+        },
+    ] as (RefundDetails & { blindingPrivateKey: Buffer })[];
 
     const constructRefundTransaction = getConstructRefundTransaction(
-        swap.asset,
-        swap.asset === LBTC && decodedAddress.blindingKey === undefined,
+        swap.assetSend,
+        swap.assetSend === LBTC && decodedAddress.blindingKey === undefined,
     );
     const claimTx = constructRefundTransaction(
         details,
         decodedAddress.script,
-        0,
-        fees,
+        cooperative ? 0 : timeoutBlockHeight,
+        feePerVbyte,
         true,
-        getNetwork(swap.asset) as LiquidNetwork,
+        getNetwork(swap.assetSend) as LiquidNetwork,
         decodedAddress.blindingKey,
     );
 
-    const boltzSig = await getPartialRefundSignature(
-        swap.asset,
-        swap.id,
-        Buffer.from(musig.getPublicNonce()),
-        claimTx,
-        0,
-    );
-    musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
-    musig.initializeSession(
-        hashForWitnessV1(
-            swap.asset,
-            getNetwork(swap.asset),
-            details,
+    if (!cooperative) {
+        return claimTx;
+    }
+
+    try {
+        const boltzSig = await getPartialRefundSignature(
+            swap.assetSend,
+            swap.id,
+            swap.type,
+            Buffer.from(musig.getPublicNonce()),
             claimTx,
             0,
-        ),
-    );
-    musig.signPartial();
-    musig.addPartial(boltzPublicKey, boltzSig.signature);
+        );
+        musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
+        musig.initializeSession(
+            hashForWitnessV1(
+                swap.assetSend,
+                getNetwork(swap.assetSend),
+                details,
+                claimTx,
+                0,
+            ),
+        );
+        musig.signPartial();
+        musig.addPartial(boltzPublicKey, boltzSig.signature);
 
-    claimTx.ins[0].witness = [musig.aggregatePartials()];
+        claimTx.ins[0].witness = [musig.aggregatePartials()];
 
-    return claimTx;
+        return claimTx;
+    } catch (e) {
+        log.warn("Uncooperative Taproot refund because", e);
+        return await refundTaproot(
+            swap,
+            lockupTx,
+            privateKey,
+            decodedAddress,
+            feePerVbyte,
+            timeoutBlockHeight,
+            false,
+        );
+    }
 };
 
-export async function refund(
-    swap: any,
+export const refund = async (
+    swap: SubmarineSwap | ChainSwap,
     refundAddress: string,
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
-) {
-    log.debug("starting to refund swap", swap);
+    cooperative: boolean = true,
+) => {
+    log.info(`refunding swap ${swap.id}: `, swap);
 
-    const assetName = swap.asset;
-
-    const output = decodeAddress(assetName, refundAddress);
-    log.info("refunding swap: ", swap.id);
     await setup();
 
-    const resFees = await getFeeEstimations(assetName);
-    const fees = resFees[swap.asset];
+    const output = decodeAddress(swap.assetSend, refundAddress);
 
-    const Transaction = getTransaction(assetName);
-    const tx = Transaction.fromHex(transactionToRefund.hex);
-    const privateKey = parsePrivateKey(swap.privateKey);
+    const feePerVbyte = (await getFeeEstimations(swap.assetSend))[
+        swap.assetSend
+    ];
+
+    const lockupTransaction = getTransaction(swap.assetSend).fromHex(
+        transactionToRefund.hex,
+    );
+    const privateKey = parsePrivateKey(swap.refundPrivateKey);
 
     let refundTransaction: TransactionInterface;
 
     if (swap.version === OutputType.Taproot) {
         refundTransaction = await refundTaproot(
             swap,
-            tx,
+            lockupTransaction,
             privateKey,
             output,
-            fees,
+            feePerVbyte,
+            transactionToRefund.timeoutBlockHeight,
+            cooperative,
         );
     } else {
-        const redeemScript = Buffer.from(swap.redeemScript, "hex");
+        const redeemScript = Buffer.from((swap as any).redeemScript, "hex");
         log.debug("redeemScript", redeemScript);
-        const swapOutput = detectSwap(redeemScript, tx);
+        const swapOutput = detectSwap(redeemScript, lockupTransaction);
         log.debug("swapOutput", swapOutput);
 
         const constructRefundTransaction = getConstructRefundTransaction(
-            assetName,
-            swap.asset === LBTC && output.blindingKey === undefined,
+            swap.assetSend,
+            swap.assetSend === LBTC && output.blindingKey === undefined,
         );
         refundTransaction = constructRefundTransaction(
             [
                 {
                     ...swapOutput,
-                    txHash: tx.getHash(),
+                    txHash: lockupTransaction.getHash(),
                     redeemScript: redeemScript,
                     keys: privateKey,
-                    blindingPrivateKey: parseBlindingKey(swap),
+                    blindingPrivateKey: parseBlindingKey(swap, true),
                 } as RefundDetails & LiquidRefundDetails,
             ],
             output.script,
             transactionToRefund.timeoutBlockHeight,
-            fees,
-            true, // rbf
-            assetName === LBTC
-                ? (getNetwork(assetName) as LiquidNetwork)
+            feePerVbyte,
+            true,
+            swap.assetSend === LBTC
+                ? (getNetwork(swap.assetReceive) as LiquidNetwork)
                 : undefined,
             output.blindingKey,
         );
     }
     const res = await broadcastTransaction(
-        assetName,
+        swap.assetSend,
         refundTransaction.toHex(),
     );
     log.debug("refund result:", res);
@@ -164,4 +200,4 @@ export async function refund(
         swap.refundTx = res.id;
     }
     return swap;
-}
+};

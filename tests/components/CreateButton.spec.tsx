@@ -2,20 +2,16 @@ import { render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import CreateButton from "../../src/components/CreateButton";
-import { useCreateContext } from "../../src/context/Create";
-import { useGlobalContext } from "../../src/context/Global";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
-import { contextWrapper } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 
 describe("CreateButton", () => {
-    let signals: any;
-    let globalSignals: any;
-    const TestComponent = () => {
-        signals = useCreateContext();
-        globalSignals = useGlobalContext();
-        return "";
-    };
-
     test("should render CreateButton", async () => {
         render(() => <CreateButton />, {
             wrapper: contextWrapper,
@@ -34,7 +30,7 @@ describe("CreateButton", () => {
                 wrapper: contextWrapper,
             },
         );
-        signals.setMinimum(BigNumber(50_000));
+        signals.setMinimum(50_000);
         const btn = (await screen.findByText(
             i18n.en.minimum_amount
                 .replace("{{ amount }}", "50 000")
@@ -97,7 +93,8 @@ describe("CreateButton", () => {
         signals.setSendAmount(BigNumber(100_000));
         signals.setAmountValid(true);
         signals.setAddressValid(true);
-        signals.setReverse(true);
+        signals.setAssetReceive(BTC);
+        signals.setAssetSend(LBTC);
         const btn = (await screen.findByText(
             i18n.en.create_swap,
         )) as HTMLButtonElement;
@@ -123,7 +120,8 @@ describe("CreateButton", () => {
         signals.setSendAmount(BigNumber(100_000));
         signals.setAmountValid(true);
         signals.setInvoiceValid(true);
-        signals.setReverse(false);
+        signals.setAssetSend(LBTC);
+        signals.setAssetReceive(LN);
         const btn = (await screen.findByText(
             i18n.en.create_swap,
         )) as HTMLButtonElement;

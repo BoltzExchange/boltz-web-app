@@ -2,21 +2,28 @@ import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
-import { BTC, LBTC, RBTC } from "../consts";
+import { BTC, LBTC, RBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
+import {
+    swapStatusFinal,
+    swapStatusPending,
+    swapStatusSuccess,
+} from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
+    getChainSwapTransactions,
     getReverseTransaction,
-    getSubmarineTransaction,
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
 import { getApiUrl } from "../utils/helper";
 import Lock from "../utils/lock";
 import {
-    swapStatusFinal,
-    swapStatusPending,
-    swapStatusSuccess,
-} from "../utils/swapStatus";
+    ChainSwap,
+    ReverseSwap,
+    SubmarineSwap,
+    getRelevantAssetForSwap,
+} from "../utils/swapCreator";
 
 type SwapStatus = {
     id: string;
@@ -67,7 +74,7 @@ class BoltzWebSocket {
                 for (const status of swapUpdates) {
                     this.relevantIds.add(status.id);
                     this.prepareSwap(status.id, status);
-                    this.swapClaimLock.acquire(() =>
+                    await this.swapClaimLock.acquire(() =>
                         this.claimSwap(status.id, status),
                     );
                 }
@@ -122,36 +129,11 @@ export const SwapChecker = () => {
         setSwapStatus,
         setSwapStatusTransaction,
         setFailureReason,
-        setTimeoutEta,
-        setTimeoutBlockheight,
     } = usePayContext();
     const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t } =
         useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
-
-    const checkForFailed = async (swap: any, data: any) => {
-        if (
-            data.status == "transaction.lockupFailed" ||
-            data.status == "invoice.failedToPay"
-        ) {
-            const res = await getSubmarineTransaction(swap.asset, swap.id);
-            if (swap.asset !== RBTC && !res.hex) {
-                log.error("no mempool tx found");
-            }
-            if (!res.timeoutEta) {
-                log.error("no timeout eta");
-            }
-            if (!res.timeoutBlockHeight) {
-                log.error("no timeout blockheight");
-            }
-            const timestamp = res.timeoutEta * 1000;
-            const eta = new Date(timestamp);
-            log.debug("Timeout ETA: \n " + eta.toLocaleString(), timestamp);
-            setTimeoutEta(timestamp);
-            setTimeoutBlockheight(res.timeoutBlockHeight);
-        }
-    };
 
     const prepareSwap = async (swapId: string, data: any) => {
         const currentSwap = await getSwap(swapId);
@@ -161,7 +143,9 @@ export const SwapChecker = () => {
         }
         if (swap() && swap().id === currentSwap.id) {
             setSwapStatus(data.status);
-            if (data.transaction) setSwapStatusTransaction(data.transaction);
+            if (data.transaction) {
+                setSwapStatusTransaction(data.transaction);
+            }
             if (data.failureReason) {
                 setFailureReason(data.failureReason);
             }
@@ -169,7 +153,6 @@ export const SwapChecker = () => {
         if (data.status) {
             await updateSwapStatus(currentSwap.id, data.status);
         }
-        await checkForFailed(currentSwap, data);
     };
 
     const claimSwap = async (swapId: string, data: any) => {
@@ -181,30 +164,52 @@ export const SwapChecker = () => {
 
         if (
             currentSwap.version !== OutputType.Taproot ||
-            currentSwap.asset === RBTC
+            getRelevantAssetForSwap(currentSwap) === RBTC
         ) {
             return;
         }
 
         if (data.status === swapStatusSuccess.InvoiceSettled) {
             data.transaction = await getReverseTransaction(
-                currentSwap.asset,
+                getRelevantAssetForSwap(currentSwap),
                 currentSwap.id,
             );
+        } else if (
+            currentSwap.type === SwapType.Chain &&
+            data.status === swapStatusSuccess.TransactionClaimed
+        ) {
+            data.transaction = (
+                await getChainSwapTransactions(
+                    getRelevantAssetForSwap(currentSwap),
+                    currentSwap.id,
+                )
+            ).serverLock.transaction;
         }
 
         if (
             currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
-            [
-                swapStatusPending.TransactionConfirmed,
-                swapStatusPending.TransactionMempool,
-                swapStatusSuccess.InvoiceSettled,
-            ].includes(data.status)
+            ((currentSwap.type === SwapType.Reverse &&
+                [
+                    swapStatusPending.TransactionConfirmed,
+                    swapStatusPending.TransactionMempool,
+                    swapStatusSuccess.InvoiceSettled,
+                ].includes(data.status)) ||
+                (currentSwap.type === SwapType.Chain &&
+                    [
+                        swapStatusSuccess.TransactionClaimed,
+                        swapStatusPending.TransactionServerConfirmed,
+                        swapStatusPending.TransactionServerMempool,
+                    ].includes(data.status)))
         ) {
             try {
-                const res = await claim(currentSwap, data.transaction);
-                const claimedSwap = await getSwap(res.id);
+                const res = await claim(
+                    currentSwap as ReverseSwap | ChainSwap,
+                    data.transaction,
+                );
+                const claimedSwap = (await getSwap(res.id)) as
+                    | ReverseSwap
+                    | ChainSwap;
                 claimedSwap.claimTx = res.claimTx;
                 await setSwapStorage(claimedSwap);
 
@@ -224,7 +229,7 @@ export const SwapChecker = () => {
             }
         } else if (data.status === swapStatusPending.TransactionClaimPending) {
             try {
-                await createSubmarineSignature(currentSwap);
+                await createSubmarineSignature(currentSwap as SubmarineSwap);
                 notify(
                     "success",
                     t("swap_completed", { id: currentSwap.id }),
@@ -252,7 +257,9 @@ export const SwapChecker = () => {
         const swapsToCheck = (await getSwaps()).filter(
             (s) =>
                 !swapStatusFinal.includes(s.status) ||
-                (s.status === swapStatusSuccess.InvoiceSettled &&
+                ((s.status === swapStatusSuccess.InvoiceSettled ||
+                    (s.type === SwapType.Chain &&
+                        s.status === swapStatusSuccess.TransactionClaimed)) &&
                     s.claimTx === undefined),
         );
 
@@ -262,7 +269,9 @@ export const SwapChecker = () => {
                 url,
                 new Set<string>(
                     swapsToCheck
-                        .filter((s) => assets.includes(s.asset))
+                        .filter((s) =>
+                            assets.includes(getRelevantAssetForSwap(s)),
+                        )
                         .map((s) => s.id),
                 ),
                 prepareSwap,
@@ -290,7 +299,7 @@ export const SwapChecker = () => {
             return;
         }
         // on page reload assetWebsocket is not yet initialized
-        const ws = assetWebsocket.get(activeSwap.asset);
+        const ws = assetWebsocket.get(getRelevantAssetForSwap(activeSwap));
         if (ws === undefined) {
             return;
         }

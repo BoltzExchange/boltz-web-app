@@ -1,32 +1,30 @@
 import { IoClose } from "solid-icons/io";
+import { createEffect } from "solid-js";
 
 import { config } from "../config";
-import { LN, sideSend } from "../consts";
+import { LN } from "../consts/Assets";
+import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { isPairValid } from "../utils/pairs";
 
 const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const setSelectAsset = (isSend: boolean, asset: string) => {
-        const setter = isSend ? setAssetSend : setAssetReceive;
-        setter(asset);
-    };
-
-    const { t, fetchPairs } = useGlobalContext();
+    const { t, fetchPairs, pairs } = useGlobalContext();
 
     const {
         assetReceive,
         assetSelect,
         assetSelected,
         assetSend,
-        setAsset,
         setAssetReceive,
         setAssetSelect,
         setAssetSend,
         setInvoice,
         setOnchainAddress,
+        setPairValid,
     } = useCreateContext();
 
     const changeAsset = (newAsset: string) => {
@@ -36,23 +34,18 @@ const SelectAsset = () => {
         setInvoice("");
         setOnchainAddress("");
 
-        // set main asset only if it is not LN
-        if (newAsset !== LN) {
-            setAsset(newAsset);
+        // set new asset and swap assets if the other asset is the same
+        if (assetSelected() === Side.Send) {
+            if (assetReceive() === newAsset) {
+                setAssetReceive(assetSend());
+            }
+            setAssetSend(newAsset);
+        } else {
+            if (assetSend() === newAsset) {
+                setAssetSend(assetReceive());
+            }
+            setAssetReceive(newAsset);
         }
-
-        const isSend = assetSelected() === sideSend;
-
-        // Only one side can be lightning
-        // Set the other side to the previously selected asset
-        // Or, if something else than lightning was selected, set the other side to lightning
-        if (newAsset === LN) {
-            setSelectAsset(!isSend, isSend ? assetSend() : assetReceive());
-        } else if ((isSend ? assetReceive() : assetSend()) !== LN) {
-            setSelectAsset(!isSend, LN);
-        }
-
-        setSelectAsset(isSend, newAsset);
 
         fetchPairs();
     };
@@ -60,9 +53,13 @@ const SelectAsset = () => {
     const isSelected = (asset: string) => {
         return (
             asset ===
-            (assetSelected() === sideSend ? assetSend() : assetReceive())
+            (assetSelected() === Side.Send ? assetSend() : assetReceive())
         );
     };
+
+    createEffect(() => {
+        setPairValid(isPairValid(pairs(), assetSend(), assetReceive()));
+    });
 
     return (
         <div
@@ -72,7 +69,9 @@ const SelectAsset = () => {
             <h2>
                 {t("select_asset", {
                     direction:
-                        assetSelected() === sideSend ? t("send") : t("receive"),
+                        assetSelected() === Side.Send
+                            ? t("send")
+                            : t("receive"),
                 })}
             </h2>
             <span class="close" onClick={() => setAssetSelect(!assetSelect())}>

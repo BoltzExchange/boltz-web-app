@@ -1,12 +1,21 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createEffect, createSignal, onCleanup } from "solid-js";
+import {
+    Accessor,
+    Show,
+    createEffect,
+    createSignal,
+    onCleanup,
+} from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
-import { RBTC } from "../consts";
+import { SwapIcons } from "../components/SwapIcons";
+import { RBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
+import { swapStatusFailed, swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import InvoiceExpired from "../status/InvoiceExpired";
@@ -22,14 +31,98 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getSwapStatus } from "../utils/boltzClient";
-import { swapStatusFailed, swapStatusPending } from "../utils/swapStatus";
+import {
+    ChainSwap,
+    ReverseSwap,
+    SomeSwap,
+    SubmarineSwap,
+    getRelevantAssetForSwap,
+} from "../utils/swapCreator";
+
+enum TransactionType {
+    Lockup = "lockup_tx",
+    Claim = "claim_tx",
+}
+
+const BlockExplorerLink = ({
+    swap,
+    swapStatus,
+    contractTransaction,
+    contractTransactionType,
+}: {
+    swap: Accessor<SomeSwap>;
+    swapStatus: Accessor<string>;
+    contractTransaction: Accessor<string>;
+    contractTransactionType: Accessor<TransactionType>;
+}) => {
+    // Refund transactions are handled SwapRefunded
+
+    if (swap().type !== SwapType.Chain) {
+        return (
+            <Show when={swap().type !== SwapType.Chain}>
+                <Show
+                    when={
+                        getRelevantAssetForSwap(swap()) &&
+                        swapStatus() !== null &&
+                        swapStatus() !== "invoice.set" &&
+                        swapStatus() !== "swap.created"
+                    }>
+                    <BlockExplorer
+                        asset={getRelevantAssetForSwap(swap())}
+                        txId={swap().claimTx}
+                        address={
+                            swap().type === SwapType.Submarine
+                                ? (swap() as SubmarineSwap).address
+                                : (swap() as ReverseSwap).lockupAddress
+                        }
+                    />
+                </Show>
+                <Show
+                    when={
+                        getRelevantAssetForSwap(swap()) &&
+                        contractTransaction() !== undefined
+                    }>
+                    <BlockExplorer
+                        asset={getRelevantAssetForSwap(swap())}
+                        txId={contractTransaction()}
+                        typeLabel={contractTransactionType()}
+                    />
+                </Show>
+            </Show>
+        );
+    }
+
+    // TODO: RSK
+    // TODO: how to show server lockup?
+
+    const [hasBeenClaimed, setHasBeenClaimed] = createSignal<boolean>(false);
+    const asset = () =>
+        hasBeenClaimed() ? swap().assetReceive : swap().assetSend;
+
+    createEffect(() => {
+        setHasBeenClaimed(swap().claimTx !== undefined);
+    });
+
+    return (
+        <BlockExplorer
+            asset={asset()}
+            txId={swap().claimTx}
+            address={
+                hasBeenClaimed
+                    ? undefined
+                    : (swap() as ChainSwap).lockupDetails.lockupAddress
+            }
+        />
+    );
+};
 
 const Pay = () => {
     const params = useParams();
     const [contractTransaction, setContractTransaction] =
-        createSignal(undefined);
-    const [contractTransactionType, setContractTransactionType] =
-        createSignal("lockup_tx");
+        createSignal<string>(undefined);
+    const [contractTransactionType, setContractTransactionType] = createSignal(
+        TransactionType.Lockup,
+    );
 
     const { getSwap, t } = useGlobalContext();
     const {
@@ -37,7 +130,6 @@ const Pay = () => {
         setSwap,
         swapStatus,
         setSwapStatus,
-        swapStatusTransaction,
         setSwapStatusTransaction,
         setFailureReason,
     } = usePayContext();
@@ -46,48 +138,30 @@ const Pay = () => {
         const currentSwap = await getSwap(params.id);
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
-            await setSwap(currentSwap);
-            const res = await getSwapStatus(currentSwap.asset, currentSwap.id);
+            setSwap(currentSwap);
+            const asset = getRelevantAssetForSwap(currentSwap);
+            const res = await getSwapStatus(asset, currentSwap.id);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
             setFailureReason(res.failureReason);
-        }
-    });
 
-    createEffect(() => {
-        if (swap() === null) {
-            return;
-        }
+            // RSK
+            if (
+                asset === RBTC &&
+                res.transaction &&
+                currentSwap.claimTx === undefined
+            ) {
+                setContractTransaction(res.transaction.id);
+            }
 
-        const tx = swapStatusTransaction();
+            if (asset === RBTC && currentSwap["lockupTx"]) {
+                setContractTransaction(currentSwap["lockupTx"]);
+            }
 
-        if (swap().asset === RBTC && tx && swap().claimTx === undefined) {
-            setContractTransaction(tx.id);
-        }
-    });
-
-    createEffect(() => {
-        if (swap() === null) {
-            return;
-        }
-
-        const claimTx = swap().claimTx;
-
-        if (swap().asset === RBTC && claimTx) {
-            setContractTransaction(claimTx);
-            setContractTransactionType("claim_tx");
-        }
-    });
-
-    createEffect(() => {
-        if (swap() === null) {
-            return;
-        }
-
-        const lockupTx = swap().lockupTx;
-
-        if (swap().asset === RBTC && lockupTx) {
-            setContractTransaction(lockupTx);
+            if (asset === RBTC && currentSwap.claimTx) {
+                setContractTransaction(currentSwap.claimTx);
+                setContractTransactionType(TransactionType.Claim);
+            }
         }
     });
 
@@ -103,12 +177,7 @@ const Pay = () => {
             <h2>
                 {t("pay_invoice", { id: params.id })}
                 <Show when={swap()}>
-                    <span
-                        data-reverse={swap().reverse}
-                        data-asset={swap().asset}
-                        class="swaplist-asset">
-                        -
-                    </span>
+                    <SwapIcons swap={swap()} />
                 </Show>
             </h2>
             <Show when={swap()}>
@@ -122,6 +191,7 @@ const Pay = () => {
                     <hr />
                     <SwapRefunded />
                 </Show>
+
                 <Show when={!swap().refundTx}>
                     <Show when={swapStatus() === null}>
                         <LoadingSpinner />
@@ -146,10 +216,19 @@ const Pay = () => {
                         }>
                         <TransactionClaimed />
                     </Show>
-                    <Show when={swapStatus() == "transaction.confirmed"}>
+                    <Show
+                        when={
+                            swapStatus() == "transaction.confirmed" ||
+                            swapStatus() ===
+                                swapStatusPending.TransactionServerConfirmed
+                        }>
                         <TransactionConfirmed />
                     </Show>
-                    <Show when={swapStatus() == "transaction.mempool"}>
+                    <Show
+                        when={
+                            swapStatus() === "transaction.mempool" ||
+                            swapStatus() === "transaction.server.mempool"
+                        }>
                         <TransactionMempool />
                     </Show>
                     <Show when={swapStatus() == "invoice.failedToPay"}>
@@ -175,34 +254,12 @@ const Pay = () => {
                         <SwapCreated />
                     </Show>
 
-                    <Show
-                        when={
-                            swap().asset !== RBTC &&
-                            swapStatus() !== null &&
-                            swapStatus() !== "invoice.set" &&
-                            swapStatus() !== "swap.created"
-                        }>
-                        <BlockExplorer
-                            asset={swap().asset}
-                            txId={swap().claimTx}
-                            address={
-                                !swap().reverse
-                                    ? swap().address
-                                    : swap().lockupAddress
-                            }
-                        />
-                    </Show>
-                    <Show
-                        when={
-                            swap().asset === RBTC &&
-                            contractTransaction() !== undefined
-                        }>
-                        <BlockExplorer
-                            asset={swap().asset}
-                            txId={contractTransaction()}
-                            typeLabel={contractTransactionType()}
-                        />
-                    </Show>
+                    <BlockExplorerLink
+                        swap={swap}
+                        swapStatus={swapStatus}
+                        contractTransaction={contractTransaction}
+                        contractTransactionType={contractTransactionType}
+                    />
                 </Show>
             </Show>
             <Show when={!swap()}>

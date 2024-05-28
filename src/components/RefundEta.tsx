@@ -1,22 +1,27 @@
-import { Show } from "solid-js";
+import { Accessor, Show } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
 
-const RefundEta = () => {
-    const { timeoutEta, timeoutBlockHeight } = usePayContext();
+const RefundEta = ({
+    timeoutEta,
+    timeoutBlockHeight,
+}: {
+    timeoutEta: Accessor<number>;
+    timeoutBlockHeight: Accessor<number>;
+}) => {
     const { t } = useGlobalContext();
+    const getDateString = (timestamp: number) =>
+        new Date(timestamp * 1000).toLocaleString();
     return (
-        <Show when={timeoutEta()}>
-            <div>
-                <h3>{t("refund_explainer")}</h3>
-                <p>
-                    {t("timeout_eta")}:{" "}
-                    {new Date(timeoutEta()).toLocaleString()} <br />
-                    {t("pay_timeout_blockheight")}: {timeoutBlockHeight()}
-                </p>
-            </div>
-        </Show>
+        <div>
+            <h3>{t("refund_explainer")}</h3>
+            <p>
+                <Show when={timeoutEta()}>
+                    {t("timeout_eta")}: {getDateString(timeoutEta())} <br />
+                </Show>
+                {t("pay_timeout_blockheight")}: {timeoutBlockHeight()}
+            </p>
+        </div>
     );
 };
 

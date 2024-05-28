@@ -13,7 +13,8 @@ import Reverse from "../components/Reverse";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import WeblnButton from "../components/WeblnButton";
-import { RBTC, sideReceive, sideSend } from "../consts";
+import { RBTC } from "../consts/Assets";
+import { Denomination, Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import {
@@ -23,7 +24,6 @@ import {
 import {
     calculateDigits,
     convertAmount,
-    denominations,
     formatAmount,
     getValidationRegex,
 } from "../utils/denomination";
@@ -45,8 +45,7 @@ const Create = () => {
         notify,
     } = useGlobalContext();
     const {
-        reverse,
-        asset,
+        swapType,
         assetSend,
         assetReceive,
         assetSelect,
@@ -74,10 +73,10 @@ const Create = () => {
     // user failed to notice the non satoshi denomination
     const changeDenomination = (amount: string) => {
         if (amount === "") return;
-        if (denomination() === denominations.btc && Number(amount) >= 10) {
-            setDenomination(denominations.sat);
-        } else if (denomination() === denominations.sat && Number(amount) < 1) {
-            setDenomination(denominations.btc);
+        if (denomination() === Denomination.Btc && Number(amount) >= 10) {
+            setDenomination(Denomination.Sat);
+        } else if (denomination() === Denomination.Sat && Number(amount) < 1) {
+            setDenomination(Denomination.Btc);
         }
     };
 
@@ -101,9 +100,9 @@ const Create = () => {
             satAmount,
             boltzFee(),
             minerFee(),
-            reverse(),
+            swapType(),
         );
-        setAmountChanged(sideReceive);
+        setAmountChanged(Side.Receive);
         setReceiveAmount(satAmount);
         setSendAmount(sendAmount);
         validateAmount();
@@ -122,9 +121,9 @@ const Create = () => {
             satAmount,
             boltzFee(),
             minerFee(),
-            reverse(),
+            swapType(),
         );
-        setAmountChanged(sideSend);
+        setAmountChanged(Side.Send);
         setSendAmount(satAmount);
         setReceiveAmount(receiveAmount);
         validateAmount();
@@ -137,7 +136,7 @@ const Create = () => {
             setSeparator(keycode);
             // switch to BTC denomination
             if (denomination() == "sat") {
-                setDenomination(denominations.btc);
+                setDenomination(Denomination.Btc);
             }
         }
         const hasDot = input.value.includes(".") || input.value.includes(",");
@@ -205,26 +204,26 @@ const Create = () => {
                 BigNumber(amount),
                 boltzFee(),
                 minerFee(),
-                reverse(),
+                swapType(),
             ),
         );
         validateAmount();
-        sendAmountRef.focus();
+        sendAmountRef?.focus();
     };
 
     onMount(() => {
-        sendAmountRef.focus();
+        sendAmountRef?.focus();
     });
 
     createEffect(
-        on([boltzFee, minerFee, reverse, asset], () => {
-            if (amountChanged() === sideReceive) {
+        on([boltzFee, minerFee, swapType, assetReceive], () => {
+            if (amountChanged() === Side.Receive) {
                 setSendAmount(
                     calculateSendAmount(
                         receiveAmount(),
                         boltzFee(),
                         minerFee(),
-                        reverse(),
+                        swapType(),
                     ),
                 );
             } else {
@@ -233,7 +232,7 @@ const Create = () => {
                         sendAmount(),
                         boltzFee(),
                         minerFee(),
-                        reverse(),
+                        swapType(),
                     ),
                 );
             }
@@ -247,8 +246,8 @@ const Create = () => {
         }
 
         const ref =
-            assetSelected() === sideSend ? sendAmountRef : receiveAmountRef;
-        ref.focus();
+            assetSelected() === Side.Send ? sendAmountRef : receiveAmountRef;
+        ref?.focus();
     });
 
     createMemo(() => {
@@ -293,7 +292,7 @@ const Create = () => {
 
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
-            <div class="frame" data-reverse={reverse()} data-asset={asset()}>
+            <div class="frame">
                 <SettingsCog />
                 <h2>{t("create_swap")}</h2>
                 <p>
@@ -321,7 +320,7 @@ const Create = () => {
                 </p>
                 <div class="icons">
                     <div>
-                        <Asset side={sideSend} signal={assetSend} />
+                        <Asset side={Side.Send} signal={assetSend} />
                         <input
                             ref={sendAmountRef}
                             autofocus
@@ -345,7 +344,7 @@ const Create = () => {
                     </div>
                     <Reverse />
                     <div>
-                        <Asset side={sideReceive} signal={assetReceive} />
+                        <Asset side={Side.Receive} signal={assetReceive} />
                         <input
                             ref={receiveAmountRef}
                             required
@@ -369,14 +368,18 @@ const Create = () => {
                 </div>
                 <Fees />
                 <hr class="spacer" />
-                <Show when={asset() === RBTC}>
+                <Show when={assetReceive() === RBTC}>
                     <ConnectMetamask showAddress={true} />
                     <hr class="spacer" />
                 </Show>
-                <Show when={reverse() && asset() !== RBTC}>
+                <Show
+                    when={
+                        swapType() !== SwapType.Submarine &&
+                        assetReceive() !== RBTC
+                    }>
                     <AddressInput />
                 </Show>
-                <Show when={!reverse()}>
+                <Show when={swapType() === SwapType.Submarine}>
                     <Show when={webln()}>
                         <WeblnButton />
                         <hr class="spacer" />

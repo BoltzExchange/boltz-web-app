@@ -5,60 +5,47 @@ import { Show, createSignal, onMount } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
-import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
+import { SwapType } from "../consts/Enums";
+import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
-import { getSubmarineTransaction, getSwapStatus } from "../utils/boltzClient";
-import { refundJsonKeys, refundJsonKeysLiquid } from "../utils/refund";
-import { swapStatusFailed, swapStatusSuccess } from "../utils/swapStatus";
+import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
+import { validateRefundFile } from "../utils/refundFile";
+import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
     const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t } =
         useGlobalContext();
-    const { setTimeoutEta, setTimeoutBlockheight } = usePayContext();
 
     const [swapFound, setSwapFound] = createSignal(null);
     const [refundInvalid, setRefundInvalid] = createSignal(false);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
-    setTimeoutBlockheight(null);
-    setTimeoutEta(null);
-
     const checkRefundJsonKeys = async (input: HTMLInputElement, json: any) => {
         log.debug("checking refund json", json);
 
-        if ("id" in json && json.id !== undefined) {
-            // When the swap id is found in the local storage, there is no need for the validation,
-            // all relevant data is there already, and we just need to show the button to redirect
-            const localStorageSwap = await getSwap(json.id);
+        try {
+            const data = validateRefundFile(json);
+
+            // When the swap id is found in the local storage, show a redirect to it
+            const localStorageSwap = await getSwap(data.id);
             if (localStorageSwap !== null) {
-                setSwapFound(json.id);
+                setSwapFound(data.id);
                 return;
             }
 
-            // Compatibility with the old refund files
-            if (json.asset === undefined && json.currency) {
-                json.asset = json.currency;
-            }
-
-            const requiredKeys =
-                json.asset !== "L-BTC" ? refundJsonKeys : refundJsonKeysLiquid;
-            const valid = requiredKeys.every((key) => key in json);
-
-            if (valid) {
-                setRefundJson(json);
-                return;
-            }
+            setRefundJson(data);
+            setRefundInvalid(false);
+        } catch (e) {
+            log.warn("Refund json validation failed", e);
+            setRefundInvalid(true);
+            input.setCustomValidity(t("invalid_refund_file"));
         }
-
-        setRefundInvalid(true);
-        input.setCustomValidity(t("invalid_refund_file"));
     };
 
     const uploadChange = (e: Event) => {
@@ -71,8 +58,12 @@ const Refund = () => {
 
         if (inputFile.type === "image/png") {
             QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
-                .then((result) =>
-                    checkRefundJsonKeys(input, JSON.parse(result.data)),
+                .then(
+                    async (result) =>
+                        await checkRefundJsonKeys(
+                            input,
+                            JSON.parse(result.data),
+                        ),
                 )
                 .catch((e) => {
                     log.error("invalid QR code upload", e);
@@ -93,16 +84,16 @@ const Refund = () => {
         }
     };
 
-    const refundSwapsSanityFilter = (swap: any) =>
-        !swap.reverse && swap.refundTx === undefined;
+    const refundSwapsSanityFilter = (swap: SomeSwap) =>
+        swap.type !== SwapType.Reverse && swap.refundTx === undefined;
 
     const [refundableSwaps, setRefundableSwaps] = createSignal([]);
 
-    const addToRefundableSwaps = (swap: any) => {
-        setRefundableSwaps(refundableSwaps().concat(swap));
-    };
-
     onMount(async () => {
+        const addToRefundableSwaps = (swap: SomeSwap) => {
+            setRefundableSwaps(refundableSwaps().concat(swap));
+        };
+
         const swapsToRefund = (await getSwaps())
             .filter(refundSwapsSanityFilter)
             .filter((swap) =>
@@ -123,7 +114,7 @@ const Refund = () => {
             )
             .map(async (swap) => {
                 try {
-                    const res = await getSwapStatus(swap.asset, swap.id);
+                    const res = await getSwapStatus(swap.assetSend, swap.id);
                     if (
                         !(await updateSwapStatus(swap.id, res.status)) &&
                         Object.values(swapStatusFailed).includes(res.status)
@@ -134,7 +125,11 @@ const Refund = () => {
                         }
 
                         // Make sure coins were locked for the swap with status "swap.expired"
-                        await getSubmarineTransaction(swap.asset, swap.id);
+                        await getLockupTransaction(
+                            swap.assetSend,
+                            swap.id,
+                            swap.type,
+                        );
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {
@@ -184,7 +179,6 @@ const Refund = () => {
                             swap={refundJson}
                             setRefundTxId={setRefundTxId}
                         />
-                        <RefundEta />
                     </Show>
                     <Show when={refundTxId() !== ""}>
                         <hr />
@@ -192,7 +186,7 @@ const Refund = () => {
                         <hr />
                         <BlockExplorer
                             typeLabel={"refund_tx"}
-                            asset={refundJson().asset}
+                            asset={refundJson().asset || refundJson().assetSend}
                             txId={refundTxId()}
                         />
                     </Show>

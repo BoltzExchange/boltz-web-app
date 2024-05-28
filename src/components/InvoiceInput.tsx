@@ -1,7 +1,8 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
-import { LN, RBTC } from "../consts";
+import { LN } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
@@ -19,12 +20,11 @@ const InvoiceInput = () => {
 
     const { t, notify } = useGlobalContext();
     const {
-        asset,
         boltzFee,
         minerFee,
         invoice,
         receiveAmount,
-        reverse,
+        swapType,
         sendAmount,
         amountValid,
         setInvoice,
@@ -34,6 +34,7 @@ const InvoiceInput = () => {
         setReceiveAmount,
         setSendAmount,
         setAssetSend,
+        assetSend,
         setAssetReceive,
         setOnchainAddress,
     } = useCreateContext();
@@ -46,7 +47,7 @@ const InvoiceInput = () => {
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
-            setAssetSend(LN);
+            setAssetSend(assetSend() === actualAsset ? LN : assetSend());
             setAssetReceive(actualAsset);
             setOnchainAddress(address);
             notify("success", t("switch_paste"));
@@ -69,7 +70,7 @@ const InvoiceInput = () => {
                         BigNumber(sats),
                         boltzFee(),
                         minerFee(),
-                        reverse(),
+                        swapType(),
                     ),
                 );
                 setInvoice(inputValue);
@@ -89,7 +90,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([amountValid, invoice], () => {
-            if (!reverse() && asset() !== RBTC) {
+            if (swapType() === SwapType.Submarine) {
                 validate(inputRef);
             }
         }),

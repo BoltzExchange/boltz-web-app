@@ -1,7 +1,10 @@
+import { Accessor } from "solid-js";
+
+import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import "../style/asset.scss";
 
-const Asset = ({ side, signal }) => {
+const Asset = ({ side, signal }: { side: Side; signal: Accessor<string> }) => {
     const openSelect = () => {
         setAssetSelected(side);
         setAssetSelect(true);

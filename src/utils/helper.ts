@@ -1,24 +1,39 @@
 import { Buffer } from "buffer";
 import { ECPairInterface } from "ecpair";
-import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
-import { BTC } from "../consts";
+import { BTC, LN } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import {
-    PairLegacy,
+    ChainPairTypeTaproot,
     Pairs,
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
+import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
-export const parseBlindingKey = (swap: { blindingKey: string | undefined }) => {
-    return swap.blindingKey ? Buffer.from(swap.blindingKey, "hex") : undefined;
+export const parseBlindingKey = (swap: SomeSwap, isRefund: boolean) => {
+    let blindingKey: string | undefined;
+
+    switch (swap.type) {
+        case SwapType.Chain:
+            if (isRefund) {
+                blindingKey = (swap as ChainSwap).lockupDetails.blindingKey;
+            } else {
+                blindingKey = (swap as ChainSwap).claimDetails.blindingKey;
+            }
+            break;
+        default:
+            blindingKey = (swap as SubmarineSwap | ReverseSwap).blindingKey;
+    }
+
+    return blindingKey ? Buffer.from(blindingKey, "hex") : undefined;
 };
 
 export const cropString = (str: string) => {
@@ -37,23 +52,26 @@ export const getApiUrl = (asset: string): string => {
     return chooseUrl(found?.apiUrl ?? config.apiUrl);
 };
 
+export const coalesceLn = (asset: string) => (asset === LN ? BTC : asset);
+
 export const getPair = <
-    T extends SubmarinePairTypeTaproot | ReversePairTypeTaproot | PairLegacy,
+    T extends
+        | SubmarinePairTypeTaproot
+        | ReversePairTypeTaproot
+        | ChainPairTypeTaproot,
 >(
     pairs: Pairs,
-    asset: string,
-    isReverse: boolean,
+    swapType: SwapType,
+    assetSend: string,
+    assetReceive: string,
 ): T | undefined => {
-    try {
-        if (isReverse) {
-            return pairs.reverse[BTC][asset] as T;
-        }
-
-        return pairs.submarine[asset][BTC] as T;
-    } catch (e) {
-        log.debug(`could not get pair ${asset} (reverse ${isReverse}): ${e}`);
-        return undefined;
-    }
+    const pairSwapType = pairs[swapType];
+    if (pairSwapType === undefined) return undefined;
+    const pairAssetSend = pairSwapType[coalesceLn(assetSend)];
+    if (pairAssetSend === undefined) return undefined;
+    const pairAssetReceive = pairAssetSend[coalesceLn(assetReceive)];
+    if (pairAssetReceive === undefined) return undefined;
+    return pairAssetReceive as T;
 };
 
 export const fetcher = async <T = any>(

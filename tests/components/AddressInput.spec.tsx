@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import AddressInput from "../../src/components/AddressInput";
-import { BTC, LBTC, LN } from "../../src/consts";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import {
     TestComponent,
     contextWrapper,
@@ -36,7 +36,7 @@ describe("AddressInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAsset(network);
+            signals.setAssetReceive(network);
 
             const input = (await screen.findByPlaceholderText(
                 globalSignals.t("onchain_address", { asset: network }),

@@ -1,11 +1,8 @@
 import { BigNumber } from "bignumber.js";
 
-export const satFactor = 100_000_000;
+import { Denomination } from "../consts/Enums";
 
-export const denominations = {
-    sat: "sat",
-    btc: "btc",
-};
+const satFactor = 100_000_000;
 
 export const getValidationRegex = (maximum: number): RegExp => {
     const digits = maximum.toString().length;
@@ -17,7 +14,7 @@ export const getValidationRegex = (maximum: number): RegExp => {
 
 export const formatAmount = (
     amount: BigNumber,
-    denomination: string,
+    denomination: Denomination,
     separator: string,
     fixed: boolean = false,
 ): string => {
@@ -26,12 +23,12 @@ export const formatAmount = (
 
 export const formatAmountDenomination = (
     amount: BigNumber,
-    denomination: string,
+    denomination: Denomination,
     separator: string,
     fixed: boolean = false,
 ): string => {
     switch (denomination) {
-        case denominations.btc:
+        case Denomination.Btc:
             const amountBig = amount.div(satFactor);
             let amountString = amountBig.toString();
             if (fixed) {
@@ -55,7 +52,7 @@ export const formatAmountDenomination = (
 
         default:
             const chars = amount.toString().split("").reverse();
-            const formattedSats: string = chars
+            return chars
                 .reduce(
                     (acc, char, i) =>
                         i % 3 === 0 ? acc + " " + char : acc + char,
@@ -65,15 +62,13 @@ export const formatAmountDenomination = (
                 .split("")
                 .reverse()
                 .join("");
-            return formattedSats;
     }
 };
 
 export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
     switch (denom) {
-        case denominations.btc:
-            const amountBig = amount.multipliedBy(satFactor);
-            return amountBig;
+        case Denomination.Btc:
+            return amount.multipliedBy(satFactor);
         default:
             return amount;
     }
@@ -84,9 +79,9 @@ export const calculateDigits = (
     denomination: string,
 ): number => {
     let digits = maximum.toString().length;
-    if (denomination === denominations.btc && digits < 10) {
+    if (denomination === Denomination.Btc && digits < 10) {
         digits = 10;
-    } else if (denomination === denominations.btc) {
+    } else if (denomination === Denomination.Btc) {
         // account for decimal point
         digits += 1;
     } else {

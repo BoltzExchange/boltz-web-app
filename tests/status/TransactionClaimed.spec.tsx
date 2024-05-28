@@ -1,6 +1,6 @@
 import { render, screen } from "@solidjs/testing-library";
 
-import { BTC, LBTC, RBTC } from "../../src/consts";
+import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
 import { TestComponent, contextWrapper, payContext } from "../helper";

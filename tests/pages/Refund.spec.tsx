@@ -5,6 +5,18 @@ import i18n from "../../src/i18n/i18n";
 import Refund from "../../src/pages/Refund";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
+jest.mock("../../src/utils/boltzClient", () => {
+    const originalModule = jest.requireActual("../../src/utils/boltzClient");
+
+    return {
+        __esModule: true,
+        ...originalModule,
+        getLockupTransaction: jest.fn(() => {
+            return { timeoutBlockHeight: 10, timeoutEta: 10 };
+        }),
+    };
+});
+
 describe("Refund", () => {
     test("should render WASM error", async () => {
         render(
@@ -108,7 +120,7 @@ describe("Refund", () => {
             id: "123",
             privateKey: "",
         };
-        await globalSignals.setSwapStorage(swap);
+        await globalSignals.setSwapStorage(swap as any);
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;

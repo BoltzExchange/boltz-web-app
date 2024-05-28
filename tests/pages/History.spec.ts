@@ -1,4 +1,7 @@
-import { validateBackupFile } from "../../src/pages/History";
+import {
+    invalidBackupFileError,
+    validateBackupFile,
+} from "../../src/pages/History";
 
 describe("History", () => {
     test.each`
@@ -6,15 +9,29 @@ describe("History", () => {
         ${[]}
         ${[{ id: "1" }]}
         ${[{ id: "1" }, { id: "2" }]}
-    `("should not throw for valid backup file: $data", ({ data }) => {
-        validateBackupFile(data);
+    `("should validate legacy backup files", ({ data }) => {
+        expect(validateBackupFile(data)).toEqual({
+            version: 0,
+            swaps: data,
+        });
+    });
+
+    test.each`
+        data
+        ${{ version: 1, swaps: [] }}
+        ${{ version: 1, swaps: [{ id: "taproot" }] }}
+    `("should validate new backup files", ({ data }) => {
+        expect(validateBackupFile(data)).toEqual(data);
     });
 
     test.each`
         error                            | data
-        ${"not an Array"}                | ${{}}
-        ${"not an Array"}                | ${"test"}
-        ${"not an Array"}                | ${1}
+        ${invalidBackupFileError}        | ${{}}
+        ${invalidBackupFileError}        | ${"test"}
+        ${invalidBackupFileError}        | ${1}
+        ${invalidBackupFileError}        | ${{ version: 1 }}
+        ${invalidBackupFileError}        | ${{ swaps: [] }}
+        ${"not all elements have an id"} | ${{ version: 1, swaps: [{ id: null }] }}
         ${"not all elements have an id"} | ${[{}]}
         ${"not all elements have an id"} | ${[{ id: undefined }]}
         ${"not all elements have an id"} | ${[{ id: null }]}

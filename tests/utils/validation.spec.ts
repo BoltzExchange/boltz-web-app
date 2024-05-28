@@ -1,7 +1,8 @@
 import { Contract } from "ethers";
 import log from "loglevel";
 
-import { BTC, LBTC } from "../../src/consts";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { SwapType } from "../../src/consts/Enums";
 import { decodeAddress, setup } from "../../src/utils/compat";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
@@ -20,12 +21,14 @@ describe("validate responses", () => {
 
     describe("normal swap", () => {
         const swapBtc = {
-            asset: "BTC",
+            assetSend: BTC,
+            assetReceive: LN,
+            type: SwapType.Submarine,
             sendAmount: 100540,
             expectedAmount: 100540,
             invoice:
                 "lnbcrt1m1pjek2zzpp52j2wjxuvnrrxc0wxlr0fhzvumsp6r34pf9gqsnawh4rnj6uk6rksdqqcqzzsxqyz5vqsp5cav7v3r4jf04ek0rs2e68kmtfnaww0f49j5vjdk4vrhkh9dcu4ns9qyyssqrtpxz8a8f07zkmf3g4dq3l8qfje55jkvl6pv7xlvs96kagcx0yzhjgy5navzztc8knksyf4sk2hp0eg33legnjfdcptp5ajcmhjg0ugqv88q6c",
-            privateKey:
+            refundPrivateKey:
                 "0c3b158328907b428b26da5587365289f2d7db694a2551ca5cc181334b34f4bf",
             bip21: "bitcoin:bcrt1pp7enx7jean5tp79satht9lz7dn76kcvfmw636d3a62sr2gepj0nqtupeyc?amount=0.0010054&label=Send%20to%20BTC%20lightning",
             address:
@@ -47,12 +50,14 @@ describe("validate responses", () => {
         };
 
         const swapLbtc = {
-            asset: "L-BTC",
+            assetSend: LBTC,
+            assetReceive: LN,
+            type: SwapType.Submarine,
             sendAmount: 100247,
             expectedAmount: 100247,
             invoice:
                 "lnbcrt1m1pjek2kfpp53mcq2uav0x24smmjsn3a327jr2jt5680a7rl08w4pj2fd9j2vcssdqqcqzzsxqyz5vqsp533qwuga37e6trz45c24a98jxsusw4yw8z6zyyta5fzuhyc3w9mvs9qyyssqgjk73dqqd8u4ye9dra3ay77lhqahjvpaqp58vh9a5a8duaxge9mq2kzyfxpn2tzm3le5d83e0yqsmag9kjfugc09wr2drtddwgh00aqp7ydahu",
-            privateKey:
+            refundPrivateKey:
                 "e43545c13ab575b198d192ee822a83aa488a9f13a6abd352557d56fb2bf03705",
             bip21: "liquidnetwork:el1pqvc0p7zfx3m8muk93z6nz8za8mukrqf2euh0mc3fj7f4c9570tmf50kxsn8rz4u5rhngsutp9wc6umz260v9vzgh04q9u7c4l6d8xzzjr8kp8aan03qy?amount=0.00100247&label=Send%20to%20BTC%20lightning&assetid=5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225",
             address:
@@ -79,7 +84,7 @@ describe("validate responses", () => {
             desc                                   | valid    | contractCode | swap
             ${"BTC valid"}                         | ${true}  | ${""}        | ${swapBtc}
             ${"BTC invalid send amount"}           | ${false} | ${""}        | ${{ ...swapBtc, sendAmount: 12313123 }}
-            ${"BTC invalid refund key"}            | ${false} | ${""}        | ${{ ...swapBtc, privateKey: "6321bb238f0678fb4c971024193f650eebe69fb891788e1af70184b2dd5d1d5f" }}
+            ${"BTC invalid refund key"}            | ${false} | ${""}        | ${{ ...swapBtc, refundPrivateKey: "6321bb238f0678fb4c971024193f650eebe69fb891788e1af70184b2dd5d1d5f" }}
             ${"BTC invalid swap tree"} | ${false} | ${""} | ${{
     ...swapBtc,
     swapTree: {
@@ -131,13 +136,14 @@ describe("validate responses", () => {
 
     describe("reverse swap", () => {
         const reverseSwapBtc = {
-            asset: "BTC",
-            reverse: true,
+            assetSend: LN,
+            assetReceive: BTC,
+            type: SwapType.Reverse,
             sendAmount: 100000,
             onchainAmount: 99295,
             receiveAmount: 99294,
             timeoutBlockHeight: 290,
-            privateKey:
+            claimPrivateKey:
                 "8febdccb245af0b98ea16331904db5eeec0a1e3960e310979b2f7b390917e9f6",
             preimage:
                 "030487ee34943293978e8fc90e68934f6e8d5a6a9bfc78916fcf108d42a00307",
@@ -160,13 +166,14 @@ describe("validate responses", () => {
         };
 
         const reverseSwapLbtc = {
-            asset: "L-BTC",
-            reverse: true,
+            assetSend: LN,
+            assetReceive: LBTC,
+            type: SwapType.Reverse,
             sendAmount: 100000,
             onchainAmount: 99475,
             receiveAmount: 99474,
             timeoutBlockHeight: 1543,
-            privateKey:
+            claimPrivateKey:
                 "9ac8ebd63f3df499cd53d61eac6a09ea5f0bbc7189a9e59850fdcef5d5f4aee6",
             preimage:
                 "5e6eb7f24087778773d8ed3646fde9f32d822b020c84443b0584a2a65f1d2e17",

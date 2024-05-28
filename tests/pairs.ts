@@ -67,4 +67,88 @@ export const pairs: Pairs = {
             },
         },
     },
+    chain: {
+        BTC: {
+            "L-BTC": {
+                hash: "721782fd58c8f7c71f48ec5cf02c3860907cfa9e00dda3a8d564acde038b4e70",
+                rate: 1,
+                limits: {
+                    maximal: 40294967,
+                    minimal: 50000,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0.1,
+                    minerFees: {
+                        server: 11376,
+                        user: {
+                            claim: 143,
+                            lockup: 15400,
+                        },
+                    },
+                },
+            },
+            RBTC: {
+                hash: "6e6a5f596ceba75b80ac5636ba30a7f373f3c55d77625a2e32390762c614a728",
+                rate: 1,
+                limits: {
+                    maximal: 4294967,
+                    minimal: 50000,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0.5,
+                    minerFees: {
+                        server: 19346,
+                        user: {
+                            claim: 4423,
+                            lockup: 15400,
+                        },
+                    },
+                },
+            },
+        },
+        "L-BTC": {
+            BTC: {
+                hash: "4529619084bb742bf533a1245e41e91402c9d44609005ced2956342fe2f33f0d",
+                rate: 1,
+                limits: {
+                    maximal: 40294967,
+                    minimal: 50000,
+                    maximalZeroConf: 40294967,
+                },
+                fees: {
+                    percentage: 0.1,
+                    minerFees: {
+                        server: 15543,
+                        user: {
+                            claim: 11100,
+                            lockup: 276,
+                        },
+                    },
+                },
+            },
+        },
+        RBTC: {
+            BTC: {
+                hash: "1e7b3199eb7b3395d1528dba8da28a436d9c3a040d5d7e1a3a3746a6136c88f8",
+                rate: 1,
+                limits: {
+                    maximal: 4294967,
+                    minimal: 50000,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0.5,
+                    minerFees: {
+                        server: 19823,
+                        user: {
+                            claim: 11100,
+                            lockup: 8246,
+                        },
+                    },
+                },
+            },
+        },
+    },
 };

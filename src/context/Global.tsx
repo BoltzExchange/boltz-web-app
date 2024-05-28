@@ -13,18 +13,19 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC } from "../consts";
+import { BTC } from "../consts/Assets";
+import { Denomination } from "../consts/Enums";
+import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
-import { swapStatusFinal } from "../utils/swapStatus";
+import { migrateStorage } from "../utils/migration";
+import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
-
-type SwapWithId = { id: string };
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
@@ -51,8 +52,8 @@ export type GlobalContextType = {
     setRef: Setter<string>;
     i18nConfigured: Accessor<string | null>;
     setI18nConfigured: Setter<string | null>;
-    denomination: Accessor<string>;
-    setDenomination: Setter<string>;
+    denomination: Accessor<Denomination>;
+    setDenomination: Setter<Denomination>;
     hideHero: Accessor<boolean>;
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
@@ -79,9 +80,9 @@ export type GlobalContextType = {
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
 
-    setSwapStorage: (swap: SwapWithId) => Promise<any>;
-    getSwap: <T = any>(id: string) => Promise<T>;
-    getSwaps: <T = any>() => Promise<T[]>;
+    setSwapStorage: (swap: SomeSwap) => Promise<any>;
+    getSwap: <T = SomeSwap>(id: string) => Promise<T>;
+    getSwaps: <T = SomeSwap>() => Promise<T[]>;
     deleteSwap: (id: string) => Promise<void>;
     clearSwaps: () => Promise<any>;
     updateSwapStatus: (id: string, newStatus: string) => Promise<boolean>;
@@ -91,28 +92,6 @@ export type GlobalContextType = {
 const stringSerializer = {
     serialize: (value: any) => value,
     deserialize: (value: any) => value,
-};
-
-const migrateSwapsFromLocalStorage = async () => {
-    const [localStorageSwaps, setLocalStorageSwaps] = makePersisted(
-        createSignal([], {
-            // Because arrays are the same object when changed,
-            // we have to override the equality checker
-            equals: () => false,
-        }),
-        {
-            name: "swaps",
-        },
-    );
-
-    for (const swap of localStorageSwaps()) {
-        await localforage.setItem(swap.id, swap);
-    }
-
-    const migratedSwapCount = localStorageSwaps().length;
-    setLocalStorageSwaps([]);
-
-    return migratedSwapCount;
 };
 
 const GlobalContext = createContext<GlobalContextType>();
@@ -156,10 +135,13 @@ const GlobalProvider = (props: { children: any }) => {
             ...stringSerializer,
         },
     );
-    const [denomination, setDenomination] = makePersisted(createSignal("sat"), {
-        name: "denomination",
-        ...stringSerializer,
-    });
+    const [denomination, setDenomination] = makePersisted<Denomination>(
+        createSignal<Denomination>(Denomination.Sat),
+        {
+            name: "denomination",
+            ...stringSerializer,
+        },
+    );
 
     const [settingsMenu, setSettingsMenu] = createSignal<boolean>(false);
 
@@ -239,35 +221,25 @@ const GlobalProvider = (props: { children: any }) => {
 
     const clearLogs = () => logsForage.clear();
 
+    const paramsForage = localforage.createInstance({
+        name: "params",
+    });
     const swapsForage = localforage.createInstance({
         name: "swaps",
     });
 
-    migrateSwapsFromLocalStorage()
-        .then((migratedSwapCount) => {
-            if (migratedSwapCount === 0) {
-                return;
-            }
+    migrateStorage(paramsForage, swapsForage).catch((e) =>
+        log.error("Storage migration failed:", e),
+    );
 
-            log.debug(
-                `migrated ${migratedSwapCount} from local storage to localforage`,
-            );
-        })
-        .catch((e) => {
-            log.error(
-                "could not migrate swaps from local storage to localforage",
-                e,
-            );
-        });
-
-    const setSwapStorage = (swap: SwapWithId) =>
+    const setSwapStorage = (swap: SomeSwap) =>
         swapsForage.setItem(swap.id, swap);
 
     const deleteSwap = (id: string) => swapsForage.removeItem(id);
 
-    const getSwap = <T = SwapWithId,>(id: string) => swapsForage.getItem<T>(id);
+    const getSwap = <T = SomeSwap,>(id: string) => swapsForage.getItem<T>(id);
 
-    const getSwaps = async <T = SwapWithId,>(): Promise<T[]> => {
+    const getSwaps = async <T = SomeSwap,>(): Promise<T[]> => {
         const swaps: T[] = [];
 
         await swapsForage.iterate<T, any>((swap) => {
@@ -279,7 +251,7 @@ const GlobalProvider = (props: { children: any }) => {
 
     const updateSwapStatus = async (id: string, newStatus: string) => {
         if (swapStatusFinal.includes(newStatus)) {
-            const swap = await getSwap<SwapWithId & { status: string }>(id);
+            const swap = await getSwap<SubmarineSwap & { status: string }>(id);
 
             if (swap.status !== newStatus) {
                 swap.status = newStatus;

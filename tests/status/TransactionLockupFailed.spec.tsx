@@ -1,10 +1,21 @@
 import { render, screen } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 
-import { BTC, RBTC } from "../../src/consts";
+import { BTC, RBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import TransactionLockupFailed from "../../src/status/TransactionLockupFailed";
 import { TestComponent, contextWrapper, payContext } from "../helper";
+
+jest.mock("../../src/utils/boltzClient", () => {
+    const originalModule = jest.requireActual("../../src/utils/boltzClient");
+    return {
+        __esModule: true,
+        ...originalModule,
+        getLockupTransaction: jest.fn(() => {
+            return { timeoutBlockHeight: 10, timeoutEta: 10 };
+        }),
+    };
+});
 
 describe("TransactionLockupFailed", () => {
     beforeEach(() => {
@@ -25,8 +36,7 @@ describe("TransactionLockupFailed", () => {
                     wrapper: contextWrapper,
                 },
             );
-            payContext.setTimeoutEta(1);
-            payContext.setSwap({ asset: BTC, version: type });
+            payContext.setSwap({ assetReceive: BTC, version: type } as any);
 
             await expect(
                 screen.findByText(i18n.en.refund_explainer),
@@ -46,7 +56,10 @@ describe("TransactionLockupFailed", () => {
                 wrapper: contextWrapper,
             },
         );
-        payContext.setSwap({ asset: BTC, version: OutputType.Taproot });
+        payContext.setSwap({
+            assetReceive: BTC,
+            version: OutputType.Taproot,
+        } as any);
 
         await expect(
             screen.findByText(i18n.en.refund),
@@ -65,7 +78,7 @@ describe("TransactionLockupFailed", () => {
                 wrapper: contextWrapper,
             },
         );
-        payContext.setSwap({ asset: RBTC });
+        payContext.setSwap({ assetReceive: RBTC } as any);
 
         await expect(
             screen.findByText(i18n.en.refund),
