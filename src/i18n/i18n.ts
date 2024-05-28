@@ -143,7 +143,8 @@ const dict = {
         view: "View",
         id: "ID",
         headline: "Non-Custodial Bitcoin Bridge",
-        subline: "Move your bitcoin between different layers while staying in full control. Powered by Atomic Swaps.",
+        subline:
+            "Move your bitcoin between different layers while staying in full control. Powered by Atomic Swaps.",
         start_swapping: "Start Swapping",
         partners: "Partners",
         integrations: "Integrations",
@@ -345,7 +346,8 @@ const dict = {
         view: "Anzeigen",
         id: "ID",
         headline: "Non-Custodial Bitcoin Bridge",
-        subline: "Bewege deine Bitcoin zwischen verschiedenen Layern, während du die volle Kontrolle behältst. Powered by Atomic Swaps.", 
+        subline:
+            "Bewege deine Bitcoin zwischen verschiedenen Layern, während du die volle Kontrolle behältst. Powered by Atomic Swaps.",
         start_swapping: "Starte Swap",
         partners: "Partner",
         integrations: "Integrationen",
@@ -551,7 +553,8 @@ const dict = {
         view: "Ver",
         id: "ID",
         headline: "Bitcoin Bridge Sin Custodia",
-        subline: "Mueva tu bitcoin entre diferentes capas mientras mantienes el control total. Powered by Atomic Swaps.",
+        subline:
+            "Mueva tu bitcoin entre diferentes capas mientras mantienes el control total. Powered by Atomic Swaps.",
         start_swapping: "Comenzar a intercambiar",
         partners: "Socios",
         integrations: "Integraciones",
@@ -741,7 +744,8 @@ const dict = {
         view: "查看",
         id: "ID",
         headline: "非托管比特币跨链桥",
-        subline: "在不同层级之间移动您的比特币，同时保持完全控制。由原子交换提供支持”。",
+        subline:
+            "在不同层级之间移动您的比特币，同时保持完全控制。由原子交换提供支持”。",
         start_swapping: "开始交换",
         partners: "合作伙伴",
         integrations: "集成",
