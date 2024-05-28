@@ -209,7 +209,7 @@ const dict = {
         safe: "Sicher",
         non_custodial: "Non-Custodial",
         non_custodial_sub:
-            "Swaps auf Boltz sind atomic, Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihre Bitcoin behalten",
+            "Swaps auf Boltz sind atomar, Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihre Bitcoin behalten",
         node: "Knoten",
         lightningnode: "Knoten anzeigen",
         error: "Fehler",
