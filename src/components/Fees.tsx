@@ -37,6 +37,11 @@ const Fees = () => {
         addressValid,
     } = useCreateContext();
 
+    const isToUnconfidentialLiquid = () =>
+        assetReceive() === LBTC &&
+        addressValid() &&
+        !isConfidentialAddress(onchainAddress());
+
     createEffect(() => {
         if (pairs()) {
             const cfg = getPair(
@@ -62,25 +67,26 @@ const Fees = () => {
                     let fee =
                         reverseCfg.fees.minerFees.claim +
                         reverseCfg.fees.minerFees.lockup;
-                    if (
-                        assetReceive() === LBTC &&
-                        addressValid() &&
-                        !isConfidentialAddress(onchainAddress())
-                    ) {
+                    if (isToUnconfidentialLiquid()) {
                         fee += 1;
                     }
 
                     setMinerFee(fee);
                     break;
 
-                case SwapType.Chain:
+                case SwapType.Chain: {
                     const chainCfg = cfg as ChainPairTypeTaproot;
-                    setMinerFee(
+                    let fee =
                         chainCfg.fees.minerFees.server +
-                            chainCfg.fees.minerFees.user.lockup +
-                            chainCfg.fees.minerFees.user.claim,
-                    );
+                        chainCfg.fees.minerFees.user.lockup +
+                        chainCfg.fees.minerFees.user.claim;
+                    if (isToUnconfidentialLiquid()) {
+                        fee += 1;
+                    }
+
+                    setMinerFee(fee);
                     break;
+                }
             }
 
             const calculateLimit = (limit: number): number => {
