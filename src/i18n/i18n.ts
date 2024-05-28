@@ -744,8 +744,7 @@ const dict = {
         view: "查看",
         id: "ID",
         headline: "非托管比特币跨链桥",
-        subline:
-            "在不同层之间交换比特币，同时保持完全控制。",
+        subline: "在不同层之间交换比特币，同时保持完全控制。",
         start_swapping: "开始交换",
         partners: "合作伙伴",
         integrations: "集成",
