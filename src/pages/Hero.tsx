@@ -212,7 +212,7 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://www.diamondhands.community/"
+                            href="https://diamondhands.technology/"
                             target="_blank"
                             class="diamondhands"></a>
                     </div>
