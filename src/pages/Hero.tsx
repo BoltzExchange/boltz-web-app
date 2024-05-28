@@ -195,6 +195,12 @@ export const Hero = () => {
                             target="_blank"
                             class="geyser"></a>
                     </div>
+                    <div>
+                        <a
+                            href="https://www.bullbitcoin.com/"
+                            target="_blank"
+                            class="bull-bitcoin"></a>
+                    </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
@@ -206,7 +212,7 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://www.diamondhands.community/"
+                            href="https://diamondhands.technology/"
                             target="_blank"
                             class="diamondhands"></a>
                     </div>
