@@ -11,6 +11,8 @@ import { isIos } from "../utils/helper";
 import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
 import { SomeSwap } from "../utils/swapCreator";
 
+export const invalidBackupFileError = "invalid file";
+
 type BackupFileType = { version: number; swaps: SomeSwap[] };
 
 // Throws when the file is invalid
@@ -27,13 +29,13 @@ const validateBackupFile = (file: BackupFileType | any[]): BackupFileType => {
         return { version: 0, swaps: file };
     } else if (typeof file === "object") {
         if (!["version", "swaps"].every((key) => key in file)) {
-            throw "invalid file";
+            throw invalidBackupFileError;
         }
 
         allSwapsHaveId(file.swaps);
         return file;
     } else {
-        throw "invalid file";
+        throw invalidBackupFileError;
     }
 };
 

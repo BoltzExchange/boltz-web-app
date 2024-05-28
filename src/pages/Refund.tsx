@@ -129,11 +129,11 @@ const Refund = () => {
 
     const [refundableSwaps, setRefundableSwaps] = createSignal([]);
 
-    const addToRefundableSwaps = (swap: SomeSwap) => {
-        setRefundableSwaps(refundableSwaps().concat(swap));
-    };
-
     onMount(async () => {
+        const addToRefundableSwaps = (swap: SomeSwap) => {
+            setRefundableSwaps(refundableSwaps().concat(swap));
+        };
+
         const swapsToRefund = (await getSwaps())
             .filter(refundSwapsSanityFilter)
             .filter((swap) =>
