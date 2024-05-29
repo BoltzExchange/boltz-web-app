@@ -1,20 +1,15 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import {
-    Accessor,
-    Show,
-    createEffect,
-    createSignal,
-    onCleanup,
-} from "solid-js";
+import { Show, createEffect, createSignal, onCleanup } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
+import BlockExplorerLink, {
+    TransactionType,
+} from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import { SwapIcons } from "../components/SwapIcons";
 import { RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -31,91 +26,7 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getSwapStatus } from "../utils/boltzClient";
-import {
-    ChainSwap,
-    ReverseSwap,
-    SomeSwap,
-    SubmarineSwap,
-    getRelevantAssetForSwap,
-} from "../utils/swapCreator";
-
-enum TransactionType {
-    Lockup = "lockup_tx",
-    Claim = "claim_tx",
-}
-
-const BlockExplorerLink = ({
-    swap,
-    swapStatus,
-    contractTransaction,
-    contractTransactionType,
-}: {
-    swap: Accessor<SomeSwap>;
-    swapStatus: Accessor<string>;
-    contractTransaction: Accessor<string>;
-    contractTransactionType: Accessor<TransactionType>;
-}) => {
-    // Refund transactions are handled in SwapRefunded
-
-    if (swap().type !== SwapType.Chain) {
-        return (
-            <Show when={swap().type !== SwapType.Chain}>
-                <Show
-                    when={
-                        getRelevantAssetForSwap(swap()) &&
-                        swapStatus() !== null &&
-                        swapStatus() !== "invoice.set" &&
-                        swapStatus() !== "swap.created"
-                    }>
-                    <BlockExplorer
-                        asset={getRelevantAssetForSwap(swap())}
-                        txId={swap().claimTx}
-                        address={
-                            swap().type === SwapType.Submarine
-                                ? (swap() as SubmarineSwap).address
-                                : (swap() as ReverseSwap).lockupAddress
-                        }
-                    />
-                </Show>
-                <Show
-                    when={
-                        getRelevantAssetForSwap(swap()) &&
-                        contractTransaction() !== undefined
-                    }>
-                    <BlockExplorer
-                        asset={getRelevantAssetForSwap(swap())}
-                        txId={contractTransaction()}
-                        typeLabel={contractTransactionType()}
-                    />
-                </Show>
-            </Show>
-        );
-    }
-
-    // TODO: RSK
-    // TODO: how to show server lockup?
-
-    const [hasBeenClaimed, setHasBeenClaimed] = createSignal<boolean>(false);
-    const asset = () =>
-        hasBeenClaimed() ? swap().assetReceive : swap().assetSend;
-
-    createEffect(() => {
-        setHasBeenClaimed(swap().claimTx !== undefined);
-    });
-
-    return (
-        <BlockExplorer
-            asset={asset()}
-            txId={swap().claimTx}
-            address={
-                hasBeenClaimed()
-                    ? // When it has been claimed, the "txId" is populated
-                      undefined
-                    : (swap() as ChainSwap).lockupDetails.lockupAddress
-            }
-        />
-    );
-};
+import { getRelevantAssetForSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
