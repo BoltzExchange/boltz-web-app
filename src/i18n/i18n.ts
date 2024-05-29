@@ -144,7 +144,7 @@ const dict = {
         id: "ID",
         headline: "Non-Custodial Bitcoin Bridge",
         subline:
-            "Swap Bitcoin between different layers while staying in full control.",
+            "Swap between different Bitcoin layers while staying in full control.",
         start_swapping: "Start Swapping",
         partners: "Partners",
         integrations: "Integrations",
@@ -348,7 +348,7 @@ const dict = {
         id: "ID",
         headline: "Non-Custodial Bitcoin Bridge",
         subline:
-            "Tausche deine Bitcoin zwischen verschiedenen Layern, während du immer die volle Kontrolle behältst.",
+            "Tausche zwischen verschiedenen Bitcoin Layern, während du immer die volle Kontrolle behältst.",
         start_swapping: "Starte Swap",
         partners: "Partner",
         integrations: "Integrationen",
@@ -556,7 +556,7 @@ const dict = {
         id: "ID",
         headline: "Bitcoin Bridge Sin Custodia",
         subline:
-            "Intercambia Bitcoin entre diferentes capas mientras mantienes el control total.",
+            "Intercambia entre diferentes capas de Bitcoin mientras mantienes el control total.",
         start_swapping: "Comenzar a intercambiar",
         partners: "Socios",
         integrations: "Integraciones",
@@ -747,7 +747,7 @@ const dict = {
         view: "查看",
         id: "ID",
         headline: "非托管比特币跨链桥",
-        subline: "在不同层之间交换比特币，同时保持完全控制。",
+        subline: "在不同比特币层之间交换，同时保持完全控制。",
         start_swapping: "开始交换",
         partners: "合作伙伴",
         integrations: "集成",
