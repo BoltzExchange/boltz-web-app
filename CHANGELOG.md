@@ -3,7 +3,41 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
-## [1.3.5](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.4..1.3.5) - 2024-05-17
+## [1.4.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.5..v1.4.0) - 2024-05-29
+
+### Bug Fixes
+
+- only set failure reason for current swap (#595) - ([a4169fe](https://github.com/BoltzExchange/boltz-web-app/commit/a4169febf884b3efba1fc1925853b99266aa8cd4))
+- log settings buttons (#597) - ([53a303a](https://github.com/BoltzExchange/boltz-web-app/commit/53a303a052e68d8a4acdf6f59b56ec4a28f835a1))
+- copy amount with correct denomination (#599) - ([47ec05c](https://github.com/BoltzExchange/boltz-web-app/commit/47ec05cc8a4f94b3b8747afaf696a0d9b40af03e))
+- handle chain swaps not being available - ([bd3e00a](https://github.com/BoltzExchange/boltz-web-app/commit/bd3e00a7cc2e0d77b602e7d99943d8488f566264))
+- chain swaps to unconfidential Liquid addresses - ([8e3fa41](https://github.com/BoltzExchange/boltz-web-app/commit/8e3fa415fafe11b171dea563e78d526e13911765))
+- increase refund QR size (#606) - ([3625883](https://github.com/BoltzExchange/boltz-web-app/commit/3625883e57081c3c3cf3d21cd2b06ea33459e4bb))
+- initialize secp before creating claim transaction (#607) - ([2af6839](https://github.com/BoltzExchange/boltz-web-app/commit/2af6839677894f880363183148997fdbfa65d236))
+- chain swap lockup address link - ([edae12f](https://github.com/BoltzExchange/boltz-web-app/commit/edae12f6950a2bc098fdbb1a0d920d422898fa92))
+- chain swap miner fee calculations (#610) - ([0416a9d](https://github.com/BoltzExchange/boltz-web-app/commit/0416a9dfa20ca23e8ba03b0746dd840f3d3ac0f0))
+
+### Features
+
+- add `Dockerfile` (#591) - ([f557118](https://github.com/BoltzExchange/boltz-web-app/commit/f557118ac527f6422d989038151108305b8201b6))
+- play sound on successful swaps (#536) - ([caa861a](https://github.com/BoltzExchange/boltz-web-app/commit/caa861a81ac8fa7ec0ac9d2268127edcfee525e2))
+- show amount on success page (#590) - ([dc5150d](https://github.com/BoltzExchange/boltz-web-app/commit/dc5150d75fa1a9f397fc02bd3c5d88bf75ea5049))
+- add browser notification (#528) - ([e5461f7](https://github.com/BoltzExchange/boltz-web-app/commit/e5461f71470356f2b0de1c3e5edab75141a510dd))
+- chain swaps (#551) - ([caffdda](https://github.com/BoltzExchange/boltz-web-app/commit/caffdda5a94b6ddccacaca7eacfb477c2c8da69a))
+
+### Miscellaneous Chores
+
+- remove license disclaimer in README - ([d514c82](https://github.com/BoltzExchange/boltz-web-app/commit/d514c82ce68dfead6ec77cd20e3665685874a593))
+- add Bull Bitcoin as integration (#603) - ([f305eaf](https://github.com/BoltzExchange/boltz-web-app/commit/f305eafafd6f1d033a6b1def12319c961c83abc4))
+- fix wording of refunded line - ([5a80247](https://github.com/BoltzExchange/boltz-web-app/commit/5a80247e93f31495cf686af3b0b63cc5110716f8))
+- change headline to Bitcoin Bridge (#604) - ([18d4b95](https://github.com/BoltzExchange/boltz-web-app/commit/18d4b9524d0e5dae42303a15b41b3e0cd2bb65be))
+
+### Refactoring
+
+- use trash icon instead of `delete` in SwapList (#596) - ([99b772e](https://github.com/BoltzExchange/boltz-web-app/commit/99b772ed06d06642d6964cbe82053d80da9674ae))
+
+---
+## [1.3.5](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.4..v1.3.5) - 2024-05-17
 
 ### Bug Fixes
 
@@ -26,6 +60,8 @@ All notable changes to this project will be documented in this file. See [conven
 
 - blog link update (#568) - ([a0a9be8](https://github.com/BoltzExchange/boltz-web-app/commit/a0a9be828632e359216b016591993d50dbdc0858))
 - remove logging of refund transaction (#592) - ([cd9a76f](https://github.com/BoltzExchange/boltz-web-app/commit/cd9a76f5f5f2ab80ba5ee866c4e29dcb558fffeb))
+- increase tooltip click delay (#593) - ([8c72cf2](https://github.com/BoltzExchange/boltz-web-app/commit/8c72cf2058946c6a11c3e78d735c840d370906a0))
+- update version to 1.3.5 and prepare release (#594) - ([15e5c44](https://github.com/BoltzExchange/boltz-web-app/commit/15e5c44898cfe0670a41c64416c44e8e74245902))
 
 ### Refactoring
 
