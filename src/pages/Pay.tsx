@@ -55,7 +55,7 @@ const BlockExplorerLink = ({
     contractTransaction: Accessor<string>;
     contractTransactionType: Accessor<TransactionType>;
 }) => {
-    // Refund transactions are handled SwapRefunded
+    // Refund transactions are handled in SwapRefunded
 
     if (swap().type !== SwapType.Chain) {
         return (
@@ -108,8 +108,9 @@ const BlockExplorerLink = ({
             asset={asset()}
             txId={swap().claimTx}
             address={
-                hasBeenClaimed
-                    ? undefined
+                hasBeenClaimed()
+                    ? // When it has been claimed, the "txId" is populated
+                      undefined
                     : (swap() as ChainSwap).lockupDetails.lockupAddress
             }
         />
