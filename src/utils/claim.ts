@@ -299,11 +299,13 @@ const claimChainSwap = async (
     }
 };
 
-export const claim = <T extends ReverseSwap | ChainSwap>(
+export const claim = async <T extends ReverseSwap | ChainSwap>(
     swap: T,
     swapStatusTransaction: { hex: string },
     cooperative: boolean = true,
 ): Promise<T | undefined> => {
+    await setup();
+
     const asset = getRelevantAssetForSwap(swap);
     if (asset === RBTC) {
         return undefined;
@@ -313,34 +315,29 @@ export const claim = <T extends ReverseSwap | ChainSwap>(
         swapStatusTransaction.hex,
     );
 
-    let claimTransaction: Promise<TransactionInterface | undefined>;
+    let claimTransaction: TransactionInterface;
     if (swap.type === SwapType.Reverse) {
-        claimTransaction = claimReverseSwap(
+        claimTransaction = await claimReverseSwap(
             swap as ReverseSwap,
             lockupTx,
             cooperative,
         );
     } else {
-        claimTransaction = claimChainSwap(
+        claimTransaction = await claimChainSwap(
             swap as ChainSwap,
             lockupTx,
             cooperative,
         );
     }
 
-    return new Promise(async (resolve) => {
-        const claimTx = await claimTransaction;
-        if (!claimTx) {
-            return resolve(undefined);
-        }
-        log.debug("Broadcasting claim transaction...");
-        const res = await broadcastTransaction(asset, claimTx.toHex());
-        log.debug("claim result:", res);
-        if (res.id) {
-            swap.claimTx = res.id;
-        }
-        resolve(swap);
-    });
+    log.debug("Broadcasting claim transaction");
+    const res = await broadcastTransaction(asset, claimTransaction.toHex());
+    log.debug("Claim transaction broadcast result", res);
+    if (res.id) {
+        swap.claimTx = res.id;
+    }
+
+    return swap;
 };
 
 export const createSubmarineSignature = async (swap: SubmarineSwap) => {
