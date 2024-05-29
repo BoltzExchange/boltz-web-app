@@ -115,10 +115,7 @@ describe("Fees component", () => {
 
         const fees = pairs.chain[BTC][LBTC].fees;
         expect(signals.minerFee()).toEqual(
-            fees.minerFees.server +
-                fees.minerFees.user.lockup +
-                fees.minerFees.user.claim +
-                1,
+            fees.minerFees.server + fees.minerFees.user.claim + 1,
         );
     });
 });

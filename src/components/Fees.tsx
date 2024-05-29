@@ -78,7 +78,6 @@ const Fees = () => {
                     const chainCfg = cfg as ChainPairTypeTaproot;
                     let fee =
                         chainCfg.fees.minerFees.server +
-                        chainCfg.fees.minerFees.user.lockup +
                         chainCfg.fees.minerFees.user.claim;
                     if (isToUnconfidentialLiquid()) {
                         fee += 1;
