@@ -14,6 +14,7 @@ export const parseDate = (date: string): Date => {
     const split = date.split("/").map((split) => Number(split));
 
     const parsed = new Date();
+    parsed.setTime(0);
     parsed.setUTCFullYear(split[0]);
     parsed.setUTCMonth(split[1]);
     parsed.setUTCDate(split[2]);
