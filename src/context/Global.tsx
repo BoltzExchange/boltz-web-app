@@ -135,7 +135,7 @@ const GlobalProvider = (props: { children: any }) => {
             ...stringSerializer,
         },
     );
-    const [denomination, setDenomination] = makePersisted<Denomination>(
+    const [denomination, setDenomination] = makePersisted(
         createSignal<Denomination>(Denomination.Sat),
         {
             name: "denomination",
@@ -292,9 +292,8 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     // i18n
-    let dictLocale: any;
     createMemo(() => setI18n(i18nConfigured()));
-    dictLocale = createMemo(() =>
+    const dictLocale = createMemo(() =>
         flatten(dict[i18n() || config.defaultLanguage]),
     );
 
