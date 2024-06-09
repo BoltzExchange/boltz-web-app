@@ -186,7 +186,7 @@ export const refund = async (
             feePerVbyte,
             true,
             swap.assetSend === LBTC
-                ? (getNetwork(swap.assetReceive) as LiquidNetwork)
+                ? (getNetwork(swap.assetSend) as LiquidNetwork)
                 : undefined,
             output.blindingKey,
         );
