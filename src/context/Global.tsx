@@ -1,4 +1,4 @@
-/* @refresh skip  */
+/* @refresh skip */
 import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
 import localforage from "localforage";
@@ -20,6 +20,7 @@ import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
+import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
@@ -162,16 +163,18 @@ const GlobalProvider = (props: { children: any }) => {
 
     const notify = (
         type: string,
-        message: string,
+        message: unknown,
         browser: boolean = false,
         audio: boolean = false,
     ) => {
+        const messageStr = formatError(message);
+
         setNotificationType(type);
-        setNotification(message);
+        setNotification(messageStr);
         if (audio && audioNotification()) playNotificationSound();
         if (browser && browserNotification()) {
             new Notification(t("notification_header"), {
-                body: message,
+                body: messageStr,
                 icon: "/boltz-icon.svg",
             });
         }
