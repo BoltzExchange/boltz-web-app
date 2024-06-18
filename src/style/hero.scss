@@ -191,28 +191,6 @@ h3 {
     height: 48px;
 }
 
-.boltobserver:before {
-    content: " ";
-    display: inline-block;
-    background: url(../assets/boltobserver.svg);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    position: absolute;
-    top: -8px;
-    left: 0;
-}
-.boltobserver {
-    position: relative;
-    padding-left: 52px;
-    text-decoration: none;
-    font-size: 18px;
-    color: white;
-    font-weight: bold;
-    line-height: 1.1;
-}
 .diamondhands {
     display: inline-block;
     background: url(../assets/diamondhands.svg);
