@@ -165,14 +165,6 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://bolt.observer/"
-                            target="_blank"
-                            class="boltobserver">
-                            bolt.observer
-                        </a>
-                    </div>
-                    <div>
-                        <a
                             href="https://fuji.money/"
                             target="_blank"
                             class="fuji"></a>
