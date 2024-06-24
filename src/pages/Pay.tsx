@@ -10,6 +10,7 @@ import SettingsCog from "../components/SettingsCog";
 import SettingsMenu from "../components/SettingsMenu";
 import { SwapIcons } from "../components/SwapIcons";
 import { RBTC } from "../consts/Assets";
+import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -146,7 +147,13 @@ const Pay = () => {
                     <Show when={swapStatus() == "invoice.failedToPay"}>
                         <InvoiceFailedToPay />
                     </Show>
-                    <Show when={swapStatus() == "transaction.lockupFailed"}>
+                    <Show
+                        when={
+                            swapStatus() == "transaction.lockupFailed" ||
+                            (swap().type === SwapType.Chain &&
+                                swapStatus() ===
+                                    swapStatusFailed.TransactionFailed)
+                        }>
                         <TransactionLockupFailed />
                     </Show>
                     <Show when={swapStatus() == "invoice.set"}>
