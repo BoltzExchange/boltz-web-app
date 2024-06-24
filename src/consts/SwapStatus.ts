@@ -10,6 +10,7 @@ export const swapStatusFailed = {
     SwapExpired: "swap.expired",
     SwapRefunded: "swap.refunded",
     InvoiceFailedToPay: "invoice.failedToPay",
+    TransactionFailed: "transaction.failed",
     TransactionLockupFailed: "transaction.lockupFailed",
 };
 
