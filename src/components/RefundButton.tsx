@@ -17,6 +17,7 @@ import {
     getLockupTransaction,
 } from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
+import { formatError } from "../utils/errors";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
@@ -233,8 +234,8 @@ const RefundButton = ({
                         notify("error", genericError);
                     });
             } else {
-                log.error(error.message);
-                notify("error", error.message);
+                log.error(formatError(error));
+                notify("error", formatError(error));
             }
         }
 
