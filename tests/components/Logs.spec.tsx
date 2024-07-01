@@ -1,6 +1,6 @@
 import { render, screen } from "@solidjs/testing-library";
 
-import Logs from "../../src/components/Logs";
+import Logs from "../../src/components/settings/Logs";
 import { contextWrapper } from "../helper";
 
 let mockIsIos = false;

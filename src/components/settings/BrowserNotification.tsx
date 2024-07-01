@@ -1,5 +1,5 @@
-import { useGlobalContext } from "../context/Global";
-import { registerNotifications } from "../utils/notification";
+import { useGlobalContext } from "../../context/Global";
+import { registerNotifications } from "../../utils/notification";
 
 const BrowserNotification = () => {
     const { browserNotification, setBrowserNotification, t, notify } =

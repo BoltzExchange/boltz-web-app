@@ -6,9 +6,9 @@ import BlockExplorerLink, {
     TransactionType,
 } from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
-import SettingsCog from "../components/SettingsCog";
-import SettingsMenu from "../components/SettingsMenu";
 import { SwapIcons } from "../components/SwapIcons";
+import SettingsCog from "../components/settings/SettingsCog";
+import SettingsMenu from "../components/settings/SettingsMenu";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusPending } from "../consts/SwapStatus";

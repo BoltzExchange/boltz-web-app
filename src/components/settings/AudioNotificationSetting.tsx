@@ -1,4 +1,4 @@
-import { useGlobalContext } from "../context/Global";
+import { useGlobalContext } from "../../context/Global";
 
 const AudioNotificationSetting = () => {
     const {

@@ -2,9 +2,9 @@ import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createSignal, onMount } from "solid-js";
 
-import SettingsCog from "../components/SettingsCog";
-import SettingsMenu from "../components/SettingsMenu";
 import SwapList from "../components/SwapList";
+import SettingsCog from "../components/settings/SettingsCog";
+import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
 import { downloadJson } from "../utils/download";
 import { isIos } from "../utils/helper";
