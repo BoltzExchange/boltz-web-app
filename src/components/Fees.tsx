@@ -17,7 +17,7 @@ import {
 import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
-import Denomination from "./Denomination";
+import Denomination from "./settings/Denomination";
 
 const Fees = () => {
     const { t, pairs, fetchPairs, denomination, separator } =

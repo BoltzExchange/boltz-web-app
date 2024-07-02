@@ -198,6 +198,9 @@ const dict = {
         browsernotification_tooltip: "Enable or disable browser notifications",
         browsernotification_error: "Notification permissions denied",
         invalid_pair: "Invalid pair",
+        reckless_mode_setting: "Reckless Mode",
+        reckless_mode_setting_tooltip:
+            "Disables prompts to download refund file and other confirmation steps",
     },
     de: {
         language: "Deutsch",
@@ -406,6 +409,9 @@ const dict = {
             "Aktiviere oder deaktiviere Browser Benachrichtigungen",
         browsernotification_error: "Benachrichtigungsrechte verweigert",
         invalid_pair: "Ungültiges Paar",
+        reckless_mode_setting: "Reckless Modus",
+        reckless_mode_setting_tooltip:
+            "Deaktiviert Downloadaufforderung der Rückerstattungsdatei und andere Bestätigungsschritte",
     },
     es: {
         language: "Español",
@@ -614,6 +620,9 @@ const dict = {
             "Activar o desactivar notificaciones del navegador",
         browsernotification_error: "Permisos de notificación denegados",
         invalid_pair: "Par no válido",
+        reckless_mode_setting: "Modo Reckless",
+        reckless_mode_setting_tooltip:
+            "Desactiva los avisos para descargar el archivo de reembolso y otros pasos de confirmación",
     },
     zh: {
         language: "中文",
@@ -797,6 +806,8 @@ const dict = {
         browsernotification_tooltip: "启用或禁用浏览器通知",
         browsernotification_error: "通知权限被拒绝",
         invalid_pair: "无效交换对",
+        reckless_mode_setting: "鲁莽模式",
+        reckless_mode_setting_tooltip: "禁用下载退款文件的提示和其他确认步骤",
     },
 };
 

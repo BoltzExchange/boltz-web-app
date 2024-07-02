@@ -1,7 +1,7 @@
 import { BiSolidHelpCircle } from "solid-icons/bi";
 
-import { useGlobalContext } from "../context/Global";
-import "../style/tooltip.scss";
+import { useGlobalContext } from "../../context/Global";
+import "../../style/tooltip.scss";
 
 const Tooltip = ({ label }) => {
     const timeout_delay = 300;

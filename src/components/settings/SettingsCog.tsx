@@ -1,6 +1,6 @@
 import { ImCog } from "solid-icons/im";
 
-import { useGlobalContext } from "../context/Global";
+import { useGlobalContext } from "../../context/Global";
 
 const SettingsCog = () => {
     const { setSettingsMenu } = useGlobalContext();

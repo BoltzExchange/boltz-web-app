@@ -33,6 +33,7 @@ export const CreateButton = () => {
         notify,
         ref,
         t,
+        isRecklessMode,
     } = useGlobalContext();
     const {
         invoice,
@@ -215,7 +216,11 @@ export const CreateButton = () => {
             setAddressValid(false);
 
             // No backups needed for Reverse Swaps or when we send RBTC
-            if (swapType() === SwapType.Reverse || assetSend() === RBTC) {
+            if (
+                isRecklessMode() ||
+                swapType() === SwapType.Reverse ||
+                assetSend() === RBTC
+            ) {
                 navigate("/swap/" + data.id);
             } else {
                 navigate("/swap/refund/" + data.id);

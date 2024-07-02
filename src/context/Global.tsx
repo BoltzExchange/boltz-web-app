@@ -81,6 +81,9 @@ export type GlobalContextType = {
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
 
+    isRecklessMode: Accessor<boolean>;
+    setRecklessMode: Setter<boolean>;
+
     setSwapStorage: (swap: SomeSwap) => Promise<any>;
     getSwap: <T = SomeSwap>(id: string) => Promise<T>;
     getSwaps: <T = SomeSwap>() => Promise<T[]>;
@@ -294,6 +297,13 @@ const GlobalProvider = (props: { children: any }) => {
         },
     );
 
+    const [isRecklessMode, setRecklessMode] = makePersisted(
+        createSignal<boolean>(false),
+        {
+            name: "recklessMode",
+        },
+    );
+
     // i18n
     createMemo(() => setI18n(i18nConfigured()));
     const dictLocale = createMemo(() =>
@@ -359,6 +369,8 @@ const GlobalProvider = (props: { children: any }) => {
                 deleteSwap,
                 getSwaps,
                 clearSwaps,
+                isRecklessMode,
+                setRecklessMode,
             }}>
             {props.children}
         </GlobalContext.Provider>

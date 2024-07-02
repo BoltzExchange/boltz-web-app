@@ -1,7 +1,7 @@
-import btcSvg from "../assets/btc.svg";
-import satSvg from "../assets/sat.svg";
-import { Denomination as Denoms } from "../consts/Enums";
-import { useGlobalContext } from "../context/Global";
+import btcSvg from "../../assets/btc.svg";
+import satSvg from "../../assets/sat.svg";
+import { Denomination as Denoms } from "../../consts/Enums";
+import { useGlobalContext } from "../../context/Global";
 
 const Denomination = () => {
     const { denomination, setDenomination, t } = useGlobalContext();
