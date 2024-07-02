@@ -21,14 +21,17 @@ const Entry = ({
     label: string;
     tooltipLabel: string;
     settingElement: JSXElement;
-}) => (
-    <span class="setting">
-        <label>{label}: </label>
-        <Tooltip label={tooltipLabel} />
-        <div class="spacer"></div>
-        {settingElement}
-    </span>
-);
+}) => {
+    const { t } = useGlobalContext();
+    return (
+        <span class="setting">
+            <label>{t(label)}: </label>
+            <Tooltip label={tooltipLabel} />
+            <div class="spacer"></div>
+            {settingElement}
+        </span>
+    );
+};
 
 const SettingsMenu = () => {
     const { t, settingsMenu, setSettingsMenu } = useGlobalContext();
@@ -46,34 +49,34 @@ const SettingsMenu = () => {
                 </span>
                 <hr class="spacer" />
                 <Entry
-                    label={t("denomination")}
+                    label={"denomination"}
                     tooltipLabel={"denomination_tooltip"}
                     settingElement={<Denomination />}
                 />
                 <Entry
-                    label={t("decimal_separator")}
+                    label={"decimal_separator"}
                     tooltipLabel={"decimal_tooltip"}
                     settingElement={<Separator />}
                 />
                 <Entry
-                    label={t("enable_audio_notifications")}
+                    label={"enable_audio_notifications"}
                     tooltipLabel={"enable_audio_notifications_tooltip"}
                     settingElement={<AudioNotificationSetting />}
                 />
                 <Entry
-                    label={t("browsernotification")}
+                    label={"browsernotification"}
                     tooltipLabel={"browsernotification_tooltip"}
                     settingElement={<BrowserNotification />}
                 />
                 <Show when={config.network !== "mainnet"}>
                     <Entry
-                        label={t("reckless_mode_setting")}
+                        label={"reckless_mode_setting"}
                         tooltipLabel={"reckless_mode_setting_tooltip"}
                         settingElement={<RecklessModeSetting />}
                     />
                 </Show>
                 <Entry
-                    label={t("logs")}
+                    label={"logs"}
                     tooltipLabel={"logs_tooltip"}
                     settingElement={<Logs />}
                 />
