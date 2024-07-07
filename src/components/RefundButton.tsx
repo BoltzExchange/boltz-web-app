@@ -205,34 +205,26 @@ const RefundButton = ({
             }
         } catch (error) {
             log.warn("refund failed", error);
-            if (typeof error.json === "function") {
-                error
-                    .json()
-                    .then((jsonError: any) => {
-                        let msg = jsonError.error;
-                        if (
-                            msg === "bad-txns-inputs-missingorspent" ||
-                            msg === "Transaction already in block chain" ||
-                            msg.startsWith("insufficient fee")
-                        ) {
-                            msg = t("already_refunded");
-                        } else if (
-                            msg === "mandatory-script-verify-flag-failed" ||
-                            msg === "non-final"
-                        ) {
-                            msg = t("locktime_not_satisfied");
-                            setTimeoutEta(transactionToRefund.timeoutEta);
-                            setTimeoutBlockheight(
-                                transactionToRefund.timeoutBlockHeight,
-                            );
-                        }
-                        log.error(msg);
-                        notify("error", msg);
-                    })
-                    .catch((genericError: any) => {
-                        log.error(genericError);
-                        notify("error", genericError);
-                    });
+            if (typeof error === "string") {
+                let msg = error;
+                if (
+                    msg === "bad-txns-inputs-missingorspent" ||
+                    msg === "Transaction already in block chain" ||
+                    msg.startsWith("insufficient fee")
+                ) {
+                    msg = t("already_refunded");
+                } else if (
+                    msg === "mandatory-script-verify-flag-failed" ||
+                    msg === "non-final"
+                ) {
+                    msg = t("locktime_not_satisfied");
+                    setTimeoutEta(transactionToRefund.timeoutEta);
+                    setTimeoutBlockheight(
+                        transactionToRefund.timeoutBlockHeight,
+                    );
+                }
+                log.error(msg);
+                notify("error", msg);
             } else {
                 log.error(formatError(error));
                 notify("error", formatError(error));
