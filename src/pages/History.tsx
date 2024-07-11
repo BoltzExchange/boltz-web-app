@@ -6,7 +6,7 @@ import SwapList from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
-import { downloadJson } from "../utils/download";
+import { downloadJson, getBackupFileName } from "../utils/download";
 import { isIos } from "../utils/helper";
 import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
 import { SomeSwap } from "../utils/swapCreator";
@@ -63,7 +63,7 @@ const History = () => {
     };
 
     const backupLocalStorage = async () => {
-        downloadJson(`boltz-backup-${Math.floor(Date.now() / 1000)}`, {
+        downloadJson(getBackupFileName(), {
             version: latestStorageVersion,
             swaps: await getSwaps(),
         });
