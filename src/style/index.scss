@@ -609,3 +609,9 @@ textarea {
 .pointer {
     cursor: pointer;
 }
+
+@media (max-width: 488px) {
+    .hidden-mobile {
+        display: none;
+    }
+}
