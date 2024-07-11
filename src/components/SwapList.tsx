@@ -32,11 +32,12 @@ const SwapList = ({
         return date.toLocaleDateString();
     };
 
-    const deleteSwapAction = async (swapId: string) => {
+    const deleteSwapAction = async (e: Event, swapId: string) => {
         if (confirm(t("delete_storage_single_swap", { id: swapId }))) {
             await deleteSwap(swapId);
             await onDelete();
         }
+        e.stopPropagation();
     };
 
     return (
@@ -48,9 +49,7 @@ const SwapList = ({
                         <div
                             class="swaplist-item"
                             onClick={() => navigate(`/swap/${swap.id}`)}>
-                            <a
-                                class="btn-small hidden-mobile"
-                                href={`/swap/${swap.id}`}>
+                            <a class="btn-small hidden-mobile" href="#">
                                 {t("view")}
                             </a>
                             <SwapIcons swap={swap} />
@@ -63,7 +62,9 @@ const SwapList = ({
                             <Show when={onDelete !== undefined}>
                                 <span
                                     class="btn-small btn-danger hidden-mobile"
-                                    onClick={() => deleteSwapAction(swap.id)}>
+                                    onClick={(e) =>
+                                        deleteSwapAction(e, swap.id)
+                                    }>
                                     <BiRegularTrash size={14} />
                                 </span>
                             </Show>
