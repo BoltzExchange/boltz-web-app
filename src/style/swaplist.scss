@@ -8,25 +8,16 @@
     }
 }
 .swaplist-item {
+    display: flex;
     padding: 12px 0;
     cursor: pointer;
     &:hover {
         background-color: rgba(0, 0, 0, 0.3);
     }
 }
-@media (max-width: 468px) {
-    #swaplist {
-        text-align: center;
-        line-height: 1.66;
-    }
-}
-@media (min-width: 468px) {
-    .swaplist-item {
-        display: flex;
-    }
-    .swaplist-asset-id {
-        flex-grow: 1;
-    }
+
+.swaplist-asset-id {
+    flex-grow: 1;
 }
 
 .swaplist-asset-date,
