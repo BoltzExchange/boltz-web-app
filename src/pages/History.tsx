@@ -109,7 +109,6 @@ const History = () => {
                 <SettingsCog />
                 <h2>{t("refund_past_swaps")}</h2>
                 <p>{t("refund_past_swaps_subline")}</p>
-                <hr />
                 <Show
                     when={swaps().length > 0}
                     fallback={
@@ -141,7 +140,6 @@ const History = () => {
                             setSwaps(await getSwaps());
                         }}
                     />
-                    <hr />
                     <Show when={swaps().length > 0}>
                         <Show when={!isIos()}>
                             <button

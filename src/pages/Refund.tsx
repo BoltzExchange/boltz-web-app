@@ -145,10 +145,8 @@ const Refund = () => {
                     <SettingsCog />
                     <h2>{t("refund_a_swap")}</h2>
                     <p>{t("refund_a_swap_subline")}</p>
-                    <hr />
                     <Show when={refundableSwaps().length > 0}>
                         <SwapList swapsSignal={refundableSwaps} />
-                        <hr />
                     </Show>
                     <input
                         required

@@ -1,4 +1,5 @@
-import { BiRegularTrash } from "solid-icons/bi";
+//import { BiRegularTrash } from "solid-icons/bi";
+import { useNavigate } from "@solidjs/router";
 import { Accessor, For, Show, createMemo, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
@@ -12,6 +13,7 @@ const SwapList = ({
     swapsSignal: Accessor<any[]>;
     onDelete?: () => Promise<any>;
 }) => {
+    const navigate = useNavigate();
     const { deleteSwap, t } = useGlobalContext();
     const [sortedSwaps, setSortedSwaps] = createSignal([]);
     const [lastSwap, setLastSwap] = createSignal();
@@ -39,13 +41,13 @@ const SwapList = ({
 
     return (
         <div id="swaplist">
+            <hr />
             <For each={sortedSwaps()}>
                 {(swap) => (
                     <>
-                        <div class="swaplist-item">
-                            <a class="btn-small" href={`/swap/${swap.id}`}>
-                                {t("view")}
-                            </a>
+                        <div
+                            class="swaplist-item"
+                            onClick={() => navigate(`/swap/${swap.id}`)}>
                             <SwapIcons swap={swap} />
                             <span class="swaplist-asset-id">
                                 {t("id")}:&nbsp;{swap.id}
@@ -53,13 +55,6 @@ const SwapList = ({
                             <span class="swaplist-asset-date">
                                 {t("created")}:&nbsp;{formatDate(swap.date)}
                             </span>
-                            <Show when={onDelete !== undefined}>
-                                <span
-                                    class="btn-small btn-danger"
-                                    onClick={() => deleteSwapAction(swap.id)}>
-                                    <BiRegularTrash size={14} />
-                                </span>
-                            </Show>
                         </div>
                         <Show when={lastSwap() !== swap}>
                             <hr />
@@ -67,6 +62,7 @@ const SwapList = ({
                     </>
                 )}
             </For>
+            <hr />
         </div>
     );
 };

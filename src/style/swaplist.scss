@@ -1,7 +1,18 @@
 #swaplist {
+    width: 100%;
     text-align: left;
     margin: auto;
     display: inline-block;
+    hr {
+        margin: 0;
+    }
+}
+.swaplist-item {
+    padding: 12px 0;
+    cursor: pointer;
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
 }
 @media (max-width: 468px) {
     #swaplist {
