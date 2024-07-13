@@ -129,11 +129,12 @@ describe("AssetSelect", () => {
     );
 
     test.each`
-        address
-        ${"bcrt1qarpsq5wx9j75r8uh806c2l3rd3x083wrdtzhea"}
+        asset   | newAsset | address
+        ${BTC}  | ${LBTC}  | ${"bcrt1qarpsq5wx9j75r8uh806c2l3rd3x083wrdtzhea"}
+        ${LBTC} | ${BTC}   | ${"el1qqgdvkht3g2puwdwxqzfrekef8anygnvs093hntsz63f42gj5m0zksfvvvsss79pv7le474snv6n2slklg7ujvth99naldh9cy"}
     `(
         "should not clear onchain address, when assetReceive did not change",
-        async ({ address }) => {
+        async ({ asset, newAsset, address }) => {
             render(
                 () => (
                     <>
@@ -148,11 +149,11 @@ describe("AssetSelect", () => {
             signals.setAssetSelect(true);
             signals.setAssetSelected(Side.Send);
             signals.setAssetSend(LN);
-            signals.setAssetReceive(BTC);
+            signals.setAssetReceive(asset);
 
-            fireEvent.click(await screen.findByTestId(`select-L-BTC`));
+            fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
-            expect(signals.assetSend()).toEqual(LBTC);
+            expect(signals.assetSend()).toEqual(newAsset);
             expect(signals.onchainAddress()).toEqual(address);
         },
     );
