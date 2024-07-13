@@ -127,4 +127,33 @@ describe("AssetSelect", () => {
             ).toEqual(expectedOther);
         },
     );
+
+    test.each`
+        address
+        ${"bcrt1qarpsq5wx9j75r8uh806c2l3rd3x083wrdtzhea"}
+    `(
+        "should not clear onchain address, when assetReceive did not change",
+        async ({ address }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <SelectAsset />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            signals.setOnchainAddress(address);
+            signals.setAssetSelect(true);
+            signals.setAssetSelected(Side.Send);
+            signals.setAssetSend(LN);
+            signals.setAssetReceive(BTC);
+
+            fireEvent.click(await screen.findByTestId(`select-L-BTC`));
+
+            expect(signals.assetSend()).toEqual(LBTC);
+            expect(signals.onchainAddress()).toEqual(address);
+        },
+    );
 });
