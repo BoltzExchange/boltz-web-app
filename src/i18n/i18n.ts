@@ -202,6 +202,7 @@ const dict = {
         reckless_mode_setting: "Reckless Mode",
         reckless_mode_setting_tooltip:
             "Disables prompts to download refund file and other confirmation steps",
+        error_starting_qr_scanner: "Error starting QR scanner",
     },
     de: {
         language: "Deutsch",

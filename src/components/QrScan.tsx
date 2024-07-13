@@ -12,7 +12,7 @@ const QrScan = () => {
     let qrScanner: QrScanner;
 
     const { swapType, setInvoice, setOnchainAddress } = useCreateContext();
-    const { t, camera, setCamera } = useGlobalContext();
+    const { t, camera, notify, setCamera } = useGlobalContext();
 
     const [scanning, setScanning] = createSignal(false);
 
@@ -26,7 +26,6 @@ const QrScan = () => {
     });
 
     const startScan = () => {
-        setScanning(true);
         if (qrScanner === undefined) {
             qrScanner = new QrScanner(
                 qrRef,
@@ -48,11 +47,22 @@ const QrScan = () => {
                 },
             );
         }
-        qrScanner.start().then();
+        qrScanner
+            .start()
+            .then(() => {
+                log.debug("qr scanner started");
+                setScanning(true);
+            })
+            .catch((err) => {
+                log.error("error starting qr scanner: ", err);
+                notify("error", t("error_starting_qr_scanner"));
+                setCamera(false);
+            });
     };
 
     const stopScan = () => {
         if (scanning()) {
+            log.debug("stopping qr scanner");
             qrScanner.destroy();
             setScanning(false);
             qrScanner = undefined;
@@ -71,14 +81,14 @@ const QrScan = () => {
                         {t("scan_qr_code")}
                     </button>
                 </Show>
-                <Show when={scanning()}>
-                    <div id="video-wrapper">
-                        <video id="qr-scanner" ref={qrRef}></video>
-                        <span class="close-qr" onClick={stopScan}>
-                            X
-                        </span>
-                    </div>
-                </Show>
+                <div
+                    id="video-wrapper"
+                    style={scanning() ? "display: block" : "display: none"}>
+                    <video id="qr-scanner" ref={qrRef}></video>
+                    <span class="close-qr" onClick={stopScan}>
+                        X
+                    </span>
+                </div>
                 <hr />
             </Show>
         </>
