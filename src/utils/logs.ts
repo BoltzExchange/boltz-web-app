@@ -43,6 +43,9 @@ export const deleteOldLogs = async (logsForage: LocalForage) => {
 export const formatLogLine = (message: any[]) =>
     message
         .map((entry: any) => {
+            if (entry instanceof Error) {
+                return entry;
+            }
             if (typeof entry === "object") {
                 return JSON.stringify(entry);
             }
