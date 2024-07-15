@@ -148,6 +148,9 @@ const Create = () => {
         }
     };
 
+    const sanitizeInputValue = (value: string) =>
+        value.replace(",", ".").replace(" ", "");
+
     const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
         const pastedData = clipboardData.getData("Text").trim();
@@ -155,11 +158,20 @@ const Create = () => {
             evt.stopPropagation();
             evt.preventDefault();
             notify("error", t("paste_invalid"));
-        } else {
-            // replace values from input before pasting
-            const input = evt.currentTarget as HTMLInputElement;
-            input.value = "";
+            return;
         }
+        const input = evt.currentTarget as HTMLInputElement;
+        // prevent pasting the same value
+        if (
+            input.value &&
+            sanitizeInputValue(pastedData) === sanitizeInputValue(input.value)
+        ) {
+            evt.stopPropagation();
+            evt.preventDefault();
+            return;
+        }
+        // replace values from input before pasting
+        input.value = "";
     };
 
     const validateAmount = () => {
