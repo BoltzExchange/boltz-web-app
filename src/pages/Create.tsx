@@ -160,6 +160,11 @@ const Create = () => {
             notify("error", t("paste_invalid"));
             return;
         }
+
+        if (pastedData.includes(".") || pastedData.includes(",")) {
+            setSeparator(pastedData.includes(".") ? "." : ",");
+        }
+
         const input = evt.currentTarget as HTMLInputElement;
         // prevent pasting the same value
         if (
