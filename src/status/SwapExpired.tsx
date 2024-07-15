@@ -1,7 +1,9 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Accessor, Show, createEffect } from "solid-js";
+import { Accessor, Show, createEffect, createSignal } from "solid-js";
 
+//import { SwapType } from "../consts/Enums";
+import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -11,8 +13,10 @@ import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 const SwapExpired = () => {
     const navigate = useNavigate();
     const { failureReason, swap } = usePayContext();
-    const { t, setTransactionToRefund, transactionToRefund } =
-        useGlobalContext();
+    const { t } = useGlobalContext();
+
+    const [transactionToRefund, setTransactionToRefund] =
+        createSignal<string>("");
 
     createEffect(async () => {
         setTransactionToRefund(null);
@@ -40,6 +44,10 @@ const SwapExpired = () => {
                     swap={swap as Accessor<SubmarineSwap | ChainSwap>}
                 />
                 <hr />
+                <BlockExplorer
+                    asset={swap().assetSend}
+                    txId={transactionToRefund()}
+                />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>
                 {t("new_swap")}

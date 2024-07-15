@@ -5,18 +5,13 @@ import {
     Show,
     Switch,
     createEffect,
-    createSignal,
     onCleanup,
 } from "solid-js";
 
-import BlockExplorerLink, {
-    TransactionType,
-} from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     swapStatusFailed,
@@ -42,11 +37,6 @@ import { getRelevantAssetForSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
-    const [contractTransaction, setContractTransaction] =
-        createSignal<string>(undefined);
-    const [contractTransactionType, setContractTransactionType] = createSignal(
-        TransactionType.Lockup,
-    );
 
     const { getSwap, t } = useGlobalContext();
     const {
@@ -68,24 +58,6 @@ const Pay = () => {
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
             setFailureReason(res.failureReason);
-
-            // RSK
-            if (
-                asset === RBTC &&
-                res.transaction &&
-                currentSwap.claimTx === undefined
-            ) {
-                setContractTransaction(res.transaction.id);
-            }
-
-            if (asset === RBTC && currentSwap["lockupTx"]) {
-                setContractTransaction(currentSwap["lockupTx"]);
-            }
-
-            if (asset === RBTC && currentSwap.claimTx) {
-                setContractTransaction(currentSwap.claimTx);
-                setContractTransactionType(TransactionType.Claim);
-            }
         }
     });
 
@@ -208,12 +180,6 @@ const Pay = () => {
                             <SwapCreated />
                         </Match>
                     </Switch>
-                    <BlockExplorerLink
-                        swap={swap}
-                        swapStatus={swapStatus}
-                        contractTransaction={contractTransaction}
-                        contractTransactionType={contractTransactionType}
-                    />
                 </Show>
             </Show>
             <Show when={!swap()}>

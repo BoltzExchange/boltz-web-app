@@ -6,6 +6,7 @@ import {
     useContext,
 } from "solid-js";
 
+import { SwapStatusTransaction } from "../consts/Types";
 import { SomeSwap } from "../utils/swapCreator";
 
 export type PayContextType = {
@@ -20,11 +21,6 @@ export type PayContextType = {
 };
 
 const PayContext = createContext<PayContextType>();
-
-type SwapStatusTransaction = {
-    hex?: string;
-    id?: string;
-};
 
 const PayProvider = (props: { children: any }) => {
     const [failureReason, setFailureReason] = createSignal<string>("");
