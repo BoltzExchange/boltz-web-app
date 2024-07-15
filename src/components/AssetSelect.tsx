@@ -30,14 +30,15 @@ const SelectAsset = () => {
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) return;
 
-        // clear invoice and address
+        // clear invoice every time asset changes
         setInvoice("");
-        setOnchainAddress("");
 
         // set new asset and swap assets if the other asset is the same
         if (assetSelected() === Side.Send) {
             if (assetReceive() === newAsset) {
                 setAssetReceive(assetSend());
+                // only clear onchain address if assetReceive did change
+                setOnchainAddress("");
             }
             setAssetSend(newAsset);
         } else {
