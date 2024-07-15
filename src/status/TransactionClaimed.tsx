@@ -2,16 +2,17 @@ import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { Show, createEffect, createSignal } from "solid-js";
 
+import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { formatAmount } from "../utils/denomination";
+import { SubmarineSwap } from "../utils/swapCreator";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
-
     return (
         <div>
             <h2>{t("broadcasting_claim")}</h2>
@@ -59,6 +60,15 @@ const TransactionClaimed = () => {
                     })}
                 </p>
                 <hr />
+                <BlockExplorer
+                    asset={
+                        swap().claimTx ? swap().assetReceive : swap().assetSend
+                    }
+                    txId={swap().claimTx || swap().lockupTx}
+                    address={
+                        swap().claimAddress || (swap() as SubmarineSwap).address
+                    }
+                />
                 <span class="btn" onClick={() => navigate("/swap")}>
                     {t("new_swap")}
                 </span>
