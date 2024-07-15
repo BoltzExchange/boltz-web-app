@@ -201,6 +201,12 @@ const dict = {
         reckless_mode_setting: "Reckless Mode",
         reckless_mode_setting_tooltip:
             "Disables prompts to download refund file and other confirmation steps",
+        blockexplorer_setting: "Block Explorer",
+        blockexplorer_setting_tooltip:
+            "Choose your preferred service for viewing onchain tx's",
+        broadcast_setting: "Broadcaster",
+        broadcast_setting_tooltip:
+            "Choose your preferred service for broadcasting claim and refund tx's",
     },
     de: {
         language: "Deutsch",

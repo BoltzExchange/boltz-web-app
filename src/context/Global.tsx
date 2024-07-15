@@ -14,7 +14,7 @@ import {
 
 import { config } from "../config";
 import { BTC } from "../consts/Assets";
-import { Denomination } from "../consts/Enums";
+import { BlockExplorer, Denomination } from "../consts/Enums";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict from "../i18n/i18n";
@@ -67,6 +67,10 @@ export type GlobalContextType = {
     setAudioNotification: Setter<boolean>;
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
+    blockExplorer: Accessor<BlockExplorer>;
+    setBlockExplorer: Setter<BlockExplorer>;
+    broadcaster: Accessor<BlockExplorer>;
+    setBroadcaster: Setter<BlockExplorer>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
     notify: (
@@ -161,6 +165,22 @@ const GlobalProvider = (props: { children: any }) => {
         createSignal(localeSeparator),
         {
             name: "separator",
+        },
+    );
+
+    const [blockExplorer, setBlockExplorer] = makePersisted(
+        createSignal<BlockExplorer>(BlockExplorer.Mempool),
+        {
+            name: "blockExplorer",
+            ...stringSerializer,
+        },
+    );
+
+    const [broadcaster, setBroadcaster] = makePersisted(
+        createSignal<BlockExplorer>(BlockExplorer.Boltz),
+        {
+            name: "broadcaster",
+            ...stringSerializer,
         },
     );
 
@@ -356,6 +376,10 @@ const GlobalProvider = (props: { children: any }) => {
                 setAudioNotification,
                 browserNotification,
                 setBrowserNotification,
+                blockExplorer,
+                setBlockExplorer,
+                broadcaster,
+                setBroadcaster,
                 // functions
                 t,
                 notify,

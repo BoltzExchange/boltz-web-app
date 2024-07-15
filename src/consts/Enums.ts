@@ -1,3 +1,9 @@
+export enum BlockExplorer {
+    Boltz = "boltz",
+    Mempool = "mempool",
+    Blockstream = "blockstream",
+}
+
 export enum SwapType {
     Submarine = "submarine",
     Reverse = "reverse",

@@ -10,10 +10,10 @@ import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { BlockExplorer, SwapType } from "../consts/Enums";
+import { broadcastTransaction } from "./blockExplorer";
 import {
     TransactionInterface,
-    broadcastTransaction,
     getChainSwapClaimDetails,
     getPartialReverseClaimSignature,
     getSubmarineClaimDetails,
@@ -303,6 +303,7 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     swap: T,
     swapStatusTransaction: { hex: string },
     cooperative: boolean = true,
+    blockExplorer: BlockExplorer = BlockExplorer.Boltz,
 ): Promise<T | undefined> => {
     await setup();
 
@@ -331,7 +332,11 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     }
 
     log.debug("Broadcasting claim transaction");
-    const res = await broadcastTransaction(asset, claimTransaction.toHex());
+    const res = await broadcastTransaction(
+        blockExplorer,
+        asset,
+        claimTransaction.toHex(),
+    );
     log.debug("Claim transaction broadcast result", res);
     if (res.id) {
         swap.claimTx = res.id;

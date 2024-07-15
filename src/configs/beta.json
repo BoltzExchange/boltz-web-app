@@ -12,12 +12,30 @@
             "blockExplorerUrl": {
                 "normal": "https://mempool.space",
                 "tor": "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion"
+            },
+            "broadcastUrl": {
+                "blockstream": {
+                    "normal": "https://blockstream.info/api/tx"
+                },
+                "mempool": {
+                    "normal": "https://mempool.space/api/tx",
+                    "tor": "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/api/tx"
+                }
             }
         },
         "L-BTC": {
             "blockExplorerUrl": {
                 "normal": "https://liquid.network",
                 "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion"
+            },
+            "broadcastUrl": {
+                "blockstream": {
+                    "normal": "https://blockstream.info/liquid/tx"
+                },
+                "mempool": {
+                    "normal": "https://liquid.network/api/tx",
+                    "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion/api/tx"
+                }
             }
         }
     }

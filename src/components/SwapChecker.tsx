@@ -130,8 +130,15 @@ export const SwapChecker = () => {
         setSwapStatusTransaction,
         setFailureReason,
     } = usePayContext();
-    const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t } =
-        useGlobalContext();
+    const {
+        blockExplorer,
+        notify,
+        updateSwapStatus,
+        getSwap,
+        getSwaps,
+        setSwapStorage,
+        t,
+    } = useGlobalContext();
 
     const assetWebsocket = new Map<string, BoltzWebSocket>();
 
@@ -206,6 +213,8 @@ export const SwapChecker = () => {
                 const res = await claim(
                     currentSwap as ReverseSwap | ChainSwap,
                     data.transaction,
+                    true,
+                    blockExplorer(),
                 );
                 const claimedSwap = (await getSwap(res.id)) as
                     | ReverseSwap

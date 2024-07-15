@@ -40,3 +40,26 @@
 .setting .spacer {
     flex-grow: 1;
 }
+
+.toggle.select {
+    > * {
+        width: auto;
+        padding: 0 5px;
+        border-radius: 12px;
+        display: none;
+    }
+    > :first-child {
+        width: auto;
+        margin: 0;
+        padding: 0;
+    }
+    > .active,
+    > :first-child {
+        display: flex;
+    }
+    &[data-dropdown="true"] {
+        > * {
+            display: flex;
+        }
+    }
+}

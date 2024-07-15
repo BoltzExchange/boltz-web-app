@@ -6,6 +6,8 @@ import { config } from "../../config";
 import { useGlobalContext } from "../../context/Global";
 import "../../style/settings.scss";
 import AudioNotificationSetting from "./AudioNotificationSetting";
+import BlockExplorerSetting from "./BlockExplorerSetting";
+import BroadcastSetting from "./BroadcastSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
 import Logs from "./Logs";
@@ -75,6 +77,16 @@ const SettingsMenu = () => {
                         settingElement={<RecklessModeSetting />}
                     />
                 </Show>
+                <Entry
+                    label={"broadcast_setting"}
+                    tooltipLabel={"broadcast_setting_tooltip"}
+                    settingElement={<BroadcastSetting />}
+                />
+                <Entry
+                    label={"blockexplorer_setting"}
+                    tooltipLabel={"blockexplorer_setting_tooltip"}
+                    settingElement={<BlockExplorerSetting />}
+                />
                 <Entry
                     label={"logs"}
                     tooltipLabel={"logs_tooltip"}
