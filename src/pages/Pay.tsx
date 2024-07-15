@@ -1,6 +1,13 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import { Show, createEffect, createSignal, onCleanup } from "solid-js";
+import {
+    Match,
+    Show,
+    Switch,
+    createEffect,
+    createSignal,
+    onCleanup,
+} from "solid-js";
 
 import BlockExplorerLink, {
     TransactionType,
@@ -11,7 +18,11 @@ import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { swapStatusFailed, swapStatusPending } from "../consts/SwapStatus";
+import {
+    swapStatusFailed,
+    swapStatusPending,
+    swapStatusSuccess,
+} from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import InvoiceExpired from "../status/InvoiceExpired";
@@ -106,73 +117,97 @@ const Pay = () => {
                 </Show>
 
                 <Show when={!swap().refundTx}>
-                    <Show when={swapStatus() === null}>
-                        <LoadingSpinner />
-                    </Show>
-                    <Show when={swapStatus()}>
+                    <Show when={swapStatus()} fallback={<LoadingSpinner />}>
                         <p>
                             {t("status")}:{" "}
                             <span class="btn-small">{swapStatus()}</span>
                         </p>
                         <hr />
                     </Show>
-                    <Show when={swapStatus() == "swap.expired"}>
-                        <SwapExpired />
-                    </Show>
-                    <Show when={swapStatus() == "invoice.expired"}>
-                        <InvoiceExpired />
-                    </Show>
-                    <Show
-                        when={
-                            swapStatus() == "transaction.claimed" ||
-                            swapStatus() == "invoice.settled"
-                        }>
-                        <TransactionClaimed />
-                    </Show>
-                    <Show
-                        when={
-                            swapStatus() == "transaction.confirmed" ||
-                            swapStatus() ===
-                                swapStatusPending.TransactionServerConfirmed
-                        }>
-                        <TransactionConfirmed />
-                    </Show>
-                    <Show
-                        when={
-                            swapStatus() === "transaction.mempool" ||
-                            swapStatus() === "transaction.server.mempool"
-                        }>
-                        <TransactionMempool />
-                    </Show>
-                    <Show when={swapStatus() == "invoice.failedToPay"}>
-                        <InvoiceFailedToPay />
-                    </Show>
-                    <Show
-                        when={
-                            swapStatus() == "transaction.lockupFailed" ||
-                            (swap().type === SwapType.Chain &&
+                    <Switch>
+                        <Match
+                            when={
                                 swapStatus() ===
-                                    swapStatusFailed.TransactionFailed)
-                        }>
-                        <TransactionLockupFailed />
-                    </Show>
-                    <Show when={swapStatus() == "invoice.set"}>
-                        <InvoiceSet />
-                    </Show>
-                    <Show when={swapStatus() == "invoice.pending"}>
-                        <InvoicePending />
-                    </Show>
-                    <Show
-                        when={
-                            swapStatus() ===
-                            swapStatusPending.TransactionClaimPending
-                        }>
-                        <TransactionClaimPending />
-                    </Show>
-                    <Show when={swapStatus() == "swap.created"}>
-                        <SwapCreated />
-                    </Show>
-
+                                    swapStatusSuccess.TransactionClaimed ||
+                                swapStatus() ===
+                                    swapStatusSuccess.InvoiceSettled
+                            }>
+                            <TransactionClaimed />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() ===
+                                swapStatusFailed.InvoiceFailedToPay
+                            }>
+                            <InvoiceFailedToPay />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() ===
+                                    swapStatusFailed.TransactionLockupFailed ||
+                                (swap().type === SwapType.Chain &&
+                                    swapStatus() ===
+                                        swapStatusFailed.TransactionFailed)
+                            }>
+                            <TransactionLockupFailed />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() === swapStatusFailed.SwapExpired
+                            }>
+                            <SwapExpired />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() === swapStatusFailed.InvoiceExpired
+                            }>
+                            <InvoiceExpired />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() ===
+                                    swapStatusPending.TransactionConfirmed ||
+                                swapStatus() ===
+                                    swapStatusPending.TransactionServerConfirmed
+                            }>
+                            <TransactionConfirmed />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() ===
+                                    swapStatusPending.TransactionMempool ||
+                                swapStatus() ===
+                                    swapStatusPending.TransactionServerMempool
+                            }>
+                            <TransactionMempool />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() === swapStatusPending.InvoiceSet
+                            }>
+                            <InvoiceSet />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() ===
+                                swapStatusPending.InvoicePending
+                            }>
+                            <InvoicePending />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() ===
+                                swapStatusPending.TransactionClaimPending
+                            }>
+                            <TransactionClaimPending />
+                        </Match>
+                        <Match
+                            when={
+                                swapStatus() === swapStatusPending.SwapCreated
+                            }>
+                            <SwapCreated />
+                        </Match>
+                    </Switch>
                     <BlockExplorerLink
                         swap={swap}
                         swapStatus={swapStatus}
