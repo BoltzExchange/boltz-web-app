@@ -1,4 +1,7 @@
 export const swapStatusPending = {
+    InvoiceSet: "invoice.set",
+    InvoicePending: "invoice.pending",
+    SwapCreated: "swap.created",
     TransactionConfirmed: "transaction.confirmed",
     TransactionMempool: "transaction.mempool",
     TransactionClaimPending: "transaction.claim.pending",
@@ -9,6 +12,7 @@ export const swapStatusPending = {
 export const swapStatusFailed = {
     SwapExpired: "swap.expired",
     SwapRefunded: "swap.refunded",
+    InvoiceExpired: "invoice.expired",
     InvoiceFailedToPay: "invoice.failedToPay",
     TransactionFailed: "transaction.failed",
     TransactionLockupFailed: "transaction.lockupFailed",
@@ -20,6 +24,7 @@ export const swapStatusSuccess = {
 };
 
 export const swapStatusFinal = [
+    swapStatusFailed.InvoiceExpired,
     swapStatusFailed.SwapExpired,
     swapStatusFailed.SwapRefunded,
     swapStatusFailed.InvoiceFailedToPay,
