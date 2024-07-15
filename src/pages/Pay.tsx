@@ -1,12 +1,6 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import {
-    Match,
-    Show,
-    Switch,
-    createEffect,
-    onCleanup,
-} from "solid-js";
+import { Match, Show, Switch, createEffect, onCleanup } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SwapIcons } from "../components/SwapIcons";
