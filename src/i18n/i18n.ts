@@ -202,7 +202,8 @@ const dict = {
         reckless_mode_setting: "Reckless Mode",
         reckless_mode_setting_tooltip:
             "Disables prompts to download refund file and other confirmation steps",
-        error_starting_qr_scanner: "Error starting QR scanner",
+        error_starting_qr_scanner:
+            "Couldn't access camera, please check permissions!",
     },
     de: {
         language: "Deutsch",
@@ -415,6 +416,8 @@ const dict = {
         reckless_mode_setting: "Reckless Modus",
         reckless_mode_setting_tooltip:
             "Deaktiviert Downloadaufforderung der Rückerstattungsdatei und andere Bestätigungsschritte",
+        error_starting_qr_scanner:
+            "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
     },
     es: {
         language: "Español",
@@ -627,6 +630,8 @@ const dict = {
         reckless_mode_setting: "Modo Reckless",
         reckless_mode_setting_tooltip:
             "Desactiva los avisos para descargar el archivo de reembolso y otros pasos de confirmación",
+        error_starting_qr_scanner:
+            "No se pudo acceder a la cámara, por favor compruebe los permisos!",
     },
     zh: {
         language: "中文",
@@ -813,6 +818,7 @@ const dict = {
         invalid_pair: "无效交换对",
         reckless_mode_setting: "鲁莽模式",
         reckless_mode_setting_tooltip: "禁用下载退款文件的提示和其他确认步骤",
+        error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
     },
 };
 
