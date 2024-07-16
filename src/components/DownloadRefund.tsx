@@ -3,15 +3,11 @@ import QRCode from "qrcode/lib/server";
 
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { download, downloadJson } from "../utils/download";
+import { download, downloadJson, getRefundFileName } from "../utils/download";
 import { isIos, isMobile } from "../utils/helper";
 
-const getRefundFileName = (swap: any): string => {
-    return `boltz-refund-${swap.id}`;
-};
-
 const downloadRefundJson = (swap: any) => {
-    downloadJson(getRefundFileName(swap), swap);
+    downloadJson(getRefundFileName(swap.id), swap);
 };
 
 const DownloadRefund = () => {
@@ -27,11 +23,12 @@ const DownloadRefund = () => {
                     newTab.document.body.innerHTML = `
                         <!DOCTYPE html>
                         <body>
+                            <h1>${t("ios_image_download_do_not_share")}</h1>
+                            <h2>${t("ios_image_download")}</h2>
                             <img src="${url}">
-                            <h1>${t("ios_image_download")}</h1>
                         </body>`;
                 } else {
-                    download(`${getRefundFileName(swap)}.png`, url);
+                    download(`${getRefundFileName(swap.id)}.png`, url);
                 }
             })
             .catch((err: Error) => {
