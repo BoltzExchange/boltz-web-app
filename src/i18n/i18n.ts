@@ -137,7 +137,7 @@ const dict = {
         refund_explainer: "You will be able to refund after the timeout",
         swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",
-        ios_image_download_do_not_share: "SECRET! DO NOT SHARE!",
+        ios_image_download_do_not_share: "CONFIDENTIAL! DO NOT SHARE!",
         ios_image_download:
             'Long press and select "Save to Photos" to download refund file',
         created: "Created",
@@ -345,6 +345,7 @@ const dict = {
             "Dein Swap kann noch nicht erstattet werden. Warte auf den Timeout, um eine Rückerstattung zu starten.",
         wasm_not_supported:
             "Bitte aktivieren Sie WebAssembly in Ihrem Browser!",
+        ios_image_download_do_not_share: "VERTRAULICH! NICHT TEILEN!",
         ios_image_download:
             'Lange drücken und "In Fotos speichern" auswählen, um die Rückerstattungsdatei herunterzuladen',
         created: "Erstellt",
@@ -556,6 +557,7 @@ const dict = {
         swap_not_refundable_yet:
             "Tu intercambio aún no es reembolsable, por favor inténtelo de nuevo más tarde!",
         wasm_not_supported: "Por favor, activa WebAssembly en tu navegador!",
+        ios_image_download_do_not_share: "¡CONFIDENCIAL! ¡NO COMPARTIR!",
         ios_image_download:
             'Mantén presionado y selecciona "Guardar en Fotos" para descargar el archivo de reembolso.',
         created: "Creado",
@@ -752,6 +754,7 @@ const dict = {
         refund_explainer: "您将能够在超时后退款",
         swap_not_refundable_yet: "您的交换尚不可退还",
         wasm_not_supported: "请在您的浏览器中激活WebAssembly",
+        ios_image_download_do_not_share: "机密！切勿共享！",
         ios_image_download: "长按并选择“保存到照片”以下载退款文件",
         created: "已创建",
         view: "查看",
