@@ -6,11 +6,27 @@
     },
     "assets": {
         "BTC": {
+            "broadcastUrl": {
+                "blockstream": {
+                    "normal": "https://blockstream.info/testnet/api/tx"
+                },
+                "mempool": {
+                    "normal": "https://mempool.space/testnet/api/tx"
+                }
+            },
             "blockExplorerUrl": {
                 "normal": "https://blockstream.info/testnet"
             }
         },
         "L-BTC": {
+            "broadcastUrl": {
+                "blockstream": {
+                    "normal": "https://blockstream.info/liquidtestnet/api/tx"
+                },
+                "mempool": {
+                    "normal": "https://liquid.network/testnet/api/tx"
+                }
+            },
             "blockExplorerUrl": {
                 "normal": "https://blockstream.info/liquidtestnet"
             }

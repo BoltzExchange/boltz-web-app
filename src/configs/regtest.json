@@ -6,11 +6,27 @@
     },
     "assets": {
         "BTC": {
+            "broadcastUrl": {
+                "blockstream": {
+                    "normal": "http://localhost:8090/tx"
+                },
+                "mempool": {
+                    "normal": "http://localhost:8090/tx"
+                }
+            },
             "blockExplorerUrl": {
                 "normal": "http://localhost:8090"
             }
         },
         "L-BTC": {
+            "broadcastUrl": {
+                "blockstream": {
+                    "normal": "http://localhost:8090/tx"
+                },
+                "mempool": {
+                    "normal": "http://localhost:8090/tx"
+                }
+            },
             "blockExplorerUrl": {
                 "normal": "http://localhost:8091"
             }

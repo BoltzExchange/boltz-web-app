@@ -28,7 +28,7 @@ const defaults = {
 };
 
 type Asset = {
-    blockExplorerUrl?: Url;
+    blockExplorerUrls?: Record<string, Url>;
     apiUrl?: Url;
 };
 
