@@ -239,6 +239,22 @@ h3 {
     width: 180px;
     height: 41px;
 }
+.blitz {
+    display: inline-block;
+    background: url(../assets/blitz.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 165px;
+    height: 23px;
+}
+.helm {
+    display: inline-block;
+    background: url(../assets/helm.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 44px;
+    height: 55px;
+}
 
 #partners,
 #integrations {

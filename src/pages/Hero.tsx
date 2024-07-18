@@ -193,6 +193,18 @@ export const Hero = () => {
                             target="_blank"
                             class="bull-bitcoin"></a>
                     </div>
+                    <div>
+                        <a
+                            href="https://blitz-wallet.com/"
+                            target="_blank"
+                            class="blitz"></a>
+                    </div>
+                    <div>
+                        <a
+                            href="https://helm-wallet.com/"
+                            target="_blank"
+                            class="helm"></a>
+                    </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
