@@ -11,7 +11,7 @@ import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
-import { getNodeStats, getNodes } from "../utils/boltzClient";
+import { getNodeStats } from "../utils/boltzClient";
 import { formatAmountDenomination } from "../utils/denomination";
 
 export const Hero = () => {
@@ -32,11 +32,7 @@ export const Hero = () => {
 
     onMount(async () => {
         try {
-            const [nodesRes, statsRes] = await Promise.all([
-                getNodes(BTC),
-                getNodeStats(BTC),
-            ]);
-            log.debug("node", nodesRes);
+            const statsRes = await getNodeStats(BTC);
 
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;
