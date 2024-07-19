@@ -6,7 +6,6 @@ import { Show, createSignal, onMount } from "solid-js";
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
-import { config } from "../config";
 import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -18,7 +17,6 @@ import { formatAmountDenomination } from "../utils/denomination";
 export const Hero = () => {
     const navigate = useNavigate();
 
-    const [nodePubkey, setNodePubkey] = createSignal<string | null>(null);
     const [numChannel, setNumChannel] = createSignal(0);
     const [numPeers, setNumPeers] = createSignal(0);
     const [capacity, setCapacity] = createSignal(0);
@@ -39,9 +37,6 @@ export const Hero = () => {
                 getNodeStats(BTC),
             ]);
             log.debug("node", nodesRes);
-            setNodePubkey(
-                nodesRes.BTC.LND?.publicKey || nodesRes.BTC.CLN?.publicKey,
-            );
 
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;
