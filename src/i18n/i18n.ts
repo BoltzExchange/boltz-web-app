@@ -11,8 +11,8 @@ const dict = {
         non_custodial: "Non-Custodial",
         non_custodial_sub:
             "Swaps on Boltz are atomic, cryptography ensures that users are always in control of their money",
-        node: "Lightning Node",
-        lightningnode: "view lightning node",
+        node: "Lightning Nodes",
+        lightningnode: "View Lightning Nodes",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",
         error_wasm: "WebAssembly not supported",
@@ -215,8 +215,8 @@ const dict = {
         non_custodial: "Non-Custodial",
         non_custodial_sub:
             "Swaps auf Boltz sind atomar, Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihre Bitcoin behalten",
-        node: "Knoten",
-        lightningnode: "Knoten anzeigen",
+        node: "Lightning Knoten",
+        lightningnode: "Lightning Knoten anzeigen",
         error: "Fehler",
         error_subline:
             "Ungültige Antwort von der API, irgendwas ist hier falsch.",
@@ -427,8 +427,8 @@ const dict = {
         non_custodial: "Sin Custodia",
         non_custodial_sub:
             "Los intercambios en Boltz son atomicos, la criptografía garantiza que los usuarios siempre tienen el control de su Bitcoin",
-        node: "Nodo",
-        lightningnode: "Ver nodo Lightning",
+        node: "Nodos de Lightning",
+        lightningnode: "Ver nodos de Lightning",
         error: "Error",
         error_subline: "Respuesta inválida de la API, algo está mal :/",
         error_wasm: "WebAssembly no soportado",

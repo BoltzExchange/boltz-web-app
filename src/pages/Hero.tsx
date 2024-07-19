@@ -28,7 +28,7 @@ export const Hero = () => {
         useGlobalContext();
 
     const openNodeInfo = async () => {
-        window.open(`${config.lightningExplorerUrl}/${nodePubkey()}`, "_blank");
+        window.open(`https://api.boltz.exchange/v2/nodes/`, "_blank");
     };
 
     const formatStatsAmount = (
