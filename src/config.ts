@@ -8,7 +8,6 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
-    lightningExplorerUrl: "https://amboss.space/node",
     discordUrl: "https://discord.gg/QBvZGcW",
     twitterUrl: "https://twitter.com/boltzhq",
     githubUrl: "https://github.com/BoltzExchange",
