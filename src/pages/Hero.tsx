@@ -27,10 +27,6 @@ export const Hero = () => {
     const { hideHero, setHideHero, t, denomination, separator } =
         useGlobalContext();
 
-    const openNodeInfo = async () => {
-        window.open(`https://api.boltz.exchange/v2/nodes/`, "_blank");
-    };
-
     const formatStatsAmount = (
         value: number,
         denom: Denomination = Denomination.Sat,
@@ -100,9 +96,7 @@ export const Hero = () => {
                         <img src={liquid} alt="Liquid Bitcoin" />
                     </div>
                 </div>
-                <h2 class="headline pointer" onclick={openNodeInfo}>
-                    {t("node")}
-                </h2>
+                <h2 class="headline">{t("node")}</h2>
                 <div id="numbers">
                     <div class="number">
                         {formatStatsAmount(numChannel())}{" "}
@@ -128,7 +122,6 @@ export const Hero = () => {
                         <small>{t("oldest_channel")}</small>
                     </div>
                 </div>
-
                 <h2 class="headline">{t("integrations")}</h2>
                 <div id="integrations">
                     <div>
