@@ -3,6 +3,44 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.4.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.4.0..v1.4.1) - 2024-07-19
+
+### Bug Fixes
+
+- time drift in date parsing - ([de3344a](https://github.com/BoltzExchange/boltz-web-app/commit/de3344a7cfeea8f7f9c5b5b77c9f5043bc9edfa7))
+- legacy Liquid refunds (#616) - ([6f5a4a0](https://github.com/BoltzExchange/boltz-web-app/commit/6f5a4a07c3341d51ac1cfc1446fb5f2233909acb))
+- error formatting in notifications (#617) - ([7bceb68](https://github.com/BoltzExchange/boltz-web-app/commit/7bceb68cd254b323efafc4c4ab8c0284fd6b1cfe))
+- missing refund page for failed chain swap (#621) - ([7fdc338](https://github.com/BoltzExchange/boltz-web-app/commit/7fdc338b36439cdf12b4fe175f5d28c5ccb37e2a))
+- translation of settings not switching - ([0b833b5](https://github.com/BoltzExchange/boltz-web-app/commit/0b833b5cb509bfb12b0f869db38b643c1cf6c766))
+- refund transaction error handling (#627) - ([87b8547](https://github.com/BoltzExchange/boltz-web-app/commit/87b8547956ad791d12f68b3a1006faad589a8031))
+- Nginx 404 with Docker on paths (#632) - ([bd6ac77](https://github.com/BoltzExchange/boltz-web-app/commit/bd6ac77f91c8072b763aa3b84ff31710d70d7c6a))
+- Error type serialization in logger (#634) - ([ebb59de](https://github.com/BoltzExchange/boltz-web-app/commit/ebb59de873f1f748a8979b29db084ff3e13d4f0a))
+- swap box clears address on asset switch (#633) - ([cc990cf](https://github.com/BoltzExchange/boltz-web-app/commit/cc990cf10876931075d4f0dbb633651e45326cd7))
+- prevent pasting same value twice - ([5ae7bf2](https://github.com/BoltzExchange/boltz-web-app/commit/5ae7bf2211e885f1984fefbbe72dd03cdd47840a))
+- switch separator on paste - ([8df049c](https://github.com/BoltzExchange/boltz-web-app/commit/8df049c366194fd03e4ea135b28f5a44c6f2a655))
+
+### Features
+
+- show cooperative refund error on broadcast fail (#624) - ([9dbb9a4](https://github.com/BoltzExchange/boltz-web-app/commit/9dbb9a48cff07d51548480a1141e36a3f7099e73))
+- reckless mode - ([9233260](https://github.com/BoltzExchange/boltz-web-app/commit/92332601abc3217ef78f94ca7bfcf30c0c0783b0))
+- add warning to download filenames (#630) - ([5a0d7f2](https://github.com/BoltzExchange/boltz-web-app/commit/5a0d7f29260395767dad56f4409a03cc2f4fea62))
+
+### Miscellaneous Chores
+
+- minor subline wording change (#612) - ([c930680](https://github.com/BoltzExchange/boltz-web-app/commit/c930680cd4265642560192c3e3d414f4a2d2b9cc))
+- dependency updates (#615) - ([d5109e1](https://github.com/BoltzExchange/boltz-web-app/commit/d5109e1f4876fea01c165ba8322d03eab1c62195))
+- remove bolt.observer (#618) - ([22d7171](https://github.com/BoltzExchange/boltz-web-app/commit/22d71719419915e90a1dd419afc4892fb3c9196c))
+- update README (#619) - ([6e9efcf](https://github.com/BoltzExchange/boltz-web-app/commit/6e9efcf731ecff75494eaebc8181ffe843c802bb))
+- update dependencies (#620) - ([4117572](https://github.com/BoltzExchange/boltz-web-app/commit/411757245bbe11301598856a89887196d652fc9e))
+- reorder run from source instructions (#628) - ([691ed5b](https://github.com/BoltzExchange/boltz-web-app/commit/691ed5b29c72cee66be9de998c64fe7cd2a0cea6))
+- add Blitz and Helm as integrations (#642) - ([87f4ea9](https://github.com/BoltzExchange/boltz-web-app/commit/87f4ea963e6f5bfa7959bee3d1868fa35a93c6df))
+
+### Refactoring
+
+- move block explorer link out of Pay page (#613) - ([154e108](https://github.com/BoltzExchange/boltz-web-app/commit/154e1085cb15e228a0a32674ed32b7d8015b07e1))
+- use consts and `Switch` for swap status (#640) - ([41218e6](https://github.com/BoltzExchange/boltz-web-app/commit/41218e6972e27f4fe5ccf767689d93d7cdc9c5ed))
+
+---
 ## [1.4.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.3.5..v1.4.0) - 2024-05-29
 
 ### Bug Fixes
@@ -31,6 +69,7 @@ All notable changes to this project will be documented in this file. See [conven
 - add Bull Bitcoin as integration (#603) - ([f305eaf](https://github.com/BoltzExchange/boltz-web-app/commit/f305eafafd6f1d033a6b1def12319c961c83abc4))
 - fix wording of refunded line - ([5a80247](https://github.com/BoltzExchange/boltz-web-app/commit/5a80247e93f31495cf686af3b0b63cc5110716f8))
 - change headline to Bitcoin Bridge (#604) - ([18d4b95](https://github.com/BoltzExchange/boltz-web-app/commit/18d4b9524d0e5dae42303a15b41b3e0cd2bb65be))
+- prepare release v1.4.0 - ([030e35e](https://github.com/BoltzExchange/boltz-web-app/commit/030e35ef047421452b77d3a61c2e713e7f958dea))
 
 ### Refactoring
 
