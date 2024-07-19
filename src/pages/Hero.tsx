@@ -6,19 +6,17 @@ import { Show, createSignal, onMount } from "solid-js";
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
-import { config } from "../config";
 import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
 import "../style/hero.scss";
-import { getNodeStats, getNodes } from "../utils/boltzClient";
+import { getNodeStats } from "../utils/boltzClient";
 import { formatAmountDenomination } from "../utils/denomination";
 
 export const Hero = () => {
     const navigate = useNavigate();
 
-    const [nodePubkey, setNodePubkey] = createSignal<string | null>(null);
     const [numChannel, setNumChannel] = createSignal(0);
     const [numPeers, setNumPeers] = createSignal(0);
     const [capacity, setCapacity] = createSignal(0);
@@ -27,10 +25,6 @@ export const Hero = () => {
     const { hideHero, setHideHero, t, denomination, separator } =
         useGlobalContext();
 
-    const openNodeInfo = async () => {
-        window.open(`${config.lightningExplorerUrl}/${nodePubkey()}`, "_blank");
-    };
-
     const formatStatsAmount = (
         value: number,
         denom: Denomination = Denomination.Sat,
@@ -38,14 +32,7 @@ export const Hero = () => {
 
     onMount(async () => {
         try {
-            const [nodesRes, statsRes] = await Promise.all([
-                getNodes(BTC),
-                getNodeStats(BTC),
-            ]);
-            log.debug("node", nodesRes);
-            setNodePubkey(
-                nodesRes.BTC.LND?.publicKey || nodesRes.BTC.CLN?.publicKey,
-            );
+            const statsRes = await getNodeStats(BTC);
 
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;
@@ -100,9 +87,7 @@ export const Hero = () => {
                         <img src={liquid} alt="Liquid Bitcoin" />
                     </div>
                 </div>
-                <h2 class="headline pointer" onclick={openNodeInfo}>
-                    {t("node")}
-                </h2>
+                <h2 class="headline">{t("node")}</h2>
                 <div id="numbers">
                     <div class="number">
                         {formatStatsAmount(numChannel())}{" "}
@@ -128,7 +113,6 @@ export const Hero = () => {
                         <small>{t("oldest_channel")}</small>
                     </div>
                 </div>
-
                 <h2 class="headline">{t("integrations")}</h2>
                 <div id="integrations">
                     <div>
