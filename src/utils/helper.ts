@@ -18,6 +18,13 @@ export const isIos = () =>
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
+export const getLockupAddress = (swap: SubmarineSwap | ChainSwap) => {
+    if (swap.type === SwapType.Submarine) {
+        return (swap as SubmarineSwap).address;
+    }
+    return (swap as ChainSwap).lockupDetails.lockupAddress;
+};
+
 export const parseBlindingKey = (swap: SomeSwap, isRefund: boolean) => {
     let blindingKey: string | undefined;
 
