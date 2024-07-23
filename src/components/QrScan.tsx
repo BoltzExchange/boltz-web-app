@@ -56,7 +56,6 @@ const QrScan = () => {
             .catch((err) => {
                 log.error("error starting qr scanner: ", err);
                 notify("error", t("error_starting_qr_scanner"));
-                setCamera(false);
             });
     };
 
