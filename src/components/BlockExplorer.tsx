@@ -2,7 +2,7 @@ import { chooseUrl, config } from "../config";
 import { useGlobalContext } from "../context/Global";
 
 const blockExplorerLink = (asset: string, isTxId: boolean, val: string) => {
-    const basePath = chooseUrl(config.assets[asset].blockExplorerUrl);
+    const basePath = chooseUrl(config.assets[asset]?.blockExplorerUrl);
     return `${basePath}/${isTxId ? "tx" : "address"}/${val}`;
 };
 

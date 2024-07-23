@@ -22,7 +22,7 @@ export const getLockupAddress = (swap: SubmarineSwap | ChainSwap) => {
     if (swap.type === SwapType.Submarine) {
         return (swap as SubmarineSwap).address;
     }
-    return (swap as ChainSwap).lockupDetails.lockupAddress;
+    return (swap as ChainSwap).lockupDetails?.lockupAddress;
 };
 
 export const parseBlindingKey = (swap: SomeSwap, isRefund: boolean) => {
