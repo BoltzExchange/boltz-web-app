@@ -36,6 +36,7 @@ describe("PayOnchain", () => {
         )) as HTMLDivElement;
         expect(buttons).not.toBeUndefined();
 
+        globalSignals.setSeparator(".");
         globalSignals.setDenomination(Denomination.Sat);
         fireEvent.click(buttons.children[0]);
 
