@@ -12,6 +12,7 @@ import Logs from "./Logs";
 import RecklessModeSetting from "./RecklessModeSetting";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
+import ZeroconfSetting from "./ZeroconfSetting";
 
 const Entry = ({
     label,
@@ -67,6 +68,11 @@ const SettingsMenu = () => {
                     label={"browsernotification"}
                     tooltipLabel={"browsernotification_tooltip"}
                     settingElement={<BrowserNotification />}
+                />
+                <Entry
+                    label={"enable_zeroconf"}
+                    tooltipLabel={"enable_zeroconf_tooltip"}
+                    settingElement={<ZeroconfSetting />}
                 />
                 <Show when={config.network !== "mainnet"}>
                     <Entry
