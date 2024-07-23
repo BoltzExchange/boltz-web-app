@@ -2,7 +2,6 @@ import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Accessor, Show, createEffect, createSignal } from "solid-js";
 
-//import { SwapType } from "../consts/Enums";
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
