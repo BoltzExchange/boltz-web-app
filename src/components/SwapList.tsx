@@ -54,10 +54,14 @@ const SwapList = ({
                             </a>
                             <SwapIcons swap={swap} />
                             <span class="swaplist-asset-id">
-                                {t("id")}:&nbsp;{swap.id}
+                                {t("id")}:&nbsp;
+                                <span class="monospace">{swap.id}</span>
                             </span>
                             <span class="swaplist-asset-date">
-                                {t("created")}:&nbsp;{formatDate(swap.date)}
+                                {t("created")}:&nbsp;
+                                <span class="monospace">
+                                    {formatDate(swap.date)}
+                                </span>
                             </span>
                             <Show when={onDelete !== undefined}>
                                 <span
