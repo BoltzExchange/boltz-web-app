@@ -11,16 +11,21 @@ import { isIos } from "../utils/helper";
 import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
 import { SomeSwap } from "../utils/swapCreator";
 
-export const invalidBackupFileError = "invalid file";
+export enum Errors {
+    InvalidBackupFile = "invalid file",
+    NotAllElementsHaveAnId = "not all elements have an id",
+}
 
 type BackupFileType = { version: number; swaps: SomeSwap[] };
 
 // Throws when the file is invalid
 // Returns the version of the backup file
-const validateBackupFile = (file: BackupFileType | any[]): BackupFileType => {
+const validateBackupFile = (
+    file: BackupFileType | any[] | SomeSwap,
+): BackupFileType => {
     const allSwapsHaveId = (swaps: any[]) => {
         if (swaps.some((swap) => swap.id === undefined || swap.id === null)) {
-            throw "not all elements have an id";
+            throw Errors.NotAllElementsHaveAnId;
         }
     };
 
@@ -28,14 +33,22 @@ const validateBackupFile = (file: BackupFileType | any[]): BackupFileType => {
         allSwapsHaveId(file);
         return { version: 0, swaps: file };
     } else if (typeof file === "object") {
-        if (!["version", "swaps"].every((key) => key in file)) {
-            throw invalidBackupFileError;
+        // A single refund file was uploaded
+        if (["id", "type"].every((key) => key in file)) {
+            return {
+                version: latestStorageVersion,
+                swaps: [file as unknown as SomeSwap],
+            };
         }
 
-        allSwapsHaveId(file.swaps);
-        return file;
+        if (!["version", "swaps"].every((key) => key in file)) {
+            throw Errors.InvalidBackupFile;
+        }
+
+        allSwapsHaveId((file as BackupFileType).swaps);
+        return file as BackupFileType;
     } else {
-        throw invalidBackupFileError;
+        throw Errors.InvalidBackupFile;
     }
 };
 
