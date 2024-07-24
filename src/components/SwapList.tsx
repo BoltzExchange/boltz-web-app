@@ -33,11 +33,12 @@ const SwapList = ({
     };
 
     const deleteSwapAction = async (e: Event, swapId: string) => {
+        e.stopPropagation();
+        e.preventDefault();
         if (confirm(t("delete_storage_single_swap", { id: swapId }))) {
             await deleteSwap(swapId);
             await onDelete();
         }
-        e.stopPropagation();
     };
 
     return (
