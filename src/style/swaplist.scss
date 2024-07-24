@@ -1,21 +1,23 @@
 #swaplist {
+    width: 100%;
     text-align: left;
     margin: auto;
     display: inline-block;
-}
-@media (max-width: 468px) {
-    #swaplist {
-        text-align: center;
-        line-height: 1.66;
+    hr {
+        margin: 0;
     }
 }
-@media (min-width: 468px) {
-    .swaplist-item {
-        display: flex;
+.swaplist-item {
+    display: flex;
+    padding: 12px 6px;
+    cursor: pointer;
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.3);
     }
-    .swaplist-asset-id {
-        flex-grow: 1;
-    }
+}
+
+.swaplist-asset-id {
+    flex-grow: 1;
 }
 
 .swaplist-asset-date,

@@ -1,4 +1,5 @@
 /* @refresh reload */
+import "@fontsource/noto-mono";
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import { Route, Router } from "@solidjs/router";

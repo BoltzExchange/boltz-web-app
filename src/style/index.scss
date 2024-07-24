@@ -5,6 +5,10 @@
     font-family: "Noto Sans", sans;
 }
 
+.monospace {
+    font-family: "Noto Mono", sans;
+}
+
 body {
     font-size: 14px;
     margin: 0;
@@ -608,4 +612,14 @@ textarea {
 
 .pointer {
     cursor: pointer;
+}
+
+@media (max-width: 488px) {
+    .hidden-mobile {
+        display: none;
+    }
+}
+
+#refundUpload {
+    margin-top: 7px;
 }
