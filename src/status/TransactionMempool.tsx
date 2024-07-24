@@ -1,3 +1,5 @@
+import { Show } from "solid-js";
+
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useGlobalContext } from "../context/Global";
@@ -11,11 +13,13 @@ const TransactionMempool = () => {
             <h2>{t("tx_in_mempool")}</h2>
             <p>{t("tx_in_mempool_subline")}</p>
             <LoadingSpinner />
-            <BlockExplorer
-                asset={swap().assetSend}
-                txId={swapStatusTransaction()?.id}
-                typeLabel="lockup_tx"
-            />
+            <Show when={swapStatusTransaction() !== null}>
+                <BlockExplorer
+                    asset={swap().assetSend}
+                    txId={swapStatusTransaction().id}
+                    typeLabel="lockup_tx"
+                />
+            </Show>
         </div>
     );
 };

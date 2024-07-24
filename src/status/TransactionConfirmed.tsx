@@ -1,3 +1,6 @@
+import { Show } from "solid-js";
+
+import BlockExplorer from "../components/BlockExplorer";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts/Assets";
@@ -53,7 +56,7 @@ const ClaimRsk = ({
 
 const TransactionConfirmed = () => {
     const { t } = useGlobalContext();
-    const { swap } = usePayContext();
+    const { swapStatusTransaction, swap } = usePayContext();
 
     if (swap().assetReceive === RBTC) {
         if (swap().type === SwapType.Chain) {
@@ -88,6 +91,13 @@ const TransactionConfirmed = () => {
             <h2>{t("tx_confirmed")}</h2>
             <p>{t("tx_ready_to_claim")}</p>
             <LoadingSpinner />
+            <Show when={swapStatusTransaction() !== null}>
+                <BlockExplorer
+                    asset={swap().assetSend}
+                    txId={swapStatusTransaction().id}
+                    typeLabel="lockup_tx"
+                />
+            </Show>
         </div>
     );
 };

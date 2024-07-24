@@ -6,7 +6,7 @@ import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getLockupTransaction } from "../utils/boltzClient";
+import { LockupTransaction, getLockupTransaction } from "../utils/boltzClient";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const SwapExpired = () => {
@@ -15,7 +15,7 @@ const SwapExpired = () => {
     const { t } = useGlobalContext();
 
     const [transactionToRefund, setTransactionToRefund] =
-        createSignal<string>("");
+        createSignal<LockupTransaction>(null);
 
     createEffect(async () => {
         setTransactionToRefund(null);
@@ -26,7 +26,7 @@ const SwapExpired = () => {
                 swap().type,
             );
             log.debug(`got swap transaction for ${swap().id}`);
-            setTransactionToRefund(res.hex);
+            setTransactionToRefund(res);
         } catch (error: any) {
             log.warn(`no swap transaction for: ${swap().id}`, error);
         }
@@ -45,7 +45,7 @@ const SwapExpired = () => {
                 <hr />
                 <BlockExplorer
                     asset={swap().assetSend}
-                    txId={transactionToRefund()}
+                    txId={transactionToRefund().id}
                 />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>

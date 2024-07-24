@@ -29,7 +29,7 @@ const InvoiceFailedToPay = () => {
             <hr />
             <BlockExplorer
                 asset={swap().assetSend}
-                address={getLockupAddress(swap() as SubmarineSwap | ChainSwap)}
+                address={getLockupAddress(swap() as SubmarineSwap)}
             />
         </div>
     );

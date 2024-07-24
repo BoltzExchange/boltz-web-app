@@ -155,6 +155,13 @@ type ChainSwapCreatedResponse = {
     lockupDetails: ChainSwapDetails;
 };
 
+export type LockupTransaction = {
+    id: string;
+    hex: string;
+    timeoutBlockHeight: number;
+    timeoutEta?: number;
+};
+
 type ChainSwapTransaction = {
     transaction: {
         id: string;
@@ -366,12 +373,7 @@ export const getLockupTransaction = async (
     asset: string,
     id: string,
     type: SwapType,
-): Promise<{
-    id: string;
-    hex: string;
-    timeoutBlockHeight: number;
-    timeoutEta?: number;
-}> => {
+): Promise<LockupTransaction> => {
     switch (type) {
         case SwapType.Submarine:
             return fetcher<{
