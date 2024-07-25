@@ -13,7 +13,7 @@ const TransactionMempool = () => {
             <h2>{t("tx_in_mempool")}</h2>
             <p>{t("tx_in_mempool_subline")}</p>
             <LoadingSpinner />
-            <Show when={swapStatusTransaction() !== null}>
+            <Show when={swapStatusTransaction()}>
                 <BlockExplorer
                     asset={swap().assetSend}
                     txId={swapStatusTransaction().id}

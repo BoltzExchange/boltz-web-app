@@ -91,7 +91,7 @@ const TransactionConfirmed = () => {
             <h2>{t("tx_confirmed")}</h2>
             <p>{t("tx_ready_to_claim")}</p>
             <LoadingSpinner />
-            <Show when={swapStatusTransaction() !== null}>
+            <Show when={swapStatusTransaction()}>
                 <BlockExplorer
                     asset={swap().assetSend}
                     txId={swapStatusTransaction().id}

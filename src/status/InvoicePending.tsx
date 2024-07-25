@@ -12,7 +12,7 @@ const InvoicePending = () => {
         <div>
             <p>{t("invoice_pending")}</p>
             <LoadingSpinner />
-            <Show when={swapStatusTransaction() !== null}>
+            <Show when={swapStatusTransaction()}>
                 <BlockExplorer
                     asset={swap().assetSend}
                     txId={swapStatusTransaction().id}

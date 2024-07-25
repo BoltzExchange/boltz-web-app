@@ -155,13 +155,6 @@ type ChainSwapCreatedResponse = {
     lockupDetails: ChainSwapDetails;
 };
 
-export type LockupTransaction = {
-    id: string;
-    hex: string;
-    timeoutBlockHeight: number;
-    timeoutEta?: number;
-};
-
 type ChainSwapTransaction = {
     transaction: {
         id: string;
@@ -369,6 +362,13 @@ export const broadcastTransaction = (asset: string, txHex: string) =>
         hex: txHex,
     });
 
+export type LockupTransaction = {
+    id: string;
+    hex: string;
+    timeoutBlockHeight: number;
+    timeoutEta?: number;
+};
+
 export const getLockupTransaction = async (
     asset: string,
     id: string,
@@ -404,16 +404,18 @@ export const getReverseTransaction = (asset: string, id: string) =>
         timeoutBlockHeight: number;
     }>(`/v2/swap/reverse/${id}/transaction`, asset);
 
+export type SwapStatus = {
+    status: string;
+    failureReason?: string;
+    zeroConfRejected?: boolean;
+    transaction?: {
+        id: string;
+        hex: string;
+    };
+};
+
 export const getSwapStatus = (asset: string, id: string) =>
-    fetcher<{
-        status: string;
-        failureReason?: string;
-        zeroConfRejected?: boolean;
-        transaction?: {
-            id: string;
-            hex: string;
-        };
-    }>(`/v2/swap/${id}`, asset);
+    fetcher<SwapStatus>(`/v2/swap/${id}`, asset);
 
 export const getChainSwapClaimDetails = (asset: string, id: string) =>
     fetcher<{
