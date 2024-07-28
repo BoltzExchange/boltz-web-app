@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 
-ENV NETWORK=mainnet
+ARG NETWORK=mainnet
 
 RUN npm run $NETWORK
 RUN npm run build
