@@ -7,12 +7,12 @@
     "assets": {
         "BTC": {
             "blockExplorerUrl": {
-                "normal": "http://localhost:8090"
+                "normal": "http://localhost:4002"
             }
         },
         "L-BTC": {
             "blockExplorerUrl": {
-                "normal": "http://localhost:8091"
+                "normal": "http://localhost:4003"
             }
         },
         "RBTC": {
