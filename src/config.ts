@@ -27,8 +27,14 @@ const defaults = {
 };
 
 type Asset = {
-    blockExplorerUrl?: Url;
     apiUrl?: Url;
+    blockExplorerUrl?: Url;
+
+    rifRelay?: string;
+    contracts?: {
+        smartWalletFactory?: string;
+        deployVerifier?: string;
+    };
 };
 
 type Url = {
