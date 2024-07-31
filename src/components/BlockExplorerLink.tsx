@@ -1,6 +1,8 @@
 import { Accessor, Show, createEffect, createSignal } from "solid-js";
 
+import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { usePayContext } from "../context/Pay";
 import {
     ChainSwap,
     ReverseSwap,
@@ -10,60 +12,57 @@ import {
 } from "../utils/swapCreator";
 import BlockExplorer from "./BlockExplorer";
 
-enum TransactionType {
-    Lockup = "lockupTx",
-    Claim = "claimTx",
-}
-
 const BlockExplorerLink = ({
     swap,
     swapStatus,
-    contractTransaction,
-    contractTransactionType,
 }: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
-    contractTransaction: Accessor<string>;
-    contractTransactionType: Accessor<TransactionType>;
 }) => {
-    // Refund transactions are handled in SwapRefunded
+    // Showing addresses makes no sense for EVM based chains
+    if (
+        (swap().type !== SwapType.Chain && getRelevantAssetForSwap(swap())) ===
+        RBTC
+    ) {
+        const { swapStatusTransaction } = usePayContext();
+        const txId = () =>
+            swap().claimTx || swap().lockupTx || swapStatusTransaction()?.id;
 
-    if (swap().type !== SwapType.Chain) {
         return (
-            <>
-                <Show
-                    when={
-                        getRelevantAssetForSwap(swap()) &&
-                        swapStatus() !== null &&
-                        swapStatus() !== "invoice.set" &&
-                        swapStatus() !== "swap.created"
-                    }>
-                    <BlockExplorer
-                        asset={getRelevantAssetForSwap(swap())}
-                        txId={swap().claimTx}
-                        address={
-                            swap().type === SwapType.Submarine
-                                ? (swap() as SubmarineSwap).address
-                                : (swap() as ReverseSwap).lockupAddress
-                        }
-                    />
-                </Show>
-                <Show
-                    when={
-                        getRelevantAssetForSwap(swap()) &&
-                        contractTransaction() !== undefined
-                    }>
-                    <BlockExplorer
-                        asset={getRelevantAssetForSwap(swap())}
-                        txId={contractTransaction()}
-                        typeLabel={contractTransactionType()}
-                    />
-                </Show>
-            </>
+            <Show when={txId() !== undefined}>
+                <BlockExplorer
+                    asset={getRelevantAssetForSwap(swap())}
+                    txId={txId()}
+                    typeLabel={
+                        swap().claimTx !== undefined ? "claim_tx" : "lockup_tx"
+                    }
+                />
+            </Show>
         );
     }
 
-    // TODO: RSK
+    if (swap().type !== SwapType.Chain) {
+        // Refund transactions are handled in SwapRefunded
+        return (
+            <Show
+                when={
+                    getRelevantAssetForSwap(swap()) &&
+                    swapStatus() !== null &&
+                    swapStatus() !== "invoice.set" &&
+                    swapStatus() !== "swap.created"
+                }>
+                <BlockExplorer
+                    asset={getRelevantAssetForSwap(swap())}
+                    txId={swap().claimTx}
+                    address={
+                        swap().type === SwapType.Submarine
+                            ? (swap() as SubmarineSwap).address
+                            : (swap() as ReverseSwap).lockupAddress
+                    }
+                />
+            </Show>
+        );
+    }
 
     const [hasBeenClaimed, setHasBeenClaimed] = createSignal<boolean>(false);
 
@@ -86,4 +85,3 @@ const BlockExplorerLink = ({
 };
 
 export default BlockExplorerLink;
-export { TransactionType };

@@ -17,7 +17,7 @@
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "http://localhost:8092"
+                "normal": "http://localhost:5100"
             },
             "rifRelay": "http://localhost:8090",
             "contracts": {

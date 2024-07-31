@@ -124,8 +124,7 @@ export const relayClaimTransaction = async (
     metadata.signature = await sign(signer, envelopingRequest);
 
     const relayRes = await relay(envelopingRequest, metadata);
-
-    return relayRes.transactionHash;
+    return relayRes.txHash;
 };
 
 export const getSmartWalletAddress = async (

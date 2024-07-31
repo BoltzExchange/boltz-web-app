@@ -57,8 +57,8 @@ export const relay = (
     relay: Record<string, any>,
     metadata: Metadata,
 ): Promise<{
+    txHash: string;
     signedTx: string;
-    transactionHash: string;
 }> =>
     sendPostRequest(`${config.assets[RBTC].rifRelay}/relay`, {
         metadata,

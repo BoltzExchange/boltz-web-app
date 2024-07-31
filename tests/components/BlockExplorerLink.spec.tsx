@@ -1,9 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 
-import BlockExplorerLink, {
-    TransactionType,
-} from "../../src/components/BlockExplorerLink";
+import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
 import { BTC, LBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
@@ -26,10 +24,6 @@ describe("BlockExplorerLink", () => {
                         <BlockExplorerLink
                             swap={swap}
                             swapStatus={() => "transaction.mempool"}
-                            contractTransaction={() => undefined}
-                            contractTransactionType={() =>
-                                TransactionType.Lockup
-                            }
                         />
                     ),
                     { wrapper: contextWrapper },
@@ -59,10 +53,6 @@ describe("BlockExplorerLink", () => {
                         <BlockExplorerLink
                             swap={swap}
                             swapStatus={() => "transaction.claimed"}
-                            contractTransaction={() => undefined}
-                            contractTransactionType={() =>
-                                TransactionType.Lockup
-                            }
                         />
                     ),
                     { wrapper: contextWrapper },
@@ -91,14 +81,7 @@ describe("BlockExplorerLink", () => {
             } as any);
 
             render(
-                () => (
-                    <BlockExplorerLink
-                        swap={swap}
-                        swapStatus={() => ""}
-                        contractTransaction={() => undefined}
-                        contractTransactionType={() => TransactionType.Lockup}
-                    />
-                ),
+                () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
                 { wrapper: contextWrapper },
             );
 
@@ -122,14 +105,7 @@ describe("BlockExplorerLink", () => {
             } as any);
 
             render(
-                () => (
-                    <BlockExplorerLink
-                        swap={swap}
-                        swapStatus={() => ""}
-                        contractTransaction={() => undefined}
-                        contractTransactionType={() => TransactionType.Lockup}
-                    />
-                ),
+                () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
                 { wrapper: contextWrapper },
             );
 
