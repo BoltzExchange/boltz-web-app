@@ -7,7 +7,7 @@ import { decodeAddress, setup } from "../../src/utils/compat";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
-    const getEtherSwap = (code: string): (() => Promise<Contract>) => {
+    const getEtherSwap = (code: string): (() => Contract) => {
         const getDeployedCode = jest.fn().mockResolvedValue(code);
         return jest.fn(() => ({
             getDeployedCode,
@@ -126,9 +126,8 @@ describe("validate responses", () => {
         `*/
             "$desc",
             async ({ valid, contractCode, swap }) => {
-                const contract = getEtherSwap(contractCode);
                 await expect(
-                    validateResponse(swap, contract, Buffer),
+                    validateResponse(swap, getEtherSwap(contractCode), Buffer),
                 ).resolves.toBe(valid);
             },
         );

@@ -1,0 +1,29 @@
+.provider-modal-entry-wrapper {
+    padding-bottom: 5px;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.25);
+    }
+}
+
+.provider-modal-entry-wrapper hr {
+    margin: 0 0 5px;
+}
+
+.provider-modal-entry {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    padding: 8px 25%;
+    gap: 1rem;
+    cursor: pointer;
+}
+
+.provider-modal-entry h4 {
+    flex-grow: 1;
+}
+
+.provider-modal-icon {
+    height: 4rem;
+}

@@ -31,17 +31,16 @@ const LockupEvm = ({
     timeoutBlockHeight: number;
     amount: number;
 }) => {
-    const { getEtherSwap, getSigner } = useWeb3Signer();
+    const { getEtherSwap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
 
     const value = () => satoshiToWei(amount);
 
     const getSignerBalance = async () => {
-        const signer = await getSigner();
-        return signer.provider.getBalance(await signer.getAddress());
+        return signer().provider.getBalance(await signer().getAddress());
     };
 
-    const [signerBalance] = createResource(getSigner, getSignerBalance);
+    const [signerBalance] = createResource(signer(), getSignerBalance);
 
     return (
         <Show

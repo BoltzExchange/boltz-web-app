@@ -386,7 +386,7 @@ const Create = () => {
                 <Fees />
                 <hr class="spacer" />
                 <Show when={assetReceive() === RBTC}>
-                    <ConnectMetamask showAddress={true} />
+                    <ConnectMetamask />
                     <hr class="spacer" />
                 </Show>
                 <Show

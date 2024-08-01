@@ -25,22 +25,20 @@ const ClaimRsk = ({
     refundAddress: string;
     timeoutBlockHeight: number;
 }) => {
-    const { getEtherSwap, getSigner } = useWeb3Signer();
+    const { getEtherSwap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
 
     return (
         <ContractTransaction
             onClick={async () => {
-                const contract = await getEtherSwap();
-                const signer = await getSigner();
-
                 let transactionHash: string;
 
                 if (useRif) {
                     transactionHash = await relayClaimTransaction(
-                        signer,
-                        contract,
+                        signer(),
+                        signer().rdns,
+                        getEtherSwap(),
                         preimage,
                         amount,
                         refundAddress,
@@ -48,7 +46,7 @@ const ClaimRsk = ({
                     );
                 } else {
                     transactionHash = (
-                        await contract[
+                        await getEtherSwap()[
                             "claim(bytes32,uint256,address,uint256)"
                         ](
                             prefix0x(preimage),

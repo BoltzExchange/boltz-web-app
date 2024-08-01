@@ -36,8 +36,10 @@ const sign = async (signer: Signer, request: EnvelopingRequest) => {
     return signer.signTypedData(data.domain, data.types, data.value);
 };
 
+// TODO: optimize network requests
 export const relayClaimTransaction = async (
     signer: Signer,
+    signerRns: string,
     etherSwap: EtherSwap,
     preimage: string,
     amount: number,
@@ -121,6 +123,12 @@ export const relayClaimTransaction = async (
     log.debug("RIF gas estimation response", estimateRes);
 
     envelopingRequest.request.tokenAmount = estimateRes.requiredTokenAmount;
+
+    // Hack to work around Rabby throwing an error when we ask for signatures too rapidly
+    if (signerRns === "io.rabby") {
+        await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+    }
+
     metadata.signature = await sign(signer, envelopingRequest);
 
     const relayRes = await relay(envelopingRequest, metadata);

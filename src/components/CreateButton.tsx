@@ -59,7 +59,7 @@ export const CreateButton = () => {
         invoiceValid,
         invoiceError,
     } = useCreateContext();
-    const { getEtherSwap, getSigner } = useWeb3Signer();
+    const { getEtherSwap, signer } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -165,10 +165,11 @@ export const CreateButton = () => {
         let claimAddress = onchainAddress();
 
         if (assetReceive() === RBTC) {
-            const signer = await getSigner();
             const [balance, gasPrice] = await Promise.all([
-                signer.provider.getBalance(await signer.getAddress()),
-                signer.provider.getFeeData().then((data) => data.gasPrice),
+                signer().provider.getBalance(await signer().getAddress()),
+                signer()
+                    .provider.getFeeData()
+                    .then((data) => data.gasPrice),
             ]);
             log.debug("RSK balance", balance);
 
@@ -176,7 +177,7 @@ export const CreateButton = () => {
             log.debug("RSK balance needed", balanceNeeded);
 
             if (balance <= balanceNeeded) {
-                claimAddress = (await getSmartWalletAddress(signer)).address;
+                claimAddress = (await getSmartWalletAddress(signer())).address;
                 log.info("Using RIF smart wallet as claim address");
             }
         }

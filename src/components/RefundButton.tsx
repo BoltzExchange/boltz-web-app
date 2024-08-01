@@ -37,15 +37,14 @@ const RefundEvm = ({
     timeoutBlockHeight: number;
 }) => {
     const { setSwap } = usePayContext();
-    const { getEtherSwap, getSigner } = useWeb3Signer();
+    const { getEtherSwap, signer } = useWeb3Signer();
     const { setSwapStorage, getSwap, t } = useGlobalContext();
 
     return (
         <ContractTransaction
             onClick={async () => {
-                const [contract, signer, currentSwap] = await Promise.all([
+                const [contract, currentSwap] = await Promise.all([
                     getEtherSwap(),
-                    getSigner(),
                     getSwap(swapId),
                 ]);
 
@@ -53,7 +52,7 @@ const RefundEvm = ({
 
                 if (
                     timeoutBlockHeight <
-                    (await signer.provider.getBlockNumber())
+                    (await signer().provider.getBlockNumber())
                 ) {
                     tx = await contract.refund(
                         prefix0x(preimageHash),

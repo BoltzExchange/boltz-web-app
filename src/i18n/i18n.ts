@@ -1,3 +1,5 @@
+// TODO: remove all metamask wording
+
 const dict = {
     en: {
         language: "English",
@@ -207,6 +209,7 @@ const dict = {
         insufficient_balance: "Insufficient balance",
         insufficient_balance_line:
             "You do not have enough balance in your wallet for this swap.",
+        select_wallet: "Select wallet",
     },
     de: {
         language: "Deutsch",
