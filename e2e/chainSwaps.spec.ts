@@ -56,5 +56,6 @@ test.describe("Chain swap", () => {
 
         await elementsSendToAddress(sendAddress, sendAmount);
         await generateLiquidBlock();
+        // TODO: verify amounts
     });
 });
