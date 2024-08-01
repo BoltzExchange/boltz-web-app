@@ -6,6 +6,7 @@ import { Show, createSignal, onMount } from "solid-js";
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
+import rbtc from "../assets/rootstock-icon.svg";
 import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -85,6 +86,7 @@ export const Hero = () => {
                         <img src={lightning} alt="Lightning Bitcoin" />
                         <img src={bitcoin} alt="Bitcoin" />
                         <img src={liquid} alt="Liquid Bitcoin" />
+                        <img src={rbtc} alt="Rootstock Bitcoin" />
                     </div>
                 </div>
                 <h2 class="headline">{t("node")}</h2>

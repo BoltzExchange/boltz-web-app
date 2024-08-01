@@ -6,7 +6,7 @@ const dict = {
         fast: "Fast",
         l2: "Built on Layer 2",
         l2_sub: "Boltz utilizes Layer 2 scaling technologies like the Lightning Network",
-        assets_sub: "Lightning / Bitcoin / Liquid",
+        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
         safe: "Safe",
         non_custodial: "Non-Custodial",
         non_custodial_sub:
