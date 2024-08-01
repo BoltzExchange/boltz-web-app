@@ -8,3 +8,7 @@ ts-out/
 coverage/
 node_modules/
 public/config.json
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

@@ -29,7 +29,7 @@ const PayInvoice = ({
 
     return (
         <div>
-            <h2>
+            <h2 data-testid="pay-invoice-title">
                 {t("pay_invoice_to", {
                     amount: formatAmount(
                         BigNumber(sendAmount),
