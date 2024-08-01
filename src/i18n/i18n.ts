@@ -206,7 +206,7 @@ const dict = {
             "Couldn't access camera, please check permissions!",
         insufficient_balance: "Insufficient balance",
         insufficient_balance_line:
-            "You do not have enough balance in your wallet for this Swap",
+            "You do not have enough balance in your wallet for this swap.",
     },
     de: {
         language: "Deutsch",
@@ -215,7 +215,7 @@ const dict = {
         fast: "Schnell",
         l2: "Auf Layer-2 gebaut",
         l2_sub: "Boltz nutzt Layer-2 Skalierungstechnologien wie das Lightning-Netzwerk",
-        assets_sub: "Lightning / Bitcoin / Liquid",
+        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
         safe: "Sicher",
         non_custodial: "Non-Custodial",
         non_custodial_sub:
@@ -421,6 +421,9 @@ const dict = {
             "Deaktiviert Downloadaufforderung der Rückerstattungsdatei und andere Bestätigungsschritte",
         error_starting_qr_scanner:
             "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
+        insufficient_balance: "Unzureichendes Guthaben",
+        insufficient_balance_line:
+            "Sie haben nicht genügend Guthaben für diesen Swap.",
     },
     es: {
         language: "Español",
@@ -429,7 +432,7 @@ const dict = {
         fast: "Rápido",
         l2: "Construido en la Capa 2",
         l2_sub: "Boltz utiliza tecnologías de segunda capa como la red de Lightning",
-        assets_sub: "Lightning / Bitcoin / Liquid",
+        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
         safe: "Seguro",
         non_custodial: "Sin Custodia",
         non_custodial_sub:
@@ -635,6 +638,9 @@ const dict = {
             "Desactiva los avisos para descargar el archivo de reembolso y otros pasos de confirmación",
         error_starting_qr_scanner:
             "No se pudo acceder a la cámara, por favor compruebe los permisos!",
+        insufficient_balance: "Saldo insuficiente",
+        insufficient_balance_line:
+            "No tienes saldo suficiente en tu monedero para este swap.",
     },
     zh: {
         language: "中文",
@@ -643,7 +649,7 @@ const dict = {
         fast: "快速",
         l2: "建立在二层网络之上",
         l2_sub: "Boltz利用像闪电网络这样的二层网络扩展技术",
-        assets_sub: "闪电网络/比特币/Liquid",
+        assets_sub: "闪电网络/比特币/Liquid/Rootstock",
         safe: "安全",
         non_custodial: "非托管",
         non_custodial_sub:
@@ -822,6 +828,8 @@ const dict = {
         reckless_mode_setting: "鲁莽模式",
         reckless_mode_setting_tooltip: "禁用下载退款文件的提示和其他确认步骤",
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
+        insufficient_balance: "余额不足",
+        insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
     },
 };
 
