@@ -5,6 +5,8 @@
     "scripts": {
         "start": "npm run regtest && vite",
         "test": "jest --runInBand ./tests",
+        "test:e2e": "playwright test",
+        "playwright:install": "playwright install --with-deps chromium",
         "dev": "vite",
         "regtest": "cp src/configs/regtest.json public/config.json",
         "preview": "vite preview",
