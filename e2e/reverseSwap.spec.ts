@@ -1,40 +1,62 @@
-import { test, expect } from '@playwright/test';
-import { getBitcoinAddress, getBitcoinWalletTx, payInvoiceLnd } from "./utils";
+import { expect, test } from "@playwright/test";
 
-test('Reverse swap BTC/BTC', async ({ page }) => {
-  await page.goto('https://localhost:5173');
+import {
+    generateBitcoinBlock,
+    getBitcoinAddress,
+    getBitcoinWalletTx,
+    payInvoiceLnd,
+} from "./utils";
 
-  const receiveAmount = "0.01";
-  const inputReceiveAmount = page.locator("input[data-testid='receiveAmount']");
-  await inputReceiveAmount.fill(receiveAmount);
+test.describe("reverseSwap", () => {
+    test.beforeEach(async () => {
+        await generateBitcoinBlock();
+    });
 
-  const inputSendAmount = page.locator("input[data-testid='sendAmount']");
-  await expect(inputSendAmount).toHaveValue('0.01005558');
+    test("Reverse swap BTC/BTC", async ({ page }) => {
+        await page.goto("/");
 
-  const inputOnchainAddress = page.locator("input[data-testid='onchainAddress']");
-  await inputOnchainAddress.fill(await getBitcoinAddress());
+        const receiveAmount = "0.01";
+        const inputReceiveAmount = page.locator(
+            "input[data-testid='receiveAmount']",
+        );
+        await inputReceiveAmount.fill(receiveAmount);
 
-  const buttonCreateSwap = page.locator("button[data-testid='create-swap-button']");
-  await buttonCreateSwap.click();
+        const inputSendAmount = page.locator("input[data-testid='sendAmount']");
+        await expect(inputSendAmount).toHaveValue("0.01005558");
 
-  const payInvoiceTitle = page.locator("h2[data-testid='pay-invoice-title']");
-  await expect(payInvoiceTitle).toHaveText("Pay this invoice about 0.01005558 BTC");
+        const inputOnchainAddress = page.locator(
+            "input[data-testid='onchainAddress']",
+        );
+        await inputOnchainAddress.fill(await getBitcoinAddress());
 
-  const spanLightningInvoice = page.locator("span[class='btn']");
-  await spanLightningInvoice.click();
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await buttonCreateSwap.click();
 
-  const lightningInvoice = await page.evaluate(() => {
-    return navigator.clipboard.readText();
-  });
-  expect(lightningInvoice).toBeDefined();
+        const payInvoiceTitle = page.locator(
+            "h2[data-testid='pay-invoice-title']",
+        );
+        await expect(payInvoiceTitle).toHaveText(
+            "Pay this invoice about 0.01005558 BTC",
+        );
 
-  await payInvoiceLnd(lightningInvoice)
+        const spanLightningInvoice = page.locator("span[class='btn']");
+        await spanLightningInvoice.click();
 
-  const txIdLink = page.getByText("open claim transaction");
+        const lightningInvoice = await page.evaluate(() => {
+            return navigator.clipboard.readText();
+        });
+        expect(lightningInvoice).toBeDefined();
 
-  const txId = (await txIdLink.getAttribute("href")).split("/").pop();
-  expect(txId).toBeDefined();
+        await payInvoiceLnd(lightningInvoice);
 
-  const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
-  expect(txInfo.amount.toString()).toEqual(receiveAmount);
+        const txIdLink = page.getByText("open claim transaction");
+
+        const txId = (await txIdLink.getAttribute("href")).split("/").pop();
+        expect(txId).toBeDefined();
+
+        const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
+        expect(txInfo.amount.toString()).toEqual(receiveAmount);
+    });
 });
