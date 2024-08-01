@@ -28,8 +28,30 @@ export const getBitcoinAddress = async (): Promise<string> => {
     return execCommand("bitcoin-cli-sim-client getnewaddress");
 };
 
+export const bitcoinSendToAddress = async (
+    address: string,
+    amount: string,
+): Promise<string> => {
+    return execCommand(
+        `bitcoin-cli-sim-client sendtoaddress "${address}" ${amount}`,
+    );
+};
+
+export const elementsSendToAddress = async (
+    address: string,
+    amount: string,
+): Promise<string> => {
+    return execCommand(
+        `elements-cli-sim-client sendtoaddress "${address}" ${amount}`,
+    );
+};
+
 export const generateBitcoinBlock = async (): Promise<string> => {
     return execCommand("bitcoin-cli-sim-client -generate");
+};
+
+export const generateLiquidBlock = async (): Promise<string> => {
+    return execCommand("elements-cli-sim-client -generate");
 };
 
 export const getBitcoinWalletTx = async (txId: string): Promise<string> => {
@@ -38,4 +60,8 @@ export const getBitcoinWalletTx = async (txId: string): Promise<string> => {
 
 export const payInvoiceLnd = async (invoice: string): Promise<string> => {
     return execCommand(`lncli-sim 1 payinvoice -f ${invoice}`);
+};
+
+export const generateInvoiceLnd = async (amount: number): Promise<string> => {
+    return execCommand(`lncli-sim 1 addinvoice --amt ${amount}`);
 };
