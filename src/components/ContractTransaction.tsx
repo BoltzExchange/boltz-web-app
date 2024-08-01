@@ -1,5 +1,8 @@
+import log from "loglevel";
 import { Show, createSignal } from "solid-js";
 
+import { useGlobalContext } from "../context/Global";
+import { formatError } from "../utils/errors";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = ({
@@ -15,6 +18,7 @@ const ContractTransaction = ({
     showHr?: boolean;
     waitingText?: string;
 }) => {
+    const { notify } = useGlobalContext();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
 
@@ -32,6 +36,12 @@ const ContractTransaction = ({
                         try {
                             await onClick();
                             setTxSent(true);
+                        } catch (e) {
+                            log.error(`EVM transaction failed`, e);
+                            notify(
+                                "error",
+                                `Transaction failed: ${formatError(e)}`,
+                            );
                         } finally {
                             setClicked(false);
                         }

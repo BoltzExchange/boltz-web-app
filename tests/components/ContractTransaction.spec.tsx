@@ -2,16 +2,20 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import ContractTransaction from "../../src/components/ContractTransaction";
 import LoadingSpinner from "../../src/components/LoadingSpinner";
+import { contextWrapper } from "../helper";
 
 describe("ContractTransaction", () => {
     test("should show button in starting state", async () => {
         const buttonText = "button";
-        const { container } = render(() => (
-            <ContractTransaction
-                onClick={async () => {}}
-                buttonText={buttonText}
-            />
-        ));
+        const { container } = render(
+            () => (
+                <ContractTransaction
+                    onClick={async () => {}}
+                    buttonText={buttonText}
+                />
+            ),
+            { wrapper: contextWrapper },
+        );
 
         const button = await screen.findByText(buttonText);
         expect(button).not.toBeUndefined();
@@ -24,13 +28,16 @@ describe("ContractTransaction", () => {
         const promptText = "pls send";
         const buttonText = "button";
 
-        const { container } = render(() => (
-            <ContractTransaction
-                onClick={async () => {}}
-                promptText={promptText}
-                buttonText={buttonText}
-            />
-        ));
+        const { container } = render(
+            () => (
+                <ContractTransaction
+                    onClick={async () => {}}
+                    promptText={promptText}
+                    buttonText={buttonText}
+                />
+            ),
+            { wrapper: contextWrapper },
+        );
 
         expect(container.childNodes.length).toEqual(2);
         expect(container.childNodes[0].textContent).toEqual(promptText);
@@ -41,14 +48,17 @@ describe("ContractTransaction", () => {
         const promptText = "pls send";
         const buttonText = "button";
 
-        const { container } = render(() => (
-            <ContractTransaction
-                onClick={async () => {}}
-                showHr={true}
-                promptText={promptText}
-                buttonText={buttonText}
-            />
-        ));
+        const { container } = render(
+            () => (
+                <ContractTransaction
+                    onClick={async () => {}}
+                    showHr={true}
+                    promptText={promptText}
+                    buttonText={buttonText}
+                />
+            ),
+            { wrapper: contextWrapper },
+        );
 
         expect(container.childNodes.length).toEqual(3);
         expect(container.childNodes[0].textContent).toEqual(promptText);
@@ -60,9 +70,15 @@ describe("ContractTransaction", () => {
         const onClick = jest.fn().mockResolvedValue(undefined);
         const buttonText = "button";
 
-        const { container } = render(() => (
-            <ContractTransaction onClick={onClick} buttonText={buttonText} />
-        ));
+        const { container } = render(
+            () => (
+                <ContractTransaction
+                    onClick={onClick}
+                    buttonText={buttonText}
+                />
+            ),
+            { wrapper: contextWrapper },
+        );
 
         fireEvent.click(await screen.findByText(buttonText));
         expect(onClick).toHaveBeenCalled();
@@ -80,13 +96,16 @@ describe("ContractTransaction", () => {
         const buttonText = "button";
         const waitingText = "waiting";
 
-        const { container } = render(() => (
-            <ContractTransaction
-                onClick={onClick}
-                buttonText={buttonText}
-                waitingText={waitingText}
-            />
-        ));
+        const { container } = render(
+            () => (
+                <ContractTransaction
+                    onClick={onClick}
+                    buttonText={buttonText}
+                    waitingText={waitingText}
+                />
+            ),
+            { wrapper: contextWrapper },
+        );
 
         fireEvent.click(await screen.findByText(buttonText));
 

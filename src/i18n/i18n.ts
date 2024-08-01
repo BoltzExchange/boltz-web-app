@@ -204,6 +204,9 @@ const dict = {
             "Disables prompts to download refund file and other confirmation steps",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
+        insufficient_balance: "Insufficient balance",
+        insufficient_balance_line:
+            "You do not have enough balance in your wallet for this Swap",
     },
     de: {
         language: "Deutsch",
@@ -822,7 +825,9 @@ const dict = {
     },
 };
 
-const rawDict = JSON.parse(JSON.stringify(dict));
+export type DictKey = keyof typeof dict.en;
+
+export const rawDict = JSON.parse(JSON.stringify(dict));
 
 Object.entries(dict)
     .filter(([lang]) => lang !== "en")
@@ -835,4 +840,3 @@ Object.entries(dict)
     });
 
 export default dict;
-export { rawDict };

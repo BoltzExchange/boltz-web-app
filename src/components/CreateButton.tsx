@@ -137,10 +137,7 @@ export const CreateButton = () => {
                     }
                     if (!invoiceValid()) {
                         setButtonLabel({
-                            key:
-                                invoiceError() === ""
-                                    ? "invalid_invoice"
-                                    : invoiceError(),
+                            key: invoiceError() || "invalid_invoice",
                         });
                         return;
                     }

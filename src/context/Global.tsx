@@ -17,7 +17,7 @@ import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
-import dict from "../i18n/i18n";
+import dict, { DictKey } from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { formatError } from "../utils/errors";
@@ -68,7 +68,7 @@ export type GlobalContextType = {
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
     // functions
-    t: (key: string, values?: Record<string, any>) => string;
+    t: (key: DictKey, values?: Record<string, any>) => string;
     notify: (
         type: string,
         message: string,
@@ -311,7 +311,7 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     const t = translator(dictLocale, resolveTemplate) as (
-        key: string,
+        key: DictKey,
         values?: Record<string, any>,
     ) => string;
 

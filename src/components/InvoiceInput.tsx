@@ -58,7 +58,7 @@ const InvoiceInput = () => {
 
         try {
             input.setCustomValidity("");
-            setInvoiceError("");
+            setInvoiceError(undefined);
             input.classList.remove("invalid");
             if (isLnurl(inputValue)) {
                 setLnurl(inputValue);
