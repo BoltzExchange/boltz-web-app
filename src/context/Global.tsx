@@ -67,6 +67,8 @@ export type GlobalContextType = {
     setAudioNotification: Setter<boolean>;
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
+    zeroconf: Accessor<boolean>;
+    setZeroconf: Setter<boolean>;
     // functions
     t: (key: string, values?: Record<string, any>) => string;
     notify: (
@@ -155,6 +157,10 @@ const GlobalProvider = (props: { children: any }) => {
             name: "audioNotification",
         },
     );
+
+    const [zeroconf, setZeroconf] = makePersisted(createSignal<boolean>(true), {
+        name: "zeroconf",
+    });
 
     const localeSeparator = (0.1).toLocaleString().charAt(1);
     const [separator, setSeparator] = makePersisted(
@@ -356,6 +362,8 @@ const GlobalProvider = (props: { children: any }) => {
                 setAudioNotification,
                 browserNotification,
                 setBrowserNotification,
+                zeroconf,
+                setZeroconf,
                 // functions
                 t,
                 notify,

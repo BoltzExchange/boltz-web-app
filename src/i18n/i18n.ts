@@ -204,6 +204,10 @@ const dict = {
             "Disables prompts to download refund file and other confirmation steps",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
+        zeroconf: "Zeroconf",
+        zeroconf_tooltip: "Enable or disable zeroconf",
+        enable_zeroconf: "Enable Zeroconf",
+        enable_zeroconf_tooltip: "Enable or disable zeroconf larger desc",
     },
     de: {
         language: "Deutsch",
