@@ -63,17 +63,11 @@ type ChainPairTypeTaproot = PairType & {
     };
 };
 
-type SubmarinePairsTaproot = Record<
-    string,
-    Record<string, SubmarinePairTypeTaproot>
->;
+type SubmarinePairsTaproot = Record;
 
-type ReversePairsTaproot = Record<
-    string,
-    Record<string, ReversePairTypeTaproot>
->;
+type ReversePairsTaproot = Record;
 
-type ChainPairsTaproot = Record<string, Record<string, ChainPairTypeTaproot>>;
+type ChainPairsTaproot = Record;
 
 type Pairs = {
     [SwapType.Submarine]: SubmarinePairsTaproot;
@@ -90,7 +84,7 @@ type Contracts = {
     network: {
         chainId: number;
     };
-    tokens: Record<string, string>;
+    tokens: Record;
     swapContracts: {
         EtherSwap: string;
         ERC20Swap: string;
@@ -168,7 +162,7 @@ type ChainSwapTransaction = {
 
 type TransactionInterface = Transaction | LiquidTransaction;
 
-export const getPairs = async (asset: string): Promise<Pairs> => {
+export const getPairs = async (asset: string): Promise => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", asset),
         fetcher<ReversePairsTaproot>("/v2/swap/reverse", asset),
@@ -196,7 +190,7 @@ export const createSubmarineSwap = (
     pairHash: string,
     referralId: string,
     refundPublicKey?: string,
-): Promise<SubmarineCreatedResponse> =>
+): Promise =>
     fetcher("/v2/swap/submarine", to, {
         from,
         to,
@@ -215,7 +209,7 @@ export const createReverseSwap = (
     referralId: string,
     claimPublicKey?: string,
     claimAddress?: string,
-): Promise<ReverseCreatedResponse> =>
+): Promise =>
     fetcher("/v2/swap/reverse", to, {
         from,
         to,
@@ -237,7 +231,7 @@ export const createChainSwap = (
     claimAddress: string | undefined,
     pairHash: string,
     referralId: string,
-): Promise<ChainSwapCreatedResponse> =>
+): Promise =>
     fetcher("/v2/swap/chain", to, {
         from,
         to,
@@ -257,7 +251,7 @@ export const getPartialRefundSignature = async (
     pubNonce: Buffer,
     transaction: TransactionInterface,
     index: number,
-): Promise<PartialSignature> => {
+): Promise => {
     checkCooperative();
     const res = await fetcher(
         `/v2/swap/${
@@ -283,7 +277,7 @@ export const getPartialReverseClaimSignature = async (
     pubNonce: Buffer,
     transaction: TransactionInterface,
     index: number,
-): Promise<PartialSignature> => {
+): Promise => {
     checkCooperative();
     const res = await fetcher(`/v2/swap/reverse/${id}/claim`, asset, {
         index,
@@ -332,7 +326,7 @@ export const getEipRefundSignature = (
 };
 
 export const getFeeEstimations = (asset: string) =>
-    fetcher<Record<string, number>>("/v2/chain/fees", asset);
+    fetcher<Record>("/v2/chain/fees", asset);
 
 export const getNodes = (asset: string) =>
     fetcher<{
@@ -355,7 +349,7 @@ export const getNodeStats = (asset: string) =>
     }>("/v2/nodes/stats", asset);
 
 export const getContracts = (asset: string) =>
-    fetcher<Record<string, Contracts>>("/v2/chain/contracts", asset);
+    fetcher<Record>("/v2/chain/contracts", asset);
 
 export const broadcastTransaction = (asset: string, txHex: string) =>
     fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, asset, {
@@ -373,7 +367,7 @@ export const getLockupTransaction = async (
     asset: string,
     id: string,
     type: SwapType,
-): Promise<LockupTransaction> => {
+): Promise => {
     switch (type) {
         case SwapType.Submarine:
             return fetcher<{
@@ -404,14 +398,16 @@ export const getReverseTransaction = (asset: string, id: string) =>
         timeoutBlockHeight: number;
     }>(`/v2/swap/reverse/${id}/transaction`, asset);
 
+export type SwapStatusTransaction = {
+    hex: string;
+    id: string;
+};
+
 export type SwapStatus = {
     status: string;
     failureReason?: string;
     zeroConfRejected?: boolean;
-    transaction?: {
-        id: string;
-        hex: string;
-    };
+    transaction?: SwapStatusTransaction;
 };
 
 export const getSwapStatus = (asset: string, id: string) =>

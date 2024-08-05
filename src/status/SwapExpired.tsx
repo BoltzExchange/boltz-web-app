@@ -25,10 +25,10 @@ const SwapExpired = () => {
                 swap().id,
                 swap().type,
             );
-            log.debug(`got swap transaction for ${swap().id}`);
+            log.debug(`got swap transaction for ${swap()?.id}`);
             setTransactionToRefund(res);
         } catch (error: any) {
-            log.warn(`no swap transaction for: ${swap().id}`, error);
+            log.warn(`no swap transaction for: ${swap()?.id}`, error);
         }
     });
 
@@ -39,13 +39,12 @@ const SwapExpired = () => {
             </p>
             <hr />
             <Show when={transactionToRefund() !== null}>
-                <RefundButton
-                    swap={swap as Accessor<SubmarineSwap | ChainSwap>}
-                />
+                <RefundButton swap={swap as Accessor} />
                 <hr />
                 <BlockExplorer
-                    asset={swap().assetSend}
-                    txId={transactionToRefund().id}
+                    typeLabel="lockup_tx"
+                    asset={swap()?.assetSend}
+                    txId={transactionToRefund()?.id}
                 />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>

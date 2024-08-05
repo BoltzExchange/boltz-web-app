@@ -6,18 +6,18 @@ import {
     useContext,
 } from "solid-js";
 
-import { SwapStatusTransaction } from "../consts/Types";
+import { SwapStatusTransaction } from "../utils/boltzClient";
 import { SomeSwap } from "../utils/swapCreator";
 
 export type PayContextType = {
-    failureReason: Accessor<string>;
-    setFailureReason: Setter<string>;
-    swap: Accessor<SomeSwap | null>;
-    setSwap: Setter<SomeSwap | null>;
-    swapStatus: Accessor<string>;
-    setSwapStatus: Setter<string>;
-    swapStatusTransaction: Accessor<SwapStatusTransaction>;
-    setSwapStatusTransaction: Setter<SwapStatusTransaction>;
+    failureReason: Accessor;
+    setFailureReason: Setter;
+    swap: Accessor;
+    setSwap: Setter;
+    swapStatus: Accessor;
+    setSwapStatus: Setter;
+    swapStatusTransaction: Accessor;
+    setSwapStatusTransaction: Setter;
 };
 
 const PayContext = createContext<PayContextType>();
@@ -30,7 +30,7 @@ const PayProvider = (props: { children: any }) => {
     });
     const [swapStatus, setSwapStatus] = createSignal<string>("");
     const [swapStatusTransaction, setSwapStatusTransaction] =
-        createSignal<SwapStatusTransaction>({});
+        createSignal<SwapStatusTransaction | null>(null);
 
     return (
         <PayContext.Provider

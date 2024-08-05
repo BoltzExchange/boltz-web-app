@@ -15,8 +15,8 @@ const TransactionMempool = () => {
             <LoadingSpinner />
             <Show when={swapStatusTransaction()}>
                 <BlockExplorer
-                    asset={swap().assetSend}
-                    txId={swapStatusTransaction().id}
+                    asset={swap()?.assetSend}
+                    txId={swapStatusTransaction()?.id}
                     typeLabel="lockup_tx"
                 />
             </Show>

@@ -22,14 +22,14 @@ const InvoiceFailedToPay = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <RefundButton swap={swap as Accessor<SubmarineSwap | ChainSwap>} />
+            <RefundButton swap={swap as Accessor} />
             <Show when={swap().assetSend !== RBTC && !isTaproot}>
                 <DownloadRefund />
             </Show>
             <hr />
             <BlockExplorer
-                asset={swap().assetSend}
-                address={getLockupAddress(swap() as SubmarineSwap)}
+                asset={swap()?.assetSend}
+                address={getLockupAddress(swap() as SubmarineSwap | ChainSwap)}
             />
         </div>
     );
