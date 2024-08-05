@@ -1,18 +1,21 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Accessor, Show, createEffect } from "solid-js";
+import { Accessor, Show, createEffect, createSignal } from "solid-js";
 
+import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { getLockupTransaction } from "../utils/boltzClient";
+import { LockupTransaction, getLockupTransaction } from "../utils/boltzClient";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
     const { failureReason, swap } = usePayContext();
-    const { t, setTransactionToRefund, transactionToRefund } =
-        useGlobalContext();
+    const { t } = useGlobalContext();
+
+    const [transactionToRefund, setTransactionToRefund] =
+        createSignal<LockupTransaction>(null);
 
     createEffect(async () => {
         setTransactionToRefund(null);
@@ -22,10 +25,10 @@ const SwapExpired = () => {
                 swap().id,
                 swap().type,
             );
-            log.debug(`got swap transaction for ${swap().id}`);
-            setTransactionToRefund(res.hex);
+            log.debug(`got swap transaction for ${swap()?.id}`);
+            setTransactionToRefund(res);
         } catch (error: any) {
-            log.warn(`no swap transaction for: ${swap().id}`, error);
+            log.warn(`no swap transaction for: ${swap()?.id}`, error);
         }
     });
 
@@ -36,10 +39,13 @@ const SwapExpired = () => {
             </p>
             <hr />
             <Show when={transactionToRefund() !== null}>
-                <RefundButton
-                    swap={swap as Accessor<SubmarineSwap | ChainSwap>}
-                />
+                <RefundButton swap={swap as Accessor} />
                 <hr />
+                <BlockExplorer
+                    typeLabel="lockup_tx"
+                    asset={swap()?.assetSend}
+                    txId={transactionToRefund()?.id}
+                />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>
                 {t("new_swap")}
