@@ -15,6 +15,7 @@ import { useGlobalContext } from "../context/Global";
 import { EIP6963ProviderInfo, useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
+import { cropString, isMobile } from "../utils/helper";
 
 const connect = async (
     notify: (type: string, message: string) => void,
@@ -122,13 +123,21 @@ const ShowAddress = ({
     const { t } = useGlobalContext();
     const { clearSigner } = useWeb3Signer();
 
-    const [text, setText] = createSignal<string>(address());
+    const formatAddress = (addr: string) => {
+        if (isMobile()) {
+            return cropString(addr);
+        }
+
+        return addr;
+    };
+
+    const [text, setText] = createSignal<string>(formatAddress(address()));
 
     return (
         <button
             onClick={() => clearSigner()}
             onMouseEnter={() => setText(t("disconnect_address"))}
-            onMouseLeave={() => setText(address())}
+            onMouseLeave={() => setText(formatAddress(address()))}
             class="btn btn-light">
             {text()}
         </button>

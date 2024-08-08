@@ -69,6 +69,7 @@ const Web3SignerContext = createContext<{
     // TODO: this is | undefined
     signer: Accessor<Signer>;
     clearSigner: () => void;
+
     getEtherSwap: () => EtherSwap;
 }>();
 
