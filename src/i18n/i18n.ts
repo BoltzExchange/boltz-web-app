@@ -276,10 +276,10 @@ const dict = {
         pay_invoice_to:
             "Zahle diese Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
-        no_metamask: "MetaMask ist nicht installiert",
-        connect_metamask: "MetaMask verbinden",
-        connect_to_address: "Mit MetaMask verbinden um Adresse zu setzen",
-        disconnect_address: "MetaMask trennen",
+        no_wallet: "Wallet ist nicht installiert",
+        connect_wallet: "Wallet verbinden",
+        connect_to_address: "Mit Swap-Adresse verbinden",
+        disconnect_address: "Wallet trennen",
         lockup_failed: "Lockup fehlgeschlagen!",
         lockup_failed_subline:
             "Deine Lockup-Transaktion ist fehlgeschlagen, warte auf den Timeout, um eine Rückerstattung zu starten.",
@@ -315,8 +315,8 @@ const dict = {
             "Swaps, die in deinem Browser gespeichert wurden",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
-        refund_address_header: "Adresse deines {{ asset }} Wallet eingeben",
-        refund_address_header_no_asset: "Adresse deines Wallet eingeben",
+        refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
+        refund_address_header_no_asset: "Adresse deines Wallets eingeben",
         refund_backup: "Backup",
         refund_import: "Backup importieren",
         refund_clear: "Speicher löschen",
@@ -426,6 +426,8 @@ const dict = {
         insufficient_balance: "Unzureichendes Guthaben",
         insufficient_balance_line:
             "Sie haben nicht genügend Guthaben für diesen Swap.",
+        select_wallet: "Wallet auswählen",
+        switch_network: "Netzwerk wechseln",
     },
     es: {
         language: "Español",
@@ -492,11 +494,11 @@ const dict = {
         send_to: "Enviar {{ amount }} {{ denomination }} a",
         pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
-        no_metamask: "MetaMask no está instalado",
-        connect_metamask: "Conectar MetaMask",
+        no_wallet: "Monedero no está instalado",
+        connect_wallet: "Conectar monedero",
         connect_to_address:
-            "Conectar con MetaMask para establecer la dirección",
-        disconnect_address: "Desconectar MetaMask",
+            "Conectar con dirección de intercambio",
+        disconnect_address: "Desconectar monedero",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
             "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
@@ -643,6 +645,8 @@ const dict = {
         insufficient_balance: "Saldo insuficiente",
         insufficient_balance_line:
             "No tienes saldo suficiente en tu monedero para este swap.",
+        select_wallet: "Seleccionar monedero",
+        switch_network: "Cambiar red",
     },
     zh: {
         language: "中文",
@@ -707,10 +711,10 @@ const dict = {
             "请确保将准确的金额{{ amount }}{{ denomination }}发送到下面显示的地址。否则,交换将失败。最好使用“复制BIP21”按钮,并将其粘贴到您钱包的发送屏幕中。",
         pay_invoice_to: "支付金额为{{ amount }}{{ denomination }}的发票",
         pay_address: "地址",
-        no_metamask: "未安装MetaMask",
-        connect_metamask: "连接MetaMask",
-        connect_to_address: "连接MetaMask以设置地址",
-        disconnect_address: "断开MetaMask",
+        no_wallet: "未安装钱包",
+        connect_wallet: "连接钱包",
+        connect_to_address: "连接交换地址",
+        disconnect_address: "断开钱包",
         lockup_failed: "锁仓失败！",
         lockup_failed_subline: "您的锁仓交易失败，请等待超时进行退款。",
         failure_reason: "失败原因",
@@ -832,6 +836,8 @@ const dict = {
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
         insufficient_balance: "余额不足",
         insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
+        select_wallet: "选择钱包",
+        switch_network: "转换网络",
     },
 };
 
