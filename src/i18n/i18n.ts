@@ -1,5 +1,3 @@
-// TODO: remove all metamask wording
-
 const dict = {
     en: {
         language: "English",
@@ -66,10 +64,10 @@ const dict = {
         pay_invoice_to:
             "Pay this invoice about {{ amount }} {{ denomination }}",
         pay_address: "Address",
-        no_metamask: "MetaMask not installed",
-        connect_metamask: "Connect MetaMask",
-        connect_to_address: "Connect to MetaMask to set address",
-        disconnect_address: "Disconnect MetaMask",
+        no_wallet: "Wallet not installed",
+        connect_wallet: "Connect wallet",
+        connect_to_address: "Connect to swap address",
+        disconnect_address: "Disconnect wallet",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
             "Your lockup transaction failed, wait for the timeout to refund.",

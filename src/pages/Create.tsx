@@ -4,7 +4,7 @@ import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 import AddressInput from "../components/AddressInput";
 import Asset from "../components/Asset";
 import AssetSelect from "../components/AssetSelect";
-import ConnectMetamask from "../components/ConnectMetamask";
+import ConnectWallet from "../components/ConnectWallet";
 import { CreateButton } from "../components/CreateButton";
 import Fees from "../components/Fees";
 import InvoiceInput from "../components/InvoiceInput";
@@ -386,7 +386,7 @@ const Create = () => {
                 <Fees />
                 <hr class="spacer" />
                 <Show when={assetReceive() === RBTC}>
-                    <ConnectMetamask />
+                    <ConnectWallet />
                     <hr class="spacer" />
                 </Show>
                 <Show

@@ -4,7 +4,7 @@ import { Show, createEffect, createSignal } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
-import { ConnectAddress, SwitchNetwork } from "./ConnectMetamask";
+import { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = ({

@@ -94,7 +94,6 @@ const ConnectModal = () => {
     return (
         <>
             <button
-                id="metamask"
                 class="btn"
                 onClick={() => {
                     if (Object.keys(providers()).length > 1) {
@@ -108,7 +107,7 @@ const ConnectModal = () => {
                         ).then();
                     }
                 }}>
-                {t("connect_metamask")}
+                {t("connect_wallet")}
             </button>
             <Modal show={show} setShow={setShow} />
         </>
@@ -150,7 +149,6 @@ export const ConnectAddress = ({ address }: { address: string }) => {
 
     return (
         <button
-            id="metamask"
             class="btn"
             onClick={async () => {
                 try {
@@ -176,7 +174,6 @@ export const SwitchNetwork = () => {
 
     return (
         <button
-            id="metamask"
             class="btn"
             onClick={async () => {
                 try {
@@ -191,7 +188,7 @@ export const SwitchNetwork = () => {
     );
 };
 
-const ConnectMetamask = () => {
+const ConnectWallet = () => {
     const { t } = useGlobalContext();
     const { providers, signer } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
@@ -209,7 +206,7 @@ const ConnectMetamask = () => {
             when={Object.keys(providers()).length > 0}
             fallback={
                 <button class="btn" disabled>
-                    {t("no_metamask")}
+                    {t("no_wallet")}
                 </button>
             }>
             <Show when={address() !== undefined} fallback={<ConnectModal />}>
@@ -219,4 +216,4 @@ const ConnectMetamask = () => {
     );
 };
 
-export default ConnectMetamask;
+export default ConnectWallet;

@@ -119,7 +119,7 @@ export const CreateButton = () => {
                     return;
                 }
                 if (assetReceive() === RBTC && !addressValid()) {
-                    setButtonLabel({ key: "connect_metamask" });
+                    setButtonLabel({ key: "connect_wallet" });
                     return;
                 }
                 if (swapType() !== SwapType.Submarine) {
