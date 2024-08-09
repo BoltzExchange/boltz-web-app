@@ -11,7 +11,7 @@ const BlockExplorer = (props: {
 
     txId?: string;
     address?: string;
-    typeLabel?: string;
+    typeLabel?: "lockup_address" | "lockup_tx" | "claim_tx" | "refund_tx";
 }) => {
     const { t } = useGlobalContext();
     const href = () =>

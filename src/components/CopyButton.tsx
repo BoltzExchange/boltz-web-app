@@ -3,6 +3,7 @@ import { IoCheckmark } from "solid-icons/io";
 import { Accessor, Show, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
+import type { DictKey } from "../i18n/i18n";
 import { clipboard } from "../utils/helper";
 
 const CopyButton = ({
@@ -10,7 +11,7 @@ const CopyButton = ({
     label,
     btnClass = "btn",
 }: {
-    label: string;
+    label: DictKey;
     data: string | Accessor<string>;
     btnClass?: string;
 }) => {

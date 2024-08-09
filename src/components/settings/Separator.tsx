@@ -10,7 +10,7 @@ const Separator = () => {
     return (
         <div
             class="separator toggle"
-            title={t("separator_tooltip")}
+            title={t("decimal_tooltip")}
             onClick={toggle}>
             <span class={separator() === "." ? "active" : ""}>.</span>
             <span class={separator() === "," ? "active" : ""}>,</span>

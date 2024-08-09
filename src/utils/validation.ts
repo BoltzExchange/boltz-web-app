@@ -26,7 +26,7 @@ import { createMusig, tweakMusig } from "./taproot/musig";
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
 
-type ContractGetter = () => Promise<BaseContract>;
+type ContractGetter = () => BaseContract;
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
     /*

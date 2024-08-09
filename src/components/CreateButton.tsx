@@ -9,6 +9,7 @@ import { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import { getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { coalesceLn } from "../utils/helper";
@@ -58,7 +59,7 @@ export const CreateButton = () => {
         invoiceValid,
         invoiceError,
     } = useCreateContext();
-    const { getEtherSwap } = useWeb3Signer();
+    const { getEtherSwap, signer } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -118,7 +119,7 @@ export const CreateButton = () => {
                     return;
                 }
                 if (assetReceive() === RBTC && !addressValid()) {
-                    setButtonLabel({ key: "connect_metamask" });
+                    setButtonLabel({ key: "connect_wallet" });
                     return;
                 }
                 if (swapType() !== SwapType.Submarine) {
@@ -136,10 +137,7 @@ export const CreateButton = () => {
                     }
                     if (!invoiceValid()) {
                         setButtonLabel({
-                            key:
-                                invoiceError() === ""
-                                    ? "invalid_invoice"
-                                    : invoiceError(),
+                            key: invoiceError() || "invalid_invoice",
                         });
                         return;
                     }
@@ -164,6 +162,28 @@ export const CreateButton = () => {
 
         if (!valid()) return;
 
+        let claimAddress = onchainAddress();
+
+        if (assetReceive() === RBTC) {
+            const [balance, gasPrice] = await Promise.all([
+                signer().provider.getBalance(await signer().getAddress()),
+                signer()
+                    .provider.getFeeData()
+                    .then((data) => data.gasPrice),
+            ]);
+            log.debug("RSK balance", balance);
+
+            const balanceNeeded = gasPrice * GasNeededToClaim;
+            log.debug("RSK balance needed", balanceNeeded);
+
+            if (balance <= balanceNeeded) {
+                claimAddress = (await getSmartWalletAddress(signer())).address;
+                log.info("Using RIF smart wallet as claim address");
+            }
+        }
+
+        const useRif = onchainAddress() !== claimAddress;
+
         try {
             let data: SomeSwap;
             switch (swapType()) {
@@ -176,6 +196,7 @@ export const CreateButton = () => {
                         receiveAmount(),
                         invoice(),
                         ref(),
+                        useRif,
                     );
                     break;
 
@@ -186,8 +207,9 @@ export const CreateButton = () => {
                         coalesceLn(assetReceive()),
                         sendAmount(),
                         receiveAmount(),
-                        onchainAddress(),
+                        claimAddress,
                         ref(),
+                        useRif,
                     );
                     break;
 
@@ -198,8 +220,9 @@ export const CreateButton = () => {
                         assetReceive(),
                         sendAmount(),
                         receiveAmount(),
-                        onchainAddress(),
+                        claimAddress,
                         ref(),
+                        useRif,
                     );
                     break;
             }
@@ -209,7 +232,10 @@ export const CreateButton = () => {
                 return;
             }
 
-            await setSwapStorage(data);
+            await setSwapStorage({
+                ...data,
+                signer: signer()?.address,
+            });
             setInvoice("");
             setInvoiceValid(false);
             setOnchainAddress("");

@@ -28,24 +28,25 @@ const RefundEvm = ({
     amount,
     claimAddress,
     preimageHash,
+    signerAddress,
     timeoutBlockHeight,
 }: {
     swapId: string;
     amount: number;
     preimageHash: string;
     claimAddress: string;
+    signerAddress: string;
     timeoutBlockHeight: number;
 }) => {
     const { setSwap } = usePayContext();
-    const { getEtherSwap, getSigner } = useWeb3Signer();
+    const { getEtherSwap, signer } = useWeb3Signer();
     const { setSwapStorage, getSwap, t } = useGlobalContext();
 
     return (
         <ContractTransaction
             onClick={async () => {
-                const [contract, signer, currentSwap] = await Promise.all([
+                const [contract, currentSwap] = await Promise.all([
                     getEtherSwap(),
-                    getSigner(),
                     getSwap(swapId),
                 ]);
 
@@ -53,7 +54,7 @@ const RefundEvm = ({
 
                 if (
                     timeoutBlockHeight <
-                    (await signer.provider.getBlockNumber())
+                    (await signer().provider.getBlockNumber())
                 ) {
                     tx = await contract.refund(
                         prefix0x(preimageHash),
@@ -85,6 +86,7 @@ const RefundEvm = ({
                 setSwap(currentSwap);
                 await tx.wait(1);
             }}
+            address={signerAddress}
             buttonText={t("refund")}
         />
     );
@@ -118,6 +120,7 @@ const RefundButton = ({
             return (
                 <RefundEvm
                     swapId={submarine.id}
+                    signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}
                     timeoutBlockHeight={submarine.timeoutBlockHeight}
@@ -130,6 +133,7 @@ const RefundButton = ({
             return (
                 <RefundEvm
                     swapId={chain.id}
+                    signerAddress={chain.signer}
                     amount={chain.lockupDetails.amount}
                     claimAddress={chain.lockupDetails.claimAddress}
                     timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}

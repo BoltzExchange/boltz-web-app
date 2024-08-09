@@ -17,7 +17,7 @@ import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
-import dict from "../i18n/i18n";
+import dict, { DictKey } from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { detectEmbedded } from "../utils/embed";
 import { formatError } from "../utils/errors";
@@ -68,7 +68,7 @@ export type GlobalContextType = {
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
     // functions
-    t: (key: string, values?: Record<string, any>) => string;
+    t: (key: DictKey, values?: Record<string, any>) => string;
     notify: (
         type: string,
         message: string,
@@ -90,6 +90,9 @@ export type GlobalContextType = {
     deleteSwap: (id: string) => Promise<void>;
     clearSwaps: () => Promise<any>;
     updateSwapStatus: (id: string, newStatus: string) => Promise<boolean>;
+
+    setRdns: (address: string, rdns: string) => Promise<string>;
+    getRdnsForAddress: (address: string) => Promise<string | null>;
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -271,6 +274,16 @@ const GlobalProvider = (props: { children: any }) => {
 
     const clearSwaps = () => swapsForage.clear();
 
+    const rdnsForage = localforage.createInstance({
+        name: "rdns",
+    });
+
+    const setRdns = (address: string, rdns: string) =>
+        rdnsForage.setItem(address.toLowerCase(), rdns);
+
+    const getRdnsForAddress = (address: string) =>
+        rdnsForage.getItem<string>(address.toLowerCase());
+
     setI18n(detectLanguage(i18nConfigured()));
     detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
@@ -311,7 +324,7 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     const t = translator(dictLocale, resolveTemplate) as (
-        key: string,
+        key: DictKey,
         values?: Record<string, any>,
     ) => string;
 
@@ -371,6 +384,9 @@ const GlobalProvider = (props: { children: any }) => {
                 clearSwaps,
                 isRecklessMode,
                 setRecklessMode,
+
+                setRdns,
+                getRdnsForAddress,
             }}>
             {props.children}
         </GlobalContext.Provider>

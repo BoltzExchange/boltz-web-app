@@ -13,10 +13,11 @@ const InvoiceSet = () => {
         return (
             <LockupEvm
                 swapId={submarine.id}
-                preimageHash={decodeInvoice(submarine.invoice).preimageHash}
-                claimAddress={submarine.claimAddress}
-                timeoutBlockHeight={submarine.timeoutBlockHeight}
+                signerAddress={submarine.signer}
                 amount={submarine.expectedAmount}
+                claimAddress={submarine.claimAddress}
+                preimageHash={decodeInvoice(submarine.invoice).preimageHash}
+                timeoutBlockHeight={submarine.timeoutBlockHeight}
             />
         );
     }

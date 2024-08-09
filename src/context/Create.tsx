@@ -12,6 +12,7 @@ import {
 import { config } from "../config";
 import { LN, RBTC } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
+import { DictKey } from "../i18n/i18n";
 
 export type CreateContextType = {
     swapType: Accessor<SwapType>;
@@ -57,8 +58,8 @@ export type CreateContextType = {
     setBoltzFee: Setter<number>;
     minerFee: Accessor<number>;
     setMinerFee: Setter<number>;
-    setInvoiceError: Setter<string>;
-    invoiceError: Accessor<string>;
+    setInvoiceError: Setter<DictKey>;
+    invoiceError: Accessor<DictKey>;
 };
 
 const CreateContext = createContext<CreateContextType>();
@@ -100,7 +101,9 @@ const CreateProvider = (props: { children: any }) => {
     const [addressValid, setAddressValid] = createSignal(false);
     const [amountValid, setAmountValid] = createSignal(false);
     const [pairValid, setPairValid] = createSignal(true);
-    const [invoiceError, setInvoiceError] = createSignal<string>("");
+    const [invoiceError, setInvoiceError] = createSignal<DictKey | undefined>(
+        undefined,
+    );
 
     createEffect(() => {
         if (amountValid() && pairValid()) {

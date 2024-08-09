@@ -4,6 +4,7 @@ import { Show } from "solid-js/web";
 
 import { config } from "../../config";
 import { useGlobalContext } from "../../context/Global";
+import type { DictKey } from "../../i18n/i18n";
 import "../../style/settings.scss";
 import AudioNotificationSetting from "./AudioNotificationSetting";
 import BrowserNotification from "./BrowserNotification";
@@ -18,7 +19,7 @@ const Entry = ({
     tooltipLabel,
     settingElement,
 }: {
-    label: string;
+    label: DictKey;
     tooltipLabel: string;
     settingElement: JSXElement;
 }) => {

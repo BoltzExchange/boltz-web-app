@@ -18,7 +18,7 @@ const AudioNotificationSetting = () => {
         <>
             <div
                 class="audio toggle"
-                title={t("enable_audio_tooltip")}
+                title={t("enable_audio_notifications_tooltip")}
                 onClick={toggleAudioNotification}>
                 <span class={audioNotification() ? "active" : ""}>
                     {t("on")}
