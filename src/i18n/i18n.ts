@@ -496,8 +496,7 @@ const dict = {
         pay_address: "Dirección",
         no_wallet: "Monedero no está instalado",
         connect_wallet: "Conectar monedero",
-        connect_to_address:
-            "Conectar con dirección de intercambio",
+        connect_to_address: "Conectar con dirección de intercambio",
         disconnect_address: "Desconectar monedero",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
