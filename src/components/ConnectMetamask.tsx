@@ -149,26 +149,45 @@ export const ConnectAddress = ({ address }: { address: string }) => {
     const { connectProviderForAddress } = useWeb3Signer();
 
     return (
-        <>
-            <button
-                id="metamask"
-                class="btn"
-                onClick={async () => {
-                    try {
-                        await connectProviderForAddress(address);
-                    } catch (e) {
-                        log.error(
-                            `Provider connect for address ${address} failed: ${formatError(e)}`,
-                        );
-                        notify(
-                            "error",
-                            `Wallet connection failed: ${formatError(e)}`,
-                        );
-                    }
-                }}>
-                {t("connect_to_address")}
-            </button>
-        </>
+        <button
+            id="metamask"
+            class="btn"
+            onClick={async () => {
+                try {
+                    await connectProviderForAddress(address);
+                } catch (e) {
+                    log.error(
+                        `Provider connect for address ${address} failed: ${formatError(e)}`,
+                    );
+                    notify(
+                        "error",
+                        `Wallet connection failed: ${formatError(e)}`,
+                    );
+                }
+            }}>
+            {t("connect_to_address")}
+        </button>
+    );
+};
+
+export const SwitchNetwork = () => {
+    const { t, notify } = useGlobalContext();
+    const { switchNetwork } = useWeb3Signer();
+
+    return (
+        <button
+            id="metamask"
+            class="btn"
+            onClick={async () => {
+                try {
+                    await switchNetwork();
+                } catch (e) {
+                    log.error(`Network switch failed: ${formatError(e)}`);
+                    notify("error", `Network switch failed: ${formatError(e)}`);
+                }
+            }}>
+            {t("switch_network")}
+        </button>
     );
 };
 
@@ -186,21 +205,17 @@ const ConnectMetamask = () => {
     });
 
     return (
-        <>
-            <Show
-                when={Object.keys(providers()).length > 0}
-                fallback={
-                    <button class="btn" disabled>
-                        {t("no_metamask")}
-                    </button>
-                }>
-                <Show
-                    when={address() !== undefined}
-                    fallback={<ConnectModal />}>
-                    <ShowAddress address={address} />
-                </Show>
+        <Show
+            when={Object.keys(providers()).length > 0}
+            fallback={
+                <button class="btn" disabled>
+                    {t("no_metamask")}
+                </button>
+            }>
+            <Show when={address() !== undefined} fallback={<ConnectModal />}>
+                <ShowAddress address={address} />
             </Show>
-        </>
+        </Show>
     );
 };
 

@@ -5,6 +5,7 @@ import log from "loglevel";
 import {
     Accessor,
     JSXElement,
+    Resource,
     createContext,
     createResource,
     createSignal,
@@ -13,7 +14,7 @@ import {
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
-import { getContracts } from "../utils/boltzClient";
+import { Contracts, getContracts } from "../utils/boltzClient";
 import { useGlobalContext } from "./Global";
 
 declare global {
@@ -45,6 +46,8 @@ type EIP1193Provider = {
         method: string;
         params?: Array<unknown>;
     }) => Promise<unknown>;
+    on: (event: "chainChanged", cb: () => void) => void;
+    removeAllListeners: (event: "chainChanged") => void;
 };
 
 export type EIP6963ProviderDetail = {
@@ -60,9 +63,6 @@ export type Signer = JsonRpcSigner & {
     rdns: string;
 };
 
-// TODO: check network and add option to add RSK as network
-// TODO: handle network and account change events
-
 const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
     connectProvider: (rdns: string) => Promise<void>;
@@ -70,6 +70,9 @@ const Web3SignerContext = createContext<{
     signer: Accessor<Signer | undefined>;
     clearSigner: () => void;
 
+    switchNetwork: () => Promise<void>;
+
+    getContracts: Resource<Contracts>;
     getEtherSwap: () => EtherSwap;
 }>();
 
@@ -84,7 +87,10 @@ const Web3SignerProvider = (props: {
     const [providers, setProviders] = createSignal<
         Record<string, EIP6963ProviderDetail>
     >({});
-    const [signer, setSigner] = createSignal<Signer | undefined>();
+    const [signer, setSigner] = createSignal<Signer | undefined>(undefined);
+    const [rawProvider, setRawProvider] = createSignal<
+        EIP1193Provider | undefined
+    >(undefined);
 
     window.addEventListener(
         "eip6963:announceProvider",
@@ -105,8 +111,16 @@ const Web3SignerProvider = (props: {
             return undefined;
         }
 
-        return await getContracts(RBTC);
+        return (await getContracts(RBTC))["rsk"];
     });
+
+    const getEtherSwap = () => {
+        return new Contract(
+            contracts().swapContracts.EtherSwap,
+            EtherSwapAbi,
+            signer(),
+        ) as unknown as EtherSwap;
+    };
 
     const connectProviderForAddress = async (address: string) =>
         connectProvider(await getRdnsForAddress(address));
@@ -127,6 +141,11 @@ const Web3SignerProvider = (props: {
 
         log.info(`Connected address from ${wallet.info.rdns}: ${addresses[0]}`);
 
+        wallet.provider.on("chainChanged", () => {
+            window.location.reload();
+        });
+        setRawProvider(wallet.provider);
+
         const signer = new JsonRpcSigner(
             new BrowserProvider(wallet.provider),
             addresses[0],
@@ -138,12 +157,40 @@ const Web3SignerProvider = (props: {
         setSigner(signer);
     };
 
-    const getEtherSwap = () => {
-        return new Contract(
-            contracts()["rsk"].swapContracts.EtherSwap,
-            EtherSwapAbi,
-            signer(),
-        ) as unknown as EtherSwap;
+    const switchNetwork = async () => {
+        if (rawProvider() === undefined) {
+            return;
+        }
+
+        const sanitizedChainId = `0x${contracts().network.chainId.toString(16)}`;
+
+        try {
+            await rawProvider().request({
+                method: "wallet_switchEthereumChain",
+                params: [
+                    {
+                        chainId: sanitizedChainId,
+                    },
+                ],
+            });
+        } catch (switchError) {
+            if (switchError.code === 4902) {
+                await rawProvider().request({
+                    method: "wallet_addEthereumChain",
+                    params: [
+                        {
+                            chainId: sanitizedChainId,
+                            blockExplorerUrls: [
+                                config.assets[RBTC].blockExplorerUrl.normal,
+                            ],
+                            ...config.assets[RBTC].network,
+                        },
+                    ],
+                });
+            }
+
+            throw switchError;
+        }
     };
 
     return (
@@ -152,11 +199,18 @@ const Web3SignerProvider = (props: {
                 signer,
                 providers,
                 getEtherSwap,
+                switchNetwork,
                 connectProvider,
                 connectProviderForAddress,
+                getContracts: contracts,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
+                    if (rawProvider()) {
+                        rawProvider().removeAllListeners("chainChanged");
+                    }
+
                     setSigner(undefined);
+                    setRawProvider(undefined);
                 },
             }}>
             {props.children}

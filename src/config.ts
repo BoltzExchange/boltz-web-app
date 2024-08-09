@@ -28,6 +28,7 @@ const defaults = {
 
 type Asset = {
     apiUrl?: Url;
+    network?: any;
     blockExplorerUrl?: Url;
 
     rifRelay?: string;
