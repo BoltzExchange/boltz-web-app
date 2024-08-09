@@ -23,13 +23,15 @@ const LockupEvm = ({
     amount,
     preimageHash,
     claimAddress,
+    signerAddress,
     timeoutBlockHeight,
 }: {
     swapId: string;
+    amount: number;
     preimageHash: string;
     claimAddress: string;
+    signerAddress: string;
     timeoutBlockHeight: number;
-    amount: number;
 }) => {
     const { getEtherSwap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
@@ -61,6 +63,7 @@ const LockupEvm = ({
                     currentSwap.lockupTx = tx.hash;
                     await setSwapStorage(currentSwap);
                 }}
+                address={signerAddress}
                 buttonText={t("send")}
                 promptText={t("transaction_prompt", { button: t("send") })}
                 waitingText={t("tx_in_mempool_subline")}

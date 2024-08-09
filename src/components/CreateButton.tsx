@@ -232,7 +232,10 @@ export const CreateButton = () => {
                 return;
             }
 
-            await setSwapStorage(data);
+            await setSwapStorage({
+                ...data,
+                signer: signer()?.address,
+            });
             setInvoice("");
             setInvoiceValid(false);
             setOnchainAddress("");

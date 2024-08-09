@@ -2,29 +2,45 @@ import log from "loglevel";
 import { Show, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
+import { ConnectAddress } from "./ConnectMetamask";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = ({
     showHr,
     onClick,
+    address,
     promptText,
     buttonText,
     waitingText,
 }: {
     onClick: () => Promise<any>;
+    address: string;
     buttonText: string;
     promptText?: string;
     showHr?: boolean;
     waitingText?: string;
 }) => {
     const { notify } = useGlobalContext();
+    const { signer } = useWeb3Signer();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
 
     return (
-        <>
-            <Show when={!txSent()}>
+        <Show
+            when={signer() !== undefined && address === signer().address}
+            fallback={<ConnectAddress address={address} />}>
+            <Show
+                when={!txSent()}
+                fallback={
+                    <>
+                        <Show when={waitingText}>
+                            <p>{waitingText}</p>
+                        </Show>
+                        <LoadingSpinner />
+                    </>
+                }>
                 <Show when={promptText}>
                     <p>{promptText}</p>
                 </Show>
@@ -52,14 +68,7 @@ const ContractTransaction = ({
                     <hr />
                 </Show>
             </Show>
-
-            <Show when={txSent()}>
-                <Show when={waitingText}>
-                    <p>{waitingText}</p>
-                </Show>
-                <LoadingSpinner />
-            </Show>
-        </>
+        </Show>
     );
 };
 

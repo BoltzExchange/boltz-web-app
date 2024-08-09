@@ -14,6 +14,7 @@ import {
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { getContracts } from "../utils/boltzClient";
+import { useGlobalContext } from "./Global";
 
 declare global {
     interface WindowEventMap {
@@ -61,13 +62,12 @@ export type Signer = JsonRpcSigner & {
 
 // TODO: check network and add option to add RSK as network
 // TODO: handle network and account change events
-// TODO: auto use last provider
 
 const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
     connectProvider: (rdns: string) => Promise<void>;
-    // TODO: this is | undefined
-    signer: Accessor<Signer>;
+    connectProviderForAddress: (address: string) => Promise<void>;
+    signer: Accessor<Signer | undefined>;
     clearSigner: () => void;
 
     getEtherSwap: () => EtherSwap;
@@ -77,6 +77,8 @@ const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
+    const { setRdns, getRdnsForAddress } = useGlobalContext();
+
     const hasRsk = config.assets[RBTC] !== undefined;
 
     const [providers, setProviders] = createSignal<
@@ -106,10 +108,13 @@ const Web3SignerProvider = (props: {
         return await getContracts(RBTC);
     });
 
+    const connectProviderForAddress = async (address: string) =>
+        connectProvider(await getRdnsForAddress(address));
+
     const connectProvider = async (rdns: string) => {
         const wallet = providers()[rdns];
         if (wallet == undefined) {
-            throw "invalid wallet";
+            throw "wallet not found";
         }
 
         log.debug(`Using wallet ${wallet.info.rdns}: ${wallet.info.name}`);
@@ -127,6 +132,9 @@ const Web3SignerProvider = (props: {
             addresses[0],
         ) as unknown as Signer;
         signer.rdns = wallet.info.rdns;
+
+        await setRdns(addresses[0], wallet.info.rdns);
+
         setSigner(signer);
     };
 
@@ -145,6 +153,7 @@ const Web3SignerProvider = (props: {
                 providers,
                 getEtherSwap,
                 connectProvider,
+                connectProviderForAddress,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
                     setSigner(undefined);

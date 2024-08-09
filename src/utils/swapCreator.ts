@@ -34,6 +34,7 @@ export type SwapBase = {
     lockupTx?: string;
 
     useRif: boolean;
+    signer?: string;
 };
 
 export type SubmarineSwap = SwapBase &

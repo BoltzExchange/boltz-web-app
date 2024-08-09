@@ -90,6 +90,9 @@ export type GlobalContextType = {
     deleteSwap: (id: string) => Promise<void>;
     clearSwaps: () => Promise<any>;
     updateSwapStatus: (id: string, newStatus: string) => Promise<boolean>;
+
+    setRdns: (address: string, rdns: string) => Promise<string>;
+    getRdnsForAddress: (address: string) => Promise<string | null>;
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -271,6 +274,16 @@ const GlobalProvider = (props: { children: any }) => {
 
     const clearSwaps = () => swapsForage.clear();
 
+    const rdnsForage = localforage.createInstance({
+        name: "rdns",
+    });
+
+    const setRdns = (address: string, rdns: string) =>
+        rdnsForage.setItem(address.toLowerCase(), rdns);
+
+    const getRdnsForAddress = (address: string) =>
+        rdnsForage.getItem<string>(address.toLowerCase());
+
     setI18n(detectLanguage(i18nConfigured()));
     detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
@@ -371,6 +384,9 @@ const GlobalProvider = (props: { children: any }) => {
                 clearSwaps,
                 isRecklessMode,
                 setRecklessMode,
+
+                setRdns,
+                getRdnsForAddress,
             }}>
             {props.children}
         </GlobalContext.Provider>

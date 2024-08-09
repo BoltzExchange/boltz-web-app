@@ -144,6 +144,34 @@ const ShowAddress = ({
     );
 };
 
+export const ConnectAddress = ({ address }: { address: string }) => {
+    const { t, notify } = useGlobalContext();
+    const { connectProviderForAddress } = useWeb3Signer();
+
+    return (
+        <>
+            <button
+                id="metamask"
+                class="btn"
+                onClick={async () => {
+                    try {
+                        await connectProviderForAddress(address);
+                    } catch (e) {
+                        log.error(
+                            `Provider connect for address ${address} failed: ${formatError(e)}`,
+                        );
+                        notify(
+                            "error",
+                            `Wallet connection failed: ${formatError(e)}`,
+                        );
+                    }
+                }}>
+                {t("connect_to_address")}
+            </button>
+        </>
+    );
+};
+
 const ConnectMetamask = () => {
     const { t } = useGlobalContext();
     const { providers, signer } = useWeb3Signer();

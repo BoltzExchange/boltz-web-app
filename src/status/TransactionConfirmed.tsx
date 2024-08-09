@@ -15,6 +15,7 @@ const ClaimRsk = ({
     swapId,
     amount,
     preimage,
+    signerAddress,
     refundAddress,
     timeoutBlockHeight,
 }: {
@@ -22,6 +23,7 @@ const ClaimRsk = ({
     swapId: string;
     useRif: boolean;
     preimage: string;
+    signerAddress: string;
     refundAddress: string;
     timeoutBlockHeight: number;
 }) => {
@@ -62,6 +64,7 @@ const ClaimRsk = ({
                 setSwap(currentSwap);
                 await setSwapStorage(currentSwap);
             }}
+            address={signerAddress}
             buttonText={t("claim")}
             promptText={t("transaction_prompt", { button: t("claim") })}
             waitingText={t("tx_ready_to_claim")}
@@ -83,6 +86,7 @@ const TransactionConfirmed = () => {
                     swapId={chain.id}
                     useRif={chain.useRif}
                     preimage={chain.preimage}
+                    signerAddress={chain.signer}
                     amount={chain.claimDetails.amount}
                     refundAddress={chain.claimDetails.refundAddress}
                     timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
@@ -98,6 +102,7 @@ const TransactionConfirmed = () => {
                 useRif={reverse.useRif}
                 preimage={reverse.preimage}
                 amount={reverse.onchainAmount}
+                signerAddress={reverse.signer}
                 refundAddress={reverse.refundAddress}
                 timeoutBlockHeight={reverse.timeoutBlockHeight}
             />
