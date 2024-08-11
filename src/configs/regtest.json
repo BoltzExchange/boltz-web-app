@@ -30,7 +30,7 @@
             },
             "rifRelay": "http://localhost:8090",
             "contracts": {
-                "smartWalletFactory": "0x59b670e9fA9D0A427751Af201D676719a970857b",
+                "smartWalletFactory": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
                 "deployVerifier": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
             }
         }

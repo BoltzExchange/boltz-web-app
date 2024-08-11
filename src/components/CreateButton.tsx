@@ -9,9 +9,10 @@ import { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
+import { gasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import { getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
+import { formatError } from "../utils/errors";
 import { coalesceLn } from "../utils/helper";
 import { fetchLnurl } from "../utils/invoice";
 import {
@@ -173,7 +174,7 @@ export const CreateButton = () => {
             ]);
             log.debug("RSK balance", balance);
 
-            const balanceNeeded = gasPrice * GasNeededToClaim;
+            const balanceNeeded = gasPrice * gasNeededToClaim;
             log.debug("RSK balance needed", balanceNeeded);
 
             if (balance <= balanceNeeded) {
@@ -269,8 +270,15 @@ export const CreateButton = () => {
 
     const buttonClick = async () => {
         setButtonDisable(true);
-        await create();
-        setButtonDisable(false);
+
+        try {
+            await create();
+        } catch (e) {
+            log.error("Swap creation failed", e);
+            notify("error", `Swap creation failed: ${formatError(e)}`);
+        } finally {
+            setButtonDisable(false);
+        }
     };
 
     const getButtonLabel = (label: ButtonLabelParams) => {

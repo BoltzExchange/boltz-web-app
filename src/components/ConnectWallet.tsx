@@ -201,6 +201,7 @@ const ConnectWallet = () => {
         setOnchainAddress(addr || "");
     });
 
+    // TODO: check network
     return (
         <Show
             when={Object.keys(providers()).length > 0}

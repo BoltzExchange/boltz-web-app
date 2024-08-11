@@ -16,10 +16,11 @@ import {
 } from "./types/TypedRequestData";
 
 // With some extra buffer; just in case
-export const GasNeededToClaim = BigInt(35355) * 2n;
-export const GasNeededToDeploy = 230000n;
+export const gasNeededToClaim = BigInt(35355) * 2n;
+export const gasNeededToDeploy = 230000n;
 
-export const MaxRelayNonceGap = 10;
+export const maxRelayNonceGap = 10;
+export const smartWalletNonce = 0n;
 
 const sign = async (signer: Signer, request: EnvelopingRequest) => {
     const { chainId } = await signer.provider.getNetwork();
@@ -76,7 +77,7 @@ export const relayClaimTransaction = async (
             to: await etherSwap.getAddress(),
             relayHub: chainInfo.relayHubAddress,
             validUntilTime: getValidUntilTime(),
-            tokenAmount: (feeData.gasPrice * GasNeededToDeploy).toString(),
+            tokenAmount: (feeData.gasPrice * gasNeededToDeploy).toString(),
         },
         relayData: {
             feesReceiver: chainInfo.feesReceiver,
@@ -97,12 +98,12 @@ export const relayClaimTransaction = async (
         envelopingRequest.relayData.callForwarder =
             await smartWalletFactory.getAddress();
     } else {
-        envelopingRequest.request.gas = GasNeededToClaim.toString();
+        envelopingRequest.request.gas = gasNeededToClaim.toString();
         envelopingRequest.request.nonce = (
             await getForwarder(signer, smartWalletAddress.address).nonce()
         ).toString();
 
-        envelopingRequest.relayData.callForwarder = smartWalletAddress;
+        envelopingRequest.relayData.callForwarder = smartWalletAddress.address;
     }
 
     const metadata: Metadata = {
@@ -111,7 +112,7 @@ export const relayClaimTransaction = async (
         relayMaxNonce:
             (await signer.provider.getTransactionCount(
                 chainInfo.relayWorkerAddress,
-            )) + MaxRelayNonceGap,
+            )) + maxRelayNonceGap,
     };
 
     // TODO: remove once this is implemented https://github.com/rsksmart/rif-relay-client/blob/0969a115ea76deef0fee63e77189cc22c0fbd181/src/gasEstimator/utils.ts#L62
@@ -122,7 +123,10 @@ export const relayClaimTransaction = async (
     const estimateRes = await estimate(envelopingRequest, metadata);
     log.debug("RIF gas estimation response", estimateRes);
 
-    envelopingRequest.request.tokenAmount = estimateRes.requiredTokenAmount;
+    envelopingRequest.request.tokenAmount = (
+        (BigInt(estimateRes.requiredTokenAmount) / 10n) *
+        15n
+    ).toString();
 
     // Hack to work around Rabby throwing an error when we ask for signatures too rapidly
     if (signerRns === "io.rabby") {
@@ -143,17 +147,16 @@ export const getSmartWalletAddress = async (
 }> => {
     const factory = getSmartWalletFactory(signer);
 
-    const nonce = await factory.nonce(await signer.getAddress());
     const smartWalletAddress: string = await factory.getSmartWalletAddress(
         await signer.getAddress(),
         ZeroAddress,
-        nonce,
+        smartWalletNonce,
     );
     log.debug(
-        `RIF smart wallet address ${smartWalletAddress} with nonce ${nonce}`,
+        `RIF smart wallet address ${smartWalletAddress} with nonce ${smartWalletNonce}`,
     );
     return {
-        nonce,
+        nonce: smartWalletNonce,
         address: smartWalletAddress,
     };
 };
