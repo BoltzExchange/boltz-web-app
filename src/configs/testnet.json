@@ -30,8 +30,8 @@
             },
             "rifRelay": "https://boltz.testnet.relay.rifcomputing.net",
             "contracts": {
-                "smartWalletFactory": "0xaa67dEDd76f9b540d3c136b1F9095696ac92A5A7",
-                "deployVerifier": "0xD10DA3D7F68114138743F9763F7efD743593b7d6"
+                "smartWalletFactory": "0x82bc3558863b3f0C9914539DbB2d143AfB9c8768",
+                "deployVerifier": "0x5e8F98ddAd4Da6eE8A8eA3D64E09385dF6b609D0"
             }
         }
     }

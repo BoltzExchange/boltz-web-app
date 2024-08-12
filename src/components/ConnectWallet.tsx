@@ -190,12 +190,24 @@ export const SwitchNetwork = () => {
 
 const ConnectWallet = () => {
     const { t } = useGlobalContext();
-    const { providers, signer } = useWeb3Signer();
+    const { providers, signer, getContracts } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
 
     const address = createMemo(() => signer()?.address);
+    const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
-    createEffect(() => {
+    createEffect(async () => {
+        if (
+            address() !== undefined &&
+            Number((await signer()?.provider.getNetwork()).chainId) !==
+                getContracts().network.chainId
+        ) {
+            setNetworkValid(false);
+            return;
+        }
+
+        setNetworkValid(true);
+
         const addr = address();
         setAddressValid(addr !== undefined);
         setOnchainAddress(addr || "");
@@ -210,7 +222,9 @@ const ConnectWallet = () => {
                 </button>
             }>
             <Show when={address() !== undefined} fallback={<ConnectModal />}>
-                <ShowAddress address={address} />
+                <Show when={networkValid()} fallback={<SwitchNetwork />}>
+                    <ShowAddress address={address} />
+                </Show>
             </Show>
         </Show>
     );
