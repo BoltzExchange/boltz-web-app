@@ -1,9 +1,10 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { Show, createSignal, onMount } from "solid-js";
+import { Show, createEffect, createSignal, onMount } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
+import ConnectWallet from "../components/ConnectWallet";
 import RefundButton from "../components/RefundButton";
 import SwapList from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
@@ -11,7 +12,9 @@ import SettingsMenu from "../components/settings/SettingsMenu";
 import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
+import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
 import { validateRefundFile } from "../utils/refundFile";
 import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
@@ -20,6 +23,7 @@ const Refund = () => {
     const navigate = useNavigate();
     const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t } =
         useGlobalContext();
+    const { signer, providers, getEtherSwap } = useWeb3Signer();
 
     const [swapFound, setSwapFound] = createSignal(null);
     const [refundInvalid, setRefundInvalid] = createSignal(false);
@@ -89,6 +93,18 @@ const Refund = () => {
 
     const [refundableSwaps, setRefundableSwaps] = createSignal([]);
 
+    createEffect(async () => {
+        if (signer() === undefined) {
+            return;
+        }
+
+        const generator = scanLogsForPossibleRefunds(signer(), getEtherSwap());
+
+        for await (const value of generator) {
+            console.log(value);
+        }
+    });
+
     onMount(async () => {
         const addToRefundableSwaps = (swap: SomeSwap) => {
             setRefundableSwaps(refundableSwaps().concat(swap));
@@ -156,6 +172,10 @@ const Refund = () => {
                         accept="application/json,image/png"
                         onChange={(e) => uploadChange(e)}
                     />
+                    <Show when={Object.keys(providers()).length > 0}>
+                        <hr />
+                        <ConnectWallet />
+                    </Show>
                     <Show when={swapFound() !== null}>
                         <hr />
                         <p>{t("swap_in_history")}</p>

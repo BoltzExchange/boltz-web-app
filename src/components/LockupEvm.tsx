@@ -1,4 +1,4 @@
-import { Show, createResource } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
@@ -38,15 +38,21 @@ const LockupEvm = ({
 
     const value = () => satoshiToWei(amount);
 
-    const getSignerBalance = async () => {
-        return signer().provider.getBalance(await signer().getAddress());
-    };
+    const [signerBalance, setSignerBalance] = createSignal<bigint>(0n);
 
-    const [signerBalance] = createResource(signer(), getSignerBalance);
+    createEffect(async () => {
+        if (signer() === undefined) {
+            return;
+        }
+
+        setSignerBalance(
+            await signer().provider.getBalance(await signer().getAddress()),
+        );
+    });
 
     return (
         <Show
-            when={signerBalance() > value()}
+            when={signer() === undefined || signerBalance() > value()}
             fallback={<InsufficientBalance />}>
             <ContractTransaction
                 onClick={async () => {
