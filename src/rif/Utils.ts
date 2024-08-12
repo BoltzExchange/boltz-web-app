@@ -1,5 +1,3 @@
-import { Provider } from "ethers";
-
 const requestValidSeconds = 172800;
 
 const deployOnlyRequestKeys: string[] = ["index"];
@@ -10,14 +8,14 @@ export const isDeployRequest = (request: Record<string, any>): boolean => {
     });
 };
 
-export const calculateGasPrice = async (
-    provider: Provider,
+export const calculateGasPrice = (
+    gasPrice: number | string | bigint,
     minGasPrice: string,
-): Promise<BigInt> => {
-    const gasPrice = BigInt((await provider.getFeeData()).gasPrice.toString());
+): BigInt => {
+    const bigGasPrice = BigInt(gasPrice);
     const bigMinGasPrice = BigInt(minGasPrice);
 
-    return BigInt(gasPrice < bigMinGasPrice ? bigMinGasPrice : gasPrice);
+    return BigInt(bigGasPrice < bigMinGasPrice ? bigMinGasPrice : bigGasPrice);
 };
 
 export const getValidUntilTime = () =>

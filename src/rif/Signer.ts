@@ -36,7 +36,6 @@ const sign = async (signer: Signer, request: EnvelopingRequest) => {
     return signer.signTypedData(data.domain, data.types, data.value);
 };
 
-// TODO: optimize network requests
 export const relayClaimTransaction = async (
     signer: Signer,
     signerRns: string,
@@ -46,7 +45,6 @@ export const relayClaimTransaction = async (
     refundAddress: string,
     timeoutBlockHeight: number,
 ) => {
-    const chainInfo = await getChainInfo();
     const callData = etherSwap.interface.encodeFunctionData(
         "claim(bytes32,uint256,address,uint256)",
         [
@@ -56,15 +54,25 @@ export const relayClaimTransaction = async (
             timeoutBlockHeight,
         ],
     );
+    const [
+        chainInfo,
+        smartWalletAddress,
+        feeData,
+        signerAddress,
+        etherSwapAddress,
+    ] = await Promise.all([
+        getChainInfo(),
+        getSmartWalletAddress(signer),
+        signer.provider.getFeeData(),
+        signer.getAddress(),
+        etherSwap.getAddress(),
+    ]);
 
-    const smartWalletAddress = await getSmartWalletAddress(signer);
     const smartWalletExists =
         (await signer.provider.getCode(smartWalletAddress.address)) !== "0x";
     log.info("RIF smart wallet exists: ", smartWalletExists);
 
     const smartWalletFactory = getSmartWalletFactory(signer);
-
-    const feeData = await signer.provider.getFeeData();
 
     const envelopingRequest: EnvelopingRequest = {
         request: {
@@ -72,8 +80,8 @@ export const relayClaimTransaction = async (
             data: callData,
             tokenGas: "20000",
             tokenContract: ZeroAddress,
-            from: await signer.getAddress(),
-            to: await etherSwap.getAddress(),
+            from: signerAddress,
+            to: etherSwapAddress,
             relayHub: chainInfo.relayHubAddress,
             validUntilTime: getValidUntilTime(),
             tokenAmount: (feeData.gasPrice * GasNeededToDeploy).toString(),
@@ -81,8 +89,9 @@ export const relayClaimTransaction = async (
         relayData: {
             feesReceiver: chainInfo.feesReceiver,
             callVerifier: config.assets[RBTC].contracts.deployVerifier,
-            gasPrice: (
-                await calculateGasPrice(signer.provider, chainInfo.minGasPrice)
+            gasPrice: calculateGasPrice(
+                feeData.gasPrice!,
+                chainInfo.minGasPrice,
             ).toString(),
         },
     };
@@ -91,7 +100,7 @@ export const relayClaimTransaction = async (
         envelopingRequest.request.recoverer = ZeroAddress;
         envelopingRequest.request.index = Number(smartWalletAddress.nonce);
         envelopingRequest.request.nonce = (
-            await smartWalletFactory.nonce(await signer.getAddress())
+            await smartWalletFactory.nonce(signerAddress)
         ).toString();
 
         envelopingRequest.relayData.callForwarder =
