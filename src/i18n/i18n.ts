@@ -209,6 +209,7 @@ const dict = {
             "You do not have enough balance in your wallet for this swap.",
         select_wallet: "Select wallet",
         switch_network: "Switch network",
+        block: "block",
     },
     de: {
         language: "Deutsch",

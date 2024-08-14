@@ -23,15 +23,19 @@ import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
 
-const RefundEvm = ({
+export const RefundEvm = ({
     swapId,
+    setRefundTxHash,
+    asset,
     amount,
     claimAddress,
     preimageHash,
     signerAddress,
     timeoutBlockHeight,
 }: {
-    swapId: string;
+    swapId?: string;
+    setRefundTxHash?: Setter<string>;
+    asset: string;
     amount: number;
     preimageHash: string;
     claimAddress: string;
@@ -45,10 +49,7 @@ const RefundEvm = ({
     return (
         <ContractTransaction
             onClick={async () => {
-                const [contract, currentSwap] = await Promise.all([
-                    getEtherSwap(),
-                    getSwap(swapId),
-                ]);
+                const contract = getEtherSwap();
 
                 let tx: TransactionResponse;
 
@@ -64,9 +65,11 @@ const RefundEvm = ({
                     );
                 } else {
                     const { signature } = await getEipRefundSignature(
-                        currentSwap.assetSend,
-                        currentSwap.id,
-                        currentSwap.type,
+                        asset,
+                        // The preimage hash can be used as an identifier
+                        preimageHash,
+                        // The endpoints for submarine and chain swap call the same endpoint
+                        SwapType.Submarine,
                     );
                     const decSignature = Signature.from(signature);
 
@@ -81,9 +84,17 @@ const RefundEvm = ({
                     );
                 }
 
-                currentSwap.refundTx = tx.hash;
-                await setSwapStorage(currentSwap);
-                setSwap(currentSwap);
+                if (setRefundTxHash !== undefined) {
+                    setRefundTxHash(tx.hash);
+                }
+
+                if (swapId !== undefined) {
+                    const currentSwap = await getSwap(swapId);
+                    currentSwap.refundTx = tx.hash;
+                    await setSwapStorage(currentSwap);
+                    setSwap(currentSwap);
+                }
+
                 await tx.wait(1);
             }}
             address={signerAddress}
@@ -120,6 +131,7 @@ const RefundButton = ({
             return (
                 <RefundEvm
                     swapId={submarine.id}
+                    asset={submarine.assetSend}
                     signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}
@@ -133,6 +145,7 @@ const RefundButton = ({
             return (
                 <RefundEvm
                     swapId={chain.id}
+                    asset={chain.assetSend}
                     signerAddress={chain.signer}
                     amount={chain.lockupDetails.amount}
                     claimAddress={chain.lockupDetails.claimAddress}

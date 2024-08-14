@@ -7,6 +7,7 @@ import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import RefundButton from "../components/RefundButton";
 import SwapList from "../components/SwapList";
+import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { SwapType } from "../consts/Enums";
@@ -14,7 +15,10 @@ import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
+import {
+    LogRefundData,
+    scanLogsForPossibleRefunds,
+} from "../utils/contractLogs";
 import { validateRefundFile } from "../utils/refundFile";
 import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
@@ -91,17 +95,34 @@ const Refund = () => {
     const refundSwapsSanityFilter = (swap: SomeSwap) =>
         swap.type !== SwapType.Reverse && swap.refundTx === undefined;
 
-    const [refundableSwaps, setRefundableSwaps] = createSignal([]);
+    const [refundableSwaps, setRefundableSwaps] = createSignal<SomeSwap[]>([]);
+    const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
+        LogRefundData[]
+    >([]);
+
+    let refundScanAbort: AbortController | undefined = undefined;
 
     createEffect(async () => {
+        setLogRefundableSwaps([]);
+
+        if (refundScanAbort !== undefined) {
+            refundScanAbort.abort("signer changed");
+        }
+
         if (signer() === undefined) {
             return;
         }
 
-        const generator = scanLogsForPossibleRefunds(signer(), getEtherSwap());
+        refundScanAbort = new AbortController();
+
+        const generator = scanLogsForPossibleRefunds(
+            refundScanAbort!.signal,
+            signer(),
+            getEtherSwap(),
+        );
 
         for await (const value of generator) {
-            console.log(value);
+            setLogRefundableSwaps(logRefundableSwaps().concat(value));
         }
     });
 
@@ -161,6 +182,9 @@ const Refund = () => {
                     <SettingsCog />
                     <h2>{t("refund_a_swap")}</h2>
                     <p>{t("refund_a_swap_subline")}</p>
+                    <Show when={logRefundableSwaps().length > 0}>
+                        <SwapListLogs swaps={logRefundableSwaps} />
+                    </Show>
                     <Show when={refundableSwaps().length > 0}>
                         <SwapList swapsSignal={refundableSwaps} />
                     </Show>

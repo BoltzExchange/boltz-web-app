@@ -4,7 +4,7 @@ import { Show, createEffect, createSignal } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
-import { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
+import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = ({
@@ -38,8 +38,15 @@ const ContractTransaction = ({
 
     return (
         <Show
-            when={signer() !== undefined && address === signer().address}
-            fallback={<ConnectAddress address={address} />}>
+            when={
+                signer() !== undefined &&
+                (address === signer().address || address === undefined)
+            }
+            fallback={
+                <Show when={address !== undefined} fallback={<ConnectWallet />}>
+                    <ConnectAddress address={address} />
+                </Show>
+            }>
             <Show
                 when={getContracts().network.chainId === signerNetwork()}
                 fallback={<SwitchNetwork />}>

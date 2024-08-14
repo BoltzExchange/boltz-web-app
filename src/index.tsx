@@ -23,6 +23,7 @@ import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
 import Refund from "./pages/Refund";
+import RefundEvm from "./pages/RefundEvm";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
 import "./utils/patches";
@@ -92,6 +93,10 @@ const cleanup = render(
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
+            <Route
+                path="/swap/refund/evm/:asset/:txHash"
+                component={RefundEvm}
+            />
             <Route path="/swap/refund/:id" component={RefundStep} />
             <Route path="/error" component={() => <Error />} />
             <Route path="/refund" component={Refund} />
