@@ -99,6 +99,9 @@ const Refund = () => {
     const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
         LogRefundData[]
     >([]);
+    const [refundScanProgress, setRefundScanProgress] = createSignal<
+        string | undefined
+    >(undefined);
 
     let refundScanAbort: AbortController | undefined = undefined;
 
@@ -113,6 +116,12 @@ const Refund = () => {
             return;
         }
 
+        setRefundScanProgress(
+            t("logs_scan_progress", {
+                value: Number(0).toFixed(2),
+            }),
+        );
+
         refundScanAbort = new AbortController();
 
         const generator = scanLogsForPossibleRefunds(
@@ -122,8 +131,15 @@ const Refund = () => {
         );
 
         for await (const value of generator) {
-            setLogRefundableSwaps(logRefundableSwaps().concat(value));
+            setRefundScanProgress(
+                t("logs_scan_progress", {
+                    value: (value.progress * 100).toFixed(2),
+                }),
+            );
+            setLogRefundableSwaps(logRefundableSwaps().concat(value.events));
         }
+
+        setRefundScanProgress(undefined);
     });
 
     onMount(async () => {
@@ -198,7 +214,7 @@ const Refund = () => {
                     />
                     <Show when={Object.keys(providers()).length > 0}>
                         <hr />
-                        <ConnectWallet />
+                        <ConnectWallet addressOverride={refundScanProgress} />
                     </Show>
                     <Show when={swapFound() !== null}>
                         <hr />

@@ -210,6 +210,7 @@ const dict = {
         select_wallet: "Select wallet",
         switch_network: "Switch network",
         block: "block",
+        logs_scan_progress: "Scan progress {{ value }}%",
     },
     de: {
         language: "Deutsch",

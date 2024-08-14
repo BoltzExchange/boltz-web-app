@@ -92,7 +92,10 @@ async function* scanLogsForPossibleRefunds(
             toBlock,
         );
 
-        const results: LogRefundData[] = [];
+        const results: { progress: number; events: LogRefundData[] } = {
+            progress: (latestBlock - toBlock) / (latestBlock - deployHeight),
+            events: [],
+        };
 
         for (const event of events) {
             log.debug(`Found lockup event in: ${event.transactionHash}`);
@@ -121,7 +124,7 @@ async function* scanLogsForPossibleRefunds(
             log.info(
                 `Found lockup event that is still locked in: ${event.transactionHash}`,
             );
-            results.push(data);
+            results.events.push(data);
         }
 
         yield results;
