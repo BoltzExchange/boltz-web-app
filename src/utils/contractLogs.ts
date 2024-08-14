@@ -1,11 +1,19 @@
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { Result, Signer, solidityPackedKeccak256 } from "ethers";
+import {
+    Contract,
+    JsonRpcProvider,
+    Result,
+    Signer,
+    solidityPackedKeccak256,
+} from "ethers";
 import log from "loglevel";
 
+import { config } from "../config";
 import { AssetType, RBTC } from "../consts/Assets";
+import { EtherSwapAbi } from "../context/Web3";
 import { weiToSatoshi } from "./rootstock";
 
-const scanInterval = 10_000;
+const scanInterval = 2_000;
 
 export type LogRefundData = {
     asset: AssetType;
@@ -48,11 +56,29 @@ async function* scanLogsForPossibleRefunds(
         signer.getAddress(),
         signer.provider.getBlockNumber(),
     ]);
-    log.info(`Scanning for possible refunds of: ${signerAddress}`);
 
+    const deployHeight = config.assets[RBTC].contracts.deployHeight;
     const filter = etherSwap.filters.Lockup(null, null, null, signerAddress);
 
-    for (let toBlock = latestBlock; toBlock >= 0; toBlock -= scanInterval) {
+    log.info(
+        `Scanning for possible refunds of ${signerAddress} from ${deployHeight} to ${latestBlock}`,
+    );
+
+    const scanProviderUrl = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
+    const etherSwapScan =
+        scanProviderUrl !== undefined
+            ? (new Contract(
+                  await etherSwap.getAddress(),
+                  EtherSwapAbi,
+                  new JsonRpcProvider(scanProviderUrl),
+              ) as unknown as EtherSwap)
+            : etherSwap;
+
+    for (
+        let toBlock = latestBlock;
+        toBlock >= deployHeight;
+        toBlock -= scanInterval
+    ) {
         if (abortSignal.aborted) {
             log.info(`Cancelling refund log scan of: ${signerAddress}`);
             return;
@@ -60,7 +86,11 @@ async function* scanLogsForPossibleRefunds(
 
         const fromBlock = Math.max(toBlock - scanInterval, 0);
         log.debug(`Scanning possible refunds from ${fromBlock} to ${toBlock}`);
-        const events = await etherSwap.queryFilter(filter, fromBlock, toBlock);
+        const events = await etherSwapScan.queryFilter(
+            filter,
+            fromBlock,
+            toBlock,
+        );
 
         const results: LogRefundData[] = [];
 

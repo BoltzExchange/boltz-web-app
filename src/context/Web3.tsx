@@ -220,4 +220,4 @@ const Web3SignerProvider = (props: {
 
 const useWeb3Signer = () => useContext(Web3SignerContext);
 
-export { useWeb3Signer, Web3SignerProvider };
+export { useWeb3Signer, Web3SignerProvider, EtherSwapAbi };

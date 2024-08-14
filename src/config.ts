@@ -33,6 +33,7 @@ type Asset = {
 
     rifRelay?: string;
     contracts?: {
+        deployHeight: number;
         smartWalletFactory?: string;
         deployVerifier?: string;
     };
