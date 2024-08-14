@@ -429,6 +429,7 @@ const dict = {
             "Sie haben nicht genügend Guthaben für diesen Swap.",
         select_wallet: "Wallet auswählen",
         switch_network: "Netzwerk wechseln",
+        block: "Block",
     },
     es: {
         language: "Español",
@@ -647,6 +648,7 @@ const dict = {
             "No tienes saldo suficiente en tu monedero para este swap.",
         select_wallet: "Seleccionar monedero",
         switch_network: "Cambiar red",
+        block: "bloque",
     },
     zh: {
         language: "中文",
@@ -838,6 +840,7 @@ const dict = {
         insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
         select_wallet: "选择钱包",
         switch_network: "转换网络",
+        block: "块",
     },
 };
 
