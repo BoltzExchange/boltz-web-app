@@ -1,7 +1,7 @@
 ---
 description: >-
-  We encourage our technical users to check the code and run the web app locally
-  from source following the instructions below.
+    We encourage our technical users to check the code and run the web app locally
+    from source following the instructions below.
 cover: .gitbook/assets/boltz-web_app_header.png
 coverY: 0
 ---

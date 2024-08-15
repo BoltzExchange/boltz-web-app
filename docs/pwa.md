@@ -1,8 +1,8 @@
 ---
 description: >-
-  For improved censorship resistance and privacy, Boltz is not available in app
-  stores, but can be installed as Progressive Web App (PWA) on all Android and
-  iOS devices, as well as desktop computers.
+    For improved censorship resistance and privacy, Boltz is not available in app
+    stores, but can be installed as Progressive Web App (PWA) on all Android and
+    iOS devices, as well as desktop computers.
 ---
 
 # 📲 Install as App
