@@ -2,6 +2,7 @@ import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
+import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
@@ -41,45 +42,20 @@ class BoltzWebSocket {
 
     constructor(
         private readonly url: string,
+        private readonly wsFallback: string | undefined,
         private readonly relevantIds: Set<string>,
         private readonly prepareSwap: (id: string, status: any) => void,
         private readonly claimSwap: (id: string, status: any) => Promise<void>,
     ) {}
 
     public connect = () => {
-        this.isClosed = false;
-        clearTimeout(this.reconnectTimeout);
-        this.ws?.close();
-        this.ws = new WebSocket(
-            `${BoltzWebSocket.formatWsUrl(this.url)}/v2/ws`,
-        );
-
-        this.ws.onopen = () => {
-            this.subscribeUpdates(Array.from(this.relevantIds.values()));
-        };
-        this.ws.onclose = () => {
-            log.warn(`ws ${this.url} closed`);
-            this.handleClose();
-        };
-        this.ws.onmessage = async (msg) => {
-            const data = JSON.parse(msg.data);
-            if (data.event === "pong" || data.event === "ping") {
-                return;
+        log.debug("Opening WebSocket");
+        this.openWebSocket(`${this.url}/v2/ws`).catch(() => {
+            if (this.wsFallback !== undefined) {
+                log.debug("Opening fallback WebSocket");
+                this.openWebSocket(this.wsFallback).then().catch();
             }
-
-            log.debug(`ws ${this.url} message`, data);
-
-            if (data.event === "update" && data.channel === "swap.update") {
-                const swapUpdates = data.args as SwapStatus[];
-                for (const status of swapUpdates) {
-                    this.relevantIds.add(status.id);
-                    this.prepareSwap(status.id, status);
-                    await this.swapClaimLock.acquire(() =>
-                        this.claimSwap(status.id, status),
-                    );
-                }
-            }
-        };
+        });
     };
 
     public close = () => {
@@ -104,6 +80,49 @@ class BoltzWebSocket {
                 args: ids,
             }),
         );
+    };
+
+    private openWebSocket = async (url: string) => {
+        this.isClosed = false;
+        clearTimeout(this.reconnectTimeout);
+        this.ws?.close();
+
+        return new Promise<void>((resolve, reject) => {
+            this.ws = new WebSocket(BoltzWebSocket.formatWsUrl(url));
+
+            this.ws.onopen = () => {
+                this.subscribeUpdates(Array.from(this.relevantIds.values()));
+            };
+            this.ws.onclose = (error) => {
+                log.warn("WebSocket closed", error);
+                this.handleClose();
+
+                if (error.wasClean) {
+                    resolve();
+                } else {
+                    reject(error);
+                }
+            };
+            this.ws.onmessage = async (msg) => {
+                const data = JSON.parse(msg.data);
+                if (data.event === "pong" || data.event === "ping") {
+                    return;
+                }
+
+                log.debug("WebSocket message", data);
+
+                if (data.event === "update" && data.channel === "swap.update") {
+                    const swapUpdates = data.args as SwapStatus[];
+                    for (const status of swapUpdates) {
+                        this.relevantIds.add(status.id);
+                        this.prepareSwap(status.id, status);
+                        await this.swapClaimLock.acquire(() =>
+                            this.claimSwap(status.id, status),
+                        );
+                    }
+                }
+            };
+        });
     };
 
     private handleClose = () => {
@@ -249,9 +268,9 @@ export const SwapChecker = () => {
                     s.claimTx === undefined),
         );
 
-        log.debug(`Opening WebSocket: ${getApiUrl()}`);
         ws = new BoltzWebSocket(
             getApiUrl(),
+            config.apiUrl.wsFallback,
             new Set<string>(swapsToCheck.map((s) => s.id)),
             prepareSwap,
             claimSwap,

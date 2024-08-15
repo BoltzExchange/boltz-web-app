@@ -27,7 +27,6 @@ const defaults = {
 };
 
 type Asset = {
-    apiUrl?: Url;
     network?: any;
     blockExplorerUrl?: Url;
 
@@ -45,7 +44,9 @@ type Url = {
 };
 
 export type Config = {
-    apiUrl?: Url;
+    // The wsFallback is used on regtest when the backend is being run without
+    // nginx and the WebSocket is on a different port than the rest of the API
+    apiUrl?: Url & { wsFallback?: string };
     network?: "mainnet" | "testnet" | "regtest";
     isBoltzClient?: boolean;
     boltzClientApiUrl?: string;

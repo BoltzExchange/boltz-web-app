@@ -269,8 +269,11 @@ export const CreateButton = () => {
 
     const buttonClick = async () => {
         setButtonDisable(true);
-        await create();
-        setButtonDisable(false);
+        try {
+            await create();
+        } finally {
+            setButtonDisable(false);
+        }
     };
 
     const getButtonLabel = (label: ButtonLabelParams) => {
