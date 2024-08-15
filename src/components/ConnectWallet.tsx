@@ -116,8 +116,10 @@ const ConnectModal = () => {
 
 const ShowAddress = ({
     address,
+    addressOverride,
 }: {
     address: Accessor<string | undefined>;
+    addressOverride?: Accessor<string | undefined>;
 }) => {
     const { t } = useGlobalContext();
     const { clearSigner } = useWeb3Signer();
@@ -130,15 +132,18 @@ const ShowAddress = ({
         return addr;
     };
 
-    const [text, setText] = createSignal<string>(formatAddress(address()));
+    const [text, setText] = createSignal<string | undefined>(undefined);
 
     return (
         <button
             onClick={() => clearSigner()}
             onMouseEnter={() => setText(t("disconnect_address"))}
-            onMouseLeave={() => setText(formatAddress(address()))}
+            onMouseLeave={() => setText(undefined)}
             class="btn btn-light">
-            {text()}
+            {text() ||
+                (addressOverride
+                    ? addressOverride() || formatAddress(address())
+                    : formatAddress(address()))}
         </button>
     );
 };
@@ -188,7 +193,11 @@ export const SwitchNetwork = () => {
     );
 };
 
-const ConnectWallet = () => {
+const ConnectWallet = ({
+    addressOverride,
+}: {
+    addressOverride?: Accessor<string | undefined>;
+}) => {
     const { t } = useGlobalContext();
     const { providers, signer, getContracts } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
@@ -223,7 +232,10 @@ const ConnectWallet = () => {
             }>
             <Show when={address() !== undefined} fallback={<ConnectModal />}>
                 <Show when={networkValid()} fallback={<SwitchNetwork />}>
-                    <ShowAddress address={address} />
+                    <ShowAddress
+                        address={address}
+                        addressOverride={addressOverride}
+                    />
                 </Show>
             </Show>
         </Show>
