@@ -13,7 +13,6 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
@@ -76,7 +75,7 @@ export type GlobalContextType = {
         audio?: boolean,
     ) => void;
     playNotificationSound: () => void;
-    fetchPairs: (asset?: string) => void;
+    fetchPairs: () => void;
 
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
@@ -192,8 +191,8 @@ const GlobalProvider = (props: { children: any }) => {
         audio.play();
     };
 
-    const fetchPairs = (asset: string = BTC) => {
-        getPairs(asset)
+    const fetchPairs = () => {
+        getPairs()
             .then((data) => {
                 log.debug("getpairs", data);
                 setOnline(true);

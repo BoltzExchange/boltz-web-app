@@ -259,7 +259,7 @@ export const CreateButton = () => {
             }
 
             if (msg === "invalid pair hash") {
-                setPairs(await getPairs(assetReceive()));
+                setPairs(await getPairs());
                 notify("error", t("feecheck"));
             } else {
                 notify("error", msg);
@@ -269,8 +269,11 @@ export const CreateButton = () => {
 
     const buttonClick = async () => {
         setButtonDisable(true);
-        await create();
-        setButtonDisable(false);
+        try {
+            await create();
+        } finally {
+            setButtonDisable(false);
+        }
     };
 
     const getButtonLabel = (label: ButtonLabelParams) => {

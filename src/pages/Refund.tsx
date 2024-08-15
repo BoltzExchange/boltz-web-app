@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { Show, createEffect, createSignal, onMount } from "solid-js";
+import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
@@ -105,6 +105,12 @@ const Refund = () => {
 
     let refundScanAbort: AbortController | undefined = undefined;
 
+    onCleanup(() => {
+        if (refundScanAbort) {
+            refundScanAbort.abort();
+        }
+    });
+
     createEffect(async () => {
         setLogRefundableSwaps([]);
 
@@ -167,7 +173,7 @@ const Refund = () => {
             )
             .map(async (swap) => {
                 try {
-                    const res = await getSwapStatus(swap.assetSend, swap.id);
+                    const res = await getSwapStatus(swap.id);
                     if (
                         !(await updateSwapStatus(swap.id, res.status)) &&
                         Object.values(swapStatusFailed).includes(res.status)
@@ -177,12 +183,8 @@ const Refund = () => {
                             return;
                         }
 
-                        // Make sure coins were locked for the swap with status "swap.expired"
-                        await getLockupTransaction(
-                            swap.assetSend,
-                            swap.id,
-                            swap.type,
-                        );
+                        // Make sure coins were locked for the swap with the status "swap.expired"
+                        await getLockupTransaction(swap.id, swap.type);
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {

@@ -111,7 +111,7 @@ const Web3SignerProvider = (props: {
             return undefined;
         }
 
-        return (await getContracts(RBTC))["rsk"];
+        return (await getContracts())["rsk"];
     });
 
     const getEtherSwap = () => {

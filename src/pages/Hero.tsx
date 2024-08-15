@@ -7,7 +7,6 @@ import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import rbtc from "../assets/rootstock-icon.svg";
-import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import Create from "../pages/Create";
@@ -33,7 +32,7 @@ export const Hero = () => {
 
     onMount(async () => {
         try {
-            const statsRes = await getNodeStats(BTC);
+            const statsRes = await getNodeStats();
 
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;

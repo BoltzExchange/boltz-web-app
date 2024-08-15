@@ -28,7 +28,6 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getSwapStatus } from "../utils/boltzClient";
-import { getRelevantAssetForSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
@@ -48,8 +47,8 @@ const Pay = () => {
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
             setSwap(currentSwap);
-            const asset = getRelevantAssetForSwap(currentSwap);
-            const res = await getSwapStatus(asset, currentSwap.id);
+
+            const res = await getSwapStatus(currentSwap.id);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
             setFailureReason(res.failureReason);
