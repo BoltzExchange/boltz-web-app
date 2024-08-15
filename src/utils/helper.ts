@@ -51,9 +51,8 @@ export const clipboard = (text: string) => {
     navigator.clipboard.writeText(text);
 };
 
-export const getApiUrl = (asset: string): string => {
-    const found = config.assets[asset];
-    return chooseUrl(found?.apiUrl ?? config.apiUrl);
+export const getApiUrl = (): string => {
+    return chooseUrl(config.apiUrl);
 };
 
 export const coalesceLn = (asset: string) => (asset === LN ? BTC : asset);
@@ -80,8 +79,7 @@ export const getPair = <
 
 export const fetcher = async <T = any>(
     url: string,
-    asset: string = BTC,
-    params: any | undefined = null,
+    params?: Record<string, any>,
 ): Promise<T> => {
     let opts = {};
     if (params) {
@@ -93,7 +91,7 @@ export const fetcher = async <T = any>(
             body: JSON.stringify(params),
         };
     }
-    const apiUrl = getApiUrl(asset) + url;
+    const apiUrl = getApiUrl() + url;
     const response = await fetch(apiUrl, opts);
     if (!response.ok) {
         return Promise.reject(response);

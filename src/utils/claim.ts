@@ -115,7 +115,6 @@ const claimReverseSwap = async (
 
     try {
         const boltzSig = await getPartialReverseClaimSignature(
-            asset,
             swap.id,
             preimage,
             Buffer.from(musig.getPublicNonce()),
@@ -200,10 +199,7 @@ const claimChainSwap = async (
 
         // Sign the claim transaction of the server
         try {
-            const serverClaimDetails = await getChainSwapClaimDetails(
-                swap.assetSend,
-                swap.id,
-            );
+            const serverClaimDetails = await getChainSwapClaimDetails(swap.id);
 
             const boltzClaimPublicKey = Buffer.from(
                 serverClaimDetails.publicKey,
@@ -259,7 +255,6 @@ const claimChainSwap = async (
     try {
         // Post our partial signature to ask for theirs
         const theirPartial = await postChainSwapDetails(
-            swap.assetReceive,
             swap.id,
             swap.preimage,
             await createTheirPartialSignature(),
@@ -349,7 +344,7 @@ export const createSubmarineSignature = async (swap: SubmarineSwap) => {
     await setup();
     log.info(`creating cooperative claim signature for`, swap.id);
 
-    const claimDetails = await getSubmarineClaimDetails(swapAsset, swap.id);
+    const claimDetails = await getSubmarineClaimDetails(swap.id);
     if (
         crypto.sha256(claimDetails.preimage).toString("hex") !==
         decodeInvoice(swap.invoice).preimageHash
@@ -369,7 +364,6 @@ export const createSubmarineSignature = async (swap: SubmarineSwap) => {
     musig.initializeSession(claimDetails.transactionHash);
 
     await postSubmarineClaimDetails(
-        swapAsset,
         swap.id,
         musig.getPublicNonce(),
         musig.signPartial(),

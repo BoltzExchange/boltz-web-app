@@ -2,7 +2,7 @@ import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
-import { BTC, LBTC, RBTC } from "../consts/Assets";
+import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     swapStatusFinal,
@@ -133,7 +133,7 @@ export const SwapChecker = () => {
     const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t } =
         useGlobalContext();
 
-    const assetWebsocket = new Map<string, BoltzWebSocket>();
+    let ws: BoltzWebSocket | undefined = undefined;
 
     const prepareSwap = async (swapId: string, data: any) => {
         const currentSwap = await getSwap(swapId);
@@ -170,19 +170,13 @@ export const SwapChecker = () => {
         }
 
         if (data.status === swapStatusSuccess.InvoiceSettled) {
-            data.transaction = await getReverseTransaction(
-                getRelevantAssetForSwap(currentSwap),
-                currentSwap.id,
-            );
+            data.transaction = await getReverseTransaction(currentSwap.id);
         } else if (
             currentSwap.type === SwapType.Chain &&
             data.status === swapStatusSuccess.TransactionClaimed
         ) {
             data.transaction = (
-                await getChainSwapTransactions(
-                    getRelevantAssetForSwap(currentSwap),
-                    currentSwap.id,
-                )
+                await getChainSwapTransactions(currentSwap.id)
             ).serverLock.transaction;
         }
 
@@ -246,14 +240,6 @@ export const SwapChecker = () => {
     };
 
     onMount(async () => {
-        const urlsToAsset = new Map<string, string[]>();
-        for (const [asset, url] of [BTC, LBTC, RBTC].map((asset) => [
-            asset,
-            getApiUrl(asset),
-        ])) {
-            urlsToAsset.set(url, (urlsToAsset.get(url) || []).concat(asset));
-        }
-
         const swapsToCheck = (await getSwaps()).filter(
             (s) =>
                 !swapStatusFinal.includes(s.status) ||
@@ -263,32 +249,18 @@ export const SwapChecker = () => {
                     s.claimTx === undefined),
         );
 
-        for (const [url, assets] of urlsToAsset.entries()) {
-            log.debug(`opening ws for assets [${assets.join(", ")}]: ${url}`);
-            const ws = new BoltzWebSocket(
-                url,
-                new Set<string>(
-                    swapsToCheck
-                        .filter((s) =>
-                            assets.includes(getRelevantAssetForSwap(s)),
-                        )
-                        .map((s) => s.id),
-                ),
-                prepareSwap,
-                claimSwap,
-            );
-            ws.connect();
-            for (const asset of assets) {
-                assetWebsocket.set(asset, ws);
-            }
-        }
+        log.debug(`Opening WebSocket: ${getApiUrl()}`);
+        ws = new BoltzWebSocket(
+            getApiUrl(),
+            new Set<string>(swapsToCheck.map((s) => s.id)),
+            prepareSwap,
+            claimSwap,
+        );
+        ws.connect();
     });
 
     onCleanup(() => {
-        const sockets = assetWebsocket.values();
-        assetWebsocket.clear();
-
-        for (const ws of sockets) {
+        if (ws !== undefined) {
             ws.close();
         }
     });
@@ -298,12 +270,10 @@ export const SwapChecker = () => {
         if (activeSwap === undefined || activeSwap === null) {
             return;
         }
-        // on page reload assetWebsocket is not yet initialized
-        const ws = assetWebsocket.get(getRelevantAssetForSwap(activeSwap));
-        if (ws === undefined) {
-            return;
+        // on page reload assetWebsocket might not be initialized yet
+        if (ws !== undefined) {
+            ws.subscribeUpdates([activeSwap.id]);
         }
-        ws.subscribeUpdates([activeSwap.id]);
     });
 
     return "";

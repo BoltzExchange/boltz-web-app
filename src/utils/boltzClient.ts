@@ -98,11 +98,6 @@ type Contracts = {
     };
 };
 
-type NodeInfo = {
-    publicKey: string;
-    uris: string[];
-};
-
 type SwapTreeLeaf = {
     output: string;
     version: number;
@@ -169,18 +164,11 @@ type ChainSwapTransaction = {
 
 type TransactionInterface = Transaction | LiquidTransaction;
 
-export const getPairs = async (asset: string): Promise<Pairs> => {
+export const getPairs = async (): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
-        fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", asset),
-        fetcher<ReversePairsTaproot>("/v2/swap/reverse", asset),
-        fetcher<ChainPairsTaproot>("/v2/swap/chain", asset).catch((error) => {
-            // Handle API endpoints that do not have chain swaps yet gracefully
-            if (error.status === 404) {
-                return {};
-            }
-
-            throw error;
-        }),
+        fetcher<SubmarinePairsTaproot>("/v2/swap/submarine"),
+        fetcher<ReversePairsTaproot>("/v2/swap/reverse"),
+        fetcher<ChainPairsTaproot>("/v2/swap/chain"),
     ]);
 
     return {
@@ -198,7 +186,7 @@ export const createSubmarineSwap = (
     referralId: string,
     refundPublicKey?: string,
 ): Promise<SubmarineCreatedResponse> =>
-    fetcher("/v2/swap/submarine", to, {
+    fetcher("/v2/swap/submarine", {
         from,
         to,
         invoice,
@@ -217,7 +205,7 @@ export const createReverseSwap = (
     claimPublicKey?: string,
     claimAddress?: string,
 ): Promise<ReverseCreatedResponse> =>
-    fetcher("/v2/swap/reverse", to, {
+    fetcher("/v2/swap/reverse", {
         from,
         to,
         invoiceAmount,
@@ -239,7 +227,7 @@ export const createChainSwap = (
     pairHash: string,
     referralId: string,
 ): Promise<ChainSwapCreatedResponse> =>
-    fetcher("/v2/swap/chain", to, {
+    fetcher("/v2/swap/chain", {
         from,
         to,
         userLockAmount,
@@ -252,7 +240,6 @@ export const createChainSwap = (
     });
 
 export const getPartialRefundSignature = async (
-    asset: string,
     id: string,
     type: SwapType,
     pubNonce: Buffer,
@@ -264,7 +251,6 @@ export const getPartialRefundSignature = async (
         `/v2/swap/${
             type === SwapType.Submarine ? "submarine" : "chain"
         }/${id}/refund`,
-        asset,
         {
             index,
             pubNonce: pubNonce.toString("hex"),
@@ -278,7 +264,6 @@ export const getPartialRefundSignature = async (
 };
 
 export const getPartialReverseClaimSignature = async (
-    asset: string,
     id: string,
     preimage: Buffer,
     pubNonce: Buffer,
@@ -286,7 +271,7 @@ export const getPartialReverseClaimSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(`/v2/swap/reverse/${id}/claim`, asset, {
+    const res = await fetcher(`/v2/swap/reverse/${id}/claim`, {
         index,
         preimage: preimage.toString("hex"),
         pubNonce: pubNonce.toString("hex"),
@@ -298,8 +283,8 @@ export const getPartialReverseClaimSignature = async (
     };
 };
 
-export const getSubmarineClaimDetails = async (asset: string, id: string) => {
-    const res = await fetcher(`/v2/swap/submarine/${id}/claim`, asset);
+export const getSubmarineClaimDetails = async (id: string) => {
+    const res = await fetcher(`/v2/swap/submarine/${id}/claim`);
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         preimage: Buffer.from(res.preimage, "hex"),
@@ -308,42 +293,26 @@ export const getSubmarineClaimDetails = async (asset: string, id: string) => {
 };
 
 export const postSubmarineClaimDetails = (
-    asset: string,
     id: string,
     pubNonce: Buffer | Uint8Array,
     partialSignature: Buffer | Uint8Array,
 ) => {
     checkCooperative();
-    return fetcher(`/v2/swap/submarine/${id}/claim`, asset, {
+    return fetcher(`/v2/swap/submarine/${id}/claim`, {
         pubNonce: Buffer.from(pubNonce).toString("hex"),
         partialSignature: Buffer.from(partialSignature).toString("hex"),
     });
 };
 
-export const getEipRefundSignature = (
-    asset: string,
-    id: string,
-    type: SwapType,
-) => {
+export const getEipRefundSignature = (id: string, type: SwapType) => {
     checkCooperative();
-    return fetcher<{ signature: string }>(
-        `/v2/swap/${type}/${id}/refund`,
-        asset,
-    );
+    return fetcher<{ signature: string }>(`/v2/swap/${type}/${id}/refund`);
 };
 
-export const getFeeEstimations = (asset: string) =>
-    fetcher<Record<string, number>>("/v2/chain/fees", asset);
+export const getFeeEstimations = () =>
+    fetcher<Record<string, number>>("/v2/chain/fees");
 
-export const getNodes = (asset: string) =>
-    fetcher<{
-        BTC: {
-            LND: NodeInfo;
-            CLN: NodeInfo;
-        };
-    }>("/v2/nodes", asset);
-
-export const getNodeStats = (asset: string) =>
+export const getNodeStats = () =>
     fetcher<{
         BTC: {
             total: {
@@ -353,18 +322,17 @@ export const getNodeStats = (asset: string) =>
                 oldestChannel: number;
             };
         };
-    }>("/v2/nodes/stats", asset);
+    }>("/v2/nodes/stats");
 
-export const getContracts = (asset: string) =>
-    fetcher<Record<string, Contracts>>("/v2/chain/contracts", asset);
+export const getContracts = () =>
+    fetcher<Record<string, Contracts>>("/v2/chain/contracts");
 
 export const broadcastTransaction = (asset: string, txHex: string) =>
-    fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, asset, {
+    fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, {
         hex: txHex,
     });
 
 export const getLockupTransaction = async (
-    asset: string,
     id: string,
     type: SwapType,
 ): Promise<{
@@ -380,10 +348,10 @@ export const getLockupTransaction = async (
                 hex: string;
                 timeoutBlockHeight: number;
                 timeoutEta?: number;
-            }>(`/v2/swap/submarine/${id}/transaction`, asset);
+            }>(`/v2/swap/submarine/${id}/transaction`);
 
         case SwapType.Chain:
-            const res = await getChainSwapTransactions(asset, id);
+            const res = await getChainSwapTransactions(id);
             return {
                 id: res.userLock.transaction.id,
                 hex: res.userLock.transaction.hex,
@@ -396,14 +364,14 @@ export const getLockupTransaction = async (
     }
 };
 
-export const getReverseTransaction = (asset: string, id: string) =>
+export const getReverseTransaction = (id: string) =>
     fetcher<{
         id: string;
         hex: string;
         timeoutBlockHeight: number;
-    }>(`/v2/swap/reverse/${id}/transaction`, asset);
+    }>(`/v2/swap/reverse/${id}/transaction`);
 
-export const getSwapStatus = (asset: string, id: string) =>
+export const getSwapStatus = (id: string) =>
     fetcher<{
         status: string;
         failureReason?: string;
@@ -412,17 +380,16 @@ export const getSwapStatus = (asset: string, id: string) =>
             id: string;
             hex: string;
         };
-    }>(`/v2/swap/${id}`, asset);
+    }>(`/v2/swap/${id}`);
 
-export const getChainSwapClaimDetails = (asset: string, id: string) =>
+export const getChainSwapClaimDetails = (id: string) =>
     fetcher<{
         pubNonce: string;
         publicKey: string;
         transactionHash: string;
-    }>(`/v2/swap/chain/${id}/claim`, asset);
+    }>(`/v2/swap/chain/${id}/claim`);
 
 export const postChainSwapDetails = (
-    asset: string,
     id: string,
     preimage: string,
     signature: { pubNonce: string; partialSignature: string },
@@ -432,18 +399,18 @@ export const postChainSwapDetails = (
     return fetcher<{
         pubNonce: string;
         partialSignature: string;
-    }>(`/v2/swap/chain/${id}/claim`, asset, {
+    }>(`/v2/swap/chain/${id}/claim`, {
         preimage,
         signature,
         toSign,
     });
 };
 
-export const getChainSwapTransactions = (asset: string, id: string) =>
+export const getChainSwapTransactions = (id: string) =>
     fetcher<{
         userLock: ChainSwapTransaction;
         serverLock: ChainSwapTransaction;
-    }>(`/v2/swap/chain/${id}/transactions`, asset);
+    }>(`/v2/swap/chain/${id}/transactions`);
 
 export {
     Pairs,
