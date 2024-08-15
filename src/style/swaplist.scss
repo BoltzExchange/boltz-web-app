@@ -37,6 +37,12 @@
     transform: scale(1.5);
 }
 
+.swaplist-asset-single {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 10px 0 25px;
+}
+
 .swaplist-asset span[data-asset="LN"] {
     background-image: url(../assets/lightning-icon.svg);
 }

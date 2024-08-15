@@ -6,7 +6,7 @@ const dict = {
         fast: "Fast",
         l2: "Built on Layer 2",
         l2_sub: "Boltz utilizes Layer 2 scaling technologies like the Lightning Network",
-        assets_sub: "Lightning / Bitcoin / Liquid",
+        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
         safe: "Safe",
         non_custodial: "Non-Custodial",
         non_custodial_sub:
@@ -64,10 +64,10 @@ const dict = {
         pay_invoice_to:
             "Pay this invoice about {{ amount }} {{ denomination }}",
         pay_address: "Address",
-        no_metamask: "MetaMask not installed",
-        connect_metamask: "Connect MetaMask",
-        connect_to_address: "Connect to MetaMask to set address",
-        disconnect_address: "Disconnect MetaMask",
+        no_wallet: "Wallet not installed",
+        connect_wallet: "Connect wallet",
+        connect_to_address: "Connect to swap address",
+        disconnect_address: "Disconnect wallet",
         lockup_failed: "Lockup Failed!",
         lockup_failed_subline:
             "Your lockup transaction failed, wait for the timeout to refund.",
@@ -204,6 +204,13 @@ const dict = {
             "Disables prompts to download refund file and other confirmation steps",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
+        insufficient_balance: "Insufficient balance",
+        insufficient_balance_line:
+            "You do not have enough balance in your wallet for this swap.",
+        select_wallet: "Select wallet",
+        switch_network: "Switch network",
+        block: "block",
+        logs_scan_progress: "Scan progress {{ value }}%",
     },
     de: {
         language: "Deutsch",
@@ -212,7 +219,7 @@ const dict = {
         fast: "Schnell",
         l2: "Auf Layer-2 gebaut",
         l2_sub: "Boltz nutzt Layer-2 Skalierungstechnologien wie das Lightning-Netzwerk",
-        assets_sub: "Lightning / Bitcoin / Liquid",
+        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
         safe: "Sicher",
         non_custodial: "Non-Custodial",
         non_custodial_sub:
@@ -271,10 +278,10 @@ const dict = {
         pay_invoice_to:
             "Zahle diese Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
-        no_metamask: "MetaMask ist nicht installiert",
-        connect_metamask: "MetaMask verbinden",
-        connect_to_address: "Mit MetaMask verbinden um Adresse zu setzen",
-        disconnect_address: "MetaMask trennen",
+        no_wallet: "Wallet ist nicht installiert",
+        connect_wallet: "Wallet verbinden",
+        connect_to_address: "Mit Swap-Adresse verbinden",
+        disconnect_address: "Wallet trennen",
         lockup_failed: "Lockup fehlgeschlagen!",
         lockup_failed_subline:
             "Deine Lockup-Transaktion ist fehlgeschlagen, warte auf den Timeout, um eine Rückerstattung zu starten.",
@@ -310,8 +317,8 @@ const dict = {
             "Swaps, die in deinem Browser gespeichert wurden",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
-        refund_address_header: "Adresse deines {{ asset }} Wallet eingeben",
-        refund_address_header_no_asset: "Adresse deines Wallet eingeben",
+        refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
+        refund_address_header_no_asset: "Adresse deines Wallets eingeben",
         refund_backup: "Backup",
         refund_import: "Backup importieren",
         refund_clear: "Speicher löschen",
@@ -418,6 +425,13 @@ const dict = {
             "Deaktiviert Downloadaufforderung der Rückerstattungsdatei und andere Bestätigungsschritte",
         error_starting_qr_scanner:
             "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
+        insufficient_balance: "Unzureichendes Guthaben",
+        insufficient_balance_line:
+            "Sie haben nicht genügend Guthaben für diesen Swap.",
+        select_wallet: "Wallet auswählen",
+        switch_network: "Netzwerk wechseln",
+        block: "Block",
+        logs_scan_progress: "Scan-Fortschritt {{ value }}%",
     },
     es: {
         language: "Español",
@@ -426,7 +440,7 @@ const dict = {
         fast: "Rápido",
         l2: "Construido en la Capa 2",
         l2_sub: "Boltz utiliza tecnologías de segunda capa como la red de Lightning",
-        assets_sub: "Lightning / Bitcoin / Liquid",
+        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
         safe: "Seguro",
         non_custodial: "Sin Custodia",
         non_custodial_sub:
@@ -484,11 +498,10 @@ const dict = {
         send_to: "Enviar {{ amount }} {{ denomination }} a",
         pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
-        no_metamask: "MetaMask no está instalado",
-        connect_metamask: "Conectar MetaMask",
-        connect_to_address:
-            "Conectar con MetaMask para establecer la dirección",
-        disconnect_address: "Desconectar MetaMask",
+        no_wallet: "Monedero no está instalado",
+        connect_wallet: "Conectar monedero",
+        connect_to_address: "Conectar con dirección de intercambio",
+        disconnect_address: "Desconectar monedero",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
             "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
@@ -632,6 +645,13 @@ const dict = {
             "Desactiva los avisos para descargar el archivo de reembolso y otros pasos de confirmación",
         error_starting_qr_scanner:
             "No se pudo acceder a la cámara, por favor compruebe los permisos!",
+        insufficient_balance: "Saldo insuficiente",
+        insufficient_balance_line:
+            "No tienes saldo suficiente en tu monedero para este swap.",
+        select_wallet: "Seleccionar monedero",
+        switch_network: "Cambiar red",
+        block: "bloque",
+        logs_scan_progress: "Progreso del escaneo {{ value }}%",
     },
     zh: {
         language: "中文",
@@ -640,7 +660,7 @@ const dict = {
         fast: "快速",
         l2: "建立在二层网络之上",
         l2_sub: "Boltz利用像闪电网络这样的二层网络扩展技术",
-        assets_sub: "闪电网络/比特币/Liquid",
+        assets_sub: "闪电网络/比特币/Liquid/Rootstock",
         safe: "安全",
         non_custodial: "非托管",
         non_custodial_sub:
@@ -696,10 +716,10 @@ const dict = {
             "请确保将准确的金额{{ amount }}{{ denomination }}发送到下面显示的地址。否则,交换将失败。最好使用“复制BIP21”按钮,并将其粘贴到您钱包的发送屏幕中。",
         pay_invoice_to: "支付金额为{{ amount }}{{ denomination }}的发票",
         pay_address: "地址",
-        no_metamask: "未安装MetaMask",
-        connect_metamask: "连接MetaMask",
-        connect_to_address: "连接MetaMask以设置地址",
-        disconnect_address: "断开MetaMask",
+        no_wallet: "未安装钱包",
+        connect_wallet: "连接钱包",
+        connect_to_address: "连接交换地址",
+        disconnect_address: "断开钱包",
         lockup_failed: "锁仓失败！",
         lockup_failed_subline: "您的锁仓交易失败，请等待超时进行退款。",
         failure_reason: "失败原因",
@@ -819,10 +839,18 @@ const dict = {
         reckless_mode_setting: "鲁莽模式",
         reckless_mode_setting_tooltip: "禁用下载退款文件的提示和其他确认步骤",
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
+        insufficient_balance: "余额不足",
+        insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
+        select_wallet: "选择钱包",
+        switch_network: "转换网络",
+        block: "块",
+        logs_scan_progress: "扫描进度{{ value }}%",
     },
 };
 
-const rawDict = JSON.parse(JSON.stringify(dict));
+export type DictKey = keyof typeof dict.en;
+
+export const rawDict = JSON.parse(JSON.stringify(dict));
 
 Object.entries(dict)
     .filter(([lang]) => lang !== "en")
@@ -835,4 +863,3 @@ Object.entries(dict)
     });
 
 export default dict;
-export { rawDict };

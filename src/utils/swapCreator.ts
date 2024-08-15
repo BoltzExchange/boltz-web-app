@@ -32,6 +32,9 @@ export type SwapBase = {
 
     refundTx?: string;
     lockupTx?: string;
+
+    useRif: boolean;
+    signer?: string;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -75,6 +78,7 @@ export const createSubmarine = async (
     receiveAmount: BigNumber,
     invoice: string,
     referralId: string,
+    useRif: boolean,
 ): Promise<SubmarineSwap> => {
     const isRsk = assetReceive === RBTC;
     const refundKeys = !isRsk ? ECPair.makeRandom() : undefined;
@@ -95,6 +99,7 @@ export const createSubmarine = async (
             assetReceive,
             sendAmount,
             receiveAmount,
+            useRif,
         ),
         invoice,
         refundPrivateKey: refundKeys?.privateKey.toString("hex"),
@@ -109,6 +114,7 @@ export const createReverse = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     referralId: string,
+    useRif: boolean,
 ): Promise<ReverseSwap> => {
     const isRsk = assetReceive === RBTC;
 
@@ -134,6 +140,7 @@ export const createReverse = async (
             assetReceive,
             sendAmount,
             receiveAmount,
+            useRif,
         ),
         claimAddress,
         preimage: preimage.toString("hex"),
@@ -149,6 +156,7 @@ export const createChain = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     referralId: string,
+    useRif: boolean,
 ): Promise<ChainSwap> => {
     const preimage = randomBytes(32);
     const claimKeys = assetReceive !== RBTC ? ECPair.makeRandom() : undefined;
@@ -174,6 +182,7 @@ export const createChain = async (
             assetReceive,
             sendAmount,
             receiveAmount,
+            useRif,
         ),
         claimAddress,
         preimage: preimage.toString("hex"),
@@ -189,9 +198,11 @@ const annotateSwapBaseData = <T>(
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
+    useRif: boolean,
 ): T & SwapBase => ({
     ...createdResponse,
     type,
+    useRif,
     assetSend,
     assetReceive,
     date: new Date().getTime(),

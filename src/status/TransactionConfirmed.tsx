@@ -5,44 +5,66 @@ import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
+import { relayClaimTransaction } from "../rif/Signer";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
+// TODO: use bignumber for amounts
 const ClaimRsk = ({
+    useRif,
     swapId,
-    preimage,
     amount,
+    preimage,
+    signerAddress,
     refundAddress,
     timeoutBlockHeight,
 }: {
-    swapId: string;
-    preimage: string;
     amount: number;
+    swapId: string;
+    useRif: boolean;
+    preimage: string;
+    signerAddress: string;
     refundAddress: string;
     timeoutBlockHeight: number;
 }) => {
-    const { getEtherSwap } = useWeb3Signer();
+    const { getEtherSwap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
 
     return (
         <ContractTransaction
             onClick={async () => {
-                const contract = await getEtherSwap();
+                let transactionHash: string;
 
-                const tx = await contract[
-                    "claim(bytes32,uint256,address,uint256)"
-                ](
-                    prefix0x(preimage),
-                    satoshiToWei(amount),
-                    refundAddress,
-                    timeoutBlockHeight,
-                );
+                if (useRif) {
+                    transactionHash = await relayClaimTransaction(
+                        signer(),
+                        signer().rdns,
+                        getEtherSwap(),
+                        preimage,
+                        amount,
+                        refundAddress,
+                        timeoutBlockHeight,
+                    );
+                } else {
+                    transactionHash = (
+                        await getEtherSwap()[
+                            "claim(bytes32,uint256,address,uint256)"
+                        ](
+                            prefix0x(preimage),
+                            satoshiToWei(amount),
+                            refundAddress,
+                            timeoutBlockHeight,
+                        )
+                    ).hash;
+                }
+
                 const currentSwap = await getSwap(swapId);
-                currentSwap.claimTx = tx.hash;
+                currentSwap.claimTx = transactionHash;
                 setSwap(currentSwap);
                 await setSwapStorage(currentSwap);
             }}
+            address={signerAddress}
             buttonText={t("claim")}
             promptText={t("transaction_prompt", { button: t("claim") })}
             waitingText={t("tx_ready_to_claim")}
@@ -62,7 +84,9 @@ const TransactionConfirmed = () => {
             return (
                 <ClaimRsk
                     swapId={chain.id}
+                    useRif={chain.useRif}
                     preimage={chain.preimage}
+                    signerAddress={chain.signer}
                     amount={chain.claimDetails.amount}
                     refundAddress={chain.claimDetails.refundAddress}
                     timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
@@ -75,10 +99,12 @@ const TransactionConfirmed = () => {
         return (
             <ClaimRsk
                 swapId={reverse.id}
-                timeoutBlockHeight={reverse.timeoutBlockHeight}
-                amount={reverse.onchainAmount}
+                useRif={reverse.useRif}
                 preimage={reverse.preimage}
+                amount={reverse.onchainAmount}
+                signerAddress={reverse.signer}
                 refundAddress={reverse.refundAddress}
+                timeoutBlockHeight={reverse.timeoutBlockHeight}
             />
         );
     }

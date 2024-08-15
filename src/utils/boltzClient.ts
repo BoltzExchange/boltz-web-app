@@ -88,6 +88,7 @@ type PartialSignature = {
 
 type Contracts = {
     network: {
+        name: string;
         chainId: number;
     };
     tokens: Record<string, string>;

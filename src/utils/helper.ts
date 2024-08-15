@@ -36,11 +36,15 @@ export const parseBlindingKey = (swap: SomeSwap, isRefund: boolean) => {
     return blindingKey ? Buffer.from(blindingKey, "hex") : undefined;
 };
 
-export const cropString = (str: string) => {
-    if (str.length < 40) {
+export const cropString = (str: string, maxLen = 40, subStrSize = 19) => {
+    if (str.length < maxLen) {
         return str;
     }
-    return str.substring(0, 19) + "..." + str.substring(str.length - 19);
+    return (
+        str.substring(0, subStrSize) +
+        "..." +
+        str.substring(str.length - subStrSize)
+    );
 };
 
 export const clipboard = (text: string) => {

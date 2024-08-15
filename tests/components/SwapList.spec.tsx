@@ -10,7 +10,7 @@ describe("SwapList", () => {
             { id: "second", date: 1454533445545 },
             { id: "third", date: 1 },
         ];
-        const swapsSignal = () => [
+        const swapsSignal = (): any[] => [
             swapsSorted[2],
             swapsSorted[0],
             swapsSorted[1],

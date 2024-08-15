@@ -5,6 +5,7 @@ import { For, createEffect } from "solid-js";
 import DownloadRefund from "../components/DownloadRefund";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import type { DictKey } from "../i18n/i18n";
 
 const RefundStep = () => {
     const params = useParams();
@@ -27,11 +28,13 @@ const RefundStep = () => {
                 <p>{t("backup_refund_subline")}</p>
                 <ul class="bulletpoints">
                     <For
-                        each={[
-                            "backup_refund_list_incognito",
-                            "backup_refund_list_tor",
-                            "backup_refund_list_clear_history",
-                        ]}>
+                        each={
+                            [
+                                "backup_refund_list_incognito",
+                                "backup_refund_list_tor",
+                                "backup_refund_list_clear_history",
+                            ] as DictKey[]
+                        }>
                         {(path) => <li>{t(path)}</li>}
                     </For>
                 </ul>

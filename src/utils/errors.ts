@@ -14,6 +14,10 @@ export const formatError = (message: unknown): string => {
             return msgObj.error;
         }
 
+        if (typeof msgObj.data === "string") {
+            return msgObj.data;
+        }
+
         if (
             typeof message.toString === "function" &&
             message.toString() !== "[object Object]"
