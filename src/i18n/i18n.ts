@@ -431,6 +431,7 @@ const dict = {
         select_wallet: "Wallet auswählen",
         switch_network: "Netzwerk wechseln",
         block: "Block",
+        logs_scan_progress: "Scan-Fortschritt {{ value }}%",
     },
     es: {
         language: "Español",
@@ -650,6 +651,7 @@ const dict = {
         select_wallet: "Seleccionar monedero",
         switch_network: "Cambiar red",
         block: "bloque",
+        logs_scan_progress: "Progreso del escaneo {{ value }}%",
     },
     zh: {
         language: "中文",
@@ -842,6 +844,7 @@ const dict = {
         select_wallet: "选择钱包",
         switch_network: "转换网络",
         block: "块",
+        logs_scan_progress: "扫描进度{{ value }}%",
     },
 };
 
