@@ -4,5 +4,6 @@
     "importOrderSeparation": true,
     "importOrderSortSpecifiers": true,
     "tabWidth": 4,
-    "bracketSameLine": true
+    "bracketSameLine": true,
+    "proseWrap": "always"
 }

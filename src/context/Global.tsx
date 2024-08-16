@@ -18,12 +18,12 @@ import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
-import { detectEmbedded } from "../utils/embed";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import { getUrlParam, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -288,18 +288,14 @@ const GlobalProvider = (props: { children: any }) => {
     setWasmSupported(checkWasmSupported());
 
     // check referral
-    const refParam = new URLSearchParams(window.location.search).get("ref");
+    const refParam = getUrlParam("ref");
     if (refParam && refParam !== "") {
         setRef(refParam);
-        window.history.replaceState(
-            {},
-            document.title,
-            window.location.pathname,
-        );
     }
 
-    if (detectEmbedded()) {
+    if (isEmbed()) {
         setEmbedded(true);
+        setHideHero(true);
     }
 
     const [browserNotification, setBrowserNotification] = makePersisted(

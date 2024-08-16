@@ -4,3 +4,5 @@ export const LBTC = "L-BTC";
 export const RBTC = "RBTC";
 
 export type AssetType = typeof LN | typeof BTC | typeof LBTC | typeof RBTC;
+
+export const assets = [LN, BTC, LBTC, RBTC];

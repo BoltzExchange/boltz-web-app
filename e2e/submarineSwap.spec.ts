@@ -28,9 +28,7 @@ test.describe("Submarine swap", () => {
         await expect(inputSendAmount).toHaveValue(sendAmount);
 
         const invoiceInput = page.locator("textarea[data-testid='invoice']");
-        await invoiceInput.fill(
-            JSON.parse(await generateInvoiceLnd(1000000)).payment_request,
-        );
+        await invoiceInput.fill(await generateInvoiceLnd(1000000));
         const buttonCreateSwap = page.locator(
             "button[data-testid='create-swap-button']",
         );
