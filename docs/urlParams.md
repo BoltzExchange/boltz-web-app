@@ -4,7 +4,7 @@ description: >-
     Those parameters are documented here.
 ---
 
-# URL query parameters
+# 🔍 URL query parameters
 
 ## Embedding
 
