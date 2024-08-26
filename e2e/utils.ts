@@ -43,7 +43,7 @@ export const bitcoinSendToAddress = async (
 
 export const elementsSendToAddress = async (
     address: string,
-    amount: string,
+    amount: string | number,
 ): Promise<string> => {
     return execCommand(
         `elements-cli-sim-client sendtoaddress "${address}" ${amount}`,

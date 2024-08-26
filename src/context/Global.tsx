@@ -75,7 +75,7 @@ export type GlobalContextType = {
         audio?: boolean,
     ) => void;
     playNotificationSound: () => void;
-    fetchPairs: () => void;
+    fetchPairs: () => Promise<void>;
 
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
@@ -191,17 +191,16 @@ const GlobalProvider = (props: { children: any }) => {
         audio.play();
     };
 
-    const fetchPairs = () => {
-        getPairs()
-            .then((data) => {
-                log.debug("getpairs", data);
-                setOnline(true);
-                setPairs(data);
-            })
-            .catch((error) => {
-                log.debug(error);
-                setOnline(false);
-            });
+    const fetchPairs = async () => {
+        try {
+            const data = await getPairs();
+            log.debug("getpairs", data);
+            setOnline(true);
+            setPairs(data);
+        } catch (error) {
+            log.debug(error);
+            setOnline(false);
+        }
     };
 
     // Use IndexedDB if available; fallback to LocalStorage

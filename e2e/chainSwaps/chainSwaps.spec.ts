@@ -5,7 +5,7 @@ import {
     generateBitcoinBlock,
     generateLiquidBlock,
     getBitcoinAddress,
-} from "./utils";
+} from "../utils";
 
 test.describe("Chain swap", () => {
     test.beforeEach(async () => {
