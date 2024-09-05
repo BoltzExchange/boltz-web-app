@@ -17,7 +17,6 @@ import {
 
 // With some extra buffer; just in case
 export const GasNeededToClaim = BigInt(35355) * 2n;
-export const GasNeededToDeploy = 230000n;
 
 export const MaxRelayNonceGap = 10;
 
@@ -78,13 +77,13 @@ export const relayClaimTransaction = async (
         request: {
             value: "0",
             data: callData,
+            tokenAmount: "0",
             tokenGas: "20000",
-            tokenContract: ZeroAddress,
             from: signerAddress,
             to: etherSwapAddress,
+            tokenContract: ZeroAddress,
             relayHub: chainInfo.relayHubAddress,
             validUntilTime: getValidUntilTime(),
-            tokenAmount: (feeData.gasPrice * GasNeededToDeploy).toString(),
         },
         relayData: {
             feesReceiver: chainInfo.feesReceiver,
@@ -115,7 +114,7 @@ export const relayClaimTransaction = async (
     }
 
     const metadata: Metadata = {
-        signature: "",
+        signature: "SERVER_SIGNATURE_REQUIRED",
         relayHubAddress: chainInfo.relayHubAddress,
         relayMaxNonce:
             (await signer.provider.getTransactionCount(
@@ -123,21 +122,11 @@ export const relayClaimTransaction = async (
             )) + MaxRelayNonceGap,
     };
 
-    // TODO: remove once this is implemented https://github.com/rsksmart/rif-relay-client/blob/0969a115ea76deef0fee63e77189cc22c0fbd181/src/gasEstimator/utils.ts#L62
-    if (!smartWalletExists) {
-        metadata.signature = await sign(signer, envelopingRequest);
-    }
-
     const estimateRes = await estimate(envelopingRequest, metadata);
     log.debug("RIF gas estimation response", estimateRes);
 
+    envelopingRequest.request.tokenGas = estimateRes.estimation;
     envelopingRequest.request.tokenAmount = estimateRes.requiredTokenAmount;
-
-    // Hack to work around Rabby throwing an error when we ask for signatures too rapidly
-    if (signerRns === "io.rabby") {
-        await new Promise<void>((resolve) => setTimeout(resolve, 1000));
-    }
-
     metadata.signature = await sign(signer, envelopingRequest);
 
     const relayRes = await relay(envelopingRequest, metadata);
