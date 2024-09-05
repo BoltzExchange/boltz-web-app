@@ -179,7 +179,6 @@ const dict = {
             "Clipboard contains invalid characters or maximum amount is exceeded",
         email: "Email",
         switch_paste: "Switched swap direction/asset based on pasted content",
-        canary: "Canary",
         settings: "Settings",
         decimal_separator: "Decimal Separator",
         denomination_tooltip: "Choose your preferred denomination: BTC or sats",
@@ -398,7 +397,6 @@ const dict = {
         email: "Email",
         switch_paste:
             "Swap-Richtung/Asset basierend auf eingefügtem Inhalt gewechselt",
-        canary: "Canary",
         settings: "Einstellungen",
         decimal_separator: "Dezimaltrennzeichen",
         denomination_tooltip:
@@ -619,7 +617,6 @@ const dict = {
         email: "Email",
         switch_paste:
             "Cambiado de dirección/activo de intercambio basado en el contenido pegado",
-        canary: "Canary",
         settings: "Ajustes",
         decimal_separator: "Separador decimal",
         denomination_tooltip: "Elige tu denominación preferida: BTC o sats",
@@ -818,7 +815,6 @@ const dict = {
         paste_invalid: "剪贴板包含无效字符或超出最大金额",
         email: "邮箱",
         switch_paste: "根据粘贴的内容切换交换方向/资产",
-        canary: "金丝雀搜查令",
         settings: "设置",
         decimal_separator: "小数分隔符",
         denomination_tooltip: "选择您的首选面额：BTC 或 sats",

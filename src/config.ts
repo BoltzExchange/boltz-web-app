@@ -21,7 +21,6 @@ const defaults = {
         "https://www.youtube.com/playlist?list=PLkqOa9SGBeZfAEHvKkGKjeRIASeu6bNO3",
     brandingUrl: "https://github.com/BoltzExchange/logo",
     testnetUrl: "https://testnet.boltz.exchange",
-    canaryUrl: "https://canary.boltz.exchange",
     telegramUrl: "https://t.me/boltzhq",
     email: "hi@bol.tz",
 };
