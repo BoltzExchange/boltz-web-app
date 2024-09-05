@@ -15,7 +15,7 @@ const RefundEvm = () => {
     const { signer, getEtherSwap } = useWeb3Signer();
 
     const [refundData] = createResource<LogRefundData>(async () => {
-        if (signer === undefined) {
+        if (signer() === undefined) {
             return undefined;
         }
 

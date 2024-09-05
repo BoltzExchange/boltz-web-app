@@ -238,6 +238,8 @@ describe("Create", () => {
         const createButton = (await screen.findByTestId(
             "create-swap-button",
         )) as HTMLButtonElement;
+        globalSignals.setOnline(true);
+
         expect(createButton.disabled).toEqual(true);
         expect(createButton.innerHTML).toEqual("Invalid BTC address");
 

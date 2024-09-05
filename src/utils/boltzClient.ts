@@ -412,6 +412,12 @@ export const getChainSwapTransactions = (id: string) =>
         serverLock: ChainSwapTransaction;
     }>(`/v2/swap/chain/${id}/transactions`);
 
+export const getChainSwapNewQuote = (id: string) =>
+    fetcher<{ amount: number }>(`/v2/swap/chain/${id}/quote`);
+
+export const acceptChainSwapNewQuote = (id: string, amount: number) =>
+    fetcher<{}>(`/v2/swap/chain/${id}/quote`, { amount });
+
 export {
     Pairs,
     Contracts,

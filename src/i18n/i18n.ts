@@ -210,6 +210,7 @@ const dict = {
         switch_network: "Switch network",
         block: "block",
         logs_scan_progress: "Scan progress {{ value }}%",
+        accept: "Accept",
     },
     de: {
         language: "Deutsch",
@@ -430,6 +431,7 @@ const dict = {
         switch_network: "Netzwerk wechseln",
         block: "Block",
         logs_scan_progress: "Scan-Fortschritt {{ value }}%",
+        accept: "Akzeptieren",
     },
     es: {
         language: "Español",
@@ -649,6 +651,7 @@ const dict = {
         switch_network: "Cambiar red",
         block: "bloque",
         logs_scan_progress: "Progreso del escaneo {{ value }}%",
+        accept: "Aceptar",
     },
     zh: {
         language: "中文",
@@ -841,6 +844,7 @@ const dict = {
         switch_network: "转换网络",
         block: "块",
         logs_scan_progress: "扫描进度{{ value }}%",
+        accept: "接受",
     },
 };
 
