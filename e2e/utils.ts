@@ -71,3 +71,8 @@ export const generateInvoiceLnd = async (amount: number): Promise<string> => {
         await execCommand(`lncli-sim 1 addinvoice --amt ${amount}`),
     ).payment_request;
 };
+
+export const getBolt12Offer = async (): Promise<string> => {
+    return JSON.parse(await execCommand("lightning-cli-sim 1 offer any ''"))
+        .bolt12;
+};
