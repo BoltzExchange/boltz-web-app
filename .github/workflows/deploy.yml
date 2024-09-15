@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy mainnet build
+name: Deploy testnet build
 
 on:
   # Runs on pushes targeting the default branch
@@ -37,8 +37,9 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install
-      - name: Copy mainnet config
-        run: npm run mainnet
+      # cand specitfy testnet or mainnnet 
+      - name: Copy config
+        run: npm run testnet
       - name: Build
         run: npm run build
       - name: Setup Pages
