@@ -2,7 +2,7 @@
 name: Deploy testnet build
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs on pushes targeting the main branch
   push:
     branches: ['main']
 
@@ -37,7 +37,7 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install
-      # specify testnet or mainnnet 
+      # specify testnet or mainnet 
       - name: Copy config
         run: npm run testnet
       - name: Build
