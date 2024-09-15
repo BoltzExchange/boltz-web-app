@@ -37,7 +37,7 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install
-      # cand specitfy testnet or mainnnet 
+      # specify testnet or mainnnet 
       - name: Copy config
         run: npm run testnet
       - name: Build
