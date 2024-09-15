@@ -1,6 +1,11 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  # Runs on pushes and PRs to targeting the main branch
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
 
 jobs:
   ci:
