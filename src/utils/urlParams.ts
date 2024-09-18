@@ -5,6 +5,14 @@ export const isEmbed = (): boolean => {
     return param && param === "1";
 };
 
+export const backendIndex = (): number => {
+    const param = searchParams().get("backend");
+    if (param) {
+        return parseInt(param);
+    }
+    return 0;
+};
+
 export const getUrlParam = (name: string): string => {
     const param = searchParams().get(name);
     if (param) {

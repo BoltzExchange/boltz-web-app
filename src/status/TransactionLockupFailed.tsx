@@ -23,7 +23,7 @@ import { formatError } from "../utils/errors";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const TransactionLockupFailed = () => {
-    const { t, denomination, separator, fetchPairs, setSwapStorage, pairs } =
+    const { t, denomination, separator, fetchPairs, setSwapStorage, pairs, backend: provider } =
         useGlobalContext();
     const { failureReason, swap, setSwap } = usePayContext();
 
@@ -36,7 +36,7 @@ const TransactionLockupFailed = () => {
 
         try {
             const [quote] = await Promise.all([
-                getChainSwapNewQuote(swap().id),
+                getChainSwapNewQuote(provider(), swap().id),
                 fetchPairs(),
             ]);
 
@@ -107,6 +107,7 @@ const TransactionLockupFailed = () => {
 
                                 try {
                                     await acceptChainSwapNewQuote(
+                                        provider(),
                                         swap().id,
                                         newQuote().quote,
                                     );

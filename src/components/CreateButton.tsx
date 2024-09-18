@@ -35,6 +35,7 @@ export const CreateButton = () => {
         ref,
         t,
         isRecklessMode,
+        backend,
     } = useGlobalContext();
     const {
         invoice,
@@ -189,6 +190,7 @@ export const CreateButton = () => {
             switch (swapType()) {
                 case SwapType.Submarine:
                     data = await createSubmarine(
+                        backend(),
                         pairs(),
                         coalesceLn(assetSend()),
                         coalesceLn(assetReceive()),
@@ -202,6 +204,7 @@ export const CreateButton = () => {
 
                 case SwapType.Reverse:
                     data = await createReverse(
+                        backend(),
                         pairs(),
                         coalesceLn(assetSend()),
                         coalesceLn(assetReceive()),
@@ -215,6 +218,7 @@ export const CreateButton = () => {
 
                 case SwapType.Chain:
                     data = await createChain(
+                        backend(),
                         pairs(),
                         assetSend(),
                         assetReceive(),
@@ -259,7 +263,7 @@ export const CreateButton = () => {
             }
 
             if (msg === "invalid pair hash") {
-                setPairs(await getPairs());
+                setPairs(await getPairs(backend()));
                 notify("error", t("feecheck"));
             } else {
                 notify("error", msg);

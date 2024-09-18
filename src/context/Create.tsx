@@ -135,6 +135,8 @@ export type CreateContextType = {
     setAssetSelect: Setter<boolean>;
     assetSelected: Accessor<string>;
     setAssetSelected: Setter<string>;
+    backendSelect: Accessor<boolean>;
+    setBackendSelect: Setter<boolean>;
     valid: Accessor<boolean>;
     setValid: Setter<boolean>;
     invoiceValid: Accessor<boolean>;
@@ -240,6 +242,9 @@ const CreateProvider = (props: { children: any }) => {
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
 
+    // backend selection
+    const [backendSelect, setBackendSelect] = createSignal(false);
+    
     handleUrlParams(
         setAssetSend,
         setAssetReceive,
@@ -268,6 +273,8 @@ const CreateProvider = (props: { children: any }) => {
                 setAssetSelect,
                 assetSelected,
                 setAssetSelected,
+                backendSelect,
+                setBackendSelect,
                 valid,
                 setValid,
                 invoiceValid,

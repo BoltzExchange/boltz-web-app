@@ -8,10 +8,8 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
-    discordUrl: "https://discord.gg/QBvZGcW",
-    twitterUrl: "https://twitter.com/boltzhq",
-    githubUrl: "https://github.com/BoltzExchange",
-    repoUrl: "https://github.com/BoltzExchange/boltz-web-app",
+    githubUrl: "https://github.com/SwapMarket",
+    repoUrl: "https://github.com/SwapMarket/swapmarket.github.io",
     docsUrl: "https://docs.boltz.exchange",
     blogUrl: "https://blog.boltz.exchange/archive",
     nostrUrl:
@@ -19,10 +17,9 @@ const defaults = {
     statusUrl: "https://status.boltz.exchange",
     youtubeUrl:
         "https://www.youtube.com/playlist?list=PLkqOa9SGBeZfAEHvKkGKjeRIASeu6bNO3",
-    brandingUrl: "https://github.com/BoltzExchange/logo",
-    testnetUrl: "https://testnet.boltz.exchange",
-    telegramUrl: "https://t.me/boltzhq",
-    email: "hi@bol.tz",
+    testnetUrl: "swapmarket.github.io/testnet",
+    telegramUrl: "https://t.me/PeerSwapLN",
+    email: "SwapMarket@proton.me",
 };
 
 type Asset = {
@@ -42,11 +39,17 @@ type Url = {
     tor?: string;
 };
 
-export type Config = {
+type Backend = {
+    alias: string;
     // The wsFallback is used on regtest when the backend is being run without
     // nginx and the WebSocket is on a different port than the rest of the API
-    apiUrl?: Url & { wsFallback?: string };
+    apiUrl: Url & { wsFallback?: string };
+    contact: string;
+    enabled: boolean;
+}
+export type Config = {
     network?: "mainnet" | "testnet" | "regtest";
+    backends?: Backend[];
     isBoltzClient?: boolean;
     boltzClientApiUrl?: string;
     isBeta?: boolean;

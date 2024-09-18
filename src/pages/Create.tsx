@@ -29,6 +29,8 @@ import {
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
 import ErrorWasm from "./ErrorWasm";
+import BackendSelect from "../components/BackendSelect";
+import Backend from "../components/Backend";
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;
@@ -312,29 +314,6 @@ const Create = () => {
             <div class="frame">
                 <SettingsCog />
                 <h2>{t("create_swap")}</h2>
-                <p>
-                    {t("create_swap_subline")} <br />
-                    {t("send")} {t("min")}:{" "}
-                    <span
-                        onClick={() => setAmount(minimum())}
-                        class="btn-small btn-light">
-                        {formatAmount(
-                            BigNumber(minimum()),
-                            denomination(),
-                            separator(),
-                        )}
-                    </span>{" "}
-                    {t("max")}:{" "}
-                    <span
-                        onClick={() => setAmount(maximum())}
-                        class="btn-small btn-light">
-                        {formatAmount(
-                            BigNumber(maximum()),
-                            denomination(),
-                            separator(),
-                        )}
-                    </span>{" "}
-                </p>
                 <div class="icons">
                     <div>
                         <Asset side={Side.Send} signal={assetSend} />
@@ -353,6 +332,7 @@ const Create = () => {
                             }
                             id="sendAmount"
                             data-testid="sendAmount"
+                            autocomplete="off"
                             value={sendAmountFormatted()}
                             onpaste={(e) => validatePaste(e)}
                             onkeypress={(e) => validateInput(e)}
@@ -376,15 +356,45 @@ const Create = () => {
                             }
                             id="receiveAmount"
                             data-testid="receiveAmount"
+                            autocomplete="off"
                             value={receiveAmountFormatted()}
                             onpaste={(e) => validatePaste(e)}
                             onkeypress={(e) => validateInput(e)}
                             onInput={(e) => changeReceiveAmount(e)}
                         />
                     </div>
+                    <div>
+                        <Backend />
+                    </div>
                 </div>
+                <BackendSelect />
                 <Fees />
                 <hr class="spacer" />
+                <p>
+                    {t("send")} {t("min")}:{" "}
+                    <span
+                        onClick={() => setAmount(minimum())}
+                        class="btn-small btn-light">
+                        {formatAmount(
+                            BigNumber(minimum()),
+                            denomination(),
+                            separator(),
+                        )}
+                    </span>{" "}
+                    {t("max")}:{" "}
+                    <span
+                        onClick={() => setAmount(maximum())}
+                        class="btn-small btn-light">
+                        {formatAmount(
+                            BigNumber(maximum()),
+                            denomination(),
+                            separator(),
+                        )}
+                    </span>{" "}
+                </p>
+                <p>
+                    {t("create_swap_subline")} <br />
+                </p>
                 <Show when={assetReceive() === RBTC}>
                     <ConnectWallet />
                     <hr class="spacer" />

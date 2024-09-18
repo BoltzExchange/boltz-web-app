@@ -20,7 +20,7 @@ import { getPair } from "../utils/helper";
 import Denomination from "./settings/Denomination";
 
 const Fees = () => {
-    const { t, pairs, fetchPairs, denomination, separator } =
+    const { t, pairs, denomination, separator } =
         useGlobalContext();
     const {
         assetSend,
@@ -103,8 +103,6 @@ const Fees = () => {
             setMaximum(calculateLimit(cfg.limits.maximal));
         }
     });
-
-    fetchPairs();
 
     return (
         <div class="fees-dyn">

@@ -19,11 +19,10 @@ import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { formatError } from "../utils/errors";
-import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import { getUrlParam, isEmbed } from "../utils/urlParams";
+import { isEmbed, backendIndex } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -58,6 +57,8 @@ export type GlobalContextType = {
     setHideHero: Setter<boolean>;
     embedded: Accessor<boolean>;
     setEmbedded: Setter<boolean>;
+    backend: Accessor<number>;
+    setBackend: Setter<number>;
     separator: Accessor<string>;
     setSeparator: Setter<string>;
     settingsMenu: Accessor<boolean>;
@@ -123,12 +124,18 @@ const GlobalProvider = (props: { children: any }) => {
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
+    const [backend, setBackend] = makePersisted(
+        createSignal<number>(0),
+        {
+            name: "backend",
+            ...stringSerializer,
+        },
+    );
+
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
     const [ref, setRef] = makePersisted(
-        createSignal(
-            isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop",
-        ),
+        createSignal("swapmarket"),
         {
             name: "ref",
             ...stringSerializer,
@@ -193,7 +200,7 @@ const GlobalProvider = (props: { children: any }) => {
 
     const fetchPairs = async () => {
         try {
-            const data = await getPairs();
+            const data = await getPairs(backend());
             log.debug("getpairs", data);
             setOnline(true);
             setPairs(data);
@@ -286,16 +293,13 @@ const GlobalProvider = (props: { children: any }) => {
     detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
-    // check referral
-    const refParam = getUrlParam("ref");
-    if (refParam && refParam !== "") {
-        setRef(refParam);
-    }
-
     if (isEmbed()) {
         setEmbedded(true);
         setHideHero(true);
     }
+
+    setBackend(backendIndex());
+    fetchPairs();
 
     const [browserNotification, setBrowserNotification] = makePersisted(
         createSignal<boolean>(false),
@@ -355,6 +359,8 @@ const GlobalProvider = (props: { children: any }) => {
                 setHideHero,
                 embedded,
                 setEmbedded,
+                backend,
+                setBackend,
                 separator,
                 setSeparator,
                 settingsMenu,

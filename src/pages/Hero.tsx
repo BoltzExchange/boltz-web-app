@@ -22,7 +22,7 @@ export const Hero = () => {
     const [capacity, setCapacity] = createSignal(0);
     const [oldestChannel, setOldestChannel] = createSignal("0");
 
-    const { hideHero, setHideHero, t, denomination, separator } =
+    const { hideHero, setHideHero, t, denomination, separator, backend } =
         useGlobalContext();
 
     const formatStatsAmount = (
@@ -32,7 +32,7 @@ export const Hero = () => {
 
     onMount(async () => {
         try {
-            const statsRes = await getNodeStats();
+            const statsRes = await getNodeStats(backend());
 
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;

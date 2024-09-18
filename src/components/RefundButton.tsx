@@ -44,7 +44,7 @@ export const RefundEvm = ({
 }) => {
     const { setSwap } = usePayContext();
     const { getEtherSwap, signer } = useWeb3Signer();
-    const { setSwapStorage, getSwap, t } = useGlobalContext();
+    const { setSwapStorage, getSwap, t, backend} = useGlobalContext();
 
     return (
         <ContractTransaction
@@ -65,6 +65,7 @@ export const RefundEvm = ({
                     );
                 } else {
                     const { signature } = await getEipRefundSignature(
+                        backend(),
                         // The preimage hash can be used as an identifier
                         preimageHash,
                         // The endpoints for submarine and chain swap call the same endpoint
@@ -116,6 +117,7 @@ const RefundButton = ({
         refundAddress,
         notify,
         t,
+        backend,
     } = useGlobalContext();
     const { setSwap } = usePayContext();
     const [timeoutEta, setTimeoutEta] = createSignal<number | null>(null);
@@ -194,6 +196,7 @@ const RefundButton = ({
         setRefundRunning(true);
 
         const transactionToRefund = await getLockupTransaction(
+            backend(),
             swap().id,
             swap().type,
         );
@@ -253,6 +256,7 @@ const RefundButton = ({
         if (!swap()) return;
 
         const transactionToRefund = await getLockupTransaction(
+            backend(),
             swap().id,
             swap().type,
         );

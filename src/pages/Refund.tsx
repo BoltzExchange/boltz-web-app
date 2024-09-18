@@ -25,7 +25,7 @@ import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t } =
+    const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t, backend } =
         useGlobalContext();
     const { signer, providers, getEtherSwap } = useWeb3Signer();
 
@@ -173,7 +173,7 @@ const Refund = () => {
             )
             .map(async (swap) => {
                 try {
-                    const res = await getSwapStatus(swap.id);
+                    const res = await getSwapStatus(backend(), swap.id);
                     if (
                         !(await updateSwapStatus(swap.id, res.status)) &&
                         Object.values(swapStatusFailed).includes(res.status)
@@ -184,7 +184,7 @@ const Refund = () => {
                         }
 
                         // Make sure coins were locked for the swap with the status "swap.expired"
-                        await getLockupTransaction(swap.id, swap.type);
+                        await getLockupTransaction(backend(), swap.id, swap.type);
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {

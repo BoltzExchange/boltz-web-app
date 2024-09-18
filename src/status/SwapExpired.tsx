@@ -11,13 +11,13 @@ import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 const SwapExpired = () => {
     const navigate = useNavigate();
     const { failureReason, swap } = usePayContext();
-    const { t, setTransactionToRefund, transactionToRefund } =
+    const { t, setTransactionToRefund, transactionToRefund, backend: provider } =
         useGlobalContext();
 
     createEffect(async () => {
         setTransactionToRefund(null);
         try {
-            const res = await getLockupTransaction(swap().id, swap().type);
+            const res = await getLockupTransaction(provider(), swap().id, swap().type);
             log.debug(`got swap transaction for ${swap().id}`);
             setTransactionToRefund(res.hex);
         } catch (error: any) {

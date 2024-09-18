@@ -51,8 +51,16 @@ export const clipboard = (text: string) => {
     navigator.clipboard.writeText(text);
 };
 
-export const getApiUrl = (): string => {
-    return chooseUrl(config.apiUrl);
+export const getApiUrl = (backend: number): string => {
+    return chooseUrl(config.backends[backend].apiUrl);
+};
+
+export const getWsUrl = (backend: number): string => {
+    if (config.backends[backend].apiUrl.wsFallback) {
+        return config.backends[backend].apiUrl.wsFallback;
+    }
+    let url = chooseUrl(config.backends[backend].apiUrl);
+    return url.replace("http://", "ws://").replace("https://", "wss://");
 };
 
 export const coalesceLn = (asset: string) => (asset === LN ? BTC : asset);
@@ -78,6 +86,7 @@ export const getPair = <
 };
 
 export const fetcher = async <T = any>(
+    backend: number,
     url: string,
     params?: Record<string, any>,
 ): Promise<T> => {
@@ -91,7 +100,7 @@ export const fetcher = async <T = any>(
             body: JSON.stringify(params),
         };
     }
-    const apiUrl = getApiUrl() + url;
+    const apiUrl = getApiUrl(backend) + url;
     const response = await fetch(apiUrl, opts);
     if (!response.ok) {
         return Promise.reject(response);

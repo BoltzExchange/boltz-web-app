@@ -48,7 +48,7 @@ const Pay = () => {
             log.debug("selecting swap", currentSwap);
             setSwap(currentSwap);
 
-            const res = await getSwapStatus(currentSwap.id);
+            const res = await getSwapStatus(currentSwap.backend, currentSwap.id);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
             setFailureReason(res.failureReason);

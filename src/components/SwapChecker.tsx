@@ -2,7 +2,6 @@ import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
-import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
@@ -17,7 +16,7 @@ import {
     getReverseTransaction,
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
-import { getApiUrl } from "../utils/helper";
+import { getWsUrl } from "../utils/helper";
 import Lock from "../utils/lock";
 import {
     ChainSwap,
@@ -42,20 +41,14 @@ class BoltzWebSocket {
 
     constructor(
         private readonly url: string,
-        private readonly wsFallback: string | undefined,
         private readonly relevantIds: Set<string>,
         private readonly prepareSwap: (id: string, status: any) => void,
         private readonly claimSwap: (id: string, status: any) => Promise<void>,
     ) {}
 
-    public connect = () => {
+    public connect = () => {  
         log.debug("Opening WebSocket");
-        this.openWebSocket(`${this.url}/v2/ws`).catch(() => {
-            if (this.wsFallback !== undefined) {
-                log.debug("Opening fallback WebSocket");
-                this.openWebSocket(this.wsFallback).then().catch();
-            }
-        });
+        this.openWebSocket(`${this.url}/v2/ws`);
     };
 
     public close = () => {
@@ -88,8 +81,11 @@ class BoltzWebSocket {
         this.ws?.close();
 
         return new Promise<void>((resolve, reject) => {
-            this.ws = new WebSocket(BoltzWebSocket.formatWsUrl(url));
+            this.ws = new WebSocket(url);
 
+            this.ws.onerror = (error) => {
+                log.error("WebSocket error", error);
+            };
             this.ws.onopen = () => {
                 this.subscribeUpdates(Array.from(this.relevantIds.values()));
             };
@@ -136,9 +132,6 @@ class BoltzWebSocket {
             reconnectInterval,
         );
     };
-
-    private static formatWsUrl = (url: string) =>
-        url.replace("http://", "ws://").replace("https://", "wss://");
 }
 
 export const SwapChecker = () => {
@@ -149,7 +142,7 @@ export const SwapChecker = () => {
         setSwapStatusTransaction,
         setFailureReason,
     } = usePayContext();
-    const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t } =
+    const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t, backend } =
         useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
@@ -189,13 +182,15 @@ export const SwapChecker = () => {
         }
 
         if (data.status === swapStatusSuccess.InvoiceSettled) {
-            data.transaction = await getReverseTransaction(currentSwap.id);
+            data.transaction = await getReverseTransaction(
+                currentSwap.backend,
+                currentSwap.id);
         } else if (
             currentSwap.type === SwapType.Chain &&
             data.status === swapStatusSuccess.TransactionClaimed
         ) {
             data.transaction = (
-                await getChainSwapTransactions(currentSwap.id)
+                await getChainSwapTransactions(backend(), currentSwap.id)
             ).serverLock.transaction;
         }
 
@@ -268,9 +263,18 @@ export const SwapChecker = () => {
                     s.claimTx === undefined),
         );
 
+        if (swapsToCheck.length === 0) {
+            return
+        }
+
+        // the first swap in the list is the most important, connect to its backend
+        let i = swapsToCheck[0].backend;
+        if (i === undefined) {
+            i = 0;
+        }
+        
         ws = new BoltzWebSocket(
-            getApiUrl(),
-            config.apiUrl.wsFallback,
+            getWsUrl(i),
             new Set<string>(swapsToCheck.map((s) => s.id)),
             prepareSwap,
             claimSwap,
@@ -289,6 +293,7 @@ export const SwapChecker = () => {
         if (activeSwap === undefined || activeSwap === null) {
             return;
         }
+
         // on page reload assetWebsocket might not be initialized yet
         if (ws !== undefined) {
             ws.subscribeUpdates([activeSwap.id]);

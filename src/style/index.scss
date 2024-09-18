@@ -100,6 +100,62 @@ hr.spacer {
     padding-right: 8px;
 }
 
+.backend-selection {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center items horizontally */
+    padding: 1px;
+    padding-bottom: 8px;
+    width: 100%; /* Ensure it takes full width of its container */
+}
+
+.backend-wrap {
+    background-color: rgb(23, 34, 46);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    position: relative; /* Change to relative to avoid overlap */
+    border-radius: 29px;
+    padding: 0px;
+    padding-right: 8px;
+    text-align: center; 
+    width: 100%; /* Adjust width to 100% minus any padding or borders */
+    box-sizing: border-box; /* Ensure padding and border are included in width calculation */
+    margin-top: 10px; /* Add margin if needed for spacing */
+    cursor: pointer;
+    z-index: 1; /* Ensure it is above other elements if necessary */
+}
+
+.backend-wrap:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.backend-select .close {
+    cursor: pointer;
+    position: absolute;
+    top: 0px;
+    right: 10px;
+}
+
+.backend-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.backend-table th, .backend-table td {
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 5px;
+    text-align: left;
+}
+
+.backend-table tr.selected {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.backend-table th {
+    background-color: rgb(23, 34, 46);
+    color: white;
+}
+
 .fees-dyn {
     display: flex;
     justify-content: center;
@@ -280,9 +336,9 @@ input::-webkit-inner-spin-button {
     margin: 0;
 }
 
-/* Firefox */
 input[type="number"] {
-    -moz-appearance: textfield;
+    appearance: textfield; /* Standard for modern browsers */
+    -moz-appearance: textfield; /* Firefox-specific */
 }
 
 textarea {
@@ -499,6 +555,7 @@ textarea {
 .asset-select:hover {
     background-color: rgba(255, 255, 255, 0.25);
 }
+
 .assets-select {
     background: #102032;
     position: absolute;

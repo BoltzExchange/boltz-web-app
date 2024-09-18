@@ -1,5 +1,4 @@
 import {
-    BsDiscord,
     BsEnvelopeFill,
     BsGithub,
     BsTelegram,
@@ -13,18 +12,20 @@ import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
 
 const Footer = () => {
-    const { t } = useGlobalContext();
+    const { t, backend } = useGlobalContext();
 
     return (
         <footer>
             <h4>
-                {t("feedback")}{" "}
+                {t("contact", {
+                    alias:
+                    config.backends[backend()].alias
+                })}{" "}
                 <a
-                    title="Discord"
-                    class="discord"
+                    title="Contact"
                     target="_blank"
-                    href={config.discordUrl}>
-                    Discord
+                    href={config.backends[backend()].contact}>
+                    {config.backends[backend()].contact}
                 </a>
             </h4>
             <div class="socials">
@@ -34,13 +35,6 @@ const Footer = () => {
                     target="_blank"
                     href={config.githubUrl}>
                     <BsGithub size={22} color="#22374F" />
-                </a>
-                <a
-                    title="Discord"
-                    class="discord"
-                    target="_blank"
-                    href={config.discordUrl}>
-                    <BsDiscord size={22} color="#22374F" />
                 </a>
                 <a
                     title="Telegram"
@@ -83,10 +77,6 @@ const Footer = () => {
                     {t("blog")}
                 </a>{" "}
                 |{" "}
-                <a target="_blank" href={config.brandingUrl}>
-                    {t("branding")}
-                </a>{" "}
-                |{" "}
                 <a target="_blank" href={config.statusUrl}>
                     {t("status")}
                 </a>{" "}
@@ -100,7 +90,7 @@ const Footer = () => {
                 {t("version")}:{" "}
                 <a
                     target="_blank"
-                    href={`${config.repoUrl}/releases/tag/v${__APP_VERSION__}`}>
+                    href={`${config.repoUrl}`}>
                     {__APP_VERSION__}
                 </a>
                 , {t("commithash")}:{" "}

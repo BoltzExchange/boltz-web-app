@@ -80,7 +80,7 @@ const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
-    const { setRdns, getRdnsForAddress } = useGlobalContext();
+    const { setRdns, getRdnsForAddress, backend: provider } = useGlobalContext();
 
     const hasRsk = config.assets[RBTC] !== undefined;
 
@@ -111,7 +111,7 @@ const Web3SignerProvider = (props: {
             return undefined;
         }
 
-        return (await getContracts())["rsk"];
+        return (await getContracts(provider()))["rsk"];
     });
 
     const getEtherSwap = () => {

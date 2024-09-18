@@ -2,10 +2,16 @@
     "torUrl": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
     "network": "mainnet",
     "loglevel": "debug",
-    "apiUrl": {
-        "normal": "https://api.boltz.exchange",
-        "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
-    },
+    "backends": [
+        {
+            "alias": "Boltz Mainnet",
+            "apiUrl": {
+                "normal": "https://api.boltz.exchange",
+                "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
+            },
+            "contact": "https://discord.gg/QBvZGcW"
+        }
+    ],
     "assets": {
         "BTC": {
             "blockExplorerUrl": {

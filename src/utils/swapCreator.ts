@@ -35,6 +35,8 @@ export type SwapBase = {
 
     useRif: boolean;
     signer?: string;
+
+    backend?: number;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -71,6 +73,7 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
 };
 
 export const createSubmarine = async (
+    backend: number,
     pairs: Pairs,
     assetSend: string,
     assetReceive: string,
@@ -83,6 +86,7 @@ export const createSubmarine = async (
     const isRsk = assetReceive === RBTC;
     const refundKeys = !isRsk ? ECPair.makeRandom() : undefined;
     const res = await createSubmarineSwap(
+        backend,
         assetSend,
         assetReceive,
         invoice,
@@ -100,6 +104,7 @@ export const createSubmarine = async (
             sendAmount,
             receiveAmount,
             useRif,
+            backend,
         ),
         invoice,
         refundPrivateKey: refundKeys?.privateKey.toString("hex"),
@@ -107,6 +112,7 @@ export const createSubmarine = async (
 };
 
 export const createReverse = async (
+    backend: number,
     pairs: Pairs,
     assetSend: string,
     assetReceive: string,
@@ -122,6 +128,7 @@ export const createReverse = async (
     const claimKeys = !isRsk ? ECPair.makeRandom() : undefined;
 
     const res = await createReverseSwap(
+        backend,
         assetSend,
         assetReceive,
         Number(sendAmount),
@@ -141,6 +148,7 @@ export const createReverse = async (
             sendAmount,
             receiveAmount,
             useRif,
+            backend,
         ),
         claimAddress,
         preimage: preimage.toString("hex"),
@@ -149,6 +157,7 @@ export const createReverse = async (
 };
 
 export const createChain = async (
+    backend: number,
     pairs: Pairs,
     assetSend: string,
     assetReceive: string,
@@ -163,6 +172,7 @@ export const createChain = async (
     const refundKeys = assetSend !== RBTC ? ECPair.makeRandom() : undefined;
 
     const res = await createChainSwap(
+        backend,
         assetSend,
         assetReceive,
         Number(sendAmount),
@@ -183,6 +193,7 @@ export const createChain = async (
             sendAmount,
             receiveAmount,
             useRif,
+            backend,
         ),
         claimAddress,
         preimage: preimage.toString("hex"),
@@ -199,6 +210,7 @@ const annotateSwapBaseData = <T>(
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     useRif: boolean,
+    backend: number,
 ): T & SwapBase => ({
     ...createdResponse,
     type,
@@ -209,4 +221,5 @@ const annotateSwapBaseData = <T>(
     version: OutputType.Taproot,
     sendAmount: Number(sendAmount),
     receiveAmount: Number(receiveAmount),
+    backend,
 });

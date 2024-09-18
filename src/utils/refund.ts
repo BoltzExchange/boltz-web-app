@@ -101,6 +101,7 @@ const refundTaproot = async <T extends TransactionInterface>(
 
     try {
         const boltzSig = await getPartialRefundSignature(
+            swap.backend,
             swap.id,
             swap.type,
             Buffer.from(musig.getPublicNonce()),
@@ -199,7 +200,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
 
     const output = decodeAddress(swap.assetSend, refundAddress);
 
-    const feePerVbyte = (await getFeeEstimations())[swap.assetSend];
+    const feePerVbyte = (await getFeeEstimations(swap.backend))[swap.assetSend];
 
     const lockupTransaction = getTransaction(swap.assetSend).fromHex(
         transactionToRefund.hex,
