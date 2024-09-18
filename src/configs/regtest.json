@@ -1,10 +1,16 @@
 {
     "network": "regtest",
     "loglevel": "debug",
-    "apiUrl": {
-        "normal": "http://localhost:9001",
-        "wsFallback": "http://localhost:9004"
-    },
+    "backends": [
+        {
+            "alias": "Regtest",
+            "apiUrl": {
+                "normal": "http://localhost:9001",
+                "wsFallback": "http://localhost:9004"
+            },
+            "contact": ""
+        }
+    ],
     "assets": {
         "BTC": {
             "blockExplorerUrl": {

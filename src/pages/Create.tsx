@@ -392,9 +392,6 @@ const Create = () => {
                         )}
                     </span>{" "}
                 </p>
-                <p>
-                    {t("create_swap_subline")} <br />
-                </p>
                 <Show when={assetReceive() === RBTC}>
                     <ConnectWallet />
                     <hr class="spacer" />
