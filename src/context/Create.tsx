@@ -244,7 +244,7 @@ const CreateProvider = (props: { children: any }) => {
 
     // backend selection
     const [backendSelect, setBackendSelect] = createSignal(false);
-    
+
     handleUrlParams(
         setAssetSend,
         setAssetReceive,

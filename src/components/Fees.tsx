@@ -20,8 +20,7 @@ import { getPair } from "../utils/helper";
 import Denomination from "./settings/Denomination";
 
 const Fees = () => {
-    const { t, pairs, denomination, separator } =
-        useGlobalContext();
+    const { t, pairs, denomination, separator } = useGlobalContext();
     const {
         assetSend,
         assetReceive,

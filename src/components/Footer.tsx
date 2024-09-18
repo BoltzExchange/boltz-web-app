@@ -2,7 +2,6 @@ import {
     BsEnvelopeFill,
     BsGithub,
     BsTelegram,
-    BsTwitter,
     BsYoutube,
 } from "solid-icons/bs";
 
@@ -18,8 +17,7 @@ const Footer = () => {
         <footer>
             <h4>
                 {t("contact", {
-                    alias:
-                    config.backends[backend()].alias
+                    alias: config.backends[backend()].alias,
                 })}{" "}
                 <a
                     title="Contact"
@@ -42,13 +40,6 @@ const Footer = () => {
                     target="_blank"
                     href={config.telegramUrl}>
                     <BsTelegram size={22} color="#22374F" />
-                </a>
-                <a
-                    title="Twitter"
-                    class="twitter"
-                    target="_blank"
-                    href={config.twitterUrl}>
-                    <BsTwitter size={22} color="#22374F" />
                 </a>
                 <a
                     title="Nostr"
@@ -88,9 +79,7 @@ const Footer = () => {
             <p>{t("footer")}</p>
             <p class="version">
                 {t("version")}:{" "}
-                <a
-                    target="_blank"
-                    href={`${config.repoUrl}`}>
+                <a target="_blank" href={`${config.repoUrl}`}>
                     {__APP_VERSION__}
                 </a>
                 , {t("commithash")}:{" "}

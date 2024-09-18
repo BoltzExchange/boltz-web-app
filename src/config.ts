@@ -46,7 +46,8 @@ type Backend = {
     apiUrl: Url & { wsFallback?: string };
     contact: string;
     enabled: boolean;
-}
+};
+
 export type Config = {
     network?: "mainnet" | "testnet" | "regtest";
     backends?: Backend[];

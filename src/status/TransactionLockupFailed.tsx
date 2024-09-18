@@ -23,8 +23,15 @@ import { formatError } from "../utils/errors";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const TransactionLockupFailed = () => {
-    const { t, denomination, separator, fetchPairs, setSwapStorage, pairs, backend: provider } =
-        useGlobalContext();
+    const {
+        t,
+        denomination,
+        separator,
+        fetchPairs,
+        setSwapStorage,
+        pairs,
+        backend: provider,
+    } = useGlobalContext();
     const { failureReason, swap, setSwap } = usePayContext();
 
     const [newQuote, newQuoteActions] = createResource<

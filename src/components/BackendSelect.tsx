@@ -1,7 +1,8 @@
-import { useGlobalContext } from "../context/Global";
-import { useCreateContext } from "../context/Create";
 import { IoClose } from "solid-icons/io";
+
 import { config } from "../config";
+import { useCreateContext } from "../context/Create";
+import { useGlobalContext } from "../context/Global";
 
 const BackendSelect = () => {
     const { backend, setBackend, fetchPairs, t } = useGlobalContext();
@@ -18,8 +19,7 @@ const BackendSelect = () => {
         <div
             class="frame assets-select"
             onClick={() => setBackendSelect(false)}
-            style={backendSelect() ? "display: block;" : "display: none;"}
-        >
+            style={backendSelect() ? "display: block;" : "display: none;"}>
             <span class="close" onClick={() => setBackendSelect(false)}>
                 <IoClose />
             </span>
@@ -37,8 +37,7 @@ const BackendSelect = () => {
                     {config.backends.map((b, index) => (
                         <tr
                             onClick={() => changeBackend(index)}
-                            class={backend() === index ? "selected" : ""}
-                        >
+                            class={backend() === index ? "selected" : ""}>
                             <td>{index + 1}</td>
                             <td>{b.alias}</td>
                             <td>fh</td>

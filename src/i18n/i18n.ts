@@ -667,8 +667,7 @@ const dict = {
         assets_sub: "闪电网络/比特币/Liquid/Rootstock",
         safe: "安全",
         non_custodial: "非托管",
-        non_custodial_sub:
-            "上的交换是原子式,密码学确保用户始终掌握自己的资金",
+        non_custodial_sub: "上的交换是原子式,密码学确保用户始终掌握自己的资金",
         node: "闪电网络节点",
         lightningnode: "查看闪电网络节点",
         error: "错误",

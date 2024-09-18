@@ -44,7 +44,7 @@ export const RefundEvm = ({
 }) => {
     const { setSwap } = usePayContext();
     const { getEtherSwap, signer } = useWeb3Signer();
-    const { setSwapStorage, getSwap, t, backend} = useGlobalContext();
+    const { setSwapStorage, getSwap, t, backend } = useGlobalContext();
 
     return (
         <ContractTransaction

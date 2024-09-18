@@ -4,6 +4,8 @@ import { Show, createEffect, createMemo, on, onMount } from "solid-js";
 import AddressInput from "../components/AddressInput";
 import Asset from "../components/Asset";
 import AssetSelect from "../components/AssetSelect";
+import Backend from "../components/Backend";
+import BackendSelect from "../components/BackendSelect";
 import ConnectWallet from "../components/ConnectWallet";
 import { CreateButton } from "../components/CreateButton";
 import Fees from "../components/Fees";
@@ -29,8 +31,6 @@ import {
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
 import ErrorWasm from "./ErrorWasm";
-import BackendSelect from "../components/BackendSelect";
-import Backend from "../components/Backend";
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined = undefined;

@@ -46,7 +46,7 @@ class BoltzWebSocket {
         private readonly claimSwap: (id: string, status: any) => Promise<void>,
     ) {}
 
-    public connect = () => {  
+    public connect = () => {
         log.debug("Opening WebSocket");
         this.openWebSocket(`${this.url}/v2/ws`);
     };
@@ -142,8 +142,15 @@ export const SwapChecker = () => {
         setSwapStatusTransaction,
         setFailureReason,
     } = usePayContext();
-    const { notify, updateSwapStatus, getSwap, getSwaps, setSwapStorage, t, backend } =
-        useGlobalContext();
+    const {
+        notify,
+        updateSwapStatus,
+        getSwap,
+        getSwaps,
+        setSwapStorage,
+        t,
+        backend,
+    } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
 
@@ -184,7 +191,8 @@ export const SwapChecker = () => {
         if (data.status === swapStatusSuccess.InvoiceSettled) {
             data.transaction = await getReverseTransaction(
                 currentSwap.backend,
-                currentSwap.id);
+                currentSwap.id,
+            );
         } else if (
             currentSwap.type === SwapType.Chain &&
             data.status === swapStatusSuccess.TransactionClaimed
@@ -264,7 +272,7 @@ export const SwapChecker = () => {
         );
 
         if (swapsToCheck.length === 0) {
-            return
+            return;
         }
 
         // the first swap in the list is the most important, connect to its backend
@@ -272,7 +280,7 @@ export const SwapChecker = () => {
         if (i === undefined) {
             i = 0;
         }
-        
+
         ws = new BoltzWebSocket(
             getWsUrl(i),
             new Set<string>(swapsToCheck.map((s) => s.id)),

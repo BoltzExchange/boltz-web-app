@@ -202,7 +202,8 @@ const claimChainSwap = async (
         try {
             const serverClaimDetails = await getChainSwapClaimDetails(
                 swap.backend,
-                swap.id);
+                swap.id,
+            );
 
             const boltzClaimPublicKey = Buffer.from(
                 serverClaimDetails.publicKey,

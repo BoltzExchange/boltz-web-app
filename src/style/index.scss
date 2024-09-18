@@ -116,7 +116,7 @@ hr.spacer {
     border-radius: 29px;
     padding: 0px;
     padding-right: 8px;
-    text-align: center; 
+    text-align: center;
     width: 100%; /* Adjust width to 100% minus any padding or borders */
     box-sizing: border-box; /* Ensure padding and border are included in width calculation */
     margin-top: 10px; /* Add margin if needed for spacing */
@@ -141,7 +141,8 @@ hr.spacer {
     margin-top: 10px;
 }
 
-.backend-table th, .backend-table td {
+.backend-table th,
+.backend-table td {
     border: 1px solid rgba(255, 255, 255, 0.25);
     padding: 5px;
     text-align: left;

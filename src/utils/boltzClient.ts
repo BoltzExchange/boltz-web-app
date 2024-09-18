@@ -197,7 +197,6 @@ export const createSubmarineSwap = (
         referralId,
     });
 };
-    
 
 export const createReverseSwap = (
     backend: number,
@@ -210,8 +209,7 @@ export const createReverseSwap = (
     claimPublicKey?: string,
     claimAddress?: string,
 ): Promise<ReverseCreatedResponse> => {
-    return fetcher(backend,
-        "/v2/swap/reverse", {
+    return fetcher(backend, "/v2/swap/reverse", {
         from,
         to,
         invoiceAmount,
@@ -222,7 +220,6 @@ export const createReverseSwap = (
         pairHash,
     });
 };
-    
 
 export const createChainSwap = (
     backend: number,
@@ -236,8 +233,7 @@ export const createChainSwap = (
     pairHash: string,
     referralId: string,
 ): Promise<ChainSwapCreatedResponse> => {
-    return fetcher(backend, 
-        "/v2/swap/chain", {
+    return fetcher(backend, "/v2/swap/chain", {
         from,
         to,
         userLockAmount,
@@ -285,9 +281,7 @@ export const getPartialReverseClaimSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(
-        backend,
-        `/v2/swap/reverse/${id}/claim`, {
+    const res = await fetcher(backend, `/v2/swap/reverse/${id}/claim`, {
         index,
         preimage: preimage.toString("hex"),
         pubNonce: pubNonce.toString("hex"),
@@ -321,9 +315,16 @@ export const postSubmarineClaimDetails = (
     });
 };
 
-export const getEipRefundSignature = (backend: number, id: string, type: SwapType) => {
+export const getEipRefundSignature = (
+    backend: number,
+    id: string,
+    type: SwapType,
+) => {
     checkCooperative();
-    return fetcher<{ signature: string }>(backend, `/v2/swap/${type}/${id}/refund`);
+    return fetcher<{ signature: string }>(
+        backend,
+        `/v2/swap/${type}/${id}/refund`,
+    );
 };
 
 export const getFeeEstimations = (backend: number) =>
@@ -435,8 +436,11 @@ export const getChainSwapTransactions = (backend: number, id: string) =>
 export const getChainSwapNewQuote = (backend: number, id: string) =>
     fetcher<{ amount: number }>(backend, `/v2/swap/chain/${id}/quote`);
 
-export const acceptChainSwapNewQuote = (backend: number, id: string, amount: number) =>
-    fetcher<{}>(backend, `/v2/swap/chain/${id}/quote`, { amount });
+export const acceptChainSwapNewQuote = (
+    backend: number,
+    id: string,
+    amount: number,
+) => fetcher<{}>(backend, `/v2/swap/chain/${id}/quote`, { amount });
 
 export {
     Pairs,

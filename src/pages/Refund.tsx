@@ -184,7 +184,11 @@ const Refund = () => {
                         }
 
                         // Make sure coins were locked for the swap with the status "swap.expired"
-                        await getLockupTransaction(backend(), swap.id, swap.type);
+                        await getLockupTransaction(
+                            backend(),
+                            swap.id,
+                            swap.type,
+                        );
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {

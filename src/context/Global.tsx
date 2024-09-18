@@ -22,7 +22,7 @@ import { formatError } from "../utils/errors";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import { isEmbed, backendIndex } from "../utils/urlParams";
+import { backendIndex, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -124,23 +124,17 @@ const GlobalProvider = (props: { children: any }) => {
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
-    const [backend, setBackend] = makePersisted(
-        createSignal<number>(0),
-        {
-            name: "backend",
-            ...stringSerializer,
-        },
-    );
+    const [backend, setBackend] = makePersisted(createSignal<number>(0), {
+        name: "backend",
+        ...stringSerializer,
+    });
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
-    const [ref, setRef] = makePersisted(
-        createSignal("swapmarket"),
-        {
-            name: "ref",
-            ...stringSerializer,
-        },
-    );
+    const [ref, setRef] = makePersisted(createSignal("swapmarket"), {
+        name: "ref",
+        ...stringSerializer,
+    });
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         createSignal(null),
         {
