@@ -29,8 +29,8 @@ const BackendSelect = () => {
                     <tr>
                         <th>#</th>
                         <th>Alias</th>
-                        <th>URL</th>
-                        <th>Status</th>
+                        <th>Fee</th>
+                        <th>Limit</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,8 +40,8 @@ const BackendSelect = () => {
                             class={backend() === index ? "selected" : ""}>
                             <td>{index + 1}</td>
                             <td>{b.alias}</td>
-                            <td>fh</td>
-                            <td>ghj</td>
+                            <td>tbd</td>
+                            <td>tbd</td>
                         </tr>
                     ))}
                 </tbody>

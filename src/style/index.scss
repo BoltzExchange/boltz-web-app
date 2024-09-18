@@ -152,6 +152,11 @@ hr.spacer {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+.backend-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    cursor: pointer;
+}
+
 .backend-table th {
     background-color: rgb(23, 34, 46);
     color: white;
