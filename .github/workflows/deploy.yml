@@ -7,7 +7,7 @@ on:
     workflows: ["CI"]  # Name of the upstream workflow
     types:
       - completed
-
+    
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -25,6 +25,8 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
+    # Add condition to only run if CI is successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

@@ -12,7 +12,7 @@ const commitHash = child
 export default defineConfig({
     plugins: [solidPlugin(), mkcert(), nodePolyfills()],
     server: {
-        https: false,
+        https: true,
         cors: { origin: "*" },
     },
     build: {
