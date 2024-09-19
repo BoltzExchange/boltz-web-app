@@ -124,10 +124,7 @@ const GlobalProvider = (props: { children: any }) => {
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
-    const [backend, setBackend] = makePersisted(createSignal<number>(0), {
-        name: "backend",
-        ...stringSerializer,
-    });
+    const [backend, setBackend] = createSignal<number>(0);
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 

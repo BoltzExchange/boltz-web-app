@@ -45,7 +45,6 @@ type Backend = {
     // nginx and the WebSocket is on a different port than the rest of the API
     apiUrl: Url & { wsFallback?: string };
     contact: string;
-    enabled: boolean;
 };
 
 export type Config = {

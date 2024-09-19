@@ -277,14 +277,10 @@ export const SwapChecker = () => {
                     s.claimTx === undefined),
         );
 
-        if (swapsToCheck.length === 0) {
-            return;
-        }
-
-        // the first swap in the list is the most important, connect to its backend
-        let i = swapsToCheck[0].backend;
-        if (i === undefined) {
-            i = 0;
+        // the first swap in the list is the most recent, connect to its backend
+        let i = 0;
+        if (swapsToCheck.length > 0 || swapsToCheck[0].backend !== undefined) {
+            i = swapsToCheck[0].backend;
         }
 
         ws = new BoltzWebSocket(

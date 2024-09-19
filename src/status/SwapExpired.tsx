@@ -15,14 +15,14 @@ const SwapExpired = () => {
         t,
         setTransactionToRefund,
         transactionToRefund,
-        backend: provider,
+        backend,
     } = useGlobalContext();
 
     createEffect(async () => {
         setTransactionToRefund(null);
         try {
             const res = await getLockupTransaction(
-                provider(),
+                backend(),
                 swap().id,
                 swap().type,
             );

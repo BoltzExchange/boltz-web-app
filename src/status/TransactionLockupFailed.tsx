@@ -30,7 +30,7 @@ const TransactionLockupFailed = () => {
         fetchPairs,
         setSwapStorage,
         pairs,
-        backend: provider,
+        backend,
     } = useGlobalContext();
     const { failureReason, swap, setSwap } = usePayContext();
 
@@ -43,7 +43,7 @@ const TransactionLockupFailed = () => {
 
         try {
             const [quote] = await Promise.all([
-                getChainSwapNewQuote(provider(), swap().id),
+                getChainSwapNewQuote(backend(), swap().id),
                 fetchPairs(),
             ]);
 
@@ -114,7 +114,7 @@ const TransactionLockupFailed = () => {
 
                                 try {
                                     await acceptChainSwapNewQuote(
-                                        provider(),
+                                        backend(),
                                         swap().id,
                                         newQuote().quote,
                                     );

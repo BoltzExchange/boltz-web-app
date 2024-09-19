@@ -314,6 +314,28 @@ const Create = () => {
             <div class="frame">
                 <SettingsCog />
                 <h2>{t("create_swap")}</h2>
+                <p>
+                    {t("send")} {t("min")}:{" "}
+                    <span
+                        onClick={() => setAmount(minimum())}
+                        class="btn-small btn-light">
+                        {formatAmount(
+                            BigNumber(minimum()),
+                            denomination(),
+                            separator(),
+                        )}
+                    </span>{" "}
+                    {t("max")}:{" "}
+                    <span
+                        onClick={() => setAmount(maximum())}
+                        class="btn-small btn-light">
+                        {formatAmount(
+                            BigNumber(maximum()),
+                            denomination(),
+                            separator(),
+                        )}
+                    </span>{" "}
+                </p>
                 <div class="icons">
                     <div>
                         <Asset side={Side.Send} signal={assetSend} />
@@ -370,28 +392,6 @@ const Create = () => {
                 <BackendSelect />
                 <Fees />
                 <hr class="spacer" />
-                <p>
-                    {t("send")} {t("min")}:{" "}
-                    <span
-                        onClick={() => setAmount(minimum())}
-                        class="btn-small btn-light">
-                        {formatAmount(
-                            BigNumber(minimum()),
-                            denomination(),
-                            separator(),
-                        )}
-                    </span>{" "}
-                    {t("max")}:{" "}
-                    <span
-                        onClick={() => setAmount(maximum())}
-                        class="btn-small btn-light">
-                        {formatAmount(
-                            BigNumber(maximum()),
-                            denomination(),
-                            separator(),
-                        )}
-                    </span>{" "}
-                </p>
                 <Show when={assetReceive() === RBTC}>
                     <ConnectWallet />
                     <hr class="spacer" />
