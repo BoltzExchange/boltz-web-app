@@ -315,6 +315,7 @@ const Create = () => {
                 <SettingsCog />
                 <h2>{t("create_swap")}</h2>
                 <p>
+                    {t("create_swap_subline")} <br />
                     {t("send")} {t("min")}:{" "}
                     <span
                         onClick={() => setAmount(minimum())}

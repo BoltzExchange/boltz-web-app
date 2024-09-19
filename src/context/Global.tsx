@@ -290,7 +290,6 @@ const GlobalProvider = (props: { children: any }) => {
     }
 
     setBackend(backendIndex());
-    fetchPairs();
 
     const [browserNotification, setBrowserNotification] = makePersisted(
         createSignal<boolean>(false),

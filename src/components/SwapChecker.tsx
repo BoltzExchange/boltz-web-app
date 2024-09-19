@@ -40,7 +40,7 @@ class BoltzWebSocket {
     private isClosed: boolean = false;
 
     constructor(
-        private readonly url: string,
+        readonly url: string,
         private readonly wsFallback: string | undefined,
         private readonly relevantIds: Set<string>,
         private readonly prepareSwap: (id: string, status: any) => void,
@@ -156,6 +156,7 @@ export const SwapChecker = () => {
         setSwapStorage,
         t,
         backend,
+        setBackend,
     } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
@@ -291,6 +292,9 @@ export const SwapChecker = () => {
             claimSwap,
         );
         ws.connect();
+        if (i !== backend()) {
+            setBackend(i);
+        }
     });
 
     onCleanup(() => {
@@ -305,10 +309,34 @@ export const SwapChecker = () => {
             return;
         }
 
-        // on page reload assetWebsocket might not be initialized yet
-        if (ws !== undefined) {
-            ws.subscribeUpdates([activeSwap.id]);
+        let i = backend();
+        if (activeSwap.backend !== undefined) {
+            i = activeSwap.backend;
         }
+
+        const correctUrl = getApiUrl(i);
+
+        // check if API backend is correct and connected
+        if (ws === undefined || ws.url !== correctUrl) {
+            if (ws !== undefined) {
+                ws.close;
+            }
+
+            ws = new BoltzWebSocket(
+                correctUrl,
+                getWsFallback(i),
+                new Set<string>([]),
+                prepareSwap,
+                claimSwap,
+            );
+            ws.connect();
+
+            if (i !== backend()) {
+                setBackend(i);
+            }    
+        }
+
+        ws.subscribeUpdates([activeSwap.id]);
     });
 
     return "";
