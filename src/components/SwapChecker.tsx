@@ -333,7 +333,7 @@ export const SwapChecker = () => {
 
             if (i !== backend()) {
                 setBackend(i);
-            }    
+            }
         }
 
         ws.subscribeUpdates([activeSwap.id]);
