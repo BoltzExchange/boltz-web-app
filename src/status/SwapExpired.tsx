@@ -11,12 +11,8 @@ import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 const SwapExpired = () => {
     const navigate = useNavigate();
     const { failureReason, swap } = usePayContext();
-    const {
-        t,
-        setTransactionToRefund,
-        transactionToRefund,
-        backend,
-    } = useGlobalContext();
+    const { t, setTransactionToRefund, transactionToRefund, backend } =
+        useGlobalContext();
 
     createEffect(async () => {
         setTransactionToRefund(null);
