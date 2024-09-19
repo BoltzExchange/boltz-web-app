@@ -76,7 +76,6 @@ const Footer = () => {
                     {t("testnet")}
                 </a>
             </p>
-            <p>{t("footer")}</p>
             <p class="version">
                 {t("version")}:{" "}
                 <a target="_blank" href={`${config.repoUrl}`}>

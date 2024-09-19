@@ -144,7 +144,7 @@ const dict = {
         created: "Created",
         view: "View",
         id: "ID",
-        headline: "Non-Custodial Bitcoin Bridge",
+        headline: "Non-Custodial Bitcoin Swaps Marketplace",
         subline:
             "Swap between different Bitcoin layers while staying in full control.",
         start_swapping: "Start Swapping",
@@ -362,7 +362,7 @@ const dict = {
         created: "Erstellt",
         view: "Anzeigen",
         id: "ID",
-        headline: "Non-Custodial Bitcoin Bridge",
+        headline: "Marktplatz für nicht verwaltete Bitcoin-Swaps",
         subline:
             "Tausche zwischen verschiedenen Bitcoin Layern, während du immer die volle Kontrolle behältst.",
         start_swapping: "Starte Swap",
@@ -583,7 +583,7 @@ const dict = {
         created: "Creado",
         view: "Ver",
         id: "ID",
-        headline: "Bitcoin Bridge Sin Custodia",
+        headline: "Mercado de Swaps de Bitcoin sin Custodia",
         subline:
             "Intercambia entre diferentes capas de Bitcoin mientras mantienes el control total.",
         start_swapping: "Comenzar a intercambiar",
@@ -788,7 +788,7 @@ const dict = {
         created: "已创建",
         view: "查看",
         id: "ID",
-        headline: "非托管比特币跨链桥",
+        headline: "非托管比特币掉期市场",
         subline: "在不同比特币层之间交换，同时保持完全控制。",
         start_swapping: "开始交换",
         partners: "合作伙伴",

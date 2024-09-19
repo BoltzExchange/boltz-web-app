@@ -55,12 +55,8 @@ export const getApiUrl = (backend: number): string => {
     return chooseUrl(config.backends[backend].apiUrl);
 };
 
-export const getWsUrl = (backend: number): string => {
-    if (config.backends[backend].apiUrl.wsFallback) {
-        return config.backends[backend].apiUrl.wsFallback;
-    }
-    let url = chooseUrl(config.backends[backend].apiUrl);
-    return url.replace("http://", "ws://").replace("https://", "wss://");
+export const getWsFallback = (backend: number): string => {
+    return config.backends[backend].apiUrl.wsFallback;
 };
 
 export const coalesceLn = (asset: string) => (asset === LN ? BTC : asset);

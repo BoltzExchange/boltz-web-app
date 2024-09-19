@@ -16,7 +16,7 @@ import {
     getReverseTransaction,
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
-import { getWsUrl } from "../utils/helper";
+import { getApiUrl, getWsFallback } from "../utils/helper";
 import Lock from "../utils/lock";
 import {
     ChainSwap,
@@ -41,6 +41,7 @@ class BoltzWebSocket {
 
     constructor(
         private readonly url: string,
+        private readonly wsFallback: string | undefined,
         private readonly relevantIds: Set<string>,
         private readonly prepareSwap: (id: string, status: any) => void,
         private readonly claimSwap: (id: string, status: any) => Promise<void>,
@@ -48,7 +49,12 @@ class BoltzWebSocket {
 
     public connect = () => {
         log.debug("Opening WebSocket");
-        this.openWebSocket(`${this.url}/v2/ws`);
+        this.openWebSocket(`${this.url}/v2/ws`).catch(() => {
+            if (this.wsFallback !== undefined) {
+                log.debug("Opening fallback WebSocket");
+                this.openWebSocket(this.wsFallback).then().catch();
+            }
+        });
     };
 
     public close = () => {
@@ -282,7 +288,8 @@ export const SwapChecker = () => {
         }
 
         ws = new BoltzWebSocket(
-            getWsUrl(i),
+            getApiUrl(i),
+            getWsFallback(i),
             new Set<string>(swapsToCheck.map((s) => s.id)),
             prepareSwap,
             claimSwap,

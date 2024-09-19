@@ -13,7 +13,7 @@
             "alias": "My Test Node",
             "apiUrl": {
                 "normal": "http://127.0.0.1:9001",
-                "wsFallback": "ws://127.0.0.1:9004"
+                "wsFallback": "http://127.0.0.1:9004"
             },
             "contact": "test@test.email"
         }
