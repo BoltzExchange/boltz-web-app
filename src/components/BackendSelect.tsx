@@ -1,17 +1,26 @@
+import { BigNumber } from "bignumber.js";
 import { IoClose } from "solid-icons/io";
 
 import { config } from "../config";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { formatAmount } from "../utils/denomination";
+import { getPair } from "../utils/helper";
 
 const BackendSelect = () => {
-    const { backend, setBackend, fetchPairs, t } = useGlobalContext();
-    const { backendSelect, setBackendSelect } = useCreateContext();
+    const { backend, setBackend, allPairs, t, denomination, separator } =
+        useGlobalContext();
+    const {
+        backendSelect,
+        setBackendSelect,
+        swapType,
+        assetSend,
+        assetReceive,
+    } = useCreateContext();
 
     // Handle backend change
     const changeBackend = (index: number) => {
         setBackend(index);
-        fetchPairs();
     };
 
     return (
@@ -26,23 +35,52 @@ const BackendSelect = () => {
             <table class="backend-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Alias</th>
-                        <th>Fee</th>
-                        <th>Limit</th>
+                        <th>{t("status")}</th>
+                        <th>{t("alias")}</th>
+                        <th>{t("fee_short")}</th>
+                        <th>
+                            {t("max")} {t("swap")}
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {config.backends.map((b, index) => (
-                        <tr
-                            onClick={() => changeBackend(index)}
-                            class={backend() === index ? "selected" : ""}>
-                            <td>{index + 1}</td>
-                            <td>{b.alias}</td>
-                            <td>tbd</td>
-                            <td>tbd</td>
-                        </tr>
-                    ))}
+                    {config.backends.map((b, index) => {
+                        const pairs = allPairs()[index]; // Get pairs for the current backend
+                        const cfg = pairs
+                            ? getPair(
+                                  pairs,
+                                  swapType(),
+                                  assetSend(),
+                                  assetReceive(),
+                              )
+                            : null;
+
+                        const status =
+                            pairs === undefined
+                                ? "🔵"
+                                : pairs === null
+                                  ? "🔴"
+                                  : "🟢";
+
+                        return (
+                            <tr
+                                onClick={() => changeBackend(index)}
+                                class={backend() === index ? "selected" : ""}>
+                                <td>{status}</td>
+                                <td>{b.alias}</td>
+                                <td>{cfg ? cfg.fees.percentage + "%" : "-"}</td>
+                                <td>
+                                    {cfg
+                                        ? formatAmount(
+                                              BigNumber(cfg.limits.maximal),
+                                              denomination(),
+                                              separator(),
+                                          )
+                                        : "-"}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>

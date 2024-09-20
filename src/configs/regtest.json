@@ -3,9 +3,25 @@
     "loglevel": "debug",
     "backends": [
         {
-            "alias": "Regtest",
+            "alias": "Regtest 1",
             "apiUrl": {
                 "normal": "http://localhost:9001",
+                "wsFallback": "http://localhost:9004"
+            },
+            "contact": ""
+        },
+        {
+            "alias": "Regtest 2",
+            "apiUrl": {
+                "normal": "http://localhost:9001",
+                "wsFallback": "http://localhost:9004"
+            },
+            "contact": ""
+        },
+        {
+            "alias": "Regtest 3",
+            "apiUrl": {
+                "normal": "http://localhost:9002",
                 "wsFallback": "http://localhost:9004"
             },
             "contact": ""

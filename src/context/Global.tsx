@@ -17,7 +17,7 @@ import { Denomination } from "../consts/Enums";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
-import { Pairs, getPairs } from "../utils/boltzClient";
+import { Pairs, getAllPairs } from "../utils/boltzClient";
 import { formatError } from "../utils/errors";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
@@ -29,8 +29,8 @@ import { detectWebLNProvider } from "../utils/webln";
 export type GlobalContextType = {
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
-    pairs: Accessor<Pairs | undefined>;
-    setPairs: Setter<Pairs | undefined>;
+    allPairs: Accessor<Pairs[] | undefined>;
+    setAllPairs: Setter<Pairs[] | undefined>;
     wasmSupported: Accessor<boolean>;
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
@@ -105,8 +105,6 @@ const GlobalContext = createContext<GlobalContextType>();
 
 const GlobalProvider = (props: { children: any }) => {
     const [online, setOnline] = createSignal<boolean>(true);
-    const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
-
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
 
@@ -148,6 +146,9 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     const [settingsMenu, setSettingsMenu] = createSignal<boolean>(false);
+
+    // State for storing pairs for all backends
+    const [allPairs, setAllPairs] = createSignal<Pairs[]>([]);
 
     const [audioNotification, setAudioNotification] = makePersisted(
         createSignal<boolean>(false),
@@ -191,10 +192,10 @@ const GlobalProvider = (props: { children: any }) => {
 
     const fetchPairs = async () => {
         try {
-            const data = await getPairs(backend());
-            log.debug("getpairs", data);
+            const data = await getAllPairs();
+            log.debug("getallpairs", data);
             setOnline(true);
-            setPairs(data);
+            setAllPairs(data); // all backends at once
         } catch (error) {
             log.debug(error);
             setOnline(false);
@@ -321,8 +322,8 @@ const GlobalProvider = (props: { children: any }) => {
             value={{
                 online,
                 setOnline,
-                pairs,
-                setPairs,
+                allPairs,
+                setAllPairs,
                 wasmSupported,
                 setWasmSupported,
                 refundAddress,

@@ -2,7 +2,9 @@ const dict = {
     en: {
         language: "English",
         status: "Status",
-        select_backend: "Swap Providers",
+        alias: "Alias",
+        fee_short: "Fee",
+        select_backend: "Select Swap Provider",
         contact: "Problem with the swap? Contact  {{ alias }}:",
         fast: "Fast",
         l2: "Built on Layer 2",
@@ -12,7 +14,7 @@ const dict = {
         non_custodial: "Non-Custodial",
         non_custodial_sub:
             "Swaps are atomic, cryptography ensures that users are always in control of their money",
-        node: "Lightning Nodes",
+        node: "Provider Statistics",
         lightningnode: "View Lightning Nodes",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",
@@ -216,7 +218,9 @@ const dict = {
     de: {
         language: "Deutsch",
         status: "Status",
-        select_backend: "Swap-Anbieteren",
+        select_backend: "Swap-Anbieteren auswählen",
+        alias: "Alias",
+        fee_short: "Gebühr",
         contact: "Probleme mit dem Swap? Kontaktieren Sie {{ alias }}:",
         fast: "Schnell",
         l2: "Auf Layer-2 gebaut",
@@ -226,7 +230,7 @@ const dict = {
         non_custodial: "Non-Custodial",
         non_custodial_sub:
             "Swaps sind atomar, Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihre Bitcoin behalten",
-        node: "Lightning Knoten",
+        node: "Anbieterstatistiken",
         lightningnode: "Lightning Knoten anzeigen",
         error: "Fehler",
         error_subline:
@@ -438,7 +442,9 @@ const dict = {
     es: {
         language: "Español",
         status: "Estado",
-        select_backend: "Proveedores de swap",
+        alias: "Alias",
+        fee_short: "Comisión",
+        select_backend: "Seleccionar el Proveedor de Swap",
         contact: "¿Problema con el swap? Contacte {{ alias }}:",
         fast: "Rápido",
         l2: "Construido en la Capa 2",
@@ -448,7 +454,7 @@ const dict = {
         non_custodial: "Sin Custodia",
         non_custodial_sub:
             "Los intercambios son atomicos, la criptografía garantiza que los usuarios siempre tienen el control de su Bitcoin",
-        node: "Nodos de Lightning",
+        node: "Estadísticas del proveedor",
         lightningnode: "Ver nodos de Lightning",
         error: "Error",
         error_subline: "Respuesta inválida de la API, algo está mal :/",
@@ -659,7 +665,9 @@ const dict = {
     zh: {
         language: "中文",
         status: "状态",
-        select_backend: "掉期提供商",
+        alias: "别名",
+        fee_short: "收费",
+        select_backend: "选择掉期提供商",
         contact: "掉期有问题？请联系 {{ alias }}:",
         fast: "快速",
         l2: "建立在二层网络之上",
@@ -669,7 +677,7 @@ const dict = {
         non_custodial: "非托管",
         non_custodial_sub: "上的交换是原子式,密码学确保用户始终掌握自己的资金",
         node: "闪电网络节点",
-        lightningnode: "查看闪电网络节点",
+        lightningnode: "提供商统计",
         error: "错误",
         error_subline: "API的响应无效，出现异常。",
         error_wasm: "不支持WebAssembly",
@@ -789,7 +797,8 @@ const dict = {
         view: "查看",
         id: "ID",
         headline: "非托管比特币掉期市场",
-        subline: "选择您的交换提供商，并在不同的比特币层之间进行交换，同时始终保持完全控制。",
+        subline:
+            "选择您的交换提供商，并在不同的比特币层之间进行交换，同时始终保持完全控制。",
         start_swapping: "开始交换",
         partners: "合作伙伴",
         integrations: "集成",

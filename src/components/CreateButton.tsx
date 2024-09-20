@@ -10,7 +10,7 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import { getPairs } from "../utils/boltzClient";
+import { getAllPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { coalesceLn } from "../utils/helper";
 import { fetchLnurl } from "../utils/invoice";
@@ -28,8 +28,8 @@ export const CreateButton = () => {
         separator,
         setSwapStorage,
         denomination,
-        pairs,
-        setPairs,
+        allPairs,
+        setAllPairs,
         online,
         notify,
         ref,
@@ -191,7 +191,7 @@ export const CreateButton = () => {
                 case SwapType.Submarine:
                     data = await createSubmarine(
                         backend(),
-                        pairs(),
+                        allPairs()[backend()],
                         coalesceLn(assetSend()),
                         coalesceLn(assetReceive()),
                         sendAmount(),
@@ -205,7 +205,7 @@ export const CreateButton = () => {
                 case SwapType.Reverse:
                     data = await createReverse(
                         backend(),
-                        pairs(),
+                        allPairs()[backend()],
                         coalesceLn(assetSend()),
                         coalesceLn(assetReceive()),
                         sendAmount(),
@@ -219,7 +219,7 @@ export const CreateButton = () => {
                 case SwapType.Chain:
                     data = await createChain(
                         backend(),
-                        pairs(),
+                        allPairs()[backend()],
                         assetSend(),
                         assetReceive(),
                         sendAmount(),
@@ -263,7 +263,7 @@ export const CreateButton = () => {
             }
 
             if (msg === "invalid pair hash") {
-                setPairs(await getPairs(backend()));
+                setAllPairs(await getAllPairs());
                 notify("error", t("feecheck"));
             } else {
                 notify("error", msg);

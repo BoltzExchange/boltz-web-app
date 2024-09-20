@@ -12,7 +12,7 @@ const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const { t, fetchPairs, pairs } = useGlobalContext();
+    const { t, fetchPairs, allPairs, backend } = useGlobalContext();
 
     const {
         assetReceive,
@@ -47,8 +47,6 @@ const SelectAsset = () => {
             }
             setAssetReceive(newAsset);
         }
-
-        fetchPairs();
     };
 
     const isSelected = (asset: string) => {
@@ -59,7 +57,9 @@ const SelectAsset = () => {
     };
 
     createEffect(() => {
-        setPairValid(isPairValid(pairs(), assetSend(), assetReceive()));
+        setPairValid(
+            isPairValid(allPairs()[backend()], assetSend(), assetReceive()),
+        );
     });
 
     return (

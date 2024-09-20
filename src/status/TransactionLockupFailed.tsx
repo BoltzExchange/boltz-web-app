@@ -29,7 +29,7 @@ const TransactionLockupFailed = () => {
         separator,
         fetchPairs,
         setSwapStorage,
-        pairs,
+        allPairs,
         backend,
     } = useGlobalContext();
     const { failureReason, swap, setSwap } = usePayContext();
@@ -48,8 +48,9 @@ const TransactionLockupFailed = () => {
             ]);
 
             const claimFee =
-                pairs()[SwapType.Chain][swap().assetSend][swap().assetReceive]
-                    .fees.minerFees.user.claim + 1;
+                allPairs()[backend()][SwapType.Chain][swap().assetSend][
+                    swap().assetReceive
+                ].fees.minerFees.user.claim + 1;
 
             return {
                 quote: quote.amount,
