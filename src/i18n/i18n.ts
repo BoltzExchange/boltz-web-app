@@ -146,7 +146,7 @@ const dict = {
         id: "ID",
         headline: "Non-Custodial Bitcoin Swaps Marketplace",
         subline:
-            "Swap between different Bitcoin layers while staying in full control.",
+            "Choose your swap provider and trade between different Bitcoin layers while staying in full control.",
         start_swapping: "Start Swapping",
         partners: "Partners",
         integrations: "Integrations",
@@ -362,9 +362,9 @@ const dict = {
         created: "Erstellt",
         view: "Anzeigen",
         id: "ID",
-        headline: "Marktplatz für nicht verwaltete Bitcoin-Swaps",
+        headline: "Marktplatz für nicht-verwaltete Bitcoin-Swaps",
         subline:
-            "Tausche zwischen verschiedenen Bitcoin Layern, während du immer die volle Kontrolle behältst.",
+            "Wählen Sie Ihren Swap-Anbieter und tauschen Sie zwischen verschiedenen Bitcoin-Layern, während Sie stets die volle Kontrolle behalten.",
         start_swapping: "Starte Swap",
         partners: "Partner",
         integrations: "Integrationen",
@@ -585,7 +585,7 @@ const dict = {
         id: "ID",
         headline: "Mercado de Swaps de Bitcoin sin Custodia",
         subline:
-            "Intercambia entre diferentes capas de Bitcoin mientras mantienes el control total.",
+            "Elija su proveedor de swap y cambie entre diferentes capas de Bitcoin, manteniendo siempre el control total.",
         start_swapping: "Comenzar a intercambiar",
         partners: "Socios",
         integrations: "Integraciones",
@@ -789,7 +789,7 @@ const dict = {
         view: "查看",
         id: "ID",
         headline: "非托管比特币掉期市场",
-        subline: "在不同比特币层之间交换，同时保持完全控制。",
+        subline: "选择您的交换提供商，并在不同的比特币层之间进行交换，同时始终保持完全控制。",
         start_swapping: "开始交换",
         partners: "合作伙伴",
         integrations: "集成",
