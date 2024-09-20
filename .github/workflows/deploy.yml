@@ -43,7 +43,7 @@ jobs:
         run: npm install
       # specify testnet or mainnet 
       - name: Copy config
-        run: npm run testnet
+        run: npm run mainnet
       - name: Build
         run: npm run build
       - name: Setup Pages

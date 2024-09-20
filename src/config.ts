@@ -17,7 +17,7 @@ const defaults = {
     statusUrl: "https://status.boltz.exchange",
     youtubeUrl:
         "https://www.youtube.com/playlist?list=PLkqOa9SGBeZfAEHvKkGKjeRIASeu6bNO3",
-    testnetUrl: "swapmarket.github.io/testnet",
+    testnetUrl: "/testnet",
     telegramUrl: "https://t.me/PeerSwapLN",
     email: "SwapMarket@proton.me",
 };
