@@ -21,7 +21,7 @@ const Nav = ({ network }) => {
             <Warnings />
             <div class="nav-inner">
                 <A id="logo" href="/" onClick={() => setHideHero(false)}>
-                    <img src={logo} style={{ height: 'auto', width: '100%' }} alt="boltz.exchange logo" />
+                    <img src={logo} alt="boltz.exchange logo" />
                 </A>
                 <Show when={network !== "mainnet"}>
                     <div id="network" class="btn btn-small">
