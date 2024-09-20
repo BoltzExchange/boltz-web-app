@@ -15,6 +15,7 @@ export default defineConfig({
         https: true,
         cors: { origin: "*" },
     },
+    base: '/',
     build: {
         commonjsOptions: {
             transformMixedEsModules: true,
