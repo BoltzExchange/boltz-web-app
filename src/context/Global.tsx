@@ -178,7 +178,7 @@ const GlobalProvider = (props: { children: any }) => {
         if (browser && browserNotification()) {
             new Notification(t("notification_header"), {
                 body: messageStr,
-                icon: "/boltz-icon.svg",
+                icon: "/sm_icon.svg",
             });
         }
     };

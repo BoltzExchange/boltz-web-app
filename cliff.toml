@@ -46,7 +46,7 @@ footer = """
 trim = true
 # postprocessors
 postprocessors = [
-    { pattern = '\$REPO', replace = "https://github.com/BoltzExchange/boltz-web-app" },
+    { pattern = '\$REPO', replace = "https://github.com/SwapMarket/swapmarket.github.io" },
 ]
 
 [git]
