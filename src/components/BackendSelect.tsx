@@ -12,7 +12,6 @@ const BackendSelect = () => {
     const changeBackend = (index: number) => {
         setBackend(index);
         fetchPairs();
-        // setBackendSelect(false); // Close the backend selection frame after selection
     };
 
     return (
