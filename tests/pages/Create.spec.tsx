@@ -64,7 +64,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
         signals.setSendAmount(BigNumber(50_000));
@@ -93,7 +93,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
         signals.setSendAmount(BigNumber(50_000));
@@ -106,7 +106,7 @@ describe("Create", () => {
 
         const updatedCfg = { ...pairs };
         pairs.reverse[BTC][BTC].fees.minerFees.claim += 1;
-        globalSignals.setPairs(updatedCfg);
+        globalSignals.setAllPairs([updatedCfg]);
 
         expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
     });
@@ -124,7 +124,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
         signals.setMinimum(pairs.reverse[BTC][BTC].limits.minimal);
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
@@ -132,7 +132,7 @@ describe("Create", () => {
         const updateConfig = () => {
             const updatedCfg = { ...pairs };
             pairs.reverse[BTC][BTC].fees.minerFees.claim += 1;
-            globalSignals.setPairs(updatedCfg);
+            globalSignals.setAllPairs([updatedCfg]);
         };
 
         const amount = 100_000;
@@ -182,7 +182,7 @@ describe("Create", () => {
             },
         );
 
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
 
         const amount =
             extrema === "min" ? signals.minimum() : signals.maximum();
@@ -217,7 +217,7 @@ describe("Create", () => {
                 wrapper: contextWrapper,
             },
         );
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
 
@@ -265,7 +265,7 @@ describe("Create", () => {
                 wrapper: contextWrapper,
             },
         );
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
         globalSignals.setSeparator(".");
         globalSignals.setDenomination(Denomination.Sat);
         signals.setAssetSend(LN);

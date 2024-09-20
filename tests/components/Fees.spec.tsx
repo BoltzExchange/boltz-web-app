@@ -24,7 +24,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
     });
 
     test("should recalculate limits on direction switch", () => {
@@ -37,7 +37,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
 
         signals.setAssetReceive(BTC);
         signals.setAssetSend(LN);
@@ -80,7 +80,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
         signals.setAssetSend(LN);
         signals.setAssetReceive(LBTC);
         signals.setAddressValid(true);
@@ -105,7 +105,7 @@ describe("Fees component", () => {
             { wrapper: contextWrapper },
         );
 
-        globalSignals.setPairs(pairs);
+        globalSignals.setAllPairs([pairs]);
         signals.setAssetSend(BTC);
         signals.setAssetReceive(LBTC);
         signals.setAddressValid(true);
