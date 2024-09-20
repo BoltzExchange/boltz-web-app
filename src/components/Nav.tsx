@@ -3,7 +3,7 @@ import { BsGlobe } from "solid-icons/bs";
 import { OcLinkexternal2 } from "solid-icons/oc";
 import { For, Show, createSignal } from "solid-js";
 
-import logo from "../assets/boltz_plus.svg";
+import logo from "../assets/logo.svg";
 import Warnings from "../components/Warnings";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
