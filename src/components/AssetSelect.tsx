@@ -12,7 +12,7 @@ const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const { t, fetchPairs, allPairs, backend } = useGlobalContext();
+    const { t, allPairs, backend } = useGlobalContext();
 
     const {
         assetReceive,
