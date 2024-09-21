@@ -10,7 +10,7 @@
             "contact": "https://discord.gg/QBvZGcW"
         },
         {
-            "alias": "My Test Node",
+            "alias": "Local Test Node",
             "apiUrl": {
                 "normal": "http://127.0.0.1:9001",
                 "wsFallback": "http://127.0.0.1:9004"
