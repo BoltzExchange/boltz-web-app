@@ -8,7 +8,7 @@ In addition to potentially lower costs, executing Bitcoin swaps via SwapMarket r
 
 ## Is this legal?
 
-Boltz's [AGPL-3.0 license](https://github.com/BoltzExchange/boltz-web-app/blob/main/LICENSE) permits modifying and runing its source code as long as it remains public.
+Boltz's [AGPL-3.0 license](https://github.com/BoltzExchange/boltz-web-app/blob/main/LICENSE) permits modifying and running its source code as long as it remains public.
 
 ## Is this safe?
 
