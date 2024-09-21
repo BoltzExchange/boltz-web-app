@@ -86,7 +86,7 @@ const App = (props: any) => {
 
 const cleanup = render(
     () => (
-        <Router root={App}>
+        <Router root={App} base="/">
             <Route path="/" component={Hero} />
             <Route path="/swap" component={Create} />
             {/* Compatibility with link in Breez:
