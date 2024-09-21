@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import log from "loglevel";
-import { Show, createSignal, onMount } from "solid-js";
+import { Show, createEffect, createSignal, onMount } from "solid-js";
 
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
@@ -30,10 +30,9 @@ export const Hero = () => {
         denom: Denomination = Denomination.Sat,
     ) => formatAmountDenomination(new BigNumber(value), denom, separator());
 
-    onMount(async () => {
+    const fetchNodeStats = async () => {
         try {
             const statsRes = await getNodeStats(backend());
-
             log.debug("node stats", statsRes);
             const stats = statsRes.BTC.total;
 
@@ -47,6 +46,16 @@ export const Hero = () => {
         } catch (error) {
             log.error("nodestats error", error);
         }
+    };
+
+    // Fetch node stats when the component is mounted
+    onMount(() => {
+        fetchNodeStats();
+    });
+
+    // Reactively fetch node stats whenever backend() changes
+    createEffect(() => {
+        fetchNodeStats(); // This will re-run whenever backend() changes
     });
 
     return (

@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy Mainnet
+name: Deploy
 
 on:
   # only run if CI successful
@@ -23,6 +23,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Deploy testnet
   trigger:
     # Add condition to only run if CI was successful
     if: ${{ github.event.workflow_run.conclusion == 'success' }}

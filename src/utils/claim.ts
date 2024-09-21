@@ -331,7 +331,11 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     }
 
     log.debug("Broadcasting claim transaction");
-    const res = await broadcastTransaction(asset, claimTransaction.toHex());
+    const res = await broadcastTransaction(
+        swap.backend,
+        asset,
+        claimTransaction.toHex(),
+    );
     log.debug("Claim transaction broadcast result", res);
     if (res.id) {
         swap.claimTx = res.id;

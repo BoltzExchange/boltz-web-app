@@ -164,6 +164,7 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
 ): Promise<T> => {
     try {
         const res = await broadcastTransaction(
+            swap.backend,
             swap.assetSend,
             txConstructionResponse.transaction.toHex(),
         );

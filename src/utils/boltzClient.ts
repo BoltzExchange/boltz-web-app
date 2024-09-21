@@ -357,11 +357,15 @@ export const getNodeStats = (backend: number) =>
 export const getContracts = (backend: number) =>
     fetcher<Record<string, Contracts>>(backend, "/v2/chain/contracts");
 
-export const broadcastTransaction = (asset: string, txHex: string) =>
-    // always use Boltz to broadcast
-    fetcher<{ id: string }>(0, `/v2/chain/${asset}/transaction`, {
+export const broadcastTransaction = (
+    backend: number,
+    asset: string,
+    txHex: string,
+) => {
+    return fetcher<{ id: string }>(backend, `/v2/chain/${asset}/transaction`, {
         hex: txHex,
     });
+};
 
 export const getLockupTransaction = async (
     backend: number,

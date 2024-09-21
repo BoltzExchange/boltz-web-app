@@ -13,8 +13,7 @@ const defaults = {
     docsUrl:
         "https://github.com/SwapMarket/swapmarket.github.io/blob/main/README.md",
     blogUrl: "https://blog.boltz.exchange/archive",
-    nostrUrl:
-        "https://snort.social/p/npub1xhklzztd83v34zsf9da2gvfrctj5wcsvsx09er9v26jy7r0uq8yq4vme7d",
+    nostrUrl: "https://iris.to/swapmarket",
     statusUrl: "https://status.boltz.exchange",
     testnetUrl: "/testnet",
     telegramUrl: "https://t.me/PeerSwapLN",
