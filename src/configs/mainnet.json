@@ -10,6 +10,14 @@
                 "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
             },
             "contact": "https://discord.gg/QBvZGcW"
+        },
+        {
+            "alias": "Eldamar Mainnet",
+            "apiUrl": {
+                "normal": "https://boltz-api.eldamar.icu",
+                "tor": "http://mnyazp2duhs3jewqzw7g6vv44g73ijiujdmk5z6js72fn3epybup2yqd.onion"
+            },
+            "contact": "https://t.me/SynthLock"
         }
     ],
     "assets": {
