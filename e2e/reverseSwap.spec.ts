@@ -38,7 +38,7 @@ test.describe("reverseSwap", () => {
             "h2[data-testid='pay-invoice-title']",
         );
         await expect(payInvoiceTitle).toHaveText(
-            "Pay this invoice about 0.01005558 BTC",
+            "Pay this invoice for 0.01005558 BTC",
         );
 
         const spanLightningInvoice = page.locator("span[class='btn']");

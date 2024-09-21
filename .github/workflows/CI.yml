@@ -1,7 +1,7 @@
 name: CI
 
 on:
-  # Runs on pushes and PRs to targeting the main branch
+  # Runs on pushes and PRs targeting the main branch
   push:
     branches: ['main']
   pull_request:

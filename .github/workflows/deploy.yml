@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Build and Deploy
+name: Deploy Mainnet
 
 on:
   # only run if CI successful
@@ -23,9 +23,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Single deploy job since we're just deploying
+  trigger:
+    # Add condition to only run if CI was successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger repository dispatch in testnet
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            -H "Authorization: token ${{ secrets.REPO_TESTNET_TOKEN }}" \
+            https://api.github.com/repos/SwapMarket/testnet/dispatches \
+            -d '{"event_type":"triggered_from_mainnet"}'
+
+  # Deploy mainnet
   deploy:
-    # Add condition to only run if CI is successful
+    # Add condition to only run if CI was successful
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
@@ -41,7 +54,6 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm install
-      # specify testnet or mainnet 
       - name: Copy config
         run: npm run mainnet
       - name: Build

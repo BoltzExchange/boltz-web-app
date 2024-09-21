@@ -64,8 +64,7 @@ const dict = {
         pay_timeout_blockheight: "Timeout block height",
         pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
-        pay_invoice_to:
-            "Pay this invoice about {{ amount }} {{ denomination }}",
+        pay_invoice_to: "Pay this invoice for {{ amount }} {{ denomination }}",
         pay_address: "Address",
         no_wallet: "Wallet not installed",
         connect_wallet: "Connect wallet",

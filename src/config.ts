@@ -10,13 +10,12 @@ const defaults = {
     defaultLanguage: "en",
     githubUrl: "https://github.com/SwapMarket",
     repoUrl: "https://github.com/SwapMarket/swapmarket.github.io",
-    docsUrl: "https://docs.boltz.exchange",
+    docsUrl:
+        "https://github.com/SwapMarket/swapmarket.github.io/blob/main/README.md",
     blogUrl: "https://blog.boltz.exchange/archive",
     nostrUrl:
-        "https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970",
+        "https://snort.social/p/npub1xhklzztd83v34zsf9da2gvfrctj5wcsvsx09er9v26jy7r0uq8yq4vme7d",
     statusUrl: "https://status.boltz.exchange",
-    youtubeUrl:
-        "https://www.youtube.com/playlist?list=PLkqOa9SGBeZfAEHvKkGKjeRIASeu6bNO3",
     testnetUrl: "/testnet",
     telegramUrl: "https://t.me/PeerSwapLN",
     email: "SwapMarket@proton.me",

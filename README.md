@@ -14,13 +14,13 @@ Boltz's [AGPL-3.0 license](https://github.com/BoltzExchange/boltz-web-app/blob/m
 
 Running a web app at Github Pages has an advantage of transparency. The code is hosted, built and deployed publicly. What you see is what you get. This is more transparent than the Boltz exchange itself.
 
-All the swaps are atomic. This means both legs settle, or none at all. Your keys never leave your wallet, which makes the exchange non-custodial.
+All the swaps are atomic. This means both legs will settle, or none at all. Your keys never leave your wallet, which makes the exchange non-custodial.
 
 ## Onboarding
 
 Nodes aspiring to become swap providers can apply via [email](mailto:SwapMarket@proton.me) or by adding their API details to the [config file](https://github.com/SwapMarket/swapmarket.github.io/blob/main/src/configs/mainnet.json) with a PR. It is obligatory to be contactable and have ample liquidity. 
 
-Consult Boltz's [deployment instructions](https://github.com/BoltzExchange/boltz-backend/blob/master/docs/deployment.md) and preferably start with the [testnet](https://github.com/SwapMarket/swapmarket.github.io/blob/main/src/configs/testnet.json) version.
+Consult Boltz's [deployment instructions](https://github.com/BoltzExchange/boltz-backend/blob/master/docs/deployment.md) and preferably start with the [Testnet mirror](https://github.com/SwapMarket/swapmarket.github.io/blob/main/src/configs/testnet.json).
 
 When running the backend, it is crucial to regularly update swapMaximal amounts in your boltz.conf to reflect changes in liquidity. 
 

@@ -1,9 +1,4 @@
-import {
-    BsEnvelopeFill,
-    BsGithub,
-    BsTelegram,
-    BsYoutube,
-} from "solid-icons/bs";
+import { BsEnvelopeFill, BsGithub, BsTelegram } from "solid-icons/bs";
 
 import nostr from "../assets/nostr.svg";
 import { config } from "../config";
@@ -47,13 +42,6 @@ const Footer = () => {
                     target="_blank"
                     href={config.nostrUrl}>
                     <img src={nostr} alt="Nostr Logo" />
-                </a>
-                <a
-                    title="Youtube"
-                    class="youtube"
-                    target="_blank"
-                    href={config.youtubeUrl}>
-                    <BsYoutube size={22} color="#22374F" />
                 </a>
                 <a
                     title={t("email")}
