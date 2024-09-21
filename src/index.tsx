@@ -36,6 +36,9 @@ if ("serviceWorker" in navigator) {
         });
 }
 
+// change to publish to /testnet etc
+const base = "/";
+
 const isEmbedded = () => {
     return useGlobalContext().embedded();
 };
@@ -45,7 +48,7 @@ const App = (props: any) => {
 
     onMount(async () => {
         try {
-            const response = await fetch("/config.json");
+            const response = await fetch(base + "config.json");
             const data = await response.json();
             setConfig(data);
             setConfigError(false);
@@ -86,7 +89,7 @@ const App = (props: any) => {
 
 const cleanup = render(
     () => (
-        <Router root={App} base="/">
+        <Router root={App} base={base}>
             <Route path="/" component={Hero} />
             <Route path="/swap" component={Create} />
             {/* Compatibility with link in Breez:
