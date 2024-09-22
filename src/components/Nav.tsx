@@ -67,6 +67,15 @@ const Nav = ({ network }) => {
                         {t("history")}
                     </A>
 
+                    <Show when={config.discordUrl}>
+                        <a
+                            class="external"
+                            target="_blank"
+                            href={config.discordUrl}>
+                            {t("help")}
+                            <OcLinkexternal2 size={23} />
+                        </a>
+                    </Show>
                     <Show when={config.docsUrl}>
                         <a
                             class="external"

@@ -8,6 +8,7 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
+    discordUrl: "https://discord.gg/qebDcQSk",
     githubUrl: "https://github.com/SwapMarket",
     repoUrl: "https://github.com/SwapMarket/swapmarket.github.io",
     docsUrl:
@@ -16,7 +17,7 @@ const defaults = {
     nostrUrl: "https://iris.to/swapmarket",
     statusUrl: "https://status.boltz.exchange",
     testnetUrl: "/testnet",
-    telegramUrl: "https://t.me/PeerSwapLN",
+    telegramUrl: "https://t.me/+tCZxi3gf-mgzZTQ0",
     email: "SwapMarket@proton.me",
 };
 
