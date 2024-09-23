@@ -20,7 +20,7 @@
         {
             "alias": "Test Node 2",
             "apiUrl": {
-                "normal": "http://18.100.95.11:8080",
+                "normal": "http://18.100.95.11:8080"
             },
             "contact": "test@test.email"
         }
