@@ -16,13 +16,6 @@
                 "wsFallback": "http://127.0.0.1:9004"
             },
             "contact": "test@test.email"
-        },
-        {
-            "alias": "Test Node 2",
-            "apiUrl": {
-                "normal": "http://18.100.95.11:8080",
-            },
-            "contact": "test@test.email"
         }
     ],
     "assets": {
