@@ -164,7 +164,7 @@ type ChainSwapTransaction = {
 
 type TransactionInterface = Transaction | LiquidTransaction;
 
-const getPairs = async (backend: number): Promise<Pairs> => {
+export const getPairs = async (backend: number): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>(backend, "/v2/swap/submarine"),
         fetcher<ReversePairsTaproot>(backend, "/v2/swap/reverse"),

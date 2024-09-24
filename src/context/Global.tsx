@@ -17,7 +17,7 @@ import { Denomination } from "../consts/Enums";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
-import { Pairs, getAllPairs } from "../utils/boltzClient";
+import { Pairs, getPairs } from "../utils/boltzClient";
 import { formatError } from "../utils/errors";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
@@ -191,15 +191,26 @@ const GlobalProvider = (props: { children: any }) => {
     };
 
     const fetchPairs = async () => {
-        try {
-            const data = await getAllPairs();
-            log.debug("getallpairs", data);
-            setOnline(true);
-            setAllPairs(data); // all backends at once
-        } catch (error) {
-            log.debug(error);
-            setOnline(false);
-        }
+        setOnline(true); // Assume we're online until proven otherwise
+        const pairs: Pairs[] = new Array(config.backends.length).fill(
+            undefined,
+        ); // Initialize an array to hold pairs
+
+        const promises = config.backends.map((_, i) =>
+            getPairs(i)
+                .then((data) => {
+                    if (data) {
+                        pairs[i] = data; // Place the fetched pair in the correct index
+                        setAllPairs([...pairs]); // Update state with new pair
+                    }
+                })
+                .catch((error) => {
+                    pairs[i] = null; // null signals API unreachable
+                    setAllPairs([...pairs]); // Update state with failed pair
+                }),
+        );
+
+        await Promise.all(promises);
     };
 
     // Use IndexedDB if available; fallback to LocalStorage
