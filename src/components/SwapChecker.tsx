@@ -294,7 +294,7 @@ export const SwapChecker = () => {
             prepareSwap,
             claimSwap,
         );
-        ws.connect();  
+        ws.connect();
     });
 
     onCleanup(() => {

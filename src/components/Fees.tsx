@@ -78,8 +78,8 @@ const Fees = () => {
 
                 if (!online()) {
                     setOnline(true);
-                }   
-                    
+                }
+
                 setBoltzFee(cfg.fees.percentage);
 
                 switch (swapType()) {
