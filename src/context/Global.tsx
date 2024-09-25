@@ -22,7 +22,7 @@ import { formatError } from "../utils/errors";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import { backendIndex, isEmbed } from "../utils/urlParams";
+import { getUrlParam, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -122,7 +122,12 @@ const GlobalProvider = (props: { children: any }) => {
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
-    const [backend, setBackend] = createSignal<number>(0);
+    const [backend, setBackend] = makePersisted(
+        createSignal<number>(0),
+        {
+            name: "backend",
+        },
+    );
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
@@ -296,12 +301,16 @@ const GlobalProvider = (props: { children: any }) => {
     detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
+    // check referral
+    const refParam = getUrlParam("ref");
+    if (refParam && refParam !== "") {
+        setRef(refParam);
+    }
+
     if (isEmbed()) {
         setEmbedded(true);
         setHideHero(true);
     }
-
-    setBackend(backendIndex());
 
     const [browserNotification, setBrowserNotification] = makePersisted(
         createSignal<boolean>(false),
