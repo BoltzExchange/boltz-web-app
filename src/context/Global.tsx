@@ -122,12 +122,9 @@ const GlobalProvider = (props: { children: any }) => {
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
-    const [backend, setBackend] = makePersisted(
-        createSignal<number>(0),
-        {
-            name: "backend",
-        },
-    );
+    const [backend, setBackend] = makePersisted(createSignal<number>(0), {
+        name: "backend",
+    });
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
