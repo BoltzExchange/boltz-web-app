@@ -309,6 +309,11 @@ const GlobalProvider = (props: { children: any }) => {
         setHideHero(true);
     }
 
+    // protection from bad persisted value
+    if (backend() >= config.backends.length) {
+        setBackend(0);
+    }
+
     const [browserNotification, setBrowserNotification] = makePersisted(
         createSignal<boolean>(false),
         {
