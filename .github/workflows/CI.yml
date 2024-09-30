@@ -47,6 +47,13 @@ jobs:
           cd regtest
           ./start.sh
 
+      # If there's an error, capture and show logs.
+      - name: Show boltz-backend logs on failure
+        if: failure()
+        run: |
+          echo "Displaying logs for the boltz-backend container"
+          docker logs boltz-backend
+
       - name: Install dependencies
         run: npm ci
 
