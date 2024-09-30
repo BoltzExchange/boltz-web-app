@@ -17,7 +17,7 @@ const defaults = {
     nostrUrl: "https://iris.to/swapmarket",
     statusUrl: "https://status.boltz.exchange",
     testnetUrl: "/testnet",
-    telegramUrl: "https://t.me/+tCZxi3gf-mgzZTQ0",
+    telegramUrl: "https://t.me/+w0F2zxxoLg85YzM6",
     email: "SwapMarket@proton.me",
 };
 
