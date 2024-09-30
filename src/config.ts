@@ -8,7 +8,7 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
-    discordUrl: "https://discord.gg/rseQtq9M",
+    discordUrl: "https://discord.gg/6bymCFzV52",
     githubUrl: "https://github.com/SwapMarket",
     repoUrl: "https://github.com/SwapMarket/swapmarket.github.io",
     docsUrl:
