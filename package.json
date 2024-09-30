@@ -45,7 +45,7 @@
         "sass": "^1.77.8",
         "solid-jest": "^0.2.0",
         "typescript": "^5.5.4",
-        "vite": "^5.4.1",
+        "vite": "^5.4.8",
         "vite-plugin-mkcert": "^1.17.6",
         "vite-plugin-node-polyfills": "^0.22.0",
         "vite-plugin-solid": "^2.10.2"
