@@ -64,8 +64,9 @@ const dict = {
         pay_invoice_to:
             "Pay this invoice about {{ amount }} {{ denomination }}",
         pay_address: "Address",
-        no_wallet: "Wallet not installed",
+        no_wallet: "No wallet installed",
         connect_wallet: "Connect wallet",
+        please_connect_wallet: "Please connect wallet",
         connect_to_address: "Connect to swap address",
         disconnect_address: "Disconnect wallet",
         lockup_failed: "Lockup Failed!",
