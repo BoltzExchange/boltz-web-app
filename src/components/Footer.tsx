@@ -84,7 +84,7 @@ const Footer = () => {
                 , {t("commithash")}:{" "}
                 <a
                     target="_blank"
-                    href={`${config.repoUrl}/commit/${__GIT_COMMIT__}`}>
+                    href={`${config.repoUrl}/attestations`}>
                     {__GIT_COMMIT__}
                 </a>
             </p>
