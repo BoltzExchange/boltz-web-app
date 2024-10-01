@@ -62,10 +62,27 @@ const isTor = () => {
     if (window?.location.hostname.endsWith(".onion")) {
         return true;
     }
+
     // Detect if Tor is blocking certain APIs (like window.OffscreenCanvas)
-    const hasOffscreenCanvas = typeof window.OffscreenCanvas !== "undefined";
-    const isTor = !hasOffscreenCanvas; // OffscreenCanvas is disabled in Tor
-    return isTor;
+    if (typeof window.OffscreenCanvas === "undefined") {
+        // OffscreenCanvas is disabled in Tor
+        return true;
+    }
+
+    // Try to use the Canvas API and check if it's blocked
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    try {
+        ctx.fillText("test", 0, 0);
+        const data = canvas.toDataURL();
+        if (data.indexOf("data:image/png;base64") === 0) {
+            return false; // Not Tor
+        }
+    } catch (e) {
+        return true; // Likely Tor
+    }
+    return false;
 };
 
 export const chooseUrl = (url?: Url) =>
