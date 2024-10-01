@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import log from "loglevel";
-import { Show, createEffect, createSignal, onMount } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
