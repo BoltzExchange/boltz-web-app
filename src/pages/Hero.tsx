@@ -48,14 +48,9 @@ export const Hero = () => {
         }
     };
 
-    // Fetch node stats when the component is mounted
-    onMount(() => {
-        fetchNodeStats();
-    });
-
     // Reactively fetch node stats whenever backend() changes
     createEffect(() => {
-        fetchNodeStats(); // This will re-run whenever backend() changes
+        fetchNodeStats();
     });
 
     return (
