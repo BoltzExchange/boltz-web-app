@@ -174,7 +174,11 @@ const Web3SignerProvider = (props: {
                 ],
             });
         } catch (switchError) {
-            if (switchError.code === 4902) {
+            if (
+                switchError.code === 4902 ||
+                // Rabby does not set the correct error code
+                switchError.message.includes("Try adding the chain")
+            ) {
                 await rawProvider().request({
                     method: "wallet_addEthereumChain",
                     params: [
