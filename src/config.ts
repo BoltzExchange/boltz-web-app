@@ -58,7 +58,15 @@ export type Config = {
 
 let config: Config = defaults;
 
-const isTor = () => window?.location.hostname.endsWith(".onion");
+const isTor = () => {
+    if (window?.location.hostname.endsWith(".onion")) {
+        return true;
+    }
+    // Detect if Tor is blocking certain APIs (like window.OffscreenCanvas)
+    const hasOffscreenCanvas = typeof window.OffscreenCanvas !== "undefined";
+    const isTor = !hasOffscreenCanvas; // OffscreenCanvas is disabled in Tor
+    return isTor;
+};
 
 export const chooseUrl = (url?: Url) =>
     url ? (isTor() && url.tor ? url.tor : url.normal) : undefined;
