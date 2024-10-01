@@ -120,7 +120,7 @@ export const CreateButton = () => {
                     return;
                 }
                 if (assetReceive() === RBTC && !addressValid()) {
-                    setButtonLabel({ key: "connect_wallet" });
+                    setButtonLabel({ key: "please_connect_wallet" });
                     return;
                 }
                 if (swapType() !== SwapType.Submarine) {

@@ -82,9 +82,7 @@ const Footer = () => {
                     {__APP_VERSION__}
                 </a>
                 , {t("commithash")}:{" "}
-                <a
-                    target="_blank"
-                    href={`${config.repoUrl}/attestations`}>
+                <a target="_blank" href={`${config.repoUrl}/attestations`}>
                     {__GIT_COMMIT__}
                 </a>
             </p>

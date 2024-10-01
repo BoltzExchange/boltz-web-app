@@ -13,12 +13,12 @@ const defaults = {
     repoUrl: "https://github.com/SwapMarket/swapmarket.github.io",
     docsUrl:
         "https://github.com/SwapMarket/swapmarket.github.io/blob/main/README.md",
-    blogUrl: "https://blog.boltz.exchange/archive",
+    blogUrl: "https://stacker.news/SwapMarket/posts",
     nostrUrl: "https://iris.to/swapmarket",
     statusUrl: "https://status.boltz.exchange",
     testnetUrl: "/testnet",
     telegramUrl: "https://t.me/+w0F2zxxoLg85YzM6",
-    email: "SwapMarket@proton.me",
+    email: "swapmarket.wizard996@passinbox.com",
 };
 
 type Asset = {
