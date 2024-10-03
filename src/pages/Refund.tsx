@@ -10,6 +10,7 @@ import SwapList from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
@@ -198,8 +199,17 @@ const Refund = () => {
             <div id="refund">
                 <div class="frame" data-testid="refundFrame">
                     <SettingsCog />
-                    <h2>{t("refund_a_swap")}</h2>
-                    <p>{t("refund_a_swap_subline")}</p>
+                    <Show
+                        when={refundJson() !== null}
+                        fallback={
+                            <>
+                                <h2>{t("refund_a_swap")}</h2>
+                                <p>{t("refund_a_swap_subline")}</p>
+                            </>
+                        }>
+                        <h2>{t("refund_swap", { id: refundJson().id })}</h2>
+                    </Show>
+
                     <Show when={logRefundableSwaps().length > 0}>
                         <SwapListLogs swaps={logRefundableSwaps} />
                     </Show>
@@ -214,7 +224,12 @@ const Refund = () => {
                         accept="application/json,image/png"
                         onChange={(e) => uploadChange(e)}
                     />
-                    <Show when={Object.keys(providers()).length > 0}>
+                    <Show
+                        when={
+                            Object.keys(providers()).length > 0 &&
+                            (refundJson() === null ||
+                                refundJson().assetSend === RBTC)
+                        }>
                         <hr />
                         <ConnectWallet addressOverride={refundScanProgress} />
                     </Show>

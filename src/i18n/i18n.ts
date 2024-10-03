@@ -97,6 +97,7 @@ const dict = {
         backup_refund_skip:
             "If any of the above applies to you, we strongly recommend downloading this refund file!",
         refund_a_swap: "Refund a swap",
+        refund_swap: "Refund swap {{ id }}",
         refund_a_swap_subline:
             "Upload your refund file and reclaim your locked funds",
         refund_past_swaps: "Past swaps",
