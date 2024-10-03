@@ -97,6 +97,7 @@ const dict = {
         backup_refund_skip:
             "If any of the above applies to you, we strongly recommend downloading this refund file!",
         refund_a_swap: "Refund a swap",
+        refund_swap: "Refund Swap {{ id }}",
         refund_a_swap_subline:
             "Upload your refund file and reclaim your locked funds",
         refund_past_swaps: "Past swaps",
@@ -312,6 +313,7 @@ const dict = {
         backup_refund_skip:
             "Falls einer dieser Punkte zutrifft, empfehlen wir ausdrücklich die Rückerstattungsdatei herunterzuladen!",
         refund_a_swap: "Einen Swap erstatten",
+        refund_swap: "Erstatte Swap {{ id }}",
         refund_a_swap_subline:
             "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück",
         refund_past_swaps: "Historische Swaps",
@@ -532,6 +534,7 @@ const dict = {
         backup_refund_skip:
             "Si alguno de los puntos anteriores le afecta, le recomendamos que descargue el archivo de reembolso.",
         refund_a_swap: "Reembolsar un intercambio",
+        refund_swap: "Reembolsar intercambio {{ id }}",
         refund_a_swap_subline:
             "Cargue su archivo de reembolso y recupere sus fondos bloqueados",
         refund_past_swaps: "Intercambios anteriores",
@@ -749,6 +752,7 @@ const dict = {
         backup_refund_list_clear_history: "清除您的浏览历史记录",
         backup_refund_skip: "如果您符合以上任何条件，强烈建议下载此退款文件！",
         refund_a_swap: "退还交换",
+        refund_swap: "退交换{{ id }}",
         refund_a_swap_subline: "上传您的退款文件，取回被锁定的资金",
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
