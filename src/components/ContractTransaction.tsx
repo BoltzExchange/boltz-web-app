@@ -11,11 +11,13 @@ const ContractTransaction = ({
     showHr,
     onClick,
     address,
+    children,
     promptText,
     buttonText,
     waitingText,
 }: {
     onClick: () => Promise<any>;
+    children?: any;
     address: string;
     buttonText: string;
     promptText?: string;
@@ -63,6 +65,7 @@ const ContractTransaction = ({
                     <Show when={promptText}>
                         <p>{promptText}</p>
                     </Show>
+                    <Show when={children !== undefined}>{children}</Show>
                     <button
                         class="btn"
                         disabled={clicked()}
