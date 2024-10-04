@@ -63,6 +63,10 @@ const Fees = () => {
             }
 
             if (currentPairs !== undefined) {
+                if (!online()) {
+                    setOnline(true);
+                }
+
                 const cfg = getPair(
                     currentPairs,
                     swapType(),
@@ -72,12 +76,7 @@ const Fees = () => {
 
                 if (!cfg) {
                     // Not a configured pair
-                    setOnline(false);
                     return;
-                }
-
-                if (!online()) {
-                    setOnline(true);
                 }
 
                 setBoltzFee(cfg.fees.percentage);
