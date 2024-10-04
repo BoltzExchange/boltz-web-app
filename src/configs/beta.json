@@ -3,10 +3,24 @@
     "isBeta": true,
     "network": "mainnet",
     "loglevel": "debug",
-    "apiUrl": {
-        "normal": "https://api.boltz.exchange",
-        "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
-    },
+    "backends": [
+        {
+            "alias": "Boltz Exchange",
+            "apiUrl": {
+                "normal": "https://api.boltz.exchange",
+                "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
+            },
+            "contact": "https://discord.gg/QBvZGcW"
+        },
+        {
+            "alias": "Middle Way",
+            "apiUrl": {
+                "normal": "https://api.middleway.space",
+                "tor": "http://middlew7gmdp53psshnb3cn74zhhulor56lsk3alr2nsrgj7ukmz47id.onion"
+            },
+            "contact": "https://t.me/MiddleWayNode"
+        }
+    ],
     "assets": {
         "BTC": {
             "blockExplorerUrl": {
