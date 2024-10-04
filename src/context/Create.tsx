@@ -181,11 +181,11 @@ const CreateProvider = (props: { children: any }) => {
 
     const [assetReceive, setAssetReceive] = makePersisted(
         createSignal(defaultSelection),
-        { name: "assetReceive" },
+        { name: config.network + "assetReceive" },
     );
 
     const [assetSend, setAssetSend] = makePersisted(createSignal(LN), {
-        name: "assetSend",
+        name: config.network + "assetSend",
     });
 
     createEffect(() => {

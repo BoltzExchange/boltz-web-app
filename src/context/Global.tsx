@@ -123,26 +123,26 @@ const GlobalProvider = (props: { children: any }) => {
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
     const [backend, setBackend] = makePersisted(createSignal<number>(0), {
-        name: "backend",
+        name: config.network + "backend",
     });
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
     const [ref, setRef] = makePersisted(createSignal("swapmarket"), {
-        name: "ref",
+        name: config.network + "ref",
         ...stringSerializer,
     });
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         createSignal(null),
         {
-            name: "i18n",
+            name: config.network + "i18n",
             ...stringSerializer,
         },
     );
     const [denomination, setDenomination] = makePersisted(
         createSignal<Denomination>(Denomination.Sat),
         {
-            name: "denomination",
+            name: config.network + "denomination",
             ...stringSerializer,
         },
     );
@@ -155,7 +155,7 @@ const GlobalProvider = (props: { children: any }) => {
     const [audioNotification, setAudioNotification] = makePersisted(
         createSignal<boolean>(false),
         {
-            name: "audioNotification",
+            name: config.network + "audioNotification",
         },
     );
 
@@ -163,7 +163,7 @@ const GlobalProvider = (props: { children: any }) => {
     const [separator, setSeparator] = makePersisted(
         createSignal(localeSeparator),
         {
-            name: "separator",
+            name: config.network + "separator",
         },
     );
 
@@ -221,7 +221,7 @@ const GlobalProvider = (props: { children: any }) => {
     });
 
     const logsForage = localforage.createInstance({
-        name: "logs",
+        name: config.network + "logs",
     });
 
     injectLogWriter(logsForage);
@@ -241,10 +241,10 @@ const GlobalProvider = (props: { children: any }) => {
     const clearLogs = () => logsForage.clear();
 
     const paramsForage = localforage.createInstance({
-        name: "params",
+        name: config.network + "params",
     });
     const swapsForage = localforage.createInstance({
-        name: "swaps",
+        name: config.network + "swaps",
     });
 
     migrateStorage(paramsForage, swapsForage).catch((e) =>
@@ -285,7 +285,7 @@ const GlobalProvider = (props: { children: any }) => {
     const clearSwaps = () => swapsForage.clear();
 
     const rdnsForage = localforage.createInstance({
-        name: "rdns",
+        name: config.network + "rdns",
     });
 
     const setRdns = (address: string, rdns: string) =>
@@ -317,14 +317,14 @@ const GlobalProvider = (props: { children: any }) => {
     const [browserNotification, setBrowserNotification] = makePersisted(
         createSignal<boolean>(false),
         {
-            name: "browserNotification",
+            name: config.network + "browserNotification",
         },
     );
 
     const [isRecklessMode, setRecklessMode] = makePersisted(
         createSignal<boolean>(false),
         {
-            name: "recklessMode",
+            name: config.network + "recklessMode",
         },
     );
 

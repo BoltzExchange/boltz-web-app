@@ -2,6 +2,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import log from "loglevel";
 import { createSignal } from "solid-js";
 
+import { config } from "../config";
 import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 
@@ -17,7 +18,7 @@ const migrateSwapsFromLocalStorage = async (swapsForage: LocalForage) => {
             equals: () => false,
         }),
         {
-            name: "swaps",
+            name: config.network + "swaps",
         },
     );
 
