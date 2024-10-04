@@ -3,6 +3,7 @@ import { Show, createEffect, createSignal } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 
 const InsufficientBalance = () => {
@@ -11,6 +12,7 @@ const InsufficientBalance = () => {
     return (
         <>
             <p>{t("insufficient_balance_line")}</p>
+            <ConnectWallet />
             <button class="btn" disabled={true}>
                 {t("insufficient_balance")}
             </button>
@@ -69,6 +71,7 @@ const LockupEvm = ({
                     currentSwap.lockupTx = tx.hash;
                     await setSwapStorage(currentSwap);
                 }}
+                children={<ConnectWallet />}
                 address={signerAddress}
                 buttonText={t("send")}
                 promptText={t("transaction_prompt", { button: t("send") })}
