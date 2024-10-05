@@ -10,9 +10,10 @@ import {
     createSignal,
 } from "solid-js";
 
+import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { EIP6963ProviderInfo, useWeb3Signer } from "../context/Web3";
+import { useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
