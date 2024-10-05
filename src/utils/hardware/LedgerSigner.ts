@@ -10,14 +10,16 @@ import {
 } from "ethers";
 import log from "loglevel";
 
-import { config } from "../config";
-import { EIP1193Provider } from "../consts/Types";
+import { config } from "../../config";
+import { EIP1193Provider } from "../../consts/Types";
+import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
-class LedgerSigner implements EIP1193Provider {
+class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly ethereumApp = "Ethereum";
-    private static readonly path = "44'/60'/0'/0/0";
 
     private readonly provider: JsonRpcProvider;
+    private derivationPath = derivationPaths.Ethereum;
+
     private transport?: Transport;
 
     constructor() {
@@ -25,6 +27,10 @@ class LedgerSigner implements EIP1193Provider {
             config.assets["RBTC"].network.rpcUrls[0],
         );
     }
+
+    public setDerivationPath = (path: string) => {
+        this.derivationPath = path;
+    };
 
     public request = async (request: {
         method: string;
@@ -46,7 +52,7 @@ class LedgerSigner implements EIP1193Provider {
                 }
 
                 const eth = new Eth(this.transport);
-                const { address } = await eth.getAddress(LedgerSigner.path);
+                const { address } = await eth.getAddress(this.derivationPath);
 
                 return [address];
             }
@@ -74,7 +80,7 @@ class LedgerSigner implements EIP1193Provider {
 
                 const eth = new Eth(this.transport);
                 const signature = await eth.clearSignTransaction(
-                    LedgerSigner.path,
+                    this.derivationPath,
                     tx.unsignedSerialized.substring(2),
                     {},
                 );
@@ -95,7 +101,7 @@ class LedgerSigner implements EIP1193Provider {
 
                 try {
                     const signature = await eth.signEIP712Message(
-                        LedgerSigner.path,
+                        this.derivationPath,
                         message,
                     );
                     return this.serializeSignature(signature);
@@ -107,7 +113,7 @@ class LedgerSigner implements EIP1193Provider {
                     delete types["EIP712Domain"];
 
                     const signature = await eth.signEIP712HashedMessage(
-                        LedgerSigner.path,
+                        this.derivationPath,
                         TypedDataEncoder.hashDomain(message.domain),
                         TypedDataEncoder.hashStruct(
                             message.primaryType,

@@ -207,6 +207,8 @@ const dict = {
         insufficient_balance_line:
             "You do not have enough balance in your wallet for this swap.",
         select_wallet: "Select wallet",
+        select_derivation_path: "Select derivation path",
+        submit_derivation_path: "Submit",
         switch_network: "Switch network",
         block: "block",
         logs_scan_progress: "Scan progress {{ value }}%",
