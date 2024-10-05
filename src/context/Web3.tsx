@@ -14,12 +14,18 @@ import {
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
+import LedgerSigner from "../utils/LedgerSigner";
 import { Contracts, getContracts } from "../utils/boltzClient";
 import { useGlobalContext } from "./Global";
+import LedgerIcon from "/ledger.svg";
 
 declare global {
     interface WindowEventMap {
         "eip6963:announceProvider": CustomEvent;
+    }
+
+    interface Navigator {
+        hid: {};
     }
 }
 
@@ -27,7 +33,8 @@ export type EIP6963ProviderInfo = {
     rdns: string;
     uuid: string;
     name: string;
-    icon: string;
+    icon?: string;
+    disabled?: boolean;
 };
 
 type EIP1193Provider = {
@@ -86,7 +93,18 @@ const Web3SignerProvider = (props: {
 
     const [providers, setProviders] = createSignal<
         Record<string, EIP6963ProviderDetail>
-    >({});
+    >({
+        ledger: {
+            provider: new LedgerSigner(),
+            info: {
+                name: "Ledger",
+                uuid: "ledger",
+                rdns: "ledger",
+                icon: LedgerIcon,
+                disabled: navigator.hid === undefined,
+            },
+        },
+    });
     const [signer, setSigner] = createSignal<Signer | undefined>(undefined);
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined

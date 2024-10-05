@@ -9,6 +9,8 @@ module.exports = {
         "^.+\\.css": "<rootDir>/tests/mocks/StylesMock.tsx",
         "^.+\\.scss": "<rootDir>/tests/mocks/StylesMock.tsx",
         "boltz-bolt12": "<rootDir>/tests/mocks/bolt12.ts",
+        "@ledgerhq/hw-app-eth": "<rootDir>/tests/mocks/LedgerMock.ts",
+        "@ledgerhq/hw-transport-webhid": "<rootDir>/tests/mocks/LedgerMock.ts",
     },
     globals: {
         Buffer: Buffer,
