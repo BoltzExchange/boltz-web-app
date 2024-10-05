@@ -309,8 +309,13 @@ export const CreateButton = () => {
 
             await setSwapStorage({
                 ...data,
-                signer: signer()?.address,
+                signer:
+                    // We do not have to commit to a signer when creating submarine swaps
+                    swapType() !== SwapType.Submarine
+                        ? signer()?.address
+                        : undefined,
             });
+
             setInvoice("");
             setInvoiceValid(false);
             setOnchainAddress("");
