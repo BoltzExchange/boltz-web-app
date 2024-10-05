@@ -15,9 +15,9 @@ import {
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
-import LedgerSigner from "../utils/LedgerSigner";
-import TrezorSigner from "../utils/TrezorSigner";
 import { Contracts, getContracts } from "../utils/boltzClient";
+import LedgerSigner from "../utils/hardware/LedgerSigner";
+import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { useGlobalContext } from "./Global";
 import LedgerIcon from "/ledger.svg";
 import TrezorIcon from "/trezor.svg";
@@ -71,6 +71,7 @@ const Web3SignerProvider = (props: {
                 uuid: "ledger",
                 rdns: "ledger",
                 icon: LedgerIcon,
+                isHardware: true,
                 disabled: navigator.hid === undefined,
             },
         },
@@ -81,6 +82,7 @@ const Web3SignerProvider = (props: {
                 uuid: "trezor",
                 rdns: "trezor",
                 icon: TrezorIcon,
+                isHardware: true,
             },
         },
     });

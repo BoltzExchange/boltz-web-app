@@ -12,20 +12,26 @@ import {
 } from "ethers";
 import log from "loglevel";
 
-import { config } from "../config";
-import { EIP1193Provider } from "../consts/Types";
+import { config } from "../../config";
+import { EIP1193Provider } from "../../consts/Types";
+import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
-class TrezorSigner implements EIP1193Provider {
-    private static readonly path = "m/44'/60'/0'/0/0";
-
+class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly provider: JsonRpcProvider;
+
     private initialized = false;
+    private derivationPath!: string;
 
     constructor() {
         this.provider = new JsonRpcProvider(
             config.assets["RBTC"].network.rpcUrls[0],
         );
+        this.setDerivationPath(derivationPaths.Ethereum);
     }
+
+    public setDerivationPath = (path: string) => {
+        this.derivationPath = `m/${path}`;
+    };
 
     public request = async (request: {
         method: string;
@@ -39,12 +45,12 @@ class TrezorSigner implements EIP1193Provider {
 
                 const addresses = this.handleError<Address>(
                     await TrezorConnect.ethereumGetAddress({
-                        path: TrezorSigner.path,
                         showOnTrezor: false,
+                        path: this.derivationPath,
                     } as any),
                 );
 
-                return [addresses.payload.address];
+                return [addresses.payload.address.toLowerCase()];
             }
 
             case "eth_sendTransaction": {
@@ -71,8 +77,8 @@ class TrezorSigner implements EIP1193Provider {
                 };
                 const signature = this.handleError(
                     await TrezorConnect.ethereumSignTransaction({
-                        path: TrezorSigner.path,
                         transaction: trezorTx,
+                        path: this.derivationPath,
                     } as unknown as any),
                 );
 
@@ -101,8 +107,8 @@ class TrezorSigner implements EIP1193Provider {
                 const signature = this.handleError(
                     await TrezorConnect.ethereumSignTypedData({
                         data: message,
-                        path: TrezorSigner.path,
                         metamask_v4_compat: true,
+                        path: this.derivationPath,
                     }),
                 );
                 return signature.payload.signature;
@@ -114,7 +120,7 @@ class TrezorSigner implements EIP1193Provider {
 
     public on = () => {};
 
-    public removeAllListeners = (event: string) => {};
+    public removeAllListeners = () => {};
 
     private initialize = async () => {
         if (this.initialized) {
