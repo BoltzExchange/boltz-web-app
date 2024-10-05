@@ -54,7 +54,12 @@ const Modal = ({
                 <hr />
                 <div
                     class="provider-modal-entry"
-                    data-disabled={provider.disabled}>
+                    data-disabled={provider.disabled}
+                    title={
+                        provider.disabled
+                            ? t("not_supported_in_browser")
+                            : undefined
+                    }>
                     <Show when={provider.icon !== undefined}>
                         <img
                             class="provider-modal-icon"
