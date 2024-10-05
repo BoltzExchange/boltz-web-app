@@ -11,6 +11,7 @@ module.exports = {
         "boltz-bolt12": "<rootDir>/tests/mocks/bolt12.ts",
         "@ledgerhq/hw-app-eth": "<rootDir>/tests/mocks/LedgerMock.ts",
         "@ledgerhq/hw-transport-webhid": "<rootDir>/tests/mocks/LedgerMock.ts",
+        "@trezor/connect-web": "<rootDir>/tests/mocks/TrezorMock.ts",
     },
     globals: {
         Buffer: Buffer,
