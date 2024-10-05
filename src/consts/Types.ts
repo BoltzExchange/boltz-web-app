@@ -11,6 +11,7 @@ export type EIP6963ProviderInfo = {
     name: string;
     icon?: string;
     disabled?: boolean;
+    isHardware?: boolean;
 };
 
 export type EIP1193Provider = {
