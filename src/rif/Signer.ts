@@ -37,7 +37,6 @@ const sign = async (signer: Signer, request: EnvelopingRequest) => {
 
 export const relayClaimTransaction = async (
     signer: Signer,
-    signerRns: string,
     etherSwap: EtherSwap,
     preimage: string,
     amount: number,

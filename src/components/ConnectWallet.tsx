@@ -46,14 +46,25 @@ const Modal = ({
         return (
             <div
                 class="provider-modal-entry-wrapper"
-                onClick={() => connect(notify, connectProvider, provider)}>
+                onClick={async () => {
+                    if (provider.disabled) {
+                        return;
+                    }
+
+                    await connect(notify, connectProvider, provider);
+                }}>
                 <hr />
-                <div class="provider-modal-entry">
-                    <img
-                        class="provider-modal-icon"
-                        src={provider.icon}
-                        alt={`${provider.name} icon`}
-                    />
+                <div
+                    class="provider-modal-entry"
+                    data-disabled={provider.disabled}>
+                    <Show when={provider.icon !== undefined}>
+                        <img
+                            class="provider-modal-icon"
+                            src={provider.icon}
+                            alt={`${provider.name} icon`}
+                        />
+                    </Show>
+
                     <h4>{provider.name}</h4>
                 </div>
             </div>
