@@ -11,8 +11,9 @@ import {
 import log from "loglevel";
 
 import { config } from "../config";
+import { EIP1193Provider } from "../consts/Types";
 
-class LedgerSigner {
+class LedgerSigner implements EIP1193Provider {
     private static readonly ethereumApp = "Ethereum";
     private static readonly path = "44'/60'/0'/0/0";
 
@@ -136,7 +137,7 @@ class LedgerSigner {
         const format = r[i++];
 
         if (format !== 1) {
-            throw " format not supported";
+            throw "format not supported";
         }
 
         const nameLength = r[i++];

@@ -14,10 +14,13 @@ import {
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
+import { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import LedgerSigner from "../utils/LedgerSigner";
+import TrezorSigner from "../utils/TrezorSigner";
 import { Contracts, getContracts } from "../utils/boltzClient";
 import { useGlobalContext } from "./Global";
 import LedgerIcon from "/ledger.svg";
+import TrezorIcon from "/trezor.svg";
 
 declare global {
     interface WindowEventMap {
@@ -28,39 +31,6 @@ declare global {
         hid: {};
     }
 }
-
-export type EIP6963ProviderInfo = {
-    rdns: string;
-    uuid: string;
-    name: string;
-    icon?: string;
-    disabled?: boolean;
-};
-
-type EIP1193Provider = {
-    isStatus?: boolean;
-    host?: string;
-    path?: string;
-    sendAsync?: (
-        request: { method: string; params?: Array<unknown> },
-        callback: (error: Error | null, response: unknown) => void,
-    ) => void;
-    send?: (
-        request: { method: string; params?: Array<unknown> },
-        callback: (error: Error | null, response: unknown) => void,
-    ) => void;
-    request: (request: {
-        method: string;
-        params?: Array<unknown>;
-    }) => Promise<unknown>;
-    on: (event: "chainChanged", cb: () => void) => void;
-    removeAllListeners: (event: "chainChanged") => void;
-};
-
-export type EIP6963ProviderDetail = {
-    info: EIP6963ProviderInfo;
-    provider: EIP1193Provider;
-};
 
 type EIP6963AnnounceProviderEvent = {
     detail: EIP6963ProviderDetail;
@@ -102,6 +72,15 @@ const Web3SignerProvider = (props: {
                 rdns: "ledger",
                 icon: LedgerIcon,
                 disabled: navigator.hid === undefined,
+            },
+        },
+        trezor: {
+            provider: new TrezorSigner(),
+            info: {
+                name: "Trezor",
+                uuid: "trezor",
+                rdns: "trezor",
+                icon: TrezorIcon,
             },
         },
     });

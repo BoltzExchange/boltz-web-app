@@ -63,6 +63,7 @@
         "@solid-primitives/i18n": "^2.1.1",
         "@solid-primitives/storage": "^4.0.0",
         "@solidjs/router": "^0.14.3",
+        "@trezor/connect-web": "^9.4.2",
         "@vulpemventures/secp256k1-zkp": "^3.2.1",
         "bignumber.js": "^9.1.2 ",
         "bitcoinjs-lib": "^6.1.6",
