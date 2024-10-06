@@ -26,7 +26,6 @@ import ContractTransaction from "./ContractTransaction";
 export const RefundEvm = ({
     swapId,
     setRefundTxHash,
-    asset,
     amount,
     claimAddress,
     preimageHash,
@@ -35,7 +34,6 @@ export const RefundEvm = ({
 }: {
     swapId?: string;
     setRefundTxHash?: Setter<string>;
-    asset: string;
     amount: number;
     preimageHash: string;
     claimAddress: string;
@@ -130,7 +128,6 @@ const RefundButton = ({
             return (
                 <RefundEvm
                     swapId={submarine.id}
-                    asset={submarine.assetSend}
                     signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}
@@ -144,7 +141,6 @@ const RefundButton = ({
             return (
                 <RefundEvm
                     swapId={chain.id}
-                    asset={chain.assetSend}
                     signerAddress={chain.signer}
                     amount={chain.lockupDetails.amount}
                     claimAddress={chain.lockupDetails.claimAddress}

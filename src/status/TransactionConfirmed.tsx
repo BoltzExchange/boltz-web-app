@@ -10,7 +10,7 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
 // TODO: use bignumber for amounts
-const ClaimRsk = ({
+const ClaimEvm = ({
     useRif,
     swapId,
     amount,
@@ -65,10 +65,9 @@ const ClaimRsk = ({
                 await setSwapStorage(currentSwap);
             }}
             address={signerAddress}
-            buttonText={t("claim")}
-            promptText={t("transaction_prompt", { button: t("claim") })}
+            buttonText={t("continue")}
+            promptText={t("transaction_prompt", { button: t("continue") })}
             waitingText={t("tx_ready_to_claim")}
-            showHr={true}
         />
     );
 };
@@ -82,7 +81,7 @@ const TransactionConfirmed = () => {
             const chain = swap() as ChainSwap;
 
             return (
-                <ClaimRsk
+                <ClaimEvm
                     swapId={chain.id}
                     useRif={chain.useRif}
                     preimage={chain.preimage}
@@ -97,7 +96,7 @@ const TransactionConfirmed = () => {
         const reverse = swap() as ReverseSwap;
 
         return (
-            <ClaimRsk
+            <ClaimEvm
                 swapId={reverse.id}
                 useRif={reverse.useRif}
                 preimage={reverse.preimage}

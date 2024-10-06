@@ -33,7 +33,7 @@ const dict = {
         fee: "Boltz Fee",
         denomination: "Denomination",
         send: "Send",
-        claim: "Claim",
+        continue: "Continue",
         receive: "Receive",
         min: "Min",
         max: "Max",
