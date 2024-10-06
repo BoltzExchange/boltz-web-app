@@ -10,10 +10,11 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import { getPairs } from "../utils/boltzClient";
+import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
+import { formatError } from "../utils/errors";
 import { coalesceLn } from "../utils/helper";
-import { fetchLnurl } from "../utils/invoice";
+import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import {
     SomeSwap,
     createChain,
@@ -58,6 +59,8 @@ export const CreateButton = () => {
         maximum,
         invoiceValid,
         invoiceError,
+        bolt12Offer,
+        setBolt12Offer,
     } = useCreateContext();
     const { getEtherSwap, signer } = useWeb3Signer();
 
@@ -67,10 +70,10 @@ export const CreateButton = () => {
         key: "create_swap",
     });
 
-    const validLnurl = () => {
+    const validWayToFetchInvoice = () => {
         return (
             swapType() === SwapType.Submarine &&
-            lnurl() !== "" &&
+            (lnurl() !== "" || bolt12Offer() !== undefined) &&
             amountValid() &&
             sendAmount().isGreaterThan(0)
         );
@@ -93,6 +96,7 @@ export const CreateButton = () => {
                 online,
                 minimum,
                 assetReceive,
+                bolt12Offer,
             ],
             () => {
                 if (!online()) {
@@ -131,7 +135,7 @@ export const CreateButton = () => {
                         return;
                     }
                 } else {
-                    if (validLnurl()) {
+                    if (validWayToFetchInvoice()) {
                         setButtonLabel({ key: "create_swap" });
                         return;
                     }
@@ -148,15 +152,64 @@ export const CreateButton = () => {
     );
 
     const create = async () => {
-        if (validLnurl()) {
-            try {
-                const inv = await fetchLnurl(lnurl(), Number(receiveAmount()));
-                setInvoice(inv);
-                setLnurl("");
-            } catch (e) {
-                notify("error", e.message);
-                log.warn("fetch lnurl failed", e);
-                return;
+        if (validWayToFetchInvoice()) {
+            if (lnurl() !== undefined && lnurl() !== "") {
+                log.info("Fetching invoice from LNURL or BIP-353", lnurl());
+
+                const fetchResults = await Promise.allSettled([
+                    (() => {
+                        try {
+                            return fetchLnurl(lnurl(), Number(receiveAmount()));
+                        } catch (e) {
+                            log.warn("Fetching invoice from LNURL failed", e);
+                            throw e;
+                        }
+                    })(),
+                    (() => {
+                        try {
+                            return fetchBip353(
+                                lnurl(),
+                                Number(receiveAmount()),
+                            );
+                        } catch (e) {
+                            log.warn("Fetching invoice from BIP-353 failed", e);
+                            throw e;
+                        }
+                    })(),
+                ]);
+
+                const fetched = fetchResults.find(
+                    (res) => res.status === "fulfilled",
+                );
+                if (fetched !== undefined) {
+                    setInvoice(fetched.value);
+                    setLnurl("");
+                } else {
+                    // All failed, so we can safely cast the first one
+                    notify(
+                        "error",
+                        (fetchResults[0] as PromiseRejectedResult).reason,
+                    );
+                    return;
+                }
+            } else {
+                log.info("Fetching invoice from bolt12 offer", bolt12Offer());
+                try {
+                    const res = await fetchBolt12Invoice(
+                        bolt12Offer(),
+                        Number(receiveAmount()),
+                    );
+                    setInvoice(res.invoice);
+                    setBolt12Offer(undefined);
+                } catch (e) {
+                    if (typeof e.json === "function") {
+                        e = (await e.json()).error;
+                    }
+
+                    notify("error", formatError(e));
+                    log.warn("Fetching invoice from bol12 failed", e);
+                    return;
+                }
             }
         }
 
@@ -286,7 +339,9 @@ export const CreateButton = () => {
             data-testid="create-swap-button"
             class={buttonClass()}
             disabled={
-                !online() || !(valid() || validLnurl()) || buttonDisable()
+                !online() ||
+                !(valid() || validWayToFetchInvoice()) ||
+                buttonDisable()
             }
             onClick={buttonClick}>
             {getButtonLabel(buttonLabel())}

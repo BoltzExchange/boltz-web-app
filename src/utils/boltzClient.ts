@@ -178,6 +178,15 @@ export const getPairs = async (): Promise<Pairs> => {
     };
 };
 
+export const fetchBolt12Invoice = async (
+    offer: string,
+    amountSat: number,
+): Promise<{ invoice: string }> =>
+    fetcher("/v2/lightning/BTC/bolt12/fetch", {
+        offer,
+        amount: amountSat,
+    });
+
 export const createSubmarineSwap = (
     from: string,
     to: string,

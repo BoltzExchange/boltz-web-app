@@ -23,6 +23,7 @@ const defaults = {
     testnetUrl: "https://testnet.boltz.exchange",
     telegramUrl: "https://t.me/boltzhq",
     email: "hi@bol.tz",
+    dnsOverHttps: "https://1.1.1.1/dns-query",
 };
 
 type Asset = {

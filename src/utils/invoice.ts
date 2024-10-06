@@ -1,9 +1,11 @@
 import { bech32, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
+import { Invoice, Offer } from "boltz-bolt12";
 import log from "loglevel";
 
 import { config } from "../config";
+import { fetchBolt12Invoice } from "./boltzClient";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {
@@ -28,6 +30,8 @@ const bolt11Prefixes = {
     testnet: "lntb",
     regtest: "lnbcrt",
 };
+
+const bip353Prefix = "₿";
 
 export const getExpiryEtaHours = (invoice: string): number => {
     const decoded = decodeInvoice(invoice);
@@ -60,7 +64,18 @@ export const decodeInvoice = (
             ).data as string,
         };
     } catch (e) {
-        throw new Error("invalid_invoice");
+        try {
+            const decoded = new Invoice(invoice);
+            const res = {
+                satoshis: Number(decoded.amount_msat / 1_000n),
+                preimageHash: Buffer.from(decoded.payment_hash).toString("hex"),
+            };
+
+            decoded.free();
+            return res;
+        } catch (e) {
+            throw new Error("invalid_invoice");
+        }
     }
 };
 
@@ -90,6 +105,37 @@ export const fetchLnurl = (
             .then(resolve)
             .catch(reject);
     });
+};
+
+export const fetchBip353 = async (
+    bip353: string,
+    amountSat: number,
+): Promise<string> => {
+    const split = bip353.split("@");
+    if (split.length !== 2) {
+        throw "invalid BIP-353";
+    }
+
+    if (split[0].startsWith(bip353Prefix)) {
+        split[0] = split[0].substring(bip353Prefix.length);
+    }
+
+    log.debug(`Fetching BIP-353: ${bip353}`);
+
+    const params = new URLSearchParams({
+        type: "TXT",
+        name: `${split[0]}.user._bitcoin-payment.${split[1]}`,
+    });
+    const res = await fetch(`${config.dnsOverHttps}?${params.toString()}`, {
+        headers: {
+            Accept: "application/dns-json",
+        },
+    });
+    const resBody = await res.json();
+    const paymentRequest = resBody.Answer[0].data;
+    const offer = new URLSearchParams(paymentRequest.split("?")[1]).get("lno");
+    return (await fetchBolt12Invoice(offer.replaceAll('"', ""), amountSat))
+        .invoice;
 };
 
 const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
@@ -150,7 +196,7 @@ export const isInvoice = (data: string) => {
     if (prefix === bolt11Prefixes.mainnet && startsWithPrefix) {
         return !data.toLowerCase().startsWith(bolt11Prefixes.regtest);
     }
-    return startsWithPrefix;
+    return startsWithPrefix || data.toLowerCase().startsWith("lni");
 };
 
 const isValidBech32 = (data: string) => {
@@ -171,4 +217,13 @@ export const isLnurl = (data: string) => {
         (data.includes("@") && emailRegex.test(data)) ||
         (data.startsWith("lnurl") && isValidBech32(data))
     );
+};
+
+export const isBolt12Offer = (offer: string) => {
+    try {
+        new Offer(offer);
+        return true;
+    } catch (e) {
+        return false;
+    }
 };
