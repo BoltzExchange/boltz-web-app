@@ -108,6 +108,7 @@ export const fetchLnurl = (
 };
 
 export const fetchBip353 = async (
+    backend: number,
     bip353: string,
     amountSat: number,
 ): Promise<string> => {
@@ -134,8 +135,9 @@ export const fetchBip353 = async (
     const resBody = await res.json();
     const paymentRequest = resBody.Answer[0].data;
     const offer = new URLSearchParams(paymentRequest.split("?")[1]).get("lno");
-    return (await fetchBolt12Invoice(offer.replaceAll('"', ""), amountSat))
-        .invoice;
+    return (
+        await fetchBolt12Invoice(backend, offer.replaceAll('"', ""), amountSat)
+    ).invoice;
 };
 
 const checkLnurlResponse = (amount: number, data: LnurlResponse) => {

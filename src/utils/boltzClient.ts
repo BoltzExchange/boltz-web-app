@@ -194,7 +194,7 @@ export const fetchBolt12Invoice = async (
     backend: number,
     offer: string,
     amountSat: number,
-): Promise<{ invoice: string }> => 
+): Promise<{ invoice: string }> =>
     fetcher(backend, "/v2/lightning/BTC/bolt12/fetch", {
         offer,
         amount: amountSat,

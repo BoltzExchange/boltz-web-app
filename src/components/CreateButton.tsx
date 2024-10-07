@@ -169,6 +169,7 @@ export const CreateButton = () => {
                     (() => {
                         try {
                             return fetchBip353(
+                                backend(),
                                 lnurl(),
                                 Number(receiveAmount()),
                             );
@@ -197,6 +198,7 @@ export const CreateButton = () => {
                 log.info("Fetching invoice from bolt12 offer", bolt12Offer());
                 try {
                     const res = await fetchBolt12Invoice(
+                        backend(),
                         bolt12Offer(),
                         Number(receiveAmount()),
                     );
