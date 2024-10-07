@@ -3,7 +3,77 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
-## [1.4.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.4.0..v1.4.1) - 2024-07-19
+## [1.4.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.4.1..1.4.2) - 2024-10-07
+
+### Bug Fixes
+
+- test payonchain separator was `,` (#648) - ([e59d304](https://github.com/BoltzExchange/boltz-web-app/commit/e59d30403e34299cfa525357e62371c6d0262351))
+- error when camera permissions is denied (#635) - ([6d96290](https://github.com/BoltzExchange/boltz-web-app/commit/6d96290fa7900258aefc0ececa3dafb386afdd5b))
+- allow single refund file to be uploaded as backup (#651) - ([9a45b7e](https://github.com/BoltzExchange/boltz-web-app/commit/9a45b7e43bd16641a869053f8191c9ddb57d3697))
+- block explorer links for RSK - ([cda71d0](https://github.com/BoltzExchange/boltz-web-app/commit/cda71d09fcf1a692f44a59efe769308df2453474))
+- add missing strings - ([ea640bf](https://github.com/BoltzExchange/boltz-web-app/commit/ea640bf41fd10f00df0fc99a2f9bb8ba379852d7))
+- add missing strings - ([68d225c](https://github.com/BoltzExchange/boltz-web-app/commit/68d225c4dc03ea5a55792192c5e5275e58326bc1))
+- wallet selection on submarine lockup - ([897b4ae](https://github.com/BoltzExchange/boltz-web-app/commit/897b4ae3edd41e1c9c21a778beda790bd3d8eaf2))
+- make .env file optional on regtest (#657) - ([9f5122a](https://github.com/BoltzExchange/boltz-web-app/commit/9f5122a48e541afa3faef40507384be57b624065))
+- add URL params doc to menu (#660) - ([c624d2a](https://github.com/BoltzExchange/boltz-web-app/commit/c624d2abfdc5c2630d66475c6bb05164df0d8905))
+
+### Documentation
+
+- URL query parameters - ([f9975e6](https://github.com/BoltzExchange/boltz-web-app/commit/f9975e698831eb853b75bcd612d9962f8c8e018d))
+
+### Features
+
+- improve swap list (#631) - ([e280f2e](https://github.com/BoltzExchange/boltz-web-app/commit/e280f2efe507831cb1b5990bb28e9ca8277a27d6))
+- implement RIF relay for claim transactions - ([8a93230](https://github.com/BoltzExchange/boltz-web-app/commit/8a93230930f767d08c87132b39e8705c92078b6f))
+- show insufficient balance for EVM lockup - ([69e5069](https://github.com/BoltzExchange/boltz-web-app/commit/69e5069535e4ceef97bbe715ea75d8537a52a92d))
+- multiple wallet selection options - ([6307bab](https://github.com/BoltzExchange/boltz-web-app/commit/6307babbbb88bdcc6ded9638688816ee5e324187))
+- crop EVM address on mobile - ([5ef9893](https://github.com/BoltzExchange/boltz-web-app/commit/5ef98939fce76e8c1f278a7c6da3efcf547d3846))
+- remember wallet of swap - ([8d047e5](https://github.com/BoltzExchange/boltz-web-app/commit/8d047e5c952e537e985a50afd12603dc1be84681))
+- detect and switch network - ([f386d8e](https://github.com/BoltzExchange/boltz-web-app/commit/f386d8e4f4705c432aaa6439ab6f0b3c563fce86))
+- check network when connecting wallet - ([a9266eb](https://github.com/BoltzExchange/boltz-web-app/commit/a9266eb0814815535a55b30e322c3ef44ba2d070))
+- scan contract logs for possible refunds - ([38aa067](https://github.com/BoltzExchange/boltz-web-app/commit/38aa067aa761cba3c250b80a4d64c4aec8e24dc6))
+- EVM refund log scanning - ([6732ca4](https://github.com/BoltzExchange/boltz-web-app/commit/6732ca4b83fe5a6b0b78508dbe1afe4fe0d03bd9))
+- use custom RPC provider for log scanning - ([4adcbd3](https://github.com/BoltzExchange/boltz-web-app/commit/4adcbd388ca5ca89e3a507db27654e28dbafd597))
+- progress indicator for logs rescan - ([69d0f94](https://github.com/BoltzExchange/boltz-web-app/commit/69d0f947b4c7ca6ddd633f48e53abcb7bb39f475))
+- WebSocket fallback URL - ([8659a57](https://github.com/BoltzExchange/boltz-web-app/commit/8659a579f87b4450e492b28e0cbd53a4cd86cc89))
+- improve embedding of swapbox - ([ed5b350](https://github.com/BoltzExchange/boltz-web-app/commit/ed5b35066bf564572b88e893a0ab74703ea4fe33))
+- renegotiate chain swap amounts (#662) - ([4ec6e5c](https://github.com/BoltzExchange/boltz-web-app/commit/4ec6e5cf9c51e9465fa84e94697f1fac9078eeff))
+- show swap ID after uploading file (#677) - ([e203f9c](https://github.com/BoltzExchange/boltz-web-app/commit/e203f9ca4ac95d7eb8b59ef20569c9f9aa8296d5))
+- show address on EVM send screen (#682) - ([c3a0baa](https://github.com/BoltzExchange/boltz-web-app/commit/c3a0baad1071ae591ff76ad5a7d74dc34edfd363))
+
+### Miscellaneous Chores
+
+- update dependencies (#650) - ([8b22b04](https://github.com/BoltzExchange/boltz-web-app/commit/8b22b04f416a8f090c33e726ceae4787c14af482))
+- publish Docker on push (#652) - ([8b69453](https://github.com/BoltzExchange/boltz-web-app/commit/8b694536e0674e071f6b106bb7e3b5a1741e3076))
+- update regtest block explorer URLs - ([1a91eb6](https://github.com/BoltzExchange/boltz-web-app/commit/1a91eb6606ce5193686f62c22ff5f5b0664f8ab1))
+- update regtest RIF addresses - ([7dcfbe2](https://github.com/BoltzExchange/boltz-web-app/commit/7dcfbe23ae2970851ea5f0ace00f1dd141d4a7cf))
+- add RBTC to landing page - ([8c5514c](https://github.com/BoltzExchange/boltz-web-app/commit/8c5514c048a37fcd2a0eec5e969decbfa94df56d))
+- run prettier - ([1e2fc28](https://github.com/BoltzExchange/boltz-web-app/commit/1e2fc2843c6c3d0fe0a524de0984a57a12248dd4))
+- optimize RIF relay calls - ([cabc34b](https://github.com/BoltzExchange/boltz-web-app/commit/cabc34bb3e77e7356c8676a02c81104052ecea88))
+- bump regtest version - ([bef523c](https://github.com/BoltzExchange/boltz-web-app/commit/bef523c4c88841eebd6755f9b174e57629b5e49e))
+- add missing strings - ([10e9419](https://github.com/BoltzExchange/boltz-web-app/commit/10e94191e8605064d2f4b9c7595a95213dd5172a))
+- add missing translations - ([fa533ed](https://github.com/BoltzExchange/boltz-web-app/commit/fa533edf35fafed4ccb08f784568a8aa55fd4809))
+- bump dependencies - ([a3bbd64](https://github.com/BoltzExchange/boltz-web-app/commit/a3bbd64905e901908c18cb0a364068249f5a57cd))
+- run prettier on docs - ([74b6777](https://github.com/BoltzExchange/boltz-web-app/commit/74b6777ff2718339b8b4cf94a6e4f36009e2ec02))
+- update regtest (#663) - ([c957ad1](https://github.com/BoltzExchange/boltz-web-app/commit/c957ad1216d235e8f39c45bf2cebce30c27362b2))
+- simplify footer (#664) - ([4769214](https://github.com/BoltzExchange/boltz-web-app/commit/4769214cbcf88696fde114df72c5835577b163d6))
+- fix vulnerable dependencies (#670) - ([08c65bb](https://github.com/BoltzExchange/boltz-web-app/commit/08c65bbc216578f22d9c556ef4a78bf2fb580814))
+- minor RSK fixes (#671) - ([abb4c7f](https://github.com/BoltzExchange/boltz-web-app/commit/abb4c7f8ac2762e8532b418b1737dabe52cf955f))
+- enable RSK on beta site (#672) - ([6980615](https://github.com/BoltzExchange/boltz-web-app/commit/698061529c2cb066a3f6b6ca25a2cebafff09e22))
+
+### Refactoring
+
+- remove all Metamask wording - ([d914789](https://github.com/BoltzExchange/boltz-web-app/commit/d914789b0e429fc78fe33d1f09f0ae783cbb0eeb))
+- rewrite build check script in Python - ([4ad7da0](https://github.com/BoltzExchange/boltz-web-app/commit/4ad7da0d1046716d2bdd4e052ca52adfd69f78b9))
+- remove API endpoint based on pair - ([255e511](https://github.com/BoltzExchange/boltz-web-app/commit/255e511d6cc17a8e2629597e67a68bb94aa99bcd))
+- only require a single signature for a RIF transaction (#665) - ([7ed509f](https://github.com/BoltzExchange/boltz-web-app/commit/7ed509f18863e4ebbdd8845f02a6307ba4db9437))
+
+### Tests
+
+- e2e tests for BTC swaps (#655) - ([0fe7bcf](https://github.com/BoltzExchange/boltz-web-app/commit/0fe7bcff6ef6f8b34a68162ccbc262adf845ea7e))
+
+---
+## [1.4.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.4.0..v1.4.1) - 2024-07-22
 
 ### Bug Fixes
 
@@ -34,6 +104,7 @@ All notable changes to this project will be documented in this file. See [conven
 - update dependencies (#620) - ([4117572](https://github.com/BoltzExchange/boltz-web-app/commit/411757245bbe11301598856a89887196d652fc9e))
 - reorder run from source instructions (#628) - ([691ed5b](https://github.com/BoltzExchange/boltz-web-app/commit/691ed5b29c72cee66be9de998c64fe7cd2a0cea6))
 - add Blitz and Helm as integrations (#642) - ([87f4ea9](https://github.com/BoltzExchange/boltz-web-app/commit/87f4ea963e6f5bfa7959bee3d1868fa35a93c6df))
+- update version to v1.4.1 and prepare release (#647) - ([d956aa9](https://github.com/BoltzExchange/boltz-web-app/commit/d956aa93af2f10756bf86cdb40f3173f404ba95d))
 
 ### Refactoring
 
