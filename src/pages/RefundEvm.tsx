@@ -42,7 +42,6 @@ const RefundEvm = () => {
                             when={refundTxHash() !== undefined}
                             fallback={
                                 <RefundButton
-                                    asset={params.asset}
                                     setRefundTxHash={setRefundTxHash}
                                     amount={Number(refundData().amount)}
                                     preimageHash={refundData().preimageHash}
