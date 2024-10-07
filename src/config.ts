@@ -19,6 +19,7 @@ const defaults = {
     testnetUrl: "/testnet",
     telegramUrl: "https://t.me/+w0F2zxxoLg85YzM6",
     email: "swapmarket.wizard996@passinbox.com",
+    dnsOverHttps: "https://1.1.1.1/dns-query",
 };
 
 type Asset = {

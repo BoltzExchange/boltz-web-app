@@ -125,6 +125,8 @@ export type CreateContextType = {
     setInvoice: Setter<string>;
     lnurl: Accessor<string>;
     setLnurl: Setter<string>;
+    bolt12Offer: Accessor<string | undefined>;
+    setBolt12Offer: Setter<string | undefined>;
     onchainAddress: Accessor<string>;
     setOnchainAddress: Setter<string>;
     assetSend: Accessor<string>;
@@ -177,6 +179,9 @@ const CreateProvider = (props: { children: any }) => {
     const [swapType, setSwapType] = createSignal<SwapType>(SwapType.Submarine);
     const [invoice, setInvoice] = createSignal<string>("");
     const [lnurl, setLnurl] = createSignal("");
+    const [bolt12Offer, setBolt12Offer] = createSignal<string | undefined>(
+        undefined,
+    );
     const [onchainAddress, setOnchainAddress] = createSignal("");
 
     const [assetReceive, setAssetReceive] = makePersisted(
@@ -263,6 +268,8 @@ const CreateProvider = (props: { children: any }) => {
                 setInvoice,
                 lnurl,
                 setLnurl,
+                bolt12Offer,
+                setBolt12Offer,
                 onchainAddress,
                 setOnchainAddress,
                 assetSend,

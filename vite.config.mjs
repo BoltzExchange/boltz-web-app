@@ -3,6 +3,8 @@ import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import solidPlugin from "vite-plugin-solid";
+import topLevelAwait from "vite-plugin-top-level-await";
+import wasm from "vite-plugin-wasm";
 
 const commitHash = child
     .execSync("git rev-parse --short HEAD")
@@ -10,7 +12,13 @@ const commitHash = child
     .trim();
 
 export default defineConfig({
-    plugins: [solidPlugin(), mkcert(), nodePolyfills()],
+    plugins: [
+        solidPlugin(),
+        wasm(),
+        topLevelAwait(),
+        mkcert(),
+        nodePolyfills(),
+    ],
     server: {
         https: true,
         cors: { origin: "*" },

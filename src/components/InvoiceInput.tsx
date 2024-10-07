@@ -11,6 +11,7 @@ import {
     decodeInvoice,
     extractAddress,
     extractInvoice,
+    isBolt12Offer,
     isLnurl,
 } from "../utils/invoice";
 import { validateInvoice } from "../utils/validation";
@@ -37,6 +38,7 @@ const InvoiceInput = () => {
         assetSend,
         setAssetReceive,
         setOnchainAddress,
+        setBolt12Offer,
     } = useCreateContext();
 
     const validate = (input: HTMLTextAreaElement) => {
@@ -62,6 +64,8 @@ const InvoiceInput = () => {
             input.classList.remove("invalid");
             if (isLnurl(inputValue)) {
                 setLnurl(inputValue);
+            } else if (isBolt12Offer(inputValue)) {
+                setBolt12Offer(inputValue);
             } else {
                 const sats = validateInvoice(inputValue);
                 setReceiveAmount(BigNumber(sats));
@@ -74,11 +78,13 @@ const InvoiceInput = () => {
                     ),
                 );
                 setInvoice(inputValue);
+                setBolt12Offer(undefined);
                 setLnurl("");
                 setInvoiceValid(true);
             }
         } catch (e) {
             setInvoiceValid(false);
+            setBolt12Offer(undefined);
             setLnurl("");
             setInvoiceError(e.message);
             if (inputValue.length !== 0) {

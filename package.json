@@ -48,7 +48,9 @@
         "vite": "^5.4.8",
         "vite-plugin-mkcert": "^1.17.6",
         "vite-plugin-node-polyfills": "^0.22.0",
-        "vite-plugin-solid": "^2.10.2"
+        "vite-plugin-solid": "^2.10.2",
+        "vite-plugin-top-level-await": "^1.4.4",
+        "vite-plugin-wasm": "^3.3.0"
     },
     "dependencies": {
         "@bitcoinerlab/secp256k1": "^1.1.1",
@@ -62,6 +64,7 @@
         "bignumber.js": "^9.1.2 ",
         "bitcoinjs-lib": "^6.1.6",
         "bolt11": "^1.4.1",
+        "boltz-bolt12": "^0.1.2",
         "boltz-core": "^2.1.2",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",

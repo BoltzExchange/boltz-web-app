@@ -53,8 +53,7 @@ const dict = {
         success_swap: "Swap Success",
         feecheck:
             "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
-        create_and_paste:
-            "Paste a bolt11 lightning invoice\n or a Lightning address\nor a LNURL Paylink",
+        create_and_paste: "Paste a Lightning invoice, offer or LNURL",
         congrats: "Congratulations!",
         successfully_swapped:
             "You successfully received {{ amount }} {{ denomination }}!",
@@ -81,8 +80,7 @@ const dict = {
         download_refund_file: "Download refund file",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
-        invalid_invoice:
-            "Please provide a valid LN invoice, LNAddress or LNURL",
+        invalid_invoice: "Please provide a valid invoice, offer or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
         copy_invoice: "lightning invoice",
         copy_address: "address",
@@ -271,8 +269,7 @@ const dict = {
         success_swap: "Swap erfolgreich!",
         feecheck:
             "Die Netzwerkgebühr wurde aufgrund der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
-        create_and_paste:
-            "Füge eine bolt11 Lightning-Rechnung\n eine Lightning-Adresse\n oder einen LNURL Paylink hier ein",
+        create_and_paste: "Füge Lightning Invoice, Offer oder LNURL hier ein",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped:
             "Du hast erfolgreich {{ amount }} {{ denomination }} empfangen!",
@@ -301,7 +298,7 @@ const dict = {
         download_refund_file: "Rückerstattungsdatei herunterladen",
         invalid_refund_file: "Ungültige Rückerstattungsdatei",
         invalid_backup_file: "Ungültige Backupdatei",
-        invalid_invoice: "Bitte gültige Rechnung, LNAdresse/LNURL eingeben",
+        invalid_invoice: "Bitte gültige Invoice, Offer oder LNURL eingeben",
         invalid_0_amount: "Lightning Rechnungen ohne Betrag nicht unterstützt",
         copy_invoice: "Lightning-Rechnung",
         copy_address: "Adresse",
@@ -497,8 +494,7 @@ const dict = {
         success_swap: "Intercambio realizado con éxito!",
         feecheck:
             "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
-        create_and_paste:
-            "Pegar una factura Lightning bolt11\n o una dirección Lightning\n o un enlace LNURL Pay",
+        create_and_paste: "Pegar Lightning Invoice, Offer o LNURL",
         congrats: "¡Felicitaciones!",
         successfully_swapped:
             "Has recibido con éxito {{ amount }} {{ denomination }}!",
@@ -525,7 +521,7 @@ const dict = {
         download_refund_file: "Descargar archivo de reembolso",
         invalid_refund_file: "Archivo de reembolso no válido",
         invalid_backup_file: "Archivo de backup no válido",
-        invalid_invoice: "Por favor, pegue una factura, LNAddress/LNURL válida",
+        invalid_invoice: "Por favor, pegue Invoice, Offer o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
         copy_invoice: "factura Lightning",
         copy_address: "dirección",
@@ -719,8 +715,7 @@ const dict = {
         new_swap: "新的交换",
         success_swap: "交换成功",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
-        create_and_paste:
-            "粘贴一个bolt11闪电发票\n或闪电网络地址\n或LNURL支付链接",
+        create_and_paste: "粘贴闪电发票,offer或LNURL",
         congrats: "恭喜！",
         successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
         timeout_eta: "超过预期时间",
@@ -746,7 +741,7 @@ const dict = {
         download_refund_file: "下载退款文件",
         invalid_refund_file: "无效的退款文件",
         invalid_backup_file: "无效的备份文件",
-        invalid_invoice: "请提供有效的闪电网络发票、LNAddress或LNURL",
+        invalid_invoice: "请提供有效的发票,offer或LNURL",
         invalid_0_amount: "不支持没有金额的发票",
         copy_invoice: "闪电网络发票",
         copy_address: "地址",
