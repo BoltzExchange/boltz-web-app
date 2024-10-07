@@ -18,6 +18,7 @@ const ClaimEvm = ({
     signerAddress,
     refundAddress,
     timeoutBlockHeight,
+    assetReceive,
 }: {
     amount: number;
     swapId: string;
@@ -26,6 +27,7 @@ const ClaimEvm = ({
     signerAddress: string;
     refundAddress: string;
     timeoutBlockHeight: number;
+    assetReceive: string;
 }) => {
     const { getEtherSwap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
@@ -66,7 +68,10 @@ const ClaimEvm = ({
             }}
             address={signerAddress}
             buttonText={t("continue")}
-            promptText={t("transaction_prompt", { button: t("continue") })}
+            promptText={t("transaction_prompt", {
+                button: t("continue"),
+                asset: assetReceive,
+            })}
             waitingText={t("tx_ready_to_claim")}
         />
     );
@@ -89,6 +94,7 @@ const TransactionConfirmed = () => {
                     amount={chain.claimDetails.amount}
                     refundAddress={chain.claimDetails.refundAddress}
                     timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
+                    assetReceive={chain.assetReceive}
                 />
             );
         }
@@ -104,6 +110,7 @@ const TransactionConfirmed = () => {
                 signerAddress={reverse.signer}
                 refundAddress={reverse.refundAddress}
                 timeoutBlockHeight={reverse.timeoutBlockHeight}
+                assetReceive={reverse.assetReceive}
             />
         );
     }
