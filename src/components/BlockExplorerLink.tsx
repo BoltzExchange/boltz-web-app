@@ -2,7 +2,6 @@ import { Accessor, Show, createEffect, createSignal } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { usePayContext } from "../context/Pay";
 import {
     ChainSwap,
     ReverseSwap,
@@ -24,18 +23,12 @@ const BlockExplorerLink = ({
         (swap().type !== SwapType.Chain && getRelevantAssetForSwap(swap())) ===
         RBTC
     ) {
-        const { swapStatusTransaction } = usePayContext();
-        const txId = () =>
-            swap().claimTx || swap().lockupTx || swapStatusTransaction()?.id;
-
         return (
-            <Show when={txId() !== undefined}>
+            <Show when={swap().claimTx !== undefined}>
                 <BlockExplorer
                     asset={getRelevantAssetForSwap(swap())}
-                    txId={txId()}
-                    typeLabel={
-                        swap().claimTx !== undefined ? "claim_tx" : "lockup_tx"
-                    }
+                    txId={swap().claimTx}
+                    typeLabel={"claim_tx"}
                 />
             </Show>
         );

@@ -158,12 +158,27 @@ export const CreateButton = () => {
 
                 const fetchResults = await Promise.allSettled([
                     (() => {
-                        try {
-                            return fetchLnurl(lnurl(), Number(receiveAmount()));
-                        } catch (e) {
-                            log.warn("Fetching invoice from LNURL failed", e);
-                            throw e;
-                        }
+                        return new Promise<string>(async (resolve, reject) => {
+                            const timeout = setTimeout(
+                                () => reject("timeout"),
+                                5_000,
+                            );
+
+                            try {
+                                const res = await fetchLnurl(
+                                    lnurl(),
+                                    Number(receiveAmount()),
+                                );
+                                clearTimeout(timeout);
+                                resolve(res);
+                            } catch (e) {
+                                log.warn(
+                                    "Fetching invoice from LNURL failed",
+                                    e,
+                                );
+                                throw e;
+                            }
+                        });
                     })(),
                     (() => {
                         try {

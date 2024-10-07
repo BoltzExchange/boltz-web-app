@@ -10,7 +10,7 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
 // TODO: use bignumber for amounts
-const ClaimRsk = ({
+const ClaimEvm = ({
     useRif,
     swapId,
     amount,
@@ -18,6 +18,7 @@ const ClaimRsk = ({
     signerAddress,
     refundAddress,
     timeoutBlockHeight,
+    assetReceive,
 }: {
     amount: number;
     swapId: string;
@@ -26,6 +27,7 @@ const ClaimRsk = ({
     signerAddress: string;
     refundAddress: string;
     timeoutBlockHeight: number;
+    assetReceive: string;
 }) => {
     const { getEtherSwap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
@@ -65,10 +67,12 @@ const ClaimRsk = ({
                 await setSwapStorage(currentSwap);
             }}
             address={signerAddress}
-            buttonText={t("claim")}
-            promptText={t("transaction_prompt", { button: t("claim") })}
+            buttonText={t("continue")}
+            promptText={t("transaction_prompt", {
+                button: t("continue"),
+                asset: assetReceive,
+            })}
             waitingText={t("tx_ready_to_claim")}
-            showHr={true}
         />
     );
 };
@@ -82,7 +86,7 @@ const TransactionConfirmed = () => {
             const chain = swap() as ChainSwap;
 
             return (
-                <ClaimRsk
+                <ClaimEvm
                     swapId={chain.id}
                     useRif={chain.useRif}
                     preimage={chain.preimage}
@@ -90,6 +94,7 @@ const TransactionConfirmed = () => {
                     amount={chain.claimDetails.amount}
                     refundAddress={chain.claimDetails.refundAddress}
                     timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
+                    assetReceive={chain.assetReceive}
                 />
             );
         }
@@ -97,7 +102,7 @@ const TransactionConfirmed = () => {
         const reverse = swap() as ReverseSwap;
 
         return (
-            <ClaimRsk
+            <ClaimEvm
                 swapId={reverse.id}
                 useRif={reverse.useRif}
                 preimage={reverse.preimage}
@@ -105,6 +110,7 @@ const TransactionConfirmed = () => {
                 signerAddress={reverse.signer}
                 refundAddress={reverse.refundAddress}
                 timeoutBlockHeight={reverse.timeoutBlockHeight}
+                assetReceive={reverse.assetReceive}
             />
         );
     }
