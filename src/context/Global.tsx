@@ -135,14 +135,14 @@ const GlobalProvider = (props: { children: any }) => {
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         createSignal(null),
         {
-            name: config.network + "i18n",
+            name: "i18n",
             ...stringSerializer,
         },
     );
     const [denomination, setDenomination] = makePersisted(
         createSignal<Denomination>(Denomination.Sat),
         {
-            name: config.network + "denomination",
+            name: "denomination",
             ...stringSerializer,
         },
     );
@@ -155,7 +155,7 @@ const GlobalProvider = (props: { children: any }) => {
     const [audioNotification, setAudioNotification] = makePersisted(
         createSignal<boolean>(false),
         {
-            name: config.network + "audioNotification",
+            name: "audioNotification",
         },
     );
 
@@ -163,7 +163,7 @@ const GlobalProvider = (props: { children: any }) => {
     const [separator, setSeparator] = makePersisted(
         createSignal(localeSeparator),
         {
-            name: config.network + "separator",
+            name: "separator",
         },
     );
 
