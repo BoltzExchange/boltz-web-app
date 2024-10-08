@@ -917,7 +917,7 @@ const dict = {
         feecheck:
             "ネットワーク手数料は更新されました。新しい金額を確認し、続行してください。",
         create_and_paste:
-            "Bolt11インボイス、ライトニングアドレス、またはLNURL Paylinkを貼り付けてください",
+            "Lightning請求書、オファー、またはLNURLを貼り付けます",
         congrats: "おめでとうございます！",
         successfully_swapped:
             "{{ amount }} {{ denomination }}を正常に受け取りました！",
@@ -1133,7 +1133,7 @@ const dict = {
         feecheck:
             "Сетевой сбор был обновлен в зависимости от состояния сети, подтвердите новые суммы и продолжите своп.",
         create_and_paste:
-            "Вставьте bolt11 lightning инвойс\n или Lightning адрес\nили LNURL Paylink",
+            "Вставьте Lightning инвойс\n или Lightning адрес\nили LNURL Paylink",
         congrats: "Поздравляем!",
         successfully_swapped:
             "Вы успешно получили {{ amount }} {{ denomination }}!",

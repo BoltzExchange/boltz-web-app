@@ -152,7 +152,11 @@ hr.spacer {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.backend-table tr:hover {
+.backend-table tr.selected:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.backend-table tr.hoverable:hover {
     background-color: rgba(255, 255, 255, 0.25);
     cursor: pointer;
 }

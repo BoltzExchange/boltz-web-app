@@ -7,7 +7,7 @@
             "apiUrl": {
                 "normal": "https://testnet.boltz.exchange/api"
             },
-            "contact": "https://discord.gg/QBvZGcW"
+            "contact": "https://t.me/boltzhq"
         },
         {
             "alias": "Local Test Node",
@@ -15,7 +15,7 @@
                 "normal": "http://127.0.0.1:9001",
                 "wsFallback": "http://127.0.0.1:9004"
             },
-            "contact": "test@test.email"
+            "contact": ""
         }
     ],
     "assets": {

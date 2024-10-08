@@ -21,6 +21,7 @@ const BackendSelect = () => {
     // Handle backend change
     const changeBackend = (index: number) => {
         setBackend(index);
+        setBackendSelect(false);
     };
 
     return (
@@ -62,10 +63,19 @@ const BackendSelect = () => {
                                   ? "🔴"
                                   : "🟢";
 
+                        // Conditional class based on whether cfg is defined or not
+                        const rowClass =
+                            backend() === index
+                                ? "selected hoverable" // Add hoverable class if selected
+                                : cfg
+                                  ? "hoverable" // Add hover effect if cfg exists
+                                  : "";
+
                         return (
                             <tr
-                                onClick={() => changeBackend(index)}
-                                class={backend() === index ? "selected" : ""}>
+                                // Only clickable if cfg is defined
+                                onClick={() => cfg && changeBackend(index)}
+                                class={rowClass}>
                                 <td>{status}</td>
                                 <td>{b.alias}</td>
                                 <td>{cfg ? cfg.fees.percentage + "%" : "-"}</td>
