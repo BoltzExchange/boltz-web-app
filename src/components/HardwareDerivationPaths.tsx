@@ -1,6 +1,6 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import { Accessor, For, Setter, createSignal } from "solid-js";
+import { Accessor, For, Setter, Show, createSignal } from "solid-js";
 
 import type {
     EIP6963ProviderDetail,
@@ -13,6 +13,7 @@ import {
     HardwareSigner,
     derivationPaths,
 } from "../utils/hardware/HadwareSigner";
+import LoadingSpinner from "./LoadingSpinner";
 
 export const connect = async (
     notify: (type: string, message: string) => void,
@@ -35,23 +36,32 @@ const connectHardware = async (
     provider: Accessor<EIP6963ProviderInfo>,
     providers: Accessor<Record<string, EIP6963ProviderDetail>>,
     path: string,
+    setLoading: Setter<boolean>,
 ) => {
-    const hardwareProvider = provider();
-    const prov = providers()[hardwareProvider.rdns]
-        .provider as unknown as HardwareSigner;
-    prov.setDerivationPath(path);
+    try {
+        setLoading(true);
 
-    await connect(notify, connectProvider, hardwareProvider);
+        const hardwareProvider = provider();
+        const prov = providers()[hardwareProvider.rdns]
+            .provider as unknown as HardwareSigner;
+        prov.setDerivationPath(path);
+
+        await connect(notify, connectProvider, hardwareProvider);
+    } finally {
+        setLoading(false);
+    }
 };
 
 const DerivationPath = ({
     name,
     path,
     provider,
+    setLoading,
 }: {
     name: string;
     path: string;
     provider: Accessor<EIP6963ProviderInfo>;
+    setLoading: Setter<boolean>;
 }) => {
     const { notify } = useGlobalContext();
     const { connectProvider, providers } = useWeb3Signer();
@@ -66,6 +76,7 @@ const DerivationPath = ({
                     provider,
                     providers,
                     path,
+                    setLoading,
                 );
             }}>
             <hr />
@@ -79,8 +90,10 @@ const DerivationPath = ({
 
 const CustomPath = ({
     provider,
+    setLoading,
 }: {
     provider: Accessor<EIP6963ProviderInfo>;
+    setLoading: Setter<boolean>;
 }) => {
     const { t, notify, hardwareDerivationPath, setHardwareDerivationPath } =
         useGlobalContext();
@@ -124,6 +137,7 @@ const CustomPath = ({
                             provider,
                             providers,
                             path(),
+                            setLoading,
                         );
                     }}>
                     {t("submit_derivation_path")}
@@ -144,6 +158,8 @@ const HardwareDerivationPaths = ({
 }) => {
     const { t } = useGlobalContext();
 
+    const [loading, setLoading] = createSignal<boolean>(false);
+
     return (
         <div
             class="frame assets-select"
@@ -155,20 +171,23 @@ const HardwareDerivationPaths = ({
                     <IoClose />
                 </span>
                 <hr class="spacer" />
-                <For
-                    each={Object.entries(derivationPaths).sort(([a], [b]) =>
-                        a.toLowerCase().localeCompare(b.toLowerCase()),
-                    )}>
-                    {([name, path]) => (
-                        <DerivationPath
-                            name={name}
-                            path={path}
-                            provider={provider}
-                        />
-                    )}
-                </For>
-                <hr style={"margin-top: 0;"} />
-                <CustomPath provider={provider} />
+                <Show when={!loading()} fallback={<LoadingSpinner />}>
+                    <For
+                        each={Object.entries(derivationPaths).sort(([a], [b]) =>
+                            a.toLowerCase().localeCompare(b.toLowerCase()),
+                        )}>
+                        {([name, path]) => (
+                            <DerivationPath
+                                name={name}
+                                path={path}
+                                provider={provider}
+                                setLoading={setLoading}
+                            />
+                        )}
+                    </For>
+                    <hr style={"margin-top: 0;"} />
+                    <CustomPath provider={provider} setLoading={setLoading} />
+                </Show>
             </div>
         </div>
     );
