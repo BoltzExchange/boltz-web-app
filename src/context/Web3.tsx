@@ -14,46 +14,23 @@ import {
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
+import { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import { Contracts, getContracts } from "../utils/boltzClient";
+import LedgerSigner from "../utils/hardware/LedgerSigner";
+import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { useGlobalContext } from "./Global";
+import LedgerIcon from "/ledger.svg";
+import TrezorIcon from "/trezor.svg";
 
 declare global {
     interface WindowEventMap {
         "eip6963:announceProvider": CustomEvent;
     }
+
+    interface Navigator {
+        hid: {};
+    }
 }
-
-export type EIP6963ProviderInfo = {
-    rdns: string;
-    uuid: string;
-    name: string;
-    icon: string;
-};
-
-type EIP1193Provider = {
-    isStatus?: boolean;
-    host?: string;
-    path?: string;
-    sendAsync?: (
-        request: { method: string; params?: Array<unknown> },
-        callback: (error: Error | null, response: unknown) => void,
-    ) => void;
-    send?: (
-        request: { method: string; params?: Array<unknown> },
-        callback: (error: Error | null, response: unknown) => void,
-    ) => void;
-    request: (request: {
-        method: string;
-        params?: Array<unknown>;
-    }) => Promise<unknown>;
-    on: (event: "chainChanged", cb: () => void) => void;
-    removeAllListeners: (event: "chainChanged") => void;
-};
-
-export type EIP6963ProviderDetail = {
-    info: EIP6963ProviderInfo;
-    provider: EIP1193Provider;
-};
 
 type EIP6963AnnounceProviderEvent = {
     detail: EIP6963ProviderDetail;
@@ -86,7 +63,29 @@ const Web3SignerProvider = (props: {
 
     const [providers, setProviders] = createSignal<
         Record<string, EIP6963ProviderDetail>
-    >({});
+    >({
+        ledger: {
+            provider: new LedgerSigner(),
+            info: {
+                name: "Ledger",
+                uuid: "ledger",
+                rdns: "ledger",
+                icon: LedgerIcon,
+                isHardware: true,
+                disabled: navigator.hid === undefined,
+            },
+        },
+        trezor: {
+            provider: new TrezorSigner(),
+            info: {
+                name: "Trezor",
+                uuid: "trezor",
+                rdns: "trezor",
+                icon: TrezorIcon,
+                isHardware: true,
+            },
+        },
+    });
     const [signer, setSigner] = createSignal<Signer | undefined>(undefined);
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined

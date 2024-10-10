@@ -10,27 +10,14 @@ import {
     createSignal,
 } from "solid-js";
 
+import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { EIP6963ProviderInfo, useWeb3Signer } from "../context/Web3";
+import { useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
-
-const connect = async (
-    notify: (type: string, message: string) => void,
-    connectProvider: (rdns: string) => Promise<void>,
-    provider: EIP6963ProviderInfo,
-) => {
-    try {
-        await connectProvider(provider.rdns);
-    } catch (e) {
-        log.error(
-            `Provider connect to ${provider.rdns} failed: ${formatError(e)}`,
-        );
-        notify("error", `Wallet connection failed: ${formatError(e)}`);
-    }
-};
+import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 
 const Modal = ({
     show,
@@ -42,18 +29,45 @@ const Modal = ({
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider } = useWeb3Signer();
 
+    const [showDerivationPaths, setShowDerivationPaths] =
+        createSignal<boolean>(false);
+    const [hardwareProvider, setHardwareProvider] =
+        createSignal<EIP6963ProviderInfo>(undefined);
+
     const Provider = ({ provider }: { provider: EIP6963ProviderInfo }) => {
         return (
             <div
                 class="provider-modal-entry-wrapper"
-                onClick={() => connect(notify, connectProvider, provider)}>
+                onClick={async () => {
+                    if (provider.disabled) {
+                        return;
+                    }
+
+                    if (provider.isHardware) {
+                        setHardwareProvider(provider);
+                        setShowDerivationPaths(true);
+                        return;
+                    }
+
+                    await connect(notify, connectProvider, provider);
+                }}>
                 <hr />
-                <div class="provider-modal-entry">
-                    <img
-                        class="provider-modal-icon"
-                        src={provider.icon}
-                        alt={`${provider.name} icon`}
-                    />
+                <div
+                    class="provider-modal-entry"
+                    data-disabled={provider.disabled}
+                    title={
+                        provider.disabled
+                            ? t("not_supported_in_browser")
+                            : undefined
+                    }>
+                    <Show when={provider.icon !== undefined}>
+                        <img
+                            class="provider-modal-icon"
+                            src={provider.icon}
+                            alt={`${provider.name} icon`}
+                        />
+                    </Show>
+
                     <h4>{provider.name}</h4>
                 </div>
             </div>
@@ -62,7 +76,6 @@ const Modal = ({
 
     return (
         <div
-            id="settings-menu"
             class="frame assets-select"
             onClick={() => setShow(false)}
             style={show() ? "display: block;" : "display: none;"}>
@@ -81,6 +94,11 @@ const Modal = ({
                     {(item) => <Provider provider={item.info} />}
                 </For>
             </div>
+            <HardwareDerivationPaths
+                show={showDerivationPaths}
+                provider={hardwareProvider}
+                setShow={setShowDerivationPaths}
+            />
         </div>
     );
 };

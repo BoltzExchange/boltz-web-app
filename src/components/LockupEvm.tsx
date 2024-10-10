@@ -69,6 +69,7 @@ const LockupEvm = ({
                     );
                     const currentSwap = await getSwap(swapId);
                     currentSwap.lockupTx = tx.hash;
+                    currentSwap.signer = signer().address;
                     await setSwapStorage(currentSwap);
                 }}
                 children={<ConnectWallet />}

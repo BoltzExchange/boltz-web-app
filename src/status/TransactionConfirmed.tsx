@@ -41,7 +41,6 @@ const ClaimEvm = ({
                 if (useRif) {
                     transactionHash = await relayClaimTransaction(
                         signer(),
-                        signer().rdns,
                         getEtherSwap(),
                         preimage,
                         amount,
