@@ -9,6 +9,7 @@ import {
     Signature,
     Transaction,
     TransactionLike,
+    TypedDataEncoder,
 } from "ethers";
 import log from "loglevel";
 
@@ -104,11 +105,24 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                 await this.initialize();
 
                 const message = JSON.parse(request.params[1] as string);
+                const types = {
+                    ...message.types,
+                };
+                delete types["EIP712Domain"];
+
                 const signature = this.handleError(
                     await TrezorConnect.ethereumSignTypedData({
                         data: message,
                         metamask_v4_compat: true,
                         path: this.derivationPath,
+                        domain_separator_hash: TypedDataEncoder.hashDomain(
+                            message.domain,
+                        ),
+                        message_hash: TypedDataEncoder.hashStruct(
+                            message.primaryType,
+                            types,
+                            message.message,
+                        ),
                     }),
                 );
                 return signature.payload.signature;
