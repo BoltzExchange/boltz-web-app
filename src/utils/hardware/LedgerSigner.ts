@@ -12,17 +12,23 @@ import log from "loglevel";
 
 import { config } from "../../config";
 import { EIP1193Provider } from "../../consts/Types";
+import type { DictKey } from "../../i18n/i18n";
 import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
-    private static readonly ethereumApp = "Ethereum";
+    private static readonly supportedApps = ["Ethereum", "RSK"];
 
     private readonly provider: JsonRpcProvider;
     private derivationPath = derivationPaths.Ethereum;
 
     private transport?: Transport;
 
-    constructor() {
+    constructor(
+        private readonly t: (
+            key: DictKey,
+            values?: Record<string, any>,
+        ) => string,
+    ) {
         this.provider = new JsonRpcProvider(
             config.assets["RBTC"].network.rpcUrls[0],
         );
@@ -46,15 +52,17 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
 
                 const openApp = (await this.getApp()).name;
                 log.debug(`Ledger has app open: ${openApp}`);
-                if (openApp !== LedgerSigner.ethereumApp) {
-                    log.info(`Opening Ledger ${LedgerSigner.ethereumApp} app`);
-                    await this.openApp(LedgerSigner.ethereumApp);
+                if (!LedgerSigner.supportedApps.includes(openApp)) {
+                    log.warn(
+                        `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps}`,
+                    );
+                    throw this.t("ledger_open_app_prompt");
                 }
 
                 const eth = new Eth(this.transport);
                 const { address } = await eth.getAddress(this.derivationPath);
 
-                return [address];
+                return [address.toLowerCase()];
             }
 
             case "eth_sendTransaction": {
@@ -157,16 +165,6 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             version,
             flags,
         };
-    };
-
-    private openApp = async (name: string): Promise<void> => {
-        await this.transport!.send(
-            0xe0,
-            0xd8,
-            0x00,
-            0x00,
-            Buffer.from(name, "ascii"),
-        );
     };
 
     private serializeSignature = (signature: {

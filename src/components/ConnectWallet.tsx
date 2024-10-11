@@ -40,6 +40,7 @@ const Modal = ({
                 class="provider-modal-entry-wrapper"
                 onClick={async () => {
                     if (provider.disabled) {
+                        notify("error", t("not_supported_in_browser"));
                         return;
                     }
 
@@ -182,7 +183,7 @@ export const ConnectAddress = ({ address }: { address: string }) => {
                     );
                     notify(
                         "error",
-                        `Wallet connection failed: ${formatError(e)}`,
+                        t("wallet_connect_failed", { error: formatError(e) }),
                     );
                 }
             }}>
