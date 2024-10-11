@@ -25,7 +25,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
     constructor() {
         this.provider = new JsonRpcProvider(
-            config.assets["RBTC"].network.rpcUrls[0],
+            config.assets["RBTC"]?.network?.rpcUrls[0],
         );
         this.setDerivationPath(derivationPaths.Ethereum);
     }

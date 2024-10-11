@@ -1,7 +1,15 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import { Accessor, For, Setter, Show, createSignal } from "solid-js";
+import {
+    Accessor,
+    For,
+    Setter,
+    Show,
+    createMemo,
+    createSignal,
+} from "solid-js";
 
+import { config } from "../config";
 import type {
     EIP6963ProviderDetail,
     EIP6963ProviderInfo,
@@ -12,6 +20,7 @@ import { formatError } from "../utils/errors";
 import {
     HardwareSigner,
     derivationPaths,
+    derivationPathsTestnet,
 } from "../utils/hardware/HadwareSigner";
 import LoadingSpinner from "./LoadingSpinner";
 
@@ -160,6 +169,17 @@ const HardwareDerivationPaths = ({
 
     const [loading, setLoading] = createSignal<boolean>(false);
 
+    const paths = createMemo(() => {
+        if (config.network === "testnet") {
+            return {
+                ...derivationPaths,
+                ...derivationPathsTestnet,
+            };
+        }
+
+        return derivationPaths;
+    });
+
     return (
         <div
             class="frame assets-select"
@@ -173,7 +193,7 @@ const HardwareDerivationPaths = ({
                 <hr class="spacer" />
                 <Show when={!loading()} fallback={<LoadingSpinner />}>
                     <For
-                        each={Object.entries(derivationPaths).sort(([a], [b]) =>
+                        each={Object.entries(paths()).sort(([a], [b]) =>
                             a.toLowerCase().localeCompare(b.toLowerCase()),
                         )}>
                         {([name, path]) => (
