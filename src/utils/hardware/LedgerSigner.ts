@@ -16,7 +16,7 @@ import type { DictKey } from "../../i18n/i18n";
 import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
-    private static readonly supportedApps = ["Ethereum", "RSK"];
+    private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];
 
     private readonly provider: JsonRpcProvider;
     private derivationPath = derivationPaths.Ethereum;
@@ -30,7 +30,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         ) => string,
     ) {
         this.provider = new JsonRpcProvider(
-            config.assets["RBTC"].network.rpcUrls[0],
+            config.assets["RBTC"]?.network?.rpcUrls[0],
         );
     }
 
