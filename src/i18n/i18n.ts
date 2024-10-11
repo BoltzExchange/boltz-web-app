@@ -162,6 +162,8 @@ const dict = {
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
         transaction_prompt:
+            'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
+        transaction_prompt_receive:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction to receive {{ asset }}.',
         invalid_address: "Invalid {{ asset }} address",
         scan_qr_code: "Scan QR Code",
