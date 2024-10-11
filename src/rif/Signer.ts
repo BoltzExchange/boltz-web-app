@@ -68,7 +68,7 @@ export const relayClaimTransaction = async (
 
     const smartWalletExists =
         (await signer.provider.getCode(smartWalletAddress.address)) !== "0x";
-    log.info("RIF smart wallet exists: ", smartWalletExists);
+    log.info("RIF smart wallet exists:", smartWalletExists);
 
     const smartWalletFactory = getSmartWalletFactory(signer);
 

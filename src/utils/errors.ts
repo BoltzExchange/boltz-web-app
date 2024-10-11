@@ -4,7 +4,13 @@ export const formatError = (message: unknown): string => {
     }
 
     if (typeof message === "object") {
-        const msgObj = message as Record<string, unknown>;
+        const msgObj = message as Record<string, any>;
+
+        if (typeof msgObj.error === "object") {
+            if (typeof msgObj.error.message === "string") {
+                return msgObj.error.message;
+            }
+        }
 
         if (typeof msgObj.message === "string") {
             return msgObj.message;

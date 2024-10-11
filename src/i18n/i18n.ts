@@ -217,6 +217,8 @@ const dict = {
         logs_scan_progress: "Scan progress {{ value }}%",
         accept: "Accept",
         timeout: "Timeout",
+        wallet_connect_failed: "Wallet connection failed: {{ error }}",
+        ledger_open_app_prompt: "open Ethereum or RSK app",
     },
     de: {
         language: "Deutsch",
