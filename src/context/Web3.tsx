@@ -57,7 +57,7 @@ const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
-    const { setRdns, getRdnsForAddress } = useGlobalContext();
+    const { setRdns, getRdnsForAddress, t } = useGlobalContext();
 
     const hasRsk = config.assets[RBTC] !== undefined;
 
@@ -65,7 +65,7 @@ const Web3SignerProvider = (props: {
         Record<string, EIP6963ProviderDetail>
     >({
         ledger: {
-            provider: new LedgerSigner(),
+            provider: new LedgerSigner(t),
             info: {
                 name: "Ledger",
                 uuid: "ledger",
