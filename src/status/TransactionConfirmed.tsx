@@ -41,7 +41,6 @@ const ClaimEvm = ({
                 if (useRif) {
                     transactionHash = await relayClaimTransaction(
                         signer(),
-                        signer().rdns,
                         getEtherSwap(),
                         preimage,
                         amount,
@@ -68,7 +67,7 @@ const ClaimEvm = ({
             }}
             address={signerAddress}
             buttonText={t("continue")}
-            promptText={t("transaction_prompt", {
+            promptText={t("transaction_prompt_receive", {
                 button: t("continue"),
                 asset: assetReceive,
             })}

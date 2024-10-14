@@ -90,6 +90,9 @@ export type GlobalContextType = {
     clearSwaps: () => Promise<any>;
     updateSwapStatus: (id: string, newStatus: string) => Promise<boolean>;
 
+    hardwareDerivationPath: Accessor<string>;
+    setHardwareDerivationPath: Setter<string>;
+
     setRdns: (address: string, rdns: string) => Promise<string>;
     getRdnsForAddress: (address: string) => Promise<string | null>;
 };
@@ -311,6 +314,13 @@ const GlobalProvider = (props: { children: any }) => {
         },
     );
 
+    const [hardwareDerivationPath, setHardwareDerivationPath] = makePersisted(
+        createSignal<string>(""),
+        {
+            name: "hardwareDerivationPath",
+        },
+    );
+
     // i18n
     createMemo(() => setI18n(i18nConfigured()));
     const dictLocale = createMemo(() =>
@@ -381,6 +391,8 @@ const GlobalProvider = (props: { children: any }) => {
 
                 setRdns,
                 getRdnsForAddress,
+                hardwareDerivationPath,
+                setHardwareDerivationPath,
             }}>
             {props.children}
         </GlobalContext.Provider>
