@@ -90,7 +90,7 @@ describe("Fees component", () => {
 
         const fees = pairs.reverse[BTC][LBTC].fees;
         expect(signals.minerFee()).toEqual(
-            fees.minerFees.lockup + fees.minerFees.claim + 1,
+            fees.minerFees.lockup + fees.minerFees.claim + 5,
         );
     });
 
@@ -115,7 +115,7 @@ describe("Fees component", () => {
 
         const fees = pairs.chain[BTC][LBTC].fees;
         expect(signals.minerFee()).toEqual(
-            fees.minerFees.server + fees.minerFees.user.claim + 1,
+            fees.minerFees.server + fees.minerFees.user.claim + 5,
         );
     });
 });
