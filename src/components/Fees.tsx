@@ -68,7 +68,7 @@ const Fees = () => {
                         reverseCfg.fees.minerFees.claim +
                         reverseCfg.fees.minerFees.lockup;
                     if (isToUnconfidentialLiquid()) {
-                        fee += 1;
+                        fee += 5;
                     }
 
                     setMinerFee(fee);
@@ -80,7 +80,7 @@ const Fees = () => {
                         chainCfg.fees.minerFees.server +
                         chainCfg.fees.minerFees.user.claim;
                     if (isToUnconfidentialLiquid()) {
-                        fee += 1;
+                        fee += 5;
                     }
 
                     setMinerFee(fee);
