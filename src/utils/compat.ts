@@ -195,16 +195,19 @@ const getConstructRefundTransaction = (
         liquidNetwork?: LiquidNetwork,
         blindingKey?: Buffer,
     ) =>
-        targetFee(feePerVbyte, (fee) =>
-            fn(
-                refundDetails as any[],
-                outputScript,
-                timeoutBlockHeight,
-                addOneSatBuffer ? fee + 1 : fee,
-                isRbf,
-                liquidNetwork,
-                blindingKey,
-            ),
+        targetFee(
+            feePerVbyte,
+            (fee) =>
+                fn(
+                    refundDetails as any[],
+                    outputScript,
+                    timeoutBlockHeight,
+                    addOneSatBuffer ? fee + 1 : fee,
+                    isRbf,
+                    liquidNetwork,
+                    blindingKey,
+                ),
+            config.network !== "mainnet",
         );
 };
 
