@@ -134,6 +134,7 @@ const GlobalProvider = (props: { children: any }) => {
             ...stringSerializer,
         },
     );
+
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         createSignal(null),
         {
@@ -141,6 +142,14 @@ const GlobalProvider = (props: { children: any }) => {
             ...stringSerializer,
         },
     );
+    const [i18nUrl, setI18nUrl] = makePersisted(
+        createSignal<string | null>(null),
+        {
+            name: "i18nUrl",
+            ...stringSerializer,
+        },
+    );
+
     const [denomination, setDenomination] = makePersisted(
         createSignal<Denomination>(Denomination.Sat),
         {
@@ -282,7 +291,7 @@ const GlobalProvider = (props: { children: any }) => {
     const getRdnsForAddress = (address: string) =>
         rdnsForage.getItem<string>(address.toLowerCase());
 
-    setI18n(detectLanguage(i18nConfigured()));
+    setI18n(detectLanguage(i18nConfigured(), i18nUrl(), setI18nUrl));
     detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
@@ -312,7 +321,7 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     // i18n
-    createMemo(() => setI18n(i18nConfigured()));
+    createMemo(() => setI18n(i18nConfigured() || i18nUrl()));
     const dictLocale = createMemo(() =>
         flatten(dict[i18n() || config.defaultLanguage]),
     );
