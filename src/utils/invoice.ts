@@ -6,6 +6,7 @@ import log from "loglevel";
 
 import { config } from "../config";
 import { fetchBolt12Invoice } from "./boltzClient";
+import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";
 
 type LnurlResponse = {
@@ -104,10 +105,7 @@ export const fetchLnurl = async (
     return await fetchLnurlInvoice(amount, res);
 };
 
-export const fetchBip353 = async (
-    bip353: string,
-    amountSat: number,
-): Promise<string> => {
+export const resolveBip353 = async (bip353: string): Promise<string> => {
     const split = bip353.split("@");
     if (split.length !== 2) {
         throw "invalid BIP-353";
@@ -119,26 +117,45 @@ export const fetchBip353 = async (
 
     log.debug(`Fetching BIP-353: ${bip353}`);
 
-    const params = new URLSearchParams({
-        type: "TXT",
-        name: `${split[0]}.user._bitcoin-payment.${split[1]}`,
-    });
-    const res = await fetch(`${config.dnsOverHttps}?${params.toString()}`, {
-        headers: {
-            Accept: "application/dns-json",
-        },
-    });
-    const resBody = await res.json();
-    if (resBody.Answer === undefined || resBody.Answer.length === 0) {
+    const res = await lookup(
+        `${split[0]}.user._bitcoin-payment.${split[1]}`,
+        "txt",
+        config.dnsOverHttps,
+    );
+
+    const nowUnix = Date.now() / 1_000;
+    if (nowUnix < res.valid_from) {
+        throw "proof is not valid yet";
+    }
+    if (nowUnix > res.expires) {
+        throw "proof has expired";
+    }
+
+    if (res.verified_rrs === undefined || res.verified_rrs.length === 0) {
         throw "no TXT record";
     }
 
-    const paymentRequest = resBody.Answer[0].data;
-    const offer = new URLSearchParams(paymentRequest.split("?")[1]).get("lno");
-    const invoice = (
-        await fetchBolt12Invoice(offer.replaceAll('"', ""), amountSat)
-    ).invoice;
-    log.debug(`Resolved invoice for BIP-353:`, invoice);
+    if (res.verified_rrs[0].type !== "txt") {
+        throw "invalid proof";
+    }
+
+    const paymentRequest = res.verified_rrs[0].contents;
+    const offer = new URLSearchParams(paymentRequest.split("?")[1])
+        .get("lno")
+        .replaceAll('"', "");
+
+    log.debug("Resolved offer for BIP-353:", offer);
+    return offer;
+};
+
+export const fetchBip353 = async (
+    bip353: string,
+    amountSat: number,
+): Promise<string> => {
+    const offer = await resolveBip353(bip353);
+    const invoice = (await fetchBolt12Invoice(offer, amountSat)).invoice;
+    log.debug(`Resolved invoice for offer:`, invoice);
+
     return invoice;
 };
 
