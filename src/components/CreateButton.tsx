@@ -173,23 +173,30 @@ export const CreateButton = () => {
                                 resolve(res);
                             } catch (e) {
                                 log.warn(
-                                    "Fetching invoice from LNURL failed",
+                                    "Fetching invoice for LNURL failed:",
                                     e,
                                 );
-                                throw e;
+                                reject(e);
                             }
                         });
                     })(),
                     (() => {
-                        try {
-                            return fetchBip353(
-                                lnurl(),
-                                Number(receiveAmount()),
-                            );
-                        } catch (e) {
-                            log.warn("Fetching invoice from BIP-353 failed", e);
-                            throw e;
-                        }
+                        return new Promise<string>(async (resolve, reject) => {
+                            try {
+                                resolve(
+                                    await fetchBip353(
+                                        lnurl(),
+                                        Number(receiveAmount()),
+                                    ),
+                                );
+                            } catch (e) {
+                                log.warn(
+                                    "Fetching invoice from BIP-353 failed:",
+                                    e,
+                                );
+                                reject(e);
+                            }
+                        });
                     })(),
                 ]);
 

@@ -79,32 +79,29 @@ export const decodeInvoice = (
     }
 };
 
-export const fetchLnurl = (
+export const fetchLnurl = async (
     lnurl: string,
     amount_sat: number,
 ): Promise<string> => {
-    return new Promise<string>((resolve, reject) => {
-        let url: string;
-        const amount = Math.round(amount_sat * 1000);
+    let url: string;
+    if (lnurl.includes("@")) {
+        // Lightning address
+        const urlsplit = lnurl.split("@");
+        url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`;
+    } else {
+        // LNURL
+        const { bytes } = bech32.decodeToBytes(lnurl);
+        url = utf8.encode(bytes);
+    }
 
-        if (lnurl.includes("@")) {
-            // Lightning address
-            const urlsplit = lnurl.split("@");
-            url = `https://${urlsplit[1]}/.well-known/lnurlp/${urlsplit[0]}`;
-        } else {
-            // LNURL
-            const { bytes } = bech32.decodeToBytes(lnurl);
-            url = utf8.encode(bytes);
-        }
+    const amount = Math.round(amount_sat * 1000);
 
-        log.debug("fetching lnurl:", url);
-        fetch(url)
-            .then(checkResponse<LnurlResponse>)
-            .then((data) => checkLnurlResponse(amount, data))
-            .then((data) => fetchLnurlInvoice(amount, data))
-            .then(resolve)
-            .catch(reject);
-    });
+    log.debug("Fetching LNURL:", url);
+
+    const res = await checkResponse<LnurlResponse>(await fetch(url));
+    checkLnurlResponse(amount, res);
+
+    return await fetchLnurlInvoice(amount, res);
 };
 
 export const fetchBip353 = async (
@@ -132,10 +129,17 @@ export const fetchBip353 = async (
         },
     });
     const resBody = await res.json();
+    if (resBody.Answer === undefined || resBody.Answer.length === 0) {
+        throw "no TXT record";
+    }
+
     const paymentRequest = resBody.Answer[0].data;
     const offer = new URLSearchParams(paymentRequest.split("?")[1]).get("lno");
-    return (await fetchBolt12Invoice(offer.replaceAll('"', ""), amountSat))
-        .invoice;
+    const invoice = (
+        await fetchBolt12Invoice(offer.replaceAll('"', ""), amountSat)
+    ).invoice;
+    log.debug(`Resolved invoice for BIP-353:`, invoice);
+    return invoice;
 };
 
 const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
