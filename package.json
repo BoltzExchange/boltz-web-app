@@ -33,6 +33,7 @@
         "@types/jest": "^29.5.12",
         "@webbtc/webln-types": "^3.0.0",
         "babel-jest": "^29.7.0",
+        "babel-plugin-transform-import-meta": "^2.2.1",
         "babel-plugin-transform-vite-meta-env": "^1.0.3",
         "babel-preset-jest": "^29.6.3",
         "babel-preset-solid": "^1.8.19",

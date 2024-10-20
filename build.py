@@ -21,7 +21,7 @@ with open("./public/config.json") as f:
     data = json.load(f)
 
     network = data["network"]
-    
+
     if data.get("cooperativeDisabled", False):
         handle_coop_disabled()
 
