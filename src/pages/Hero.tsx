@@ -190,6 +190,12 @@ export const Hero = () => {
                             target="_blank"
                             class="helm"></a>
                     </div>
+                    <div>
+                        <a
+                            href="https://bancolibre.com/"
+                            target="_blank"
+                            class="bancoLibre"></a>
+                    </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">

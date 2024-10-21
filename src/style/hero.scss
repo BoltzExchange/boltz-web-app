@@ -255,6 +255,14 @@ h3 {
     width: 44px;
     height: 55px;
 }
+.bancoLibre {
+    display: inline-block;
+    background: url(../assets/banco-libre.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 200px;
+    height: 35px;
+}
 
 #partners,
 #integrations {
