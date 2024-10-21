@@ -34,6 +34,10 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         );
     }
 
+    public getDerivationPath = () => {
+        return this.derivationPath;
+    };
+
     public setDerivationPath = (path: string) => {
         this.derivationPath = path;
     };

@@ -22,7 +22,9 @@ import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 const Modal = ({
     show,
     setShow,
+    derivationPath,
 }: {
+    derivationPath: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
 }) => {
@@ -50,7 +52,13 @@ const Modal = ({
                         return;
                     }
 
-                    await connect(notify, connectProvider, provider);
+                    await connect(
+                        notify,
+                        connectProvider,
+                        providers,
+                        provider,
+                        derivationPath,
+                    );
                 }}>
                 <hr />
                 <div
@@ -104,7 +112,7 @@ const Modal = ({
     );
 };
 
-const ConnectModal = () => {
+const ConnectModal = ({ derivationPath }: { derivationPath: string }) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider } = useWeb3Signer();
 
@@ -122,13 +130,19 @@ const ConnectModal = () => {
                         connect(
                             notify,
                             connectProvider,
+                            providers,
                             Object.values(providers())[0].info,
+                            derivationPath,
                         ).then();
                     }
                 }}>
                 {t("connect_wallet")}
             </button>
-            <Modal show={show} setShow={setShow} />
+            <Modal
+                show={show}
+                setShow={setShow}
+                derivationPath={derivationPath}
+            />
         </>
     );
 };
@@ -167,7 +181,11 @@ const ShowAddress = ({
     );
 };
 
-export const ConnectAddress = ({ address }: { address: string }) => {
+export const ConnectAddress = ({
+    address,
+}: {
+    address: { address: string; derivationPath?: string };
+}) => {
     const { t, notify } = useGlobalContext();
     const { connectProviderForAddress } = useWeb3Signer();
 
@@ -176,7 +194,10 @@ export const ConnectAddress = ({ address }: { address: string }) => {
             class="btn"
             onClick={async () => {
                 try {
-                    await connectProviderForAddress(address);
+                    await connectProviderForAddress(
+                        address.address,
+                        address.derivationPath,
+                    );
                 } catch (e) {
                     log.error(
                         `Provider connect for address ${address} failed: ${formatError(e)}`,
@@ -213,8 +234,10 @@ export const SwitchNetwork = () => {
 };
 
 const ConnectWallet = ({
+    derivationPath,
     addressOverride,
 }: {
+    derivationPath?: string;
     addressOverride?: Accessor<string | undefined>;
 }) => {
     const { t } = useGlobalContext();
@@ -249,7 +272,9 @@ const ConnectWallet = ({
                     {t("no_wallet")}
                 </button>
             }>
-            <Show when={address() !== undefined} fallback={<ConnectModal />}>
+            <Show
+                when={address() !== undefined}
+                fallback={<ConnectModal derivationPath={derivationPath} />}>
                 <Show when={networkValid()} fallback={<SwitchNetwork />}>
                     <ShowAddress
                         address={address}

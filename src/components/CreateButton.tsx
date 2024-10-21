@@ -8,11 +8,12 @@ import { SwapType } from "../consts/Enums";
 import { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import { coalesceLn } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import {
@@ -62,7 +63,7 @@ export const CreateButton = () => {
         bolt12Offer,
         setBolt12Offer,
     } = useCreateContext();
-    const { getEtherSwap, signer } = useWeb3Signer();
+    const { getEtherSwap, signer, providers } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -320,6 +321,15 @@ export const CreateButton = () => {
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
                         ? signer()?.address
+                        : undefined,
+                derivationPath:
+                    swapType() !== SwapType.Submarine &&
+                    signer() !== undefined &&
+                    customDerivationPathRdns.includes(signer().rdns)
+                        ? (
+                              providers()[signer().rdns]
+                                  .provider as unknown as HardwareSigner
+                          ).getDerivationPath()
                         : undefined,
             });
 

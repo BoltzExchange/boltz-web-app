@@ -15,19 +15,21 @@ const ClaimEvm = ({
     swapId,
     amount,
     preimage,
+    assetReceive,
     signerAddress,
     refundAddress,
+    derivationPath,
     timeoutBlockHeight,
-    assetReceive,
 }: {
     amount: number;
     swapId: string;
     useRif: boolean;
     preimage: string;
+    assetReceive: string;
     signerAddress: string;
     refundAddress: string;
+    derivationPath: string;
     timeoutBlockHeight: number;
-    assetReceive: string;
 }) => {
     const { getEtherSwap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
@@ -65,7 +67,7 @@ const ClaimEvm = ({
                 setSwap(currentSwap);
                 await setSwapStorage(currentSwap);
             }}
-            address={signerAddress}
+            address={{ derivationPath, address: signerAddress }}
             buttonText={t("continue")}
             promptText={t("transaction_prompt_receive", {
                 button: t("continue"),
@@ -91,6 +93,7 @@ const TransactionConfirmed = () => {
                     preimage={chain.preimage}
                     signerAddress={chain.signer}
                     amount={chain.claimDetails.amount}
+                    derivationPath={chain.derivationPath}
                     refundAddress={chain.claimDetails.refundAddress}
                     timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
                     assetReceive={chain.assetReceive}
@@ -108,6 +111,7 @@ const TransactionConfirmed = () => {
                 amount={reverse.onchainAmount}
                 signerAddress={reverse.signer}
                 refundAddress={reverse.refundAddress}
+                derivationPath={reverse.derivationPath}
                 timeoutBlockHeight={reverse.timeoutBlockHeight}
                 assetReceive={reverse.assetReceive}
             />

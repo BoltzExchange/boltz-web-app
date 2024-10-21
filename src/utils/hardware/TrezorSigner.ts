@@ -30,6 +30,10 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         this.setDerivationPath(derivationPaths.Ethereum);
     }
 
+    public getDerivationPath = () => {
+        return this.derivationPath;
+    };
+
     public setDerivationPath = (path: string) => {
         this.derivationPath = `m/${path}`;
     };
