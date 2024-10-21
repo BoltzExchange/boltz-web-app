@@ -19,6 +19,10 @@ import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 import Denomination from "./settings/Denomination";
 
+// When sending to an unconfidential address, we need to add an extra
+// confidential OP_RETURN output with 1 sat inside
+const unconfidentialExtra = 5;
+
 const Fees = () => {
     const {
         t,
@@ -94,7 +98,7 @@ const Fees = () => {
                             reverseCfg.fees.minerFees.claim +
                             reverseCfg.fees.minerFees.lockup;
                         if (isToUnconfidentialLiquid()) {
-                            fee += 1;
+                            fee += unconfidentialExtra;
                         }
 
                         setMinerFee(fee);
@@ -106,7 +110,7 @@ const Fees = () => {
                             chainCfg.fees.minerFees.server +
                             chainCfg.fees.minerFees.user.claim;
                         if (isToUnconfidentialLiquid()) {
-                            fee += 1;
+                            fee += unconfidentialExtra;
                         }
 
                         setMinerFee(fee);
