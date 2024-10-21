@@ -851,7 +851,7 @@ const dict = {
         block: "块",
         logs_scan_progress: "扫描进度{{ value }}%",
         accept: "接受",
-        timeout: "逾时",
+        timeout: "超时",
     },
 };
 
