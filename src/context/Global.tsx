@@ -215,7 +215,7 @@ const GlobalProvider = (props: { children: any }) => {
                         setAllPairs([...pairs]); // Update state with new pair
                     }
                 })
-                .catch((error) => {
+                .catch(() => {
                     pairs[i] = null; // null signals API unreachable
                     setAllPairs([...pairs]); // Update state with failed pair
                 }),

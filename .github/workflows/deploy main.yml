@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy
+name: Deploy main
 
 on:
   # Allows you to run this workflow manually from the Actions tab

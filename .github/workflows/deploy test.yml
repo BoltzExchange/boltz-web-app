@@ -1,5 +1,5 @@
 # Deploy testnet and beta automatically
-name: Deploy
+name: Deploy test
 
 on:
   # only run if CI successful
