@@ -27,7 +27,7 @@ jobs:
   # Deploy testnet
   testnet:
     # Only run if CI was successful and the branch is 'test'
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/test' }}
+    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/test'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger repository dispatch in testnet
@@ -41,7 +41,7 @@ jobs:
   # Deploy beta
   beta:
     # Only run if CI was successful and the branch is 'test'
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/test' }}
+    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/test'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger repository dispatch in beta
@@ -55,7 +55,7 @@ jobs:
   # Deploy mainnet
   deploy:
     # Only run if CI was successful and the branch is main
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
+    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

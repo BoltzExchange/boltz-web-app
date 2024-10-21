@@ -339,7 +339,7 @@ const GlobalProvider = (props: { children: any }) => {
 
     // i18n
     createMemo(() => setI18n(i18nConfigured() || i18nUrl()));
-    
+
     const dictLocale = createMemo(() =>
         flatten(dict[i18n() || config.defaultLanguage]),
     );
