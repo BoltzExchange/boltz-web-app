@@ -1081,6 +1081,7 @@ const dict = {
         block: "ブロック",
         logs_scan_progress: "スキャンの進行状況 {{ value }}%",
         accept: "受け入れる",
+        timeout: "タイムアウト",
     },
     ru: {
         language: "Русский",
@@ -1303,6 +1304,7 @@ const dict = {
         block: "блок",
         logs_scan_progress: "Прогресс сканирования {{ value }}%",
         accept: "Принять",
+        timeout: "Тайм-аут",
     },
 };
 
