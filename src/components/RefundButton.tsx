@@ -25,20 +25,22 @@ import ContractTransaction from "./ContractTransaction";
 
 export const RefundEvm = ({
     swapId,
-    setRefundTxHash,
     amount,
     claimAddress,
     preimageHash,
     signerAddress,
+    derivationPath,
+    setRefundTxHash,
     timeoutBlockHeight,
 }: {
     swapId?: string;
-    setRefundTxHash?: Setter<string>;
     amount: number;
     preimageHash: string;
     claimAddress: string;
     signerAddress: string;
+    derivationPath?: string;
     timeoutBlockHeight: number;
+    setRefundTxHash?: Setter<string>;
 }) => {
     const { setSwap } = usePayContext();
     const { getEtherSwap, signer } = useWeb3Signer();
@@ -94,7 +96,7 @@ export const RefundEvm = ({
 
                 await tx.wait(1);
             }}
-            address={signerAddress}
+            address={{ derivationPath, address: signerAddress }}
             buttonText={t("refund")}
         />
     );
@@ -131,6 +133,7 @@ const RefundButton = ({
                     signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}
+                    derivationPath={submarine.derivationPath}
                     timeoutBlockHeight={submarine.timeoutBlockHeight}
                     preimageHash={decodeInvoice(submarine.invoice).preimageHash}
                 />
@@ -143,6 +146,7 @@ const RefundButton = ({
                     swapId={chain.id}
                     signerAddress={chain.signer}
                     amount={chain.lockupDetails.amount}
+                    derivationPath={chain.derivationPath}
                     claimAddress={chain.lockupDetails.claimAddress}
                     timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}
                     preimageHash={crypto

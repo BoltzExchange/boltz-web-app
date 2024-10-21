@@ -11,5 +11,6 @@ export const derivationPathsTestnet = {
 };
 
 export interface HardwareSigner {
+    getDerivationPath(): string;
     setDerivationPath(path: string): void;
 }

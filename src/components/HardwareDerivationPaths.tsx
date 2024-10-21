@@ -28,9 +28,17 @@ import LoadingSpinner from "./LoadingSpinner";
 export const connect = async (
     notify: (type: string, message: string) => void,
     connectProvider: (rdns: string) => Promise<void>,
+    providers: Accessor<Record<string, EIP6963ProviderDetail>>,
     provider: EIP6963ProviderInfo,
+    derivationPath?: string,
 ) => {
     try {
+        if (derivationPath !== undefined) {
+            const prov = providers()[provider.rdns]
+                .provider as unknown as HardwareSigner;
+            prov.setDerivationPath(derivationPath);
+        }
+
         await connectProvider(provider.rdns);
     } catch (e) {
         log.error(
@@ -51,12 +59,7 @@ const connectHardware = async (
     try {
         setLoading(true);
 
-        const hardwareProvider = provider();
-        const prov = providers()[hardwareProvider.rdns]
-            .provider as unknown as HardwareSigner;
-        prov.setDerivationPath(path);
-
-        await connect(notify, connectProvider, hardwareProvider);
+        await connect(notify, connectProvider, providers, provider(), path);
     } finally {
         setLoading(false);
     }
