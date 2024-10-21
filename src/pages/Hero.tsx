@@ -196,6 +196,12 @@ export const Hero = () => {
                             target="_blank"
                             class="bancoLibre"></a>
                     </div>
+                    <div>
+                        <a
+                            href="https://stashpay.me"
+                            target="_blank"
+                            class="stashPay"></a>
+                    </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
