@@ -160,7 +160,7 @@ export const CreateButton = () => {
                     (() => {
                         return new Promise<string>(async (resolve, reject) => {
                             const timeout = setTimeout(
-                                () => reject("timeout"),
+                                () => reject(t("timeout")),
                                 5_000,
                             );
 
@@ -169,7 +169,6 @@ export const CreateButton = () => {
                                     lnurl(),
                                     Number(receiveAmount()),
                                 );
-                                clearTimeout(timeout);
                                 resolve(res);
                             } catch (e) {
                                 log.warn(
@@ -177,24 +176,32 @@ export const CreateButton = () => {
                                     e,
                                 );
                                 reject(e);
+                            } finally {
+                                clearTimeout(timeout);
                             }
                         });
                     })(),
                     (() => {
                         return new Promise<string>(async (resolve, reject) => {
+                            const timeout = setTimeout(
+                                () => reject(t("timeout")),
+                                5_000,
+                            );
+
                             try {
-                                resolve(
-                                    await fetchBip353(
-                                        lnurl(),
-                                        Number(receiveAmount()),
-                                    ),
+                                const res = await fetchBip353(
+                                    lnurl(),
+                                    Number(receiveAmount()),
                                 );
+                                resolve(res);
                             } catch (e) {
                                 log.warn(
                                     "Fetching invoice from BIP-353 failed:",
                                     e,
                                 );
                                 reject(e);
+                            } finally {
+                                clearTimeout(timeout);
                             }
                         });
                     })(),
