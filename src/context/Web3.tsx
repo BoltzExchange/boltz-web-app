@@ -31,6 +31,10 @@ declare global {
     interface Navigator {
         hid: {};
     }
+
+    interface Window {
+        ethereum?: any;
+    }
 }
 
 type EIP6963AnnounceProviderEvent = {
@@ -45,6 +49,8 @@ enum HardwareRdns {
     Ledger = "ledger",
     Trezor = "trezor",
 }
+
+const browserRdns = "browser";
 
 const customDerivationPathRdns: string[] = [
     HardwareRdns.Ledger,
@@ -78,7 +84,16 @@ const Web3SignerProvider = (props: {
     const [providers, setProviders] = createSignal<
         Record<string, EIP6963ProviderDetail>
     >({
-        ledger: {
+        [browserRdns]: {
+            provider: window.ethereum,
+            info: {
+                name: "Browser native",
+                uuid: browserRdns,
+                rdns: browserRdns,
+                disabled: window.ethereum === undefined,
+            },
+        },
+        [HardwareRdns.Ledger]: {
             provider: new LedgerSigner(t),
             info: {
                 name: "Ledger",
@@ -89,7 +104,7 @@ const Web3SignerProvider = (props: {
                 disabled: navigator.hid === undefined,
             },
         },
-        trezor: {
+        [HardwareRdns.Trezor]: {
             provider: new TrezorSigner(),
             info: {
                 name: "Trezor",
@@ -111,8 +126,13 @@ const Web3SignerProvider = (props: {
             log.debug(
                 `Found EIP-6963 wallet: ${event.detail.info.rdns}: ${event.detail.info.name}`,
             );
+            const existingProviders = { ...providers() };
+
+            // We should not show the browser provider when an EIP-6963 provider is found
+            delete existingProviders[browserRdns];
+
             setProviders({
-                ...providers(),
+                ...existingProviders,
                 [event.detail.info.rdns]: event.detail,
             });
         },
