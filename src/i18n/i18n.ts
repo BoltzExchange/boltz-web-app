@@ -162,6 +162,8 @@ const dict = {
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
         transaction_prompt:
+            'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
+        transaction_prompt_receive:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction to receive {{ asset }}.',
         invalid_address: "Invalid {{ asset }} address",
         scan_qr_code: "Scan QR Code",
@@ -207,10 +209,15 @@ const dict = {
         insufficient_balance_line:
             "You do not have enough balance in your wallet for this swap.",
         select_wallet: "Select wallet",
+        select_derivation_path: "Select derivation path",
+        submit_derivation_path: "Submit",
+        not_supported_in_browser: "Not supported in this browser",
         switch_network: "Switch network",
         block: "block",
         logs_scan_progress: "Scan progress {{ value }}%",
         accept: "Accept",
+        wallet_connect_failed: "Wallet connection failed: {{ error }}",
+        ledger_open_app_prompt: "Open Ethereum or RSK app",
     },
     de: {
         language: "Deutsch",
@@ -381,6 +388,8 @@ const dict = {
         not_found_subline: "Die gesuchte Seite existiert nicht.",
         back_to_home: "Zurück zur Startseite",
         transaction_prompt:
+            '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
+        transaction_prompt_receive:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion um {{ asset }} zu empfangen.',
         invalid_address: "Ungültige {{ asset }} Adresse",
         scan_qr_code: "QR Code scannen",
@@ -429,10 +438,16 @@ const dict = {
         insufficient_balance_line:
             "Sie haben nicht genügend Guthaben für diesen Swap.",
         select_wallet: "Wallet auswählen",
+        select_derivation_path: "Ableitungspfad auswählen",
+        submit_derivation_path: "Senden",
+        not_supported_in_browser: "In diesem Browser nicht unterstützt",
         switch_network: "Netzwerk wechseln",
         block: "Block",
         logs_scan_progress: "Scan-Fortschritt {{ value }}%",
         accept: "Akzeptieren",
+        wallet_connect_failed:
+            "Verbindung zu Wallet fehlgeschlagen: {{ error }}",
+        ledger_open_app_prompt: "Ethereum oder RSK app öffnen",
     },
     es: {
         language: "Español",
@@ -602,6 +617,8 @@ const dict = {
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
         transaction_prompt:
+            'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
+        transaction_prompt_receive:
             'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
         invalid_address: "Dirección {{ asset }} inválida",
         scan_qr_code: "Escanear código QR",
@@ -650,10 +667,15 @@ const dict = {
         insufficient_balance_line:
             "No tienes saldo suficiente en tu monedero para este swap.",
         select_wallet: "Seleccionar monedero",
+        select_derivation_path: "Seleccionar ruta de derivación",
+        submit_derivation_path: "Enviar",
+        not_supported_in_browser: "No compatible con este navegador",
         switch_network: "Cambiar red",
         block: "bloque",
         logs_scan_progress: "Progreso del escaneo {{ value }}%",
         accept: "Aceptar",
+        wallet_connect_failed: "Fallo en la conexión del monedero: {{ error }}",
+        ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
     },
     zh: {
         language: "中文",
@@ -805,6 +827,8 @@ const dict = {
         not_found_subline: "您要查找的页面不存在。",
         back_to_home: "返回首页",
         transaction_prompt:
+            "按“{{ button }}”以打开已连接的钱包并确认显示的交易。",
+        transaction_prompt_receive:
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易以便收{{ asset }}。",
         invalid_address: "无效的{{ asset }}地址",
         scan_qr_code: "扫描 QR 码",
@@ -844,10 +868,15 @@ const dict = {
         insufficient_balance: "余额不足",
         insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
         select_wallet: "选择钱包",
+        select_derivation_path: "选择派生路径",
+        submit_derivation_path: "提交",
+        not_supported_in_browser: "此浏览器不支持",
         switch_network: "转换网络",
         block: "块",
         logs_scan_progress: "扫描进度{{ value }}%",
         accept: "接受",
+        wallet_connect_failed: "钱包连接失败：{{ error }}",
+        ledger_open_app_prompt: "打开以太坊或 RSK 应用",
     },
 };
 

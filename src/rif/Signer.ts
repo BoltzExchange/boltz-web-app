@@ -37,7 +37,6 @@ const sign = async (signer: Signer, request: EnvelopingRequest) => {
 
 export const relayClaimTransaction = async (
     signer: Signer,
-    signerRns: string,
     etherSwap: EtherSwap,
     preimage: string,
     amount: number,
@@ -69,7 +68,7 @@ export const relayClaimTransaction = async (
 
     const smartWalletExists =
         (await signer.provider.getCode(smartWalletAddress.address)) !== "0x";
-    log.info("RIF smart wallet exists: ", smartWalletExists);
+    log.info("RIF smart wallet exists:", smartWalletExists);
 
     const smartWalletFactory = getSmartWalletFactory(signer);
 

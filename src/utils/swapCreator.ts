@@ -35,6 +35,8 @@ export type SwapBase = {
 
     useRif: boolean;
     signer?: string;
+    // Set for hardware wallet signers
+    derivationPath?: string;
 };
 
 export type SubmarineSwap = SwapBase &
