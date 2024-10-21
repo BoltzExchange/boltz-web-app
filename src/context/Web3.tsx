@@ -31,6 +31,10 @@ declare global {
     interface Navigator {
         hid: {};
     }
+
+    interface Window {
+        ethereum?: any;
+    }
 }
 
 type EIP6963AnnounceProviderEvent = {
@@ -78,6 +82,15 @@ const Web3SignerProvider = (props: {
     const [providers, setProviders] = createSignal<
         Record<string, EIP6963ProviderDetail>
     >({
+        native: {
+            provider: window.ethereum,
+            info: {
+                name: "Browser native",
+                uuid: "browser",
+                rdns: "browser",
+                disabled: window.ethereum === undefined,
+            },
+        },
         ledger: {
             provider: new LedgerSigner(t),
             info: {
