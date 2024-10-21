@@ -20,6 +20,7 @@ import { formatError } from "../utils/errors";
 import {
     HardwareSigner,
     derivationPaths,
+    derivationPathsMainnet,
     derivationPathsTestnet,
 } from "../utils/hardware/HadwareSigner";
 import LoadingSpinner from "./LoadingSpinner";
@@ -170,14 +171,26 @@ const HardwareDerivationPaths = ({
     const [loading, setLoading] = createSignal<boolean>(false);
 
     const paths = createMemo(() => {
-        if (config.network === "testnet") {
-            return {
-                ...derivationPaths,
-                ...derivationPathsTestnet,
-            };
-        }
+        switch (config.network) {
+            case "mainnet":
+                return {
+                    ...derivationPaths,
+                    ...derivationPathsMainnet,
+                };
 
-        return derivationPaths;
+            case "testnet":
+                return {
+                    ...derivationPaths,
+                    ...derivationPathsTestnet,
+                };
+
+            default:
+                return {
+                    ...derivationPaths,
+                    ...derivationPathsMainnet,
+                    ...derivationPathsTestnet,
+                };
+        }
     });
 
     return (
