@@ -213,6 +213,7 @@ const dict = {
         block: "block",
         logs_scan_progress: "Scan progress {{ value }}%",
         accept: "Accept",
+        timeout: "Timeout",
     },
     de: {
         language: "Deutsch",
@@ -438,6 +439,7 @@ const dict = {
         block: "Block",
         logs_scan_progress: "Scan-Fortschritt {{ value }}%",
         accept: "Akzeptieren",
+        timeout: "Timeout",
     },
     es: {
         language: "Español",
@@ -662,6 +664,7 @@ const dict = {
         block: "bloque",
         logs_scan_progress: "Progreso del escaneo {{ value }}%",
         accept: "Aceptar",
+        timeout: "timeout",
     },
     zh: {
         language: "中文",
@@ -859,6 +862,7 @@ const dict = {
         block: "块",
         logs_scan_progress: "扫描进度{{ value }}%",
         accept: "接受",
+        timeout: "超时",
     },
     ja: {
         language: "日本語",
