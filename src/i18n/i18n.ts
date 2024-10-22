@@ -1212,7 +1212,7 @@ const dict = {
         swap_expired: "Вы не успели завершить оплату вовремя.",
         create_invoice_webln: "создать инвойс через WebLN",
         pay_invoice_webln: "оплатить инвойс через WebLN",
-        select_asset: "Выбрать {{ direction }} актив",
+        select_asset: "{{ direction }} актив",
         tx_confirmed: "Транзакция подтверждена",
         tx_ready_to_claim: "Требование транзакции сейчас...",
         transaction_refunded: "Провайдер вернул транзакцию",
