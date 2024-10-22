@@ -1,0 +1,41 @@
+# Deploy testnet and beta automatically
+name: Deploy test
+
+on:
+  # only run if CI successful
+  workflow_run:
+    workflows: ["CI"]  # Name of the upstream workflow
+    types:
+      - completed
+    
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # Deploy testnet
+  testnet:
+    # Only run if CI was successful and the branch is 'test'
+    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger repository dispatch in testnet
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            -H "Authorization: token ${{ secrets.REPO_TESTNET_TOKEN }}" \
+            https://api.github.com/repos/SwapMarket/testnet/dispatches \
+            -d '{"event_type":"triggered_from_mainnet"}'
+
+  # Deploy beta
+  beta:
+    # Only run if CI was successful and the branch is 'test'
+    if: github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger repository dispatch in beta
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            -H "Authorization: token ${{ secrets.REPO_TESTNET_TOKEN }}" \
+            https://api.github.com/repos/SwapMarket/beta/dispatches \
+            -d '{"event_type":"triggered_from_mainnet"}'

@@ -50,4 +50,30 @@ test.describe("Submarine swap", () => {
         await generateBitcoinBlock();
         // TODO: verify amounts
     });
+
+    test("Create with LNURL", async ({ page }) => {
+        await page.goto("/");
+
+        await page
+            .locator(
+                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection",
+            )
+            .click();
+        await page.getByTestId("select-LN").click();
+        await page.locator(".asset-wrap").first().click();
+        await page.getByTestId("select-L-BTC").click();
+
+        await page.getByTestId("invoice").click();
+        await page
+            .getByTestId("invoice")
+            .fill(
+                "LNURL1DP68GUP69UHNZV3H9CCZUVPWXYARXVPSXQHKZURF9AKXUATJD3CQQKE2EU",
+            );
+
+        await page.getByTestId("sendAmount").fill("50 0000");
+
+        await page.getByTestId("create-swap-button").click();
+        // When we can click that button, the swap was created
+        await page.getByRole("button", { name: "Skip download" }).click();
+    });
 });

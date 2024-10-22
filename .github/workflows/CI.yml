@@ -1,11 +1,11 @@
 name: CI
 
 on:
-  # Runs on pushes and PRs targeting the main branch
+  # Runs on pushes and PRs targeting the main and test branches
   push:
-    branches: ['main']
+    branches: ['main', 'test']
   pull_request:
-    branches: ['main']
+    branches: ['main', 'test']
 
 jobs:
   ci:

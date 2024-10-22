@@ -161,7 +161,7 @@ export const CreateButton = () => {
                     (() => {
                         return new Promise<string>(async (resolve, reject) => {
                             const timeout = setTimeout(
-                                () => reject("timeout"),
+                                () => reject(t("timeout")),
                                 5_000,
                             );
 
@@ -170,28 +170,42 @@ export const CreateButton = () => {
                                     lnurl(),
                                     Number(receiveAmount()),
                                 );
-                                clearTimeout(timeout);
                                 resolve(res);
                             } catch (e) {
                                 log.warn(
-                                    "Fetching invoice from LNURL failed",
+                                    "Fetching invoice for LNURL failed:",
                                     e,
                                 );
-                                throw e;
+                                reject(e);
+                            } finally {
+                                clearTimeout(timeout);
                             }
                         });
                     })(),
                     (() => {
-                        try {
-                            return fetchBip353(
-                                backend(),
-                                lnurl(),
-                                Number(receiveAmount()),
+                        return new Promise<string>(async (resolve, reject) => {
+                            const timeout = setTimeout(
+                                () => reject(t("timeout")),
+                                5_000,
                             );
-                        } catch (e) {
-                            log.warn("Fetching invoice from BIP-353 failed", e);
-                            throw e;
-                        }
+
+                            try {
+                                const res = await fetchBip353(
+                                    backend(),
+                                    lnurl(),
+                                    Number(receiveAmount()),
+                                );
+                                resolve(res);
+                            } catch (e) {
+                                log.warn(
+                                    "Fetching invoice from BIP-353 failed:",
+                                    e,
+                                );
+                                reject(e);
+                            } finally {
+                                clearTimeout(timeout);
+                            }
+                        });
                     })(),
                 ]);
 

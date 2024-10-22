@@ -31,3 +31,13 @@ are:
 
 `sendAmount` or `receiveAmount` set the respective amounts. Value is denominated
 in satoshis and `sendAmount` takes precedence.
+
+## Language
+
+When no language has been set before, the default can be set with `lang`.
+Available values are:
+
+-   English: `en`
+-   German: `de`
+-   Spanish: `es`
+-   Chinese: `zh`

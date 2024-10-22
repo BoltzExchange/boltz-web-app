@@ -5,6 +5,7 @@ module.exports = {
         "@babel/preset-typescript",
     ],
     plugins: [
+        "babel-plugin-transform-import-meta",
         "babel-plugin-transform-vite-meta-env",
         [
             "@babel/plugin-transform-modules-commonjs",

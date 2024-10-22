@@ -213,6 +213,7 @@ const dict = {
         block: "block",
         logs_scan_progress: "Scan progress {{ value }}%",
         accept: "Accept",
+        timeout: "Timeout",
     },
     de: {
         language: "Deutsch",
@@ -438,6 +439,7 @@ const dict = {
         block: "Block",
         logs_scan_progress: "Scan-Fortschritt {{ value }}%",
         accept: "Akzeptieren",
+        timeout: "Timeout",
     },
     es: {
         language: "Español",
@@ -662,6 +664,7 @@ const dict = {
         block: "bloque",
         logs_scan_progress: "Progreso del escaneo {{ value }}%",
         accept: "Aceptar",
+        timeout: "timeout",
     },
     zh: {
         language: "中文",
@@ -859,6 +862,7 @@ const dict = {
         block: "块",
         logs_scan_progress: "扫描进度{{ value }}%",
         accept: "接受",
+        timeout: "超时",
     },
     ja: {
         language: "日本語",
@@ -1077,6 +1081,7 @@ const dict = {
         block: "ブロック",
         logs_scan_progress: "スキャンの進行状況 {{ value }}%",
         accept: "受け入れる",
+        timeout: "タイムアウト",
     },
     ru: {
         language: "Русский",
@@ -1207,7 +1212,7 @@ const dict = {
         swap_expired: "Вы не успели завершить оплату вовремя.",
         create_invoice_webln: "создать инвойс через WebLN",
         pay_invoice_webln: "оплатить инвойс через WebLN",
-        select_asset: "Выбрать {{ direction }} актив",
+        select_asset: "{{ direction }} актив",
         tx_confirmed: "Транзакция подтверждена",
         tx_ready_to_claim: "Требование транзакции сейчас...",
         transaction_refunded: "Провайдер вернул транзакцию",
@@ -1228,7 +1233,7 @@ const dict = {
         created: "Создано",
         view: "Просмотр",
         id: "ID",
-        headline: "Рынок Биткоин-свопов без посредников",
+        headline: "Маркетплейс некастодиальных Биткоин-свопов",
         subline:
             "Выберите контрагента и совершайте свопы между различными слоями Биткоина под Вашим полным контролем.",
         start_swapping: "Начать своп",
@@ -1299,6 +1304,7 @@ const dict = {
         block: "блок",
         logs_scan_progress: "Прогресс сканирования {{ value }}%",
         accept: "Принять",
+        timeout: "Тайм-аут",
     },
 };
 
