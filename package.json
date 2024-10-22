@@ -65,7 +65,7 @@
         "bignumber.js": "^9.1.2 ",
         "bitcoinjs-lib": "^6.1.6",
         "bolt11": "^1.4.1",
-        "boltz-bolt12": "^0.1.2",
+        "boltz-bolt12": "^0.1.3",
         "boltz-core": "^2.1.3",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
