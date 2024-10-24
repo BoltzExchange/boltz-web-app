@@ -250,3 +250,44 @@ export const isBolt12Offer = (offer: string) => {
         return false;
     }
 };
+
+export const validateInvoiceForOffer = (offer: string, invoice: string) => {
+    const of = new Offer(offer);
+    const possibleSigners: Uint8Array[] = [];
+
+    if (of.signing_pubkey !== undefined) {
+        possibleSigners.push(of.signing_pubkey);
+    }
+
+    for (const path of of.paths) {
+        const hops = path.hops;
+        if (hops.length > 0) {
+            possibleSigners.push(hops[hops.length - 1].pubkey);
+        }
+
+        hops.forEach((hop) => hop.free());
+        path.free();
+    }
+
+    of.free();
+
+    const inv = new Invoice(invoice);
+
+    try {
+        const invoiceSigner = inv.signing_pubkey;
+
+        for (const signer of possibleSigners) {
+            if (signer.length !== invoiceSigner.length) {
+                continue;
+            }
+
+            if (signer.every((b, i) => b === invoiceSigner[i])) {
+                return true;
+            }
+        }
+    } finally {
+        inv.free();
+    }
+
+    throw "invoice does not belong to offer";
+};
