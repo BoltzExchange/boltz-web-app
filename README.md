@@ -26,7 +26,7 @@ The web app is static. All your settings, logs and transaction history are store
 
 Nodes aspiring to become swap providers can apply via [email](mailto:swapmarket.wizard996@passinbox.com) or by adding their API details to the [config file](https://github.com/SwapMarket/swapmarket.github.io/blob/main/src/configs/mainnet.json) with a PR. It is obligatory to be contactable and have ample liquidity. 
 
-Consult Boltz's [deployment instructions](https://github.com/BoltzExchange/boltz-backend/blob/master/docs/deployment.md). It is easier to start with the [Testnet mirror](https://swapmarket.github.io/testnet) and your local backend listening on 127.0.0.1:9001/9004.
+Consult Boltz's [deployment instructions](https://github.com/BoltzExchange/boltz-backend/blob/master/docs/deployment.md). It is advisable to start with the [Testnet mirror](https://swapmarket.github.io/testnet) and your local backend listening on 127.0.0.1:9001/9004.
 
 ## Resources
 
