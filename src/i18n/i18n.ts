@@ -1104,6 +1104,7 @@ const dict = {
         block: "ブロック",
         logs_scan_progress: " 進捗度 {{ value }}%",
         accept: "受入れる",
+        timeout: "タイムアウト",
         wallet_connect_failed: "ウォレット接続の失敗: {{ error }}",
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
     },
