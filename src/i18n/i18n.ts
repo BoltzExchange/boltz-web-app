@@ -932,7 +932,7 @@ const dict = {
         feecheck:
             "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",
         create_and_paste:
-            "Bolt11インボイス、またはライトニングアドレス、またはLNURL Paylinkを貼り付けてください\n\n金額：{{ amount }} {{ denomination }}",
+            "ライトニングインボイス、Offer、またはLNURLを貼り付ける",
         congrats: "おめでとうございます！",
         successfully_swapped: "スワップが正常に完了しました",
         timeout_eta: "タイムアウト予想時間",
