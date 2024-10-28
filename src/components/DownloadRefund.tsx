@@ -15,7 +15,10 @@ const DownloadRefund = () => {
     const { t } = useGlobalContext();
 
     const downloadRefundQr = (swap: any) => {
-        QRCode.toDataURL(JSON.stringify(swap), { width: 1200 })
+        QRCode.toDataURL(JSON.stringify(swap), {
+            width: 1200,
+            errorCorrectionLevel: "L",
+        })
             .then((url: string) => {
                 if (isIos()) {
                     // Compatibility with third party iOS browsers
