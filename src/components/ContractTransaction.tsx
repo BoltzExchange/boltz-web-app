@@ -38,15 +38,18 @@ const ContractTransaction = ({
         setSignerNetwork(Number(network?.chainId));
     });
 
+    const allowAnyAddress =
+        address === undefined || address.address === undefined;
+
     return (
         <Show
             when={
                 signer() !== undefined &&
-                (address === undefined || address.address === signer().address)
+                (allowAnyAddress || address.address === signer().address)
             }
             fallback={
                 <Show
-                    when={address !== undefined}
+                    when={!allowAnyAddress}
                     fallback={
                         <ConnectWallet
                             derivationPath={address.derivationPath}
