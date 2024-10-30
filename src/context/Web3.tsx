@@ -84,15 +84,6 @@ const Web3SignerProvider = (props: {
     const [providers, setProviders] = createSignal<
         Record<string, EIP6963ProviderDetail>
     >({
-        [browserRdns]: {
-            provider: window.ethereum,
-            info: {
-                name: "Browser native",
-                uuid: browserRdns,
-                rdns: browserRdns,
-                disabled: window.ethereum === undefined,
-            },
-        },
         [HardwareRdns.Ledger]: {
             provider: new LedgerSigner(t),
             info: {
@@ -119,6 +110,21 @@ const Web3SignerProvider = (props: {
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined
     >(undefined);
+
+    if (window.ethereum !== undefined) {
+        setProviders({
+            ...providers(),
+            [browserRdns]: {
+                provider: window.ethereum,
+                info: {
+                    name: "Browser native",
+                    uuid: browserRdns,
+                    rdns: browserRdns,
+                    disabled: window.ethereum === undefined,
+                },
+            },
+        });
+    }
 
     window.addEventListener(
         "eip6963:announceProvider",
