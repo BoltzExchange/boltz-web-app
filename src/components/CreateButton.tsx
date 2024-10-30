@@ -186,7 +186,7 @@ export const CreateButton = () => {
                         return new Promise<string>(async (resolve, reject) => {
                             const timeout = setTimeout(
                                 () => reject(t("timeout")),
-                                5_000,
+                                15_000,
                             );
 
                             try {
