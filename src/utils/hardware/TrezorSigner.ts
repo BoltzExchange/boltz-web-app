@@ -17,6 +17,8 @@ import { config } from "../../config";
 import { EIP1193Provider } from "../../consts/Types";
 import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly provider: JsonRpcProvider;
 

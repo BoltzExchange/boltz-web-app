@@ -144,7 +144,7 @@ describe("invoice", () => {
         `(
             "should detect $invoice as invoice",
             ({ expected, network, invoice }) => {
-                setConfig({ network });
+                setConfig({ network } as never);
                 expect(isInvoice(invoice)).toEqual(expected);
             },
         );

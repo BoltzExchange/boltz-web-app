@@ -9,6 +9,7 @@ import {
     createSignal,
     useContext,
 } from "solid-js";
+import type { JSX } from "solid-js";
 
 import { config } from "../config";
 import { BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
@@ -32,6 +33,8 @@ const setDestination = (
                 getNetwork(asset) as LiquidNetwork,
             );
             return true;
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             return false;
         }
@@ -171,7 +174,7 @@ export type CreateContextType = {
 
 const CreateContext = createContext<CreateContextType>();
 
-const CreateProvider = (props: { children: any }) => {
+const CreateProvider = (props: { children: JSX.Element }) => {
     const defaultSelection = Object.keys(config.assets)[0];
 
     const [swapType, setSwapType] = createSignal<SwapType>(SwapType.Submarine);
@@ -183,10 +186,12 @@ const CreateProvider = (props: { children: any }) => {
     const [onchainAddress, setOnchainAddress] = createSignal("");
 
     const [assetReceive, setAssetReceive] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal(defaultSelection),
         { name: "assetReceive" },
     );
 
+    // eslint-disable-next-line solid/reactivity
     const [assetSend, setAssetSend] = makePersisted(createSignal(LN), {
         name: "assetSend",
     });

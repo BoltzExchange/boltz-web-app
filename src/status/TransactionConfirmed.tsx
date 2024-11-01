@@ -1,3 +1,5 @@
+import { Show } from "solid-js";
+
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts/Assets";
@@ -10,17 +12,7 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
 // TODO: use bignumber for amounts
-const ClaimEvm = ({
-    useRif,
-    swapId,
-    amount,
-    preimage,
-    assetReceive,
-    signerAddress,
-    refundAddress,
-    derivationPath,
-    timeoutBlockHeight,
-}: {
+const ClaimEvm = (props: {
     amount: number;
     swapId: string;
     useRif: boolean;
@@ -37,41 +29,45 @@ const ClaimEvm = ({
 
     return (
         <ContractTransaction
+            /* eslint-disable-next-line solid/reactivity */
             onClick={async () => {
                 let transactionHash: string;
 
-                if (useRif) {
+                if (props.useRif) {
                     transactionHash = await relayClaimTransaction(
                         signer(),
                         getEtherSwap(),
-                        preimage,
-                        amount,
-                        refundAddress,
-                        timeoutBlockHeight,
+                        props.preimage,
+                        props.amount,
+                        props.refundAddress,
+                        props.timeoutBlockHeight,
                     );
                 } else {
                     transactionHash = (
                         await getEtherSwap()[
                             "claim(bytes32,uint256,address,uint256)"
                         ](
-                            prefix0x(preimage),
-                            satoshiToWei(amount),
-                            refundAddress,
-                            timeoutBlockHeight,
+                            prefix0x(props.preimage),
+                            satoshiToWei(props.amount),
+                            props.refundAddress,
+                            props.timeoutBlockHeight,
                         )
                     ).hash;
                 }
 
-                const currentSwap = await getSwap(swapId);
+                const currentSwap = await getSwap(props.swapId);
                 currentSwap.claimTx = transactionHash;
                 setSwap(currentSwap);
                 await setSwapStorage(currentSwap);
             }}
-            address={{ derivationPath, address: signerAddress }}
+            address={{
+                address: props.signerAddress,
+                derivationPath: props.derivationPath,
+            }}
             buttonText={t("continue")}
             promptText={t("transaction_prompt_receive", {
                 button: t("continue"),
-                asset: assetReceive,
+                asset: props.assetReceive,
             })}
             waitingText={t("tx_ready_to_claim")}
         />
@@ -82,11 +78,34 @@ const TransactionConfirmed = () => {
     const { t } = useGlobalContext();
     const { swap } = usePayContext();
 
-    if (swap().assetReceive === RBTC) {
-        if (swap().type === SwapType.Chain) {
-            const chain = swap() as ChainSwap;
+    const chain = swap() as ChainSwap;
+    const reverse = swap() as ReverseSwap;
 
-            return (
+    return (
+        <Show
+            when={swap().assetReceive === RBTC}
+            fallback={
+                <div>
+                    <h2>{t("tx_confirmed")}</h2>
+                    <p>{t("tx_ready_to_claim")}</p>
+                    <LoadingSpinner />
+                </div>
+            }>
+            <Show
+                when={swap().type !== SwapType.Chain}
+                fallback={
+                    <ClaimEvm
+                        swapId={reverse.id}
+                        useRif={reverse.useRif}
+                        preimage={reverse.preimage}
+                        amount={reverse.onchainAmount}
+                        signerAddress={reverse.signer}
+                        refundAddress={reverse.refundAddress}
+                        derivationPath={reverse.derivationPath}
+                        timeoutBlockHeight={reverse.timeoutBlockHeight}
+                        assetReceive={reverse.assetReceive}
+                    />
+                }>
                 <ClaimEvm
                     swapId={chain.id}
                     useRif={chain.useRif}
@@ -98,32 +117,8 @@ const TransactionConfirmed = () => {
                     timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
                     assetReceive={chain.assetReceive}
                 />
-            );
-        }
-
-        const reverse = swap() as ReverseSwap;
-
-        return (
-            <ClaimEvm
-                swapId={reverse.id}
-                useRif={reverse.useRif}
-                preimage={reverse.preimage}
-                amount={reverse.onchainAmount}
-                signerAddress={reverse.signer}
-                refundAddress={reverse.refundAddress}
-                derivationPath={reverse.derivationPath}
-                timeoutBlockHeight={reverse.timeoutBlockHeight}
-                assetReceive={reverse.assetReceive}
-            />
-        );
-    }
-
-    return (
-        <div>
-            <h2>{t("tx_confirmed")}</h2>
-            <p>{t("tx_ready_to_claim")}</p>
-            <LoadingSpinner />
-        </div>
+            </Show>
+        </Show>
     );
 };
 

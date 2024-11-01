@@ -2,10 +2,7 @@ import { Accessor, Show } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 
-const RefundEta = ({
-    timeoutEta,
-    timeoutBlockHeight,
-}: {
+const RefundEta = (props: {
     timeoutEta: Accessor<number>;
     timeoutBlockHeight: Accessor<number>;
 }) => {
@@ -16,10 +13,11 @@ const RefundEta = ({
         <div>
             <h3>{t("refund_explainer")}</h3>
             <p>
-                <Show when={timeoutEta()}>
-                    {t("timeout_eta")}: {getDateString(timeoutEta())} <br />
+                <Show when={props.timeoutEta()}>
+                    {t("timeout_eta")}: {getDateString(props.timeoutEta())}{" "}
+                    <br />
                 </Show>
-                {t("pay_timeout_blockheight")}: {timeoutBlockHeight()}
+                {t("pay_timeout_blockheight")}: {props.timeoutBlockHeight()}
             </p>
         </div>
     );

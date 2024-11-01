@@ -26,7 +26,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
     constructor(
         private readonly t: (
             key: DictKey,
-            values?: Record<string, any>,
+            values?: Record<string, unknown>,
         ) => string,
     ) {
         this.provider = new JsonRpcProvider(
@@ -87,7 +87,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     from: undefined,
                     chainId: network.chainId,
                     gasPrice: feeData.gasPrice,
-                    gasLimit: (txParams as any).gas,
+                    gasLimit: (txParams as unknown as { gas: number }).gas,
                 });
 
                 const eth = new Eth(this.transport);

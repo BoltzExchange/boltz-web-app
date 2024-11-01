@@ -27,7 +27,6 @@ const defaults = {
 };
 
 type Asset = {
-    network?: any;
     blockExplorerUrl?: Url;
 
     rifRelay?: string;
@@ -35,6 +34,15 @@ type Asset = {
         deployHeight: number;
         smartWalletFactory?: string;
         deployVerifier?: string;
+    };
+    network?: {
+        chainName: string;
+        rpcUrls: string[];
+        nativeCurrency: {
+            name: string;
+            symbol: string;
+            decimals: number;
+        };
     };
 };
 
@@ -62,7 +70,7 @@ const isTor = () => window?.location.hostname.endsWith(".onion");
 export const chooseUrl = (url?: Url) =>
     url ? (isTor() && url.tor ? url.tor : url.normal) : undefined;
 
-export const setConfig = (data: any) => {
+export const setConfig = (data: Config) => {
     config = { ...defaults, ...data };
     log.setLevel(config.loglevel!);
 };

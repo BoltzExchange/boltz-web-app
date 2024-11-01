@@ -26,7 +26,7 @@ const sign = async (signer: Signer, request: EnvelopingRequest) => {
     const data = getEnvelopingRequestDataV4Field({
         chainId: Number(chainId),
         envelopingRequest: request,
-        verifier: request.relayData.callForwarder,
+        verifier: request.relayData.callForwarder as string,
         requestTypes: isDeployRequest(request)
             ? deployRequestType
             : relayRequestType,

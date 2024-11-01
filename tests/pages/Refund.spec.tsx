@@ -5,6 +5,8 @@ import i18n from "../../src/i18n/i18n";
 import Refund from "../../src/pages/Refund";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 jest.mock("../../src/utils/boltzClient", () => {
     const originalModule = jest.requireActual("../../src/utils/boltzClient");
 

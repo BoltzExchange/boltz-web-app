@@ -65,12 +65,7 @@ const connectHardware = async (
     }
 };
 
-const DerivationPath = ({
-    name,
-    path,
-    provider,
-    setLoading,
-}: {
+const DerivationPath = (props: {
     name: string;
     path: string;
     provider: Accessor<EIP6963ProviderInfo>;
@@ -86,25 +81,22 @@ const DerivationPath = ({
                 await connectHardware(
                     notify,
                     connectProvider,
-                    provider,
+                    props.provider,
                     providers,
-                    path,
-                    setLoading,
+                    props.path,
+                    props.setLoading,
                 );
             }}>
             <hr />
             <div class="provider-modal-entry">
-                <h4>{name}</h4>
-                <span>{path}</span>
+                <h4>{props.name}</h4>
+                <span>{props.path}</span>
             </div>
         </div>
     );
 };
 
-const CustomPath = ({
-    provider,
-    setLoading,
-}: {
+const CustomPath = (props: {
     provider: Accessor<EIP6963ProviderInfo>;
     setLoading: Setter<boolean>;
 }) => {
@@ -122,7 +114,7 @@ const CustomPath = ({
         <div>
             <div
                 class="provider-modal-entry"
-                style={"cursor: default; padding-top: 0;"}>
+                style={{ cursor: "default", "padding-top": "0" }}>
                 <h4>Custom</h4>
                 <input
                     type="text"
@@ -137,20 +129,20 @@ const CustomPath = ({
 
             <div
                 class="provider-modal-entry"
-                style={"cursor: default; padding-top: 0;"}>
+                style={{ cursor: "default", "padding-top": "0" }}>
                 <button
                     class="btn"
-                    style={"margin-top: 0;"}
+                    style={{ "margin-top": "0" }}
                     disabled={path() === undefined || path() === ""}
                     onClick={async () => {
                         setHardwareDerivationPath(path());
                         await connectHardware(
                             notify,
                             connectProvider,
-                            provider,
+                            props.provider,
                             providers,
                             path(),
-                            setLoading,
+                            props.setLoading,
                         );
                     }}>
                     {t("submit_derivation_path")}
@@ -160,11 +152,7 @@ const CustomPath = ({
     );
 };
 
-const HardwareDerivationPaths = ({
-    show,
-    setShow,
-    provider,
-}: {
+const HardwareDerivationPaths = (props: {
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
     provider: Accessor<EIP6963ProviderInfo>;
@@ -199,11 +187,11 @@ const HardwareDerivationPaths = ({
     return (
         <div
             class="frame assets-select"
-            onClick={() => setShow(false)}
-            style={show() ? "display: block;" : "display: none;"}>
+            onClick={() => props.setShow(false)}
+            style={props.show() ? "display: block;" : "display: none;"}>
             <div onClick={(e) => e.stopPropagation()}>
                 <h2>{t("select_derivation_path")}</h2>
-                <span class="close" onClick={() => setShow(false)}>
+                <span class="close" onClick={() => props.setShow(false)}>
                     <IoClose />
                 </span>
                 <hr class="spacer" />
@@ -216,13 +204,16 @@ const HardwareDerivationPaths = ({
                             <DerivationPath
                                 name={name}
                                 path={path}
-                                provider={provider}
+                                provider={props.provider}
                                 setLoading={setLoading}
                             />
                         )}
                     </For>
-                    <hr style={"margin-top: 0;"} />
-                    <CustomPath provider={provider} setLoading={setLoading} />
+                    <hr style={{ "margin-top": "0" }} />
+                    <CustomPath
+                        provider={props.provider}
+                        setLoading={setLoading}
+                    />
                 </Show>
             </div>
         </div>

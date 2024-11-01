@@ -264,7 +264,7 @@ export const getPartialRefundSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(
+    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(
         `/v2/swap/${
             type === SwapType.Submarine ? "submarine" : "chain"
         }/${id}/refund`,
@@ -288,12 +288,15 @@ export const getPartialReverseClaimSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(`/v2/swap/reverse/${id}/claim`, {
-        index,
-        preimage: preimage.toString("hex"),
-        pubNonce: pubNonce.toString("hex"),
-        transaction: transaction.toHex(),
-    });
+    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(
+        `/v2/swap/reverse/${id}/claim`,
+        {
+            index,
+            preimage: preimage.toString("hex"),
+            pubNonce: pubNonce.toString("hex"),
+            transaction: transaction.toHex(),
+        },
+    );
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         signature: Buffer.from(res.partialSignature, "hex"),
@@ -301,7 +304,11 @@ export const getPartialReverseClaimSignature = async (
 };
 
 export const getSubmarineClaimDetails = async (id: string) => {
-    const res = await fetcher(`/v2/swap/submarine/${id}/claim`);
+    const res = await fetcher<{
+        pubNonce: string;
+        preimage: string;
+        transactionHash: string;
+    }>(`/v2/swap/submarine/${id}/claim`);
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         preimage: Buffer.from(res.preimage, "hex"),
@@ -367,7 +374,7 @@ export const getLockupTransaction = async (
                 timeoutEta?: number;
             }>(`/v2/swap/submarine/${id}/transaction`);
 
-        case SwapType.Chain:
+        case SwapType.Chain: {
             const res = await getChainSwapTransactions(id);
             return {
                 id: res.userLock.transaction.id,
@@ -375,6 +382,7 @@ export const getLockupTransaction = async (
                 timeoutEta: res.userLock.timeout.eta,
                 timeoutBlockHeight: res.userLock.timeout.blockHeight,
             };
+        }
 
         default:
             throw `cannot get lockup transaction for swap type ${type}`;
@@ -433,7 +441,7 @@ export const getChainSwapNewQuote = (id: string) =>
     fetcher<{ amount: number }>(`/v2/swap/chain/${id}/quote`);
 
 export const acceptChainSwapNewQuote = (id: string, amount: number) =>
-    fetcher<{}>(`/v2/swap/chain/${id}/quote`, { amount });
+    fetcher<object>(`/v2/swap/chain/${id}/quote`, { amount });
 
 export {
     Pairs,

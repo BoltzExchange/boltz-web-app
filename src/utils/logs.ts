@@ -24,7 +24,7 @@ export const parseDate = (date: string): Date => {
 
 export const deleteOldLogs = async (logsForage: LocalForage) => {
     const currentDate = new Date();
-    await logsForage.iterate<string[], any>((_, date) => {
+    await logsForage.iterate<string[], unknown>((_, date) => {
         const logDate = parseDate(date);
 
         // Delete logs older than logDeletionTime
@@ -40,9 +40,9 @@ export const deleteOldLogs = async (logsForage: LocalForage) => {
     });
 };
 
-export const formatLogLine = (message: any[]) =>
+export const formatLogLine = (message: unknown[]) =>
     message
-        .map((entry: any) => {
+        .map((entry: unknown) => {
             if (entry instanceof Error) {
                 return entry;
             }
@@ -66,7 +66,7 @@ export const injectLogWriter = (logsForage: LocalForage) => {
             loggerName,
         );
 
-        return (...message: any[]) => {
+        return (...message: unknown[]) => {
             rawLogMethod(...message);
 
             const currentDate = getDate();

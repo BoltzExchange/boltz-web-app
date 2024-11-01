@@ -28,6 +28,7 @@ import { createMusig, tweakMusig } from "./taproot/musig";
 
 type ContractGetter = () => BaseContract;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const validateContract = async (getEtherSwap: ContractGetter) => {
     /*
     const code = await (await getEtherSwap()).getDeployedCode();
@@ -154,7 +155,7 @@ const validateReverse = async (
 const validateSubmarine = async (
     swap: SubmarineSwap,
     getEtherSwap: ContractGetter,
-    buffer: any,
+    buffer: typeof BufferBrowser.Buffer,
 ) => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
@@ -285,7 +286,7 @@ const validateChainSwap = async (
 export const validateResponse = async (
     swap: SomeSwap,
     getEtherSwap: ContractGetter,
-    buffer: any = BufferBrowser,
+    buffer: typeof BufferBrowser.Buffer = BufferBrowser as never,
 ): Promise<boolean> => {
     try {
         switch (swap.type) {
@@ -321,7 +322,7 @@ export const validateResponse = async (
 export const validateInvoice = (inputValue: string) => {
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
-        // set receive/send when invoice differs from the amounts
+        // set receive/send when the invoice differs from the amounts
         if (isInputInvoice) {
             const decoded = decodeInvoice(inputValue);
             if (decoded.satoshis === 0) {

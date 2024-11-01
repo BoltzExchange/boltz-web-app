@@ -1,4 +1,4 @@
-export const checkResponse = <T = any>(response: Response): Promise<T> => {
+export const checkResponse = <T = unknown>(response: Response): Promise<T> => {
     if (!response.ok) {
         return Promise.reject(response);
     }

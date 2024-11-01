@@ -116,6 +116,8 @@ const InvoiceInput = () => {
                     if (inv.satoshis !== amount) {
                         setInvoice("");
                     }
+
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (e) {
                     return;
                 }
@@ -135,7 +137,8 @@ const InvoiceInput = () => {
             name="invoice"
             value={invoice()}
             autocomplete="off"
-            placeholder={t("create_and_paste")}></textarea>
+            placeholder={t("create_and_paste")}
+        />
     );
 };
 

@@ -64,6 +64,8 @@ export const decodeInvoice = (
                 (tag) => tag.tagName === "payment_hash",
             ).data as string,
         };
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         try {
             const decoded = new Invoice(invoice);
@@ -74,6 +76,8 @@ export const decodeInvoice = (
 
             decoded.free();
             return res;
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
             throw new Error("invalid_invoice");
         }
@@ -224,13 +228,14 @@ const isValidBech32 = (data: string) => {
     try {
         bech32.decodeToBytes(data);
         return true;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         return false;
     }
 };
 
 const emailRegex =
-    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 export const isLnurl = (data: string) => {
     data = data.toLowerCase().replace(invoicePrefix, "");
@@ -244,6 +249,8 @@ export const isBolt12Offer = (offer: string) => {
     try {
         new Offer(offer);
         return true;
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         return false;
     }

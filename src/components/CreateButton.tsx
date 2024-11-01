@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
-import { createEffect, createMemo, createSignal, on } from "solid-js";
+import { createEffect, createSignal, on } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -80,7 +80,7 @@ export const CreateButton = () => {
         );
     };
 
-    createMemo(() => {
+    createEffect(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
     });
 
@@ -232,12 +232,13 @@ export const CreateButton = () => {
                     setInvoice(res.invoice);
                     setBolt12Offer(undefined);
                 } catch (e) {
-                    if (typeof e.json === "function") {
-                        e = (await e.json()).error;
-                    }
+                    const err: unknown =
+                        typeof e.json === "function"
+                            ? (await e.json()).error
+                            : e;
 
-                    notify("error", formatError(e));
-                    log.warn("Fetching invoice from bol12 failed", e);
+                    notify("error", formatError(err));
+                    log.warn("Fetching invoice from bol12 failed", err);
                     return;
                 }
             }

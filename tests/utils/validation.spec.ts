@@ -11,7 +11,7 @@ describe("validate responses", () => {
         const getDeployedCode = jest.fn().mockResolvedValue(code);
         return jest.fn(() => ({
             getDeployedCode,
-        })) as any;
+        })) as unknown as () => Contract;
     };
 
     beforeAll(async () => {

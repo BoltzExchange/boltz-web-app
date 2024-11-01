@@ -53,7 +53,7 @@ describe("CopyButton", () => {
 
     test("should copy from a function", async () => {
         const textToCopy = "50000";
-        const [signal, _] = createSignal(textToCopy);
+        const [signal] = createSignal(textToCopy);
 
         const {
             container: { firstChild: button },

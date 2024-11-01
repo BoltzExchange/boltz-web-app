@@ -219,7 +219,10 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             cooperative,
         );
     } else {
-        const redeemScript = Buffer.from((swap as any).redeemScript, "hex");
+        const redeemScript = Buffer.from(
+            (swap as unknown as { redeemScript: string }).redeemScript,
+            "hex",
+        );
         log.debug("redeemScript", redeemScript);
         const swapOutput = detectSwap(redeemScript, lockupTransaction);
         log.debug("swapOutput", swapOutput);

@@ -2,6 +2,8 @@ import log from "loglevel";
 
 import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 describe("WebLN", () => {
     beforeEach(() => {
         log.error = jest.fn();
@@ -22,7 +24,6 @@ describe("WebLN", () => {
     });
 
     test("should call WebLN callback if enable call succeeds", async () => {
-        // @ts-ignore
         window.webln = {
             enable: jest.fn().mockResolvedValue(undefined),
         } as any;
@@ -30,9 +31,7 @@ describe("WebLN", () => {
 
         expect(await enableWebln(cb));
 
-        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledTimes(1);
-        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledWith();
 
         expect(cb).toHaveBeenCalledTimes(1);
@@ -40,7 +39,6 @@ describe("WebLN", () => {
     });
 
     test("should not call WebLN callback if enable call fails", async () => {
-        // @ts-ignore
         window.webln = {
             enable: jest.fn().mockRejectedValue("unauthorized"),
         } as any;
@@ -48,9 +46,7 @@ describe("WebLN", () => {
 
         expect(await enableWebln(cb));
 
-        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledTimes(1);
-        // @ts-ignore
         expect(window.webln.enable).toHaveBeenCalledWith();
 
         expect(cb).toHaveBeenCalledTimes(0);

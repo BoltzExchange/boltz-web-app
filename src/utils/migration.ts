@@ -4,6 +4,7 @@ import { createSignal } from "solid-js";
 
 import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { SomeSwap } from "./swapCreator";
 
 export const latestStorageVersion = 1;
 
@@ -11,6 +12,7 @@ const storageVersionKey = "version";
 
 const migrateSwapsFromLocalStorage = async (swapsForage: LocalForage) => {
     const [localStorageSwaps, setLocalStorageSwaps] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal([], {
             // Because arrays are the same object when changed,
             // we have to override the equality checker
@@ -31,7 +33,9 @@ const migrateSwapsFromLocalStorage = async (swapsForage: LocalForage) => {
     return migratedSwapCount;
 };
 
-export const migrateSwapToChainSwapFormat = (swap: any): any => {
+export const migrateSwapToChainSwapFormat = (
+    swap: Record<string, unknown>,
+): SomeSwap => {
     if (swap.reverse) {
         return {
             ...swap,
@@ -39,7 +43,7 @@ export const migrateSwapToChainSwapFormat = (swap: any): any => {
             type: SwapType.Reverse,
             assetReceive: swap.asset,
             claimPrivateKey: swap.privateKey,
-        };
+        } as SomeSwap;
     } else {
         return {
             ...swap,
@@ -47,7 +51,7 @@ export const migrateSwapToChainSwapFormat = (swap: any): any => {
             assetSend: swap.asset,
             type: SwapType.Submarine,
             refundPrivateKey: swap.privateKey,
-        };
+        } as SomeSwap;
     }
 };
 
@@ -55,7 +59,7 @@ const migrateStorageToChainSwaps = async (swapsForage: LocalForage) => {
     const swaps = await swapsForage.keys();
 
     for (const swapId of swaps) {
-        const swap = await swapsForage.getItem<any>(swapId);
+        const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
         await swapsForage.setItem(swapId, migrateSwapToChainSwapFormat(swap));
     }
 
@@ -87,13 +91,16 @@ const migrateLocalForage = async (
     }
 };
 
-export const migrateBackupFile = (version: number, swaps: any[]): any[] => {
+export const migrateBackupFile = (
+    version: number,
+    swaps: Record<string, unknown>[],
+): SomeSwap[] => {
     switch (version) {
         case latestStorageVersion:
             log.debug(
                 `Backup file already at latest version: ${latestStorageVersion}`,
             );
-            return swaps;
+            return swaps as SomeSwap[];
 
         case 0: {
             log.debug(

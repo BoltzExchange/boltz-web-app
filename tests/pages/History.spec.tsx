@@ -1,6 +1,7 @@
 import { SwapType } from "../../src/consts/Enums";
 import { Errors, validateBackupFile } from "../../src/pages/History";
 import { latestStorageVersion } from "../../src/utils/migration";
+import { SomeSwap } from "../../src/utils/swapCreator";
 
 describe("History", () => {
     test.each`
@@ -25,7 +26,7 @@ describe("History", () => {
 
     test("should validate single swap refund files", () => {
         const file = { id: "asdf", type: SwapType.Chain };
-        expect(validateBackupFile(file as any)).toEqual({
+        expect(validateBackupFile(file as SomeSwap)).toEqual({
             version: latestStorageVersion,
             swaps: [file],
         });

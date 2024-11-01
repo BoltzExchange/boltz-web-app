@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createMemo, on, onMount } from "solid-js";
+import { Show, createEffect, on, onMount } from "solid-js";
 
 import AddressInput from "../components/AddressInput";
 import Asset from "../components/Asset";
@@ -31,8 +31,8 @@ import { isMobile } from "../utils/helper";
 import ErrorWasm from "./ErrorWasm";
 
 const Create = () => {
-    let receiveAmountRef: HTMLInputElement | undefined = undefined;
-    let sendAmountRef: HTMLInputElement | undefined = undefined;
+    let receiveAmountRef: HTMLInputElement | undefined;
+    let sendAmountRef: HTMLInputElement | undefined;
 
     const {
         separator,
@@ -141,7 +141,7 @@ const Create = () => {
         }
         const hasDot = input.value.includes(".") || input.value.includes(",");
         const regex =
-            denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\.|\,/;
+            denomination() == "sat" || hasDot ? /[0-9]/ : /[0-9]|\.|,/;
         if (!regex.test(keycode)) {
             evt.stopPropagation();
             evt.preventDefault();
@@ -267,7 +267,7 @@ const Create = () => {
         ref?.focus();
     });
 
-    createMemo(() => {
+    createEffect(() => {
         const rAmount = Number(receiveAmount());
         if (rAmount > 0) {
             setReceiveAmountFormatted(
@@ -354,8 +354,8 @@ const Create = () => {
                             id="sendAmount"
                             data-testid="sendAmount"
                             value={sendAmountFormatted()}
-                            onpaste={(e) => validatePaste(e)}
-                            onkeypress={(e) => validateInput(e)}
+                            onPaste={(e) => validatePaste(e)}
+                            onKeyPress={(e) => validateInput(e)}
                             onInput={(e) => changeSendAmount(e)}
                         />
                     </div>
@@ -377,8 +377,8 @@ const Create = () => {
                             id="receiveAmount"
                             data-testid="receiveAmount"
                             value={receiveAmountFormatted()}
-                            onpaste={(e) => validatePaste(e)}
-                            onkeypress={(e) => validateInput(e)}
+                            onPaste={(e) => validatePaste(e)}
+                            onKeyPress={(e) => validateInput(e)}
                             onInput={(e) => changeReceiveAmount(e)}
                         />
                     </div>

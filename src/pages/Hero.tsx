@@ -54,7 +54,7 @@ export const Hero = () => {
             <div
                 id="create-overlay"
                 class={hideHero() ? "" : "glow"}
-                onclick={() => setHideHero(true)}>
+                onClick={() => setHideHero(true)}>
                 <Create />
             </div>
             <Show when={!hideHero()}>
@@ -62,7 +62,7 @@ export const Hero = () => {
                     {t("headline")}
                     <small>{t("subline")}</small>
                 </h1>
-                <span class="btn btn-inline" onclick={() => navigate("swap")}>
+                <span class="btn btn-inline" onClick={() => navigate("swap")}>
                     {t("start_swapping")}
                 </span>
                 <div class="hero-boxes">
@@ -120,25 +120,29 @@ export const Hero = () => {
                         <a
                             href="https://corelightning.org/"
                             target="_blank"
-                            class="cln"></a>
+                            class="cln"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://breez.technology/"
                             target="_blank"
-                            class="breez"></a>
+                            class="breez"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://lnbits.com/"
                             target="_blank"
-                            class="lnbits"></a>
+                            class="lnbits"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://www.ridethelightning.info/"
                             target="_blank"
-                            class="rtl"></a>
+                            class="rtl"
+                        />
                     </div>
                     <div>
                         <a
@@ -152,55 +156,64 @@ export const Hero = () => {
                         <a
                             href="https://fuji.money/"
                             target="_blank"
-                            class="fuji"></a>
+                            class="fuji"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://aquawallet.io/"
                             target="_blank"
-                            class="aqua"></a>
+                            class="aqua"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://vulpem.com/marina.html"
                             target="_blank"
-                            class="marina"></a>
+                            class="marina"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://geyser.fund/"
                             target="_blank"
-                            class="geyser"></a>
+                            class="geyser"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://www.bullbitcoin.com/"
                             target="_blank"
-                            class="bull-bitcoin"></a>
+                            class="bull-bitcoin"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://blitz-wallet.com/"
                             target="_blank"
-                            class="blitz"></a>
+                            class="blitz"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://helm-wallet.com/"
                             target="_blank"
-                            class="helm"></a>
+                            class="helm"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://bancolibre.com/"
                             target="_blank"
-                            class="bancoLibre"></a>
+                            class="bancoLibre"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://stashpay.me"
                             target="_blank"
-                            class="stashPay"></a>
+                            class="stashPay"
+                        />
                     </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
@@ -209,19 +222,22 @@ export const Hero = () => {
                         <a
                             href="https://blockstream.com/"
                             target="_blank"
-                            class="blockstream"></a>
+                            class="blockstream"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://diamondhands.technology/"
                             target="_blank"
-                            class="diamondhands"></a>
+                            class="diamondhands"
+                        />
                     </div>
                     <div>
                         <a
                             href="https://vulpem.com/"
                             target="_blank"
-                            class="vulpem"></a>
+                            class="vulpem"
+                        />
                     </div>
                 </div>
             </Show>

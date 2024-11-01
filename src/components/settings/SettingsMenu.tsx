@@ -1,6 +1,6 @@
 import { IoClose } from "solid-icons/io";
-import { JSXElement } from "solid-js";
-import { Show } from "solid-js/web";
+import type { JSXElement } from "solid-js";
+import { Show } from "solid-js";
 
 import { config } from "../../config";
 import { useGlobalContext } from "../../context/Global";
@@ -14,22 +14,18 @@ import RecklessModeSetting from "./RecklessModeSetting";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
 
-const Entry = ({
-    label,
-    tooltipLabel,
-    settingElement,
-}: {
+const Entry = (props: {
     label: DictKey;
-    tooltipLabel: string;
+    tooltipLabel: DictKey;
     settingElement: JSXElement;
 }) => {
     const { t } = useGlobalContext();
     return (
         <span class="setting">
-            <label>{t(label)}: </label>
-            <Tooltip label={tooltipLabel} />
-            <div class="spacer"></div>
-            {settingElement}
+            <label>{t(props.label)}: </label>
+            <Tooltip label={props.tooltipLabel} />
+            <div class="spacer" />
+            {props.settingElement}
         </span>
     );
 };

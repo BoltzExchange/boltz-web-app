@@ -11,7 +11,7 @@ import {
     swapStatusSuccess,
 } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
+import { SwapStatusTransaction, usePayContext } from "../context/Pay";
 import {
     getChainSwapTransactions,
     getReverseTransaction,
@@ -29,6 +29,9 @@ import {
 type SwapStatus = {
     id: string;
     status: string;
+
+    failureReason?: string;
+    transaction: SwapStatusTransaction;
 };
 
 const reconnectInterval = 5_000;
@@ -37,15 +40,18 @@ class BoltzWebSocket {
     private readonly swapClaimLock = new Lock();
 
     private ws?: WebSocket;
-    private reconnectTimeout?: any;
+    private reconnectTimeout?: ReturnType<typeof setTimeout>;
     private isClosed: boolean = false;
 
     constructor(
         private readonly url: string,
         private readonly wsFallback: string | undefined,
         private readonly relevantIds: Set<string>,
-        private readonly prepareSwap: (id: string, status: any) => void,
-        private readonly claimSwap: (id: string, status: any) => Promise<void>,
+        private readonly prepareSwap: (id: string, status: SwapStatus) => void,
+        private readonly claimSwap: (
+            id: string,
+            status: SwapStatus,
+        ) => Promise<void>,
     ) {}
 
     public connect = () => {
@@ -154,27 +160,27 @@ export const SwapChecker = () => {
 
     let ws: BoltzWebSocket | undefined = undefined;
 
-    const prepareSwap = async (swapId: string, data: any) => {
+    const prepareSwap = async (swapId: string, data: SwapStatus) => {
         const currentSwap = await getSwap(swapId);
         if (currentSwap === null) {
             log.warn(`prepareSwap: swap ${swapId} not found`);
             return;
         }
         if (swap() && swap().id === currentSwap.id) {
-            setSwapStatus(data.status);
+            setSwapStatus(data.status as string);
             if (data.transaction) {
                 setSwapStatusTransaction(data.transaction);
             }
             if (data.failureReason) {
-                setFailureReason(data.failureReason);
+                setFailureReason(data.failureReason as string);
             }
         }
         if (data.status) {
-            await updateSwapStatus(currentSwap.id, data.status);
+            await updateSwapStatus(currentSwap.id, data.status as string);
         }
     };
 
-    const claimSwap = async (swapId: string, data: any) => {
+    const claimSwap = async (swapId: string, data: SwapStatus) => {
         const currentSwap = await getSwap(swapId);
         if (currentSwap === null) {
             log.warn(`claimSwap: swap ${swapId} not found`);
@@ -207,7 +213,7 @@ export const SwapChecker = () => {
                     swapStatusPending.TransactionConfirmed,
                     swapStatusPending.TransactionMempool,
                     swapStatusSuccess.InvoiceSettled,
-                ].includes(data.status)) ||
+                ].includes(data.status as string)) ||
                 (currentSwap.type === SwapType.Chain &&
                     [
                         swapStatusSuccess.TransactionClaimed,
@@ -218,7 +224,7 @@ export const SwapChecker = () => {
             try {
                 const res = await claim(
                     currentSwap as ReverseSwap | ChainSwap,
-                    data.transaction,
+                    data.transaction as { hex: string },
                 );
                 const claimedSwap = (await getSwap(res.id)) as
                     | ReverseSwap

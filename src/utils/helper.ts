@@ -77,9 +77,9 @@ export const getPair = <
     return pairAssetReceive as T;
 };
 
-export const fetcher = async <T = any>(
+export const fetcher = async <T = unknown>(
     url: string,
-    params?: Record<string, any>,
+    params?: Record<string, unknown>,
 ): Promise<T> => {
     let opts = {};
     if (params) {
@@ -102,6 +102,8 @@ export const fetcher = async <T = any>(
 export const parsePrivateKey = (privateKey: string): ECPairInterface => {
     try {
         return ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         // When the private key is not HEX, we try to decode it as WIF
         return ECPair.fromWIF(privateKey);

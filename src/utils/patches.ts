@@ -1,8 +1,13 @@
 import { Buffer } from "buffer";
 
 // liquidjs-lib node buffer patch for writeBigUInt64BE
-// @ts-ignore
-Uint8Array.prototype.writeBigUInt64BE = function (int64: any, offset: any) {
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+Uint8Array.prototype.writeBigUInt64BE = function (
+    int64: number,
+    offset: number | undefined,
+) {
     if (typeof int64 !== "number") {
         int64 = Number(int64);
     }
@@ -23,7 +28,8 @@ Uint8Array.prototype.writeBigUInt64BE = function (int64: any, offset: any) {
     }
 };
 
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 Buffer.isBuffer = function (b) {
     return (
         b != null &&

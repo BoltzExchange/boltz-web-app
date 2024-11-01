@@ -1,5 +1,6 @@
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
+import { EnvelopingRequest } from "./types/TypedRequestData";
 
 export type Metadata = {
     signature?: string;
@@ -7,7 +8,7 @@ export type Metadata = {
     relayHubAddress: string;
 };
 
-const sendPostRequest = (url: string, body: any) =>
+const sendPostRequest = (url: string, body: unknown) =>
     fetch(url, {
         method: "POST",
         headers: {
@@ -39,7 +40,7 @@ export const getChainInfo = (): Promise<{
 }> => fetch(`${config.assets[RBTC].rifRelay}/chain-info`).then(handleResponse);
 
 export const estimate = (
-    relay: Record<string, any>,
+    relay: EnvelopingRequest,
     metadata: Metadata,
 ): Promise<{
     gasPrice: string;
@@ -54,7 +55,7 @@ export const estimate = (
     }).then(handleResponse);
 
 export const relay = (
-    relay: Record<string, any>,
+    relay: EnvelopingRequest,
     metadata: Metadata,
 ): Promise<{
     txHash: string;

@@ -78,7 +78,11 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
                 script,
                 blindingKey: decoded.blindingKey,
             };
-        } catch (e) {}
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            /* empty */
+        }
     }
 
     return {
@@ -91,6 +95,8 @@ export const isConfidentialAddress = (addr: string): boolean => {
         const address = getAddress(LBTC);
         (address as typeof LiquidAddress).fromConfidential(addr);
         return true;
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         return false;
     }
@@ -105,6 +111,8 @@ const probeUserInputOption = (asset: string, input: string): boolean => {
             try {
                 decodeAddress(asset, input);
                 return true;
+
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (e) {
                 return false;
             }
@@ -199,7 +207,7 @@ const getConstructRefundTransaction = (
             feePerVbyte,
             (fee) =>
                 fn(
-                    refundDetails as any[],
+                    refundDetails as never[],
                     outputScript,
                     timeoutBlockHeight,
                     addOneSatBuffer ? fee + 1 : fee,

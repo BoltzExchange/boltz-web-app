@@ -7,18 +7,18 @@ import "../style/swaplist.scss";
 import { LogRefundData } from "../utils/contractLogs";
 import { cropString } from "../utils/helper";
 
-const AssetIcon = ({ asset }: { asset: AssetType }) => (
+const AssetIcon = (props: { asset: AssetType }) => (
     <span class="swaplist-asset swaplist-asset-single">
-        <span data-asset={asset} />
+        <span data-asset={props.asset} />
     </span>
 );
 
-const SwapListLogs = ({ swaps }: { swaps: Accessor<LogRefundData[]> }) => {
+const SwapListLogs = (props: { swaps: Accessor<LogRefundData[]> }) => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
 
     const sortedSwaps = createMemo(() => {
-        return swaps().sort((a, b) => {
+        return props.swaps().sort((a, b) => {
             return a.blockNumber - b.blockNumber;
         });
     });

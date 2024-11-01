@@ -1,3 +1,5 @@
+import { Show } from "solid-js";
+
 import LockupEvm from "../components/LockupEvm";
 import PayOnchain from "../components/PayOnchain";
 import { RBTC } from "../consts/Assets";
@@ -9,26 +11,26 @@ const InvoiceSet = () => {
     const { swap } = usePayContext();
     const submarine = swap() as SubmarineSwap;
 
-    if (submarine.assetSend === RBTC) {
-        return (
-            <LockupEvm
-                swapId={submarine.id}
-                signerAddress={submarine.signer}
-                amount={submarine.expectedAmount}
-                claimAddress={submarine.claimAddress}
-                preimageHash={decodeInvoice(submarine.invoice).preimageHash}
-                timeoutBlockHeight={submarine.timeoutBlockHeight}
-            />
-        );
-    }
-
     return (
-        <PayOnchain
-            asset={getRelevantAssetForSwap(submarine)}
-            expectedAmount={submarine.expectedAmount}
-            address={submarine.address}
-            bip21={submarine.bip21}
-        />
+        <Show
+            when={submarine.assetSend !== RBTC}
+            fallback={
+                <LockupEvm
+                    swapId={submarine.id}
+                    signerAddress={submarine.signer}
+                    amount={submarine.expectedAmount}
+                    claimAddress={submarine.claimAddress}
+                    preimageHash={decodeInvoice(submarine.invoice).preimageHash}
+                    timeoutBlockHeight={submarine.timeoutBlockHeight}
+                />
+            }>
+            <PayOnchain
+                asset={getRelevantAssetForSwap(submarine)}
+                expectedAmount={submarine.expectedAmount}
+                address={submarine.address}
+                bip21={submarine.bip21}
+            />
+        </Show>
     );
 };
 

@@ -1,5 +1,6 @@
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import {
+    BytesLike,
     Contract,
     JsonRpcProvider,
     Result,
@@ -135,7 +136,12 @@ async function* scanLogsForPossibleRefunds(
 
 const parseLockupEvent = (
     etherSwap: EtherSwap,
-    event: any,
+    event: {
+        data: BytesLike;
+        blockNumber: number;
+        transactionHash: string;
+        topics: readonly string[];
+    },
 ): {
     data: LogRefundData;
     decoded: Result;

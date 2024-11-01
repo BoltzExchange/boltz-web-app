@@ -1,32 +1,41 @@
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
-import { Accessor, Show, createSignal } from "solid-js";
+import {
+    Accessor,
+    Show,
+    createEffect,
+    createSignal,
+    mergeProps,
+} from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import type { DictKey } from "../i18n/i18n";
 import { clipboard } from "../utils/helper";
 
-const CopyButton = ({
-    data,
-    label,
-    btnClass = "btn",
-}: {
+const CopyButton = (props: {
     label: DictKey;
     data: string | Accessor<string>;
     btnClass?: string;
 }) => {
     const { t } = useGlobalContext();
 
-    const [buttonClass, setButtonClass] = createSignal<string>(btnClass);
+    const merged = mergeProps({ btnClass: "btn" }, props);
+
+    const [buttonClass, setButtonClass] = createSignal<string>("");
     const [buttonActive, setButtonActive] = createSignal<boolean>(false);
 
+    createEffect(() => {
+        setButtonClass(merged.btnClass);
+    });
+
     const onClick = () => {
-        const copyData = typeof data === "string" ? data : data();
+        const copyData =
+            typeof merged.data === "string" ? merged.data : merged.data();
         clipboard(copyData.replaceAll(" ", ""));
-        setButtonClass(`${btnClass} btn-active`);
+        setButtonClass(`${merged.btnClass} btn-active`);
         setButtonActive(true);
         setTimeout(() => {
-            setButtonClass(btnClass);
+            setButtonClass(merged.btnClass);
             setButtonActive(false);
         }, 600);
     };
@@ -38,7 +47,7 @@ const CopyButton = ({
                 fallback={<BiRegularCopy size={21} />}>
                 <IoCheckmark size={21} />
             </Show>
-            {t(label)}
+            {t(merged.label)}
         </span>
     );
 };

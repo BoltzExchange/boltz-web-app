@@ -1,5 +1,5 @@
 import { IoClose } from "solid-icons/io";
-import { createEffect } from "solid-js";
+import { For, createEffect } from "solid-js";
 
 import { config } from "../config";
 import { LN } from "../consts/Assets";
@@ -79,16 +79,18 @@ const SelectAsset = () => {
                 <IoClose />
             </span>
             <hr />
-            {assets.map((asset) => (
-                <div
-                    class={`asset-select asset-${asset}`}
-                    data-selected={isSelected(asset)}
-                    data-testid={`select-${asset}`}
-                    onClick={() => changeAsset(asset)}>
-                    <span class="icon"></span>
-                    <span class="asset-text"></span>
-                </div>
-            ))}
+            <For each={assets}>
+                {(asset) => (
+                    <div
+                        class={`asset-select asset-${asset}`}
+                        data-selected={isSelected(asset)}
+                        data-testid={`select-${asset}`}
+                        onClick={() => changeAsset(asset)}>
+                        <span class="icon" />
+                        <span class="asset-text" />
+                    </div>
+                )}
+            </For>
         </div>
     );
 };

@@ -4,6 +4,7 @@ import { OutputType } from "boltz-core";
 import { BTC, RBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import TransactionLockupFailed from "../../src/status/TransactionLockupFailed";
+import { SomeSwap } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
 jest.mock("../../src/utils/boltzClient", () => {
@@ -36,7 +37,10 @@ describe("TransactionLockupFailed", () => {
                     wrapper: contextWrapper,
                 },
             );
-            payContext.setSwap({ assetReceive: BTC, version: type } as any);
+            payContext.setSwap({
+                assetReceive: BTC,
+                version: type,
+            } as SomeSwap);
 
             await expect(
                 screen.findByText(i18n.en.refund_explainer),
@@ -59,7 +63,7 @@ describe("TransactionLockupFailed", () => {
         payContext.setSwap({
             assetReceive: BTC,
             version: OutputType.Taproot,
-        } as any);
+        } as SomeSwap);
 
         await expect(
             screen.findByText(i18n.en.refund),
@@ -78,7 +82,7 @@ describe("TransactionLockupFailed", () => {
                 wrapper: contextWrapper,
             },
         );
-        payContext.setSwap({ assetReceive: RBTC } as any);
+        payContext.setSwap({ assetReceive: RBTC } as SomeSwap);
 
         await expect(
             screen.findByText(i18n.en.refund),

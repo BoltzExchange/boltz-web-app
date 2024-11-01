@@ -26,10 +26,11 @@ describe("PayOnchain", () => {
             },
         );
 
-        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         navigator.clipboard = {
             writeText: jest.fn(),
-        } as any;
+        } as unknown;
 
         const buttons = (await screen.findByTestId(
             "pay-onchain-buttons",
