@@ -18,11 +18,11 @@ const ContractTransaction = ({
 }: {
     onClick: () => Promise<any>;
     children?: any;
-    address: string;
+    showHr?: boolean;
     buttonText: string;
     promptText?: string;
-    showHr?: boolean;
     waitingText?: string;
+    address: { address: string; derivationPath?: string };
 }) => {
     const { notify } = useGlobalContext();
     const { signer, getContracts } = useWeb3Signer();
@@ -38,14 +38,23 @@ const ContractTransaction = ({
         setSignerNetwork(Number(network?.chainId));
     });
 
+    const allowAnyAddress =
+        address === undefined || address.address === undefined;
+
     return (
         <Show
             when={
                 signer() !== undefined &&
-                (address === signer().address || address === undefined)
+                (allowAnyAddress || address.address === signer().address)
             }
             fallback={
-                <Show when={address !== undefined} fallback={<ConnectWallet />}>
+                <Show
+                    when={!allowAnyAddress}
+                    fallback={
+                        <ConnectWallet
+                            derivationPath={address.derivationPath}
+                        />
+                    }>
                     <ConnectAddress address={address} />
                 </Show>
             }>
