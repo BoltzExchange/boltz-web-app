@@ -28,6 +28,13 @@ export default defineConfig({
             transformMixedEsModules: true,
         },
     },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                api: "modern-compiler",
+            },
+        },
+    },
     define: {
         __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
         __GIT_COMMIT__: JSON.stringify(commitHash),
