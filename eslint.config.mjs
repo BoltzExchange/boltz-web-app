@@ -10,6 +10,7 @@ export default [
     {
         ignores: [
             "dist",
+            "regtest",
             "coverage",
             "node_modules",
             "dnssec-prover",
@@ -25,6 +26,36 @@ export default [
     {
         rules: {
             "no-async-promise-executor": "off",
+        },
+    },
+    {
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        {
+                            message: "It is supposed to be lazy loaded",
+                            group: ["*/lazy/**"],
+                        },
+                        {
+                            message: "It is a heavy dependency",
+                            group: [
+                                "@trezor/connect-web",
+                                "@ledgerhq/hw-app-eth",
+                                "@ledgerhq/hw-transport",
+                                "@ledgerhq/hw-transport-webhid",
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
+        files: ["*/lazy/**", "*/utils/hardware/*"],
+        rules: {
+            "no-restricted-imports": "off",
         },
     },
 ];

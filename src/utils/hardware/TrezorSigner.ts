@@ -1,5 +1,5 @@
 import type { Address, Unsuccessful } from "@trezor/connect-web";
-import TrezorConnect from "@trezor/connect-web";
+import type TrezorConnect from "@trezor/connect-web";
 import type {
     Response,
     SuccessWithDevice,
@@ -15,12 +15,14 @@ import log from "loglevel";
 
 import { config } from "../../config";
 import { EIP1193Provider } from "../../consts/Types";
+import Loader from "../../lazy/Loader";
 import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly provider: JsonRpcProvider;
+    private readonly modules: Loader<typeof TrezorConnect>;
 
     private initialized = false;
     private derivationPath!: string;
@@ -30,6 +32,9 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
             config.assets["RBTC"]?.network?.rpcUrls[0],
         );
         this.setDerivationPath(derivationPaths.Ethereum);
+        this.modules = new Loader("Trezor", async () => {
+            return (await import("@trezor/connect-web")).default;
+        });
     }
 
     public getDerivationPath = () => {
@@ -50,8 +55,9 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
                 await this.initialize();
 
+                const connect = await this.modules.get();
                 const addresses = this.handleError<Address>(
-                    await TrezorConnect.ethereumGetAddress({
+                    await connect.ethereumGetAddress({
                         showOnTrezor: false,
                         path: this.derivationPath,
                     } as any),
@@ -67,7 +73,8 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
                 const txParams = request.params[0] as TransactionLike;
 
-                const [nonce, network, feeData] = await Promise.all([
+                const [connect, nonce, network, feeData] = await Promise.all([
+                    this.modules.get(),
                     this.provider.getTransactionCount(txParams.from),
                     this.provider.getNetwork(),
                     this.provider.getFeeData(),
@@ -82,8 +89,9 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     gasPrice: feeData.gasPrice.toString(16),
                     value: BigInt(txParams.value || 0).toString(16),
                 };
+
                 const signature = this.handleError(
-                    await TrezorConnect.ethereumSignTransaction({
+                    await connect.ethereumSignTransaction({
                         transaction: trezorTx,
                         path: this.derivationPath,
                     } as unknown as any),
@@ -116,8 +124,9 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                 };
                 delete types["EIP712Domain"];
 
+                const connect = await this.modules.get();
                 const signature = this.handleError(
-                    await TrezorConnect.ethereumSignTypedData({
+                    await connect.ethereumSignTypedData({
                         data: message,
                         metamask_v4_compat: true,
                         path: this.derivationPath,
@@ -148,7 +157,8 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         }
 
         try {
-            await TrezorConnect.init({
+            const connect = await this.modules.get();
+            await connect.init({
                 lazyLoad: true,
                 manifest: {
                     email: "hi@bol.tz",
