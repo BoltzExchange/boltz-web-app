@@ -10,50 +10,73 @@ import {
     createSignal,
 } from "solid-js";
 
+import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { EIP6963ProviderInfo, useWeb3Signer } from "../context/Web3";
+import { useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
-
-const connect = async (
-    notify: (type: string, message: string) => void,
-    connectProvider: (rdns: string) => Promise<void>,
-    provider: EIP6963ProviderInfo,
-) => {
-    try {
-        await connectProvider(provider.rdns);
-    } catch (e) {
-        log.error(
-            `Provider connect to ${provider.rdns} failed: ${formatError(e)}`,
-        );
-        notify("error", `Wallet connection failed: ${formatError(e)}`);
-    }
-};
+import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 
 const Modal = ({
     show,
     setShow,
+    derivationPath,
 }: {
+    derivationPath: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
 }) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider } = useWeb3Signer();
 
+    const [showDerivationPaths, setShowDerivationPaths] =
+        createSignal<boolean>(false);
+    const [hardwareProvider, setHardwareProvider] =
+        createSignal<EIP6963ProviderInfo>(undefined);
+
     const Provider = ({ provider }: { provider: EIP6963ProviderInfo }) => {
         return (
             <div
                 class="provider-modal-entry-wrapper"
-                onClick={() => connect(notify, connectProvider, provider)}>
+                onClick={async () => {
+                    if (provider.disabled) {
+                        notify("error", t("not_supported_in_browser"));
+                        return;
+                    }
+
+                    if (provider.isHardware) {
+                        setHardwareProvider(provider);
+                        setShowDerivationPaths(true);
+                        return;
+                    }
+
+                    await connect(
+                        notify,
+                        connectProvider,
+                        providers,
+                        provider,
+                        derivationPath,
+                    );
+                }}>
                 <hr />
-                <div class="provider-modal-entry">
-                    <img
-                        class="provider-modal-icon"
-                        src={provider.icon}
-                        alt={`${provider.name} icon`}
-                    />
+                <div
+                    class="provider-modal-entry"
+                    data-disabled={provider.disabled}
+                    title={
+                        provider.disabled
+                            ? t("not_supported_in_browser")
+                            : undefined
+                    }>
+                    <Show when={provider.icon !== undefined}>
+                        <img
+                            class="provider-modal-icon"
+                            src={provider.icon}
+                            alt={`${provider.name} icon`}
+                        />
+                    </Show>
+
                     <h4>{provider.name}</h4>
                 </div>
             </div>
@@ -62,7 +85,6 @@ const Modal = ({
 
     return (
         <div
-            id="settings-menu"
             class="frame assets-select"
             onClick={() => setShow(false)}
             style={show() ? "display: block;" : "display: none;"}>
@@ -81,11 +103,16 @@ const Modal = ({
                     {(item) => <Provider provider={item.info} />}
                 </For>
             </div>
+            <HardwareDerivationPaths
+                show={showDerivationPaths}
+                provider={hardwareProvider}
+                setShow={setShowDerivationPaths}
+            />
         </div>
     );
 };
 
-const ConnectModal = () => {
+const ConnectModal = ({ derivationPath }: { derivationPath: string }) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider } = useWeb3Signer();
 
@@ -103,13 +130,19 @@ const ConnectModal = () => {
                         connect(
                             notify,
                             connectProvider,
+                            providers,
                             Object.values(providers())[0].info,
+                            derivationPath,
                         ).then();
                     }
                 }}>
                 {t("connect_wallet")}
             </button>
-            <Modal show={show} setShow={setShow} />
+            <Modal
+                show={show}
+                setShow={setShow}
+                derivationPath={derivationPath}
+            />
         </>
     );
 };
@@ -148,7 +181,11 @@ const ShowAddress = ({
     );
 };
 
-export const ConnectAddress = ({ address }: { address: string }) => {
+export const ConnectAddress = ({
+    address,
+}: {
+    address: { address: string; derivationPath?: string };
+}) => {
     const { t, notify } = useGlobalContext();
     const { connectProviderForAddress } = useWeb3Signer();
 
@@ -157,14 +194,17 @@ export const ConnectAddress = ({ address }: { address: string }) => {
             class="btn"
             onClick={async () => {
                 try {
-                    await connectProviderForAddress(address);
+                    await connectProviderForAddress(
+                        address.address,
+                        address.derivationPath,
+                    );
                 } catch (e) {
                     log.error(
                         `Provider connect for address ${address} failed: ${formatError(e)}`,
                     );
                     notify(
                         "error",
-                        `Wallet connection failed: ${formatError(e)}`,
+                        t("wallet_connect_failed", { error: formatError(e) }),
                     );
                 }
             }}>
@@ -194,8 +234,10 @@ export const SwitchNetwork = () => {
 };
 
 const ConnectWallet = ({
+    derivationPath,
     addressOverride,
 }: {
+    derivationPath?: string;
     addressOverride?: Accessor<string | undefined>;
 }) => {
     const { t } = useGlobalContext();
@@ -230,7 +272,9 @@ const ConnectWallet = ({
                     {t("no_wallet")}
                 </button>
             }>
-            <Show when={address() !== undefined} fallback={<ConnectModal />}>
+            <Show
+                when={address() !== undefined}
+                fallback={<ConnectModal derivationPath={derivationPath} />}>
                 <Show when={networkValid()} fallback={<SwitchNetwork />}>
                     <ShowAddress
                         address={address}
