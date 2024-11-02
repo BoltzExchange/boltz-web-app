@@ -27,8 +27,8 @@ export default [
         languageOptions: {
             parserOptions: {
                 projectService: {
-                    allowDefaultProject: ["public/*.js", "*.mjs"],
                     defaultProject: "tsconfig.json",
+                    allowDefaultProject: ["public/*.js", "*.mjs"],
                 },
                 tsconfigRootDir: import.meta.dirname,
             },
@@ -49,6 +49,7 @@ export default [
                             message: "It is a heavy dependency",
                             group: [
                                 "boltz-bolt12",
+                                "@trezor/connect",
                                 "@trezor/connect-web",
                                 "@ledgerhq/hw-app-eth",
                                 "@ledgerhq/hw-transport",
@@ -62,7 +63,7 @@ export default [
         },
     },
     {
-        files: ["*/lazy/**", "*/utils/hardware/*"],
+        files: ["*/lazy/**"],
         rules: {
             "no-restricted-imports": "off",
         },
