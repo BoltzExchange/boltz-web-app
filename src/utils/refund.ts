@@ -24,7 +24,6 @@ import {
     getConstructRefundTransaction,
     getNetwork,
     getTransaction,
-    setup,
 } from "./compat";
 import { formatError } from "./errors";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
@@ -60,7 +59,7 @@ const refundTaproot = async <T extends TransactionInterface>(
 
     const swapTree = SwapTreeSerializer.deserializeSwapTree(lockupTree);
     const boltzPublicKey = Buffer.from(theirPublicKey, "hex");
-    const musig = createMusig(privateKey, boltzPublicKey);
+    const musig = await createMusig(privateKey, boltzPublicKey);
     const tweakedKey = tweakMusig(swap.assetSend, musig, swapTree.tree);
 
     const swapOutput = detectSwap(tweakedKey, lockupTx);
@@ -193,9 +192,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
     cooperative: boolean = true,
 ): Promise<T> => {
-    log.info(`refunding swap ${swap.id}: `, swap);
-
-    await setup();
+    log.info(`Refunding swap ${swap.id}: `, swap);
 
     const output = decodeAddress(swap.assetSend, refundAddress);
 

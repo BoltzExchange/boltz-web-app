@@ -16,7 +16,7 @@ import log from "loglevel";
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import { ChainSwapDetails } from "./boltzClient";
-import { decodeAddress, setup } from "./compat";
+import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
@@ -48,10 +48,9 @@ const validateAddress = async (
     blindingKey: string | undefined,
     buffer: BufferConstructor,
 ) => {
-    await setup();
     const tweakedKey = tweakMusig(
         chain,
-        createMusig(ourKeys, theirPublicKey),
+        await createMusig(ourKeys, theirPublicKey),
         tree.tree,
     );
 

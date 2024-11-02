@@ -53,6 +53,7 @@ export default [
                                 "@ledgerhq/hw-app-eth",
                                 "@ledgerhq/hw-transport",
                                 "@ledgerhq/hw-transport-webhid",
+                                "@vulpemventures/secp256k1-zkp",
                             ],
                         },
                     ],

@@ -3,7 +3,7 @@ import log from "loglevel";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
-import { decodeAddress, setup } from "../../src/utils/compat";
+import { decodeAddress } from "../../src/utils/compat";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
@@ -14,9 +14,8 @@ describe("validate responses", () => {
         })) as unknown as () => Contract;
     };
 
-    beforeAll(async () => {
+    beforeAll(() => {
         log.disableAll();
-        await setup();
     });
 
     describe("normal swap", () => {

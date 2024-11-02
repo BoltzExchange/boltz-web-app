@@ -1,4 +1,3 @@
-import zkp, { Secp256k1ZKP } from "@vulpemventures/secp256k1-zkp";
 import { Network, Transaction, address, networks } from "bitcoinjs-lib";
 import {
     ClaimDetails,
@@ -11,7 +10,6 @@ import {
 import {
     LiquidClaimDetails,
     LiquidRefundDetails,
-    init,
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
 } from "boltz-core/dist/lib/liquid";
@@ -27,6 +25,7 @@ import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
+import secp from "../lazy/secp";
 import { isInvoice, isLnurl } from "./invoice";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
@@ -35,20 +34,7 @@ type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
 
 type DecodedAddress = { script: Buffer; blindingKey?: Buffer };
 
-export let secp: Secp256k1ZKP;
-let confi: confidential.Confidential;
-
 const possibleUserInputTypes = [LN, LBTC, BTC];
-
-const setup = async () => {
-    if (confi !== undefined) {
-        return;
-    }
-
-    secp = await zkp();
-    init(secp);
-    confi = new confidential.Confidential(secp);
-};
 
 const getAddress = (asset: string): typeof address | typeof LiquidAddress => {
     if (asset === LBTC) {
@@ -219,10 +205,10 @@ const getConstructRefundTransaction = (
         );
 };
 
-const getOutputAmount = (
+const getOutputAmount = async (
     asset: string,
     output: TransactionOutput | LiquidTransactionOutputWithKey,
-): number => {
+): Promise<number> => {
     if (asset !== LBTC) {
         return (output as TransactionOutput).value;
     }
@@ -230,7 +216,8 @@ const getOutputAmount = (
     output = output as LiquidTransactionOutputWithKey;
 
     if (output.rangeProof?.length !== 0) {
-        const unblinded = confi.unblindOutputWithKey(
+        const { confidential } = await secp.get();
+        const unblinded = confidential.unblindOutputWithKey(
             output,
             output.blindingPrivateKey,
         );
@@ -241,7 +228,6 @@ const getOutputAmount = (
 };
 
 export {
-    setup,
     getAddress,
     getNetwork,
     decodeAddress,
