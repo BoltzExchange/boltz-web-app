@@ -2,7 +2,7 @@ module.exports = {
     preset: "solid-jest/preset/browser",
     setupFilesAfterEnv: ["<rootDir>/node_modules/@testing-library/jest-dom"],
     transformIgnorePatterns: [
-        "node_modules/(?!@solidjs|solid-icons|boltz-bolt12)",
+        "node_modules/(?!@solidjs|solid-icons|boltz-bolt12|seroval-plugins)",
     ],
     moduleNameMapper: {
         "^.+\\.svg": "<rootDir>/tests/mocks/SvgMock.tsx",
