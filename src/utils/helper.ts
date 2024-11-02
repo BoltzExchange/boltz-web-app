@@ -11,7 +11,6 @@ import {
     SubmarinePairTypeTaproot,
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
-import { formatError } from "./errors";
 import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 
 export const isIos = () =>
@@ -95,7 +94,7 @@ export const fetcher = async <T = unknown>(
     const apiUrl = getApiUrl() + url;
     const response = await fetch(apiUrl, opts);
     if (!response.ok) {
-        return Promise.reject(new Error(formatError(response)));
+        return Promise.reject(response);
     }
     return (await response.json()) as T;
 };

@@ -78,6 +78,7 @@ export default [
             "@typescript-eslint/no-unsafe-assignment": "off",
             "@typescript-eslint/no-unsafe-member-access": "off",
             "@typescript-eslint/no-unsafe-enum-comparison": "off",
+            "@typescript-eslint/prefer-promise-reject-errors": "off",
             "@typescript-eslint/no-unnecessary-type-assertion": "off",
         },
     },
