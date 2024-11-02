@@ -63,6 +63,8 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     log.warn(
                         `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps.join(", ")}`,
                     );
+                    await this.transport.close();
+                    this.transport = undefined;
                     throw this.t("ledger_open_app_prompt");
                 }
 

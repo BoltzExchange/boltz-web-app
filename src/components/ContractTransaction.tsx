@@ -1,6 +1,6 @@
 import log from "loglevel";
-import { Show, createResource, createSignal } from "solid-js";
 import type { JSX } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
@@ -26,7 +26,8 @@ const ContractTransaction = (props: {
         undefined,
     );
 
-    createResource(async () => {
+    // eslint-disable-next-line solid/reactivity
+    createEffect(async () => {
         const network = await signer()?.provider?.getNetwork();
         setSignerNetwork(Number(network?.chainId));
     });

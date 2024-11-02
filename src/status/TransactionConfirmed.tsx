@@ -95,27 +95,29 @@ const TransactionConfirmed = () => {
                 when={swap().type !== SwapType.Chain}
                 fallback={
                     <ClaimEvm
-                        swapId={reverse.id}
-                        useRif={reverse.useRif}
-                        preimage={reverse.preimage}
-                        amount={reverse.onchainAmount}
-                        signerAddress={reverse.signer}
-                        refundAddress={reverse.refundAddress}
-                        derivationPath={reverse.derivationPath}
-                        timeoutBlockHeight={reverse.timeoutBlockHeight}
-                        assetReceive={reverse.assetReceive}
+                        swapId={chain.id}
+                        useRif={chain.useRif}
+                        preimage={chain.preimage}
+                        signerAddress={chain.signer}
+                        amount={chain.claimDetails.amount}
+                        derivationPath={chain.derivationPath}
+                        refundAddress={chain.claimDetails.refundAddress}
+                        timeoutBlockHeight={
+                            chain.claimDetails.timeoutBlockHeight
+                        }
+                        assetReceive={chain.assetReceive}
                     />
                 }>
                 <ClaimEvm
-                    swapId={chain.id}
-                    useRif={chain.useRif}
-                    preimage={chain.preimage}
-                    signerAddress={chain.signer}
-                    amount={chain.claimDetails.amount}
-                    derivationPath={chain.derivationPath}
-                    refundAddress={chain.claimDetails.refundAddress}
-                    timeoutBlockHeight={chain.claimDetails.timeoutBlockHeight}
-                    assetReceive={chain.assetReceive}
+                    swapId={reverse.id}
+                    useRif={reverse.useRif}
+                    preimage={reverse.preimage}
+                    amount={reverse.onchainAmount}
+                    signerAddress={reverse.signer}
+                    refundAddress={reverse.refundAddress}
+                    derivationPath={reverse.derivationPath}
+                    timeoutBlockHeight={reverse.timeoutBlockHeight}
+                    assetReceive={reverse.assetReceive}
                 />
             </Show>
         </Show>

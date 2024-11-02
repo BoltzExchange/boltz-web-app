@@ -5,8 +5,8 @@ import {
     For,
     Setter,
     Show,
+    createEffect,
     createMemo,
-    createResource,
     createSignal,
 } from "solid-js";
 
@@ -235,7 +235,8 @@ const ConnectWallet = (props: {
     const address = createMemo(() => signer()?.address);
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
-    createResource(async () => {
+    // eslint-disable-next-line solid/reactivity
+    createEffect(async () => {
         if (
             address() !== undefined &&
             Number((await signer()?.provider.getNetwork())?.chainId || -1) !==

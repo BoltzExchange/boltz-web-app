@@ -1,4 +1,4 @@
-import { Show, createResource, createSignal } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
@@ -37,7 +37,8 @@ const LockupEvm = (props: {
 
     const [signerBalance, setSignerBalance] = createSignal<bigint>(0n);
 
-    createResource(async () => {
+    // eslint-disable-next-line solid/reactivity
+    createEffect(async () => {
         if (signer() === undefined) {
             return;
         }
