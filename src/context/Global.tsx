@@ -208,7 +208,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const playNotificationSound = () => {
         const audio = new Audio("/notification.mp3");
         audio.volume = 0.3;
-        audio.play();
+        void audio.play();
     };
 
     const fetchPairs = async () => {
@@ -304,7 +304,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         rdnsForage.getItem<string>(address.toLowerCase());
 
     setI18n(detectLanguage(i18nConfigured(), i18nUrl(), setI18nUrl));
-    detectWebLNProvider().then((state: boolean) => setWebln(state));
+    void detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
     // check referral
@@ -343,9 +343,11 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     );
 
     // i18n
-    createEffect(() => setI18n(i18nConfigured() || i18nUrl()));
-    const dictLocale = createMemo(() =>
-        flatten(dict[i18n() || config.defaultLanguage]),
+    createEffect(() => {
+        setI18n(i18nConfigured() || i18nUrl());
+    });
+    const dictLocale = createMemo(
+        () => flatten(dict[i18n() || config.defaultLanguage]) as never,
     );
 
     // eslint-disable-next-line solid/reactivity

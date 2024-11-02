@@ -3,7 +3,14 @@ import { OutputType } from "boltz-core";
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import { Accessor, Setter, Show, createSignal, onMount } from "solid-js";
+import {
+    Accessor,
+    Setter,
+    Show,
+    createResource,
+    createSignal,
+    onMount,
+} from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
 import RefundEta from "../components/RefundEta";
@@ -22,6 +29,7 @@ import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ContractTransaction from "./ContractTransaction";
+import LoadingSpinner from "./LoadingSpinner";
 
 export const RefundEvm = (props: {
     swapId?: string;
@@ -165,7 +173,7 @@ const RefundButton = (props: {
             // save refundTx into swaps json and set it to the current swap
             // only if the swap exist in localstorage, else it is a refund json
             // so we save it into the signal
-            const currentSwap = (await getSwap(res.id)) as SubmarineSwap;
+            const currentSwap = await getSwap(res.id);
             if (currentSwap !== null) {
                 currentSwap.refundTx = res.refundTx;
                 await setSwapStorage(currentSwap);
@@ -221,6 +229,11 @@ const RefundButton = (props: {
         }
     });
 
+    const [preimageHash] = createResource(async () => {
+        return (await decodeInvoice((props.swap() as SubmarineSwap).invoice))
+            .preimageHash;
+    });
+
     return (
         <Show
             when={
@@ -257,21 +270,24 @@ const RefundButton = (props: {
                                 .toString("hex")}
                         />
                     }>
-                    <RefundEvm
-                        swapId={props.swap().id}
-                        signerAddress={props.swap().signer}
-                        claimAddress={props.swap().claimAddress}
-                        derivationPath={props.swap().derivationPath}
-                        amount={(props.swap() as SubmarineSwap).expectedAmount}
-                        timeoutBlockHeight={
-                            (props.swap() as SubmarineSwap).timeoutBlockHeight
-                        }
-                        preimageHash={
-                            decodeInvoice(
-                                (props.swap() as SubmarineSwap).invoice,
-                            ).preimageHash
-                        }
-                    />
+                    <Show
+                        when={!preimageHash.loading}
+                        fallback={<LoadingSpinner />}>
+                        <RefundEvm
+                            swapId={props.swap().id}
+                            signerAddress={props.swap().signer}
+                            claimAddress={props.swap().claimAddress}
+                            derivationPath={props.swap().derivationPath}
+                            amount={
+                                (props.swap() as SubmarineSwap).expectedAmount
+                            }
+                            timeoutBlockHeight={
+                                (props.swap() as SubmarineSwap)
+                                    .timeoutBlockHeight
+                            }
+                            preimageHash={preimageHash()}
+                        />
+                    </Show>
                 </Show>
             }>
             <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>

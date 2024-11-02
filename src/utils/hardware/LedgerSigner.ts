@@ -77,7 +77,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                 log.debug(`Ledger has app open: ${openApp}`);
                 if (!LedgerSigner.supportedApps.includes(openApp)) {
                     log.warn(
-                        `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps}`,
+                        `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps.join(", ")}`,
                     );
                     throw this.t("ledger_open_app_prompt");
                 }
@@ -159,7 +159,10 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             }
         }
 
-        return this.provider.send(request.method, request.params);
+        return (await this.provider.send(
+            request.method,
+            request.params,
+        )) as never;
     };
 
     public on = () => {};
@@ -171,7 +174,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         version: string;
         flags: number | Buffer;
     }> => {
-        const r = await this.transport!.send(0xb0, 0x01, 0x00, 0x00);
+        const r = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
         let i = 0;
         const format = r[i++];
 

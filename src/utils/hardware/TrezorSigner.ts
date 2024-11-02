@@ -18,7 +18,7 @@ import { EIP1193Provider } from "../../consts/Types";
 import Loader from "../../lazy/Loader";
 import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
-/* eslint-disable  @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly provider: JsonRpcProvider;
@@ -144,7 +144,10 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
             }
         }
 
-        return this.provider.send(request.method, request.params);
+        return (await this.provider.send(
+            request.method,
+            request.params,
+        )) as never;
     };
 
     public on = () => {};
@@ -182,7 +185,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         res: Awaited<Response<T>>,
     ): SuccessWithDevice<T> => {
         if (res.success) {
-            return res as SuccessWithDevice<T>;
+            return res;
         }
 
         throw (res as Unsuccessful).payload.error;

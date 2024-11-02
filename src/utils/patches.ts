@@ -20,11 +20,11 @@ Uint8Array.prototype.writeBigUInt64BE = function (
     if (!offset) {
         this.writeUInt32BE(big, 0);
         this.writeUInt32BE(low, 4);
-        return this;
+        return this as never;
     } else {
         this.writeUInt32BE(big, offset);
         this.writeUInt32BE(low, offset + 4);
-        return this;
+        return this as never;
     }
 };
 

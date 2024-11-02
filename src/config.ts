@@ -72,7 +72,7 @@ export const chooseUrl = (url?: Url) =>
 
 export const setConfig = (data: Config) => {
     config = { ...defaults, ...data };
-    log.setLevel(config.loglevel!);
+    log.setLevel(config.loglevel);
 };
 
 export { config };

@@ -8,6 +8,31 @@ export type Metadata = {
     relayHubAddress: string;
 };
 
+type ChainInfo = {
+    relayWorkerAddress: string;
+    feesReceiver: string;
+    relayManagerAddress: string;
+    relayHubAddress: string;
+    minGasPrice: string;
+    chainId: string;
+    networkId: string;
+    ready: boolean;
+    version: string;
+};
+
+type EstimationResponse = {
+    gasPrice: string;
+    estimation: string;
+    requiredTokenAmount: string;
+    requiredNativeAmount: string;
+    exchangeRate: string;
+};
+
+type RelayResponse = {
+    txHash: string;
+    signedTx: string;
+};
+
 const sendPostRequest = (url: string, body: unknown) =>
     fetch(url, {
         method: "POST",
@@ -18,50 +43,34 @@ const sendPostRequest = (url: string, body: unknown) =>
         body: JSON.stringify(body),
     });
 
-const handleResponse = async (res: Response) => {
+const handleResponse = async <T>(res: Response): Promise<T> => {
     const json = await res.json();
     if ("error" in json) {
         throw json.error;
     }
 
-    return json;
+    return json as T;
 };
 
-export const getChainInfo = (): Promise<{
-    relayWorkerAddress: string;
-    feesReceiver: string;
-    relayManagerAddress: string;
-    relayHubAddress: string;
-    minGasPrice: string;
-    chainId: string;
-    networkId: string;
-    ready: boolean;
-    version: string;
-}> => fetch(`${config.assets[RBTC].rifRelay}/chain-info`).then(handleResponse);
+export const getChainInfo = (): Promise<ChainInfo> =>
+    fetch(`${config.assets[RBTC].rifRelay}/chain-info`).then(
+        handleResponse<ChainInfo>,
+    );
 
 export const estimate = (
     relay: EnvelopingRequest,
     metadata: Metadata,
-): Promise<{
-    gasPrice: string;
-    estimation: string;
-    requiredTokenAmount: string;
-    requiredNativeAmount: string;
-    exchangeRate: string;
-}> =>
+): Promise<EstimationResponse> =>
     sendPostRequest(`${config.assets[RBTC].rifRelay}/estimate`, {
         metadata,
         relayRequest: relay,
-    }).then(handleResponse);
+    }).then(handleResponse<EstimationResponse>);
 
 export const relay = (
     relay: EnvelopingRequest,
     metadata: Metadata,
-): Promise<{
-    txHash: string;
-    signedTx: string;
-}> =>
+): Promise<RelayResponse> =>
     sendPostRequest(`${config.assets[RBTC].rifRelay}/relay`, {
         metadata,
         relayRequest: relay,
-    }).then(handleResponse);
+    }).then(handleResponse<RelayResponse>);

@@ -118,18 +118,18 @@ const ConnectModal = (props: { derivationPath: string }) => {
         <>
             <button
                 class="btn"
-                onClick={() => {
+                onClick={async () => {
                     if (Object.keys(providers()).length > 1) {
                         setShow(true);
                     } else {
                         // Do not show the modal when there is only one option to select
-                        connect(
+                        await connect(
                             notify,
                             connectProvider,
                             providers,
                             Object.values(providers())[0].info,
                             props.derivationPath,
-                        ).then();
+                        );
                     }
                 }}>
                 {t("connect_wallet")}
@@ -191,7 +191,7 @@ export const ConnectAddress = (props: {
                     );
                 } catch (e) {
                     log.error(
-                        `Provider connect for address ${props.address} failed: ${formatError(e)}`,
+                        `Provider connect for address ${props.address.address} failed: ${formatError(e)}`,
                     );
                     notify(
                         "error",

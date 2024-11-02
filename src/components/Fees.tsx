@@ -109,7 +109,7 @@ const Fees = () => {
         }
     });
 
-    fetchPairs();
+    void fetchPairs();
 
     return (
         <div class="fees-dyn">

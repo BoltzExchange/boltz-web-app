@@ -243,7 +243,7 @@ describe("validate invoices", () => {
         ${"invalid_0_amount"} | ${"lnbcrt1pjkez94sp5zk8dj2zyp3sng3v4xkp4m85yuuk2tqh5jw5dvrhu4atu79yrejwspp5cgrj9s3rqz80jth0ehhm7mxxtkruualungad73w78u7l2nrmqzcqdq9dfhnzxqyjw5qcqp2rzjqfvckvedaaankysf067nfn3pnapxc5jgruymhjy2ef80crkraq7xwqqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqw4faj9q9p05m9jmrvvuumvaxdrr5ry40vp8me89ctcp3ex9ms5g5q3gkwegnqkzvzmmfdc6kepgyvqn6dssl87k2pc6rdv5pjxvwv8gqh2w9dc"}
     `("invalid invoice: $error", async ({ error, invoice }) => {
         try {
-            validateInvoice(invoice);
+            await validateInvoice(invoice);
         } catch (e) {
             expect(e.message).toEqual(error);
         }
@@ -252,14 +252,14 @@ describe("validate invoices", () => {
         invoice
         ${"lnbcrt10u1pjkepsqsp5lqav47x6j8e9flvg6fmghgut9rtlzxxnmud4n6v46xvvg79z0mdspp5xkeqqmhz7xws3yvmj9cm0tmz0wj0u7ntv2ecxstth2v7r4768qgqdq5g9kxy7fqd9h8vmmfvdjsxqr9mscqp2rzjqfvckvedaaankysf067nfn3pnapxc5jgruymhjy2ef80crkraq7xwqqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqla9upqr2v0pz8a59l4ztjxjmrz3m826mx7z77ttsw8jml7yde2qpgurfl7g5t30fmttfn807p9cltzddk4cs4h3xeesf4p44jdzd9hgq0kmh4a"}
     `("valid invoice", async ({ invoice }) => {
-        const sats = validateInvoice(invoice);
+        const sats = await validateInvoice(invoice);
         expect(sats).toBeGreaterThan(0);
     });
     test.each`
         invoice
         ${"lnbcrt111110p1pjejeznsp52ryrltrdpamsf77vplvwgugpphv6vep5qanxkm0t8asvnnrjrtnspp5gjw9yquvg97dhyl02x03x7ntyk89lutccjdzc72en7zksad2pjssdqvd45kc6tnv96qxqyjw5qcqp2rzjq203yew34yu5y7vfad2n27k5pnw735m46g92huev0rcqeadrvyup2qqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqhzpymzfgcvym7lkzszr7a036almdcl26h7kq76hcur5488etrr5jqr65g23phhgl4v3wsjrkwc0pwmtugtfmqq4dgcmetgxuzjxytgsq8ah759"}
     `("valid millisatoshis invoice", async ({ invoice }) => {
-        const sats = validateInvoice(invoice);
+        const sats = await validateInvoice(invoice);
         expect(sats).toEqual(12);
     });
 });
@@ -275,7 +275,7 @@ describe("validate onchain addresses", () => {
         ${LBTC} | ${"AzpoeCb1nyd1D3SWHCvDJsbYDPtA6ith4uGRYz9RdjHttsDG7HhCrshphLYtApYBtzxy6rsXYZeS9h6a"}
         ${LBTC} | ${"ert1q4k67l66z0nwgcsgzw20638cpm75d6tpl4f4vyrp76fnnutn0ulvqwe7ahr"}
         ${LBTC} | ${"el1qqdmeywy40z2aasvaydsnmgqqqcgk92cvd9p9h4mpeh2x83dy79mhltd4al45ylxu33qsyu5l4z0srhagm5krl2n2cgxra5n88chxle7ctnpml5s983jr"}
-    `("should validate $address", async ({ asset, address }) => {
+    `("should validate $address", ({ asset, address }) => {
         decodeAddress(asset, address);
     });
 

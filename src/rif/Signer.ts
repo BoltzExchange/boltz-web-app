@@ -88,7 +88,7 @@ export const relayClaimTransaction = async (
             feesReceiver: chainInfo.feesReceiver,
             callVerifier: config.assets[RBTC].contracts.deployVerifier,
             gasPrice: calculateGasPrice(
-                feeData.gasPrice!,
+                feeData.gasPrice,
                 chainInfo.minGasPrice,
             ).toString(),
         },

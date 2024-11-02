@@ -28,8 +28,10 @@ export const formatError = (message: unknown): string => {
 
         if (
             typeof message.toString === "function" &&
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             message.toString() !== "[object Object]"
         ) {
+            // eslint-disable-next-line @typescript-eslint/no-base-to-string
             return message.toString();
         }
     }

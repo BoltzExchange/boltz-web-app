@@ -1,10 +1,10 @@
 import { bech32, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
-import { Invoice, Offer } from "boltz-bolt12";
 import log from "loglevel";
 
 import { config } from "../config";
+import Bolt12 from "../lazy/bolt12";
 import { fetchBolt12Invoice } from "./boltzClient";
 import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";
@@ -34,8 +34,8 @@ const bolt11Prefixes = {
 
 const bip353Prefix = "₿";
 
-export const getExpiryEtaHours = (invoice: string): number => {
-    const decoded = decodeInvoice(invoice);
+export const getExpiryEtaHours = async (invoice: string): Promise<number> => {
+    const decoded = await decodeInvoice(invoice);
     const now = Date.now() / 1000;
     const delta = (decoded.expiry || 0) - now;
     if (delta < 0) {
@@ -48,9 +48,9 @@ export const getExpiryEtaHours = (invoice: string): number => {
     return eta;
 };
 
-export const decodeInvoice = (
+export const decodeInvoice = async (
     invoice: string,
-): { satoshis: number; preimageHash: string; expiry?: number } => {
+): Promise<{ satoshis: number; preimageHash: string; expiry?: number }> => {
     try {
         const decoded = bolt11.decode(invoice);
         const sats = BigNumber(decoded.millisatoshis || 0)
@@ -68,7 +68,8 @@ export const decodeInvoice = (
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         try {
-            const decoded = new Invoice(invoice);
+            const mod = await Bolt12.get();
+            const decoded = new mod.Invoice(invoice);
             const res = {
                 satoshis: Number(decoded.amount_msat / 1_000n),
                 preimageHash: Buffer.from(decoded.payment_hash).toString("hex"),
@@ -245,8 +246,9 @@ export const isLnurl = (data: string) => {
     );
 };
 
-export const isBolt12Offer = (offer: string) => {
+export const isBolt12Offer = async (offer: string) => {
     try {
+        const { Offer } = await Bolt12.get();
         new Offer(offer);
         return true;
 
@@ -256,7 +258,11 @@ export const isBolt12Offer = (offer: string) => {
     }
 };
 
-export const validateInvoiceForOffer = (offer: string, invoice: string) => {
+export const validateInvoiceForOffer = async (
+    offer: string,
+    invoice: string,
+) => {
+    const { Offer, Invoice } = await Bolt12.get();
     const of = new Offer(offer);
     const possibleSigners: Uint8Array[] = [];
 

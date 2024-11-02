@@ -1,3 +1,4 @@
+import log from "loglevel";
 import { IoClose } from "solid-icons/io";
 import { For, createEffect } from "solid-js";
 
@@ -48,7 +49,9 @@ const SelectAsset = () => {
             setAssetReceive(newAsset);
         }
 
-        fetchPairs();
+        void fetchPairs().catch((err) =>
+            log.error("Could not fetch pairs", err),
+        );
     };
 
     const isSelected = (asset: string) => {

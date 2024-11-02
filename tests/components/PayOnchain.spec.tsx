@@ -5,6 +5,8 @@ import { BTC } from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 describe("PayOnchain", () => {
     test("should copy amount reactively", async () => {
         const amount = 100_000;

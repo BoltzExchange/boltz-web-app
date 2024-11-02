@@ -5,7 +5,7 @@ import { SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 describe("SwapList", () => {
-    it("should sort correctly", async () => {
+    it("should sort correctly", () => {
         const swapsSorted: SomeSwap[] = [
             { id: "first", date: new Date().getTime() } as SomeSwap,
             { id: "second", date: 1454533445545 } as SomeSwap,

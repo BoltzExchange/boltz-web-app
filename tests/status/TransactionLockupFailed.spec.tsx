@@ -15,7 +15,7 @@ jest.mock("../../src/utils/boltzClient", () => {
         getLockupTransaction: jest.fn(() => {
             return { timeoutBlockHeight: 10, timeoutEta: 10 };
         }),
-    };
+    } as unknown;
 });
 
 describe("TransactionLockupFailed", () => {

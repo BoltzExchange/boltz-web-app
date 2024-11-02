@@ -145,10 +145,10 @@ const getNetwork = (
     network = network ?? config.network;
     if (asset === LBTC) {
         const liquidNet = network === "mainnet" ? "liquid" : network;
-        return LiquidNetworks[liquidNet];
+        return LiquidNetworks[liquidNet] as LiquidNetwork;
     } else {
         const bitcoinNet = network === "mainnet" ? "bitcoin" : network;
-        return networks[bitcoinNet];
+        return networks[bitcoinNet] as Network;
     }
 };
 

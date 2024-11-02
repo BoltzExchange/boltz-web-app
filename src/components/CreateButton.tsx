@@ -161,7 +161,7 @@ export const CreateButton = () => {
                     (() => {
                         return new Promise<string>(async (resolve, reject) => {
                             const timeout = setTimeout(
-                                () => reject(t("timeout")),
+                                () => reject(new Error(t("timeout"))),
                                 5_000,
                             );
 
@@ -176,7 +176,7 @@ export const CreateButton = () => {
                                     "Fetching invoice for LNURL failed:",
                                     e,
                                 );
-                                reject(e);
+                                reject(new Error(formatError(e)));
                             } finally {
                                 clearTimeout(timeout);
                             }
@@ -185,7 +185,7 @@ export const CreateButton = () => {
                     (() => {
                         return new Promise<string>(async (resolve, reject) => {
                             const timeout = setTimeout(
-                                () => reject(t("timeout")),
+                                () => reject(new Error(t("timeout"))),
                                 15_000,
                             );
 
@@ -200,7 +200,7 @@ export const CreateButton = () => {
                                     "Fetching invoice from BIP-353 failed:",
                                     e,
                                 );
-                                reject(e);
+                                reject(new Error(formatError(e)));
                             } finally {
                                 clearTimeout(timeout);
                             }
@@ -214,6 +214,7 @@ export const CreateButton = () => {
                 if (fetched !== undefined) {
                     setInvoice(fetched.value);
                     setLnurl("");
+                    setInvoiceValid(true);
                 } else {
                     // All failed, so we can safely cast the first one
                     notify(
@@ -231,6 +232,7 @@ export const CreateButton = () => {
                     );
                     setInvoice(res.invoice);
                     setBolt12Offer(undefined);
+                    setInvoiceValid(true);
                 } catch (e) {
                     const err: unknown =
                         typeof e.json === "function"

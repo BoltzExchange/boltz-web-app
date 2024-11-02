@@ -29,7 +29,7 @@ import "./style/index.scss";
 import "./utils/patches";
 
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
+    void navigator.serviceWorker
         .register("/service-worker.js", { scope: "/" })
         .then((reg) => {
             log.info(`Registration succeeded. Scope is ${reg.scope}`);

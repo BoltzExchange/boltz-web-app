@@ -2,7 +2,7 @@ import log from "loglevel";
 
 import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 
-/* eslint-disable  @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/unbound-method,@typescript-eslint/no-explicit-any */
 
 describe("WebLN", () => {
     beforeEach(() => {
@@ -19,6 +19,7 @@ describe("WebLN", () => {
     });
 
     test("should detect WebLN when provider is present after 200ms", async () => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         setTimeout(() => (window.webln = {} as any), 1);
         expect(await detectWebLNProvider()).toEqual(true);
     });

@@ -141,7 +141,7 @@ const Refund = () => {
         refundScanAbort = new AbortController();
 
         const generator = scanLogsForPossibleRefunds(
-            refundScanAbort!.signal,
+            refundScanAbort.signal,
             signer(),
             getEtherSwap(),
         );
@@ -173,7 +173,7 @@ const Refund = () => {
             );
         setRefundableSwaps(swapsToRefund);
 
-        (await getSwaps())
+        void (await getSwaps())
             .filter(refundSwapsSanityFilter)
             .filter(
                 (swap) =>

@@ -190,7 +190,7 @@ export const fetchBolt12Invoice = async (
             amount: amountSat,
         },
     );
-    validateInvoiceForOffer(offer, res.invoice);
+    await validateInvoiceForOffer(offer, res.invoice);
 
     return res;
 };

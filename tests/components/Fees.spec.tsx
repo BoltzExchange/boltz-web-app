@@ -14,7 +14,7 @@ import {
 import { pairs } from "../pairs";
 
 describe("Fees component", () => {
-    test("should render", async () => {
+    test("should render", () => {
         render(
             () => (
                 <>

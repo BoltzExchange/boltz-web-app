@@ -17,11 +17,11 @@ jest.mock("../../src/utils/boltzClient", () => {
         getLockupTransaction: jest.fn(() => {
             return { timeoutBlockHeight: 10, timeoutEta: 10 };
         }),
-    };
+    } as unknown;
 });
 
 describe("RefundButton", () => {
-    test("should render RefundButton", async () => {
+    test("should render RefundButton", () => {
         const [swap] = createSignal(null);
         render(() => <RefundButton swap={swap} />, {
             wrapper: contextWrapper,

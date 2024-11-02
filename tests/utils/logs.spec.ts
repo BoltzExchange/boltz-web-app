@@ -9,6 +9,8 @@ import {
     parseDate,
 } from "../../src/utils/logs";
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 describe("logs", () => {
     beforeEach(() => {
         jest.clearAllMocks();

@@ -5,6 +5,8 @@ import CopyButton from "../../src/components/CopyButton";
 import i18n from "../../src/i18n/i18n";
 import { contextWrapper } from "../helper";
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 const writeText = jest.fn();
 
 Object.defineProperty(navigator, "clipboard", {
@@ -34,7 +36,7 @@ describe("CopyButton", () => {
         expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
     });
 
-    test("should not copy spaces", async () => {
+    test("should not copy spaces", () => {
         const textToCopy = "50 000";
         const expectedCopy = "50000";
 
@@ -51,7 +53,7 @@ describe("CopyButton", () => {
         );
     });
 
-    test("should copy from a function", async () => {
+    test("should copy from a function", () => {
         const textToCopy = "50000";
         const [signal] = createSignal(textToCopy);
 

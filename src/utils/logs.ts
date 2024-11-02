@@ -36,7 +36,7 @@ export const deleteOldLogs = async (logsForage: LocalForage) => {
         }
 
         log.debug(`deleting logs of ${date}`);
-        logsForage.removeItem(date);
+        void logsForage.removeItem(date);
     });
 };
 
@@ -71,7 +71,7 @@ export const injectLogWriter = (logsForage: LocalForage) => {
 
             const currentDate = getDate();
 
-            logLock
+            void logLock
                 .acquire(async () => {
                     await logsForage.setItem(
                         currentDate,

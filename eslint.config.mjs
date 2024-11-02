@@ -21,8 +21,19 @@ export default [
         ],
     },
     pluginJs.configs.recommended,
-    ...tseslint.configs.recommended,
+    ...tseslint.configs.recommendedTypeChecked,
     solid.configs["flat/typescript"],
+    {
+        languageOptions: {
+            parserOptions: {
+                projectService: {
+                    allowDefaultProject: ["public/*.js", "*.mjs"],
+                    defaultProject: "tsconfig.json",
+                },
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
     {
         rules: {
             "no-async-promise-executor": "off",
@@ -35,12 +46,9 @@ export default [
                 {
                     patterns: [
                         {
-                            message: "It is supposed to be lazy loaded",
-                            group: ["*/lazy/**"],
-                        },
-                        {
                             message: "It is a heavy dependency",
                             group: [
+                                "boltz-bolt12",
                                 "@trezor/connect-web",
                                 "@ledgerhq/hw-app-eth",
                                 "@ledgerhq/hw-transport",
@@ -56,6 +64,21 @@ export default [
         files: ["*/lazy/**", "*/utils/hardware/*"],
         rules: {
             "no-restricted-imports": "off",
+        },
+    },
+    {
+        rules: {
+            "require-await": "error",
+            "@typescript-eslint/no-floating-promises": "error",
+
+            "@typescript-eslint/no-unsafe-call": "off",
+            "@typescript-eslint/only-throw-error": "off",
+            "@typescript-eslint/no-unsafe-argument": "off",
+            "@typescript-eslint/no-misused-promises": "off",
+            "@typescript-eslint/no-unsafe-assignment": "off",
+            "@typescript-eslint/no-unsafe-member-access": "off",
+            "@typescript-eslint/no-unsafe-enum-comparison": "off",
+            "@typescript-eslint/no-unnecessary-type-assertion": "off",
         },
     },
 ];

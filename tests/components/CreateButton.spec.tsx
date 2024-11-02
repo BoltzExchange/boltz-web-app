@@ -12,7 +12,7 @@ import {
 } from "../helper";
 
 describe("CreateButton", () => {
-    test("should render CreateButton", async () => {
+    test("should render CreateButton", () => {
         render(() => <CreateButton />, {
             wrapper: contextWrapper,
         });

@@ -17,6 +17,7 @@ import {
     getReverseTransaction,
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
+import { formatError } from "../utils/errors";
 import { getApiUrl } from "../utils/helper";
 import Lock from "../utils/lock";
 import {
@@ -59,7 +60,7 @@ class BoltzWebSocket {
         this.openWebSocket(`${this.url}/v2/ws`).catch(() => {
             if (this.wsFallback !== undefined) {
                 log.debug("Opening fallback WebSocket");
-                this.openWebSocket(this.wsFallback).then().catch();
+                void this.openWebSocket(this.wsFallback).then().catch();
             }
         });
     };
@@ -88,7 +89,7 @@ class BoltzWebSocket {
         );
     };
 
-    private openWebSocket = async (url: string) => {
+    private openWebSocket = (url: string) => {
         this.isClosed = false;
         clearTimeout(this.reconnectTimeout);
         this.ws?.close();
@@ -106,7 +107,7 @@ class BoltzWebSocket {
                 if (error.wasClean) {
                     resolve();
                 } else {
-                    reject(error);
+                    reject(new Error(formatError(error)));
                 }
             };
             this.ws.onmessage = async (msg) => {
@@ -167,16 +168,16 @@ export const SwapChecker = () => {
             return;
         }
         if (swap() && swap().id === currentSwap.id) {
-            setSwapStatus(data.status as string);
+            setSwapStatus(data.status);
             if (data.transaction) {
                 setSwapStatusTransaction(data.transaction);
             }
             if (data.failureReason) {
-                setFailureReason(data.failureReason as string);
+                setFailureReason(data.failureReason);
             }
         }
         if (data.status) {
-            await updateSwapStatus(currentSwap.id, data.status as string);
+            await updateSwapStatus(currentSwap.id, data.status);
         }
     };
 
@@ -213,7 +214,7 @@ export const SwapChecker = () => {
                     swapStatusPending.TransactionConfirmed,
                     swapStatusPending.TransactionMempool,
                     swapStatusSuccess.InvoiceSettled,
-                ].includes(data.status as string)) ||
+                ].includes(data.status)) ||
                 (currentSwap.type === SwapType.Chain &&
                     [
                         swapStatusSuccess.TransactionClaimed,
@@ -226,9 +227,7 @@ export const SwapChecker = () => {
                     currentSwap as ReverseSwap | ChainSwap,
                     data.transaction as { hex: string },
                 );
-                const claimedSwap = (await getSwap(res.id)) as
-                    | ReverseSwap
-                    | ChainSwap;
+                const claimedSwap = await getSwap(res.id);
                 claimedSwap.claimTx = res.claimTx;
                 await setSwapStorage(claimedSwap);
 
