@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import log from "loglevel";
-import { For, createEffect } from "solid-js";
+import { For, createResource } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
 import { useGlobalContext } from "../context/Global";
@@ -13,7 +13,7 @@ const RefundStep = () => {
     const { setSwap } = usePayContext();
     const { getSwap, t } = useGlobalContext();
 
-    createEffect(async () => {
+    createResource(async () => {
         const currentSwap = await getSwap(params.id);
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
@@ -39,7 +39,7 @@ const RefundStep = () => {
                     </For>
                 </ul>
                 <hr />
-                <p style="font-size: 46px; margin:0;">⚠️</p>
+                <p style={{ "font-size": "46px", margin: "0" }}>⚠️</p>
                 <h3>{t("backup_refund_skip")}</h3>
                 <hr />
                 <div class="btns btns-space-between">

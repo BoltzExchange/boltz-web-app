@@ -1,4 +1,5 @@
 import log from "loglevel";
+import type { JSX } from "solid-js";
 import { Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
@@ -7,17 +8,9 @@ import { formatError } from "../utils/errors";
 import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
 
-const ContractTransaction = ({
-    showHr,
-    onClick,
-    address,
-    children,
-    promptText,
-    buttonText,
-    waitingText,
-}: {
-    onClick: () => Promise<any>;
-    children?: any;
+const ContractTransaction = (props: {
+    onClick: () => Promise<unknown>;
+    children?: JSX.Element;
     showHr?: boolean;
     buttonText: string;
     promptText?: string;
@@ -33,29 +26,31 @@ const ContractTransaction = ({
         undefined,
     );
 
+    // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
         const network = await signer()?.provider?.getNetwork();
         setSignerNetwork(Number(network?.chainId));
     });
 
-    const allowAnyAddress =
-        address === undefined || address.address === undefined;
+    const allowAnyAddress = () =>
+        props.address === undefined || props.address.address === undefined;
 
     return (
         <Show
             when={
                 signer() !== undefined &&
-                (allowAnyAddress || address.address === signer().address)
+                (allowAnyAddress() ||
+                    props.address.address === signer().address)
             }
             fallback={
                 <Show
-                    when={!allowAnyAddress}
+                    when={!allowAnyAddress()}
                     fallback={
                         <ConnectWallet
-                            derivationPath={address.derivationPath}
+                            derivationPath={props.address.derivationPath}
                         />
                     }>
-                    <ConnectAddress address={address} />
+                    <ConnectAddress address={props.address} />
                 </Show>
             }>
             <Show
@@ -65,23 +60,25 @@ const ContractTransaction = ({
                     when={!txSent()}
                     fallback={
                         <>
-                            <Show when={waitingText}>
-                                <p>{waitingText}</p>
+                            <Show when={props.waitingText}>
+                                <p>{props.waitingText}</p>
                             </Show>
                             <LoadingSpinner />
                         </>
                     }>
-                    <Show when={promptText}>
-                        <p>{promptText}</p>
+                    <Show when={props.promptText}>
+                        <p>{props.promptText}</p>
                     </Show>
-                    <Show when={children !== undefined}>{children}</Show>
+                    <Show when={props.children !== undefined}>
+                        {props.children}
+                    </Show>
                     <button
                         class="btn"
                         disabled={clicked()}
                         onClick={async () => {
                             setClicked(true);
                             try {
-                                await onClick();
+                                await props.onClick();
                                 setTxSent(true);
                             } catch (e) {
                                 log.error(`EVM transaction failed`, e);
@@ -93,9 +90,9 @@ const ContractTransaction = ({
                                 setClicked(false);
                             }
                         }}>
-                        {buttonText}
+                        {props.buttonText}
                     </button>
-                    <Show when={showHr}>
+                    <Show when={props.showHr}>
                         <hr />
                     </Show>
                 </Show>

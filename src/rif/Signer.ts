@@ -26,7 +26,7 @@ const sign = async (signer: Signer, request: EnvelopingRequest) => {
     const data = getEnvelopingRequestDataV4Field({
         chainId: Number(chainId),
         envelopingRequest: request,
-        verifier: request.relayData.callForwarder,
+        verifier: request.relayData.callForwarder as string,
         requestTypes: isDeployRequest(request)
             ? deployRequestType
             : relayRequestType,
@@ -88,7 +88,7 @@ export const relayClaimTransaction = async (
             feesReceiver: chainInfo.feesReceiver,
             callVerifier: config.assets[RBTC].contracts.deployVerifier,
             gasPrice: calculateGasPrice(
-                feeData.gasPrice!,
+                feeData.gasPrice,
                 chainInfo.minGasPrice,
             ).toString(),
         },

@@ -24,55 +24,43 @@ const execCommand = async (command: string): Promise<string> => {
     }
 };
 
-export const getBitcoinAddress = async (): Promise<string> => {
-    return execCommand("bitcoin-cli-sim-client getnewaddress");
-};
+export const getBitcoinAddress = (): Promise<string> =>
+    execCommand("bitcoin-cli-sim-client getnewaddress");
 
-export const getLiquidAddress = async (): Promise<string> => {
-    return execCommand("elements-cli-sim-client getnewaddress");
-};
+export const getLiquidAddress = (): Promise<string> =>
+    execCommand("elements-cli-sim-client getnewaddress");
 
-export const bitcoinSendToAddress = async (
+export const bitcoinSendToAddress = (
     address: string,
     amount: string,
-): Promise<string> => {
-    return execCommand(
-        `bitcoin-cli-sim-client sendtoaddress "${address}" ${amount}`,
-    );
-};
+): Promise<string> =>
+    execCommand(`bitcoin-cli-sim-client sendtoaddress "${address}" ${amount}`);
 
-export const elementsSendToAddress = async (
+export const elementsSendToAddress = (
     address: string,
     amount: string | number,
-): Promise<string> => {
-    return execCommand(
-        `elements-cli-sim-client sendtoaddress "${address}" ${amount}`,
-    );
-};
+): Promise<string> =>
+    execCommand(`elements-cli-sim-client sendtoaddress "${address}" ${amount}`);
 
-export const generateBitcoinBlock = async (): Promise<string> => {
-    return execCommand("bitcoin-cli-sim-client -generate");
-};
+export const generateBitcoinBlock = (): Promise<string> =>
+    execCommand("bitcoin-cli-sim-client -generate");
 
-export const generateLiquidBlock = async (): Promise<string> => {
-    return execCommand("elements-cli-sim-client -generate");
-};
+export const generateLiquidBlock = (): Promise<string> =>
+    execCommand("elements-cli-sim-client -generate");
 
-export const getBitcoinWalletTx = async (txId: string): Promise<string> => {
-    return execCommand(`bitcoin-cli-sim-client gettransaction ${txId}`);
-};
+export const getBitcoinWalletTx = (txId: string): Promise<string> =>
+    execCommand(`bitcoin-cli-sim-client gettransaction ${txId}`);
 
-export const payInvoiceLnd = async (invoice: string): Promise<string> => {
-    return execCommand(`lncli-sim 1 payinvoice -f ${invoice}`);
-};
+export const payInvoiceLnd = (invoice: string): Promise<string> =>
+    execCommand(`lncli-sim 1 payinvoice -f ${invoice}`);
 
 export const generateInvoiceLnd = async (amount: number): Promise<string> => {
     return JSON.parse(
         await execCommand(`lncli-sim 1 addinvoice --amt ${amount}`),
-    ).payment_request;
+    ).payment_request as string;
 };
 
 export const getBolt12Offer = async (): Promise<string> => {
     return JSON.parse(await execCommand("lightning-cli-sim 1 offer any ''"))
-        .bolt12;
+        .bolt12 as string;
 };

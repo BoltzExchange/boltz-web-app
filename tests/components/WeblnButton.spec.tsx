@@ -6,7 +6,7 @@ import i18n from "../../src/i18n/i18n";
 import { TestComponent, contextWrapper, signals } from "../helper";
 
 describe("WeblnButton", () => {
-    test("should render WeblnButton", async () => {
+    test("should render WeblnButton", () => {
         render(() => <WeblnButton />, {
             wrapper: contextWrapper,
         });

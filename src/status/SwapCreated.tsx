@@ -1,4 +1,5 @@
 import { crypto } from "bitcoinjs-lib";
+import { Show } from "solid-js";
 
 import LockupEvm from "../components/LockupEvm";
 import PayInvoice from "../components/PayInvoice";
@@ -11,11 +12,28 @@ import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 const SwapCreated = () => {
     const { swap } = usePayContext();
 
-    if (swap().type === SwapType.Chain) {
-        const chain = swap() as ChainSwap;
+    const chain = swap() as ChainSwap;
+    const reverse = swap() as ReverseSwap;
 
-        if (chain.assetSend === RBTC) {
-            return (
+    return (
+        <Show
+            when={swap().type === SwapType.Chain}
+            fallback={
+                <PayInvoice
+                    sendAmount={reverse.sendAmount}
+                    invoice={reverse.invoice}
+                />
+            }>
+            <Show
+                when={chain.assetSend === RBTC}
+                fallback={
+                    <PayOnchain
+                        asset={chain.assetSend}
+                        expectedAmount={chain.lockupDetails.amount}
+                        address={chain.lockupDetails.lockupAddress}
+                        bip21={chain.lockupDetails.bip21}
+                    />
+                }>
                 <LockupEvm
                     swapId={chain.id}
                     signerAddress={chain.signer}
@@ -26,22 +44,8 @@ const SwapCreated = () => {
                         .sha256(Buffer.from(chain.preimage, "hex"))
                         .toString("hex")}
                 />
-            );
-        }
-
-        return (
-            <PayOnchain
-                asset={chain.assetSend}
-                expectedAmount={chain.lockupDetails.amount}
-                address={chain.lockupDetails.lockupAddress}
-                bip21={chain.lockupDetails.bip21}
-            />
-        );
-    }
-
-    const reverse = swap() as ReverseSwap;
-    return (
-        <PayInvoice sendAmount={reverse.sendAmount} invoice={reverse.invoice} />
+            </Show>
+        </Show>
     );
 };
 

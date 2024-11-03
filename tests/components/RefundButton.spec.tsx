@@ -5,6 +5,7 @@ import { createSignal } from "solid-js";
 import RefundButton from "../../src/components/RefundButton";
 import { BTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
+import { ChainSwap, SubmarineSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 jest.mock("../../src/utils/boltzClient", () => {
@@ -16,11 +17,11 @@ jest.mock("../../src/utils/boltzClient", () => {
         getLockupTransaction: jest.fn(() => {
             return { timeoutBlockHeight: 10, timeoutEta: 10 };
         }),
-    };
+    } as unknown;
 });
 
 describe("RefundButton", () => {
-    test("should render RefundButton", async () => {
+    test("should render RefundButton", () => {
         const [swap] = createSignal(null);
         render(() => <RefundButton swap={swap} />, {
             wrapper: contextWrapper,
@@ -28,14 +29,14 @@ describe("RefundButton", () => {
     });
 
     test("button should be active after pasting valid address", async () => {
-        const [swap] = createSignal({
+        const [swap] = createSignal<SubmarineSwap | ChainSwap>({
             version: OutputType.Taproot,
             id: "swap",
             assetSend: BTC,
             assetReceive: LN,
             type: SwapType.Submarine,
-        });
-        render(() => <RefundButton swap={swap as any} />, {
+        } as SubmarineSwap);
+        render(() => <RefundButton swap={swap} />, {
             wrapper: contextWrapper,
         });
         const input = (await screen.findByTestId(
@@ -57,7 +58,7 @@ describe("RefundButton", () => {
 
     test("button should be inactive after pasting the lock address", async () => {
         const lockupAddress = "2N4Q5FhU2497BryFfUgbqkAJE87aKHUhXMp";
-        const [swap] = createSignal({
+        const [swap] = createSignal<SubmarineSwap | ChainSwap>({
             version: 1,
             date: 1620000000,
             id: "swap",
@@ -69,8 +70,8 @@ describe("RefundButton", () => {
             address: lockupAddress,
             bip21: `bitcoin:${lockupAddress}?amount=0.0001`,
             swapTree: {},
-        });
-        render(() => <RefundButton swap={swap as any} />, {
+        } as SubmarineSwap);
+        render(() => <RefundButton swap={swap} />, {
             wrapper: contextWrapper,
         });
         const input = (await screen.findByTestId(
@@ -91,14 +92,14 @@ describe("RefundButton", () => {
     });
 
     test("button should be inactive after pasting an invalid address", async () => {
-        const [swap] = createSignal({
+        const [swap] = createSignal<SubmarineSwap | ChainSwap>({
             version: OutputType.Taproot,
             id: "swap",
             assetSend: BTC,
             assetReceive: LN,
             type: SwapType.Submarine,
-        });
-        render(() => <RefundButton swap={swap as any} />, {
+        } as SubmarineSwap);
+        render(() => <RefundButton swap={swap} />, {
             wrapper: contextWrapper,
         });
         const input = (await screen.findByTestId(

@@ -28,7 +28,7 @@ export const formatAmountDenomination = (
     fixed: boolean = false,
 ): string => {
     switch (denomination) {
-        case Denomination.Btc:
+        case Denomination.Btc: {
             const amountBig = amount.div(satFactor);
             let amountString = amountBig.toString();
             if (fixed) {
@@ -49,8 +49,9 @@ export const formatAmountDenomination = (
             }
 
             return amountString;
+        }
 
-        default:
+        default: {
             const chars = amount.toString().split("").reverse();
             return chars
                 .reduce(
@@ -62,6 +63,7 @@ export const formatAmountDenomination = (
                 .split("")
                 .reverse()
                 .join("");
+        }
     }
 };
 

@@ -12,16 +12,10 @@ import { clipboard, cropString, isMobile } from "../utils/helper";
 import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
 
-const PayInvoice = ({
-    sendAmount,
-    invoice,
-}: {
-    sendAmount: number;
-    invoice: string;
-}) => {
+const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
     const { t, denomination, separator, webln } = useGlobalContext();
     const payWeblnInvoice = async (pr: string) => {
-        enableWebln(async () => {
+        await enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);
             log.debug("webln payment result:", result);
         });
@@ -32,7 +26,7 @@ const PayInvoice = ({
             <h2 data-testid="pay-invoice-title">
                 {t("pay_invoice_to", {
                     amount: formatAmount(
-                        BigNumber(sendAmount),
+                        BigNumber(props.sendAmount),
                         denomination(),
                         separator(),
                     ),
@@ -41,14 +35,14 @@ const PayInvoice = ({
                 })}
             </h2>
             <hr />
-            <a href={invoicePrefix + invoice}>
-                <QrCode data={invoice} />
+            <a href={invoicePrefix + props.invoice}>
+                <QrCode data={props.invoice} />
             </a>
             <hr />
             <p
-                onclick={() => clipboard(invoice)}
+                onClick={() => clipboard(props.invoice)}
                 class="address-box break-word">
-                {cropString(invoice)}
+                {cropString(props.invoice)}
             </p>
             <hr />
             <Show when={isMobile()}>
@@ -58,17 +52,17 @@ const PayInvoice = ({
             <Show when={webln() && !isMobile()}>
                 <span
                     class="btn btn-light"
-                    onClick={() => payWeblnInvoice(invoice)}>
+                    onClick={() => payWeblnInvoice(props.invoice)}>
                     {t("pay_invoice_webln")}
                 </span>
             </Show>
             <Show when={isMobile()}>
-                <a href={invoicePrefix + invoice} class="btn btn-light">
+                <a href={invoicePrefix + props.invoice} class="btn btn-light">
                     {t("open_in_wallet")}
                 </a>
             </Show>
             <hr class="spacer" />
-            <CopyButton label="copy_invoice" data={invoice} />
+            <CopyButton label="copy_invoice" data={props.invoice} />
         </div>
     );
 };

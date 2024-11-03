@@ -2,10 +2,10 @@
 import "@fontsource/noto-mono";
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
-import { Route, Router } from "@solidjs/router";
+import { Route, RouteSectionProps, Router } from "@solidjs/router";
 import log from "loglevel";
-import { Match, Switch, createSignal, onMount } from "solid-js";
-import { Show, render } from "solid-js/web";
+import { Match, Show, Switch, createSignal, onMount } from "solid-js";
+import { render } from "solid-js/web";
 
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
@@ -29,7 +29,7 @@ import "./style/index.scss";
 import "./utils/patches";
 
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
+    void navigator.serviceWorker
         .register("/service-worker.js", { scope: "/" })
         .then((reg) => {
             log.info(`Registration succeeded. Scope is ${reg.scope}`);
@@ -40,7 +40,7 @@ const isEmbedded = () => {
     return useGlobalContext().embedded();
 };
 
-const App = (props: any) => {
+const App = (props: RouteSectionProps) => {
     const [configError, setConfigError] = createSignal<boolean>(null);
 
     onMount(async () => {

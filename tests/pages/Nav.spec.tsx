@@ -7,7 +7,7 @@ import { contextWrapper } from "../helper";
 describe("Nav", () => {
     test.each(["testnet", "regtest", "random"])(
         "should show network on network %s",
-        async (network) => {
+        (network) => {
             render(() => <Nav network={network} />, {
                 wrapper: contextWrapper,
             });
@@ -17,7 +17,7 @@ describe("Nav", () => {
         },
     );
 
-    test("should not show network on mainnet", async () => {
+    test("should not show network on mainnet", () => {
         const network = mainnetConfig.network;
 
         render(() => <Nav network={network} />, { wrapper: contextWrapper });

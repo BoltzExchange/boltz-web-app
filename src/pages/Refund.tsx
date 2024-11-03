@@ -1,7 +1,13 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import {
+    Show,
+    createResource,
+    createSignal,
+    onCleanup,
+    onMount,
+} from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
@@ -35,7 +41,10 @@ const Refund = () => {
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
-    const checkRefundJsonKeys = async (input: HTMLInputElement, json: any) => {
+    const checkRefundJsonKeys = async (
+        input: HTMLInputElement,
+        json: Record<string, string | object | number>,
+    ) => {
         log.debug("checking refund json", json);
 
         try {
@@ -112,7 +121,7 @@ const Refund = () => {
         }
     });
 
-    createEffect(async () => {
+    createResource(async () => {
         setLogRefundableSwaps([]);
 
         if (refundScanAbort !== undefined) {
@@ -132,7 +141,7 @@ const Refund = () => {
         refundScanAbort = new AbortController();
 
         const generator = scanLogsForPossibleRefunds(
-            refundScanAbort!.signal,
+            refundScanAbort.signal,
             signer(),
             getEtherSwap(),
         );
@@ -164,7 +173,7 @@ const Refund = () => {
             );
         setRefundableSwaps(swapsToRefund);
 
-        (await getSwaps())
+        void (await getSwaps())
             .filter(refundSwapsSanityFilter)
             .filter(
                 (swap) =>
@@ -172,6 +181,7 @@ const Refund = () => {
                     swapsToRefund.find((found) => found.id === swap.id) ===
                         undefined,
             )
+            // eslint-disable-next-line solid/reactivity
             .map(async (swap) => {
                 try {
                     const res = await getSwapStatus(swap.id);

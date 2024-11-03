@@ -1,8 +1,9 @@
 import log from "loglevel";
 import QRCode from "qrcode/lib/server";
-import { createSignal } from "solid-js";
+import { createResource, createSignal } from "solid-js";
 
 import "../style/qrcode.scss";
+import { formatError } from "../utils/errors";
 
 interface QrCodeProps {
     data: string;
@@ -12,16 +13,25 @@ interface QrCodeProps {
 export const Qrcode = (params: QrCodeProps) => {
     const [dataUrl, setDataUrl] = createSignal("");
 
-    QRCode.toDataURL(params.data, { width: 300 })
-        .then(setDataUrl)
-        .catch((err: Error) => {
-            log.error("qr code generation error", err);
-        });
+    createResource(async () => {
+        try {
+            setDataUrl(
+                await (QRCode.toDataURL(params.data, {
+                    width: 300,
+                }) as Promise<string>),
+            );
+        } catch (e) {
+            log.error(`QR code generation failed: ${formatError(e)}`);
+        }
+    });
 
     return (
-        <div data-asset={params.asset} id="qrcode" style="position: relative;">
+        <div
+            data-asset={params.asset}
+            id="qrcode"
+            style={{ position: "relative" }}>
             <img src={dataUrl()} alt="Payment QR Code" />
-            <span></span>
+            <span />
         </div>
     );
 };

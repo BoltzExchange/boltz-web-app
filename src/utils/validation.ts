@@ -16,7 +16,7 @@ import log from "loglevel";
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import { ChainSwapDetails } from "./boltzClient";
-import { decodeAddress, setup } from "./compat";
+import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import { ECPair, ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
@@ -28,7 +28,8 @@ import { createMusig, tweakMusig } from "./taproot/musig";
 
 type ContractGetter = () => BaseContract;
 
-const validateContract = async (getEtherSwap: ContractGetter) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const validateContract = (getEtherSwap: ContractGetter) => {
     /*
     const code = await (await getEtherSwap()).getDeployedCode();
     const codeMatches = code === EtherSwapBytecode.object;
@@ -47,10 +48,9 @@ const validateAddress = async (
     blindingKey: string | undefined,
     buffer: BufferConstructor,
 ) => {
-    await setup();
     const tweakedKey = tweakMusig(
         chain,
-        createMusig(ourKeys, theirPublicKey),
+        await createMusig(ourKeys, theirPublicKey),
         tree.tree,
     );
 
@@ -100,7 +100,7 @@ const validateReverse = async (
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
-    const invoiceData = decodeInvoice(swap.invoice);
+    const invoiceData = await decodeInvoice(swap.invoice);
 
     // Amounts
     if (
@@ -117,7 +117,7 @@ const validateReverse = async (
     }
 
     if (swap.assetReceive === RBTC) {
-        return await validateContract(getEtherSwap);
+        return validateContract(getEtherSwap);
     }
 
     // SwapTree
@@ -154,7 +154,7 @@ const validateReverse = async (
 const validateSubmarine = async (
     swap: SubmarineSwap,
     getEtherSwap: ContractGetter,
-    buffer: any,
+    buffer: typeof BufferBrowser.Buffer,
 ) => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
@@ -162,11 +162,11 @@ const validateSubmarine = async (
     }
 
     if (swap.assetSend === RBTC) {
-        return await validateContract(getEtherSwap);
+        return validateContract(getEtherSwap);
     }
 
     // SwapTree
-    const invoiceData = decodeInvoice(swap.invoice);
+    const invoiceData = await decodeInvoice(swap.invoice);
 
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
@@ -228,7 +228,7 @@ const validateChainSwap = async (
         }
 
         if (asset === RBTC) {
-            return await validateContract(getEtherSwap);
+            return validateContract(getEtherSwap);
         }
 
         const ourKeys = ECPair.fromPrivateKey(
@@ -285,26 +285,26 @@ const validateChainSwap = async (
 export const validateResponse = async (
     swap: SomeSwap,
     getEtherSwap: ContractGetter,
-    buffer: any = BufferBrowser,
+    buffer: typeof BufferBrowser.Buffer = BufferBrowser as never,
 ): Promise<boolean> => {
     try {
         switch (swap.type) {
             case SwapType.Submarine:
-                return validateSubmarine(
+                return await validateSubmarine(
                     swap as SubmarineSwap,
                     getEtherSwap,
                     buffer,
                 );
 
             case SwapType.Reverse:
-                return validateReverse(
+                return await validateReverse(
                     swap as ReverseSwap,
                     getEtherSwap,
                     buffer,
                 );
 
             case SwapType.Chain:
-                return validateChainSwap(
+                return await validateChainSwap(
                     swap as ChainSwap,
                     getEtherSwap,
                     buffer,
@@ -318,12 +318,12 @@ export const validateResponse = async (
     }
 };
 
-export const validateInvoice = (inputValue: string) => {
+export const validateInvoice = async (inputValue: string) => {
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
-        // set receive/send when invoice differs from the amounts
+        // set receive/send when the invoice differs from the amounts
         if (isInputInvoice) {
-            const decoded = decodeInvoice(inputValue);
+            const decoded = await decodeInvoice(inputValue);
             if (decoded.satoshis === 0) {
                 throw new Error("invalid_0_amount");
             }

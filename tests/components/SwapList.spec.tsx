@@ -1,16 +1,17 @@
 import { render } from "@solidjs/testing-library";
 
 import SwapList from "../../src/components/SwapList";
+import { SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 describe("SwapList", () => {
-    it("should sort correctly", async () => {
-        const swapsSorted = [
-            { id: "first", date: new Date().getTime() },
-            { id: "second", date: 1454533445545 },
-            { id: "third", date: 1 },
+    it("should sort correctly", () => {
+        const swapsSorted: SomeSwap[] = [
+            { id: "first", date: new Date().getTime() } as SomeSwap,
+            { id: "second", date: 1454533445545 } as SomeSwap,
+            { id: "third", date: 1 } as SomeSwap,
         ];
-        const swapsSignal = (): any[] => [
+        const swapsSignal = (): SomeSwap[] => [
             swapsSorted[2],
             swapsSorted[0],
             swapsSorted[1],

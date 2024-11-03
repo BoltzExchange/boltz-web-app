@@ -1,3 +1,7 @@
+import log from "loglevel";
+
+import { formatError } from "./errors";
+
 const checkWasmSupported = () => {
     try {
         if (
@@ -13,7 +17,9 @@ const checkWasmSupported = () => {
                     WebAssembly.Instance
                 );
         }
-    } catch (e) {}
+    } catch (e) {
+        log.error(`WASM support check failed: ${formatError(e)}`);
+    }
 
     return false;
 };

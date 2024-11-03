@@ -1,6 +1,3 @@
-import Eth from "@ledgerhq/hw-app-eth";
-import Transport from "@ledgerhq/hw-transport";
-import TransportWebHID from "@ledgerhq/hw-transport-webhid";
 import {
     JsonRpcProvider,
     Signature,
@@ -13,25 +10,29 @@ import log from "loglevel";
 import { config } from "../../config";
 import { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
+import ledgerLoader, { Transport } from "../../lazy/ledger";
 import { HardwareSigner, derivationPaths } from "./HadwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];
 
     private readonly provider: JsonRpcProvider;
-    private derivationPath = derivationPaths.Ethereum;
+    private readonly loader: typeof ledgerLoader;
 
     private transport?: Transport;
+    private derivationPath = derivationPaths.Ethereum;
 
     constructor(
         private readonly t: (
             key: DictKey,
-            values?: Record<string, any>,
+            values?: Record<string, unknown>,
         ) => string,
     ) {
         this.provider = new JsonRpcProvider(
             config.assets["RBTC"]?.network?.rpcUrls[0],
         );
+
+        this.loader = ledgerLoader;
     }
 
     public getDerivationPath = () => {
@@ -50,20 +51,24 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             case "eth_requestAccounts": {
                 log.debug("Getting Ledger accounts");
 
+                const modules = await this.loader.get();
+
                 if (this.transport === undefined) {
-                    this.transport = await TransportWebHID.create();
+                    this.transport = await modules.webhid.create();
                 }
 
                 const openApp = (await this.getApp()).name;
                 log.debug(`Ledger has app open: ${openApp}`);
                 if (!LedgerSigner.supportedApps.includes(openApp)) {
                     log.warn(
-                        `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps}`,
+                        `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps.join(", ")}`,
                     );
+                    await this.transport.close();
+                    this.transport = undefined;
                     throw this.t("ledger_open_app_prompt");
                 }
 
-                const eth = new Eth(this.transport);
+                const eth = new modules.eth(this.transport);
                 const { address } = await eth.getAddress(this.derivationPath);
 
                 return [address.toLowerCase()];
@@ -87,10 +92,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     from: undefined,
                     chainId: network.chainId,
                     gasPrice: feeData.gasPrice,
-                    gasLimit: (txParams as any).gas,
+                    gasLimit: (txParams as unknown as { gas: number }).gas,
                 });
 
-                const eth = new Eth(this.transport);
+                const modules = await this.loader.get();
+                const eth = new modules.eth(this.transport);
                 const signature = await eth.clearSignTransaction(
                     this.derivationPath,
                     tx.unsignedSerialized.substring(2),
@@ -108,7 +114,8 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             case "eth_signTypedData_v4": {
                 log.debug("Signing EIP-712 message with Ledger");
 
-                const eth = new Eth(this.transport);
+                const modules = await this.loader.get();
+                const eth = new modules.eth(this.transport);
                 const message = JSON.parse(request.params[1] as string);
 
                 try {
@@ -138,7 +145,10 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             }
         }
 
-        return this.provider.send(request.method, request.params);
+        return (await this.provider.send(
+            request.method,
+            request.params,
+        )) as never;
     };
 
     public on = () => {};
@@ -150,7 +160,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         version: string;
         flags: number | Buffer;
     }> => {
-        const r = await this.transport!.send(0xb0, 0x01, 0x00, 0x00);
+        const r = await this.transport.send(0xb0, 0x01, 0x00, 0x00);
         let i = 0;
         const format = r[i++];
 

@@ -1,3 +1,4 @@
+import log from "loglevel";
 import { createEffect, on } from "solid-js";
 
 import { LN, RBTC } from "../consts/Assets";
@@ -5,6 +6,7 @@ import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { probeUserInput } from "../utils/compat";
+import { formatError } from "../utils/errors";
 import { extractAddress, extractInvoice } from "../utils/invoice";
 
 const AddressInput = () => {
@@ -61,6 +63,8 @@ const AddressInput = () => {
                     break;
             }
         } catch (e) {
+            log.debug(`Invalid address input: ${formatError(e)}`);
+
             setAddressValid(false);
             if (inputValue.length !== 0) {
                 const msg = t("invalid_address", { asset: assetReceive() });
