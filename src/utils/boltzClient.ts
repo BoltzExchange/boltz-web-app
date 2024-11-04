@@ -312,12 +312,16 @@ export const getPartialReverseClaimSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(backend, `/v2/swap/reverse/${id}/claim`, {
-        index,
-        preimage: preimage.toString("hex"),
-        pubNonce: pubNonce.toString("hex"),
-        transaction: transaction.toHex(),
-    });
+    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(
+        backend,
+        `/v2/swap/reverse/${id}/claim`,
+        {
+            index,
+            preimage: preimage.toString("hex"),
+            pubNonce: pubNonce.toString("hex"),
+            transaction: transaction.toHex(),
+        },
+    );
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         signature: Buffer.from(res.partialSignature, "hex"),
@@ -475,9 +479,11 @@ export const getChainSwapTransactions = (backend: number, id: string) =>
 export const getChainSwapNewQuote = (backend: number, id: string) =>
     fetcher<{ amount: number }>(backend, `/v2/swap/chain/${id}/quote`);
 
-export const acceptChainSwapNewQuote = (backend: number,
-    id: string, amount: number) =>
-    fetcher<object>(backend, `/v2/swap/chain/${id}/quote`, { amount });
+export const acceptChainSwapNewQuote = (
+    backend: number,
+    id: string,
+    amount: number,
+) => fetcher<object>(backend, `/v2/swap/chain/${id}/quote`, { amount });
 
 export {
     Pairs,
