@@ -324,7 +324,7 @@ export const SwapChecker = () => {
         // check if API backend is correct and connected
         if (ws === undefined || ws.url !== correctUrl) {
             if (ws !== undefined) {
-                ws.close;
+                ws.close();
             }
 
             ws = new BoltzWebSocket(

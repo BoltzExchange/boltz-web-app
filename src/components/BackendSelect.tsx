@@ -45,6 +45,7 @@ const BackendSelect = () => {
                     </tr>
                 </thead>
                 <tbody>
+                    {/* eslint-disable-next-line solid/prefer-for */}
                     {config.backends.map((b, index) => {
                         const pairs = allPairs()[index]; // Get pairs for the current backend
                         const cfg = pairs

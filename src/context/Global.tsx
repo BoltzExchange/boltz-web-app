@@ -127,16 +127,24 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
-    const [backend, setBackend] = makePersisted(createSignal<number>(0), {
-        name: config.network + "backend",
-    });
+    const [backend, setBackend] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<number>(0),
+        {
+            name: config.network + "backend",
+        },
+    );
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
-    const [ref, setRef] = makePersisted(createSignal("swapmarket"), {
-        name: config.network + "ref",
-        ...stringSerializer,
-    });
+    const [ref, setRef] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal("swapmarket"),
+        {
+            name: config.network + "ref",
+            ...stringSerializer,
+        },
+    );
 
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         // eslint-disable-next-line solid/reactivity
@@ -359,10 +367,11 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     );
 
     // i18n
-    createMemo(() => setI18n(i18nConfigured() || i18nUrl()));
-
-    const dictLocale = createMemo(() =>
-        flatten(dict[i18n() || config.defaultLanguage]),
+    createEffect(() => {
+        setI18n(i18nConfigured() || i18nUrl());
+    });
+    const dictLocale = createMemo(
+        () => flatten(dict[i18n() || config.defaultLanguage]) as never,
     );
 
     // eslint-disable-next-line solid/reactivity

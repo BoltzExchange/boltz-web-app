@@ -50,7 +50,7 @@ export const Hero = () => {
 
     // Reactively fetch node stats whenever backend() changes
     createEffect(() => {
-        fetchNodeStats();
+        void fetchNodeStats();
     });
 
     return (
@@ -118,6 +118,8 @@ export const Hero = () => {
                         <small>{t("oldest_channel")}</small>
                     </div>
                 </div>
+            </Show>
+            <Show when={false}>
                 <h2 class="headline">{t("integrations")}</h2>
                 <div id="integrations">
                     <div>

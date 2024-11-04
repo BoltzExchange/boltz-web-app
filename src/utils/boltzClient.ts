@@ -179,8 +179,8 @@ export const getPairs = async (backend: number): Promise<Pairs> => {
     };
 };
 
-export const getAllPairs = async (): Promise<Pairs[]> => {
-    const promises = [];
+export const getAllPairs = (): Promise<(Pairs | null)[]> => {
+    const promises: Promise<Pairs | null>[] = [];
 
     for (let i = 0; i < config.backends.length; i++) {
         promises.push(
@@ -413,7 +413,7 @@ export const getLockupTransaction = async (
                 timeoutEta?: number;
             }>(backend, `/v2/swap/submarine/${id}/transaction`);
 
-        case SwapType.Chain:
+        case SwapType.Chain: {
             const res = await getChainSwapTransactions(backend, id);
             return {
                 id: res.userLock.transaction.id,
@@ -421,6 +421,7 @@ export const getLockupTransaction = async (
                 timeoutEta: res.userLock.timeout.eta,
                 timeoutBlockHeight: res.userLock.timeout.blockHeight,
             };
+        }
 
         default:
             throw `cannot get lockup transaction for swap type ${type}`;
