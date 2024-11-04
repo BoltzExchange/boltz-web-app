@@ -24,7 +24,7 @@ export const TestComponent = () => {
     return "";
 };
 
-export const contextWrapper = (props: any) => {
+export const contextWrapper = (props: { children: Element }) => {
     return (
         <GlobalProvider>
             <Web3SignerProvider noFetch={true}>

@@ -25,7 +25,7 @@ const sendQuery = async (
     builder: WASMProofBuilder,
     domain: string,
     dohEndpoint: string,
-) => {
+): Promise<LookupResult> => {
     const query = wasm.get_next_query(builder);
     if (query === null || query === undefined) {
         const proof = wasm.get_unverified_proof(builder);
@@ -33,7 +33,9 @@ const sendQuery = async (
             throw "failed to build proof";
         }
 
-        return JSON.parse(wasm.verify_byte_stream(proof, domain));
+        return JSON.parse(
+            wasm.verify_byte_stream(proof, domain),
+        ) as LookupResult;
     }
 
     const b64url = btoa(String.fromCodePoint(...query))

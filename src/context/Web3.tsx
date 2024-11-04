@@ -9,6 +9,7 @@ import {
     createContext,
     createResource,
     createSignal,
+    onMount,
     useContext,
 } from "solid-js";
 
@@ -29,11 +30,11 @@ declare global {
     }
 
     interface Navigator {
-        hid: {};
+        hid: object;
     }
 
     interface Window {
-        ethereum?: any;
+        ethereum?: EIP1193Provider;
     }
 }
 
@@ -110,39 +111,41 @@ const Web3SignerProvider = (props: {
         EIP1193Provider | undefined
     >(undefined);
 
-    if (window.ethereum !== undefined) {
-        setProviders({
-            ...providers(),
-            [browserRdns]: {
-                provider: window.ethereum,
-                info: {
-                    name: "Browser native",
-                    uuid: browserRdns,
-                    rdns: browserRdns,
-                    disabled: window.ethereum === undefined,
-                },
-            },
-        });
-    }
-
-    window.addEventListener(
-        "eip6963:announceProvider",
-        (event: EIP6963AnnounceProviderEvent) => {
-            log.debug(
-                `Found EIP-6963 wallet: ${event.detail.info.rdns}: ${event.detail.info.name}`,
-            );
-            const existingProviders = { ...providers() };
-
-            // We should not show the browser provider when an EIP-6963 provider is found
-            delete existingProviders[browserRdns];
-
+    onMount(() => {
+        if (window.ethereum !== undefined) {
             setProviders({
-                ...existingProviders,
-                [event.detail.info.rdns]: event.detail,
+                ...providers(),
+                [browserRdns]: {
+                    provider: window.ethereum,
+                    info: {
+                        name: "Browser native",
+                        uuid: browserRdns,
+                        rdns: browserRdns,
+                        disabled: window.ethereum === undefined,
+                    },
+                },
             });
-        },
-    );
-    window.dispatchEvent(new Event("eip6963:requestProvider"));
+        }
+
+        window.addEventListener(
+            "eip6963:announceProvider",
+            (event: EIP6963AnnounceProviderEvent) => {
+                log.debug(
+                    `Found EIP-6963 wallet: ${event.detail.info.rdns}: ${event.detail.info.name}`,
+                );
+                const existingProviders = { ...providers() };
+
+                // We should not show the browser provider when an EIP-6963 provider is found
+                delete existingProviders[browserRdns];
+
+                setProviders({
+                    ...existingProviders,
+                    [event.detail.info.rdns]: event.detail,
+                });
+            },
+        );
+        window.dispatchEvent(new Event("eip6963:requestProvider"));
+    });
 
     const [contracts] = createResource(async () => {
         if (props.noFetch || !hasRsk) {

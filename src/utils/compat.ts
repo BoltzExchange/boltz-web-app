@@ -1,4 +1,3 @@
-import zkp, { Secp256k1ZKP } from "@vulpemventures/secp256k1-zkp";
 import { Network, Transaction, address, networks } from "bitcoinjs-lib";
 import {
     ClaimDetails,
@@ -11,7 +10,6 @@ import {
 import {
     LiquidClaimDetails,
     LiquidRefundDetails,
-    init,
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
 } from "boltz-core/dist/lib/liquid";
@@ -27,6 +25,7 @@ import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
+import secp from "../lazy/secp";
 import { isInvoice, isLnurl } from "./invoice";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
@@ -35,20 +34,7 @@ type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
 
 type DecodedAddress = { script: Buffer; blindingKey?: Buffer };
 
-export let secp: Secp256k1ZKP;
-let confi: confidential.Confidential;
-
 const possibleUserInputTypes = [LN, LBTC, BTC];
-
-const setup = async () => {
-    if (confi !== undefined) {
-        return;
-    }
-
-    secp = await zkp();
-    init(secp);
-    confi = new confidential.Confidential(secp);
-};
 
 const getAddress = (asset: string): typeof address | typeof LiquidAddress => {
     if (asset === LBTC) {
@@ -78,7 +64,11 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
                 script,
                 blindingKey: decoded.blindingKey,
             };
-        } catch (e) {}
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            /* empty */
+        }
     }
 
     return {
@@ -91,6 +81,8 @@ export const isConfidentialAddress = (addr: string): boolean => {
         const address = getAddress(LBTC);
         (address as typeof LiquidAddress).fromConfidential(addr);
         return true;
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         return false;
     }
@@ -105,6 +97,8 @@ const probeUserInputOption = (asset: string, input: string): boolean => {
             try {
                 decodeAddress(asset, input);
                 return true;
+
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (e) {
                 return false;
             }
@@ -137,10 +131,10 @@ const getNetwork = (
     network = network ?? config.network;
     if (asset === LBTC) {
         const liquidNet = network === "mainnet" ? "liquid" : network;
-        return LiquidNetworks[liquidNet];
+        return LiquidNetworks[liquidNet] as LiquidNetwork;
     } else {
         const bitcoinNet = network === "mainnet" ? "bitcoin" : network;
-        return networks[bitcoinNet];
+        return networks[bitcoinNet] as Network;
     }
 };
 
@@ -199,7 +193,7 @@ const getConstructRefundTransaction = (
             feePerVbyte,
             (fee) =>
                 fn(
-                    refundDetails as any[],
+                    refundDetails as never[],
                     outputScript,
                     timeoutBlockHeight,
                     addOneSatBuffer ? fee + 1 : fee,
@@ -211,10 +205,10 @@ const getConstructRefundTransaction = (
         );
 };
 
-const getOutputAmount = (
+const getOutputAmount = async (
     asset: string,
     output: TransactionOutput | LiquidTransactionOutputWithKey,
-): number => {
+): Promise<number> => {
     if (asset !== LBTC) {
         return (output as TransactionOutput).value;
     }
@@ -222,7 +216,8 @@ const getOutputAmount = (
     output = output as LiquidTransactionOutputWithKey;
 
     if (output.rangeProof?.length !== 0) {
-        const unblinded = confi.unblindOutputWithKey(
+        const { confidential } = await secp.get();
+        const unblinded = confidential.unblindOutputWithKey(
             output,
             output.blindingPrivateKey,
         );
@@ -233,7 +228,6 @@ const getOutputAmount = (
 };
 
 export {
-    setup,
     getAddress,
     getNetwork,
     decodeAddress,

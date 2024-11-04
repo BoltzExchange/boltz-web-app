@@ -1,6 +1,6 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import { Match, Show, Switch, createEffect, onCleanup } from "solid-js";
+import { Match, Show, Switch, createResource, onCleanup } from "solid-js";
 
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -42,8 +42,9 @@ const Pay = () => {
         setFailureReason,
     } = usePayContext();
 
-    createEffect(async () => {
+    createResource(async () => {
         const currentSwap = await getSwap(params.id);
+
         if (currentSwap) {
             log.debug("selecting swap", currentSwap);
             setSwap(currentSwap);

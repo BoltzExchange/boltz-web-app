@@ -5,7 +5,7 @@ import { BTC, LN } from "../../src/consts/Assets";
 import { TestComponent, contextWrapper, signals } from "../helper";
 
 describe("Reverse", () => {
-    test("should reverse assets", async () => {
+    test("should reverse assets", () => {
         const {
             container: { firstChild: flip },
         } = render(

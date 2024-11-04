@@ -10,12 +10,13 @@ import {
     swapStatusSuccess,
 } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
-import { usePayContext } from "../context/Pay";
+import { SwapStatusTransaction, usePayContext } from "../context/Pay";
 import {
     getChainSwapTransactions,
     getReverseTransaction,
 } from "../utils/boltzClient";
 import { claim, createSubmarineSignature } from "../utils/claim";
+import { formatError } from "../utils/errors";
 import { getApiUrl, getWsFallback } from "../utils/helper";
 import Lock from "../utils/lock";
 import {
@@ -28,6 +29,9 @@ import {
 type SwapStatus = {
     id: string;
     status: string;
+
+    failureReason?: string;
+    transaction: SwapStatusTransaction;
 };
 
 const reconnectInterval = 5_000;
@@ -36,15 +40,18 @@ class BoltzWebSocket {
     private readonly swapClaimLock = new Lock();
 
     private ws?: WebSocket;
-    private reconnectTimeout?: any;
+    private reconnectTimeout?: ReturnType<typeof setTimeout>;
     private isClosed: boolean = false;
 
     constructor(
         readonly url: string,
         private readonly wsFallback: string | undefined,
         private readonly relevantIds: Set<string>,
-        private readonly prepareSwap: (id: string, status: any) => void,
-        private readonly claimSwap: (id: string, status: any) => Promise<void>,
+        private readonly prepareSwap: (id: string, status: SwapStatus) => void,
+        private readonly claimSwap: (
+            id: string,
+            status: SwapStatus,
+        ) => Promise<void>,
     ) {}
 
     public connect = () => {
@@ -52,7 +59,7 @@ class BoltzWebSocket {
         this.openWebSocket(`${this.url}/v2/ws`).catch(() => {
             if (this.wsFallback !== undefined) {
                 log.debug("Opening fallback WebSocket");
-                this.openWebSocket(this.wsFallback).then().catch();
+                void this.openWebSocket(this.wsFallback).then().catch();
             }
         });
     };
@@ -81,7 +88,7 @@ class BoltzWebSocket {
         );
     };
 
-    private openWebSocket = async (url: string) => {
+    private openWebSocket = (url: string) => {
         this.isClosed = false;
         clearTimeout(this.reconnectTimeout);
         this.ws?.close();
@@ -102,7 +109,7 @@ class BoltzWebSocket {
                 if (error.wasClean) {
                     resolve();
                 } else {
-                    reject(error);
+                    reject(new Error(formatError(error)));
                 }
             };
             this.ws.onmessage = async (msg) => {
@@ -161,7 +168,7 @@ export const SwapChecker = () => {
 
     let ws: BoltzWebSocket | undefined = undefined;
 
-    const prepareSwap = async (swapId: string, data: any) => {
+    const prepareSwap = async (swapId: string, data: SwapStatus) => {
         const currentSwap = await getSwap(swapId);
         if (currentSwap === null) {
             log.warn(`prepareSwap: swap ${swapId} not found`);
@@ -181,7 +188,7 @@ export const SwapChecker = () => {
         }
     };
 
-    const claimSwap = async (swapId: string, data: any) => {
+    const claimSwap = async (swapId: string, data: SwapStatus) => {
         const currentSwap = await getSwap(swapId);
         if (currentSwap === null) {
             log.warn(`claimSwap: swap ${swapId} not found`);
@@ -228,11 +235,9 @@ export const SwapChecker = () => {
             try {
                 const res = await claim(
                     currentSwap as ReverseSwap | ChainSwap,
-                    data.transaction,
+                    data.transaction as { hex: string },
                 );
-                const claimedSwap = (await getSwap(res.id)) as
-                    | ReverseSwap
-                    | ChainSwap;
+                const claimedSwap = await getSwap(res.id);
                 claimedSwap.claimTx = res.claimTx;
                 await setSwapStorage(claimedSwap);
 

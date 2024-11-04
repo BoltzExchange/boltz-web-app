@@ -9,6 +9,7 @@ import {
     invoicePrefix,
 } from "../../src/utils/invoice";
 import { TestComponent, contextWrapper, signals } from "../helper";
+import { wait } from "../utils";
 
 describe("InvoiceInput", () => {
     test.each`
@@ -36,6 +37,7 @@ describe("InvoiceInput", () => {
             target: { value: invoice },
         });
 
+        await wait(100);
         expect(signals.invoiceValid()).toEqual(expected);
     });
 
@@ -57,8 +59,9 @@ describe("InvoiceInput", () => {
             target: { value: invoice },
         });
 
+        await wait(100);
         expect(signals.receiveAmount()).toEqual(
-            BigNumber(decodeInvoice(invoice).satoshis),
+            BigNumber((await decodeInvoice(invoice)).satoshis),
         );
     });
 
@@ -82,9 +85,11 @@ describe("InvoiceInput", () => {
             target: { value: invoice },
         });
 
+        await wait(100);
         expect(signals.invoice()).toEqual(invoice);
 
         signals.setReceiveAmount(signals.receiveAmount().plus(1));
+        await wait(100);
 
         expect(signals.invoice()).toEqual("");
     });
@@ -144,6 +149,7 @@ describe("InvoiceInput", () => {
             target: { value: invoice },
         });
 
+        await wait(100);
         expect(signals.invoice()).toEqual(extractInvoice(invoice));
     });
 

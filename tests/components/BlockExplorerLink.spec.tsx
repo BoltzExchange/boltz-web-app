@@ -78,7 +78,7 @@ describe("BlockExplorerLink", () => {
                 lockupDetails: {
                     lockupAddress: "bc1",
                 },
-            } as any);
+            } as ChainSwap);
 
             render(
                 () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
@@ -90,6 +90,7 @@ describe("BlockExplorerLink", () => {
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
+                // eslint-disable-next-line solid/reactivity
                 `${config.assets[LBTC].blockExplorerUrl.normal}/address/${swap().lockupDetails.lockupAddress}`,
             );
         });
@@ -102,7 +103,7 @@ describe("BlockExplorerLink", () => {
                 lockupDetails: {
                     lockupAddress: "bc1",
                 },
-            } as any);
+            } as ChainSwap);
 
             render(
                 () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
@@ -114,12 +115,15 @@ describe("BlockExplorerLink", () => {
             )) as HTMLAnchorElement;
 
             expect(button.href).toEqual(
+                // eslint-disable-next-line solid/reactivity
                 `${config.assets[LBTC].blockExplorerUrl.normal}/address/${swap().lockupDetails.lockupAddress}`,
             );
 
+            // eslint-disable-next-line solid/reactivity
             setSwap({ ...swap(), claimTx: "123" });
 
             expect(button.href).toEqual(
+                // eslint-disable-next-line solid/reactivity
                 `${config.assets[BTC].blockExplorerUrl.normal}/tx/${swap().claimTx}`,
             );
         });

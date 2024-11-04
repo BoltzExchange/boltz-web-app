@@ -24,7 +24,9 @@ describe("BlockExplorer", () => {
         const baseLink = config.assets[asset].blockExplorerUrl.normal;
         expect(baseLink).toBeDefined();
         expect(button).not.toBeUndefined();
-        expect((button as any).href).toEqual(`${baseLink}/address/${address}`);
+        expect((button as HTMLAnchorElement).href).toEqual(
+            `${baseLink}/address/${address}`,
+        );
     });
 
     test.each`
@@ -45,6 +47,8 @@ describe("BlockExplorer", () => {
         const baseLink = config.assets[asset].blockExplorerUrl.normal;
         expect(baseLink).toBeDefined();
         expect(button).not.toBeUndefined();
-        expect((button as any).href).toEqual(`${baseLink}/tx/${txId}`);
+        expect((button as HTMLAnchorElement).href).toEqual(
+            `${baseLink}/tx/${txId}`,
+        );
     });
 });

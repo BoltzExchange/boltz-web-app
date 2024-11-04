@@ -9,12 +9,7 @@ import { useGlobalContext } from "../context/Global";
 import { formatAmount } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
 
-const PayOnchain = ({
-    asset,
-    expectedAmount,
-    address,
-    bip21,
-}: {
+const PayOnchain = (props: {
     asset: string;
     expectedAmount: number;
     address: string;
@@ -27,31 +22,33 @@ const PayOnchain = ({
             <h2>
                 {t("send_to", {
                     amount: formatAmount(
-                        BigNumber(expectedAmount),
+                        BigNumber(props.expectedAmount),
                         denomination(),
                         separator(),
                     ),
                     denomination:
-                        denomination() === Denomination.Sat ? "sats" : asset,
+                        denomination() === Denomination.Sat
+                            ? "sats"
+                            : props.asset,
                 })}
             </h2>
             <hr />
-            <a href={bip21}>
-                <QrCode asset={asset} data={bip21} />
+            <a href={props.bip21}>
+                <QrCode asset={props.asset} data={props.bip21} />
             </a>
             <hr />
             <p
-                onclick={() => clipboard(address)}
+                onClick={() => clipboard(props.address)}
                 class="address-box break-word">
-                {cropString(address)}
+                {cropString(props.address)}
             </p>
-            <Show when={asset === BTC}>
+            <Show when={props.asset === BTC}>
                 <hr class="spacer" />
                 <h3>{t("warning_expiry")}</h3>
             </Show>
             <Show when={isMobile()}>
                 <hr />
-                <a href={bip21} class="btn btn-light">
+                <a href={props.bip21} class="btn btn-light">
                     {t("open_in_wallet")}
                 </a>
             </Show>
@@ -61,14 +58,14 @@ const PayOnchain = ({
                     label="copy_amount"
                     data={() =>
                         formatAmount(
-                            BigNumber(expectedAmount),
+                            BigNumber(props.expectedAmount),
                             denomination(),
                             separator(),
                         )
                     }
                 />
-                <CopyButton label="copy_address" data={address} />
-                <CopyButton label="copy_bip21" data={bip21} />
+                <CopyButton label="copy_address" data={props.address} />
+                <CopyButton label="copy_bip21" data={props.bip21} />
             </div>
         </div>
     );

@@ -8,7 +8,7 @@ const BrowserNotification = () => {
     const toggle = (evt: MouseEvent) => {
         // When disabled, we try to request permission and enable them
         if (!browserNotification()) {
-            registerNotifications().then((state: boolean) => {
+            void registerNotifications().then((state: boolean) => {
                 setBrowserNotification(state);
                 if (state === false) {
                     notify("error", t("browsernotification_error"));

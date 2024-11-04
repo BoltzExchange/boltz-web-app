@@ -7,10 +7,12 @@ import {
     Accessor,
     Setter,
     createContext,
+    createEffect,
     createMemo,
     createSignal,
     useContext,
 } from "solid-js";
+import type { JSX } from "solid-js";
 
 import { config } from "../config";
 import { Denomination } from "../consts/Enums";
@@ -68,7 +70,7 @@ export type GlobalContextType = {
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
     // functions
-    t: (key: DictKey, values?: Record<string, any>) => string;
+    t: (key: DictKey, values?: Record<string, unknown>) => string;
     notify: (
         type: string,
         message: string,
@@ -84,11 +86,11 @@ export type GlobalContextType = {
     isRecklessMode: Accessor<boolean>;
     setRecklessMode: Setter<boolean>;
 
-    setSwapStorage: (swap: SomeSwap) => Promise<any>;
+    setSwapStorage: (swap: SomeSwap) => Promise<void>;
     getSwap: <T = SomeSwap>(id: string) => Promise<T>;
     getSwaps: <T = SomeSwap>() => Promise<T[]>;
     deleteSwap: (id: string) => Promise<void>;
-    clearSwaps: () => Promise<any>;
+    clearSwaps: () => Promise<void>;
     updateSwapStatus: (id: string, newStatus: string) => Promise<boolean>;
 
     hardwareDerivationPath: Accessor<string>;
@@ -100,13 +102,13 @@ export type GlobalContextType = {
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
-    serialize: (value: any) => value,
-    deserialize: (value: any) => value,
+    serialize: (value: never) => value,
+    deserialize: (value: never) => value,
 };
 
 const GlobalContext = createContext<GlobalContextType>();
 
-const GlobalProvider = (props: { children: any }) => {
+const GlobalProvider = (props: { children: JSX.Element }) => {
     const [online, setOnline] = createSignal<boolean>(true);
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
@@ -137,6 +139,7 @@ const GlobalProvider = (props: { children: any }) => {
     });
 
     const [i18nConfigured, setI18nConfigured] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal(null),
         {
             name: "i18n",
@@ -144,6 +147,7 @@ const GlobalProvider = (props: { children: any }) => {
         },
     );
     const [i18nUrl, setI18nUrl] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal<string | null>(null),
         {
             name: "i18nUrl",
@@ -152,6 +156,7 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     const [denomination, setDenomination] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal<Denomination>(Denomination.Sat),
         {
             name: "denomination",
@@ -165,6 +170,7 @@ const GlobalProvider = (props: { children: any }) => {
     const [allPairs, setAllPairs] = createSignal<Pairs[]>([]);
 
     const [audioNotification, setAudioNotification] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
         {
             name: "audioNotification",
@@ -173,6 +179,7 @@ const GlobalProvider = (props: { children: any }) => {
 
     const localeSeparator = (0.1).toLocaleString().charAt(1);
     const [separator, setSeparator] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal(localeSeparator),
         {
             name: "separator",
@@ -201,7 +208,7 @@ const GlobalProvider = (props: { children: any }) => {
     const playNotificationSound = () => {
         const audio = new Audio("/notification.mp3");
         audio.volume = 0.3;
-        audio.play();
+        void audio.play();
     };
 
     const fetchPairs = async () => {
@@ -238,12 +245,12 @@ const GlobalProvider = (props: { children: any }) => {
 
     injectLogWriter(logsForage);
 
-    createMemo(() => deleteOldLogs(logsForage));
+    createEffect(() => deleteOldLogs(logsForage));
 
     const getLogs = async () => {
         const logs: Record<string, string[]> = {};
 
-        await logsForage.iterate<string[], any>((logArray, date) => {
+        await logsForage.iterate<string[], unknown>((logArray, date) => {
             logs[date] = logArray;
         });
 
@@ -263,8 +270,9 @@ const GlobalProvider = (props: { children: any }) => {
         log.error("Storage migration failed:", e),
     );
 
-    const setSwapStorage = (swap: SomeSwap) =>
-        swapsForage.setItem(swap.id, swap);
+    const setSwapStorage = async (swap: SomeSwap) => {
+        await swapsForage.setItem(swap.id, swap);
+    };
 
     const deleteSwap = (id: string) => swapsForage.removeItem(id);
 
@@ -273,7 +281,7 @@ const GlobalProvider = (props: { children: any }) => {
     const getSwaps = async <T = SomeSwap,>(): Promise<T[]> => {
         const swaps: T[] = [];
 
-        await swapsForage.iterate<T, any>((swap) => {
+        await swapsForage.iterate<T, unknown>((swap) => {
             swaps.push(swap);
         });
 
@@ -307,7 +315,7 @@ const GlobalProvider = (props: { children: any }) => {
         rdnsForage.getItem<string>(address.toLowerCase());
 
     setI18n(detectLanguage(i18nConfigured(), i18nUrl(), setI18nUrl));
-    detectWebLNProvider().then((state: boolean) => setWebln(state));
+    void detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
     // check referral
@@ -327,6 +335,7 @@ const GlobalProvider = (props: { children: any }) => {
     }
 
     const [browserNotification, setBrowserNotification] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
         {
             name: config.network + "browserNotification",
@@ -334,6 +343,7 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     const [isRecklessMode, setRecklessMode] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
         {
             name: config.network + "recklessMode",
@@ -341,6 +351,7 @@ const GlobalProvider = (props: { children: any }) => {
     );
 
     const [hardwareDerivationPath, setHardwareDerivationPath] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
         createSignal<string>(""),
         {
             name: "hardwareDerivationPath",
@@ -354,9 +365,10 @@ const GlobalProvider = (props: { children: any }) => {
         flatten(dict[i18n() || config.defaultLanguage]),
     );
 
+    // eslint-disable-next-line solid/reactivity
     const t = translator(dictLocale, resolveTemplate) as (
         key: DictKey,
-        values?: Record<string, any>,
+        values?: Record<string, unknown>,
     ) => string;
 
     return (

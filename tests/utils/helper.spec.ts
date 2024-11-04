@@ -1,3 +1,4 @@
+import { Pairs } from "../../src/utils/boltzClient";
 import { getPair } from "../../src/utils/helper";
 
 describe("helper", () => {
@@ -36,7 +37,7 @@ describe("helper", () => {
                         },
                     },
                 },
-            } as any;
+            } as unknown as Pairs;
 
             expect(getPair(config, swapType, assetSend, assetReceive)).toEqual(
                 expected,

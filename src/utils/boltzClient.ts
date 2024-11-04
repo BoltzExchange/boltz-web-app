@@ -204,7 +204,7 @@ export const fetchBolt12Invoice = async (
             amount: amountSat,
         },
     );
-    validateInvoiceForOffer(offer, res.invoice);
+    await validateInvoiceForOffer(offer, res.invoice);
 
     return res;
 };
@@ -286,7 +286,7 @@ export const getPartialRefundSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(
+    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(
         backend,
         `/v2/swap/${
             type === SwapType.Submarine ? "submarine" : "chain"
@@ -312,7 +312,7 @@ export const getPartialReverseClaimSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(backend, `/v2/swap/reverse/${id}/claim`, {
+    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(backend, `/v2/swap/reverse/${id}/claim`, {
         index,
         preimage: preimage.toString("hex"),
         pubNonce: pubNonce.toString("hex"),
@@ -325,7 +325,11 @@ export const getPartialReverseClaimSignature = async (
 };
 
 export const getSubmarineClaimDetails = async (backend: number, id: string) => {
-    const res = await fetcher(backend, `/v2/swap/submarine/${id}/claim`);
+    const res = await fetcher<{
+        pubNonce: string;
+        preimage: string;
+        transactionHash: string;
+    }>(backend, `/v2/swap/submarine/${id}/claim`);
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         preimage: Buffer.from(res.preimage, "hex"),
@@ -471,11 +475,9 @@ export const getChainSwapTransactions = (backend: number, id: string) =>
 export const getChainSwapNewQuote = (backend: number, id: string) =>
     fetcher<{ amount: number }>(backend, `/v2/swap/chain/${id}/quote`);
 
-export const acceptChainSwapNewQuote = (
-    backend: number,
-    id: string,
-    amount: number,
-) => fetcher<{}>(backend, `/v2/swap/chain/${id}/quote`, { amount });
+export const acceptChainSwapNewQuote = (backend: number,
+    id: string, amount: number) =>
+    fetcher<object>(backend, `/v2/swap/chain/${id}/quote`, { amount });
 
 export {
     Pairs,

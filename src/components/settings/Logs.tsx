@@ -3,7 +3,7 @@ import {
     BiRegularDownload,
     BiRegularTrash,
 } from "solid-icons/bi";
-import { Show } from "solid-js/web";
+import { Show } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
 import { downloadJson } from "../../utils/download";

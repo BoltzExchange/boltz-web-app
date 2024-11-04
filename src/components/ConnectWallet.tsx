@@ -19,11 +19,7 @@ import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 
-const Modal = ({
-    show,
-    setShow,
-    derivationPath,
-}: {
+const Modal = (props: {
     derivationPath: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
@@ -36,18 +32,18 @@ const Modal = ({
     const [hardwareProvider, setHardwareProvider] =
         createSignal<EIP6963ProviderInfo>(undefined);
 
-    const Provider = ({ provider }: { provider: EIP6963ProviderInfo }) => {
+    const Provider = (providerProps: { provider: EIP6963ProviderInfo }) => {
         return (
             <div
                 class="provider-modal-entry-wrapper"
                 onClick={async () => {
-                    if (provider.disabled) {
+                    if (providerProps.provider.disabled) {
                         notify("error", t("not_supported_in_browser"));
                         return;
                     }
 
-                    if (provider.isHardware) {
-                        setHardwareProvider(provider);
+                    if (providerProps.provider.isHardware) {
+                        setHardwareProvider(providerProps.provider);
                         setShowDerivationPaths(true);
                         return;
                     }
@@ -56,28 +52,28 @@ const Modal = ({
                         notify,
                         connectProvider,
                         providers,
-                        provider,
-                        derivationPath,
+                        providerProps.provider,
+                        props.derivationPath,
                     );
                 }}>
                 <hr />
                 <div
                     class="provider-modal-entry"
-                    data-disabled={provider.disabled}
+                    data-disabled={providerProps.provider.disabled}
                     title={
-                        provider.disabled
+                        providerProps.provider.disabled
                             ? t("not_supported_in_browser")
                             : undefined
                     }>
-                    <Show when={provider.icon !== undefined}>
+                    <Show when={providerProps.provider.icon !== undefined}>
                         <img
                             class="provider-modal-icon"
-                            src={provider.icon}
-                            alt={`${provider.name} icon`}
+                            src={providerProps.provider.icon}
+                            alt={`${providerProps.provider.name} icon`}
                         />
                     </Show>
 
-                    <h4>{provider.name}</h4>
+                    <h4>{providerProps.provider.name}</h4>
                 </div>
             </div>
         );
@@ -86,11 +82,11 @@ const Modal = ({
     return (
         <div
             class="frame assets-select"
-            onClick={() => setShow(false)}
-            style={show() ? "display: block;" : "display: none;"}>
+            onClick={() => props.setShow(false)}
+            style={props.show() ? "display: block;" : "display: none;"}>
             <div onClick={(e) => e.stopPropagation()}>
                 <h2>{t("select_wallet")}</h2>
-                <span class="close" onClick={() => setShow(false)}>
+                <span class="close" onClick={() => props.setShow(false)}>
                     <IoClose />
                 </span>
                 <hr class="spacer" />
@@ -112,7 +108,7 @@ const Modal = ({
     );
 };
 
-const ConnectModal = ({ derivationPath }: { derivationPath: string }) => {
+const ConnectModal = (props: { derivationPath: string }) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider } = useWeb3Signer();
 
@@ -122,18 +118,18 @@ const ConnectModal = ({ derivationPath }: { derivationPath: string }) => {
         <>
             <button
                 class="btn"
-                onClick={() => {
+                onClick={async () => {
                     if (Object.keys(providers()).length > 1) {
                         setShow(true);
                     } else {
                         // Do not show the modal when there is only one option to select
-                        connect(
+                        await connect(
                             notify,
                             connectProvider,
                             providers,
                             Object.values(providers())[0].info,
-                            derivationPath,
-                        ).then();
+                            props.derivationPath,
+                        );
                     }
                 }}>
                 {t("connect_wallet")}
@@ -141,16 +137,13 @@ const ConnectModal = ({ derivationPath }: { derivationPath: string }) => {
             <Modal
                 show={show}
                 setShow={setShow}
-                derivationPath={derivationPath}
+                derivationPath={props.derivationPath}
             />
         </>
     );
 };
 
-const ShowAddress = ({
-    address,
-    addressOverride,
-}: {
+const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
@@ -174,16 +167,14 @@ const ShowAddress = ({
             onMouseLeave={() => setText(undefined)}
             class="btn btn-light">
             {text() ||
-                (addressOverride
-                    ? addressOverride() || formatAddress(address())
-                    : formatAddress(address()))}
+                (props.addressOverride
+                    ? props.addressOverride() || formatAddress(props.address())
+                    : formatAddress(props.address()))}
         </button>
     );
 };
 
-export const ConnectAddress = ({
-    address,
-}: {
+export const ConnectAddress = (props: {
     address: { address: string; derivationPath?: string };
 }) => {
     const { t, notify } = useGlobalContext();
@@ -195,12 +186,12 @@ export const ConnectAddress = ({
             onClick={async () => {
                 try {
                     await connectProviderForAddress(
-                        address.address,
-                        address.derivationPath,
+                        props.address.address,
+                        props.address.derivationPath,
                     );
                 } catch (e) {
                     log.error(
-                        `Provider connect for address ${address} failed: ${formatError(e)}`,
+                        `Provider connect for address ${props.address.address} failed: ${formatError(e)}`,
                     );
                     notify(
                         "error",
@@ -233,10 +224,7 @@ export const SwitchNetwork = () => {
     );
 };
 
-const ConnectWallet = ({
-    derivationPath,
-    addressOverride,
-}: {
+const ConnectWallet = (props: {
     derivationPath?: string;
     addressOverride?: Accessor<string | undefined>;
 }) => {
@@ -247,10 +235,11 @@ const ConnectWallet = ({
     const address = createMemo(() => signer()?.address);
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
+    // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
         if (
             address() !== undefined &&
-            Number((await signer()?.provider.getNetwork()).chainId) !==
+            Number((await signer()?.provider.getNetwork())?.chainId || -1) !==
                 getContracts().network.chainId
         ) {
             setNetworkValid(false);
@@ -274,11 +263,13 @@ const ConnectWallet = ({
             }>
             <Show
                 when={address() !== undefined}
-                fallback={<ConnectModal derivationPath={derivationPath} />}>
+                fallback={
+                    <ConnectModal derivationPath={props.derivationPath} />
+                }>
                 <Show when={networkValid()} fallback={<SwitchNetwork />}>
                     <ShowAddress
                         address={address}
-                        addressOverride={addressOverride}
+                        addressOverride={props.addressOverride}
                     />
                 </Show>
             </Show>

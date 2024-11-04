@@ -26,7 +26,6 @@ import {
     getNetwork,
     getOutputAmount,
     getTransaction,
-    setup,
 } from "./compat";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
@@ -38,7 +37,7 @@ import {
 } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
-const createAdjustedClaim = <
+const createAdjustedClaim = async <
     T extends
         | (ClaimDetails & { blindingPrivateKey?: Buffer })
         | LiquidClaimDetails,
@@ -50,10 +49,11 @@ const createAdjustedClaim = <
     blindingKey?: Buffer,
 ) => {
     const asset = getRelevantAssetForSwap(swap);
-    const inputSum = claimDetails.reduce(
-        (total: number, input: T) => total + getOutputAmount(asset, input),
-        0,
-    );
+
+    let inputSum = 0;
+    for (const details of claimDetails) {
+        inputSum += await getOutputAmount(asset, details);
+    }
     const feeBudget = Math.floor(inputSum - swap.receiveAmount);
 
     const constructClaimTransaction = getConstructClaimTransaction(asset);
@@ -72,7 +72,6 @@ const claimReverseSwap = async (
     lockupTx: TransactionInterface,
     cooperative: boolean = true,
 ): Promise<TransactionInterface | undefined> => {
-    await setup();
     log.info(`Claiming Taproot swap cooperatively: ${cooperative}`);
     const asset = getRelevantAssetForSwap(swap);
 
@@ -84,7 +83,7 @@ const claimReverseSwap = async (
 
     const decodedAddress = decodeAddress(asset, swap.claimAddress);
     const boltzPublicKey = Buffer.from(swap.refundPublicKey, "hex");
-    const musig = createMusig(privateKey, boltzPublicKey);
+    const musig = await createMusig(privateKey, boltzPublicKey);
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
     const tweakedKey = tweakMusig(asset, musig, tree.tree);
     const swapOutput = detectSwap(tweakedKey, lockupTx);
@@ -101,7 +100,7 @@ const claimReverseSwap = async (
             internalKey: musig.getAggregatedPublicKey(),
         },
     ] as (ClaimDetails & { blindingPrivateKey: Buffer })[];
-    const claimTx = createAdjustedClaim(
+    const claimTx = await createAdjustedClaim(
         swap,
         details,
         decodedAddress.script,
@@ -150,7 +149,10 @@ const claimChainSwap = async (
         "hex",
     );
     const claimPrivateKey = parsePrivateKey(swap.claimPrivateKey);
-    const ourClaimMusig = createMusig(claimPrivateKey, boltzRefundPublicKey);
+    const ourClaimMusig = await createMusig(
+        claimPrivateKey,
+        boltzRefundPublicKey,
+    );
     const claimTree = SwapTreeSerializer.deserializeSwapTree(
         swap.claimDetails.swapTree,
     );
@@ -176,7 +178,7 @@ const claimChainSwap = async (
         },
     ] as (ClaimDetails & { blindingPrivateKey: Buffer })[];
     const decodedAddress = decodeAddress(swap.assetReceive, swap.claimAddress);
-    const claimTx = createAdjustedClaim(
+    const claimTx = await createAdjustedClaim(
         swap,
         details,
         decodedAddress.script,
@@ -209,7 +211,7 @@ const claimChainSwap = async (
                 serverClaimDetails.publicKey,
                 "hex",
             );
-            const theirClaimMusig = createMusig(
+            const theirClaimMusig = await createMusig(
                 parsePrivateKey(swap.refundPrivateKey),
                 boltzClaimPublicKey,
             );
@@ -304,8 +306,6 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     swapStatusTransaction: { hex: string },
     cooperative: boolean = true,
 ): Promise<T | undefined> => {
-    await setup();
-
     const asset = getRelevantAssetForSwap(swap);
     if (asset === RBTC) {
         return undefined;
@@ -350,19 +350,18 @@ export const createSubmarineSignature = async (swap: SubmarineSwap) => {
         return;
     }
 
-    await setup();
-    log.info(`creating cooperative claim signature for`, swap.id);
+    log.info("Creating cooperative claim signature for", swap.id);
 
     const claimDetails = await getSubmarineClaimDetails(swap.backend, swap.id);
     if (
         crypto.sha256(claimDetails.preimage).toString("hex") !==
-        decodeInvoice(swap.invoice).preimageHash
+        (await decodeInvoice(swap.invoice)).preimageHash
     ) {
         throw "invalid preimage";
     }
 
     const boltzPublicKey = Buffer.from(swap.claimPublicKey, "hex");
-    const musig = createMusig(
+    const musig = await createMusig(
         parsePrivateKey(swap.refundPrivateKey),
         boltzPublicKey,
     );

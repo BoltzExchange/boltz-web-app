@@ -83,7 +83,7 @@ const QrScan = () => {
                 <div
                     id="video-wrapper"
                     style={scanning() ? "display: block" : "display: none"}>
-                    <video id="qr-scanner" ref={qrRef}></video>
+                    <video id="qr-scanner" ref={qrRef} />
                     <span class="close-qr" onClick={stopScan}>
                         X
                     </span>

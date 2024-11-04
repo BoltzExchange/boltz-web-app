@@ -5,6 +5,7 @@ import {
     createSignal,
     useContext,
 } from "solid-js";
+import type { JSX } from "solid-js";
 
 import { SomeSwap } from "../utils/swapCreator";
 
@@ -26,7 +27,7 @@ type SwapStatusTransaction = {
     id?: string;
 };
 
-const PayProvider = (props: { children: any }) => {
+const PayProvider = (props: { children: JSX.Element }) => {
     const [failureReason, setFailureReason] = createSignal<string>("");
     const [swap, setSwap] = createSignal<SomeSwap | null>(null, {
         // To allow updating properties of the swap object without replacing it completely
@@ -61,4 +62,4 @@ const usePayContext = () => {
     return context;
 };
 
-export { usePayContext, PayProvider };
+export { usePayContext, PayProvider, SwapStatusTransaction };

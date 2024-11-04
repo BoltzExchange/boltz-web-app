@@ -10,7 +10,7 @@ import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
 import "../style/nav.scss";
 
-const Nav = ({ network }) => {
+const Nav = (props: { network: string }) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const { t, setHideHero, setI18nConfigured } = useGlobalContext();
@@ -23,9 +23,9 @@ const Nav = ({ network }) => {
                 <A id="logo" href="/" onClick={() => setHideHero(false)}>
                     <img src={logo} alt="boltz.exchange logo" />
                 </A>
-                <Show when={network !== "mainnet"}>
+                <Show when={props.network !== "mainnet"}>
                     <div id="network" class="btn btn-small">
-                        {network}
+                        {props.network}
                     </div>
                 </Show>
                 <div
