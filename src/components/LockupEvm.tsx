@@ -1,6 +1,7 @@
 import { Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
@@ -30,6 +31,7 @@ const LockupEvm = (props: {
     derivationPath?: string;
     timeoutBlockHeight: number;
 }) => {
+    const { setSwap } = usePayContext();
     const { getEtherSwap, signer, providers } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
 
@@ -75,6 +77,7 @@ const LockupEvm = (props: {
                         ).getDerivationPath();
                     }
 
+                    setSwap(currentSwap);
                     await setSwapStorage(currentSwap);
                 }}
                 children={<ConnectWallet />}

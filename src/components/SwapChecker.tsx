@@ -32,7 +32,7 @@ type SwapStatus = {
     status: string;
 
     failureReason?: string;
-    transaction: SwapStatusTransaction;
+    transaction?: SwapStatusTransaction;
 };
 
 const reconnectInterval = 5_000;
@@ -75,6 +75,10 @@ class BoltzWebSocket {
     };
 
     public subscribeUpdates = (ids: string[]) => {
+        if (ids.every((id) => this.relevantIds.has(id))) {
+            return;
+        }
+
         ids.forEach((id) => this.relevantIds.add(id));
         if (this.ws.readyState !== WebSocket.OPEN) {
             return;
@@ -188,10 +192,21 @@ export const SwapChecker = () => {
             return;
         }
 
-        if (
-            currentSwap.version !== OutputType.Taproot ||
-            getRelevantAssetForSwap(currentSwap) === RBTC
-        ) {
+        if (getRelevantAssetForSwap(currentSwap) === RBTC) {
+            if (
+                data.status === swapStatusPending.TransactionMempool &&
+                data.transaction !== undefined
+            ) {
+                currentSwap.lockupTx = data.transaction.id;
+
+                setSwap(currentSwap);
+                await setSwapStorage(currentSwap);
+            }
+
+            return;
+        }
+
+        if (currentSwap.version !== OutputType.Taproot) {
             return;
         }
 

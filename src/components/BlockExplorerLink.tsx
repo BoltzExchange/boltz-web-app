@@ -1,4 +1,11 @@
-import { Accessor, Show, createEffect, createSignal } from "solid-js";
+import {
+    Accessor,
+    Match,
+    Show,
+    Switch,
+    createEffect,
+    createSignal,
+} from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -43,6 +50,8 @@ const BlockExplorerLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
+    const isRsk = () => getRelevantAssetForSwap(props.swap()) === RBTC;
+
     return (
         <Show
             when={props.swap().type !== SwapType.Chain}
@@ -52,37 +61,52 @@ const BlockExplorerLink = (props: {
                     swapStatus={props.swapStatus}
                 />
             }>
-            {/* Showing addresses makes no sense for EVM based chains */}
-            <Show
-                when={getRelevantAssetForSwap(props.swap()) !== RBTC}
-                fallback={
-                    <Show when={props.swap().claimTx !== undefined}>
+            <Switch>
+                <Match when={!isRsk()}>
+                    {/* Refund transactions are handled in SwapRefunded */}
+                    <Show
+                        when={
+                            getRelevantAssetForSwap(props.swap()) &&
+                            props.swapStatus() !== null &&
+                            props.swapStatus() !== "invoice.set" &&
+                            props.swapStatus() !== "swap.created"
+                        }>
+                        <BlockExplorer
+                            asset={getRelevantAssetForSwap(props.swap())}
+                            txId={props.swap().claimTx}
+                            address={
+                                props.swap().type === SwapType.Submarine
+                                    ? (props.swap() as SubmarineSwap).address
+                                    : (props.swap() as ReverseSwap)
+                                          .lockupAddress
+                            }
+                        />
+                    </Show>
+                </Match>
+
+                {/* Showing addresses makes no sense for EVM based chains */}
+                <Match when={isRsk()}>
+                    <Show
+                        when={props.swap().claimTx !== undefined}
+                        fallback={
+                            <Show when={props.swap().lockupTx}>
+                                <BlockExplorer
+                                    asset={getRelevantAssetForSwap(
+                                        props.swap(),
+                                    )}
+                                    txId={props.swap().lockupTx}
+                                    typeLabel={"lockup_tx"}
+                                />
+                            </Show>
+                        }>
                         <BlockExplorer
                             asset={getRelevantAssetForSwap(props.swap())}
                             txId={props.swap().claimTx}
                             typeLabel={"claim_tx"}
                         />
                     </Show>
-                }>
-                {/* Refund transactions are handled in SwapRefunded */}
-                <Show
-                    when={
-                        getRelevantAssetForSwap(props.swap()) &&
-                        props.swapStatus() !== null &&
-                        props.swapStatus() !== "invoice.set" &&
-                        props.swapStatus() !== "swap.created"
-                    }>
-                    <BlockExplorer
-                        asset={getRelevantAssetForSwap(props.swap())}
-                        txId={props.swap().claimTx}
-                        address={
-                            props.swap().type === SwapType.Submarine
-                                ? (props.swap() as SubmarineSwap).address
-                                : (props.swap() as ReverseSwap).lockupAddress
-                        }
-                    />
-                </Show>
-            </Show>
+                </Match>
+            </Switch>
         </Show>
     );
 };
