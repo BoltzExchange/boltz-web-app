@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
-## [1.4.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.4.1..1.4.2) - 2024-10-07
+## [1.5.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.4.1..v1.5.0) - 2024-11-05
 
 ### Bug Fixes
 
@@ -16,6 +16,16 @@ All notable changes to this project will be documented in this file. See [conven
 - wallet selection on submarine lockup - ([897b4ae](https://github.com/BoltzExchange/boltz-web-app/commit/897b4ae3edd41e1c9c21a778beda790bd3d8eaf2))
 - make .env file optional on regtest (#657) - ([9f5122a](https://github.com/BoltzExchange/boltz-web-app/commit/9f5122a48e541afa3faef40507384be57b624065))
 - add URL params doc to menu (#660) - ([c624d2a](https://github.com/BoltzExchange/boltz-web-app/commit/c624d2abfdc5c2630d66475c6bb05164df0d8905))
+- add timeout to BIP-353 DNS lookup (#704) - ([7ecf7a3](https://github.com/BoltzExchange/boltz-web-app/commit/7ecf7a344c5e0edbc4dfac24e0cdecd7c2a6c7d2))
+- reduce error correction level for refund QRs (#711) - ([382d523](https://github.com/BoltzExchange/boltz-web-app/commit/382d523f353e9380f7a458656f63ed9d580aaf05))
+- EIP-712 compatibility with Trezor One - ([1392b1d](https://github.com/BoltzExchange/boltz-web-app/commit/1392b1d3e3dedbe19f6d142be9b3f0f25402f21e))
+- transaction prompt for locking EVM - ([75bde46](https://github.com/BoltzExchange/boltz-web-app/commit/75bde465aa14d5097e5db69cd368d1caa3586112))
+- revert to working ledger eth app version - ([74f01c4](https://github.com/BoltzExchange/boltz-web-app/commit/74f01c4a554fe8eeae327779eb2e9c1f272b8efe))
+- do not show testnet derivation path on mainnet - ([7fbde1c](https://github.com/BoltzExchange/boltz-web-app/commit/7fbde1c84936cae50d1d82a8ec642403d6cb590e))
+- address connect prompt - ([374517c](https://github.com/BoltzExchange/boltz-web-app/commit/374517c56c7b18006213be361a18ef0316a4d4b7))
+- hide browser native wallet when window.ethereum is undefined - ([3e4a212](https://github.com/BoltzExchange/boltz-web-app/commit/3e4a2125bc6e65b6c103f936604a0440672257b3))
+- invalid pair hash detection - ([37f5d19](https://github.com/BoltzExchange/boltz-web-app/commit/37f5d197890de6cd69474ccc9d270404fcff4a8d))
+- broken EVM reactivity - ([dd15284](https://github.com/BoltzExchange/boltz-web-app/commit/dd15284bc3a5b9f0f2610be3987b8534d367d014))
 
 ### Documentation
 
@@ -40,6 +50,19 @@ All notable changes to this project will be documented in this file. See [conven
 - renegotiate chain swap amounts (#662) - ([4ec6e5c](https://github.com/BoltzExchange/boltz-web-app/commit/4ec6e5cf9c51e9465fa84e94697f1fac9078eeff))
 - show swap ID after uploading file (#677) - ([e203f9c](https://github.com/BoltzExchange/boltz-web-app/commit/e203f9ca4ac95d7eb8b59ef20569c9f9aa8296d5))
 - show address on EVM send screen (#682) - ([c3a0baa](https://github.com/BoltzExchange/boltz-web-app/commit/c3a0baad1071ae591ff76ad5a7d74dc34edfd363))
+- bolt12 support for submarine swaps - ([8b9c1cb](https://github.com/BoltzExchange/boltz-web-app/commit/8b9c1cbf62ab562529d0029149b1398b81cc0034))
+- implement Discount CT (#697) - ([7d13dcb](https://github.com/BoltzExchange/boltz-web-app/commit/7d13dcb54e6b9bd417e76972d04d4877abafba5a))
+- language URL search parameter (#698) - ([6bcfad2](https://github.com/BoltzExchange/boltz-web-app/commit/6bcfad295d910716c22f02ed8b773a77194e5d41))
+- fetch BIP-353 with DNSSEC prover (#700) - ([e1991a6](https://github.com/BoltzExchange/boltz-web-app/commit/e1991a6c9d39cfb92869f527684468fb7f0ce99b))
+- validate invoices fetched for offers (#706) - ([a732713](https://github.com/BoltzExchange/boltz-web-app/commit/a7327130cd9ba17dbcac15c2cb8529d85ff9a3c5))
+- ledger support - ([ad621c5](https://github.com/BoltzExchange/boltz-web-app/commit/ad621c5e3fa2346da1458b9c53256d20d198a15b))
+- trezor support - ([ef8479b](https://github.com/BoltzExchange/boltz-web-app/commit/ef8479bd47e422133625a9943cc378e2a7b6bfe7))
+- hardware custom derivation paths - ([f4d8220](https://github.com/BoltzExchange/boltz-web-app/commit/f4d8220e791b2fe610437e88a255f7a86b49c702))
+- loading indicator for wallet selection - ([9d96971](https://github.com/BoltzExchange/boltz-web-app/commit/9d96971123b82d64dee612e4c0f76aa786493bca))
+- remember custom derivation paths for swaps - ([274c906](https://github.com/BoltzExchange/boltz-web-app/commit/274c906a21d266d4ec2f9e404a13dafbaeb0282a))
+- add Japanese (#702) - ([0a032a8](https://github.com/BoltzExchange/boltz-web-app/commit/0a032a8ef7fb21d615a0724d243d861665966e1b))
+- browser native web3 wallet support (#701) - ([031c4c6](https://github.com/BoltzExchange/boltz-web-app/commit/031c4c674ed3276eeaca69b9e9881fe95e45cd06))
+- show EVM lockup transactions (#715) - ([9c9184c](https://github.com/BoltzExchange/boltz-web-app/commit/9c9184c5a9ae4577631b7e14f033253b8cb488d2))
 
 ### Miscellaneous Chores
 
@@ -60,6 +83,22 @@ All notable changes to this project will be documented in this file. See [conven
 - fix vulnerable dependencies (#670) - ([08c65bb](https://github.com/BoltzExchange/boltz-web-app/commit/08c65bbc216578f22d9c556ef4a78bf2fb580814))
 - minor RSK fixes (#671) - ([abb4c7f](https://github.com/BoltzExchange/boltz-web-app/commit/abb4c7f8ac2762e8532b418b1737dabe52cf955f))
 - enable RSK on beta site (#672) - ([6980615](https://github.com/BoltzExchange/boltz-web-app/commit/698061529c2cb066a3f6b6ca25a2cebafff09e22))
+- reword for bolt12 - ([8e32075](https://github.com/BoltzExchange/boltz-web-app/commit/8e32075485ddcea9d02a11ddb548b227ff8158cb))
+- bump regtest for Bitcoin Core v28.0 support (#688) - ([e8c9aa8](https://github.com/BoltzExchange/boltz-web-app/commit/e8c9aa8a63bbdc331a2ab7f2f77a7ffbad302bf2))
+- release v1.4.2 - ([81cacd4](https://github.com/BoltzExchange/boltz-web-app/commit/81cacd4063ec087fc75498698d8668e20c3786d9))
+- add BancoLibre to integrations - ([2641a39](https://github.com/BoltzExchange/boltz-web-app/commit/2641a3930b73aeb631744f07530f5f4b434c7648))
+- add StashPay to integrations - ([69cb83b](https://github.com/BoltzExchange/boltz-web-app/commit/69cb83b2b173dab4d2582c6fd49b02e76d219677))
+- bump bolt12 resolve timeout (#710) - ([6a844a0](https://github.com/BoltzExchange/boltz-web-app/commit/6a844a02f58c1fbb1fd58a18174f9089564675c7))
+- show ledger not supported message - ([5df045d](https://github.com/BoltzExchange/boltz-web-app/commit/5df045de231d32f8628cb80c69756521505fb07f))
+- allow RSK Test ledger app - ([25476e9](https://github.com/BoltzExchange/boltz-web-app/commit/25476e93485dcc02a02279f3c7b3bd04ecf764db))
+- add new strings, misc fixes - ([4934d37](https://github.com/BoltzExchange/boltz-web-app/commit/4934d37bf5d7740c252c38e901915681b702224e))
+- add timeout in Japanese - ([0d69faa](https://github.com/BoltzExchange/boltz-web-app/commit/0d69faa2756721bce22b4e2c3a0fda58036384f6))
+- update dependencies (#713) - ([723f072](https://github.com/BoltzExchange/boltz-web-app/commit/723f0722a6ac0681feacbee34b14ff9c8fdb950a))
+- fix Docker build on arm64 (#714) - ([daf4c5e](https://github.com/BoltzExchange/boltz-web-app/commit/daf4c5e35b96792235d30925754dfe6e7053d800))
+- add basic ESLint config - ([bd84463](https://github.com/BoltzExchange/boltz-web-app/commit/bd84463b3ae59430e0e7e4a708b6eff3dd44eabd))
+- run prettier on public folder - ([cf67887](https://github.com/BoltzExchange/boltz-web-app/commit/cf6788782db0f972c2ed4ec6e39fe89e82ff6996))
+- fix package-lock.json for Docker build - ([eb5bc5e](https://github.com/BoltzExchange/boltz-web-app/commit/eb5bc5e5a3826f5a73495f56bd61c80129b3fb31))
+- bump version to v1.5.0 - ([dc0f4ac](https://github.com/BoltzExchange/boltz-web-app/commit/dc0f4acfbe7c00ea4c39901b9b6e1ddede36f483))
 
 ### Refactoring
 
@@ -67,6 +106,13 @@ All notable changes to this project will be documented in this file. See [conven
 - rewrite build check script in Python - ([4ad7da0](https://github.com/BoltzExchange/boltz-web-app/commit/4ad7da0d1046716d2bdd4e052ca52adfd69f78b9))
 - remove API endpoint based on pair - ([255e511](https://github.com/BoltzExchange/boltz-web-app/commit/255e511d6cc17a8e2629597e67a68bb94aa99bcd))
 - only require a single signature for a RIF transaction (#665) - ([7ed509f](https://github.com/BoltzExchange/boltz-web-app/commit/7ed509f18863e4ebbdd8845f02a6307ba4db9437))
+- cleanup RSK claim page (#687) - ([d37de5a](https://github.com/BoltzExchange/boltz-web-app/commit/d37de5a630a0f3b5286d1f287559c4e5790656f2))
+- improve invoice fetching (#699) - ([7703f36](https://github.com/BoltzExchange/boltz-web-app/commit/7703f36d7ffc5595c933aeaf6b8d64ff86cb06e4))
+- remove open Ledger app prompt - ([e3ca2a7](https://github.com/BoltzExchange/boltz-web-app/commit/e3ca2a7a2de4589e4e88df9ee8ca529dde6cbac8))
+- lazy load HWW dependencies - ([4f8ed9a](https://github.com/BoltzExchange/boltz-web-app/commit/4f8ed9aefea6ba41cc029cd4edb984c5ef15a66f))
+- lazy load bolt12 library - ([c3594ad](https://github.com/BoltzExchange/boltz-web-app/commit/c3594adedf09f2076d6cdbf9cb158032520ed265))
+- lazy load @vulpemventures/secp256k1-zkp - ([43a5004](https://github.com/BoltzExchange/boltz-web-app/commit/43a50048c991ddbd46992411159fbf4bc3d48036))
+- move HWW lazy loaders - ([3e2dd57](https://github.com/BoltzExchange/boltz-web-app/commit/3e2dd57106e73f35f411bf0ec3f0280a7f0a8166))
 
 ### Tests
 
