@@ -48,8 +48,6 @@ export type GlobalContextType = {
     setNotificationType: Setter<string>;
     webln: Accessor<boolean>;
     setWebln: Setter<boolean>;
-    camera: Accessor<boolean>;
-    setCamera: Setter<boolean>;
     ref: Accessor<string>;
     setRef: Setter<string>;
     i18nConfigured: Accessor<string | null>;
@@ -124,7 +122,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const [notificationType, setNotificationType] = createSignal<string>("");
 
     const [webln, setWebln] = createSignal<boolean>(false);
-    const [camera, setCamera] = createSignal<boolean>(false);
 
     const [embedded, setEmbedded] = createSignal<boolean>(false);
 
@@ -377,8 +374,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setNotificationType,
                 webln,
                 setWebln,
-                camera,
-                setCamera,
                 ref,
                 setRef,
                 i18nConfigured,

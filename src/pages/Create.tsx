@@ -403,7 +403,7 @@ const Create = () => {
                     </Show>
                     <InvoiceInput />
                 </Show>
-                <Show when={isMobile()}>
+                <Show when={isMobile() && assetReceive() !== RBTC}>
                     <QrScan />
                 </Show>
                 <CreateButton />
