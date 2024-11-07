@@ -108,6 +108,41 @@ const Modal = (props: {
     );
 };
 
+const ConnectModal = (props: { derivationPath: string; isDisabled: boolean }) => {
+    const { t, notify } = useGlobalContext();
+    const { providers, connectProvider } = useWeb3Signer();
+
+    const [show, setShow] = createSignal<boolean>(false);
+
+    return (
+        <>
+            <button
+                class="btn"
+                disabled={props.isDisabled}
+                onClick={async () => {
+                    if (Object.keys(providers()).length > 1) {
+                        setShow(true);
+                    } else {
+                        // Do not show the modal when there is only one option to select
+                        await connect(
+                            notify,
+                            connectProvider,
+                            providers,
+                            Object.values(providers())[0].info,
+                            props.derivationPath,
+                        );
+                    }
+                }}>
+                {t("connect_wallet")}
+            </button>
+            <Modal
+                show={show}
+                setShow={setShow}
+                derivationPath={props.derivationPath}
+            />
+        </>
+    );
+};
 const ConnectModal = (props: { derivationPath: string }) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider } = useWeb3Signer();
@@ -227,7 +262,19 @@ export const SwitchNetwork = () => {
 const ConnectWallet = (props: {
     derivationPath?: string;
     addressOverride?: Accessor<string | undefined>;
+    isValidPair: boolean;
+const ConnectWallet = (props: {
+    derivationPath?: string;
+    addressOverride?: Accessor<string | undefined>;
 }) => {
+    const { t } = useGlobalContext();
+    const { providers, signer, getContracts } = useWeb3Signer();
+    const { setAddressValid, setOnchainAddress } = useCreateContext();
+
+    const address = createMemo(() => signer()?.address);
+    const [networkValid, setNetworkValid] = createSignal<boolean>(true);
+
+    const isButtonDisabled = createMemo(() => !props.isValidPair || !networkValid());
     const { t } = useGlobalContext();
     const { providers, signer, getContracts } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
@@ -264,6 +311,7 @@ const ConnectWallet = (props: {
             <Show
                 when={address() !== undefined}
                 fallback={
+                     <ConnectModal derivationPath={props.derivationPath} isDisabled={isButtonDisabled()} />
                     <ConnectModal derivationPath={props.derivationPath} />
                 }>
                 <Show when={networkValid()} fallback={<SwitchNetwork />}>
