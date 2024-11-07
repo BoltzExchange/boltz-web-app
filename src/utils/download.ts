@@ -16,7 +16,7 @@ export const download = (file: string, content: string) => {
 
 export const downloadJson = <T>(
     file: string,
-    content: T extends Promise<any> ? never : T,
+    content: T extends Promise<T> ? never : T,
 ) => {
     download(
         `${file}.json`,

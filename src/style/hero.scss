@@ -1,4 +1,5 @@
-@import "vars";
+@use "sass:color";
+@use "vars";
 
 .headline,
 h1 {
@@ -50,7 +51,7 @@ h2.headline small {
 }
 h3 {
     margin: 0;
-    color: $primary;
+    color: vars.$primary;
 }
 
 .inner-wrap {
@@ -117,7 +118,7 @@ h3 {
     font-size: 16px;
     display: block;
     font-weight: normal;
-    color: $primary;
+    color: vars.$primary;
 }
 
 .thunderhub:before {
@@ -312,14 +313,14 @@ h3 {
 }
 #create-overlay.glow .frame {
     transition: all 0.8s ease-in-out;
-    box-shadow: 0 0 0 transparentize($primary, 0.7);
+    box-shadow: 0 0 0 color.adjust(vars.$primary, $alpha: -0.7);
 }
 
 @media (min-width: 488px) {
     #create-overlay.glow .frame {
-        box-shadow: 0 0 40px transparentize($primary, 0.7);
+        box-shadow: 0 0 40px color.adjust(vars.$primary, $alpha: -0.7);
     }
     #create-overlay.glow .frame:hover {
-        box-shadow: 0 0 60px transparentize($primary, 0.7);
+        box-shadow: 0 0 60px color.adjust(vars.$primary, $alpha: -0.7);
     }
 }

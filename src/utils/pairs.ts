@@ -20,6 +20,8 @@ export const isPairValid = (
         } else {
             return pairs[SwapType.Chain][assetSend][assetReceive] !== undefined;
         }
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         return false;
     }

@@ -6,7 +6,7 @@ import { usePayContext } from "../context/Pay";
 import { download, downloadJson, getRefundFileName } from "../utils/download";
 import { isIos, isMobile } from "../utils/helper";
 
-const downloadRefundJson = (swap: any) => {
+const downloadRefundJson = (swap: { id: string } & Record<string, unknown>) => {
     downloadJson(getRefundFileName(swap.id), swap);
 };
 
@@ -14,8 +14,13 @@ const DownloadRefund = () => {
     const { swap } = usePayContext();
     const { t } = useGlobalContext();
 
-    const downloadRefundQr = (swap: any) => {
-        QRCode.toDataURL(JSON.stringify(swap), { width: 1200 })
+    const downloadRefundQr = (
+        swap: { id: string } & Record<string, unknown>,
+    ) => {
+        QRCode.toDataURL(JSON.stringify(swap), {
+            width: 1200,
+            errorCorrectionLevel: "L",
+        })
             .then((url: string) => {
                 if (isIos()) {
                     // Compatibility with third party iOS browsers
@@ -39,7 +44,7 @@ const DownloadRefund = () => {
     return (
         <button
             class="btn btn-success"
-            onclick={() =>
+            onClick={() =>
                 isMobile()
                     ? downloadRefundQr(swap())
                     : downloadRefundJson(swap())

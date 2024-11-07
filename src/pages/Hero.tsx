@@ -50,7 +50,7 @@ export const Hero = () => {
 
     // Reactively fetch node stats whenever backend() changes
     createEffect(() => {
-        fetchNodeStats();
+        void fetchNodeStats();
     });
 
     return (
@@ -58,7 +58,7 @@ export const Hero = () => {
             <div
                 id="create-overlay"
                 class={hideHero() ? "" : "glow"}
-                onclick={() => setHideHero(true)}>
+                onClick={() => setHideHero(true)}>
                 <Create />
             </div>
             <Show when={!hideHero()}>
@@ -66,7 +66,7 @@ export const Hero = () => {
                     {t("headline")}
                     <small>{t("subline")}</small>
                 </h1>
-                <span class="btn btn-inline" onclick={() => navigate("swap")}>
+                <span class="btn btn-inline" onClick={() => navigate("swap")}>
                     {t("start_swapping")}
                 </span>
                 <div class="hero-boxes">
@@ -116,6 +116,134 @@ export const Hero = () => {
                     <div class="number">
                         {t("oldest_channel_years", { years: oldestChannel() })}
                         <small>{t("oldest_channel")}</small>
+                    </div>
+                </div>
+            </Show>
+            <Show when={false}>
+                <h2 class="headline">{t("integrations")}</h2>
+                <div id="integrations">
+                    <div>
+                        <a
+                            href="https://corelightning.org/"
+                            target="_blank"
+                            class="cln"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://breez.technology/"
+                            target="_blank"
+                            class="breez"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://lnbits.com/"
+                            target="_blank"
+                            class="lnbits"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://www.ridethelightning.info/"
+                            target="_blank"
+                            class="rtl"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://thunderhub.io/"
+                            target="_blank"
+                            class="thunderhub">
+                            Thunderhub
+                        </a>
+                    </div>
+                    <div>
+                        <a
+                            href="https://fuji.money/"
+                            target="_blank"
+                            class="fuji"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://aquawallet.io/"
+                            target="_blank"
+                            class="aqua"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://vulpem.com/marina.html"
+                            target="_blank"
+                            class="marina"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://geyser.fund/"
+                            target="_blank"
+                            class="geyser"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://www.bullbitcoin.com/"
+                            target="_blank"
+                            class="bull-bitcoin"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://blitz-wallet.com/"
+                            target="_blank"
+                            class="blitz"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://helm-wallet.com/"
+                            target="_blank"
+                            class="helm"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://bancolibre.com/"
+                            target="_blank"
+                            class="bancoLibre"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://stashpay.me"
+                            target="_blank"
+                            class="stashPay"
+                        />
+                    </div>
+                </div>
+                <h2 class="special headline">{t("partners")}</h2>
+                <div id="partners">
+                    <div>
+                        <a
+                            href="https://blockstream.com/"
+                            target="_blank"
+                            class="blockstream"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://diamondhands.technology/"
+                            target="_blank"
+                            class="diamondhands"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://vulpem.com/"
+                            target="_blank"
+                            class="vulpem"
+                        />
                     </div>
                 </div>
             </Show>

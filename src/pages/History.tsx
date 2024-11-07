@@ -21,17 +21,17 @@ type BackupFileType = { version: number; swaps: SomeSwap[] };
 // Throws when the file is invalid
 // Returns the version of the backup file
 const validateBackupFile = (
-    file: BackupFileType | any[] | SomeSwap,
+    file: BackupFileType | unknown[] | SomeSwap,
 ): BackupFileType => {
-    const allSwapsHaveId = (swaps: any[]) => {
+    const allSwapsHaveId = (swaps: { id: string }[]) => {
         if (swaps.some((swap) => swap.id === undefined || swap.id === null)) {
             throw Errors.NotAllElementsHaveAnId;
         }
     };
 
     if (file instanceof Array) {
-        allSwapsHaveId(file);
-        return { version: 0, swaps: file };
+        allSwapsHaveId(file as { id: string }[]);
+        return { version: 0, swaps: file as SomeSwap[] };
     } else if (typeof file === "object") {
         // A single refund file was uploaded
         if (["id", "type"].every((key) => key in file)) {
@@ -66,7 +66,7 @@ const History = () => {
         t,
     } = useGlobalContext();
 
-    const [swaps, setSwaps] = createSignal<any[]>([]);
+    const [swaps, setSwaps] = createSignal<SomeSwap[]>([]);
 
     const deleteLocalStorage = async () => {
         if (confirm(t("delete_storage"))) {
@@ -140,7 +140,7 @@ const History = () => {
                                     ref={importRef}
                                     required
                                     type="file"
-                                    style="display: none"
+                                    style={{ display: "none" }}
                                     accept="application/json"
                                     onChange={(e) => importLocalStorage(e)}
                                 />
@@ -149,6 +149,7 @@ const History = () => {
                     }>
                     <SwapList
                         swapsSignal={swaps}
+                        /* eslint-disable-next-line solid/reactivity */
                         onDelete={async () => {
                             setSwaps(await getSwaps());
                         }}

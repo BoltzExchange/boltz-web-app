@@ -12,16 +12,14 @@ const QrScan = () => {
     let qrScanner: QrScanner;
 
     const { swapType, setInvoice, setOnchainAddress } = useCreateContext();
-    const { t, camera, notify, setCamera } = useGlobalContext();
+    const { t, notify } = useGlobalContext();
 
+    const [camera, setCamera] = createSignal<boolean>(false);
     const [scanning, setScanning] = createSignal(false);
 
     onMount(async () => {
         const hasCamera = await QrScanner.hasCamera();
-        log.debug("detecting camera: ", hasCamera);
-        if (!hasCamera) {
-            return;
-        }
+        log.debug("Has camera to scan QR codes:", hasCamera);
         setCamera(hasCamera);
     });
 
@@ -83,7 +81,7 @@ const QrScan = () => {
                 <div
                     id="video-wrapper"
                     style={scanning() ? "display: block" : "display: none"}>
-                    <video id="qr-scanner" ref={qrRef}></video>
+                    <video id="qr-scanner" ref={qrRef} />
                     <span class="close-qr" onClick={stopScan}>
                         X
                     </span>

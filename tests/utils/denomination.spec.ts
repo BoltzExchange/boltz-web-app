@@ -90,7 +90,7 @@ describe("denomination utils", () => {
             ${"0.123123131"} | ${false}
             ${"0,123"}       | ${true}
         `("validating regex for $amount", ({ amount, valid }) => {
-            let regex = getValidationRegex(max);
+            const regex = getValidationRegex(max);
             expect(regex.test(amount)).toEqual(valid);
         });
     });

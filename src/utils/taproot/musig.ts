@@ -12,15 +12,20 @@ import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { LBTC } from "../../consts/Assets";
+import secp from "../../lazy/secp";
 import { TransactionInterface } from "../boltzClient";
-import { secp } from "../compat";
 
-export const createMusig = (ourKeys: ECPairInterface, theirPublicKey: Buffer) =>
-    new Musig(secp, ourKeys, randomBytes(32), [
+export const createMusig = async (
+    ourKeys: ECPairInterface,
+    theirPublicKey: Buffer,
+) => {
+    const { secpZkp } = await secp.get();
+    return new Musig(secpZkp, ourKeys, randomBytes(32), [
         // The key of Boltz always comes first
         theirPublicKey,
         ourKeys.publicKey,
     ]);
+};
 
 export const tweakMusig = (asset: string, musig: Musig, tree: Taptree) =>
     (asset === LBTC ? LiquidTaprootUtils : TaprootUtils).tweakMusig(

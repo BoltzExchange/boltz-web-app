@@ -4,9 +4,9 @@ import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import "../style/asset.scss";
 
-const Asset = ({ side, signal }: { side: Side; signal: Accessor<string> }) => {
+const Asset = (props: { side: Side; signal: Accessor<string> }) => {
     const openSelect = () => {
-        setAssetSelected(side);
+        setAssetSelected(props.side);
         setAssetSelect(true);
     };
 
@@ -14,14 +14,14 @@ const Asset = ({ side, signal }: { side: Side; signal: Accessor<string> }) => {
 
     return (
         <div class="asset-wrap" onClick={openSelect}>
-            <div class={`asset asset-${signal()}`}>
+            <div class={`asset asset-${props.signal()}`}>
                 <div class="asset-selection">
-                    <span class="icon"></span>
-                    <span class="asset-text"></span>
-                    <span class="arrow-down"></span>
+                    <span class="icon" />
+                    <span class="asset-text" />
+                    <span class="arrow-down" />
                 </div>
             </div>
-            <div class="assets-select"></div>
+            <div class="assets-select" />
         </div>
     );
 };

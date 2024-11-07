@@ -37,6 +37,9 @@ export type SwapBase = {
     signer?: string;
 
     backend?: number;
+
+    // Set for hardware wallet signers
+    derivationPath?: string;
 };
 
 export type SubmarineSwap = SwapBase &

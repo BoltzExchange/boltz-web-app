@@ -5,6 +5,8 @@ import { BTC } from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 describe("PayOnchain", () => {
     test("should copy amount reactively", async () => {
         const amount = 100_000;
@@ -26,10 +28,11 @@ describe("PayOnchain", () => {
             },
         );
 
-        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         navigator.clipboard = {
             writeText: jest.fn(),
-        } as any;
+        } as unknown;
 
         const buttons = (await screen.findByTestId(
             "pay-onchain-buttons",

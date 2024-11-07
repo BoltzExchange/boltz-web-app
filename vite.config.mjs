@@ -23,10 +23,17 @@ export default defineConfig({
         https: true,
         cors: { origin: "*" },
     },
-    base: '/',
+    base: "/",
     build: {
         commonjsOptions: {
             transformMixedEsModules: true,
+        },
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                api: "modern-compiler",
+            },
         },
     },
     define: {

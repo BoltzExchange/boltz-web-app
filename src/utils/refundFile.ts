@@ -37,8 +37,8 @@ const getRequiredKeys = (
 };
 
 export const validateRefundFile = (
-    data: Record<string, any>,
-): { id: string } & Record<string, any> => {
+    data: Record<string, string | object | number | boolean>,
+): { id: string } & Record<string, string | object | number | boolean> => {
     // Compatibility with ancient refund files
     if (data.asset === undefined && data.currency !== undefined) {
         data.asset = data.currency;
@@ -47,8 +47,8 @@ export const validateRefundFile = (
     const isLegacy = "asset" in data;
     const requiredKeys = getRequiredKeys(
         isLegacy,
-        data.asset || data.assetSend,
-        data.type,
+        (data.asset || data.assetSend) as string,
+        data.type as SwapType,
     );
 
     if (!requiredKeys.every((key) => key in data)) {
@@ -62,5 +62,5 @@ export const validateRefundFile = (
         });
     }
 
-    return data as { id: string } & Record<string, any>;
+    return data as { id: string } & Record<string, string | object | number>;
 };

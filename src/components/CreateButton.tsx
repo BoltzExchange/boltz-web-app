@@ -1,18 +1,19 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
-import { createEffect, createMemo, createSignal, on } from "solid-js";
+import { createEffect, createSignal, on } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import { fetchBolt12Invoice, getAllPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import { coalesceLn } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import {
@@ -63,7 +64,7 @@ export const CreateButton = () => {
         bolt12Offer,
         setBolt12Offer,
     } = useCreateContext();
-    const { getEtherSwap, signer } = useWeb3Signer();
+    const { getEtherSwap, signer, providers } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -80,7 +81,7 @@ export const CreateButton = () => {
         );
     };
 
-    createMemo(() => {
+    createEffect(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
     });
 
@@ -161,7 +162,7 @@ export const CreateButton = () => {
                     (() => {
                         return new Promise<string>(async (resolve, reject) => {
                             const timeout = setTimeout(
-                                () => reject(t("timeout")),
+                                () => reject(new Error(t("timeout"))),
                                 5_000,
                             );
 
@@ -176,7 +177,7 @@ export const CreateButton = () => {
                                     "Fetching invoice for LNURL failed:",
                                     e,
                                 );
-                                reject(e);
+                                reject(new Error(formatError(e)));
                             } finally {
                                 clearTimeout(timeout);
                             }
@@ -185,8 +186,8 @@ export const CreateButton = () => {
                     (() => {
                         return new Promise<string>(async (resolve, reject) => {
                             const timeout = setTimeout(
-                                () => reject(t("timeout")),
-                                5_000,
+                                () => reject(new Error(t("timeout"))),
+                                15_000,
                             );
 
                             try {
@@ -201,7 +202,7 @@ export const CreateButton = () => {
                                     "Fetching invoice from BIP-353 failed:",
                                     e,
                                 );
-                                reject(e);
+                                reject(new Error(formatError(e)));
                             } finally {
                                 clearTimeout(timeout);
                             }
@@ -215,6 +216,7 @@ export const CreateButton = () => {
                 if (fetched !== undefined) {
                     setInvoice(fetched.value);
                     setLnurl("");
+                    setInvoiceValid(true);
                 } else {
                     // All failed, so we can safely cast the first one
                     notify(
@@ -233,13 +235,15 @@ export const CreateButton = () => {
                     );
                     setInvoice(res.invoice);
                     setBolt12Offer(undefined);
+                    setInvoiceValid(true);
                 } catch (e) {
-                    if (typeof e.json === "function") {
-                        e = (await e.json()).error;
-                    }
+                    const err: unknown =
+                        typeof e.json === "function"
+                            ? (await e.json()).error
+                            : e;
 
-                    notify("error", formatError(e));
-                    log.warn("Fetching invoice from bol12 failed", e);
+                    notify("error", formatError(err));
+                    log.warn("Fetching invoice from bol12 failed", err);
                     return;
                 }
             }
@@ -322,8 +326,22 @@ export const CreateButton = () => {
 
             await setSwapStorage({
                 ...data,
-                signer: signer()?.address,
+                signer:
+                    // We do not have to commit to a signer when creating submarine swaps
+                    swapType() !== SwapType.Submarine
+                        ? signer()?.address
+                        : undefined,
+                derivationPath:
+                    swapType() !== SwapType.Submarine &&
+                    signer() !== undefined &&
+                    customDerivationPathRdns.includes(signer().rdns)
+                        ? (
+                              providers()[signer().rdns]
+                                  .provider as unknown as HardwareSigner
+                          ).getDerivationPath()
+                        : undefined,
             });
+
             setInvoice("");
             setInvoiceValid(false);
             setOnchainAddress("");

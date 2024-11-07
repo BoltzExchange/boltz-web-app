@@ -5,6 +5,8 @@ import i18n from "../../src/i18n/i18n";
 import Refund from "../../src/pages/Refund";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
+/* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
+
 jest.mock("../../src/utils/boltzClient", () => {
     const originalModule = jest.requireActual("../../src/utils/boltzClient");
 
@@ -14,7 +16,7 @@ jest.mock("../../src/utils/boltzClient", () => {
         getLockupTransaction: jest.fn(() => {
             return { timeoutBlockHeight: 10, timeoutEta: 10 };
         }),
-    };
+    } as unknown;
 });
 
 describe("Refund", () => {
@@ -52,7 +54,7 @@ describe("Refund", () => {
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;
-        expect(refundFrame.children.length).toEqual(5);
+        expect(refundFrame.children.length).toEqual(8);
 
         const uploadInput = await screen.findByTestId("refundUpload");
         const swapFile = new File(["{}"], "swap.json", {
@@ -85,7 +87,7 @@ describe("Refund", () => {
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;
-        expect(refundFrame.children.length).toEqual(5);
+        expect(refundFrame.children.length).toEqual(8);
 
         const uploadInput = await screen.findByTestId("refundUpload");
         const swapFile = new File(["{}"], "swap.json", {
@@ -124,7 +126,7 @@ describe("Refund", () => {
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;
-        expect(refundFrame.children.length).toEqual(5);
+        expect(refundFrame.children.length).toEqual(8);
 
         const uploadInput = await screen.findByTestId("refundUpload");
         const swapFile = new File(["{}"], "swap.json", {

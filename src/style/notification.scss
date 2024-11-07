@@ -1,4 +1,5 @@
-@import "vars";
+@use "sass:color";
+@use "vars";
 
 #notification {
     background: black;
@@ -23,10 +24,10 @@
     box-shadow: 0px 0 3px black;
 }
 #notification.error {
-    background-color: transparentize($error, 0.15);
+    background-color: color.adjust(vars.$error, $alpha: -0.15);
 }
 #notification.success {
-    background-color: transparentize($success, 0.15);
+    background-color: color.adjust(vars.$success, $alpha: -0.15);
 }
 
 #notification img {

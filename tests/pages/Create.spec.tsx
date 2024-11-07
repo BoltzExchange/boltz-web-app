@@ -51,7 +51,7 @@ describe("Create", () => {
         ).not.toBeUndefined();
     });
 
-    test("should update receive amount on asset change", async () => {
+    test("should update receive amount on asset change", () => {
         render(
             () => (
                 <>
@@ -80,7 +80,7 @@ describe("Create", () => {
         expect(signals.receiveAmount()).toEqual(BigNumber(49447));
     });
 
-    test("should update receive amount on miner fee change", async () => {
+    test("should update receive amount on miner fee change", () => {
         render(
             () => (
                 <>

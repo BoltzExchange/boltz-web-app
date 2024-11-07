@@ -2,7 +2,9 @@ const requestValidSeconds = 172800;
 
 const deployOnlyRequestKeys: string[] = ["index"];
 
-export const isDeployRequest = (request: Record<string, any>): boolean => {
+export const isDeployRequest = (request: {
+    request: Record<string, unknown>;
+}): boolean => {
     return deployOnlyRequestKeys.every((key) => {
         return key in request.request;
     });
@@ -11,7 +13,7 @@ export const isDeployRequest = (request: Record<string, any>): boolean => {
 export const calculateGasPrice = (
     gasPrice: number | string | bigint,
     minGasPrice: string,
-): BigInt => {
+): bigint => {
     const bigGasPrice = BigInt(gasPrice);
     const bigMinGasPrice = BigInt(minGasPrice);
 

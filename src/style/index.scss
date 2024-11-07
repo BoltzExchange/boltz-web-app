@@ -1,4 +1,5 @@
-@import "vars";
+@use "sass:color";
+@use "vars";
 
 * {
     box-sizing: border-box;
@@ -12,8 +13,8 @@
 body {
     font-size: 14px;
     margin: 0;
-    background: $background;
-    color: $color;
+    background: vars.$background;
+    color: vars.$color;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
@@ -34,7 +35,7 @@ footer {
 
 a,
 a:hover {
-    color: $primary;
+    color: vars.$primary;
 }
 
 .headline,
@@ -213,7 +214,7 @@ hr.spacer {
     padding: 8px 12px;
     text-decoration: none;
     border-radius: 16px;
-    background-color: $primary;
+    background-color: vars.$primary;
     color: #14283f;
     font-weight: bold;
     text-transform: uppercase;
@@ -227,7 +228,7 @@ hr.spacer {
 }
 
 .btn-small {
-    background-color: $primary;
+    background-color: vars.$primary;
     color: #14283f;
     border-radius: 7px;
     padding: 0 6px;
@@ -241,7 +242,7 @@ hr.spacer {
 [data-status="invoice.failedToPay"],
 [data-status="transaction.lockupFailed"] {
     > p > .btn-small {
-        background-color: $error;
+        background-color: vars.$error;
         color: #fff;
     }
 }
@@ -282,7 +283,7 @@ hr.spacer {
     background-color: rgb(11, 22, 35);
 }
 .btn-light:hover {
-    background-color: $primary;
+    background-color: vars.$primary;
 }
 .btn-explorer {
     background: #533180;
@@ -302,11 +303,11 @@ hr.spacer {
 }
 .btn-danger:disabled,
 .btn-danger {
-    background-color: transparentize($error, 0.42);
+    background-color: color.adjust(vars.$error, $alpha: -0.42);
     color: white;
 }
 .btn-danger:hover {
-    background: $error;
+    background: vars.$error;
 }
 .btns {
     display: flex;
@@ -373,13 +374,13 @@ input:focus,
 textarea:focus {
     outline: none;
     color: #ddd;
-    border-color: $primary;
+    border-color: vars.$primary;
 }
 input.invalid,
 textarea.invalid {
     outline: none;
     color: #ddd;
-    border-color: $error;
+    border-color: vars.$error;
 }
 .fees-dyn label {
     display: block;
@@ -508,7 +509,7 @@ textarea {
 }
 
 .error {
-    background: transparentize($error, 0.15);
+    background: color.adjust(vars.$error, $alpha: -0.15);
     color: #ddd;
     padding: 6px 10px;
     display: inline-block;

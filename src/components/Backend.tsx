@@ -14,7 +14,7 @@ const Backend = () => {
         <div class="backend-wrap" onClick={openSelect}>
             <div class="backend-selection">
                 <h2>{config.backends[backend()].alias}</h2>
-                <span class="arrow-down"></span>
+                <span class="arrow-down" />
             </div>
         </div>
     );

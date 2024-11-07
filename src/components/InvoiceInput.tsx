@@ -41,7 +41,7 @@ const InvoiceInput = () => {
         setBolt12Offer,
     } = useCreateContext();
 
-    const validate = (input: HTMLTextAreaElement) => {
+    const validate = async (input: HTMLTextAreaElement) => {
         const val = input.value.trim();
 
         const address = extractAddress(val);
@@ -64,10 +64,10 @@ const InvoiceInput = () => {
             input.classList.remove("invalid");
             if (isLnurl(inputValue)) {
                 setLnurl(inputValue);
-            } else if (isBolt12Offer(inputValue)) {
+            } else if (await isBolt12Offer(inputValue)) {
                 setBolt12Offer(inputValue);
             } else {
-                const sats = validateInvoice(inputValue);
+                const sats = await validateInvoice(inputValue);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
                     calculateSendAmount(
@@ -95,16 +95,16 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([amountValid, invoice], () => {
+        on([amountValid, invoice], async () => {
             if (swapType() === SwapType.Submarine) {
-                validate(inputRef);
+                await validate(inputRef);
             }
         }),
     );
 
     // reset invoice if amount is changed
     createEffect(
-        on([receiveAmount, sendAmount, invoice], () => {
+        on([receiveAmount, sendAmount, invoice], async () => {
             const amount = Number(receiveAmount());
             if (
                 invoice() !== "" &&
@@ -112,10 +112,12 @@ const InvoiceInput = () => {
                 !receiveAmount().isZero()
             ) {
                 try {
-                    const inv = decodeInvoice(invoice());
+                    const inv = await decodeInvoice(invoice());
                     if (inv.satoshis !== amount) {
                         setInvoice("");
                     }
+
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (e) {
                     return;
                 }
@@ -135,7 +137,8 @@ const InvoiceInput = () => {
             name="invoice"
             value={invoice()}
             autocomplete="off"
-            placeholder={t("create_and_paste")}></textarea>
+            placeholder={t("create_and_paste")}
+        />
     );
 };
 

@@ -1,11 +1,12 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import { Accessor, Show, createEffect } from "solid-js";
+import { Accessor, Show, createResource } from "solid-js";
 
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { getLockupTransaction } from "../utils/boltzClient";
+import { formatError } from "../utils/errors";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const SwapExpired = () => {
@@ -14,7 +15,7 @@ const SwapExpired = () => {
     const { t, setTransactionToRefund, transactionToRefund, backend } =
         useGlobalContext();
 
-    createEffect(async () => {
+    createResource(async () => {
         setTransactionToRefund(null);
         try {
             const res = await getLockupTransaction(
@@ -24,8 +25,10 @@ const SwapExpired = () => {
             );
             log.debug(`got swap transaction for ${swap().id}`);
             setTransactionToRefund(res.hex);
-        } catch (error: any) {
-            log.warn(`no swap transaction for: ${swap().id}`, error);
+        } catch (e) {
+            log.warn(
+                `no swap transaction for: ${swap().id}: ${formatError(e)}`,
+            );
         }
     });
 

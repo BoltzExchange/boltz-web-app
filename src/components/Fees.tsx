@@ -92,7 +92,7 @@ const Fees = () => {
                         );
                         break;
 
-                    case SwapType.Reverse:
+                    case SwapType.Reverse: {
                         const reverseCfg = cfg as ReversePairTypeTaproot;
                         let fee =
                             reverseCfg.fees.minerFees.claim +
@@ -103,6 +103,7 @@ const Fees = () => {
 
                         setMinerFee(fee);
                         break;
+                    }
 
                     case SwapType.Chain: {
                         const chainCfg = cfg as ChainPairTypeTaproot;
@@ -135,7 +136,7 @@ const Fees = () => {
         }
     });
 
-    fetchPairs();
+    void fetchPairs();
 
     return (
         <div class="fees-dyn">
@@ -151,7 +152,8 @@ const Fees = () => {
                     )}
                     <span
                         class="denominator"
-                        data-denominator={denomination()}></span>
+                        data-denominator={denomination()}
+                    />
                 </span>
                 <br />
                 {t("fee")} ({boltzFee().toString().replaceAll(".", separator())}
@@ -170,7 +172,8 @@ const Fees = () => {
                     )}
                     <span
                         class="denominator"
-                        data-denominator={denomination()}></span>
+                        data-denominator={denomination()}
+                    />
                 </span>
             </label>
         </div>

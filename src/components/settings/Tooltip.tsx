@@ -1,15 +1,16 @@
 import { BiSolidHelpCircle } from "solid-icons/bi";
 
 import { useGlobalContext } from "../../context/Global";
+import type { DictKey } from "../../i18n/i18n";
 import "../../style/tooltip.scss";
 
-const Tooltip = ({ label }) => {
+const Tooltip = (props: { label: DictKey }) => {
     const timeout_delay = 300;
     const timeout_delay_click = 2500;
 
     const { t } = useGlobalContext();
 
-    let timeout: any = null;
+    let timeout: ReturnType<typeof setTimeout> = null;
 
     const tooltipClick = (evt: MouseEvent) => {
         const target = evt.currentTarget as HTMLSpanElement;
@@ -40,7 +41,7 @@ const Tooltip = ({ label }) => {
                 onMouseLeave={tooltipLeave}>
                 <BiSolidHelpCircle />
             </span>
-            <span class="tooltip-text">{t(label)}</span>
+            <span class="tooltip-text">{t(props.label)}</span>
         </span>
     );
 };

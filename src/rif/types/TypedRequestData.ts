@@ -51,8 +51,8 @@ export function getDomainSeparator(
 }
 
 export type EnvelopingRequest = {
-    request: Record<string, any>;
-    relayData: Record<string, any>;
+    request: Record<string, unknown>;
+    relayData: Record<string, unknown>;
 };
 
 type GetRequestDataFieldProps = {

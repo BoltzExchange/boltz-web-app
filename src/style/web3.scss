@@ -20,10 +20,16 @@
     cursor: pointer;
 }
 
+.provider-modal-entry[data-disabled="true"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .provider-modal-entry h4 {
     flex-grow: 1;
 }
 
 .provider-modal-icon {
     height: 4rem;
+    min-width: 5rem;
 }

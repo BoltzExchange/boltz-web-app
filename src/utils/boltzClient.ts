@@ -6,6 +6,7 @@ import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import { fetcher } from "./helper";
+import { validateInvoiceForOffer } from "./invoice";
 
 const cooperativeErrorMessage = "cooperative signatures for swaps are disabled";
 const checkCooperative = () => {
@@ -178,8 +179,8 @@ export const getPairs = async (backend: number): Promise<Pairs> => {
     };
 };
 
-export const getAllPairs = async (): Promise<Pairs[]> => {
-    const promises = [];
+export const getAllPairs = (): Promise<(Pairs | null)[]> => {
+    const promises: Promise<Pairs | null>[] = [];
 
     for (let i = 0; i < config.backends.length; i++) {
         promises.push(
@@ -194,11 +195,19 @@ export const fetchBolt12Invoice = async (
     backend: number,
     offer: string,
     amountSat: number,
-): Promise<{ invoice: string }> =>
-    fetcher(backend, "/v2/lightning/BTC/bolt12/fetch", {
-        offer,
-        amount: amountSat,
-    });
+): Promise<{ invoice: string }> => {
+    const res = await fetcher<{ invoice: string }>(
+        backend,
+        "/v2/lightning/BTC/bolt12/fetch",
+        {
+            offer,
+            amount: amountSat,
+        },
+    );
+    await validateInvoiceForOffer(offer, res.invoice);
+
+    return res;
+};
 
 export const createSubmarineSwap = (
     backend: number,
@@ -277,7 +286,7 @@ export const getPartialRefundSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(
+    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(
         backend,
         `/v2/swap/${
             type === SwapType.Submarine ? "submarine" : "chain"
@@ -303,12 +312,16 @@ export const getPartialReverseClaimSignature = async (
     index: number,
 ): Promise<PartialSignature> => {
     checkCooperative();
-    const res = await fetcher(backend, `/v2/swap/reverse/${id}/claim`, {
-        index,
-        preimage: preimage.toString("hex"),
-        pubNonce: pubNonce.toString("hex"),
-        transaction: transaction.toHex(),
-    });
+    const res = await fetcher<{ pubNonce: string; partialSignature: string }>(
+        backend,
+        `/v2/swap/reverse/${id}/claim`,
+        {
+            index,
+            preimage: preimage.toString("hex"),
+            pubNonce: pubNonce.toString("hex"),
+            transaction: transaction.toHex(),
+        },
+    );
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         signature: Buffer.from(res.partialSignature, "hex"),
@@ -316,7 +329,11 @@ export const getPartialReverseClaimSignature = async (
 };
 
 export const getSubmarineClaimDetails = async (backend: number, id: string) => {
-    const res = await fetcher(backend, `/v2/swap/submarine/${id}/claim`);
+    const res = await fetcher<{
+        pubNonce: string;
+        preimage: string;
+        transactionHash: string;
+    }>(backend, `/v2/swap/submarine/${id}/claim`);
     return {
         pubNonce: Musig.parsePubNonce(res.pubNonce),
         preimage: Buffer.from(res.preimage, "hex"),
@@ -396,7 +413,7 @@ export const getLockupTransaction = async (
                 timeoutEta?: number;
             }>(backend, `/v2/swap/submarine/${id}/transaction`);
 
-        case SwapType.Chain:
+        case SwapType.Chain: {
             const res = await getChainSwapTransactions(backend, id);
             return {
                 id: res.userLock.transaction.id,
@@ -404,6 +421,7 @@ export const getLockupTransaction = async (
                 timeoutEta: res.userLock.timeout.eta,
                 timeoutBlockHeight: res.userLock.timeout.blockHeight,
             };
+        }
 
         default:
             throw `cannot get lockup transaction for swap type ${type}`;
@@ -466,7 +484,7 @@ export const acceptChainSwapNewQuote = (
     backend: number,
     id: string,
     amount: number,
-) => fetcher<{}>(backend, `/v2/swap/chain/${id}/quote`, { amount });
+) => fetcher<object>(backend, `/v2/swap/chain/${id}/quote`, { amount });
 
 export {
     Pairs,

@@ -1,4 +1,11 @@
-import { Accessor, Show, createEffect, createSignal } from "solid-js";
+import {
+    Accessor,
+    Match,
+    Show,
+    Switch,
+    createEffect,
+    createSignal,
+} from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -11,69 +18,96 @@ import {
 } from "../utils/swapCreator";
 import BlockExplorer from "./BlockExplorer";
 
-const BlockExplorerLink = ({
-    swap,
-    swapStatus,
-}: {
+const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
-    // Showing addresses makes no sense for EVM based chains
-    if (
-        (swap().type !== SwapType.Chain && getRelevantAssetForSwap(swap())) ===
-        RBTC
-    ) {
-        return (
-            <Show when={swap().claimTx !== undefined}>
-                <BlockExplorer
-                    asset={getRelevantAssetForSwap(swap())}
-                    txId={swap().claimTx}
-                    typeLabel={"claim_tx"}
-                />
-            </Show>
-        );
-    }
-
-    if (swap().type !== SwapType.Chain) {
-        // Refund transactions are handled in SwapRefunded
-        return (
-            <Show
-                when={
-                    getRelevantAssetForSwap(swap()) &&
-                    swapStatus() !== null &&
-                    swapStatus() !== "invoice.set" &&
-                    swapStatus() !== "swap.created"
-                }>
-                <BlockExplorer
-                    asset={getRelevantAssetForSwap(swap())}
-                    txId={swap().claimTx}
-                    address={
-                        swap().type === SwapType.Submarine
-                            ? (swap() as SubmarineSwap).address
-                            : (swap() as ReverseSwap).lockupAddress
-                    }
-                />
-            </Show>
-        );
-    }
-
     const [hasBeenClaimed, setHasBeenClaimed] = createSignal<boolean>(false);
 
     createEffect(() => {
-        setHasBeenClaimed(swap().claimTx !== undefined);
+        setHasBeenClaimed(props.swap().claimTx !== undefined);
     });
 
     return (
         <BlockExplorer
-            asset={hasBeenClaimed() ? swap().assetReceive : swap().assetSend}
-            txId={swap().claimTx}
+            asset={
+                hasBeenClaimed()
+                    ? props.swap().assetReceive
+                    : props.swap().assetSend
+            }
+            txId={props.swap().claimTx}
             address={
                 // When it has been claimed, the "txId" is populated
                 hasBeenClaimed()
                     ? undefined
-                    : (swap() as ChainSwap).lockupDetails.lockupAddress
+                    : (props.swap() as ChainSwap).lockupDetails.lockupAddress
             }
         />
+    );
+};
+
+const BlockExplorerLink = (props: {
+    swap: Accessor<SomeSwap>;
+    swapStatus: Accessor<string>;
+}) => {
+    const isRsk = () => getRelevantAssetForSwap(props.swap()) === RBTC;
+
+    return (
+        <Show
+            when={props.swap().type !== SwapType.Chain}
+            fallback={
+                <ChainSwapLink
+                    swap={props.swap}
+                    swapStatus={props.swapStatus}
+                />
+            }>
+            <Switch>
+                <Match when={!isRsk()}>
+                    {/* Refund transactions are handled in SwapRefunded */}
+                    <Show
+                        when={
+                            getRelevantAssetForSwap(props.swap()) &&
+                            props.swapStatus() !== null &&
+                            props.swapStatus() !== "invoice.set" &&
+                            props.swapStatus() !== "swap.created"
+                        }>
+                        <BlockExplorer
+                            asset={getRelevantAssetForSwap(props.swap())}
+                            txId={props.swap().claimTx}
+                            address={
+                                props.swap().type === SwapType.Submarine
+                                    ? (props.swap() as SubmarineSwap).address
+                                    : (props.swap() as ReverseSwap)
+                                          .lockupAddress
+                            }
+                        />
+                    </Show>
+                </Match>
+
+                {/* Showing addresses makes no sense for EVM based chains */}
+                <Match when={isRsk()}>
+                    <Show
+                        when={props.swap().claimTx !== undefined}
+                        fallback={
+                            <Show when={props.swap().lockupTx}>
+                                <BlockExplorer
+                                    asset={getRelevantAssetForSwap(
+                                        props.swap(),
+                                    )}
+                                    txId={props.swap().lockupTx}
+                                    typeLabel={"lockup_tx"}
+                                />
+                            </Show>
+                        }>
+                        <BlockExplorer
+                            asset={getRelevantAssetForSwap(props.swap())}
+                            txId={props.swap().claimTx}
+                            typeLabel={"claim_tx"}
+                        />
+                    </Show>
+                </Match>
+            </Switch>
+        </Show>
     );
 };
 

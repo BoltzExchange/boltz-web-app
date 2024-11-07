@@ -1,28 +1,27 @@
 import { useNavigate } from "@solidjs/router";
 import { BiRegularTrash } from "solid-icons/bi";
-import { Accessor, For, Show, createMemo, createSignal } from "solid-js";
+import { Accessor, For, Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 import { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
-const SwapList = ({
-    swapsSignal,
-    onDelete,
-}: {
+const SwapList = (props: {
     swapsSignal: Accessor<SomeSwap[]>;
-    onDelete?: () => Promise<any>;
+    onDelete?: () => Promise<unknown>;
 }) => {
     const navigate = useNavigate();
     const { deleteSwap, t } = useGlobalContext();
     const [sortedSwaps, setSortedSwaps] = createSignal<SomeSwap[]>([]);
     const [lastSwap, setLastSwap] = createSignal();
 
-    createMemo(() => {
-        const sorted = swapsSignal().sort((a: SomeSwap, b: SomeSwap) =>
-            a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
-        );
+    createEffect(() => {
+        const sorted = props
+            .swapsSignal()
+            .sort((a: SomeSwap, b: SomeSwap) =>
+                a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
+            );
         setSortedSwaps(sorted);
         setLastSwap(sorted[sorted.length - 1]);
     });
@@ -38,7 +37,7 @@ const SwapList = ({
         e.preventDefault();
         if (confirm(t("delete_storage_single_swap", { id: swapId }))) {
             await deleteSwap(swapId);
-            await onDelete();
+            await props.onDelete();
         }
     };
 
@@ -65,7 +64,7 @@ const SwapList = ({
                                     {formatDate(swap.date)}
                                 </span>
                             </span>
-                            <Show when={onDelete !== undefined}>
+                            <Show when={props.onDelete !== undefined}>
                                 <span
                                     class="btn-small btn-danger hidden-mobile"
                                     onClick={(e) =>
