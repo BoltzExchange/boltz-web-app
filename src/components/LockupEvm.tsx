@@ -10,6 +10,8 @@ import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 
+const lockupGasUsage = 46_000n;
+
 const InsufficientBalance = () => {
     const { t } = useGlobalContext();
 
@@ -47,11 +49,16 @@ const LockupEvm = (props: {
             return;
         }
 
-        const balance = await signer().provider.getBalance(
-            await signer().getAddress(),
-        );
-        log.info("EVM signer balance", balance);
-        setSignerBalance(balance);
+        const [balance, gasPrice] = await Promise.all([
+            signer().provider.getBalance(await signer().getAddress()),
+            signer()
+                .provider.getFeeData()
+                .then((data) => data.gasPrice),
+        ]);
+
+        const spendable = balance - gasPrice * lockupGasUsage;
+        log.info("EVM signer spendable balance", spendable);
+        setSignerBalance(spendable);
     });
 
     return (
