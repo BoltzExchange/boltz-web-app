@@ -250,27 +250,30 @@ export const CreateButton = () => {
 
         let claimAddress = onchainAddress();
 
-        if (assetReceive() === RBTC) {
-            const [balance, gasPrice] = await Promise.all([
-                signer().provider.getBalance(await signer().getAddress()),
-                signer()
-                    .provider.getFeeData()
-                    .then((data) => data.gasPrice),
-            ]);
-            log.debug("RSK balance", balance);
-
-            const balanceNeeded = gasPrice * GasNeededToClaim;
-            log.debug("RSK balance needed", balanceNeeded);
-
-            if (balance <= balanceNeeded) {
-                claimAddress = (await getSmartWalletAddress(signer())).address;
-                log.info("Using RIF smart wallet as claim address");
-            }
-        }
-
-        const useRif = onchainAddress() !== claimAddress;
-
         try {
+            if (assetReceive() === RBTC) {
+                const [balance, gasPrice] = await Promise.all([
+                    signer().provider.getBalance(await signer().getAddress()),
+                    signer()
+                        .provider.getFeeData()
+                        .then((data) => data.gasPrice),
+                ]);
+                log.debug("RSK balance", balance);
+
+                const balanceNeeded = gasPrice * GasNeededToClaim;
+                log.debug("RSK balance needed", balanceNeeded);
+
+                if (balance <= balanceNeeded) {
+                    claimAddress = (await getSmartWalletAddress(signer()))
+                        .address;
+                    log.info("Using RIF smart wallet as claim address");
+                } else {
+                    log.info("RIF smart wallet not needed");
+                }
+            }
+
+            const useRif = onchainAddress() !== claimAddress;
+
             let data: SomeSwap;
             switch (swapType()) {
                 case SwapType.Submarine:
