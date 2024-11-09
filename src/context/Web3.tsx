@@ -282,8 +282,22 @@ const Web3SignerProvider = (props: {
 
 const useWeb3Signer = () => useContext(Web3SignerContext);
 
+const etherSwapCodeHash = () => {
+    switch (config.network) {
+        case "mainnet":
+            return "0x4d6894da95269c76528b81c6d25425a2f6bba70156cfaf7725064f919647d955";
+
+        case "testnet":
+            return "0xd9a282305f30590b3df70c3c1f9338b042a97dff12736794e9de2cdabf8542c1";
+
+        default:
+            return undefined;
+    }
+};
+
 export {
     useWeb3Signer,
+    etherSwapCodeHash,
     Web3SignerProvider,
     EtherSwapAbi,
     customDerivationPathRdns,
