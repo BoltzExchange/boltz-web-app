@@ -1,6 +1,11 @@
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
 import { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
+import {
+    BrowserProvider,
+    Contract,
+    JsonRpcProvider,
+    JsonRpcSigner,
+} from "ethers";
 import log from "loglevel";
 import {
     Accessor,
@@ -160,7 +165,8 @@ const Web3SignerProvider = (props: {
         return new Contract(
             contracts().swapContracts.EtherSwap,
             EtherSwapAbi,
-            signer(),
+            signer() ||
+                new JsonRpcProvider(config.assets["RBTC"]?.network?.rpcUrls[0]),
         ) as unknown as EtherSwap;
     };
 
