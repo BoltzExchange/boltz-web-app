@@ -73,8 +73,9 @@ class BoltzWebSocket {
         this.ws?.close();
     };
 
-    public subscribeUpdates = (ids: string[]) => {
-        if (ids.every((id) => this.relevantIds.has(id))) {
+    // "force" skips the check if we already subscribed to all the ids
+    public subscribeUpdates = (ids: string[], force = false) => {
+        if (!force && ids.every((id) => this.relevantIds.has(id))) {
             return;
         }
 
@@ -104,7 +105,10 @@ class BoltzWebSocket {
                 log.error("WebSocket error", error);
             };
             this.ws.onopen = () => {
-                this.subscribeUpdates(Array.from(this.relevantIds.values()));
+                this.subscribeUpdates(
+                    Array.from(this.relevantIds.values()),
+                    true,
+                );
             };
             this.ws.onclose = (error) => {
                 log.warn("WebSocket closed", error);

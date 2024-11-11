@@ -69,6 +69,7 @@ const Create = () => {
         setAmountValid,
         boltzFee,
         minerFee,
+        pairValid,
     } = useCreateContext();
 
     // if btc and amount > 10, switch to sat
@@ -394,7 +395,7 @@ const Create = () => {
                 <Fees />
                 <hr class="spacer" />
                 <Show when={assetReceive() === RBTC}>
-                    <ConnectWallet />
+                    <ConnectWallet disabled={() => !pairValid()} />
                     <hr class="spacer" />
                 </Show>
                 <Show

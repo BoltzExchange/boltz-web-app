@@ -10,11 +10,12 @@ import {
 } from "boltz-core";
 import { default as BufferBrowser } from "buffer";
 import { ECPairInterface } from "ecpair";
-import { BaseContract } from "ethers";
+import { BaseContract, ethers } from "ethers";
 import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
+import { etherSwapCodeHash } from "../context/Web3";
 import { ChainSwapDetails } from "./boltzClient";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
@@ -28,15 +29,14 @@ import { createMusig, tweakMusig } from "./taproot/musig";
 
 type ContractGetter = () => BaseContract;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const validateContract = (getEtherSwap: ContractGetter) => {
-    /*
-    const code = await (await getEtherSwap()).getDeployedCode();
-    const codeMatches = code === EtherSwapBytecode.object;
-*/
-    // TODO: actually verify the code match
-    // This check is currently disabled, because it mismatches on RSK, because it was compiled for a different EVM target
-    return true;
+const validateContract = async (getEtherSwap: ContractGetter) => {
+    const codeHash = etherSwapCodeHash();
+    if (codeHash === undefined) {
+        return true;
+    }
+
+    const code = await getEtherSwap().getDeployedCode();
+    return codeHash === ethers.keccak256(code);
 };
 
 const validateAddress = async (
