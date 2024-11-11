@@ -22,7 +22,7 @@
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "https://explorer.rsk.co"
+                "normal": "https://explorer.rootstock.io"
             },
             "network": {
                 "chainName": "Rootstock",
