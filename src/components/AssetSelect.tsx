@@ -8,12 +8,13 @@ import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { isPairValid } from "../utils/pairs";
+import { getPair } from "../utils/helper";
 
 const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const { t, fetchPairs, allPairs, backend } = useGlobalContext();
+    const { t, fetchPairs, allPairs, backend, setBackend } = useGlobalContext();
 
     const {
         assetReceive,
@@ -26,6 +27,7 @@ const SelectAsset = () => {
         setInvoice,
         setOnchainAddress,
         setPairValid,
+        swapType,
     } = useCreateContext();
 
     const changeAsset = (newAsset: string) => {
@@ -49,7 +51,24 @@ const SelectAsset = () => {
             setAssetReceive(newAsset);
         }
 
-        void fetchPairs().catch((err) =>
+        void fetchPairs().then(() => {
+            // verify if the current backend supports the pair
+            const pairs = allPairs()[backend()]; // Get pairs for the current backend
+            const cfg = pairs
+                ? getPair(
+                        pairs,
+                        swapType(),
+                        assetSend(),
+                        assetReceive(),
+                    )
+                : null;
+            if (!cfg) {
+                //switch to Boltz
+                setBackend(0); 
+            }
+
+
+        }).catch((err) =>
             log.error("Could not fetch pairs", err),
         );
     };
