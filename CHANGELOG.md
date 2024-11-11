@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.5.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.0..v1.5.1) - 2024-11-11
+
+### Bug Fixes
+
+- do not show QR scan for RSK (#722) - ([f94e7cd](https://github.com/BoltzExchange/boltz-web-app/commit/f94e7cdb31946ccbc4bd5d2f4f29086ca63c7335))
+- swap update subscription on WS reconnect (#726) - ([419eb52](https://github.com/BoltzExchange/boltz-web-app/commit/419eb5245ed7f103fe3a2a585ec326a83647d19c))
+- catch EVM provider error in create - ([50ed8b7](https://github.com/BoltzExchange/boltz-web-app/commit/50ed8b78ca79e3801a082392258d1652f3816104))
+
+### Features
+
+- disable EVM connect button for invalid pairs (#727) - ([3eff8d3](https://github.com/BoltzExchange/boltz-web-app/commit/3eff8d346677c81105e7b99c7fc6120ce1c8415f))
+- contract code validation (#730) - ([f62ef91](https://github.com/BoltzExchange/boltz-web-app/commit/f62ef913f12d6482217ea1784c54b1f2850d3bb2))
+- loading spinner when fetching signer balance - ([957f43c](https://github.com/BoltzExchange/boltz-web-app/commit/957f43cfb2875bb6ba13b16b2689737e6f837269))
+
+### Miscellaneous Chores
+
+- update changelog for v1.5.0 - ([058a4a7](https://github.com/BoltzExchange/boltz-web-app/commit/058a4a70dee2c9120ff362e91fe3b9f10df92e2d))
+- add RSK to mainnet config (#735) - ([41c3df6](https://github.com/BoltzExchange/boltz-web-app/commit/41c3df6407135e982f27a6102ea8b6e2acfb531c))
+- bump version to v1.5.1 - ([3dd5a3b](https://github.com/BoltzExchange/boltz-web-app/commit/3dd5a3bb8c29d4403e983badb4c149577302b6ef))
+
+### Refactoring
+
+- stricter EVM signer balance check - ([5a854d4](https://github.com/BoltzExchange/boltz-web-app/commit/5a854d473dd462cbf36b528fcd3fde0ae615738a))
+
+---
 ## [1.5.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.4.1..v1.5.0) - 2024-11-05
 
 ### Bug Fixes

@@ -20,7 +20,14 @@ const BackendSelect = () => {
 
     // Handle backend change
     const changeBackend = (index: number) => {
-        setBackend(index);
+        const pairs = allPairs()[index]; // Get pairs for the current backend
+        const cfg = pairs
+            ? getPair(pairs, swapType(), assetSend(), assetReceive())
+            : null;
+        if (cfg) {
+            // only switch the backend if the pair is tradeable
+            setBackend(index);
+        }
         setBackendSelect(false);
     };
 
@@ -74,8 +81,8 @@ const BackendSelect = () => {
 
                         return (
                             <tr
-                                // Only clickable if cfg is defined
-                                onClick={() => cfg && changeBackend(index)}
+                                // Only clickable if pairs is defined
+                                onClick={() => pairs && changeBackend(index)}
                                 class={rowClass}>
                                 <td>{status}</td>
                                 <td>{b.alias}</td>

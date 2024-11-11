@@ -108,7 +108,10 @@ const Modal = (props: {
     );
 };
 
-const ConnectModal = (props: { derivationPath: string }) => {
+const ConnectModal = (props: {
+    derivationPath: string;
+    disabled?: Accessor<boolean>;
+}) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider } = useWeb3Signer();
 
@@ -118,6 +121,9 @@ const ConnectModal = (props: { derivationPath: string }) => {
         <>
             <button
                 class="btn"
+                disabled={
+                    props.disabled !== undefined ? props.disabled() : false
+                }
                 onClick={async () => {
                     if (Object.keys(providers()).length > 1) {
                         setShow(true);
@@ -226,6 +232,7 @@ export const SwitchNetwork = () => {
 
 const ConnectWallet = (props: {
     derivationPath?: string;
+    disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
     const { t } = useGlobalContext();
@@ -264,7 +271,10 @@ const ConnectWallet = (props: {
             <Show
                 when={address() !== undefined}
                 fallback={
-                    <ConnectModal derivationPath={props.derivationPath} />
+                    <ConnectModal
+                        disabled={props.disabled}
+                        derivationPath={props.derivationPath}
+                    />
                 }>
                 <Show when={networkValid()} fallback={<SwitchNetwork />}>
                     <ShowAddress
