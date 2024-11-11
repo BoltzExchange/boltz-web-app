@@ -22,16 +22,11 @@ const BackendSelect = () => {
     const changeBackend = (index: number) => {
         const pairs = allPairs()[index]; // Get pairs for the current backend
         const cfg = pairs
-            ? getPair(
-                    pairs,
-                    swapType(),
-                    assetSend(),
-                    assetReceive(),
-                )
+            ? getPair(pairs, swapType(), assetSend(), assetReceive())
             : null;
         if (cfg) {
             // only switch the backend if the pair is tradeable
-            setBackend(index); 
+            setBackend(index);
         }
         setBackendSelect(false);
     };

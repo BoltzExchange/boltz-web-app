@@ -7,8 +7,8 @@ import { LN } from "../consts/Assets";
 import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { isPairValid } from "../utils/pairs";
 import { getPair } from "../utils/helper";
+import { isPairValid } from "../utils/pairs";
 
 const SelectAsset = () => {
     const assets = Object.keys(config.assets);
@@ -51,26 +51,19 @@ const SelectAsset = () => {
             setAssetReceive(newAsset);
         }
 
-        void fetchPairs().then(() => {
-            // verify if the current backend supports the pair
-            const pairs = allPairs()[backend()]; // Get pairs for the current backend
-            const cfg = pairs
-                ? getPair(
-                        pairs,
-                        swapType(),
-                        assetSend(),
-                        assetReceive(),
-                    )
-                : null;
-            if (!cfg) {
-                //switch to Boltz
-                setBackend(0); 
-            }
-
-
-        }).catch((err) =>
-            log.error("Could not fetch pairs", err),
-        );
+        void fetchPairs()
+            .then(() => {
+                // verify if the current backend supports the pair
+                const pairs = allPairs()[backend()]; // Get pairs for the current backend
+                const cfg = pairs
+                    ? getPair(pairs, swapType(), assetSend(), assetReceive())
+                    : null;
+                if (!cfg) {
+                    //switch to Boltz
+                    setBackend(0);
+                }
+            })
+            .catch((err) => log.error("Could not fetch pairs", err));
     };
 
     const isSelected = (asset: string) => {
