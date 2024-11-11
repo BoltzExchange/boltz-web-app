@@ -443,6 +443,9 @@ export const getChainSwapNewQuote = (id: string) =>
 export const acceptChainSwapNewQuote = (id: string, amount: number) =>
     fetcher<object>(`/v2/swap/chain/${id}/quote`, { amount });
 
+export const getSubmarinePreimage = (id: string) =>
+    fetcher<{ preimage: string }>(`/v2/swap/submarine/${id}/preimage`);
+
 export {
     Pairs,
     Contracts,

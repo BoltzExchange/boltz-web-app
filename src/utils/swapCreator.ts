@@ -42,6 +42,7 @@ export type SwapBase = {
 export type SubmarineSwap = SwapBase &
     SubmarineCreatedResponse & {
         invoice: string;
+        preimage?: string;
         refundPrivateKey?: string;
     };
 

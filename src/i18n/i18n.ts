@@ -219,6 +219,7 @@ const dict = {
         timeout: "Timeout",
         wallet_connect_failed: "Wallet connection failed: {{ error }}",
         ledger_open_app_prompt: "Open Ethereum or RSK app",
+        copy_preimage: "Copy preimage",
     },
     de: {
         language: "Deutsch",
