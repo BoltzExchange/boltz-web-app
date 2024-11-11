@@ -18,6 +18,26 @@
                 "normal": "https://liquid.network",
                 "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion"
             }
+        },
+        "RBTC": {
+            "blockExplorerUrl": {
+                "normal": "https://explorer.rootstock.io"
+            },
+            "network": {
+                "chainName": "Rootstock",
+                "rpcUrls": ["https://public-node.rsk.co"],
+                "nativeCurrency": {
+                    "name": "RBTC",
+                    "symbol": "RBTC",
+                    "decimals": 18
+                }
+            },
+            "rifRelay": "https://boltz.mainnet.relay.rifcomputing.net",
+            "contracts": {
+                "deployHeight": 6747215,
+                "smartWalletFactory": "0x44944a80861120B58cc48B066d57cDAf5eC213dd",
+                "deployVerifier": "0xc0F5bEF6b20Be41174F826684c663a8635c6A081"
+            }
         }
     }
 }
