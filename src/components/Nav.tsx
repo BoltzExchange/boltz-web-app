@@ -94,6 +94,15 @@ const Nav = (props: { network: string }) => {
                             <OcLinkexternal2 size={23} />
                         </a>
                     </Show>
+                    <Show when={config.tetherUrl}>
+                        <a
+                            class="external"
+                            target="_blank"
+                            href={config.tetherUrl}>
+                             <span style={{ color: "#5DB2A5" }}>{t("tether")}</span>
+                            <OcLinkexternal2 size={23} />
+                        </a>
+                    </Show>
                 </div>
                 <svg
                     id="hamburger"

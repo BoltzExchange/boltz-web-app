@@ -221,6 +221,7 @@ const dict = {
         timeout: "Timeout",
         wallet_connect_failed: "Wallet connection failed: {{ error }}",
         ledger_open_app_prompt: "Open Ethereum or RSK app",
+        tether: "USDt",
     },
     de: {
         language: "Deutsch",
@@ -455,6 +456,7 @@ const dict = {
         wallet_connect_failed:
             "Verbindung zu Wallet fehlgeschlagen: {{ error }}",
         ledger_open_app_prompt: "Ethereum oder RSK app öffnen",
+        tether: "USDt",
     },
     es: {
         language: "Español",
@@ -687,6 +689,7 @@ const dict = {
         timeout: "timeout",
         wallet_connect_failed: "Fallo en la conexión del monedero: {{ error }}",
         ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
+        tether: "USDt",
     },
     zh: {
         language: "中文",
@@ -892,6 +895,7 @@ const dict = {
         timeout: "超时",
         wallet_connect_failed: "钱包连接失败：{{ error }}",
         ledger_open_app_prompt: "打开以太坊或 RSK 应用",
+        tether: "USDt",
     },
     ja: {
         language: "日本語",
@@ -1121,6 +1125,7 @@ const dict = {
         timeout: "タイムアウト",
         wallet_connect_failed: "ウォレット接続の失敗: {{ error }}",
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
+        tether: "USDt",
     },
     ru: {
         language: "Русский",
@@ -1351,6 +1356,7 @@ const dict = {
         timeout: "Тайм-аут",
         wallet_connect_failed: "Не удалось подключиться к кошельку:{{ error }}",
         ledger_open_app_prompt: "Откройте приложение Ethereum или RSK",
+        tether: "USDt",
     },
 };
 

@@ -13,6 +13,7 @@ const defaults = {
     repoUrl: "https://github.com/SwapMarket/swapmarket.github.io",
     docsUrl:
         "https://github.com/SwapMarket/swapmarket.github.io/blob/main/README.md",
+    tetherUrl: "/usdt",
     blogUrl: "https://stacker.news/SwapMarket/posts",
     nostrUrl: "https://iris.to/swapmarket",
     statusUrl: "https://status.boltz.exchange",
