@@ -281,9 +281,9 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const deleteSwap = (id: string) => swapsForage.removeItem(id);
 
-    const getSwap = <T = SomeSwap,>(id: string) => swapsForage.getItem<T>(id);
+    const getSwap = <T = SomeSwap>(id: string) => swapsForage.getItem<T>(id);
 
-    const getSwaps = async <T = SomeSwap,>(): Promise<T[]> => {
+    const getSwaps = async <T = SomeSwap>(): Promise<T[]> => {
         const swaps: T[] = [];
 
         await swapsForage.iterate<T, unknown>((swap) => {
