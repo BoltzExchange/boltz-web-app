@@ -13,11 +13,12 @@ import {
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
+import Warning from "./Warning";
 
 const Modal = (props: {
     derivationPath: string;
@@ -31,6 +32,13 @@ const Modal = (props: {
         createSignal<boolean>(false);
     const [hardwareProvider, setHardwareProvider] =
         createSignal<EIP6963ProviderInfo>(undefined);
+
+    const hasBrowserWallet = createMemo(() => {
+        return Object.values(providers()).some(
+            (provider) =>
+                !customDerivationPathRdns.includes(provider.info.rdns),
+        );
+    });
 
     const Provider = (providerProps: { provider: EIP6963ProviderInfo }) => {
         return (
@@ -90,6 +98,15 @@ const Modal = (props: {
                     <IoClose />
                 </span>
                 <hr class="spacer" />
+                <Show when={!hasBrowserWallet()}>
+                    <hr />
+
+                    <div class="no-browser-wallet">
+                        <Warning />
+                        <h3>{t("no_browser_wallet")}</h3>
+                    </div>
+                    <hr class="spacer" />
+                </Show>
                 <For
                     each={Object.values(providers()).sort((a, b) =>
                         a.info.name
