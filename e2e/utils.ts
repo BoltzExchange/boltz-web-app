@@ -1,3 +1,4 @@
+import bolt11 from "bolt11";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -58,6 +59,25 @@ export const generateInvoiceLnd = async (amount: number): Promise<string> => {
     return JSON.parse(
         await execCommand(`lncli-sim 1 addinvoice --amt ${amount}`),
     ).payment_request as string;
+};
+
+export const lookupInvoiceLnd = async (
+    invoice: string,
+): Promise<{ state: string; r_preimage: string }> => {
+    const decoded = bolt11.decode(invoice);
+    let paymentHash: string | undefined;
+
+    for (const tag of decoded.tags) {
+        switch (tag.tagName) {
+            case "payment_hash":
+                paymentHash = tag.data as string;
+                break;
+        }
+    }
+
+    return JSON.parse(
+        await execCommand(`lncli-sim 1 lookupinvoice ${paymentHash}`),
+    ) as never;
 };
 
 export const getBolt12Offer = async (): Promise<string> => {

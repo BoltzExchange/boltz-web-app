@@ -219,6 +219,7 @@ const dict = {
         timeout: "Timeout",
         wallet_connect_failed: "Wallet connection failed: {{ error }}",
         ledger_open_app_prompt: "Open Ethereum or RSK app",
+        copy_preimage: "Copy preimage",
     },
     de: {
         language: "Deutsch",
@@ -450,6 +451,7 @@ const dict = {
         wallet_connect_failed:
             "Verbindung zu Wallet fehlgeschlagen: {{ error }}",
         ledger_open_app_prompt: "Ethereum oder RSK app öffnen",
+        copy_preimage: "Preimage Kopieren",
     },
     es: {
         language: "Español",
@@ -679,6 +681,7 @@ const dict = {
         timeout: "timeout",
         wallet_connect_failed: "Fallo en la conexión del monedero: {{ error }}",
         ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
+        copy_preimage: "Copiar preimagen",
     },
     zh: {
         language: "中文",
@@ -881,6 +884,7 @@ const dict = {
         timeout: "超时",
         wallet_connect_failed: "钱包连接失败：{{ error }}",
         ledger_open_app_prompt: "打开以太坊或 RSK 应用",
+        copy_preimage: "复制预图像",
     },
     ja: {
         language: "日本語",
@@ -1107,6 +1111,7 @@ const dict = {
         timeout: "タイムアウト",
         wallet_connect_failed: "ウォレット接続の失敗: {{ error }}",
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
+        copy_preimage: "コピー前画像",
     },
 };
 
