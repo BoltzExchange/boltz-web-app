@@ -1,10 +1,12 @@
 import { BigNumber } from "bignumber.js";
 
+import { BTC, LBTC } from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import {
     calculateDigits,
     convertAmount,
     formatAmount,
+    formatDenomination,
     getValidationRegex,
 } from "../../src/utils/denomination";
 
@@ -93,5 +95,15 @@ describe("denomination utils", () => {
             const regex = getValidationRegex(max);
             expect(regex.test(amount)).toEqual(valid);
         });
+    });
+
+    test.each`
+        denomination        | input   | expected
+        ${Denomination.Sat} | ${BTC}  | ${"sats"}
+        ${Denomination.Sat} | ${LBTC} | ${"sats"}
+        ${Denomination.Btc} | ${BTC}  | ${BTC}
+        ${Denomination.Btc} | ${LBTC} | ${LBTC}
+    `("should format denomination", ({ denomination, input, expected }) => {
+        expect(formatDenomination(denomination, input)).toEqual(expected);
     });
 });

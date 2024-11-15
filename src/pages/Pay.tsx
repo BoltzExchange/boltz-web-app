@@ -1,6 +1,14 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import { Match, Show, Switch, createResource, onCleanup } from "solid-js";
+import {
+    Match,
+    Show,
+    Switch,
+    createMemo,
+    createResource,
+    createSignal,
+    onCleanup,
+} from "solid-js";
 
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -62,8 +70,14 @@ const Pay = () => {
         setSwapStatus(null);
     });
 
+    const [statusOverride, setStatusOverride] = createSignal<
+        string | undefined
+    >(undefined);
+
+    const status = createMemo(() => statusOverride() || swapStatus());
+
     return (
-        <div data-status={swapStatus()} class="frame">
+        <div data-status={status()} class="frame">
             <SettingsCog />
             <h2>
                 {t("pay_invoice", { id: params.id })}
@@ -87,7 +101,7 @@ const Pay = () => {
                     <Show when={swapStatus()} fallback={<LoadingSpinner />}>
                         <p>
                             {t("status")}:{" "}
-                            <span class="btn-small">{swapStatus()}</span>
+                            <span class="btn-small">{status()}</span>
                         </p>
                         <hr />
                     </Show>
@@ -116,7 +130,9 @@ const Pay = () => {
                                     swapStatus() ===
                                         swapStatusFailed.TransactionFailed)
                             }>
-                            <TransactionLockupFailed />
+                            <TransactionLockupFailed
+                                setStatusOverride={setStatusOverride}
+                            />
                         </Match>
                         <Match
                             when={

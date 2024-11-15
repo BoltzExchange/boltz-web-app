@@ -108,7 +108,16 @@ export const CreateButton = () => {
                     setButtonLabel({ key: "invalid_pair" });
                     return;
                 }
-                if (!amountValid()) {
+                if (
+                    !amountValid() &&
+                    // Chain swaps with 0-amount that do not have RBTC as sending asset
+                    // can skip this check
+                    !(
+                        swapType() === SwapType.Chain &&
+                        assetSend() !== RBTC &&
+                        sendAmount().isZero()
+                    )
+                ) {
                     const lessThanMin = Number(sendAmount()) < minimum();
                     setButtonLabel({
                         key: lessThanMin ? "minimum_amount" : "maximum_amount",

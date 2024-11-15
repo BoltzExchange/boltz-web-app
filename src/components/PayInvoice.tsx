@@ -5,9 +5,8 @@ import { Show } from "solid-js";
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts/Assets";
-import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { formatAmount } from "../utils/denomination";
+import { formatAmount, formatDenomination } from "../utils/denomination";
 import { clipboard, cropString, isMobile } from "../utils/helper";
 import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
@@ -30,8 +29,7 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
                         denomination(),
                         separator(),
                     ),
-                    denomination:
-                        denomination() === Denomination.Sat ? "sats" : BTC,
+                    denomination: formatDenomination(denomination(), BTC),
                 })}
             </h2>
             <hr />

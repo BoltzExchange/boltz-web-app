@@ -67,6 +67,9 @@ export const formatAmountDenomination = (
     }
 };
 
+export const formatDenomination = (denom: Denomination, asset: string) =>
+    denom === Denomination.Sat ? "sats" : asset;
+
 export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
     switch (denom) {
         case Denomination.Btc:
