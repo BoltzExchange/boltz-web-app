@@ -2,6 +2,7 @@ import bolt11 from "bolt11";
 
 import { setConfig } from "../../src/config";
 import {
+    checkInvoicePreimage,
     decodeInvoice,
     extractAddress,
     extractInvoice,
@@ -152,5 +153,26 @@ describe("invoice", () => {
                 expect(isInvoice(invoice)).toEqual(expected);
             },
         );
+    });
+
+    describe("checkInvoicePreimage", () => {
+        test.each`
+            preimage                                                              | invoice
+            ${"4c8176e16eab0a2282bb47ac8dfceddabffa73e849ea9b6662c44f868a2b4d2a"} | ${"lnbcrt1m1pnnvd2tpp55g70uxevgu3ddpkkn8yvwu6ehvme7lr464gdv7thelmzjz7fyqsqdqqcqzzsxqyz5vqsp5l6n65lrnqmp7lhx9wen493zvkg9gfrksx0lren5m34wy5ge2x6fq9p4gqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpqysgqdxrky9sy3sk6zuh6x9gtga2trtqapyj69zel0lp6xv8xmrqzst3ja2mxsfsaq7ccffnl27pyzyhj8t8eylq792khl3ha3x8qgxca87qpfyqk7l"}
+        `(
+            "should check preimage for invoice",
+            async ({ invoice, preimage }) => {
+                await checkInvoicePreimage(invoice, preimage);
+            },
+        );
+
+        test("should fail when preimage is invalid", async () => {
+            await expect(
+                checkInvoicePreimage(
+                    "lnbcrt1m1pnnvd2tpp55g70uxevgu3ddpkkn8yvwu6ehvme7lr464gdv7thelmzjz7fyqsqdqqcqzzsxqyz5vqsp5l6n65lrnqmp7lhx9wen493zvkg9gfrksx0lren5m34wy5ge2x6fq9p4gqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpqysgqdxrky9sy3sk6zuh6x9gtga2trtqapyj69zel0lp6xv8xmrqzst3ja2mxsfsaq7ccffnl27pyzyhj8t8eylq792khl3ha3x8qgxca87qpfyqk7l",
+                    "ab",
+                ),
+            ).rejects.toEqual("invalid preimage");
+        });
     });
 });
