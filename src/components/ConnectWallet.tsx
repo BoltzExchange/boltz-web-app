@@ -18,7 +18,6 @@ import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
-import Warning from "./Warning";
 
 const Modal = (props: {
     derivationPath: string;
@@ -102,7 +101,6 @@ const Modal = (props: {
                     <hr />
 
                     <div class="no-browser-wallet">
-                        <Warning />
                         <h3>{t("no_browser_wallet")}</h3>
                     </div>
                     <hr class="spacer" />
