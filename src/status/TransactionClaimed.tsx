@@ -31,7 +31,7 @@ const TransactionClaimed = () => {
 
     const { notify } = useGlobalContext();
     const { swap } = usePayContext();
-    const { t, denomination, separator, setSwapStorage } = useGlobalContext();
+    const { t, denomination, separator, setSwapStorage, backend } = useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
@@ -47,7 +47,7 @@ const TransactionClaimed = () => {
             return submarine.preimage;
         }
 
-        const res = await getSubmarinePreimage(submarine.id);
+        const res = await getSubmarinePreimage(backend(), submarine.id);
         try {
             await checkInvoicePreimage(submarine.invoice, res.preimage);
         } catch (e) {
