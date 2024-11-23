@@ -31,7 +31,8 @@ const TransactionClaimed = () => {
 
     const { notify } = useGlobalContext();
     const { swap } = usePayContext();
-    const { t, denomination, separator, setSwapStorage, backend } = useGlobalContext();
+    const { t, denomination, separator, setSwapStorage, backend } =
+        useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
