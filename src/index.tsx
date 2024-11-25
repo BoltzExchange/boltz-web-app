@@ -27,6 +27,7 @@ import RefundEvm from "./pages/RefundEvm";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
 import "./utils/patches";
+import Chatwoot from "./chatwoot";
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker
@@ -67,6 +68,7 @@ const App = (props: RouteSectionProps) => {
                         <CreateProvider>
                             <PayProvider>
                                 <SwapChecker />
+                                <Chatwoot />
                                 <Show when={!isEmbedded()}>
                                     <Nav network={config.network} />
                                 </Show>

@@ -17,16 +17,6 @@ const Footer = () => {
 
     return (
         <footer>
-            <h4>
-                {t("feedback")}{" "}
-                <a
-                    title="Discord"
-                    class="discord"
-                    target="_blank"
-                    href={config.discordUrl}>
-                    Discord
-                </a>
-            </h4>
             <div class="socials">
                 <a
                     title="Github"
@@ -79,6 +69,10 @@ const Footer = () => {
                 </a>
             </div>
             <p class="footer-nav">
+                <a target="_blank" href={config.supportUrl}>
+                    {t("support")}
+                </a>{" "}
+                |{" "}
                 <a target="_blank" href={config.blogUrl}>
                     {t("blog")}
                 </a>{" "}
