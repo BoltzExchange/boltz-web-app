@@ -633,6 +633,8 @@ textarea {
 
     gap: 1rem;
     margin-bottom: 1.5rem;
+    font-size: 1rem;
+    font-weight: 400;
 }
 
 .quote > div {
@@ -643,6 +645,8 @@ textarea {
 }
 
 .quote > div > input {
-    font-size: 33px;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
     text-align: center;
 }

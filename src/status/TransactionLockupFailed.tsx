@@ -34,7 +34,7 @@ const Amount = (props: { label: DictKey; amount: number }) => {
 
     return (
         <div>
-            <h2>{t(props.label)}</h2>
+            <div>{t(props.label)}</div>
             <input
                 disabled
                 type="text"
