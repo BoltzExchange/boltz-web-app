@@ -219,7 +219,7 @@ const dict = {
         timeout: "Timeout",
         wallet_connect_failed: "Wallet connection failed: {{ error }}",
         ledger_open_app_prompt: "Open Ethereum or RSK app",
-        validate_payment: "Validate payment",
+        validate_payment: "Show Proof of Payment",
         no_browser_wallet: "No browser wallet detected",
     },
     de: {
@@ -452,6 +452,7 @@ const dict = {
         wallet_connect_failed:
             "Verbindung zu Wallet fehlgeschlagen: {{ error }}",
         ledger_open_app_prompt: "Ethereum oder RSK app öffnen",
+        validate_payment: "Proof of Payment anzeigen",
         no_browser_wallet: "Kein Browser Wallet gefunden",
     },
     es: {
@@ -682,6 +683,7 @@ const dict = {
         timeout: "timeout",
         wallet_connect_failed: "Fallo en la conexión del monedero: {{ error }}",
         ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
+        validate_payment: "Mostrar justificante de pago",
         no_browser_wallet: "No se detectó monedero en el navegador",
     },
     zh: {
@@ -885,6 +887,7 @@ const dict = {
         timeout: "超时",
         wallet_connect_failed: "钱包连接失败：{{ error }}",
         ledger_open_app_prompt: "打开以太坊或 RSK 应用",
+        validate_payment: "出示付款证明",
         no_browser_wallet: "未检测到浏览器钱包",
     },
     ja: {
@@ -1112,6 +1115,7 @@ const dict = {
         timeout: "タイムアウト",
         wallet_connect_failed: "ウォレット接続の失敗: {{ error }}",
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
+        validate_payment: "支払い証明書の提示",
         no_browser_wallet: "ブラウザのウォレットが検出されない",
     },
 };
