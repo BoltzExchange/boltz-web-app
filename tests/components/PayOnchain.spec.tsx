@@ -2,8 +2,9 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import PayOnchain from "../../src/components/PayOnchain";
 import { BTC } from "../../src/consts/Assets";
-import { Denomination } from "../../src/consts/Enums";
+import { Denomination, SwapType } from "../../src/consts/Enums";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
+import { pairs } from "../pairs";
 
 /* eslint-disable @typescript-eslint/unbound-method */
 
@@ -16,7 +17,9 @@ describe("PayOnchain", () => {
                 <>
                     <TestComponent />
                     <PayOnchain
-                        asset={BTC}
+                        type={SwapType.Submarine}
+                        assetSend={BTC}
+                        assetReceive={BTC}
                         address={"btc1"}
                         bip21={"bitcoin:bc1"}
                         expectedAmount={amount}
@@ -27,6 +30,7 @@ describe("PayOnchain", () => {
                 wrapper: contextWrapper,
             },
         );
+        globalSignals.setPairs(pairs);
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error

@@ -60,6 +60,8 @@ const dict = {
         pay_timeout_blockheight: "Timeout block height",
         pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
+        send_between:
+            "Send between {{ min }} and {{ max }} {{ denomination }} to",
         pay_invoice_to:
             "Pay this invoice about {{ amount }} {{ denomination }}",
         pay_address: "Address",
@@ -219,8 +221,10 @@ const dict = {
         timeout: "Timeout",
         wallet_connect_failed: "Wallet connection failed: {{ error }}",
         ledger_open_app_prompt: "Open Ethereum or RSK app",
-        copy_preimage: "Copy preimage",
+        validate_payment: "Show Proof of Payment",
         no_browser_wallet: "No browser wallet detected",
+        sent: "Sent",
+        will_receive: "Will receive",
     },
     de: {
         language: "Deutsch",
@@ -284,6 +288,8 @@ const dict = {
         pay_timeout_blockheight: "Timeout Blockhöhe",
         pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
+        send_between:
+            "Sende zwischen {{ min }} und {{ max }} {{ denomination }} an",
         pay_invoice_to:
             "Zahle diese Rechnung über {{ amount }} {{ denomination }}",
         pay_address: "Adresse",
@@ -452,8 +458,10 @@ const dict = {
         wallet_connect_failed:
             "Verbindung zu Wallet fehlgeschlagen: {{ error }}",
         ledger_open_app_prompt: "Ethereum oder RSK app öffnen",
-        copy_preimage: "Preimage Kopieren",
+        validate_payment: "Proof of Payment anzeigen",
         no_browser_wallet: "Kein Browser Wallet gefunden",
+        sent: "Gesendet",
+        will_receive: "Sie erhalten",
     },
     es: {
         language: "Español",
@@ -517,6 +525,7 @@ const dict = {
         pay_timeout_blockheight: "Altura del bloque de tiempo de espera",
         pay_expected_amount: "Importe esperado",
         send_to: "Enviar {{ amount }} {{ denomination }} a",
+        send_between: "Enviar entre {{ min }} y {{ max }} {{ denomination }} a",
         pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
         pay_address: "Dirección",
         no_wallet: "Monedero no está instalado",
@@ -683,8 +692,10 @@ const dict = {
         timeout: "timeout",
         wallet_connect_failed: "Fallo en la conexión del monedero: {{ error }}",
         ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
-        copy_preimage: "Copiar preimagen",
+        validate_payment: "Mostrar justificante de pago",
         no_browser_wallet: "No se detectó monedero en el navegador",
+        sent: "Enviado",
+        will_receive: "Recibirá",
     },
     zh: {
         language: "中文",
@@ -746,6 +757,7 @@ const dict = {
         pay_expected_amount: "预期金额",
         send_to:
             "请确保将准确的金额{{ amount }}{{ denomination }}发送到下面显示的地址。否则,交换将失败。最好使用“复制BIP21”按钮,并将其粘贴到您钱包的发送屏幕中。",
+        send_between: "在 {{ min }} 和 {{ max }} {{ denomination }} 之间发送至",
         pay_invoice_to: "支付金额为{{ amount }}{{ denomination }}的发票",
         pay_address: "地址",
         no_wallet: "未安装钱包",
@@ -887,8 +899,10 @@ const dict = {
         timeout: "超时",
         wallet_connect_failed: "钱包连接失败：{{ error }}",
         ledger_open_app_prompt: "打开以太坊或 RSK 应用",
-        copy_preimage: "复制预图像",
+        validate_payment: "出示付款证明",
         no_browser_wallet: "未检测到浏览器钱包",
+        sent: "已发送",
+        will_receive: "将收到",
     },
     ja: {
         language: "日本語",
@@ -954,6 +968,8 @@ const dict = {
         pay_expected_amount: "予想金額",
         send_to:
             "{{ amount }} {{ denomination }} を以下のアドレスへ送金して下さい",
+        send_between:
+            "{{ min }} から {{ max }} {{ denomination }} を送信してください",
         pay_invoice_to:
             "このインボイスを支払う {{ amount }} {{ denomination }}",
         pay_address: "アドレス",
@@ -1115,8 +1131,10 @@ const dict = {
         timeout: "タイムアウト",
         wallet_connect_failed: "ウォレット接続の失敗: {{ error }}",
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
-        copy_preimage: "コピー前画像",
+        validate_payment: "支払い証明書の提示",
         no_browser_wallet: "ブラウザのウォレットが検出されない",
+        sent: "送信済み",
+        will_receive: "受信予定",
     },
 };
 

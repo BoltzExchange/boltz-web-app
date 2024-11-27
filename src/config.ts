@@ -26,6 +26,7 @@ const defaults = {
     email: "hi@bol.tz",
     dnsOverHttps: "https://1.1.1.1/dns-query",
     chatwootUrl: "https://support.boltz.exchange",
+    preimageValidation: "https://validate-payment.com",
 };
 
 type Asset = {

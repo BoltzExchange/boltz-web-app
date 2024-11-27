@@ -195,6 +195,15 @@ const Create = () => {
         setCustomValidity("", false);
 
         const amount = Number(sendAmount());
+        if (
+            swapType() === SwapType.Chain &&
+            assetSend() !== RBTC &&
+            amount === 0
+        ) {
+            setAmountValid(true);
+            return;
+        }
+
         const lessThanMin = amount < minimum();
 
         if (lessThanMin || amount > maximum()) {

@@ -185,7 +185,8 @@ hr.spacer {
 [data-status="swap.refunded"],
 [data-status="invoice.settled"],
 [data-status="transaction.confirmed"],
-[data-status="transaction.claimed"] {
+[data-status="transaction.claimed"],
+[data-status="quote.available"] {
     > p > .btn-small {
         background-color: #246c24;
         color: #fff;
@@ -623,4 +624,29 @@ textarea {
 
 #refundUpload {
     margin-top: 7px;
+}
+
+.quote {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.quote > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.quote > div > input {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
 }

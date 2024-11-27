@@ -85,8 +85,14 @@ const validateBip21 = (
         return false;
     }
 
+    const params = new URLSearchParams(bip21Split[1]);
+
+    if (expectedAmount === 0) {
+        return !params.has("amount");
+    }
+
     return (
-        new URLSearchParams(bip21Split[1]).get("amount") ===
+        params.get("amount") ===
         formatAmountDenomination(
             BigNumber(expectedAmount),
             Denomination.Btc,
@@ -218,11 +224,14 @@ const validateChainSwap = async (
         details: ChainSwapDetails,
     ) => {
         if (side === Side.Send) {
-            if (details.amount !== swap.sendAmount) {
+            if (swap.sendAmount > 0 && details.amount !== swap.sendAmount) {
                 return false;
             }
         } else {
-            if (details.amount <= swap.receiveAmount) {
+            if (
+                swap.receiveAmount > 0 &&
+                details.amount <= swap.receiveAmount
+            ) {
                 return false;
             }
         }
