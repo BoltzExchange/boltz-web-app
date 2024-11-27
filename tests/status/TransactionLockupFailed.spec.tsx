@@ -1,5 +1,6 @@
 import { render, screen } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
+import { createSignal } from "solid-js";
 
 import { BTC, RBTC } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
@@ -26,11 +27,16 @@ describe("TransactionLockupFailed", () => {
     test.each([OutputType.Bech32, OutputType.Compatibility, undefined])(
         "should show timeout for legacy swaps",
         async (type) => {
+            // eslint-disable-next-line solid/reactivity
+            const [, setStatusOverride] = createSignal<string>();
+
             render(
                 () => (
                     <>
                         <TestComponent />
-                        <TransactionLockupFailed />
+                        <TransactionLockupFailed
+                            setStatusOverride={setStatusOverride}
+                        />
                     </>
                 ),
                 {
@@ -49,11 +55,16 @@ describe("TransactionLockupFailed", () => {
     );
 
     test("should show refund button for Taproot swaps", async () => {
+        // eslint-disable-next-line solid/reactivity
+        const [, setStatusOverride] = createSignal<string>();
+
         render(
             () => (
                 <>
                     <TestComponent />
-                    <TransactionLockupFailed />
+                    <TransactionLockupFailed
+                        setStatusOverride={setStatusOverride}
+                    />
                 </>
             ),
             {
@@ -71,11 +82,16 @@ describe("TransactionLockupFailed", () => {
     });
 
     test("should show refund button for RBTC swaps", async () => {
+        // eslint-disable-next-line solid/reactivity
+        const [, setStatusOverride] = createSignal<string>();
+
         render(
             () => (
                 <>
                     <TestComponent />
-                    <TransactionLockupFailed />
+                    <TransactionLockupFailed
+                        setStatusOverride={setStatusOverride}
+                    />
                 </>
             ),
             {
