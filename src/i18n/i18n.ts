@@ -460,6 +460,8 @@ const dict = {
         ledger_open_app_prompt: "Ethereum oder RSK app öffnen",
         copy_preimage: "Preimage Kopieren",
         no_browser_wallet: "Kein Browser Wallet gefunden",
+        sent: "Gesendet",
+        will_receive: "Sie erhalten",
     },
     es: {
         language: "Español",
@@ -692,6 +694,8 @@ const dict = {
         ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
         copy_preimage: "Copiar preimagen",
         no_browser_wallet: "No se detectó monedero en el navegador",
+        sent: "Enviado",
+        will_receive: "Recibirá",
     },
     zh: {
         language: "中文",
@@ -897,6 +901,8 @@ const dict = {
         ledger_open_app_prompt: "打开以太坊或 RSK 应用",
         copy_preimage: "复制预图像",
         no_browser_wallet: "未检测到浏览器钱包",
+        sent: "已发送",
+        will_receive: "Will receive",
     },
     ja: {
         language: "日本語",
@@ -1127,6 +1133,8 @@ const dict = {
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
         copy_preimage: "コピー前画像",
         no_browser_wallet: "ブラウザのウォレットが検出されない",
+        sent: "送信済み",
+        will_receive: "受信予定",
     },
 };
 
