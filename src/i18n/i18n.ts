@@ -902,7 +902,7 @@ const dict = {
         copy_preimage: "复制预图像",
         no_browser_wallet: "未检测到浏览器钱包",
         sent: "已发送",
-        will_receive: "Will receive",
+        will_receive: "将收到",
     },
     ja: {
         language: "日本語",
