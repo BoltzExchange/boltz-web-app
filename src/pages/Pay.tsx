@@ -1,6 +1,6 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
-import { Match, Show, Switch, createResource, onCleanup, createSignal } from "solid-js";
+import { Match, Show, Switch, createResource, onCleanup } from "solid-js";
 
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";

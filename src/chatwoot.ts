@@ -1,6 +1,21 @@
+import { createEffect, onMount } from "solid-js";
+
 import { config } from "./config";
 import { usePayContext } from "./context/Pay";
-import { createEffect, onMount } from "solid-js";
+
+declare global {
+    interface Window {
+        chatwootSettings: {
+            darkMode: string;
+        };
+        chatwootSDK: {
+            run: (config: { websiteToken: string; baseUrl: string }) => void;
+        };
+        $chatwoot: {
+            setCustomAttributes: (attributes: { swapId: string }) => void;
+        };
+    }
+}
 
 export default function Chatwoot() {
     onMount(() => {
@@ -14,13 +29,13 @@ export default function Chatwoot() {
             script.defer = true;
             script.async = true;
             parent.parentNode.insertBefore(script, parent);
-            script.onload = function() {
+            script.onload = function () {
                 window.chatwootSettings = {
-                    darkMode: "auto"
+                    darkMode: "auto",
                 };
                 window.chatwootSDK.run({
                     websiteToken: token,
-                    baseUrl: url
+                    baseUrl: url,
                 });
             };
         }
@@ -31,7 +46,7 @@ export default function Chatwoot() {
     createEffect(() => {
         if (swap() !== null) {
             window.$chatwoot.setCustomAttributes({
-                swapId: swap().id
+                swapId: swap().id,
             });
         }
     });

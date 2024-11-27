@@ -7,6 +7,7 @@ import log from "loglevel";
 import { Match, Show, Switch, createSignal, onMount } from "solid-js";
 import { render } from "solid-js/web";
 
+import Chatwoot from "./chatwoot";
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
@@ -27,7 +28,6 @@ import RefundEvm from "./pages/RefundEvm";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
 import "./utils/patches";
-import Chatwoot from "./chatwoot";
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker
