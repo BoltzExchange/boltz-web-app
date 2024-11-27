@@ -1,7 +1,7 @@
-import { createEffect, onMount } from "solid-js";
+import log from "loglevel";
+import { onMount } from "solid-js";
 
 import { config } from "./config";
-import { usePayContext } from "./context/Pay";
 
 declare global {
     interface Window {
@@ -38,16 +38,8 @@ export default function Chatwoot() {
                     baseUrl: url,
                 });
             };
-        }
-    });
-
-    const { swap } = usePayContext();
-
-    createEffect(() => {
-        if (swap() !== null) {
-            window.$chatwoot.setCustomAttributes({
-                swapId: swap().id,
-            });
+        } else {
+            log.warn("Chatwoot token or url not set");
         }
     });
 
