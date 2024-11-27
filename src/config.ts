@@ -24,6 +24,7 @@ const defaults = {
     telegramUrl: "https://t.me/boltzhq",
     email: "hi@bol.tz",
     dnsOverHttps: "https://1.1.1.1/dns-query",
+    preimageValidation: "https://validate-payment.com",
 };
 
 type Asset = {
