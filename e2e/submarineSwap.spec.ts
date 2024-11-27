@@ -51,10 +51,12 @@ test.describe("Submarine swap", () => {
 
         await generateBitcoinBlock();
 
-        await page.getByText("Copy preimage").click();
-        const preimage = await page.evaluate(() => {
-            return navigator.clipboard.readText();
-        });
+        const validationLink = new URL(
+            await page.getByText("Validate payment").getAttribute("href"),
+        );
+
+        expect(validationLink.searchParams.get("invoice")).toEqual(invoice);
+        const preimage = validationLink.searchParams.get("preimage");
 
         const lookupRes = await lookupInvoiceLnd(invoice);
         expect(lookupRes.state).toEqual("SETTLED");
