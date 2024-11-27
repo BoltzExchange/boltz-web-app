@@ -68,6 +68,8 @@ export const getPair = <
     assetSend: string,
     assetReceive: string,
 ): T | undefined => {
+    if (pairs === undefined) return undefined;
+
     const pairSwapType = pairs[swapType];
     if (pairSwapType === undefined) return undefined;
     const pairAssetSend = pairSwapType[coalesceLn(assetSend)];

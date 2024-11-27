@@ -1,51 +1,101 @@
 import BigNumber from "bignumber.js";
 import log from "loglevel";
+import { ImArrowDown } from "solid-icons/im";
 import {
     Accessor,
-    Match,
+    Setter,
     Show,
-    Switch,
+    createEffect,
     createResource,
     createSignal,
+    onCleanup,
 } from "solid-js";
 
+import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import {
     acceptChainSwapNewQuote,
     getChainSwapNewQuote,
+    getChainSwapTransactions,
 } from "../utils/boltzClient";
+import { getAddress, getOutputAmount, getTransaction } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import { parseBlindingKey } from "../utils/helper";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
-const TransactionLockupFailed = () => {
-    const { t, denomination, separator, fetchPairs, setSwapStorage, pairs } =
-        useGlobalContext();
+const Amount = (props: { label: DictKey; amount: number }) => {
+    const { t, denomination, separator } = useGlobalContext();
+
+    return (
+        <div>
+            <div>{t(props.label)}</div>
+            <input
+                disabled
+                type="text"
+                placeholder="0"
+                inputMode={denomination() == "btc" ? "decimal" : "numeric"}
+                value={formatAmount(
+                    new BigNumber(props.amount),
+                    denomination(),
+                    separator(),
+                )}
+            />
+        </div>
+    );
+};
+
+const TransactionLockupFailed = (props: {
+    setStatusOverride: Setter<string | undefined>;
+}) => {
+    const { t, fetchPairs, setSwapStorage, pairs } = useGlobalContext();
     const { failureReason, swap, setSwap } = usePayContext();
 
     const [newQuote, newQuoteActions] = createResource<
-        { quote: number; receiveAmount: number } | undefined
+        { sentAmount: number; quote: number; receiveAmount: number } | undefined
     >(async () => {
         if (swap() === null || swap().type !== SwapType.Chain) {
             return undefined;
         }
 
+        const chainSwap = swap() as ChainSwap;
+
         try {
-            const [quote] = await Promise.all([
-                getChainSwapNewQuote(swap().id),
+            const [quote, transactions] = await Promise.all([
+                getChainSwapNewQuote(chainSwap.id),
+                getChainSwapTransactions(chainSwap.id),
                 fetchPairs(),
             ]);
 
             const claimFee =
-                pairs()[SwapType.Chain][swap().assetSend][swap().assetReceive]
-                    .fees.minerFees.user.claim + 1;
+                pairs()[SwapType.Chain][chainSwap.assetSend][
+                    chainSwap.assetReceive
+                ].fees.minerFees.user.claim + 1;
 
+            const lockTransaction = getTransaction(chainSwap.assetSend).fromHex(
+                transactions.userLock.transaction.hex,
+            );
+            const lockupScript = getAddress(chainSwap.assetSend).toOutputScript(
+                chainSwap.lockupDetails.lockupAddress,
+            );
+
+            const output = lockTransaction.outs.find((o) =>
+                o.script.equals(lockupScript),
+            );
+            const outputAmount = await getOutputAmount(chainSwap.assetSend, {
+                ...output,
+                blindingPrivateKey: parseBlindingKey(chainSwap, true),
+            } as never);
+
+            props.setStatusOverride("quote.available");
             return {
                 quote: quote.amount,
+                sentAmount: outputAmount,
                 receiveAmount: quote.amount - claimFee,
             };
         } catch (e) {
@@ -59,39 +109,47 @@ const TransactionLockupFailed = () => {
 
     const [quoteRejected, setQuoteRejected] = createSignal<boolean>(false);
 
+    createEffect(() => {
+        if (quoteRejected()) {
+            props.setStatusOverride(undefined);
+        }
+    });
+
+    onCleanup(() => {
+        props.setStatusOverride(undefined);
+    });
+
     return (
         <Show when={swap() !== null} fallback={<NotFound />}>
-            <Switch
-                fallback={
-                    <div>
-                        <h2>{t("lockup_failed")}</h2>
-                        <p>
-                            {t("failure_reason")}: {failureReason()}
-                        </p>
-                        <hr />
-                        <RefundButton
-                            swap={swap as Accessor<SubmarineSwap | ChainSwap>}
-                        />
-                        <hr />
-                    </div>
-                }>
-                <Match
-                    when={
-                        newQuote.state === "ready" &&
-                        newQuote() !== undefined &&
-                        !quoteRejected()
+            <Show
+                when={newQuote.state === "ready"}
+                fallback={<LoadingSpinner />}>
+                <Show
+                    when={newQuote() !== undefined && !quoteRejected()}
+                    fallback={
+                        <div>
+                            <h2>{t("lockup_failed")}</h2>
+                            <p>
+                                {t("failure_reason")}: {failureReason()}
+                            </p>
+                            <hr />
+                            <RefundButton
+                                swap={
+                                    swap as Accessor<SubmarineSwap | ChainSwap>
+                                }
+                            />
+                            <hr />
+                        </div>
                     }>
-                    <h2>
-                        New quote:{" "}
-                        {formatAmount(
-                            BigNumber(newQuote().receiveAmount),
-                            denomination(),
-                            separator(),
-                        )}
-                    </h2>
-                    <p>
-                        {t("failure_reason")}: {failureReason()}
-                    </p>
+                    <div class="quote">
+                        <Amount label={"sent"} amount={newQuote().sentAmount} />
+                        <ImArrowDown size={15} style={{ opacity: 0.5 }} />
+                        <Amount
+                            label={"will_receive"}
+                            amount={newQuote().receiveAmount}
+                        />
+                    </div>
+
                     <div class="btns btns-space-between">
                         <button
                             class="btn btn-success"
@@ -126,8 +184,8 @@ const TransactionLockupFailed = () => {
                         </button>
                     </div>
                     <hr />
-                </Match>
-            </Switch>
+                </Show>
+            </Show>
         </Show>
     );
 };
