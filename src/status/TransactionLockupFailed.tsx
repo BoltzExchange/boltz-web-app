@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import {
@@ -23,7 +24,12 @@ import {
     getChainSwapNewQuote,
     getChainSwapTransactions,
 } from "../utils/boltzClient";
-import { getAddress, getOutputAmount, getTransaction } from "../utils/compat";
+import {
+    getAddress,
+    getNetwork,
+    getOutputAmount,
+    getTransaction,
+} from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { parseBlindingKey } from "../utils/helper";
@@ -82,6 +88,7 @@ const TransactionLockupFailed = (props: {
             );
             const lockupScript = getAddress(chainSwap.assetSend).toOutputScript(
                 chainSwap.lockupDetails.lockupAddress,
+                getNetwork(chainSwap.assetSend) as LiquidNetwork,
             );
 
             const output = lockTransaction.outs.find((o) =>
