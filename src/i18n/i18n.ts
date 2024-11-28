@@ -225,6 +225,7 @@ const dict = {
         no_browser_wallet: "No browser wallet detected",
         sent: "Sent",
         will_receive: "Will receive",
+        refund_available_in: "Refund will be available in {{ blocks }} blocks",
     },
     de: {
         language: "Deutsch",
@@ -462,6 +463,7 @@ const dict = {
         no_browser_wallet: "Kein Browser Wallet gefunden",
         sent: "Gesendet",
         will_receive: "Sie erhalten",
+        refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
     },
     es: {
         language: "Español",
@@ -696,6 +698,7 @@ const dict = {
         no_browser_wallet: "No se detectó monedero en el navegador",
         sent: "Enviado",
         will_receive: "Recibirá",
+        refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
     },
     zh: {
         language: "中文",
@@ -903,6 +906,7 @@ const dict = {
         no_browser_wallet: "未检测到浏览器钱包",
         sent: "已发送",
         will_receive: "将收到",
+        refund_available_in: "退款将分 {{ blocks }} 区块提供",
     },
     ja: {
         language: "日本語",
@@ -1135,6 +1139,7 @@ const dict = {
         no_browser_wallet: "ブラウザのウォレットが検出されない",
         sent: "送信済み",
         will_receive: "受信予定",
+        refund_available_in: "返金は {{ blocks }} つのブロックに分かれる",
     },
 };
 
