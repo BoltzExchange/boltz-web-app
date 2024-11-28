@@ -22,10 +22,10 @@ amount.
 `sendAsset` and `receiveAsset` can be used to set the assets. Possible values
 are:
 
--   `LN`
--   `BTC`
--   `L-BTC`
--   `RBTC`
+- `LN`
+- `BTC`
+- `L-BTC`
+- `RBTC`
 
 ## Amounts
 
@@ -37,7 +37,7 @@ in satoshis and `sendAmount` takes precedence.
 When no language has been set before, the default can be set with `lang`.
 Available values are:
 
--   English: `en`
--   German: `de`
--   Spanish: `es`
--   Chinese: `zh`
+- English: `en`
+- German: `de`
+- Spanish: `es`
+- Chinese: `zh`
