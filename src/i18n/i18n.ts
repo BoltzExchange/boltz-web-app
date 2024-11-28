@@ -225,6 +225,7 @@ const dict = {
         no_browser_wallet: "No browser wallet detected",
         sent: "Sent",
         will_receive: "Will receive",
+        refund_available_in: "Refund will be available in {{ blocks }} blocks",
     },
     de: {
         language: "Deutsch",

@@ -9,6 +9,7 @@ import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = (props: {
+    disabled?: boolean;
     onClick: () => Promise<unknown>;
     children?: JSX.Element;
     showHr?: boolean;
@@ -74,7 +75,7 @@ const ContractTransaction = (props: {
                     </Show>
                     <button
                         class="btn"
-                        disabled={clicked()}
+                        disabled={props.disabled || clicked()}
                         onClick={async () => {
                             setClicked(true);
                             try {

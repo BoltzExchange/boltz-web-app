@@ -32,6 +32,7 @@ import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 
 export const RefundEvm = (props: {
+    disabled?: boolean;
     swapId?: string;
     amount: number;
     preimageHash: string;
@@ -47,6 +48,7 @@ export const RefundEvm = (props: {
 
     return (
         <ContractTransaction
+            disabled={props.disabled}
             /* eslint-disable-next-line solid/reactivity */
             onClick={async () => {
                 const contract = getEtherSwap();
