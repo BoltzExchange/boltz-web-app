@@ -8,6 +8,7 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
+    supportUrl: "https://support.boltz.exchange/hc/center",
     discordUrl: "https://discord.gg/QBvZGcW",
     twitterUrl: "https://twitter.com/boltzhq",
     githubUrl: "https://github.com/BoltzExchange",
@@ -24,6 +25,7 @@ const defaults = {
     telegramUrl: "https://t.me/boltzhq",
     email: "hi@bol.tz",
     dnsOverHttps: "https://1.1.1.1/dns-query",
+    chatwootUrl: "https://support.boltz.exchange",
     preimageValidation: "https://validate-payment.com",
 };
 

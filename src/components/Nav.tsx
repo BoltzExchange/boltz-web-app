@@ -80,7 +80,7 @@ const Nav = (props: { network: string }) => {
                         <a
                             class="external"
                             target="_blank"
-                            href={config.discordUrl}>
+                            href={config.supportUrl}>
                             {t("help")}
                             <OcLinkexternal2 size={23} />
                         </a>
