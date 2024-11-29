@@ -220,12 +220,18 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         v: number | string;
         r: string;
         s: string;
-    }) =>
-        Signature.from({
-            v: signature.v,
+    }) => {
+        const v =
+            typeof signature.v === "string" && !signature.v.startsWith("0x")
+                ? BigInt(`0x${signature.v}`)
+                : signature.v;
+
+        return Signature.from({
+            v,
             r: BigInt(`0x${signature.r}`).toString(),
             s: BigInt(`0x${signature.s}`).toString(),
         }).serialized;
+    };
 }
 
 export default LedgerSigner;
