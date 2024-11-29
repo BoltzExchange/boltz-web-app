@@ -1,4 +1,6 @@
+import BigNumber from "bignumber.js";
 import log from "loglevel";
+import { ImArrowLeft2, ImArrowRight2 } from "solid-icons/im";
 import { IoClose } from "solid-icons/io";
 import {
     Accessor,
@@ -6,16 +8,20 @@ import {
     Setter,
     Show,
     createMemo,
+    createResource,
     createSignal,
 } from "solid-js";
 
 import { config } from "../config";
+import { RBTC } from "../consts/Assets";
+import { Denomination } from "../consts/Enums";
 import type {
     EIP6963ProviderDetail,
     EIP6963ProviderInfo,
 } from "../consts/Types";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
     HardwareSigner,
@@ -23,6 +29,8 @@ import {
     derivationPathsMainnet,
     derivationPathsTestnet,
 } from "../utils/hardware/HadwareSigner";
+import { cropString } from "../utils/helper";
+import { weiToSatoshi } from "../utils/rootstock";
 import LoadingSpinner from "./LoadingSpinner";
 
 export const connect = async (
@@ -68,24 +76,13 @@ const connectHardware = async (
 const DerivationPath = (props: {
     name: string;
     path: string;
-    provider: Accessor<EIP6963ProviderInfo>;
-    setLoading: Setter<boolean>;
+    setBasePath: Setter<string>;
 }) => {
-    const { notify } = useGlobalContext();
-    const { connectProvider, providers } = useWeb3Signer();
-
     return (
         <div
             class="provider-modal-entry-wrapper"
-            onClick={async () => {
-                await connectHardware(
-                    notify,
-                    connectProvider,
-                    props.provider,
-                    providers,
-                    props.path,
-                    props.setLoading,
-                );
+            onClick={() => {
+                props.setBasePath(props.path);
             }}>
             <hr />
             <div class="provider-modal-entry">
@@ -93,6 +90,107 @@ const DerivationPath = (props: {
                 <span>{props.path}</span>
             </div>
         </div>
+    );
+};
+
+const HwAddressSelection = (props: {
+    setLoading: Setter<boolean>;
+    basePath: Accessor<string>;
+    setBasePath: Setter<string>;
+    provider: Accessor<EIP6963ProviderInfo>;
+}) => {
+    const limit = 5;
+
+    const { separator, notify } = useGlobalContext();
+    const { providers, connectProvider } = useWeb3Signer();
+
+    const [offset, setOffset] = createSignal(0);
+    const isFirstPage = () => offset() === 0;
+
+    // eslint-disable-next-line solid/reactivity
+    const [addresses] = createResource(offset, async () => {
+        try {
+            const prov = providers()[props.provider().rdns]
+                .provider as unknown as HardwareSigner;
+
+            const addresses = await prov.deriveAddresses(
+                props.basePath(),
+                offset(),
+                limit,
+            );
+            return await Promise.all(
+                addresses.map(async ({ address, path }) => ({
+                    path,
+                    address,
+                    balance: await prov.getProvider().getBalance(address),
+                })),
+            );
+        } catch (e) {
+            props.setBasePath(undefined);
+            log.error(`Deriving addresses failed: ${formatError(e)}`);
+            notify("error", `Deriving addresses failed: ${formatError(e)}`);
+            throw e;
+        }
+    });
+
+    return (
+        <Show when={!addresses.loading} fallback={<LoadingSpinner />}>
+            <For each={addresses()}>
+                {({ address, balance, path }) => (
+                    <div
+                        class="provider-modal-entry-wrapper"
+                        onClick={async () => {
+                            await connectHardware(
+                                notify,
+                                connectProvider,
+                                props.provider,
+                                providers,
+                                path,
+                                props.setLoading,
+                            );
+                        }}>
+                        <hr />
+                        <div
+                            class="provider-modal-entry"
+                            style={{ padding: "8px 10%" }}>
+                            <h4 class="no-grow">
+                                {cropString(address, 15, 10)}
+                            </h4>
+                            <span>
+                                {formatAmount(
+                                    new BigNumber(
+                                        weiToSatoshi(balance).toString(),
+                                    ),
+                                    Denomination.Btc,
+                                    separator(),
+                                )}{" "}
+                                {RBTC}
+                            </span>
+                        </div>
+                    </div>
+                )}
+            </For>
+            <div class="paginator">
+                <div
+                    classList={{ button: true, disabled: isFirstPage() }}
+                    onClick={() => {
+                        if (isFirstPage()) {
+                            return;
+                        }
+
+                        setOffset(offset() - limit);
+                    }}>
+                    <ImArrowLeft2 />
+                </div>
+                <div
+                    class="button"
+                    onClick={() => {
+                        setOffset(offset() + limit);
+                    }}>
+                    <ImArrowRight2 />
+                </div>
+            </div>
+        </Show>
     );
 };
 
@@ -160,6 +258,7 @@ const HardwareDerivationPaths = (props: {
     const { t } = useGlobalContext();
 
     const [loading, setLoading] = createSignal<boolean>(false);
+    const [basePath, setBasePath] = createSignal<string | undefined>();
 
     const paths = createMemo(() => {
         switch (config.network) {
@@ -184,36 +283,51 @@ const HardwareDerivationPaths = (props: {
         }
     });
 
+    const close = () => {
+        props.setShow(false);
+        setBasePath(undefined);
+    };
+
     return (
         <div
             class="frame assets-select"
-            onClick={() => props.setShow(false)}
+            onClick={() => close()}
             style={props.show() ? "display: block;" : "display: none;"}>
             <div onClick={(e) => e.stopPropagation()}>
                 <h2>{t("select_derivation_path")}</h2>
-                <span class="close" onClick={() => props.setShow(false)}>
+                <span class="close" onClick={() => close()}>
                     <IoClose />
                 </span>
                 <hr class="spacer" />
                 <Show when={!loading()} fallback={<LoadingSpinner />}>
-                    <For
-                        each={Object.entries(paths()).sort(([a], [b]) =>
-                            a.toLowerCase().localeCompare(b.toLowerCase()),
-                        )}>
-                        {([name, path]) => (
-                            <DerivationPath
-                                name={name}
-                                path={path}
-                                provider={props.provider}
+                    <Show
+                        when={basePath() === undefined}
+                        fallback={
+                            <HwAddressSelection
+                                basePath={basePath}
                                 setLoading={setLoading}
+                                setBasePath={setBasePath}
+                                provider={props.provider}
                             />
-                        )}
-                    </For>
-                    <hr style={{ "margin-top": "0" }} />
-                    <CustomPath
-                        provider={props.provider}
-                        setLoading={setLoading}
-                    />
+                        }>
+                        <For
+                            each={Object.entries(paths()).sort(([a], [b]) =>
+                                a.toLowerCase().localeCompare(b.toLowerCase()),
+                            )}>
+                            {([name, path]) => (
+                                <DerivationPath
+                                    name={name}
+                                    path={path}
+                                    setBasePath={setBasePath}
+                                />
+                            )}
+                        </For>
+                        <hr style={{ "margin-top": "0" }} />
+                        <CustomPath
+                            provider={props.provider}
+                            setLoading={setLoading}
+                        />
+                    </Show>
                 </Show>
             </div>
         </div>
