@@ -15,6 +15,7 @@ import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
+
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 

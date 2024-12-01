@@ -13,7 +13,7 @@ import {
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
+import { useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
@@ -25,19 +25,12 @@ const Modal = (props: {
     setShow: Setter<boolean>;
 }) => {
     const { t, notify } = useGlobalContext();
-    const { providers, connectProvider } = useWeb3Signer();
+    const { providers, connectProvider, hasBrowserWallet } = useWeb3Signer();
 
     const [showDerivationPaths, setShowDerivationPaths] =
         createSignal<boolean>(false);
     const [hardwareProvider, setHardwareProvider] =
         createSignal<EIP6963ProviderInfo>(undefined);
-
-    const hasBrowserWallet = createMemo(() => {
-        return Object.values(providers()).some(
-            (provider) =>
-                !customDerivationPathRdns.includes(provider.info.rdns),
-        );
-    });
 
     const Provider = (providerProps: { provider: EIP6963ProviderInfo }) => {
         return (
