@@ -65,11 +65,14 @@ const customDerivationPathRdns: string[] = [
 
 const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
+    hasBrowserWallet: Accessor<boolean>;
+
     connectProvider: (rdns: string) => Promise<void>;
     connectProviderForAddress: (
         address: string,
         derivationPath?: string,
     ) => Promise<void>;
+
     signer: Accessor<Signer | undefined>;
     clearSigner: () => void;
 
@@ -116,9 +119,12 @@ const Web3SignerProvider = (props: {
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined
     >(undefined);
+    const [hasBrowserWallet, setHasBrowserWallet] =
+        createSignal<boolean>(false);
 
     onMount(() => {
         if (window.ethereum !== undefined) {
+            setHasBrowserWallet(true);
             setProviders({
                 ...providers(),
                 [browserRdns]: {
@@ -139,6 +145,8 @@ const Web3SignerProvider = (props: {
                 log.debug(
                     `Found EIP-6963 wallet: ${event.detail.info.rdns}: ${event.detail.info.name}`,
                 );
+                setHasBrowserWallet(true);
+
                 const existingProviders = { ...providers() };
 
                 // We should not show the browser provider when an EIP-6963 provider is found
@@ -269,6 +277,7 @@ const Web3SignerProvider = (props: {
                 getEtherSwap,
                 switchNetwork,
                 connectProvider,
+                hasBrowserWallet,
                 connectProviderForAddress,
                 getContracts: contracts,
                 clearSigner: () => {
