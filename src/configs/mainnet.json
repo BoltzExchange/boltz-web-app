@@ -21,7 +21,7 @@
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "https://explorer.rootstock.io"
+                "normal": "https://rootstock.blockscout.com"
             },
             "network": {
                 "chainName": "Rootstock",

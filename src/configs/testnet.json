@@ -17,7 +17,7 @@
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "https://explorer.testnet.rsk.co"
+                "normal": "https://rootstock-testnet.blockscout.com"
             },
             "network": {
                 "chainName": "Rootstock Testnet",
