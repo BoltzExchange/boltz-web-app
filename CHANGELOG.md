@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.5.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.2..v1.5.3) - 2024-12-02
+
+### Bug Fixes
+
+- address parsing for new quote (#753) - ([125cfd5](https://github.com/BoltzExchange/boltz-web-app/commit/125cfd58e2899e8eb62eb3e9e0e48fa27cc1cc4b))
+- Ledger signature parsing (#756) - ([0bdbe67](https://github.com/BoltzExchange/boltz-web-app/commit/0bdbe6748d086a9cc05cd7aa887017f51091ced0))
+- no refund file download in mobile EVM browser (#760) - ([6c514dc](https://github.com/BoltzExchange/boltz-web-app/commit/6c514dc3fe5db1540cb7258882fe8344442e2611))
+
+### Features
+
+- nicer HWW derivation path selection (#755) - ([a5f46e3](https://github.com/BoltzExchange/boltz-web-app/commit/a5f46e34c63ca15c4e02e62fd3e54718a347c55f))
+
+### Miscellaneous Chores
+
+- minor dependency updates (#750) - ([37420ad](https://github.com/BoltzExchange/boltz-web-app/commit/37420ad5056917f14af11195e0e0b2c8ddf9d420))
+- switch RSK explorer to Blockscout (#759) - ([dfc9e89](https://github.com/BoltzExchange/boltz-web-app/commit/dfc9e897b50c5839d44f92a88fa39e64bd44ab7d))
+
+### Refactoring
+
+- nicer screen for logs refunds (#752) - ([a162f67](https://github.com/BoltzExchange/boltz-web-app/commit/a162f6757ac9ba124e7a18206e9a8a4816151e63))
+
+---
 ## [1.5.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.1..v1.5.2) - 2024-11-28
 
 ### Features
@@ -16,6 +38,7 @@ All notable changes to this project will be documented in this file. See [conven
 ### Miscellaneous Chores
 
 - update changelog for v1.5.1 - ([76d1833](https://github.com/BoltzExchange/boltz-web-app/commit/76d18336a164173f966e5f77a84454738609cef3))
+- bump version to v1.5.2 - ([aaaa66e](https://github.com/BoltzExchange/boltz-web-app/commit/aaaa66ef3fc1f14c7daebbb1b2b635f4526a0442))
 
 ---
 ## [1.5.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.0..v1.5.1) - 2024-11-11
