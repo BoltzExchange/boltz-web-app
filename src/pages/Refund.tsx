@@ -231,6 +231,8 @@ const Refund = () => {
                     />
                     <Show
                         when={
+                            import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !==
+                                undefined &&
                             Object.keys(providers()).length > 0 &&
                             (refundJson() === null ||
                                 refundJson().assetSend === RBTC)

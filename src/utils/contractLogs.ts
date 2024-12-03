@@ -66,14 +66,15 @@ async function* scanLogsForPossibleRefunds(
     );
 
     const scanProviderUrl = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
-    const etherSwapScan =
-        scanProviderUrl !== undefined
-            ? (new Contract(
-                  await etherSwap.getAddress(),
-                  EtherSwapAbi,
-                  new JsonRpcProvider(scanProviderUrl),
-              ) as unknown as EtherSwap)
-            : etherSwap;
+    if (scanProviderUrl === undefined) {
+        return;
+    }
+
+    const etherSwapScan = new Contract(
+        await etherSwap.getAddress(),
+        EtherSwapAbi,
+        new JsonRpcProvider(scanProviderUrl),
+    ) as unknown as EtherSwap;
 
     for (
         let toBlock = latestBlock;

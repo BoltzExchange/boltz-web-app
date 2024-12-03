@@ -54,7 +54,7 @@ describe("Refund", () => {
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;
-        expect(refundFrame.children.length).toEqual(8);
+        expect(refundFrame.children.length).toEqual(5);
 
         const uploadInput = await screen.findByTestId("refundUpload");
         const swapFile = new File(["{}"], "swap.json", {
@@ -87,7 +87,7 @@ describe("Refund", () => {
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;
-        expect(refundFrame.children.length).toEqual(8);
+        expect(refundFrame.children.length).toEqual(5);
 
         const uploadInput = await screen.findByTestId("refundUpload");
         const swapFile = new File(["{}"], "swap.json", {
@@ -126,7 +126,7 @@ describe("Refund", () => {
         const refundFrame = (await screen.findByTestId(
             "refundFrame",
         )) as HTMLDivElement;
-        expect(refundFrame.children.length).toEqual(8);
+        expect(refundFrame.children.length).toEqual(5);
 
         const uploadInput = await screen.findByTestId("refundUpload");
         const swapFile = new File(["{}"], "swap.json", {
