@@ -6,7 +6,7 @@ import QrCode from "../components/QrCode";
 import { BTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { getPairs } from "../utils/boltzClient";
+import { getAllPairs } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { clipboard, cropString, getPair, isMobile } from "../utils/helper";
 import LoadingSpinner from "./LoadingSpinner";
@@ -19,16 +19,15 @@ const PayOnchain = (props: {
     address: string;
     bip21: string;
 }) => {
-    const { t, denomination, separator, setPairs, pairs } = useGlobalContext();
+    const { t, denomination, separator, allPairs, setAllPairs, backend } = useGlobalContext();
 
     const [pairsFetch] = createResource(async () => {
-        if (pairs() !== undefined) {
-            return pairs();
+        if (allPairs()[backend()] !== undefined) {
+            return allPairs()[backend()];
         }
 
-        const p = await getPairs();
-        setPairs(p);
-        return p;
+        setAllPairs(await getAllPairs());
+        return allPairs()[backend()];
     });
 
     const headerText = createMemo(() => {
@@ -45,12 +44,12 @@ const PayOnchain = (props: {
             });
         }
 
-        if (pairs() === undefined) {
+        if (allPairs()[backend()] === undefined) {
             return "";
         }
 
         const pair = getPair(
-            pairs(),
+            allPairs()[backend()],
             props.type,
             props.assetSend,
             props.assetReceive,
