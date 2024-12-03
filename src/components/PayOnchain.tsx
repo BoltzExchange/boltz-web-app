@@ -19,7 +19,8 @@ const PayOnchain = (props: {
     address: string;
     bip21: string;
 }) => {
-    const { t, denomination, separator, allPairs, setAllPairs, backend } = useGlobalContext();
+    const { t, denomination, separator, allPairs, setAllPairs, backend } =
+        useGlobalContext();
 
     const [pairsFetch] = createResource(async () => {
         if (allPairs()[backend()] !== undefined) {
