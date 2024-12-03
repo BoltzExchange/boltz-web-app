@@ -23,6 +23,7 @@
             },
             "network": {
                 "chainName": "Rootstock Testnet",
+                "chainId": 31,
                 "rpcUrls": ["https://public-node.testnet.rsk.co"],
                 "nativeCurrency": {
                     "name": "RBTC",

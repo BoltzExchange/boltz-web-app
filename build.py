@@ -34,9 +34,11 @@ if network != "regtest":
 
             for var in [
                 "VITE_RSK_LOG_SCAN_ENDPOINT",
-                "VITE_CHATWOOT_TOKEN"
+                "VITE_WALLETCONNECT_PROJECT_ID",
+                "VITE_CHATWOOT_TOKEN",
             ]:
                 if var not in data:
                     print(f"WARN: {var} not in .env file")
+
     except Exception as e:
         print("WARN: could not open .env file:", e)
