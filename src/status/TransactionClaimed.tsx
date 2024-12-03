@@ -3,8 +3,8 @@ import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show, createEffect, createResource, createSignal } from "solid-js";
 
-import CopyButton from "../components/CopyButton";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -24,6 +24,13 @@ const Broadcasting = () => {
             <LoadingSpinner />
         </div>
     );
+};
+
+const paymentValidationUrl = (invoice: string, preimage: string): string => {
+    const url = new URL(config.preimageValidation);
+    url.searchParams.append("invoice", invoice);
+    url.searchParams.append("preimage", preimage);
+    return url.toString();
 };
 
 const TransactionClaimed = () => {
@@ -95,7 +102,15 @@ const TransactionClaimed = () => {
                     {t("new_swap")}
                 </span>
                 <Show when={!preimage.loading && preimage() !== undefined}>
-                    <CopyButton label={"copy_preimage"} data={preimage()} />
+                    <a
+                        class="btn btn-explorer"
+                        target="_blank"
+                        href={paymentValidationUrl(
+                            (swap() as SubmarineSwap).invoice,
+                            preimage(),
+                        )}>
+                        {t("validate_payment")}
+                    </a>
                 </Show>
             </Show>
         </div>

@@ -63,10 +63,11 @@ const AddressInput = () => {
                     break;
             }
         } catch (e) {
-            log.debug(`Invalid address input: ${formatError(e)}`);
-
             setAddressValid(false);
+
             if (inputValue.length !== 0) {
+                log.debug(`Invalid address input: ${formatError(e)}`);
+
                 const msg = t("invalid_address", { asset: assetReceive() });
                 input.classList.add("invalid");
                 input.setCustomValidity(msg);

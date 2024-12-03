@@ -256,7 +256,7 @@ export const createChainSwap = (
     backend: number,
     from: string,
     to: string,
-    userLockAmount: number,
+    userLockAmount: number | undefined,
     preimageHash: string,
     claimPublicKey: string | undefined,
     refundPublicKey: string | undefined,
@@ -267,13 +267,13 @@ export const createChainSwap = (
     return fetcher(backend, "/v2/swap/chain", {
         from,
         to,
-        userLockAmount,
         preimageHash,
         claimPublicKey,
         refundPublicKey,
         claimAddress,
         pairHash,
         referralId,
+        userLockAmount,
     });
 };
 

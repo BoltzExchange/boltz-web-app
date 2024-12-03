@@ -8,6 +8,7 @@ const defaults = {
 
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
+    supportUrl: "https://support.boltz.exchange/hc/center",
     discordUrl: "https://discord.gg/6bymCFzV52",
     githubUrl: "https://github.com/SwapMarket",
     repoUrl: "https://github.com/SwapMarket/swapmarket.github.io",
@@ -21,6 +22,8 @@ const defaults = {
     telegramUrl: "https://t.me/+w0F2zxxoLg85YzM6",
     email: "swapmarket.wizard996@passinbox.com",
     dnsOverHttps: "https://1.1.1.1/dns-query",
+    chatwootUrl: "https://support.boltz.exchange",
+    preimageValidation: "https://validate-payment.com",
 };
 
 type Asset = {

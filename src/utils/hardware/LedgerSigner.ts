@@ -11,7 +11,11 @@ import { config } from "../../config";
 import { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import ledgerLoader, { Transport } from "../../lazy/ledger";
-import { HardwareSigner, derivationPaths } from "./HadwareSigner";
+import {
+    DerivedAddress,
+    HardwareSigner,
+    derivationPaths,
+} from "./HadwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];
@@ -35,6 +39,32 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         this.loader = ledgerLoader;
     }
 
+    public getProvider = (): JsonRpcProvider => this.provider;
+
+    public deriveAddresses = async (
+        basePath: string,
+        offset: number,
+        limit: number,
+    ): Promise<DerivedAddress[]> => {
+        log.debug(
+            `Deriving ${limit} Ledger addresses with offset ${offset} for base path: ${basePath}`,
+        );
+
+        const modules = await this.loader.get();
+        await this.checkApp(modules);
+
+        const eth = new modules.eth(this.transport);
+
+        const addresses: DerivedAddress[] = [];
+        for (let i = 0; i < limit; i++) {
+            const path = `${basePath}/${offset + i}`;
+            const { address } = await eth.getAddress(path);
+            addresses.push({ path, address: address.toLowerCase() });
+        }
+
+        return addresses;
+    };
+
     public getDerivationPath = () => {
         return this.derivationPath;
     };
@@ -52,21 +82,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                 log.debug("Getting Ledger accounts");
 
                 const modules = await this.loader.get();
-
-                if (this.transport === undefined) {
-                    this.transport = await modules.webhid.create();
-                }
-
-                const openApp = (await this.getApp()).name;
-                log.debug(`Ledger has app open: ${openApp}`);
-                if (!LedgerSigner.supportedApps.includes(openApp)) {
-                    log.warn(
-                        `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps.join(", ")}`,
-                    );
-                    await this.transport.close();
-                    this.transport = undefined;
-                    throw this.t("ledger_open_app_prompt");
-                }
+                await this.checkApp(modules);
 
                 const eth = new modules.eth(this.transport);
                 const { address } = await eth.getAddress(this.derivationPath);
@@ -155,6 +171,25 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
 
     public removeAllListeners = () => {};
 
+    private checkApp = async (
+        modules: Awaited<ReturnType<typeof ledgerLoader.get>>,
+    ) => {
+        if (this.transport === undefined) {
+            this.transport = await modules.webhid.create();
+        }
+
+        const openApp = (await this.getApp()).name;
+        log.debug(`Ledger has app open: ${openApp}`);
+        if (!LedgerSigner.supportedApps.includes(openApp)) {
+            log.warn(
+                `Open Ledger app ${openApp} not in supported: ${LedgerSigner.supportedApps.join(", ")}`,
+            );
+            await this.transport.close();
+            this.transport = undefined;
+            throw this.t("ledger_open_app_prompt");
+        }
+    };
+
     private getApp = async (): Promise<{
         name: string;
         version: string;
@@ -185,12 +220,18 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         v: number | string;
         r: string;
         s: string;
-    }) =>
-        Signature.from({
-            v: signature.v,
+    }) => {
+        const v =
+            typeof signature.v === "string" && !signature.v.startsWith("0x")
+                ? BigInt(`0x${signature.v}`)
+                : signature.v;
+
+        return Signature.from({
+            v,
             r: BigInt(`0x${signature.r}`).toString(),
             s: BigInt(`0x${signature.s}`).toString(),
         }).serialized;
+    };
 }
 
 export default LedgerSigner;

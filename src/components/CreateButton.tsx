@@ -14,7 +14,7 @@ import { fetchBolt12Invoice, getAllPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
-import { coalesceLn } from "../utils/helper";
+import { coalesceLn, isMobile } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import {
     SomeSwap,
@@ -64,7 +64,8 @@ export const CreateButton = () => {
         bolt12Offer,
         setBolt12Offer,
     } = useCreateContext();
-    const { getEtherSwap, signer, providers } = useWeb3Signer();
+    const { getEtherSwap, signer, providers, hasBrowserWallet } =
+        useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -109,7 +110,16 @@ export const CreateButton = () => {
                     setButtonLabel({ key: "invalid_pair" });
                     return;
                 }
-                if (!amountValid()) {
+                if (
+                    !amountValid() &&
+                    // Chain swaps with 0-amount that do not have RBTC as sending asset
+                    // can skip this check
+                    !(
+                        swapType() === SwapType.Chain &&
+                        assetSend() !== RBTC &&
+                        sendAmount().isZero()
+                    )
+                ) {
                     const lessThanMin = Number(sendAmount()) < minimum();
                     setButtonLabel({
                         key: lessThanMin ? "minimum_amount" : "maximum_amount",
@@ -350,11 +360,15 @@ export const CreateButton = () => {
             setOnchainAddress("");
             setAddressValid(false);
 
+            // Mobile EVM browsers struggle with downloading files
+            const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
+
             // No backups needed for Reverse Swaps or when we send RBTC
             if (
                 isRecklessMode() ||
                 swapType() === SwapType.Reverse ||
-                assetSend() === RBTC
+                assetSend() === RBTC ||
+                isMobileEvmBrowser()
             ) {
                 navigate("/swap/" + data.id);
             } else {

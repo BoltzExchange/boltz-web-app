@@ -15,7 +15,12 @@ import trezorLoader, {
     SuccessWithDevice,
     Unsuccessful,
 } from "../../lazy/trezor";
-import { HardwareSigner, derivationPaths } from "./HadwareSigner";
+import { trimPrefix } from "../strings";
+import {
+    DerivedAddress,
+    HardwareSigner,
+    derivationPaths,
+} from "./HadwareSigner";
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly provider: JsonRpcProvider;
@@ -31,6 +36,39 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         this.setDerivationPath(derivationPaths.Ethereum);
         this.loader = trezorLoader;
     }
+
+    public getProvider = (): JsonRpcProvider => this.provider;
+
+    public deriveAddresses = async (
+        basePath: string,
+        offset: number,
+        limit: number,
+    ): Promise<DerivedAddress[]> => {
+        log.debug(
+            `Deriving ${limit} Trezor addresses with offset ${offset} for base path: ${basePath}`,
+        );
+
+        const paths: string[] = [];
+        for (let i = 0; i < limit; i++) {
+            paths.push(`${basePath}/${offset + i}`);
+        }
+
+        await this.initialize();
+        const connect = await this.loader.get();
+        const addresses = this.handleError<Address[]>(
+            await connect.ethereumGetAddress({
+                bundle: paths.map((path) => ({
+                    path: `m/${path}`,
+                    showOnTrezor: false,
+                })),
+            }),
+        );
+
+        return addresses.payload.map((res) => ({
+            address: res.address,
+            path: trimPrefix(res.serializedPath, "m/"),
+        }));
+    };
 
     public getDerivationPath = () => {
         return this.derivationPath;

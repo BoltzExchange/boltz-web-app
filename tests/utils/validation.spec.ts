@@ -232,6 +232,76 @@ describe("validate responses", () => {
             },
         );
     });
+
+    describe("Chain Swap", () => {
+        const zeroAmount = {
+            referralId: "boltz_webapp_desktop",
+            id: "eFoBgGFfDHo4",
+            claimDetails: {
+                serverPublicKey:
+                    "0271067a9bbccfe069d924c03e87ef1532fa53e8af9995ac1a450ce395dd368593",
+                amount: 996479,
+                lockupAddress:
+                    "bcrt1pfw5r4mufen4faygxzhmez5qzzqsd7e826q3zxl6kmawlf9gjfhwqzf6fsn",
+                timeoutBlockHeight: 296,
+                swapTree: {
+                    claimLeaf: {
+                        version: 192,
+                        output: "82012088a914dce766e849984cb5499623d7d8851a34f895f6a08820cceea6857e5f8dcd4f44d26adc49473d6d7b51e059d5eea0dd936eaeae383450ac",
+                    },
+                    refundLeaf: {
+                        version: 192,
+                        output: "2071067a9bbccfe069d924c03e87ef1532fa53e8af9995ac1a450ce395dd368593ad022801b1",
+                    },
+                },
+            },
+            lockupDetails: {
+                blindingKey:
+                    "259b78561186fbad872025f0bf62b8a410fcb4f45f5d3b1ea6606fdff9191156",
+                serverPublicKey:
+                    "026f9151f5a85c9215ffadc7786c6b4c21cf1195aef8bc7fad51307ddaaa433a85",
+                amount: 0,
+                lockupAddress:
+                    "el1pqtx5366l50zk6zrs02sulma5zqqzm0ft9sa8w8gt403c8daynl33ydjxfwusv5ucqgd538qwktl5p7ne7aruhuan497ctusqpypq6c8xt8sl7vgfpkj8",
+                timeoutBlockHeight: 1853,
+                swapTree: {
+                    claimLeaf: {
+                        version: 196,
+                        output: "82012088a914dce766e849984cb5499623d7d8851a34f895f6a088206f9151f5a85c9215ffadc7786c6b4c21cf1195aef8bc7fad51307ddaaa433a85ac",
+                    },
+                    refundLeaf: {
+                        version: 196,
+                        output: "2052c3bd8caf5e574317e63e5a6fc1e70f55cba2207be95f3074891c3afcb19637ad023d07b1",
+                    },
+                },
+                bip21: "liquidnetwork:el1pqtx5366l50zk6zrs02sulma5zqqzm0ft9sa8w8gt403c8daynl33ydjxfwusv5ucqgd538qwktl5p7ne7aruhuan497ctusqpypq6c8xt8sl7vgfpkj8?label=Send%20to%20BTC%20address&assetid=5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225",
+            },
+            type: SwapType.Chain,
+            useRif: false,
+            assetSend: "L-BTC",
+            assetReceive: "BTC",
+            date: 1731666190381,
+            version: 3,
+            sendAmount: 0,
+            receiveAmount: 995035,
+            claimAddress: "bcrt1qlc26kc7s6gu94za4ajf95n42ra2t90cu89pnrn",
+            preimage:
+                "fb3c3e61382685211dd5f03e35b4d0df9fbfddb4059a8d2dfaae7f580f001d8c",
+            claimPrivateKey:
+                "9ed53293ce06b679796035026b419d6f8d8732336b4908000ca51253bb4d21eb",
+            refundPrivateKey:
+                "297be239304392970158ba6dea46b058b868ac7e797ce8a0931d2ac78043465e",
+            status: "transaction.claimed",
+            claimTx:
+                "ab466d2ec7150d37fc487bc9e9670fb871048c0cceac2debc430fe75d9bc242f",
+        };
+
+        test("should validate with 0-amount", async () => {
+            await expect(
+                validateResponse(zeroAmount, {} as never, Buffer),
+            ).resolves.toEqual(true);
+        });
+    });
 });
 
 describe("validate invoices", () => {
