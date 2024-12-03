@@ -5,6 +5,7 @@ import json
 
 def handle_coop_disabled():
     print("Cooperative signatures are disabled in config")
+    sys.exit(1)
 
 with open("./src/config.ts", "r") as f:
     for line in f:
