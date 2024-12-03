@@ -64,6 +64,10 @@ const Footer = () => {
                 </a>
             </div>
             <p class="footer-nav">
+                <a target="_blank" href={config.supportUrl}>
+                    {t("support")}
+                </a>{" "}
+                |{" "}
                 <a target="_blank" href={config.blogUrl}>
                     {t("blog")}
                 </a>{" "}

@@ -71,7 +71,7 @@ const Nav = (props: { network: string }) => {
                         <a
                             class="external"
                             target="_blank"
-                            href={config.discordUrl}>
+                            href={config.supportUrl}>
                             {t("help")}
                             <OcLinkexternal2 size={23} />
                         </a>
@@ -91,6 +91,17 @@ const Nav = (props: { network: string }) => {
                             target="_blank"
                             href={config.torUrl}>
                             {t("onion")}
+                            <OcLinkexternal2 size={23} />
+                        </a>
+                    </Show>
+                    <Show when={config.tetherUrl}>
+                        <a
+                            class="external"
+                            target="_blank"
+                            href={config.tetherUrl}>
+                            <span style={{ color: "#5DB2A5" }}>
+                                {t("tether")}
+                            </span>
                             <OcLinkexternal2 size={23} />
                         </a>
                     </Show>

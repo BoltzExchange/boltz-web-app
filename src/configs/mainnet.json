@@ -8,7 +8,7 @@
                 "normal": "https://api.boltz.exchange",
                 "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
             },
-            "contact": "https://t.me/boltzhq"
+            "contact": "https://boltz.exchange"
         },
         {
             "alias": "Eldamar",
@@ -42,7 +42,7 @@
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "https://explorer.rootstock.io"
+                "normal": "https://rootstock.blockscout.com"
             },
             "network": {
                 "chainName": "Rootstock",

@@ -1,6 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
 
 import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
+import { SwapType } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
 import { TestComponent, contextWrapper, payContext } from "../helper";
@@ -18,13 +19,13 @@ describe("TransactionClaimed", () => {
 
     test.each`
         name                                                | swap
-        ${"normal swaps"}                                   | ${{ reverse: false }}
+        ${"normal swaps"}                                   | ${{ type: SwapType.Submarine }}
         ${"reverse swaps to RBTC"} | ${{
-    reverse: true,
-    asset: RBTC,
+    type: SwapType.Reverse,
+    assetReceive: RBTC,
 }}
-        ${"reverse swaps to BTC with claim transactions"}   | ${{ reverse: true, asset: BTC, claimTx: "txid" }}
-        ${"reverse swaps to L-BTC with claim transactions"} | ${{ reverse: true, asset: LBTC, claimTx: "txid" }}
+        ${"reverse swaps to BTC with claim transactions"}   | ${{ type: SwapType.Reverse, assetReceive: BTC, claimTx: "txid" }}
+        ${"reverse swaps to L-BTC with claim transactions"} | ${{ type: SwapType.Reverse, assetReceive: LBTC, claimTx: "txid" }}
     `("should show success for $name", async ({ swap }) => {
         render(
             () => (

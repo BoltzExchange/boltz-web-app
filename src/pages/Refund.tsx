@@ -1,13 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import {
-    Show,
-    createResource,
-    createSignal,
-    onCleanup,
-    onMount,
-} from "solid-js";
+import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
@@ -121,7 +115,8 @@ const Refund = () => {
         }
     });
 
-    createResource(async () => {
+    // eslint-disable-next-line solid/reactivity
+    createEffect(async () => {
         setLogRefundableSwaps([]);
 
         if (refundScanAbort !== undefined) {

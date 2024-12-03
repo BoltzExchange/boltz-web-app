@@ -33,3 +33,23 @@
     height: 4rem;
     min-width: 5rem;
 }
+
+.no-browser-wallet {
+    margin: 1rem;
+}
+
+.paginator {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.paginator > .button {
+    padding: 1rem 1rem;
+    cursor: pointer;
+}
+
+.paginator .disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

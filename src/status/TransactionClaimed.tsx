@@ -1,13 +1,19 @@
 import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createSignal } from "solid-js";
+import log from "loglevel";
+import { Show, createEffect, createResource, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
+import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { getSubmarinePreimage } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
+import { formatError } from "../utils/errors";
+import { checkInvoicePreimage } from "../utils/invoice";
+import { SubmarineSwap } from "../utils/swapCreator";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -20,14 +26,47 @@ const Broadcasting = () => {
     );
 };
 
+const paymentValidationUrl = (invoice: string, preimage: string): string => {
+    const url = new URL(config.preimageValidation);
+    url.searchParams.append("invoice", invoice);
+    url.searchParams.append("preimage", preimage);
+    return url.toString();
+};
+
 const TransactionClaimed = () => {
     const navigate = useNavigate();
+
+    const { notify } = useGlobalContext();
     const { swap } = usePayContext();
-    const { t, denomination, separator } = useGlobalContext();
+    const { t, denomination, separator, setSwapStorage, backend } =
+        useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
     >(undefined);
+
+    const [preimage] = createResource(async () => {
+        const submarine = swap() as SubmarineSwap;
+        if (submarine?.type !== SwapType.Submarine) {
+            return undefined;
+        }
+
+        if (submarine.preimage !== undefined) {
+            return submarine.preimage;
+        }
+
+        const res = await getSubmarinePreimage(backend(), submarine.id);
+        try {
+            await checkInvoicePreimage(submarine.invoice, res.preimage);
+        } catch (e) {
+            log.error("Preimage check failed", e);
+            notify("error", formatError(e));
+        }
+
+        submarine.preimage = res.preimage;
+        await setSwapStorage(submarine);
+        return res.preimage;
+    });
 
     createEffect(() => {
         const s = swap();
@@ -62,6 +101,17 @@ const TransactionClaimed = () => {
                 <span class="btn" onClick={() => navigate("/swap")}>
                     {t("new_swap")}
                 </span>
+                <Show when={!preimage.loading && preimage() !== undefined}>
+                    <a
+                        class="btn btn-explorer"
+                        target="_blank"
+                        href={paymentValidationUrl(
+                            (swap() as SubmarineSwap).invoice,
+                            preimage(),
+                        )}>
+                        {t("validate_payment")}
+                    </a>
+                </Show>
             </Show>
         </div>
     );

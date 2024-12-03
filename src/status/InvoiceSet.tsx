@@ -6,7 +6,7 @@ import PayOnchain from "../components/PayOnchain";
 import { RBTC } from "../consts/Assets";
 import { usePayContext } from "../context/Pay";
 import { decodeInvoice } from "../utils/invoice";
-import { SubmarineSwap, getRelevantAssetForSwap } from "../utils/swapCreator";
+import { SubmarineSwap } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
     const { swap } = usePayContext();
@@ -21,7 +21,9 @@ const InvoiceSet = () => {
             when={submarine.assetSend === RBTC}
             fallback={
                 <PayOnchain
-                    asset={getRelevantAssetForSwap(submarine)}
+                    type={submarine.type}
+                    assetSend={submarine.assetSend}
+                    assetReceive={submarine.assetReceive}
                     expectedAmount={submarine.expectedAmount}
                     address={submarine.address}
                     bip21={submarine.bip21}

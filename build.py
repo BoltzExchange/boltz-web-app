@@ -35,3 +35,7 @@ if network != "regtest":
             if var not in data:
                 print(f"{var} not in .env file")
                 sys.exit(1)
+
+        for var in ["VITE_CHATWOOT_TOKEN"]:
+            if var not in data:
+                print(f"WARN: {var} not in .env file")

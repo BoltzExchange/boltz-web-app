@@ -41,6 +41,7 @@ export const deleteOldLogs = async (logsForage: LocalForage) => {
 };
 
 export const formatLogLine = (message: unknown[]) =>
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     message
         .map((entry: unknown) => {
             if (entry instanceof Error) {

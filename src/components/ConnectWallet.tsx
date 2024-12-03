@@ -25,7 +25,7 @@ const Modal = (props: {
     setShow: Setter<boolean>;
 }) => {
     const { t, notify } = useGlobalContext();
-    const { providers, connectProvider } = useWeb3Signer();
+    const { providers, connectProvider, hasBrowserWallet } = useWeb3Signer();
 
     const [showDerivationPaths, setShowDerivationPaths] =
         createSignal<boolean>(false);
@@ -90,6 +90,14 @@ const Modal = (props: {
                     <IoClose />
                 </span>
                 <hr class="spacer" />
+                <Show when={!hasBrowserWallet()}>
+                    <hr />
+
+                    <div class="no-browser-wallet">
+                        <h3>{t("no_browser_wallet")}</h3>
+                    </div>
+                    <hr class="spacer" />
+                </Show>
                 <For
                     each={Object.values(providers()).sort((a, b) =>
                         a.info.name

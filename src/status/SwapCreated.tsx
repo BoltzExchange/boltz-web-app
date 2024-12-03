@@ -28,7 +28,9 @@ const SwapCreated = () => {
                 when={chain.assetSend === RBTC}
                 fallback={
                     <PayOnchain
-                        asset={chain.assetSend}
+                        type={chain.type}
+                        assetSend={chain.assetSend}
+                        assetReceive={chain.assetReceive}
                         expectedAmount={chain.lockupDetails.amount}
                         address={chain.lockupDetails.lockupAddress}
                         bip21={chain.lockupDetails.bip21}

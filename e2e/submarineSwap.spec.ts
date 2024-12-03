@@ -4,6 +4,7 @@ import {
     bitcoinSendToAddress,
     generateBitcoinBlock,
     generateInvoiceLnd,
+    lookupInvoiceLnd,
 } from "./utils";
 
 test.describe("Submarine swap", () => {
@@ -28,7 +29,8 @@ test.describe("Submarine swap", () => {
         await expect(inputSendAmount).toHaveValue(sendAmount);
 
         const invoiceInput = page.locator("textarea[data-testid='invoice']");
-        await invoiceInput.fill(await generateInvoiceLnd(1000000));
+        const invoice = await generateInvoiceLnd(1000000);
+        await invoiceInput.fill(invoice);
         const buttonCreateSwap = page.locator(
             "button[data-testid='create-swap-button']",
         );
@@ -48,7 +50,17 @@ test.describe("Submarine swap", () => {
         await bitcoinSendToAddress(sendAddress, sendAmount);
 
         await generateBitcoinBlock();
-        // TODO: verify amounts
+
+        const validationLink = new URL(
+            await page.getByText("Show Proof of Payment").getAttribute("href"),
+        );
+
+        expect(validationLink.searchParams.get("invoice")).toEqual(invoice);
+        const preimage = validationLink.searchParams.get("preimage");
+
+        const lookupRes = await lookupInvoiceLnd(invoice);
+        expect(lookupRes.state).toEqual("SETTLED");
+        expect(lookupRes.r_preimage).toEqual(preimage);
     });
 
     test("Create with LNURL", async ({ page }) => {

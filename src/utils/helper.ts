@@ -15,6 +15,7 @@ import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
+
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
 
@@ -72,6 +73,8 @@ export const getPair = <
     assetSend: string,
     assetReceive: string,
 ): T | undefined => {
+    if (pairs === undefined) return undefined;
+
     const pairSwapType = pairs[swapType];
     if (pairSwapType === undefined) return undefined;
     const pairAssetSend = pairSwapType[coalesceLn(assetSend)];

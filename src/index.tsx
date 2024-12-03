@@ -7,6 +7,7 @@ import log from "loglevel";
 import { Match, Show, Switch, createSignal, onMount } from "solid-js";
 import { render } from "solid-js/web";
 
+import Chatwoot from "./chatwoot";
 import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
@@ -70,6 +71,7 @@ const App = (props: RouteSectionProps) => {
                         <CreateProvider>
                             <PayProvider>
                                 <SwapChecker />
+                                <Chatwoot />
                                 <Show when={!isEmbedded()}>
                                     <Nav network={config.network} />
                                 </Show>

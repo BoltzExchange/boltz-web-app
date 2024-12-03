@@ -7,7 +7,7 @@
             "apiUrl": {
                 "normal": "https://testnet.boltz.exchange/api"
             },
-            "contact": "https://t.me/boltzhq"
+            "contact": "https://boltz.exchange"
         },
         {
             "alias": "Local Test Node",
@@ -31,7 +31,7 @@
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "https://explorer.testnet.rsk.co"
+                "normal": "https://rootstock-testnet.blockscout.com"
             },
             "network": {
                 "chainName": "Rootstock Testnet",

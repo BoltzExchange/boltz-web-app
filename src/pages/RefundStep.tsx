@@ -3,6 +3,7 @@ import log from "loglevel";
 import { For, createResource } from "solid-js";
 
 import DownloadRefund from "../components/DownloadRefund";
+import Warning from "../components/Warning";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import type { DictKey } from "../i18n/i18n";
@@ -39,7 +40,7 @@ const RefundStep = () => {
                     </For>
                 </ul>
                 <hr />
-                <p style={{ "font-size": "46px", margin: "0" }}>⚠️</p>
+                <Warning />
                 <h3>{t("backup_refund_skip")}</h3>
                 <hr />
                 <div class="btns btns-space-between">
