@@ -186,6 +186,7 @@ hr.spacer {
 [data-status="invoice.settled"],
 [data-status="transaction.confirmed"],
 [data-status="transaction.claimed"],
+[data-status="transaction.claim.pending"],
 [data-status="quote.available"] {
     > p > .btn-small {
         background-color: #246c24;
