@@ -49,10 +49,12 @@ export default [
                             message: "It is a heavy dependency",
                             group: [
                                 "boltz-bolt12",
+                                "@reown/appkit",
                                 "@trezor/connect",
                                 "@trezor/connect-web",
                                 "@ledgerhq/hw-app-eth",
                                 "@ledgerhq/hw-transport",
+                                "@reown/appkit-adapter-ethers",
                                 "@ledgerhq/hw-transport-webhid",
                                 "@vulpemventures/secp256k1-zkp",
                             ],

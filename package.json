@@ -65,6 +65,8 @@
         "@fontsource/noto-sans": "^5.1.0",
         "@ledgerhq/hw-app-eth": "6.38.2",
         "@ledgerhq/hw-transport-webhid": "^6.29.4",
+        "@reown/appkit": "^1.5.3",
+        "@reown/appkit-adapter-ethers": "^1.5.3",
         "@scure/base": "^1.2.1",
         "@solid-primitives/i18n": "^2.1.1",
         "@solid-primitives/storage": "^4.2.1",

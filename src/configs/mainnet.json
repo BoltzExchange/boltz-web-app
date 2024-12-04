@@ -25,6 +25,7 @@
             },
             "network": {
                 "chainName": "Rootstock",
+                "chainId": 30,
                 "rpcUrls": ["https://public-node.rsk.co"],
                 "nativeCurrency": {
                     "name": "RBTC",

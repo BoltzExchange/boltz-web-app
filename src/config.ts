@@ -40,6 +40,7 @@ type Asset = {
     };
     network?: {
         chainName: string;
+        chainId: number;
         rpcUrls: string[];
         nativeCurrency: {
             name: string;

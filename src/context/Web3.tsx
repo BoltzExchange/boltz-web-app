@@ -11,6 +11,7 @@ import {
     Accessor,
     JSXElement,
     Resource,
+    Setter,
     createContext,
     createResource,
     createSignal,
@@ -18,16 +19,18 @@ import {
     useContext,
 } from "solid-js";
 
+import LedgerIcon from "../assets/ledger.svg";
+import TrezorIcon from "../assets/trezor.svg";
+import WalletConnectIcon from "../assets/wallet-connect.svg";
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
+import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { Contracts, getContracts } from "../utils/boltzClient";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { useGlobalContext } from "./Global";
-import LedgerIcon from "/ledger.svg";
-import TrezorIcon from "/trezor.svg";
 
 declare global {
     interface WindowEventMap {
@@ -57,6 +60,7 @@ enum HardwareRdns {
 }
 
 const browserRdns = "browser";
+const walletConnectRdns = "wallet-connect";
 
 const customDerivationPathRdns: string[] = [
     HardwareRdns.Ledger,
@@ -80,6 +84,9 @@ const Web3SignerContext = createContext<{
 
     getContracts: Resource<Contracts>;
     getEtherSwap: () => EtherSwap;
+
+    openWalletConnectModal: Accessor<boolean>;
+    setOpenWalletConnectModal: Setter<boolean>;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -121,6 +128,10 @@ const Web3SignerProvider = (props: {
     >(undefined);
     const [hasBrowserWallet, setHasBrowserWallet] =
         createSignal<boolean>(false);
+    const [openWalletConnectModal, setOpenWalletConnectModal] =
+        createSignal<boolean>(false);
+
+    WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
     onMount(() => {
         if (window.ethereum !== undefined) {
@@ -134,6 +145,22 @@ const Web3SignerProvider = (props: {
                         uuid: browserRdns,
                         rdns: browserRdns,
                         disabled: window.ethereum === undefined,
+                    },
+                },
+            });
+        }
+
+        if (import.meta.env.VITE_WALLETCONNECT_PROJECT_ID !== undefined) {
+            setProviders({
+                ...providers(),
+                [walletConnectRdns]: {
+                    provider: new WalletConnectProvider(),
+                    info: {
+                        name: "WalletConnect",
+                        uuid: "wallet-connect",
+                        icon: WalletConnectIcon,
+                        isHardware: false,
+                        rdns: walletConnectRdns,
                     },
                 },
             });
@@ -278,6 +305,8 @@ const Web3SignerProvider = (props: {
                 switchNetwork,
                 connectProvider,
                 hasBrowserWallet,
+                openWalletConnectModal,
+                setOpenWalletConnectModal,
                 connectProviderForAddress,
                 getContracts: contracts,
                 clearSigner: () => {
