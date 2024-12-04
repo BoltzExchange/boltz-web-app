@@ -7,12 +7,14 @@
     "assets": {
         "BTC": {
             "blockExplorerUrl": {
-                "normal": "https://blockstream.info/testnet"
+                "normal": "https://blockstream.info/testnet",
+                "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/testnet"
             }
         },
         "L-BTC": {
             "blockExplorerUrl": {
-                "normal": "https://blockstream.info/liquidtestnet"
+                "normal": "https://blockstream.info/liquidtestnet",
+                "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquidtestnet"
             }
         },
         "RBTC": {
