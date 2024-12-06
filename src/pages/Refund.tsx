@@ -68,7 +68,7 @@ const Refund = () => {
         setSwapFound(null);
         setRefundInvalid(false);
 
-        if (inputFile.type === "image/png") {
+        if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
             QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
                 .then(
                     async (result) =>
@@ -226,7 +226,7 @@ const Refund = () => {
                         type="file"
                         id="refundUpload"
                         data-testid="refundUpload"
-                        accept="application/json,image/png"
+                        accept="application/json,image/png,imagine/jpg,image/jpeg"
                         onChange={(e) => uploadChange(e)}
                     />
                     <Show
