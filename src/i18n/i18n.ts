@@ -225,7 +225,7 @@ const dict = {
         will_receive: "Will receive",
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         no_wallet_connected: "No wallet connected",
-        qr_scan_supported: "QR scan not supported in this browser",
+        qr_scan_supported: "This browser doesn't support refunds via QR",
     },
     de: {
         language: "Deutsch",
@@ -463,6 +463,8 @@ const dict = {
         will_receive: "Sie erhalten",
         refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
         no_wallet_connected: "Kein Wallet verbunden",
+        qr_scan_supported:
+            "Dieser Browser unterstützt keine Erstattungen über QR",
     },
     es: {
         language: "Español",
@@ -696,6 +698,8 @@ const dict = {
         will_receive: "Recibirá",
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         no_wallet_connected: "No hay monedero conectado",
+        qr_scan_supported:
+            "Este navegador no admite devoluciones a través de QR",
     },
     zh: {
         language: "中文",
@@ -903,6 +907,7 @@ const dict = {
         will_receive: "将收到",
         refund_available_in: "退款将分 {{ blocks }} 区块提供",
         no_wallet_connected: "未连接钱包",
+        qr_scan_supported: "此浏览器不支持通过 QR 退款",
     },
     ja: {
         language: "日本語",
@@ -1135,6 +1140,7 @@ const dict = {
         will_receive: "受信予定",
         refund_available_in: "返金は {{ blocks }} つのブロックに分かれる",
         no_wallet_connected: "財布はつながっていない！",
+        qr_scan_supported: "このブラウザはQRによる払い戻しに対応していません。",
     },
 };
 
