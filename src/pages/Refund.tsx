@@ -20,9 +20,15 @@ import {
     LogRefundData,
     scanLogsForPossibleRefunds,
 } from "../utils/contractLogs";
+import { qrScanProbe } from "../utils/qrScanProbe";
 import { validateRefundFile } from "../utils/refundFile";
 import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
+
+enum RefundError {
+    InvalidData,
+    QrScanNotSupported,
+}
 
 const Refund = () => {
     const navigate = useNavigate();
@@ -31,7 +37,9 @@ const Refund = () => {
     const { signer, providers, getEtherSwap } = useWeb3Signer();
 
     const [swapFound, setSwapFound] = createSignal(null);
-    const [refundInvalid, setRefundInvalid] = createSignal(false);
+    const [refundInvalid, setRefundInvalid] = createSignal<
+        RefundError | undefined
+    >(undefined);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
@@ -52,47 +60,47 @@ const Refund = () => {
             }
 
             setRefundJson(data);
-            setRefundInvalid(false);
+            setRefundInvalid(undefined);
         } catch (e) {
             log.warn("Refund json validation failed", e);
-            setRefundInvalid(true);
+            setRefundInvalid(RefundError.InvalidData);
             input.setCustomValidity(t("invalid_refund_file"));
         }
     };
 
-    const uploadChange = (e: Event) => {
+    const uploadChange = async (e: Event) => {
         const input = e.currentTarget as HTMLInputElement;
         const inputFile = input.files[0];
         input.setCustomValidity("");
         setRefundJson(null);
         setSwapFound(null);
-        setRefundInvalid(false);
+        setRefundInvalid(undefined);
 
         if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
-            QrScanner.scanImage(inputFile, { returnDetailedScanResult: true })
-                .then(
-                    async (result) =>
-                        await checkRefundJsonKeys(
-                            input,
-                            JSON.parse(result.data),
-                        ),
-                )
-                .catch((e) => {
-                    log.error("invalid QR code upload", e);
-                    setRefundInvalid(true);
-                    input.setCustomValidity(t("invalid_refund_file"));
+            if (!(await qrScanProbe())) {
+                setRefundInvalid(RefundError.QrScanNotSupported);
+                return;
+            }
+
+            try {
+                const res = await QrScanner.scanImage(inputFile, {
+                    returnDetailedScanResult: true,
                 });
+                await checkRefundJsonKeys(input, JSON.parse(res.data));
+            } catch (e) {
+                log.error("invalid QR code upload", e);
+                setRefundInvalid(RefundError.InvalidData);
+                input.setCustomValidity(t("invalid_refund_file"));
+            }
         } else {
-            inputFile
-                .text()
-                .then(async (result) => {
-                    await checkRefundJsonKeys(input, JSON.parse(result));
-                })
-                .catch((e) => {
-                    log.error("invalid file upload", e);
-                    setRefundInvalid(true);
-                    input.setCustomValidity(t("invalid_refund_file"));
-                });
+            try {
+                const data = await inputFile.text();
+                await checkRefundJsonKeys(input, JSON.parse(data));
+            } catch (e) {
+                log.error("invalid file upload", e);
+                setRefundInvalid(RefundError.InvalidData);
+                input.setCustomValidity(t("invalid_refund_file"));
+            }
         }
     };
 
@@ -249,10 +257,18 @@ const Refund = () => {
                             {t("open_swap")}
                         </button>
                     </Show>
-                    <Show when={refundInvalid()}>
+                    <Show when={refundInvalid() !== undefined}>
                         <hr />
                         <button class="btn" disabled={true}>
-                            {t("invalid_refund_file")}
+                            {(() => {
+                                switch (refundInvalid()) {
+                                    case RefundError.InvalidData:
+                                        return t("invalid_refund_file");
+
+                                    case RefundError.QrScanNotSupported:
+                                        return t("qr_scan_supported");
+                                }
+                            })()}
                         </button>
                     </Show>
                     <Show when={refundTxId() === "" && refundJson() !== null}>

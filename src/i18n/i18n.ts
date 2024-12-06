@@ -225,6 +225,7 @@ const dict = {
         will_receive: "Will receive",
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         no_wallet_connected: "No wallet connected",
+        qr_scan_supported: "QR scan not supported in this browser",
     },
     de: {
         language: "Deutsch",
