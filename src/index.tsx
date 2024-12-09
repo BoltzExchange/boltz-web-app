@@ -63,7 +63,7 @@ const App = (props: RouteSectionProps) => {
     return (
         <Switch>
             <Match when={configError() === true}>
-                <div>Invalid or missing app configuration</div>
+                <h1>Invalid or missing app configuration</h1>
             </Match>
             <Match when={configError() === false}>
                 <GlobalProvider>

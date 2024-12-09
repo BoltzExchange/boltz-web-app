@@ -175,8 +175,6 @@ const dict = {
         version: "Version",
         commithash: "Commit Hash",
         open_in_wallet: "Open in Wallet",
-        invoice_paid: "Invoice paid",
-        creating_coop_claim: "Creating cooperative claim transaction.",
         branding: "Branding",
         testnet: "Testnet",
         broadcasting_claim: "Broadcasting claim transaction...",
@@ -230,6 +228,8 @@ const dict = {
         will_receive: "Will receive",
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         tether: "USDt",
+        no_wallet_connected: "No wallet connected",
+        qr_scan_supported: "This browser doesn't support refunds via QR",
     },
     de: {
         language: "Deutsch",
@@ -414,8 +414,6 @@ const dict = {
         version: "Version",
         commithash: "Commit Hash",
         open_in_wallet: "Im Wallet öffnen",
-        invoice_paid: "Rechnung bezahlt",
-        creating_coop_claim: "Erstelle kooperative Claim-Transaktion.",
         branding: "Branding",
         testnet: "Testnet",
         broadcasting_claim: "Sende claim transaction...",
@@ -473,6 +471,9 @@ const dict = {
         will_receive: "Sie erhalten",
         refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
         tether: "USDt",
+        no_wallet_connected: "Kein Wallet verbunden",
+        qr_scan_supported:
+            "Dieser Browser unterstützt keine Erstattungen über QR",
     },
     es: {
         language: "Español",
@@ -655,9 +656,6 @@ const dict = {
         version: "Versión",
         commithash: "Commit Hash",
         open_in_wallet: "Abrir en monedero",
-        invoice_paid: "Factura pagada",
-        creating_coop_claim:
-            "Creación de una transacción de reclamación cooperativa.",
         branding: "Branding",
         testnet: "Testnet",
         broadcasting_claim: "Enviando transacción de reclamación...",
@@ -713,6 +711,9 @@ const dict = {
         will_receive: "Recibirá",
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         tether: "USDt",
+        no_wallet_connected: "No hay monedero conectado",
+        qr_scan_supported:
+            "Este navegador no admite devoluciones a través de QR",
     },
     zh: {
         language: "中文",
@@ -877,8 +878,6 @@ const dict = {
         version: "版本",
         commithash: "提交哈希",
         open_in_wallet: "在钱包中打开",
-        invoice_paid: "发票已支付",
-        creating_coop_claim: "创建合作索赔交易。",
         branding: "品牌",
         testnet: "测试网",
         broadcasting_claim: "正在发送索赔交易...",
@@ -926,6 +925,8 @@ const dict = {
         will_receive: "将收到",
         refund_available_in: "退款将分 {{ blocks }} 区块提供",
         tether: "USDt",
+        no_wallet_connected: "未连接钱包",
+        qr_scan_supported: "此浏览器不支持通过 QR 退款",
     },
     ja: {
         language: "日本語",
@@ -1109,8 +1110,6 @@ const dict = {
         version: "バージョン",
         commithash: "コミットハッシュ",
         open_in_wallet: "ウォレットで開く",
-        invoice_paid: "インボイス支払い完了",
-        creating_coop_claim: "協力的クレームトランザクションの作成中",
         branding: "ブランディング",
         testnet: "テストネット",
         broadcasting_claim: "クレームトランザクションのブロードキャスト中",
@@ -1164,6 +1163,8 @@ const dict = {
         will_receive: "受信予定",
         refund_available_in: "返金は {{ blocks }} つのブロックに分かれる",
         tether: "USDt",
+        no_wallet_connected: "財布はつながっていない！",
+        qr_scan_supported: "このブラウザはQRによる払い戻しに対応していません。",
     },
     ru: {
         language: "Русский",
@@ -1345,8 +1346,6 @@ const dict = {
         version: "Версия",
         commithash: "Хэш коммита",
         open_in_wallet: "Открыть в кошельке",
-        invoice_paid: "Инвойс оплачен",
-        creating_coop_claim: "Создание кооперативной транзакции требования.",
         branding: "Брендинг",
         testnet: "Тестовая сеть",
         broadcasting_claim: "Отправка транзакции требования...",
@@ -1403,6 +1402,8 @@ const dict = {
         will_receive: "Будет получено",
         refund_available_in: "Возврат будет доступен через {{blocks}} блоков",
         tether: "USDt",
+        no_wallet_connected: "Кошелек не подключен",
+        qr_scan_supported: "Этот браузер не поддерживает возвраты через QR",
     },
 };
 

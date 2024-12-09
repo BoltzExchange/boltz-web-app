@@ -30,7 +30,6 @@ import InvoiceSet from "../status/InvoiceSet";
 import SwapCreated from "../status/SwapCreated";
 import SwapExpired from "../status/SwapExpired";
 import SwapRefunded from "../status/SwapRefunded";
-import TransactionClaimPending from "../status/TransactionClaimPending";
 import TransactionClaimed from "../status/TransactionClaimed";
 import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
@@ -114,7 +113,9 @@ const Pay = () => {
                                 swapStatus() ===
                                     swapStatusSuccess.TransactionClaimed ||
                                 swapStatus() ===
-                                    swapStatusSuccess.InvoiceSettled
+                                    swapStatusSuccess.InvoiceSettled ||
+                                swapStatus() ===
+                                    swapStatusPending.TransactionClaimPending
                             }>
                             <TransactionClaimed />
                         </Match>
@@ -179,13 +180,6 @@ const Pay = () => {
                                 swapStatusPending.InvoicePending
                             }>
                             <InvoicePending />
-                        </Match>
-                        <Match
-                            when={
-                                swapStatus() ===
-                                swapStatusPending.TransactionClaimPending
-                            }>
-                            <TransactionClaimPending />
                         </Match>
                         <Match
                             when={

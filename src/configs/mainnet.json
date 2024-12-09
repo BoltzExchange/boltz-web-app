@@ -36,8 +36,8 @@
         },
         "L-BTC": {
             "blockExplorerUrl": {
-                "normal": "https://liquid.network",
-                "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion"
+                "normal": "https://blockstream.info/liquid",
+                "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquid"
             }
         },
         "RBTC": {
@@ -46,6 +46,7 @@
             },
             "network": {
                 "chainName": "Rootstock",
+                "chainId": 30,
                 "rpcUrls": ["https://public-node.rsk.co"],
                 "nativeCurrency": {
                     "name": "RBTC",
