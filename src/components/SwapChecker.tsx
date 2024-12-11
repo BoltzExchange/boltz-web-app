@@ -264,7 +264,10 @@ export const SwapChecker = () => {
                 log.warn(msg, e);
                 notify("error", msg);
             }
-        } else if (data.status === swapStatusPending.TransactionClaimPending) {
+        } else if (
+            currentSwap.type === SwapType.Submarine &&
+            data.status === swapStatusPending.TransactionClaimPending
+        ) {
             try {
                 await createSubmarineSignature(currentSwap as SubmarineSwap);
                 notify(

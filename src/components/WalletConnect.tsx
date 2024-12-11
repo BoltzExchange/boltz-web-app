@@ -18,15 +18,21 @@ export const WalletConnect = () => {
         useWeb3Signer();
 
     const [createdKit] = createResource(async () => {
+        const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+        if (projectId === undefined) {
+            log.warn("WalletConnect project id not set");
+            return undefined;
+        }
+
         const configRsk = config.assets[RBTC];
 
         const { appKit, EthersAdapter } = await loader.get();
         const created = appKit.createAppKit({
+            projectId,
             themeMode: "dark",
             enableEIP6963: false,
             enableInjected: false,
             adapters: [new EthersAdapter()],
-            projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string,
             networks: [
                 {
                     id: configRsk.network.chainId,
@@ -84,7 +90,11 @@ export const WalletConnect = () => {
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
         if (openWalletConnectModal()) {
-            await createdKit().open();
+            const kit = createdKit();
+
+            if (kit !== undefined) {
+                await kit.open();
+            }
         }
     });
 
