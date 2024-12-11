@@ -282,11 +282,11 @@ const Web3SignerProvider = (props: {
                     method: "wallet_addEthereumChain",
                     params: [
                         {
-                            chainId: sanitizedChainId,
+                            ...config.assets[RBTC].network,
                             blockExplorerUrls: [
                                 config.assets[RBTC].blockExplorerUrl.normal,
                             ],
-                            ...config.assets[RBTC].network,
+                            chainId: sanitizedChainId,
                         },
                     ],
                 });
