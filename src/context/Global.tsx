@@ -16,6 +16,7 @@ import type { JSX } from "solid-js";
 
 import { config } from "../config";
 import { Denomination } from "../consts/Enums";
+import { referralIdKey } from "../consts/LocalStorage";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
@@ -133,7 +134,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
             isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop",
         ),
         {
-            name: "ref",
+            name: referralIdKey,
             ...stringSerializer,
         },
     );
