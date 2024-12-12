@@ -281,11 +281,11 @@ const Web3SignerProvider = (props: {
                     method: "wallet_addEthereumChain",
                     params: [
                         {
-                            chainId: sanitizedChainId,
+                            ...config.assets[RBTC].network,
                             blockExplorerUrls: [
                                 config.assets[RBTC].blockExplorerUrl.normal,
                             ],
-                            ...config.assets[RBTC].network,
+                            chainId: sanitizedChainId,
                         },
                     ],
                 });
@@ -325,13 +325,18 @@ const Web3SignerProvider = (props: {
 
 const useWeb3Signer = () => useContext(Web3SignerContext);
 
-const etherSwapCodeHash = () => {
+const etherSwapCodeHashes = () => {
     switch (config.network) {
         case "mainnet":
-            return "0x4d6894da95269c76528b81c6d25425a2f6bba70156cfaf7725064f919647d955";
+            return [
+                "0x4d6894da95269c76528b81c6d25425a2f6bba70156cfaf7725064f919647d955",
+            ];
 
         case "testnet":
-            return "0xd9a282305f30590b3df70c3c1f9338b042a97dff12736794e9de2cdabf8542c1";
+            return [
+                "0xd9a282305f30590b3df70c3c1f9338b042a97dff12736794e9de2cdabf8542c1",
+                "0xb8f6205d7fecc5b7a577519c7ec40af594f929d150c05bf84e1f94b7472dd783",
+            ];
 
         default:
             return undefined;
@@ -339,9 +344,9 @@ const etherSwapCodeHash = () => {
 };
 
 export {
-    useWeb3Signer,
-    etherSwapCodeHash,
-    Web3SignerProvider,
     EtherSwapAbi,
+    useWeb3Signer,
+    Web3SignerProvider,
+    etherSwapCodeHashes,
     customDerivationPathRdns,
 };
