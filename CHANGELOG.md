@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.5.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.3..v1.5.4) - 2024-12-04
+
+### Miscellaneous Chores
+
+- switch to Blockstream Liquid explorer (#764) - ([042c05f](https://github.com/BoltzExchange/boltz-web-app/commit/042c05f61ce20ee7c47ca8dcab02336e0220cc8c))
+
+### Refactoring
+
+- make RSK log scan endpoint optional (#761) - ([89d3f6a](https://github.com/BoltzExchange/boltz-web-app/commit/89d3f6a7e0a33742246eb804ec1bec1151f14501))
+- show transaction.claim.pending as success (#763) - ([80685e8](https://github.com/BoltzExchange/boltz-web-app/commit/80685e81b1edd5ebf7ce64bd01b6b20d6f8407b6))
+
+---
 ## [1.5.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.2..v1.5.3) - 2024-12-02
 
 ### Bug Fixes
@@ -19,6 +31,7 @@ All notable changes to this project will be documented in this file. See [conven
 
 - minor dependency updates (#750) - ([37420ad](https://github.com/BoltzExchange/boltz-web-app/commit/37420ad5056917f14af11195e0e0b2c8ddf9d420))
 - switch RSK explorer to Blockscout (#759) - ([dfc9e89](https://github.com/BoltzExchange/boltz-web-app/commit/dfc9e897b50c5839d44f92a88fa39e64bd44ab7d))
+- bump version to v1.5.3 - ([811e7e2](https://github.com/BoltzExchange/boltz-web-app/commit/811e7e29da300cf2211e4ea0bc01946eb73472dc))
 
 ### Refactoring
 

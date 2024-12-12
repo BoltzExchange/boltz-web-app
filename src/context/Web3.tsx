@@ -11,6 +11,7 @@ import {
     Accessor,
     JSXElement,
     Resource,
+    Setter,
     createContext,
     createResource,
     createSignal,
@@ -18,16 +19,18 @@ import {
     useContext,
 } from "solid-js";
 
+import LedgerIcon from "../assets/ledger.svg";
+import TrezorIcon from "../assets/trezor.svg";
+import WalletConnectIcon from "../assets/wallet-connect.svg";
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
+import WalletConnectProvider from "../utils/WalletConnectProvider";
 import { Contracts, getContracts } from "../utils/boltzClient";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { useGlobalContext } from "./Global";
-import LedgerIcon from "/ledger.svg";
-import TrezorIcon from "/trezor.svg";
 
 declare global {
     interface WindowEventMap {
@@ -57,6 +60,7 @@ enum HardwareRdns {
 }
 
 const browserRdns = "browser";
+const walletConnectRdns = "wallet-connect";
 
 const customDerivationPathRdns: string[] = [
     HardwareRdns.Ledger,
@@ -80,6 +84,9 @@ const Web3SignerContext = createContext<{
 
     getContracts: Resource<Contracts>;
     getEtherSwap: () => EtherSwap;
+
+    openWalletConnectModal: Accessor<boolean>;
+    setOpenWalletConnectModal: Setter<boolean>;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -120,6 +127,10 @@ const Web3SignerProvider = (props: {
     >(undefined);
     const [hasBrowserWallet, setHasBrowserWallet] =
         createSignal<boolean>(false);
+    const [openWalletConnectModal, setOpenWalletConnectModal] =
+        createSignal<boolean>(false);
+
+    WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
     onMount(() => {
         if (window.ethereum !== undefined) {
@@ -133,6 +144,22 @@ const Web3SignerProvider = (props: {
                         uuid: browserRdns,
                         rdns: browserRdns,
                         disabled: window.ethereum === undefined,
+                    },
+                },
+            });
+        }
+
+        if (import.meta.env.VITE_WALLETCONNECT_PROJECT_ID !== undefined) {
+            setProviders({
+                ...providers(),
+                [walletConnectRdns]: {
+                    provider: new WalletConnectProvider(),
+                    info: {
+                        name: "WalletConnect",
+                        uuid: "wallet-connect",
+                        icon: WalletConnectIcon,
+                        isHardware: false,
+                        rdns: walletConnectRdns,
                     },
                 },
             });
@@ -254,11 +281,11 @@ const Web3SignerProvider = (props: {
                     method: "wallet_addEthereumChain",
                     params: [
                         {
-                            chainId: sanitizedChainId,
+                            ...config.assets[RBTC].network,
                             blockExplorerUrls: [
                                 config.assets[RBTC].blockExplorerUrl.normal,
                             ],
-                            ...config.assets[RBTC].network,
+                            chainId: sanitizedChainId,
                         },
                     ],
                 });
@@ -277,6 +304,8 @@ const Web3SignerProvider = (props: {
                 switchNetwork,
                 connectProvider,
                 hasBrowserWallet,
+                openWalletConnectModal,
+                setOpenWalletConnectModal,
                 connectProviderForAddress,
                 getContracts: contracts,
                 clearSigner: () => {
@@ -296,13 +325,18 @@ const Web3SignerProvider = (props: {
 
 const useWeb3Signer = () => useContext(Web3SignerContext);
 
-const etherSwapCodeHash = () => {
+const etherSwapCodeHashes = () => {
     switch (config.network) {
         case "mainnet":
-            return "0x4d6894da95269c76528b81c6d25425a2f6bba70156cfaf7725064f919647d955";
+            return [
+                "0x4d6894da95269c76528b81c6d25425a2f6bba70156cfaf7725064f919647d955",
+            ];
 
         case "testnet":
-            return "0xd9a282305f30590b3df70c3c1f9338b042a97dff12736794e9de2cdabf8542c1";
+            return [
+                "0xd9a282305f30590b3df70c3c1f9338b042a97dff12736794e9de2cdabf8542c1",
+                "0xb8f6205d7fecc5b7a577519c7ec40af594f929d150c05bf84e1f94b7472dd783",
+            ];
 
         default:
             return undefined;
@@ -310,9 +344,9 @@ const etherSwapCodeHash = () => {
 };
 
 export {
-    useWeb3Signer,
-    etherSwapCodeHash,
-    Web3SignerProvider,
     EtherSwapAbi,
+    useWeb3Signer,
+    Web3SignerProvider,
+    etherSwapCodeHashes,
     customDerivationPathRdns,
 };

@@ -28,14 +28,17 @@ with open("./public/config.json") as f:
 
 # .env file is not required on regtest
 if network != "regtest":
-    with open(".env", "r") as f:
-        data = f.read()
+    try:
+        with open(".env", "r") as f:
+            data = f.read()
 
-        for var in ["VITE_RSK_LOG_SCAN_ENDPOINT"]:
-            if var not in data:
-                print(f"{var} not in .env file")
-                sys.exit(1)
+            for var in [
+                "VITE_RSK_LOG_SCAN_ENDPOINT",
+                "VITE_WALLETCONNECT_PROJECT_ID",
+                "VITE_CHATWOOT_TOKEN",
+            ]:
+                if var not in data:
+                    print(f"WARN: {var} not in .env file")
 
-        for var in ["VITE_CHATWOOT_TOKEN"]:
-            if var not in data:
-                print(f"WARN: {var} not in .env file")
+    except Exception as e:
+        print("WARN: could not open .env file:", e)

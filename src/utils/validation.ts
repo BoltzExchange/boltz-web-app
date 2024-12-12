@@ -15,7 +15,7 @@ import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
-import { etherSwapCodeHash } from "../context/Web3";
+import { etherSwapCodeHashes } from "../context/Web3";
 import { ChainSwapDetails } from "./boltzClient";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
@@ -30,13 +30,13 @@ import { createMusig, tweakMusig } from "./taproot/musig";
 type ContractGetter = () => BaseContract;
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
-    const codeHash = etherSwapCodeHash();
-    if (codeHash === undefined) {
+    const codeHashes = etherSwapCodeHashes();
+    if (codeHashes === undefined) {
         return true;
     }
 
     const code = await getEtherSwap().getDeployedCode();
-    return codeHash === ethers.keccak256(code);
+    return codeHashes.includes(ethers.keccak256(code));
 };
 
 const validateAddress = async (

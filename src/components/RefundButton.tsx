@@ -59,7 +59,9 @@ export const RefundEvm = (props: {
                     props.timeoutBlockHeight <
                     (await signer().provider.getBlockNumber())
                 ) {
-                    tx = await contract.refund(
+                    tx = await contract[
+                        "refund(bytes32,uint256,address,uint256)"
+                    ](
                         prefix0x(props.preimageHash),
                         satoshiToWei(props.amount),
                         props.claimAddress,
