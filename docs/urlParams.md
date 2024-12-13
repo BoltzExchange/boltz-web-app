@@ -41,3 +41,7 @@ Available values are:
 - German: `de`
 - Spanish: `es`
 - Chinese: `zh`
+
+## Referral
+
+Members of our partner programm can set their referral id via `referral`.
