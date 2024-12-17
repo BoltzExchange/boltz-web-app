@@ -97,6 +97,7 @@ const Nav = (props: { network: string }) => {
                     <Show when={config.tetherUrl}>
                         <a
                             class="external"
+                            target="_blank"
                             href={config.tetherUrl}
                             style={{ "display": "inline-flex", "align-items": "center", "text-decoration": "none" }}>
                             {t("tether")}
