@@ -106,7 +106,7 @@ const Nav = (props: { network: string }) => {
                             }}>
                             {t("tether")}
                             <img
-                                src="/tether-usdt-logo.svg"
+                                src="tether-usdt-logo.svg"
                                 alt="Tether"
                                 width="24"
                                 height="24"
