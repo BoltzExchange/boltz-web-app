@@ -97,12 +97,16 @@ const Nav = (props: { network: string }) => {
                     <Show when={config.tetherUrl}>
                         <a
                             class="external"
-                            target="_blank"
-                            href={config.tetherUrl}>
-                            <span style={{ color: "#5DB2A5" }}>
-                                {t("tether")}
-                            </span>
-                            <OcLinkexternal2 size={23} />
+                            href={config.tetherUrl}
+                            style={{ "display": "inline-flex", "align-items": "center", "text-decoration": "none" }}>
+                            {t("tether")}
+                            <img
+                                src="/tether-usdt-logo.svg"
+                                alt="Tether"
+                                width="24"
+                                height="24"
+                                style={{ "margin-left": "8px", "vertical-align": "middle" }} 
+                            />
                         </a>
                     </Show>
                 </div>
