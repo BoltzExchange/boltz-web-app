@@ -362,7 +362,8 @@ export const CreateButton = () => {
                 isRecklessMode() ||
                 swapType() === SwapType.Reverse ||
                 assetSend() === RBTC ||
-                isMobileEvmBrowser()
+                // Only disable refund files on mobile EVM browsers when one side is RSK
+                (assetReceive() === RBTC && isMobileEvmBrowser())
             ) {
                 navigate("/swap/" + data.id);
             } else {
