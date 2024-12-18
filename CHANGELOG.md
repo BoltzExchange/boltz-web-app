@@ -3,11 +3,41 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.6.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.4..v1.6.0) - 2024-12-18
+
+### Bug Fixes
+
+- exit build script when coop signatures are disabled - ([ef20340](https://github.com/BoltzExchange/boltz-web-app/commit/ef20340e05f056c08d06be1bb8e41829697b7c5f))
+- JPEG refund files (#765) - ([ef48ad4](https://github.com/BoltzExchange/boltz-web-app/commit/ef48ad4e1d31ea645a181e8261913d2d82034a0d))
+- only sign coop claims for submarine swaps - ([3e0032c](https://github.com/BoltzExchange/boltz-web-app/commit/3e0032c9e99c73cb790b683bef8920b6416439a8))
+- web3 add chain prompt (#771) - ([c98503d](https://github.com/BoltzExchange/boltz-web-app/commit/c98503d7458b1fd045898673dcede7db7e47c583))
+- refund files for non RBTC pairs in mobile EVM browsers (#776) - ([d22238c](https://github.com/BoltzExchange/boltz-web-app/commit/d22238cd1028e5364c4bb826306e394b9f8fcb94))
+
+### Features
+
+- add WalletConnect - ([7cf02a1](https://github.com/BoltzExchange/boltz-web-app/commit/7cf02a171c17758861e1a21a6253331ba4d7de3a))
+- show error when QR scanning is not supported in browser (#768) - ([e64874d](https://github.com/BoltzExchange/boltz-web-app/commit/e64874db43e71d2d988fabe9564e01c85e933488))
+- help server claim Chain Swaps that receive on EVM - ([2c61f54](https://github.com/BoltzExchange/boltz-web-app/commit/2c61f5423c6adb29f39bc92e4a6ef7b59d0cff2c))
+
+### Miscellaneous Chores
+
+- update contract hashes - ([bcfa6b1](https://github.com/BoltzExchange/boltz-web-app/commit/bcfa6b14f3a61cb075c0342e1e67b62a54560d8f))
+- minor dependency updates - ([74f0a54](https://github.com/BoltzExchange/boltz-web-app/commit/74f0a540652d6e9cbdb94a5895bf88cf98148770))
+- only load WalletConnect when configured - ([04a5a27](https://github.com/BoltzExchange/boltz-web-app/commit/04a5a273e41f061e150a076b90b3b4577b93f331))
+- pass referral id in every request header (#773) - ([835a841](https://github.com/BoltzExchange/boltz-web-app/commit/835a841c7c77b90230d0f302de8cb78701e7385d))
+- contract hash for EtherSwap v4 on mainnet - ([d43ad11](https://github.com/BoltzExchange/boltz-web-app/commit/d43ad1150a1270a449de7d780019a7aa9cf54e6b))
+
+### Refactoring
+
+- nicer WebSocket debugging logs - ([164f535](https://github.com/BoltzExchange/boltz-web-app/commit/164f535035327795fc31b0a8361f2eaaefddeb8d))
+
+---
 ## [1.5.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.3..v1.5.4) - 2024-12-04
 
 ### Miscellaneous Chores
 
 - switch to Blockstream Liquid explorer (#764) - ([042c05f](https://github.com/BoltzExchange/boltz-web-app/commit/042c05f61ce20ee7c47ca8dcab02336e0220cc8c))
+- bump version to v1.5.4 - ([be2edba](https://github.com/BoltzExchange/boltz-web-app/commit/be2edbaddbf822a144b0c8d861f56faefb9eaf92))
 
 ### Refactoring
 
