@@ -456,9 +456,9 @@ export const getChainSwapClaimDetails = (backend: number, id: string) =>
 export const postChainSwapDetails = (
     backend: number,
     id: string,
-    preimage: string,
+    preimage: string | undefined,
     signature: { pubNonce: string; partialSignature: string },
-    toSign: { pubNonce: string; transaction: string; index: number },
+    toSign?: { pubNonce: string; transaction: string; index: number },
 ) => {
     checkCooperative();
     return fetcher<{
