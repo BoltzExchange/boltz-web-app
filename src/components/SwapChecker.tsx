@@ -131,9 +131,7 @@ class BoltzWebSocket {
                     return;
                 }
 
-                log.debug(
-                    `WebSocket message: ${JSON.stringify(data, null, 2)}`,
-                );
+                log.debug(`WebSocket message:`, data);
 
                 if (data.event === "update" && data.channel === "swap.update") {
                     const swapUpdates = data.args as SwapStatus[];
