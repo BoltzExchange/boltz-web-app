@@ -2,7 +2,7 @@ import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
-import { RBTC } from "../consts/Assets";
+import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     swapStatusFinal,
@@ -14,8 +14,13 @@ import { SwapStatusTransaction, usePayContext } from "../context/Pay";
 import {
     getChainSwapTransactions,
     getReverseTransaction,
+    postChainSwapDetails,
 } from "../utils/boltzClient";
-import { claim, createSubmarineSignature } from "../utils/claim";
+import {
+    claim,
+    createSubmarineSignature,
+    createTheirPartialChainSwapSignature,
+} from "../utils/claim";
 import { formatError } from "../utils/errors";
 import { getApiUrl, getWsFallback } from "../utils/helper";
 import Lock from "../utils/lock";
@@ -33,6 +38,8 @@ type SwapStatus = {
     failureReason?: string;
     transaction?: SwapStatusTransaction;
 };
+
+const coopClaimableSymbols = [BTC, LBTC];
 
 const reconnectInterval = 5_000;
 
@@ -126,7 +133,9 @@ class BoltzWebSocket {
                     return;
                 }
 
-                log.debug("WebSocket message", data);
+                log.debug(
+                    `WebSocket message: ${JSON.stringify(data, null, 2)}`,
+                );
 
                 if (data.event === "update" && data.channel === "swap.update") {
                     const swapUpdates = data.args as SwapStatus[];
@@ -200,6 +209,15 @@ export const SwapChecker = () => {
         const currentSwap = await getSwap(swapId);
         if (currentSwap === null) {
             log.warn(`claimSwap: swap ${swapId} not found`);
+            return;
+        }
+
+        if (
+            currentSwap.type === SwapType.Chain &&
+            data.status === swapStatusPending.TransactionClaimPending &&
+            coopClaimableSymbols.includes((currentSwap as ChainSwap).assetSend)
+        ) {
+            await helpServerClaim(currentSwap as ChainSwap);
             return;
         }
 
@@ -292,6 +310,27 @@ export const SwapChecker = () => {
                 log.warn(msg, e);
                 notify("error", msg);
             }
+        }
+    };
+
+    const helpServerClaim = async (swap: ChainSwap) => {
+        if (swap.claimTx === undefined) {
+            log.warn(
+                `Not helping server claim Chain Swap ${swap.id} because we have not claimed yet`,
+            );
+            return;
+        }
+
+        try {
+            log.debug(
+                `Helping server claim ${swap.assetSend} of Chain Swap ${swap.id}`,
+            );
+            const sig = await createTheirPartialChainSwapSignature(swap);
+            await postChainSwapDetails(swap.backend, swap.id, undefined, sig);
+        } catch (e) {
+            log.warn(
+                `Helping server claim Chain Swap ${swap.id} failed: ${formatError(e)}`,
+            );
         }
     };
 

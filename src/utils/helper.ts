@@ -4,6 +4,7 @@ import { ECPairInterface } from "ecpair";
 import { chooseUrl, config } from "../config";
 import { BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { referralIdKey } from "../consts/LocalStorage";
 import {
     ChainPairTypeTaproot,
     Pairs,
@@ -89,16 +90,25 @@ export const fetcher = async <T = unknown>(
     url: string,
     params?: Record<string, unknown>,
 ): Promise<T> => {
-    let opts = {};
+    // We cannot use the context here, so we get the data directly from local storage
+    const referral = localStorage.getItem(referralIdKey);
+    let opts: RequestInit = {
+        headers: {
+            referral,
+        },
+    };
+
     if (params) {
         opts = {
             method: "POST",
             headers: {
+                ...opts.headers,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(params),
         };
     }
+
     const apiUrl = getApiUrl(backend) + url;
     const response = await fetch(apiUrl, opts);
     if (!response.ok) {
