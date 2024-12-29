@@ -10,7 +10,7 @@ import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
 import "../style/nav.scss";
 
-const Nav = (props: { network: string }) => {
+const Nav = (props: { network: string; isPro?: boolean }) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const { t, setHideHero, setI18nConfigured } = useGlobalContext();
@@ -26,6 +26,11 @@ const Nav = (props: { network: string }) => {
                 <Show when={props.network !== "mainnet"}>
                     <div id="network" class="btn btn-small">
                         {props.network}
+                    </div>
+                </Show>
+                <Show when={props.isPro}>
+                    <div id="network" class="btn btn-small">
+                        {t("pro")}
                     </div>
                 </Show>
                 <div

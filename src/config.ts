@@ -63,6 +63,7 @@ export type Config = {
     isBoltzClient?: boolean;
     boltzClientApiUrl?: string;
     isBeta?: boolean;
+    isPro?: boolean;
     assets?: Record<string, Asset>;
     torUrl?: string;
 } & typeof defaults;

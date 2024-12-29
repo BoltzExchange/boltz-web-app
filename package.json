@@ -13,6 +13,7 @@
         "build": "./build.py && vite build; cp dist/index.html dist/404.html",
         "mainnet": "cp src/configs/mainnet.json public/config.json",
         "beta": "cp src/configs/beta.json public/config.json",
+        "pro": "cp src/configs/pro.json public/config.json",
         "testnet": "cp src/configs/testnet.json public/config.json",
         "prettier": "npx prettier src public tests e2e docs *.js *.ts *.mjs *.json",
         "prettier:write": "npm run prettier -- --write",
