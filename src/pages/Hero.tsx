@@ -224,6 +224,13 @@ export const Hero = () => {
                 <div id="partners">
                     <div>
                         <a
+                            href="https://arklabs.to/"
+                            target="_blank"
+                            class="arklabs"
+                        />
+                    </div>
+                    <div>
+                        <a
                             href="https://blockstream.com/"
                             target="_blank"
                             class="blockstream"
