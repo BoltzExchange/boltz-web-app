@@ -98,6 +98,14 @@ export type GlobalContextType = {
     getRdnsForAddress: (address: string) => Promise<string | null>;
 };
 
+const defaultReferral = () => {
+    if (config.isPro) {
+        return "pro";
+    }
+
+    return isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
+};
+
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
     serialize: (value: never) => value,
@@ -130,9 +138,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const [ref, setRef] = makePersisted(
         // eslint-disable-next-line solid/reactivity
-        createSignal(
-            isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop",
-        ),
+        createSignal(defaultReferral()),
         {
             name: referralIdKey,
             ...stringSerializer,
@@ -427,4 +433,4 @@ const useGlobalContext = () => {
     return context;
 };
 
-export { useGlobalContext, GlobalProvider };
+export { useGlobalContext, GlobalProvider, defaultReferral };

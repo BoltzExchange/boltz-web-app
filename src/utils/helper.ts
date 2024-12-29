@@ -5,6 +5,7 @@ import { chooseUrl, config } from "../config";
 import { BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
+import { defaultReferral } from "../context/Global";
 import {
     ChainPairTypeTaproot,
     Pairs,
@@ -86,7 +87,7 @@ export const fetcher = async <T = unknown>(
     params?: Record<string, unknown>,
 ): Promise<T> => {
     // We cannot use the context here, so we get the data directly from local storage
-    const referral = localStorage.getItem(referralIdKey);
+    const referral = localStorage.getItem(referralIdKey) || defaultReferral();
     let opts: RequestInit = {
         headers: {
             referral,

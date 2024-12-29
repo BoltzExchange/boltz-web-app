@@ -70,7 +70,10 @@ const App = (props: RouteSectionProps) => {
                                 <SwapChecker />
                                 <Chatwoot />
                                 <Show when={!isEmbedded()}>
-                                    <Nav network={config.network} />
+                                    <Nav
+                                        isPro={config.isPro}
+                                        network={config.network}
+                                    />
                                 </Show>
                                 {props.children}
                                 <Notification />

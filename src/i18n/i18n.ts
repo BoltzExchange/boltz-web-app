@@ -157,6 +157,8 @@ const dict = {
         peers: "Number of Peers",
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
+        pro: "pro",
+        pro_banner: "BETA: AVAILABILITY NOT GUARANTEED",
         warning_return: "Important: Return to this page after paying invoice",
         warning_expiry:
             "Make sure your transaction confirms within ~24 hours after creation of this swap!",
@@ -390,6 +392,8 @@ const dict = {
         peers: "Anzahl der Peers",
         num_channels: "Anzahl der Kanäle",
         beta_caution: "BETA - OBACHT!",
+        pro: "pro",
+        pro_banner: "BETA: VERFÜGBARKEIT NICHT GARANTIERT",
         warning_return:
             "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
         warning_expiry:
@@ -627,6 +631,8 @@ const dict = {
         peers: "Número de peers",
         num_channels: "Número de canales",
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
+        pro: "pro",
+        pro_banner: "BETA: DISPONIBILIDAD NO GARANTIZADA",
         warning_return:
             "Importante: Regresa a esta página después de pagar la factura!",
         warning_expiry:
@@ -846,6 +852,8 @@ const dict = {
         peers: "对端数",
         num_channels: "通道数",
         beta_caution: "BETA - 谨慎使用！",
+        pro: "pro",
+        pro_banner: "测试版：不保证可用性",
         warning_return: "重要：支付发票后返回此页面",
         warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
         not_found: "404 - 页面未找到",
@@ -1071,6 +1079,8 @@ const dict = {
         peers: "ピアの数",
         num_channels: "チャネルの数",
         beta_caution: "ベータ版の為、ご利用は慎重にお願いします",
+        pro: "pro",
+        pro_banner: "ベータ版：利用可能性は保証されない",
         warning_return:
             "重要：インボイスのお支払い後、このページへ戻ってください",
         warning_expiry:
