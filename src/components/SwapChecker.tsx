@@ -2,6 +2,7 @@ import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
+import { config } from "../config";
 import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
@@ -346,6 +347,9 @@ export const SwapChecker = () => {
         if (swapsToCheck.length > 0 && swapsToCheck[0].backend) {
             // the first swap in the list is the most recent, connect to its backend
             i = swapsToCheck[0].backend;
+            while (i >= config.backends.length) {
+                i--;
+            }
         }
         if (i !== backend()) {
             setBackend(i);
