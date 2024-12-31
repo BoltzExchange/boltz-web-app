@@ -30,6 +30,8 @@ import { getUrlParam, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
+const proReferral = "pro";
+
 export type GlobalContextType = {
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
@@ -100,7 +102,7 @@ export type GlobalContextType = {
 
 const defaultReferral = () => {
     if (config.isPro) {
-        return "pro";
+        return proReferral;
     }
 
     return isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
@@ -311,10 +313,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     void detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
-    // check referral
-    const refParam = getUrlParam("ref");
-    if (refParam && refParam !== "") {
-        setRef(refParam);
+    if (!config.isPro) {
+        // Get the referral from the URL parameters if this is not pro
+        const refParam = getUrlParam("ref");
+        if (refParam && refParam !== "") {
+            setRef(refParam);
+        }
+    } else {
+        setRef(proReferral);
     }
 
     if (isEmbed()) {
