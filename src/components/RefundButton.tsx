@@ -178,10 +178,9 @@ const RefundButton = (props: {
                 currentSwap.refundTx = res.refundTx;
                 await setSwapStorage(currentSwap);
                 setSwap(currentSwap);
-            } else {
-                if (props.setRefundTxId) {
-                    props.setRefundTxId(res.refundTx);
-                }
+            }
+            if (props.setRefundTxId) {
+                props.setRefundTxId(res.refundTx);
             }
         } catch (error) {
             log.warn("refund failed", error);
