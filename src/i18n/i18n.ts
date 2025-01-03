@@ -103,6 +103,16 @@ const dict = {
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
+        no_refundable_swaps: "No refundable swaps found",
+        cant_find_swap: "Can't find your swap?",
+        refund_external_explainer:
+            "Try refunding an external swap via refund file and other emergency methods",
+        refund_external_explainer_rsk:
+            "Connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
+        connected_wallet_no_swaps:
+            "The connected Rootstock Wallet does NOT contain any refundable swaps.",
+        rsk_log_endpoint_not_available: "Log endpoint not available",
+        refund_external_swap: "Refund External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
             "Enter address of your {{ asset }} wallet to refund",
