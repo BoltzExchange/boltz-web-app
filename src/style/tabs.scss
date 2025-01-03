@@ -1,0 +1,30 @@
+@use "sass:color";
+@use "vars";
+
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    margin: 0.5rem 0;
+
+    .tab {
+        padding: 0.5rem 1rem;
+        background-color: lighten(vars.$background, 0%);
+        color: vars.$color;
+        border-radius: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background-color: darken(vars.$background, 10%);
+        }
+
+        &.active {
+            background-color: vars.$primary;
+            color: vars.$background;
+            font-weight: bold;
+        }
+    }
+}
