@@ -293,9 +293,7 @@ export const SwapChecker = () => {
                     true,
                 );
             } catch (e) {
-                const err: unknown =
-                    typeof e.json === "function" ? (await e.json()).error : e;
-                if (err === "swap not eligible for a cooperative claim") {
+                if (e === "swap not eligible for a cooperative claim") {
                     log.debug(
                         `Server did not want help claiming ${currentSwap.id}`,
                     );
@@ -304,7 +302,7 @@ export const SwapChecker = () => {
 
                 const msg =
                     "creating cooperative signature for submarine swap claim failed";
-                log.warn(msg, err);
+                log.warn(msg, e);
                 notify("error", msg);
             }
         }
