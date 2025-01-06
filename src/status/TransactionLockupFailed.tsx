@@ -164,6 +164,11 @@ const TransactionLockupFailed = (props: {
                                 const newSwap = swap() as ChainSwap;
 
                                 const { quote, receiveAmount } = newQuote();
+                                log.info(
+                                    `Accepting new quote for swap ${newSwap.id}`,
+                                    { quote, receiveAmount },
+                                );
+
                                 newSwap.receiveAmount = receiveAmount;
                                 newSwap.claimDetails.amount = quote;
 

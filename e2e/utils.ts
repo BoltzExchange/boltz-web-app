@@ -52,6 +52,9 @@ export const generateLiquidBlock = (): Promise<string> =>
 export const getBitcoinWalletTx = (txId: string): Promise<string> =>
     execCommand(`bitcoin-cli-sim-client gettransaction ${txId}`);
 
+export const getElementsWalletTx = (txId: string): Promise<string> =>
+    execCommand(`elements-cli-sim-client gettransaction ${txId}`);
+
 export const payInvoiceLnd = (invoice: string): Promise<string> =>
     execCommand(`lncli-sim 1 payinvoice -f ${invoice}`);
 
