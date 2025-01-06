@@ -171,18 +171,13 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
         }
         return swap;
     } catch (e) {
-        const errorMsg = typeof e.json === "function" ? await e.json() : e;
-        if (errorMsg.error === undefined) {
-            throw e;
-        }
-
         // When the uncooperative refund transaction is not ready to be broadcast yet
         // (= non-final) and the cooperative spend has been tried but failed,
         // throw the error of the cooperative spend
-        throw errorMsg.error === "non-final" &&
+        throw e === "non-final" &&
             txConstructionResponse.cooperativeError !== undefined
             ? txConstructionResponse.cooperativeError
-            : errorMsg.error;
+            : e;
     }
 };
 
