@@ -48,6 +48,10 @@ const createAdjustedClaim = async <
     liquidNetwork?: LiquidNetwork,
     blindingKey?: Buffer,
 ) => {
+    if (swap.receiveAmount === 0) {
+        throw "amount to be received is 0";
+    }
+
     const asset = getRelevantAssetForSwap(swap);
 
     let inputSum = 0;
