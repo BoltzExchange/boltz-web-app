@@ -160,6 +160,8 @@ const dict = {
         peers: "Number of Peers",
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
+        pro: "pro",
+        pro_banner: "BETA: AVAILABILITY NOT GUARANTEED",
         warning_return: "Important: Return to this page after paying invoice",
         warning_expiry:
             "Make sure your transaction confirms within ~24 hours after creation of this swap!",
@@ -229,7 +231,6 @@ const dict = {
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         tether: "L-USDt",
         no_wallet_connected: "No wallet connected",
-        qr_scan_supported: "This browser doesn't support refunds via QR",
     },
     de: {
         language: "Deutsch",
@@ -398,6 +399,8 @@ const dict = {
         peers: "Anzahl der Peers",
         num_channels: "Anzahl der Kanäle",
         beta_caution: "BETA - OBACHT!",
+        pro: "pro",
+        pro_banner: "BETA: VERFÜGBARKEIT NICHT GARANTIERT",
         warning_return:
             "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
         warning_expiry:
@@ -472,8 +475,6 @@ const dict = {
         refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
         tether: "L-USDt",
         no_wallet_connected: "Kein Wallet verbunden",
-        qr_scan_supported:
-            "Dieser Browser unterstützt keine Erstattungen über QR",
     },
     es: {
         language: "Español",
@@ -640,6 +641,8 @@ const dict = {
         peers: "Número de peers",
         num_channels: "Número de canales",
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
+        pro: "pro",
+        pro_banner: "BETA: DISPONIBILIDAD NO GARANTIZADA",
         warning_return:
             "Importante: Regresa a esta página después de pagar la factura!",
         warning_expiry:
@@ -712,8 +715,6 @@ const dict = {
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         tether: "L-USDt",
         no_wallet_connected: "No hay monedero conectado",
-        qr_scan_supported:
-            "Este navegador no admite devoluciones a través de QR",
     },
     zh: {
         language: "中文",
@@ -864,6 +865,8 @@ const dict = {
         peers: "对端数",
         num_channels: "通道数",
         beta_caution: "BETA - 谨慎使用！",
+        pro: "pro",
+        pro_banner: "测试版：不保证可用性",
         warning_return: "重要：支付发票后返回此页面",
         warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
         not_found: "404 - 页面未找到",
@@ -926,7 +929,6 @@ const dict = {
         refund_available_in: "退款将分 {{ blocks }} 区块提供",
         tether: "L-USDt",
         no_wallet_connected: "未连接钱包",
-        qr_scan_supported: "此浏览器不支持通过 QR 退款",
     },
     ja: {
         language: "日本語",
@@ -1094,6 +1096,8 @@ const dict = {
         peers: "ピアの数",
         num_channels: "チャネルの数",
         beta_caution: "ベータ版の為、ご利用は慎重にお願いします",
+        pro: "pro",
+        pro_banner: "ベータ版：利用可能性は保証されない",
         warning_return:
             "重要：インボイスのお支払い後、このページへ戻ってください",
         warning_expiry:
@@ -1164,7 +1168,6 @@ const dict = {
         refund_available_in: "返金は {{ blocks }} つのブロックに分かれる",
         tether: "L-USDt",
         no_wallet_connected: "財布はつながっていない！",
-        qr_scan_supported: "このブラウザはQRによる払い戻しに対応していません。",
     },
     ru: {
         language: "Русский",
@@ -1331,6 +1334,8 @@ const dict = {
         peers: "Число пиров",
         num_channels: "Число каналов",
         beta_caution: "БЕТА - ИСПОЛЬЗУЙТЕ С ОСТОРОЖНОСТЬЮ!",
+        pro: "pro",
+        pro_banner: "БЕТА - НАЛИЧИЕ НЕ ГАРАНТИРУЕТСЯ!",
         warning_return: "Важно: вернитесь на эту страницу после оплаты инвойса",
         warning_expiry:
             "Убедитесь, что ваша транзакция подтвердится в течение ~24 часов после создания свопа!",
@@ -1403,7 +1408,6 @@ const dict = {
         refund_available_in: "Возврат будет доступен через {{blocks}} блоков",
         tether: "L-USDt",
         no_wallet_connected: "Кошелек не подключен",
-        qr_scan_supported: "Этот браузер не поддерживает возвраты через QR",
     },
 };
 

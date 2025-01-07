@@ -1,34 +1,12 @@
 {
-    "isBeta": true,
+    "isPro": true,
     "torUrl": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
     "network": "mainnet",
     "loglevel": "debug",
-    "backends": [
-        {
-            "alias": "Boltz Exchange",
-            "apiUrl": {
-                "normal": "https://api.boltz.exchange",
-                "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
-            },
-            "contact": "https://boltz.exchange"
-        },
-        {
-            "alias": "Eldamar",
-            "apiUrl": {
-                "normal": "https://boltz-api.eldamar.icu",
-                "tor": "http://mnyazp2duhs3jewqzw7g6vv44g73ijiujdmk5z6js72fn3epybup2yqd.onion"
-            },
-            "contact": "https://t.me/SynthLock"
-        },
-        {
-            "alias": "Middle Way",
-            "apiUrl": {
-                "normal": "https://api.middleway.space",
-                "tor": "http://middlew7gmdp53psshnb3cn74zhhulor56lsk3alr2nsrgj7ukmz47id.onion"
-            },
-            "contact": "https://t.me/MiddleWayNode"
-        }
-    ],
+    "apiUrl": {
+        "normal": "https://api.boltz.exchange",
+        "tor": "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api"
+    },
     "assets": {
         "BTC": {
             "blockExplorerUrl": {

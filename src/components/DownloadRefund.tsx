@@ -18,7 +18,7 @@ const DownloadRefund = () => {
         swap: { id: string } & Record<string, unknown>,
     ) => {
         QRCode.toDataURL(JSON.stringify(swap), {
-            width: 1200,
+            width: 2500,
             errorCorrectionLevel: "L",
         })
             .then((url: string) => {

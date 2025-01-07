@@ -20,14 +20,12 @@ import {
     LogRefundData,
     scanLogsForPossibleRefunds,
 } from "../utils/contractLogs";
-import { qrScanProbe } from "../utils/qrScanProbe";
 import { validateRefundFile } from "../utils/refundFile";
 import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 enum RefundError {
     InvalidData,
-    QrScanNotSupported,
 }
 
 const Refund = () => {
@@ -77,11 +75,6 @@ const Refund = () => {
         setRefundInvalid(undefined);
 
         if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
-            if (!(await qrScanProbe())) {
-                setRefundInvalid(RefundError.QrScanNotSupported);
-                return;
-            }
-
             try {
                 const res = await QrScanner.scanImage(inputFile, {
                     returnDetailedScanResult: true,
@@ -268,9 +261,6 @@ const Refund = () => {
                                 switch (refundInvalid()) {
                                     case RefundError.InvalidData:
                                         return t("invalid_refund_file");
-
-                                    case RefundError.QrScanNotSupported:
-                                        return t("qr_scan_supported");
                                 }
                             })()}
                         </button>

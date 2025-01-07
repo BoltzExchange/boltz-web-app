@@ -48,6 +48,10 @@ const createAdjustedClaim = async <
     liquidNetwork?: LiquidNetwork,
     blindingKey?: Buffer,
 ) => {
+    if (swap.receiveAmount === 0) {
+        throw "amount to be received is 0";
+    }
+
     const asset = getRelevantAssetForSwap(swap);
 
     let inputSum = 0;
@@ -186,18 +190,14 @@ export const createTheirPartialChainSwapSignature = async (
             ).toString("hex"),
         };
     } catch (err) {
-        if (typeof err.json !== "function") {
-            throw err;
+        if (err === "swap not eligible for a cooperative claim") {
+            log.debug(
+                `Backend already broadcast their claim for chain swap ${swap.id}`,
+            );
+            return undefined;
         }
 
-        const errMessage = (await err.json()).error;
-        if (errMessage !== "swap not eligible for a cooperative claim") {
-            throw err;
-        }
-
-        log.debug(
-            `backend already broadcast their claim for chain swap ${swap.id}`,
-        );
+        throw err;
     }
 
     return undefined;
