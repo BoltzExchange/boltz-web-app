@@ -349,11 +349,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         setHideHero(true);
     }
 
-    // protection from bad persisted value
-    if (backend() >= config.backends.length) {
-        setBackend(0);
-    }
-
     const [browserNotification, setBrowserNotification] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),

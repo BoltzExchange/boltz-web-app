@@ -240,7 +240,7 @@ export const SwapChecker = () => {
 
         if (data.status === swapStatusSuccess.InvoiceSettled) {
             data.transaction = await getReverseTransaction(
-                currentSwap.backend,
+                currentSwap.backend || 0,
                 currentSwap.id,
             );
         } else if (
@@ -332,7 +332,12 @@ export const SwapChecker = () => {
                 `Helping server claim ${swap.assetSend} of Chain Swap ${swap.id}`,
             );
             const sig = await createTheirPartialChainSwapSignature(swap);
-            await postChainSwapDetails(swap.backend, swap.id, undefined, sig);
+            await postChainSwapDetails(
+                swap.backend || 0,
+                swap.id,
+                undefined,
+                sig,
+            );
         } catch (e) {
             log.warn(
                 `Helping server claim Chain Swap ${swap.id} failed: ${formatError(e)}`,
