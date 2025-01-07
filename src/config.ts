@@ -1,5 +1,7 @@
 import log from "loglevel";
 
+import Backend from "./components/Backend";
+
 const defaults = {
     // Disables API endpoints that create cooperative signatures for claim
     // and refund transactions
