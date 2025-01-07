@@ -5,11 +5,12 @@ import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import {
     Accessor,
+    Match,
     Setter,
     Show,
+    Switch,
     createResource,
     createSignal,
-    onMount,
 } from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
@@ -162,16 +163,11 @@ const RefundButton = (props: {
     const refundAction = async () => {
         setRefundRunning(true);
 
-        const transactionToRefund = await getLockupTransaction(
-            props.swap().id,
-            props.swap().type,
-        );
-
         try {
             const res = await refund(
                 props.swap(),
                 refundAddress(),
-                transactionToRefund,
+                lockupTransaction(),
             );
 
             // save refundTx into swaps json and set it to the current swap
@@ -202,9 +198,9 @@ const RefundButton = (props: {
                     msg === "non-final"
                 ) {
                     msg = t("locktime_not_satisfied");
-                    setTimeoutEta(transactionToRefund.timeoutEta);
+                    setTimeoutEta(lockupTransaction().timeoutEta);
                     setTimeoutBlockheight(
-                        transactionToRefund.timeoutBlockHeight,
+                        lockupTransaction().timeoutBlockHeight,
                     );
                 }
                 log.error(msg);
@@ -218,8 +214,10 @@ const RefundButton = (props: {
         setRefundRunning(false);
     };
 
-    onMount(async () => {
-        if (!props.swap()) return;
+    const [lockupTransaction] = createResource(async () => {
+        if (!props.swap()) {
+            return undefined;
+        }
 
         const transactionToRefund = await getLockupTransaction(
             props.swap().id,
@@ -231,6 +229,8 @@ const RefundButton = (props: {
             setTimeoutEta(transactionToRefund.timeoutEta);
             setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
         }
+
+        return transactionToRefund;
     });
 
     const [preimageHash] = createResource(async () => {
@@ -294,43 +294,57 @@ const RefundButton = (props: {
                     </Show>
                 </Show>
             }>
-            <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
-                <RefundEta
-                    timeoutEta={timeoutEta}
-                    timeoutBlockHeight={timeoutBlockheight}
-                />
-            </Show>
-            <h3 style={{ color: "#fff" }}>
-                {props.swap()
-                    ? t("refund_address_header", {
-                          asset: props.swap()?.assetSend,
-                      })
-                    : t("refund_address_header_no_asset")}
-            </h3>
-            <input
-                data-testid="refundAddress"
-                id="refundAddress"
-                disabled={props.swap() === null}
-                onInput={(e) =>
-                    setValid(refundAddressChange(e, props.swap()?.assetSend))
-                }
-                type="text"
-                name="refundAddress"
-                placeholder={
-                    props.swap()
-                        ? t("onchain_address", {
-                              asset: props.swap()?.assetSend,
-                          })
-                        : t("onchain_address_no_asset")
-                }
-            />
-            <button
-                data-testid="refundButton"
-                class="btn"
-                disabled={!valid() || refundRunning()}
-                onClick={() => refundAction()}>
-                {t("refund")}
-            </button>
+            <Switch>
+                <Match when={lockupTransaction.state === "ready"}>
+                    <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
+                        <RefundEta
+                            timeoutEta={timeoutEta}
+                            timeoutBlockHeight={timeoutBlockheight}
+                        />
+                    </Show>
+                    <h3 style={{ color: "#fff" }}>
+                        {props.swap()
+                            ? t("refund_address_header", {
+                                  asset: props.swap()?.assetSend,
+                              })
+                            : t("refund_address_header_no_asset")}
+                    </h3>
+                    <input
+                        data-testid="refundAddress"
+                        id="refundAddress"
+                        disabled={props.swap() === null}
+                        onInput={(e) =>
+                            setValid(
+                                refundAddressChange(e, props.swap()?.assetSend),
+                            )
+                        }
+                        type="text"
+                        name="refundAddress"
+                        placeholder={
+                            props.swap()
+                                ? t("onchain_address", {
+                                      asset: props.swap()?.assetSend,
+                                  })
+                                : t("onchain_address_no_asset")
+                        }
+                    />
+                    <button
+                        data-testid="refundButton"
+                        class="btn"
+                        disabled={!valid() || refundRunning()}
+                        onClick={() => refundAction()}>
+                        {t("refund")}
+                    </button>
+                </Match>
+                <Match when={lockupTransaction.state === "pending"}>
+                    <LoadingSpinner />
+                </Match>
+                <Match when={lockupTransaction.state === "errored"}>
+                    <button class="btn" disabled={true}>
+                        {t("no_lockup_transaction")}
+                    </button>
+                </Match>
+            </Switch>
         </Show>
     );
 };

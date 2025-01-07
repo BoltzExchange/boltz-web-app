@@ -34,6 +34,7 @@
         "@testing-library/user-event": "^14.5.2",
         "@trivago/prettier-plugin-sort-imports": "^5.2.0",
         "@types/jest": "^29.5.14",
+        "@types/node": "^22.10.5",
         "@webbtc/webln-types": "^3.0.0",
         "babel-jest": "^29.7.0",
         "babel-plugin-transform-import-meta": "^2.2.1",
