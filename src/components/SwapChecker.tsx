@@ -304,6 +304,13 @@ export const SwapChecker = () => {
                     true,
                 );
             } catch (e) {
+                if (e === "swap not eligible for a cooperative claim") {
+                    log.debug(
+                        `Server did not want help claiming ${currentSwap.id}`,
+                    );
+                    return;
+                }
+
                 const msg =
                     "creating cooperative signature for submarine swap claim failed";
                 log.warn(msg, e);
@@ -347,6 +354,7 @@ export const SwapChecker = () => {
         if (swapsToCheck.length > 0 && swapsToCheck[0].backend) {
             // the first swap in the list is the most recent, connect to its backend
             i = swapsToCheck[0].backend;
+            // check if the backend is valid
             while (i >= config.backends.length) {
                 i--;
             }

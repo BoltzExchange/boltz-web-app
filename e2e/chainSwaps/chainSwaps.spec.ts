@@ -5,6 +5,7 @@ import {
     generateBitcoinBlock,
     generateLiquidBlock,
     getBitcoinAddress,
+    getBitcoinWalletTx,
 } from "../utils";
 
 test.describe("Chain swap", () => {
@@ -56,6 +57,13 @@ test.describe("Chain swap", () => {
 
         await elementsSendToAddress(sendAddress, sendAmount);
         await generateLiquidBlock();
-        // TODO: verify amounts
+
+        const txIdLink = page.getByText("open claim transaction");
+
+        const txId = (await txIdLink.getAttribute("href")).split("/").pop();
+        expect(txId).toBeDefined();
+
+        const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
+        expect(txInfo.amount.toString()).toEqual(receiveAmount);
     });
 });

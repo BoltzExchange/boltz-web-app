@@ -1,8 +1,59 @@
 import { expect, test } from "@playwright/test";
 
-import { getBitcoinAddress } from "../utils";
+import {
+    bitcoinSendToAddress,
+    generateBitcoinBlock,
+    getBitcoinAddress,
+    getElementsWalletTx,
+    getLiquidAddress,
+} from "../utils";
 
 test.describe("Chain Swap 0-amount", () => {
+    test("BTC/L-BTC", async ({ page }) => {
+        await page.goto("/");
+
+        await page
+            .locator(
+                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
+            )
+            .click();
+        await page.getByTestId("select-L-BTC").click();
+
+        await page.locator(".arrow-down").first().click();
+        await page.getByTestId("select-BTC").click();
+
+        await page.getByTestId("onchainAddress").click();
+
+        const liquidAddress = await getLiquidAddress();
+        await page.getByTestId("onchainAddress").fill(liquidAddress);
+        await page.getByTestId("create-swap-button").click();
+
+        await page.getByRole("button", { name: "Skip download" }).click();
+
+        const buttons = page.locator("div[data-testid='pay-onchain-buttons']");
+        const copyAddressButton = buttons.getByText("address");
+        expect(copyAddressButton).toBeDefined();
+        await copyAddressButton.click();
+
+        const sendAddress = await page.evaluate(() => {
+            return navigator.clipboard.readText();
+        });
+        expect(sendAddress).toBeDefined();
+
+        await bitcoinSendToAddress(sendAddress, "0.01");
+
+        await page.getByRole("button", { name: "Accept" }).click();
+        await generateBitcoinBlock();
+
+        const txIdLink = page.getByText("open claim transaction");
+
+        const txId = (await txIdLink.getAttribute("href")).split("/").pop();
+        expect(txId).toBeDefined();
+
+        const txInfo = JSON.parse(await getElementsWalletTx(txId));
+        expect(txInfo.amount.bitcoin.toString()).toEqual("0.0099865");
+    });
+
     test("should allow 0-amount chain swaps", async ({ page }) => {
         await page.goto("/");
 

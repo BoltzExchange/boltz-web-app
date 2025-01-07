@@ -247,13 +247,8 @@ export const CreateButton = () => {
                     setBolt12Offer(undefined);
                     setInvoiceValid(true);
                 } catch (e) {
-                    const err: unknown =
-                        typeof e.json === "function"
-                            ? (await e.json()).error
-                            : e;
-
-                    notify("error", formatError(err));
-                    log.warn("Fetching invoice from bol12 failed", err);
+                    notify("error", formatError(e));
+                    log.warn("Fetching invoice from bol12 failed", e);
                     return;
                 }
             }
@@ -376,17 +371,11 @@ export const CreateButton = () => {
                 navigate("/swap/refund/" + data.id);
             }
         } catch (err) {
-            let msg = err;
-
-            if (typeof err.json === "function") {
-                msg = (await err.json()).error;
-            }
-
-            if (msg === "invalid pair hash") {
+            if (err === "invalid pair hash") {
                 setAllPairs(await getAllPairs());
                 notify("error", t("feecheck"));
             } else {
-                notify("error", msg);
+                notify("error", err);
             }
         }
     };

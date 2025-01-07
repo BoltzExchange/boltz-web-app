@@ -29,6 +29,8 @@ import { getUrlParam, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
+const proReferral = "pro";
+
 export type GlobalContextType = {
     online: Accessor<boolean>;
     setOnline: Setter<boolean>;
@@ -99,6 +101,14 @@ export type GlobalContextType = {
     getRdnsForAddress: (address: string) => Promise<string | null>;
 };
 
+const defaultReferral = () => {
+    if (config.isPro) {
+        return proReferral;
+    }
+
+    return "swapmarket";
+};
+
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
     serialize: (value: never) => value,
@@ -137,7 +147,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const [ref, setRef] = makePersisted(
         // eslint-disable-next-line solid/reactivity
-        createSignal("swapmarket"),
+        createSignal(defaultReferral()),
         {
             name: config.network + referralIdKey,
             ...stringSerializer,
@@ -324,10 +334,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     void detectWebLNProvider().then((state: boolean) => setWebln(state));
     setWasmSupported(checkWasmSupported());
 
-    // check referral
-    const refParam = getUrlParam("ref");
-    if (refParam && refParam !== "") {
-        setRef(refParam);
+    if (!config.isPro) {
+        // Get the referral from the URL parameters if this is not pro
+        const refParam = getUrlParam("ref");
+        if (refParam && refParam !== "") {
+            setRef(refParam);
+        }
+    } else {
+        setRef(proReferral);
     }
 
     if (isEmbed()) {
@@ -453,4 +467,4 @@ const useGlobalContext = () => {
     return context;
 };
 
-export { useGlobalContext, GlobalProvider };
+export { useGlobalContext, GlobalProvider, defaultReferral };

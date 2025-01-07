@@ -25,6 +25,9 @@ const Warnings = () => {
             <Show when={config.isBeta}>
                 <div class="banner banner-yellow">{t("beta_caution")}</div>
             </Show>
+            <Show when={config.isPro}>
+                <div class="banner banner-yellow">{t("pro_banner")}</div>
+            </Show>
         </div>
     );
 };
