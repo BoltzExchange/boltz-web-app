@@ -227,6 +227,7 @@ const dict = {
         will_receive: "Will receive",
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         no_wallet_connected: "No wallet connected",
+        no_lockup_transaction: "No lockup transaction found",
     },
     de: {
         language: "Deutsch",
@@ -466,6 +467,7 @@ const dict = {
         will_receive: "Sie erhalten",
         refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
         no_wallet_connected: "Kein Wallet verbunden",
+        no_lockup_transaction: "Keine Lockup-Transaktion gefunden",
     },
     es: {
         language: "Español",
@@ -701,6 +703,7 @@ const dict = {
         will_receive: "Recibirá",
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         no_wallet_connected: "No hay monedero conectado",
+        no_lockup_transaction: "No se encontró ninguna transacción de lockup",
     },
     zh: {
         language: "中文",
@@ -910,6 +913,7 @@ const dict = {
         will_receive: "将收到",
         refund_available_in: "退款将分 {{ blocks }} 区块提供",
         no_wallet_connected: "未连接钱包",
+        no_lockup_transaction: "未找到锁仓交易",
     },
     ja: {
         language: "日本語",
@@ -1144,6 +1148,7 @@ const dict = {
         will_receive: "受信予定",
         refund_available_in: "返金は {{ blocks }} つのブロックに分かれる",
         no_wallet_connected: "財布はつながっていない！",
+        no_lockup_transaction: "ロックアップトランザクションが見つかりません",
     },
 };
 
