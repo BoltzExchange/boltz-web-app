@@ -74,7 +74,7 @@ const Refund = () => {
                 <div class="frame" data-testid="refundFrame">
                     <header>
                         <SettingsCog />
-                        <h2>{t("refund_a_swap")}</h2>
+                        <h2>{t("refund_swap")}</h2>
                     </header>
                     <Show
                         when={refundableSwaps().length > 0}

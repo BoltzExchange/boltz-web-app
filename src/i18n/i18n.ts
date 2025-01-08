@@ -96,8 +96,7 @@ const dict = {
         backup_refund_list_clear_history: "clear your browsing history",
         backup_refund_skip:
             "If any of the above applies to you, we strongly recommend downloading this refund file!",
-        refund_a_swap: "Refund a swap",
-        refund_swap: "Refund Swap {{ id }}",
+        refund_swap: "Refund Swap",
         refund_a_swap_subline:
             "Upload your refund file and reclaim your locked funds",
         refund_past_swaps: "Past swaps",
@@ -341,8 +340,7 @@ const dict = {
         backup_refund_list_clear_history: "die Browser Daten gelöscht werden",
         backup_refund_skip:
             "Falls einer dieser Punkte zutrifft, empfehlen wir ausdrücklich die Rückerstattungsdatei herunterzuladen!",
-        refund_a_swap: "Einen Swap erstatten",
-        refund_swap: "Erstatte Swap {{ id }}",
+        refund_swap: "Swap erstatten",
         refund_a_swap_subline:
             "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück",
         refund_past_swaps: "Historische Swaps",
