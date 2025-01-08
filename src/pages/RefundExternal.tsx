@@ -110,10 +110,8 @@ const RefundBtcLike = () => {
                     })()}
                 </button>
             </Show>
-            <Show when={refundTxId() === "" && refundJson() !== null}>
-                <hr />
-                <RefundButton swap={refundJson} setRefundTxId={setRefundTxId} />
-            </Show>
+            <hr />
+            <RefundButton swap={refundJson} setRefundTxId={setRefundTxId} />
             <Show when={refundTxId() !== ""}>
                 <hr />
                 <p>{t("refunded")}</p>
