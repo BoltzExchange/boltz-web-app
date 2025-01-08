@@ -185,9 +185,7 @@ const RefundRsk = () => {
     });
 
     return (
-        <Show
-            when={import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined}
-            fallback={<p>{t("rsk_log_endpoint_not_available")}</p>}>
+        <>
             <Switch fallback={<p>{t("refund_external_explainer_rsk")}</p>}>
                 <Match when={logRefundableSwaps().length > 0}>
                     <SwapListLogs swaps={logRefundableSwaps} />
@@ -201,7 +199,7 @@ const RefundRsk = () => {
             </Switch>
             <hr />
             <ConnectWallet addressOverride={refundScanProgress} />
-        </Show>
+        </>
     );
 };
 
@@ -216,6 +214,12 @@ const RefundExternal = () => {
 
     const selected = () => params.type ?? tabBtc.value;
 
+    const rskAvailable =
+        import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined;
+    if (!rskAvailable) {
+        log.warn("RSK log scan endpoint not available");
+    }
+
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
@@ -224,21 +228,23 @@ const RefundExternal = () => {
                         <SettingsCog />
                         <h2>{t("refund_external_swap")}</h2>
                     </header>
-                    <div class="tabs">
-                        <For each={[tabBtc, tabRsk]}>
-                            {(tab) => (
-                                <div
-                                    class={`tab ${selected() === tab.value ? "active" : ""}`}
-                                    onClick={() =>
-                                        navigate(
-                                            `/refund/external/${tab.value}`,
-                                        )
-                                    }>
-                                    {tab.name}
-                                </div>
-                            )}
-                        </For>
-                    </div>
+                    <Show when={rskAvailable}>
+                        <div class="tabs">
+                            <For each={[tabBtc, tabRsk]}>
+                                {(tab) => (
+                                    <div
+                                        class={`tab ${selected() === tab.value ? "active" : ""}`}
+                                        onClick={() =>
+                                            navigate(
+                                                `/refund/external/${tab.value}`,
+                                            )
+                                        }>
+                                        {tab.name}
+                                    </div>
+                                )}
+                            </For>
+                        </div>
+                    </Show>
                     <Show when={selected() === tabBtc.value}>
                         <RefundBtcLike />
                     </Show>

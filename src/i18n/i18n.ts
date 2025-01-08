@@ -113,7 +113,6 @@ const dict = {
             "Scanning for refundable swaps in your Rootstock Wallet...",
         connected_wallet_no_swaps:
             "The connected Rootstock Wallet does NOT contain any refundable swaps.",
-        rsk_log_endpoint_not_available: "Log endpoint not available",
         refund_external_swap: "Refund External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
