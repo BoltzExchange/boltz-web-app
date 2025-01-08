@@ -98,7 +98,7 @@ const dict = {
             "If any of the above applies to you, we strongly recommend downloading this refund file!",
         refund_swap: "Refund Swap",
         refund_a_swap_subline:
-            "Upload your refund file and reclaim your locked funds",
+            "Upload your Swap’s refund file, to refund a swap that is not available in this browser’s swap history.",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
@@ -116,9 +116,9 @@ const dict = {
         refund_external_swap: "Refund External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
-            "Enter address of your {{ asset }} wallet to refund",
+            "Enter a {{ asset }} address to receive your refund on:",
         refund_address_header_no_asset:
-            "Enter address of your wallet to refund",
+            "Enter an address to receive your refund on:",
         refund_backup: "Backup",
         refund_import: "Import Backup",
         refund_clear: "Delete storage",

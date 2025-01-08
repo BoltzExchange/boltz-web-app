@@ -112,6 +112,7 @@ export const RefundEvm = (props: {
 const RefundButton = (props: {
     swap: Accessor<SubmarineSwap | ChainSwap>;
     setRefundTxId?: Setter<string>;
+    buttonOverride?: string;
 }) => {
     const {
         getSwap,
@@ -338,7 +339,7 @@ const RefundButton = (props: {
                         class="btn"
                         disabled={!valid() || refundRunning()}
                         onClick={() => refundAction()}>
-                        {t("refund")}
+                        {props.buttonOverride ?? t("refund")}
                     </button>
                 </Match>
                 <Match when={lockupTransaction.state === "pending"}>
