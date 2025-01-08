@@ -103,7 +103,11 @@ const RefundBtcLike = () => {
             <RefundButton
                 swap={refundJson}
                 setRefundTxId={setRefundTxId}
-                buttonOverride={refundInvalid() == RefundError.InvalidData ? t("invalid_refund_file") : undefined}
+                buttonOverride={
+                    refundInvalid() == RefundError.InvalidData
+                        ? t("invalid_refund_file")
+                        : undefined
+                }
             />
             <Show when={refundTxId() !== ""}>
                 <hr />

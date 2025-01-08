@@ -9,8 +9,9 @@ import {
     Setter,
     Show,
     Switch,
+    createEffect,
     createResource,
-    createSignal, createEffect
+    createSignal,
 } from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
@@ -214,30 +215,32 @@ const RefundButton = (props: {
         setRefundRunning(false);
     };
 
-    const [lockupTransaction, {refetch: refetchLockup}] = createResource(async () => {
-        if (!props.swap()) {
-            return undefined;
-        }
+    const [lockupTransaction, { refetch: refetchLockup }] = createResource(
+        async () => {
+            if (!props.swap()) {
+                return undefined;
+            }
 
-        const transactionToRefund = await getLockupTransaction(
-            props.swap().id,
-            props.swap().type,
-        );
+            const transactionToRefund = await getLockupTransaction(
+                props.swap().id,
+                props.swap().type,
+            );
 
-        // show refund ETA for legacy swaps
-        if (props.swap().version !== OutputType.Taproot) {
-            setTimeoutEta(transactionToRefund.timeoutEta);
-            setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
-        }
+            // show refund ETA for legacy swaps
+            if (props.swap().version !== OutputType.Taproot) {
+                setTimeoutEta(transactionToRefund.timeoutEta);
+                setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
+            }
 
-        return transactionToRefund;
-    });
+            return transactionToRefund;
+        },
+    );
 
     createEffect(() => {
-        if(props.swap() !== undefined) {
+        if (props.swap() !== undefined) {
             refetchLockup(null);
         }
-    })
+    });
 
     const [preimageHash] = createResource(async () => {
         return (await decodeInvoice((props.swap() as SubmarineSwap).invoice))
