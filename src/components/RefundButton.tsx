@@ -10,7 +10,7 @@ import {
     Show,
     Switch,
     createResource,
-    createSignal,
+    createSignal, createEffect
 } from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
@@ -213,7 +213,7 @@ const RefundButton = (props: {
         setRefundRunning(false);
     };
 
-    const [lockupTransaction] = createResource(async () => {
+    const [lockupTransaction, {refetch: refetchLockup}] = createResource(async () => {
         if (!props.swap()) {
             return undefined;
         }
@@ -231,6 +231,12 @@ const RefundButton = (props: {
 
         return transactionToRefund;
     });
+
+    createEffect(() => {
+        if(props.swap() !== undefined) {
+            refetchLockup(null);
+        }
+    })
 
     const [preimageHash] = createResource(async () => {
         return (await decodeInvoice((props.swap() as SubmarineSwap).invoice))
