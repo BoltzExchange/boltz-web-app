@@ -9,7 +9,6 @@ import {
     Setter,
     Show,
     Switch,
-    createEffect,
     createResource,
     createSignal,
 } from "solid-js";
@@ -215,31 +214,24 @@ const RefundButton = (props: {
         setRefundRunning(false);
     };
 
-    const [lockupTransaction, { refetch: refetchLockup }] = createResource(
-        async () => {
-            if (!props.swap()) {
-                return undefined;
-            }
-
-            const transactionToRefund = await getLockupTransaction(
-                props.swap().id,
-                props.swap().type,
-            );
-
-            // show refund ETA for legacy swaps
-            if (props.swap().version !== OutputType.Taproot) {
-                setTimeoutEta(transactionToRefund.timeoutEta);
-                setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
-            }
-
-            return transactionToRefund;
-        },
-    );
-
-    createEffect(() => {
-        if (props.swap() !== undefined) {
-            refetchLockup(null);
+    // eslint-disable-next-line solid/reactivity
+    const [lockupTransaction] = createResource(props.swap, async (swap) => {
+        if (!swap) {
+            return undefined;
         }
+
+        const transactionToRefund = await getLockupTransaction(
+            swap.id,
+            swap.type,
+        );
+
+        // show refund ETA for legacy swaps
+        if (swap.version !== OutputType.Taproot) {
+            setTimeoutEta(transactionToRefund.timeoutEta);
+            setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
+        }
+
+        return transactionToRefund;
     });
 
     const [preimageHash] = createResource(async () => {
@@ -304,7 +296,7 @@ const RefundButton = (props: {
                 </Show>
             }>
             <Switch>
-                <Match when={lockupTransaction.state === "ready"}>
+                <Match when={lockupTransaction.state === "ready" || lockupTransaction.state == "unresolved"}>
                     <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
                         <RefundEta
                             timeoutEta={timeoutEta}
