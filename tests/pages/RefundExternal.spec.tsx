@@ -2,8 +2,8 @@ import { render, screen } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 
 import i18n from "../../src/i18n/i18n";
-import { TestComponent, contextWrapper, globalSignals } from "../helper";
 import RefundExternal, { RefundBtcLike } from "../../src/pages/RefundExternal";
+import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 /* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
 
@@ -64,7 +64,9 @@ describe("RefundExternal", () => {
                 });
             await user.upload(uploadInput, swapFile);
 
-            expect(await screen.findAllByText(i18n.en.refund)).not.toBeUndefined();
+            expect(
+                await screen.findAllByText(i18n.en.refund),
+            ).not.toBeUndefined();
         });
 
         test("should show invalid refund button when invalid file was uploaded", async () => {
@@ -94,6 +96,5 @@ describe("RefundExternal", () => {
                 await screen.findAllByText(i18n.en.invalid_refund_file),
             ).not.toBeUndefined();
         });
-    })
-
+    });
 });

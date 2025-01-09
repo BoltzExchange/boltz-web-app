@@ -296,7 +296,11 @@ const RefundButton = (props: {
                 </Show>
             }>
             <Switch>
-                <Match when={lockupTransaction.state === "ready" || lockupTransaction.state == "unresolved"}>
+                <Match
+                    when={
+                        lockupTransaction.state === "ready" ||
+                        lockupTransaction.state == "unresolved"
+                    }>
                     <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
                         <RefundEta
                             timeoutEta={timeoutEta}
