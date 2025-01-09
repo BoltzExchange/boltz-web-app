@@ -321,7 +321,7 @@ const Create = () => {
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div class="frame">
                 <SettingsCog />
-                <h2>{t("create_swap")}</h2>
+                <h2 data-testid="create-swap-title">{t("create_swap")}</h2>
                 <p>
                     {t("create_swap_subline")} <br />
                     {t("send")} {t("min")}:{" "}
