@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { createEffect } from "solid-js";
+import { Show, createEffect, createSignal } from "solid-js";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -18,6 +18,8 @@ import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 import Denomination from "./settings/Denomination";
+
+const ppmFactor = 10_000;
 
 // When sending to an unconfidential address, we need to add an extra
 // confidential OP_RETURN output with 1 sat inside
@@ -46,7 +48,15 @@ const Fees = () => {
         addressValid() &&
         !isConfidentialAddress(onchainAddress());
 
+    const [routingFee, setRoutingFee] = createSignal<number | undefined>(
+        undefined,
+    );
+
     createEffect(() => {
+        // Reset routing fee when changing the pair
+        // (which might not be submarine and not set the signal)
+        setRoutingFee(undefined);
+
         if (pairs()) {
             const cfg = getPair(
                 pairs(),
@@ -61,6 +71,10 @@ const Fees = () => {
 
             switch (swapType()) {
                 case SwapType.Submarine:
+                    setRoutingFee(
+                        (cfg as SubmarinePairTypeTaproot).fees
+                            .maximalRoutingFee,
+                    );
                     setMinerFee(
                         (cfg as SubmarinePairTypeTaproot).fees.minerFees,
                     );
@@ -148,6 +162,13 @@ const Fees = () => {
                         data-denominator={denomination()}
                     />
                 </span>
+                <Show when={routingFee() !== undefined}>
+                    <br />
+                    {t("routing_fee_limit")}:{" "}
+                    <span data-testid="routing-fee-limit">
+                        {routingFee() * ppmFactor} ppm
+                    </span>
+                </Show>
             </label>
         </div>
     );

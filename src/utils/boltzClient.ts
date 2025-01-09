@@ -35,8 +35,9 @@ type SubmarinePairTypeTaproot = PairType & {
         maximalZeroConf: number;
     };
     fees: {
-        percentage: number;
         minerFees: number;
+        percentage: number;
+        maximalRoutingFee?: number;
     };
 };
 

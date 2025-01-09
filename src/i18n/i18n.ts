@@ -228,6 +228,7 @@ const dict = {
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         no_wallet_connected: "No wallet connected",
         no_lockup_transaction: "No lockup transaction found",
+        routing_fee_limit: "Routing fee limit",
     },
     de: {
         language: "Deutsch",
@@ -468,6 +469,7 @@ const dict = {
         refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
         no_wallet_connected: "Kein Wallet verbunden",
         no_lockup_transaction: "Keine Lockup-Transaktion gefunden",
+        routing_fee_limit: "Routing Gebühr Limit",
     },
     es: {
         language: "Español",
@@ -704,6 +706,7 @@ const dict = {
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         no_wallet_connected: "No hay monedero conectado",
         no_lockup_transaction: "No se encontró ninguna transacción de lockup",
+        routing_fee_limit: "Límite de la tarifa de enrutamiento",
     },
     zh: {
         language: "中文",
@@ -914,6 +917,7 @@ const dict = {
         refund_available_in: "退款将分 {{ blocks }} 区块提供",
         no_wallet_connected: "未连接钱包",
         no_lockup_transaction: "未找到锁仓交易",
+        routing_fee_limit: "最大路由费用",
     },
     ja: {
         language: "日本語",
@@ -1149,6 +1153,7 @@ const dict = {
         refund_available_in: "返金は {{ blocks }} つのブロックに分かれる",
         no_wallet_connected: "財布はつながっていない！",
         no_lockup_transaction: "ロックアップトランザクションが見つかりません",
+        routing_fee_limit: "ルーティング料金の上限",
     },
 };
 
