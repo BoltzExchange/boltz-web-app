@@ -354,7 +354,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     // i18n
     createEffect(() => {
-        setI18n(i18nConfigured() || i18nUrl());
+        setI18n(detectLanguage(i18nConfigured() || i18nUrl()));
     });
     const dictLocale = createMemo(
         () => flatten(dict[i18n() || config.defaultLanguage]) as never,
