@@ -99,16 +99,18 @@ const RefundBtcLike = () => {
                 accept="application/json,image/png,imagine/jpg,image/jpeg"
                 onChange={(e) => uploadChange(e)}
             />
-            <hr />
-            <RefundButton
-                swap={refundJson}
-                setRefundTxId={setRefundTxId}
-                buttonOverride={
-                    refundInvalid() == RefundError.InvalidData
-                        ? t("invalid_refund_file")
-                        : undefined
-                }
-            />
+            <Show when={refundTxId() === ""}>
+                <hr />
+                <RefundButton
+                    swap={refundJson}
+                    setRefundTxId={setRefundTxId}
+                    buttonOverride={
+                        refundInvalid() == RefundError.InvalidData
+                            ? t("invalid_refund_file")
+                            : undefined
+                    }
+                />
+            </Show>
             <Show when={refundTxId() !== ""}>
                 <hr />
                 <p>{t("refunded")}</p>
