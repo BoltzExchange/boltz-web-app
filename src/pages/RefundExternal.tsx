@@ -31,7 +31,7 @@ enum RefundError {
     InvalidData,
 }
 
-const RefundBtcLike = () => {
+export const RefundBtcLike = () => {
     const { t } = useGlobalContext();
 
     const [refundInvalid, setRefundInvalid] = createSignal<
@@ -126,7 +126,7 @@ const RefundBtcLike = () => {
     );
 };
 
-const RefundRsk = () => {
+export const RefundRsk = () => {
     const { t } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
 
