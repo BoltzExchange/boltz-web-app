@@ -43,6 +43,8 @@ describe("denomination utils", () => {
             ${Denomination.Btc} | ${1000}        | ${"."}    | ${"0.00001"}
             ${Denomination.Btc} | ${10000}       | ${"."}    | ${"0.0001"}
             ${Denomination.Btc} | ${10000}       | ${","}    | ${"0,0001"}
+            ${Denomination.Sat} | ${0.12}        | ${","}    | ${"0,12"}
+            ${Denomination.Sat} | ${0.24}        | ${","}    | ${"0,24"}
         `(
             "format $amount in $denomination with `$separator` separator",
             ({ denomination, amount, formatted, separator }) => {
