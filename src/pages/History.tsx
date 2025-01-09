@@ -153,6 +153,7 @@ const History = () => {
                         onDelete={async () => {
                             setSwaps(await getSwaps());
                         }}
+                        action={t("view")}
                     />
                     <Show when={swaps().length > 0}>
                         <Show when={!isIos()}>

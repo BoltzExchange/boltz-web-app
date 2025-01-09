@@ -10,6 +10,9 @@ test.describe("Refund files", () => {
         await page.goto("/");
 
         await page.getByRole("link", { name: "Refund" }).click();
+        await page
+            .getByRole("button", { name: "Refund external swap" })
+            .click();
         await page.getByTestId("refundUpload").click();
 
         await page

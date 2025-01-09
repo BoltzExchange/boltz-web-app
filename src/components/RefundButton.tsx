@@ -112,6 +112,7 @@ export const RefundEvm = (props: {
 const RefundButton = (props: {
     swap: Accessor<SubmarineSwap | ChainSwap>;
     setRefundTxId?: Setter<string>;
+    buttonOverride?: string;
 }) => {
     const {
         getSwap,
@@ -178,10 +179,9 @@ const RefundButton = (props: {
                 currentSwap.refundTx = res.refundTx;
                 await setSwapStorage(currentSwap);
                 setSwap(currentSwap);
-            } else {
-                if (props.setRefundTxId) {
-                    props.setRefundTxId(res.refundTx);
-                }
+            }
+            if (props.setRefundTxId) {
+                props.setRefundTxId(res.refundTx);
             }
         } catch (error) {
             log.warn("refund failed", error);
@@ -214,18 +214,19 @@ const RefundButton = (props: {
         setRefundRunning(false);
     };
 
-    const [lockupTransaction] = createResource(async () => {
-        if (!props.swap()) {
+    // eslint-disable-next-line solid/reactivity
+    const [lockupTransaction] = createResource(props.swap, async (swap) => {
+        if (!swap) {
             return undefined;
         }
 
         const transactionToRefund = await getLockupTransaction(
-            props.swap().id,
-            props.swap().type,
+            swap.id,
+            swap.type,
         );
 
         // show refund ETA for legacy swaps
-        if (props.swap().version !== OutputType.Taproot) {
+        if (swap.version !== OutputType.Taproot) {
             setTimeoutEta(transactionToRefund.timeoutEta);
             setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
         }
@@ -295,7 +296,11 @@ const RefundButton = (props: {
                 </Show>
             }>
             <Switch>
-                <Match when={lockupTransaction.state === "ready"}>
+                <Match
+                    when={
+                        lockupTransaction.state === "ready" ||
+                        lockupTransaction.state == "unresolved"
+                    }>
                     <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
                         <RefundEta
                             timeoutEta={timeoutEta}
@@ -333,7 +338,7 @@ const RefundButton = (props: {
                         class="btn"
                         disabled={!valid() || refundRunning()}
                         onClick={() => refundAction()}>
-                        {t("refund")}
+                        {props.buttonOverride ?? t("refund")}
                     </button>
                 </Match>
                 <Match when={lockupTransaction.state === "pending"}>

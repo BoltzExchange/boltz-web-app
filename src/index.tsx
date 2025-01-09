@@ -25,6 +25,7 @@ import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
 import Refund from "./pages/Refund";
 import RefundEvm from "./pages/RefundEvm";
+import RefundExternal from "./pages/RefundExternal";
 import RefundStep from "./pages/RefundStep";
 import "./style/index.scss";
 import "./utils/patches";
@@ -105,6 +106,8 @@ const cleanup = render(
             <Route path="/swap/refund/:id" component={RefundStep} />
             <Route path="/error" component={() => <Error />} />
             <Route path="/refund" component={Refund} />
+            <Route path="/refund/external" component={RefundExternal} />
+            <Route path="/refund/external/:type" component={RefundExternal} />
             <Route path="/history" component={History} />
             <Route path="*404" component={NotFound} />
         </Router>
