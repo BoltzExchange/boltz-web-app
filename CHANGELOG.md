@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
-## [1.6.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.0..1.6.1) - 2025-01-10
+## [1.6.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.0..v1.6.1) - 2025-01-10
 
 ### Bug Fixes
 
@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file. See [conven
 - include transaction.refunded in final swap states (#777) - ([6cdf23c](https://github.com/BoltzExchange/boltz-web-app/commit/6cdf23cb8bd6b964f72a5df3793578167f316a9b))
 - use orange heart (#778) - ([45ae3c9](https://github.com/BoltzExchange/boltz-web-app/commit/45ae3c935307710af133c7ae27e9410620c0ee6a))
 - add ark labs to partner section (#781) - ([7ece218](https://github.com/BoltzExchange/boltz-web-app/commit/7ece218b92f301a1661bd26a50dc84f7484ae236))
+- bump version to v1.6.1 - ([a858be2](https://github.com/BoltzExchange/boltz-web-app/commit/a858be2f35aab38bb321a5913508bcf512ae041b))
 
 ### Refactoring
 
