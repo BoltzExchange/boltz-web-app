@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.6.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.0..1.6.1) - 2025-01-10
+
+### Bug Fixes
+
+- ignore error when server does not want to claim cooperatively (#783) - ([0285e79](https://github.com/BoltzExchange/boltz-web-app/commit/0285e79af4e7fd8f60510e25008437588e8ceb11))
+- no ref URL param on pro site (#782) - ([c721763](https://github.com/BoltzExchange/boltz-web-app/commit/c721763b2bb805905a7e425574d0f33bb0110da3))
+- remove buggy QR code probe - ([7f90b7b](https://github.com/BoltzExchange/boltz-web-app/commit/7f90b7bcf7101e365fc321334f13788c1c20853c))
+- bump refund QR code size - ([1cfa933](https://github.com/BoltzExchange/boltz-web-app/commit/1cfa9331bb53b0811e8503c8892b6999f2b739bd))
+- default browser language detection (#792) - ([34edb7b](https://github.com/BoltzExchange/boltz-web-app/commit/34edb7bc495a7237533b901ba13894e4cef6ffde))
+
+### Features
+
+- pro build configuration (#780) - ([14ff825](https://github.com/BoltzExchange/boltz-web-app/commit/14ff8250fc5ec5e5802747d6d20c0d83cd6f28b4))
+- safety check before calculating fees (#786) - ([02b2823](https://github.com/BoltzExchange/boltz-web-app/commit/02b28230a5670dfe50eb8f120aa7918bd8437315))
+- show when no lockup can be found for refund (#789) - ([c76bd47](https://github.com/BoltzExchange/boltz-web-app/commit/c76bd470bea93e878470cc8e840f69978f3e345f))
+- show routing fees (#791) - ([dfcccba](https://github.com/BoltzExchange/boltz-web-app/commit/dfcccba0285f169cab9682e3759e5e6d7bc8e728))
+
+### Miscellaneous Chores
+
+- include transaction.refunded in final swap states (#777) - ([6cdf23c](https://github.com/BoltzExchange/boltz-web-app/commit/6cdf23cb8bd6b964f72a5df3793578167f316a9b))
+- use orange heart (#778) - ([45ae3c9](https://github.com/BoltzExchange/boltz-web-app/commit/45ae3c935307710af133c7ae27e9410620c0ee6a))
+- add ark labs to partner section (#781) - ([7ece218](https://github.com/BoltzExchange/boltz-web-app/commit/7ece218b92f301a1661bd26a50dc84f7484ae236))
+
+### Refactoring
+
+- cleanup JSON error handling (#787) - ([7ec2580](https://github.com/BoltzExchange/boltz-web-app/commit/7ec258062a84ffd543dd08d516b44e33bb6584ee))
+- cleanup refund page (#785) - ([88b969c](https://github.com/BoltzExchange/boltz-web-app/commit/88b969c357c625ad0621b229d69cba31b24b791e))
+
+### Tests
+
+- E2E for refund files (#794) - ([e962389](https://github.com/BoltzExchange/boltz-web-app/commit/e962389a4a62ae5c8df698292f795ab246060ed3))
+
+---
 ## [1.6.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.5.4..v1.6.0) - 2024-12-18
 
 ### Bug Fixes
@@ -26,6 +59,7 @@ All notable changes to this project will be documented in this file. See [conven
 - only load WalletConnect when configured - ([04a5a27](https://github.com/BoltzExchange/boltz-web-app/commit/04a5a273e41f061e150a076b90b3b4577b93f331))
 - pass referral id in every request header (#773) - ([835a841](https://github.com/BoltzExchange/boltz-web-app/commit/835a841c7c77b90230d0f302de8cb78701e7385d))
 - contract hash for EtherSwap v4 on mainnet - ([d43ad11](https://github.com/BoltzExchange/boltz-web-app/commit/d43ad1150a1270a449de7d780019a7aa9cf54e6b))
+- bump version to v1.6.0 - ([aaafe08](https://github.com/BoltzExchange/boltz-web-app/commit/aaafe08dd9686a4aba42e0d62cb049d5757a95ca))
 
 ### Refactoring
 
