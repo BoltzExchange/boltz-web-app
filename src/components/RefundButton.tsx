@@ -3,15 +3,7 @@ import { OutputType } from "boltz-core";
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import {
-    Accessor,
-    Match,
-    Setter,
-    Show,
-    Switch,
-    createResource,
-    createSignal,
-} from "solid-js";
+import { Accessor, Setter, Show, createResource, createSignal } from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
 import RefundEta from "../components/RefundEta";
@@ -136,6 +128,8 @@ export const RefundBtc = (props: {
         const input = evt.currentTarget as HTMLInputElement;
         const inputValue = input.value.trim();
 
+        setRefundAddress(inputValue);
+
         const lockupAddress =
             props.swap().type === SwapType.Submarine
                 ? (props.swap() as SubmarineSwap).address
@@ -143,7 +137,6 @@ export const RefundBtc = (props: {
 
         if (inputValue === lockupAddress) {
             log.debug("refunds to lockup address are blocked");
-            input.setCustomValidity("lockup address");
             return false;
         }
         try {
@@ -152,14 +145,12 @@ export const RefundBtc = (props: {
                 getNetwork(asset) as LiquidNetwork,
             );
             input.setCustomValidity("");
-            setRefundAddress(inputValue);
             return true;
         } catch (e) {
             log.debug("parsing refund address failed", e);
             input.setCustomValidity("invalid address");
+            return false;
         }
-
-        return false;
     };
 
     const refundAction = async () => {
@@ -235,62 +226,63 @@ export const RefundBtc = (props: {
         return transactionToRefund;
     });
 
+    const buttonMessage = () => {
+        if (lockupTransaction.state == "errored") {
+            return t("no_lockup_transaction");
+        }
+        if (valid() || !refundAddress() || !props.swap()) {
+            return t("refund");
+        }
+        return t("invalid_address", { asset: props.swap()?.assetSend });
+    };
+
     return (
-        <Switch>
-            <Match
-                when={
-                    lockupTransaction.state === "ready" ||
-                    lockupTransaction.state == "unresolved"
-                }>
-                <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
-                    <RefundEta
-                        timeoutEta={timeoutEta}
-                        timeoutBlockHeight={timeoutBlockheight}
-                    />
-                </Show>
-                <h3 style={{ color: "#fff" }}>
-                    {props.swap()
-                        ? t("refund_address_header", {
+        <Show
+            when={
+                lockupTransaction.state === "ready" ||
+                lockupTransaction.state == "unresolved" ||
+                lockupTransaction.state == "errored"
+            }
+            fallback={<LoadingSpinner />}>
+            <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
+                <RefundEta
+                    timeoutEta={timeoutEta}
+                    timeoutBlockHeight={timeoutBlockheight}
+                />
+            </Show>
+            <h3 style={{ color: "#fff" }}>
+                {props.swap()
+                    ? t("refund_address_header", {
+                          asset: props.swap()?.assetSend,
+                      })
+                    : t("refund_address_header_no_asset")}
+            </h3>
+            <input
+                data-testid="refundAddress"
+                id="refundAddress"
+                disabled={lockupTransaction.state == "errored"}
+                value={refundAddress()}
+                onInput={(e) =>
+                    setValid(refundAddressChange(e, props.swap()?.assetSend))
+                }
+                type="text"
+                name="refundAddress"
+                placeholder={
+                    props.swap()
+                        ? t("onchain_address", {
                               asset: props.swap()?.assetSend,
                           })
-                        : t("refund_address_header_no_asset")}
-                </h3>
-                <input
-                    data-testid="refundAddress"
-                    id="refundAddress"
-                    disabled={props.swap() === null}
-                    onInput={(e) =>
-                        setValid(
-                            refundAddressChange(e, props.swap()?.assetSend),
-                        )
-                    }
-                    type="text"
-                    name="refundAddress"
-                    placeholder={
-                        props.swap()
-                            ? t("onchain_address", {
-                                  asset: props.swap()?.assetSend,
-                              })
-                            : t("onchain_address_no_asset")
-                    }
-                />
-                <button
-                    data-testid="refundButton"
-                    class="btn"
-                    disabled={!valid() || refundRunning()}
-                    onClick={() => refundAction()}>
-                    {props.buttonOverride ?? t("refund")}
-                </button>
-            </Match>
-            <Match when={lockupTransaction.state === "pending"}>
-                <LoadingSpinner />
-            </Match>
-            <Match when={lockupTransaction.state === "errored"}>
-                <button class="btn" disabled={true}>
-                    {t("no_lockup_transaction")}
-                </button>
-            </Match>
-        </Switch>
+                        : t("onchain_address_no_asset")
+                }
+            />
+            <button
+                data-testid="refundButton"
+                class="btn"
+                disabled={!valid() || refundRunning()}
+                onClick={() => refundAction()}>
+                {props.buttonOverride ?? buttonMessage()}
+            </button>
+        </Show>
     );
 };
 
