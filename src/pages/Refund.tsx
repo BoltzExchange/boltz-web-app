@@ -1,158 +1,27 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
-import QrScanner from "qr-scanner";
-import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { Show, createSignal, onMount } from "solid-js";
 
-import BlockExplorer from "../components/BlockExplorer";
-import ConnectWallet from "../components/ConnectWallet";
-import RefundButton from "../components/RefundButton";
 import SwapList from "../components/SwapList";
-import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import "../style/tabs.scss";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import {
-    LogRefundData,
-    scanLogsForPossibleRefunds,
-} from "../utils/contractLogs";
-import { validateRefundFile } from "../utils/refundFile";
 import { SomeSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
-enum RefundError {
-    InvalidData,
-}
-
 const Refund = () => {
     const navigate = useNavigate();
-    const { getSwap, getSwaps, updateSwapStatus, wasmSupported, t, backend } =
+    const { getSwaps, updateSwapStatus, wasmSupported, t, backend } =
         useGlobalContext();
-    const { signer, providers, getEtherSwap } = useWeb3Signer();
-
-    const [swapFound, setSwapFound] = createSignal(null);
-    const [refundInvalid, setRefundInvalid] = createSignal<
-        RefundError | undefined
-    >(undefined);
-    const [refundJson, setRefundJson] = createSignal(null);
-    const [refundTxId, setRefundTxId] = createSignal<string>("");
-
-    const checkRefundJsonKeys = async (
-        input: HTMLInputElement,
-        json: Record<string, string | object | number>,
-    ) => {
-        log.debug("checking refund json", json);
-
-        try {
-            const data = validateRefundFile(json);
-
-            // When the swap id is found in the local storage, show a redirect to it
-            const localStorageSwap = await getSwap(data.id);
-            if (localStorageSwap !== null) {
-                setSwapFound(data.id);
-                return;
-            }
-
-            setRefundJson(data);
-            setRefundInvalid(undefined);
-        } catch (e) {
-            log.warn("Refund json validation failed", e);
-            setRefundInvalid(RefundError.InvalidData);
-            input.setCustomValidity(t("invalid_refund_file"));
-        }
-    };
-
-    const uploadChange = async (e: Event) => {
-        const input = e.currentTarget as HTMLInputElement;
-        const inputFile = input.files[0];
-        input.setCustomValidity("");
-        setRefundJson(null);
-        setSwapFound(null);
-        setRefundInvalid(undefined);
-
-        if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
-            try {
-                const res = await QrScanner.scanImage(inputFile, {
-                    returnDetailedScanResult: true,
-                });
-                await checkRefundJsonKeys(input, JSON.parse(res.data));
-            } catch (e) {
-                log.error("invalid QR code upload", e);
-                setRefundInvalid(RefundError.InvalidData);
-                input.setCustomValidity(t("invalid_refund_file"));
-            }
-        } else {
-            try {
-                const data = await inputFile.text();
-                await checkRefundJsonKeys(input, JSON.parse(data));
-            } catch (e) {
-                log.error("invalid file upload", e);
-                setRefundInvalid(RefundError.InvalidData);
-                input.setCustomValidity(t("invalid_refund_file"));
-            }
-        }
-    };
 
     const refundSwapsSanityFilter = (swap: SomeSwap) =>
         swap.type !== SwapType.Reverse && swap.refundTx === undefined;
 
     const [refundableSwaps, setRefundableSwaps] = createSignal<SomeSwap[]>([]);
-    const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
-        LogRefundData[]
-    >([]);
-    const [refundScanProgress, setRefundScanProgress] = createSignal<
-        string | undefined
-    >(undefined);
-
-    let refundScanAbort: AbortController | undefined = undefined;
-
-    onCleanup(() => {
-        if (refundScanAbort) {
-            refundScanAbort.abort();
-        }
-    });
-
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
-        setLogRefundableSwaps([]);
-
-        if (refundScanAbort !== undefined) {
-            refundScanAbort.abort("signer changed");
-        }
-
-        if (signer() === undefined) {
-            return;
-        }
-
-        setRefundScanProgress(
-            t("logs_scan_progress", {
-                value: Number(0).toFixed(2),
-            }),
-        );
-
-        refundScanAbort = new AbortController();
-
-        const generator = scanLogsForPossibleRefunds(
-            refundScanAbort.signal,
-            signer(),
-            getEtherSwap(),
-        );
-
-        for await (const value of generator) {
-            setRefundScanProgress(
-                t("logs_scan_progress", {
-                    value: (value.progress * 100).toFixed(2),
-                }),
-            );
-            setLogRefundableSwaps(logRefundableSwaps().concat(value.events));
-        }
-
-        setRefundScanProgress(undefined);
-    });
 
     onMount(async () => {
         const addToRefundableSwaps = (swap: SomeSwap) => {
@@ -208,80 +77,30 @@ const Refund = () => {
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
                 <div class="frame" data-testid="refundFrame">
-                    <SettingsCog />
+                    <header>
+                        <SettingsCog />
+                        <h2>{t("refund_swap")}</h2>
+                    </header>
                     <Show
-                        when={refundJson() !== null}
+                        when={refundableSwaps().length > 0}
                         fallback={
                             <>
-                                <h2>{t("refund_a_swap")}</h2>
-                                <p>{t("refund_a_swap_subline")}</p>
+                                <p>{t("no_refundable_swaps")}</p>
+                                <hr />
                             </>
                         }>
-                        <h2>{t("refund_swap", { id: refundJson().id })}</h2>
-                    </Show>
-
-                    <Show when={logRefundableSwaps().length > 0}>
-                        <SwapListLogs swaps={logRefundableSwaps} />
-                    </Show>
-                    <Show when={refundableSwaps().length > 0}>
-                        <SwapList swapsSignal={refundableSwaps} />
-                    </Show>
-                    <input
-                        required
-                        type="file"
-                        id="refundUpload"
-                        data-testid="refundUpload"
-                        accept="application/json,image/png,imagine/jpg,image/jpeg"
-                        onChange={(e) => uploadChange(e)}
-                    />
-                    <Show
-                        when={
-                            import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !==
-                                undefined &&
-                            Object.keys(providers()).length > 0 &&
-                            (refundJson() === null ||
-                                refundJson().assetSend === RBTC)
-                        }>
-                        <hr />
-                        <ConnectWallet addressOverride={refundScanProgress} />
-                    </Show>
-                    <Show when={swapFound() !== null}>
-                        <hr />
-                        <p>{t("swap_in_history")}</p>
-                        <button
-                            class="btn btn-success"
-                            onClick={() => navigate(`/swap/${swapFound()}`)}>
-                            {t("open_swap")}
-                        </button>
-                    </Show>
-                    <Show when={refundInvalid() !== undefined}>
-                        <hr />
-                        <button class="btn" disabled={true}>
-                            {(() => {
-                                switch (refundInvalid()) {
-                                    case RefundError.InvalidData:
-                                        return t("invalid_refund_file");
-                                }
-                            })()}
-                        </button>
-                    </Show>
-                    <Show when={refundTxId() === "" && refundJson() !== null}>
-                        <hr />
-                        <RefundButton
-                            swap={refundJson}
-                            setRefundTxId={setRefundTxId}
+                        <SwapList
+                            swapsSignal={refundableSwaps}
+                            action={t("refund")}
                         />
                     </Show>
-                    <Show when={refundTxId() !== ""}>
-                        <hr />
-                        <p>{t("refunded")}</p>
-                        <hr />
-                        <BlockExplorer
-                            typeLabel={"refund_tx"}
-                            asset={refundJson().asset || refundJson().assetSend}
-                            txId={refundTxId()}
-                        />
-                    </Show>
+                    <h4>{t("cant_find_swap")}</h4>
+                    <p>{t("refund_external_explainer")}</p>
+                    <button
+                        class="btn"
+                        onClick={() => navigate(`/refund/external`)}>
+                        {t("refund_external_swap")}
+                    </button>
                     <SettingsMenu />
                 </div>
             </div>

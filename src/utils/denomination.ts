@@ -53,7 +53,7 @@ export const formatAmountDenomination = (
 
         default: {
             const chars = amount.toString().split("").reverse();
-            return chars
+            const formatted = chars
                 .reduce(
                     (acc, char, i) =>
                         i % 3 === 0 ? acc + " " + char : acc + char,
@@ -63,6 +63,12 @@ export const formatAmountDenomination = (
                 .split("")
                 .reverse()
                 .join("");
+
+            return (
+                formatted.includes(".") || formatted.includes(",")
+                    ? formatted.replaceAll(" .", ".").replaceAll(" ,", ",")
+                    : formatted
+            ).replaceAll(".", separator);
         }
     }
 };

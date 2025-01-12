@@ -30,26 +30,28 @@ export const getNavigatorLanguage = (language: string): string => {
 
 export const detectLanguage = (
     i18nConfigured: string | null,
-    i18nUrl: string | null,
-    setI18nUrl: Setter<string>,
+    i18nUrl?: string | null,
+    setI18nUrl?: Setter<string>,
 ): string => {
     if (i18nConfigured !== null) {
         return i18nConfigured;
     }
 
-    const urlParam = getUrlParam("lang");
-    if (urlParam) {
-        if (isValidLang(urlParam)) {
-            log.info("Using language URL parameter:", urlParam);
-            setI18nUrl(urlParam);
-            return urlParam;
-        } else {
-            log.warn("Invalid language URL parameter:", urlParam);
+    if (i18nUrl !== undefined) {
+        const urlParam = getUrlParam("lang");
+        if (urlParam) {
+            if (isValidLang(urlParam)) {
+                log.info("Using language URL parameter:", urlParam);
+                setI18nUrl(urlParam);
+                return urlParam;
+            } else {
+                log.warn("Invalid language URL parameter:", urlParam);
+            }
         }
-    }
 
-    if (i18nUrl !== null) {
-        return i18nUrl;
+        if (i18nUrl !== null && i18nUrl !== undefined) {
+            return i18nUrl;
+        }
     }
 
     return getNavigatorLanguage(navigator.language);

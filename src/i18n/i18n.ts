@@ -99,18 +99,29 @@ const dict = {
         backup_refund_list_clear_history: "clear your browsing history",
         backup_refund_skip:
             "If any of the above applies to you, we strongly recommend downloading this refund file!",
-        refund_a_swap: "Refund a swap",
-        refund_swap: "Refund Swap {{ id }}",
+        refund_swap: "Refund Swap",
         refund_a_swap_subline:
-            "Upload your refund file and reclaim your locked funds",
+            "Upload your Swap’s refund file, to refund a swap that is not available in this browser’s swap history.",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
+        no_refundable_swaps:
+            "No refundable swaps found in your browser history",
+        cant_find_swap: "Can't find your swap?",
+        refund_external_explainer:
+            "Try refunding an external swap via refund file and other emergency methods",
+        refund_external_explainer_rsk:
+            "Connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
+        refund_external_scanning_rsk:
+            "Scanning for refundable swaps in your Rootstock Wallet...",
+        connected_wallet_no_swaps:
+            "The connected Rootstock Wallet does not contain any refundable swaps.",
+        refund_external_swap: "Refund External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
-            "Enter address of your {{ asset }} wallet to refund",
+            "Enter a {{ asset }} address to receive your refund on:",
         refund_address_header_no_asset:
-            "Enter address of your wallet to refund",
+            "Enter an address to receive your refund on:",
         refund_backup: "Backup",
         refund_import: "Import Backup",
         refund_clear: "Delete storage",
@@ -231,6 +242,8 @@ const dict = {
         refund_available_in: "Refund will be available in {{ blocks }} blocks",
         tether: "L-USDt",
         no_wallet_connected: "No wallet connected",
+        no_lockup_transaction: "No lockup transaction found",
+        routing_fee_limit: "Routing fee limit",
     },
     de: {
         language: "Deutsch",
@@ -335,13 +348,24 @@ const dict = {
         backup_refund_list_clear_history: "die Browser Daten gelöscht werden",
         backup_refund_skip:
             "Falls einer dieser Punkte zutrifft, empfehlen wir ausdrücklich die Rückerstattungsdatei herunterzuladen!",
-        refund_a_swap: "Einen Swap erstatten",
-        refund_swap: "Erstatte Swap {{ id }}",
+        refund_swap: "Swap Erstatten",
         refund_a_swap_subline:
-            "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück",
+            "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück.",
         refund_past_swaps: "Historische Swaps",
         refund_past_swaps_subline:
             "Swaps, die in deinem Browser gespeichert wurden",
+        no_refundable_swaps:
+            "Keine erstattungsfähigen Swaps in Browserverlauf gefunden",
+        cant_find_swap: "Swap nicht gefunden?",
+        refund_external_explainer:
+            "Versuchen Sie, einen externen Swap über eine Rückerstattungsdatei und andere Notfallmethoden zu erstatten",
+        refund_external_explainer_rsk:
+            "Verbinden Sie Ihr Rootstock Wallet, um nach erstattungsfähigen Swaps zu suchen, die nicht im Swap-Verlauf dieses Browsers gespeichert sind..",
+        refund_external_scanning_rsk:
+            "Scanne nach erstattungsfähigen Swaps in Rootstock-Wallet...",
+        connected_wallet_no_swaps:
+            "Das angeschlossene Rootstock Wallet enthält keine erstattungsfähigen Swaps.",
+        refund_external_swap: "Externen Swap rückerstatten",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
@@ -475,6 +499,8 @@ const dict = {
         refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
         tether: "L-USDt",
         no_wallet_connected: "Kein Wallet verbunden",
+        no_lockup_transaction: "Keine Lockup-Transaktion gefunden",
+        routing_fee_limit: "Routing Gebühr Limit",
     },
     es: {
         language: "Español",
@@ -576,13 +602,24 @@ const dict = {
         backup_refund_list_clear_history: "borra tu historial de navegación",
         backup_refund_skip:
             "Si alguno de los puntos anteriores le afecta, le recomendamos que descargue el archivo de reembolso.",
-        refund_a_swap: "Reembolsar un intercambio",
-        refund_swap: "Reembolsar intercambio {{ id }}",
+        refund_swap: "Reembolsar Intercambio",
         refund_a_swap_subline:
-            "Cargue su archivo de reembolso y recupere sus fondos bloqueados",
+            "Cargue su archivo de reembolso y recupere sus fondos bloqueados.",
         refund_past_swaps: "Intercambios anteriores",
         refund_past_swaps_subline:
             "Intercambios que se guardaron en el almacenamiento del navegador",
+        no_refundable_swaps:
+            "No se han encontrado swaps reembolsables en el historial de tu navegador",
+        cant_find_swap: "¿No encuentra su intercambio?",
+        refund_external_explainer:
+            "Intenta reembolsar un swap externo mediante el archivo de reembolso y otros métodos de emergencia.",
+        refund_external_explainer_rsk:
+            "Conecta tu monedero Rootstock para buscar swaps reembolsables que no estén guardados en el historial de swaps de este navegador.",
+        refund_external_scanning_rsk:
+            "Escaneando en busca de swaps reembolsables en su monedero Rootstock...",
+        connected_wallet_no_swaps:
+            "El monedero Rootstock conectada no contiene ningún swap reembolsable.",
+        refund_external_swap: "Reembolsar Swap Externo",
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_header:
             "Introduzca la dirección de tu monedero {{ asset }} para reembolsar",
@@ -715,6 +752,8 @@ const dict = {
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         tether: "L-USDt",
         no_wallet_connected: "No hay monedero conectado",
+        no_lockup_transaction: "No se encontró ninguna transacción de lockup",
+        routing_fee_limit: "Límite de la tarifa de enrutamiento",
     },
     zh: {
         language: "中文",
@@ -811,11 +850,21 @@ const dict = {
         backup_refund_list_tor: "正在使用Tor浏览器",
         backup_refund_list_clear_history: "清除您的浏览历史记录",
         backup_refund_skip: "如果您符合以上任何条件，强烈建议下载此退款文件！",
-        refund_a_swap: "退还交换",
-        refund_swap: "退交换{{ id }}",
+        refund_swap: "退还交换",
         refund_a_swap_subline: "上传您的退款文件，取回被锁定的资金",
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
+        no_refundable_swaps: "在您的浏览器历史中未发现可退款的交换。",
+        cant_find_swap: "找不到您的交换？",
+        refund_external_explainer:
+            "尝试通过退款文件和其他紧急方法退款外部交换。",
+        refund_external_explainer_rsk:
+            "连接您的 Rootstock 钱包，扫描未保存在此浏览器交换历史记录中的可退款交换。",
+        refund_external_scanning_rsk:
+            "正在扫描您的 Rootstock 钱包中的可退款掉期。。。",
+        connected_wallet_no_swaps:
+            "已连接的 Rootstock 钱包不包含任何可退款掉期。",
+        refund_external_swap: "退款外部交换",
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
         refund_address_header_no_asset: "输入要退款的钱包地址",
@@ -929,6 +978,8 @@ const dict = {
         refund_available_in: "退款将分 {{ blocks }} 区块提供",
         tether: "L-USDt",
         no_wallet_connected: "未连接钱包",
+        no_lockup_transaction: "未找到锁仓交易",
+        routing_fee_limit: "最大路由费用",
     },
     ja: {
         language: "日本語",
@@ -1035,12 +1086,23 @@ const dict = {
         backup_refund_list_clear_history: "ブラウザ履歴を消した場合",
         backup_refund_skip:
             "もし以上にあてはまる場合、返金ファイルをダウンロードすることを強くお勧めします！",
-        refund_a_swap: "スワップを返金する",
-        refund_swap: "スワップの返金 {{ id }}",
+        refund_swap: "スワップを返金する",
         refund_a_swap_subline:
             "返金ファイルをアップロードし、ロックされた資金を回収します",
         refund_past_swaps: "過去のスワップ",
         refund_past_swaps_subline: "ブラウザのストレージに保存されたスワップ",
+        no_refundable_swaps:
+            "ブラウザの履歴に返金可能なスワップが見つかりません。",
+        cant_find_swap: "スワップが見つからない？",
+        refund_external_explainer:
+            "払い戻しファイルやその他の緊急手段を使って外部スワップを払い戻してみる。",
+        refund_external_explainer_rsk:
+            "Rootstockウォレットを接続して、このブラウザのスワップ履歴に保存されていない払い戻し可能なスワップをスキャンします。",
+        refund_external_scanning_rsk:
+            "Rootstockウォレットにある払い戻し可能なスワップをスキャンしています...",
+        connected_wallet_no_swaps:
+            "接続されているRootstockウォレットには返金可能なスワップが含まれていません。",
+        refund_external_swap: "払い戻し外部スワップ",
         history_no_swaps: "まだスワップを行っていないようです。",
         refund_address_header:
             "返金用の {{ asset }} ウォレットのアドレスを入力",
@@ -1168,6 +1230,8 @@ const dict = {
         refund_available_in: "返金は {{ blocks }} つのブロックに分かれる",
         tether: "L-USDt",
         no_wallet_connected: "財布はつながっていない！",
+        no_lockup_transaction: "ロックアップトランザクションが見つかりません",
+        routing_fee_limit: "ルーティング料金の上限",
     },
     ru: {
         language: "Русский",
@@ -1272,14 +1336,25 @@ const dict = {
         backup_refund_list_clear_history: "очистите историю браузера",
         backup_refund_skip:
             "Если что-то из вышеперечисленного применимо к Вам, мы настоятельно рекомендуем скачать этот файл возврата!",
-        refund_a_swap: "Возврат свопа",
         refund_swap: "Возврат свопа {{ id }}",
         refund_a_swap_subline:
             "Загрузите файл возврата и верните свои заблокированные средства",
         refund_past_swaps: "Прошлые свопы",
         refund_past_swaps_subline:
             "Свопы, сохраненные в памяти вашего браузера",
-        history_no_swaps: "Похоже, Вы еще не совершили свопы.",
+        history_no_swaps: "Похоже, Вы еще не совершили свопы",
+        no_refundable_swaps:
+            "В истории вашего браузера не найдено свопов на возврат",
+        cant_find_swap: "Не можете найти нужный своп?",
+        refund_external_explainer:
+            "Попробуйте вернуть внешний своп через файл возврата и другие экстренные методы",
+        refund_external_explainer_rsk:
+            "Подключите свой кошелек Rootstock для поиска возвращаемых свопов, которые не сохранены в истории свопов этого браузера.",
+        refund_external_scanning_rsk:
+            "Scanning for refundable swaps in your Rootstock Wallet...",
+        connected_wallet_no_swaps:
+            "Сканирование возвращаемых свопов в вашем кошельке Rootstock.",
+        refund_external_swap: "Возврат внешнего свопа",
         refund_address_header:
             "Введите адрес вашего {{ asset }} кошелька для возврата",
         refund_address_header_no_asset:
@@ -1408,6 +1483,8 @@ const dict = {
         refund_available_in: "Возврат будет доступен через {{blocks}} блоков",
         tether: "L-USDt",
         no_wallet_connected: "Кошелек не подключен",
+        no_lockup_transaction: "Транзакция блокировки не найдена",
+        routing_fee_limit: "Лимит платы за маршрутизацию",
     },
 };
 
