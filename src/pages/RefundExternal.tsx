@@ -54,14 +54,12 @@ export const RefundBtcLike = () => {
         } catch (e) {
             log.warn("Refund json validation failed", e);
             setRefundInvalid(RefundError.InvalidData);
-            input.setCustomValidity(t("invalid_refund_file"));
         }
     };
 
     const uploadChange = async (e: Event) => {
         const input = e.currentTarget as HTMLInputElement;
         const inputFile = input.files[0];
-        input.setCustomValidity("");
         setRefundJson(null);
         setRefundInvalid(undefined);
 
@@ -74,7 +72,6 @@ export const RefundBtcLike = () => {
             } catch (e) {
                 log.error("invalid QR code upload", e);
                 setRefundInvalid(RefundError.InvalidData);
-                input.setCustomValidity(t("invalid_refund_file"));
             }
         } else {
             try {
@@ -83,7 +80,6 @@ export const RefundBtcLike = () => {
             } catch (e) {
                 log.error("invalid file upload", e);
                 setRefundInvalid(RefundError.InvalidData);
-                input.setCustomValidity(t("invalid_refund_file"));
             }
         }
     };
