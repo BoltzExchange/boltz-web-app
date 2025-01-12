@@ -3,7 +3,14 @@ import { OutputType } from "boltz-core";
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
-import { Accessor, Setter, Show, createResource, createSignal } from "solid-js";
+import {
+    Accessor,
+    Setter,
+    Show,
+    createEffect,
+    createResource,
+    createSignal,
+} from "solid-js";
 import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
 import RefundEta from "../components/RefundEta";
@@ -124,34 +131,31 @@ export const RefundBtc = (props: {
     const [valid, setValid] = createSignal<boolean>(false);
     const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
 
-    const refundAddressChange = (evt: InputEvent, asset: string) => {
-        const input = evt.currentTarget as HTMLInputElement;
-        const inputValue = input.value.trim();
-
-        setRefundAddress(inputValue);
+    createEffect(() => {
+        const asset = props.swap()?.assetSend;
+        if (!asset) return;
 
         const lockupAddress =
             props.swap().type === SwapType.Submarine
                 ? (props.swap() as SubmarineSwap).address
                 : (props.swap() as ChainSwap).lockupDetails.lockupAddress;
 
-        if (inputValue === lockupAddress) {
+        if (refundAddress() === lockupAddress) {
             log.debug("refunds to lockup address are blocked");
-            return false;
+            setValid(false);
+        } else {
+            try {
+                getAddress(asset).toOutputScript(
+                    refundAddress(),
+                    getNetwork(asset) as LiquidNetwork,
+                );
+                setValid(true);
+            } catch (e) {
+                log.debug("parsing refund address failed", e);
+                setValid(false);
+            }
         }
-        try {
-            getAddress(asset).toOutputScript(
-                inputValue,
-                getNetwork(asset) as LiquidNetwork,
-            );
-            input.setCustomValidity("");
-            return true;
-        } catch (e) {
-            log.debug("parsing refund address failed", e);
-            input.setCustomValidity("invalid address");
-            return false;
-        }
-    };
+    });
 
     const refundAction = async () => {
         setRefundRunning(true);
@@ -262,9 +266,7 @@ export const RefundBtc = (props: {
                 id="refundAddress"
                 disabled={lockupTransaction.state == "errored"}
                 value={refundAddress()}
-                onInput={(e) =>
-                    setValid(refundAddressChange(e, props.swap()?.assetSend))
-                }
+                onInput={(e) => setRefundAddress(e.target.value.trim())}
                 type="text"
                 name="refundAddress"
                 placeholder={
