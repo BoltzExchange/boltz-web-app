@@ -121,6 +121,7 @@ const RefundButton = (props: {
         notify,
         t,
         backend,
+        setBackend,
     } = useGlobalContext();
     const { setSwap } = usePayContext();
     const [timeoutEta, setTimeoutEta] = createSignal<number | null>(null);
@@ -223,6 +224,10 @@ const RefundButton = (props: {
 
     onMount(async () => {
         if (!props.swap()) return;
+
+        if (props.swap().backend) {
+            setBackend(props.swap().backend);
+        }
 
         const transactionToRefund = await getLockupTransaction(
             backend(),
