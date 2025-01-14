@@ -39,7 +39,7 @@ import { getSwapStatus } from "../utils/boltzClient";
 const Pay = () => {
     const params = useParams();
 
-    const { getSwap, t } = useGlobalContext();
+    const { getSwap, t, setBackend } = useGlobalContext();
     const {
         swap,
         setSwap,
@@ -53,6 +53,10 @@ const Pay = () => {
         const currentSwap = await getSwap(params.id);
 
         if (currentSwap) {
+            if (currentSwap.backend) {
+                setBackend(currentSwap.backend);
+            }
+
             log.debug("selecting swap", currentSwap);
             setSwap(currentSwap);
 

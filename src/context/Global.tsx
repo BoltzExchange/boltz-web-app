@@ -22,6 +22,7 @@ import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
 import { formatError } from "../utils/errors";
+import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
@@ -106,7 +107,7 @@ const defaultReferral = () => {
         return proReferral;
     }
 
-    return "swapmarket";
+    return isMobile() ? "swapmarket_mobile" : "swapmarket";
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -149,7 +150,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         // eslint-disable-next-line solid/reactivity
         createSignal(defaultReferral()),
         {
-            name: config.network + referralIdKey,
+            name: referralIdKey,
             ...stringSerializer,
         },
     );
@@ -375,7 +376,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     // i18n
     createEffect(() => {
-        setI18n(i18nConfigured() || i18nUrl());
+        setI18n(detectLanguage(i18nConfigured() || i18nUrl()));
     });
     const dictLocale = createMemo(
         () => flatten(dict[i18n() || config.defaultLanguage]) as never,

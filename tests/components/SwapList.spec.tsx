@@ -19,7 +19,7 @@ describe("SwapList", () => {
 
         const {
             container: { firstChild: firstChild },
-        } = render(() => <SwapList swapsSignal={swapsSignal} />, {
+        } = render(() => <SwapList swapsSignal={swapsSignal} action="Test" />, {
             wrapper: contextWrapper,
         });
 

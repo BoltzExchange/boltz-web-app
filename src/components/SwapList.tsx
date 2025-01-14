@@ -9,6 +9,7 @@ import { SwapIcons } from "./SwapIcons";
 
 const SwapList = (props: {
     swapsSignal: Accessor<SomeSwap[]>;
+    action: string;
     onDelete?: () => Promise<unknown>;
 }) => {
     const navigate = useNavigate();
@@ -51,7 +52,7 @@ const SwapList = (props: {
                             class="swaplist-item"
                             onClick={() => navigate(`/swap/${swap.id}`)}>
                             <a class="btn-small hidden-mobile" href="#">
-                                {t("view")}
+                                {props.action}
                             </a>
                             <SwapIcons swap={swap} />
                             <span class="swaplist-asset-id">

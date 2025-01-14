@@ -7,6 +7,8 @@ on:
     workflows: ["CI"]  # Name of the upstream workflow
     types:
       - completed
+    branches:
+      - test  # Trigger only for the test branch
     
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

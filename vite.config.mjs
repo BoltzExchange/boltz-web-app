@@ -1,4 +1,6 @@
 import * as child from "child_process";
+import fs from "fs";
+import path from "path";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
@@ -10,6 +12,10 @@ const commitHash = child
     .execSync("git rev-parse --short HEAD")
     .toString()
     .trim();
+
+const packageJson = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "package.json"), "utf8"),
+);
 
 export default defineConfig({
     plugins: [
@@ -37,7 +43,7 @@ export default defineConfig({
         },
     },
     define: {
-        __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-        __GIT_COMMIT__: JSON.stringify(commitHash),
+        __APP_VERSION__: `"${packageJson.version}"`,
+        __GIT_COMMIT__: `"${commitHash}"`,
     },
 });
