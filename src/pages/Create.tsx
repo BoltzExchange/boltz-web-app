@@ -363,6 +363,7 @@ const Create = () => {
                             }
                             id="sendAmount"
                             data-testid="sendAmount"
+                            autocomplete="off"
                             value={sendAmountFormatted()}
                             onPaste={(e) => validatePaste(e)}
                             onKeyPress={(e) => validateInput(e)}
@@ -386,6 +387,7 @@ const Create = () => {
                             }
                             id="receiveAmount"
                             data-testid="receiveAmount"
+                            autocomplete="off"
                             value={receiveAmountFormatted()}
                             onPaste={(e) => validatePaste(e)}
                             onKeyPress={(e) => validateInput(e)}
