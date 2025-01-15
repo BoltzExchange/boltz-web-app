@@ -167,7 +167,8 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
 ): Promise<T> => {
     try {
         // We cannot use the context here, so we get the data directly from local storage
-        const externalBroadcast = localStorage.getItem(externalBroadcastIdKey);
+        const externalBroadcast =
+            localStorage.getItem(externalBroadcastIdKey) === "true";
 
         log.debug(
             "Broadcasting refund transaction via",
