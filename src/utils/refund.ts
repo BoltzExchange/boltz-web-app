@@ -12,6 +12,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { externalBroadcastIdKey } from "../consts/LocalStorage";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -26,7 +27,11 @@ import {
     getTransaction,
 } from "./compat";
 import { formatError } from "./errors";
-import { parseBlindingKey, parsePrivateKey } from "./helper";
+import {
+    broadcastToExplorer,
+    parseBlindingKey,
+    parsePrivateKey,
+} from "./helper";
 import { ChainSwap, SubmarineSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
@@ -161,10 +166,23 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
     txConstructionResponse: Awaited<ReturnType<typeof refundTaproot>>,
 ): Promise<T> => {
     try {
-        const res = await broadcastTransaction(
-            swap.assetSend,
-            txConstructionResponse.transaction.toHex(),
+        // We cannot use the context here, so we get the data directly from local storage
+        const externalBroadcast = localStorage.getItem(externalBroadcastIdKey);
+
+        log.debug(
+            "Broadcasting refund transaction via",
+            externalBroadcast ? "block explorer" : "Boltz backend",
         );
+        const res = externalBroadcast
+            ? await broadcastToExplorer(
+                  swap.assetSend,
+                  txConstructionResponse.transaction.toHex(),
+              )
+            : await broadcastTransaction(
+                  swap.assetSend,
+                  txConstructionResponse.transaction.toHex(),
+              );
+
         log.debug("Refund broadcast result", res);
         if (res.id) {
             swap.refundTx = res.id;

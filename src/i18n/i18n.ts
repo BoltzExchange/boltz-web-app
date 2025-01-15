@@ -495,6 +495,9 @@ const dict = {
         no_wallet_connected: "Kein Wallet verbunden",
         no_lockup_transaction: "Keine Lockup-Transaktion gefunden",
         routing_fee_limit: "Routing Gebühr Limit",
+        broadcast_setting: "Externe Sendung",
+        broadcast_setting_tooltip:
+            "Verwenden Sie Drittanbieter-Block-Explorer, um Anspruchs- und Rückerstattungstransaktionen zu senden.",
     },
     es: {
         language: "Español",
@@ -743,6 +746,9 @@ const dict = {
         no_wallet_connected: "No hay monedero conectado",
         no_lockup_transaction: "No se encontró ninguna transacción de lockup",
         routing_fee_limit: "Límite de la tarifa de enrutamiento",
+        broadcast_setting: "Transmisión Externa",
+        broadcast_setting_tooltip:
+            "Utilice exploradores de bloques de terceros para transmitir transacciones de reclamación y reembolso",
     },
     zh: {
         language: "中文",
@@ -964,6 +970,8 @@ const dict = {
         no_wallet_connected: "未连接钱包",
         no_lockup_transaction: "未找到锁仓交易",
         routing_fee_limit: "最大路由费用",
+        broadcast_setting: "外部广播",
+        broadcast_setting_tooltip: "使用第三方区块浏览器广播索赔和退款交易",
     },
     ja: {
         language: "日本語",
@@ -1211,6 +1219,9 @@ const dict = {
         no_wallet_connected: "財布はつながっていない！",
         no_lockup_transaction: "ロックアップトランザクションが見つかりません",
         routing_fee_limit: "ルーティング料金の上限",
+        broadcast_setting: "外部ブロードキャスト",
+        broadcast_setting_tooltip:
+            "クレームおよび返金トランザクションを送信するために、サードパーティのブロックエクスプローラーを使用してください",
     },
 };
 

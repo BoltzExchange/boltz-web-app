@@ -131,3 +131,33 @@ export const parsePrivateKey = (privateKey: string): ECPairInterface => {
         return ECPair.fromWIF(privateKey);
     }
 };
+
+// posts transaction to a block explorer
+export const broadcastToExplorer = async (
+    asset: string,
+    txHex: string,
+): Promise<{ id: string }> => {
+    const basePath = chooseUrl(config.assets[asset].blockExplorerUrl);
+
+    const opts: RequestInit = {
+        method: "POST",
+        body: txHex,
+    };
+
+    const apiUrl = basePath + "/api/tx/";
+    const response = await fetch(apiUrl, opts);
+    if (!response.ok) {
+        try {
+            const body = await response.json();
+            return Promise.reject(formatError(body));
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {
+            return Promise.reject(response);
+        }
+    }
+
+    return {
+        id: await response.text(),
+    };
+};
