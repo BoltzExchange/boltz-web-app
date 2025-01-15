@@ -240,6 +240,9 @@ const dict = {
         no_wallet_connected: "No wallet connected",
         no_lockup_transaction: "No lockup transaction found",
         routing_fee_limit: "Routing fee limit",
+        broadcast_setting: "External Broadcast",
+        broadcast_setting_tooltip:
+            "Use third-party block explorers for broadcasting claim and refund transactions",
     },
     de: {
         language: "Deutsch",
