@@ -189,7 +189,7 @@ const Pay = () => {
                 </Show>
             </Show>
             <Show when={!swap()}>
-                <p>{t("pay_swap_404")}</p>
+                <h2 class="not-found">{t("pay_swap_404")}</h2>
             </Show>
             <SettingsMenu />
         </div>
