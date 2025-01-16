@@ -144,7 +144,7 @@ export const broadcastToExplorer = async (
         body: txHex,
     };
 
-    const apiUrl = basePath + "/api/tx/";
+    const apiUrl = basePath + "/api/tx";
     const response = await fetch(apiUrl, opts);
     if (!response.ok) {
         try {
