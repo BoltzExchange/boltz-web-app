@@ -147,14 +147,7 @@ export const broadcastToExplorer = async (
     const apiUrl = basePath + "/api/tx";
     const response = await fetch(apiUrl, opts);
     if (!response.ok) {
-        try {
-            const body = await response.json();
-            return Promise.reject(formatError(body));
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
-            return Promise.reject(response);
-        }
+        return Promise.reject(response.statusText);
     }
 
     return {
