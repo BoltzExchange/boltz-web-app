@@ -332,20 +332,14 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     log.debug("Broadcasting claim transaction");
 
     if (externalBroadcast) {
-        const res = await broadcastToExplorer(
-            asset,
-            claimTransaction.toHex(),
-        );
+        const res = await broadcastToExplorer(asset, claimTransaction.toHex());
         log.debug("Claim transaction broadcast result via explorer", res);
         if (res.id) {
             swap.claimTx = res.id;
         }
-    } 
+    }
 
-    const res = await broadcastTransaction(
-        asset,
-        claimTransaction.toHex(),
-    );
+    const res = await broadcastTransaction(asset, claimTransaction.toHex());
     log.debug("Claim transaction broadcast result via backend", res);
     if (res.id) {
         swap.claimTx = res.id;

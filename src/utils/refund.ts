@@ -177,7 +177,7 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
             if (res.id) {
                 swap.refundTx = res.id;
             }
-        } 
+        }
 
         const res = await broadcastTransaction(
             swap.assetSend,
