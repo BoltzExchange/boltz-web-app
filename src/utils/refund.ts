@@ -166,39 +166,25 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
     externalBroadcast: boolean,
 ): Promise<T> => {
     try {
-        log.debug(
-            "Broadcasting refund transaction via",
-            externalBroadcast ? "block explorer" : "Boltz backend",
-        );
-
-        let res: {
-            id: string;
-        };
-
+        log.debug("Broadcasting refund transaction");
         if (externalBroadcast) {
-            try {
-                res = await broadcastToExplorer(
-                    swap.assetSend,
-                    txConstructionResponse.transaction.toHex(),
-                );
-            } catch (e) {
-                log.debug(
-                    "Broadcast to explorer failed, falling back to backend",
-                    e,
-                );
-                res = await broadcastTransaction(
-                    swap.assetSend,
-                    txConstructionResponse.transaction.toHex(),
-                );
-            }
-        } else {
-            res = await broadcastTransaction(
+            const res = await broadcastToExplorer(
                 swap.assetSend,
                 txConstructionResponse.transaction.toHex(),
             );
-        }
 
-        log.debug("Refund broadcast result", res);
+            log.debug("Refund broadcast result via explorer", res);
+            if (res.id) {
+                swap.refundTx = res.id;
+            }
+        } 
+
+        const res = await broadcastTransaction(
+            swap.assetSend,
+            txConstructionResponse.transaction.toHex(),
+        );
+
+        log.debug("Refund broadcast result via backend", res);
         if (res.id) {
             swap.refundTx = res.id;
         }

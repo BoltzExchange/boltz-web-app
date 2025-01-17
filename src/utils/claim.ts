@@ -329,38 +329,24 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
         );
     }
 
-    log.debug(
-        "Broadcasting claim transaction via",
-        externalBroadcast ? "block explorer" : "Boltz backend",
-    );
-
-    let res: {
-        id: string;
-    };
+    log.debug("Broadcasting claim transaction");
 
     if (externalBroadcast) {
-        try {
-            res = await broadcastToExplorer(
-                swap.assetSend,
-                claimTransaction.toHex(),
-            );
-        } catch (e) {
-            log.debug(
-                "Broadcast to explorer failed, falling back to backend",
-                e,
-            );
-            res = await broadcastTransaction(
-                swap.assetSend,
-                claimTransaction.toHex(),
-            );
-        }
-    } else {
-        res = await broadcastTransaction(
-            swap.assetSend,
+        const res = await broadcastToExplorer(
+            asset,
             claimTransaction.toHex(),
         );
-    }
-    log.debug("Claim transaction broadcast result", res);
+        log.debug("Claim transaction broadcast result via explorer", res);
+        if (res.id) {
+            swap.claimTx = res.id;
+        }
+    } 
+
+    const res = await broadcastTransaction(
+        asset,
+        claimTransaction.toHex(),
+    );
+    log.debug("Claim transaction broadcast result via backend", res);
     if (res.id) {
         swap.claimTx = res.id;
     }
