@@ -240,9 +240,9 @@ const dict = {
         no_wallet_connected: "No wallet connected",
         no_lockup_transaction: "No lockup transaction found",
         routing_fee_limit: "Routing fee limit",
-        broadcast_setting: "External Broadcast",
+        broadcast_setting: "Prefer External Broadcast",
         broadcast_setting_tooltip:
-            "Use third-party block explorers for broadcasting claim and refund transactions",
+            "Use third-party block explorers for broadcasting claim and refund transactions. If fails, fall back to Boltz backend.",
     },
     de: {
         language: "Deutsch",
@@ -495,9 +495,9 @@ const dict = {
         no_wallet_connected: "Kein Wallet verbunden",
         no_lockup_transaction: "Keine Lockup-Transaktion gefunden",
         routing_fee_limit: "Routing Gebühr Limit",
-        broadcast_setting: "Externe Sendung",
+        broadcast_setting: "Bevorzugte externe Sendung",
         broadcast_setting_tooltip:
-            "Verwenden Sie Drittanbieter-Block-Explorer, um Anspruchs- und Rückerstattungstransaktionen zu senden.",
+            "Verwenden Sie Drittanbieter-Blockexplorer, um Anspruchs- und Rückerstattungstransaktionen zu senden. Falls dies fehlschlägt, wird auf das Boltz-Backend zurückgegriffen.",
     },
     es: {
         language: "Español",
@@ -746,9 +746,9 @@ const dict = {
         no_wallet_connected: "No hay monedero conectado",
         no_lockup_transaction: "No se encontró ninguna transacción de lockup",
         routing_fee_limit: "Límite de la tarifa de enrutamiento",
-        broadcast_setting: "Transmisión Externa",
+        broadcast_setting: "Preferir transmisión externa",
         broadcast_setting_tooltip:
-            "Utilice exploradores de bloques de terceros para transmitir transacciones de reclamación y reembolso",
+            "Utilice exploradores de bloques de terceros para transmitir transacciones de reclamo y reembolso. Si falla, se recurrirá al backend de Boltz.",
     },
     zh: {
         language: "中文",
@@ -970,8 +970,9 @@ const dict = {
         no_wallet_connected: "未连接钱包",
         no_lockup_transaction: "未找到锁仓交易",
         routing_fee_limit: "最大路由费用",
-        broadcast_setting: "外部广播",
-        broadcast_setting_tooltip: "使用第三方区块浏览器广播索赔和退款交易",
+        broadcast_setting: "优先使用外部广播",
+        broadcast_setting_tooltip:
+            "使用第三方区块浏览器广播认领和退款交易。如果失败，则退回使用Boltz后台。",
     },
     ja: {
         language: "日本語",
@@ -1219,9 +1220,9 @@ const dict = {
         no_wallet_connected: "財布はつながっていない！",
         no_lockup_transaction: "ロックアップトランザクションが見つかりません",
         routing_fee_limit: "ルーティング料金の上限",
-        broadcast_setting: "外部ブロードキャスト",
+        broadcast_setting: "外部ブロードキャストを優先",
         broadcast_setting_tooltip:
-            "クレームおよび返金トランザクションを送信するために、サードパーティのブロックエクスプローラーを使用してください",
+            "請求および返金取引をブロードキャストする際にサードパーティのブロックエクスプローラーを使用します。失敗した場合は、Boltzバックエンドを使用します。",
     },
 };
 
