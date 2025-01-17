@@ -242,7 +242,7 @@ const dict = {
         routing_fee_limit: "Routing fee limit",
         broadcast_setting: "External Broadcast",
         broadcast_setting_tooltip:
-            "Use third-party block explorers for broadcasting claim and refund transactions in addition to Boltz backend.",
+            "Use third-party block explorers for broadcasting claim and refund transactions in addition to Boltz backend",
     },
     de: {
         language: "Deutsch",
@@ -497,7 +497,7 @@ const dict = {
         routing_fee_limit: "Routing Gebühr Limit",
         broadcast_setting: "Externe Sendung",
         broadcast_setting_tooltip:
-            "Verwenden Sie Drittanbieter-Blockexplorer, um Anspruchs- und Rückerstattungstransaktionen zusätzlich zum Boltz-Backend zu senden.",
+            "Verwenden Sie Drittanbieter-Blockexplorer, um Anspruchs- und Rückerstattungstransaktionen zusätzlich zum Boltz-Backend zu senden",
     },
     es: {
         language: "Español",
@@ -972,7 +972,7 @@ const dict = {
         routing_fee_limit: "最大路由费用",
         broadcast_setting: "外部广播",
         broadcast_setting_tooltip:
-            "除了Boltz后台外，还使用第三方区块浏览器广播认领和退款交易。",
+            "除了Boltz后台外，还使用第三方区块浏览器广播认领和退款交易",
     },
     ja: {
         language: "日本語",
@@ -1222,7 +1222,7 @@ const dict = {
         routing_fee_limit: "ルーティング料金の上限",
         broadcast_setting: "外部ブロードキャスト",
         broadcast_setting_tooltip:
-            "Boltzバックエンドに加えて、サードパーティのブロックエクスプローラーを使用して請求および返金取引をブロードキャストします。",
+            "Boltzバックエンドに加えて、サードパーティのブロックエクスプローラーを使用して請求および返金取引をブロードキャストします",
     },
 };
 
