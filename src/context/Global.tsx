@@ -16,7 +16,7 @@ import type { JSX } from "solid-js";
 
 import { config } from "../config";
 import { Denomination } from "../consts/Enums";
-import { externalBroadcastIdKey, referralIdKey } from "../consts/LocalStorage";
+import { referralIdKey } from "../consts/LocalStorage";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
@@ -373,7 +373,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
         {
-            name: externalBroadcastIdKey,
+            name: "externalBroadcast",
         },
     );
 

@@ -11,7 +11,6 @@ import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { externalBroadcastIdKey } from "../consts/LocalStorage";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -303,7 +302,8 @@ const claimChainSwap = async (
 export const claim = async <T extends ReverseSwap | ChainSwap>(
     swap: T,
     swapStatusTransaction: { hex: string },
-    cooperative: boolean = true,
+    cooperative: boolean,
+    externalBroadcast: boolean,
 ): Promise<T | undefined> => {
     const asset = getRelevantAssetForSwap(swap);
     if (asset === RBTC) {
@@ -329,18 +329,37 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
         );
     }
 
-    // We cannot use the context here, so we get the data directly from local storage
-    // Avoid broadcasting via a non-cooperating backend
-    const externalBroadcast =
-        localStorage.getItem(externalBroadcastIdKey) === "true" || !cooperative;
-
     log.debug(
         "Broadcasting claim transaction via",
         externalBroadcast ? "block explorer" : "Boltz backend",
     );
-    const res = externalBroadcast
-        ? await broadcastToExplorer(asset, claimTransaction.toHex())
-        : await broadcastTransaction(asset, claimTransaction.toHex());
+
+    let res: {
+        id: string;
+    };
+
+    if (externalBroadcast) {
+        try {
+            res = await broadcastToExplorer(
+                swap.assetSend,
+                claimTransaction.toHex(),
+            );
+        } catch (e) {
+            log.debug(
+                "Broadcast to explorer failed, falling back to backend",
+                e,
+            );
+            res = await broadcastTransaction(
+                swap.assetSend,
+                claimTransaction.toHex(),
+            );
+        }
+    } else {
+        res = await broadcastTransaction(
+            swap.assetSend,
+            claimTransaction.toHex(),
+        );
+    }
     log.debug("Claim transaction broadcast result", res);
     if (res.id) {
         swap.claimTx = res.id;

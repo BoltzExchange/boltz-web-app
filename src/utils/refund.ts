@@ -12,7 +12,6 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { externalBroadcastIdKey } from "../consts/LocalStorage";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -164,25 +163,40 @@ const refundTaproot = async <T extends TransactionInterface>(
 const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
     txConstructionResponse: Awaited<ReturnType<typeof refundTaproot>>,
+    externalBroadcast: boolean,
 ): Promise<T> => {
     try {
-        // We cannot use the context here, so we get the data directly from local storage
-        const externalBroadcast =
-            localStorage.getItem(externalBroadcastIdKey) === "true";
-
         log.debug(
             "Broadcasting refund transaction via",
             externalBroadcast ? "block explorer" : "Boltz backend",
         );
-        const res = externalBroadcast
-            ? await broadcastToExplorer(
-                  swap.assetSend,
-                  txConstructionResponse.transaction.toHex(),
-              )
-            : await broadcastTransaction(
-                  swap.assetSend,
-                  txConstructionResponse.transaction.toHex(),
-              );
+
+        let res: {
+            id: string;
+        };
+
+        if (externalBroadcast) {
+            try {
+                res = await broadcastToExplorer(
+                    swap.assetSend,
+                    txConstructionResponse.transaction.toHex(),
+                );
+            } catch (e) {
+                log.debug(
+                    "Broadcast to explorer failed, falling back to backend",
+                    e,
+                );
+                res = await broadcastTransaction(
+                    swap.assetSend,
+                    txConstructionResponse.transaction.toHex(),
+                );
+            }
+        } else {
+            res = await broadcastTransaction(
+                swap.assetSend,
+                txConstructionResponse.transaction.toHex(),
+            );
+        }
 
         log.debug("Refund broadcast result", res);
         if (res.id) {
@@ -204,7 +218,8 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
     refundAddress: string,
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
-    cooperative: boolean = true,
+    cooperative: boolean,
+    externalBroadcast: boolean,
 ): Promise<T> => {
     log.info(`Refunding swap ${swap.id}: `, swap);
 
@@ -265,5 +280,5 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
         };
     }
 
-    return broadcastRefund(swap, refundTransaction);
+    return broadcastRefund(swap, refundTransaction, externalBroadcast);
 };

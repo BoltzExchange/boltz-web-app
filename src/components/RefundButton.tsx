@@ -119,6 +119,7 @@ export const RefundBtc = (props: {
         setRefundAddress,
         refundAddress,
         notify,
+        externalBroadcast,
         t,
     } = useGlobalContext();
     const { setSwap } = usePayContext();
@@ -165,6 +166,8 @@ export const RefundBtc = (props: {
                 props.swap(),
                 refundAddress(),
                 lockupTransaction(),
+                true,
+                externalBroadcast(),
             );
 
             // save refundTx into swaps json and set it to the current swap
