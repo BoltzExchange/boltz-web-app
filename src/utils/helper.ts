@@ -149,11 +149,10 @@ export const broadcastToExplorer = async (
     if (!response.ok) {
         try {
             const body = await response.json();
-            return Promise.reject(formatError(body));
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
-            return Promise.reject(response);
+            throw formatError(body);
+        } catch {
+            // If parsing JSON fails, throw a generic error with status text
+            throw response.statusText;
         }
     }
 

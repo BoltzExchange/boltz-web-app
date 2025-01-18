@@ -27,11 +27,7 @@ import {
     getOutputAmount,
     getTransaction,
 } from "./compat";
-import {
-    broadcastToExplorer,
-    parseBlindingKey,
-    parsePrivateKey,
-} from "./helper";
+import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
 import {
     ChainSwap,
@@ -330,17 +326,13 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     }
 
     log.debug("Broadcasting claim transaction");
+    const res = await broadcastTransaction(
+        asset,
+        claimTransaction.toHex(),
+        externalBroadcast,
+    );
+    log.debug("Claim transaction broadcast result", res);
 
-    if (externalBroadcast) {
-        const res = await broadcastToExplorer(asset, claimTransaction.toHex());
-        log.debug("Claim transaction broadcast result via explorer", res);
-        if (res.id) {
-            swap.claimTx = res.id;
-        }
-    }
-
-    const res = await broadcastTransaction(asset, claimTransaction.toHex());
-    log.debug("Claim transaction broadcast result via backend", res);
     if (res.id) {
         swap.claimTx = res.id;
     }

@@ -26,11 +26,7 @@ import {
     getTransaction,
 } from "./compat";
 import { formatError } from "./errors";
-import {
-    broadcastToExplorer,
-    parseBlindingKey,
-    parsePrivateKey,
-} from "./helper";
+import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { ChainSwap, SubmarineSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
@@ -167,24 +163,12 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
 ): Promise<T> => {
     try {
         log.debug("Broadcasting refund transaction");
-        if (externalBroadcast) {
-            const res = await broadcastToExplorer(
-                swap.assetSend,
-                txConstructionResponse.transaction.toHex(),
-            );
-
-            log.debug("Refund broadcast result via explorer", res);
-            if (res.id) {
-                swap.refundTx = res.id;
-            }
-        }
-
         const res = await broadcastTransaction(
             swap.assetSend,
             txConstructionResponse.transaction.toHex(),
+            externalBroadcast,
         );
-
-        log.debug("Refund broadcast result via backend", res);
+        log.debug("Refund broadcast result", res);
         if (res.id) {
             swap.refundTx = res.id;
         }
