@@ -138,14 +138,11 @@ export const broadcastToExplorer = async (
     txHex: string,
 ): Promise<{ id: string }> => {
     const basePath = chooseUrl(config.assets[asset].blockExplorerUrl);
-
-    const opts: RequestInit = {
+    const response = await fetch(`${basePath}/api/tx`, {
         method: "POST",
         body: txHex,
-    };
+    });
 
-    const apiUrl = basePath + "/api/tx";
-    const response = await fetch(apiUrl, opts);
     if (!response.ok) {
         try {
             const body = await response.json();

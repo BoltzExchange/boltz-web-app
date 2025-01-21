@@ -242,7 +242,7 @@ const dict = {
         routing_fee_limit: "Routing fee limit",
         broadcast_setting: "External Broadcast",
         broadcast_setting_tooltip:
-            "Use third-party block explorers for broadcasting claim and refund transactions in addition to Boltz backend",
+            "Also use the block explorer to broadcast transactions",
     },
     de: {
         language: "Deutsch",
@@ -495,9 +495,9 @@ const dict = {
         no_wallet_connected: "Kein Wallet verbunden",
         no_lockup_transaction: "Keine Lockup-Transaktion gefunden",
         routing_fee_limit: "Routing Gebühr Limit",
-        broadcast_setting: "Externe Sendung",
+        broadcast_setting: "Externer Broadcast",
         broadcast_setting_tooltip:
-            "Verwenden Sie Drittanbieter-Blockexplorer, um Anspruchs- und Rückerstattungstransaktionen zusätzlich zum Boltz-Backend zu senden",
+            "Verwende auch den Block Explorer, um Transaktionen zu senden",
     },
     es: {
         language: "Español",
@@ -748,7 +748,7 @@ const dict = {
         routing_fee_limit: "Límite de la tarifa de enrutamiento",
         broadcast_setting: "Transmisión externa",
         broadcast_setting_tooltip:
-            "Utilice exploradores de bloques de terceros para transmitir transacciones de reclamo y reembolso además del backend de Boltz",
+            "También use el explorador de bloques para transmitir transacciones",
     },
     zh: {
         language: "中文",
@@ -971,8 +971,7 @@ const dict = {
         no_lockup_transaction: "未找到锁仓交易",
         routing_fee_limit: "最大路由费用",
         broadcast_setting: "外部广播",
-        broadcast_setting_tooltip:
-            "除了Boltz后台外，还使用第三方区块浏览器广播认领和退款交易",
+        broadcast_setting_tooltip: "使用区块浏览器发送认领和退款交易",
     },
     ja: {
         language: "日本語",
@@ -1220,9 +1219,9 @@ const dict = {
         no_wallet_connected: "財布はつながっていない！",
         no_lockup_transaction: "ロックアップトランザクションが見つかりません",
         routing_fee_limit: "ルーティング料金の上限",
-        broadcast_setting: "外部ブロードキャスト",
+        broadcast_setting: "外部放送",
         broadcast_setting_tooltip:
-            "Boltzバックエンドに加えて、サードパーティのブロックエクスプローラーを使用して請求および返金取引をブロードキャストします",
+            "ブロック・エクスプローラーを使ってトランザクションをブロードキャストする",
     },
 };
 
