@@ -355,41 +355,32 @@ export const getContracts = () =>
 export const broadcastTransaction = async (
     asset: string,
     txHex: string,
-    externalBroadcast: boolean,
+    externalBroadcast: boolean = false,
 ): Promise<{
     id: string;
 }> => {
     const promises: Promise<{
         id: string;
-    }>[] = [];
-
-    // broadcast to Boltz backend
-    promises.push(
+    }>[] = [
         fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, {
             hex: txHex,
         }),
-    );
+    ];
 
-    // broadcast to block explorer
     if (externalBroadcast) {
         promises.push(broadcastToExplorer(asset, txHex));
     }
 
-    // Wait for all promises to settle
     const results = await Promise.allSettled(promises);
-    let reason = "";
-
-    // Process the results
-    for (const result of results) {
-        if (result.status === "fulfilled") {
-            // Return the first successful transaction ID
-            return result.value;
-        }
-        reason = result.reason;
+    const successfulResult = results.find(
+        (result) => result.status === "fulfilled",
+    );
+    if (successfulResult) {
+        return (successfulResult as PromiseFulfilledResult<{ id: string }>)
+            .value;
     }
 
-    // If no promises resolved successfully, return the last reason
-    throw reason;
+    throw (results[0] as PromiseRejectedResult).reason;
 };
 
 export const getLockupTransaction = async (
