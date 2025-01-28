@@ -1499,6 +1499,9 @@ const dict = {
         no_wallet_connected: "Кошелек не подключен",
         no_lockup_transaction: "Транзакция блокировки не найдена",
         routing_fee_limit: "Лимит платы за маршрутизацию",
+        broadcast_setting: "Внешняя трансляция",
+        broadcast_setting_tooltip:
+            "Также использовать обозреватель блоков для трансляции транзакций.",
     },
 };
 
