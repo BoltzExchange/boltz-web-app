@@ -160,12 +160,15 @@ const refundTaproot = async <T extends TransactionInterface>(
 const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
     txConstructionResponse: Awaited<ReturnType<typeof refundTaproot>>,
+    externalBroadcast: boolean,
 ): Promise<T> => {
     try {
+        log.debug("Broadcasting refund transaction");
         const res = await broadcastTransaction(
             swap.backend || 0,
             swap.assetSend,
             txConstructionResponse.transaction.toHex(),
+            externalBroadcast,
         );
         log.debug("Refund broadcast result", res);
         if (res.id) {
@@ -187,7 +190,8 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
     refundAddress: string,
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
-    cooperative: boolean = true,
+    cooperative: boolean,
+    externalBroadcast: boolean,
 ): Promise<T> => {
     log.info(`Refunding swap ${swap.id}: `, swap);
 
@@ -250,5 +254,5 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
         };
     }
 
-    return broadcastRefund(swap, refundTransaction);
+    return broadcastRefund(swap, refundTransaction, externalBroadcast);
 };

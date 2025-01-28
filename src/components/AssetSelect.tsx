@@ -49,6 +49,8 @@ const SelectAsset = () => {
                 setAssetSend(assetReceive());
             }
             setAssetReceive(newAsset);
+            // always clear onchain address if assetChange did change
+            setOnchainAddress("");
         }
 
         void fetchPairs()
