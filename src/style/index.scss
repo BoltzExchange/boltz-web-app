@@ -90,7 +90,7 @@ hr.spacer {
     left: 10px;
     cursor: pointer;
     &:hover {
-        background-color: rgba(255, 255, 255, 0.25);
+        background: rgb(20, 40, 63);
     }
 }
 
@@ -381,6 +381,72 @@ textarea {
         color: rgb(247, 147, 26);
         background-color: rgb(23, 34, 46);
         border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+}
+.denomination-desktop {
+    display: flex;
+    max-width: max-content;
+    flex-grow: 0;
+    gap: 1px;
+    padding: 2px;
+    height: fit-content;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    background: rgb(11, 22, 34);
+    border-radius: 20px;
+    span {
+        filter: grayscale(1);
+    }
+    button {
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        flex-grow: 0;
+        gap: 10px;
+        padding: 0.3rem 0.9rem;
+        background: rgb(11, 22, 34);
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        position: relative;
+        box-sizing: border-box;
+        border: 1px solid transparent; // ensures the button is always the same size
+        &:first-child {
+            border-radius: 20px 0 0 20px;
+        }
+        &:last-child {
+            border-radius: 0 20px 20px 0;
+        }
+        &:hover {
+            background: rgb(20, 40, 63);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px dashed rgba(255, 175, 75, 0.15);
+        }
+        &.active {
+            color: vars.$primary;
+            background-color: rgb(30, 45, 60);
+            border: 1px dashed rgba(255, 175, 75, 0.2);
+            span {
+                filter: none;
+            }
+        }
+        // for keyboard navigation
+        &:focus-visible {
+            outline: none;
+            border: 1px solid vars.$primary;
+        }
+        &.active:focus-visible {
+            outline: none;
+            border: 1px solid vars.$primary;
+        }
+    }
+}
+@media (max-width: 488px) {
+    .denomination-desktop {
+        display: none;
+    }
+}
+@media (min-width: 489px) {
+    .denomination-mobile {
+        display: none;
     }
 }
 .denomination img {
