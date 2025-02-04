@@ -219,6 +219,20 @@ export const Hero = () => {
                             class="stashPay"
                         />
                     </div>
+                    <div>
+                        <a
+                            href="https://tropykus.com"
+                            target="_blank"
+                            class="tropykus"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://www.tryspeed.com/"
+                            target="_blank"
+                            class="speed"
+                        />
+                    </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
