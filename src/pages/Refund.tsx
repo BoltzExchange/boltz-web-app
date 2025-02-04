@@ -27,17 +27,17 @@ const Refund = () => {
             setRefundableSwaps(refundableSwaps().concat(swap));
         };
 
-        const swapsToRefund = (await getSwaps())
+        const allSwaps = await getSwaps();
+
+        const swapsToRefund = allSwaps
             .filter(refundSwapsSanityFilter)
-            .filter((swap) =>
-                [
-                    swapStatusFailed.InvoiceFailedToPay,
-                    swapStatusFailed.TransactionLockupFailed,
-                ].includes(swap.status),
+            .filter(
+                (swap) =>
+                    swapStatusFailed.TransactionLockupFailed === swap.status,
             );
         setRefundableSwaps(swapsToRefund);
 
-        void (await getSwaps())
+        void allSwaps
             .filter(refundSwapsSanityFilter)
             .filter(
                 (swap) =>
@@ -53,12 +53,7 @@ const Refund = () => {
                         !(await updateSwapStatus(swap.id, res.status)) &&
                         Object.values(swapStatusFailed).includes(res.status)
                     ) {
-                        if (res.status !== swapStatusFailed.SwapExpired) {
-                            addToRefundableSwaps(swap);
-                            return;
-                        }
-
-                        // Make sure coins were locked for the swap with the status "swap.expired"
+                        // Make sure coins were locked for the swaps with status "swap.expired" or "swap.failedToPay"
                         await getLockupTransaction(swap.id, swap.type);
                         addToRefundableSwaps(swap);
                     }
