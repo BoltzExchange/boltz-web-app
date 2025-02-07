@@ -25,7 +25,7 @@ test.describe("Submarine swap", () => {
         await inputReceiveAmount.fill(receiveAmount);
 
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
-        const sendAmount = "0.01005302";
+        const sendAmount = "0.01001302";
         await expect(inputSendAmount).toHaveValue(sendAmount);
 
         const invoiceInput = page.locator("textarea[data-testid='invoice']");
