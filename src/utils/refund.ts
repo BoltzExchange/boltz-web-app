@@ -12,6 +12,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import {
     TransactionInterface,
@@ -82,7 +83,7 @@ const refundTaproot = async <T extends TransactionInterface>(
         swap.assetSend,
         swap.assetSend === LBTC && decodedAddress.blindingKey === undefined,
     );
-    const claimTx = constructRefundTransaction(
+    const refundTx = constructRefundTransaction(
         details,
         decodedAddress.script,
         cooperative ? 0 : timeoutBlockHeight,
@@ -95,7 +96,7 @@ const refundTaproot = async <T extends TransactionInterface>(
     if (!cooperative) {
         return {
             cooperativeError,
-            transaction: claimTx as T,
+            transaction: refundTx as T,
         };
     }
 
@@ -104,7 +105,7 @@ const refundTaproot = async <T extends TransactionInterface>(
             swap.id,
             swap.type,
             Buffer.from(musig.getPublicNonce()),
-            claimTx,
+            refundTx,
             0,
         );
         musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
@@ -113,17 +114,17 @@ const refundTaproot = async <T extends TransactionInterface>(
                 swap.assetSend,
                 getNetwork(swap.assetSend),
                 details,
-                claimTx,
+                refundTx,
                 0,
             ),
         );
         musig.signPartial();
         musig.addPartial(boltzPublicKey, boltzSig.signature);
 
-        claimTx.ins[0].witness = [musig.aggregatePartials()];
+        refundTx.ins[0].witness = [musig.aggregatePartials()];
 
         return {
-            transaction: claimTx as T,
+            transaction: refundTx as T,
         };
     } catch (e) {
         if (!cooperative) {
@@ -186,6 +187,7 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
 };
 
 export const refund = async <T extends SubmarineSwap | ChainSwap>(
+    deriveKey: deriveKeyFn,
     swap: T,
     refundAddress: string,
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
@@ -201,7 +203,11 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     const lockupTransaction = getTransaction(swap.assetSend).fromHex(
         transactionToRefund.hex,
     );
-    const privateKey = parsePrivateKey(swap.refundPrivateKey);
+    const privateKey = parsePrivateKey(
+        deriveKey,
+        swap.refundPrivateKeyIndex,
+        swap.refundPrivateKey,
+    );
 
     let refundTransaction: Awaited<ReturnType<typeof refundTaproot>>;
 

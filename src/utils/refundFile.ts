@@ -1,6 +1,7 @@
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { migrateSwapToChainSwapFormat } from "./migration";
+import { RecoveryFile, getXpub } from "./recoveryFile";
 
 const getRequiredKeys = (
     isLegacy: boolean,
@@ -63,4 +64,16 @@ export const validateRefundFile = (
     }
 
     return data as { id: string } & Record<string, string | object | number>;
+};
+
+export const validateRecoveryFile = (
+    data: Record<string, string | object | number | boolean>,
+): RecoveryFile => {
+    if (!("xpriv" in data)) {
+        throw "invalid recovery file";
+    }
+
+    getXpub(data as RecoveryFile);
+
+    return data as RecoveryFile;
 };

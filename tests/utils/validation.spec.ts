@@ -4,6 +4,7 @@ import log from "loglevel";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import { decodeAddress } from "../../src/utils/compat";
+import { ECPair } from "../../src/utils/ecpair";
 import { validateInvoice, validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
@@ -126,7 +127,15 @@ describe("validate responses", () => {
             "$desc",
             async ({ valid, contractCode, swap }) => {
                 await expect(
-                    validateResponse(swap, getEtherSwap(contractCode), Buffer),
+                    validateResponse(
+                        swap,
+                        () =>
+                            ECPair.fromPrivateKey(
+                                Buffer.from(swap.refundPrivateKey, "hex"),
+                            ),
+                        getEtherSwap(contractCode),
+                        Buffer,
+                    ),
                 ).resolves.toBe(valid);
             },
         );
@@ -227,7 +236,15 @@ describe("validate responses", () => {
             async ({ valid, contractCode, swap }) => {
                 const contract = getEtherSwap(contractCode);
                 await expect(
-                    validateResponse(swap, contract, Buffer),
+                    validateResponse(
+                        swap,
+                        () =>
+                            ECPair.fromPrivateKey(
+                                Buffer.from(swap.claimPrivateKey, "hex"),
+                            ),
+                        contract,
+                        Buffer,
+                    ),
                 ).resolves.toBe(valid);
             },
         );
@@ -289,8 +306,10 @@ describe("validate responses", () => {
                 "fb3c3e61382685211dd5f03e35b4d0df9fbfddb4059a8d2dfaae7f580f001d8c",
             claimPrivateKey:
                 "9ed53293ce06b679796035026b419d6f8d8732336b4908000ca51253bb4d21eb",
+            claimPrivateKeyIndex: 0,
             refundPrivateKey:
                 "297be239304392970158ba6dea46b058b868ac7e797ce8a0931d2ac78043465e",
+            refundPrivateKeyIndex: 1,
             status: "transaction.claimed",
             claimTx:
                 "ab466d2ec7150d37fc487bc9e9670fb871048c0cceac2debc430fe75d9bc242f",
@@ -298,7 +317,20 @@ describe("validate responses", () => {
 
         test("should validate with 0-amount", async () => {
             await expect(
-                validateResponse(zeroAmount, {} as never, Buffer),
+                validateResponse(
+                    zeroAmount,
+                    (index: number) =>
+                        ECPair.fromPrivateKey(
+                            Buffer.from(
+                                index === 0
+                                    ? zeroAmount.claimPrivateKey
+                                    : zeroAmount.refundPrivateKey,
+                                "hex",
+                            ),
+                        ),
+                    {} as never,
+                    Buffer,
+                ),
             ).resolves.toEqual(true);
         });
     });
