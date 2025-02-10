@@ -77,7 +77,8 @@ const dict = {
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
         onchain_address_no_asset: "Enter address",
-        download_refund_file: "Download refund file",
+        download_rescue_key: "Download Rescue Key",
+        verify_existing_rescue_key: "Verify Existing Key",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
         invalid_invoice: "Please provide a valid invoice, offer or LNURL",
@@ -87,15 +88,7 @@ const dict = {
         copy_amount: "amount",
         copy_bip21: "BIP21",
         copied: "Copied!",
-        backup_skip: "Skip download",
-        backup_refund: "Download Refund File",
-        backup_refund_subline:
-            "If this swap fails, you'll have to refund your chain bitcoin using your refund key. This key is stored in your browser's storage by default, but can be lost if you",
-        backup_refund_list_incognito: "are using incognito mode",
-        backup_refund_list_tor: "are using Tor browser",
-        backup_refund_list_clear_history: "clear your browsing history",
-        backup_refund_skip:
-            "If any of the above applies to you, we strongly recommend downloading this refund file!",
+        backup_rescue_key: "Download Boltz Rescue Key",
         refund_swap: "Refund Swap",
         refund_a_swap_subline:
             "Upload your Swap’s refund file, to refund a swap that is not available in this browser’s swap history.",
@@ -150,7 +143,7 @@ const dict = {
         refund_explainer: "You will be able to refund after the timeout",
         swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",
-        ios_image_download_do_not_share: "CONFIDENTIAL! DO NOT SHARE!",
+        ios_image_download_do_not_share: "Boltz Rescue Key - DO NOT SHARE",
         ios_image_download:
             'Long press and select "Save to Photos" to download refund file',
         created: "Created",
@@ -213,9 +206,6 @@ const dict = {
         browsernotification_tooltip: "Enable or disable browser notifications",
         browsernotification_error: "Notification permissions denied",
         invalid_pair: "Invalid pair",
-        reckless_mode_setting: "Reckless Mode",
-        reckless_mode_setting_tooltip:
-            "Disables prompts to download refund file and other confirmation steps",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
         insufficient_balance: "Insufficient balance",
@@ -243,6 +233,13 @@ const dict = {
         broadcast_setting: "External Broadcast",
         broadcast_setting_tooltip:
             "Also use the block explorer to broadcast transactions",
+        backup_subline: "First time using Boltz in this browser?",
+        backup_subline_second:
+            "The Boltz Rescue Key allows for emergency recovery of funds in case a swap fails. It works on any device and for all swaps created with it. Store the key file in a secure and permanent location.",
+        verify_existing_rescue_key_subline:
+            "Please select your previously downloaded Boltz Rescue Key to verify its correctness.",
+        verify_rescue_file_failed:
+            "Verification of the Boltz Rescue Key failed. We recommend downloading the new key instead.",
     },
     de: {
         language: "Deutsch",
@@ -334,15 +331,6 @@ const dict = {
         copy_amount: "Betrag",
         copy_bip21: "BIP21",
         copied: "kopiert!",
-        backup_skip: "Überspringen",
-        backup_refund: "Rückerstattungsdatei herunterladen",
-        backup_refund_subline:
-            "Falls dieser Swap fehlschlagen sollte, musst du dir deine Bitcoin mit deinem Rückerstattungsschlüssel zurückholen. Dieser Schlüssel wird standardmäßig in dein Browser gespeichert, kann aber verloren gehen wenn",
-        backup_refund_list_incognito: "du ein Inkognito Fenster verwendest",
-        backup_refund_list_tor: "du Tor Browser verwendest",
-        backup_refund_list_clear_history: "die Browser Daten gelöscht werden",
-        backup_refund_skip:
-            "Falls einer dieser Punkte zutrifft, empfehlen wir ausdrücklich die Rückerstattungsdatei herunterzuladen!",
         refund_swap: "Swap Erstatten",
         refund_a_swap_subline:
             "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück.",
@@ -467,9 +455,6 @@ const dict = {
             "Aktiviere oder deaktiviere Browser Benachrichtigungen",
         browsernotification_error: "Benachrichtigungsrechte verweigert",
         invalid_pair: "Ungültiges Paar",
-        reckless_mode_setting: "Reckless Modus",
-        reckless_mode_setting_tooltip:
-            "Deaktiviert Downloadaufforderung der Rückerstattungsdatei und andere Bestätigungsschritte",
         error_starting_qr_scanner:
             "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
         insufficient_balance: "Unzureichendes Guthaben",
@@ -586,15 +571,6 @@ const dict = {
         copy_amount: "importe",
         copy_bip21: "BIP21",
         copied: "Copiado",
-        backup_skip: "Saltar",
-        backup_refund: "Descargar archivo de reembolso",
-        backup_refund_subline:
-            "Si este intercambio falla, tendrás que reembolsar tu bitcoin utilizando tu clave de reembolso. Esta clave se guarda por defecto en el almacenamiento de tu navegador, pero puede perderse si",
-        backup_refund_list_incognito: "utiliza el modo incógnito",
-        backup_refund_list_tor: "utiliza el navegador Tor",
-        backup_refund_list_clear_history: "borra tu historial de navegación",
-        backup_refund_skip:
-            "Si alguno de los puntos anteriores le afecta, le recomendamos que descargue el archivo de reembolso.",
         refund_swap: "Reembolsar Intercambio",
         refund_a_swap_subline:
             "Cargue su archivo de reembolso y recupere sus fondos bloqueados.",
@@ -719,9 +695,6 @@ const dict = {
             "Activar o desactivar notificaciones del navegador",
         browsernotification_error: "Permisos de notificación denegados",
         invalid_pair: "Par no válido",
-        reckless_mode_setting: "Modo Reckless",
-        reckless_mode_setting_tooltip:
-            "Desactiva los avisos para descargar el archivo de reembolso y otros pasos de confirmación",
         error_starting_qr_scanner:
             "No se pudo acceder a la cámara, por favor compruebe los permisos!",
         insufficient_balance: "Saldo insuficiente",
@@ -834,14 +807,6 @@ const dict = {
         copy_amount: "金额",
         copy_bip21: "BIP21",
         copied: "已复制",
-        backup_skip: "跳过下载",
-        backup_refund: "下载退款文件",
-        backup_refund_subline:
-            "如果此交换失败，您将不得不使用退款密钥退还链上的比特币。默认情况下，此密钥存储在浏览器的本地存储中，但如果您",
-        backup_refund_list_incognito: "正在使用隐身模式",
-        backup_refund_list_tor: "正在使用Tor浏览器",
-        backup_refund_list_clear_history: "清除您的浏览历史记录",
-        backup_refund_skip: "如果您符合以上任何条件，强烈建议下载此退款文件！",
         refund_swap: "退还交换",
         refund_a_swap_subline: "上传您的退款文件，取回被锁定的资金",
         refund_past_swaps: "过去的交换",
@@ -946,8 +911,6 @@ const dict = {
         browsernotification_tooltip: "启用或禁用浏览器通知",
         browsernotification_error: "通知权限被拒绝",
         invalid_pair: "无效交换对",
-        reckless_mode_setting: "鲁莽模式",
-        reckless_mode_setting_tooltip: "禁用下载退款文件的提示和其他确认步骤",
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
         insufficient_balance: "余额不足",
         insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
@@ -1064,16 +1027,6 @@ const dict = {
         copy_amount: "金額をコピー",
         copy_bip21: "BIP21をコピー",
         copied: "クリップボードにコピーしました！",
-        backup_skip: "ダウンロードをスキップする",
-        backup_refund: "返金ファイルをダウンロードする",
-        backup_refund_subline:
-            "もしこのスワップが失敗したら、返金用の鍵を使ってオンチェーンビットコインの返金処理をする必要があります。このデータは通常ブラウザ内に保管されていますが、特定の条件では喪失してしまいます",
-        backup_refund_list_incognito:
-            "シークレットブラウザモードを使っている場合",
-        backup_refund_list_tor: "Torブラウザを使っている場合",
-        backup_refund_list_clear_history: "ブラウザ履歴を消した場合",
-        backup_refund_skip:
-            "もし以上にあてはまる場合、返金ファイルをダウンロードすることを強くお勧めします！",
         refund_swap: "スワップを返金する",
         refund_a_swap_subline:
             "返金ファイルをアップロードし、ロックされた資金を回収します",
@@ -1192,9 +1145,6 @@ const dict = {
         browsernotification_tooltip: "ブラウザ通知をオン、もしくはオフにする",
         browsernotification_error: "通知権限が拒否されました",
         invalid_pair: "無効なペア",
-        reckless_mode_setting: "レックレスモード",
-        reckless_mode_setting_tooltip:
-            " 返金ファイルと他の承認ステップをダウンロードするプロンプトを無効化する",
         error_starting_qr_scanner:
             "カメラにアクセスできませんでした。権限を確認してください！",
         insufficient_balance: "残高不足",
