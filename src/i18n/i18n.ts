@@ -243,6 +243,7 @@ const dict = {
         broadcast_setting: "External Broadcast",
         broadcast_setting_tooltip:
             "Also use the block explorer to broadcast transactions",
+        backup_subline: "If a swap fails, it can be refunded with this file",
     },
     de: {
         language: "Deutsch",

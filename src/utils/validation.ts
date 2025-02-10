@@ -15,11 +15,12 @@ import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
+import { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
 import { ChainSwapDetails } from "./boltzClient";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
-import { ECPair, ecc } from "./ecpair";
+import { ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
 import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 import { createMusig, tweakMusig } from "./taproot/musig";
@@ -103,6 +104,7 @@ const validateBip21 = (
 
 const validateReverse = async (
     swap: ReverseSwap,
+    deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
@@ -129,9 +131,7 @@ const validateReverse = async (
     // SwapTree
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
-    const ourKeys = ECPair.fromPrivateKey(
-        buffer.from(swap.claimPrivateKey, "hex"),
-    );
+    const ourKeys = deriveKey(swap.claimPrivateKeyIndex);
     const theirPublicKey = buffer.from(swap.refundPublicKey, "hex");
 
     const compareTree = reverseSwapTree(
@@ -159,6 +159,7 @@ const validateReverse = async (
 
 const validateSubmarine = async (
     swap: SubmarineSwap,
+    deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: typeof BufferBrowser.Buffer,
 ) => {
@@ -176,9 +177,7 @@ const validateSubmarine = async (
 
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
-    const ourKeys = ECPair.fromPrivateKey(
-        buffer.from(swap.refundPrivateKey, "hex"),
-    );
+    const ourKeys = deriveKey(swap.refundPrivateKeyIndex);
     const theirPublicKey = buffer.from(swap.claimPublicKey, "hex");
 
     const compareTree = swapTree(
@@ -213,6 +212,7 @@ const validateSubmarine = async (
 
 const validateChainSwap = async (
     swap: ChainSwap,
+    deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
@@ -240,13 +240,10 @@ const validateChainSwap = async (
             return validateContract(getEtherSwap);
         }
 
-        const ourKeys = ECPair.fromPrivateKey(
-            buffer.from(
-                side === Side.Send
-                    ? swap.refundPrivateKey
-                    : swap.claimPrivateKey,
-                "hex",
-            ),
+        const ourKeys = deriveKey(
+            side === Side.Send
+                ? swap.refundPrivateKeyIndex
+                : swap.claimPrivateKeyIndex,
         );
         const theirPublicKey = buffer.from(details.serverPublicKey, "hex");
         const tree = SwapTreeSerializer.deserializeSwapTree(details.swapTree);
@@ -293,6 +290,7 @@ const validateChainSwap = async (
 // To be able to use the Buffer from Node.js
 export const validateResponse = async (
     swap: SomeSwap,
+    deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: typeof BufferBrowser.Buffer = BufferBrowser as never,
 ): Promise<boolean> => {
@@ -301,6 +299,7 @@ export const validateResponse = async (
             case SwapType.Submarine:
                 return await validateSubmarine(
                     swap as SubmarineSwap,
+                    deriveKey,
                     getEtherSwap,
                     buffer,
                 );
@@ -308,6 +307,7 @@ export const validateResponse = async (
             case SwapType.Reverse:
                 return await validateReverse(
                     swap as ReverseSwap,
+                    deriveKey,
                     getEtherSwap,
                     buffer,
                 );
@@ -315,6 +315,7 @@ export const validateResponse = async (
             case SwapType.Chain:
                 return await validateChainSwap(
                     swap as ChainSwap,
+                    deriveKey,
                     getEtherSwap,
                     buffer,
                 );
