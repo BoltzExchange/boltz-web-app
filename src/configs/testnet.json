@@ -6,7 +6,7 @@
         {
             "alias": "Boltz Testnet",
             "apiUrl": {
-                "normal": "https://testnet.boltz.exchange/api"
+                "normal": "https://api.testnet.boltz.exchange"
             },
             "contact": "https://boltz.exchange"
         },
