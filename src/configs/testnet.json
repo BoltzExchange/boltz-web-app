@@ -2,7 +2,7 @@
     "network": "testnet",
     "loglevel": "debug",
     "apiUrl": {
-        "normal": "https://testnet.boltz.exchange/api"
+        "normal": "https://api.testnet.boltz.exchange"
     },
     "assets": {
         "BTC": {
