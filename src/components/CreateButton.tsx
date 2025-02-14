@@ -14,7 +14,7 @@ import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
-import { coalesceLn, isMobile } from "../utils/helper";
+import { coalesceLn } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import {
     SomeSwap,
@@ -36,7 +36,9 @@ export const CreateButton = () => {
         notify,
         ref,
         t,
-        isRecklessMode,
+        newKey,
+        deriveKey,
+        recoveryFileBackupDone,
     } = useGlobalContext();
     const {
         invoice,
@@ -63,8 +65,7 @@ export const CreateButton = () => {
         bolt12Offer,
         setBolt12Offer,
     } = useCreateContext();
-    const { getEtherSwap, signer, providers, hasBrowserWallet } =
-        useWeb3Signer();
+    const { getEtherSwap, signer, providers } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
@@ -291,6 +292,7 @@ export const CreateButton = () => {
                         invoice(),
                         ref(),
                         useRif,
+                        newKey,
                     );
                     break;
 
@@ -304,6 +306,7 @@ export const CreateButton = () => {
                         claimAddress,
                         ref(),
                         useRif,
+                        newKey,
                     );
                     break;
 
@@ -317,11 +320,12 @@ export const CreateButton = () => {
                         claimAddress,
                         ref(),
                         useRif,
+                        newKey,
                     );
                     break;
             }
 
-            if (!(await validateResponse(data, getEtherSwap))) {
+            if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
                 navigate("/error");
                 return;
             }
@@ -349,20 +353,10 @@ export const CreateButton = () => {
             setOnchainAddress("");
             setAddressValid(false);
 
-            // Mobile EVM browsers struggle with downloading files
-            const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
-
-            // No backups needed for Reverse Swaps or when we send RBTC
-            if (
-                isRecklessMode() ||
-                swapType() === SwapType.Reverse ||
-                assetSend() === RBTC ||
-                // Only disable refund files on mobile EVM browsers when one side is RSK
-                (assetReceive() === RBTC && isMobileEvmBrowser())
-            ) {
+            if (recoveryFileBackupDone()) {
                 navigate("/swap/" + data.id);
             } else {
-                navigate("/swap/refund/" + data.id);
+                navigate("/backup/" + data.id);
             }
         } catch (err) {
             if (err === "invalid pair hash") {
