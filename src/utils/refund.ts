@@ -12,6 +12,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import secp from "../lazy/secp";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -215,6 +216,8 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             cooperative,
         );
     } else {
+        // Initialize the secp256k1-zkp library for blinding
+        await secp.get();
         const redeemScript = Buffer.from(
             (swap as unknown as { redeemScript: string }).redeemScript,
             "hex",
