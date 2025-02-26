@@ -3,6 +3,41 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.6.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.1..v1.6.2) - 2025-02-26
+
+### Bug Fixes
+
+- make vite version detection more reliable - ([c2d2458](https://github.com/BoltzExchange/boltz-web-app/commit/c2d24586e3e80efffce9bf9f0a40ca0bd808e165))
+- clean address input on direction switch (#801) - ([3b3dc42](https://github.com/BoltzExchange/boltz-web-app/commit/3b3dc42da99d87cf305650ba03b9acaa5faf850b))
+- do not show swaps as 'refundable' when there was no lockup tx (#811) - ([371f9d1](https://github.com/BoltzExchange/boltz-web-app/commit/371f9d1fdd88555981b80304f50c85b86ce8d922))
+- init secp-zkp for legacy refunds (#822) - ([27da26e](https://github.com/BoltzExchange/boltz-web-app/commit/27da26efe7f450b72eec469921ad4db79742ea50))
+- concurrent EVM claims (#826) - ([a6152ed](https://github.com/BoltzExchange/boltz-web-app/commit/a6152ed47840b55bec1231434451e1015d1bfb5e))
+
+### Features
+
+- transaction broadcasts via block explorer (#802) - ([47f89db](https://github.com/BoltzExchange/boltz-web-app/commit/47f89db8e63aca8b957512ae9b80045e3ad58ba4))
+- add tropykus and speed as integrations (#812) - ([9893fea](https://github.com/BoltzExchange/boltz-web-app/commit/9893fea15fff837a08a677a1bee9c104b27be437))
+
+### Miscellaneous Chores
+
+- minor dependency bumps (#795) - ([75d834f](https://github.com/BoltzExchange/boltz-web-app/commit/75d834fb0e42528b0f93e4850a065b43dbc9cd17))
+- bump dnssec-prover to v0.6.6 (#798) - ([5be91f0](https://github.com/BoltzExchange/boltz-web-app/commit/5be91f009469420f5dae2e0b4068fc870e00fd55))
+- disable amounts input autocomplete (#800) - ([326c111](https://github.com/BoltzExchange/boltz-web-app/commit/326c1111b86f3af91df8dccaa77beab8bd2ebadf))
+- make swap not found page look nicer (#803) - ([01e82e9](https://github.com/BoltzExchange/boltz-web-app/commit/01e82e9b138d315f9502d216c5b841eb7785f00c))
+- update regtest (#808) - ([93f301e](https://github.com/BoltzExchange/boltz-web-app/commit/93f301ec58d770466d98f78a8f2bf32a5c050da3))
+- minor dependency updates (#810) - ([cf96270](https://github.com/BoltzExchange/boltz-web-app/commit/cf9627089d9e813b4fff74d35eba7f181085c9b5))
+- minor dependency updates (#818) - ([71ff293](https://github.com/BoltzExchange/boltz-web-app/commit/71ff293f97e0cfac427a556df3372cf6ea072005))
+- use new testnet API endpoint (#819) - ([552c770](https://github.com/BoltzExchange/boltz-web-app/commit/552c77005b4107e1ac78cc35c2d2a4c557716480))
+- update regtest (#821) - ([8d618bf](https://github.com/BoltzExchange/boltz-web-app/commit/8d618bf2bf2fda342862ae6a55528e036f22eea1))
+- update Vite dependencies - ([b709538](https://github.com/BoltzExchange/boltz-web-app/commit/b709538049a2d827f54674ea4efe69900bc5cb3e))
+- minor dependency updates - ([313448c](https://github.com/BoltzExchange/boltz-web-app/commit/313448cee9890cebad4c36e255ebcd08a32339b7))
+
+### Refactoring
+
+- refund address input (#796) - ([53b7d18](https://github.com/BoltzExchange/boltz-web-app/commit/53b7d182fdc7f6975f0e896232b97d5ed87918e6))
+- cleanup external broadcast (#804) - ([aaf3254](https://github.com/BoltzExchange/boltz-web-app/commit/aaf3254ff29b56201eb2d5409f7fd0a66c77e32c))
+
+---
 ## [1.6.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.0..v1.6.1) - 2025-01-10
 
 ### Bug Fixes
