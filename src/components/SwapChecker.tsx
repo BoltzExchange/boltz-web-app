@@ -225,8 +225,6 @@ export const SwapChecker = () => {
                 data.transaction !== undefined
             ) {
                 currentSwap.lockupTx = data.transaction.id;
-
-                setSwap(currentSwap);
                 await setSwapStorage(currentSwap);
             }
 
