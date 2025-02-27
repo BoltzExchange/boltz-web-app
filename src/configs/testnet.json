@@ -9,17 +9,42 @@
             "blockExplorerUrl": {
                 "normal": "https://blockstream.info/testnet",
                 "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/testnet"
-            }
+            },
+            "blockExplorerApis": [
+                {
+                    "normal": "https://blockstream.info/testnet/api",
+                    "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/api"
+                },
+                {
+                    "normal": "https://mempool.space/testnet/api",
+                    "tor": "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/testnet/api"
+                }
+            ]
         },
         "L-BTC": {
             "blockExplorerUrl": {
                 "normal": "https://blockstream.info/liquidtestnet",
                 "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquidtestnet"
-            }
+            },
+            "blockExplorerApis": [
+                {
+                    "normal": "https://blockstream.info/liquidtestnet/api",
+                    "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquidtestnet/api"
+                },
+                {
+                    "normal": "https://liquid.network/liquidtestnet/api",
+                    "tor": "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion/liquidtestnet/api"
+                }
+            ]
         },
         "RBTC": {
             "blockExplorerUrl": {
-                "normal": "https://rootstock-testnet.blockscout.com"
+                "normal": "https://rootstock-testnet.blockscout.com",
+                "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/testnet"
+            },
+            "apiUrl": {
+                "normal": "https://rootstock-testnet.blockscout.com/api",
+                "tor": "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/api/testnet"
             },
             "network": {
                 "chainName": "Rootstock Testnet",
