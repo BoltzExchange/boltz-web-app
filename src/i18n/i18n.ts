@@ -78,7 +78,7 @@ const dict = {
         onchain_address: "Enter {{ asset }} address",
         onchain_address_no_asset: "Enter address",
         download_rescue_key: "Download Rescue Key",
-        verify_existing_rescue_key: "Verify Existing Key",
+        verify_existing_rescue_key: "Verify Rescue Key",
         invalid_refund_file: "Invalid refund file",
         invalid_backup_file: "Invalid backup file",
         invalid_invoice: "Please provide a valid invoice, offer or LNURL",
