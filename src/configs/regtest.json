@@ -8,12 +8,22 @@
         "BTC": {
             "blockExplorerUrl": {
                 "normal": "http://localhost:4002"
-            }
+            },
+            "blockExplorerApis": [
+                {
+                    "normal": "http://localhost:4002/api"
+                }
+            ]
         },
         "L-BTC": {
             "blockExplorerUrl": {
                 "normal": "http://localhost:4003"
-            }
+            },
+            "blockExplorerApis": [
+                {
+                    "normal": "http://localhost:4003/api"
+                }
+            ]
         },
         "RBTC": {
             "blockExplorerUrl": {
