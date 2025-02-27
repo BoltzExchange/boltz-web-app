@@ -90,6 +90,9 @@ test.describe("Refund files", () => {
             const amount = 1;
             await elementsSendToAddress(address, amount);
 
+            // To make sure the backend has seen and rejected our tx
+            await page.getByRole("heading", { name: "Lockup Failed!" }).click();
+
             if (isMobile) {
                 await page.locator("#hamburger").click();
             }
