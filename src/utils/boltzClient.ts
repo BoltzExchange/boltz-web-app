@@ -5,7 +5,7 @@ import { Transaction as LiquidTransaction } from "liquidjs-lib";
 
 import { config } from "../config";
 import { SwapType } from "../consts/Enums";
-import { fetcher } from "./helper";
+import { broadcastToExplorer, fetcher } from "./helper";
 import { validateInvoiceForOffer } from "./invoice";
 
 const cooperativeErrorMessage = "cooperative signatures for swaps are disabled";
@@ -385,14 +385,36 @@ export const getNodeStats = (backend: number) =>
 export const getContracts = (backend: number) =>
     fetcher<Record<string, Contracts>>(backend, "/v2/chain/contracts");
 
-export const broadcastTransaction = (
+export const broadcastTransaction = async (
     backend: number,
     asset: string,
     txHex: string,
-) => {
-    return fetcher<{ id: string }>(backend, `/v2/chain/${asset}/transaction`, {
-        hex: txHex,
-    });
+    externalBroadcast: boolean = false,
+): Promise<{
+    id: string;
+}> => {
+    const promises: Promise<{
+        id: string;
+    }>[] = [
+        fetcher<{ id: string }>(backend, `/v2/chain/${asset}/transaction`, {
+            hex: txHex,
+        }),
+    ];
+
+    if (externalBroadcast) {
+        promises.push(broadcastToExplorer(asset, txHex));
+    }
+
+    const results = await Promise.allSettled(promises);
+    const successfulResult = results.find(
+        (result) => result.status === "fulfilled",
+    );
+    if (successfulResult) {
+        return (successfulResult as PromiseFulfilledResult<{ id: string }>)
+            .value;
+    }
+
+    throw (results[0] as PromiseRejectedResult).reason;
 };
 
 export const getLockupTransaction = async (

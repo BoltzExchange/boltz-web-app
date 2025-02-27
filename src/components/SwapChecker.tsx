@@ -180,6 +180,7 @@ export const SwapChecker = () => {
         t,
         backend,
         setBackend,
+        externalBroadcast,
     } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
@@ -226,8 +227,6 @@ export const SwapChecker = () => {
                 data.transaction !== undefined
             ) {
                 currentSwap.lockupTx = data.transaction.id;
-
-                setSwap(currentSwap);
                 await setSwapStorage(currentSwap);
             }
 
@@ -272,6 +271,8 @@ export const SwapChecker = () => {
                 const res = await claim(
                     currentSwap as ReverseSwap | ChainSwap,
                     data.transaction as { hex: string },
+                    true,
+                    externalBroadcast(),
                 );
                 const claimedSwap = await getSwap(res.id);
                 claimedSwap.claimTx = res.claimTx;

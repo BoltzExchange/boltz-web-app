@@ -12,6 +12,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import secp from "../lazy/secp";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -160,12 +161,15 @@ const refundTaproot = async <T extends TransactionInterface>(
 const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
     txConstructionResponse: Awaited<ReturnType<typeof refundTaproot>>,
+    externalBroadcast: boolean,
 ): Promise<T> => {
     try {
+        log.debug("Broadcasting refund transaction");
         const res = await broadcastTransaction(
             swap.backend || 0,
             swap.assetSend,
             txConstructionResponse.transaction.toHex(),
+            externalBroadcast,
         );
         log.debug("Refund broadcast result", res);
         if (res.id) {
@@ -187,7 +191,8 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
     refundAddress: string,
     transactionToRefund: { hex: string; timeoutBlockHeight: number },
-    cooperative: boolean = true,
+    cooperative: boolean,
+    externalBroadcast: boolean,
 ): Promise<T> => {
     log.info(`Refunding swap ${swap.id}: `, swap);
 
@@ -215,6 +220,8 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             cooperative,
         );
     } else {
+        // Initialize the secp256k1-zkp library for blinding
+        await secp.get();
         const redeemScript = Buffer.from(
             (swap as unknown as { redeemScript: string }).redeemScript,
             "hex",
@@ -250,5 +257,5 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
         };
     }
 
-    return broadcastRefund(swap, refundTransaction);
+    return broadcastRefund(swap, refundTransaction, externalBroadcast);
 };
