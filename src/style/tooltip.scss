@@ -18,6 +18,7 @@
         box-shadow: 0px 0 5px #000;
     }
     &.active {
+        z-index: 1;
         opacity: 1;
         .tooltip-text {
             display: block;

@@ -9,6 +9,7 @@ import BroadcastSetting from "./BroadcastSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
 import Logs from "./Logs";
+import RescueFile from "./RescueKey";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
 
@@ -67,6 +68,11 @@ const SettingsMenu = () => {
                     label={"broadcast_setting"}
                     tooltipLabel={"broadcast_setting_tooltip"}
                     settingElement={<BroadcastSetting />}
+                />
+                <Entry
+                    label={"rescue_key"}
+                    tooltipLabel={"backup_subline_second"}
+                    settingElement={<RescueFile />}
                 />
                 <Entry
                     label={"logs"}

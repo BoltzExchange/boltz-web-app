@@ -240,6 +240,7 @@ const dict = {
             "Please select your previously downloaded Boltz Rescue Key to verify its correctness.",
         verify_rescue_file_failed:
             "Verification of the Boltz Rescue Key failed. We recommend downloading the new key instead.",
+        rescue_key: "Rescue Key",
     },
     de: {
         language: "Deutsch",
