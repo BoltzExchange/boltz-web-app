@@ -1,4 +1,4 @@
-export const recoveryFileTypes =
+export const rescueFileTypes =
     "application/json,image/png,imagine/jpg,image/jpeg";
 
 export const getBackupFileName = (): string => {

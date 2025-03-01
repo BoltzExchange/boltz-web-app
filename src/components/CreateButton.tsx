@@ -38,7 +38,7 @@ export const CreateButton = () => {
         t,
         newKey,
         deriveKey,
-        recoveryFileBackupDone,
+        rescueFileBackupDone,
     } = useGlobalContext();
     const {
         invoice,
@@ -358,7 +358,7 @@ export const CreateButton = () => {
             const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
 
             if (
-                recoveryFileBackupDone() ||
+                rescueFileBackupDone() ||
                 swapType() === SwapType.Reverse ||
                 assetSend() === RBTC ||
                 // Only disable refund files on mobile EVM browsers when one side is RSK

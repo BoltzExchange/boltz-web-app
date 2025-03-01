@@ -6,13 +6,13 @@ import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { useRecoveryContext } from "../context/Recovery";
-import { RecoverableSwap } from "../utils/boltzClient";
+import { useRescueContext } from "../context/Rescue";
+import { RescuableSwap } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
-import { deriveKey } from "../utils/recoveryFile";
+import { deriveKey } from "../utils/rescueFile";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
-const mapSwap = (swap: RecoverableSwap): SubmarineSwap | ChainSwap => {
+const mapSwap = (swap: RescuableSwap): SubmarineSwap | ChainSwap => {
     if (swap.type === SwapType.Submarine) {
         return {
             ...swap,
@@ -41,12 +41,12 @@ const mapSwap = (swap: RecoverableSwap): SubmarineSwap | ChainSwap => {
     } as Partial<ChainSwap> as ChainSwap;
 };
 
-const RefundRecovery = () => {
+const RefundRescue = () => {
     const params = useParams<{ id: string }>();
     const { t } = useGlobalContext();
-    const { recoverableSwaps, xpriv } = useRecoveryContext();
+    const { rescuableSwaps, xpriv } = useRescueContext();
 
-    const swap = () => recoverableSwaps().find((swap) => swap.id === params.id);
+    const swap = () => rescuableSwaps().find((swap) => swap.id === params.id);
 
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
@@ -84,4 +84,4 @@ const RefundRecovery = () => {
     );
 };
 
-export default RefundRecovery;
+export default RefundRescue;

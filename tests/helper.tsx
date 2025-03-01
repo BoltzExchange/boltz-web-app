@@ -11,7 +11,7 @@ import {
     useGlobalContext,
 } from "../src/context/Global";
 import { PayContextType, PayProvider, usePayContext } from "../src/context/Pay";
-import { RecoveryProvider } from "../src/context/Recovery";
+import { RescueProvider } from "../src/context/Rescue";
 import { Web3SignerProvider } from "../src/context/Web3";
 
 export let signals: CreateContextType;
@@ -31,14 +31,14 @@ export const contextWrapper = (props: { children: Element }) => {
             <Web3SignerProvider noFetch={true}>
                 <CreateProvider>
                     <PayProvider>
-                        <RecoveryProvider>
+                        <RescueProvider>
                             <Router>
                                 <Route
                                     path="/"
                                     component={() => props.children}
                                 />
                             </Router>
-                        </RecoveryProvider>
+                        </RescueProvider>
                     </PayProvider>
                 </CreateProvider>
             </Web3SignerProvider>

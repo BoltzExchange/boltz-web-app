@@ -4,9 +4,9 @@ import QrScanner from "qr-scanner";
 import { Show, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { recoveryFileTypes } from "../utils/download";
-import { RecoveryFile } from "../utils/recoveryFile";
-import { validateRecoveryFile } from "../utils/refundFile";
+import { rescueFileTypes } from "../utils/download";
+import { validateRescueFile } from "../utils/rescueFile";
+import type { RescueFile } from "../utils/rescueFile";
 
 export const existingBackupId = "existing";
 
@@ -15,10 +15,10 @@ const BackupVerify = () => {
     const params = useParams<{ id: string }>();
     const {
         t,
-        recoveryFile,
-        setRecoveryFileBackupDone,
+        rescueFile,
+        setRescueFileBackupDone,
         clearSwaps,
-        setRecoveryFile,
+        setRescueFile,
     } = useGlobalContext();
 
     const [verificationFailed, setVerificationFailed] = createSignal<
@@ -30,7 +30,7 @@ const BackupVerify = () => {
         const inputFile = input.files[0];
 
         try {
-            let data: RecoveryFile;
+            let data: RescueFile;
 
             if (
                 ["image/png", "image/jpg", "image/jpeg"].includes(
@@ -48,25 +48,25 @@ const BackupVerify = () => {
                 data = JSON.parse(await inputFile.text());
             }
 
-            validateRecoveryFile(data);
+            validateRescueFile(data);
 
             if (params.id === existingBackupId) {
-                setRecoveryFileBackupDone(true);
+                setRescueFileBackupDone(true);
                 await clearSwaps();
-                setRecoveryFile(data);
-                log.info("Imported existing recovery file");
+                setRescueFile(data);
+                log.info("Imported existing rescue file");
                 navigate("/");
             } else {
-                if (recoveryFile()?.xpriv !== data.xpriv) {
-                    throw "recovery file does not match";
+                if (rescueFile()?.xpriv !== data.xpriv) {
+                    throw "rescue file does not match";
                 }
 
-                setRecoveryFileBackupDone(true);
-                log.info("Verified recovery file");
+                setRescueFileBackupDone(true);
+                log.info("Verified rescue file");
                 navigate(`/swap/${params.id}`);
             }
         } catch (e) {
-            log.error("invalid recovery file upload", e);
+            log.error("invalid rescue file upload", e);
             setVerificationFailed(true);
         }
     };
@@ -95,7 +95,7 @@ const BackupVerify = () => {
                     type="file"
                     id="refundUpload"
                     data-testid="refundUpload"
-                    accept={recoveryFileTypes}
+                    accept={rescueFileTypes}
                     onChange={(e) => uploadChange(e)}
                 />
             </Show>

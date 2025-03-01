@@ -28,11 +28,11 @@ import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import {
-    RecoveryFile,
+    RescueFile,
     deriveKey,
-    generateRecoveryFile,
+    generateRescueFile,
     getXpub,
-} from "../utils/recoveryFile";
+} from "../utils/rescueFile";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import { getUrlParam, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
@@ -113,10 +113,10 @@ export type GlobalContextType = {
     newKey: newKeyFn;
     deriveKey: deriveKeyFn;
     getXpub: () => string;
-    recoveryFile: Accessor<RecoveryFile | null>;
-    setRecoveryFile: Setter<RecoveryFile | null>;
-    recoveryFileBackupDone: Accessor<boolean>;
-    setRecoveryFileBackupDone: Setter<boolean>;
+    rescueFile: Accessor<RescueFile | null>;
+    setRescueFile: Setter<RescueFile | null>;
+    rescueFileBackupDone: Accessor<boolean>;
+    setRescueFileBackupDone: Setter<boolean>;
 };
 
 const defaultReferral = () => {
@@ -211,11 +211,11 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
-    const [recoveryFile, setRecoveryFile] = makePersisted(
+    const [rescueFile, setRescueFile] = makePersisted(
         // eslint-disable-next-line solid/reactivity
-        createSignal<RecoveryFile>(null),
+        createSignal<RescueFile>(null),
         {
-            name: "recoveryFile",
+            name: "rescueFile",
         },
     );
 
@@ -227,24 +227,24 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
-    const [recoveryFileBackupDone, setRecoveryFileBackupDone] = makePersisted(
+    const [rescueFileBackupDone, setRescueFileBackupDone] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
         {
-            name: "recoveryFileBackupDone",
+            name: "rescueFileBackupDone",
         },
     );
 
     createEffect(() => {
-        if (recoveryFile() === null) {
-            log.debug("Generating recovery file");
-            setRecoveryFile(generateRecoveryFile());
+        if (rescueFile() === null) {
+            log.debug("Generating rescue file");
+            setRescueFile(generateRescueFile());
         }
     });
 
     const deriveKeyWrapper = (index: number) => {
         return ECPair.fromPrivateKey(
-            Buffer.from(deriveKey(recoveryFile(), index).privateKey),
+            Buffer.from(deriveKey(rescueFile(), index).privateKey),
         );
     };
 
@@ -255,7 +255,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     };
 
     const getXpubWrapper = () => {
-        return getXpub(recoveryFile());
+        return getXpub(rescueFile());
     };
 
     const notify = (
@@ -494,13 +494,13 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setExternalBroadcast,
 
                 newKey,
-                recoveryFile,
-                setRecoveryFile,
+                rescueFile,
+                setRescueFile,
                 deriveKey: deriveKeyWrapper,
                 getXpub: getXpubWrapper,
 
-                recoveryFileBackupDone,
-                setRecoveryFileBackupDone,
+                rescueFileBackupDone,
+                setRescueFileBackupDone,
             }}>
             {props.children}
         </GlobalContext.Provider>

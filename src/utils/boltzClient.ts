@@ -166,8 +166,8 @@ type ChainSwapTransaction = {
 
 type TransactionInterface = Transaction | LiquidTransaction;
 
-export type RecoverableSwap = Awaited<
-    ReturnType<typeof getRecoverableSwaps>
+export type RescuableSwap = Awaited<
+    ReturnType<typeof getRescuableSwaps>
 >[number];
 
 export const getPairs = async (): Promise<Pairs> => {
@@ -477,7 +477,7 @@ export const acceptChainSwapNewQuote = (id: string, amount: number) =>
 export const getSubmarinePreimage = (id: string) =>
     fetcher<{ preimage: string }>(`/v2/swap/submarine/${id}/preimage`);
 
-export const getRecoverableSwaps = (xpub: string) =>
+export const getRescuableSwaps = (xpub: string) =>
     fetcher<
         {
             id: string;

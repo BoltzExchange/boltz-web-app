@@ -4,11 +4,11 @@ import { Accessor, For, Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
-import type { RecoverableSwap } from "../utils/boltzClient";
+import type { RescuableSwap } from "../utils/boltzClient";
 import { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
-type Swap = (SomeSwap | RecoverableSwap) & { disabled?: boolean };
+type Swap = (SomeSwap | RescuableSwap) & { disabled?: boolean };
 
 const getSwapDate = (swap: Swap) => {
     if ("date" in swap) {

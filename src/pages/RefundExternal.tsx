@@ -22,18 +22,18 @@ import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
-import { useRecoveryContext } from "../context/Recovery";
+import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
-import { getRecoverableSwaps } from "../utils/boltzClient";
+import { getRescuableSwaps } from "../utils/boltzClient";
 import {
     LogRefundData,
     scanLogsForPossibleRefunds,
 } from "../utils/contractLogs";
-import { recoveryFileTypes } from "../utils/download";
+import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
-import { RecoveryFile, getXpub } from "../utils/recoveryFile";
-import { validateRecoveryFile, validateRefundFile } from "../utils/refundFile";
+import { validateRefundFile } from "../utils/refundFile";
+import { RescueFile, getXpub, validateRescueFile } from "../utils/rescueFile";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
@@ -42,7 +42,7 @@ enum RefundError {
 }
 
 enum RefundType {
-    Recovery,
+    Rescue,
     Legacy,
 }
 
@@ -89,7 +89,7 @@ const BtcLikeLegacy = (props: {
 export const RefundBtcLike = () => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
-    const recoveryContext = useRecoveryContext();
+    const rescueContext = useRescueContext();
 
     const [refundInvalid, setRefundInvalid] = createSignal<
         RefundError | undefined
@@ -97,18 +97,18 @@ export const RefundBtcLike = () => {
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundType, setRefundType] = createSignal<RefundType>();
 
-    const [recoverableSwaps] = createResource(
+    const [rescuableSwaps] = createResource(
         () => ({ refundJson: refundJson(), type: refundType() }),
         async (source) => {
             if (
-                source.type !== RefundType.Recovery ||
+                source.type !== RefundType.Rescue ||
                 source.refundJson === null
             ) {
                 return undefined;
             }
 
-            const res = await getRecoverableSwaps(getXpub(source.refundJson));
-            recoveryContext.setRecoverableSwaps(res);
+            const res = await getRescuableSwaps(getXpub(source.refundJson));
+            rescueContext.setRescuableSwaps(res);
             return res;
         },
     );
@@ -120,10 +120,10 @@ export const RefundBtcLike = () => {
 
         try {
             if ("xpriv" in json) {
-                log.info("Found recovery file");
-                setRefundType(RefundType.Recovery);
-                setRefundJson(validateRecoveryFile(json));
-                recoveryContext.setXpriv(json as RecoveryFile);
+                log.info("Found rescue file");
+                setRefundType(RefundType.Rescue);
+                setRefundJson(validateRescueFile(json));
+                rescueContext.setXpriv(json as RescueFile);
                 setRefundInvalid(undefined);
             } else {
                 log.info("Found legacy refund file");
@@ -176,22 +176,22 @@ export const RefundBtcLike = () => {
                 type="file"
                 id="refundUpload"
                 data-testid="refundUpload"
-                accept={recoveryFileTypes}
+                accept={rescueFileTypes}
                 onChange={(e) => uploadChange(e)}
             />
-            <Show when={refundType() === RefundType.Recovery}>
+            <Show when={refundType() === RefundType.Rescue}>
                 <Switch>
-                    <Match when={recoverableSwaps.state === "ready"}>
+                    <Match when={rescuableSwaps.state === "ready"}>
                         <div style={{ "margin-top": "2%" }}>
                             <Show
                                 when={
-                                    recoverableSwaps() !== undefined &&
-                                    recoverableSwaps().length > 0
+                                    rescuableSwaps() !== undefined &&
+                                    rescuableSwaps().length > 0
                                 }
                                 fallback={<p>No swaps found</p>}>
                                 <SwapList
                                     swapsSignal={() =>
-                                        recoverableSwaps().map((swap) => ({
+                                        rescuableSwaps().map((swap) => ({
                                             ...swap,
                                             disabled:
                                                 swap.transaction === undefined,
@@ -200,18 +200,18 @@ export const RefundBtcLike = () => {
                                     action={t("refund")}
                                     surroundingSeparators={false}
                                     onClick={(swap) => {
-                                        navigate(`/refund/recovery/${swap.id}`);
+                                        navigate(`/refund/rescue/${swap.id}`);
                                     }}
                                 />
                             </Show>
                         </div>
                     </Match>
-                    <Match when={recoverableSwaps.state === "refreshing"}>
+                    <Match when={rescuableSwaps.state === "refreshing"}>
                         <LoadingSpinner />
                     </Match>
-                    <Match when={recoverableSwaps.state === "errored"}>
+                    <Match when={rescuableSwaps.state === "errored"}>
                         <h3 style={{ "margin-top": "2%" }}>
-                            Error: {formatError(recoverableSwaps.error)}
+                            Error: {formatError(rescuableSwaps.error)}
                         </h3>
                     </Match>
                 </Switch>

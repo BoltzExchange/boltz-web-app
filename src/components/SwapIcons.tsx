@@ -3,16 +3,16 @@ import { Show } from "solid-js";
 
 import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { RecoverableSwap } from "../utils/boltzClient";
+import { RescuableSwap } from "../utils/boltzClient";
 import { SomeSwap } from "../utils/swapCreator";
 
-export const SwapIcons = (props: { swap: SomeSwap | RecoverableSwap }) => {
+export const SwapIcons = (props: { swap: SomeSwap | RescuableSwap }) => {
     return (
         <Show
             when={"assetSend" in props.swap}
             fallback={
                 <span class="swaplist-asset">
-                    <span data-asset={(props.swap as RecoverableSwap).symbol} />
+                    <span data-asset={(props.swap as RescuableSwap).symbol} />
                 </span>
             }>
             <span class="swaplist-asset">

@@ -1,8 +1,5 @@
 import { migrateSwapToChainSwapFormat } from "../../src/utils/migration";
-import {
-    validateRecoveryFile,
-    validateRefundFile,
-} from "../../src/utils/refundFile";
+import { validateRefundFile } from "../../src/utils/refundFile";
 
 describe("refundFile", () => {
     test.each`
@@ -64,37 +61,6 @@ describe("refundFile", () => {
         expect(validateRefundFile(data)).toEqual({
             ...migrateSwapToChainSwapFormat(data),
             reverse: false,
-        });
-    });
-
-    describe("validateRecoveryFile", () => {
-        test("should accept valid recovery file", () => {
-            const data = {
-                xpriv: "xprv9s21ZrQH143K4CEaPNdUFtd1NTKS3jrSkD8Wq431KG49RgsrCESErYyXrdM6yoghWpesYRirK3PTnLYWYCmWjAEMB2aDX9XmKqsNznUn7v9",
-            };
-
-            expect(validateRecoveryFile(data)).toEqual(data);
-        });
-
-        test("should throw error for invalid recovery file", () => {
-            const data = {
-                id: "uYZcNe",
-                asset: "BTC",
-                privateKey:
-                    "def0a13214538650fb84a7545c9b81128a639f55147cdd61c46d5ea0f70045a3",
-            };
-
-            expect(() => validateRecoveryFile(data)).toThrow(
-                "invalid recovery file",
-            );
-        });
-
-        test("should throw error if xpriv is invalid", () => {
-            const data = {
-                xpriv: "invalid",
-            };
-
-            expect(() => validateRecoveryFile(data)).toThrow();
         });
     });
 });

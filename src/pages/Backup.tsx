@@ -8,15 +8,15 @@ import { download, downloadJson } from "../utils/download";
 import { isIos, isMobile } from "../utils/helper";
 import { existingBackupId } from "./BackupVerify";
 
-const recoveryFileName = "boltz-recovery-DO-NOT-SHARE";
+const rescueFileName = "boltz-rescue-key-DO-NOT-SHARE";
 
 const Backup = () => {
     const navigate = useNavigate();
     const params = useParams<{ id: string }>();
-    const { t, recoveryFile, recoveryFileBackupDone } = useGlobalContext();
+    const { t, rescueFile, rescueFileBackupDone } = useGlobalContext();
 
     createEffect(() => {
-        if (recoveryFileBackupDone()) {
+        if (rescueFileBackupDone()) {
             navigate("/swap/" + params.id);
         }
     });
@@ -25,12 +25,12 @@ const Backup = () => {
         navigate("/backup/verify/" + id);
     };
 
-    const downloadRecoveryFile = async () => {
+    const downloadRescueFile = async () => {
         if (!isMobile()) {
-            downloadJson(recoveryFileName, recoveryFile());
+            downloadJson(rescueFileName, rescueFile());
         } else {
             const qrData = await QRCode.toDataURL(
-                JSON.stringify(recoveryFile()),
+                JSON.stringify(rescueFile()),
                 {
                     width: 1_500,
                     errorCorrectionLevel: "L",
@@ -47,7 +47,7 @@ const Backup = () => {
                             <img src="${qrData}">
                         </body>`;
             } else {
-                download(`${recoveryFileName}.png`, qrData);
+                download(`${rescueFileName}.png`, qrData);
             }
         }
 
@@ -68,7 +68,7 @@ const Backup = () => {
                     }}>
                     {t("verify_existing_rescue_key")}
                 </button>
-                <button class="btn" onClick={downloadRecoveryFile}>
+                <button class="btn" onClick={downloadRescueFile}>
                     {t("download_rescue_key")}
                 </button>
             </div>

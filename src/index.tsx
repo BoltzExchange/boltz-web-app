@@ -16,7 +16,7 @@ import { config, setConfig } from "./config";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider, useGlobalContext } from "./context/Global";
 import { PayProvider } from "./context/Pay";
-import { RecoveryProvider } from "./context/Recovery";
+import { RescueProvider } from "./context/Rescue";
 import { Web3SignerProvider } from "./context/Web3";
 import Backup from "./pages/Backup";
 import BackupVerify from "./pages/BackupVerify";
@@ -29,7 +29,7 @@ import Pay from "./pages/Pay";
 import Refund from "./pages/Refund";
 import RefundEvm from "./pages/RefundEvm";
 import RefundExternal from "./pages/RefundExternal";
-import RefundRecovery from "./pages/RefundRecovery";
+import RefundRescue from "./pages/RefundRescue";
 import "./style/index.scss";
 import "./utils/patches";
 
@@ -71,7 +71,7 @@ const App = (props: RouteSectionProps) => {
                     <Web3SignerProvider>
                         <CreateProvider>
                             <PayProvider>
-                                <RecoveryProvider>
+                                <RescueProvider>
                                     <SwapChecker />
                                     <Chatwoot />
                                     <Show when={!isEmbedded()}>
@@ -85,7 +85,7 @@ const App = (props: RouteSectionProps) => {
                                     <Show when={!isEmbedded()}>
                                         <Footer />
                                     </Show>
-                                </RecoveryProvider>
+                                </RescueProvider>
                             </PayProvider>
                         </CreateProvider>
                     </Web3SignerProvider>
@@ -114,7 +114,7 @@ const cleanup = render(
             <Route path="/refund" component={Refund} />
             <Route path="/refund/external" component={RefundExternal} />
             <Route path="/refund/external/:type" component={RefundExternal} />
-            <Route path="/refund/recovery/:id" component={RefundRecovery} />
+            <Route path="/refund/rescue/:id" component={RefundRescue} />
             <Route path="/history" component={History} />
             <Route path="*404" component={NotFound} />
         </Router>
