@@ -6,6 +6,7 @@ import {
     generateLiquidBlock,
     getBitcoinAddress,
     getBitcoinWalletTx,
+    verifyRescueFile,
 } from "../utils";
 
 test.describe("Chain swap", () => {
@@ -42,8 +43,7 @@ test.describe("Chain swap", () => {
         );
         await buttonCreateSwap.click();
 
-        const skipDownload = page.getByText("Skip download");
-        await skipDownload.click();
+        await verifyRescueFile(page);
 
         const buttons = page.locator("div[data-testid='pay-onchain-buttons']");
         const copyAddressButton = buttons.getByText("address");

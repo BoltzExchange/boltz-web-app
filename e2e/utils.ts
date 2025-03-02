@@ -1,6 +1,10 @@
+import { Page } from "@playwright/test";
 import bolt11 from "bolt11";
 import { exec } from "child_process";
+import fs from "fs";
 import { promisify } from "util";
+
+import dict from "../src/i18n/i18n";
 
 const execAsync = promisify(exec);
 
@@ -116,4 +120,20 @@ export const lookupInvoiceLnd = async (
 export const getBolt12Offer = async (): Promise<string> => {
     return JSON.parse(await execCommand("lightning-cli-sim 1 offer any ''"))
         .bolt12 as string;
+};
+
+export const verifyRescueFile = async (page: Page) => {
+    const downloadPromise = page.waitForEvent("download");
+    await page
+        .getByRole("button", { name: dict.en.download_rescue_key })
+        .click();
+
+    const fileName = "rescue-file.json";
+    await (await downloadPromise).saveAs(fileName);
+
+    await page.getByTestId("rescueFileUpload").setInputFiles(fileName);
+
+    if (fs.existsSync(fileName)) {
+        fs.unlinkSync(fileName);
+    }
 };

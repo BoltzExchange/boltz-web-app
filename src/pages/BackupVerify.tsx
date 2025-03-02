@@ -93,8 +93,8 @@ const BackupVerify = () => {
                 <input
                     required
                     type="file"
-                    id="refundUpload"
-                    data-testid="refundUpload"
+                    id="rescueFileUpload"
+                    data-testid="rescueFileUpload"
                     accept={rescueFileTypes}
                     onChange={(e) => uploadChange(e)}
                 />

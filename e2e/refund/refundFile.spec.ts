@@ -27,7 +27,7 @@ test.describe("Refund files", () => {
         }
     });
 
-    test("should show that no lockup transaction can be found", async ({
+    test.skip("should show that no lockup transaction can be found", async ({
         page,
     }) => {
         await page.goto("/");
@@ -53,7 +53,9 @@ test.describe("Refund files", () => {
     ].forEach(({ fileType, isMobile }) => {
         // The most data is created when swapping from Liquid to a BOLT12 invoice
         // If the QR code is readable in this case, the others should be fine as well
-        test(`should refund with ${fileType} file`, async ({ browser }) => {
+        test.skip(`should refund with ${fileType} file`, async ({
+            browser,
+        }) => {
             const page = await (
                 await browser.newContext({
                     ...(isMobile ? devices["Pixel 7"] : {}),

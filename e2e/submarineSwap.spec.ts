@@ -5,6 +5,7 @@ import {
     generateBitcoinBlock,
     generateInvoiceLnd,
     lookupInvoiceLnd,
+    verifyRescueFile,
 } from "./utils";
 
 test.describe("Submarine swap", () => {
@@ -36,8 +37,7 @@ test.describe("Submarine swap", () => {
         );
         await buttonCreateSwap.click();
 
-        const skipDownload = page.getByText("Skip download");
-        await skipDownload.click();
+        await verifyRescueFile(page);
 
         const copyAddressButton = page.getByText("address");
         expect(copyAddressButton).toBeDefined();
@@ -86,6 +86,6 @@ test.describe("Submarine swap", () => {
 
         await page.getByTestId("create-swap-button").click();
         // When we can click that button, the swap was created
-        await page.getByRole("button", { name: "Skip download" }).click();
+        await verifyRescueFile(page);
     });
 });
