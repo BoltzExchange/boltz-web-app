@@ -86,6 +86,35 @@ export const generateInvoiceLnd = async (amount: number): Promise<string> => {
     ).payment_request as string;
 };
 
+export const waitForNodesToSync = async (): Promise<void> => {
+    const height = JSON.parse(
+        await execCommand("bitcoin-cli-sim-client getblockchaininfo"),
+    ).blocks;
+
+    const nodesToCheck = [
+        async (): Promise<number> => {
+            return JSON.parse(await execCommand("lncli-sim 2 getinfo"))
+                .block_height as number;
+        },
+        async (): Promise<number> => {
+            return JSON.parse(await execCommand("lightning-cli-sim 2 getinfo"))
+                .blockheight as number;
+        },
+    ];
+
+    for (const node of nodesToCheck) {
+        while (true) {
+            const nodeHeight = await node();
+
+            if (nodeHeight === height) {
+                break;
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 1_000));
+        }
+    }
+};
+
 export const addReferral = (name: string): Promise<string> =>
     boltzCli(`addreferral ${name} 0`);
 
@@ -124,9 +153,7 @@ export const getBolt12Offer = async (): Promise<string> => {
 
 export const verifyRescueFile = async (page: Page) => {
     const downloadPromise = page.waitForEvent("download");
-    await page
-        .getByRole("button", { name: dict.en.download_rescue_key })
-        .click();
+    await page.getByRole("button", { name: dict.en.download_new_key }).click();
 
     const fileName = "rescue-file.json";
     await (await downloadPromise).saveAs(fileName);

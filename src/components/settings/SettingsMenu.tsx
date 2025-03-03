@@ -71,7 +71,7 @@ const SettingsMenu = () => {
                 />
                 <Entry
                     label={"rescue_key"}
-                    tooltipLabel={"backup_subline_second"}
+                    tooltipLabel={"download_boltz_rescue_key"}
                     settingElement={<RescueFile />}
                 />
                 <Entry

@@ -27,7 +27,7 @@ test.describe("BOLT12", () => {
         );
         await buttonCreateSwap.click();
 
-        const downloadButton = page.getByText(dict.en.download_rescue_key);
+        const downloadButton = page.getByText(dict.en.download_new_key);
         await expect(downloadButton).toBeVisible();
     });
 });

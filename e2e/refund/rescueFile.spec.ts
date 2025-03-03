@@ -47,7 +47,7 @@ test.describe("Rescue file", () => {
 
         const downloadPromise = page.waitForEvent("download");
         await page
-            .getByRole("button", { name: dict.en.download_rescue_key })
+            .getByRole("button", { name: dict.en.download_new_key })
             .click();
         await (await downloadPromise).saveAs(rescueFileJson);
 
@@ -91,7 +91,9 @@ test.describe("Rescue file", () => {
 
             const downloadPromise = page.waitForEvent("download");
             await page
-                .getByRole("button", { name: dict.en.download_rescue_key })
+                .getByRole("button", {
+                    name: dict.en.download_new_key,
+                })
                 .click();
             await (await downloadPromise).saveAs(rescueFile);
 

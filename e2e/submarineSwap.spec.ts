@@ -6,11 +6,13 @@ import {
     generateInvoiceLnd,
     lookupInvoiceLnd,
     verifyRescueFile,
+    waitForNodesToSync,
 } from "./utils";
 
 test.describe("Submarine swap", () => {
     test.beforeEach(async () => {
         await generateBitcoinBlock();
+        await waitForNodesToSync();
     });
 
     test("Submarine swap BTC/BTC", async ({ page }) => {
