@@ -8,11 +8,9 @@ import { rescueFileTypes } from "../utils/download";
 import { validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
 
-export const existingBackupId = "existing";
-
 const BackupVerify = () => {
     const navigate = useNavigate();
-    const params = useParams<{ id: string }>();
+    const params = useParams<{ id?: string }>();
     const {
         t,
         rescueFile,
@@ -50,7 +48,7 @@ const BackupVerify = () => {
 
             validateRescueFile(data);
 
-            if (params.id === existingBackupId) {
+            if (params.id === undefined) {
                 setRescueFileBackupDone(true);
                 await clearSwaps();
                 setRescueFile(data);

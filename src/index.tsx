@@ -105,6 +105,7 @@ const cleanup = render(
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
             <Route path="/backup/:id" component={Backup} />
+            <Route path="/backup/verify" component={BackupVerify} />
             <Route path="/backup/verify/:id" component={BackupVerify} />
             <Route
                 path="/swap/refund/evm/:asset/:txHash"

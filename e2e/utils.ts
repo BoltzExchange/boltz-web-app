@@ -105,7 +105,6 @@ export const waitForNodesToSync = async (): Promise<void> => {
     for (const node of nodesToCheck) {
         while (true) {
             const nodeHeight = await node();
-
             if (nodeHeight === height) {
                 break;
             }

@@ -8,7 +8,6 @@ import { DictKey } from "../i18n/i18n";
 import { download, downloadJson } from "../utils/download";
 import { isIos, isMobile } from "../utils/helper";
 import { RescueFile } from "../utils/rescueFile";
-import { existingBackupId } from "./BackupVerify";
 
 const rescueFileName = "boltz-rescue-key-DO-NOT-SHARE";
 
@@ -50,8 +49,9 @@ const Backup = () => {
         }
     });
 
-    const navigateToVerification = (id: string) => {
-        navigate("/backup/verify/" + id);
+    const navigateToVerification = (id?: string) => {
+        const basePath = "/backup/verify";
+        navigate(id ? `${basePath}/${id}` : basePath);
     };
 
     return (
@@ -65,7 +65,7 @@ const Backup = () => {
                 <button
                     class="btn btn-light"
                     onClick={() => {
-                        navigateToVerification(existingBackupId);
+                        navigateToVerification();
                     }}>
                     {t("verify_key")}
                 </button>
