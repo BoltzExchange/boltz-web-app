@@ -491,7 +491,7 @@ export const getRescuableSwaps = (xpub: string) =>
             transaction?: { id: string; vout: number };
             createdAt: number;
         }[]
-    >(`/v2/swap/recovery`, { xpub });
+    >(`/v2/swap/rescue`, { xpub });
 
 export {
     Pairs,
