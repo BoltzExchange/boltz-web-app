@@ -245,6 +245,7 @@ const dict = {
         verify_key_failed:
             "Verification of the Boltz Rescue Key failed. We recommend downloading a new Boltz Rescue Key to continue.",
         rescue_key: "Rescue Key",
+        no_swaps_found: "No swaps found",
     },
     de: {
         language: "Deutsch",
@@ -503,6 +504,7 @@ const dict = {
         verify_key_failed:
             "Die Verifizierung des Boltz Rettungsschlüssels ist fehlgeschlagen. Wir empfehlen, einen neuen Rettungsschlüssel herunterzuladen.",
         rescue_key: "Rettungsschlüssel",
+        no_swaps_found: "Keine Swaps gefunden",
     },
     es: {
         language: "Español",
@@ -757,6 +759,7 @@ const dict = {
         verify_key_failed:
             "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
         rescue_key: "Clave de Rescate Boltz",
+        no_swaps_found: "No se encontraron swaps",
     },
     zh: {
         language: "中文",
@@ -984,6 +987,7 @@ const dict = {
         verify_key_failed:
             "Boltz 救援密钥验证失败。我们建议下载新的 Boltz 救援密钥以继续。",
         rescue_key: "救援钥匙",
+        no_swaps_found: "未找到交换",
     },
     ja: {
         language: "日本語",
@@ -1236,6 +1240,7 @@ const dict = {
         verify_key_failed:
             "Boltzレスキューキーの検証に失敗しました。続行するには、新しいBoltzレスキューキーをダウンロードすることをお勧めします。",
         rescue_key: "レスキューキー",
+        no_swaps_found: "スワップが見つからない",
     },
 };
 

@@ -44,7 +44,7 @@ const mapSwap = (swap: RescuableSwap): SubmarineSwap | ChainSwap => {
 const RefundRescue = () => {
     const params = useParams<{ id: string }>();
     const { t } = useGlobalContext();
-    const { rescuableSwaps, xpriv } = useRescueContext();
+    const { rescuableSwaps, rescueFile } = useRescueContext();
 
     const swap = () => rescuableSwaps().find((swap) => swap.id === params.id);
 
@@ -61,7 +61,7 @@ const RefundRescue = () => {
                         deriveKeyFn={(index: number) =>
                             ECPair.fromPrivateKey(
                                 Buffer.from(
-                                    deriveKey(xpriv(), index).privateKey,
+                                    deriveKey(rescueFile(), index).privateKey,
                                 ),
                             )
                         }

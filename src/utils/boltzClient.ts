@@ -170,6 +170,7 @@ export type RescuableSwap = {
     id: string;
     type: SwapType;
     tree: SwapTree;
+    status: string;
     symbol: string;
     keyIndex: number;
     blindingKey?: string;

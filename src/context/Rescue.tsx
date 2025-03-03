@@ -11,8 +11,8 @@ import type { RescuableSwap } from "../utils/boltzClient";
 import { RescueFile } from "../utils/rescueFile";
 
 export type RescueContextType = {
-    xpriv: Accessor<RescueFile>;
-    setXpriv: Setter<RescueFile>;
+    rescueFile: Accessor<RescueFile>;
+    setRescueFile: Setter<RescueFile>;
 
     rescuableSwaps: Accessor<RescuableSwap[]>;
     setRescuableSwaps: Setter<RescuableSwap[]>;
@@ -21,14 +21,19 @@ export type RescueContextType = {
 const RescueContext = createContext<RescueContextType>();
 
 export const RescueProvider = (props: { children: JSX.Element }) => {
-    const [xpriv, setXpriv] = createSignal<RescueFile>();
+    const [rescueFile, setRescueFile] = createSignal<RescueFile>();
     const [rescuableSwaps, setRescuableSwaps] = createSignal<RescuableSwap[]>(
         [],
     );
 
     return (
         <RescueContext.Provider
-            value={{ xpriv, setXpriv, rescuableSwaps, setRescuableSwaps }}>
+            value={{
+                rescueFile,
+                setRescueFile,
+                rescuableSwaps,
+                setRescuableSwaps,
+            }}>
             {props.children}
         </RescueContext.Provider>
     );

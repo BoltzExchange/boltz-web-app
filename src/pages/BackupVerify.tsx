@@ -55,7 +55,7 @@ const BackupVerify = () => {
                 log.info("Imported existing rescue file");
                 navigate("/");
             } else {
-                if (rescueFile()?.xpriv !== data.xpriv) {
+                if (rescueFile()?.mnemonic !== data.mnemonic) {
                     throw "rescue file does not match";
                 }
 

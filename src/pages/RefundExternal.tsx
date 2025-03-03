@@ -21,6 +21,7 @@ import SwapList from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { swapStatusFailed } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
@@ -97,6 +98,8 @@ export const RefundBtcLike = () => {
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundType, setRefundType] = createSignal<RefundType>();
 
+    const failedStatuses = Object.values(swapStatusFailed);
+
     const [rescuableSwaps] = createResource(
         () => ({ refundJson: refundJson(), type: refundType() }),
         async (source) => {
@@ -119,11 +122,11 @@ export const RefundBtcLike = () => {
         log.debug("checking refund json");
 
         try {
-            if ("xpriv" in json) {
+            if ("mnemonic" in json) {
                 log.info("Found rescue file");
                 setRefundType(RefundType.Rescue);
                 setRefundJson(validateRescueFile(json));
-                rescueContext.setXpriv(json as RescueFile);
+                rescueContext.setRescueFile(json as RescueFile);
                 setRefundInvalid(undefined);
             } else {
                 log.info("Found legacy refund file");
@@ -155,6 +158,7 @@ export const RefundBtcLike = () => {
                 checkRefundJsonKeys(JSON.parse(res.data));
             } catch (e) {
                 log.error("invalid QR code upload", e);
+                setRefundType(undefined);
                 setRefundInvalid(RefundError.InvalidData);
             }
         } else {
@@ -163,6 +167,7 @@ export const RefundBtcLike = () => {
                 checkRefundJsonKeys(JSON.parse(data));
             } catch (e) {
                 log.error("invalid file upload", e);
+                setRefundType(undefined);
                 setRefundInvalid(RefundError.InvalidData);
             }
         }
@@ -188,13 +193,17 @@ export const RefundBtcLike = () => {
                                     rescuableSwaps() !== undefined &&
                                     rescuableSwaps().length > 0
                                 }
-                                fallback={<p>No swaps found</p>}>
+                                fallback={<h4>{t("no_swaps_found")}</h4>}>
                                 <SwapList
                                     swapsSignal={() =>
                                         rescuableSwaps().map((swap) => ({
                                             ...swap,
                                             disabled:
-                                                swap.transaction === undefined,
+                                                swap.transaction ===
+                                                    undefined ||
+                                                !failedStatuses.includes(
+                                                    swap.status,
+                                                ),
                                         }))
                                     }
                                     action={t("refund")}
@@ -210,7 +219,7 @@ export const RefundBtcLike = () => {
                         <LoadingSpinner />
                     </Match>
                     <Match when={rescuableSwaps.state === "errored"}>
-                        <h3 style={{ "margin-top": "2%" }}>
+                        <h3 style={{ margin: "2%" }}>
                             Error: {formatError(rescuableSwaps.error)}
                         </h3>
                     </Match>
@@ -223,7 +232,7 @@ export const RefundBtcLike = () => {
                 />
             </Show>
             <Show when={refundInvalid() !== undefined}>
-                <h3 style={{ "margin-top": "3%" }}>
+                <h3 style={{ margin: "3%", "margin-top": "4%" }}>
                     {t("invalid_refund_file")}
                 </h3>
             </Show>

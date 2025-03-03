@@ -51,7 +51,7 @@ const Backup = () => {
 
     const navigateToVerification = (id?: string) => {
         const basePath = "/backup/verify";
-        navigate(id ? `${basePath}/${id}` : basePath);
+        navigate(id !== undefined ? `${basePath}/${id}` : basePath);
     };
 
     return (

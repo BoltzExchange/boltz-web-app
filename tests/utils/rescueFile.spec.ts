@@ -9,22 +9,22 @@ import { RescueFile } from "../../src/utils/rescueFile";
 
 describe("rescueFile", () => {
     const rescueFile: RescueFile = {
-        xpriv: "xprv9s21ZrQH143K4CEaPNdUFtd1NTKS3jrSkD8Wq431KG49RgsrCESErYyXrdM6yoghWpesYRirK3PTnLYWYCmWjAEMB2aDX9XmKqsNznUn7v9",
-    };
+        mnemonic:
+            "invite smile evidence shield frost source truly ball odor unfold example nuclear",
+    } as const;
 
     describe("getXpub", () => {
-        test("should derive xpub from xpriv", () => {
+        test("should derive xpub from mnemonic", () => {
             const xpub = getXpub(rescueFile);
-
             expect(xpub).toEqual(
-                "xpub661MyMwAqRbcGgK3VQAUd2ZjvV9vTCaJ7S47dSScsbb8JVCzjmkVQMJ1hsywDkGUEtnaVpBuM9Pijsh3391LR7j2JsF4npnzzjjCFTogrGN",
+                "xpub661MyMwAqRbcG5eD5Hh9EddaCEik4rxpJA1RDEsxjujXzGsJDg4kT7EXC8GPM4ZZLVCoNA8fArGbjqKmo6M6khKTaTmYBJNTQXCFrejsgCi",
             );
         });
 
-        test("should throw error if xpriv is invalid", () => {
+        test("should throw error if mnemonic is invalid", () => {
             expect(() =>
                 getXpub({
-                    xpriv: "invalid",
+                    mnemonic: "invalid",
                 }),
             ).toThrow();
         });
@@ -34,10 +34,10 @@ describe("rescueFile", () => {
         test("should generate a valid rescue file", () => {
             const rescueFile = generateRescueFile();
 
-            expect(rescueFile).toHaveProperty("xpriv");
-            expect(typeof rescueFile.xpriv).toBe("string");
+            expect(rescueFile).toHaveProperty("mnemonic");
+            expect(typeof rescueFile.mnemonic).toBe("string");
 
-            // Verify the xpriv is valid by deriving an xpub from it
+            // Verify the mnemonic is valid by deriving an xpub from it
             expect(() => getXpub(rescueFile)).not.toThrow();
         });
     });
@@ -45,9 +45,9 @@ describe("rescueFile", () => {
     describe("deriveKey", () => {
         test.each`
             index | expected
-            ${0}  | ${"00042485889db2ef842eab44a3c24ea9f222e102e97b8b8df406259b70e76ea8"}
-            ${1}  | ${"d57dde1dd1b283c0f233169e1ee05b68689cb425a5af2fcd920a65438fc58a38"}
-            ${2}  | ${"9c429de0fdd96076dd5a6cbd881e568e8d12ecf6c7d415ff0c89381424a82819"}
+            ${0}  | ${"cb9774710e1d1eaa747a38fff23b20cbb5847e1586e97ebdca36489f3a0105d8"}
+            ${1}  | ${"72a43f69c3a4cc4a2ebae6c8b12e7b56ebec3423c0acb40eba422792c8d27d6a"}
+            ${2}  | ${"217c41a6670f1a104b5f0b17b0e1b60da97339c259a215825b85aed654537efc"}
         `("should derive a key at specified index", ({ index, expected }) => {
             const derivedKey = deriveKey(rescueFile, index);
 
@@ -63,11 +63,7 @@ describe("rescueFile", () => {
 
     describe("validateRescueFile", () => {
         test("should accept valid rescue file", () => {
-            const data = {
-                xpriv: "xprv9s21ZrQH143K4CEaPNdUFtd1NTKS3jrSkD8Wq431KG49RgsrCESErYyXrdM6yoghWpesYRirK3PTnLYWYCmWjAEMB2aDX9XmKqsNznUn7v9",
-            };
-
-            expect(validateRescueFile(data)).toEqual(data);
+            expect(validateRescueFile(rescueFile)).toEqual(rescueFile);
         });
 
         test("should throw error for invalid rescue file", () => {
@@ -83,12 +79,12 @@ describe("rescueFile", () => {
             );
         });
 
-        test("should throw error if xpriv is invalid", () => {
+        test("should throw error if mnemonic is invalid", () => {
             const data = {
-                xpriv: "invalid",
+                mnemonic: "invalid",
             };
 
-            expect(() => validateRescueFile(data)).toThrow();
+            expect(() => validateRescueFile(data)).toThrow("invalid mnemonic");
         });
     });
 });
