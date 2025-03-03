@@ -12,11 +12,16 @@ import { ECPair } from "../utils/ecpair";
 import { deriveKey } from "../utils/rescueFile";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
-const mapSwap = (swap: RescuableSwap): SubmarineSwap | ChainSwap => {
+const mapSwap = (
+    swap?: RescuableSwap,
+): SubmarineSwap | ChainSwap | undefined => {
+    if (swap === undefined) {
+        return undefined;
+    }
+
     if (swap.type === SwapType.Submarine) {
         return {
             ...swap,
-            type: SwapType.Submarine,
             swapTree: swap.tree,
             assetSend: swap.symbol,
             version: OutputType.Taproot,
@@ -24,21 +29,22 @@ const mapSwap = (swap: RescuableSwap): SubmarineSwap | ChainSwap => {
             refundPrivateKeyIndex: swap.keyIndex,
             claimPublicKey: swap.serverPublicKey,
         } as Partial<SubmarineSwap> as SubmarineSwap;
+    } else if (swap.type === SwapType.Chain) {
+        return {
+            ...swap,
+            assetSend: swap.symbol,
+            version: OutputType.Taproot,
+            refundPrivateKeyIndex: swap.keyIndex,
+            lockupDetails: {
+                swapTree: swap.tree,
+                blindingKey: swap.blindingKey,
+                lockupAddress: swap.lockupAddress,
+                serverPublicKey: swap.serverPublicKey,
+            } as Partial<ChainSwap["lockupDetails"]>,
+        } as Partial<ChainSwap> as ChainSwap;
     }
 
-    return {
-        ...swap,
-        type: SwapType.Chain,
-        version: OutputType.Taproot,
-        assetSend: swap.symbol,
-        refundPrivateKeyIndex: swap.keyIndex,
-        lockupDetails: {
-            swapTree: swap.tree,
-            blindingKey: swap.blindingKey,
-            lockupAddress: swap.lockupAddress,
-            serverPublicKey: swap.serverPublicKey,
-        } as Partial<ChainSwap["lockupDetails"]>,
-    } as Partial<ChainSwap> as ChainSwap;
+    return undefined;
 };
 
 const RefundRescue = () => {
@@ -46,18 +52,23 @@ const RefundRescue = () => {
     const { t } = useGlobalContext();
     const { rescuableSwaps, rescueFile } = useRescueContext();
 
-    const swap = () => rescuableSwaps().find((swap) => swap.id === params.id);
+    const swap = () =>
+        mapSwap(rescuableSwaps().find((swap) => swap.id === params.id));
 
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     return (
         <div class="frame">
-            <Show when={swap()} fallback={<h2>{t("pay_swap_404")}</h2>}>
+            <Show
+                when={swap() !== undefined}
+                fallback={<h2>{t("pay_swap_404")}</h2>}>
                 <h2>{t("refund_swap")}</h2>
 
                 <Show when={refundTxId() === ""}>
                     <hr />
                     <RefundButton
+                        swap={swap}
+                        setRefundTxId={setRefundTxId}
                         deriveKeyFn={(index: number) =>
                             ECPair.fromPrivateKey(
                                 Buffer.from(
@@ -65,8 +76,6 @@ const RefundRescue = () => {
                                 ),
                             )
                         }
-                        swap={() => mapSwap(swap())}
-                        setRefundTxId={setRefundTxId}
                     />
                 </Show>
                 <Show when={refundTxId() !== ""}>
@@ -75,7 +84,7 @@ const RefundRescue = () => {
                     <hr />
                     <BlockExplorer
                         typeLabel={"refund_tx"}
-                        asset={swap().symbol}
+                        asset={swap().assetSend}
                         txId={refundTxId()}
                     />
                 </Show>
