@@ -56,17 +56,18 @@ const Backup = () => {
 
     return (
         <div class="frame">
-            <h2>{t("backup_rescue_key")}</h2>
-            <h4>{t("backup_subline")}</h4>
+            <h2>{t("download_boltz_rescue_key")}</h2>
+            <h4>{t("download_boltz_rescue_key_subline")}</h4>
+            <p>{t("download_boltz_rescue_key_subline_second")}</p>
             <Warning />
-            <p>{t("backup_subline_second")}</p>
+            <p>{t("download_boltz_rescue_key_subline_third")}</p>
             <div class="btns">
                 <button
                     class="btn btn-light"
                     onClick={() => {
                         navigateToVerification(existingBackupId);
                     }}>
-                    {t("verify_existing_rescue_key")}
+                    {t("verify_key")}
                 </button>
                 <button
                     class="btn"
@@ -74,7 +75,7 @@ const Backup = () => {
                         await downloadRescueFile(t, rescueFile);
                         navigateToVerification(params.id);
                     }}>
-                    {t("download_rescue_key")}
+                    {t("download_new_key")}
                 </button>
             </div>
         </div>

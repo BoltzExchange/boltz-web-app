@@ -78,18 +78,18 @@ const BackupVerify = () => {
                 fallback={
                     <>
                         <h2>{t("error")}</h2>
-                        <h4>{t("verify_rescue_file_failed")}</h4>
+                        <h4>{t("verify_key_failed")}</h4>
                         <button
                             class="btn"
                             onClick={() => {
                                 navigate("/backup/" + params.id);
                             }}>
-                            {t("download_rescue_key")}
+                            {t("download_new_key")}
                         </button>
                     </>
                 }>
-                <h2>{t("verify_existing_rescue_key")}</h2>
-                <h4>{t("verify_existing_rescue_key_subline")}</h4>
+                <h2>{t("verify_boltz_rescue_key")}</h2>
+                <h4>{t("verify_boltz_rescue_key_subline")}</h4>
                 <input
                     required
                     type="file"
