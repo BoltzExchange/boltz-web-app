@@ -84,7 +84,7 @@
         "ecpair": "^2.1.0",
         "ethers": "^6.13.5",
         "iframe-resizer": "^5.3.3",
-        "liquidjs-lib": "^6.0.2-liquid.36",
+        "liquidjs-lib": "^6.0.2-liquid.37",
         "localforage": "^1.10.0",
         "loglevel": "^1.9.2",
         "qr-scanner": "^1.4.2",
