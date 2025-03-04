@@ -16,7 +16,7 @@ import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { useGlobalContext } from "../context/Global";
+import { deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import {
@@ -112,6 +112,7 @@ export const RefundBtc = (props: {
     swap: Accessor<SubmarineSwap | ChainSwap>;
     setRefundTxId?: Setter<string>;
     buttonOverride?: string;
+    deriveKeyFn?: deriveKeyFn;
 }) => {
     const {
         getSwap,
@@ -121,6 +122,7 @@ export const RefundBtc = (props: {
         notify,
         externalBroadcast,
         t,
+        deriveKey,
     } = useGlobalContext();
     const { setSwap } = usePayContext();
 
@@ -163,6 +165,7 @@ export const RefundBtc = (props: {
 
         try {
             const res = await refund(
+                props.deriveKeyFn || deriveKey,
                 props.swap(),
                 refundAddress(),
                 lockupTransaction(),
@@ -182,6 +185,8 @@ export const RefundBtc = (props: {
             if (props.setRefundTxId) {
                 props.setRefundTxId(res.refundTx);
             }
+
+            setRefundAddress("");
         } catch (error) {
             log.warn("refund failed", error);
             if (typeof error === "string") {
@@ -295,6 +300,7 @@ const RefundButton = (props: {
     swap: Accessor<SubmarineSwap | ChainSwap>;
     setRefundTxId?: Setter<string>;
     buttonOverride?: string;
+    deriveKeyFn?: deriveKeyFn;
 }) => {
     const [preimageHash] = createResource(async () => {
         return (await decodeInvoice((props.swap() as SubmarineSwap).invoice))

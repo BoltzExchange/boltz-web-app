@@ -1,5 +1,6 @@
 import { Pairs } from "../../src/utils/boltzClient";
-import { getPair } from "../../src/utils/helper";
+import { ECPair } from "../../src/utils/ecpair";
+import { getPair, parsePrivateKey } from "../../src/utils/helper";
 
 describe("helper", () => {
     test.each`
@@ -44,4 +45,44 @@ describe("helper", () => {
             );
         },
     );
+
+    describe("parsePrivateKey", () => {
+        test("should use derive function when keyIndex is provided", () => {
+            const keyIndex = 42;
+            const key = ECPair.makeRandom();
+            const mockDerive = jest.fn().mockReturnValue(key);
+
+            expect(parsePrivateKey(mockDerive, keyIndex)).toBe(key);
+            expect(mockDerive).toHaveBeenCalledTimes(1);
+            expect(mockDerive).toHaveBeenCalledWith(keyIndex);
+        });
+
+        test("should parse hex private key", () => {
+            const originalKey = ECPair.makeRandom();
+            const privateKeyHex = originalKey.privateKey?.toString("hex");
+
+            const mockDerive = jest.fn();
+
+            expect(
+                parsePrivateKey(mockDerive, undefined, privateKeyHex),
+            ).toEqual(originalKey);
+
+            // Verify derive function wasn't called
+            expect(mockDerive).not.toHaveBeenCalled();
+        });
+
+        test("should parse WIF private key", () => {
+            const originalKey = ECPair.makeRandom();
+            const wif = originalKey.toWIF();
+
+            const mockDerive = jest.fn();
+
+            expect(parsePrivateKey(mockDerive, undefined, wif)).toEqual(
+                originalKey,
+            );
+
+            // Verify derive function wasn't called
+            expect(mockDerive).not.toHaveBeenCalled();
+        });
+    });
 });

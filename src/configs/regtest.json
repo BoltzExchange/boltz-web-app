@@ -2,8 +2,7 @@
     "network": "regtest",
     "loglevel": "debug",
     "apiUrl": {
-        "normal": "http://localhost:9001",
-        "wsFallback": "http://localhost:9004"
+        "normal": "http://localhost:9001"
     },
     "assets": {
         "BTC": {

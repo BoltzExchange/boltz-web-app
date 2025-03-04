@@ -5,6 +5,7 @@ import { randomBytes } from "crypto";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { newKeyFn } from "../context/Global";
 import {
     ChainSwapCreatedResponse,
     Pairs,
@@ -14,7 +15,6 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
-import { ECPair } from "./ecpair";
 import { getPair } from "./helper";
 
 export type SwapBase = {
@@ -43,6 +43,9 @@ export type SubmarineSwap = SwapBase &
     SubmarineCreatedResponse & {
         invoice: string;
         preimage?: string;
+        refundPrivateKeyIndex?: number;
+
+        // Deprecated; used for backwards compatibility
         refundPrivateKey?: string;
     };
 
@@ -50,6 +53,9 @@ export type ReverseSwap = SwapBase &
     ReverseCreatedResponse & {
         preimage: string;
         claimAddress: string;
+        claimPrivateKeyIndex?: number;
+
+        // Deprecated; used for backwards compatibility
         claimPrivateKey?: string;
     };
 
@@ -57,8 +63,12 @@ export type ChainSwap = SwapBase &
     ChainSwapCreatedResponse & {
         preimage: string;
         claimAddress: string;
-        claimPrivateKey: string;
-        refundPrivateKey: string;
+        claimPrivateKeyIndex?: number;
+        refundPrivateKeyIndex?: number;
+
+        // Deprecated; used for backwards compatibility
+        claimPrivateKey?: string;
+        refundPrivateKey?: string;
     };
 
 export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
@@ -82,16 +92,17 @@ export const createSubmarine = async (
     invoice: string,
     referralId: string,
     useRif: boolean,
+    newKey: newKeyFn,
 ): Promise<SubmarineSwap> => {
     const isRsk = assetReceive === RBTC;
-    const refundKeys = !isRsk ? ECPair.makeRandom() : undefined;
+    const key = !isRsk ? newKey() : undefined;
     const res = await createSubmarineSwap(
         assetSend,
         assetReceive,
         invoice,
         getPair(pairs, SwapType.Submarine, assetSend, assetReceive).hash,
         referralId,
-        refundKeys?.publicKey.toString("hex"),
+        key?.key.publicKey.toString("hex"),
     );
 
     return {
@@ -105,7 +116,7 @@ export const createSubmarine = async (
             useRif,
         ),
         invoice,
-        refundPrivateKey: refundKeys?.privateKey.toString("hex"),
+        refundPrivateKeyIndex: key?.index,
     };
 };
 
@@ -118,11 +129,12 @@ export const createReverse = async (
     claimAddress: string,
     referralId: string,
     useRif: boolean,
+    newKey: newKeyFn,
 ): Promise<ReverseSwap> => {
     const isRsk = assetReceive === RBTC;
 
     const preimage = randomBytes(32);
-    const claimKeys = !isRsk ? ECPair.makeRandom() : undefined;
+    const key = !isRsk ? newKey() : undefined;
 
     const res = await createReverseSwap(
         assetSend,
@@ -131,7 +143,7 @@ export const createReverse = async (
         crypto.sha256(preimage).toString("hex"),
         getPair(pairs, SwapType.Reverse, assetSend, assetReceive).hash,
         referralId,
-        claimKeys?.publicKey.toString("hex"),
+        key?.key.publicKey.toString("hex"),
         claimAddress,
     );
 
@@ -147,7 +159,7 @@ export const createReverse = async (
         ),
         claimAddress,
         preimage: preimage.toString("hex"),
-        claimPrivateKey: claimKeys?.privateKey.toString("hex"),
+        claimPrivateKeyIndex: key?.index,
     };
 };
 
@@ -160,10 +172,11 @@ export const createChain = async (
     claimAddress: string,
     referralId: string,
     useRif: boolean,
+    newKey: newKeyFn,
 ): Promise<ChainSwap> => {
     const preimage = randomBytes(32);
-    const claimKeys = assetReceive !== RBTC ? ECPair.makeRandom() : undefined;
-    const refundKeys = assetSend !== RBTC ? ECPair.makeRandom() : undefined;
+    const claimKey = assetReceive !== RBTC ? newKey() : undefined;
+    const refundKey = assetSend !== RBTC ? newKey() : undefined;
 
     const res = await createChainSwap(
         assetSend,
@@ -172,8 +185,8 @@ export const createChain = async (
             ? undefined
             : Number(sendAmount),
         crypto.sha256(preimage).toString("hex"),
-        claimKeys?.publicKey.toString("hex"),
-        refundKeys?.publicKey.toString("hex"),
+        claimKey?.key.publicKey.toString("hex"),
+        refundKey?.key.publicKey.toString("hex"),
         claimAddress,
         getPair(pairs, SwapType.Chain, assetSend, assetReceive).hash,
         referralId,
@@ -191,8 +204,8 @@ export const createChain = async (
         ),
         claimAddress,
         preimage: preimage.toString("hex"),
-        claimPrivateKey: claimKeys?.privateKey.toString("hex"),
-        refundPrivateKey: refundKeys?.privateKey.toString("hex"),
+        claimPrivateKeyIndex: claimKey?.index,
+        refundPrivateKeyIndex: refundKey?.index,
     };
 };
 

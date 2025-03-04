@@ -11,8 +11,14 @@
     display: flex;
     padding: 12px 6px;
     cursor: pointer;
+
     &:hover {
         background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    &.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 }
 

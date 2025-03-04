@@ -1,6 +1,10 @@
+import { Page } from "@playwright/test";
 import bolt11 from "bolt11";
 import { exec } from "child_process";
+import fs from "fs";
 import { promisify } from "util";
+
+import dict from "../src/i18n/i18n";
 
 const execAsync = promisify(exec);
 
@@ -82,6 +86,34 @@ export const generateInvoiceLnd = async (amount: number): Promise<string> => {
     ).payment_request as string;
 };
 
+export const waitForNodesToSync = async (): Promise<void> => {
+    const height = JSON.parse(
+        await execCommand("bitcoin-cli-sim-client getblockchaininfo"),
+    ).blocks;
+
+    const nodesToCheck = [
+        async (): Promise<number> => {
+            return JSON.parse(await execCommand("lncli-sim 2 getinfo"))
+                .block_height as number;
+        },
+        async (): Promise<number> => {
+            return JSON.parse(await execCommand("lightning-cli-sim 2 getinfo"))
+                .blockheight as number;
+        },
+    ];
+
+    for (const node of nodesToCheck) {
+        while (true) {
+            const nodeHeight = await node();
+            if (nodeHeight === height) {
+                break;
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, 1_000));
+        }
+    }
+};
+
 export const addReferral = (name: string): Promise<string> =>
     boltzCli(`addreferral ${name} 0`);
 
@@ -116,4 +148,18 @@ export const lookupInvoiceLnd = async (
 export const getBolt12Offer = async (): Promise<string> => {
     return JSON.parse(await execCommand("lightning-cli-sim 1 offer any ''"))
         .bolt12 as string;
+};
+
+export const verifyRescueFile = async (page: Page) => {
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: dict.en.download_new_key }).click();
+
+    const fileName = "rescue-file.json";
+    await (await downloadPromise).saveAs(fileName);
+
+    await page.getByTestId("rescueFileUpload").setInputFiles(fileName);
+
+    if (fs.existsSync(fileName)) {
+        fs.unlinkSync(fileName);
+    }
 };

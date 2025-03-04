@@ -16,7 +16,10 @@ import { config, setConfig } from "./config";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider, useGlobalContext } from "./context/Global";
 import { PayProvider } from "./context/Pay";
+import { RescueProvider } from "./context/Rescue";
 import { Web3SignerProvider } from "./context/Web3";
+import Backup from "./pages/Backup";
+import BackupVerify from "./pages/BackupVerify";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
 import Hero from "./pages/Hero";
@@ -26,7 +29,7 @@ import Pay from "./pages/Pay";
 import Refund from "./pages/Refund";
 import RefundEvm from "./pages/RefundEvm";
 import RefundExternal from "./pages/RefundExternal";
-import RefundStep from "./pages/RefundStep";
+import RefundRescue from "./pages/RefundRescue";
 import "./style/index.scss";
 import "./utils/patches";
 
@@ -68,19 +71,21 @@ const App = (props: RouteSectionProps) => {
                     <Web3SignerProvider>
                         <CreateProvider>
                             <PayProvider>
-                                <SwapChecker />
-                                <Chatwoot />
-                                <Show when={!isEmbedded()}>
-                                    <Nav
-                                        isPro={config.isPro}
-                                        network={config.network}
-                                    />
-                                </Show>
-                                {props.children}
-                                <Notification />
-                                <Show when={!isEmbedded()}>
-                                    <Footer />
-                                </Show>
+                                <RescueProvider>
+                                    <SwapChecker />
+                                    <Chatwoot />
+                                    <Show when={!isEmbedded()}>
+                                        <Nav
+                                            isPro={config.isPro}
+                                            network={config.network}
+                                        />
+                                    </Show>
+                                    {props.children}
+                                    <Notification />
+                                    <Show when={!isEmbedded()}>
+                                        <Footer />
+                                    </Show>
+                                </RescueProvider>
                             </PayProvider>
                         </CreateProvider>
                     </Web3SignerProvider>
@@ -99,15 +104,18 @@ const cleanup = render(
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
+            <Route path="/backup/:id" component={Backup} />
+            <Route path="/backup/verify" component={BackupVerify} />
+            <Route path="/backup/verify/:id" component={BackupVerify} />
             <Route
                 path="/swap/refund/evm/:asset/:txHash"
                 component={RefundEvm}
             />
-            <Route path="/swap/refund/:id" component={RefundStep} />
             <Route path="/error" component={() => <Error />} />
             <Route path="/refund" component={Refund} />
             <Route path="/refund/external" component={RefundExternal} />
             <Route path="/refund/external/:type" component={RefundExternal} />
+            <Route path="/refund/rescue/:id" component={RefundRescue} />
             <Route path="/history" component={History} />
             <Route path="*404" component={NotFound} />
         </Router>
