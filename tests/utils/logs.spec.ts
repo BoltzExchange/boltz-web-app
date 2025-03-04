@@ -12,8 +12,12 @@ import {
 /* eslint-disable @typescript-eslint/unbound-method */
 
 describe("logs", () => {
+    beforeAll(() => {
+        vi.stubGlobal("console", {});
+    });
+
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     afterAll(() => {
@@ -51,7 +55,7 @@ describe("logs", () => {
                 cb([], oldDates[1]);
                 cb([], getDate());
             },
-            removeItem: jest.fn(),
+            removeItem: vi.fn(),
         } as unknown as LocalForage;
 
         await deleteOldLogs(forage);
@@ -78,8 +82,8 @@ describe("logs", () => {
         "should inject into the log writer and write new entries when no existing logs are found",
         async ({ existingLogs }) => {
             const forage = {
-                getItem: jest.fn().mockResolvedValue(existingLogs),
-                setItem: jest.fn(),
+                getItem: vi.fn().mockResolvedValue(existingLogs),
+                setItem: vi.fn(),
             } as unknown as LocalForage;
 
             injectLogWriter(forage);
@@ -105,8 +109,8 @@ describe("logs", () => {
         const existingLogs = ["i was here first"];
 
         const forage = {
-            getItem: jest.fn().mockResolvedValue(existingLogs),
-            setItem: jest.fn(),
+            getItem: vi.fn().mockResolvedValue(existingLogs),
+            setItem: vi.fn(),
         } as unknown as LocalForage;
 
         injectLogWriter(forage);
