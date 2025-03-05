@@ -18,7 +18,7 @@ describe("Lock", () => {
         expect(value).toEqual(1);
         expect(lock["locked"]).toEqual(true);
 
-        const second = jest.fn().mockResolvedValue(undefined);
+        const second = vi.fn().mockResolvedValue(undefined);
         const secondResolve = lock.acquire(second);
 
         expect(second).toHaveBeenCalledTimes(0);

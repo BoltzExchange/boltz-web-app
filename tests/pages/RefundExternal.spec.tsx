@@ -7,16 +7,12 @@ import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 /* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
 
-jest.mock("../../src/utils/boltzClient", () => {
-    const originalModule = jest.requireActual("../../src/utils/boltzClient");
-
+vi.mock("../../src/utils/boltzClient", () => {
     return {
-        __esModule: true,
-        ...originalModule,
-        getLockupTransaction: jest.fn(() => {
+        getLockupTransaction: vi.fn(() => {
             return { timeoutBlockHeight: 10, timeoutEta: 10 };
         }),
-    } as unknown;
+    };
 });
 
 describe("RefundExternal", () => {

@@ -1,4 +1,3 @@
-import { ECPair } from "../../src/utils/ecpair";
 import {
     deriveKey,
     generateRescueFile,
@@ -53,11 +52,9 @@ describe("rescueFile", () => {
 
             expect(derivedKey).toBeDefined();
             expect(derivedKey.privateKey).toBeDefined();
-            expect(
-                ECPair.fromPrivateKey(
-                    Buffer.from(derivedKey.privateKey),
-                ).privateKey?.toString("hex"),
-            ).toEqual(expected);
+            expect(Buffer.from(derivedKey.privateKey).toString("hex")).toEqual(
+                expected,
+            );
         });
     });
 

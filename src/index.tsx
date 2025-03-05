@@ -31,6 +31,7 @@ import RefundEvm from "./pages/RefundEvm";
 import RefundExternal from "./pages/RefundExternal";
 import RefundRescue from "./pages/RefundRescue";
 import "./style/index.scss";
+import { initEcc } from "./utils/ecpair";
 import "./utils/patches";
 
 if ("serviceWorker" in navigator) {
@@ -46,6 +47,7 @@ const isEmbedded = () => {
 };
 
 const App = (props: RouteSectionProps) => {
+    initEcc();
     const [configError, setConfigError] = createSignal<boolean>(null);
 
     onMount(async () => {

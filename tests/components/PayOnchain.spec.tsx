@@ -35,7 +35,7 @@ describe("PayOnchain", () => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
         navigator.clipboard = {
-            writeText: jest.fn(),
+            writeText: vi.fn(),
         } as unknown;
 
         const buttons = (await screen.findByTestId(

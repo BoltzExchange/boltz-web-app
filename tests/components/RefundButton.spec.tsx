@@ -8,16 +8,12 @@ import { SwapType } from "../../src/consts/Enums";
 import { ChainSwap, SubmarineSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
-jest.mock("../../src/utils/boltzClient", () => {
-    const originalModule = jest.requireActual("../../src/utils/boltzClient");
-
+vi.mock("../../src/utils/boltzClient", () => {
     return {
-        __esModule: true,
-        ...originalModule,
-        getLockupTransaction: jest.fn(() => {
+        getLockupTransaction: vi.fn(() => {
             return { timeoutBlockHeight: 10, timeoutEta: 10 };
         }),
-    } as unknown;
+    };
 });
 
 describe("RefundButton", () => {

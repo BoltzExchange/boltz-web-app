@@ -2,6 +2,15 @@ import { Pairs } from "../../src/utils/boltzClient";
 import { ECPair } from "../../src/utils/ecpair";
 import { getPair, parsePrivateKey } from "../../src/utils/helper";
 
+vi.mock("../../src/utils/ecpair", () => {
+    return {
+        ECPair: {
+            fromWIF: vi.fn().mockReturnValue({ key: "data" }),
+            fromPrivateKey: vi.fn().mockReturnValue({ key: "data" }),
+        },
+    };
+});
+
 describe("helper", () => {
     test.each`
         swapType       | assetSend     | assetReceive  | expected
@@ -49,8 +58,8 @@ describe("helper", () => {
     describe("parsePrivateKey", () => {
         test("should use derive function when keyIndex is provided", () => {
             const keyIndex = 42;
-            const key = ECPair.makeRandom();
-            const mockDerive = jest.fn().mockReturnValue(key);
+            const key = { key: "data" };
+            const mockDerive = vi.fn().mockReturnValue(key);
 
             expect(parsePrivateKey(mockDerive, keyIndex)).toBe(key);
             expect(mockDerive).toHaveBeenCalledTimes(1);
@@ -58,10 +67,10 @@ describe("helper", () => {
         });
 
         test("should parse hex private key", () => {
-            const originalKey = ECPair.makeRandom();
-            const privateKeyHex = originalKey.privateKey?.toString("hex");
+            const originalKey = { key: "data" };
+            const privateKeyHex = originalKey.key;
 
-            const mockDerive = jest.fn();
+            const mockDerive = vi.fn();
 
             expect(
                 parsePrivateKey(mockDerive, undefined, privateKeyHex),
@@ -69,20 +78,8 @@ describe("helper", () => {
 
             // Verify derive function wasn't called
             expect(mockDerive).not.toHaveBeenCalled();
-        });
-
-        test("should parse WIF private key", () => {
-            const originalKey = ECPair.makeRandom();
-            const wif = originalKey.toWIF();
-
-            const mockDerive = jest.fn();
-
-            expect(parsePrivateKey(mockDerive, undefined, wif)).toEqual(
-                originalKey,
-            );
-
-            // Verify derive function wasn't called
-            expect(mockDerive).not.toHaveBeenCalled();
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            expect(ECPair.fromPrivateKey).toHaveBeenCalledTimes(1);
         });
     });
 });

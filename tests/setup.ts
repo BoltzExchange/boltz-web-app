@@ -1,14 +1,16 @@
-import { TextEncoder } from "util";
-
 import { setConfig } from "../src/config";
 import regtest from "../src/configs/regtest.json";
 
 regtest.loglevel = "error";
 setConfig(regtest as never);
 
-global.TextEncoder = TextEncoder;
+vi.mock("ethers", () => ({
+    JsonRpcProvider: vi.fn(),
+}));
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 globalThis.Notification = {
-    requestPermission: jest.fn().mockResolvedValue(true),
+    requestPermission: vi.fn().mockResolvedValue(true),
     permission: "granted",
-} as unknown as jest.Mocked<typeof Notification>;
+} as unknown;
