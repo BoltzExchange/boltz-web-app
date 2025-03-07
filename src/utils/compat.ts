@@ -201,7 +201,7 @@ const getConstructRefundTransaction = (
                     liquidNetwork,
                     blindingKey,
                 ),
-            config.network !== "mainnet",
+            true,
         );
 };
 
