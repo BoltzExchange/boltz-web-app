@@ -1349,7 +1349,6 @@ const dict = {
         invoice_payment_failure: "Не удалось оплатить Ваш lightning инвойс",
         onchain_address: "Введите адрес {{ asset }}",
         onchain_address_no_asset: "Введите адрес",
-        download_refund_file: "Скачать файл возврата",
         invalid_refund_file: "Недействительный файл возврата",
         invalid_backup_file: "Недействительный файл резервного копирования",
         invalid_invoice:
@@ -1360,15 +1359,6 @@ const dict = {
         copy_amount: "сумма",
         copy_bip21: "BIP21",
         copied: "Скопировано!",
-        backup_skip: "Пропустить загрузку",
-        backup_refund: "Скачать файл возврата",
-        backup_refund_subline:
-            "Если этот своп не удастся, Вы сможете вернуть ваши биткоины с использованием ключа возврата. Этот ключ по умолчанию хранится в памяти вашего браузера, но может быть утерян, если вы",
-        backup_refund_list_incognito: "используете режим инкогнито",
-        backup_refund_list_tor: "используете браузер Tor",
-        backup_refund_list_clear_history: "очистите историю браузера",
-        backup_refund_skip:
-            "Если что-то из вышеперечисленного применимо к Вам, мы настоятельно рекомендуем скачать этот файл возврата!",
         refund_swap: "Возврат свопа {{ id }}",
         refund_a_swap_subline:
             "Загрузите файл возврата и верните свои заблокированные средства",
@@ -1490,9 +1480,6 @@ const dict = {
             "Включить или отключить уведомления браузера",
         browsernotification_error: "Доступ к уведомлениям отклонен",
         invalid_pair: "Недопустимая пара",
-        reckless_mode_setting: "Режим беспечности",
-        reckless_mode_setting_tooltip:
-            "Отключает запросы на скачивание файла возврата и другие шаги подтверждения",
         error_starting_qr_scanner:
             "Не удалось получить доступ к камере, проверьте разрешения!",
         insufficient_balance: "Недостаточный баланс",
