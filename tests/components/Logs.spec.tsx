@@ -5,7 +5,7 @@ import { contextWrapper } from "../helper";
 
 let mockIsIos = false;
 
-jest.mock("../../src/utils/helper", () => ({
+vi.mock("../../src/utils/helper", () => ({
     isIos: () => mockIsIos,
     isMobile: () => false,
 }));

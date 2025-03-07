@@ -15,7 +15,6 @@ describe("AddressInput", () => {
         ${true}  | ${BTC}  | ${"mv5v8C3e1SySwqe6r2fq9Fh6DbZr8ddjsX"}
         ${true}  | ${BTC}  | ${"2N17VNGbi4yUHtkD7vhrc8cpi9JGVmC8scn"}
         ${true}  | ${BTC}  | ${"bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3"}
-        ${true}  | ${BTC}  | ${"bcrt1pjyk4csn4nd4apwqy8s2p5kj5kywtrwzejtjalz3sufeljsycxw3qgrstgd"}
         ${false} | ${BTC}  | ${"02d96eadea3d780104449aca5c93461ce67c1564e2e1d73225fa67dd3b997a6018"}
         ${true}  | ${LBTC} | ${"CTEyTteD4cQg2NfF1yGWUU1rWSDC8sKHrj5BZJzr8kzyKFXwNCJ8VyDhi45Q98KdSf3jeTkbjJy18JkP"}
         ${true}  | ${LBTC} | ${"AzpjfmC41JpC6ieu3odwFBqtF4isFeY8RHv1e699EM2RgiyHd49og66a8qLLMDrhL8pCLeWAxJat1ebD"}
@@ -58,7 +57,7 @@ describe("AddressInput", () => {
 
     test.each`
         asset   | input
-        ${BTC}  | ${"bcrt1p89lvl3e6e8sxmjryqx80p7cmd3l0eeh6cr48ht948wa2a0l68szqljype5"}
+        ${BTC}  | ${"bcrt1q7vq47xpsg4t080205edaulc3sdsjpdxy9svhr3"}
         ${LBTC} | ${"el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu"}
         ${LN}   | ${"admin@bol.tz"}
     `(

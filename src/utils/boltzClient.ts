@@ -166,6 +166,20 @@ type ChainSwapTransaction = {
 
 type TransactionInterface = Transaction | LiquidTransaction;
 
+export type RescuableSwap = {
+    id: string;
+    type: SwapType;
+    tree: SwapTree;
+    status: string;
+    symbol: string;
+    keyIndex: number;
+    blindingKey?: string;
+    lockupAddress: string;
+    serverPublicKey: string;
+    transaction?: { id: string; vout: number };
+    createdAt: number;
+};
+
 export const getPairs = async (backend: number): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>(backend, "/v2/swap/submarine"),
@@ -511,6 +525,9 @@ export const acceptChainSwapNewQuote = (
 
 export const getSubmarinePreimage = (backend: number, id: string) =>
     fetcher<{ preimage: string }>(backend, `/v2/swap/submarine/${id}/preimage`);
+
+export const getRescuableSwaps = (backend: number, xpub: string) =>
+    fetcher<RescuableSwap[]>(backend, `/v2/swap/rescue`, { xpub });
 
 export {
     Pairs,

@@ -6,6 +6,7 @@ import {
     getBitcoinAddress,
     getElementsWalletTx,
     getLiquidAddress,
+    verifyRescueFile,
 } from "../utils";
 
 test.describe("Chain Swap 0-amount", () => {
@@ -28,7 +29,7 @@ test.describe("Chain Swap 0-amount", () => {
         await page.getByTestId("onchainAddress").fill(liquidAddress);
         await page.getByTestId("create-swap-button").click();
 
-        await page.getByRole("button", { name: "Skip download" }).click();
+        await verifyRescueFile(page);
 
         const buttons = page.locator("div[data-testid='pay-onchain-buttons']");
         const copyAddressButton = buttons.getByText("address");
@@ -72,8 +73,7 @@ test.describe("Chain Swap 0-amount", () => {
         );
         await buttonCreateSwap.click();
 
-        const skipDownload = page.getByText("Skip download");
-        await skipDownload.click();
+        await verifyRescueFile(page);
     });
 
     test("should not allow 0-amount chain swaps when sending RBTC", async ({

@@ -1,6 +1,7 @@
 /* @refresh skip */
 import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
+import { ECPairInterface } from "ecpair";
 import localforage from "localforage";
 import log from "loglevel";
 import {
@@ -21,16 +22,26 @@ import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import dict, { DictKey } from "../i18n/i18n";
 import { Pairs, getPairs } from "../utils/boltzClient";
+import { ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
+import {
+    RescueFile,
+    deriveKey,
+    generateRescueFile,
+    getXpub,
+} from "../utils/rescueFile";
 import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import { getUrlParam, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
 const proReferral = "pro";
+
+export type deriveKeyFn = (index: number) => ECPairInterface;
+export type newKeyFn = () => { index: number; key: ECPairInterface };
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
@@ -85,9 +96,6 @@ export type GlobalContextType = {
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
 
-    isRecklessMode: Accessor<boolean>;
-    setRecklessMode: Setter<boolean>;
-
     setSwapStorage: (swap: SomeSwap) => Promise<void>;
     getSwap: <T = SomeSwap>(id: string) => Promise<T>;
     getSwaps: <T = SomeSwap>() => Promise<T[]>;
@@ -103,6 +111,14 @@ export type GlobalContextType = {
 
     externalBroadcast: Accessor<boolean>;
     setExternalBroadcast: Setter<boolean>;
+
+    newKey: newKeyFn;
+    deriveKey: deriveKeyFn;
+    getXpub: () => string;
+    rescueFile: Accessor<RescueFile | null>;
+    setRescueFile: Setter<RescueFile | null>;
+    rescueFileBackupDone: Accessor<boolean>;
+    setRescueFileBackupDone: Setter<boolean>;
 };
 
 const defaultReferral = () => {
@@ -205,6 +221,53 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
             name: "separator",
         },
     );
+
+    const [rescueFile, setRescueFile] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<RescueFile>(null),
+        {
+            name: "rescueFile",
+        },
+    );
+
+    const [lastUsedKey, setLastUsedKey] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<number>(0),
+        {
+            name: "lastUsedKey",
+        },
+    );
+
+    const [rescueFileBackupDone, setRescueFileBackupDone] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<boolean>(false),
+        {
+            name: "rescueFileBackupDone",
+        },
+    );
+
+    createEffect(() => {
+        if (rescueFile() === null) {
+            log.debug("Generating rescue file");
+            setRescueFile(generateRescueFile());
+        }
+    });
+
+    const deriveKeyWrapper = (index: number) => {
+        return ECPair.fromPrivateKey(
+            Buffer.from(deriveKey(rescueFile(), index).privateKey),
+        );
+    };
+
+    const newKey = () => {
+        const index = lastUsedKey();
+        setLastUsedKey(index + 1);
+        return { index, key: deriveKeyWrapper(index) };
+    };
+
+    const getXpubWrapper = () => {
+        return getXpub(rescueFile());
+    };
 
     const notify = (
         type: string,
@@ -361,14 +424,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
-    const [isRecklessMode, setRecklessMode] = makePersisted(
-        // eslint-disable-next-line solid/reactivity
-        createSignal<boolean>(false),
-        {
-            name: config.network + "recklessMode",
-        },
-    );
-
     const [hardwareDerivationPath, setHardwareDerivationPath] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<string>(""),
@@ -453,8 +508,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 deleteSwap,
                 getSwaps,
                 clearSwaps,
-                isRecklessMode,
-                setRecklessMode,
 
                 setRdns,
                 getRdnsForAddress,
@@ -463,6 +516,15 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
                 externalBroadcast,
                 setExternalBroadcast,
+
+                newKey,
+                rescueFile,
+                setRescueFile,
+                deriveKey: deriveKeyWrapper,
+                getXpub: getXpubWrapper,
+
+                rescueFileBackupDone,
+                setRescueFileBackupDone,
             }}>
             {props.children}
         </GlobalContext.Provider>

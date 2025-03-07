@@ -1,8 +1,6 @@
 import { IoClose } from "solid-icons/io";
 import type { JSXElement } from "solid-js";
-import { Show } from "solid-js";
 
-import { config } from "../../config";
 import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
 import "../../style/settings.scss";
@@ -11,7 +9,7 @@ import BroadcastSetting from "./BroadcastSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
 import Logs from "./Logs";
-import RecklessModeSetting from "./RecklessModeSetting";
+import RescueFile from "./RescueKey";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
 
@@ -71,13 +69,11 @@ const SettingsMenu = () => {
                     tooltipLabel={"broadcast_setting_tooltip"}
                     settingElement={<BroadcastSetting />}
                 />
-                <Show when={config.network !== "mainnet"}>
-                    <Entry
-                        label={"reckless_mode_setting"}
-                        tooltipLabel={"reckless_mode_setting_tooltip"}
-                        settingElement={<RecklessModeSetting />}
-                    />
-                </Show>
+                <Entry
+                    label={"rescue_key"}
+                    tooltipLabel={"download_boltz_rescue_key"}
+                    settingElement={<RescueFile />}
+                />
                 <Entry
                     label={"logs"}
                     tooltipLabel={"logs_tooltip"}

@@ -36,7 +36,9 @@ export const CreateButton = () => {
         notify,
         ref,
         t,
-        isRecklessMode,
+        newKey,
+        deriveKey,
+        rescueFileBackupDone,
         backend,
     } = useGlobalContext();
     const {
@@ -295,6 +297,7 @@ export const CreateButton = () => {
                         invoice(),
                         ref(),
                         useRif,
+                        newKey,
                     );
                     break;
 
@@ -309,6 +312,7 @@ export const CreateButton = () => {
                         claimAddress,
                         ref(),
                         useRif,
+                        newKey,
                     );
                     break;
 
@@ -323,11 +327,12 @@ export const CreateButton = () => {
                         claimAddress,
                         ref(),
                         useRif,
+                        newKey,
                     );
                     break;
             }
 
-            if (!(await validateResponse(data, getEtherSwap))) {
+            if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
                 navigate("/error");
                 return;
             }
@@ -358,9 +363,8 @@ export const CreateButton = () => {
             // Mobile EVM browsers struggle with downloading files
             const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
 
-            // No backups needed for Reverse Swaps or when we send RBTC
             if (
-                isRecklessMode() ||
+                rescueFileBackupDone() ||
                 swapType() === SwapType.Reverse ||
                 assetSend() === RBTC ||
                 // Only disable refund files on mobile EVM browsers when one side is RSK
@@ -368,7 +372,7 @@ export const CreateButton = () => {
             ) {
                 navigate("/swap/" + data.id);
             } else {
-                navigate("/swap/refund/" + data.id);
+                navigate("/backup/" + data.id);
             }
         } catch (err) {
             if (err === "invalid pair hash") {

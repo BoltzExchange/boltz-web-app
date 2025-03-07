@@ -81,8 +81,8 @@ describe("AssetSelect", () => {
         signals.setAssetSelect(true);
         signals.setAssetSelected(Side.Send);
 
-        const setAssetSend = jest.spyOn(signals, "setAssetSend");
-        const setAssetReceive = jest.spyOn(signals, "setAssetReceive");
+        const setAssetSend = vi.spyOn(signals, "setAssetSend");
+        const setAssetReceive = vi.spyOn(signals, "setAssetReceive");
 
         const btcButton = container.children[0].children[3];
         fireEvent.click(btcButton);

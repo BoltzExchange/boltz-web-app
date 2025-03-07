@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import dict from "../src/i18n/i18n";
 import { generateBitcoinBlock, getBolt12Offer } from "./utils";
 
 test.describe("BOLT12", () => {
@@ -26,7 +27,7 @@ test.describe("BOLT12", () => {
         );
         await buttonCreateSwap.click();
 
-        const skipDownload = page.getByText("Skip download");
-        await expect(skipDownload).toBeVisible();
+        const downloadButton = page.getByText(dict.en.download_new_key);
+        await expect(downloadButton).toBeVisible();
     });
 });

@@ -4,25 +4,44 @@ import { Accessor, For, Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
+import type { RescuableSwap } from "../utils/boltzClient";
 import { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
+type Swap = (SomeSwap | RescuableSwap) & { disabled?: boolean };
+
+const getSwapDate = (swap: Swap) => {
+    if ("date" in swap) {
+        return swap.date;
+    }
+
+    return swap.createdAt * 1_000;
+};
+
 const SwapList = (props: {
-    swapsSignal: Accessor<SomeSwap[]>;
+    swapsSignal: Accessor<Swap[]>;
     action: string;
     onDelete?: () => Promise<unknown>;
+    onClick?: (swap: Swap) => void;
+    surroundingSeparators?: boolean;
 }) => {
     const navigate = useNavigate();
     const { deleteSwap, t } = useGlobalContext();
-    const [sortedSwaps, setSortedSwaps] = createSignal<SomeSwap[]>([]);
+    const [sortedSwaps, setSortedSwaps] = createSignal<Swap[]>([]);
     const [lastSwap, setLastSwap] = createSignal();
 
     createEffect(() => {
-        const sorted = props
-            .swapsSignal()
-            .sort((a: SomeSwap, b: SomeSwap) =>
-                a.date > b.date ? -1 : a.date === b.date ? 0 : 1,
-            );
+        const sorted = props.swapsSignal().sort((a: Swap, b: Swap) => {
+            const aDate = getSwapDate(a);
+            const bDate = getSwapDate(b);
+
+            if (a.disabled !== b.disabled) {
+                return a.disabled ? 1 : -1;
+            }
+
+            // Within each group (disabled/enabled), sort by date descending
+            return aDate > bDate ? -1 : aDate === bDate ? 0 : 1;
+        });
         setSortedSwaps(sorted);
         setLastSwap(sorted[sorted.length - 1]);
     });
@@ -44,13 +63,25 @@ const SwapList = (props: {
 
     return (
         <div id="swaplist">
-            <hr />
+            <Show when={props.surroundingSeparators ?? true}>
+                <hr />
+            </Show>
             <For each={sortedSwaps()}>
                 {(swap) => (
                     <>
                         <div
-                            class="swaplist-item"
-                            onClick={() => navigate(`/swap/${swap.id}`)}>
+                            class={`swaplist-item ${swap.disabled ? "disabled" : ""}`}
+                            onClick={() => {
+                                if (swap.disabled) {
+                                    return;
+                                }
+
+                                if (props.onClick) {
+                                    props.onClick(swap);
+                                } else {
+                                    navigate(`/swap/${swap.id}`);
+                                }
+                            }}>
                             <a class="btn-small hidden-mobile" href="#">
                                 {props.action}
                             </a>
@@ -62,7 +93,7 @@ const SwapList = (props: {
                             <span class="swaplist-asset-date">
                                 {t("created")}:&nbsp;
                                 <span class="monospace">
-                                    {formatDate(swap.date)}
+                                    {formatDate(getSwapDate(swap))}
                                 </span>
                             </span>
                             <Show when={props.onDelete !== undefined}>
@@ -81,7 +112,9 @@ const SwapList = (props: {
                     </>
                 )}
             </For>
-            <hr />
+            <Show when={props.surroundingSeparators ?? true}>
+                <hr />
+            </Show>
         </div>
     );
 };

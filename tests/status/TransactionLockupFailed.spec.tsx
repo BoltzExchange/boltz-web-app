@@ -8,20 +8,17 @@ import TransactionLockupFailed from "../../src/status/TransactionLockupFailed";
 import { SomeSwap } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
-jest.mock("../../src/utils/boltzClient", () => {
-    const originalModule = jest.requireActual("../../src/utils/boltzClient");
+vi.mock("../../src/utils/boltzClient", () => {
     return {
-        __esModule: true,
-        ...originalModule,
-        getLockupTransaction: jest.fn(() => {
+        getLockupTransaction: vi.fn(() => {
             return { timeoutBlockHeight: 10, timeoutEta: 10 };
         }),
-    } as unknown;
+    };
 });
 
 describe("TransactionLockupFailed", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     test.each([OutputType.Bech32, OutputType.Compatibility, undefined])(

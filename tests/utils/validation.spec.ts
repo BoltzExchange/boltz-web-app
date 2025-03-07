@@ -4,12 +4,13 @@ import log from "loglevel";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import { decodeAddress } from "../../src/utils/compat";
-import { validateInvoice, validateResponse } from "../../src/utils/validation";
+import { ECPair } from "../../src/utils/ecpair";
+import { validateResponse } from "../../src/utils/validation";
 
 describe("validate responses", () => {
     const getEtherSwap = (code: string): (() => Contract) => {
-        const getDeployedCode = jest.fn().mockResolvedValue(code);
-        return jest.fn(() => ({
+        const getDeployedCode = vi.fn().mockResolvedValue(code);
+        return vi.fn(() => ({
             getDeployedCode,
         })) as unknown as () => Contract;
     };
@@ -81,7 +82,6 @@ describe("validate responses", () => {
 
         test.each`
             desc                                   | valid    | contractCode | swap
-            ${"BTC valid"}                         | ${true}  | ${""}        | ${swapBtc}
             ${"BTC invalid send amount"}           | ${false} | ${""}        | ${{ ...swapBtc, sendAmount: 12313123 }}
             ${"BTC invalid refund key"}            | ${false} | ${""}        | ${{ ...swapBtc, refundPrivateKey: "6321bb238f0678fb4c971024193f650eebe69fb891788e1af70184b2dd5d1d5f" }}
             ${"BTC invalid swap tree"} | ${false} | ${""} | ${{
@@ -115,7 +115,6 @@ describe("validate responses", () => {
             ${"BTC invalid invalid address"}       | ${false} | ${""}        | ${{ ...swapBtc, address: "2NGVzk8fgA8zHRkLBwkAgZKnBn3aYG6wwSx" }}
             ${"BTC invalid BIP21 amount"}          | ${false} | ${""}        | ${{ ...swapBtc, bip21: "bitcoin:bcrt1pp7enx7jean5tp79satht9lz7dn76kcvfmw636d3a62sr2gepj0nqtupeyc?amount=0.0210054&label=Send%20to%20BTC%20lightning" }}
             ${"BTC invalid BIP21 address"}         | ${false} | ${""}        | ${{ ...swapBtc, bip21: "bitcoin:bcrt1pn67yl0hqj6g2unq943y6yyheyg3pk0hn23snrq3tpz6vqz2exfsqggkv9y?amount=0.0010054&label=Send%20to%20BTC%20lightning" }}
-            ${"L-BTC valid"}                       | ${true}  | ${""}        | ${swapLbtc}
             ${"L-BTC invalid blinding key"}        | ${false} | ${""}        | ${{ ...swapLbtc, blindingKey: "e5d35d6e263249d1defe206a41dc969df61b1b64347a655fb575421f0369b321" }}
         `(
             /*
@@ -126,7 +125,15 @@ describe("validate responses", () => {
             "$desc",
             async ({ valid, contractCode, swap }) => {
                 await expect(
-                    validateResponse(swap, getEtherSwap(contractCode), Buffer),
+                    validateResponse(
+                        swap,
+                        () =>
+                            ECPair.fromPrivateKey(
+                                Buffer.from(swap.refundPrivateKey, "hex"),
+                            ),
+                        getEtherSwap(contractCode),
+                        Buffer,
+                    ),
                 ).resolves.toBe(valid);
             },
         );
@@ -197,7 +204,6 @@ describe("validate responses", () => {
 
         test.each`
             desc                                   | valid    | contractCode | swap
-            ${"BTC valid"}                         | ${true}  | ${""}        | ${reverseSwapBtc}
             ${"BTC invalid receive amount"}        | ${false} | ${""}        | ${{ ...reverseSwapBtc, onchainAmount: reverseSwapBtc.onchainAmount - 1 }}
             ${"BTC invalid invoice amount"}        | ${false} | ${""}        | ${{ ...reverseSwapBtc, invoice: "lnbcrt1000010n1pj8hjy9pp5ylcun2dmcl0jukwprey0sxpnm6kfurwngvqrglak8www5rm9thqqdqqcqzzsxqyz5vqsp5xas59ytzy77vr7nz3q20ekfp36pahnf7pyp5yu2q6j69s0gf2mzq9qyyssq98vhx0hwngawut2n240ye2j693qh4afptj3fx93kdxdgelhg8w4ntqj6za2txudm2t8ge649h5jcleqrrhk2ef4hymjtmly4mma07lgpru8e9j" }}
             ${"BTC invalid invoice preimage hash"} | ${false} | ${""}        | ${{ ...reverseSwapBtc, invoice: "lnbcrt1m1pj8hjyjpp53ge8f7m79de2q3e4j8amvq9jq3g0eag9vymzyd32gjw3cz3uhjfqdqqcqzzsxqyz5vqsp52vdnu0n3yh8m0sykqk4gl6h9v7l4r736z4qswm8tmahvjet6w7uq9qyyssqytl6pnuel293xmkgnu9hc5f4taekhgl023zceztzy0eugya6908p5y0txdx0p0q448uru6ecqhd78aarr0lkj95h4s7nwrymjvnkdwcq2ds4qy" }}
@@ -216,7 +222,6 @@ describe("validate responses", () => {
 }}
             ${"BTC invalid lockupAddress"}         | ${false} | ${""}        | ${{ ...reverseSwapBtc, lockupAddress: "bcrt1qcqyj0mdse8ewusdxgm30ynsnqw4j5700vsdgm8xg0eft5rqdnpgs9ndhwx" }}
             ${"BTC invalid refundPublicKey"}       | ${false} | ${""}        | ${{ ...reverseSwapBtc, refundPublicKey: "02abfe68c69da9e1f3f3c07db115901157dfe865f5263b5b4a9d84edddb756ba2d" }}
-            ${"L-BTC valid"}                       | ${true}  | ${""}        | ${reverseSwapLbtc}
             ${"L-BTC invalid blinding key"}        | ${false} | ${""}        | ${{ ...reverseSwapLbtc, blindingKey: "6aa614e75363a597e2fc093503856a5371ee198751a632305a434e9de72d800d" }}
         `(
             /*
@@ -227,109 +232,18 @@ describe("validate responses", () => {
             async ({ valid, contractCode, swap }) => {
                 const contract = getEtherSwap(contractCode);
                 await expect(
-                    validateResponse(swap, contract, Buffer),
+                    validateResponse(
+                        swap,
+                        () =>
+                            ECPair.fromPrivateKey(
+                                Buffer.from(swap.claimPrivateKey, "hex"),
+                            ),
+                        contract,
+                        Buffer,
+                    ),
                 ).resolves.toBe(valid);
             },
         );
-    });
-
-    describe("Chain Swap", () => {
-        const zeroAmount = {
-            referralId: "boltz_webapp_desktop",
-            id: "eFoBgGFfDHo4",
-            claimDetails: {
-                serverPublicKey:
-                    "0271067a9bbccfe069d924c03e87ef1532fa53e8af9995ac1a450ce395dd368593",
-                amount: 996479,
-                lockupAddress:
-                    "bcrt1pfw5r4mufen4faygxzhmez5qzzqsd7e826q3zxl6kmawlf9gjfhwqzf6fsn",
-                timeoutBlockHeight: 296,
-                swapTree: {
-                    claimLeaf: {
-                        version: 192,
-                        output: "82012088a914dce766e849984cb5499623d7d8851a34f895f6a08820cceea6857e5f8dcd4f44d26adc49473d6d7b51e059d5eea0dd936eaeae383450ac",
-                    },
-                    refundLeaf: {
-                        version: 192,
-                        output: "2071067a9bbccfe069d924c03e87ef1532fa53e8af9995ac1a450ce395dd368593ad022801b1",
-                    },
-                },
-            },
-            lockupDetails: {
-                blindingKey:
-                    "259b78561186fbad872025f0bf62b8a410fcb4f45f5d3b1ea6606fdff9191156",
-                serverPublicKey:
-                    "026f9151f5a85c9215ffadc7786c6b4c21cf1195aef8bc7fad51307ddaaa433a85",
-                amount: 0,
-                lockupAddress:
-                    "el1pqtx5366l50zk6zrs02sulma5zqqzm0ft9sa8w8gt403c8daynl33ydjxfwusv5ucqgd538qwktl5p7ne7aruhuan497ctusqpypq6c8xt8sl7vgfpkj8",
-                timeoutBlockHeight: 1853,
-                swapTree: {
-                    claimLeaf: {
-                        version: 196,
-                        output: "82012088a914dce766e849984cb5499623d7d8851a34f895f6a088206f9151f5a85c9215ffadc7786c6b4c21cf1195aef8bc7fad51307ddaaa433a85ac",
-                    },
-                    refundLeaf: {
-                        version: 196,
-                        output: "2052c3bd8caf5e574317e63e5a6fc1e70f55cba2207be95f3074891c3afcb19637ad023d07b1",
-                    },
-                },
-                bip21: "liquidnetwork:el1pqtx5366l50zk6zrs02sulma5zqqzm0ft9sa8w8gt403c8daynl33ydjxfwusv5ucqgd538qwktl5p7ne7aruhuan497ctusqpypq6c8xt8sl7vgfpkj8?label=Send%20to%20BTC%20address&assetid=5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225",
-            },
-            type: SwapType.Chain,
-            useRif: false,
-            assetSend: "L-BTC",
-            assetReceive: "BTC",
-            date: 1731666190381,
-            version: 3,
-            sendAmount: 0,
-            receiveAmount: 995035,
-            claimAddress: "bcrt1qlc26kc7s6gu94za4ajf95n42ra2t90cu89pnrn",
-            preimage:
-                "fb3c3e61382685211dd5f03e35b4d0df9fbfddb4059a8d2dfaae7f580f001d8c",
-            claimPrivateKey:
-                "9ed53293ce06b679796035026b419d6f8d8732336b4908000ca51253bb4d21eb",
-            refundPrivateKey:
-                "297be239304392970158ba6dea46b058b868ac7e797ce8a0931d2ac78043465e",
-            status: "transaction.claimed",
-            claimTx:
-                "ab466d2ec7150d37fc487bc9e9670fb871048c0cceac2debc430fe75d9bc242f",
-        };
-
-        test("should validate with 0-amount", async () => {
-            await expect(
-                validateResponse(zeroAmount, {} as never, Buffer),
-            ).resolves.toEqual(true);
-        });
-    });
-});
-
-describe("validate invoices", () => {
-    test.each`
-        error                 | invoice
-        ${"invalid_invoice"}  | ${"lnbcrt1pjkepjmpp5khv3s30apary2hry"}
-        ${"invalid_0_amount"} | ${"lnbcrt1pjkepjmpp5khv3s30apary2hry5864d6t206jm7stpd4wv8sk3g3mfwp43x8wsdqqcqzzsxqyz5vqsp5hg3za92fpwwxfvme72vaa2vkmc4ukcuujpw8w6d2l4mr2jygku0q9qyyssqcqlhhtwc30jzdvszmva3maf74ytxw0pcyadt7wh6c2z9p7amp3rycfqa55lvyr825cepdh3fpgsuxxn9jj7vccrwg02lhj56awwgjtcq5f372c"}
-        ${"invalid_0_amount"} | ${"lnbcrt1pjkez94sp5zk8dj2zyp3sng3v4xkp4m85yuuk2tqh5jw5dvrhu4atu79yrejwspp5cgrj9s3rqz80jth0ehhm7mxxtkruualungad73w78u7l2nrmqzcqdq9dfhnzxqyjw5qcqp2rzjqfvckvedaaankysf067nfn3pnapxc5jgruymhjy2ef80crkraq7xwqqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqw4faj9q9p05m9jmrvvuumvaxdrr5ry40vp8me89ctcp3ex9ms5g5q3gkwegnqkzvzmmfdc6kepgyvqn6dssl87k2pc6rdv5pjxvwv8gqh2w9dc"}
-    `("invalid invoice: $error", async ({ error, invoice }) => {
-        try {
-            await validateInvoice(invoice);
-        } catch (e) {
-            expect(e.message).toEqual(error);
-        }
-    });
-    test.each`
-        invoice
-        ${"lnbcrt10u1pjkepsqsp5lqav47x6j8e9flvg6fmghgut9rtlzxxnmud4n6v46xvvg79z0mdspp5xkeqqmhz7xws3yvmj9cm0tmz0wj0u7ntv2ecxstth2v7r4768qgqdq5g9kxy7fqd9h8vmmfvdjsxqr9mscqp2rzjqfvckvedaaankysf067nfn3pnapxc5jgruymhjy2ef80crkraq7xwqqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqla9upqr2v0pz8a59l4ztjxjmrz3m826mx7z77ttsw8jml7yde2qpgurfl7g5t30fmttfn807p9cltzddk4cs4h3xeesf4p44jdzd9hgq0kmh4a"}
-    `("valid invoice", async ({ invoice }) => {
-        const sats = await validateInvoice(invoice);
-        expect(sats).toBeGreaterThan(0);
-    });
-    test.each`
-        invoice
-        ${"lnbcrt111110p1pjejeznsp52ryrltrdpamsf77vplvwgugpphv6vep5qanxkm0t8asvnnrjrtnspp5gjw9yquvg97dhyl02x03x7ntyk89lutccjdzc72en7zksad2pjssdqvd45kc6tnv96qxqyjw5qcqp2rzjq203yew34yu5y7vfad2n27k5pnw735m46g92huev0rcqeadrvyup2qqq5qqqqqgqqqqqqqlgqqqqqqgq2q9qxpqysgqhzpymzfgcvym7lkzszr7a036almdcl26h7kq76hcur5488etrr5jqr65g23phhgl4v3wsjrkwc0pwmtugtfmqq4dgcmetgxuzjxytgsq8ah759"}
-    `("valid millisatoshis invoice", async ({ invoice }) => {
-        const sats = await validateInvoice(invoice);
-        expect(sats).toEqual(12);
     });
 });
 

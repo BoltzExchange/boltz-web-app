@@ -23,7 +23,7 @@ import {
     createTheirPartialChainSwapSignature,
 } from "../utils/claim";
 import { formatError } from "../utils/errors";
-import { getApiUrl, getWsFallback } from "../utils/helper";
+import { getApiUrl } from "../utils/helper";
 import Lock from "../utils/lock";
 import {
     ChainSwap,
@@ -53,7 +53,6 @@ class BoltzWebSocket {
 
     constructor(
         readonly url: string,
-        private readonly wsFallback: string | undefined,
         private readonly relevantIds: Set<string>,
         private readonly prepareSwap: (id: string, status: SwapStatus) => void,
         private readonly claimSwap: (
@@ -64,12 +63,7 @@ class BoltzWebSocket {
 
     public connect = () => {
         log.debug("Opening WebSocket");
-        this.openWebSocket(`${this.url}/v2/ws`).catch(() => {
-            if (this.wsFallback !== undefined) {
-                log.debug("Opening fallback WebSocket");
-                void this.openWebSocket(this.wsFallback).then().catch();
-            }
-        });
+        void this.openWebSocket(`${this.url}/v2/ws`);
     };
 
     public close = () => {
@@ -181,6 +175,7 @@ export const SwapChecker = () => {
         backend,
         setBackend,
         externalBroadcast,
+        deriveKey,
     } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
@@ -269,6 +264,7 @@ export const SwapChecker = () => {
         ) {
             try {
                 const res = await claim(
+                    deriveKey,
                     currentSwap as ReverseSwap | ChainSwap,
                     data.transaction as { hex: string },
                     true,
@@ -297,7 +293,10 @@ export const SwapChecker = () => {
             data.status === swapStatusPending.TransactionClaimPending
         ) {
             try {
-                await createSubmarineSignature(currentSwap as SubmarineSwap);
+                await createSubmarineSignature(
+                    deriveKey,
+                    currentSwap as SubmarineSwap,
+                );
                 notify(
                     "success",
                     t("swap_completed", { id: currentSwap.id }),
@@ -332,7 +331,10 @@ export const SwapChecker = () => {
             log.debug(
                 `Helping server claim ${swap.assetSend} of Chain Swap ${swap.id}`,
             );
-            const sig = await createTheirPartialChainSwapSignature(swap);
+            const sig = await createTheirPartialChainSwapSignature(
+                deriveKey,
+                swap,
+            );
             await postChainSwapDetails(
                 swap.backend || 0,
                 swap.id,
@@ -371,7 +373,6 @@ export const SwapChecker = () => {
 
         ws = new BoltzWebSocket(
             getApiUrl(i),
-            getWsFallback(i),
             new Set<string>(swapsToCheck.map((s) => s.id)),
             prepareSwap,
             claimSwap,
@@ -406,7 +407,6 @@ export const SwapChecker = () => {
 
             ws = new BoltzWebSocket(
                 correctUrl,
-                getWsFallback(i),
                 new Set<string>([]),
                 prepareSwap,
                 claimSwap,
