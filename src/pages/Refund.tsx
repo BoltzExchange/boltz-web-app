@@ -6,11 +6,12 @@ import SwapList from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { SwapType } from "../consts/Enums";
-import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
+import { swapStatusFailed, swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import "../style/tabs.scss";
+import { fetchUTXOsWithFailover } from "../utils/blockchain";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { SomeSwap } from "../utils/swapCreator";
+import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 const Refund = () => {
@@ -29,24 +30,37 @@ const Refund = () => {
 
         const allSwaps = await getSwaps();
 
-        const swapsToRefund = allSwaps
-            .filter(refundSwapsSanityFilter)
-            .filter(
-                (swap) =>
-                    swapStatusFailed.TransactionLockupFailed === swap.status,
-            );
+        const swapsWithUTXO = (
+            await Promise.all(
+                allSwaps.filter(refundSwapsSanityFilter).map(async (swap: SubmarineSwap) => {
+                    const utxos = await fetchUTXOsWithFailover(
+                        swap.assetSend,
+                        swap.address,
+                    );
+                    if (utxos.length > 0) {
+                        return swap;
+                    }
+                    return null;
+                }),
+            )
+        ).filter((swap) => swap !== null);
+
+        const swapsToRefund = swapsWithUTXO.filter(
+            (swap) => swapStatusFailed.TransactionLockupFailed === swap.status,
+        );
         setRefundableSwaps(swapsToRefund);
 
         void allSwaps
             .filter(refundSwapsSanityFilter)
             .filter(
                 (swap) =>
-                    swap.status !== swapStatusSuccess.TransactionClaimed &&
+                    swap.status !== swapStatusPending.SwapCreated &&
+                    swap.status !== swapStatusPending.InvoicePending &&
                     swapsToRefund.find((found) => found.id === swap.id) ===
                         undefined,
             )
             // eslint-disable-next-line solid/reactivity
-            .map(async (swap) => {
+            .map(async (swap: SubmarineSwap) => {
                 try {
                     const res = await getSwapStatus(swap.id);
                     if (
@@ -58,6 +72,14 @@ const Refund = () => {
                         addToRefundableSwaps(swap);
                     }
                 } catch (e) {
+                    const utxos = await fetchUTXOsWithFailover(
+                        swap.assetSend,
+                        swap.address,
+                    );
+                    if (utxos.length > 0) {
+                        addToRefundableSwaps(swap);
+                        return;
+                    }
                     log.warn("failed to get swap status", swap.id, e);
                 }
             });
