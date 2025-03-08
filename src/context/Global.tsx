@@ -83,7 +83,7 @@ export type GlobalContextType = {
     // functions
     t: (key: DictKey, values?: Record<string, unknown>) => string;
     notify: (
-        type: string,
+        type: "success" | "error",
         message: string,
         browser?: boolean,
         audio?: boolean,
