@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 
 import dict from "../../src/i18n/i18n";
+import { getRescuableSwaps } from "../boltzClient";
 import {
     elementsSendToAddress,
     generateLiquidBlock,
@@ -14,6 +15,7 @@ import {
 test.describe("Rescue file", () => {
     const rescueFileJson = path.join(__dirname, "rescue.json");
     const rescueFileQr = path.join(__dirname, "rescue.png");
+    const existingFilePath = path.join(__dirname, "existingRescueFile.json");
 
     test.beforeAll(async () => {
         await generateLiquidBlock();
@@ -25,6 +27,98 @@ test.describe("Rescue file", () => {
                 fs.unlinkSync(file);
             }
         }
+    });
+
+    test("should show error when wrong rescue file was uploaded", async ({
+        page,
+    }) => {
+        await page.goto("/");
+
+        await page.locator(".arrow-down").first().click();
+        await page.getByTestId("select-L-BTC").click();
+        await page
+            .locator(
+                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
+            )
+            .click();
+        await page.getByTestId("select-LN").click();
+
+        await page.getByTestId("invoice").fill(await getBolt12Offer());
+        await page.getByTestId("sendAmount").fill("0.005");
+        await page.getByTestId("create-swap-button").click();
+
+        await page
+            .getByRole("button", { name: dict.en.download_new_key })
+            .click();
+
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(existingFilePath);
+        await page.getByText(dict.en.verify_key_failed).click();
+    });
+
+    test("should create swap after new backup download", async ({ page }) => {
+        await page.goto("/");
+
+        await page.locator(".arrow-down").first().click();
+        await page.getByTestId("select-L-BTC").click();
+        await page
+            .locator(
+                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
+            )
+            .click();
+        await page.getByTestId("select-LN").click();
+
+        await page.getByTestId("invoice").fill(await getBolt12Offer());
+        await page.getByTestId("sendAmount").fill("0.005");
+        await page.getByTestId("create-swap-button").click();
+
+        const downloadPromise = page.waitForEvent("download");
+        await page
+            .getByRole("button", { name: dict.en.download_new_key })
+            .click();
+        await (await downloadPromise).saveAs(rescueFileJson);
+
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(rescueFileJson);
+        await page.getByText("address").click();
+
+        // Verify that the swap was created
+        expect(await getRescuableSwaps(rescueFileJson)).toHaveLength(1);
+    });
+
+    test("should create swap after existing backup verification", async ({
+        page,
+    }) => {
+        const existingSwaps = await getRescuableSwaps(existingFilePath);
+
+        await page.goto("/");
+
+        await page.locator(".arrow-down").first().click();
+        await page.getByTestId("select-L-BTC").click();
+        await page
+            .locator(
+                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
+            )
+            .click();
+        await page.getByTestId("select-LN").click();
+
+        await page.getByTestId("invoice").fill(await getBolt12Offer());
+        await page.getByTestId("sendAmount").fill("0.005");
+        await page.getByTestId("create-swap-button").click();
+
+        await page.getByRole("button", { name: dict.en.verify_key }).click();
+
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(existingFilePath);
+        await page.getByText("address").click();
+
+        // Verify that a new swap was created
+        expect(await getRescuableSwaps(existingFilePath)).toHaveLength(
+            existingSwaps.length + 1,
+        );
     });
 
     test("should show entries for swaps with no lockup transaction as disabled", async ({
@@ -50,6 +144,13 @@ test.describe("Rescue file", () => {
             .getByRole("button", { name: dict.en.download_new_key })
             .click();
         await (await downloadPromise).saveAs(rescueFileJson);
+
+        // We have to verify the rescue file for the swap to be created...
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(rescueFileJson);
+        // ... and actually wait for the swap creation
+        await page.getByText("address").click();
 
         await page.getByRole("link", { name: "Refund" }).click();
         await page
