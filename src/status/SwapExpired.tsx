@@ -5,6 +5,10 @@ import { Accessor, Show, createResource } from "solid-js";
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import {
+    fetchRawTxWithFailover,
+    fetchUTXOsWithFailover,
+} from "../utils/blockchain";
 import { getLockupTransaction } from "../utils/boltzClient";
 import { formatError } from "../utils/errors";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
@@ -22,6 +26,19 @@ const SwapExpired = () => {
             log.debug(`got swap transaction for ${swap().id}`);
             setTransactionToRefund(res.hex);
         } catch (e) {
+            const utxos = await fetchUTXOsWithFailover(
+                swap().assetSend,
+                (swap() as SubmarineSwap).address,
+            );
+
+            if (utxos.length > 0) {
+                const rawTx = await fetchRawTxWithFailover(
+                    swap().assetSend,
+                    utxos[0].txid,
+                );
+                setTransactionToRefund(rawTx.hex);
+                return;
+            }
             log.warn(
                 `no swap transaction for: ${swap().id}: ${formatError(e)}`,
             );
