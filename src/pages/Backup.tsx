@@ -1,13 +1,30 @@
-import { useNavigate, useParams } from "@solidjs/router";
+import { Navigator, useNavigate } from "@solidjs/router";
+import BigNumber from "bignumber.js";
+import { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import log from "loglevel";
 import QRCode from "qrcode/lib/server";
-import { Accessor, createEffect } from "solid-js";
+import { Accessor, Setter, createEffect } from "solid-js";
 
+import { createSwap, getClaimAddress } from "../components/CreateButton";
 import Warning from "../components/Warning";
-import { useGlobalContext } from "../context/Global";
+import { SwapType } from "../consts/Enums";
+import { EIP6963ProviderDetail } from "../consts/Types";
+import { useCreateContext } from "../context/Create";
+import {
+    deriveKeyFn,
+    newKeyFn,
+    notifyFn,
+    tFn,
+    useGlobalContext,
+} from "../context/Global";
+import { Signer, useWeb3Signer } from "../context/Web3";
 import { DictKey } from "../i18n/i18n";
+import { Pairs } from "../utils/boltzClient";
 import { download, downloadJson } from "../utils/download";
 import { isIos, isMobile } from "../utils/helper";
 import { RescueFile } from "../utils/rescueFile";
+import { SomeSwap } from "../utils/swapCreator";
+import { existingBackupFileType } from "./BackupVerify";
 
 const rescueFileName = "boltz-rescue-key-DO-NOT-SHARE";
 
@@ -38,20 +55,160 @@ export const downloadRescueFile = async (
     }
 };
 
+export const backupDone = async (
+    navigate: Navigator,
+    t: tFn,
+    notify: notifyFn,
+    newKey: newKeyFn,
+    deriveKey: deriveKeyFn,
+    valid: Accessor<boolean>,
+
+    ref: Accessor<string>,
+    rescueFileBackupDone: Accessor<boolean>,
+    pairs: Accessor<Pairs>,
+    swapType: Accessor<SwapType>,
+    assetSend: Accessor<string>,
+    assetReceive: Accessor<string>,
+    sendAmount: Accessor<BigNumber>,
+    receiveAmount: Accessor<BigNumber>,
+    invoice: Accessor<string>,
+    onchainAddress: Accessor<string>,
+    signer: Accessor<Signer>,
+    providers: Accessor<Record<string, EIP6963ProviderDetail>>,
+    getEtherSwap: () => EtherSwap,
+    hasBrowserWallet: Accessor<boolean>,
+
+    setPairs: Setter<Pairs>,
+    setInvoice: Setter<string>,
+    setInvoiceValid: Setter<boolean>,
+    setOnchainAddress: Setter<string>,
+    setAddressValid: Setter<boolean>,
+    setSwapStorage: (swap: SomeSwap) => Promise<void>,
+) => {
+    if (!valid()) {
+        log.warn("Invalid swap creation data, redirecting to home");
+        navigate("/");
+        return;
+    }
+
+    try {
+        log.info("Creating swap");
+        const { claimAddress, useRif } = await getClaimAddress(
+            assetReceive,
+            signer,
+            onchainAddress,
+        );
+
+        if (
+            !(await createSwap(
+                navigate,
+                t,
+                notify,
+                newKey,
+                deriveKey,
+                ref,
+                rescueFileBackupDone,
+                pairs,
+                swapType,
+                assetSend,
+                assetReceive,
+                sendAmount,
+                receiveAmount,
+                invoice,
+                signer,
+                providers,
+                getEtherSwap,
+                hasBrowserWallet,
+                claimAddress,
+                useRif,
+                setPairs,
+                setInvoice,
+                setInvoiceValid,
+                setOnchainAddress,
+                setAddressValid,
+                setSwapStorage,
+            ))
+        ) {
+            navigate("/swap");
+            return;
+        }
+    } catch (e) {
+        log.error("Error creating swap", e);
+        notify("error", e);
+        navigate("/swap");
+    }
+};
+
 const Backup = () => {
     const navigate = useNavigate();
-    const params = useParams<{ id: string }>();
-    const { t, rescueFile, rescueFileBackupDone } = useGlobalContext();
+    const {
+        t,
+        rescueFile,
+        rescueFileBackupDone,
+        notify,
+        newKey,
+        deriveKey,
+        ref,
+        pairs,
+        setPairs,
+        setSwapStorage,
+    } = useGlobalContext();
+    const {
+        swapType,
+        assetSend,
+        assetReceive,
+        sendAmount,
+        receiveAmount,
+        invoice,
+        onchainAddress,
+        setOnchainAddress,
+        setInvoice,
+        setInvoiceValid,
+        setAddressValid,
+        valid,
+    } = useCreateContext();
+    const { signer, providers, getEtherSwap, hasBrowserWallet } =
+        useWeb3Signer();
 
-    createEffect(() => {
+    // eslint-disable-next-line solid/reactivity
+    createEffect(async () => {
         if (rescueFileBackupDone()) {
-            navigate("/swap/" + params.id);
+            await backupDone(
+                navigate,
+                t,
+                notify,
+                newKey,
+                deriveKey,
+                valid,
+                ref,
+                rescueFileBackupDone,
+                pairs,
+                swapType,
+                assetSend,
+                assetReceive,
+                sendAmount,
+                receiveAmount,
+                invoice,
+                onchainAddress,
+                signer,
+                providers,
+                getEtherSwap,
+                hasBrowserWallet,
+                setPairs,
+                setInvoice,
+                setInvoiceValid,
+                setOnchainAddress,
+                setAddressValid,
+                setSwapStorage,
+            );
         }
     });
 
-    const navigateToVerification = (id?: string) => {
+    const navigateToVerification = (existingFile: boolean) => {
         const basePath = "/backup/verify";
-        navigate(id !== undefined ? `${basePath}/${id}` : basePath);
+        navigate(
+            existingFile ? `${basePath}/${existingBackupFileType}` : basePath,
+        );
     };
 
     return (
@@ -65,7 +222,7 @@ const Backup = () => {
                 <button
                     class="btn btn-light"
                     onClick={() => {
-                        navigateToVerification();
+                        navigateToVerification(true);
                     }}>
                     {t("verify_key")}
                 </button>
@@ -73,7 +230,7 @@ const Backup = () => {
                     class="btn"
                     onClick={async () => {
                         await downloadRescueFile(t, rescueFile);
-                        navigateToVerification(params.id);
+                        navigateToVerification(false);
                     }}>
                     {t("download_new_key")}
                 </button>

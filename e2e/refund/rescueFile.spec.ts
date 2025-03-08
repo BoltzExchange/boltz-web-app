@@ -1,8 +1,9 @@
-import { devices, expect, test } from "@playwright/test";
+import { Page, devices, expect, test } from "@playwright/test";
 import fs from "fs";
 import path from "path";
 
 import dict from "../../src/i18n/i18n";
+import { getRescuableSwaps } from "../boltzClient";
 import {
     elementsSendToAddress,
     generateLiquidBlock,
@@ -11,9 +12,40 @@ import {
     getLiquidAddress,
 } from "../utils";
 
+const setupSwapAssets = async (page: Page) => {
+    await page.locator(".arrow-down").first().click();
+    await page.getByTestId("select-L-BTC").click();
+    await page
+        .locator(
+            "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
+        )
+        .click();
+    await page.getByTestId("select-LN").click();
+};
+
+const fillSwapDetails = async (page: Page) => {
+    await page.getByTestId("invoice").fill(await getBolt12Offer());
+    await page.getByTestId("sendAmount").fill("0.005");
+    await page.getByTestId("create-swap-button").click();
+};
+
+const createAndVerifySwap = async (page: Page, rescueFile: string) => {
+    await page.goto("/");
+    await setupSwapAssets(page);
+    await fillSwapDetails(page);
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: dict.en.download_new_key }).click();
+    await (await downloadPromise).saveAs(rescueFile);
+
+    await page.getByTestId("rescueFileUpload").setInputFiles(rescueFile);
+    await page.getByText("address").click();
+};
+
 test.describe("Rescue file", () => {
     const rescueFileJson = path.join(__dirname, "rescue.json");
     const rescueFileQr = path.join(__dirname, "rescue.png");
+    const existingFilePath = path.join(__dirname, "existingRescueFile.json");
 
     test.beforeAll(async () => {
         await generateLiquidBlock();
@@ -27,29 +59,53 @@ test.describe("Rescue file", () => {
         }
     });
 
-    test("should show entries for swaps with no lockup transaction as disabled", async ({
+    test("should show error when wrong rescue file was uploaded", async ({
         page,
     }) => {
         await page.goto("/");
-
-        await page.locator(".arrow-down").first().click();
-        await page.getByTestId("select-L-BTC").click();
-        await page
-            .locator(
-                "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
-            )
-            .click();
-        await page.getByTestId("select-LN").click();
-
-        await page.getByTestId("invoice").fill(await getBolt12Offer());
-        await page.getByTestId("sendAmount").fill("0.005");
-        await page.getByTestId("create-swap-button").click();
-
-        const downloadPromise = page.waitForEvent("download");
+        await setupSwapAssets(page);
+        await fillSwapDetails(page);
         await page
             .getByRole("button", { name: dict.en.download_new_key })
             .click();
-        await (await downloadPromise).saveAs(rescueFileJson);
+
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(existingFilePath);
+        await page.getByText(dict.en.verify_key_failed).click();
+    });
+
+    test("should create swap after new backup download", async ({ page }) => {
+        await createAndVerifySwap(page, rescueFileJson);
+        // Verify that the swap was created
+        expect(await getRescuableSwaps(rescueFileJson)).toHaveLength(1);
+    });
+
+    test("should create swap after existing backup verification", async ({
+        page,
+    }) => {
+        const existingSwaps = await getRescuableSwaps(existingFilePath);
+
+        await page.goto("/");
+        await setupSwapAssets(page);
+        await fillSwapDetails(page);
+
+        await page.getByRole("button", { name: dict.en.verify_key }).click();
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(existingFilePath);
+        await page.getByText("address").click();
+
+        // Verify that a new swap was created
+        expect(await getRescuableSwaps(existingFilePath)).toHaveLength(
+            existingSwaps.length + 1,
+        );
+    });
+
+    test("should show entries for swaps with no lockup transaction as disabled", async ({
+        page,
+    }) => {
+        await createAndVerifySwap(page, rescueFileJson);
 
         await page.getByRole("link", { name: "Refund" }).click();
         await page
@@ -72,36 +128,9 @@ test.describe("Rescue file", () => {
                 })
             ).newPage();
 
-            await page.goto("/");
-
             const rescueFile = isMobile ? rescueFileQr : rescueFileJson;
+            await createAndVerifySwap(page, rescueFile);
 
-            await page.locator(".arrow-down").first().click();
-            await page.getByTestId("select-L-BTC").click();
-            await page
-                .locator(
-                    "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
-                )
-                .click();
-            await page.getByTestId("select-LN").click();
-
-            await page.getByTestId("invoice").fill(await getBolt12Offer());
-            await page.getByTestId("sendAmount").fill("0.005");
-            await page.getByTestId("create-swap-button").click();
-
-            const downloadPromise = page.waitForEvent("download");
-            await page
-                .getByRole("button", {
-                    name: dict.en.download_new_key,
-                })
-                .click();
-            await (await downloadPromise).saveAs(rescueFile);
-
-            await page
-                .getByTestId("rescueFileUpload")
-                .setInputFiles(rescueFile);
-
-            await page.getByText("address").click();
             const address = await page.evaluate(() => {
                 return navigator.clipboard.readText();
             });

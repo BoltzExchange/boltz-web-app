@@ -42,6 +42,13 @@ const proReferral = "pro";
 
 export type deriveKeyFn = (index: number) => ECPairInterface;
 export type newKeyFn = () => { index: number; key: ECPairInterface };
+export type tFn = (key: DictKey, values?: Record<string, unknown>) => string;
+export type notifyFn = (
+    type: "success" | "error",
+    message: string,
+    browser?: boolean,
+    audio?: boolean,
+) => void;
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
@@ -81,13 +88,8 @@ export type GlobalContextType = {
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
     // functions
-    t: (key: DictKey, values?: Record<string, unknown>) => string;
-    notify: (
-        type: "success" | "error",
-        message: string,
-        browser?: boolean,
-        audio?: boolean,
-    ) => void;
+    t: tFn;
+    notify: notifyFn;
     playNotificationSound: () => void;
     fetchPairs: () => Promise<void>;
 
