@@ -23,7 +23,6 @@ import {
 } from "../utils/claim";
 import { formatError } from "../utils/errors";
 import { getApiUrl } from "../utils/helper";
-import Lock from "../utils/lock";
 import {
     ChainSwap,
     ReverseSwap,
@@ -44,8 +43,6 @@ const coopClaimableSymbols = [BTC, LBTC];
 const reconnectInterval = 5_000;
 
 class BoltzWebSocket {
-    private readonly swapClaimLock = new Lock();
-
     private ws?: WebSocket;
     private reconnectTimeout?: ReturnType<typeof setTimeout>;
     private isClosed: boolean = false;
@@ -131,8 +128,11 @@ class BoltzWebSocket {
                     for (const status of swapUpdates) {
                         this.relevantIds.add(status.id);
                         this.prepareSwap(status.id, status);
-                        await this.swapClaimLock.acquire(() =>
-                            this.claimSwap(status.id, status),
+                        await navigator.locks.request(
+                            "swapCheckerClaim",
+                            async () => {
+                                await this.claimSwap(status.id, status);
+                            },
                         );
                     }
                 }

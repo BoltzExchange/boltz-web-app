@@ -14,6 +14,15 @@ import {
 describe("logs", () => {
     beforeAll(() => {
         vi.stubGlobal("console", {});
+
+        // Mock navigator.locks API
+        vi.stubGlobal("navigator", {
+            locks: {
+                request: vi.fn((name, callback) => {
+                    return Promise.resolve(callback());
+                }),
+            },
+        });
     });
 
     beforeEach(() => {
@@ -130,5 +139,29 @@ describe("logs", () => {
             ...existingLogs,
             logMessage,
         ]);
+    });
+
+    test("should use navigator.locks when writing logs", async () => {
+        const forage = {
+            getItem: vi.fn().mockResolvedValue([]),
+            setItem: vi.fn(),
+        } as unknown as LocalForage;
+
+        injectLogWriter(forage);
+        log.setLevel("trace");
+
+        const logMessage = "test with locks";
+        log.debug(logMessage);
+
+        await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+        });
+
+        // Verify that navigator.locks.request was called with the correct lock name
+        expect(navigator.locks.request).toHaveBeenCalled();
+        expect(navigator.locks.request).toHaveBeenCalledWith(
+            "logLock",
+            expect.any(Function),
+        );
     });
 });
