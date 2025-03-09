@@ -1,7 +1,5 @@
 import log from "loglevel";
 
-import Lock from "./lock";
-
 // One week
 export const logDeletionTime = 60 * 60 * 24 * 7;
 
@@ -58,8 +56,6 @@ export const formatLogLine = (message: unknown[]) =>
 export const injectLogWriter = (logsForage: LocalForage) => {
     const originalLogFactory = log.methodFactory;
 
-    const logLock = new Lock();
-
     log.methodFactory = (methodName, logLevel, loggerName) => {
         const rawLogMethod = originalLogFactory(
             methodName,
@@ -72,8 +68,8 @@ export const injectLogWriter = (logsForage: LocalForage) => {
 
             const currentDate = getDate();
 
-            void logLock
-                .acquire(async () => {
+            void navigator.locks
+                .request("logLock", async () => {
                     await logsForage.setItem(
                         currentDate,
                         (
