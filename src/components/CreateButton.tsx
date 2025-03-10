@@ -1,20 +1,27 @@
-import { useNavigate } from "@solidjs/router";
+import { Navigator, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import log from "loglevel";
-import { Accessor, createEffect, createSignal, on } from "solid-js";
+import { Accessor, Setter, createEffect, createSignal, on } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { ButtonLabelParams } from "../consts/Types";
+import { ButtonLabelParams, EIP6963ProviderDetail } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
-import { useGlobalContext } from "../context/Global";
+import {
+    deriveKeyFn,
+    newKeyFn,
+    notifyFn,
+    tFn,
+    useGlobalContext,
+} from "../context/Global";
 import {
     Signer,
     customDerivationPathRdns,
     useWeb3Signer,
 } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
+import { Pairs, fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
@@ -64,7 +71,141 @@ export const getClaimAddress = async (
     };
 };
 
-export const CreateButton = () => {
+export const createSwap = async (
+    navigate: Navigator,
+    t: tFn,
+    notify: notifyFn,
+    newKey: newKeyFn,
+    deriveKey: deriveKeyFn,
+
+    ref: Accessor<string>,
+    rescueFileBackupDone: Accessor<boolean>,
+    pairs: Accessor<Pairs>,
+    swapType: Accessor<SwapType>,
+    assetSend: Accessor<string>,
+    assetReceive: Accessor<string>,
+    sendAmount: Accessor<BigNumber>,
+    receiveAmount: Accessor<BigNumber>,
+    invoice: Accessor<string>,
+    signer: Accessor<Signer>,
+    providers: Accessor<Record<string, EIP6963ProviderDetail>>,
+    getEtherSwap: () => EtherSwap,
+    hasBrowserWallet: Accessor<boolean>,
+
+    claimAddress: string,
+    useRif: boolean,
+
+    setPairs: Setter<Pairs>,
+    setInvoice: Setter<string>,
+    setInvoiceValid: Setter<boolean>,
+    setOnchainAddress: Setter<string>,
+    setAddressValid: Setter<boolean>,
+    setSwapStorage: (swap: SomeSwap) => Promise<void>,
+): Promise<boolean> => {
+    // Mobile EVM browsers struggle with downloading files
+    const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
+
+    if (
+        !rescueFileBackupDone() &&
+        swapType() !== SwapType.Reverse &&
+        assetSend() !== RBTC &&
+        // Only disable refund files on mobile EVM browsers when one side is RSK
+        !(assetReceive() === RBTC && isMobileEvmBrowser())
+    ) {
+        navigate("/backup");
+        return false;
+    }
+
+    try {
+        let data: SomeSwap;
+        switch (swapType()) {
+            case SwapType.Submarine:
+                data = await createSubmarine(
+                    pairs(),
+                    coalesceLn(assetSend()),
+                    coalesceLn(assetReceive()),
+                    sendAmount(),
+                    receiveAmount(),
+                    invoice(),
+                    ref(),
+                    useRif,
+                    newKey,
+                );
+                break;
+
+            case SwapType.Reverse:
+                data = await createReverse(
+                    pairs(),
+                    coalesceLn(assetSend()),
+                    coalesceLn(assetReceive()),
+                    sendAmount(),
+                    receiveAmount(),
+                    claimAddress,
+                    ref(),
+                    useRif,
+                    newKey,
+                );
+                break;
+
+            case SwapType.Chain:
+                data = await createChain(
+                    pairs(),
+                    assetSend(),
+                    assetReceive(),
+                    sendAmount(),
+                    receiveAmount(),
+                    claimAddress,
+                    ref(),
+                    useRif,
+                    newKey,
+                );
+                break;
+        }
+
+        if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
+            navigate("/error");
+            return false;
+        }
+
+        await setSwapStorage({
+            ...data,
+            signer:
+                // We do not have to commit to a signer when creating submarine swaps
+                swapType() !== SwapType.Submarine
+                    ? signer()?.address
+                    : undefined,
+            derivationPath:
+                swapType() !== SwapType.Submarine &&
+                signer() !== undefined &&
+                customDerivationPathRdns.includes(signer().rdns)
+                    ? (
+                          providers()[signer().rdns]
+                              .provider as unknown as HardwareSigner
+                      ).getDerivationPath()
+                    : undefined,
+        });
+
+        setInvoice("");
+        setInvoiceValid(false);
+        setOnchainAddress("");
+        setAddressValid(false);
+
+        navigate("/swap/" + data.id);
+
+        return true;
+    } catch (err) {
+        if (err === "invalid pair hash") {
+            setPairs(await getPairs());
+            notify("error", t("feecheck"));
+        } else {
+            notify("error", err);
+        }
+
+        return false;
+    }
+};
+
+const CreateButton = () => {
     const navigate = useNavigate();
     const {
         separator,
@@ -113,15 +254,6 @@ export const CreateButton = () => {
     const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
         key: "create_swap",
     });
-
-    const validWayToFetchInvoice = () => {
-        return (
-            swapType() === SwapType.Submarine &&
-            (lnurl() !== "" || bolt12Offer() !== undefined) &&
-            amountValid() &&
-            sendAmount().isGreaterThan(0)
-        );
-    };
 
     createEffect(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
@@ -204,197 +336,96 @@ export const CreateButton = () => {
         ),
     );
 
-    const create = async () => {
-        if (validWayToFetchInvoice()) {
-            if (lnurl() !== undefined && lnurl() !== "") {
-                log.info("Fetching invoice from LNURL or BIP-353", lnurl());
+    const validWayToFetchInvoice = (): boolean => {
+        return (
+            swapType() === SwapType.Submarine &&
+            (lnurl() !== "" || bolt12Offer() !== undefined) &&
+            amountValid() &&
+            sendAmount().isGreaterThan(0)
+        );
+    };
 
-                const fetchResults = await Promise.allSettled([
-                    (() => {
-                        return new Promise<string>(async (resolve, reject) => {
-                            const timeout = setTimeout(
-                                () => reject(new Error(t("timeout"))),
-                                5_000,
+    const fetchInvoice = async () => {
+        if (lnurl() !== undefined && lnurl() !== "") {
+            log.info("Fetching invoice from LNURL or BIP-353", lnurl());
+
+            const fetchResults = await Promise.allSettled([
+                (() => {
+                    return new Promise<string>(async (resolve, reject) => {
+                        const timeout = setTimeout(
+                            () => reject(new Error(t("timeout"))),
+                            5_000,
+                        );
+
+                        try {
+                            const res = await fetchLnurl(
+                                lnurl(),
+                                Number(receiveAmount()),
                             );
+                            resolve(res);
+                        } catch (e) {
+                            log.warn("Fetching invoice for LNURL failed:", e);
+                            reject(new Error(formatError(e)));
+                        } finally {
+                            clearTimeout(timeout);
+                        }
+                    });
+                })(),
+                (() => {
+                    return new Promise<string>(async (resolve, reject) => {
+                        const timeout = setTimeout(
+                            () => reject(new Error(t("timeout"))),
+                            15_000,
+                        );
 
-                            try {
-                                const res = await fetchLnurl(
-                                    lnurl(),
-                                    Number(receiveAmount()),
-                                );
-                                resolve(res);
-                            } catch (e) {
-                                log.warn(
-                                    "Fetching invoice for LNURL failed:",
-                                    e,
-                                );
-                                reject(new Error(formatError(e)));
-                            } finally {
-                                clearTimeout(timeout);
-                            }
-                        });
-                    })(),
-                    (() => {
-                        return new Promise<string>(async (resolve, reject) => {
-                            const timeout = setTimeout(
-                                () => reject(new Error(t("timeout"))),
-                                15_000,
+                        try {
+                            const res = await fetchBip353(
+                                lnurl(),
+                                Number(receiveAmount()),
                             );
+                            resolve(res);
+                        } catch (e) {
+                            log.warn(
+                                "Fetching invoice from BIP-353 failed:",
+                                e,
+                            );
+                            reject(new Error(formatError(e)));
+                        } finally {
+                            clearTimeout(timeout);
+                        }
+                    });
+                })(),
+            ]);
 
-                            try {
-                                const res = await fetchBip353(
-                                    lnurl(),
-                                    Number(receiveAmount()),
-                                );
-                                resolve(res);
-                            } catch (e) {
-                                log.warn(
-                                    "Fetching invoice from BIP-353 failed:",
-                                    e,
-                                );
-                                reject(new Error(formatError(e)));
-                            } finally {
-                                clearTimeout(timeout);
-                            }
-                        });
-                    })(),
-                ]);
-
-                const fetched = fetchResults.find(
-                    (res) => res.status === "fulfilled",
-                );
-                if (fetched !== undefined) {
-                    setInvoice(fetched.value);
-                    setLnurl("");
-                    setInvoiceValid(true);
-                } else {
-                    // All failed, so we can safely cast the first one
-                    notify(
-                        "error",
-                        (fetchResults[0] as PromiseRejectedResult).reason,
-                    );
-                    return;
-                }
-            } else {
-                log.info("Fetching invoice from bolt12 offer", bolt12Offer());
-                try {
-                    const res = await fetchBolt12Invoice(
-                        bolt12Offer(),
-                        Number(receiveAmount()),
-                    );
-                    setInvoice(res.invoice);
-                    setBolt12Offer(undefined);
-                    setInvoiceValid(true);
-                } catch (e) {
-                    notify("error", formatError(e));
-                    log.warn("Fetching invoice from bol12 failed", e);
-                    return;
-                }
-            }
-        }
-
-        if (!valid()) return;
-
-        try {
-            const { useRif, claimAddress } = await getClaimAddress(
-                assetReceive,
-                signer,
-                onchainAddress,
+            const fetched = fetchResults.find(
+                (res) => res.status === "fulfilled",
             );
-
-            let data: SomeSwap;
-            switch (swapType()) {
-                case SwapType.Submarine:
-                    data = await createSubmarine(
-                        pairs(),
-                        coalesceLn(assetSend()),
-                        coalesceLn(assetReceive()),
-                        sendAmount(),
-                        receiveAmount(),
-                        invoice(),
-                        ref(),
-                        useRif,
-                        newKey,
-                    );
-                    break;
-
-                case SwapType.Reverse:
-                    data = await createReverse(
-                        pairs(),
-                        coalesceLn(assetSend()),
-                        coalesceLn(assetReceive()),
-                        sendAmount(),
-                        receiveAmount(),
-                        claimAddress,
-                        ref(),
-                        useRif,
-                        newKey,
-                    );
-                    break;
-
-                case SwapType.Chain:
-                    data = await createChain(
-                        pairs(),
-                        assetSend(),
-                        assetReceive(),
-                        sendAmount(),
-                        receiveAmount(),
-                        claimAddress,
-                        ref(),
-                        useRif,
-                        newKey,
-                    );
-                    break;
-            }
-
-            if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
-                navigate("/error");
+            if (fetched !== undefined) {
+                setInvoice(fetched.value);
+                setLnurl("");
+                setInvoiceValid(true);
+            } else {
+                // All failed, so we can safely cast the first one
+                notify(
+                    "error",
+                    (fetchResults[0] as PromiseRejectedResult).reason,
+                );
                 return;
             }
-
-            await setSwapStorage({
-                ...data,
-                signer:
-                    // We do not have to commit to a signer when creating submarine swaps
-                    swapType() !== SwapType.Submarine
-                        ? signer()?.address
-                        : undefined,
-                derivationPath:
-                    swapType() !== SwapType.Submarine &&
-                    signer() !== undefined &&
-                    customDerivationPathRdns.includes(signer().rdns)
-                        ? (
-                              providers()[signer().rdns]
-                                  .provider as unknown as HardwareSigner
-                          ).getDerivationPath()
-                        : undefined,
-            });
-
-            setInvoice("");
-            setInvoiceValid(false);
-            setOnchainAddress("");
-            setAddressValid(false);
-
-            // Mobile EVM browsers struggle with downloading files
-            const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
-
-            if (
-                rescueFileBackupDone() ||
-                swapType() === SwapType.Reverse ||
-                assetSend() === RBTC ||
-                // Only disable refund files on mobile EVM browsers when one side is RSK
-                (assetReceive() === RBTC && isMobileEvmBrowser())
-            ) {
-                navigate("/swap/" + data.id);
-            } else {
-                navigate("/backup/" + data.id);
-            }
-        } catch (err) {
-            if (err === "invalid pair hash") {
-                setPairs(await getPairs());
-                notify("error", t("feecheck"));
-            } else {
-                notify("error", err);
+        } else {
+            log.info("Fetching invoice from bolt12 offer", bolt12Offer());
+            try {
+                const res = await fetchBolt12Invoice(
+                    bolt12Offer(),
+                    Number(receiveAmount()),
+                );
+                setInvoice(res.invoice);
+                setBolt12Offer(undefined);
+                setInvoiceValid(true);
+            } catch (e) {
+                notify("error", formatError(e));
+                log.warn("Fetching invoice from bol12 failed", e);
+                return;
             }
         }
     };
@@ -402,7 +433,49 @@ export const CreateButton = () => {
     const buttonClick = async () => {
         setButtonDisable(true);
         try {
-            await create();
+            if (validWayToFetchInvoice()) {
+                await fetchInvoice();
+            }
+
+            const { useRif, claimAddress } = await getClaimAddress(
+                assetReceive,
+                signer,
+                onchainAddress,
+            );
+
+            if (!valid()) return;
+
+            await createSwap(
+                navigate,
+                t,
+                notify,
+                newKey,
+                deriveKey,
+                ref,
+                rescueFileBackupDone,
+                pairs,
+                swapType,
+                assetSend,
+                assetReceive,
+                sendAmount,
+                receiveAmount,
+                invoice,
+                signer,
+                providers,
+                getEtherSwap,
+                hasBrowserWallet,
+                claimAddress,
+                useRif,
+                setPairs,
+                setInvoice,
+                setInvoiceValid,
+                setOnchainAddress,
+                setAddressValid,
+                setSwapStorage,
+            );
+        } catch (e) {
+            log.error("Error creating swap", e);
+            notify("error", e);
         } finally {
             setButtonDisable(false);
         }
