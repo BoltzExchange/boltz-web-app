@@ -247,7 +247,7 @@ const dict = {
         rescue_key: "Rescue Key",
         no_swaps_found: "No swaps found",
         rif_extra_fee:
-            "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee.",
+            "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
     },
     de: {
         language: "Deutsch",
@@ -508,7 +508,7 @@ const dict = {
         rescue_key: "Rettungsschlüssel",
         no_swaps_found: "Keine Swaps gefunden",
         rif_extra_fee:
-            "Wallet hat nicht genug RBTC, Gebühr um die RIF Relay erhöht.",
+            "Wallet enthält nicht genug RBTC, Gebühr um RIF-Relay-Gebühr angepasst!",
     },
     es: {
         language: "Español",
@@ -765,7 +765,7 @@ const dict = {
         rescue_key: "Clave de Rescate Boltz",
         no_swaps_found: "No se encontraron swaps",
         rif_extra_fee:
-            "La cartera no contiene suficientes RBTC, la tarifa se ha ajustado para incluir la tarifa de retransmisión RIF.",
+            "El monedero no contiene suficientes RBTC, comisión ajustado para incluir comisión de RIF Relay!",
     },
     zh: {
         language: "中文",
@@ -994,7 +994,7 @@ const dict = {
             "Boltz 救援密钥验证失败。我们建议下载新的 Boltz 救援密钥以继续。",
         rescue_key: "救援钥匙",
         no_swaps_found: "未找到交换",
-        rif_extra_fee: "钱包中没有足够的 RBTC，费用已调整为包括 RIF 中继费",
+        rif_extra_fee: "钱包中没有足够的 RBTC，费用已调整为包括 RIF 中继费！",
     },
     ja: {
         language: "日本語",
@@ -1249,7 +1249,7 @@ const dict = {
         rescue_key: "レスキューキー",
         no_swaps_found: "スワップが見つからない",
         rif_extra_fee:
-            "ウォレットに十分なRBTCがないため、RIFリレー手数料を含めて手数料を調整。",
+            "ウォレットに十分なRBTCがないため、RIFリレー手数料を含めて手数料を調整！",
     },
 };
 
