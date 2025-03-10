@@ -1,14 +1,18 @@
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
-import { createEffect, createSignal, on } from "solid-js";
+import { Accessor, createEffect, createSignal, on } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
+import {
+    Signer,
+    customDerivationPathRdns,
+    useWeb3Signer,
+} from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
@@ -23,6 +27,42 @@ import {
     createSubmarine,
 } from "../utils/swapCreator";
 import { validateResponse } from "../utils/validation";
+
+export const getClaimAddress = async (
+    assetReceive: Accessor<string>,
+    signer: Accessor<Signer>,
+    onchainAddress: Accessor<string>,
+): Promise<{ useRif: boolean; gasPrice: bigint; claimAddress: string }> => {
+    if (assetReceive() === RBTC) {
+        const [balance, gasPrice] = await Promise.all([
+            signer().provider.getBalance(await signer().getAddress()),
+            signer()
+                .provider.getFeeData()
+                .then((data) => data.gasPrice),
+        ]);
+        log.debug("RSK balance", balance);
+
+        const balanceNeeded = gasPrice * GasNeededToClaim;
+        log.debug("RSK balance needed", balanceNeeded);
+
+        if (balance <= balanceNeeded) {
+            log.info("Using RIF smart wallet as claim address");
+            return {
+                gasPrice,
+                useRif: true,
+                claimAddress: (await getSmartWalletAddress(signer())).address,
+            };
+        } else {
+            log.info("RIF smart wallet not needed");
+        }
+    }
+
+    return {
+        gasPrice: 0n,
+        useRif: false,
+        claimAddress: onchainAddress(),
+    };
+};
 
 export const CreateButton = () => {
     const navigate = useNavigate();
@@ -255,31 +295,12 @@ export const CreateButton = () => {
 
         if (!valid()) return;
 
-        let claimAddress = onchainAddress();
-
         try {
-            if (assetReceive() === RBTC) {
-                const [balance, gasPrice] = await Promise.all([
-                    signer().provider.getBalance(await signer().getAddress()),
-                    signer()
-                        .provider.getFeeData()
-                        .then((data) => data.gasPrice),
-                ]);
-                log.debug("RSK balance", balance);
-
-                const balanceNeeded = gasPrice * GasNeededToClaim;
-                log.debug("RSK balance needed", balanceNeeded);
-
-                if (balance <= balanceNeeded) {
-                    claimAddress = (await getSmartWalletAddress(signer()))
-                        .address;
-                    log.info("Using RIF smart wallet as claim address");
-                } else {
-                    log.info("RIF smart wallet not needed");
-                }
-            }
-
-            const useRif = onchainAddress() !== claimAddress;
+            const { useRif, claimAddress } = await getClaimAddress(
+                assetReceive,
+                signer,
+                onchainAddress,
+            );
 
             let data: SomeSwap;
             switch (swapType()) {
