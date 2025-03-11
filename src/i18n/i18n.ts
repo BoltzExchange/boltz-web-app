@@ -77,7 +77,7 @@ const dict = {
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
         onchain_address_no_asset: "Enter address",
-        invalid_refund_file: "Invalid refund file",
+        invalid_refund_file: "Invalid rescue key",
         invalid_backup_file: "Invalid backup file",
         invalid_invoice: "Please provide a valid invoice, offer or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
@@ -88,7 +88,7 @@ const dict = {
         copied: "Copied!",
         refund_swap: "Refund Swap",
         refund_a_swap_subline:
-            "Upload your Swap’s refund file, to refund a swap that is not available in this browser’s swap history.",
+            "Upload your rescue key to refund a swap that is not available in this browser’s swap history.",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
@@ -96,7 +96,7 @@ const dict = {
             "No refundable swaps found in your browser history",
         cant_find_swap: "Can't find your swap?",
         refund_external_explainer:
-            "Try refunding an external swap via refund file and other emergency methods",
+            "Try refunding an external swap via rescue key and other emergency methods.",
         refund_external_explainer_rsk:
             "Connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
         refund_external_scanning_rsk:
@@ -329,7 +329,7 @@ const dict = {
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
         onchain_address: "{{ asset }}-Adresse eingeben",
         onchain_address_no_asset: "Adresse",
-        invalid_refund_file: "Ungültige Rückerstattungsdatei",
+        invalid_refund_file: "Ungültiger Rettungsschlüssel",
         invalid_backup_file: "Ungültige Backupdatei",
         invalid_invoice: "Bitte gültige Invoice, Offer oder LNURL eingeben",
         invalid_0_amount: "Lightning Rechnungen ohne Betrag nicht unterstützt",
@@ -338,9 +338,9 @@ const dict = {
         copy_amount: "Betrag",
         copy_bip21: "BIP21",
         copied: "kopiert!",
-        refund_swap: "Swap Erstatten",
+        refund_swap: "Swap Rückerstatten",
         refund_a_swap_subline:
-            "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück.",
+            "Lade deinen Rettungsschlüssel hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück.",
         refund_past_swaps: "Historische Swaps",
         refund_past_swaps_subline:
             "Swaps, die in deinem Browser gespeichert wurden",
@@ -348,14 +348,14 @@ const dict = {
             "Keine erstattungsfähigen Swaps in Browserverlauf gefunden",
         cant_find_swap: "Swap nicht gefunden?",
         refund_external_explainer:
-            "Versuchen Sie, einen externen Swap über eine Rückerstattungsdatei und andere Notfallmethoden zu erstatten",
+            "Versuchen Sie, einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden zu erstatten.",
         refund_external_explainer_rsk:
-            "Verbinden Sie Ihr Rootstock Wallet, um nach erstattungsfähigen Swaps zu suchen, die nicht im Swap-Verlauf dieses Browsers gespeichert sind..",
+            "Verbinden Sie Ihr Rootstock Wallet, um nach erstattungsfähigen Swaps zu suchen, die nicht im Swap-Verlauf dieses Browsers gespeichert sind.",
         refund_external_scanning_rsk:
             "Scanne nach erstattungsfähigen Swaps in Rootstock-Wallet...",
         connected_wallet_no_swaps:
             "Das angeschlossene Rootstock Wallet enthält keine erstattungsfähigen Swaps.",
-        refund_external_swap: "Externen Swap rückerstatten",
+        refund_external_swap: "Externen Swap Rückerstatten",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
@@ -582,12 +582,12 @@ const dict = {
         disconnect_address: "Desconectar monedero",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
-            "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
+            "Tu transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
         failure_reason: "Motivo del fallo",
-        invoice_payment_failure: "No se pudo pagar su factura Lightning",
+        invoice_payment_failure: "No se pudo pagar tu factura Lightning",
         onchain_address: "Ingrese la dirección de {{ asset }}",
         onchain_address_no_asset: "Ingrese la dirección",
-        invalid_refund_file: "Archivo de reembolso no válido",
+        invalid_refund_file: "'Clave de rescate no válido",
         invalid_backup_file: "Archivo de backup no válido",
         invalid_invoice: "Por favor, pegue Invoice, Offer o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
@@ -598,19 +598,19 @@ const dict = {
         copied: "Copiado",
         refund_swap: "Reembolsar Intercambio",
         refund_a_swap_subline:
-            "Cargue su archivo de reembolso y recupere sus fondos bloqueados.",
+            "Cargue tu clave de rescate y recupere tus fondos bloqueados.",
         refund_past_swaps: "Intercambios anteriores",
         refund_past_swaps_subline:
             "Intercambios que se guardaron en el almacenamiento del navegador",
         no_refundable_swaps:
             "No se han encontrado swaps reembolsables en el historial de tu navegador",
-        cant_find_swap: "¿No encuentra su intercambio?",
+        cant_find_swap: "¿No encuentras tu intercambio?",
         refund_external_explainer:
-            "Intenta reembolsar un swap externo mediante el archivo de reembolso y otros métodos de emergencia.",
+            "Intenta reembolsar un swap externo mediante una clave de rescate y otros métodos de emergencia.",
         refund_external_explainer_rsk:
             "Conecta tu monedero Rootstock para buscar swaps reembolsables que no estén guardados en el historial de swaps de este navegador.",
         refund_external_scanning_rsk:
-            "Escaneando en busca de swaps reembolsables en su monedero Rootstock...",
+            "Escaneando en busca de swaps reembolsables en tu monedero Rootstock...",
         connected_wallet_no_swaps:
             "El monedero Rootstock conectada no contiene ningún swap reembolsable.",
         refund_external_swap: "Reembolsar Swap Externo",
@@ -624,9 +624,9 @@ const dict = {
         refund_clear: "Borrar almacenamiento",
         delete_swap: "Eliminar intercambio del almacenamiento",
         delete_storage:
-            "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de su intercambio y sus claves de reembolso.",
+            "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de tu intercambio y tus claves de reembolso.",
         delete_storage_single_swap:
-            "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento?\nSe perderán la información de su intercambio y sus claves privadas de reembolso.",
+            "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento?\nSe perderán la información de tu intercambio y tus claves privadas de reembolso.",
         delete_logs: "¿Estás seguro de que deseas borrar tus registros?",
         tx_in_mempool: "La transacción está en el mempool.",
         tx_in_mempool_subline:
@@ -683,9 +683,9 @@ const dict = {
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
         transaction_prompt:
-            'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
+            'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada.',
         transaction_prompt_receive:
-            'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
+            'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
         invalid_address: "Dirección {{ asset }} inválida",
         scan_qr_code: "Escanear código QR",
         version: "Versión",
@@ -758,7 +758,7 @@ const dict = {
         download_new_key: "Descargar nueva clave",
         verify_boltz_rescue_key: "Verificar clave de rescate Boltz",
         verify_boltz_rescue_key_subline:
-            "Por favor, seleccione su clave de rescate Boltz previamente descargada para verificar su validez.",
+            "Por favor, seleccione tu clave de rescate Boltz previamente descargada para verificar su validez.",
         verify_key: "Verificar clave existente",
         verify_key_failed:
             "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
@@ -841,7 +841,7 @@ const dict = {
         invoice_payment_failure: "无法支付您的闪电发票",
         onchain_address: "输入{{ asset }}地址",
         onchain_address_no_asset: "地址",
-        invalid_refund_file: "无效的退款文件",
+        invalid_refund_file: "无效的救援钥匙",
         invalid_backup_file: "无效的备份文件",
         invalid_invoice: "请提供有效的发票,offer或LNURL",
         invalid_0_amount: "不支持没有金额的发票",
@@ -851,13 +851,13 @@ const dict = {
         copy_bip21: "BIP21",
         copied: "已复制",
         refund_swap: "退还交换",
-        refund_a_swap_subline: "上传您的退款文件，取回被锁定的资金",
+        refund_a_swap_subline: "上传您的救援钥匙，取回被锁定的资金。",
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         no_refundable_swaps: "在您的浏览器历史中未发现可退款的交换。",
         cant_find_swap: "找不到您的交换？",
         refund_external_explainer:
-            "尝试通过退款文件和其他紧急方法退款外部交换。",
+            "尝试通过救援钥匙和其他紧急方法退款外部交换。",
         refund_external_explainer_rsk:
             "连接您的 Rootstock 钱包，扫描未保存在此浏览器交换历史记录中的可退款交换。",
         refund_external_scanning_rsk:
@@ -1077,7 +1077,7 @@ const dict = {
         invoice_payment_failure: "インボイスを支払うことができませんでした",
         onchain_address: "{{ asset }}アドレスを入力してください",
         onchain_address_no_asset: "アドレスを入力してください",
-        invalid_refund_file: "無効な返金ファイル",
+        invalid_refund_file: "無効なレスキューキー",
         invalid_backup_file: "無効なバックアップファイル",
         invalid_invoice: "有効なインボイス、Offer、LNURLを入力してください",
         invalid_0_amount: "金額のない空インボイスは対応していません",
@@ -1088,14 +1088,14 @@ const dict = {
         copied: "クリップボードにコピーしました！",
         refund_swap: "スワップを返金する",
         refund_a_swap_subline:
-            "返金ファイルをアップロードし、ロックされた資金を回収します",
+            "このブラウザのスワップ履歴にないスワップを払い戻すには、レスキューキーをアップロードしてください。",
         refund_past_swaps: "過去のスワップ",
         refund_past_swaps_subline: "ブラウザのストレージに保存されたスワップ",
         no_refundable_swaps:
             "ブラウザの履歴に返金可能なスワップが見つかりません。",
         cant_find_swap: "スワップが見つからない？",
         refund_external_explainer:
-            "払い戻しファイルやその他の緊急手段を使って外部スワップを払い戻してみる。",
+            "レスキューキーやその他の緊急手段で外部スワップの払い戻しを試みる。",
         refund_external_explainer_rsk:
             "Rootstockウォレットを接続して、このブラウザのスワップ履歴に保存されていない払い戻し可能なスワップをスキャンします。",
         refund_external_scanning_rsk:
