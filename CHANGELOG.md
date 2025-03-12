@@ -3,6 +3,48 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.2..v1.7.0) - 2025-03-12
+
+### Bug Fixes
+
+- spending explicit outputs with confidential nonce (#830) - ([3495b74](https://github.com/BoltzExchange/boltz-web-app/commit/3495b747c9fb24f08bced160e772ae48f35cdc26))
+- fix E2E tests - ([fd4d306](https://github.com/BoltzExchange/boltz-web-app/commit/fd4d30614477a8499c4d3aee7e711d7d1fbd764c))
+- references of changed i18n - ([d7daf2b](https://github.com/BoltzExchange/boltz-web-app/commit/d7daf2bd55f749d1dfae70c9363687d26dcc8c11))
+
+### Features
+
+- swap recovery rescan - ([aa49284](https://github.com/BoltzExchange/boltz-web-app/commit/aa49284a6052d3eed9a59d77f94322ca242d6a2a))
+- download rescue key in settings - ([b60ffa7](https://github.com/BoltzExchange/boltz-web-app/commit/b60ffa780502b7190ed63b4db6467ab8af280ef6))
+- adjust network fee when RIF is needed - ([53b8111](https://github.com/BoltzExchange/boltz-web-app/commit/53b811106d6a24df3ba6135b297e84f6f01412aa))
+- defer swap creation after backup is done - ([6c49820](https://github.com/BoltzExchange/boltz-web-app/commit/6c49820cd6ee97eaaa8089d88840244ae107cb58))
+
+### Miscellaneous Chores
+
+- verify rescue key wording - ([140d79e](https://github.com/BoltzExchange/boltz-web-app/commit/140d79ecb6e762eb0ff449b67f88aa443723f32a))
+- rename recovery endpoint to rescue - ([d268113](https://github.com/BoltzExchange/boltz-web-app/commit/d2681131bd306dc6bd339e9d436853347aa993b3))
+- add missing strings, minor display adjustments - ([25da0ff](https://github.com/BoltzExchange/boltz-web-app/commit/25da0ff08865595b382e6a2bc9eaeffb9da80711))
+- bump vulnerable NPM dependencies - ([42b03e9](https://github.com/BoltzExchange/boltz-web-app/commit/42b03e99643b78818bc5e3abbaa13a7c95390616))
+- use Discount CT on mainnet (#825) - ([7ba569a](https://github.com/BoltzExchange/boltz-web-app/commit/7ba569aec3c8c5490217d34bc6552e3dbea27734))
+- minor wording adjustments - ([ad8cab1](https://github.com/BoltzExchange/boltz-web-app/commit/ad8cab1fbdc9e2618a5b7f1bb59f412f26bc8061))
+- bump dependencies - ([20de41f](https://github.com/BoltzExchange/boltz-web-app/commit/20de41f0f2eaed4b2b5ec52bc83b7ae878303cfe))
+- bump dependencies - ([d13ea7d](https://github.com/BoltzExchange/boltz-web-app/commit/d13ea7dfe958e58f41aea575f9f3cfb002109b39))
+
+### Refactoring
+
+- rename recovery to refund file - ([9c2fafd](https://github.com/BoltzExchange/boltz-web-app/commit/9c2fafdb2f03600e6e2b2d8302b38fc89ee10e97))
+- nested backup/verify paths - ([8a9ef44](https://github.com/BoltzExchange/boltz-web-app/commit/8a9ef44ff1d91e619d2c813ace29da9efeab8ce0))
+- save mnemonic instead of xpriv - ([c11cb4a](https://github.com/BoltzExchange/boltz-web-app/commit/c11cb4a735969238a53b3ce4e01f836daa8401c1))
+- cleanup rescue refunds - ([0404964](https://github.com/BoltzExchange/boltz-web-app/commit/0404964b74646139a2129f679ccb858991e7b706))
+- use vitest instead of jest - ([cfeb2e6](https://github.com/BoltzExchange/boltz-web-app/commit/cfeb2e6d5a0c4944028010c375d160ede51b3abd))
+- use Web Locks API for claim lock (#837) - ([e62af4d](https://github.com/BoltzExchange/boltz-web-app/commit/e62af4d662dee15cc64d06e8a51e2739258c0fc1))
+- external refund rescue key wording (#840) - ([c6f6067](https://github.com/BoltzExchange/boltz-web-app/commit/c6f606788f1f816fa436b3fc612fd30e33044dc4))
+- add loading spinner to backup verification - ([e526169](https://github.com/BoltzExchange/boltz-web-app/commit/e5261695b29495f76a29e5b2d6c2b47998b644ca))
+
+### Tests
+
+- E2E tests for rescue files - ([439fadf](https://github.com/BoltzExchange/boltz-web-app/commit/439fadfbc9e241c3f6d1d5d472099395e37d6c36))
+
+---
 ## [1.6.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.1..v1.6.2) - 2025-02-26
 
 ### Bug Fixes
@@ -31,6 +73,7 @@ All notable changes to this project will be documented in this file. See [conven
 - update regtest (#821) - ([8d618bf](https://github.com/BoltzExchange/boltz-web-app/commit/8d618bf2bf2fda342862ae6a55528e036f22eea1))
 - update Vite dependencies - ([b709538](https://github.com/BoltzExchange/boltz-web-app/commit/b709538049a2d827f54674ea4efe69900bc5cb3e))
 - minor dependency updates - ([313448c](https://github.com/BoltzExchange/boltz-web-app/commit/313448cee9890cebad4c36e255ebcd08a32339b7))
+- bump version to v1.6.2 (#827) - ([051d2bd](https://github.com/BoltzExchange/boltz-web-app/commit/051d2bda5ee1f9683df79932043067029e90d5f9))
 
 ### Refactoring
 

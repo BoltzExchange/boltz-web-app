@@ -109,9 +109,9 @@ const cleanup = render(
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
-            <Route path="/backup/:id" component={Backup} />
+            <Route path="/backup" component={Backup} />
             <Route path="/backup/verify" component={BackupVerify} />
-            <Route path="/backup/verify/:id" component={BackupVerify} />
+            <Route path="/backup/verify/:type" component={BackupVerify} />
             <Route
                 path="/swap/refund/evm/:asset/:txHash"
                 component={RefundEvm}
