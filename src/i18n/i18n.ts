@@ -1359,7 +1359,7 @@ const dict = {
         copy_amount: "сумма",
         copy_bip21: "BIP21",
         copied: "Скопировано!",
-        refund_swap: "Возврат свопа {{ id }}",
+        refund_swap: "Возврат свопа",
         refund_a_swap_subline:
             "Загрузите файл возврата и верните свои заблокированные средства",
         refund_past_swaps: "Прошлые свопы",
@@ -1480,7 +1480,7 @@ const dict = {
             "Включить или отключить уведомления браузера",
         browsernotification_error: "Доступ к уведомлениям отклонен",
         invalid_pair: "Недопустимая пара",
-        error_starting_qr_scanner:
+        nerror_starting_qr_scanner:
             "Не удалось получить доступ к камере, проверьте разрешения!",
         insufficient_balance: "Недостаточный баланс",
         insufficient_balance_line:
