@@ -3,6 +3,7 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createSignal } from "solid-js";
 
+import LoadingSpinner from "../components/LoadingSpinner";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
@@ -53,11 +54,15 @@ const BackupVerify = () => {
         boolean | undefined
     >(false);
 
-    const uploadChange = async (e: Event) => {
-        const input = e.currentTarget as HTMLInputElement;
-        const inputFile = input.files[0];
+    const [inputProcessing, setInputProcessing] = createSignal(false);
 
+    const uploadChange = async (e: Event) => {
         try {
+            setInputProcessing(true);
+
+            const input = e.currentTarget as HTMLInputElement;
+            const inputFile = input.files[0];
+
             let data: RescueFile;
 
             if (
@@ -128,6 +133,8 @@ const BackupVerify = () => {
         } catch (e) {
             log.error("invalid rescue file upload", e);
             setVerificationFailed(true);
+        } finally {
+            setInputProcessing(false);
         }
     };
 
@@ -156,8 +163,12 @@ const BackupVerify = () => {
                     id="rescueFileUpload"
                     data-testid="rescueFileUpload"
                     accept={rescueFileTypes}
+                    disabled={inputProcessing()}
                     onChange={(e) => uploadChange(e)}
                 />
+                <Show when={inputProcessing()}>
+                    <LoadingSpinner />
+                </Show>
             </Show>
         </div>
     );
