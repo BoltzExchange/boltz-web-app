@@ -1491,8 +1491,6 @@ const dict = {
         invalid_pair: "Недопустимая пара",
         error_starting_qr_scanner:
             "Не удалось получить доступ к камере, проверьте права доступа!",
-        nerror_starting_qr_scanner:
-            "Не удалось получить доступ к камере, проверьте разрешения!",
         insufficient_balance: "Недостаточный баланс",
         insufficient_balance_line:
             "На вашем кошельке недостаточно средств для этого свопа.",
