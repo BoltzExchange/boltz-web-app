@@ -6,7 +6,7 @@ import { detectWebLNProvider, enableWebln } from "../../src/utils/webln";
 
 describe("WebLN", () => {
     beforeEach(() => {
-        log.error = jest.fn();
+        log.error = vi.fn();
     });
 
     test("should not detect WebLN when no injected provider is present", async () => {
@@ -26,9 +26,9 @@ describe("WebLN", () => {
 
     test("should call WebLN callback if enable call succeeds", async () => {
         window.webln = {
-            enable: jest.fn().mockResolvedValue(undefined),
+            enable: vi.fn().mockResolvedValue(undefined),
         } as any;
-        const cb = jest.fn();
+        const cb = vi.fn();
 
         expect(await enableWebln(cb));
 
@@ -41,9 +41,9 @@ describe("WebLN", () => {
 
     test("should not call WebLN callback if enable call fails", async () => {
         window.webln = {
-            enable: jest.fn().mockRejectedValue("unauthorized"),
+            enable: vi.fn().mockRejectedValue("unauthorized"),
         } as any;
-        const cb = jest.fn();
+        const cb = vi.fn();
 
         expect(await enableWebln(cb));
 
@@ -55,7 +55,7 @@ describe("WebLN", () => {
     });
 
     test("should not call WebLN callback if window.webln is undefined", async () => {
-        const cb = jest.fn();
+        const cb = vi.fn();
 
         expect(await enableWebln(cb));
 

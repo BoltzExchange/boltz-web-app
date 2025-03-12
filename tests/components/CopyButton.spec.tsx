@@ -7,7 +7,7 @@ import { contextWrapper } from "../helper";
 
 /* eslint-disable @typescript-eslint/unbound-method */
 
-const writeText = jest.fn();
+const writeText = vi.fn();
 
 Object.defineProperty(navigator, "clipboard", {
     value: {

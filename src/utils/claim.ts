@@ -11,6 +11,7 @@ import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { deriveKeyFn } from "../context/Global";
 import {
     TransactionInterface,
     broadcastTransaction,
@@ -72,6 +73,7 @@ const createAdjustedClaim = async <
 };
 
 const claimReverseSwap = async (
+    deriveKey: deriveKeyFn,
     swap: ReverseSwap,
     lockupTx: TransactionInterface,
     cooperative: boolean = true,
@@ -79,11 +81,12 @@ const claimReverseSwap = async (
     log.info(`Claiming Taproot swap cooperatively: ${cooperative}`);
     const asset = getRelevantAssetForSwap(swap);
 
-    const privateKey = parsePrivateKey(swap.claimPrivateKey);
-    log.debug("privateKey: ", swap.claimPrivateKey);
-
+    const privateKey = parsePrivateKey(
+        deriveKey,
+        swap.claimPrivateKeyIndex,
+        swap.claimPrivateKey,
+    );
     const preimage = Buffer.from(swap.preimage, "hex");
-    log.debug("preimage: ", swap.preimage);
 
     const decodedAddress = decodeAddress(asset, swap.claimAddress);
     const boltzPublicKey = Buffer.from(swap.refundPublicKey, "hex");
@@ -138,11 +141,12 @@ const claimReverseSwap = async (
         return claimTx;
     } catch (e) {
         log.warn("Uncooperative Taproot claim because", e);
-        return claimReverseSwap(swap, lockupTx, false);
+        return claimReverseSwap(deriveKey, swap, lockupTx, false);
     }
 };
 
 export const createTheirPartialChainSwapSignature = async (
+    deriveKey: deriveKeyFn,
     swap: ChainSwap,
 ): Promise<Awaited<ReturnType<typeof postChainSwapDetails>> | undefined> => {
     // RSK claim transactions can't be signed cooperatively
@@ -162,7 +166,11 @@ export const createTheirPartialChainSwapSignature = async (
             "hex",
         );
         const theirClaimMusig = await createMusig(
-            parsePrivateKey(swap.refundPrivateKey),
+            parsePrivateKey(
+                deriveKey,
+                swap.refundPrivateKeyIndex,
+                swap.refundPrivateKey,
+            ),
             boltzClaimPublicKey,
         );
         tweakMusig(
@@ -199,11 +207,10 @@ export const createTheirPartialChainSwapSignature = async (
 
         throw err;
     }
-
-    return undefined;
 };
 
 const claimChainSwap = async (
+    deriveKey: deriveKeyFn,
     swap: ChainSwap,
     lockupTx: TransactionInterface,
     cooperative = true,
@@ -213,7 +220,11 @@ const claimChainSwap = async (
         swap.claimDetails.serverPublicKey,
         "hex",
     );
-    const claimPrivateKey = parsePrivateKey(swap.claimPrivateKey);
+    const claimPrivateKey = parsePrivateKey(
+        deriveKey,
+        swap.claimPrivateKeyIndex,
+        swap.claimPrivateKey,
+    );
     const ourClaimMusig = await createMusig(
         claimPrivateKey,
         boltzRefundPublicKey,
@@ -263,7 +274,7 @@ const claimChainSwap = async (
             swap.backend,
             swap.id,
             swap.preimage,
-            await createTheirPartialChainSwapSignature(swap),
+            await createTheirPartialChainSwapSignature(deriveKey, swap),
             {
                 index: 0,
                 transaction: claimTx.toHex(),
@@ -296,11 +307,12 @@ const claimChainSwap = async (
         return claimTx;
     } catch (e) {
         log.warn("Uncooperative Taproot claim because", e);
-        return claimChainSwap(swap, lockupTx, false);
+        return claimChainSwap(deriveKey, swap, lockupTx, false);
     }
 };
 
 export const claim = async <T extends ReverseSwap | ChainSwap>(
+    deriveKey: deriveKeyFn,
     swap: T,
     swapStatusTransaction: { hex: string },
     cooperative: boolean,
@@ -318,12 +330,14 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     let claimTransaction: TransactionInterface;
     if (swap.type === SwapType.Reverse) {
         claimTransaction = await claimReverseSwap(
+            deriveKey,
             swap as ReverseSwap,
             lockupTx,
             cooperative,
         );
     } else {
         claimTransaction = await claimChainSwap(
+            deriveKey,
             swap as ChainSwap,
             lockupTx,
             cooperative,
@@ -346,7 +360,10 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     return swap;
 };
 
-export const createSubmarineSignature = async (swap: SubmarineSwap) => {
+export const createSubmarineSignature = async (
+    deriveKey: deriveKeyFn,
+    swap: SubmarineSwap,
+) => {
     const swapAsset = getRelevantAssetForSwap(swap);
     if (swapAsset === RBTC) {
         return;
@@ -364,7 +381,11 @@ export const createSubmarineSignature = async (swap: SubmarineSwap) => {
 
     const boltzPublicKey = Buffer.from(swap.claimPublicKey, "hex");
     const musig = await createMusig(
-        parsePrivateKey(swap.refundPrivateKey),
+        parsePrivateKey(
+            deriveKey,
+            swap.refundPrivateKeyIndex,
+            swap.refundPrivateKey,
+        ),
         boltzPublicKey,
     );
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);

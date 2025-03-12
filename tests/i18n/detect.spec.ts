@@ -26,7 +26,7 @@ describe("detect", () => {
         test.each(["en", "de", "something"])(
             "should prefer configured language",
             (lang) => {
-                const setter = jest.fn();
+                const setter = vi.fn();
                 expect(detectLanguage(lang, null, setter)).toEqual(lang);
                 expect(setter).toHaveBeenCalledTimes(0);
             },
@@ -42,7 +42,7 @@ describe("detect", () => {
                     writable: true,
                 });
 
-                const setter = jest.fn();
+                const setter = vi.fn();
                 expect(detectLanguage(null, "not used", setter)).toEqual(lang);
 
                 expect(setter).toHaveBeenCalledTimes(1);
@@ -59,7 +59,7 @@ describe("detect", () => {
             });
 
             const lastParam = "asdf";
-            const setter = jest.fn();
+            const setter = vi.fn();
 
             expect(detectLanguage(null, lastParam, setter)).toEqual(lastParam);
             expect(setter).toHaveBeenCalledTimes(0);
@@ -73,7 +73,7 @@ describe("detect", () => {
                 writable: true,
             });
 
-            const setter = jest.fn();
+            const setter = vi.fn();
             expect(detectLanguage(null, null, setter)).toEqual("en");
 
             expect(setter).toHaveBeenCalledTimes(0);

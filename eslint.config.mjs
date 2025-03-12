@@ -14,8 +14,6 @@ export default [
             "coverage",
             "node_modules",
             "dnssec-prover",
-            "jest.config.js",
-            "babel.config.js",
             "vite.config.mjs",
             "src/utils/dnssec/dnssec_prover*",
             "playwright-report/*",

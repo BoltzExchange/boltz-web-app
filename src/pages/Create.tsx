@@ -7,7 +7,7 @@ import AssetSelect from "../components/AssetSelect";
 import Backend from "../components/Backend";
 import BackendSelect from "../components/BackendSelect";
 import ConnectWallet from "../components/ConnectWallet";
-import { CreateButton } from "../components/CreateButton";
+import CreateButton from "../components/CreateButton";
 import Fees from "../components/Fees";
 import InvoiceInput from "../components/InvoiceInput";
 import QrScan from "../components/QrScan";

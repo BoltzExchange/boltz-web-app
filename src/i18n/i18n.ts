@@ -80,8 +80,7 @@ const dict = {
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address",
         onchain_address_no_asset: "Enter address",
-        download_refund_file: "Download refund file",
-        invalid_refund_file: "Invalid refund file",
+        invalid_refund_file: "Invalid rescue key",
         invalid_backup_file: "Invalid backup file",
         invalid_invoice: "Please provide a valid invoice, offer or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
@@ -90,18 +89,9 @@ const dict = {
         copy_amount: "amount",
         copy_bip21: "BIP21",
         copied: "Copied!",
-        backup_skip: "Skip download",
-        backup_refund: "Download Refund File",
-        backup_refund_subline:
-            "If this swap fails, you'll have to refund your chain bitcoin using your refund key. This key is stored in your browser's storage by default, but can be lost if you",
-        backup_refund_list_incognito: "are using incognito mode",
-        backup_refund_list_tor: "are using Tor browser",
-        backup_refund_list_clear_history: "clear your browsing history",
-        backup_refund_skip:
-            "If any of the above applies to you, we strongly recommend downloading this refund file!",
         refund_swap: "Refund Swap",
         refund_a_swap_subline:
-            "Upload your Swap’s refund file, to refund a swap that is not available in this browser’s swap history.",
+            "Upload your rescue key to refund a swap that is not available in this browser’s swap history.",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
@@ -109,7 +99,7 @@ const dict = {
             "No refundable swaps found in your browser history",
         cant_find_swap: "Can't find your swap?",
         refund_external_explainer:
-            "Try refunding an external swap via refund file and other emergency methods",
+            "Try refunding an external swap via rescue key and other emergency methods.",
         refund_external_explainer_rsk:
             "Connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
         refund_external_scanning_rsk:
@@ -153,9 +143,9 @@ const dict = {
         refund_explainer: "You will be able to refund after the timeout",
         swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",
-        ios_image_download_do_not_share: "CONFIDENTIAL! DO NOT SHARE!",
+        ios_image_download_do_not_share: "Boltz Rescue Key - DO NOT SHARE!",
         ios_image_download:
-            'Long press and select "Save to Photos" to download refund file',
+            'Long press and select "Save to Photos" to download',
         created: "Created",
         view: "View",
         id: "ID",
@@ -216,9 +206,6 @@ const dict = {
         browsernotification_tooltip: "Enable or disable browser notifications",
         browsernotification_error: "Notification permissions denied",
         invalid_pair: "Invalid pair",
-        reckless_mode_setting: "Reckless Mode",
-        reckless_mode_setting_tooltip:
-            "Disables prompts to download refund file and other confirmation steps",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
         insufficient_balance: "Insufficient balance",
@@ -247,6 +234,24 @@ const dict = {
         broadcast_setting: "External Broadcast",
         broadcast_setting_tooltip:
             "Also use the block explorer to broadcast transactions",
+        download_boltz_rescue_key: "Download Boltz Rescue Key",
+        download_boltz_rescue_key_subline:
+            "We replaced per-swap refund files with a single Rescue Key 🙌",
+        download_boltz_rescue_key_subline_second:
+            "This new key works on any device and works for all swaps created with it. Store the key file in a secure and permanent location.",
+        download_boltz_rescue_key_subline_third:
+            "To continue, please select if you want to download a new Boltz Rescue Key or verify an existing one.",
+        download_new_key: "Download New Key",
+        verify_boltz_rescue_key: "Verify Boltz Rescue Key",
+        verify_boltz_rescue_key_subline:
+            "Please select your previously downloaded Boltz Rescue Key to verify its correctness.",
+        verify_key: "Verify Existing Key",
+        verify_key_failed:
+            "Verification of the Boltz Rescue Key failed. We recommend downloading a new Boltz Rescue Key to continue.",
+        rescue_key: "Rescue Key",
+        no_swaps_found: "No swaps found",
+        rif_extra_fee:
+            "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
     },
     de: {
         language: "Deutsch",
@@ -332,8 +337,7 @@ const dict = {
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
         onchain_address: "{{ asset }}-Adresse eingeben",
         onchain_address_no_asset: "Adresse",
-        download_refund_file: "Rückerstattungsdatei herunterladen",
-        invalid_refund_file: "Ungültige Rückerstattungsdatei",
+        invalid_refund_file: "Ungültiger Rettungsschlüssel",
         invalid_backup_file: "Ungültige Backupdatei",
         invalid_invoice: "Bitte gültige Invoice, Offer oder LNURL eingeben",
         invalid_0_amount: "Lightning Rechnungen ohne Betrag nicht unterstützt",
@@ -342,18 +346,9 @@ const dict = {
         copy_amount: "Betrag",
         copy_bip21: "BIP21",
         copied: "kopiert!",
-        backup_skip: "Überspringen",
-        backup_refund: "Rückerstattungsdatei herunterladen",
-        backup_refund_subline:
-            "Falls dieser Swap fehlschlagen sollte, musst du dir deine Bitcoin mit deinem Rückerstattungsschlüssel zurückholen. Dieser Schlüssel wird standardmäßig in dein Browser gespeichert, kann aber verloren gehen wenn",
-        backup_refund_list_incognito: "du ein Inkognito Fenster verwendest",
-        backup_refund_list_tor: "du Tor Browser verwendest",
-        backup_refund_list_clear_history: "die Browser Daten gelöscht werden",
-        backup_refund_skip:
-            "Falls einer dieser Punkte zutrifft, empfehlen wir ausdrücklich die Rückerstattungsdatei herunterzuladen!",
-        refund_swap: "Swap Erstatten",
+        refund_swap: "Swap Rückerstatten",
         refund_a_swap_subline:
-            "Lade deine Rückerstattungsdatei hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück.",
+            "Lade deinen Rettungsschlüssel hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück.",
         refund_past_swaps: "Historische Swaps",
         refund_past_swaps_subline:
             "Swaps, die in deinem Browser gespeichert wurden",
@@ -361,14 +356,14 @@ const dict = {
             "Keine erstattungsfähigen Swaps in Browserverlauf gefunden",
         cant_find_swap: "Swap nicht gefunden?",
         refund_external_explainer:
-            "Versuchen Sie, einen externen Swap über eine Rückerstattungsdatei und andere Notfallmethoden zu erstatten",
+            "Versuchen Sie, einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden zu erstatten.",
         refund_external_explainer_rsk:
-            "Verbinden Sie Ihr Rootstock Wallet, um nach erstattungsfähigen Swaps zu suchen, die nicht im Swap-Verlauf dieses Browsers gespeichert sind..",
+            "Verbinden Sie Ihr Rootstock Wallet, um nach erstattungsfähigen Swaps zu suchen, die nicht im Swap-Verlauf dieses Browsers gespeichert sind.",
         refund_external_scanning_rsk:
             "Scanne nach erstattungsfähigen Swaps in Rootstock-Wallet...",
         connected_wallet_no_swaps:
             "Das angeschlossene Rootstock Wallet enthält keine erstattungsfähigen Swaps.",
-        refund_external_swap: "Externen Swap rückerstatten",
+        refund_external_swap: "Externen Swap Rückerstatten",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
@@ -406,11 +401,11 @@ const dict = {
             "Du kannst nach dem Timeout eine Rückerstattung beantragen",
         swap_not_refundable_yet:
             "Dein Swap kann noch nicht erstattet werden. Warte auf den Timeout, um eine Rückerstattung zu starten.",
-        wasm_not_supported:
-            "Bitte aktivieren Sie WebAssembly in Ihrem Browser!",
-        ios_image_download_do_not_share: "VERTRAULICH! NICHT TEILEN!",
+        wasm_not_supported: "Bitte aktiviere WebAssembly in deinem Browser!",
+        ios_image_download_do_not_share:
+            "Rettungsschlüssel - VERTRAULICH! NICHT TEILEN!",
         ios_image_download:
-            'Lange drücken und "In Fotos speichern" auswählen, um die Rückerstattungsdatei herunterzuladen',
+            'Lange drücken und "In Fotos speichern" auswählen, um herunterzuladen',
         created: "Erstellt",
         view: "Anzeigen",
         id: "ID",
@@ -475,14 +470,11 @@ const dict = {
             "Aktiviere oder deaktiviere Browser Benachrichtigungen",
         browsernotification_error: "Benachrichtigungsrechte verweigert",
         invalid_pair: "Ungültiges Paar",
-        reckless_mode_setting: "Reckless Modus",
-        reckless_mode_setting_tooltip:
-            "Deaktiviert Downloadaufforderung der Rückerstattungsdatei und andere Bestätigungsschritte",
         error_starting_qr_scanner:
             "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
         insufficient_balance: "Unzureichendes Guthaben",
         insufficient_balance_line:
-            "Sie haben nicht genügend Guthaben für diesen Swap.",
+            "Du hast nicht genügend Guthaben für diesen Swap.",
         select_wallet: "Wallet auswählen",
         select_derivation_path: "Ableitungspfad auswählen",
         submit_derivation_path: "Senden",
@@ -498,7 +490,7 @@ const dict = {
         validate_payment: "Proof of Payment anzeigen",
         no_browser_wallet: "Kein Browser Wallet gefunden",
         sent: "Gesendet",
-        will_receive: "Sie erhalten",
+        will_receive: "Du erhältst",
         refund_available_in: "Rückerstattung möglich in {{ blocks }} Blöcken",
         tether: "L-USDt",
         no_wallet_connected: "Kein Wallet verbunden",
@@ -507,6 +499,25 @@ const dict = {
         broadcast_setting: "Externer Broadcast",
         broadcast_setting_tooltip:
             "Verwende auch den Block Explorer, um Transaktionen zu senden",
+        download_boltz_rescue_key: "Boltz Rettungsschlüssel herunterladen",
+        download_boltz_rescue_key_subline:
+            "Wir haben pro-Swap Rückerstattungsdateien mit einem einzigen Boltz Rettungsschlüssel ersetzt 🙌",
+        download_boltz_rescue_key_subline_second:
+            "Dieser neue Schlüssel funktioniert auf jedem Gerät und ist für alle Swaps gültig. Speichere die Schlüsseldatei an einem sicheren Ort.",
+        download_boltz_rescue_key_subline_third:
+            "Wähle bitte aus, ob du einen neuen Boltz Rettungsschlüssel herunterladen oder einen existierenden Schlüssel verifizieren möchtest.",
+        download_new_key: "Neuen Schlüssel herunterladen",
+        verify_boltz_rescue_key:
+            "Existierenden Boltz Rettungsschlüssel verifizieren",
+        verify_boltz_rescue_key_subline:
+            "Bitte wähle den zuvor heruntergeladenen Boltz Rettungsschlüssel aus, um seine Gültigkeit zu überprüfen.",
+        verify_key: "Existierenden Schlüssel verifizieren",
+        verify_key_failed:
+            "Die Verifizierung des Boltz Rettungsschlüssels ist fehlgeschlagen. Wir empfehlen, einen neuen Rettungsschlüssel herunterzuladen.",
+        rescue_key: "Rettungsschlüssel",
+        no_swaps_found: "Keine Swaps gefunden",
+        rif_extra_fee:
+            "Wallet enthält nicht genug RBTC, Gebühr um RIF-Relay-Gebühr angepasst!",
     },
     es: {
         language: "Español",
@@ -584,13 +595,12 @@ const dict = {
         disconnect_address: "Desconectar monedero",
         lockup_failed: "Fallo en el lockup",
         lockup_failed_subline:
-            "Su transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
+            "Tu transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
         failure_reason: "Motivo del fallo",
-        invoice_payment_failure: "No se pudo pagar su factura Lightning",
+        invoice_payment_failure: "No se pudo pagar tu factura Lightning",
         onchain_address: "Ingrese la dirección de {{ asset }}",
         onchain_address_no_asset: "Ingrese la dirección",
-        download_refund_file: "Descargar archivo de reembolso",
-        invalid_refund_file: "Archivo de reembolso no válido",
+        invalid_refund_file: "'Clave de rescate no válido",
         invalid_backup_file: "Archivo de backup no válido",
         invalid_invoice: "Por favor, pegue Invoice, Offer o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
@@ -599,30 +609,21 @@ const dict = {
         copy_amount: "importe",
         copy_bip21: "BIP21",
         copied: "Copiado",
-        backup_skip: "Saltar",
-        backup_refund: "Descargar archivo de reembolso",
-        backup_refund_subline:
-            "Si este intercambio falla, tendrás que reembolsar tu bitcoin utilizando tu clave de reembolso. Esta clave se guarda por defecto en el almacenamiento de tu navegador, pero puede perderse si",
-        backup_refund_list_incognito: "utiliza el modo incógnito",
-        backup_refund_list_tor: "utiliza el navegador Tor",
-        backup_refund_list_clear_history: "borra tu historial de navegación",
-        backup_refund_skip:
-            "Si alguno de los puntos anteriores le afecta, le recomendamos que descargue el archivo de reembolso.",
         refund_swap: "Reembolsar Intercambio",
         refund_a_swap_subline:
-            "Cargue su archivo de reembolso y recupere sus fondos bloqueados.",
+            "Cargue tu clave de rescate y recupere tus fondos bloqueados.",
         refund_past_swaps: "Intercambios anteriores",
         refund_past_swaps_subline:
             "Intercambios que se guardaron en el almacenamiento del navegador",
         no_refundable_swaps:
             "No se han encontrado swaps reembolsables en el historial de tu navegador",
-        cant_find_swap: "¿No encuentra su intercambio?",
+        cant_find_swap: "¿No encuentras tu intercambio?",
         refund_external_explainer:
-            "Intenta reembolsar un swap externo mediante el archivo de reembolso y otros métodos de emergencia.",
+            "Intenta reembolsar un swap externo mediante una clave de rescate y otros métodos de emergencia.",
         refund_external_explainer_rsk:
             "Conecta tu monedero Rootstock para buscar swaps reembolsables que no estén guardados en el historial de swaps de este navegador.",
         refund_external_scanning_rsk:
-            "Escaneando en busca de swaps reembolsables en su monedero Rootstock...",
+            "Escaneando en busca de swaps reembolsables en tu monedero Rootstock...",
         connected_wallet_no_swaps:
             "El monedero Rootstock conectada no contiene ningún swap reembolsable.",
         refund_external_swap: "Reembolsar Swap Externo",
@@ -636,9 +637,9 @@ const dict = {
         refund_clear: "Borrar almacenamiento",
         delete_swap: "Eliminar intercambio del almacenamiento",
         delete_storage:
-            "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de su intercambio y sus claves de reembolso.",
+            "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de tu intercambio y tus claves de reembolso.",
         delete_storage_single_swap:
-            "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento?\nSe perderán la información de su intercambio y sus claves privadas de reembolso.",
+            "¿Estás seguro de que deseas borrar el intercambio {{ id }} de tu almacenamiento?\nSe perderán la información de tu intercambio y tus claves privadas de reembolso.",
         delete_logs: "¿Estás seguro de que deseas borrar tus registros?",
         tx_in_mempool: "La transacción está en el mempool.",
         tx_in_mempool_subline:
@@ -666,9 +667,10 @@ const dict = {
         swap_not_refundable_yet:
             "Tu intercambio aún no es reembolsable, por favor inténtelo de nuevo más tarde!",
         wasm_not_supported: "Por favor, activa WebAssembly en tu navegador!",
-        ios_image_download_do_not_share: "¡CONFIDENCIAL! ¡NO COMPARTIR!",
+        ios_image_download_do_not_share:
+            "Clave de rescate - ¡CONFIDENCIAL! ¡NO COMPARTIR!",
         ios_image_download:
-            'Mantén presionado y selecciona "Guardar en Fotos" para descargar el archivo de reembolso.',
+            'Mantén presionado y selecciona "Guardar en Fotos" para descargar.',
         created: "Creado",
         view: "Ver",
         id: "ID",
@@ -694,9 +696,9 @@ const dict = {
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
         transaction_prompt:
-            'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada.',
+            'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada.',
         transaction_prompt_receive:
-            'Pulse "{{ button }}" para abrir su monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
+            'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
         invalid_address: "Dirección {{ asset }} inválida",
         scan_qr_code: "Escanear código QR",
         version: "Versión",
@@ -732,9 +734,6 @@ const dict = {
             "Activar o desactivar notificaciones del navegador",
         browsernotification_error: "Permisos de notificación denegados",
         invalid_pair: "Par no válido",
-        reckless_mode_setting: "Modo Reckless",
-        reckless_mode_setting_tooltip:
-            "Desactiva los avisos para descargar el archivo de reembolso y otros pasos de confirmación",
         error_starting_qr_scanner:
             "No se pudo acceder a la cámara, por favor compruebe los permisos!",
         insufficient_balance: "Saldo insuficiente",
@@ -763,6 +762,24 @@ const dict = {
         broadcast_setting: "Transmisión externa",
         broadcast_setting_tooltip:
             "También use el explorador de bloques para transmitir transacciones",
+        download_boltz_rescue_key: "Descargar clave de rescate Boltz",
+        download_boltz_rescue_key_subline:
+            "Hemos sustituido los archivos de reembolso por una única clave de rescate 🙌",
+        download_boltz_rescue_key_subline_second:
+            "Esta nueva clave funciona en cualquier dispositivo y sirve para todos los intercambios creados con ella. Guarda la clave en un lugar seguro y permanente.",
+        download_boltz_rescue_key_subline_third:
+            "Para continuar, seleccione si desea descargar una nueva clave de rescate o verificar una existente.",
+        download_new_key: "Descargar nueva clave",
+        verify_boltz_rescue_key: "Verificar clave de rescate Boltz",
+        verify_boltz_rescue_key_subline:
+            "Por favor, seleccione tu clave de rescate Boltz previamente descargada para verificar su validez.",
+        verify_key: "Verificar clave existente",
+        verify_key_failed:
+            "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
+        rescue_key: "Clave de Rescate Boltz",
+        no_swaps_found: "No se encontraron swaps",
+        rif_extra_fee:
+            "El monedero no contiene suficientes RBTC, comisión ajustado para incluir comisión de RIF Relay!",
     },
     zh: {
         language: "中文",
@@ -841,8 +858,7 @@ const dict = {
         invoice_payment_failure: "无法支付您的闪电发票",
         onchain_address: "输入{{ asset }}地址",
         onchain_address_no_asset: "地址",
-        download_refund_file: "下载退款文件",
-        invalid_refund_file: "无效的退款文件",
+        invalid_refund_file: "无效的救援钥匙",
         invalid_backup_file: "无效的备份文件",
         invalid_invoice: "请提供有效的发票,offer或LNURL",
         invalid_0_amount: "不支持没有金额的发票",
@@ -851,22 +867,14 @@ const dict = {
         copy_amount: "金额",
         copy_bip21: "BIP21",
         copied: "已复制",
-        backup_skip: "跳过下载",
-        backup_refund: "下载退款文件",
-        backup_refund_subline:
-            "如果此交换失败，您将不得不使用退款密钥退还链上的比特币。默认情况下，此密钥存储在浏览器的本地存储中，但如果您",
-        backup_refund_list_incognito: "正在使用隐身模式",
-        backup_refund_list_tor: "正在使用Tor浏览器",
-        backup_refund_list_clear_history: "清除您的浏览历史记录",
-        backup_refund_skip: "如果您符合以上任何条件，强烈建议下载此退款文件！",
         refund_swap: "退还交换",
-        refund_a_swap_subline: "上传您的退款文件，取回被锁定的资金",
+        refund_a_swap_subline: "上传您的救援钥匙，取回被锁定的资金。",
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         no_refundable_swaps: "在您的浏览器历史中未发现可退款的交换。",
         cant_find_swap: "找不到您的交换？",
         refund_external_explainer:
-            "尝试通过退款文件和其他紧急方法退款外部交换。",
+            "尝试通过救援钥匙和其他紧急方法退款外部交换。",
         refund_external_explainer_rsk:
             "连接您的 Rootstock 钱包，扫描未保存在此浏览器交换历史记录中的可退款交换。",
         refund_external_scanning_rsk:
@@ -906,8 +914,8 @@ const dict = {
         refund_explainer: "您将能够在超时后退款",
         swap_not_refundable_yet: "您的交换尚不可退还",
         wasm_not_supported: "请在您的浏览器中激活WebAssembly",
-        ios_image_download_do_not_share: "机密！切勿共享！",
-        ios_image_download: "长按并选择“保存到照片”以下载退款文件",
+        ios_image_download_do_not_share: "救援钥匙-机密！切勿共享！",
+        ios_image_download: "长按并选择“保存到照片”以下载。",
         created: "已创建",
         view: "查看",
         id: "ID",
@@ -964,8 +972,6 @@ const dict = {
         browsernotification_tooltip: "启用或禁用浏览器通知",
         browsernotification_error: "通知权限被拒绝",
         invalid_pair: "无效交换对",
-        reckless_mode_setting: "鲁莽模式",
-        reckless_mode_setting_tooltip: "禁用下载退款文件的提示和其他确认步骤",
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
         insufficient_balance: "余额不足",
         insufficient_balance_line: "您的钱包余额不足以进行此次交换。",
@@ -991,6 +997,23 @@ const dict = {
         routing_fee_limit: "最大路由费用",
         broadcast_setting: "外部广播",
         broadcast_setting_tooltip: "使用区块浏览器发送认领和退款交易",
+        download_boltz_rescue_key: "下载 Boltz 救援密钥",
+        download_boltz_rescue_key_subline:
+            "我们用单个救援密钥取代了每个交换的退款文件 🙌",
+        download_boltz_rescue_key_subline_second:
+            "新密钥可在任何设备上使用，并适用于用它创建的所有交换。将密钥文件存储在安全的永久位置。",
+        download_boltz_rescue_key_subline_third:
+            "要继续，请选择是下载新的 Boltz 救援密钥还是验证现有密钥。",
+        download_new_key: "下载新密钥",
+        verify_boltz_rescue_key: "验证博尔茨救援密钥",
+        verify_boltz_rescue_key_subline:
+            "请选择您之前下载的 Boltz 救援密钥，以验证其正确性。",
+        verify_key: "验证现有密钥",
+        verify_key_failed:
+            "Boltz 救援密钥验证失败。我们建议下载新的 Boltz 救援密钥以继续。",
+        rescue_key: "救援钥匙",
+        no_swaps_found: "未找到交换",
+        rif_extra_fee: "钱包中没有足够的 RBTC，费用已调整为包括 RIF 中继费！",
     },
     ja: {
         language: "日本語",
@@ -1077,8 +1100,7 @@ const dict = {
         invoice_payment_failure: "インボイスを支払うことができませんでした",
         onchain_address: "{{ asset }}アドレスを入力してください",
         onchain_address_no_asset: "アドレスを入力してください",
-        download_refund_file: "返金ファイルをダウンロード",
-        invalid_refund_file: "無効な返金ファイル",
+        invalid_refund_file: "無効なレスキューキー",
         invalid_backup_file: "無効なバックアップファイル",
         invalid_invoice: "有効なインボイス、Offer、LNURLを入力してください",
         invalid_0_amount: "金額のない空インボイスは対応していません",
@@ -1087,26 +1109,16 @@ const dict = {
         copy_amount: "金額をコピー",
         copy_bip21: "BIP21をコピー",
         copied: "クリップボードにコピーしました！",
-        backup_skip: "ダウンロードをスキップする",
-        backup_refund: "返金ファイルをダウンロードする",
-        backup_refund_subline:
-            "もしこのスワップが失敗したら、返金用の鍵を使ってオンチェーンビットコインの返金処理をする必要があります。このデータは通常ブラウザ内に保管されていますが、特定の条件では喪失してしまいます",
-        backup_refund_list_incognito:
-            "シークレットブラウザモードを使っている場合",
-        backup_refund_list_tor: "Torブラウザを使っている場合",
-        backup_refund_list_clear_history: "ブラウザ履歴を消した場合",
-        backup_refund_skip:
-            "もし以上にあてはまる場合、返金ファイルをダウンロードすることを強くお勧めします！",
         refund_swap: "スワップを返金する",
         refund_a_swap_subline:
-            "返金ファイルをアップロードし、ロックされた資金を回収します",
+            "このブラウザのスワップ履歴にないスワップを払い戻すには、レスキューキーをアップロードしてください。",
         refund_past_swaps: "過去のスワップ",
         refund_past_swaps_subline: "ブラウザのストレージに保存されたスワップ",
         no_refundable_swaps:
             "ブラウザの履歴に返金可能なスワップが見つかりません。",
         cant_find_swap: "スワップが見つからない？",
         refund_external_explainer:
-            "払い戻しファイルやその他の緊急手段を使って外部スワップを払い戻してみる。",
+            "レスキューキーやその他の緊急手段で外部スワップの払い戻しを試みる。",
         refund_external_explainer_rsk:
             "Rootstockウォレットを接続して、このブラウザのスワップ履歴に保存されていない払い戻し可能なスワップをスキャンします。",
         refund_external_scanning_rsk:
@@ -1151,9 +1163,10 @@ const dict = {
         refund_explainer: "タイムアウト後に返金できます",
         swap_not_refundable_yet: "まだスワップは返金できません",
         wasm_not_supported: "ブラウザでWebAssemblyを有効にしてください",
-        ios_image_download_do_not_share: "機密情報です。共有しないでください",
+        ios_image_download_do_not_share:
+            "レスキュー・キー - 機密情報です。共有しないでください",
         ios_image_download:
-            "長押しして「「写真に保存」を選択して返金ファイルをダウンロードしてください",
+            "長押しして「写真に保存」を選択し、ダウンロードする。",
         created: "作成済み",
         view: "表示",
         id: "ID",
@@ -1215,9 +1228,6 @@ const dict = {
         browsernotification_tooltip: "ブラウザ通知をオン、もしくはオフにする",
         browsernotification_error: "通知権限が拒否されました",
         invalid_pair: "無効なペア",
-        reckless_mode_setting: "レックレスモード",
-        reckless_mode_setting_tooltip:
-            " 返金ファイルと他の承認ステップをダウンロードするプロンプトを無効化する",
         error_starting_qr_scanner:
             "カメラにアクセスできませんでした。権限を確認してください！",
         insufficient_balance: "残高不足",
@@ -1246,6 +1256,24 @@ const dict = {
         broadcast_setting: "外部放送",
         broadcast_setting_tooltip:
             "ブロック・エクスプローラーを使ってトランザクションをブロードキャストする",
+        download_boltz_rescue_key: "ダウンロード Boltzレスキューキー",
+        download_boltz_rescue_key_subline:
+            "スワップごとの払い戻しファイルを、単一のレスキュー・キー🙌に置き換えた。",
+        download_boltz_rescue_key_subline_second:
+            "この新しいキーは、どのデバイスでも動作し、このキーで作成されたすべてのスワップに対応します。キーファイルは安全で永続的な場所に保管してください。",
+        download_boltz_rescue_key_subline_third:
+            "続行するには、新しいBoltzレスキューキーをダウンロードするか、既存のBoltzレスキューキーを確認するかを選択してください。",
+        download_new_key: "新しいキーをダウンロード",
+        verify_boltz_rescue_key: "Boltzレスキューキー検証",
+        verify_boltz_rescue_key_subline:
+            "以前にダウンロードしたBoltzレスキューキーを選択して、その正しさを確認してください。",
+        verify_key: "既存のキーを検証する",
+        verify_key_failed:
+            "Boltzレスキューキーの検証に失敗しました。続行するには、新しいBoltzレスキューキーをダウンロードすることをお勧めします。",
+        rescue_key: "レスキューキー",
+        no_swaps_found: "スワップが見つからない",
+        rif_extra_fee:
+            "ウォレットに十分なRBTCがないため、RIFリレー手数料を含めて手数料を調整！",
     },
     ru: {
         language: "Русский",
@@ -1330,7 +1358,6 @@ const dict = {
         invoice_payment_failure: "Не удалось оплатить Ваш lightning инвойс",
         onchain_address: "Введите адрес {{ asset }}",
         onchain_address_no_asset: "Введите адрес",
-        download_refund_file: "Скачать файл возврата",
         invalid_refund_file: "Недействительный файл возврата",
         invalid_backup_file: "Недействительный файл резервного копирования",
         invalid_invoice:
@@ -1341,16 +1368,7 @@ const dict = {
         copy_amount: "сумма",
         copy_bip21: "BIP21",
         copied: "Скопировано!",
-        backup_skip: "Пропустить загрузку",
-        backup_refund: "Скачать файл возврата",
-        backup_refund_subline:
-            "Если этот своп не удастся, Вы сможете вернуть ваши биткоины с использованием ключа возврата. Этот ключ по умолчанию хранится в памяти вашего браузера, но может быть утерян, если вы",
-        backup_refund_list_incognito: "используете режим инкогнито",
-        backup_refund_list_tor: "используете браузер Tor",
-        backup_refund_list_clear_history: "очистите историю браузера",
-        backup_refund_skip:
-            "Если что-то из вышеперечисленного применимо к Вам, мы настоятельно рекомендуем скачать этот файл возврата!",
-        refund_swap: "Возврат свопа {{ id }}",
+        refund_swap: "Возврат свопа",
         refund_a_swap_subline:
             "Загрузите файл возврата и верните свои заблокированные средства",
         refund_past_swaps: "Прошлые свопы",
@@ -1471,11 +1489,8 @@ const dict = {
             "Включить или отключить уведомления браузера",
         browsernotification_error: "Доступ к уведомлениям отклонен",
         invalid_pair: "Недопустимая пара",
-        reckless_mode_setting: "Режим беспечности",
-        reckless_mode_setting_tooltip:
-            "Отключает запросы на скачивание файла возврата и другие шаги подтверждения",
         error_starting_qr_scanner:
-            "Не удалось получить доступ к камере, проверьте разрешения!",
+            "Не удалось получить доступ к камере, проверьте права доступа!",
         insufficient_balance: "Недостаточный баланс",
         insufficient_balance_line:
             "На вашем кошельке недостаточно средств для этого свопа.",
@@ -1502,6 +1517,24 @@ const dict = {
         broadcast_setting: "Внешняя трансляция",
         broadcast_setting_tooltip:
             "Также использовать обозреватель блоков для трансляции транзакций.",
+        download_boltz_rescue_key: "Скачать ключ спасения Boltz",
+        download_boltz_rescue_key_subline:
+            "Мы заменили файлы возврата для каждого свопа одним ключом спасения 🙌",
+        download_boltz_rescue_key_subline_second:
+            "Этот новый ключ работает на любом устройстве и подходит для всех свопов, созданных с его помощью. Храните файл ключа в безопасном и постоянном месте.",
+        download_boltz_rescue_key_subline_third:
+            "Чтобы продолжить, выберите, хотите ли вы скачать новый ключ спасения Boltz или проверить существующий.",
+        download_new_key: "Скачать новый ключ",
+        verify_boltz_rescue_key: "Проверить ключ спасения Boltz",
+        verify_boltz_rescue_key_subline:
+            "Выберите ранее скачанный ключ спасения Boltz для проверки его корректности.",
+        verify_key: "Проверить существующий ключ",
+        verify_key_failed:
+            "Проверка ключа спасения Boltz не удалась. Рекомендуем скачать новый ключ спасения Boltz для продолжения.",
+        rescue_key: "Ключ спасения",
+        no_swaps_found: "Свопы не найдены",
+        rif_extra_fee:
+            "В кошельке недостаточно RBTC, комиссия скорректирована с учетом комиссии за RIF Relay!",
     },
 };
 

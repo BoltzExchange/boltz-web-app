@@ -6,6 +6,7 @@ import {
     generateLiquidBlock,
     getBitcoinAddress,
     getLiquidAddress,
+    verifyRescueFile,
 } from "../utils";
 
 test.describe("ChainSwap overpayment", () => {
@@ -30,7 +31,7 @@ test.describe("ChainSwap overpayment", () => {
 
         await page.getByTestId("receiveAmount").fill("100 000");
         await page.getByTestId("create-swap-button").click();
-        await page.getByRole("button", { name: "Skip download" }).click();
+        await verifyRescueFile(page);
         await page
             .getByTestId("pay-onchain-buttons")
             .getByText("address")
@@ -64,7 +65,7 @@ test.describe("ChainSwap overpayment", () => {
 
         await page.getByTestId("receiveAmount").fill("100 000");
         await page.getByTestId("create-swap-button").click();
-        await page.getByRole("button", { name: "Skip download" }).click();
+        await verifyRescueFile(page);
         await page
             .getByTestId("pay-onchain-buttons")
             .getByText("address")

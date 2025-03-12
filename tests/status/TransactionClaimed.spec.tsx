@@ -6,15 +6,15 @@ import i18n from "../../src/i18n/i18n";
 import TransactionClaimed from "../../src/status/TransactionClaimed";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
-jest.mock("../../src/utils/boltzClient", () => ({
-    getReverseTransaction: jest.fn().mockResolvedValue({
+vi.mock("../../src/utils/boltzClient", () => ({
+    getReverseTransaction: vi.fn().mockResolvedValue({
         hex: "txHex",
     }),
 }));
 
 describe("TransactionClaimed", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     test.each`

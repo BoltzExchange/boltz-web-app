@@ -46,4 +46,8 @@ export default defineConfig({
         __APP_VERSION__: `"${packageJson.version}"`,
         __GIT_COMMIT__: `"${commitHash}"`,
     },
+    test: {
+        globals: true,
+        setupFiles: "./tests/setup.ts",
+    },
 });

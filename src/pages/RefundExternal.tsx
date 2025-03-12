@@ -2,57 +2,147 @@ import { useNavigate, useParams } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
 import {
+    Accessor,
     For,
     Match,
     Show,
     Switch,
     createEffect,
+    createResource,
     createSignal,
     onCleanup,
 } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
+import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
+import SwapList from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { swapStatusFailed } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
+import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
+import { getRescuableSwaps } from "../utils/boltzClient";
 import {
     LogRefundData,
     scanLogsForPossibleRefunds,
 } from "../utils/contractLogs";
+import { rescueFileTypes } from "../utils/download";
+import { formatError } from "../utils/errors";
 import { validateRefundFile } from "../utils/refundFile";
+import { RescueFile, getXpub, validateRescueFile } from "../utils/rescueFile";
+import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 enum RefundError {
     InvalidData,
 }
 
-export const RefundBtcLike = () => {
+enum RefundType {
+    Rescue,
+    Legacy,
+}
+
+const BtcLikeLegacy = (props: {
+    refundJson: Accessor<SubmarineSwap | ChainSwap>;
+    refundInvalid: Accessor<RefundError | undefined>;
+}) => {
     const { t } = useGlobalContext();
+
+    const [refundTxId, setRefundTxId] = createSignal<string>("");
+
+    return (
+        <>
+            <Show when={refundTxId() === ""}>
+                <hr />
+                <RefundButton
+                    swap={props.refundJson}
+                    setRefundTxId={setRefundTxId}
+                    buttonOverride={
+                        props.refundInvalid() == RefundError.InvalidData
+                            ? t("invalid_refund_file")
+                            : undefined
+                    }
+                />
+            </Show>
+            <Show when={refundTxId() !== ""}>
+                <hr />
+                <p>{t("refunded")}</p>
+                <hr />
+                <BlockExplorer
+                    typeLabel={"refund_tx"}
+                    asset={
+                        (props.refundJson() as never as Record<string, string>)
+                            .asset || props.refundJson().assetSend
+                    }
+                    txId={refundTxId()}
+                />
+            </Show>
+            <SettingsMenu />
+        </>
+    );
+};
+
+export const RefundBtcLike = () => {
+    const navigate = useNavigate();
+    const { backend, t } = useGlobalContext();
+    const rescueContext = useRescueContext();
 
     const [refundInvalid, setRefundInvalid] = createSignal<
         RefundError | undefined
     >(undefined);
     const [refundJson, setRefundJson] = createSignal(null);
-    const [refundTxId, setRefundTxId] = createSignal<string>("");
+    const [refundType, setRefundType] = createSignal<RefundType>();
+
+    const failedStatuses = Object.values(swapStatusFailed);
+
+    const [rescuableSwaps] = createResource(
+        () => ({ refundJson: refundJson(), type: refundType() }),
+        async (source) => {
+            if (
+                source.type !== RefundType.Rescue ||
+                source.refundJson === null
+            ) {
+                return undefined;
+            }
+
+            const res = await getRescuableSwaps(
+                backend(),
+                getXpub(source.refundJson),
+            );
+            rescueContext.setRescuableSwaps(res);
+            return res;
+        },
+    );
 
     const checkRefundJsonKeys = (
-        input: HTMLInputElement,
         json: Record<string, string | object | number>,
     ) => {
-        log.debug("checking refund json", json);
+        log.debug("checking refund json");
 
         try {
-            const data = validateRefundFile(json);
+            if ("mnemonic" in json) {
+                log.info("Found rescue file");
+                setRefundType(RefundType.Rescue);
+                setRefundJson(validateRescueFile(json));
+                rescueContext.setRescueFile(json as RescueFile);
+                setRefundInvalid(undefined);
+            } else {
+                log.info("Found legacy refund file");
 
-            setRefundJson(data);
-            setRefundInvalid(undefined);
+                const data = validateRefundFile(json);
+
+                setRefundType(RefundType.Legacy);
+                setRefundJson(data);
+                setRefundInvalid(undefined);
+            }
         } catch (e) {
-            log.warn("Refund json validation failed", e);
+            log.warn("Refund json validation failed:", e);
+            setRefundType(undefined);
             setRefundInvalid(RefundError.InvalidData);
         }
     };
@@ -68,17 +158,19 @@ export const RefundBtcLike = () => {
                 const res = await QrScanner.scanImage(inputFile, {
                     returnDetailedScanResult: true,
                 });
-                checkRefundJsonKeys(input, JSON.parse(res.data));
+                checkRefundJsonKeys(JSON.parse(res.data));
             } catch (e) {
                 log.error("invalid QR code upload", e);
+                setRefundType(undefined);
                 setRefundInvalid(RefundError.InvalidData);
             }
         } else {
             try {
                 const data = await inputFile.text();
-                checkRefundJsonKeys(input, JSON.parse(data));
+                checkRefundJsonKeys(JSON.parse(data));
             } catch (e) {
                 log.error("invalid file upload", e);
+                setRefundType(undefined);
                 setRefundInvalid(RefundError.InvalidData);
             }
         }
@@ -92,32 +184,61 @@ export const RefundBtcLike = () => {
                 type="file"
                 id="refundUpload"
                 data-testid="refundUpload"
-                accept="application/json,image/png,imagine/jpg,image/jpeg"
+                accept={rescueFileTypes}
                 onChange={(e) => uploadChange(e)}
             />
-            <Show when={refundTxId() === ""}>
-                <hr />
-                <RefundButton
-                    swap={refundJson}
-                    setRefundTxId={setRefundTxId}
-                    buttonOverride={
-                        refundInvalid() == RefundError.InvalidData
-                            ? t("invalid_refund_file")
-                            : undefined
-                    }
+            <Show when={refundType() === RefundType.Rescue}>
+                <Switch>
+                    <Match when={rescuableSwaps.state === "ready"}>
+                        <div style={{ "margin-top": "2%" }}>
+                            <Show
+                                when={
+                                    rescuableSwaps() !== undefined &&
+                                    rescuableSwaps().length > 0
+                                }
+                                fallback={<h4>{t("no_swaps_found")}</h4>}>
+                                <SwapList
+                                    swapsSignal={() =>
+                                        rescuableSwaps().map((swap) => ({
+                                            ...swap,
+                                            disabled:
+                                                swap.transaction ===
+                                                    undefined ||
+                                                !failedStatuses.includes(
+                                                    swap.status,
+                                                ),
+                                        }))
+                                    }
+                                    action={t("refund")}
+                                    surroundingSeparators={false}
+                                    onClick={(swap) => {
+                                        navigate(`/refund/rescue/${swap.id}`);
+                                    }}
+                                />
+                            </Show>
+                        </div>
+                    </Match>
+                    <Match when={rescuableSwaps.state === "refreshing"}>
+                        <LoadingSpinner />
+                    </Match>
+                    <Match when={rescuableSwaps.state === "errored"}>
+                        <h3 style={{ margin: "2%" }}>
+                            Error: {formatError(rescuableSwaps.error)}
+                        </h3>
+                    </Match>
+                </Switch>
+            </Show>
+            <Show when={refundType() === RefundType.Legacy}>
+                <BtcLikeLegacy
+                    refundJson={refundJson}
+                    refundInvalid={refundInvalid}
                 />
             </Show>
-            <Show when={refundTxId() !== ""}>
-                <hr />
-                <p>{t("refunded")}</p>
-                <hr />
-                <BlockExplorer
-                    typeLabel={"refund_tx"}
-                    asset={refundJson().asset || refundJson().assetSend}
-                    txId={refundTxId()}
-                />
+            <Show when={refundInvalid() !== undefined}>
+                <h3 style={{ margin: "3%", "margin-top": "4%" }}>
+                    {t("invalid_refund_file")}
+                </h3>
             </Show>
-            <SettingsMenu />
         </>
     );
 };

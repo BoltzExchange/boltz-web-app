@@ -63,6 +63,9 @@ type Backend = {
 };
 
 export type Config = {
+    // The wsFallback is used on regtest when the backend is being run without
+    // nginx and the WebSocket is on a different port than the rest of the API
+    apiUrl?: Url;
     network?: "mainnet" | "testnet" | "regtest";
     backends?: Backend[];
     isBoltzClient?: boolean;

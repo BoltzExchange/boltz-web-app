@@ -1,10 +1,17 @@
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createSignal } from "solid-js";
+import {
+    Show,
+    createEffect,
+    createMemo,
+    createResource,
+    createSignal,
+} from "solid-js";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import {
     ChainPairTypeTaproot,
     ReversePairTypeTaproot,
@@ -17,6 +24,8 @@ import {
 import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
+import { weiToSatoshi } from "../utils/rootstock";
+import { getClaimAddress } from "./CreateButton";
 import Denomination from "./settings/Denomination";
 
 const ppmFactor = 10_000;
@@ -24,6 +33,8 @@ const ppmFactor = 10_000;
 // When sending to an unconfidential address, we need to add an extra
 // confidential OP_RETURN output with 1 sat inside
 const unconfidentialExtra = 5;
+
+const rifExtraGasCost = 157_000n;
 
 const Fees = () => {
     const {
@@ -35,6 +46,7 @@ const Fees = () => {
         fetchPairs,
         online,
         setOnline,
+        notify,
     } = useGlobalContext();
     const {
         assetSend,
@@ -50,6 +62,7 @@ const Fees = () => {
         onchainAddress,
         addressValid,
     } = useCreateContext();
+    const { signer } = useWeb3Signer();
 
     const isToUnconfidentialLiquid = () =>
         assetReceive() === LBTC &&
@@ -60,10 +73,44 @@ const Fees = () => {
         undefined,
     );
 
+    const rifFetchTrigger = createMemo(() => {
+        return {
+            signer: signer(),
+            assetReceive: assetReceive(),
+        };
+    });
+    const [rifExtraCost] = createResource(
+        rifFetchTrigger,
+        async ({ signer, assetReceive }) => {
+            if (signer === undefined) {
+                return 0;
+            }
+
+            const { useRif, gasPrice } = await getClaimAddress(
+                () => assetReceive,
+                () => signer,
+                onchainAddress,
+            );
+            if (!useRif) {
+                return 0;
+            }
+
+            notify("success", t("rif_extra_fee"));
+            return Number(weiToSatoshi(gasPrice * rifExtraGasCost));
+        },
+        { initialValue: 0 },
+    );
+
     createEffect(() => {
         // Reset routing fee when changing the pair
         // (which might not be submarine and not set the signal)
         setRoutingFee(undefined);
+
+        // Updating the miner fee with "setMinerFee(minerFee() + rifExtraCost())"
+        // causes an endless loop of triggering the effect again
+        const updateMinerFee = (fee: number) => {
+            setMinerFee(fee + rifExtraCost());
+        };
 
         const currentBackend = backend(); // Store the current backend
         const currentPairs = allPairs()[currentBackend]; // Access pairs for the current backend
@@ -101,7 +148,7 @@ const Fees = () => {
                             (cfg as SubmarinePairTypeTaproot).fees
                                 .maximalRoutingFee,
                         );
-                        setMinerFee(
+                        updateMinerFee(
                             (cfg as SubmarinePairTypeTaproot).fees.minerFees,
                         );
                         break;
@@ -115,7 +162,7 @@ const Fees = () => {
                             fee += unconfidentialExtra;
                         }
 
-                        setMinerFee(fee);
+                        updateMinerFee(fee);
                         break;
                     }
 
@@ -128,7 +175,7 @@ const Fees = () => {
                             fee += unconfidentialExtra;
                         }
 
-                        setMinerFee(fee);
+                        updateMinerFee(fee);
                         break;
                     }
                 }

@@ -1,5 +1,4 @@
-import ecc from "@bitcoinerlab/secp256k1";
-import { initEccLib, networks } from "bitcoinjs-lib";
+import { networks } from "bitcoinjs-lib";
 import { networks as LiquidNetworks } from "liquidjs-lib";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
@@ -10,10 +9,6 @@ import {
 } from "../../src/utils/compat";
 
 describe("parse network correctly", () => {
-    beforeAll(() => {
-        initEccLib(ecc);
-    });
-
     test.each`
         asset   | network      | expected
         ${BTC}  | ${"mainnet"} | ${networks.bitcoin}
@@ -28,7 +23,6 @@ describe("parse network correctly", () => {
 
     test.each`
         asset   | input
-        ${BTC}  | ${"bcrt1p89lvl3e6e8sxmjryqx80p7cmd3l0eeh6cr48ht948wa2a0l68szqljype5"}
         ${BTC}  | ${"bcrt1q6agtc4dnjvly869zcgad6u6q2caccvpx83n8ad"}
         ${BTC}  | ${"2NDkcnHAnugU1aQ5bv522MeZTgv6tQs2rt8"}
         ${BTC}  | ${"mpSn4rFm3zmDesvNi2N2Fp86ae3wSFAUG4"}

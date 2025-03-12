@@ -1,5 +1,15 @@
 import { Pairs } from "../../src/utils/boltzClient";
-import { getPair } from "../../src/utils/helper";
+import { ECPair } from "../../src/utils/ecpair";
+import { getPair, parsePrivateKey } from "../../src/utils/helper";
+
+vi.mock("../../src/utils/ecpair", () => {
+    return {
+        ECPair: {
+            fromWIF: vi.fn().mockReturnValue({ key: "data" }),
+            fromPrivateKey: vi.fn().mockReturnValue({ key: "data" }),
+        },
+    };
+});
 
 describe("helper", () => {
     test.each`
@@ -44,4 +54,32 @@ describe("helper", () => {
             );
         },
     );
+
+    describe("parsePrivateKey", () => {
+        test("should use derive function when keyIndex is provided", () => {
+            const keyIndex = 42;
+            const key = { key: "data" };
+            const mockDerive = vi.fn().mockReturnValue(key);
+
+            expect(parsePrivateKey(mockDerive, keyIndex)).toBe(key);
+            expect(mockDerive).toHaveBeenCalledTimes(1);
+            expect(mockDerive).toHaveBeenCalledWith(keyIndex);
+        });
+
+        test("should parse hex private key", () => {
+            const originalKey = { key: "data" };
+            const privateKeyHex = originalKey.key;
+
+            const mockDerive = vi.fn();
+
+            expect(
+                parsePrivateKey(mockDerive, undefined, privateKeyHex),
+            ).toEqual(originalKey);
+
+            // Verify derive function wasn't called
+            expect(mockDerive).not.toHaveBeenCalled();
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            expect(ECPair.fromPrivateKey).toHaveBeenCalledTimes(1);
+        });
+    });
 });
