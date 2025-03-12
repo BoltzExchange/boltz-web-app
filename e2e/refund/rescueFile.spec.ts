@@ -102,6 +102,48 @@ test.describe("Rescue file", () => {
         );
     });
 
+    test("should create swaps with sequential key indicies after importing existing rescue file", async ({
+        page,
+    }) => {
+        // Create a couple swaps
+        for (let i = 0; i < 5; i++) {
+            await page.goto("/");
+            await setupSwapAssets(page);
+            await fillSwapDetails(page);
+
+            if (i === 0) {
+                await page
+                    .getByRole("button", { name: dict.en.verify_key })
+                    .click();
+                await page
+                    .getByTestId("rescueFileUpload")
+                    .setInputFiles(existingFilePath);
+            }
+
+            await page.getByText("address").click();
+        }
+
+        // Clear localStorage to force verification and rescan
+        await page.evaluate(() => window.localStorage.clear());
+        await page.reload();
+
+        await page.goto("/");
+        await setupSwapAssets(page);
+        await fillSwapDetails(page);
+
+        await page.getByRole("button", { name: dict.en.verify_key }).click();
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(existingFilePath);
+        await page.getByText("address").click();
+
+        const swaps = await getRescuableSwaps(existingFilePath);
+        const keyIndices = swaps.map((swap) => swap.keyIndex);
+        for (let i = 0; i < keyIndices.length - 1; i++) {
+            expect(keyIndices[i + 1]).toEqual(keyIndices[i] + 1);
+        }
+    });
+
     test("should show entries for swaps with no lockup transaction as disabled", async ({
         page,
     }) => {

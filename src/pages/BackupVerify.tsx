@@ -7,8 +7,9 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import { getRescuableSwaps } from "../utils/boltzClient";
 import { rescueFileTypes } from "../utils/download";
-import { validateRescueFile } from "../utils/rescueFile";
+import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
 import { backupDone } from "./Backup";
 
@@ -32,6 +33,7 @@ const BackupVerify = () => {
         setRescueFileBackupDone,
         clearSwaps,
         setRescueFile,
+        setLastUsedKey,
     } = useGlobalContext();
     const {
         swapType,
@@ -84,6 +86,14 @@ const BackupVerify = () => {
             validateRescueFile(data);
 
             if (params.type === existingBackupFileType) {
+                const existingSwaps = await getRescuableSwaps(getXpub(data));
+                const highestIndex = existingSwaps.reduce(
+                    (max, swap) => Math.max(max, swap.keyIndex),
+                    -1,
+                );
+                log.debug(`Found highest index: ${highestIndex}`);
+                setLastUsedKey(highestIndex + 1);
+
                 setRescueFileBackupDone(true);
                 await clearSwaps();
                 setRescueFile(data);
