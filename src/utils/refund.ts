@@ -194,7 +194,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     deriveKey: deriveKeyFn,
     swap: T,
     refundAddress: string,
-    transactionToRefund: { hex: string; timeoutBlockHeight: number },
+    transactionToRefund: { hex: string; timeoutBlockHeight?: number },
     cooperative: boolean,
     externalBroadcast: boolean,
 ): Promise<T> => {

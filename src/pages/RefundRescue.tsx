@@ -1,18 +1,27 @@
 import { useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
-import { Show, createSignal } from "solid-js";
+import log from "loglevel";
+import {
+    Accessor,
+    Show,
+    createResource,
+    createSignal,
+    onCleanup,
+} from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
-import { RescuableSwap } from "../utils/boltzClient";
+import { RescuableSwap, getSwapStatus } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
+import { getRefundableUTXOs } from "../utils/refund";
 import { deriveKey } from "../utils/rescueFile";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
-const mapSwap = (
+export const mapSwap = (
     swap?: RescuableSwap,
 ): SubmarineSwap | ChainSwap | undefined => {
     if (swap === undefined) {
@@ -49,25 +58,53 @@ const mapSwap = (
 
 const RefundRescue = () => {
     const params = useParams<{ id: string }>();
+
     const { t } = useGlobalContext();
+    const {
+        swap,
+        setSwap,
+        setSwapStatus,
+        setSwapStatusTransaction,
+        setFailureReason,
+        setRefundableUTXOs,
+    } = usePayContext();
     const { rescuableSwaps, rescueFile } = useRescueContext();
 
-    const swap = () =>
+    const rescuableSwap = () =>
         mapSwap(rescuableSwaps().find((swap) => swap.id === params.id));
 
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
+    createResource(async () => {
+        if (rescuableSwap()) {
+            const res = await getSwapStatus(rescuableSwap().id);
+            log.debug("selecting swap", rescuableSwap());
+            setSwap(rescuableSwap());
+            setSwapStatus(res.status);
+            setSwapStatusTransaction(res.transaction);
+            setFailureReason(res.failureReason);
+
+            const utxos = await getRefundableUTXOs(rescuableSwap());
+            setRefundableUTXOs(utxos);
+        }
+    });
+
+    onCleanup(() => {
+        log.debug("cleanup RefundRescue");
+        setRefundableUTXOs([]);
+    });
+
     return (
         <div class="frame">
             <Show
-                when={swap() !== undefined}
+                when={rescuableSwap() !== undefined}
                 fallback={<h2>{t("pay_swap_404")}</h2>}>
                 <h2>{t("refund_swap")}</h2>
 
                 <Show when={refundTxId() === ""}>
                     <hr />
                     <RefundButton
-                        swap={swap}
+                        swap={swap as Accessor<SubmarineSwap | ChainSwap>}
                         setRefundTxId={setRefundTxId}
                         deriveKeyFn={(index: number) =>
                             ECPair.fromPrivateKey(
@@ -84,7 +121,7 @@ const RefundRescue = () => {
                     <hr />
                     <BlockExplorer
                         typeLabel={"refund_tx"}
-                        asset={swap().assetSend}
+                        asset={rescuableSwap().assetSend}
                         txId={refundTxId()}
                     />
                 </Show>

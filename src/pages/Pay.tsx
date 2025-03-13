@@ -4,6 +4,7 @@ import {
     Match,
     Show,
     Switch,
+    createEffect,
     createMemo,
     createResource,
     createSignal,
@@ -34,12 +35,15 @@ import TransactionClaimed from "../status/TransactionClaimed";
 import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
-import { getSwapStatus } from "../utils/boltzClient";
+import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
+import { getRefundableUTXOs, isSwapRefundable } from "../utils/refund";
+import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
 
     const { getSwap, t } = useGlobalContext();
+
     const {
         swap,
         setSwap,
@@ -47,15 +51,20 @@ const Pay = () => {
         setSwapStatus,
         setSwapStatusTransaction,
         setFailureReason,
+        setRefundableUTXOs,
     } = usePayContext();
+
+    const prevSwapStatus = { value: "" };
+
+    createEffect(() => {
+        prevSwapStatus.value = swapStatus();
+    });
 
     createResource(async () => {
         const currentSwap = await getSwap(params.id);
 
         if (currentSwap) {
-            log.debug("selecting swap", currentSwap);
             setSwap(currentSwap);
-
             const res = await getSwapStatus(currentSwap.id);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
@@ -63,10 +72,49 @@ const Pay = () => {
         }
     });
 
+    createResource(swapStatus, async () => {
+        const isInitialSwapState =
+            (swapStatus() === swapStatusPending.SwapCreated &&
+                prevSwapStatus.value === "") ||
+            (swapStatus() === swapStatusPending.InvoiceSet &&
+                prevSwapStatus.value === "");
+
+        // No need to fetch UTXO data for a swap just created
+        if (isInitialSwapState) {
+            return;
+        }
+
+        // We don't check the block explorer during the initial phase
+        // of a swap because, more often than not, it doesn't have
+        // information about the lockup transaction yet.
+        const shouldCheckBlockExplorer =
+            swapStatus() !== swapStatusPending.InvoiceSet &&
+            prevSwapStatus.value !== swapStatusPending.InvoiceSet &&
+            swapStatus() !== swapStatusPending.SwapCreated &&
+            prevSwapStatus.value !== swapStatusPending.SwapCreated &&
+            isSwapRefundable(swap());
+
+        try {
+            const utxos = shouldCheckBlockExplorer
+                ? await getRefundableUTXOs(swap() as ChainSwap | SubmarineSwap)
+                : [await getLockupTransaction(swap().id, swap().type)];
+
+            setRefundableUTXOs(utxos);
+
+            if (utxos.length > 0) {
+                // if there are remaining UTXOs, we consider we don't have a refundTx yet
+                setSwap({ ...swap(), refundTx: "" });
+            }
+        } catch (e) {
+            log.debug("error fetching UTXOs: ", e.stack);
+        }
+    });
+
     onCleanup(() => {
         log.debug("cleanup Pay");
         setSwap(null);
         setSwapStatus(null);
+        setRefundableUTXOs([]);
     });
 
     const [statusOverride, setStatusOverride] = createSignal<

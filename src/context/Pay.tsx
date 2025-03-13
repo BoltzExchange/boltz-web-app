@@ -7,6 +7,7 @@ import {
 } from "solid-js";
 import type { JSX } from "solid-js";
 
+import { LockupTransaction } from "../utils/boltzClient";
 import { SomeSwap } from "../utils/swapCreator";
 
 export type PayContextType = {
@@ -18,6 +19,12 @@ export type PayContextType = {
     setSwapStatus: Setter<string>;
     swapStatusTransaction: Accessor<SwapStatusTransaction>;
     setSwapStatusTransaction: Setter<SwapStatusTransaction>;
+    refundableUTXOs: Accessor<
+        (Partial<LockupTransaction> & Pick<LockupTransaction, "hex">)[]
+    >;
+    setRefundableUTXOs: Setter<
+        (Partial<LockupTransaction> & Pick<LockupTransaction, "hex">)[]
+    >;
 };
 
 const PayContext = createContext<PayContextType>();
@@ -36,6 +43,9 @@ const PayProvider = (props: { children: JSX.Element }) => {
     const [swapStatus, setSwapStatus] = createSignal<string>("");
     const [swapStatusTransaction, setSwapStatusTransaction] =
         createSignal<SwapStatusTransaction>({});
+    const [refundableUTXOs, setRefundableUTXOs] = createSignal<
+        (Partial<LockupTransaction> & Pick<LockupTransaction, "hex">)[]
+    >([]);
 
     return (
         <PayContext.Provider
@@ -48,6 +58,8 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 setSwapStatus,
                 swapStatusTransaction,
                 setSwapStatusTransaction,
+                refundableUTXOs,
+                setRefundableUTXOs,
             }}>
             {props.children}
         </PayContext.Provider>
