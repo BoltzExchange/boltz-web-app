@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.0..v1.7.1) - 2025-03-13
+
+### Miscellaneous Chores
+
+- rescue key file renaming (#848) - ([74edbd7](https://github.com/BoltzExchange/boltz-web-app/commit/74edbd753d25b101ce8a3c2bf13c67e9cb2b5610))
+- remove unused refund file name - ([778fc98](https://github.com/BoltzExchange/boltz-web-app/commit/778fc98d3c118ef6ec6103c7ce56eebcaf502ff7))
+- bump version to v1.7.1 - ([ae3de15](https://github.com/BoltzExchange/boltz-web-app/commit/ae3de15e8c37d9ff7351d94e7c004e9b33e8fbb7))
+
+### Refactoring
+
+- get last used key index on rescue file import (#844) - ([2b890b1](https://github.com/BoltzExchange/boltz-web-app/commit/2b890b104c851a956384a463a5fc017cd1ca1992))
+- remove QR rescue file generation - ([0fa5081](https://github.com/BoltzExchange/boltz-web-app/commit/0fa5081bec1a7fef2e571f7c0106d777758d6ae9))
+- enable logs download on iOS - ([ad24b9f](https://github.com/BoltzExchange/boltz-web-app/commit/ad24b9f733dcf26c391ff6af6626c597a022d1d1))
+- remove QR rescue file generation (#847) - ([53ba7cb](https://github.com/BoltzExchange/boltz-web-app/commit/53ba7cb40b74936cf1e14d0ac7141d8bf07d553d))
+
+---
 ## [1.7.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.6.2..v1.7.0) - 2025-03-12
 
 ### Bug Fixes
@@ -28,6 +44,7 @@ All notable changes to this project will be documented in this file. See [conven
 - minor wording adjustments - ([ad8cab1](https://github.com/BoltzExchange/boltz-web-app/commit/ad8cab1fbdc9e2618a5b7f1bb59f412f26bc8061))
 - bump dependencies - ([20de41f](https://github.com/BoltzExchange/boltz-web-app/commit/20de41f0f2eaed4b2b5ec52bc83b7ae878303cfe))
 - bump dependencies - ([d13ea7d](https://github.com/BoltzExchange/boltz-web-app/commit/d13ea7dfe958e58f41aea575f9f3cfb002109b39))
+- bump version to v1.7.0 (#843) - ([1c7ca26](https://github.com/BoltzExchange/boltz-web-app/commit/1c7ca265a9e9bde465a4391d574fbea561442045))
 
 ### Refactoring
 
