@@ -6,13 +6,13 @@ import { downloadRescueFile } from "../../pages/Backup";
 const RescueFile = () => {
     const iconSize = 16;
 
-    const { t, rescueFile } = useGlobalContext();
+    const { rescueFile } = useGlobalContext();
 
     return (
         <div class="flex">
             <span
                 class="btn-small"
-                onClick={() => downloadRescueFile(t, rescueFile)}>
+                onClick={() => downloadRescueFile(rescueFile)}>
                 <BiRegularDownload size={iconSize} />
             </span>
         </div>
