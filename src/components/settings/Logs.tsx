@@ -3,11 +3,10 @@ import {
     BiRegularDownload,
     BiRegularTrash,
 } from "solid-icons/bi";
-import { Show } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
 import { downloadJson } from "../../utils/download";
-import { clipboard, isIos } from "../../utils/helper";
+import { clipboard } from "../../utils/helper";
 
 const Logs = () => {
     const iconSize = 16;
@@ -37,15 +36,13 @@ const Logs = () => {
                 <BiRegularCopy size={iconSize} />
             </span>
             &nbsp;
-            <Show when={!isIos()}>
-                <span
-                    onClick={download}
-                    class="btn-small"
-                    data-testid="logs-download">
-                    <BiRegularDownload size={iconSize} />
-                </span>
-                &nbsp;
-            </Show>
+            <span
+                onClick={download}
+                class="btn-small"
+                data-testid="logs-download">
+                <BiRegularDownload size={iconSize} />
+            </span>
+            &nbsp;
             <span onClick={clear} class="btn-small btn-danger">
                 <BiRegularTrash size={iconSize} />
             </span>
