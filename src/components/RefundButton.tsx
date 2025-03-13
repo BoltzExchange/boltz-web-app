@@ -11,7 +11,6 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
-import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
@@ -19,6 +18,10 @@ import { SwapType } from "../consts/Enums";
 import { deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
+import {
+    fetchRawTxWithFailover,
+    fetchUTXOsWithFailover,
+} from "../utils/blockchain";
 import {
     getEipRefundSignature,
     getLockupTransaction,
@@ -28,6 +31,7 @@ import { formatError } from "../utils/errors";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 
@@ -218,25 +222,49 @@ export const RefundBtc = (props: {
         setRefundRunning(false);
     };
 
-    // eslint-disable-next-line solid/reactivity
-    const [lockupTransaction] = createResource(props.swap, async (swap) => {
-        if (!swap) {
-            return undefined;
-        }
+    const [lockupTransaction] = createResource(
+        // eslint-disable-next-line solid/reactivity
+        props.swap,
+        async (swap: SubmarineSwap) => {
+            if (!swap) {
+                return undefined;
+            }
+            try {
+                const transactionToRefund = await getLockupTransaction(
+                    swap.id,
+                    swap.type,
+                );
 
-        const transactionToRefund = await getLockupTransaction(
-            swap.id,
-            swap.type,
-        );
+                // show refund ETA for legacy swaps
+                if (swap.version !== OutputType.Taproot) {
+                    setTimeoutEta(transactionToRefund.timeoutEta);
+                    setTimeoutBlockheight(
+                        transactionToRefund.timeoutBlockHeight,
+                    );
+                }
 
-        // show refund ETA for legacy swaps
-        if (swap.version !== OutputType.Taproot) {
-            setTimeoutEta(transactionToRefund.timeoutEta);
-            setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
-        }
+                return transactionToRefund;
+            } catch {
+                const utxos = await fetchUTXOsWithFailover(
+                    swap.assetSend,
+                    swap.address,
+                );
 
-        return transactionToRefund;
-    });
+                if (utxos.length > 0) {
+                    const rawTx = await fetchRawTxWithFailover(
+                        swap.assetSend,
+                        utxos[0].txid,
+                    );
+                    return {
+                        hex: rawTx.hex,
+                        timeoutBlockHeight: null,
+                        timeoutEta: null,
+                    };
+                }
+                throw new Error("No UTXOs found");
+            }
+        },
+    );
 
     const buttonMessage = () => {
         if (lockupTransaction.state == "errored") {

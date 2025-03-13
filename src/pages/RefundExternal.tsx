@@ -26,6 +26,7 @@ import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
+import { fetchUTXOsWithFailover } from "../utils/blockchain";
 import { getRescuableSwaps } from "../utils/boltzClient";
 import {
     LogRefundData,
@@ -111,8 +112,26 @@ export const RefundBtcLike = () => {
             }
 
             const res = await getRescuableSwaps(getXpub(source.refundJson));
-            rescueContext.setRescuableSwaps(res);
-            return res;
+            const swapsWithUTXO = await Promise.all(
+                res.map(async (swap) => {
+                    const utxos = await fetchUTXOsWithFailover(
+                        swap.symbol,
+                        swap.lockupAddress,
+                    );
+                    if (utxos.length > 0) {
+                        return {
+                            ...swap,
+                            transaction: {
+                                id: utxos[0].txid,
+                                vout: utxos[0].vout,
+                            },
+                        };
+                    }
+                    return swap;
+                }),
+            );
+            rescueContext.setRescuableSwaps(swapsWithUTXO);
+            return swapsWithUTXO;
         },
     );
 
@@ -206,7 +225,7 @@ export const RefundBtcLike = () => {
                                                 ),
                                         }))
                                     }
-                                    action={t("refund")}
+                                    action={() => t("refund")}
                                     surroundingSeparators={false}
                                     onClick={(swap) => {
                                         navigate(`/refund/rescue/${swap.id}`);

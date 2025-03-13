@@ -18,9 +18,23 @@ const getSwapDate = (swap: Swap) => {
     return swap.createdAt * 1_000;
 };
 
+export const sortSwaps = (swaps: Swap[]) => {
+    return swaps.sort((a: Swap, b: Swap) => {
+        const aDate = getSwapDate(a);
+        const bDate = getSwapDate(b);
+
+        if (a.disabled !== b.disabled) {
+            return a.disabled ? 1 : -1;
+        }
+
+        // Within each group (disabled/enabled), sort by date descending
+        return aDate > bDate ? -1 : aDate === bDate ? 0 : 1;
+    });
+};
+
 const SwapList = (props: {
     swapsSignal: Accessor<Swap[]>;
-    action: string;
+    action: (swap: Swap) => string;
     onDelete?: () => Promise<unknown>;
     onClick?: (swap: Swap) => void;
     surroundingSeparators?: boolean;
@@ -31,17 +45,7 @@ const SwapList = (props: {
     const [lastSwap, setLastSwap] = createSignal();
 
     createEffect(() => {
-        const sorted = props.swapsSignal().sort((a: Swap, b: Swap) => {
-            const aDate = getSwapDate(a);
-            const bDate = getSwapDate(b);
-
-            if (a.disabled !== b.disabled) {
-                return a.disabled ? 1 : -1;
-            }
-
-            // Within each group (disabled/enabled), sort by date descending
-            return aDate > bDate ? -1 : aDate === bDate ? 0 : 1;
-        });
+        const sorted = sortSwaps(props.swapsSignal());
         setSortedSwaps(sorted);
         setLastSwap(sorted[sorted.length - 1]);
     });
@@ -83,7 +87,7 @@ const SwapList = (props: {
                                 }
                             }}>
                             <a class="btn-small hidden-mobile" href="#">
-                                {props.action}
+                                {props.action(swap)}
                             </a>
                             <SwapIcons swap={swap} />
                             <span class="swaplist-asset-id">
