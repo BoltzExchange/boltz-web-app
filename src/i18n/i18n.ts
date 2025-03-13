@@ -140,9 +140,6 @@ const dict = {
         refund_explainer: "You will be able to refund after the timeout",
         swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",
-        ios_image_download_do_not_share: "Boltz Rescue Key - DO NOT SHARE!",
-        ios_image_download:
-            'Long press and select "Save to Photos" to download',
         created: "Created",
         view: "View",
         id: "ID",
@@ -394,10 +391,6 @@ const dict = {
         swap_not_refundable_yet:
             "Dein Swap kann noch nicht erstattet werden. Warte auf den Timeout, um eine Rückerstattung zu starten.",
         wasm_not_supported: "Bitte aktiviere WebAssembly in deinem Browser!",
-        ios_image_download_do_not_share:
-            "Rettungsschlüssel - VERTRAULICH! NICHT TEILEN!",
-        ios_image_download:
-            'Lange drücken und "In Fotos speichern" auswählen, um herunterzuladen',
         created: "Erstellt",
         view: "Anzeigen",
         id: "ID",
@@ -654,10 +647,6 @@ const dict = {
         swap_not_refundable_yet:
             "Tu intercambio aún no es reembolsable, por favor inténtelo de nuevo más tarde!",
         wasm_not_supported: "Por favor, activa WebAssembly en tu navegador!",
-        ios_image_download_do_not_share:
-            "Clave de rescate - ¡CONFIDENCIAL! ¡NO COMPARTIR!",
-        ios_image_download:
-            'Mantén presionado y selecciona "Guardar en Fotos" para descargar.',
         created: "Creado",
         view: "Ver",
         id: "ID",
@@ -897,8 +886,6 @@ const dict = {
         refund_explainer: "您将能够在超时后退款",
         swap_not_refundable_yet: "您的交换尚不可退还",
         wasm_not_supported: "请在您的浏览器中激活WebAssembly",
-        ios_image_download_do_not_share: "救援钥匙-机密！切勿共享！",
-        ios_image_download: "长按并选择“保存到照片”以下载。",
         created: "已创建",
         view: "查看",
         id: "ID",
@@ -1140,10 +1127,6 @@ const dict = {
         refund_explainer: "タイムアウト後に返金できます",
         swap_not_refundable_yet: "まだスワップは返金できません",
         wasm_not_supported: "ブラウザでWebAssemblyを有効にしてください",
-        ios_image_download_do_not_share:
-            "レスキュー・キー - 機密情報です。共有しないでください",
-        ios_image_download:
-            "長押しして「写真に保存」を選択し、ダウンロードする。",
         created: "作成済み",
         view: "表示",
         id: "ID",
