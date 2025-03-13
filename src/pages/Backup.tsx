@@ -26,7 +26,7 @@ import { RescueFile } from "../utils/rescueFile";
 import { SomeSwap } from "../utils/swapCreator";
 import { existingBackupFileType } from "./BackupVerify";
 
-const rescueFileName = "boltz-rescue-key-DO-NOT-SHARE";
+const rescueFileName = "boltz-rescue-key-DO-NOT-DELETE";
 
 export const downloadRescueFile = async (
     t: (key: DictKey, values?: Record<string, unknown>) => string,
