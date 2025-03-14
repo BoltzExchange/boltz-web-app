@@ -995,9 +995,9 @@ const dict = {
         no_swaps_found: "未找到交换",
         rif_extra_fee: "钱包中没有足够的 RBTC，费用已调整为包括 RIF 中继费！",
         no_refund_due: "暂无退款",
-        back: "返回",
+        back: "回一页",
         next: "下一页",
-        pagination_info: "第 {{ start }} 页，共 {{ end }} 页",
+        pagination_info: "{{ start }} 的 {{ end }} 页",
     },
     ja: {
         language: "日本語",
@@ -1252,7 +1252,7 @@ const dict = {
         no_refund_due: "返金予定なし",
         back: "戻る",
         next: "次へ",
-        pagination_info: "{{ start }} ページ目 / {{ end }} ページ",
+        pagination_info: "{{ end }} ページ中 {{ start }} ページ目",
     },
 };
 
