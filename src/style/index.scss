@@ -245,6 +245,7 @@ hr.spacer {
 .btn-danger:hover {
     background: vars.$error;
 }
+.center,
 .btns {
     display: flex;
     align-items: center;
@@ -499,6 +500,9 @@ textarea {
     border-left: 0;
     border-right: 0;
     background: #0003;
+}
+.frame.refund {
+    min-width: fit-content;
 }
 
 @media (min-width: 488px) {

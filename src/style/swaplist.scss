@@ -16,9 +16,21 @@
         background-color: rgba(0, 0, 0, 0.3);
     }
 
+    .swap-status {
+        white-space: nowrap;
+    }
+
     &.disabled {
         opacity: 0.5;
         cursor: not-allowed;
+
+        .btn-small {
+            background-color: #fff;
+
+            &:hover {
+                cursor: not-allowed;
+            }
+        }
     }
 }
 
@@ -26,9 +38,11 @@
     flex-grow: 1;
 }
 
-.swaplist-asset-date,
-.swaplist-asset-id {
+.swaplist-asset-date {
     padding: 0 9px 0 0;
+}
+.swaplist-asset-id {
+    padding: 0 2.5rem 0 0;
 }
 .swaplist-asset {
     display: inline-flex;
