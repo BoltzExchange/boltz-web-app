@@ -1,8 +1,9 @@
-import { Page, expect, test } from "@playwright/test";
+import { Page, expect, request, test } from "@playwright/test";
 import fs from "fs";
 import path from "path";
 
 import dict from "../../src/i18n/i18n";
+import { UTXO } from "../../src/utils/blockchain";
 import { getRescuableSwaps } from "../boltzClient";
 import {
     elementsSendToAddress,
@@ -156,7 +157,21 @@ test.describe("Rescue file", () => {
         await expect(entry).toHaveClass("swaplist-item disabled");
     });
 
-    test(`should refund with rescue file`, async ({ page }) => {
+    test(`should refund with rescue file`, async ({ browser }) => {
+        const context = await browser.newContext();
+
+        // Disabling cache so we always have the real UTXO set
+        await context.route("**/*", async (route, request) => {
+            await route.continue({
+                headers: {
+                    ...request.headers(),
+                    "Cache-Control": "no-cache", // Force no-cache for every request
+                },
+            });
+        });
+        const page = await context.newPage();
+
+        const requestContext = request.newContext();
         await createAndVerifySwap(page, rescueFileJson);
 
         const address = await page.evaluate(() => {
@@ -167,6 +182,21 @@ test.describe("Rescue file", () => {
 
         // To make sure the backend has seen and rejected our tx
         await page.getByRole("heading", { name: "Lockup Failed!" }).click();
+
+        // Wait for the UTXO to appear in the mempool
+        await expect
+            .poll(
+                async () => {
+                    const res = await (
+                        await requestContext
+                    ).get(`http://localhost:4003/api/address/${address}/utxo`);
+
+                    const utxos = (await res.json()) as UTXO[];
+                    return utxos.length > 0;
+                },
+                { timeout: 10_000 },
+            )
+            .toBe(true);
 
         await page.getByRole("link", { name: "Refund" }).click();
         await page
