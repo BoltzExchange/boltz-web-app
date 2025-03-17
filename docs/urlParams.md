@@ -41,3 +41,4 @@ Available values are:
 - German: `de`
 - Spanish: `es`
 - Chinese: `zh`
+- Japanese: `ja`
