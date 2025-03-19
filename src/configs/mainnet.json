@@ -17,6 +17,14 @@
                 "tor": "http://middlew7gmdp53psshnb3cn74zhhulor56lsk3alr2nsrgj7ukmz47id.onion"
             },
             "contact": "https://t.me/MiddleWayNode"
+        },
+        {
+            "alias": "Eldamar",
+            "apiUrl": {
+                "normal": "https://boltz-api.eldamar.icu",
+                "tor": "http://mnyazp2duhs3jewqzw7g6vv44g73ijiujdmk5z6js72fn3epybup2yqd.onion"
+            },
+            "contact": "https://t.me/SynthLock"
         }
     ],
     "assets": {
