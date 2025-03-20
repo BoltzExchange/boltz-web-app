@@ -87,7 +87,8 @@ const Footer = () => {
                 |{" "}
                 <a target="_blank" href={config.testnetUrl}>
                     {t("testnet")}
-                </a>
+                </a>{" "}
+                | <a href="/terms">{t("terms")}</a>
             </p>
             <p>{t("footer")}</p>
             <p class="version">
