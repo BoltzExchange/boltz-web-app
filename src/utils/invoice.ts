@@ -178,9 +178,14 @@ const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
     return data;
 };
 
-const fetchLnurlInvoice = async (amount: number, data: LnurlResponse) => {
-    log.debug("fetching invoice", `${data.callback}?amount=${amount}`);
-    const res = await fetch(`${data.callback}?amount=${amount}`).then(
+export const fetchLnurlInvoice = async (
+    amount: number,
+    data: LnurlResponse,
+) => {
+    const url = new URL(data.callback);
+    url.searchParams.set("amount", amount.toString());
+    log.debug("fetching invoice", url.toString());
+    const res = await fetch(url.toString()).then(
         checkResponse<LnurlCallbackResponse>,
     );
     log.debug("fetched invoice", res);
