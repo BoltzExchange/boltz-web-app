@@ -7,7 +7,6 @@ import {
     createSignal,
 } from "solid-js";
 
-import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     ChainSwap,
@@ -15,6 +14,7 @@ import {
     SomeSwap,
     SubmarineSwap,
     getRelevantAssetForSwap,
+    isRsk,
 } from "../utils/swapCreator";
 import BlockExplorer from "./BlockExplorer";
 
@@ -50,8 +50,6 @@ const BlockExplorerLink = (props: {
     swap: Accessor<SomeSwap>;
     swapStatus: Accessor<string>;
 }) => {
-    const isRsk = () => getRelevantAssetForSwap(props.swap()) === RBTC;
-
     return (
         <Show
             when={props.swap().type !== SwapType.Chain}
@@ -62,7 +60,7 @@ const BlockExplorerLink = (props: {
                 />
             }>
             <Switch>
-                <Match when={!isRsk()}>
+                <Match when={!isRsk(props.swap())}>
                     {/* Refund transactions are handled in SwapRefunded */}
                     <Show
                         when={
@@ -85,7 +83,7 @@ const BlockExplorerLink = (props: {
                 </Match>
 
                 {/* Showing addresses makes no sense for EVM based chains */}
-                <Match when={isRsk()}>
+                <Match when={isRsk(props.swap())}>
                     <Show
                         when={props.swap().claimTx !== undefined}
                         fallback={

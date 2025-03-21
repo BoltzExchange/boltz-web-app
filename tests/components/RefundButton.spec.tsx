@@ -6,15 +6,7 @@ import RefundButton from "../../src/components/RefundButton";
 import { BTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import { ChainSwap, SubmarineSwap } from "../../src/utils/swapCreator";
-import { contextWrapper } from "../helper";
-
-vi.mock("../../src/utils/boltzClient", () => {
-    return {
-        getLockupTransaction: vi.fn(() => {
-            return { timeoutBlockHeight: 10, timeoutEta: 10 };
-        }),
-    };
-});
+import { TestComponent, contextWrapper, payContext } from "../helper";
 
 describe("RefundButton", () => {
     test("should render RefundButton", () => {
@@ -32,9 +24,18 @@ describe("RefundButton", () => {
             assetReceive: LN,
             type: SwapType.Submarine,
         } as SubmarineSwap);
-        render(() => <RefundButton swap={swap} />, {
-            wrapper: contextWrapper,
-        });
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RefundButton swap={swap} />,
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        payContext.setRefundableUTXOs([{ hex: "0x0" }]);
         const input = (await screen.findByTestId(
             "refundAddress",
         )) as HTMLInputElement;
@@ -67,9 +68,18 @@ describe("RefundButton", () => {
             bip21: `bitcoin:${lockupAddress}?amount=0.0001`,
             swapTree: {},
         } as SubmarineSwap);
-        render(() => <RefundButton swap={swap} />, {
-            wrapper: contextWrapper,
-        });
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RefundButton swap={swap} />,
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        payContext.setRefundableUTXOs([{ hex: "0x0" }]);
         const input = (await screen.findByTestId(
             "refundAddress",
         )) as HTMLInputElement;
@@ -95,9 +105,18 @@ describe("RefundButton", () => {
             assetReceive: LN,
             type: SwapType.Submarine,
         } as SubmarineSwap);
-        render(() => <RefundButton swap={swap} />, {
-            wrapper: contextWrapper,
-        });
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RefundButton swap={swap} />,
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        payContext.setRefundableUTXOs([{ hex: "0x0" }]);
         const input = (await screen.findByTestId(
             "refundAddress",
         )) as HTMLInputElement;

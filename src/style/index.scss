@@ -245,6 +245,7 @@ hr.spacer {
 .btn-danger:hover {
     background: vars.$error;
 }
+.center,
 .btns {
     display: flex;
     align-items: center;
@@ -499,6 +500,20 @@ textarea {
     border-left: 0;
     border-right: 0;
     background: #0003;
+}
+.refund {
+    max-width: fit-content;
+
+    p {
+        max-width: 480px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 488px) {
+    .frame {
+        max-width: 480px;
+    }
 }
 
 @media (min-width: 488px) {

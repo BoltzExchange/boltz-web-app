@@ -180,6 +180,13 @@ export type RescuableSwap = {
     createdAt: number;
 };
 
+export type LockupTransaction = {
+    id: string;
+    hex: string;
+    timeoutBlockHeight: number;
+    timeoutEta?: number;
+};
+
 export const getPairs = async (): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine"),
@@ -400,12 +407,7 @@ export const broadcastTransaction = async (
 export const getLockupTransaction = async (
     id: string,
     type: SwapType,
-): Promise<{
-    id: string;
-    hex: string;
-    timeoutBlockHeight: number;
-    timeoutEta?: number;
-}> => {
+): Promise<LockupTransaction> => {
     switch (type) {
         case SwapType.Submarine:
             return fetcher<{

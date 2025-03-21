@@ -8,6 +8,7 @@ import {
     Show,
     Switch,
     createEffect,
+    createMemo,
     createResource,
     createSignal,
     onCleanup,
@@ -16,27 +17,31 @@ import {
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
+import Pagination from "../components/Pagination";
 import RefundButton from "../components/RefundButton";
-import SwapList from "../components/SwapList";
+import SwapList, { sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { swapStatusFailed } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
-import { getRescuableSwaps } from "../utils/boltzClient";
+import { RescuableSwap, getRescuableSwaps } from "../utils/boltzClient";
 import {
     LogRefundData,
     scanLogsForPossibleRefunds,
 } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
+import { getRefundableUTXOs } from "../utils/refund";
+import { createRefundList } from "../utils/refund";
 import { validateRefundFile } from "../utils/refundFile";
 import { RescueFile, getXpub, validateRescueFile } from "../utils/rescueFile";
 import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
+import { mapSwap } from "./RefundRescue";
 
 enum RefundError {
     InvalidData,
@@ -47,20 +52,34 @@ enum RefundType {
     Legacy,
 }
 
+const swapsPerPage = 10;
+
 const BtcLikeLegacy = (props: {
     refundJson: Accessor<SubmarineSwap | ChainSwap>;
     refundInvalid: Accessor<RefundError | undefined>;
 }) => {
     const { t } = useGlobalContext();
+    const { setRefundableUTXOs } = usePayContext();
 
     const [refundTxId, setRefundTxId] = createSignal<string>("");
+
+    const swap = createMemo(() => props.refundJson());
+
+    createResource(swap, async (swap) => {
+        const utxos = await getRefundableUTXOs(swap);
+        setRefundableUTXOs(utxos);
+    });
+
+    onCleanup(() => {
+        setRefundableUTXOs([]);
+    });
 
     return (
         <>
             <Show when={refundTxId() === ""}>
                 <hr />
                 <RefundButton
-                    swap={props.refundJson}
+                    swap={swap}
                     setRefundTxId={setRefundTxId}
                     buttonOverride={
                         props.refundInvalid() == RefundError.InvalidData
@@ -97,8 +116,9 @@ export const RefundBtcLike = () => {
     >(undefined);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundType, setRefundType] = createSignal<RefundType>();
-
-    const failedStatuses = Object.values(swapStatusFailed);
+    const [currentPage, setCurrentPage] = createSignal(1);
+    const [currentSwaps, setCurrentSwaps] = createSignal<SubmarineSwap[]>([]);
+    const [loading, setLoading] = createSignal(false);
 
     const [rescuableSwaps] = createResource(
         () => ({ refundJson: refundJson(), type: refundType() }),
@@ -112,7 +132,17 @@ export const RefundBtcLike = () => {
 
             const res = await getRescuableSwaps(getXpub(source.refundJson));
             rescueContext.setRescuableSwaps(res);
-            return res;
+            return res.map((swap) => mapSwap(swap));
+        },
+    );
+
+    const [refundList] = createResource(
+        currentSwaps,
+        async (swaps: (SubmarineSwap & RescuableSwap)[]) => {
+            setLoading(true);
+            return await createRefundList(swaps).finally(() =>
+                setLoading(false),
+            );
         },
     );
 
@@ -173,6 +203,14 @@ export const RefundBtcLike = () => {
         }
     };
 
+    const getListHeight = () => ({
+        // to avoid layout shift when swapping between pages with less than 5 swaps
+        "min-height":
+            rescuableSwaps()?.length > swapsPerPage
+                ? `${45 * swapsPerPage}px`
+                : "0",
+    });
+
     return (
         <>
             <p>{t("refund_a_swap_subline")}</p>
@@ -189,28 +227,45 @@ export const RefundBtcLike = () => {
                     <Match when={rescuableSwaps.state === "ready"}>
                         <div style={{ "margin-top": "2%" }}>
                             <Show
-                                when={
-                                    rescuableSwaps() !== undefined &&
-                                    rescuableSwaps().length > 0
-                                }
+                                when={rescuableSwaps().length > 0}
                                 fallback={<h4>{t("no_swaps_found")}</h4>}>
-                                <SwapList
-                                    swapsSignal={() =>
-                                        rescuableSwaps().map((swap) => ({
-                                            ...swap,
-                                            disabled:
-                                                swap.transaction ===
-                                                    undefined ||
-                                                !failedStatuses.includes(
-                                                    swap.status,
-                                                ),
-                                        }))
-                                    }
-                                    action={t("refund")}
-                                    surroundingSeparators={false}
-                                    onClick={(swap) => {
-                                        navigate(`/refund/rescue/${swap.id}`);
-                                    }}
+                                <div style={getListHeight()}>
+                                    <Show
+                                        when={!loading()}
+                                        fallback={
+                                            <div
+                                                class="center"
+                                                style={getListHeight()}>
+                                                <LoadingSpinner />
+                                            </div>
+                                        }>
+                                        <SwapList
+                                            swapsSignal={refundList}
+                                            action={(swap) =>
+                                                swap.disabled
+                                                    ? t("no_refund_due")
+                                                    : t("refund")
+                                            }
+                                            surroundingSeparators={false}
+                                            onClick={(swap) => {
+                                                navigate(
+                                                    `/refund/rescue/${swap.id}`,
+                                                );
+                                            }}
+                                            hideDateOnMobile
+                                        />
+                                    </Show>
+                                </div>
+                                <Pagination
+                                    items={rescuableSwaps}
+                                    setDisplayedItems={(
+                                        swaps: SubmarineSwap[],
+                                    ) => setCurrentSwaps(swaps)}
+                                    sort={sortSwaps}
+                                    totalItems={rescuableSwaps().length}
+                                    itemsPerPage={swapsPerPage}
+                                    currentPage={currentPage}
+                                    setCurrentPage={setCurrentPage}
                                 />
                             </Show>
                         </div>
@@ -336,7 +391,7 @@ const RefundExternal = () => {
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
-                <div class="frame" data-testid="refundFrame">
+                <div class="frame refund" data-testid="refundFrame">
                     <header>
                         <SettingsCog />
                         <h2>{t("refund_external_swap")}</h2>

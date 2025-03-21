@@ -12,12 +12,16 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { swapStatusPending } from "../consts/SwapStatus";
 import { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
+import { getSwapUTXOs } from "./blockchain";
 import {
+    LockupTransaction,
     TransactionInterface,
     broadcastTransaction,
     getFeeEstimations,
+    getLockupTransaction,
     getPartialRefundSignature,
 } from "./boltzClient";
 import {
@@ -29,7 +33,7 @@ import {
 } from "./compat";
 import { formatError } from "./errors";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
-import { ChainSwap, SubmarineSwap } from "./swapCreator";
+import { ChainSwap, SomeSwap, SubmarineSwap, isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 const refundTaproot = async <T extends TransactionInterface>(
@@ -190,7 +194,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     deriveKey: deriveKeyFn,
     swap: T,
     refundAddress: string,
-    transactionToRefund: { hex: string; timeoutBlockHeight: number },
+    transactionToRefund: { hex: string; timeoutBlockHeight?: number },
     cooperative: boolean,
     externalBroadcast: boolean,
 ): Promise<T> => {
@@ -260,4 +264,73 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     }
 
     return broadcastRefund(swap, refundTransaction, externalBroadcast);
+};
+
+export const isSwapRefundable = (swap: SomeSwap) =>
+    !isRsk(swap) &&
+    [SwapType.Chain, SwapType.Submarine].includes(swap.type) &&
+    ![...Object.values(swapStatusPending)].includes(swap.status);
+
+export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
+    const mergeLockupWithUTXOs = (
+        lockupTx: LockupTransaction,
+        utxos: Pick<LockupTransaction, "hex">[],
+    ) => {
+        const isLockupTx = (utxo: Pick<LockupTransaction, "hex">) =>
+            utxo.hex === lockupTx.hex;
+
+        if (utxos.some(isLockupTx)) {
+            // If the utxo is also a lockup tx, prefer using it
+            return [lockupTx, ...utxos.filter((tx) => !isLockupTx(tx))];
+        }
+
+        return utxos;
+    };
+
+    if (!isSwapRefundable(currentSwap)) {
+        log.warn(`swap ${currentSwap.id} is not refundable`);
+        return [];
+    }
+
+    const [lockupTxResult, utxosResult] = await Promise.allSettled([
+        getLockupTransaction(currentSwap.id, currentSwap.type),
+        getSwapUTXOs(currentSwap as ChainSwap | SubmarineSwap),
+    ]);
+
+    const lockupTx =
+        lockupTxResult.status === "fulfilled" ? lockupTxResult.value : null;
+    const utxos = utxosResult.status === "fulfilled" ? utxosResult.value : null;
+
+    if (lockupTx && utxos) {
+        return mergeLockupWithUTXOs(lockupTx, utxos);
+    }
+    if (lockupTx && !utxos) {
+        return [lockupTx];
+    }
+    if (!lockupTx && utxos) {
+        return utxos;
+    }
+
+    // if both requests were "rejected"
+    log.error("failed to fetch utxo data for swap: ", currentSwap.id);
+    return [];
+};
+
+export const createRefundList = async (swaps: SomeSwap[]) => {
+    return await Promise.all(
+        swaps.map(async (swap) => {
+            try {
+                const utxos = await getRefundableUTXOs(swap);
+
+                if (utxos.length > 0) {
+                    return swap;
+                }
+
+                return { ...swap, disabled: true };
+            } catch (e) {
+                log.error("error creating refund list: ", e.stack);
+                return { ...swap, disabled: true };
+            }
+        }),
+    );
 };

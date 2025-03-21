@@ -36,8 +36,6 @@ jobs:
           cache: "npm"
 
       - name: Start regtest
-        env:
-          COMPOSE_PROFILES: ci
         run: |
           git submodule init
           git submodule update
