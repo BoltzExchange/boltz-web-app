@@ -1,6 +1,6 @@
 import { Component } from "solid-js";
 
-import "../style/terms.scss";
+import "../style/legal.scss";
 
 const Terms: Component = () => {
     return (
