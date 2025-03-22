@@ -69,10 +69,6 @@ const Footer = () => {
                 </a>
             </div>
             <p class="footer-nav">
-                <a target="_blank" href={config.supportUrl}>
-                    {t("support")}
-                </a>{" "}
-                |{" "}
                 <a target="_blank" href={config.blogUrl}>
                     {t("blog")}
                 </a>{" "}
@@ -87,22 +83,16 @@ const Footer = () => {
                 |{" "}
                 <a target="_blank" href={config.testnetUrl}>
                     {t("testnet")}
-                </a>{" "}
-                | <a href="/terms">{t("terms")}</a>
+                </a>
             </p>
             <p>{t("footer")}</p>
-            <p class="version">
-                {t("version")}:{" "}
+            <p class="legal-nav">
+                <a href="/terms">{t("terms")}</a>
+                <a href="/privacy">{t("privacy")}</a>
                 <a
                     target="_blank"
                     href={`${config.repoUrl}/releases/tag/v${__APP_VERSION__}`}>
-                    {__APP_VERSION__}
-                </a>
-                , {t("commithash")}:{" "}
-                <a
-                    target="_blank"
-                    href={`${config.repoUrl}/commit/${__GIT_COMMIT__}`}>
-                    {__GIT_COMMIT__}
+                    {t("version")}
                 </a>
             </p>
         </footer>
