@@ -26,6 +26,7 @@ import Hero from "./pages/Hero";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
+import Privacy from "./pages/Privacy";
 import Refund from "./pages/Refund";
 import RefundEvm from "./pages/RefundEvm";
 import RefundExternal from "./pages/RefundExternal";
@@ -121,6 +122,7 @@ const cleanup = render(
             <Route path="/refund/rescue/:id" component={RefundRescue} />
             <Route path="/history" component={History} />
             <Route path="/terms" component={Terms} />
+            <Route path="/privacy" component={Privacy} />
             <Route path="*404" component={NotFound} />
         </Router>
     ),
