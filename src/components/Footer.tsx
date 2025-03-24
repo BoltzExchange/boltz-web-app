@@ -69,10 +69,6 @@ const Footer = () => {
                 </a>
             </div>
             <p class="footer-nav">
-                <a target="_blank" href={config.supportUrl}>
-                    {t("support")}
-                </a>{" "}
-                |{" "}
                 <a target="_blank" href={config.blogUrl}>
                     {t("blog")}
                 </a>{" "}
@@ -87,10 +83,12 @@ const Footer = () => {
                 |{" "}
                 <a target="_blank" href={config.testnetUrl}>
                     {t("testnet")}
-                </a>{" "}
-                | <a href="/terms">{t("terms")}</a>
+                </a>
             </p>
-            <p>{t("footer")}</p>
+            <p class="legal-nav">
+                <a href="/terms">{t("terms")}</a>
+                <a href="/privacy">{t("privacy")}</a>
+            </p>
             <p class="version">
                 {t("version")}:{" "}
                 <a
@@ -105,6 +103,7 @@ const Footer = () => {
                     {__GIT_COMMIT__}
                 </a>
             </p>
+            <p>{t("footer")}</p>
         </footer>
     );
 };

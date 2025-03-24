@@ -1,4 +1,4 @@
-.terms-container {
+.legal-container {
     max-width: 800px;
     margin: 2rem auto;
     padding: 2rem;
@@ -97,4 +97,12 @@
             font-size: 1.2rem;
         }
     }
+}
+
+.terms-container {
+    @extend .legal-container;
+}
+
+.privacy-container {
+    @extend .legal-container;
 }
