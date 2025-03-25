@@ -161,18 +161,14 @@ export const RefundBtc = (props: {
         setRefundRunning(true);
 
         try {
-            let refundedSwap: SomeSwap;
-
-            for (const tx of refundableUTXOs()) {
-                refundedSwap = await refund(
-                    props.deriveKeyFn || deriveKey,
-                    props.swap(),
-                    refundAddress(),
-                    tx,
-                    true,
-                    externalBroadcast(),
-                );
-            }
+            const refundedSwap: SomeSwap = await refund(
+                props.deriveKeyFn || deriveKey,
+                props.swap(),
+                refundAddress(),
+                refundableUTXOs(),
+                true,
+                externalBroadcast(),
+            );
 
             // save refundTx into swaps json and set it to the current swap
             // only if the swap exist in localstorage, else it is a refund json
