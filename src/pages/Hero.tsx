@@ -259,9 +259,9 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://vulpem.com/"
+                            href="https://rootstocklabs.com/"
                             target="_blank"
-                            class="vulpem"
+                            class="rootstocklabs"
                         />
                     </div>
                 </div>
