@@ -121,7 +121,20 @@ const Pay = () => {
         string | undefined
     >(undefined);
 
-    const status = createMemo(() => statusOverride() || swapStatus());
+    const renameSwapStatus = (status: string) => {
+        if (
+            swap()?.type === SwapType.Chain &&
+            status === swapStatusFailed.TransactionRefunded
+        ) {
+            // Rename because the previous name was confusing users
+            return "swap.waitingForRefund";
+        }
+        return status;
+    };
+
+    const status = createMemo(
+        () => statusOverride() || renameSwapStatus(swapStatus()),
+    );
 
     return (
         <div data-status={status()} class="frame">
