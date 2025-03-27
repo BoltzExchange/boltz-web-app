@@ -1,5 +1,4 @@
 import { crypto } from "bitcoinjs-lib";
-import { OutputType } from "boltz-core";
 import { Signature, TransactionResponse } from "ethers";
 import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
@@ -8,10 +7,10 @@ import {
     Setter,
     Show,
     createEffect,
+    createMemo,
     createResource,
     createSignal,
 } from "solid-js";
-import { ChainSwap, SubmarineSwap } from "src/utils/swapCreator";
 
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
@@ -19,15 +18,13 @@ import { SwapType } from "../consts/Enums";
 import { deriveKeyFn, useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
-import {
-    getEipRefundSignature,
-    getLockupTransaction,
-} from "../utils/boltzClient";
+import { getEipRefundSignature } from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 
@@ -124,7 +121,7 @@ export const RefundBtc = (props: {
         t,
         deriveKey,
     } = useGlobalContext();
-    const { setSwap } = usePayContext();
+    const { setSwap, refundableUTXOs } = usePayContext();
 
     const [timeoutEta, setTimeoutEta] = createSignal<number | null>(null);
     const [timeoutBlockheight, setTimeoutBlockheight] = createSignal<
@@ -164,26 +161,30 @@ export const RefundBtc = (props: {
         setRefundRunning(true);
 
         try {
-            const res = await refund(
-                props.deriveKeyFn || deriveKey,
-                props.swap(),
-                refundAddress(),
-                lockupTransaction(),
-                true,
-                externalBroadcast(),
-            );
+            let refundedSwap: SomeSwap;
+
+            for (const tx of refundableUTXOs()) {
+                refundedSwap = await refund(
+                    props.deriveKeyFn || deriveKey,
+                    props.swap(),
+                    refundAddress(),
+                    tx,
+                    true,
+                    externalBroadcast(),
+                );
+            }
 
             // save refundTx into swaps json and set it to the current swap
             // only if the swap exist in localstorage, else it is a refund json
             // so we save it into the signal
-            const currentSwap = await getSwap(res.id);
+            const currentSwap = await getSwap(refundedSwap.id);
             if (currentSwap !== null) {
-                currentSwap.refundTx = res.refundTx;
+                currentSwap.refundTx = refundedSwap.refundTx;
                 await setSwapStorage(currentSwap);
                 setSwap(currentSwap);
             }
             if (props.setRefundTxId) {
-                props.setRefundTxId(res.refundTx);
+                props.setRefundTxId(refundedSwap.refundTx);
             }
 
             setRefundAddress("");
@@ -202,10 +203,13 @@ export const RefundBtc = (props: {
                     msg === "non-final"
                 ) {
                     msg = t("locktime_not_satisfied");
-                    setTimeoutEta(lockupTransaction().timeoutEta);
-                    setTimeoutBlockheight(
-                        lockupTransaction().timeoutBlockHeight,
+                    const legacyTx = refundableUTXOs().find(
+                        (tx) => tx.timeoutEta && tx.timeoutBlockHeight,
                     );
+                    if (legacyTx) {
+                        setTimeoutEta(legacyTx.timeoutEta);
+                        setTimeoutBlockheight(legacyTx.timeoutBlockHeight);
+                    }
                 }
                 log.error(msg);
                 notify("error", msg);
@@ -218,44 +222,18 @@ export const RefundBtc = (props: {
         setRefundRunning(false);
     };
 
-    // eslint-disable-next-line solid/reactivity
-    const [lockupTransaction] = createResource(props.swap, async (swap) => {
-        if (!swap) {
-            return undefined;
-        }
-
-        const transactionToRefund = await getLockupTransaction(
-            swap.id,
-            swap.type,
-        );
-
-        // show refund ETA for legacy swaps
-        if (swap.version !== OutputType.Taproot) {
-            setTimeoutEta(transactionToRefund.timeoutEta);
-            setTimeoutBlockheight(transactionToRefund.timeoutBlockHeight);
-        }
-
-        return transactionToRefund;
-    });
-
-    const buttonMessage = () => {
-        if (lockupTransaction.state == "errored") {
+    const buttonMessage = createMemo(() => {
+        if (refundableUTXOs()?.length === 0) {
             return t("no_lockup_transaction");
         }
         if (valid() || !refundAddress() || !props.swap()) {
             return t("refund");
         }
         return t("invalid_address", { asset: props.swap()?.assetSend });
-    };
+    });
 
     return (
-        <Show
-            when={
-                lockupTransaction.state === "ready" ||
-                lockupTransaction.state == "unresolved" ||
-                lockupTransaction.state == "errored"
-            }
-            fallback={<LoadingSpinner />}>
+        <Show when={refundableUTXOs()} fallback={<LoadingSpinner />}>
             <Show when={timeoutEta() > 0 || timeoutBlockheight() > 0}>
                 <RefundEta
                     timeoutEta={timeoutEta}
@@ -272,7 +250,7 @@ export const RefundBtc = (props: {
             <input
                 data-testid="refundAddress"
                 id="refundAddress"
-                disabled={lockupTransaction.state == "errored"}
+                disabled={refundableUTXOs().length === 0}
                 value={refundAddress()}
                 onInput={(e) => setRefundAddress(e.target.value.trim())}
                 type="text"

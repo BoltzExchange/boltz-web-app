@@ -1,88 +1,96 @@
 import { useNavigate } from "@solidjs/router";
-import log from "loglevel";
-import { Show, createSignal, onMount } from "solid-js";
+import { Show, createResource, createSignal } from "solid-js";
 
-import SwapList from "../components/SwapList";
+import LoadingSpinner from "../components/LoadingSpinner";
+import Pagination from "../components/Pagination";
+import SwapList, { sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { SwapType } from "../consts/Enums";
-import { swapStatusFailed, swapStatusSuccess } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import "../style/tabs.scss";
-import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { SomeSwap } from "../utils/swapCreator";
+import { isMobile } from "../utils/helper";
+import { createRefundList } from "../utils/refund";
+import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
+
+const swapsPerPage = 10;
 
 const Refund = () => {
     const navigate = useNavigate();
-    const { getSwaps, updateSwapStatus, wasmSupported, t } = useGlobalContext();
+    const { getSwaps, wasmSupported, t } = useGlobalContext();
 
-    const refundSwapsSanityFilter = (swap: SomeSwap) =>
-        swap.type !== SwapType.Reverse && swap.refundTx === undefined;
+    const [currentPage, setCurrentPage] = createSignal(1);
+    const [currentSwaps, setCurrentSwaps] = createSignal<SomeSwap[]>([]);
+    const [loading, setLoading] = createSignal(false);
 
-    const [refundableSwaps, setRefundableSwaps] = createSignal<SomeSwap[]>([]);
+    const [allSwaps] = createResource(
+        currentPage,
+        async () => await getSwaps(),
+    );
 
-    onMount(async () => {
-        const addToRefundableSwaps = (swap: SomeSwap) => {
-            setRefundableSwaps(refundableSwaps().concat(swap));
-        };
-
-        const allSwaps = await getSwaps();
-
-        const swapsToRefund = allSwaps
-            .filter(refundSwapsSanityFilter)
-            .filter(
-                (swap) =>
-                    swapStatusFailed.TransactionLockupFailed === swap.status,
+    const [refundList] = createResource(
+        currentSwaps,
+        async (swaps: SomeSwap[]) => {
+            setLoading(true);
+            return await createRefundList(swaps).finally(() =>
+                setLoading(false),
             );
-        setRefundableSwaps(swapsToRefund);
+        },
+    );
 
-        void allSwaps
-            .filter(refundSwapsSanityFilter)
-            .filter(
-                (swap) =>
-                    swap.status !== swapStatusSuccess.TransactionClaimed &&
-                    swapsToRefund.find((found) => found.id === swap.id) ===
-                        undefined,
-            )
-            // eslint-disable-next-line solid/reactivity
-            .map(async (swap) => {
-                try {
-                    const res = await getSwapStatus(swap.id);
-                    if (
-                        !(await updateSwapStatus(swap.id, res.status)) &&
-                        Object.values(swapStatusFailed).includes(res.status)
-                    ) {
-                        // Make sure coins were locked for the swaps with status "swap.expired" or "swap.failedToPay"
-                        await getLockupTransaction(swap.id, swap.type);
-                        addToRefundableSwaps(swap);
-                    }
-                } catch (e) {
-                    log.warn("failed to get swap status", swap.id, e);
-                }
-            });
+    const getListHeight = () => ({
+        // to avoid layout shift when swapping between pages with less than 5 swaps
+        "min-height":
+            allSwaps()?.length > swapsPerPage ? `${45 * swapsPerPage}px` : "0",
     });
 
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
-                <div class="frame" data-testid="refundFrame">
+                <div class="frame refund" data-testid="refundFrame">
                     <header>
                         <SettingsCog />
                         <h2>{t("refund_swap")}</h2>
                     </header>
                     <Show
-                        when={refundableSwaps().length > 0}
+                        when={allSwaps()?.length > 0}
                         fallback={
                             <>
                                 <p>{t("no_refundable_swaps")}</p>
                                 <hr />
                             </>
                         }>
-                        <SwapList
-                            swapsSignal={refundableSwaps}
-                            action={t("refund")}
+                        <div style={!isMobile() ? getListHeight() : null}>
+                            <Show
+                                when={!loading()}
+                                fallback={
+                                    <div class="center" style={getListHeight()}>
+                                        <LoadingSpinner />
+                                    </div>
+                                }>
+                                <SwapList
+                                    swapsSignal={refundList}
+                                    action={(swap) =>
+                                        swap.disabled
+                                            ? t("no_refund_due")
+                                            : t("refund")
+                                    }
+                                    hideDateOnMobile
+                                />
+                            </Show>
+                        </div>
+                        <Pagination
+                            items={allSwaps}
+                            setDisplayedItems={(swaps: SubmarineSwap[]) =>
+                                setCurrentSwaps(swaps)
+                            }
+                            sort={sortSwaps}
+                            totalItems={allSwaps().length}
+                            itemsPerPage={swapsPerPage}
+                            currentPage={currentPage}
+                            setCurrentPage={setCurrentPage}
                         />
+                        <hr />
                     </Show>
                     <h4>{t("cant_find_swap")}</h4>
                     <p>{t("refund_external_explainer")}</p>

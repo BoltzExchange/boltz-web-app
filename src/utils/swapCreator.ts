@@ -83,6 +83,8 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
     }
 };
 
+export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;
+
 export const createSubmarine = async (
     pairs: Pairs,
     assetSend: string,
