@@ -80,6 +80,9 @@ export const getElementsWalletTx = (txId: string): Promise<string> =>
 export const payInvoiceLnd = (invoice: string): Promise<string> =>
     execCommand(`lncli-sim 1 payinvoice -f ${invoice}`);
 
+export const decodeLiquidRawTransaction = (tx: string): Promise<string> =>
+    execCommand(`elements-cli-sim-client decoderawtransaction "${tx}"`);
+
 export const generateInvoiceLnd = async (amount: number): Promise<string> => {
     return JSON.parse(
         await execCommand(`lncli-sim 1 addinvoice --amt ${amount}`),
@@ -116,6 +119,10 @@ export const waitForNodesToSync = async (): Promise<void> => {
 
 export const addReferral = (name: string): Promise<string> =>
     boltzCli(`addreferral ${name} 0`);
+
+export const setFailedToPay = async (swapId: string): Promise<void> => {
+    await boltzCli(`setswapstatus ${swapId} invoice.failedToPay`);
+};
 
 export const getReferrals = async (): Promise<Record<string, unknown>> =>
     JSON.parse(await boltzCli(`getreferrals`)) as Record<string, unknown>;
@@ -162,4 +169,34 @@ export const verifyRescueFile = async (page: Page) => {
     if (fs.existsSync(fileName)) {
         fs.unlinkSync(fileName);
     }
+};
+
+export const setupSwapAssets = async (page: Page) => {
+    await page.locator(".arrow-down").first().click();
+    await page.getByTestId("select-L-BTC").click();
+    await page
+        .locator(
+            "div:nth-child(3) > .asset-wrap > .asset > .asset-selection > .arrow-down",
+        )
+        .click();
+    await page.getByTestId("select-LN").click();
+};
+
+export const fillSwapDetails = async (page: Page) => {
+    await page.getByTestId("invoice").fill(await getBolt12Offer());
+    await page.getByTestId("sendAmount").fill("0.005");
+    await page.getByTestId("create-swap-button").click();
+};
+
+export const createAndVerifySwap = async (page: Page, rescueFile: string) => {
+    await page.goto("/");
+    await setupSwapAssets(page);
+    await fillSwapDetails(page);
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: dict.en.download_new_key }).click();
+    await (await downloadPromise).saveAs(rescueFile);
+
+    await page.getByTestId("rescueFileUpload").setInputFiles(rescueFile);
+    await page.getByText("address").click();
 };
