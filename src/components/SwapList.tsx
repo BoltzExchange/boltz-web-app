@@ -76,6 +76,7 @@ const SwapList = (props: {
                 {(swap) => (
                     <>
                         <div
+                            data-testid={`swaplist-item-${swap.id}`}
                             class={`swaplist-item ${swap.disabled ? "disabled" : ""}`}
                             onClick={() => {
                                 if (swap.disabled) {
