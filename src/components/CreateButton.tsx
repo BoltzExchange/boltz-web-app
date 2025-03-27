@@ -341,7 +341,8 @@ const CreateButton = () => {
             swapType() === SwapType.Submarine &&
             (lnurl() !== "" || bolt12Offer() !== undefined) &&
             amountValid() &&
-            sendAmount().isGreaterThan(0)
+            sendAmount().isGreaterThan(0) &&
+            assetReceive() !== assetSend()
         );
     };
 
