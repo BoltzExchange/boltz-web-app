@@ -171,6 +171,7 @@ hr.spacer {
 }
 
 [data-status="swap.expired"],
+[data-status="swap.waitingForRefund"],
 [data-status="invoice.expired"],
 [data-status="transaction.refunded"],
 [data-status="invoice.failedToPay"],

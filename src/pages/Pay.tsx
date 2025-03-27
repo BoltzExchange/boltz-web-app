@@ -1,6 +1,7 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
 import {
+    Accessor,
     Match,
     Show,
     Switch,
@@ -13,6 +14,7 @@ import {
 
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
+import RefundButton from "../components/RefundButton";
 import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -121,7 +123,20 @@ const Pay = () => {
         string | undefined
     >(undefined);
 
-    const status = createMemo(() => statusOverride() || swapStatus());
+    const renameSwapStatus = (status: string) => {
+        if (
+            swap()?.type === SwapType.Chain &&
+            status === swapStatusFailed.TransactionRefunded
+        ) {
+            // Rename because the previous name was confusing users
+            return "swap.waitingForRefund";
+        }
+        return status;
+    };
+
+    const status = createMemo(
+        () => statusOverride() || renameSwapStatus(swapStatus()),
+    );
 
     return (
         <div data-status={status()} class="frame">
@@ -182,6 +197,14 @@ const Pay = () => {
                             <TransactionLockupFailed
                                 setStatusOverride={setStatusOverride}
                             />
+                        </Match>
+                        <Match
+                            when={
+                                swap().type === SwapType.Chain &&
+                                swapStatus() ===
+                                    swapStatusFailed.TransactionRefunded
+                            }>
+                            <RefundButton swap={swap as Accessor<ChainSwap>} />
                         </Match>
                         <Match
                             when={
