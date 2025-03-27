@@ -1,6 +1,7 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
 import {
+    Accessor,
     Match,
     Show,
     Switch,
@@ -13,6 +14,7 @@ import {
 
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
+import RefundButton from "../components/RefundButton";
 import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -195,6 +197,14 @@ const Pay = () => {
                             <TransactionLockupFailed
                                 setStatusOverride={setStatusOverride}
                             />
+                        </Match>
+                        <Match
+                            when={
+                                swap().type === SwapType.Chain &&
+                                swapStatus() ===
+                                    swapStatusFailed.TransactionRefunded
+                            }>
+                            <RefundButton swap={swap as Accessor<ChainSwap>} />
                         </Match>
                         <Match
                             when={
