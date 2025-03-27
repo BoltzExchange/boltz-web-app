@@ -244,7 +244,9 @@ const isValidBech32 = (data: string) => {
 const emailRegex =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-export const isLnurl = (data: string) => {
+export const isLnurl = (data: string | null | undefined) => {
+    if (typeof data !== "string") return false;
+
     data = data.toLowerCase().replace(invoicePrefix, "");
     return (
         (data.includes("@") && emailRegex.test(data)) ||
