@@ -357,7 +357,7 @@ const CreateButton = () => {
                     return new Promise<string>(async (resolve, reject) => {
                         const timeout = setTimeout(
                             () => reject(new Error(t("timeout"))),
-                            LNURL_FETCH_TIMEOUT,
+                            invoiceFetchTimeout,
                         );
 
                         try {
