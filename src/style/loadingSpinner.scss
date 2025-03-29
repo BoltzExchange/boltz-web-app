@@ -25,6 +25,15 @@
     animation-delay: -0.16s;
 }
 
+.inner-spinner {
+    margin: 0;
+
+    & div {
+        width: 14px;
+        height: 14px;
+    }
+}
+
 @-webkit-keyframes sk-bouncedelay {
     0%,
     80%,
