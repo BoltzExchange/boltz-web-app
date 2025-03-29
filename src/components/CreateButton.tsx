@@ -35,6 +35,9 @@ import {
 } from "../utils/swapCreator";
 import { validateResponse } from "../utils/validation";
 
+// In seconds
+const invoiceFetchTimeout = 25_000;
+
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
     signer: Accessor<Signer>,
@@ -355,7 +358,7 @@ const CreateButton = () => {
                     return new Promise<string>(async (resolve, reject) => {
                         const timeout = setTimeout(
                             () => reject(new Error(t("timeout"))),
-                            5_000,
+                            invoiceFetchTimeout,
                         );
 
                         try {
@@ -376,7 +379,7 @@ const CreateButton = () => {
                     return new Promise<string>(async (resolve, reject) => {
                         const timeout = setTimeout(
                             () => reject(new Error(t("timeout"))),
-                            15_000,
+                            invoiceFetchTimeout,
                         );
 
                         try {
