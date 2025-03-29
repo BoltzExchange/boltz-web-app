@@ -35,7 +35,7 @@ import {
 } from "../utils/swapCreator";
 import { validateResponse } from "../utils/validation";
 
-// In seconds
+// In milliseconds
 const invoiceFetchTimeout = 25_000;
 
 export const getClaimAddress = async (
