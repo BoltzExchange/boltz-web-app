@@ -35,8 +35,8 @@ import {
 } from "../utils/swapCreator";
 import { validateResponse } from "../utils/validation";
 
-const LNURL_FETCH_TIMEOUT = 25_000;
-const BIP353_FETCH_TIMEOUT = 25_000;
+// In seconds
+const invoiceFetchTimeout = 25_000;
 
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
