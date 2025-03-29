@@ -140,16 +140,18 @@ const Pay = () => {
 
     return (
         <div data-status={status()} class="frame">
-            <SettingsCog />
-            <h2>
-                {t("pay_invoice", { id: params.id })}
-                <Show when={swap()}>
-                    <SwapIcons swap={swap()} />
-                </Show>
-            </h2>
+            <span class="frame-header">
+                <h2>
+                    {t("pay_invoice", { id: params.id })}
+                    <Show when={swap()}>
+                        <SwapIcons swap={swap()} />
+                    </Show>
+                </h2>
+                <SettingsCog />
+            </span>
             <Show when={swap()}>
                 <Show when={swap().refundTx}>
-                    <p>
+                    <p class="swap-status">
                         {t("status")}:{" "}
                         <span class="btn-small btn-success">
                             {swapStatusFailed.SwapRefunded}
@@ -161,7 +163,7 @@ const Pay = () => {
 
                 <Show when={!swap().refundTx}>
                     <Show when={swapStatus()} fallback={<LoadingSpinner />}>
-                        <p>
+                        <p class="swap-status">
                             {t("status")}:{" "}
                             <span class="btn-small">{status()}</span>
                         </p>
