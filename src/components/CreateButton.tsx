@@ -34,6 +34,7 @@ import {
     createSubmarine,
 } from "../utils/swapCreator";
 import { validateResponse } from "../utils/validation";
+import LoadingSpinner from "./LoadingSpinner";
 
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
@@ -253,6 +254,7 @@ const CreateButton = () => {
         useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
+    const [loading, setLoading] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
     const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
         key: "create_swap",
@@ -436,6 +438,7 @@ const CreateButton = () => {
 
     const buttonClick = async () => {
         setButtonDisable(true);
+        setLoading(true);
         try {
             if (validWayToFetchInvoice()) {
                 await fetchInvoice();
@@ -482,6 +485,7 @@ const CreateButton = () => {
             notify("error", e);
         } finally {
             setButtonDisable(false);
+            setLoading(false);
         }
     };
 
@@ -500,7 +504,11 @@ const CreateButton = () => {
                 buttonDisable()
             }
             onClick={buttonClick}>
-            {getButtonLabel(buttonLabel())}
+            {loading() ? (
+                <LoadingSpinner class="inner-spinner" />
+            ) : (
+                getButtonLabel(buttonLabel())
+            )}
         </button>
     );
 };
