@@ -21,3 +21,18 @@ export const firstResolved = <T>(promises: Promise<T>[]): Promise<T> => {
         });
     });
 };
+
+export const promiseWithTimeout = <T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    errorMessage = "Timeout",
+): Promise<T> => {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+        const timeoutId = setTimeout(() => {
+            clearTimeout(timeoutId);
+            reject(new Error(errorMessage));
+        }, timeoutMs);
+    });
+
+    return Promise.race([promise, timeoutPromise]);
+};

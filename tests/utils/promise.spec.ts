@@ -1,4 +1,4 @@
-import { firstResolved } from "../../src/utils/promise";
+import { firstResolved, promiseWithTimeout } from "../../src/utils/promise";
 
 describe("promise", () => {
     describe("firstResolved", () => {
@@ -42,6 +42,43 @@ describe("promise", () => {
 
         it("should throw an error if no promises are provided", () => {
             expect(() => firstResolved([])).toThrow("no promises provided");
+        });
+    });
+
+    describe("promiseWithTimeout", () => {
+        it("should resolve with the promise result if it resolves before timeout", async () => {
+            const promise = Promise.resolve("success");
+            await expect(promiseWithTimeout(promise, 100)).resolves.toBe(
+                "success",
+            );
+        });
+
+        it("should reject with timeout error if promise takes too long", async () => {
+            const slowPromise = new Promise((resolve) =>
+                setTimeout(() => resolve("too late"), 200),
+            );
+
+            await expect(promiseWithTimeout(slowPromise, 100)).rejects.toThrow(
+                "Timeout",
+            );
+        });
+
+        it("should use custom error message when provided", async () => {
+            const slowPromise = new Promise((resolve) =>
+                setTimeout(() => resolve("too late"), 200),
+            );
+
+            await expect(
+                promiseWithTimeout(slowPromise, 100, "custom timeout message"),
+            ).rejects.toThrow("custom timeout message");
+        });
+
+        it("should reject with the promise error if promise rejects before timeout", async () => {
+            const failingPromise = Promise.reject(new Error("promise failure"));
+
+            await expect(
+                promiseWithTimeout(failingPromise, 100),
+            ).rejects.toThrow("promise failure");
         });
     });
 });
