@@ -27,6 +27,7 @@ import { formatError } from "../utils/errors";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import { coalesceLn, isMobile } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
+import { firstResolved } from "../utils/promise";
 import {
     SomeSwap,
     createChain,
@@ -353,70 +354,66 @@ const CreateButton = () => {
 
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
-            log.info("Fetching invoice from LNURL or BIP-353", lnurl());
+            try {
+                log.info("Fetching invoice from LNURL or BIP-353", lnurl());
 
-            const fetchResults = await Promise.allSettled([
-                (() => {
-                    return new Promise<string>(async (resolve, reject) => {
-                        const timeout = setTimeout(
-                            () => reject(new Error(t("timeout"))),
-                            invoiceFetchTimeout,
-                        );
-
-                        try {
-                            const res = await fetchLnurl(
-                                lnurl(),
-                                Number(receiveAmount()),
+                const fetched = await firstResolved([
+                    (() => {
+                        return new Promise<string>(async (resolve, reject) => {
+                            const timeout = setTimeout(
+                                () => reject(new Error(t("timeout"))),
+                                invoiceFetchTimeout,
                             );
-                            resolve(res);
-                        } catch (e) {
-                            log.warn("Fetching invoice for LNURL failed:", e);
-                            reject(new Error(formatError(e)));
-                        } finally {
-                            clearTimeout(timeout);
-                        }
-                    });
-                })(),
-                (() => {
-                    return new Promise<string>(async (resolve, reject) => {
-                        const timeout = setTimeout(
-                            () => reject(new Error(t("timeout"))),
-                            invoiceFetchTimeout,
-                        );
 
-                        try {
-                            const res = await fetchBip353(
-                                lnurl(),
-                                Number(receiveAmount()),
+                            try {
+                                const res = await fetchLnurl(
+                                    lnurl(),
+                                    Number(receiveAmount()),
+                                );
+                                resolve(res);
+                            } catch (e) {
+                                log.warn(
+                                    "Fetching invoice for LNURL failed:",
+                                    e,
+                                );
+                                reject(formatError(e));
+                            } finally {
+                                clearTimeout(timeout);
+                            }
+                        });
+                    })(),
+                    (() => {
+                        return new Promise<string>(async (resolve, reject) => {
+                            const timeout = setTimeout(
+                                () => reject(new Error(t("timeout"))),
+                                invoiceFetchTimeout,
                             );
-                            resolve(res);
-                        } catch (e) {
-                            log.warn(
-                                "Fetching invoice from BIP-353 failed:",
-                                e,
-                            );
-                            reject(new Error(formatError(e)));
-                        } finally {
-                            clearTimeout(timeout);
-                        }
-                    });
-                })(),
-            ]);
 
-            const fetched = fetchResults.find(
-                (res) => res.status === "fulfilled",
-            );
-            if (fetched !== undefined) {
-                setInvoice(fetched.value);
+                            try {
+                                const res = await fetchBip353(
+                                    lnurl(),
+                                    Number(receiveAmount()),
+                                );
+                                resolve(res);
+                            } catch (e) {
+                                log.warn(
+                                    "Fetching invoice from BIP-353 failed:",
+                                    e,
+                                );
+                                reject(formatError(e));
+                            } finally {
+                                clearTimeout(timeout);
+                            }
+                        });
+                    })(),
+                ]);
+
+                setInvoice(fetched);
                 setLnurl("");
                 setInvoiceValid(true);
-            } else {
-                // All failed, so we can safely cast the first one
-                notify(
-                    "error",
-                    (fetchResults[0] as PromiseRejectedResult).reason,
-                );
-                return;
+            } catch (e) {
+                log.warn("Fetching invoice failed", e);
+                notify("error", formatError(e));
             }
         } else {
             log.info("Fetching invoice from bolt12 offer", bolt12Offer());
