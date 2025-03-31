@@ -11,6 +11,7 @@
         "regtest": "cp src/configs/regtest.json public/config.json",
         "preview": "vite preview",
         "build": "./build.py && vite build; cp dist/index.html dist/404.html",
+        "build:docker": "docker build --build-arg NETWORK=mainnet . -o build -f build/Dockerfile && docker build --build-arg NETWORK=pro . -o build -f build/Dockerfile",
         "mainnet": "cp src/configs/mainnet.json public/config.json",
         "beta": "cp src/configs/beta.json public/config.json",
         "pro": "cp src/configs/pro.json public/config.json",
