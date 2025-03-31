@@ -3,6 +3,47 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.1..v1.7.2) - 2025-03-31
+
+### Bug Fixes
+
+- LNURL fetch amount query param (#860) - ([75fdeff](https://github.com/BoltzExchange/boltz-web-app/commit/75fdeff7de0cd14ada72d3ba5d4971bb2746c381))
+- parse amounts query params for LN addresses (#863) - ([a8b1661](https://github.com/BoltzExchange/boltz-web-app/commit/a8b166182522f574e6e71b8bd86cf38c5980e939))
+- settings icon overlap on small screens (#872) - ([f90b52a](https://github.com/BoltzExchange/boltz-web-app/commit/f90b52adb463bb622eaa63b218de8c5820c879f9))
+
+### Documentation
+
+- add Japanase to URL param documentation (#853) - ([9756756](https://github.com/BoltzExchange/boltz-web-app/commit/97567568d4bfb0d4c47d2613751d5dcfd072381d))
+
+### Features
+
+- add terms (#857) - ([e64bdbb](https://github.com/BoltzExchange/boltz-web-app/commit/e64bdbb51e7c2de81d9c3a965e90ec617740694c))
+- add privacy policy (#861) - ([f9af109](https://github.com/BoltzExchange/boltz-web-app/commit/f9af1092ff95bc5277cf48d64116b3df3140bf9a))
+- add Rootstock Labs as partner (#862) - ([b501d34](https://github.com/BoltzExchange/boltz-web-app/commit/b501d342d242089c48c7a5ce1958ad494d76c860))
+- fetch refundable UTXOs from block explorer (#828) - ([3b74c90](https://github.com/BoltzExchange/boltz-web-app/commit/3b74c907b45647ce2703da99f10e1d1ddba72908))
+- refund all UTXOs in one transaction (#864) - ([9a3a970](https://github.com/BoltzExchange/boltz-web-app/commit/9a3a970b3631644bd17d3d72ab60ce06340f107c))
+- rename transaction.refunded state (#865) - ([76ed81c](https://github.com/BoltzExchange/boltz-web-app/commit/76ed81cf11ae63f6b21145e6d4fad82efcbef797))
+- add loading spinner to CreateButton (#871) - ([44c442f](https://github.com/BoltzExchange/boltz-web-app/commit/44c442f42d6c1df04bd0dd2a5828a1defa3b3584))
+
+### Miscellaneous Chores
+
+- fix CHANGELOG for v1.7.1 - ([993fa7c](https://github.com/BoltzExchange/boltz-web-app/commit/993fa7c0084938453c3d3a362968db5e50e629d7))
+- update Aqua logo (#866) - ([db8ef12](https://github.com/BoltzExchange/boltz-web-app/commit/db8ef1296c50f3f43d75c9a156cd8ad8e588b1cc))
+- bump LNURL and BOLT12 resolve timeout (#868) - ([0f2bb30](https://github.com/BoltzExchange/boltz-web-app/commit/0f2bb309d61749745a08f2bfe2ab7055f891a1d5))
+- update dependencies (#870) - ([3aa44c7](https://github.com/BoltzExchange/boltz-web-app/commit/3aa44c799100faf2b4a0a85d856ad71fda3b486e))
+- production builds in Docker - ([e0cbbae](https://github.com/BoltzExchange/boltz-web-app/commit/e0cbbae59b32abda04431e489ccd907e1843b760))
+- update regtest - ([273df42](https://github.com/BoltzExchange/boltz-web-app/commit/273df42f808db1163a7b64a6c2556a3603cfdcdb))
+
+### Refactoring
+
+- race invoice timeout - ([56b90b8](https://github.com/BoltzExchange/boltz-web-app/commit/56b90b80c9d3ae4b09539a3da436d8804ab4dca2))
+- cleanup promises with timeout - ([8370405](https://github.com/BoltzExchange/boltz-web-app/commit/837040567d4a75f9a0762d84415ee3d10db7aed7))
+
+### Tests
+
+- add E2E tests for refunding multiple UTXOs (#869) - ([b81802d](https://github.com/BoltzExchange/boltz-web-app/commit/b81802d23c1c598caa45b66e448d90dc9911e6a3))
+
+---
 ## [1.7.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.0..v1.7.1) - 2025-03-13
 
 ### Miscellaneous Chores
