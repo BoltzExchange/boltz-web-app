@@ -12,6 +12,7 @@ export default [
             "dist",
             "regtest",
             "coverage",
+            "build/dist",
             "node_modules",
             "dnssec-prover",
             "vite.config.mjs",
