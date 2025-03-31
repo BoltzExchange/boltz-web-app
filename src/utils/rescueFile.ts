@@ -6,6 +6,12 @@ import {
 } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english";
 
+export enum Errors {
+    InvalidFile = "invalid file",
+    NotAllElementsHaveAnId = "not all elements have an id",
+    InvalidMnemonic = "invalid mnemonic",
+}
+
 export type RescueFile = {
     mnemonic: string;
 };
@@ -35,11 +41,11 @@ export const validateRescueFile = (
     data: Record<string, string | object | number | boolean>,
 ): RescueFile => {
     if (!("mnemonic" in data)) {
-        throw "invalid rescue file";
+        throw Errors.InvalidFile;
     }
 
     if (!validateMnemonic(data.mnemonic as string, wordlist)) {
-        throw "invalid mnemonic";
+        throw Errors.InvalidMnemonic;
     }
 
     getXpub(data as RescueFile);
