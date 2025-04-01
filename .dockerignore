@@ -1,1 +1,4 @@
 node_modules/
+regtest/
+build/dist/
+dist/

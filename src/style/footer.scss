@@ -42,8 +42,28 @@
         padding: 0 2px;
         opacity: 0.4;
         text-decoration: none;
+        font-size: 1.1em;
         &:hover {
             opacity: 1;
+        }
+    }
+}
+
+.legal-nav {
+    @extend .footer-nav;
+    margin-top: 0.25rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9em;
+
+    a {
+        margin: 0 0.35rem;
+
+        &:first-child {
+            margin-left: 0;
+        }
+
+        &:last-child {
+            margin-right: 0;
         }
     }
 }

@@ -1,8 +1,8 @@
 import "../style/loadingSpinner.scss";
 
-const LoadingSpinner = () => {
+const LoadingSpinner = (props: { class?: string }) => {
     return (
-        <div class="spinner">
+        <div class={`spinner ${props.class}`} data-testid="loading-spinner">
             <div class="bounce1" />
             <div class="bounce2" />
             <div class="bounce3" />

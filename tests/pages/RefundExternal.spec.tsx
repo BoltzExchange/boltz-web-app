@@ -3,15 +3,32 @@ import { userEvent } from "@testing-library/user-event";
 
 import i18n from "../../src/i18n/i18n";
 import RefundExternal, { RefundBtcLike } from "../../src/pages/RefundExternal";
-import { TestComponent, contextWrapper, globalSignals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    payContext,
+} from "../helper";
 
 /* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
 
 vi.mock("../../src/utils/boltzClient", () => {
     return {
-        getLockupTransaction: vi.fn(() => {
-            return { timeoutBlockHeight: 10, timeoutEta: 10 };
-        }),
+        getLockupTransaction: vi.fn(() =>
+            Promise.resolve({
+                id: "1",
+                hex: "0x",
+                timeoutBlockHeight: 10,
+                timeoutEta: 10,
+            }),
+        ),
+    };
+});
+
+vi.mock("../../src/utils/blockchain", () => {
+    return {
+        fetchUTXOsWithFailover: vi.fn(() => Promise.resolve([])),
+        fetchRawTxWithFailover: vi.fn(() => Promise.resolve([])),
     };
 });
 
@@ -59,6 +76,7 @@ describe("RefundExternal", () => {
                     privateKey: "",
                 });
             await user.upload(uploadInput, swapFile);
+            payContext.setRefundableUTXOs([{ hex: "0x0" }]);
 
             expect(
                 await screen.findAllByText(i18n.en.refund),

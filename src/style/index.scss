@@ -237,6 +237,7 @@ hr.spacer {
 }
 
 [data-status="swap.expired"],
+[data-status="swap.waitingForRefund"],
 [data-status="invoice.expired"],
 [data-status="transaction.refunded"],
 [data-status="invoice.failedToPay"],
@@ -311,6 +312,7 @@ hr.spacer {
 .btn-danger:hover {
     background: vars.$error;
 }
+.center,
 .btns {
     display: flex;
     align-items: center;
@@ -566,6 +568,20 @@ textarea {
     border-right: 0;
     background: #0003;
 }
+.refund {
+    max-width: fit-content;
+
+    p {
+        max-width: 480px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 488px) {
+    .frame {
+        max-width: 480px;
+    }
+}
 
 @media (min-width: 488px) {
     .frame {
@@ -573,6 +589,23 @@ textarea {
         margin-bottom: 56px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 16px;
+    }
+}
+
+@media (max-width: 488px) {
+    .frame-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-evenly;
+        font-size: 0.85rem;
+
+        #settings-cog {
+            position: unset;
+            margin-bottom: -2px;
+        }
+    }
+    .swap-status {
+        margin-top: 0;
     }
 }
 

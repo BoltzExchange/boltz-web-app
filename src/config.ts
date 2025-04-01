@@ -30,6 +30,7 @@ const defaults = {
 
 type Asset = {
     blockExplorerUrl?: Url;
+    blockExplorerApis?: Url[];
 
     rifRelay?: string;
     contracts?: {

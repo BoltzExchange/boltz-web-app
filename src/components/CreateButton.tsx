@@ -27,6 +27,7 @@ import { formatError } from "../utils/errors";
 import { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import { coalesceLn, isMobile } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
+import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import {
     SomeSwap,
     createChain,
@@ -34,6 +35,10 @@ import {
     createSubmarine,
 } from "../utils/swapCreator";
 import { validateResponse } from "../utils/validation";
+import LoadingSpinner from "./LoadingSpinner";
+
+// In milliseconds
+const invoiceFetchTimeout = 25_000;
 
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
@@ -255,6 +260,7 @@ const CreateButton = () => {
         useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
+    const [loading, setLoading] = createSignal(false);
     const [buttonClass, setButtonClass] = createSignal("btn");
     const [buttonLabel, setButtonLabel] = createSignal<ButtonLabelParams>({
         key: "create_swap",
@@ -346,77 +352,56 @@ const CreateButton = () => {
             swapType() === SwapType.Submarine &&
             (lnurl() !== "" || bolt12Offer() !== undefined) &&
             amountValid() &&
-            sendAmount().isGreaterThan(0)
+            sendAmount().isGreaterThan(0) &&
+            assetReceive() !== assetSend()
         );
     };
 
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
-            log.info("Fetching invoice from LNURL or BIP-353", lnurl());
+            try {
+                log.info("Fetching invoice from LNURL or BIP-353", lnurl());
 
-            const fetchResults = await Promise.allSettled([
-                (() => {
-                    return new Promise<string>(async (resolve, reject) => {
-                        const timeout = setTimeout(
-                            () => reject(new Error(t("timeout"))),
-                            5_000,
-                        );
+                const fetched = await firstResolved(
+                    [
+                        (async () => {
+                            try {
+                                return await fetchLnurl(
+                                    lnurl(),
+                                    Number(receiveAmount()),
+                                );
+                            } catch (e) {
+                                log.warn(
+                                    "Fetching invoice for LNURL failed:",
+                                    e,
+                                );
+                                throw formatError(e);
+                            }
+                        })(),
+                        (async () => {
+                            try {
+                                return await fetchBip353(
+                                    backend(),
+                                    lnurl(),
+                                    Number(receiveAmount()),
+                                );
+                            } catch (e) {
+                                log.warn(
+                                    "Fetching invoice from BIP-353 failed:",
+                                    e,
+                                );
+                                throw formatError(e);
+                            }
+                        })(),
+                    ].map((p) => promiseWithTimeout(p, invoiceFetchTimeout)),
+                );
 
-                        try {
-                            const res = await fetchLnurl(
-                                lnurl(),
-                                Number(receiveAmount()),
-                            );
-                            resolve(res);
-                        } catch (e) {
-                            log.warn("Fetching invoice for LNURL failed:", e);
-                            reject(new Error(formatError(e)));
-                        } finally {
-                            clearTimeout(timeout);
-                        }
-                    });
-                })(),
-                (() => {
-                    return new Promise<string>(async (resolve, reject) => {
-                        const timeout = setTimeout(
-                            () => reject(new Error(t("timeout"))),
-                            15_000,
-                        );
-
-                        try {
-                            const res = await fetchBip353(
-                                backend(),
-                                lnurl(),
-                                Number(receiveAmount()),
-                            );
-                            resolve(res);
-                        } catch (e) {
-                            log.warn(
-                                "Fetching invoice from BIP-353 failed:",
-                                e,
-                            );
-                            reject(new Error(formatError(e)));
-                        } finally {
-                            clearTimeout(timeout);
-                        }
-                    });
-                })(),
-            ]);
-
-            const fetched = fetchResults.find(
-                (res) => res.status === "fulfilled",
-            );
-            if (fetched !== undefined) {
-                setInvoice(fetched.value);
+                setInvoice(fetched);
                 setLnurl("");
                 setInvoiceValid(true);
-            } else {
-                // All failed, so we can safely cast the first one
-                notify(
-                    "error",
-                    (fetchResults[0] as PromiseRejectedResult).reason,
-                );
-                return;
+            } catch (e) {
+                log.warn("Fetching invoice failed", e);
+                notify("error", formatError(e));
             }
         } else {
             log.info("Fetching invoice from bolt12 offer", bolt12Offer());
@@ -439,6 +424,7 @@ const CreateButton = () => {
 
     const buttonClick = async () => {
         setButtonDisable(true);
+        setLoading(true);
         try {
             if (validWayToFetchInvoice()) {
                 await fetchInvoice();
@@ -486,6 +472,7 @@ const CreateButton = () => {
             notify("error", e);
         } finally {
             setButtonDisable(false);
+            setLoading(false);
         }
     };
 
@@ -504,7 +491,11 @@ const CreateButton = () => {
                 buttonDisable()
             }
             onClick={buttonClick}>
-            {getButtonLabel(buttonLabel())}
+            {loading() ? (
+                <LoadingSpinner class="inner-spinner" />
+            ) : (
+                getButtonLabel(buttonLabel())
+            )}
         </button>
     );
 };

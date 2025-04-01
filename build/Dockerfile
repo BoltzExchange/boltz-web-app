@@ -13,10 +13,8 @@ ARG NETWORK=mainnet
 RUN npm run $NETWORK
 RUN npm run build
 
-FROM nginx:alpine AS final
+FROM scratch AS output
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ARG NETWORK=mainnet
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-EXPOSE 80
+COPY --from=builder /app/dist /dist/${NETWORK}

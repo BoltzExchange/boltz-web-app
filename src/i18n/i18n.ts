@@ -27,6 +27,8 @@ const dict = {
         support: "Support",
         documentation: "Docs",
         onion: "Onion",
+        terms: "Terms",
+        privacy: "Privacy",
         blockexplorer: "open {{ typeLabel }}",
         blockexplorer_lockup_address: "lockup address",
         blockexplorer_lockup_tx: "lockup transaction",
@@ -249,6 +251,10 @@ const dict = {
         no_swaps_found: "No swaps found",
         rif_extra_fee:
             "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
+        no_refund_due: "No refund due",
+        back: "Back",
+        next: "Next",
+        pagination_info: "Page {{ start }} of {{ end }}",
     },
     de: {
         language: "Deutsch",
@@ -279,6 +285,8 @@ const dict = {
         support: "Hilfe",
         documentation: "Docs",
         onion: "Onion",
+        terms: "Nutzungsbedingungen",
+        privacy: "Datenschutz",
         blockexplorer: "{{ typeLabel }} anzeigen",
         blockexplorer_lockup_address: "Lockupadresse",
         blockexplorer_lockup_tx: "Lockuptransaktion",
@@ -511,6 +519,10 @@ const dict = {
         no_swaps_found: "Keine Swaps gefunden",
         rif_extra_fee:
             "Wallet enthält nicht genug RBTC, Gebühr um RIF-Relay-Gebühr angepasst!",
+        no_refund_due: "Kein Refund fällig",
+        back: "Zurück",
+        next: "Weiter",
+        pagination_info: "Seite {{ start }} von {{ end }}",
     },
     es: {
         language: "Español",
@@ -540,6 +552,8 @@ const dict = {
         support: "Ayuda",
         documentation: "Docs",
         onion: "Onion",
+        terms: "Términos",
+        privacy: "Privacidad",
         blockexplorer: "Ver en {{ typeLabel }}",
         blockexplorer_lockup_address: "Dirección Lockup",
         blockexplorer_lockup_tx: "Transacción de Lockup",
@@ -769,6 +783,10 @@ const dict = {
         no_swaps_found: "No se encontraron swaps",
         rif_extra_fee:
             "El monedero no contiene suficientes RBTC, comisión ajustado para incluir comisión de RIF Relay!",
+        no_refund_due: "Sin reembolso pendiente",
+        back: "Atrás",
+        next: "Siguiente",
+        pagination_info: "Página {{ start }} de {{ end }}",
     },
     zh: {
         language: "中文",
@@ -797,6 +815,8 @@ const dict = {
         support: "支持",
         documentation: "文档",
         onion: "洋葱",
+        terms: "条款",
+        privacy: "隐私",
         blockexplorer: "打开{{ typeLabel }}",
         blockexplorer_lockup_address: "锁仓地址",
         blockexplorer_lockup_tx: "锁仓交易",
@@ -1001,6 +1021,10 @@ const dict = {
         rescue_key: "救援钥匙",
         no_swaps_found: "未找到交换",
         rif_extra_fee: "钱包中没有足够的 RBTC，费用已调整为包括 RIF 中继费！",
+        no_refund_due: "暂无退款",
+        back: "回一页",
+        next: "下一页",
+        pagination_info: "{{ start }} 的 {{ end }} 页",
     },
     ja: {
         language: "日本語",
@@ -1030,6 +1054,8 @@ const dict = {
         support: "ヘルプ",
         documentation: "ドキュメント",
         onion: "Onion",
+        terms: "利用規約",
+        privacy: "プライバシー",
         blockexplorer: "ブロックエクスプローラーで表示{{ typeLabel }}",
         blockexplorer_lockup_address: "ロックアップアドレス",
         blockexplorer_lockup_tx: "ロックアップトランザクション",
@@ -1257,6 +1283,10 @@ const dict = {
         no_swaps_found: "スワップが見つからない",
         rif_extra_fee:
             "ウォレットに十分なRBTCがないため、RIFリレー手数料を含めて手数料を調整！",
+        no_refund_due: "返金予定なし",
+        back: "戻る",
+        next: "次へ",
+        pagination_info: "{{ end }} ページ中 {{ start }} ページ目",
     },
     ru: {
         language: "Русский",
@@ -1286,6 +1316,8 @@ const dict = {
         support: "Поддержка",
         documentation: "Документация",
         onion: "Onion",
+        terms: "Условия",
+        privacy: "Приватность",
         blockexplorer: "открыть {{ typeLabel }}",
         blockexplorer_lockup_address: "адрес блокировки",
         blockexplorer_lockup_tx: "транзакцию блокировки",
@@ -1515,6 +1547,10 @@ const dict = {
         no_swaps_found: "Свопы не найдены",
         rif_extra_fee:
             "В кошельке недостаточно RBTC, комиссия скорректирована с учетом комиссии за RIF Relay!",
+        no_refund_due: "Возврат не ожидаем",
+        back: "Назад",
+        next: "Вперед",
+        pagination_info: "Страница {{ start }} из {{ end }}",
     },
 };
 

@@ -180,9 +180,14 @@ const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
     return data;
 };
 
-const fetchLnurlInvoice = async (amount: number, data: LnurlResponse) => {
-    log.debug("fetching invoice", `${data.callback}?amount=${amount}`);
-    const res = await fetch(`${data.callback}?amount=${amount}`).then(
+export const fetchLnurlInvoice = async (
+    amount: number,
+    data: LnurlResponse,
+) => {
+    const url = new URL(data.callback);
+    url.searchParams.set("amount", amount.toString());
+    log.debug("fetching invoice", url.toString());
+    const res = await fetch(url.toString()).then(
         checkResponse<LnurlCallbackResponse>,
     );
     log.debug("fetched invoice", res);
@@ -241,7 +246,9 @@ const isValidBech32 = (data: string) => {
 const emailRegex =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
-export const isLnurl = (data: string) => {
+export const isLnurl = (data: string | null | undefined) => {
+    if (typeof data !== "string") return false;
+
     data = data.toLowerCase().replace(invoicePrefix, "");
     return (
         (data.includes("@") && emailRegex.test(data)) ||

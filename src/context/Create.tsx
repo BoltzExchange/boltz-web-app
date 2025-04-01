@@ -16,13 +16,14 @@ import { BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { DictKey } from "../i18n/i18n";
 import { getAddress, getNetwork } from "../utils/compat";
+import { isLnurl } from "../utils/invoice";
 import { getUrlParam, urlParamIsSet } from "../utils/urlParams";
 
 const setDestination = (
     setAssetReceive: Setter<string>,
     setInvoice: Setter<string>,
     setOnchainAddress: Setter<string>,
-) => {
+): { destinationAsset: string | null; destination: string | null } => {
     const isValidForAsset = (
         asset: typeof BTC | typeof LBTC,
         address: string,
@@ -45,19 +46,19 @@ const setDestination = (
         if (isValidForAsset(BTC, destination)) {
             setAssetReceive(BTC);
             setOnchainAddress(destination);
-            return BTC;
+            return { destinationAsset: BTC, destination };
         } else if (isValidForAsset(LBTC, destination)) {
             setAssetReceive(LBTC);
             setOnchainAddress(destination);
-            return LBTC;
+            return { destinationAsset: LBTC, destination };
         } else {
             setAssetReceive(LN);
             setInvoice(destination);
-            return LN;
+            return { destinationAsset: LN, destination };
         }
     }
 
-    return undefined;
+    return { destinationAsset: null, destination: null };
 };
 
 const isValidAsset = (asset: string) =>
@@ -84,7 +85,7 @@ const handleUrlParams = (
     setSendAmount: Setter<BigNumber>,
     setReceiveAmount: Setter<BigNumber>,
 ) => {
-    const destinationAsset = setDestination(
+    const { destinationAsset, destination } = setDestination(
         setAssetReceive,
         setInvoice,
         setOnchainAddress,
@@ -103,8 +104,8 @@ const handleUrlParams = (
         }
     }
 
-    // Lightning invoice amounts take precedence
-    if (destinationAsset !== LN) {
+    // Lightning invoice amounts take precedence unless this is a LN addr
+    if (destinationAsset !== LN || isLnurl(destination)) {
         const sendAmount = parseAmount(getUrlParam("sendAmount"));
         if (sendAmount) {
             setAmountChanged(Side.Send);
