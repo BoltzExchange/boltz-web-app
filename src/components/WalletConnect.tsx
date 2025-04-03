@@ -64,7 +64,7 @@ export const WalletConnect = () => {
             features: {
                 email: false,
                 socials: false,
-                analytics: true,
+                analytics: false,
             },
         });
 
