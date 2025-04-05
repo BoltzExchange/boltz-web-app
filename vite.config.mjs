@@ -25,6 +25,11 @@ export default defineConfig({
         mkcert(),
         nodePolyfills(),
     ],
+    resolve: {
+        alias: {
+            src: path.resolve(__dirname, "src"),
+        },
+    },
     server: {
         https: true,
         cors: { origin: "*" },
