@@ -5,7 +5,7 @@ RUN npm i -g npm
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY . .
 
 ARG NETWORK=mainnet
