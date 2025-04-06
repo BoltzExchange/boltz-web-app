@@ -4,7 +4,7 @@ import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import { Route, RouteSectionProps, Router } from "@solidjs/router";
 import log from "loglevel";
-import { Match, Show, Switch, createSignal, onMount } from "solid-js";
+import { Show } from "solid-js";
 import { render } from "solid-js/web";
 
 import Chatwoot from "./chatwoot";
@@ -12,7 +12,7 @@ import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
-import { config, setConfig } from "./config";
+import { config } from "./config";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider, useGlobalContext } from "./context/Global";
 import { PayProvider } from "./context/Pay";
@@ -48,54 +48,35 @@ const isEmbedded = () => {
     return useGlobalContext().embedded();
 };
 
+log.setLevel(config.loglevel as log.LogLevelDesc);
+document.body.classList.remove("loading");
+
 const App = (props: RouteSectionProps) => {
     initEcc();
-    const [configError, setConfigError] = createSignal<boolean>(null);
-
-    onMount(async () => {
-        try {
-            const response = await fetch("/config.json");
-            const data = await response.json();
-            setConfig(data);
-            setConfigError(false);
-        } catch (error) {
-            setConfigError(true);
-            console.error("Error loading config:", error);
-        }
-        document.body.classList.remove("loading");
-    });
-
     return (
-        <Switch>
-            <Match when={configError() === true}>
-                <h1>Invalid or missing app configuration</h1>
-            </Match>
-            <Match when={configError() === false}>
-                <GlobalProvider>
-                    <Web3SignerProvider>
-                        <CreateProvider>
-                            <PayProvider>
-                                <RescueProvider>
-                                    <SwapChecker />
-                                    <Chatwoot />
-                                    <Show when={!isEmbedded()}>
-                                        <Nav
-                                            isPro={config.isPro}
-                                            network={config.network}
-                                        />
-                                    </Show>
-                                    {props.children}
-                                    <Notification />
-                                    <Show when={!isEmbedded()}>
-                                        <Footer />
-                                    </Show>
-                                </RescueProvider>
-                            </PayProvider>
-                        </CreateProvider>
-                    </Web3SignerProvider>
-                </GlobalProvider>
-            </Match>
-        </Switch>
+        <GlobalProvider>
+            <Web3SignerProvider>
+                <CreateProvider>
+                    <PayProvider>
+                        <RescueProvider>
+                            <SwapChecker />
+                            <Chatwoot />
+                            <Show when={!isEmbedded()}>
+                                <Nav
+                                    isPro={config.isPro}
+                                    network={config.network}
+                                />
+                            </Show>
+                            {props.children}
+                            <Notification />
+                            <Show when={!isEmbedded()}>
+                                <Footer />
+                            </Show>
+                        </RescueProvider>
+                    </PayProvider>
+                </CreateProvider>
+            </Web3SignerProvider>
+        </GlobalProvider>
     );
 };
 

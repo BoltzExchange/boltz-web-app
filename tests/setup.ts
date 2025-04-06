@@ -1,8 +1,6 @@
-import { setConfig } from "../src/config";
-import regtest from "../src/configs/regtest.json";
+import log from "loglevel";
 
-regtest.loglevel = "error";
-setConfig(regtest as never);
+log.setLevel("error");
 
 vi.mock("ethers", () => ({
     JsonRpcProvider: vi.fn(),

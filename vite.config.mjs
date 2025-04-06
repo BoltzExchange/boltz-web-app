@@ -17,6 +17,24 @@ const packageJson = JSON.parse(
     fs.readFileSync(path.join(__dirname, "package.json"), "utf8"),
 );
 
+const configFile = path.resolve(__dirname, "src/config.ts");
+
+if (!fs.existsSync(configFile)) {
+    console.error(`
+❌ Missing configuration file: src/config.ts
+
+Please run one of the following commands to generate a config file:
+    - \x1b[36mnpm run mainnet\x1b[0m
+    - \x1b[36mnpm run regtest\x1b[0m
+    - \x1b[36mnpm run testnet\x1b[0m
+    - \x1b[36mnpm run beta\x1b[0m
+    - \x1b[36mnpm run pro\x1b[0m
+  
+Then start the dev server again.
+  `);
+    process.exit(1);
+}
+
 export default defineConfig({
     plugins: [
         solidPlugin(),
@@ -25,6 +43,11 @@ export default defineConfig({
         mkcert(),
         nodePolyfills(),
     ],
+    resolve: {
+        alias: {
+            src: path.resolve(__dirname, "src"),
+        },
+    },
     server: {
         https: true,
         cors: { origin: "*" },
