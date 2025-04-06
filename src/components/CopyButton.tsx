@@ -3,6 +3,7 @@ import { IoCheckmark } from "solid-icons/io";
 import type { Accessor } from "solid-js";
 import { Show, createEffect, createSignal, mergeProps } from "solid-js";
 
+import { copyIconTimeout } from "../consts/CopyContent";
 import { useGlobalContext } from "../context/Global";
 import type { DictKey } from "../i18n/i18n";
 import { clipboard } from "../utils/helper";
@@ -32,7 +33,7 @@ const CopyButton = (props: {
         setTimeout(() => {
             setButtonClass(merged.btnClass);
             setButtonActive(false);
-        }, 600);
+        }, copyIconTimeout);
     };
 
     return (
