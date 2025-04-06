@@ -143,7 +143,7 @@ const validateReverse = async (
     const compareTree = reverseSwapTree(
         swap.assetReceive === "L-BTC",
         preimageHash,
-        ourKeys.publicKey,
+        Buffer.from(ourKeys.publicKey),
         theirPublicKey,
         swap.timeoutBlockHeight,
     );
@@ -190,7 +190,7 @@ const validateSubmarine = async (
         swap.assetSend === "L-BTC",
         buffer.from(invoiceData.preimageHash, "hex"),
         theirPublicKey,
-        ourKeys.publicKey,
+        Buffer.from(ourKeys.publicKey),
         swap.timeoutBlockHeight,
     );
 
@@ -256,8 +256,12 @@ const validateChainSwap = async (
         const compareTree = reverseSwapTree(
             asset === LBTC,
             preimageHash,
-            side === Side.Send ? theirPublicKey : ourKeys.publicKey,
-            side === Side.Send ? ourKeys.publicKey : theirPublicKey,
+            side === Side.Send
+                ? theirPublicKey
+                : Buffer.from(ourKeys.publicKey),
+            side === Side.Send
+                ? Buffer.from(ourKeys.publicKey)
+                : theirPublicKey,
             details.timeoutBlockHeight,
         );
 

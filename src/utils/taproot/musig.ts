@@ -4,7 +4,7 @@ import type { RefundDetails } from "boltz-core";
 import { Musig, TaprootUtils } from "boltz-core";
 import type { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
 import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/dist/lib/liquid";
-import type { Buffer } from "buffer";
+import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
 import type { ECPairInterface } from "ecpair";
 import type { Transaction as LiquidTransaction } from "liquidjs-lib";
@@ -22,7 +22,7 @@ export const createMusig = async (
     return new Musig(secpZkp, ourKeys, randomBytes(32), [
         // The key of Boltz always comes first
         theirPublicKey,
-        ourKeys.publicKey,
+        Buffer.from(ourKeys.publicKey),
     ]);
 };
 
