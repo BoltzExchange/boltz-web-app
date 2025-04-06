@@ -23,7 +23,7 @@ const setDestination = (
     setAssetReceive: Setter<string>,
     setInvoice: Setter<string>,
     setOnchainAddress: Setter<string>,
-): { destinationAsset: string | null; destination: string | null } => {
+): { destinationAsset?: string; destination?: string } => {
     const isValidForAsset = (
         asset: typeof BTC | typeof LBTC,
         address: string,
@@ -58,7 +58,7 @@ const setDestination = (
         }
     }
 
-    return { destinationAsset: null, destination: null };
+    return { destinationAsset: undefined, destination: undefined };
 };
 
 const isValidAsset = (asset: string) =>
