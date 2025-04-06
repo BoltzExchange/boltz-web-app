@@ -52,7 +52,7 @@
         "@bitcoinerlab/secp256k1": "^1.2.0",
         "@fontsource/noto-mono": "^5.2.5",
         "@fontsource/noto-sans": "^5.2.6",
-        "@ledgerhq/hw-app-eth": "^6.43.1",
+        "@ledgerhq/hw-app-eth": "^6.44.0",
         "@ledgerhq/hw-transport-webhid": "^6.30.0",
         "@reown/appkit": "1.6.9",
         "@reown/appkit-adapter-ethers": "1.6.9",
