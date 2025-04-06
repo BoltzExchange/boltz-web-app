@@ -1,14 +1,8 @@
-import type { JSX } from "solid-js";
-import {
-    Accessor,
-    Setter,
-    createContext,
-    createSignal,
-    useContext,
-} from "solid-js";
+import type { Accessor, JSX, Setter } from "solid-js";
+import { createContext, createSignal, useContext } from "solid-js";
 
 import type { RescuableSwap } from "../utils/boltzClient";
-import { RescueFile } from "../utils/rescueFile";
+import type { RescueFile } from "../utils/rescueFile";
 
 export type RescueContextType = {
     rescueFile: Accessor<RescueFile>;

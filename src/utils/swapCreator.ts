@@ -1,16 +1,18 @@
-import BigNumber from "bignumber.js";
+import type BigNumber from "bignumber.js";
 import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { newKeyFn } from "../context/Global";
-import {
+import type { newKeyFn } from "../context/Global";
+import type {
     ChainSwapCreatedResponse,
     Pairs,
     ReverseCreatedResponse,
     SubmarineCreatedResponse,
+} from "./boltzClient";
+import {
     createChainSwap,
     createReverseSwap,
     createSubmarineSwap,

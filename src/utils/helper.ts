@@ -1,12 +1,13 @@
 import { Buffer } from "buffer";
-import { ECPairInterface } from "ecpair";
+import type { ECPairInterface } from "ecpair";
 
 import { chooseUrl, config } from "../config";
 import { BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
-import { defaultReferral, deriveKeyFn } from "../context/Global";
-import {
+import type { deriveKeyFn } from "../context/Global";
+import { defaultReferral } from "../context/Global";
+import type {
     ChainPairTypeTaproot,
     Pairs,
     ReversePairTypeTaproot,
@@ -14,7 +15,12 @@ import {
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
 import { formatError } from "./errors";
-import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
+import type {
+    ChainSwap,
+    ReverseSwap,
+    SomeSwap,
+    SubmarineSwap,
+} from "./swapCreator";
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;

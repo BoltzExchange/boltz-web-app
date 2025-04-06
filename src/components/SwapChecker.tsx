@@ -10,7 +10,8 @@ import {
     swapStatusSuccess,
 } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
-import { SwapStatusTransaction, usePayContext } from "../context/Pay";
+import type { SwapStatusTransaction } from "../context/Pay";
+import { usePayContext } from "../context/Pay";
 import {
     getChainSwapTransactions,
     getReverseTransaction,
@@ -23,12 +24,12 @@ import {
 } from "../utils/claim";
 import { formatError } from "../utils/errors";
 import { getApiUrl } from "../utils/helper";
-import {
+import type {
     ChainSwap,
     ReverseSwap,
     SubmarineSwap,
-    getRelevantAssetForSwap,
 } from "../utils/swapCreator";
+import { getRelevantAssetForSwap } from "../utils/swapCreator";
 
 type SwapStatus = {
     id: string;

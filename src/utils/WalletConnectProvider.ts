@@ -1,7 +1,7 @@
 import type { BrowserProvider } from "ethers";
-import { Setter } from "solid-js";
+import type { Setter } from "solid-js";
 
-import { EIP1193Provider } from "../consts/Types";
+import type { EIP1193Provider } from "../consts/Types";
 import type { DictKey } from "../i18n/i18n";
 
 class WalletConnectProvider implements EIP1193Provider {

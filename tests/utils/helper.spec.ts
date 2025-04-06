@@ -1,4 +1,4 @@
-import { Pairs } from "../../src/utils/boltzClient";
+import type { Pairs } from "../../src/utils/boltzClient";
 import { ECPair } from "../../src/utils/ecpair";
 import { getPair, parsePrivateKey } from "../../src/utils/helper";
 

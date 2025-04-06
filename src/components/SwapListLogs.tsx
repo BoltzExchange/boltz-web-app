@@ -1,10 +1,11 @@
 import { useNavigate } from "@solidjs/router";
-import { Accessor, For, Show, createMemo } from "solid-js";
+import type { Accessor } from "solid-js";
+import { For, Show, createMemo } from "solid-js";
 
-import { AssetType } from "../consts/Assets";
+import type { AssetType } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
-import { LogRefundData } from "../utils/contractLogs";
+import type { LogRefundData } from "../utils/contractLogs";
 import { cropString } from "../utils/helper";
 
 const AssetIcon = (props: { asset: AssetType }) => (

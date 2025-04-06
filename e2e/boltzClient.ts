@@ -3,7 +3,7 @@ import { mnemonicToSeedSync } from "@scure/bip39";
 import axios from "axios";
 import fs from "fs";
 
-import { RescuableSwap } from "../src/utils/boltzClient";
+import type { RescuableSwap } from "../src/utils/boltzClient";
 
 const boltzEndpoint = "http://localhost:9001";
 

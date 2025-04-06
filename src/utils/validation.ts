@@ -1,28 +1,34 @@
 import { BigNumber } from "bignumber.js";
 import { crypto } from "bitcoinjs-lib";
+import type { Types } from "boltz-core";
 import {
     Scripts,
     SwapTreeSerializer,
-    Types,
     compareTrees,
     reverseSwapTree,
     swapTree,
 } from "boltz-core";
 import { default as BufferBrowser } from "buffer";
-import { ECPairInterface } from "ecpair";
-import { BaseContract, ethers } from "ethers";
+import type { ECPairInterface } from "ecpair";
+import type { BaseContract } from "ethers";
+import { ethers } from "ethers";
 import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
-import { deriveKeyFn } from "../context/Global";
+import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
-import { ChainSwapDetails } from "./boltzClient";
+import type { ChainSwapDetails } from "./boltzClient";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import { ecc } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
-import { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
+import type {
+    ChainSwap,
+    ReverseSwap,
+    SomeSwap,
+    SubmarineSwap,
+} from "./swapCreator";
 import { createMusig, tweakMusig } from "./taproot/musig";
 
 // TODO: sanity check timeout block height?

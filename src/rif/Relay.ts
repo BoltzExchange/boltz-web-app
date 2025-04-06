@@ -1,6 +1,6 @@
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
-import { EnvelopingRequest } from "./types/TypedRequestData";
+import type { EnvelopingRequest } from "./types/TypedRequestData";
 
 export type Metadata = {
     signature?: string;

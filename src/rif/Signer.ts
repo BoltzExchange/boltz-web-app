@@ -1,15 +1,17 @@
-import { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { Signer, ZeroAddress } from "ethers";
+import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { Signer } from "ethers";
+import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import { getForwarder, getSmartWalletFactory } from "./Contracts";
-import { Metadata, estimate, getChainInfo, relay } from "./Relay";
+import type { Metadata } from "./Relay";
+import { estimate, getChainInfo, relay } from "./Relay";
 import { calculateGasPrice, getValidUntilTime, isDeployRequest } from "./Utils";
+import type { EnvelopingRequest } from "./types/TypedRequestData";
 import {
-    EnvelopingRequest,
     deployRequestType,
     getEnvelopingRequestDataV4Field,
     relayRequestType,

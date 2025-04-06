@@ -1,21 +1,14 @@
-import {
-    Accessor,
-    Match,
-    Show,
-    Switch,
-    createEffect,
-    createSignal,
-} from "solid-js";
+import type { Accessor } from "solid-js";
+import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 
 import { SwapType } from "../consts/Enums";
-import {
+import type {
     ChainSwap,
     ReverseSwap,
     SomeSwap,
     SubmarineSwap,
-    getRelevantAssetForSwap,
-    isRsk,
 } from "../utils/swapCreator";
+import { getRelevantAssetForSwap, isRsk } from "../utils/swapCreator";
 import BlockExplorer from "./BlockExplorer";
 
 const ChainSwapLink = (props: {

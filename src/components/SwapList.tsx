@@ -1,11 +1,12 @@
 import { useNavigate } from "@solidjs/router";
 import { BiRegularTrash } from "solid-icons/bi";
-import { Accessor, For, Show, createEffect, createSignal } from "solid-js";
+import type { Accessor } from "solid-js";
+import { For, Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 import type { RescuableSwap } from "../utils/boltzClient";
-import { SomeSwap } from "../utils/swapCreator";
+import type { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
 type Swap = (SomeSwap | RescuableSwap) & { disabled?: boolean };

@@ -4,7 +4,7 @@ import { createSignal } from "solid-js";
 
 import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { SomeSwap } from "./swapCreator";
+import type { SomeSwap } from "./swapCreator";
 
 export const latestStorageVersion = 1;
 

@@ -1,4 +1,5 @@
-import init, { WASMProofBuilder } from "./dnssec_prover_wasm.js";
+import type { WASMProofBuilder } from "./dnssec_prover_wasm.js";
+import init from "./dnssec_prover_wasm.js";
 import * as wasm from "./dnssec_prover_wasm.js";
 
 /*

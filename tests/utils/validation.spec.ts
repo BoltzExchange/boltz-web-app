@@ -1,4 +1,4 @@
-import { Contract } from "ethers";
+import type { Contract } from "ethers";
 import log from "loglevel";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";

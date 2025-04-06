@@ -1,7 +1,7 @@
 import { useParams } from "@solidjs/router";
 import log from "loglevel";
+import type { Accessor } from "solid-js";
 import {
-    Accessor,
     Match,
     Show,
     Switch,
@@ -39,7 +39,7 @@ import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
 import { getRefundableUTXOs, isSwapRefundable } from "../utils/refund";
-import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();

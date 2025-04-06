@@ -2,8 +2,8 @@ import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
 import { SwapType } from "../consts/Enums";
-import { LockupTransaction } from "./boltzClient";
-import { ChainSwap, SubmarineSwap } from "./swapCreator";
+import type { LockupTransaction } from "./boltzClient";
+import type { ChainSwap, SubmarineSwap } from "./swapCreator";
 
 export type UTXO = {
     txid: string;

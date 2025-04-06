@@ -1,6 +1,6 @@
-import { Accessor } from "solid-js";
+import type { Accessor } from "solid-js";
 
-import { Side } from "../consts/Enums";
+import type { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import "../style/asset.scss";
 

@@ -3,8 +3,8 @@ import { Show } from "solid-js";
 
 import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { RescuableSwap } from "../utils/boltzClient";
-import { SomeSwap } from "../utils/swapCreator";
+import type { RescuableSwap } from "../utils/boltzClient";
+import type { SomeSwap } from "../utils/swapCreator";
 
 export const SwapIcons = (props: { swap: SomeSwap | RescuableSwap }) => {
     return (

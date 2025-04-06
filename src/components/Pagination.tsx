@@ -1,12 +1,6 @@
 import { useSearchParams } from "@solidjs/router";
-import {
-    Accessor,
-    For,
-    Setter,
-    createMemo,
-    mergeProps,
-    onMount,
-} from "solid-js";
+import type { Accessor, Setter } from "solid-js";
+import { For, createMemo, mergeProps, onMount } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/pagination.scss";

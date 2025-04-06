@@ -1,10 +1,11 @@
+import type * as SolidRouter from "@solidjs/router";
 import { render, screen } from "@solidjs/testing-library";
 
 import { BTC, LBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import { swapStatusFailed } from "../../src/consts/SwapStatus";
 import Pay from "../../src/pages/Pay";
-import { ChainSwap, ReverseSwap } from "../../src/utils/swapCreator";
+import type { ChainSwap, ReverseSwap } from "../../src/utils/swapCreator";
 import { TestComponent } from "../helper";
 import { contextWrapper, payContext } from "../helper";
 
@@ -15,10 +16,7 @@ vi.mock("../../src/utils/boltzClient", () => ({
 }));
 
 vi.mock("@solidjs/router", async () => {
-    const actual =
-        await vi.importActual<typeof import("@solidjs/router")>(
-            "@solidjs/router",
-        );
+    const actual = await vi.importActual<typeof SolidRouter>("@solidjs/router");
     return {
         ...actual,
         useParams: vi.fn(() => ({ id: "123" })), // Mock params.id

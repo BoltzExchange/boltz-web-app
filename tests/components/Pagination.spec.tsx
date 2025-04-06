@@ -4,7 +4,7 @@ import { createSignal } from "solid-js";
 import Pagination from "../../src/components/Pagination";
 import { BTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
-import { SubmarineSwap } from "../../src/utils/swapCreator";
+import type { SubmarineSwap } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper } from "../helper";
 
 const lockupAddress = "2N4Q5FhU2497BryFfUgbqkAJE87aKHUhXMp";
