@@ -5,7 +5,7 @@ import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
 import { BTC, LBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
-import { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
+import type { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 describe("BlockExplorerLink", () => {

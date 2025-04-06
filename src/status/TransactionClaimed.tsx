@@ -13,7 +13,7 @@ import { getSubmarinePreimage } from "../utils/boltzClient";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";
-import { SubmarineSwap } from "../utils/swapCreator";
+import type { SubmarineSwap } from "../utils/swapCreator";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();

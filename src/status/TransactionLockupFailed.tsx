@@ -2,9 +2,8 @@ import BigNumber from "bignumber.js";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
+import type { Accessor, Setter } from "solid-js";
 import {
-    Accessor,
-    Setter,
     Show,
     createEffect,
     createResource,
@@ -17,7 +16,7 @@ import RefundButton from "../components/RefundButton";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { DictKey } from "../i18n/i18n";
+import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import {
     acceptChainSwapNewQuote,
@@ -33,7 +32,7 @@ import {
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { parseBlindingKey } from "../utils/helper";
-import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Amount = (props: { label: DictKey; amount: number }) => {
     const { t, denomination, separator } = useGlobalContext();

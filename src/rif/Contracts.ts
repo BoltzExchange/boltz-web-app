@@ -1,4 +1,5 @@
-import { Contract, Signer } from "ethers";
+import type { Signer } from "ethers";
+import { Contract } from "ethers";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";

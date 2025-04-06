@@ -2,15 +2,8 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 import { ImArrowLeft2, ImArrowRight2 } from "solid-icons/im";
 import { IoClose } from "solid-icons/io";
-import {
-    Accessor,
-    For,
-    Setter,
-    Show,
-    createMemo,
-    createResource,
-    createSignal,
-} from "solid-js";
+import type { Accessor, Setter } from "solid-js";
+import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
@@ -23,8 +16,8 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import type { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import {
-    HardwareSigner,
     derivationPaths,
     derivationPathsMainnet,
     derivationPathsTestnet,

@@ -1,39 +1,35 @@
 /* @refresh skip */
 import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
-import { ECPairInterface } from "ecpair";
+import type { ECPairInterface } from "ecpair";
 import localforage from "localforage";
 import log from "loglevel";
 import {
-    Accessor,
-    Setter,
     createContext,
     createEffect,
     createMemo,
     createSignal,
     useContext,
 } from "solid-js";
-import type { JSX } from "solid-js";
+import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
 import { Denomination } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
-import dict, { DictKey } from "../i18n/i18n";
-import { Pairs, getPairs } from "../utils/boltzClient";
+import type { DictKey } from "../i18n/i18n";
+import dict from "../i18n/i18n";
+import type { Pairs } from "../utils/boltzClient";
+import { getPairs } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
-import {
-    RescueFile,
-    deriveKey,
-    generateRescueFile,
-    getXpub,
-} from "../utils/rescueFile";
-import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { RescueFile } from "../utils/rescueFile";
+import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
+import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import { getUrlParam, isEmbed } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";

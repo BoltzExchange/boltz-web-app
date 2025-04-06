@@ -1,4 +1,4 @@
-import log from "loglevel";
+import type log from "loglevel";
 
 type Asset = {
     blockExplorerUrl?: Url;

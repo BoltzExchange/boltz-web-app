@@ -1,7 +1,7 @@
-import { Transaction } from "bitcoinjs-lib";
+import type { Transaction } from "bitcoinjs-lib";
 import { Musig } from "boltz-core";
 import { Buffer } from "buffer";
-import { Transaction as LiquidTransaction } from "liquidjs-lib";
+import type { Transaction as LiquidTransaction } from "liquidjs-lib";
 
 import { config } from "../config";
 import { SwapType } from "../consts/Enums";

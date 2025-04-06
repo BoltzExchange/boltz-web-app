@@ -5,7 +5,7 @@ import {
     getXpub,
     validateRescueFile,
 } from "../../src/utils/rescueFile";
-import { RescueFile } from "../../src/utils/rescueFile";
+import type { RescueFile } from "../../src/utils/rescueFile";
 
 describe("rescueFile", () => {
     const rescueFile: RescueFile = {

@@ -1,16 +1,11 @@
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import {
-    BytesLike,
-    Contract,
-    JsonRpcProvider,
-    Result,
-    Signer,
-    solidityPackedKeccak256,
-} from "ethers";
+import type { BytesLike, Result, Signer } from "ethers";
+import { Contract, JsonRpcProvider, solidityPackedKeccak256 } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
-import { AssetType, RBTC } from "../consts/Assets";
+import type { AssetType } from "../consts/Assets";
+import { RBTC } from "../consts/Assets";
 import { EtherSwapAbi } from "../context/Web3";
 import { weiToSatoshi } from "./rootstock";
 

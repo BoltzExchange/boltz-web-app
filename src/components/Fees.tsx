@@ -12,7 +12,7 @@ import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import {
+import type {
     ChainPairTypeTaproot,
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,

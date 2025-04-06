@@ -10,7 +10,7 @@ import { downloadJson, getBackupFileName } from "../utils/download";
 import { isIos } from "../utils/helper";
 import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
 import { Errors, validateRescueFile } from "../utils/rescueFile";
-import { SomeSwap } from "../utils/swapCreator";
+import type { SomeSwap } from "../utils/swapCreator";
 
 type BackupFileType = { version: number; mnemonic: string; swaps: SomeSwap[] };
 

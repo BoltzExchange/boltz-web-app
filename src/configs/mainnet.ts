@@ -1,4 +1,5 @@
-import { Config, baseConfig, chooseUrl } from "src/configs/base";
+import type { Config } from "src/configs/base";
+import { baseConfig, chooseUrl } from "src/configs/base";
 
 const config = {
     ...baseConfig,

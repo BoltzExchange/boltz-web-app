@@ -10,7 +10,7 @@ import { useGlobalContext } from "../context/Global";
 import "../style/tabs.scss";
 import { isMobile } from "../utils/helper";
 import { createRefundList } from "../utils/refund";
-import { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 const swapsPerPage = 10;

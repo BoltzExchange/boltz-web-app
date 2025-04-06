@@ -2,7 +2,8 @@
 import "@fontsource/noto-mono";
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
-import { Route, RouteSectionProps, Router } from "@solidjs/router";
+import type { RouteSectionProps } from "@solidjs/router";
+import { Route, Router } from "@solidjs/router";
 import log from "loglevel";
 import { Show } from "solid-js";
 import { render } from "solid-js/web";

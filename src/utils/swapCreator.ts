@@ -1,16 +1,18 @@
-import BigNumber from "bignumber.js";
+import type BigNumber from "bignumber.js";
 import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { newKeyFn } from "../context/Global";
-import {
+import type { newKeyFn } from "../context/Global";
+import type {
     ChainSwapCreatedResponse,
     Pairs,
     ReverseCreatedResponse,
     SubmarineCreatedResponse,
+} from "./boltzClient";
+import {
     createChainSwap,
     createReverseSwap,
     createSubmarineSwap,
@@ -104,7 +106,9 @@ export const createSubmarine = async (
         invoice,
         getPair(pairs, SwapType.Submarine, assetSend, assetReceive).hash,
         referralId,
-        key?.key.publicKey.toString("hex"),
+        key !== undefined
+            ? Buffer.from(key.key.publicKey).toString("hex")
+            : undefined,
     );
 
     return {
@@ -145,7 +149,9 @@ export const createReverse = async (
         crypto.sha256(preimage).toString("hex"),
         getPair(pairs, SwapType.Reverse, assetSend, assetReceive).hash,
         referralId,
-        key?.key.publicKey.toString("hex"),
+        key !== undefined
+            ? Buffer.from(key.key.publicKey).toString("hex")
+            : undefined,
         claimAddress,
     );
 
@@ -187,8 +193,12 @@ export const createChain = async (
             ? undefined
             : Number(sendAmount),
         crypto.sha256(preimage).toString("hex"),
-        claimKey?.key.publicKey.toString("hex"),
-        refundKey?.key.publicKey.toString("hex"),
+        claimKey !== undefined
+            ? Buffer.from(claimKey.key.publicKey).toString("hex")
+            : undefined,
+        refundKey !== undefined
+            ? Buffer.from(refundKey.key.publicKey).toString("hex")
+            : undefined,
         claimAddress,
         getPair(pairs, SwapType.Chain, assetSend, assetReceive).hash,
         referralId,

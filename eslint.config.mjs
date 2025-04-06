@@ -73,6 +73,7 @@ export default [
         rules: {
             "require-await": "error",
             "@typescript-eslint/no-floating-promises": "error",
+            "@typescript-eslint/consistent-type-imports": "warn",
 
             "@typescript-eslint/no-unsafe-call": "off",
             "@typescript-eslint/only-throw-error": "off",
