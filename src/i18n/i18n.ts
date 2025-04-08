@@ -159,7 +159,8 @@ const dict = {
         beta_caution: "BETA - USE WITH CAUTION!",
         pro: "pro",
         pro_banner: "BETA: AVAILABILITY NOT GUARANTEED",
-        warning_return: "Important: Return to this page after paying invoice",
+        warning_return:
+            "Return to this page after paying the invoice! The payment might show pending until you return to this page.",
         warning_expiry:
             "Make sure your transaction confirms within ~24 hours after creation of this swap!",
         not_found: "404 - Page Not Found",
@@ -417,7 +418,7 @@ const dict = {
         pro: "pro",
         pro_banner: "BETA: VERFÜGBARKEIT NICHT GARANTIERT",
         warning_return:
-            "Wichtig: Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück!",
+            "Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück! Die Zahlung wird möglicherweise als ausstehend angezeigt, bis du zu dieser Seite zurückkehrst.",
         warning_expiry:
             "Wichtig: Die Transaktion muss innerhalb ~24 Stunden nach Erstellung dieses Swaps bestätigt sein!",
         not_found: "404 - Seite nicht gefunden",
@@ -679,7 +680,7 @@ const dict = {
         pro: "pro",
         pro_banner: "BETA: DISPONIBILIDAD NO GARANTIZADA",
         warning_return:
-            "Importante: Regresa a esta página después de pagar la factura!",
+            "Regresa a esta página después de pagar la factura! El pago puede aparecer como pendiente hasta que vuelvas a esta página.",
         warning_expiry:
             "Importante: Asegúrese de que la transacción se confirma en ~24 horas",
         not_found: "404 - Página no encontrada",
@@ -935,6 +936,8 @@ const dict = {
         beta_caution: "BETA - USE COM CUIDADO!",
         pro: "pro",
         pro_banner: "BETA: DISPONIBILIDADE NÃO GARANTIDA",
+        warning_return:
+            "Volte a esta página após pagar o invoice! O pagamento pode aparecer como pendente até que volte a esta página.",
         warning_expiry:
             "Certifique-se de que sua transação seja confirmada em até 24h após a criação da troca!",
         not_found: "404 - Página não encontrada",
@@ -1177,7 +1180,8 @@ const dict = {
         beta_caution: "BETA - 谨慎使用！",
         pro: "pro",
         pro_banner: "测试版：不保证可用性",
-        warning_return: "重要：支付发票后返回此页面",
+        warning_return:
+            "重要：支付发票后返回此页面！在您返回此页面之前，付款可能显示为待定。",
         warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
         not_found: "404 - 页面未找到",
         not_found_subline: "您要查找的页面不存在。",
@@ -1426,7 +1430,7 @@ const dict = {
         pro: "pro",
         pro_banner: "ベータ版：利用可能性は保証されない",
         warning_return:
-            "重要：インボイスのお支払い後、このページへ戻ってください",
+            "重要：インボイスのお支払い後、このページへ戻ってください！このページに戻るまで、支払いは保留中と表示される場合があります。",
         warning_expiry:
             "必ず24時間以内にトランザクションが承認されるようにしてください",
         not_found: "404 - Page Not Found",
