@@ -36,10 +36,7 @@ export default [
     {
         rules: {
             "no-async-promise-executor": "off",
-        },
-    },
-    {
-        rules: {
+            "no-console": 1,
             "no-restricted-imports": [
                 "error",
                 {
@@ -84,6 +81,12 @@ export default [
             "@typescript-eslint/no-unsafe-enum-comparison": "off",
             "@typescript-eslint/prefer-promise-reject-errors": "off",
             "@typescript-eslint/no-unnecessary-type-assertion": "off",
+        },
+    },
+    {
+        files: ["tests/**/*.ts", "e2e/**/*.ts"],
+        rules: {
+            "no-console": "off",
         },
     },
 ];
