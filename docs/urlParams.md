@@ -40,6 +40,6 @@ Available values are:
 - English: `en`
 - German: `de`
 - Spanish: `es`
-- Portuguese `pt`
+- Portuguese: `pt`
 - Chinese: `zh`
 - Japanese: `ja`
