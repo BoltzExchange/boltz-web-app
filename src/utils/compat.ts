@@ -222,7 +222,6 @@ const getOutputAmount = async (
 
     if (output.rangeProof?.length !== 0) {
         const { confidential } = await secp.get();
-        console.log(output);
         const unblinded = confidential.unblindOutputWithKey(
             output,
             output.blindingPrivateKey,

@@ -7,12 +7,14 @@ import QrCode from "../components/QrCode";
 import { BTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { formatAmount, formatDenomination } from "../utils/denomination";
-import { clipboard, cropString, isMobile } from "../utils/helper";
+import { isMobile } from "../utils/helper";
 import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
+import CopyBox from "./CopyBox";
 
 const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
     const { t, denomination, separator, webln } = useGlobalContext();
+
     const payWeblnInvoice = async (pr: string) => {
         await enableWebln(async () => {
             const result = await window.webln.sendPayment(pr);
@@ -37,11 +39,7 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
                 <QrCode data={props.invoice} />
             </a>
             <hr />
-            <p
-                onClick={() => clipboard(props.invoice)}
-                class="address-box break-word">
-                {cropString(props.invoice)}
-            </p>
+            <CopyBox value={props.invoice} />
             <hr />
             <Show when={isMobile()}>
                 <h3>{t("warning_return")}</h3>
