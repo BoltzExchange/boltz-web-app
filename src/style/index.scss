@@ -749,11 +749,26 @@ textarea {
     gap: 0.3rem;
 }
 
-.quote > div > input {
-    color: white;
+.quote > div > span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20rem;
+    padding: 7px 8px;
+    margin: 0;
+    text-align: center;
     font-size: 1.5rem;
     font-weight: 600;
-    text-align: center;
+    color: white;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    box-sizing: border-box;
+    .denominator {
+        width: 15px;
+        height: 15px;
+        margin-left: 0.5rem;
+    }
 }
 
 header {
@@ -764,4 +779,9 @@ header {
     margin-top: 2rem;
     margin-bottom: 1rem;
     color: vars.$primary;
+}
+
+.swap-limits {
+    display: inline-flex;
+    gap: 0.8rem;
 }
