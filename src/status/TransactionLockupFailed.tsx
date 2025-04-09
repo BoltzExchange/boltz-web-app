@@ -40,17 +40,16 @@ const Amount = (props: { label: DictKey; amount: number }) => {
     return (
         <div>
             <div>{t(props.label)}</div>
-            <input
-                disabled
-                type="text"
-                placeholder="0"
-                inputMode={denomination() == "btc" ? "decimal" : "numeric"}
-                value={formatAmount(
-                    new BigNumber(props.amount),
-                    denomination(),
-                    separator(),
-                )}
-            />
+            <span>
+                {`${
+                    formatAmount(
+                        new BigNumber(props.amount),
+                        denomination(),
+                        separator(),
+                    ) || 0
+                }`}
+                <span class="denominator" data-denominator={denomination()} />
+            </span>
         </div>
     );
 };
