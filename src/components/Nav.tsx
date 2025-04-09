@@ -72,7 +72,7 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                         {t("history")}
                     </A>
 
-                    <Show when={config.discordUrl}>
+                    <Show when={config.supportUrl}>
                         <a
                             class="external"
                             target="_blank"
