@@ -1,6 +1,7 @@
 import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
+import { createStore } from "solid-js/store";
 
 import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -178,6 +179,23 @@ export const SwapChecker = () => {
 
     let ws: BoltzWebSocket | undefined = undefined;
 
+    const [pendingSwaps, setPendingSwaps] = createStore<string[]>([]);
+
+    const handlePendingSwap = (swapId: string, data: SwapStatus) => {
+        if (
+            Object.values(swapStatusPending).includes(data.status) &&
+            data.status !== swapStatusPending.SwapCreated &&
+            !pendingSwaps.includes(swapId)
+        ) {
+            setPendingSwaps((pendingSwaps) => [...pendingSwaps, swapId]);
+        }
+        if (Object.values(swapStatusFinal).includes(data.status)) {
+            setPendingSwaps((pendingSwaps) =>
+                pendingSwaps.filter((id: string) => id !== swapId),
+            );
+        }
+    };
+
     const prepareSwap = async (swapId: string, data: SwapStatus) => {
         const currentSwap = await getSwap(swapId);
         if (currentSwap === null) {
@@ -194,6 +212,9 @@ export const SwapChecker = () => {
             }
         }
         if (data.status) {
+            if ([SwapType.Chain, SwapType.Reverse].includes(currentSwap.type)) {
+                handlePendingSwap(currentSwap.id, data);
+            }
             await updateSwapStatus(currentSwap.id, data.status);
         }
     };
@@ -373,6 +394,14 @@ export const SwapChecker = () => {
             ws.subscribeUpdates([activeSwap.id]);
         }
     });
+
+    // @ts-expect-error: onbeforeunload doesn't need to return a value
+    window.onbeforeunload = (event: BeforeUnloadEvent) => {
+        if (pendingSwaps?.length > 0) {
+            event.preventDefault();
+            return "";
+        }
+    };
 
     return "";
 };
