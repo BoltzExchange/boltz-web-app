@@ -72,21 +72,21 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                         {t("history")}
                     </A>
 
+                    <Show when={config.supportUrl}>
+                        <a
+                            class="external"
+                            target="_blank"
+                            href={config.supportUrl}>
+                            {t("help")}
+                            <OcLinkexternal2 size={23} />
+                        </a>
+                    </Show>
                     <Show when={config.docsUrl}>
                         <a
                             class="external"
                             target="_blank"
                             href={config.docsUrl}>
                             {t("documentation")}
-                            <OcLinkexternal2 size={23} />
-                        </a>
-                    </Show>
-                    <Show when={config.discordUrl}>
-                        <a
-                            class="external"
-                            target="_blank"
-                            href={config.supportUrl}>
-                            {t("help")}
                             <OcLinkexternal2 size={23} />
                         </a>
                     </Show>
