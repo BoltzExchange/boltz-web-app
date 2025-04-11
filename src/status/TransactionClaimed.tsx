@@ -10,7 +10,7 @@ import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { getSubmarinePreimage } from "../utils/boltzClient";
-import { formatAmount } from "../utils/denomination";
+import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";
 import type { SubmarineSwap } from "../utils/swapCreator";
@@ -93,7 +93,10 @@ const TransactionClaimed = () => {
                             denomination(),
                             separator(),
                         ),
-                        denomination: denomination(),
+                        denomination: formatDenomination(
+                            denomination(),
+                            swap().assetReceive,
+                        ),
                     })}
                 </p>
                 <hr />
