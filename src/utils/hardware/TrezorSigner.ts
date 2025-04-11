@@ -63,7 +63,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         );
 
         return addresses.payload.map((res) => ({
-            address: res.address,
+            address: res.address.toLowerCase(),
             path: trimPrefix(res.serializedPath, "m/"),
         }));
     };
