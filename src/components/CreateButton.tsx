@@ -19,7 +19,7 @@ import type { Pairs } from "../utils/boltzClient";
 import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
-import type { HardwareSigner } from "../utils/hardware/HadwareSigner";
+import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { coalesceLn, isMobile } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";

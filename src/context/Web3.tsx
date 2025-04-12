@@ -25,7 +25,7 @@ import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { Contracts } from "../utils/boltzClient";
 import { getContracts } from "../utils/boltzClient";
-import type { HardwareSigner } from "../utils/hardware/HadwareSigner";
+import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { useGlobalContext } from "./Global";

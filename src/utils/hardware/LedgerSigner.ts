@@ -12,8 +12,8 @@ import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import type { Transport } from "../../lazy/ledger";
 import ledgerLoader from "../../lazy/ledger";
-import type { DerivedAddress, HardwareSigner } from "./HadwareSigner";
-import { derivationPaths } from "./HadwareSigner";
+import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
+import { derivationPaths } from "./HardwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];

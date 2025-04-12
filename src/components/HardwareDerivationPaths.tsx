@@ -16,12 +16,12 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
-import type { HardwareSigner } from "../utils/hardware/HadwareSigner";
+import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import {
     derivationPaths,
     derivationPathsMainnet,
     derivationPathsTestnet,
-} from "../utils/hardware/HadwareSigner";
+} from "../utils/hardware/HardwareSigner";
 import { cropString } from "../utils/helper";
 import { weiToSatoshi } from "../utils/rootstock";
 import LoadingSpinner from "./LoadingSpinner";
