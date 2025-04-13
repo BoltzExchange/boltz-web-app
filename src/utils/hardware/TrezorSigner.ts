@@ -17,8 +17,8 @@ import type {
 } from "../../lazy/trezor";
 import trezorLoader from "../../lazy/trezor";
 import { trimPrefix } from "../strings";
-import type { DerivedAddress, HardwareSigner } from "./HadwareSigner";
-import { derivationPaths } from "./HadwareSigner";
+import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
+import { derivationPaths } from "./HardwareSigner";
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly provider: JsonRpcProvider;
