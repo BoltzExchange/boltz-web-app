@@ -79,7 +79,7 @@ const DerivationPath = (props: {
             }}>
             <hr />
             <div class="provider-modal-entry">
-                <h4>{props.name}</h4>
+                <h4 style={{ "white-space": "nowrap" }}>{props.name}</h4>
                 <span>{props.path}</span>
             </div>
         </div>
