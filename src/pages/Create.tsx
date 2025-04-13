@@ -25,6 +25,7 @@ import {
     calculateDigits,
     convertAmount,
     formatAmount,
+    formatDenomination,
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
@@ -213,7 +214,7 @@ const Create = () => {
                     denomination(),
                     separator(),
                 ),
-                denomination: denomination(),
+                denomination: formatDenomination(denomination(), assetSend()),
             };
             const label = lessThanMin ? "minimum_amount" : "maximum_amount";
             const errorMsg = t(label, params);
@@ -322,29 +323,41 @@ const Create = () => {
             <div class="frame">
                 <SettingsCog />
                 <h2 data-testid="create-swap-title">{t("create_swap")}</h2>
-                <p>
-                    {t("create_swap_subline")} <br />
-                    {t("send")} {t("min")}:{" "}
-                    <span
-                        onClick={() => setAmount(minimum())}
-                        class="btn-small btn-light">
-                        {formatAmount(
-                            BigNumber(minimum()),
-                            denomination(),
-                            separator(),
-                        )}
-                    </span>{" "}
-                    {t("max")}:{" "}
-                    <span
-                        onClick={() => setAmount(maximum())}
-                        class="btn-small btn-light">
-                        {formatAmount(
-                            BigNumber(maximum()),
-                            denomination(),
-                            separator(),
-                        )}
-                    </span>{" "}
-                </p>
+                {t("create_swap_subline")} <br />
+                <span class="swap-limits">
+                    <span>
+                        {t("send")} {t("min")}:
+                        <span
+                            onClick={() => setAmount(minimum())}
+                            class="btn-small btn-light">
+                            {formatAmount(
+                                BigNumber(minimum()),
+                                denomination(),
+                                separator(),
+                            )}
+                        </span>
+                        <span
+                            class="denominator"
+                            data-denominator={denomination()}
+                        />
+                    </span>
+                    <span>
+                        {t("max")}
+                        <span
+                            onClick={() => setAmount(maximum())}
+                            class="btn-small btn-light">
+                            {formatAmount(
+                                BigNumber(maximum()),
+                                denomination(),
+                                separator(),
+                            )}
+                        </span>
+                        <span
+                            class="denominator"
+                            data-denominator={denomination()}
+                        />
+                    </span>
+                </span>
                 <div class="icons">
                     <div>
                         <Asset side={Side.Send} signal={assetSend} />

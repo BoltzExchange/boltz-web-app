@@ -34,7 +34,7 @@ describe("CreateButton", () => {
         const btn = (await screen.findByText(
             i18n.en.minimum_amount
                 .replace("{{ amount }}", "50 000")
-                .replace("{{ denomination }}", "sat"),
+                .replace("{{ denomination }}", "sats"),
         )) as HTMLButtonElement;
         expect(btn).not.toBeUndefined();
         expect(btn.disabled).toBeTruthy();

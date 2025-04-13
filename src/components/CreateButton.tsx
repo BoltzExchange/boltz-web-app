@@ -17,7 +17,7 @@ import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import type { Pairs } from "../utils/boltzClient";
 import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
-import { formatAmount } from "../utils/denomination";
+import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HadwareSigner";
 import { coalesceLn, isMobile } from "../utils/helper";
@@ -274,6 +274,7 @@ const CreateButton = () => {
                 minimum,
                 assetReceive,
                 bolt12Offer,
+                denomination,
             ],
             () => {
                 if (!online()) {
@@ -303,7 +304,10 @@ const CreateButton = () => {
                                 denomination(),
                                 separator(),
                             ),
-                            denomination: denomination(),
+                            denomination: formatDenomination(
+                                denomination(),
+                                assetSend(),
+                            ),
                         },
                     });
                     return;
