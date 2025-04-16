@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { Setter } from "solid-js";
+import type { Setter } from "solid-js";
 
 import { config } from "../config";
 import { getUrlParam } from "../utils/urlParams";

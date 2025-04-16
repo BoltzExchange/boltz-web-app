@@ -1,5 +1,5 @@
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
-import { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import {
     BrowserProvider,
     Contract,
@@ -7,11 +7,8 @@ import {
     JsonRpcSigner,
 } from "ethers";
 import log from "loglevel";
+import type { Accessor, JSXElement, Resource, Setter } from "solid-js";
 import {
-    Accessor,
-    JSXElement,
-    Resource,
-    Setter,
     createContext,
     createResource,
     createSignal,
@@ -24,10 +21,11 @@ import TrezorIcon from "../assets/trezor.svg";
 import WalletConnectIcon from "../assets/wallet-connect.svg";
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
-import { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
+import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
-import { Contracts, getContracts } from "../utils/boltzClient";
-import { HardwareSigner } from "../utils/hardware/HadwareSigner";
+import type { Contracts } from "../utils/boltzClient";
+import { getContracts } from "../utils/boltzClient";
+import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { useGlobalContext } from "./Global";

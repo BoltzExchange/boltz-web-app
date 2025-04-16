@@ -4,7 +4,7 @@ import { Show, createEffect, createSignal } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
-import { HardwareSigner } from "../utils/hardware/HadwareSigner";
+import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";

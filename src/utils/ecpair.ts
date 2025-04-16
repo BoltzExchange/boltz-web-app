@@ -1,6 +1,7 @@
 import ecc from "@bitcoinerlab/secp256k1";
 import { initEccLib } from "bitcoinjs-lib";
-import { ECPairAPI, ECPairFactory } from "ecpair";
+import type { ECPairAPI } from "ecpair";
+import { ECPairFactory } from "ecpair";
 
 let ECPair: ECPairAPI;
 

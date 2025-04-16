@@ -1,10 +1,10 @@
 import { crypto } from "bitcoinjs-lib";
-import { Signature, TransactionResponse } from "ethers";
-import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import type { TransactionResponse } from "ethers";
+import { Signature } from "ethers";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
+import type { Accessor, Setter } from "solid-js";
 import {
-    Accessor,
-    Setter,
     Show,
     createEffect,
     createMemo,
@@ -15,7 +15,8 @@ import {
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { deriveKeyFn, useGlobalContext } from "../context/Global";
+import type { deriveKeyFn } from "../context/Global";
+import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { getEipRefundSignature } from "../utils/boltzClient";
@@ -24,7 +25,7 @@ import { formatError } from "../utils/errors";
 import { decodeInvoice } from "../utils/invoice";
 import { refund } from "../utils/refund";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
-import { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 

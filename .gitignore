@@ -7,7 +7,7 @@ dist/
 ts-out/
 coverage/
 node_modules/
-public/config.json
+src/config.ts
 /test-results/
 /playwright-report/
 /blob-report/

@@ -1,14 +1,7 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import {
-    Accessor,
-    For,
-    Setter,
-    Show,
-    createEffect,
-    createMemo,
-    createSignal,
-} from "solid-js";
+import type { Accessor, Setter } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";

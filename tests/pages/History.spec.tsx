@@ -1,50 +1,34 @@
-import { SwapType } from "../../src/consts/Enums";
-import { Errors, validateBackupFile } from "../../src/pages/History";
-import { latestStorageVersion } from "../../src/utils/migration";
-import { SomeSwap } from "../../src/utils/swapCreator";
+import { validateBackupFile } from "../../src/pages/History";
+import { Errors } from "../../src/utils/rescueFile";
+
+const mnemonic =
+    "path follow autumn enough napkin manual warrior vote skate feel during humor";
 
 describe("History", () => {
     test.each`
         data
-        ${[]}
-        ${[{ id: "1" }]}
-        ${[{ id: "1" }, { id: "2" }]}
-    `("should validate legacy backup files", ({ data }) => {
-        expect(validateBackupFile(data)).toEqual({
-            version: 0,
-            swaps: data,
-        });
-    });
-
-    test.each`
-        data
-        ${{ version: 1, swaps: [] }}
-        ${{ version: 1, swaps: [{ id: "taproot" }] }}
+        ${{ version: 1, swaps: [], mnemonic }}
+        ${{ version: 1, swaps: [{ id: "taproot" }], mnemonic }}
     `("should validate new backup files", ({ data }) => {
         expect(validateBackupFile(data)).toEqual(data);
     });
 
-    test("should validate single swap refund files", () => {
-        const file = { id: "asdf", type: SwapType.Chain };
-        expect(validateBackupFile(file as SomeSwap)).toEqual({
-            version: latestStorageVersion,
-            swaps: [file],
-        });
-    });
-
     test.each`
         error                            | data
-        ${Errors.InvalidBackupFile}      | ${{}}
-        ${Errors.InvalidBackupFile}      | ${"test"}
-        ${Errors.InvalidBackupFile}      | ${1}
-        ${Errors.InvalidBackupFile}      | ${{ version: 1 }}
-        ${Errors.InvalidBackupFile}      | ${{ swaps: [] }}
-        ${Errors.InvalidBackupFile}      | ${{ id: "asdf" }}
-        ${Errors.NotAllElementsHaveAnId} | ${{ version: 1, swaps: [{ id: null }] }}
-        ${Errors.NotAllElementsHaveAnId} | ${[{}]}
-        ${Errors.NotAllElementsHaveAnId} | ${[{ id: undefined }]}
-        ${Errors.NotAllElementsHaveAnId} | ${[{ id: null }]}
-        ${Errors.NotAllElementsHaveAnId} | ${[{ id: "1" }, { noId: "2" }]}
+        ${Errors.InvalidFile}            | ${{}}
+        ${Errors.InvalidFile}            | ${"test"}
+        ${Errors.InvalidFile}            | ${1}
+        ${Errors.InvalidFile}            | ${{ version: 1 }}
+        ${Errors.InvalidFile}            | ${{ swaps: [] }}
+        ${Errors.InvalidFile}            | ${{ id: "asdf" }}
+        ${Errors.InvalidFile}            | ${[{}]}
+        ${Errors.InvalidFile}            | ${{ version: 1, id: "asdf", swaps: [{ id: "asdf" }] }}
+        ${Errors.NotAllElementsHaveAnId} | ${{ version: 1, swaps: [{ id: null }], mnemonic }}
+        ${Errors.NotAllElementsHaveAnId} | ${{ version: 1, id: null, swaps: [{ id: null }], mnemonic }}
+        ${Errors.NotAllElementsHaveAnId} | ${{ version: 1, id: undefined, swaps: [{ id: null }], mnemonic }}
+        ${Errors.NotAllElementsHaveAnId} | ${{ version: 1, id: "", swaps: [{ id: null }], mnemonic }}
+        ${Errors.InvalidMnemonic}        | ${{ version: 1, id: "asdf", swaps: [{ id: "asdf" }], mnemonic: "hello" }}
+        ${Errors.InvalidMnemonic}        | ${{ version: 1, id: "asdf", swaps: [{ id: "asdf" }], mnemonic: "" }}
     `("should throw for invalid backup file: $data", ({ data, error }) => {
         expect(() => validateBackupFile(data)).toThrow(error);
     });

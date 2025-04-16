@@ -9,7 +9,7 @@ import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { relayClaimTransaction } from "../rif/Signer";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
-import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
+import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
 // TODO: use bignumber for amounts
 const ClaimEvm = (props: {

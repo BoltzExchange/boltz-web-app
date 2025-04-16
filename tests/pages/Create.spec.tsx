@@ -250,7 +250,7 @@ describe("Create", () => {
         });
 
         expect(createButton.disabled).toEqual(true);
-        expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sat");
+        expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sats");
     });
 
     test("should allow comma in pasted amounts", async () => {

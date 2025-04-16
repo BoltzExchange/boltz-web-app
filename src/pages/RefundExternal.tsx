@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
+import type { Accessor } from "solid-js";
 import {
-    Accessor,
     For,
     Match,
     Show,
@@ -28,18 +28,18 @@ import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
-import { RescuableSwap, getRescuableSwaps } from "../utils/boltzClient";
-import {
-    LogRefundData,
-    scanLogsForPossibleRefunds,
-} from "../utils/contractLogs";
+import type { RescuableSwap } from "../utils/boltzClient";
+import { getRescuableSwaps } from "../utils/boltzClient";
+import type { LogRefundData } from "../utils/contractLogs";
+import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
 import { getRefundableUTXOs } from "../utils/refund";
 import { createRefundList } from "../utils/refund";
 import { validateRefundFile } from "../utils/refundFile";
-import { RescueFile, getXpub, validateRescueFile } from "../utils/rescueFile";
-import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { RescueFile } from "../utils/rescueFile";
+import { getXpub, validateRescueFile } from "../utils/rescueFile";
+import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
 

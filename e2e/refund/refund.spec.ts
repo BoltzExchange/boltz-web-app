@@ -1,8 +1,9 @@
-import { Page, expect, request, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, request, test } from "@playwright/test";
 import fs from "fs";
 import path from "path";
 
-import { UTXO } from "../../src/utils/blockchain";
+import type { UTXO } from "../../src/utils/blockchain";
 import {
     createAndVerifySwap,
     decodeLiquidRawTransaction,

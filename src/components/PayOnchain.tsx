@@ -4,11 +4,12 @@ import { Show, createMemo, createResource } from "solid-js";
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import type { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { getAllPairs } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
-import { clipboard, cropString, getPair, isMobile } from "../utils/helper";
+import { getPair, isMobile } from "../utils/helper";
+import CopyBox from "./CopyBox";
 import LoadingSpinner from "./LoadingSpinner";
 
 const PayOnchain = (props: {
@@ -81,11 +82,7 @@ const PayOnchain = (props: {
                     <QrCode asset={props.assetSend} data={props.bip21} />
                 </a>
                 <hr />
-                <p
-                    onClick={() => clipboard(props.address)}
-                    class="address-box break-word">
-                    {cropString(props.address)}
-                </p>
+                <CopyBox value={props.address} />
                 <Show when={props.assetSend === BTC}>
                     <hr class="spacer" />
                     <h3>{t("warning_expiry")}</h3>

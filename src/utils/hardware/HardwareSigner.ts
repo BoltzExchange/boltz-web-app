@@ -5,11 +5,11 @@ export const derivationPaths = {
 };
 
 export const derivationPathsMainnet = {
-    RSK: "44'/137'/0'",
+    Rootstock: "44'/137'/0'/0",
 };
 
 export const derivationPathsTestnet = {
-    ["RSK Testnet"]: "44'/37310'/0'",
+    ["Rootstock Testnet"]: "44'/37310'/0'/0",
 };
 
 export type DerivedAddress = {

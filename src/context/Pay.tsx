@@ -1,14 +1,8 @@
-import {
-    Accessor,
-    Setter,
-    createContext,
-    createSignal,
-    useContext,
-} from "solid-js";
-import type { JSX } from "solid-js";
+import { createContext, createSignal, useContext } from "solid-js";
+import type { Accessor, JSX, Setter } from "solid-js";
 
-import { LockupTransaction } from "../utils/boltzClient";
-import { SomeSwap } from "../utils/swapCreator";
+import type { LockupTransaction } from "../utils/boltzClient";
+import type { SomeSwap } from "../utils/swapCreator";
 
 export type PayContextType = {
     failureReason: Accessor<string>;

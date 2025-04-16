@@ -6,7 +6,7 @@ import PayOnchain from "../components/PayOnchain";
 import { RBTC } from "../consts/Assets";
 import { usePayContext } from "../context/Pay";
 import { decodeInvoice } from "../utils/invoice";
-import { SubmarineSwap } from "../utils/swapCreator";
+import type { SubmarineSwap } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
     const { swap } = usePayContext();

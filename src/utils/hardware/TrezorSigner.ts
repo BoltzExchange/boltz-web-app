@@ -1,26 +1,24 @@
+import type { TransactionLike } from "ethers";
 import {
     JsonRpcProvider,
     Signature,
     Transaction,
-    TransactionLike,
     TypedDataEncoder,
 } from "ethers";
 import log from "loglevel";
 
 import { config } from "../../config";
-import { EIP1193Provider } from "../../consts/Types";
-import trezorLoader, {
+import type { EIP1193Provider } from "../../consts/Types";
+import type {
     Address,
     Response,
     SuccessWithDevice,
     Unsuccessful,
 } from "../../lazy/trezor";
+import trezorLoader from "../../lazy/trezor";
 import { trimPrefix } from "../strings";
-import {
-    DerivedAddress,
-    HardwareSigner,
-    derivationPaths,
-} from "./HadwareSigner";
+import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
+import { derivationPaths } from "./HardwareSigner";
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly provider: JsonRpcProvider;
@@ -65,7 +63,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         );
 
         return addresses.payload.map((res) => ({
-            address: res.address,
+            address: res.address.toLowerCase(),
             path: trimPrefix(res.serializedPath, "m/"),
         }));
     };

@@ -1,16 +1,11 @@
 import { Route, Router } from "@solidjs/router";
 
-import {
-    CreateContextType,
-    CreateProvider,
-    useCreateContext,
-} from "../src/context/Create";
-import {
-    GlobalContextType,
-    GlobalProvider,
-    useGlobalContext,
-} from "../src/context/Global";
-import { PayContextType, PayProvider, usePayContext } from "../src/context/Pay";
+import type { CreateContextType } from "../src/context/Create";
+import { CreateProvider, useCreateContext } from "../src/context/Create";
+import type { GlobalContextType } from "../src/context/Global";
+import { GlobalProvider, useGlobalContext } from "../src/context/Global";
+import type { PayContextType } from "../src/context/Pay";
+import { PayProvider, usePayContext } from "../src/context/Pay";
 import { RescueProvider } from "../src/context/Rescue";
 import { Web3SignerProvider } from "../src/context/Web3";
 

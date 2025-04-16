@@ -1,10 +1,10 @@
 import { useNavigate } from "@solidjs/router";
-import { Accessor } from "solid-js";
+import type { Accessor } from "solid-js";
 
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const SwapExpired = () => {
     const navigate = useNavigate();

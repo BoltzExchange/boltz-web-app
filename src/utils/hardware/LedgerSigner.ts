@@ -1,21 +1,19 @@
+import type { TransactionLike } from "ethers";
 import {
     JsonRpcProvider,
     Signature,
     Transaction,
-    TransactionLike,
     TypedDataEncoder,
 } from "ethers";
 import log from "loglevel";
 
 import { config } from "../../config";
-import { EIP1193Provider } from "../../consts/Types";
+import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
-import ledgerLoader, { Transport } from "../../lazy/ledger";
-import {
-    DerivedAddress,
-    HardwareSigner,
-    derivationPaths,
-} from "./HadwareSigner";
+import type { Transport } from "../../lazy/ledger";
+import ledgerLoader from "../../lazy/ledger";
+import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
+import { derivationPaths } from "./HardwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];

@@ -6,7 +6,7 @@ import { BTC, RBTC } from "../../src/consts/Assets";
 import { swapStatusFailed } from "../../src/consts/SwapStatus";
 import i18n from "../../src/i18n/i18n";
 import TransactionLockupFailed from "../../src/status/TransactionLockupFailed";
-import { SomeSwap } from "../../src/utils/swapCreator";
+import type { SomeSwap } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
 describe("TransactionLockupFailed", () => {

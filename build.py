@@ -1,30 +1,23 @@
-#! /bin/python3
+#!/usr/bin/env python3
 
 import sys
-import json
+
 
 def handle_coop_disabled():
     print("Cooperative signatures are disabled in config")
     sys.exit(1)
 
-with open("./src/config.ts", "r") as f:
-    for line in f:
-        if "cooperativeDisabled" not in line:
-            continue
-
-        if "false" not in line:
-            handle_coop_disabled()
 
 network: str | None = None
 
-with open("./public/config.json") as f:
-    data = json.load(f)
+with open("./src/config.ts", "r") as f:
+    for line in f:
+        if "cooperativeDisabled" in line:
+            if "false" not in line:
+                handle_coop_disabled()
 
-    network = data["network"]
-
-    if data.get("cooperativeDisabled", False):
-        handle_coop_disabled()
-
+        if "network:" in line and '"' in line:
+            network = line.split(":")[1].strip().strip('"').strip('",')
 
 # .env file is not required on regtest
 if network != "regtest":

@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 import dict from "../../src/i18n/i18n";
-import { UTXO } from "../../src/utils/blockchain";
+import type { UTXO } from "../../src/utils/blockchain";
 import { getRescuableSwaps } from "../boltzClient";
 import {
     createAndVerifySwap,

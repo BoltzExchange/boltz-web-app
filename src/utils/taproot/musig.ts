@@ -1,19 +1,18 @@
-import { Network, Transaction } from "bitcoinjs-lib";
-import { Taptree } from "bitcoinjs-lib/src/types";
-import { Musig, RefundDetails, TaprootUtils } from "boltz-core";
-import {
-    LiquidRefundDetails,
-    TaprootUtils as LiquidTaprootUtils,
-} from "boltz-core/dist/lib/liquid";
+import type { Network, Transaction } from "bitcoinjs-lib";
+import type { Taptree } from "bitcoinjs-lib/src/types";
+import type { RefundDetails } from "boltz-core";
+import { Musig, TaprootUtils } from "boltz-core";
+import type { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
+import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
-import { ECPairInterface } from "ecpair";
-import { Transaction as LiquidTransaction } from "liquidjs-lib";
-import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import type { ECPairInterface } from "ecpair";
+import type { Transaction as LiquidTransaction } from "liquidjs-lib";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { LBTC } from "../../consts/Assets";
 import secp from "../../lazy/secp";
-import { TransactionInterface } from "../boltzClient";
+import type { TransactionInterface } from "../boltzClient";
 
 export const createMusig = async (
     ourKeys: ECPairInterface,
@@ -23,7 +22,7 @@ export const createMusig = async (
     return new Musig(secpZkp, ourKeys, randomBytes(32), [
         // The key of Boltz always comes first
         theirPublicKey,
-        ourKeys.publicKey,
+        Buffer.from(ourKeys.publicKey),
     ]);
 };
 

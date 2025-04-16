@@ -761,12 +761,17 @@ textarea {
     word-break: break-all;
 }
 
-.address-box {
-    font-size: 18px;
+.copy-box {
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    gap: 0.63rem;
+    user-select: none;
+    font-size: 1.13rem;
     background-color: #545c65;
     background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 7px;
-    padding: 10px;
+    border-radius: 0.43rem;
+    padding: 0.63rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: rgba(255, 255, 255, 0.5);
     margin: 0;
@@ -811,11 +816,26 @@ textarea {
     gap: 0.3rem;
 }
 
-.quote > div > input {
-    color: white;
+.quote > div > span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20rem;
+    padding: 7px 8px;
+    margin: 0;
+    text-align: center;
     font-size: 1.5rem;
     font-weight: 600;
-    text-align: center;
+    color: white;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    box-sizing: border-box;
+    .denominator {
+        width: 15px;
+        height: 15px;
+        margin-left: 0.5rem;
+    }
 }
 
 header {
@@ -826,4 +846,9 @@ header {
     margin-top: 2rem;
     margin-bottom: 1rem;
     color: vars.$primary;
+}
+
+.swap-limits {
+    display: inline-flex;
+    gap: 0.8rem;
 }

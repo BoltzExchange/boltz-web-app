@@ -5,7 +5,7 @@ import { createSignal } from "solid-js";
 import RefundButton from "../../src/components/RefundButton";
 import { BTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
-import { ChainSwap, SubmarineSwap } from "../../src/utils/swapCreator";
+import type { ChainSwap, SubmarineSwap } from "../../src/utils/swapCreator";
 import { TestComponent, contextWrapper, payContext } from "../helper";
 
 describe("RefundButton", () => {

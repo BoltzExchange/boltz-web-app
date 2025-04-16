@@ -1,10 +1,11 @@
 import {
+    Errors,
     deriveKey,
     generateRescueFile,
     getXpub,
     validateRescueFile,
 } from "../../src/utils/rescueFile";
-import { RescueFile } from "../../src/utils/rescueFile";
+import type { RescueFile } from "../../src/utils/rescueFile";
 
 describe("rescueFile", () => {
     const rescueFile: RescueFile = {
@@ -71,9 +72,7 @@ describe("rescueFile", () => {
                     "def0a13214538650fb84a7545c9b81128a639f55147cdd61c46d5ea0f70045a3",
             };
 
-            expect(() => validateRescueFile(data)).toThrow(
-                "invalid rescue file",
-            );
+            expect(() => validateRescueFile(data)).toThrow(Errors.InvalidFile);
         });
 
         test("should throw error if mnemonic is invalid", () => {
@@ -81,7 +80,9 @@ describe("rescueFile", () => {
                 mnemonic: "invalid",
             };
 
-            expect(() => validateRescueFile(data)).toThrow("invalid mnemonic");
+            expect(() => validateRescueFile(data)).toThrow(
+                Errors.InvalidMnemonic,
+            );
         });
     });
 });

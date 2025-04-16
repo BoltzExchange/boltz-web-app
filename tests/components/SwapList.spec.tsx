@@ -1,7 +1,7 @@
 import { render } from "@solidjs/testing-library";
 
 import SwapList from "../../src/components/SwapList";
-import { SomeSwap } from "../../src/utils/swapCreator";
+import type { SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 describe("SwapList", () => {

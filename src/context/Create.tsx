@@ -2,19 +2,17 @@ import { makePersisted } from "@solid-primitives/storage";
 import BigNumber from "bignumber.js";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import {
-    Accessor,
-    Setter,
     createContext,
     createEffect,
     createSignal,
     useContext,
 } from "solid-js";
-import type { JSX } from "solid-js";
+import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
 import { BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
-import { DictKey } from "../i18n/i18n";
+import type { DictKey } from "../i18n/i18n";
 import { getAddress, getNetwork } from "../utils/compat";
 import { isLnurl } from "../utils/invoice";
 import { getUrlParam, urlParamIsSet } from "../utils/urlParams";
@@ -23,7 +21,7 @@ const setDestination = (
     setAssetReceive: Setter<string>,
     setInvoice: Setter<string>,
     setOnchainAddress: Setter<string>,
-): { destinationAsset: string | null; destination: string | null } => {
+): { destinationAsset?: string; destination?: string } => {
     const isValidForAsset = (
         asset: typeof BTC | typeof LBTC,
         address: string,
@@ -58,7 +56,7 @@ const setDestination = (
         }
     }
 
-    return { destinationAsset: null, destination: null };
+    return { destinationAsset: undefined, destination: undefined };
 };
 
 const isValidAsset = (asset: string) =>

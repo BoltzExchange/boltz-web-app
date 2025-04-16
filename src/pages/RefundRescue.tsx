@@ -1,13 +1,8 @@
 import { useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
 import log from "loglevel";
-import {
-    Accessor,
-    Show,
-    createResource,
-    createSignal,
-    onCleanup,
-} from "solid-js";
+import type { Accessor } from "solid-js";
+import { Show, createResource, createSignal, onCleanup } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import RefundButton from "../components/RefundButton";
@@ -15,11 +10,12 @@ import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
-import { RescuableSwap, getSwapStatus } from "../utils/boltzClient";
+import type { RescuableSwap } from "../utils/boltzClient";
+import { getSwapStatus } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import { getRefundableUTXOs } from "../utils/refund";
 import { deriveKey } from "../utils/rescueFile";
-import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 export const mapSwap = (
     swap?: RescuableSwap,

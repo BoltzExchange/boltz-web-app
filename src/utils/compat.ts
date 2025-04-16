@@ -1,27 +1,32 @@
-import { Network, Transaction, address, networks } from "bitcoinjs-lib";
-import {
+import type { Network } from "bitcoinjs-lib";
+import { Transaction, address, networks } from "bitcoinjs-lib";
+import type {
     ClaimDetails,
     RefundDetails,
     TransactionOutput,
+} from "boltz-core";
+import {
     constructClaimTransaction,
     constructRefundTransaction,
     targetFee,
 } from "boltz-core";
-import {
+import type {
     LiquidClaimDetails,
     LiquidRefundDetails,
+} from "boltz-core/dist/lib/liquid";
+import {
     constructClaimTransaction as lcCT,
     constructRefundTransaction as lcRT,
 } from "boltz-core/dist/lib/liquid";
-import { Buffer } from "buffer";
+import type { Buffer } from "buffer";
+import type { TxOutput as LiquidTransactionOutput } from "liquidjs-lib";
 import {
     address as LiquidAddress,
     networks as LiquidNetworks,
     Transaction as LiquidTransaction,
-    TxOutput as LiquidTransactionOutput,
     confidential,
 } from "liquidjs-lib";
-import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
@@ -217,7 +222,6 @@ const getOutputAmount = async (
 
     if (output.rangeProof?.length !== 0) {
         const { confidential } = await secp.get();
-        console.log(output);
         const unblinded = confidential.unblindOutputWithKey(
             output,
             output.blindingPrivateKey,

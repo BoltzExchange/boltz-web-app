@@ -1,31 +1,26 @@
-import {
-    OutputType,
-    RefundDetails,
-    SwapTreeSerializer,
-    detectSwap,
-} from "boltz-core";
-import { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
+import type { RefundDetails } from "boltz-core";
+import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
+import type { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
-import { ECPairInterface } from "ecpair";
-import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import type { ECPairInterface } from "ecpair";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
-import { deriveKeyFn } from "../context/Global";
+import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { getSwapUTXOs } from "./blockchain";
+import type { LockupTransaction, TransactionInterface } from "./boltzClient";
 import {
-    LockupTransaction,
-    TransactionInterface,
     broadcastTransaction,
     getFeeEstimations,
     getLockupTransaction,
     getPartialRefundSignature,
 } from "./boltzClient";
+import type { DecodedAddress } from "./compat";
 import {
-    DecodedAddress,
     decodeAddress,
     getConstructRefundTransaction,
     getNetwork,
@@ -33,7 +28,8 @@ import {
 } from "./compat";
 import { formatError } from "./errors";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
-import { ChainSwap, SomeSwap, SubmarineSwap, isRsk } from "./swapCreator";
+import type { ChainSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
+import { isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 const refundTaproot = async <T extends TransactionInterface>(

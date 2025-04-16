@@ -40,6 +40,7 @@ Available values are:
 - English: `en`
 - German: `de`
 - Spanish: `es`
+- Portuguese: `pt`
 - Chinese: `zh`
 - Japanese: `ja`
 - Russian: `ru`

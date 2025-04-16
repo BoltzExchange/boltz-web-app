@@ -37,10 +37,7 @@ export default [
     {
         rules: {
             "no-async-promise-executor": "off",
-        },
-    },
-    {
-        rules: {
+            "no-console": 1,
             "no-restricted-imports": [
                 "error",
                 {
@@ -74,6 +71,7 @@ export default [
         rules: {
             "require-await": "error",
             "@typescript-eslint/no-floating-promises": "error",
+            "@typescript-eslint/consistent-type-imports": "warn",
 
             "@typescript-eslint/no-unsafe-call": "off",
             "@typescript-eslint/only-throw-error": "off",
@@ -84,6 +82,12 @@ export default [
             "@typescript-eslint/no-unsafe-enum-comparison": "off",
             "@typescript-eslint/prefer-promise-reject-errors": "off",
             "@typescript-eslint/no-unnecessary-type-assertion": "off",
+        },
+    },
+    {
+        files: ["tests/**/*.ts", "e2e/**/*.ts"],
+        rules: {
+            "no-console": "off",
         },
     },
 ];

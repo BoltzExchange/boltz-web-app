@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import bolt11 from "bolt11";
 import { exec } from "child_process";
 import fs from "fs";

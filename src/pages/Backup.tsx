@@ -1,26 +1,24 @@
-import { Navigator, useNavigate } from "@solidjs/router";
-import BigNumber from "bignumber.js";
-import { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { Navigator } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
+import type BigNumber from "bignumber.js";
+import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import log from "loglevel";
-import { Accessor, Setter, createEffect } from "solid-js";
+import type { Accessor, Setter } from "solid-js";
+import { createEffect } from "solid-js";
 
 import { createSwap, getClaimAddress } from "../components/CreateButton";
 import Warning from "../components/Warning";
-import { SwapType } from "../consts/Enums";
-import { EIP6963ProviderDetail } from "../consts/Types";
+import type { SwapType } from "../consts/Enums";
+import type { EIP6963ProviderDetail } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
-import {
-    deriveKeyFn,
-    newKeyFn,
-    notifyFn,
-    tFn,
-    useGlobalContext,
-} from "../context/Global";
-import { Signer, useWeb3Signer } from "../context/Web3";
-import { Pairs } from "../utils/boltzClient";
+import type { deriveKeyFn, newKeyFn, notifyFn, tFn } from "../context/Global";
+import { useGlobalContext } from "../context/Global";
+import type { Signer } from "../context/Web3";
+import { useWeb3Signer } from "../context/Web3";
+import type { Pairs } from "../utils/boltzClient";
 import { downloadJson } from "../utils/download";
-import { RescueFile } from "../utils/rescueFile";
-import { SomeSwap } from "../utils/swapCreator";
+import type { RescueFile } from "../utils/rescueFile";
+import type { SomeSwap } from "../utils/swapCreator";
 import { existingBackupFileType } from "./BackupVerify";
 
 const rescueFileName = "boltz-rescue-key-DO-NOT-DELETE";

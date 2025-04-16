@@ -2,9 +2,8 @@ import BigNumber from "bignumber.js";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
+import type { Accessor, Setter } from "solid-js";
 import {
-    Accessor,
-    Setter,
     Show,
     createEffect,
     createResource,
@@ -17,7 +16,7 @@ import RefundButton from "../components/RefundButton";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { DictKey } from "../i18n/i18n";
+import type { DictKey } from "../i18n/i18n";
 import NotFound from "../pages/NotFound";
 import {
     acceptChainSwapNewQuote,
@@ -33,7 +32,7 @@ import {
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { parseBlindingKey } from "../utils/helper";
-import { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Amount = (props: { label: DictKey; amount: number }) => {
     const { t, denomination, separator } = useGlobalContext();
@@ -41,17 +40,16 @@ const Amount = (props: { label: DictKey; amount: number }) => {
     return (
         <div>
             <div>{t(props.label)}</div>
-            <input
-                disabled
-                type="text"
-                placeholder="0"
-                inputMode={denomination() == "btc" ? "decimal" : "numeric"}
-                value={formatAmount(
-                    new BigNumber(props.amount),
-                    denomination(),
-                    separator(),
-                )}
-            />
+            <span>
+                {`${
+                    formatAmount(
+                        new BigNumber(props.amount),
+                        denomination(),
+                        separator(),
+                    ) || 0
+                }`}
+                <span class="denominator" data-denominator={denomination()} />
+            </span>
         </div>
     );
 };

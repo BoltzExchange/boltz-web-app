@@ -1,35 +1,30 @@
-import { Navigator, useNavigate } from "@solidjs/router";
+import type { Navigator } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import log from "loglevel";
-import { Accessor, Setter, createEffect, createSignal, on } from "solid-js";
+import type { Accessor, Setter } from "solid-js";
+import { createEffect, createSignal, on } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { ButtonLabelParams, EIP6963ProviderDetail } from "../consts/Types";
+import type { ButtonLabelParams, EIP6963ProviderDetail } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
-import {
-    deriveKeyFn,
-    newKeyFn,
-    notifyFn,
-    tFn,
-    useGlobalContext,
-} from "../context/Global";
-import {
-    Signer,
-    customDerivationPathRdns,
-    useWeb3Signer,
-} from "../context/Web3";
+import type { deriveKeyFn, newKeyFn, notifyFn, tFn } from "../context/Global";
+import { useGlobalContext } from "../context/Global";
+import type { Signer } from "../context/Web3";
+import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import { Pairs, fetchBolt12Invoice, getAllPairs } from "../utils/boltzClient";
-import { formatAmount } from "../utils/denomination";
+import type { Pairs } from "../utils/boltzClient";
+import { fetchBolt12Invoice, getAllPairs } from "../utils/boltzClient";
+import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
-import { HardwareSigner } from "../utils/hardware/HadwareSigner";
+import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { coalesceLn, isMobile } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
+import type { SomeSwap } from "../utils/swapCreator";
 import {
-    SomeSwap,
     createChain,
     createReverse,
     createSubmarine,
@@ -284,6 +279,7 @@ const CreateButton = () => {
                 minimum,
                 assetReceive,
                 bolt12Offer,
+                denomination,
             ],
             () => {
                 if (!online()) {
@@ -313,7 +309,10 @@ const CreateButton = () => {
                                 denomination(),
                                 separator(),
                             ),
-                            denomination: denomination(),
+                            denomination: formatDenomination(
+                                denomination(),
+                                assetSend(),
+                            ),
                         },
                     });
                     return;

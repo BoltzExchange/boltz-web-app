@@ -9,47 +9,33 @@ import { useGlobalContext } from "../context/Global";
 import { downloadJson, getBackupFileName } from "../utils/download";
 import { isIos } from "../utils/helper";
 import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
-import { SomeSwap } from "../utils/swapCreator";
+import { Errors, validateRescueFile } from "../utils/rescueFile";
+import type { SomeSwap } from "../utils/swapCreator";
 
-export enum Errors {
-    InvalidBackupFile = "invalid file",
-    NotAllElementsHaveAnId = "not all elements have an id",
-}
-
-type BackupFileType = { version: number; swaps: SomeSwap[] };
+type BackupFileType = { version: number; mnemonic: string; swaps: SomeSwap[] };
 
 // Throws when the file is invalid
 // Returns the version of the backup file
-const validateBackupFile = (
-    file: BackupFileType | unknown[] | SomeSwap,
-): BackupFileType => {
+const validateBackupFile = (file: BackupFileType): BackupFileType => {
     const allSwapsHaveId = (swaps: { id: string }[]) => {
         if (swaps.some((swap) => swap.id === undefined || swap.id === null)) {
             throw Errors.NotAllElementsHaveAnId;
         }
     };
 
-    if (file instanceof Array) {
-        allSwapsHaveId(file as { id: string }[]);
-        return { version: 0, swaps: file as SomeSwap[] };
-    } else if (typeof file === "object") {
-        // A single refund file was uploaded
-        if (["id", "type"].every((key) => key in file)) {
-            return {
-                version: latestStorageVersion,
-                swaps: [file as unknown as SomeSwap],
-            };
-        }
-
-        if (!["version", "swaps"].every((key) => key in file)) {
-            throw Errors.InvalidBackupFile;
-        }
-
-        allSwapsHaveId((file as BackupFileType).swaps);
-        return file as BackupFileType;
-    } else {
-        throw Errors.InvalidBackupFile;
+    if (typeof file !== "object") {
+        throw Errors.InvalidFile;
     }
+
+    if (!["version", "swaps", "mnemonic"].every((key) => key in file)) {
+        throw Errors.InvalidFile;
+    }
+
+    validateRescueFile(file);
+
+    allSwapsHaveId((file as BackupFileType).swaps);
+
+    return file as BackupFileType;
 };
 
 const History = () => {
@@ -58,6 +44,9 @@ const History = () => {
     let importRef: HTMLInputElement;
 
     const {
+        rescueFile,
+        setRescueFile,
+        setRescueFileBackupDone,
         getSwaps,
         clearSwaps,
         setSwapStorage,
@@ -78,6 +67,7 @@ const History = () => {
     const backupLocalStorage = async () => {
         downloadJson(getBackupFileName(), {
             version: latestStorageVersion,
+            mnemonic: rescueFile().mnemonic,
             swaps: await getSwaps(),
         });
     };
@@ -104,6 +94,8 @@ const History = () => {
                     await setSwapStorage(swap);
                 }
                 setSwaps(swaps);
+                setRescueFile({ mnemonic: parsedFile.mnemonic });
+                setRescueFileBackupDone(true);
             })
             .catch((e) => {
                 log.error("invalid file upload", e);

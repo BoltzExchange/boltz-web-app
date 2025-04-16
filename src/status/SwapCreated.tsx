@@ -7,7 +7,7 @@ import PayOnchain from "../components/PayOnchain";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
-import { ChainSwap, ReverseSwap } from "../utils/swapCreator";
+import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
 const SwapCreated = () => {
     const { swap } = usePayContext();

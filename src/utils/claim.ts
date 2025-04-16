@@ -1,19 +1,15 @@
 import { crypto } from "bitcoinjs-lib";
-import {
-    ClaimDetails,
-    OutputType,
-    SwapTreeSerializer,
-    detectSwap,
-} from "boltz-core";
-import { LiquidClaimDetails } from "boltz-core/dist/lib/liquid";
-import { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
+import type { ClaimDetails } from "boltz-core";
+import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
+import type { LiquidClaimDetails } from "boltz-core/dist/lib/liquid";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { deriveKeyFn } from "../context/Global";
+import type { deriveKeyFn } from "../context/Global";
+import type { TransactionInterface } from "./boltzClient";
 import {
-    TransactionInterface,
     broadcastTransaction,
     getChainSwapClaimDetails,
     getPartialReverseClaimSignature,
@@ -30,12 +26,8 @@ import {
 } from "./compat";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
-import {
-    ChainSwap,
-    ReverseSwap,
-    SubmarineSwap,
-    getRelevantAssetForSwap,
-} from "./swapCreator";
+import type { ChainSwap, ReverseSwap, SubmarineSwap } from "./swapCreator";
+import { getRelevantAssetForSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 const createAdjustedClaim = async <
