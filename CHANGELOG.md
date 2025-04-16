@@ -3,6 +3,44 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.2..v1.7.3) - 2025-04-16
+
+### Bug Fixes
+
+- config for pro (#881) - ([9359179](https://github.com/BoltzExchange/boltz-web-app/commit/9359179962d6960723e6005f44809e724d6ee1f9))
+- rollback WalletConnect to fix production builds (#882) - ([373619a](https://github.com/BoltzExchange/boltz-web-app/commit/373619a9cb57ae0c8990da779ce4b1469e660481))
+- builds in Docker (#887) - ([2da0e19](https://github.com/BoltzExchange/boltz-web-app/commit/2da0e197cc50cc26371571a251d92e4890efe6d3))
+- `receiveAsset` URL parameter (#885) - ([8610a90](https://github.com/BoltzExchange/boltz-web-app/commit/8610a9046b1402703a7bbac8e63fabdc105fe346))
+- address derivation for RSK from Trezor (#898) - ([03db673](https://github.com/BoltzExchange/boltz-web-app/commit/03db6731be065adb8f185583019dfdfa62aed44e))
+- Rootstock derivation path (#900) - ([a3925a9](https://github.com/BoltzExchange/boltz-web-app/commit/a3925a95519fbd9e51480479d57c8689189d2f65))
+- format and add missing denominations (#894) - ([0fc95ce](https://github.com/BoltzExchange/boltz-web-app/commit/0fc95ce3c6978213977065e457749a397368294a))
+
+### Features
+
+- include rescue key in backup (#874) - ([b592bbd](https://github.com/BoltzExchange/boltz-web-app/commit/b592bbd73628ebb9fd89197487e1dd9bc4d1d256))
+- add Portuguese translations (#889) - ([f0a5c75](https://github.com/BoltzExchange/boltz-web-app/commit/f0a5c758bd830fd4246f5912ee59f7cb65181ab5))
+- improve UX for copying address/invoice on click - ([988414a](https://github.com/BoltzExchange/boltz-web-app/commit/988414ad88e20ad6d4b981efebf5db1ee4347b51))
+
+### Miscellaneous Chores
+
+- python3 from env in shebang (#880) - ([f42a6cd](https://github.com/BoltzExchange/boltz-web-app/commit/f42a6cd885f9982e9983d44a699848290ab40b2e))
+- minor dependency updates - ([8f18c90](https://github.com/BoltzExchange/boltz-web-app/commit/8f18c909eaf71a1a06a68b08e10c6151c74b0e88))
+- check type imports with ESLint - ([2d64281](https://github.com/BoltzExchange/boltz-web-app/commit/2d6428158e28505549002b5d1d4a70d89ba418de))
+- bump boltz-core to v3.0.0 - ([f4e000f](https://github.com/BoltzExchange/boltz-web-app/commit/f4e000f9a389079abfb8f974dae867b3af4603e6))
+- bump Ledger dependencies - ([c093918](https://github.com/BoltzExchange/boltz-web-app/commit/c09391840d7a3b1fc96c0de650fb285ba96c675d))
+- add eslint no-console rule and remove old console.log - ([d96d864](https://github.com/BoltzExchange/boltz-web-app/commit/d96d864a6b03d0ae3a6132078bda120fd5e44707))
+- reorder header menu (#896) - ([1df3f95](https://github.com/BoltzExchange/boltz-web-app/commit/1df3f95b34cb800c21f1c0e32f23b250aa4ecdfd))
+
+### Refactoring
+
+- compiled network configuration file (#883) - ([ece175d](https://github.com/BoltzExchange/boltz-web-app/commit/ece175d0f1881b8ab10dd7e193801dfcd0e6f0eb))
+- HadwareSigner -> HardwareSigner (#902) - ([2d5b280](https://github.com/BoltzExchange/boltz-web-app/commit/2d5b280bd02c74c5350a449b0330dd0e3d9eb138))
+
+### Tests
+
+- copy box content to clipboard on click - ([35c3783](https://github.com/BoltzExchange/boltz-web-app/commit/35c37836e0fd649356dd30aad96d70587ab47b03))
+
+---
 ## [1.7.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.1..v1.7.2) - 2025-03-31
 
 ### Bug Fixes
@@ -33,6 +71,7 @@ All notable changes to this project will be documented in this file. See [conven
 - update dependencies (#870) - ([3aa44c7](https://github.com/BoltzExchange/boltz-web-app/commit/3aa44c799100faf2b4a0a85d856ad71fda3b486e))
 - production builds in Docker - ([e0cbbae](https://github.com/BoltzExchange/boltz-web-app/commit/e0cbbae59b32abda04431e489ccd907e1843b760))
 - update regtest - ([273df42](https://github.com/BoltzExchange/boltz-web-app/commit/273df42f808db1163a7b64a6c2556a3603cfdcdb))
+- bump version to v1.7.2 - ([d9aa7c4](https://github.com/BoltzExchange/boltz-web-app/commit/d9aa7c4e2136e87363a913d4d33c641f6b35eb06))
 
 ### Refactoring
 
