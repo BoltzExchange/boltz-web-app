@@ -239,6 +239,13 @@ export const Hero = () => {
                             class="speed"
                         />
                     </div>
+                    <div>
+                        <a
+                            href="https://www.fedi.xyz/"
+                            target="_blank"
+                            class="fedi"
+                        />
+                    </div>
                 </div>
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
