@@ -164,7 +164,12 @@ const Fees = () => {
                     : limit;
             };
 
-            setMinimum(calculateLimit(cfg.limits.minimal));
+            setMinimum(
+                calculateLimit(
+                    (cfg as SubmarinePairTypeTaproot).limits.minimalBatched ||
+                        cfg.limits.minimal,
+                ),
+            );
             setMaximum(calculateLimit(cfg.limits.maximal));
         }
     });
