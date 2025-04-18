@@ -33,6 +33,7 @@ type PairType = {
 type SubmarinePairTypeTaproot = PairType & {
     limits: PairLimits & {
         maximalZeroConf: number;
+        minimalBatched?: number;
     };
     fees: {
         minerFees: number;

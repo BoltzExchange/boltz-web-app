@@ -118,4 +118,21 @@ describe("Fees component", () => {
             fees.minerFees.server + fees.minerFees.user.claim + 5,
         );
     });
+
+    test("should apply minimalBatched limit for liquid submarine swaps", () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setPairs(pairs);
+        signals.setAssetSend(LBTC);
+        signals.setAssetReceive(LN);
+        signals.setSendAmount(BigNumber(41));
+        expect(signals.minimum()).toEqual(41);
+    });
 });

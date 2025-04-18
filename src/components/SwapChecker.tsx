@@ -23,7 +23,7 @@ import {
     createTheirPartialChainSwapSignature,
 } from "../utils/claim";
 import { formatError } from "../utils/errors";
-import { getApiUrl } from "../utils/helper";
+import { getApiUrl, getPair } from "../utils/helper";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -174,6 +174,7 @@ export const SwapChecker = () => {
         externalBroadcast,
         t,
         deriveKey,
+        pairs,
     } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
@@ -285,7 +286,14 @@ export const SwapChecker = () => {
             }
         } else if (
             currentSwap.type === SwapType.Submarine &&
-            data.status === swapStatusPending.TransactionClaimPending
+            data.status === swapStatusPending.TransactionClaimPending &&
+            currentSwap.receiveAmount >=
+                getPair(
+                    pairs(),
+                    currentSwap.type,
+                    currentSwap.assetSend,
+                    currentSwap.assetReceive,
+                ).limits.minimal
         ) {
             try {
                 await createSubmarineSignature(

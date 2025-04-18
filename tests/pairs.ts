@@ -25,10 +25,11 @@ export const pairs: Pairs = {
                     maximal: 4294967,
                     minimal: 10000,
                     maximalZeroConf: 0,
+                    minimalBatched: 21,
                 },
                 fees: {
                     percentage: 0.1,
-                    minerFees: 147,
+                    minerFees: 19,
                 },
             },
         },
