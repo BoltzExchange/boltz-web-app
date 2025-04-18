@@ -27,7 +27,7 @@ const CopyButton = (props: {
     const onClick = () => {
         const copyData =
             typeof merged.data === "string" ? merged.data : merged.data();
-        clipboard(copyData.replaceAll(" ", ""));
+        clipboard(copyData);
         setButtonClass(`${merged.btnClass} btn-active`);
         setButtonActive(true);
         setTimeout(() => {

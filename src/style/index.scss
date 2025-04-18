@@ -765,3 +765,84 @@ header {
     margin-bottom: 1rem;
     color: vars.$primary;
 }
+
+.mnemonic-word {
+    font-weight: bold;
+}
+
+.text-highlight {
+    color: vars.$primary;
+}
+
+.mnemonic-number {
+    color: #666666;
+}
+
+.backup-mnemonic-container {
+    display: flex;
+    justify-content: center;
+    max-width: 18rem;
+    padding: 1rem;
+    margin: 0 auto;
+
+    color: white;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+
+    user-select: none;
+
+    .mnemonic-wordlist {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(6, auto);
+        grid-auto-flow: column;
+        column-gap: 2rem;
+        row-gap: 0.1rem;
+
+        .mnemonic-item {
+            display: flex;
+            justify-content: start;
+            gap: 0.5rem;
+
+            .mnemonic-number {
+                min-width: 1.3rem;
+            }
+        }
+    }
+}
+
+.mnemonic-verification {
+    display: flex;
+    flex-direction: row;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: start;
+    font-size: 1rem;
+    gap: 1rem;
+
+    .mnemonic-item {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.4rem;
+    }
+
+    .verification-item {
+        min-width: 4rem;
+        border-bottom: 2px solid currentColor;
+        color: vars.$primary;
+        border-radius: 0;
+
+        .mnemonic-number {
+            color: vars.$primary;
+        }
+    }
+}
+
+.mnemonic-backup-verify-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}

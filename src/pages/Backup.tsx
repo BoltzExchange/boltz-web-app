@@ -4,8 +4,9 @@ import type BigNumber from "bignumber.js";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
-import { createEffect } from "solid-js";
+import { For, Match, Switch, createEffect } from "solid-js";
 
+import CopyButton from "../components/CopyButton";
 import { createSwap, getClaimAddress } from "../components/CreateButton";
 import Warning from "../components/Warning";
 import type { SwapType } from "../consts/Enums";
@@ -17,6 +18,7 @@ import type { Signer } from "../context/Web3";
 import { useWeb3Signer } from "../context/Web3";
 import type { Pairs } from "../utils/boltzClient";
 import { downloadJson } from "../utils/download";
+import { isMobile } from "../utils/helper";
 import type { RescueFile } from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
 import { existingBackupFileType } from "./BackupVerify";
@@ -113,6 +115,7 @@ export const backupDone = async (
 
 const Backup = () => {
     const navigate = useNavigate();
+    const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
     const {
         t,
         rescueFile,
@@ -183,8 +186,8 @@ const Backup = () => {
         );
     };
 
-    return (
-        <div class="frame">
+    const BackupFile = () => (
+        <>
             <h2>{t("download_boltz_rescue_key")}</h2>
             <h4>{t("download_boltz_rescue_key_subline")}</h4>
             <p>{t("download_boltz_rescue_key_subline_second")}</p>
@@ -207,6 +210,57 @@ const Backup = () => {
                     {t("download_new_key")}
                 </button>
             </div>
+        </>
+    );
+
+    const BackupMnemonic = () => (
+        <>
+            <h2>{t("backup_boltz_rescue_key")}</h2>
+            <h4>{t("download_boltz_rescue_key_subline")}</h4>
+            {/* <Warning /> */}
+            <p>{t("backup_boltz_rescue_key_subline_second")}</p>
+            <div class="backup-mnemonic-container">
+                <div class="mnemonic-wordlist">
+                    <For each={rescueFile().mnemonic.split(" ")}>
+                        {(word, i) => (
+                            <div class="mnemonic-item">
+                                <span class="mnemonic-number">{i() + 1}</span>
+                                <span class="mnemonic-word">{word}</span>
+                            </div>
+                        )}
+                    </For>
+                </div>
+            </div>
+            <p class="mnemonic-word">
+                {t("backup_boltz_rescue_key_reminder").toUpperCase()}
+            </p>
+            <p>{t("backup_boltz_rescue_key_subline_third")}</p>
+            <CopyButton
+                label="copy_rescue_key"
+                btnClass="btn btn-light"
+                data={rescueFile().mnemonic}
+            />
+            <hr />
+            <button
+                class="btn btn-yellow"
+                onClick={() => {
+                    navigateToVerification(true);
+                }}>
+                {t("user_saved_key")}
+            </button>
+        </>
+    );
+
+    return (
+        <div class="frame">
+            <Switch>
+                <Match when={!isMobileEvmBrowser()}>
+                    <BackupFile />
+                </Match>
+                <Match when={isMobileEvmBrowser()}>
+                    <BackupMnemonic />
+                </Match>
+            </Switch>
         </div>
     );
 };

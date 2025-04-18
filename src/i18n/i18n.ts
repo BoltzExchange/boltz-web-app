@@ -252,6 +252,20 @@ const dict = {
         back: "Back",
         next: "Next",
         pagination_info: "Page {{ start }} of {{ end }}",
+        backup_boltz_rescue_key: "Backup Boltz Rescue Key",
+        backup_boltz_rescue_key_subline_second:
+            "This new key works on any device and works for all swaps created with it.",
+        backup_boltz_rescue_key_subline_third:
+            "Please write down or copy this key and store it in a secure and permanent location.",
+        backup_boltz_rescue_key_reminder: "Keep this safe. Do not share.",
+        copy_rescue_key: "Copy rescue key",
+        user_saved_key: "I have saved the rescue key",
+        verify_mnemonic_word: {
+            start: "What is the word at ",
+            strong: "position {{ number }}",
+            end: " of your rescue key?",
+        },
+        incorrect_word: "Incorrect word. Please double-check your rescue key.",
     },
     de: {
         language: "Deutsch",
@@ -1525,7 +1539,13 @@ const dict = {
     },
 };
 
-export type DictKey = keyof typeof dict.en;
+type NestedKeyOf<T> = {
+    [K in keyof T & string]: T[K] extends object
+        ? `${K}.${NestedKeyOf<T[K]>}`
+        : K;
+}[keyof T & string];
+
+export type DictKey = NestedKeyOf<typeof dict.en>;
 
 export const rawDict = JSON.parse(JSON.stringify(dict));
 
