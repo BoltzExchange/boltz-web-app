@@ -342,7 +342,7 @@ const Create = () => {
                         />
                     </span>
                     <span>
-                        {t("max")}
+                        {t("max")}:
                         <span
                             onClick={() => setAmount(maximum())}
                             class="btn-small btn-light">
