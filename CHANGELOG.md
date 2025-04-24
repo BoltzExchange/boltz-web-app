@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.3..v1.7.4) - 2025-04-24
+
+### Bug Fixes
+
+- missing colon for max amount (#907) - ([3f82675](https://github.com/BoltzExchange/boltz-web-app/commit/3f82675a21b1f66bfa95d4579bbbb069eb3eb325))
+
+### Features
+
+- add Fedi as integration (#904) - ([50b429d](https://github.com/BoltzExchange/boltz-web-app/commit/50b429dfa3d44df68dbd0b20a420d11978ce9cde))
+- apply `minimalBatched` to submarine swaps (#906) - ([bf7bf37](https://github.com/BoltzExchange/boltz-web-app/commit/bf7bf37d49185647e40fdb6de7f45dc5cc992835))
+- prompt on tab close with pending swaps (#897) - ([f7fa7a6](https://github.com/BoltzExchange/boltz-web-app/commit/f7fa7a63686b460f60c132f862722a7ed89b835a))
+
+---
 ## [1.7.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.2..v1.7.3) - 2025-04-16
 
 ### Bug Fixes
@@ -30,6 +43,7 @@ All notable changes to this project will be documented in this file. See [conven
 - bump Ledger dependencies - ([c093918](https://github.com/BoltzExchange/boltz-web-app/commit/c09391840d7a3b1fc96c0de650fb285ba96c675d))
 - add eslint no-console rule and remove old console.log - ([d96d864](https://github.com/BoltzExchange/boltz-web-app/commit/d96d864a6b03d0ae3a6132078bda120fd5e44707))
 - reorder header menu (#896) - ([1df3f95](https://github.com/BoltzExchange/boltz-web-app/commit/1df3f95b34cb800c21f1c0e32f23b250aa4ecdfd))
+- bump version to v1.7.3 (#903) - ([e4c83cc](https://github.com/BoltzExchange/boltz-web-app/commit/e4c83cc96a8309cd5a34b0a9049c0ea277fdaee5))
 
 ### Refactoring
 
