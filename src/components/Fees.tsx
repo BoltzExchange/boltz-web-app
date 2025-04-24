@@ -123,77 +123,80 @@ const Fees = () => {
                 return;
             }
 
-            if (currentPairs) {
-                if (!online()) {
-                    setOnline(true);
-                }
-
-                const cfg = getPair(
-                    currentPairs,
-                    swapType(),
-                    assetSend(),
-                    assetReceive(),
-                );
-
-                if (!cfg) {
-                    // Not a configured pair
-                    return;
-                }
-
-                setBoltzFee(cfg.fees.percentage);
-
-                switch (swapType()) {
-                    case SwapType.Submarine:
-                        setRoutingFee(
-                            (cfg as SubmarinePairTypeTaproot).fees
-                                .maximalRoutingFee,
-                        );
-                        updateMinerFee(
-                            (cfg as SubmarinePairTypeTaproot).fees.minerFees,
-                        );
-                        break;
-
-                    case SwapType.Reverse: {
-                        const reverseCfg = cfg as ReversePairTypeTaproot;
-                        let fee =
-                            reverseCfg.fees.minerFees.claim +
-                            reverseCfg.fees.minerFees.lockup;
-                        if (isToUnconfidentialLiquid()) {
-                            fee += unconfidentialExtra;
-                        }
-
-                        updateMinerFee(fee);
-                        break;
-                    }
-
-                    case SwapType.Chain: {
-                        const chainCfg = cfg as ChainPairTypeTaproot;
-                        let fee =
-                            chainCfg.fees.minerFees.server +
-                            chainCfg.fees.minerFees.user.claim;
-                        if (isToUnconfidentialLiquid()) {
-                            fee += unconfidentialExtra;
-                        }
-
-                        updateMinerFee(fee);
-                        break;
-                    }
-                }
-
-                const calculateLimit = (limit: number): number => {
-                    return swapType() === SwapType.Submarine
-                        ? calculateSendAmount(
-                              BigNumber(limit),
-                              boltzFee(),
-                              minerFee(),
-                              swapType(),
-                          ).toNumber()
-                        : limit;
-                };
-
-                setMinimum(calculateLimit(cfg.limits.minimal));
-                setMaximum(calculateLimit(cfg.limits.maximal));
+            if (!online()) {
+                setOnline(true);
             }
+
+            const cfg = getPair(
+                currentPairs,
+                swapType(),
+                assetSend(),
+                assetReceive(),
+            );
+
+            if (!cfg) {
+                // Not a configured pair
+                return;
+            }
+
+            setBoltzFee(cfg.fees.percentage);
+
+            switch (swapType()) {
+                case SwapType.Submarine:
+                    setRoutingFee(
+                        (cfg as SubmarinePairTypeTaproot).fees
+                            .maximalRoutingFee,
+                    );
+                    updateMinerFee(
+                        (cfg as SubmarinePairTypeTaproot).fees.minerFees,
+                    );
+                    break;
+
+                case SwapType.Reverse: {
+                    const reverseCfg = cfg as ReversePairTypeTaproot;
+                    let fee =
+                        reverseCfg.fees.minerFees.claim +
+                        reverseCfg.fees.minerFees.lockup;
+                    if (isToUnconfidentialLiquid()) {
+                        fee += unconfidentialExtra;
+                    }
+
+                    updateMinerFee(fee);
+                    break;
+                }
+
+                case SwapType.Chain: {
+                    const chainCfg = cfg as ChainPairTypeTaproot;
+                    let fee =
+                        chainCfg.fees.minerFees.server +
+                        chainCfg.fees.minerFees.user.claim;
+                    if (isToUnconfidentialLiquid()) {
+                        fee += unconfidentialExtra;
+                    }
+
+                    updateMinerFee(fee);
+                    break;
+                }
+            }
+
+            const calculateLimit = (limit: number): number => {
+                return swapType() === SwapType.Submarine
+                    ? calculateSendAmount(
+                          BigNumber(limit),
+                          boltzFee(),
+                          minerFee(),
+                          swapType(),
+                      ).toNumber()
+                    : limit;
+            };
+
+            setMinimum(
+                calculateLimit(
+                    (cfg as SubmarinePairTypeTaproot).limits.minimalBatched ||
+                        cfg.limits.minimal,
+                ),
+            );
+            setMaximum(calculateLimit(cfg.limits.maximal));
         }
     });
 

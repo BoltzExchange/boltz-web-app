@@ -1,6 +1,7 @@
 import { OutputType } from "boltz-core";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
+import { createStore } from "solid-js/store";
 
 import { config } from "../config";
 import { BTC, LBTC, RBTC } from "../consts/Assets";
@@ -24,10 +25,11 @@ import {
     createTheirPartialChainSwapSignature,
 } from "../utils/claim";
 import { formatError } from "../utils/errors";
-import { getApiUrl } from "../utils/helper";
+import { getApiUrl, getPair } from "../utils/helper";
 import type {
     ChainSwap,
     ReverseSwap,
+    SomeSwap,
     SubmarineSwap,
 } from "../utils/swapCreator";
 import { getRelevantAssetForSwap } from "../utils/swapCreator";
@@ -177,9 +179,32 @@ export const SwapChecker = () => {
         setBackend,
         externalBroadcast,
         deriveKey,
+        allPairs,
     } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
+
+    const [pendingSwaps, setPendingSwaps] = createStore<string[]>([]);
+
+    const updatePendingSwaps = (swap: SomeSwap, data: SwapStatus) => {
+        if (![SwapType.Chain, SwapType.Reverse].includes(swap.type)) {
+            return;
+        }
+
+        if (
+            Object.values(swapStatusPending).includes(data.status) &&
+            data.status !== swapStatusPending.SwapCreated &&
+            !pendingSwaps.includes(swap.id)
+        ) {
+            setPendingSwaps((pendingSwaps) => [...pendingSwaps, swap.id]);
+        }
+
+        if (Object.values(swapStatusFinal).includes(data.status)) {
+            setPendingSwaps((pendingSwaps) =>
+                pendingSwaps.filter((id: string) => id !== swap.id),
+            );
+        }
+    };
 
     const prepareSwap = async (swapId: string, data: SwapStatus) => {
         const currentSwap = await getSwap(swapId);
@@ -197,6 +222,7 @@ export const SwapChecker = () => {
             }
         }
         if (data.status) {
+            updatePendingSwaps(currentSwap, data);
             await updateSwapStatus(currentSwap.id, data.status);
         }
     };
@@ -291,7 +317,14 @@ export const SwapChecker = () => {
             }
         } else if (
             currentSwap.type === SwapType.Submarine &&
-            data.status === swapStatusPending.TransactionClaimPending
+            data.status === swapStatusPending.TransactionClaimPending &&
+            currentSwap.receiveAmount >=
+                getPair(
+                    allPairs[backend()],
+                    currentSwap.type,
+                    currentSwap.assetSend,
+                    currentSwap.assetReceive,
+                ).limits.minimal
         ) {
             try {
                 await createSubmarineSignature(
@@ -421,6 +454,14 @@ export const SwapChecker = () => {
 
         ws.subscribeUpdates([activeSwap.id]);
     });
+
+    window.onbeforeunload = (event: BeforeUnloadEvent) => {
+        if (pendingSwaps?.length > 0) {
+            event.preventDefault();
+            return "";
+        }
+        return undefined;
+    };
 
     return "";
 };

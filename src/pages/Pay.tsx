@@ -247,7 +247,7 @@ const Pay = () => {
                                 swapStatus() ===
                                     swapStatusPending.TransactionServerMempool
                             }>
-                            <TransactionMempool />
+                            <TransactionMempool swap={swap} />
                         </Match>
                         <Match
                             when={
