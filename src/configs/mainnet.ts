@@ -3,7 +3,6 @@ import { baseConfig, chooseUrl } from "src/configs/base";
 
 const config = {
     ...baseConfig,
-    torUrl: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
     network: "mainnet",
     loglevel: "debug",
     backends: [
