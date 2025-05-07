@@ -82,11 +82,13 @@ const Create = () => {
         }
     };
 
-    const checkEmptyAmount = (amount: string) => {
-        if (amount === "") {
-            setReceiveAmount(BigNumber(0));
-            setSendAmount(BigNumber(0));
-        }
+    const isEmptyAmount = (amount: string): boolean => {
+        return amount === "";
+    };
+
+    const resetAmounts = () => {
+        setReceiveAmount(BigNumber(0));
+        setSendAmount(BigNumber(0));
     };
 
     const changeReceiveAmount = (evt: InputEvent) => {
@@ -95,7 +97,11 @@ const Create = () => {
             .trim()
             .replaceAll(" ", "")
             .replaceAll(",", ".");
-        checkEmptyAmount(amount);
+        if (isEmptyAmount(amount)) {
+            resetAmounts();
+            validateAmount();
+            return;
+        }
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
         const sendAmount = calculateSendAmount(
@@ -116,7 +122,11 @@ const Create = () => {
             .trim()
             .replaceAll(" ", "")
             .replaceAll(",", ".");
-        checkEmptyAmount(amount);
+        if (isEmptyAmount(amount)) {
+            resetAmounts();
+            validateAmount();
+            return;
+        }
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
         const receiveAmount = calculateReceiveAmount(
