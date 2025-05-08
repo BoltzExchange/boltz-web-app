@@ -34,6 +34,7 @@ import type { LogRefundData } from "../utils/contractLogs";
 import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
+import { isMobile } from "../utils/helper";
 import { getRefundableUTXOs } from "../utils/refund";
 import { createRefundList } from "../utils/refund";
 import { validateRefundFile } from "../utils/refundFile";
@@ -41,9 +42,10 @@ import type { RescueFile } from "../utils/rescueFile";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
+import { MnemonicInput } from "./MnemonicVerify";
 import { mapSwap } from "./RefundRescue";
 
-enum RefundError {
+export enum RefundError {
     InvalidData,
 }
 
@@ -110,10 +112,13 @@ export const RefundBtcLike = () => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
     const rescueContext = useRescueContext();
+    const { hasBrowserWallet } = useWeb3Signer();
+    const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
 
     const [refundInvalid, setRefundInvalid] = createSignal<
         RefundError | undefined
     >(undefined);
+    const [enterMnemonic, setEnterMnemonic] = createSignal(false);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundType, setRefundType] = createSignal<RefundType>();
     const [currentPage, setCurrentPage] = createSignal(1);
@@ -213,15 +218,18 @@ export const RefundBtcLike = () => {
 
     return (
         <>
-            <p>{t("refund_a_swap_subline")}</p>
-            <input
-                required
-                type="file"
-                id="refundUpload"
-                data-testid="refundUpload"
-                accept={rescueFileTypes}
-                onChange={(e) => uploadChange(e)}
-            />
+            <Show when={!enterMnemonic() && !isMobileEvmBrowser()}>
+                <p>{t("refund_a_swap_subline")}</p>
+                <input
+                    required
+                    type="file"
+                    id="refundUpload"
+                    data-testid="refundUpload"
+                    accept={rescueFileTypes}
+                    onChange={(e) => uploadChange(e)}
+                />
+            </Show>
+
             <Show when={refundType() === RefundType.Rescue}>
                 <Switch>
                     <Match when={rescuableSwaps.state === "ready"}>
@@ -286,11 +294,41 @@ export const RefundBtcLike = () => {
                     refundInvalid={refundInvalid}
                 />
             </Show>
-            <Show when={refundInvalid() !== undefined}>
+            <Show when={refundInvalid() !== undefined && !enterMnemonic()}>
                 <h3 style={{ margin: "3%", "margin-top": "4%" }}>
                     {t("invalid_refund_file")}
                 </h3>
             </Show>
+            <Show when={enterMnemonic() || isMobileEvmBrowser()}>
+                <p>{t("refund_a_swap_mnemonic")}</p>
+                <MnemonicInput
+                    onSubmit={(mnemonic) => {
+                        setRefundType(RefundType.Rescue);
+                        setRefundJson(
+                            validateRescueFile({ mnemonic: mnemonic }),
+                        );
+                        rescueContext.setRescueFile({ mnemonic: mnemonic });
+                        setRefundInvalid(undefined);
+                    }}
+                />
+            </Show>
+
+            <Switch>
+                <Match when={!enterMnemonic() && !isMobileEvmBrowser()}>
+                    <button
+                        class="btn btn-light"
+                        onClick={() => setEnterMnemonic(true)}>
+                        {t("enter_mnemonic")}
+                    </button>
+                </Match>
+                <Match when={enterMnemonic()}>
+                    <button
+                        class="btn btn-light"
+                        onClick={() => setEnterMnemonic(false)}>
+                        {t("back")}
+                    </button>
+                </Match>
+            </Switch>
         </>
     );
 };
