@@ -788,3 +788,140 @@ header {
     display: inline-flex;
     gap: 0.8rem;
 }
+
+.text-bold {
+    font-weight: 600;
+}
+
+.text-highlight {
+    color: vars.$primary;
+}
+
+.mnemonic-number {
+    min-width: 1.3rem;
+    color: #5f6871;
+}
+
+.backup-mnemonic-container {
+    display: flex;
+    justify-content: center;
+    max-width: 18rem;
+    padding: 1rem;
+    margin: 0 auto;
+
+    color: white;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+
+    user-select: none;
+
+    .mnemonic-wordlist {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(6, auto);
+        grid-auto-flow: column;
+        column-gap: 2rem;
+        row-gap: 0.1rem;
+
+        .mnemonic-item {
+            display: flex;
+            justify-content: start;
+            gap: 0.5rem;
+        }
+    }
+}
+
+.verification-words {
+    display: flex;
+    flex-direction: row;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: start;
+    font-size: 1rem;
+    gap: 1rem;
+
+    .mnemonic-item {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.4rem;
+    }
+
+    .verification-item {
+        min-width: 4rem;
+        border-bottom: 2px solid currentColor;
+        color: vars.$primary;
+        border-radius: 0;
+
+        .mnemonic-number {
+            color: vars.$primary;
+        }
+    }
+}
+
+.verification-buttons {
+    width: 100%;
+}
+
+.mnemonic-input-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.625rem;
+    gap: 10px;
+
+    .mnemonic-inputs {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+        grid-auto-flow: column;
+        column-gap: 1rem;
+        row-gap: 0.5rem;
+
+        max-width: 18rem;
+        padding: 1rem;
+        margin: 0 auto;
+
+        color: white;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+
+        .input-box {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: space-around;
+
+            .mnemonic-input {
+                padding: 0;
+
+                color: white;
+                background: transparent;
+                font-weight: 600;
+                text-align: left;
+
+                border: none;
+                border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+                border-radius: 0;
+            }
+            .mnemonic-input:focus {
+                border-bottom: 1px dotted vars.$primary;
+
+                &.invalid {
+                    border-bottom: 1px dashed vars.$error;
+                }
+            }
+
+            .invalid {
+                border-bottom: 1px dashed vars.$error;
+            }
+        }
+    }
+}
+
+.mnemonic-backup-verify-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}

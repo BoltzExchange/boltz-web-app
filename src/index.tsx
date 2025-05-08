@@ -20,11 +20,14 @@ import { PayProvider } from "./context/Pay";
 import { RescueProvider } from "./context/Rescue";
 import { Web3SignerProvider } from "./context/Web3";
 import Backup from "./pages/Backup";
+import { BackupMnemonic } from "./pages/BackupMnemonic";
 import BackupVerify from "./pages/BackupVerify";
+import BackupVerifyExisting from "./pages/BackupVerifyExisting";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
 import Hero from "./pages/Hero";
 import History from "./pages/History";
+import MnemonicVerify from "./pages/MnemonicVerify";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
 import Privacy from "./pages/Privacy";
@@ -95,8 +98,13 @@ const cleanup = render(
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
             <Route path="/backup" component={Backup} />
+            <Route path="/backup/mnemonic" component={BackupMnemonic} />
+            <Route path="/backup/mnemonic/verify" component={MnemonicVerify} />
             <Route path="/backup/verify" component={BackupVerify} />
-            <Route path="/backup/verify/:type" component={BackupVerify} />
+            <Route
+                path="/backup/verify/:type"
+                component={BackupVerifyExisting}
+            />
             <Route
                 path="/swap/refund/evm/:asset/:txHash"
                 component={RefundEvm}

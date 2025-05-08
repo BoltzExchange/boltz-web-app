@@ -17,6 +17,7 @@ import {
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
+import MnemonicInput from "../components/MnemonicInput";
 import Pagination from "../components/Pagination";
 import RefundButton from "../components/RefundButton";
 import SwapList, { sortSwaps } from "../components/SwapList";
@@ -43,7 +44,7 @@ import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
 
-enum RefundError {
+export enum RefundError {
     InvalidData,
 }
 
@@ -114,6 +115,7 @@ export const RefundBtcLike = () => {
     const [refundInvalid, setRefundInvalid] = createSignal<
         RefundError | undefined
     >(undefined);
+    const [enterMnemonic, setEnterMnemonic] = createSignal(false);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundType, setRefundType] = createSignal<RefundType>();
     const [currentPage, setCurrentPage] = createSignal(1);
@@ -213,21 +215,42 @@ export const RefundBtcLike = () => {
 
     return (
         <>
-            <p>{t("refund_a_swap_subline")}</p>
-            <input
-                required
-                type="file"
-                id="refundUpload"
-                data-testid="refundUpload"
-                accept={rescueFileTypes}
-                onChange={(e) => uploadChange(e)}
-            />
+            <Show when={!enterMnemonic()}>
+                <p>{t("refund_a_swap_subline")}</p>
+                <hr />
+            </Show>
+            <Show when={refundType() === RefundType.Legacy}>
+                <BtcLikeLegacy
+                    refundJson={refundJson}
+                    refundInvalid={refundInvalid}
+                />
+            </Show>
+            <Show when={refundInvalid() !== undefined && !enterMnemonic()}>
+                <h3 style={{ margin: "3%", "margin-top": "4%" }}>
+                    {t("invalid_refund_file")}
+                </h3>
+            </Show>
+            <Show when={enterMnemonic()}>
+                <p>{t("refund_a_swap_mnemonic")}</p>
+                <MnemonicInput
+                    onSubmit={(mnemonic) => {
+                        setRefundType(RefundType.Rescue);
+                        setRefundJson(
+                            validateRescueFile({ mnemonic: mnemonic }),
+                        );
+                        rescueContext.setRescueFile({ mnemonic: mnemonic });
+                        setRefundInvalid(undefined);
+                        setEnterMnemonic(false);
+                    }}
+                />
+            </Show>
+
             <Show when={refundType() === RefundType.Rescue}>
                 <Switch>
                     <Match when={rescuableSwaps.state === "ready"}>
                         <div style={{ "margin-top": "2%" }}>
                             <Show
-                                when={rescuableSwaps().length > 0}
+                                when={rescuableSwaps()?.length > 0}
                                 fallback={<h4>{t("no_swaps_found")}</h4>}>
                                 <div style={getListHeight()}>
                                     <Show
@@ -280,17 +303,39 @@ export const RefundBtcLike = () => {
                     </Match>
                 </Switch>
             </Show>
-            <Show when={refundType() === RefundType.Legacy}>
-                <BtcLikeLegacy
-                    refundJson={refundJson}
-                    refundInvalid={refundInvalid}
+            <Show when={!enterMnemonic()}>
+                <input
+                    required
+                    type="file"
+                    id="refundUpload"
+                    data-testid="refundUpload"
+                    accept={rescueFileTypes}
+                    onChange={(e) => uploadChange(e)}
                 />
             </Show>
-            <Show when={refundInvalid() !== undefined}>
-                <h3 style={{ margin: "3%", "margin-top": "4%" }}>
-                    {t("invalid_refund_file")}
-                </h3>
-            </Show>
+            <Switch>
+                <Match when={!enterMnemonic()}>
+                    <button
+                        class="btn btn-light"
+                        onClick={() => {
+                            setEnterMnemonic(true);
+                            setRefundType(undefined);
+                            setRefundJson(null);
+                            setRefundInvalid(undefined);
+                            rescueContext.setRescuableSwaps([]);
+                            rescueContext.setRescueFile(undefined);
+                        }}>
+                        {t("enter_mnemonic")}
+                    </button>
+                </Match>
+                <Match when={enterMnemonic()}>
+                    <button
+                        class="btn btn-light"
+                        onClick={() => setEnterMnemonic(false)}>
+                        {t("back")}
+                    </button>
+                </Match>
+            </Switch>
         </>
     );
 };
