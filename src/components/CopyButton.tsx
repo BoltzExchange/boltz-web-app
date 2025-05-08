@@ -11,11 +11,12 @@ import { clipboard } from "../utils/helper";
 const CopyButton = (props: {
     label: DictKey;
     data: string | Accessor<string>;
+    removeSpaces?: boolean;
     btnClass?: string;
 }) => {
     const { t } = useGlobalContext();
 
-    const merged = mergeProps({ btnClass: "btn" }, props);
+    const merged = mergeProps({ btnClass: "btn", removeSpaces: true }, props);
 
     const [buttonClass, setButtonClass] = createSignal<string>("");
     const [buttonActive, setButtonActive] = createSignal<boolean>(false);
@@ -27,7 +28,9 @@ const CopyButton = (props: {
     const onClick = () => {
         const copyData =
             typeof merged.data === "string" ? merged.data : merged.data();
-        clipboard(copyData.replaceAll(" ", ""));
+        clipboard(
+            merged.removeSpaces ? copyData.replaceAll(" ", "") : copyData,
+        );
         setButtonClass(`${merged.btnClass} btn-active`);
         setButtonActive(true);
         setTimeout(() => {
