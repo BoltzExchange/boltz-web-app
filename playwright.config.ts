@@ -30,7 +30,8 @@ export default defineConfig({
     /* Configure projects for major browsers */
     projects: [
         {
-            name: "chromium",
+            name: "Desktop Chrome",
+            testIgnore: /.*mobile.spec.ts/,
             use: {
                 ...devices["Desktop Chrome"],
                 contextOptions: {
@@ -39,13 +40,17 @@ export default defineConfig({
                 },
             },
         },
-
-        /*
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    */
+        {
+            name: "Pixel 7",
+            testMatch: /.*mobile.spec.ts/,
+            use: {
+                ...devices["Pixel 7"],
+                contextOptions: {
+                    // chromium-specific permissions
+                    permissions: ["clipboard-read", "clipboard-write"],
+                },
+            },
+        },
     ],
 
     webServer: {
