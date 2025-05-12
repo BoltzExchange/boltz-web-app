@@ -41,6 +41,18 @@ const InvoiceInput = () => {
         setBolt12Offer,
     } = useCreateContext();
 
+    const clearInputError = (input: HTMLTextAreaElement) => {
+        input.classList.remove("invalid");
+        input.setCustomValidity("");
+        setInvoiceError(undefined);
+    };
+
+    const resetInvoiceState = () => {
+        setBolt12Offer(undefined);
+        setInvoiceValid(false);
+        setLnurl("");
+    };
+
     const validate = async (input: HTMLTextAreaElement) => {
         const val = input.value.trim();
 
@@ -58,10 +70,13 @@ const InvoiceInput = () => {
 
         const inputValue = extractInvoice(val);
 
+        if (inputValue.length === 0) {
+            clearInputError(input);
+            resetInvoiceState();
+            return;
+        }
+
         try {
-            input.setCustomValidity("");
-            setInvoiceError(undefined);
-            input.classList.remove("invalid");
             if (isLnurl(inputValue)) {
                 setLnurl(inputValue);
             } else if (await isBolt12Offer(inputValue)) {
@@ -82,15 +97,12 @@ const InvoiceInput = () => {
                 setLnurl("");
                 setInvoiceValid(true);
             }
+            clearInputError(input);
         } catch (e) {
-            setInvoiceValid(false);
-            setBolt12Offer(undefined);
-            setLnurl("");
+            input.classList.add("invalid");
+            input.setCustomValidity(t(e.message));
+            resetInvoiceState();
             setInvoiceError(e.message);
-            if (inputValue.length !== 0) {
-                input.setCustomValidity(t(e.message));
-                input.classList.add("invalid");
-            }
         }
     };
 
