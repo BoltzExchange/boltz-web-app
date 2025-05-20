@@ -160,7 +160,7 @@ const dict = {
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
         pro: "pro",
-        pro_banner: "BETA: AVAILABILITY NOT GUARANTEED",
+        pro_banner: "Looking to use Boltz Pro via API?",
         warning_return:
             "Return to this page after paying the invoice! The payment might show pending until you return to this page.",
         warning_expiry:
@@ -420,7 +420,7 @@ const dict = {
         num_channels: "Anzahl der Kanäle",
         beta_caution: "BETA - OBACHT!",
         pro: "pro",
-        pro_banner: "BETA: VERFÜGBARKEIT NICHT GARANTIERT",
+        pro_banner: "Möchten Sie Boltz Pro über die API nutzen?",
         warning_return:
             "Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück! Die Zahlung wird möglicherweise als ausstehend angezeigt, bis du zu dieser Seite zurückkehrst.",
         warning_expiry:
@@ -684,7 +684,7 @@ const dict = {
         num_channels: "Número de canales",
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
         pro: "pro",
-        pro_banner: "BETA: DISPONIBILIDAD NO GARANTIZADA",
+        pro_banner: "¿Quieres usar Boltz Pro a través de la API?",
         warning_return:
             "Regresa a esta página después de pagar la factura! El pago puede aparecer como pendiente hasta que vuelvas a esta página.",
         warning_expiry:
@@ -943,7 +943,7 @@ const dict = {
         num_channels: "Número de canais",
         beta_caution: "BETA - USE COM CUIDADO!",
         pro: "pro",
-        pro_banner: "BETA: DISPONIBILIDADE NÃO GARANTIDA",
+        pro_banner: "Quer usar a Boltz Pro via API?",
         warning_return:
             "Volte a esta página após pagar o invoice! O pagamento pode aparecer como pendente até que volte a esta página.",
         warning_expiry:
@@ -1188,7 +1188,7 @@ const dict = {
         num_channels: "通道数",
         beta_caution: "BETA - 谨慎使用！",
         pro: "pro",
-        pro_banner: "测试版：不保证可用性",
+        pro_banner: "想要通过 API 使用 Boltz Pro？",
         warning_return:
             "重要：支付发票后返回此页面！在您返回此页面之前，付款可能显示为待定。",
         warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
@@ -1439,7 +1439,7 @@ const dict = {
         num_channels: "チャネルの数",
         beta_caution: "ベータ版の為、ご利用は慎重にお願いします",
         pro: "pro",
-        pro_banner: "ベータ版：利用可能性は保証されない",
+        pro_banner: "API経由でBoltz Proを使用したいですか？",
         warning_return:
             "重要：インボイスのお支払い後、このページへ戻ってください！このページに戻るまで、支払いは保留中と表示される場合があります。",
         warning_expiry:
