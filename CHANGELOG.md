@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.5](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.4..v1.7.5) - 2025-05-20
+
+### Bug Fixes
+
+- button size to avoid text overflow (#908) - ([40af40c](https://github.com/BoltzExchange/boltz-web-app/commit/40af40cdd0263fe6a3889dacdf45d20fb5160f74))
+- revalidate amount on backspace deletion (#914) - ([3f0b7a5](https://github.com/BoltzExchange/boltz-web-app/commit/3f0b7a5949a683c60ac8aa2d3761bf7a75568df1))
+- properly handle 0-amount invoice error (#913) - ([88e8375](https://github.com/BoltzExchange/boltz-web-app/commit/88e8375a3e8bc806a5ad8c8f67727f5edaf1fd32))
+
+### Miscellaneous Chores
+
+- update dependencies (#911) - ([8abf39a](https://github.com/BoltzExchange/boltz-web-app/commit/8abf39a1fa4a6e464dc7b8b187245fb4a567f369))
+- bump base-x (#916) - ([e5bf782](https://github.com/BoltzExchange/boltz-web-app/commit/e5bf782577c4568e9f7417942a8d054326f4eb7b))
+- bump dependencies (#917) - ([dbc9c9d](https://github.com/BoltzExchange/boltz-web-app/commit/dbc9c9d2a9cbfa261ca3b837dd7329997978ae9f))
+- API instructions in pro banner (#918) - ([f4b9cdb](https://github.com/BoltzExchange/boltz-web-app/commit/f4b9cdbdefe1f88eaa2cd058d37f7980f8bde749))
+
+---
 ## [1.7.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.3..v1.7.4) - 2025-04-24
 
 ### Bug Fixes
@@ -14,6 +30,10 @@ All notable changes to this project will be documented in this file. See [conven
 - add Fedi as integration (#904) - ([50b429d](https://github.com/BoltzExchange/boltz-web-app/commit/50b429dfa3d44df68dbd0b20a420d11978ce9cde))
 - apply `minimalBatched` to submarine swaps (#906) - ([bf7bf37](https://github.com/BoltzExchange/boltz-web-app/commit/bf7bf37d49185647e40fdb6de7f45dc5cc992835))
 - prompt on tab close with pending swaps (#897) - ([f7fa7a6](https://github.com/BoltzExchange/boltz-web-app/commit/f7fa7a63686b460f60c132f862722a7ed89b835a))
+
+### Miscellaneous Chores
+
+- bump version to v1.7.4 (#909) - ([7c04bb1](https://github.com/BoltzExchange/boltz-web-app/commit/7c04bb1715d8e797988b6134fa3250ca25569182))
 
 ---
 ## [1.7.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.2..v1.7.3) - 2025-04-16
