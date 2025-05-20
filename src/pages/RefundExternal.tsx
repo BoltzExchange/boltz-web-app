@@ -135,7 +135,7 @@ export const RefundBtcLike = () => {
                 getXpub(source.refundJson),
             );
             rescueContext.setRescuableSwaps(res);
-            return res.map((swap) => mapSwap(swap));
+            return res.map((swap) => mapSwap(backend(), swap));
         },
     );
 

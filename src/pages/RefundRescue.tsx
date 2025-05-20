@@ -18,6 +18,7 @@ import { deriveKey } from "../utils/rescueFile";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 export const mapSwap = (
+    backend: number,
     swap?: RescuableSwap,
 ): SubmarineSwap | ChainSwap | undefined => {
     if (swap === undefined) {
@@ -33,6 +34,7 @@ export const mapSwap = (
             address: swap.lockupAddress,
             refundPrivateKeyIndex: swap.keyIndex,
             claimPublicKey: swap.serverPublicKey,
+            backend: backend,
         } as Partial<SubmarineSwap> as SubmarineSwap;
     } else if (swap.type === SwapType.Chain) {
         return {
@@ -46,6 +48,7 @@ export const mapSwap = (
                 lockupAddress: swap.lockupAddress,
                 serverPublicKey: swap.serverPublicKey,
             } as Partial<ChainSwap["lockupDetails"]>,
+            backend: backend,
         } as Partial<ChainSwap> as ChainSwap;
     }
 
@@ -55,7 +58,7 @@ export const mapSwap = (
 const RefundRescue = () => {
     const params = useParams<{ id: string }>();
 
-    const { t } = useGlobalContext();
+    const { backend, t } = useGlobalContext();
     const {
         swap,
         setSwap,
@@ -67,7 +70,10 @@ const RefundRescue = () => {
     const { rescuableSwaps, rescueFile } = useRescueContext();
 
     const rescuableSwap = () =>
-        mapSwap(rescuableSwaps().find((swap) => swap.id === params.id));
+        mapSwap(
+            backend(),
+            rescuableSwaps().find((swap) => swap.id === params.id),
+        );
 
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
