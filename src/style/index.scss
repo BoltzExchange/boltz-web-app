@@ -429,13 +429,13 @@ textarea {
     align-items: center;
     display: flex;
     justify-content: start;
-    height: 36px;
+    height: 38px;
     &:hover {
         background: rgb(20, 40, 63);
     }
     > * {
-        width: 28px;
-        height: 28px;
+        min-width: 30px;
+        height: 30px;
         border-radius: 50%;
         user-select: none;
         display: flex;

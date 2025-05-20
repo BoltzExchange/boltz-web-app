@@ -131,4 +131,34 @@ describe("CreateButton", () => {
         expect(btn.disabled).toBeTruthy();
         expect(btn.textContent).toEqual(i18n.en.invalid_invoice);
     });
+
+    test("should be disabled with invalid_0_amount label", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoiceValid(true);
+        signals.setAssetSend(LBTC);
+        signals.setAssetReceive(LN);
+        const btn = (await screen.findByText(
+            i18n.en.create_swap,
+        )) as HTMLButtonElement;
+        expect(btn).not.toBeUndefined();
+        expect(btn.disabled).toBeFalsy();
+        signals.setInvoiceValid(false);
+        signals.setInvoiceError("invalid_0_amount");
+        expect(btn.disabled).toBeTruthy();
+        expect(btn.textContent).toEqual(i18n.en.invalid_0_amount);
+        signals.setAmountValid(false);
+        expect(btn.disabled).toBeTruthy();
+        expect(btn.textContent).toEqual(i18n.en.invalid_0_amount);
+    });
 });

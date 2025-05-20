@@ -272,6 +272,7 @@ const CreateButton = () => {
                 amountValid,
                 addressValid,
                 invoiceValid,
+                invoiceError,
                 pairValid,
                 swapType,
                 lnurl,
@@ -290,16 +291,24 @@ const CreateButton = () => {
                     setButtonLabel({ key: "invalid_pair" });
                     return;
                 }
-                if (
+
+                const isChainSwapWithZeroAmount = () =>
+                    swapType() === SwapType.Chain &&
+                    assetSend() !== RBTC &&
+                    sendAmount().isZero();
+
+                const isSubmarineSwapInvoiceValid = () =>
+                    swapType() === SwapType.Submarine && !invoiceError();
+
+                const shouldShowAmountError = () =>
                     !amountValid() &&
                     // Chain swaps with 0-amount that do not have RBTC as sending asset
                     // can skip this check
-                    !(
-                        swapType() === SwapType.Chain &&
-                        assetSend() !== RBTC &&
-                        sendAmount().isZero()
-                    )
-                ) {
+                    !isChainSwapWithZeroAmount() &&
+                    (isSubmarineSwapInvoiceValid() ||
+                        swapType() !== SwapType.Submarine);
+
+                if (shouldShowAmountError()) {
                     const lessThanMin = Number(sendAmount()) < minimum();
                     setButtonLabel({
                         key: lessThanMin ? "minimum_amount" : "maximum_amount",
