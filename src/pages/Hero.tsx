@@ -164,6 +164,13 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
+                            href="https://cakewallet.com/"
+                            target="_blank"
+                            class="cake"
+                        />
+                    </div>
+                    <div>
+                        <a
                             href="https://www.fedi.xyz/"
                             target="_blank"
                             class="fedi"
