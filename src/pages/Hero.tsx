@@ -122,9 +122,30 @@ export const Hero = () => {
                 <div id="integrations">
                     <div>
                         <a
-                            href="https://corelightning.org/"
+                            href="https://getalby.com/"
                             target="_blank"
-                            class="cln"
+                            class="alby"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://aquawallet.io/"
+                            target="_blank"
+                            class="aqua"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://bancolibre.com/"
+                            target="_blank"
+                            class="bancoLibre"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://blitz-wallet.com/"
+                            target="_blank"
+                            class="blitz"
                         />
                     </div>
                     <div>
@@ -136,6 +157,41 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
+                            href="https://www.bullbitcoin.com/"
+                            target="_blank"
+                            class="bull-bitcoin"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://www.fedi.xyz/"
+                            target="_blank"
+                            class="fedi"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://fuji.money/"
+                            target="_blank"
+                            class="fuji"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://geyser.fund/"
+                            target="_blank"
+                            class="geyser"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://helm-wallet.com/"
+                            target="_blank"
+                            class="helm"
+                        />
+                    </div>
+                    <div>
+                        <a
                             href="https://lnbits.com/"
                             target="_blank"
                             class="lnbits"
@@ -143,9 +199,30 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
+                            href="https://vulpem.com/marina.html"
+                            target="_blank"
+                            class="marina"
+                        />
+                    </div>
+                    <div>
+                        <a
                             href="https://www.ridethelightning.info/"
                             target="_blank"
                             class="rtl"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://www.tryspeed.com/"
+                            target="_blank"
+                            class="speed"
+                        />
+                    </div>
+                    <div>
+                        <a
+                            href="https://stashpay.me"
+                            target="_blank"
+                            class="stashPay"
                         />
                     </div>
                     <div>
@@ -158,86 +235,9 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://fuji.money/"
-                            target="_blank"
-                            class="fuji"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://aquawallet.io/"
-                            target="_blank"
-                            class="aqua"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://vulpem.com/marina.html"
-                            target="_blank"
-                            class="marina"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://geyser.fund/"
-                            target="_blank"
-                            class="geyser"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://www.bullbitcoin.com/"
-                            target="_blank"
-                            class="bull-bitcoin"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://blitz-wallet.com/"
-                            target="_blank"
-                            class="blitz"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://helm-wallet.com/"
-                            target="_blank"
-                            class="helm"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://bancolibre.com/"
-                            target="_blank"
-                            class="bancoLibre"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://stashpay.me"
-                            target="_blank"
-                            class="stashPay"
-                        />
-                    </div>
-                    <div>
-                        <a
                             href="https://tropykus.com"
                             target="_blank"
                             class="tropykus"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://www.tryspeed.com/"
-                            target="_blank"
-                            class="speed"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://www.fedi.xyz/"
-                            target="_blank"
-                            class="fedi"
                         />
                     </div>
                 </div>
