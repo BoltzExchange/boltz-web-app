@@ -1,0 +1,134 @@
+@use "sass:color";
+@use "vars" as *;
+@use "index";
+
+// Override variables that index.scss uses
+$primary: #c5a063 !global;
+$background: #1d1d1d !global;
+$color: #ffffff !global;
+$error: #ff4444 !global;
+$success: #44ff44 !global;
+
+// Colors from qrcode.scss
+$qrcode-bg: #ffffff !global;
+$qrcode-text: #ffffff !global;
+
+// Colors from qrscan.scss
+$qrscan-overlay: #ffffff !global;
+$qrscan-text: #14283f !global;
+
+// Colors from legal.scss
+$legal-text: #c5a063 !global;
+$legal-bg: #1d1d1d !global;
+$legal-border: #1a1a1a !global;
+$legal-link: #4a9eff !global;
+$legal-link-hover: #7ab8ff !global;
+
+// Colors from swaplist.scss
+$swaplist-overlay: #000000 !global;
+$swaplist-bg: #ffffff !global;
+
+// Colors from tooltip.scss
+$tooltip-text: #ffffff !global;
+$tooltip-bg: #111111 !global;
+$tooltip-shadow: #000000 !global;
+
+// Colors from settings.scss
+$settings-border: #1a1a1a !global;
+
+// Colors from web3.scss
+$web3-overlay: #404040 !global;
+
+// Colors from pagination.scss
+$pagination-bg: #142b46 !global;
+$pagination-border: #1a1a1a !global;
+$pagination-text: #d2dae7 !global;
+
+// Colors from tabs.scss
+$tabs-bg: $background !global;
+$tabs-text: $color !global;
+$tabs-bg-hover: #1a1a1a !global;
+$tabs-active-bg: $primary !global;
+$tabs-active-text: $background !global;
+
+// Pro styles only apply when the boltz-pro attribute is present
+[boltz-pro="true"] {
+    @extend *;
+    background: $background;
+
+    // Override specific elements
+    .btn {
+        background-color: $primary;
+        color: $background;
+    }
+
+    .btn-small {
+        background-color: $primary;
+        color: $background;
+    }
+
+    a, a:hover {
+        color: $primary;
+    }
+
+    .headline, h1 {
+        color: $primary;
+    }
+
+    hr {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .asset-wrap {
+        background-color: $background;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        &:hover {
+            background: color.adjust($background, $lightness: 3%);
+        }
+    }
+    .banner.banner-yellow {
+        background: $primary;
+        color: $background;
+        
+        a {
+            background: $primary;
+            color: $background;
+            &:hover {
+                color: color.adjust($background, $lightness: -10%);
+            }
+        }
+    }
+
+    nav {
+        background: $background;
+        &:hover {
+            background: color.adjust($background, $lightness: 3%);
+        }
+    }
+
+    #network {
+        background: $primary;
+        color: $background;
+    }
+
+    #logo img {
+        filter: brightness(0) invert(1);
+    }
+
+    .numbers {
+        color: $color;
+    }
+
+    .assets-select {
+        background: $background;
+    }
+
+    .denomination-desktop {
+        background: $background;
+        color: $color;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        &:hover {
+            background: color.adjust($background, $lightness: 3%);
+        }
+    }
+}

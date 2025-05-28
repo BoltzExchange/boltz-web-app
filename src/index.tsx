@@ -37,6 +37,10 @@ import "./style/index.scss";
 import { initEcc } from "./utils/ecpair";
 import "./utils/patches";
 
+if (config.isPro) {
+    import("./style/pro.scss");
+}
+
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker
         .register("/service-worker.js", { scope: "/" })
@@ -60,19 +64,21 @@ const App = (props: RouteSectionProps) => {
                 <CreateProvider>
                     <PayProvider>
                         <RescueProvider>
-                            <SwapChecker />
-                            <Chatwoot />
-                            <Show when={!isEmbedded()}>
-                                <Nav
-                                    isPro={config.isPro}
-                                    network={config.network}
-                                />
-                            </Show>
-                            {props.children}
-                            <Notification />
-                            <Show when={!isEmbedded()}>
-                                <Footer />
-                            </Show>
+                            <div boltz-pro={config.isPro ? "true" : undefined}>
+                                <SwapChecker />
+                                <Chatwoot />
+                                <Show when={!isEmbedded()}>
+                                    <Nav
+                                        isPro={config.isPro}
+                                        network={config.network}
+                                    />
+                                </Show>
+                                {props.children}
+                                <Notification />
+                                <Show when={!isEmbedded()}>
+                                    <Footer />
+                                </Show>
+                            </div>
                         </RescueProvider>
                     </PayProvider>
                 </CreateProvider>
