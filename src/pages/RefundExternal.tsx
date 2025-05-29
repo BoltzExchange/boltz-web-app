@@ -220,6 +220,7 @@ export const RefundBtcLike = () => {
         <>
             <Show when={!enterMnemonic() && !isMobileEvmBrowser()}>
                 <p>{t("refund_a_swap_subline")}</p>
+                <hr />
                 <input
                     required
                     type="file"
