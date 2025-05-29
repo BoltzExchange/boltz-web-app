@@ -1536,7 +1536,13 @@ const dict = {
     },
 };
 
-export type DictKey = keyof typeof dict.en;
+type NestedKeyOf<T> = {
+    [K in keyof T & string]: T[K] extends object
+        ? `${K}.${NestedKeyOf<T[K]>}`
+        : K;
+}[keyof T & string];
+
+export type DictKey = NestedKeyOf<typeof dict.en>;
 
 export const rawDict = JSON.parse(JSON.stringify(dict));
 
