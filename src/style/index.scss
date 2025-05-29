@@ -206,21 +206,27 @@ hr.spacer {
     background-color: #545c65;
     cursor: not-allowed;
 }
-
-.btn-active,
-.btn-small:hover,
-.btn:hover,
-.tag .btn:hover {
+.btn-active {
     background-color: #fff;
     color: #14283f;
+}
+@media (hover: hover) {
+    .btn-small:hover,
+    .btn:hover,
+    .tag .btn:hover {
+        background-color: #fff;
+        color: #14283f;
+    }
 }
 
 .btn-light {
     color: white;
     background-color: rgb(11, 22, 35);
 }
-.btn-light:hover {
-    background-color: vars.$primary;
+@media (hover: hover) {
+    .btn-light:hover {
+        background-color: vars.$primary;
+    }
 }
 .btn-explorer {
     background: #533180;
@@ -235,16 +241,21 @@ hr.spacer {
     background-color: #246c24;
     color: white;
 }
-.btn-success:hover {
-    background-color: #fff;
+@media (hover: hover) {
+    .btn-success:hover {
+        background-color: #fff;
+    }
 }
+
 .btn-danger:disabled,
 .btn-danger {
     background-color: color.adjust(vars.$error, $alpha: -0.42);
     color: white;
 }
-.btn-danger:hover {
-    background: vars.$error;
+@media (hover: hover) {
+    .btn-danger:hover {
+        background: vars.$error;
+    }
 }
 .center,
 .btns {
@@ -417,10 +428,12 @@ textarea.invalid {
         &:last-child {
             border-radius: 0 20px 20px 0;
         }
-        &:hover {
-            background: rgb(20, 40, 63);
-            color: rgba(255, 255, 255, 0.8);
-            border: 1px dashed rgba(255, 175, 75, 0.15);
+        @media (hover: hover) {
+            &:hover {
+                background: rgb(20, 40, 63);
+                color: rgba(255, 255, 255, 0.8);
+                border: 1px dashed rgba(255, 175, 75, 0.15);
+            }
         }
         &.active {
             color: vars.$primary;
@@ -562,8 +575,10 @@ textarea.invalid {
     z-index: 1;
     box-shadow: 0 0 7px rgba(0, 0, 0, 0.4);
 }
-#flip-assets:hover {
-    background: rgb(20, 40, 63);
+@media (hover: hover) {
+    #flip-assets:hover {
+        background: rgb(20, 40, 63);
+    }
 }
 
 #flip-assets svg {

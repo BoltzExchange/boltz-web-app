@@ -17,8 +17,13 @@
         cursor: pointer;
         transition: all 0.3s ease;
 
-        &:hover {
-            background-color: color.adjust(vars.$background, $lightness: -10%);
+        @media (hover: hover) {
+            &:hover {
+                background-color: color.adjust(
+                    vars.$background,
+                    $lightness: -10%
+                );
+            }
         }
 
         &.active {
