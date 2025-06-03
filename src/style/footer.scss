@@ -4,9 +4,9 @@
     align-items: center;
 }
 .socials a {
-    opacity: 0.4;
+    opacity: 0.65;
     padding: 8px;
-    background: #fff;
+    background: var(--color-secondary-200);
     border-radius: 100%;
     width: 38px;
     height: 38px;
@@ -26,7 +26,7 @@
 .version {
     font-size: 10px;
     a {
-        color: #fff;
+        color: var(--color-text);
         opacity: 0.4;
         text-decoration: none;
         &:hover {
@@ -36,9 +36,9 @@
 }
 
 .footer-nav {
-    color: #727e8c;
+    color: var(--color-medium-gray);
     a {
-        color: #fff;
+        color: var(--color-text);
         padding: 0 2px;
         opacity: 0.4;
         text-decoration: none;
