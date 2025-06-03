@@ -32,7 +32,6 @@ export const backupDone = async (
     notify: notifyFn,
     newKey: newKeyFn,
     deriveKey: deriveKeyFn,
-    valid: Accessor<boolean>,
 
     ref: Accessor<string>,
     rescueFileBackupDone: Accessor<boolean>,
@@ -56,12 +55,6 @@ export const backupDone = async (
     setAddressValid: Setter<boolean>,
     setSwapStorage: (swap: SomeSwap) => Promise<void>,
 ) => {
-    if (!valid()) {
-        log.warn("Invalid swap creation data, redirecting to home");
-        navigate("/");
-        return;
-    }
-
     try {
         log.info("Creating swap");
         const { claimAddress, useRif } = await getClaimAddress(
