@@ -13,7 +13,7 @@
     cursor: pointer;
 
     &:hover {
-        background-color: rgba(0, 0, 0, 0.3);
+        background-color: var(--color-black-30);
     }
 
     .swap-status {
@@ -25,7 +25,7 @@
         cursor: not-allowed;
 
         .btn-small {
-            background-color: #fff;
+            background-color: var(--color-text);
 
             &:hover {
                 cursor: not-allowed;

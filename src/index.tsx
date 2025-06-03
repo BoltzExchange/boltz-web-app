@@ -50,6 +50,10 @@ const isEmbedded = () => {
 };
 
 log.setLevel(config.loglevel as log.LogLevelDesc);
+document.documentElement.setAttribute(
+    "boltz-theme",
+    config.isPro ? "pro" : "default",
+);
 document.body.classList.remove("loading");
 
 const App = (props: RouteSectionProps) => {

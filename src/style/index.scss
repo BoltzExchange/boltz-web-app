@@ -1,5 +1,6 @@
 @use "sass:color";
 @use "vars";
+@use "theme";
 
 * {
     box-sizing: border-box;
@@ -13,14 +14,18 @@
 body {
     font-size: 14px;
     margin: 0;
-    background: vars.$background;
-    color: vars.$color;
+    background: var(--color-secondary-600);
+    color: var(--color-text);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
 }
 body::-webkit-scrollbar {
     display: none;
+}
+::selection {
+    background: var(--color-primary);
+    color: var(--color-secondary-700);
 }
 
 footer {
@@ -35,12 +40,12 @@ footer {
 
 a,
 a:hover {
-    color: vars.$primary;
+    color: var(--color-primary);
 }
 
 .headline,
 h1 {
-    color: rgba(255, 255, 255, 0.3);
+    color: var(--color-white-30);
     font-weight: 800;
 }
 
@@ -56,7 +61,7 @@ hr {
     margin: 10px 0;
     border: none;
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--color-white-10);
 }
 hr.spacer {
     margin: 4px 0;
@@ -80,8 +85,8 @@ hr.spacer {
 }
 
 .asset-wrap {
-    background-color: rgb(23, 34, 46);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: var(--color-dark-gray);
+    border: 1px solid var(--color-white-15);
     position: absolute;
     border-radius: 29px;
     padding: 0px;
@@ -90,7 +95,7 @@ hr.spacer {
     left: 10px;
     cursor: pointer;
     &:hover {
-        background: rgb(20, 40, 63);
+        background: var(--color-secondary-600);
     }
 }
 
@@ -148,8 +153,8 @@ hr.spacer {
     padding: 8px 12px;
     text-decoration: none;
     border-radius: 16px;
-    background-color: vars.$primary;
-    color: #14283f;
+    background-color: var(--color-primary);
+    color: var(--color-secondary-700);
     font-weight: bold;
     text-transform: uppercase;
     border: none;
@@ -162,8 +167,8 @@ hr.spacer {
 }
 
 .btn-small {
-    background-color: vars.$primary;
-    color: #14283f;
+    background-color: var(--color-primary);
+    color: var(--color-secondary-700);
     border-radius: 7px;
     padding: 0 6px;
     cursor: pointer;
@@ -177,8 +182,8 @@ hr.spacer {
 [data-status="invoice.failedToPay"],
 [data-status="transaction.lockupFailed"] {
     > p > .btn-small {
-        background-color: vars.$error;
-        color: #fff;
+        background-color: var(--color-error-500);
+        color: var(--color-text);
     }
 }
 
@@ -190,20 +195,20 @@ hr.spacer {
 [data-status="transaction.claim.pending"],
 [data-status="quote.available"] {
     > p > .btn-small {
-        background-color: #246c24;
-        color: #fff;
+        background-color: var(--color-success-500);
+        color: var(--color-text);
     }
 }
 
 .tag .btn {
-    background-color: rgba(0, 0, 0, 0.2);
-    color: white;
+    background-color: var(--color-black-20);
+    color: var(--color-text);
 }
 
 .btn:disabled:hover,
 .btn:disabled {
-    color: #14283f;
-    background-color: #545c65;
+    color: var(--color-secondary-600);
+    background-color: var(--color-medium-gray);
     cursor: not-allowed;
 }
 
@@ -211,40 +216,40 @@ hr.spacer {
 .btn-small:hover,
 .btn:hover,
 .tag .btn:hover {
-    background-color: #fff;
-    color: #14283f;
+    background-color: var(--color-text);
+    color: var(--color-secondary-700);
 }
 
 .btn-light {
-    color: white;
-    background-color: rgb(11, 22, 35);
+    color: var(--color-text);
+    background-color: var(--color-black-50);
 }
 .btn-light:hover {
-    background-color: vars.$primary;
+    background-color: var(--color-primary);
 }
 .btn-explorer {
-    background: #533180;
-    color: white;
+    background: var(--color-tertiary);
+    color: var(--color-text);
 }
 .btn-explorer:hover {
-    background: white;
-    color: #533180;
+    background: var(--color-secondary-100);
+    color: var(--color-tertiary);
 }
 
 .btn-success {
-    background-color: #246c24;
-    color: white;
+    background-color: var(--color-success-500);
+    color: var(--color-text);
 }
 .btn-success:hover {
-    background-color: #fff;
+    background-color: var(--color-text);
 }
 .btn-danger:disabled,
 .btn-danger {
-    background-color: color.adjust(vars.$error, $alpha: -0.42);
+    background-color: var(--color-error-700);
     color: white;
 }
 .btn-danger:hover {
-    background: vars.$error;
+    background: var(--color-error-500);
 }
 .center,
 .btns {
@@ -296,9 +301,9 @@ textarea {
 
 input,
 textarea {
-    color: rgba(255, 255, 255, 0.3);
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    color: var(--color-white-30);
+    background: var(--color-black-30);
+    border: 1px dashed var(--color-white-30);
     border-radius: 10px;
     width: 100%;
     font-size: 15px;
@@ -311,14 +316,14 @@ textarea {
 input:focus,
 textarea:focus {
     outline: none;
-    color: #ddd;
-    border-color: vars.$primary;
+    color: var(--color-white-80);
+    border-color: var(--color-primary);
 }
 input.invalid,
 textarea.invalid {
     outline: none;
-    color: #ddd;
-    border-color: vars.$error;
+    color: var(--color-white-80);
+    border-color: var(--color-error);
 }
 .fees-dyn label {
     display: block;
@@ -356,16 +361,16 @@ textarea {
 .toggle {
     cursor: pointer;
     flex-grow: 0;
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--color-black-30);
     border-radius: 18px;
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border: 1px dashed var(--color-white-30);
     padding: 0 5px;
     align-items: center;
     display: flex;
     justify-content: start;
     height: 38px;
     &:hover {
-        background: rgb(20, 40, 63);
+        background: var(--color-secondary-600);
     }
     > * {
         min-width: 30px;
@@ -380,9 +385,9 @@ textarea {
         margin-right: 5px;
     }
     .active {
-        color: rgb(247, 147, 26);
-        background-color: rgb(23, 34, 46);
-        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: var(--color-btc-orange);
+        background: var(--color-secondary-700);
+        border: 1px solid var(--color-white-25);
     }
 }
 .denomination-desktop {
@@ -392,8 +397,8 @@ textarea {
     gap: 1px;
     padding: 2px;
     height: fit-content;
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    background: rgb(11, 22, 34);
+    border: 1px dashed var(--color-white-10);
+    background: var(--color-secondary-700);
     border-radius: 20px;
     span {
         filter: grayscale(1);
@@ -405,8 +410,8 @@ textarea {
         flex-grow: 0;
         gap: 10px;
         padding: 0.3rem 0.9rem;
-        background: rgb(11, 22, 34);
-        color: rgba(255, 255, 255, 0.5);
+        background: var(--color-black-30);
+        color: var(--color-white-50);
         cursor: pointer;
         position: relative;
         box-sizing: border-box;
@@ -418,14 +423,14 @@ textarea {
             border-radius: 0 20px 20px 0;
         }
         &:hover {
-            background: rgb(20, 40, 63);
-            color: rgba(255, 255, 255, 0.8);
-            border: 1px dashed rgba(255, 175, 75, 0.15);
+            background: var(--color-secondary-600);
+            color: var(--color-white-80);
+            border: 1px dashed var(--color-btc-orange-15);
         }
         &.active {
-            color: vars.$primary;
-            background-color: rgb(30, 45, 60);
-            border: 1px dashed rgba(255, 175, 75, 0.2);
+            color: var(--color-btc-orange);
+            background: var(--color-secondary-500);
+            border: 1px dashed var(--color-btc-orange-20);
             span {
                 filter: none;
             }
@@ -433,11 +438,11 @@ textarea {
         // for keyboard navigation
         &:focus-visible {
             outline: none;
-            border: 1px solid vars.$primary;
+            border: 1px solid var(--color-primary);
         }
         &.active:focus-visible {
             outline: none;
-            border: 1px solid vars.$primary;
+            border: 1px solid var(--color-primary);
         }
     }
 }
@@ -481,8 +486,8 @@ textarea {
 .denomination .active {
     filter: none;
     border-radius: 50%;
-    background-color: rgb(23, 34, 46);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background-color: var(--color-secondary-700);
+    border: 1px solid var(--color-white-25);
 }
 
 .hidden {
@@ -490,17 +495,16 @@ textarea {
 }
 
 .frame {
-    color: #fff;
+    color: var(--color-text);
     padding: 12px;
     min-width: 360px;
     max-width: 480px;
     margin: 0 auto;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-white-10);
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1);
     border-left: 0;
     border-right: 0;
-    background: #0003;
+    background: var(--color-secondary-700);
 }
 .refund {
     max-width: fit-content;
@@ -521,7 +525,7 @@ textarea {
     .frame {
         margin-top: 74px;
         margin-bottom: 56px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--color-white-10);
         border-radius: 16px;
     }
 }
@@ -544,8 +548,8 @@ textarea {
 }
 
 .error {
-    background: color.adjust(vars.$error, $alpha: -0.15);
-    color: #ddd;
+    background: var(--color-error-700);
+    color: var(--color-white-80);
     padding: 6px 10px;
     display: inline-block;
 }
@@ -554,16 +558,16 @@ textarea {
     width: 32px;
     height: 32px;
     padding: 8px;
-    background: rgb(11, 22, 35);
+    background: var(--color-secondary-800);
     margin: -21px auto;
-    border: 1px dashed rgb(55, 55, 55);
+    border: 1px dashed var(--color-medium-gray);
     border-radius: 6px;
     cursor: pointer;
     z-index: 1;
-    box-shadow: 0 0 7px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 7px var(--color-black-40);
 }
 #flip-assets:hover {
-    background: rgb(20, 40, 63);
+    background: var(--color-secondary-500);
 }
 
 #flip-assets svg {
@@ -587,8 +591,8 @@ textarea {
 .asset-select {
     display: flex;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: var(--color-white-05);
+    border: 1px solid var(--color-white-15);
     border-radius: 29px;
     padding: 1px;
     padding-right: 16px;
@@ -599,17 +603,17 @@ textarea {
 }
 [data-selected="true"],
 .asset-select:hover {
-    background-color: rgba(255, 255, 255, 0.25);
+    background-color: var(--color-white-25);
 }
 .assets-select {
-    background: #102032;
+    background: var(--color-secondary-700);
     position: absolute;
     width: 100%;
     left: 0;
     top: 64px;
     z-index: 999;
     display: none;
-    box-shadow: 0 0 12px black;
+    box-shadow: 0 0 12px var(--color-black);
     margin: 0;
 }
 .assets-select.active {
@@ -623,7 +627,7 @@ textarea {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-black-50);
     z-index: -1;
 }
 
@@ -657,7 +661,7 @@ textarea {
     transition:
         stroke-dasharray 400ms,
         stroke-dashoffset 400ms;
-    stroke: #fff;
+    stroke: var(--color-secondary-100);
     stroke-width: 5.5;
     stroke-linecap: round;
 }
@@ -701,12 +705,11 @@ textarea {
     gap: 0.63rem;
     user-select: none;
     font-size: 1.13rem;
-    background-color: #545c65;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--color-black-20);
     border-radius: 0.43rem;
     padding: 0.63rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--color-white-10);
+    color: var(--color-white-50);
     margin: 0;
     cursor: pointer;
 }
@@ -759,9 +762,9 @@ textarea {
     text-align: center;
     font-size: 1.5rem;
     font-weight: 600;
-    color: white;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    color: var(--color-text);
+    background: var(--color-black-30);
+    border: 1px dashed var(--color-white-30);
     border-radius: 10px;
     box-sizing: border-box;
     .denominator {
@@ -778,7 +781,7 @@ header {
 .not-found {
     margin-top: 2rem;
     margin-bottom: 1rem;
-    color: vars.$primary;
+    color: var(--color-primary);
 }
 
 .swap-limits {
