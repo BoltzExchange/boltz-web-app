@@ -345,7 +345,7 @@ input.invalid,
 textarea.invalid {
     outline: none;
     color: var(--color-white-80);
-    border-color: var(--color-error);
+    border-color: var(--color-error-500);
 }
 .fees-dyn label {
     display: block;
@@ -934,12 +934,12 @@ header {
                 border-bottom: 1px dotted var(--color-primary);
 
                 &.invalid {
-                    border-bottom: 1px dashed var(--color-error);
+                    border-bottom: 1px dashed var(--color-error-500);
                 }
             }
 
             .invalid {
-                border-bottom: 1px dashed var(--color-error);
+                border-bottom: 1px dashed var(--color-error-500);
             }
         }
     }
