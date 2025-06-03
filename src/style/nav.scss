@@ -91,6 +91,24 @@ nav a.active {
     padding-right: 21px;
     padding-left: 8px;
 }
+#logo-mask {
+    display: inline-block;
+    width: 165px;
+    height: 38px;
+    margin-left: -6px;
+    margin-right: 7px;
+    background: linear-gradient(
+        180deg,
+        var(--color-primary-lighter) 10%,
+        var(--color-primary) 90%
+    );
+    mask: url("../assets/boltz.svg") no-repeat center;
+    mask-size: contain;
+
+    /* For Safari */
+    -webkit-mask: url("../assets/boltz.svg") no-repeat center;
+    -webkit-mask-size: contain;
+}
 #logo {
     z-index: 1;
 }
