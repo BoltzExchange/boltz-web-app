@@ -17,8 +17,10 @@
         cursor: pointer;
         transition: all 0.3s ease;
 
-        &:hover {
-            background-color: var(--color-secondary-700);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--color-secondary-700);
+            }
         }
 
         &.active {

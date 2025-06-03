@@ -212,44 +212,66 @@ hr.spacer {
     cursor: not-allowed;
 }
 
-.btn-active,
-.btn-small:hover,
-.btn:hover,
-.tag .btn:hover {
+.btn-active {
     background-color: var(--color-text);
     color: var(--color-secondary-700);
+}
+@media (hover: hover) {
+    .btn-small:hover,
+    .btn:hover,
+    .tag .btn:hover {
+        background-color: var(--color-text);
+        color: var(--color-secondary-700);
+    }
+}
+@media (hover: hover) {
+    .btn-small:hover,
+    .btn:hover,
+    .tag .btn:hover {
+        background-color: #fff;
+        color: #14283f;
+    }
 }
 
 .btn-light {
     color: var(--color-text);
-    background-color: var(--color-black-50);
+    background-color: var(--color-black-40);
 }
-.btn-light:hover {
-    background-color: var(--color-primary);
+@media (hover: hover) {
+    .btn-light:hover {
+        background-color: var(--color-primary);
+    }
 }
 .btn-explorer {
     background: var(--color-tertiary);
     color: var(--color-text);
 }
-.btn-explorer:hover {
-    background: var(--color-secondary-100);
-    color: var(--color-tertiary);
+@media (hover: hover) {
+    .btn-explorer:hover {
+        background: var(--color-secondary-100);
+        color: var(--color-tertiary);
+    }
 }
 
 .btn-success {
     background-color: var(--color-success-500);
     color: var(--color-text);
 }
-.btn-success:hover {
-    background-color: var(--color-text);
+
+@media (hover: hover) {
+    .btn-success:hover {
+        background-color: var(--color-text);
+    }
 }
 .btn-danger:disabled,
 .btn-danger {
     background-color: var(--color-error-700);
     color: white;
 }
-.btn-danger:hover {
-    background: var(--color-error-500);
+@media (hover: hover) {
+    .btn-danger:hover {
+        background: var(--color-error-500);
+    }
 }
 .center,
 .btns {
@@ -422,10 +444,12 @@ textarea.invalid {
         &:last-child {
             border-radius: 0 20px 20px 0;
         }
-        &:hover {
-            background: var(--color-secondary-600);
-            color: var(--color-white-80);
-            border: 1px dashed var(--color-btc-orange-15);
+        @media (hover: hover) {
+            &:hover {
+                background: var(--color-secondary-600);
+                color: var(--color-white-80);
+                border: 1px dashed var(--color-btc-orange-15);
+            }
         }
         &.active {
             color: var(--color-btc-orange);
@@ -566,8 +590,10 @@ textarea.invalid {
     z-index: 1;
     box-shadow: 0 0 7px var(--color-black-40);
 }
-#flip-assets:hover {
-    background: var(--color-secondary-500);
+@media (hover: hover) {
+    #flip-assets:hover {
+        background: var(--color-secondary-500);
+    }
 }
 
 #flip-assets svg {
@@ -794,7 +820,7 @@ header {
 }
 
 .text-highlight {
-    color: vars.$primary;
+    color: var(--color-primary);
 }
 
 .mnemonic-number {
@@ -851,11 +877,11 @@ header {
     .verification-item {
         min-width: 4rem;
         border-bottom: 2px solid currentColor;
-        color: vars.$primary;
+        color: var(--color-primary);
         border-radius: 0;
 
         .mnemonic-number {
-            color: vars.$primary;
+            color: var(--color-primary);
         }
     }
 }
@@ -905,15 +931,15 @@ header {
                 border-radius: 0;
             }
             .mnemonic-input:focus {
-                border-bottom: 1px dotted vars.$primary;
+                border-bottom: 1px dotted var(--color-primary);
 
                 &.invalid {
-                    border-bottom: 1px dashed vars.$error;
+                    border-bottom: 1px dashed var(--color-error);
                 }
             }
 
             .invalid {
-                border-bottom: 1px dashed vars.$error;
+                border-bottom: 1px dashed var(--color-error);
             }
         }
     }
