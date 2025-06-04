@@ -48,9 +48,9 @@ $boltz_icon: url(/boltz-icon.svg);
 :root[boltz-theme="default"] {
     --color-primary: #e8cb2b;
     --color-primary-lighter: #fee86b;
-    --color-primary-70: color-mix(
+    --color-primary-glow: color-mix(
         in srgb,
-        var(--color-primary) 70%,
+        var(--color-primary) 40%,
         transparent
     );
 
@@ -59,7 +59,7 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-secondary-300: #727e8c;
     --color-secondary-500: #1e2d3c;
     --color-secondary-600: #14283f;
-    --color-secondary-700: #0d1e30;
+    --color-secondary-700: #102133;
     --color-secondary-800: #081422;
 
     --color-tertiary: #533180;
@@ -76,9 +76,9 @@ $boltz_icon: url(/boltz-icon.svg);
 
 :root[boltz-theme="pro"] {
     --color-primary: #c47835;
-    --color-primary-70: color-mix(
+    --color-primary-glow: color-mix(
         in srgb,
-        var(--color-primary) 70%,
+        var(--color-primary) 80%,
         transparent
     );
 

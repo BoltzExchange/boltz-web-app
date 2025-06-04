@@ -345,14 +345,14 @@ h3 {
 }
 #create-overlay.glow .frame {
     transition: all 0.8s ease-in-out;
-    box-shadow: 0 0 0 var(--color-primary-70);
+    box-shadow: 0 0 0 var(--color-primary-glow);
 }
 
 @media (min-width: 488px) {
     #create-overlay.glow .frame {
-        box-shadow: 0 0 40px var(--color-primary-70);
+        box-shadow: 0 0 40px var(--color-primary-glow);
     }
     #create-overlay.glow .frame:hover {
-        box-shadow: 0 0 60px var(--color-primary-70);
+        box-shadow: 0 0 60px var(--color-primary-glow);
     }
 }
