@@ -10,6 +10,7 @@
         "dev": "vite",
         "preview": "vite preview",
         "build": "./build.py && vite build; cp dist/index.html dist/404.html",
+        "build:pro": "git apply pro-theme.patch && npm run build",
         "build:docker": "docker build --build-arg NETWORK=mainnet . -o build -f build/Dockerfile && docker build --build-arg NETWORK=pro . -o build -f build/Dockerfile",
         "mainnet": "cp src/configs/mainnet.ts src/config.ts",
         "beta": "cp src/configs/beta.ts src/config.ts",

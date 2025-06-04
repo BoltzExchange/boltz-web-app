@@ -1,0 +1,42 @@
+diff --git a/index.html b/index.html
+index 2b0d28e..cb0c2e5 100644
+--- a/index.html
++++ b/index.html
+@@ -1,5 +1,5 @@
+ <!doctype html>
+-<html lang="en" boltz-theme="default" style="height: 100%">
++<html lang="en" boltz-theme="pro" style="height: 100%">
+     <head>
+         <meta charset="utf-8" />
+         <meta
+@@ -45,7 +45,7 @@
+                 display: none;
+             }
+             .loading {
+-                background: #142840;
++                background: #14191e;
+             }
+             .loading > svg {
+                 position: absolute;
+@@ -72,8 +72,8 @@
+                     x2="0"
+                     y2="49"
+                     gradientUnits="userSpaceOnUse">
+-                    <stop stop-color="#FFE96D" offset="0" />
+-                    <stop stop-color="#E1C218" offset="1" />
++                    <stop stop-color="#c8cfd6" offset="0" />
++                    <stop stop-color="#9fa8b1" offset="1" />
+                 </linearGradient>
+                 <linearGradient
+                     id="paint0_linear-3"
+@@ -82,8 +82,8 @@
+                     y1="-11"
+                     y2="56"
+                     gradientUnits="userSpaceOnUse">
+-                    <stop stop-color="#FFE96D" offset="0" />
+-                    <stop stop-color="#E1C218" offset="1" />
++                    <stop stop-color="#c8cfd6" offset="0" />
++                    <stop stop-color="#9fa8b1" offset="1" />
+                 </linearGradient>
+             </defs>
+             <g transform="translate(-69.488 -50.153)">
