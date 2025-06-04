@@ -60,7 +60,9 @@ test.describe("Rescue file", () => {
         await setupSwapAssets(page);
         await fillSwapDetails(page);
 
-        await page.getByRole("button", { name: dict.en.verify_key }).click();
+        await page
+            .getByRole("button", { name: dict.en.verify_existing_key })
+            .click();
         await page
             .getByTestId("rescueFileUpload")
             .setInputFiles(existingFilePath);
@@ -83,7 +85,7 @@ test.describe("Rescue file", () => {
 
             if (i === 0) {
                 await page
-                    .getByRole("button", { name: dict.en.verify_key })
+                    .getByRole("button", { name: dict.en.verify_existing_key })
                     .click();
                 await page
                     .getByTestId("rescueFileUpload")
@@ -101,7 +103,9 @@ test.describe("Rescue file", () => {
         await setupSwapAssets(page);
         await fillSwapDetails(page);
 
-        await page.getByRole("button", { name: dict.en.verify_key }).click();
+        await page
+            .getByRole("button", { name: dict.en.verify_existing_key })
+            .click();
         await page
             .getByTestId("rescueFileUpload")
             .setInputFiles(existingFilePath);

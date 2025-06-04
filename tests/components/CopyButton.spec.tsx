@@ -53,6 +53,30 @@ describe("CopyButton", () => {
         );
     });
 
+    test("should copy spaces", () => {
+        const textToCopy =
+            "main little unit rookie path embody ancient repair message dirt brush task";
+
+        const {
+            container: { firstChild: button },
+        } = render(
+            () => (
+                <CopyButton
+                    label="copy_bip21"
+                    data={textToCopy}
+                    removeSpaces={false}
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const btn = button as HTMLSpanElement;
+        fireEvent.click(btn);
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
+    });
+
     test("should copy from a function", () => {
         const textToCopy = "50000";
         const [signal] = createSignal(textToCopy);

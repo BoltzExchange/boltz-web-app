@@ -1,9 +1,10 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
-import { Show, createSignal } from "solid-js";
+import { Match, Show, Switch, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
+import MnemonicInput from "../components/MnemonicInput";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
@@ -15,7 +16,7 @@ import { backupDone } from "./Backup";
 
 export const existingBackupFileType = "existing";
 
-const VerifyExisting = () => {
+const BackupVerify = () => {
     const navigate = useNavigate();
     const params = useParams<{ type?: string }>();
 
@@ -56,6 +57,7 @@ const VerifyExisting = () => {
     >(false);
 
     const [inputProcessing, setInputProcessing] = createSignal(false);
+    const [enterMnemonic, setEnterMnemonic] = createSignal(false);
 
     const handleBackupDone = async () => {
         try {
@@ -152,6 +154,15 @@ const VerifyExisting = () => {
         }
     };
 
+    const submitMnemonic = async (mnemonic: string) => {
+        try {
+            await validateBackup({ mnemonic });
+            await handleBackupDone();
+        } catch {
+            setVerificationFailed(true);
+        }
+    };
+
     return (
         <div class="frame">
             <Show
@@ -170,22 +181,53 @@ const VerifyExisting = () => {
                     </>
                 }>
                 <h2>{t("verify_boltz_rescue_key")}</h2>
-                <h4>{t("verify_boltz_rescue_key_subline")}</h4>
-                <input
-                    required
-                    type="file"
-                    id="rescueFileUpload"
-                    data-testid="rescueFileUpload"
-                    accept={rescueFileTypes}
-                    disabled={inputProcessing()}
-                    onChange={(e) => uploadChange(e)}
-                />
-                <Show when={inputProcessing()}>
-                    <LoadingSpinner />
+                <Show when={!enterMnemonic()}>
+                    <p style={{ margin: "1.2rem 0 1.2rem 0" }}>
+                        {t("verify_boltz_rescue_key_subline")}
+                    </p>
+                    <input
+                        required
+                        type="file"
+                        id="rescueFileUpload"
+                        data-testid="rescueFileUpload"
+                        accept={rescueFileTypes}
+                        disabled={inputProcessing()}
+                        onChange={(e) => uploadChange(e)}
+                    />
+                    <Show when={inputProcessing()}>
+                        <LoadingSpinner />
+                    </Show>
                 </Show>
+                <Show when={enterMnemonic()}>
+                    <p style={{ "margin-top": "1.2rem" }}>
+                        {t("verify_boltz_rescue_key_mnemonic")}
+                    </p>
+                    <MnemonicInput
+                        onSubmit={(mnemonic) => {
+                            void submitMnemonic(mnemonic);
+                        }}
+                    />
+                </Show>
+
+                <Switch>
+                    <Match when={!enterMnemonic()}>
+                        <button
+                            class="btn btn-light"
+                            onClick={() => setEnterMnemonic(true)}>
+                            {t("enter_mnemonic")}
+                        </button>
+                    </Match>
+                    <Match when={enterMnemonic()}>
+                        <button
+                            class="btn btn-light"
+                            onClick={() => setEnterMnemonic(false)}>
+                            {t("back")}
+                        </button>
+                    </Match>
+                </Switch>
             </Show>
         </div>
     );
 };
 
-export default VerifyExisting;
+export default BackupVerify;

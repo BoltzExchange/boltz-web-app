@@ -29,8 +29,10 @@
         cursor: pointer;
         padding: 0.5rem 1rem;
         border-radius: 0.5rem;
-        &:hover {
-            background-color: var(--color-secondary-500);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--color-secondary-500);
+            }
         }
     }
 }
