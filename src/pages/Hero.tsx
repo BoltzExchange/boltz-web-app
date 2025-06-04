@@ -164,6 +164,13 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
+                            href="https://www.cakepay.com/"
+                            target="_blank"
+                            class="cakepay"
+                        />
+                    </div>
+                    <div>
+                        <a
                             href="https://www.fedi.xyz/"
                             target="_blank"
                             class="fedi"
@@ -195,13 +202,6 @@ export const Hero = () => {
                             href="https://lnbits.com/"
                             target="_blank"
                             class="lnbits"
-                        />
-                    </div>
-                    <div>
-                        <a
-                            href="https://vulpem.com/marina.html"
-                            target="_blank"
-                            class="marina"
                         />
                     </div>
                     <div>
