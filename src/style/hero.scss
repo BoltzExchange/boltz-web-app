@@ -167,14 +167,6 @@ h3 {
     width: 96px;
     height: 45px;
 }
-.marina {
-    display: inline-block;
-    background: url(../assets/marina.svg);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 42px;
-    height: 42px;
-}
 .aqua {
     display: inline-block;
     background: url(../assets/aqua.svg);
@@ -222,7 +214,7 @@ h3 {
     background-size: 100%;
     background-repeat: no-repeat;
     width: 120px;
-    height: 35px;
+    height: 38px;
 }
 .geyser {
     display: inline-block;
@@ -293,8 +285,8 @@ h3 {
     background: url(../assets/fedi.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 120px;
-    height: 40px;
+    width: 115px;
+    height: 35px;
 }
 .alby {
     display: inline-block;
@@ -303,6 +295,14 @@ h3 {
     background-repeat: no-repeat;
     width: 128px;
     height: 52px;
+}
+.cakepay {
+    display: inline-block;
+    background: url(../assets/cakepay.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 181px;
+    height: 50px;
 }
 
 #partners,
