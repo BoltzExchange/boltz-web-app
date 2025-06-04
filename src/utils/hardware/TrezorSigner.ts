@@ -195,6 +195,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
             await connect.init({
                 lazyLoad: true,
                 manifest: {
+                    appName: "Boltz",
                     email: "hi@bol.tz",
                     appUrl: "https://boltz.exchange",
                 },
