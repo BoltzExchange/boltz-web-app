@@ -3,7 +3,6 @@ import { Show } from "solid-js";
 import reload_svg from "../assets/reload.svg";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
-import ProBanner from "./ProBanner";
 
 const Warnings = () => {
     const { t, online, fetchPairs, wasmSupported } = useGlobalContext();
