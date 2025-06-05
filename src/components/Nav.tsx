@@ -3,12 +3,12 @@ import { BsGlobe } from "solid-icons/bs";
 import { OcLinkexternal2 } from "solid-icons/oc";
 import { For, Show, createSignal } from "solid-js";
 
+import logo from "../assets/logo.svg";
 import Warnings from "../components/Warnings";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
 import "../style/nav.scss";
-import logo from "../assets/logo.svg";
 
 const Nav = (props: { network: string; isPro?: boolean }) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -21,7 +21,7 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
             <Warnings />
             <div class="nav-inner">
                 <A id="logo" href="/" onClick={() => setHideHero(false)}>
-                    <img src={logo} alt="boltz.exchange logo" />
+                    <img src={logo} alt="SwapMarket logo" />
                 </A>
                 <Show when={props.network !== "mainnet"}>
                     <div id="network" class="btn btn-small">
