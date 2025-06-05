@@ -13,12 +13,12 @@
     top: 12px;
     right: 12px;
     z-index: 2;
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--color-white-60);
     cursor: pointer;
     padding: 5px;
     border-radius: 50%;
     cursor: pointer;
-    color: #14283f;
+    color: var(--color-secondary-600);
     font-weight: 800;
     font-size: 23px;
     width: 42px;

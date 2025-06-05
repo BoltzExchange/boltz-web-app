@@ -20,7 +20,7 @@ import { fetchBolt12Invoice, getAllPairs } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { coalesceLn, isMobile } from "../utils/helper";
+import { coalesceLn } from "../utils/helper";
 import { fetchBip353, fetchLnurl } from "../utils/invoice";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import type { SomeSwap } from "../utils/swapCreator";
@@ -103,15 +103,10 @@ export const createSwap = async (
     setSwapStorage: (swap: SomeSwap) => Promise<void>,
     backend: Accessor<number>,
 ): Promise<boolean> => {
-    // Mobile EVM browsers struggle with downloading files
-    const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
-
     if (
         !rescueFileBackupDone() &&
-        swapType() !== SwapType.Reverse &&
         assetSend() !== RBTC &&
-        // Only disable refund files on mobile EVM browsers when one side is RSK
-        !(assetReceive() === RBTC && isMobileEvmBrowser())
+        swapType() !== SwapType.Reverse
     ) {
         navigate("/backup");
         return false;

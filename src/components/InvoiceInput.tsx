@@ -145,6 +145,7 @@ const InvoiceInput = () => {
             onKeyUp={(e) => validate(e.currentTarget)}
             onPaste={(e) => validate(e.currentTarget)}
             id="invoice"
+            class="invoice-input"
             data-testid="invoice"
             name="invoice"
             value={invoice()}

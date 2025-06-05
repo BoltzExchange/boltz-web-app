@@ -1,0 +1,103 @@
+$lightning_icon: url(../assets/lightning-icon.svg);
+$bitcoin_icon: url(../assets/bitcoin-icon.svg);
+$liquid_icon: url(../assets/liquid-icon.svg);
+$rootstock_icon: url(../assets/rootstock-icon.svg);
+$boltz_icon: url(/boltz-icon.svg);
+
+:root {
+    // Base colors
+    --color-white: #ffffff;
+    --color-black: #000000;
+    --color-btc-orange: #f7931a;
+    --color-light-gray: #d0d0d0;
+    --color-medium-gray: #545c65;
+    --color-darker-gray: #191919;
+    --color-link: #4a9eff;
+    --color-link-hover: #7ab8ff;
+
+    // Orange opacity levels
+    --color-btc-orange-15: color-mix(
+        in srgb,
+        var(--color-btc-orange) 15%,
+        transparent
+    );
+    --color-btc-orange-20: color-mix(
+        in srgb,
+        var(--color-btc-orange) 20%,
+        transparent
+    );
+
+    // White opacity levels
+    --color-white-05: color-mix(in srgb, var(--color-white) 5%, transparent);
+    --color-white-10: color-mix(in srgb, var(--color-white) 10%, transparent);
+    --color-white-15: color-mix(in srgb, var(--color-white) 15%, transparent);
+    --color-white-25: color-mix(in srgb, var(--color-white) 25%, transparent);
+    --color-white-30: color-mix(in srgb, var(--color-white) 30%, transparent);
+    --color-white-50: color-mix(in srgb, var(--color-white) 50%, transparent);
+    --color-white-60: color-mix(in srgb, var(--color-white) 60%, transparent);
+    --color-white-80: color-mix(in srgb, var(--color-white) 80%, transparent);
+    --color-white-90: color-mix(in srgb, var(--color-white) 90%, transparent);
+
+    // Black opacity levels
+    --color-black-20: color-mix(in srgb, var(--color-black) 20%, transparent);
+    --color-black-30: color-mix(in srgb, var(--color-black) 30%, transparent);
+    --color-black-40: color-mix(in srgb, var(--color-black) 40%, transparent);
+    --color-black-50: color-mix(in srgb, var(--color-black) 50%, transparent);
+}
+
+:root[boltz-theme="default"] {
+    --color-primary: #e8cb2b;
+    --color-primary-lighter: #fee86b;
+    --color-primary-glow: color-mix(
+        in srgb,
+        var(--color-primary) 40%,
+        transparent
+    );
+
+    --color-secondary-100: #d0d4d9;
+    --color-secondary-200: #a1a9b2;
+    --color-secondary-300: #727e8c;
+    --color-secondary-500: #1e2d3c;
+    --color-secondary-600: #14283f;
+    --color-secondary-700: #102133;
+    --color-secondary-800: #081422;
+
+    --color-tertiary: #533180;
+
+    --color-text: #e6ebf0;
+    --color-dark-gray: #17222e;
+    --color-hero-gradient-1: #eac806;
+    --color-hero-gradient-2: #2084f6;
+    --color-error-500: #8b0000;
+    --color-error-700: #530000;
+    --color-success-500: #246c24;
+    --color-success-700: #003300;
+}
+
+:root[boltz-theme="pro"] {
+    --color-primary: #c47835;
+    --color-primary-glow: color-mix(
+        in srgb,
+        var(--color-primary) 80%,
+        transparent
+    );
+
+    --color-secondary-100: #d7deec;
+    --color-secondary-200: #c8cfd6;
+    --color-secondary-300: #9fa8b1;
+    --color-secondary-500: #1f262e;
+    --color-secondary-600: #14191e;
+    --color-secondary-700: #0d1216;
+    --color-secondary-800: #080b0e;
+
+    --color-tertiary: #4f1d85;
+
+    --color-text: #9fa8b1;
+    --color-dark-gray: #191c1f;
+    --color-hero-gradient-1: var(--color-btc-orange);
+    --color-hero-gradient-2: #c47835;
+    --color-error-500: #77211b;
+    --color-error-700: #570d1c;
+    --color-success-500: #0a5217;
+    --color-success-700: #043017;
+}

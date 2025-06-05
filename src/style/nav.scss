@@ -17,11 +17,11 @@ nav {
     top: 0;
     z-index: 999;
     width: 100%;
-    background: color.adjust(vars.$background, $lightness: -3%);
+    background: var(--color-secondary-700);
     position: relative;
 }
 nav a {
-    color: white;
+    color: var(--color-text);
     text-decoration: none;
     font-size: 16px;
 }
@@ -33,19 +33,23 @@ nav a:first-child {
 
 nav a:hover,
 nav a.active {
-    color: vars.$primary;
+    color: var(--color-primary);
     text-decoration: underline;
 }
 
 #network {
     position: relative;
     width: auto;
-    color: #0b1623;
-    background: #fff;
+    color: var(--color-secondary-700);
+    background: var(--color-secondary-100);
     margin: 0;
     margin-right: 12px;
     font-size: 12px;
     z-index: 1;
+}
+#network[boltz-theme="pro"] {
+    color: var(--color-secondary-700);
+    background: var(--color-primary);
 }
 
 #languages {
@@ -56,7 +60,7 @@ nav a.active {
 #languages > a {
     margin-left: 13px;
     padding-left: 13px;
-    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    border-left: 1px solid var(--color-white-30);
 }
 #languages > a.globe {
     margin-left: 0;
@@ -70,8 +74,8 @@ nav a.active {
 }
 
 #languages .lang:hover {
-    background-color: vars.$primary;
-    color: rgb(11, 22, 35);
+    background-color: var(--color-primary);
+    color: var(--color-secondary-700);
 }
 
 #languages .dropdown {
@@ -79,7 +83,7 @@ nav a.active {
     position: absolute;
     top: 0px;
     right: 0px;
-    background: rgb(11, 22, 35);
+    background: var(--color-secondary-800);
 }
 #languages.active .dropdown {
     display: block;
@@ -90,6 +94,31 @@ nav a.active {
     max-width: 165px;
     padding-right: 21px;
     padding-left: 8px;
+}
+#logo-mask {
+    display: inline-block;
+    width: 165px;
+    height: 38px;
+    margin-left: -6px;
+    margin-right: 7px;
+    background: linear-gradient(
+        180deg,
+        var(--color-primary-lighter) 10%,
+        var(--color-primary) 90%
+    );
+    mask: url("../assets/boltz.svg") no-repeat center;
+    mask-size: contain;
+
+    /* For Safari */
+    -webkit-mask: url("../assets/boltz.svg") no-repeat center;
+    -webkit-mask-size: contain;
+}
+#logo-mask[boltz-theme="pro"] {
+    background: linear-gradient(
+        180deg,
+        var(--color-secondary-200) 10%,
+        var(--color-secondary-300) 90%
+    );
 }
 #logo {
     z-index: 1;
@@ -116,7 +145,7 @@ nav a.active {
     transition:
         stroke-dasharray 400ms,
         stroke-dashoffset 400ms;
-    stroke: #fff;
+    stroke: var(--color-secondary-100);
     stroke-width: 5.5;
     stroke-linecap: round;
 }
@@ -148,7 +177,7 @@ nav a.active {
     #collapse.active {
         display: flex;
         position: fixed;
-        background: #14283f;
+        background: var(--color-secondary-600);
         left: 0;
         right: 0;
         bottom: 0;
@@ -186,13 +215,13 @@ nav a.active {
     #collapse a {
         margin-left: 13px;
         padding-left: 13px;
-        border-left: 1px solid rgba(255, 255, 255, 0.3);
+        border-left: 1px solid var(--color-white-30);
         display: inline;
     }
 }
 
 .banner {
-    background: vars.$error;
+    background: var(--color-error-500);
     font-size: 18px;
     padding: 5px;
     position: relative;
@@ -200,6 +229,20 @@ nav a.active {
 }
 
 .banner-yellow {
-    background: vars.$primary;
-    color: #14283f;
+    background: var(--color-primary);
+    color: var(--color-secondary-600);
+
+    a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+
+        text-decoration: underline;
+        text-transform: uppercase;
+        color: currentColor;
+    }
+
+    a:hover {
+        color: currentColor;
+    }
 }

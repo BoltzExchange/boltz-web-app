@@ -6,23 +6,26 @@
     gap: 0.5rem;
     align-items: center;
     justify-content: center;
+    margin-bottom: 1rem;
 
     .tab {
         padding: 0.5rem 1rem;
-        background-color: vars.$background;
-        color: vars.$color;
+        background-color: var(--color-secondary-700);
+        color: var(--color-text);
         border-radius: 20px;
         text-align: center;
         cursor: pointer;
         transition: all 0.3s ease;
 
-        &:hover {
-            background-color: color.adjust(vars.$background, $lightness: -10%);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--color-secondary-700);
+            }
         }
 
         &.active {
-            background-color: vars.$primary;
-            color: vars.$background;
+            background-color: var(--color-primary);
+            color: var(--color-secondary-700);
         }
     }
 }

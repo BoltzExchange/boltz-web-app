@@ -2,15 +2,15 @@
 @use "vars";
 
 #notification {
-    background: black;
-    color: white;
+    background: var(--color-black);
+    color: var(--color-text);
 }
 #notification {
     visibility: hidden;
     max-width: 480px;
     margin: auto;
-    background-color: rgb(11, 22, 35);
-    color: #fff;
+    background-color: var(--color-secondary-300);
+    color: var(--color-text);
     text-align: center;
     position: fixed;
     z-index: 9999;
@@ -21,13 +21,13 @@
     overflow: hidden;
     padding: 6px 12px;
     border-radius: 6px;
-    box-shadow: 0px 0 3px black;
+    box-shadow: 0px 0 3px var(--color-black);
 }
 #notification.error {
-    background-color: color.adjust(vars.$error, $alpha: -0.15);
+    background-color: var(--color-error-500);
 }
 #notification.success {
-    background-color: color.adjust(vars.$success, $alpha: -0.15);
+    background-color: var(--color-success-500);
 }
 
 #notification img {
@@ -37,12 +37,12 @@
     padding-top: 16px;
     padding-bottom: 16px;
     box-sizing: border-box;
-    background-color: #111;
-    color: #fff;
+    background-color: var(--color-darker-gray);
+    color: var(--color-text);
 }
 
 #notification span {
-    color: #fff;
+    color: var(--color-text);
     padding: 16px;
     overflow: hidden;
 }

@@ -93,7 +93,9 @@ const dict = {
         copied: "Copied!",
         refund_swap: "Refund Swap",
         refund_a_swap_subline:
-            "Upload your rescue key to refund a swap that is not available in this browser’s swap history.",
+            "If you sent BTC or L-BTC into a Boltz swap, upload or enter your rescue key to refund a swap that is not available in this browser’s swap history.",
+        refund_a_swap_mnemonic:
+            "Enter your rescue key to refund a swap that is not available in this browser’s swap history.",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
@@ -103,7 +105,7 @@ const dict = {
         refund_external_explainer:
             "Try refunding an external swap via rescue key and other emergency methods.",
         refund_external_explainer_rsk:
-            "Connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
+            "If you sent RBTC into a Boltz swap, connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
         refund_external_scanning_rsk:
             "Scanning for refundable swaps in your Rootstock Wallet...",
         connected_wallet_no_swaps:
@@ -163,7 +165,7 @@ const dict = {
         num_channels: "Number of Channels",
         beta_caution: "BETA - USE WITH CAUTION!",
         pro: "pro",
-        pro_banner: "BETA: AVAILABILITY NOT GUARANTEED",
+        pro_banner: "Looking to use Boltz Pro via API?",
         warning_return:
             "Return to this page after paying the invoice! The payment might show pending until you return to this page.",
         warning_expiry:
@@ -236,18 +238,19 @@ const dict = {
         broadcast_setting: "External Broadcast",
         broadcast_setting_tooltip:
             "Also use the block explorer to broadcast transactions",
-        download_boltz_rescue_key: "Download Boltz Rescue Key",
+        download_boltz_rescue_key: "Boltz Rescue Key",
         download_boltz_rescue_key_subline:
             "We replaced per-swap refund files with a single Rescue Key 🙌",
         download_boltz_rescue_key_subline_second:
-            "This new key works on any device and works for all swaps created with it. Store the key file in a secure and permanent location.",
+            "This new key works on any device and works for all swaps created with it. Save the key in a secure and permanent location.",
         download_boltz_rescue_key_subline_third:
             "To continue, please select if you want to download a new Boltz Rescue Key or verify an existing one.",
         download_new_key: "Download New Key",
         verify_boltz_rescue_key: "Verify Boltz Rescue Key",
         verify_boltz_rescue_key_subline:
-            "Please select your previously downloaded Boltz Rescue Key to verify its correctness.",
-        verify_key: "Verify Existing Key",
+            "Please select your previously saved Boltz Rescue Key to verify it.",
+        verify_key: "Verify key",
+        verify_existing_key: "Verify existing key",
         verify_key_failed:
             "Verification of the Boltz Rescue Key failed. We recommend downloading a new Boltz Rescue Key to continue.",
         rescue_key: "Rescue Key",
@@ -258,6 +261,29 @@ const dict = {
         back: "Back",
         next: "Next",
         pagination_info: "Page {{ start }} of {{ end }}",
+        get_boltz_rescue_key_subline:
+            "To continue, please select if you want to generate a new Boltz Rescue Key or verify an existing one.",
+        generate_key: "Generate new key",
+        backup_boltz_rescue_key: "Backup Boltz Rescue Key",
+        backup_boltz_rescue_key_subline_second:
+            "This new key works on any device and works for all swaps created with it.",
+        backup_boltz_rescue_key_subline_third:
+            "Please write down or copy this key and store it in a secure and permanent location.",
+        backup_boltz_rescue_key_reminder: "Keep this safe. Do not share.",
+        copy_rescue_key: "Copy rescue key",
+        user_saved_key: "I have saved the rescue key",
+        verify_mnemonic_word: {
+            start: "What is the word at ",
+            strong: "position {{ number }}",
+            end: " of your rescue key?",
+        },
+        incorrect_word: "Incorrect word. Please double-check your rescue key.",
+        enter_mnemonic: "Enter rescue key",
+        scan_refundable_swaps: "Scan for refundable swaps",
+        upload_rescue_key: "Upload rescue key",
+        verify_boltz_rescue_key_mnemonic:
+            "Please enter your rescue key below to import it.",
+        hint_paste_mnemonic: "Hint: you can paste all 12 words at once.",
     },
     de: {
         language: "Deutsch",
@@ -356,7 +382,9 @@ const dict = {
         copied: "kopiert!",
         refund_swap: "Swap Rückerstatten",
         refund_a_swap_subline:
-            "Lade deinen Rettungsschlüssel hoch und hole dir deine Bitcoin aus einem fehlgeschlagenen Swap zurück.",
+            "Lade deinen Rettungsschlüssel hoch oder gib ihn ein, um einen Swap zu erstatten, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
+        refund_a_swap_mnemonic:
+            "Gib deinen Rettungsschlüssel ein, um einen Swap zu erstatten, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
         refund_past_swaps: "Historische Swaps",
         refund_past_swaps_subline:
             "Swaps, die in deinem Browser gespeichert wurden",
@@ -364,9 +392,9 @@ const dict = {
             "Keine erstattungsfähigen Swaps in Browserverlauf gefunden",
         cant_find_swap: "Swap nicht gefunden?",
         refund_external_explainer:
-            "Versuchen Sie, einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden zu erstatten.",
+            "Versuche einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden zu erstatten.",
         refund_external_explainer_rsk:
-            "Verbinden Sie Ihr Rootstock Wallet, um nach erstattungsfähigen Swaps zu suchen, die nicht im Swap-Verlauf dieses Browsers gespeichert sind.",
+            "Wenn du RBTC in einen Boltz-Swap geschickt hast, verbinde dein Rootstock Wallet um nach erstattungsfähigen Swaps zu suchen, die nicht im Swapverlauf dieses Browsers gespeichert sind.",
         refund_external_scanning_rsk:
             "Scanne nach erstattungsfähigen Swaps in Rootstock-Wallet...",
         connected_wallet_no_swaps:
@@ -428,7 +456,7 @@ const dict = {
         num_channels: "Anzahl der Kanäle",
         beta_caution: "BETA - OBACHT!",
         pro: "pro",
-        pro_banner: "BETA: VERFÜGBARKEIT NICHT GARANTIERT",
+        pro_banner: "Möchten Sie Boltz Pro über die API nutzen?",
         warning_return:
             "Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück! Die Zahlung wird möglicherweise als ausstehend angezeigt, bis du zu dieser Seite zurückkehrst.",
         warning_expiry:
@@ -505,7 +533,7 @@ const dict = {
         broadcast_setting: "Externer Broadcast",
         broadcast_setting_tooltip:
             "Verwende auch den Block Explorer, um Transaktionen zu senden",
-        download_boltz_rescue_key: "Boltz Rettungsschlüssel herunterladen",
+        download_boltz_rescue_key: "Boltz Rettungsschlüssel",
         download_boltz_rescue_key_subline:
             "Wir haben pro-Swap Rückerstattungsdateien mit einem einzigen Boltz Rettungsschlüssel ersetzt 🙌",
         download_boltz_rescue_key_subline_second:
@@ -516,8 +544,9 @@ const dict = {
         verify_boltz_rescue_key:
             "Existierenden Boltz Rettungsschlüssel verifizieren",
         verify_boltz_rescue_key_subline:
-            "Bitte wähle den zuvor heruntergeladenen Boltz Rettungsschlüssel aus, um seine Gültigkeit zu überprüfen.",
-        verify_key: "Existierenden Schlüssel verifizieren",
+            "Bitte wähle den zuvor heruntergeladenen Boltz Rettungsschlüssel aus, um ihn zu verifizieren.",
+        verify_key: "Schlüssel verifizieren",
+        verify_existing_key: "Existierenden Schlüssel verifizieren",
         verify_key_failed:
             "Die Verifizierung des Boltz Rettungsschlüssels ist fehlgeschlagen. Wir empfehlen, einen neuen Rettungsschlüssel herunterzuladen.",
         rescue_key: "Rettungsschlüssel",
@@ -528,6 +557,32 @@ const dict = {
         back: "Zurück",
         next: "Weiter",
         pagination_info: "Seite {{ start }} von {{ end }}",
+        get_boltz_rescue_key_subline:
+            "Um fortzufahren, wähle aus, ob du eine neue Boltz Rettungsschlüssel generieren oder einen vorhandenen Schlüssel verifizieren möchtest.",
+        generate_key: "Neuen Schlüssel generieren",
+        backup_boltz_rescue_key: "Boltz Rettungsschlüssel sichern",
+        backup_boltz_rescue_key_subline_second:
+            "Dieser neue Schlüssel funktioniert auf jedem Gerät und ist für alle Swaps gültig.",
+        backup_boltz_rescue_key_subline_third:
+            "Bitte schreibe diesen Schlüssel auf oder kopiere ihn und speichere ihn an einem sicheren und dauerhaften Ort.",
+        backup_boltz_rescue_key_reminder:
+            "Speichere diesen Schlüssel sicher ab. Teile ihn nicht.",
+        copy_rescue_key: "Rettungsschlüssel kopieren",
+        user_saved_key: "Ich habe den Rettungsschlüssel gespeichert",
+        verify_mnemonic_word: {
+            start: "Was ist das Wort auf ",
+            strong: "Position {{ number }}",
+            end: " deines Rettungsschlüssels?",
+        },
+        incorrect_word:
+            "Wort inkorrekt. Bitte überprüfe deinen Rettungsschlüssel.",
+        enter_mnemonic: "Rettungsschlüssel eingeben",
+        scan_refundable_swaps: "Nach erstattbaren Swaps scannen",
+        upload_rescue_key: "Rettungsschlüssel hochladen",
+        verify_boltz_rescue_key_mnemonic:
+            "Bitte gib deinen Rettungsschlüssel unten ein, um ihn zu importieren.",
+        hint_paste_mnemonic:
+            "Tipp: du kannst alle 12 Wörter gleichzeitig einfügen.",
     },
     es: {
         language: "Español",
@@ -623,7 +678,9 @@ const dict = {
         copied: "Copiado",
         refund_swap: "Reembolsar Intercambio",
         refund_a_swap_subline:
-            "Cargue tu clave de rescate y recupere tus fondos bloqueados.",
+            "Si enviaste BTC o L-BTC a un intercambio Boltz, cargue o introduzca su clave de rescate para reembolsar un swap que no esté disponible en el historial de swaps de este navegador",
+        refund_a_swap_mnemonic:
+            "Ingrese tu clave de rescate y recupere tus fondos bloqueados.",
         refund_past_swaps: "Intercambios anteriores",
         refund_past_swaps_subline:
             "Intercambios que se guardaron en el almacenamiento del navegador",
@@ -633,7 +690,7 @@ const dict = {
         refund_external_explainer:
             "Intenta reembolsar un swap externo mediante una clave de rescate y otros métodos de emergencia.",
         refund_external_explainer_rsk:
-            "Conecta tu monedero Rootstock para buscar swaps reembolsables que no estén guardados en el historial de swaps de este navegador.",
+            "Si enviaste RBTC a un swap de Boltz, conecta tu monedero Rootstock para buscar swaps reembolsables que no estén guardados en el historial de swaps de este navegador.",
         refund_external_scanning_rsk:
             "Escaneando en busca de swaps reembolsables en tu monedero Rootstock...",
         connected_wallet_no_swaps:
@@ -697,7 +754,7 @@ const dict = {
         num_channels: "Número de canales",
         beta_caution: "BETA - ¡ÚSALO CON PRECAUCIÓN!",
         pro: "pro",
-        pro_banner: "BETA: DISPONIBILIDAD NO GARANTIZADA",
+        pro_banner: "¿Quieres usar Boltz Pro a través de la API?",
         warning_return:
             "Regresa a esta página después de pagar la factura! El pago puede aparecer como pendiente hasta que vuelvas a esta página.",
         warning_expiry:
@@ -772,7 +829,7 @@ const dict = {
         broadcast_setting: "Transmisión externa",
         broadcast_setting_tooltip:
             "También use el explorador de bloques para transmitir transacciones",
-        download_boltz_rescue_key: "Descargar clave de rescate Boltz",
+        download_boltz_rescue_key: "Clave de rescate Boltz",
         download_boltz_rescue_key_subline:
             "Hemos sustituido los archivos de reembolso por una única clave de rescate 🙌",
         download_boltz_rescue_key_subline_second:
@@ -780,10 +837,11 @@ const dict = {
         download_boltz_rescue_key_subline_third:
             "Para continuar, seleccione si desea descargar una nueva clave de rescate o verificar una existente.",
         download_new_key: "Descargar nueva clave",
-        verify_boltz_rescue_key: "Verificar clave de rescate Boltz",
+        verify_boltz_rescue_key: "Verificar clave de rescate existente",
         verify_boltz_rescue_key_subline:
             "Por favor, seleccione tu clave de rescate Boltz previamente descargada para verificar su validez.",
-        verify_key: "Verificar clave existente",
+        verify_key: "Verificar clave",
+        verify_existing_key: "Verificar clave existente",
         verify_key_failed:
             "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
         rescue_key: "Clave de Rescate Boltz",
@@ -794,6 +852,32 @@ const dict = {
         back: "Atrás",
         next: "Siguiente",
         pagination_info: "Página {{ start }} de {{ end }}",
+        get_boltz_rescue_key_subline:
+            "Para continuar, seleccione si deseas generar una nueva clave de rescate de Boltz o verificar una existente.",
+        generate_key: "Generar nueva clave",
+        backup_boltz_rescue_key: "Backup clave de rescate Boltz",
+        backup_boltz_rescue_key_subline_second:
+            "Esta nueva clave funciona en cualquier dispositivo y funciona para todas las transacciones creadas con ella.",
+        backup_boltz_rescue_key_subline_third:
+            "Por favor, escriba o copie esta clave y almacénela en un lugar seguro y permanente.",
+        backup_boltz_rescue_key_reminder:
+            "Guarde esta clave con seguridad. No comparta.",
+        copy_rescue_key: "Copiar clave de rescate",
+        user_saved_key: "He guardado la clave de rescate",
+        verify_mnemonic_word: {
+            start: "¿Cuál es la palabra en ",
+            strong: "la posición {{ number }}",
+            end: " de tu clave de rescate?",
+        },
+        incorrect_word:
+            "Palabra incorrecta. Por favor, verifique su clave de rescate.",
+        enter_mnemonic: "Ingrese clave de rescate",
+        scan_refundable_swaps: "Buscar swaps reembolsables",
+        upload_rescue_key: "Subir clave de rescate",
+        verify_boltz_rescue_key_mnemonic:
+            "Por favor, ingrese su clave de rescate a continuación para importarlo.",
+        hint_paste_mnemonic:
+            "Consejo: puedes pegar todas las 12 palabras a la vez.",
     },
     pt: {
         language: "Português",
@@ -892,7 +976,9 @@ const dict = {
         copied: "Copiado!",
         refund_swap: "Reembolsar troca",
         refund_a_swap_subline:
-            "Envie sua chave de resgate para reembolsar uma troca que não está no histórico deste navegador.",
+            "Se enviou BTC ou L-BTC para uma troca Boltz, faça upload ou insira sua chave de resgate para reembolsar uma troca que não está no histórico deste navegador.",
+        refund_a_swap_mnemonic:
+            "Insira sua chave de resgate para reembolsar uma troca que não está no histórico deste navegador.",
         refund_past_swaps: "Trocas passadas",
         refund_past_swaps_subline:
             "Trocas que foram salvas no armazenamento do seu navegador",
@@ -902,7 +988,7 @@ const dict = {
         refund_external_explainer:
             "Tente reembolsar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
         refund_external_explainer_rsk:
-            "Conecte sua carteira Rootstock para procurar por trocas reembolsáveis que não estão no histórico do navegador.",
+            "Se enviou RBTC para uma troca Boltz, conecte sua carteira Rootstock para procurar por trocas reembolsáveis que não estão no histórico do navegador.",
         refund_external_scanning_rsk:
             "Procurando trocas reembolsáveis na sua carteira Rootstock...",
         connected_wallet_no_swaps:
@@ -962,7 +1048,7 @@ const dict = {
         num_channels: "Número de canais",
         beta_caution: "BETA - USE COM CUIDADO!",
         pro: "pro",
-        pro_banner: "BETA: DISPONIBILIDADE NÃO GARANTIDA",
+        pro_banner: "Quer usar a Boltz Pro via API?",
         warning_return:
             "Volte a esta página após pagar o invoice! O pagamento pode aparecer como pendente até que volte a esta página.",
         warning_expiry:
@@ -1036,7 +1122,7 @@ const dict = {
         broadcast_setting: "Transmissão externa",
         broadcast_setting_tooltip:
             "Também usar o block explorer para transmitir transações",
-        download_boltz_rescue_key: "Baixar chave de resgate da Boltz",
+        download_boltz_rescue_key: "Chave de resgate da Boltz",
         download_boltz_rescue_key_subline:
             "Substituímos os arquivos de reembolso por uma única chave de resgate 🙌",
         download_boltz_rescue_key_subline_second:
@@ -1046,8 +1132,9 @@ const dict = {
         download_new_key: "Baixar nova chave",
         verify_boltz_rescue_key: "Verificar chave de resgate",
         verify_boltz_rescue_key_subline:
-            "Selecione sua chave de resgate previamente baixada para verificar a validade.",
-        verify_key: "Verificar chave existente",
+            "Selecione sua chave de resgate previamente baixada para verificá-la.",
+        verify_key: "Verificar chave",
+        verify_existing_key: "Verificar chave existente",
         verify_key_failed:
             "Falha ao verificar a chave de resgate. Recomendamos baixar uma nova chave.",
         rescue_key: "Chave de resgate",
@@ -1058,6 +1145,31 @@ const dict = {
         back: "Voltar",
         next: "Próximo",
         pagination_info: "Página {{ start }} de {{ end }}",
+        get_boltz_rescue_key_subline:
+            "Para continuar, selecione se deseja gerar uma nova chave de resgate Boltz ou verificar uma existente.",
+        generate_key: "Gerar nova chave",
+        backup_boltz_rescue_key: "Backup chave de resgate da Boltz",
+        backup_boltz_rescue_key_subline_second:
+            "Esta nova chave funciona em qualquer dispositivo e funciona para todas as trocas criadas com ela.",
+        backup_boltz_rescue_key_subline_third:
+            "Por favor, escreva ou copie esta chave e armazene-a em um local seguro e permanente.",
+        backup_boltz_rescue_key_reminder:
+            "Guarde com segurança. Não compartilhe.",
+        copy_rescue_key: "Copiar chave de resgate",
+        user_saved_key: "Eu guardei a chave de resgate",
+        verify_mnemonic_word: {
+            start: "Qual é a palavra na ",
+            strong: "posição {{ number }}",
+            end: " da sua chave de resgate?",
+        },
+        incorrect_word:
+            "Palavra incorreta. Por favor, verifique sua chave de resgate.",
+        enter_mnemonic: "Digitar chave de resgate",
+        scan_refundable_swaps: "Pesquisar por trocas reembolsáveis",
+        upload_rescue_key: "Carregar chave de resgate",
+        verify_boltz_rescue_key_mnemonic:
+            "Por favor, digite sua chave de resgate abaixo para importá-la.",
+        hint_paste_mnemonic: "Dica: você pode colar as 12 palavras de uma vez.",
     },
     zh: {
         language: "中文",
@@ -1148,7 +1260,9 @@ const dict = {
         copy_bip21: "BIP21",
         copied: "已复制",
         refund_swap: "退还交换",
-        refund_a_swap_subline: "上传您的救援钥匙，取回被锁定的资金。",
+        refund_a_swap_subline:
+            "如果您向 Boltz 互换发送了 BTC 或 L-BTC，请上传或输入您的解救密钥，以退还此浏览器互换历史中不可用的互换。",
+        refund_a_swap_mnemonic: "输入您的救援钥匙，取回被锁定的资金。",
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         no_refundable_swaps: "在您的浏览器历史中未发现可退款的交换。",
@@ -1156,7 +1270,7 @@ const dict = {
         refund_external_explainer:
             "尝试通过救援钥匙和其他紧急方法退款外部交换。",
         refund_external_explainer_rsk:
-            "连接您的 Rootstock 钱包，扫描未保存在此浏览器交换历史记录中的可退款交换。",
+            "如果您将 RBTC 发送到 Boltz 交换中，请连接您的 Rootstock 钱包，扫描未保存在此浏览器交换历史记录中的可退款交换。",
         refund_external_scanning_rsk:
             "正在扫描您的 Rootstock 钱包中的可退款掉期。。。",
         connected_wallet_no_swaps:
@@ -1211,7 +1325,7 @@ const dict = {
         num_channels: "通道数",
         beta_caution: "BETA - 谨慎使用！",
         pro: "pro",
-        pro_banner: "测试版：不保证可用性",
+        pro_banner: "想要通过 API 使用 Boltz Pro？",
         warning_return:
             "重要：支付发票后返回此页面！在您返回此页面之前，付款可能显示为待定。",
         warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
@@ -1277,7 +1391,7 @@ const dict = {
         routing_fee_limit: "最大路由费用",
         broadcast_setting: "外部广播",
         broadcast_setting_tooltip: "使用区块浏览器发送认领和退款交易",
-        download_boltz_rescue_key: "下载 Boltz 救援密钥",
+        download_boltz_rescue_key: "Boltz 救援密钥",
         download_boltz_rescue_key_subline:
             "我们用单个救援密钥取代了每个交换的退款文件 🙌",
         download_boltz_rescue_key_subline_second:
@@ -1287,8 +1401,9 @@ const dict = {
         download_new_key: "下载新密钥",
         verify_boltz_rescue_key: "验证博尔茨救援密钥",
         verify_boltz_rescue_key_subline:
-            "请选择您之前下载的 Boltz 救援密钥，以验证其正确性。",
-        verify_key: "验证现有密钥",
+            "请选择您之前保存的 Boltz 救援密钥进行验证。",
+        verify_key: "验证密钥",
+        verify_existing_key: "导入现有密钥",
         verify_key_failed:
             "Boltz 救援密钥验证失败。我们建议下载新的 Boltz 救援密钥以继续。",
         rescue_key: "救援钥匙",
@@ -1298,6 +1413,28 @@ const dict = {
         back: "回一页",
         next: "下一页",
         pagination_info: "{{ start }} 的 {{ end }} 页",
+        get_boltz_rescue_key_subline:
+            "要继续，请选择是要生成新的 Boltz 救援密钥，还是要验证现有密钥。",
+        generate_key: "生成新密钥",
+        backup_boltz_rescue_key: "备份 Boltz 救援密钥",
+        backup_boltz_rescue_key_subline_second:
+            "这个新密钥适用于任何设备，并可用于所有用其创建的兑换操作。",
+        backup_boltz_rescue_key_subline_third:
+            "请记下或复制此密钥，并将其保存在安全且永久的位置。",
+        backup_boltz_rescue_key_reminder: "请妥善保管。不要分享。",
+        copy_rescue_key: "复制救援密钥",
+        user_saved_key: "我已保存救援密钥",
+        verify_mnemonic_word: {
+            start: "你的救援密钥中，",
+            strong: "第 {{ number }} 个",
+            end: "单词是什么？",
+        },
+        incorrect_word: "单词不正确。请再次检查你的救援密钥。",
+        enter_mnemonic: "输入救援密钥",
+        scan_refundable_swaps: "扫描可退款交换",
+        upload_rescue_key: "上传救援密钥",
+        verify_boltz_rescue_key_mnemonic: "请在下方输入你的救援密钥以导入。",
+        hint_paste_mnemonic: "提示：你可以一次性粘贴全部 12 个单词。",
     },
     ja: {
         language: "日本語",
@@ -1397,7 +1534,9 @@ const dict = {
         copied: "クリップボードにコピーしました！",
         refund_swap: "スワップを返金する",
         refund_a_swap_subline:
-            "このブラウザのスワップ履歴にないスワップを払い戻すには、レスキューキーをアップロードしてください。",
+            "BTCまたはL-BTCをBoltzスワップに送信した場合、このブラウザのスワップ履歴にないスワップを払い戻すには、レスキューキーをアップロードまたは入力してください。",
+        refund_a_swap_mnemonic:
+            "このブラウザのスワップ履歴にないスワップを払い戻すには、レスキューキーを挿入してください。",
         refund_past_swaps: "過去のスワップ",
         refund_past_swaps_subline: "ブラウザのストレージに保存されたスワップ",
         no_refundable_swaps:
@@ -1406,7 +1545,7 @@ const dict = {
         refund_external_explainer:
             "レスキューキーやその他の緊急手段で外部スワップの払い戻しを試みる。",
         refund_external_explainer_rsk:
-            "Rootstockウォレットを接続して、このブラウザのスワップ履歴に保存されていない払い戻し可能なスワップをスキャンします。",
+            "BoltzスワップにRBTCを送信した場合、Rootstock Walletを接続して、このブラウザのスワップ履歴に保存されていない返金可能スワップをスキャンします。",
         refund_external_scanning_rsk:
             "Rootstockウォレットにある払い戻し可能なスワップをスキャンしています...",
         connected_wallet_no_swaps:
@@ -1467,7 +1606,7 @@ const dict = {
         num_channels: "チャネルの数",
         beta_caution: "ベータ版の為、ご利用は慎重にお願いします",
         pro: "pro",
-        pro_banner: "ベータ版：利用可能性は保証されない",
+        pro_banner: "API経由でBoltz Proを使用したいですか？",
         warning_return:
             "重要：インボイスのお支払い後、このページへ戻ってください！このページに戻るまで、支払いは保留中と表示される場合があります。",
         warning_expiry:
@@ -1540,7 +1679,7 @@ const dict = {
         broadcast_setting: "外部放送",
         broadcast_setting_tooltip:
             "ブロック・エクスプローラーを使ってトランザクションをブロードキャストする",
-        download_boltz_rescue_key: "ダウンロード Boltzレスキューキー",
+        download_boltz_rescue_key: "Boltzレスキューキー",
         download_boltz_rescue_key_subline:
             "スワップごとの払い戻しファイルを、単一のレスキュー・キー🙌に置き換えた。",
         download_boltz_rescue_key_subline_second:
@@ -1550,8 +1689,9 @@ const dict = {
         download_new_key: "新しいキーをダウンロード",
         verify_boltz_rescue_key: "Boltzレスキューキー検証",
         verify_boltz_rescue_key_subline:
-            "以前にダウンロードしたBoltzレスキューキーを選択して、その正しさを確認してください。",
-        verify_key: "既存のキーを検証する",
+            "以前にダウンロードしたBoltzレスキューキーを選択して確認してください。",
+        verify_key: "ベリファイキー",
+        verify_existing_key: "既存のキーをインポートする",
         verify_key_failed:
             "Boltzレスキューキーの検証に失敗しました。続行するには、新しいBoltzレスキューキーをダウンロードすることをお勧めします。",
         rescue_key: "レスキューキー",
@@ -1562,6 +1702,32 @@ const dict = {
         back: "戻る",
         next: "次へ",
         pagination_info: "{{ end }} ページ中 {{ start }} ページ目",
+        get_boltz_rescue_key_subline:
+            "続行するには、新しいBoltzレスキューキーを生成するか、既存のものを検証するかを選択してください。",
+        generate_key: "新しいキーを生成",
+        backup_boltz_rescue_key: "Boltzレスキューキーのバックアップ",
+        backup_boltz_rescue_key_subline_second:
+            "この新しいキーはどのデバイスでも動作し、このキーで作成されたすべてのスワップに対応します。",
+        backup_boltz_rescue_key_subline_third:
+            "キーファイルを安全で永続的な場所に保管してください。",
+        backup_boltz_rescue_key_reminder:
+            "安全に保管してください。共有しないでください。",
+        copy_rescue_key: "レスキューキーをコピー",
+        user_saved_key: "レスキューキーを保存しました",
+        verify_mnemonic_word: {
+            start: "あなたのレスキューキーの",
+            strong: "{{ number }}番目の単語",
+            end: "は何ですか？",
+        },
+        incorrect_word:
+            "間違った単語です。レスキューキーを再確認してください。",
+        enter_mnemonic: "レスキューキーを入力",
+        scan_refundable_swaps: "返金可能なスワップをスキャン",
+        upload_rescue_key: "レスキューキーをアップロード",
+        verify_boltz_rescue_key_mnemonic:
+            "下にレスキューキーを入力してインポートしてください。",
+        hint_paste_mnemonic:
+            "ヒント：12個の単語を一度に貼り付けることができます。",
     },
     ru: {
         language: "Русский",
@@ -1660,7 +1826,9 @@ const dict = {
         copied: "Скопировано!",
         refund_swap: "Возврат свопа",
         refund_a_swap_subline:
-            "Загрузите файл возврата и верните свои заблокированные средства",
+            "Если вы отправили BTC или L-BTC на своп, загрузите или введите свой ключ восстановления, чтобы вернуть своп, который недоступен в истории свопов этого браузера.",
+        refund_a_swap_mnemonic:
+            "Введите свой ключ восстановления, чтобы вернуть средства за обмен, который недоступен в истории обменов этого браузера.",
         refund_past_swaps: "Прошлые свопы",
         refund_past_swaps_subline:
             "Свопы, сохраненные в памяти вашего браузера",
@@ -1806,21 +1974,22 @@ const dict = {
         broadcast_setting: "Внешняя трансляция",
         broadcast_setting_tooltip:
             "Также использовать обозреватель блоков для трансляции транзакций.",
-        download_boltz_rescue_key: "Скачать ключ спасения Boltz",
+        download_boltz_rescue_key: "Ключ восстановления",
         download_boltz_rescue_key_subline:
-            "Мы заменили файлы возврата для каждого свопа одним ключом спасения 🙌",
+            "Мы заменили файлы возврата для каждого свопа одним ключом восстановления 🙌",
         download_boltz_rescue_key_subline_second:
-            "Этот новый ключ работает на любом устройстве и подходит для всех свопов, созданных с его помощью. Храните файл ключа в безопасном и постоянном месте.",
+            "Этот новый ключ работает на любом устройстве и подходит для всех свопов, созданных с его помощью. Сохраните файл ключа в безопасном и постоянном месте.",
         download_boltz_rescue_key_subline_third:
-            "Чтобы продолжить, выберите, хотите ли вы скачать новый ключ спасения Boltz или проверить существующий.",
+            "Чтобы продолжить, выберите, хотите ли вы скачать новый ключ восстановления Boltz или проверить существующий.",
         download_new_key: "Скачать новый ключ",
-        verify_boltz_rescue_key: "Проверить ключ спасения Boltz",
+        verify_boltz_rescue_key: "Проверить ключ восстановления Boltz",
         verify_boltz_rescue_key_subline:
-            "Выберите ранее скачанный ключ спасения Boltz для проверки его корректности.",
+            "Пожалуйста, выберите ранее сохраненный ключ восстановления Boltz, чтобы проверить его.",
         verify_key: "Проверить существующий ключ",
+        verify_existing_key: "Проверить ключ",
         verify_key_failed:
-            "Проверка ключа спасения Boltz не удалась. Рекомендуем скачать новый ключ спасения Boltz для продолжения.",
-        rescue_key: "Ключ спасения",
+            "Проверка ключа восстановления Boltz не удалась. Рекомендуем скачать новый ключ восстановления Boltz для продолжения.",
+        rescue_key: "Ключ восстановления",
         no_swaps_found: "Свопы не найдены",
         rif_extra_fee:
             "В кошельке недостаточно RBTC, комиссия скорректирована с учетом комиссии за RIF Relay!",
@@ -1828,10 +1997,42 @@ const dict = {
         back: "Назад",
         next: "Вперед",
         pagination_info: "Страница {{ start }} из {{ end }}",
+        get_boltz_rescue_key_subline:
+            "Чтобы продолжить, выберите, хотите ли вы сгенерировать новый ключ восстановления Boltz или проверить существующий.",
+        generate_key: "Сгенерировать новый ключ",
+        backup_boltz_rescue_key:
+            "Резервное копирование ключа восстановления Boltz",
+        backup_boltz_rescue_key_subline_second:
+            "Этот новый ключ работает на любом устройстве и подходит для всех обменов, созданных с его помощью.",
+        backup_boltz_rescue_key_subline_third:
+            "Пожалуйста, запишите или скопируйте этот ключ и храните его в безопасном и постоянном месте.",
+        backup_boltz_rescue_key_reminder:
+            "Храните в безопасности. Не делитесь им.",
+        copy_rescue_key: "Скопировать ключ восстановления",
+        user_saved_key: "Я сохранил ключ восстановления",
+        verify_mnemonic_word: {
+            start: "Какое слово находится на ",
+            strong: "позиции {{ number }}",
+            end: " в вашем ключе восстановления?",
+        },
+        incorrect_word:
+            "Неверное слово. Пожалуйста, проверьте ваш ключ восстановления.",
+        enter_mnemonic: "Введите ключ восстановления",
+        scan_refundable_swaps: "Сканировать возвратные обмены",
+        upload_rescue_key: "Загрузить ключ восстановления",
+        verify_boltz_rescue_key_mnemonic:
+            "Пожалуйста, введите свой ключ восстановления ниже, чтобы импортировать его.",
+        hint_paste_mnemonic: "Подсказка: вы можете вставить все 12 слов сразу.",
     },
 };
 
-export type DictKey = keyof typeof dict.en;
+type NestedKeyOf<T> = {
+    [K in keyof T & string]: T[K] extends object
+        ? `${K}.${NestedKeyOf<T[K]>}`
+        : K;
+}[keyof T & string];
+
+export type DictKey = NestedKeyOf<typeof dict.en>;
 
 export const rawDict = JSON.parse(JSON.stringify(dict));
 

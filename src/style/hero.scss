@@ -7,8 +7,8 @@ h1 {
     line-height: 1.05;
     background: linear-gradient(
         20deg,
-        rgb(255, 197, 0) 10%,
-        rgb(0, 88, 255) 100%
+        var(--color-hero-gradient-1) 10%,
+        var(--color-hero-gradient-2) 90%
     );
     -webkit-background-clip: text;
     margin: 24px 12px 12px;
@@ -26,7 +26,7 @@ h1 small {
     font-size: 18px;
     font-weight: normal;
     display: block;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--color-white-90);
     max-width: 661px;
     margin: 21px auto 34px;
     line-height: 1.2;
@@ -51,7 +51,7 @@ h2.headline small {
 }
 h3 {
     margin: 0;
-    color: vars.$primary;
+    color: var(--color-primary);
 }
 
 .inner-wrap {
@@ -68,9 +68,9 @@ h3 {
     border-radius: 21px;
     padding: 12px;
     margin: 12px;
-    color: #fff;
-    background: #0003;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text);
+    background: var(--color-black-30);
+    border: 1px solid var(--color-white-10);
 }
 .hero-box img {
     width: 36px;
@@ -118,7 +118,7 @@ h3 {
     font-size: 16px;
     display: block;
     font-weight: normal;
-    color: vars.$primary;
+    color: var(--color-primary);
 }
 
 .thunderhub:before {
@@ -139,7 +139,7 @@ h3 {
     padding-left: 48px;
     text-decoration: none;
     font-size: 18px;
-    color: #bdc5ee;
+    color: var(--color-text);
     font-weight: bold;
     line-height: 1.1;
 }
@@ -165,15 +165,7 @@ h3 {
     background-size: 100%;
     background-repeat: no-repeat;
     width: 96px;
-    height: 37px;
-}
-.marina {
-    display: inline-block;
-    background: url(../assets/marina.svg);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 42px;
-    height: 42px;
+    height: 45px;
 }
 .aqua {
     display: inline-block;
@@ -182,14 +174,6 @@ h3 {
     background-repeat: no-repeat;
     width: 180px;
     height: 32px;
-}
-.cln {
-    display: inline-block;
-    background: url(../assets/cln.svg);
-    background-size: 100%;
-    background-repeat: no-repeat;
-    width: 124px;
-    height: 48px;
 }
 
 .diamondhands {
@@ -230,7 +214,7 @@ h3 {
     background-size: 100%;
     background-repeat: no-repeat;
     width: 120px;
-    height: 35px;
+    height: 38px;
 }
 .geyser {
     display: inline-block;
@@ -253,8 +237,8 @@ h3 {
     background: url(../assets/blitz.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 165px;
-    height: 23px;
+    width: 175px;
+    height: 20px;
 }
 .helm {
     display: inline-block;
@@ -301,8 +285,24 @@ h3 {
     background: url(../assets/fedi.svg);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 120px;
-    height: 40px;
+    width: 115px;
+    height: 35px;
+}
+.alby {
+    display: inline-block;
+    background: url(../assets/alby.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 128px;
+    height: 52px;
+}
+.cakepay {
+    display: inline-block;
+    background: url(../assets/cakepay.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    width: 181px;
+    height: 50px;
 }
 
 #partners,
@@ -345,14 +345,14 @@ h3 {
 }
 #create-overlay.glow .frame {
     transition: all 0.8s ease-in-out;
-    box-shadow: 0 0 0 color.adjust(vars.$primary, $alpha: -0.7);
+    box-shadow: 0 0 0 var(--color-primary-glow);
 }
 
 @media (min-width: 488px) {
     #create-overlay.glow .frame {
-        box-shadow: 0 0 40px color.adjust(vars.$primary, $alpha: -0.7);
+        box-shadow: 0 0 40px var(--color-primary-glow);
     }
     #create-overlay.glow .frame:hover {
-        box-shadow: 0 0 60px color.adjust(vars.$primary, $alpha: -0.7);
+        box-shadow: 0 0 60px var(--color-primary-glow);
     }
 }

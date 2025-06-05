@@ -2,17 +2,17 @@
     max-width: 800px;
     margin: 2rem auto;
     padding: 2rem;
-    color: #e1e1e1;
+    color: var(--color-text);
     line-height: 1.6;
     font-size: 16px;
-    background: #102032;
+    background: var(--color-secondary-700);
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--color-white-10);
     text-align: left;
     font-family: "Noto Sans", sans-serif;
 
     h1 {
-        color: #ffffff;
+        color: var(--color-text);
         font-size: 2.5rem;
         margin-bottom: 2rem;
         font-weight: 800;
@@ -20,7 +20,7 @@
     }
 
     h2 {
-        color: #ffffff;
+        color: var(--color-text);
         font-size: 1.8rem;
         margin: 2rem 0 1rem;
         font-weight: 600;
@@ -28,7 +28,7 @@
     }
 
     h3 {
-        color: #ffffff;
+        color: var(--color-text);
         font-size: 1.4rem;
         margin: 1.5rem 0 1rem;
         font-weight: 500;
@@ -37,19 +37,19 @@
 
     p {
         margin-bottom: 1.2rem;
-        color: #e1e1e1;
+        color: var(--color-text);
         text-align: left;
         font-weight: 400;
     }
 
     a {
-        color: #4a9eff;
+        color: var(--color-link);
         text-decoration: none;
         transition: color 0.2s ease;
         font-weight: 400;
 
         &:hover {
-            color: #7ab8ff;
+            color: var(--color-link-hover);
             text-decoration: underline;
         }
     }
@@ -59,7 +59,7 @@
 
         h3 {
             margin-top: 0;
-            color: #ffffff;
+            color: var(--color-text);
         }
 
         p {
@@ -70,7 +70,7 @@
     ul {
         margin: 1rem 0;
         padding-left: 2rem;
-        color: #e1e1e1;
+        color: var(--color-text);
         text-align: left;
         font-weight: 400;
 
