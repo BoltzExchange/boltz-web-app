@@ -1017,11 +1017,11 @@ header {
     }
 }
 
-.positive-fee {
-    color: var(--color-positive-fee);
+.lower-fee {
+    color: var(--color-lower-fee);
     text-shadow:
-        0 0 4px var(--color-positive-fee-glow),
-        0 0 8px var(--color-positive-fee-glow);
+        0 0 4px var(--color-lower-fee-glow),
+        0 0 8px var(--color-lower-fee-glow);
 }
 
 .negative-fee {
