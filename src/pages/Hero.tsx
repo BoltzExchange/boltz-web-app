@@ -7,6 +7,7 @@ import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import rbtc from "../assets/rootstock-icon.svg";
+import { config } from "../config";
 import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -17,6 +18,7 @@ import {
     formatAmountDenomination,
     formatDenomination,
 } from "../utils/denomination";
+import FeeComparison from "./FeeComparison";
 
 export const Hero = () => {
     const navigate = useNavigate();
@@ -59,7 +61,7 @@ export const Hero = () => {
                 id="create-overlay"
                 class={hideHero() ? "" : "glow"}
                 onClick={() => setHideHero(true)}>
-                <Create />
+                {config.isPro ? <FeeComparison /> : <Create />}
             </div>
             <Show when={!hideHero()}>
                 <h1>
