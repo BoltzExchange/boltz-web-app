@@ -93,6 +93,7 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-tertiary: #4f1d85;
 
     --color-text: #9fa8b1;
+    --color-text-glow: color-mix(in srgb, var(--color-text) 35%, transparent);
     --color-dark-gray: #191c1f;
     --color-hero-gradient-1: var(--color-btc-orange);
     --color-hero-gradient-2: #c47835;
@@ -100,4 +101,17 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-error-700: #570d1c;
     --color-success-500: #0a5217;
     --color-success-700: #043017;
+
+    --color-negative-fee: #11c87c;
+    --color-negative-fee-glow: color-mix(
+        in srgb,
+        var(--color-negative-fee) 50%,
+        transparent
+    );
+    --color-lower-fee: #23a7d7;
+    --color-lower-fee-glow: color-mix(
+        in srgb,
+        var(--color-lower-fee) 50%,
+        transparent
+    );
 }
