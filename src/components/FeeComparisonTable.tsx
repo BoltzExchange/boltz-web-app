@@ -1,3 +1,4 @@
+import { OcLinkexternal2 } from "solid-icons/oc";
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Show } from "solid-js";
 
@@ -5,9 +6,10 @@ import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { type Pairs } from "../utils/boltzClient";
+import { getFeeHighlightClass } from "./Fees";
 import LoadingSpinner from "./LoadingSpinner";
 
-type FeeComparison = {
+type SwapFees = {
     assetSend: string;
     assetReceive: string;
     proFee: number;
@@ -18,16 +20,16 @@ type FeeComparison = {
 export const FeeComparisonTable = (props: {
     proPairs: Pairs;
     regularPairs: Pairs;
-    onSelect: (opportunity: FeeComparison) => void;
+    onSelect: (opportunity: SwapFees) => void;
 }) => {
     const { t } = useGlobalContext();
 
-    const extractFeeDifferences = (
+    const getSwapFees = (
         proPairs: Pairs,
         regularPairs: Pairs,
         swapType: SwapType,
-    ): FeeComparison[] => {
-        const result: FeeComparison[] = [];
+    ): SwapFees[] => {
+        const result: SwapFees[] = [];
 
         for (const assetSend of Object.keys(proPairs)) {
             for (const assetReceive of Object.keys(proPairs[assetSend])) {
@@ -58,13 +60,13 @@ export const FeeComparisonTable = (props: {
 
         return swapTypes
             .flatMap(({ type, key }) =>
-                extractFeeDifferences(pro[key], regular[key], type).filter(
-                    (opportunity) =>
-                        opportunity.proFee < opportunity.regularFee,
+                getSwapFees(pro[key], regular[key], type).filter(
+                    (swap) => swap.proFee < swap.regularFee,
                 ),
             )
             .sort((a, b) => a.proFee - b.proFee);
     };
+
     return (
         <Show
             when={props.proPairs && props.regularPairs}
@@ -78,40 +80,70 @@ export const FeeComparisonTable = (props: {
                     </tr>
                 </thead>
                 <tbody>
-                    <For each={filterOpportunities()}>
-                        {(opportunity) => (
+                    <Show
+                        when={filterOpportunities().length > 0}
+                        fallback={
                             <tr
-                                class="fee-comparison-row"
-                                onClick={() => props.onSelect(opportunity)}>
-                                <td>
-                                    <div class="swaplist-asset">
-                                        <span
-                                            data-asset={opportunity.assetSend}
-                                        />
-                                        <VsArrowSmallRight />
-                                        <span
-                                            data-asset={
-                                                opportunity.assetReceive
-                                            }
-                                        />
+                                class="fee-comparison-row no-data-row"
+                                data-testid="no-opportunities-found">
+                                <td colSpan={3}>
+                                    <span>
+                                        {t("no_opportunities_found.text")}
+                                    </span>
+                                    <div class="fee-comparison-alerts">
+                                        {t(
+                                            "no_opportunities_found.telegram_bot_text",
+                                        )}{" "}
+                                        <a
+                                            href="https://t.me/boltz_pro_bot"
+                                            target="_blank">
+                                            {t(
+                                                "no_opportunities_found.telegram_bot",
+                                            )}
+                                            <OcLinkexternal2 size={14} />
+                                        </a>
                                     </div>
                                 </td>
-                                <td>
-                                    <span
-                                        class={`${
-                                            opportunity.proFee < 0
-                                                ? "positive-fee"
-                                                : "negative-fee"
-                                        }`}>
-                                        {opportunity.proFee}%
-                                    </span>
-                                </td>
-                                <td>
-                                    <strong>{opportunity.regularFee}%</strong>
-                                </td>
                             </tr>
-                        )}
-                    </For>
+                        }>
+                        <For each={filterOpportunities()}>
+                            {(opportunity) => (
+                                <tr
+                                    class="fee-comparison-row"
+                                    onClick={() => props.onSelect(opportunity)}>
+                                    <td>
+                                        <div class="swaplist-asset">
+                                            <span
+                                                data-asset={
+                                                    opportunity.assetSend
+                                                }
+                                            />
+                                            <VsArrowSmallRight />
+                                            <span
+                                                data-asset={
+                                                    opportunity.assetReceive
+                                                }
+                                            />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span
+                                            class={getFeeHighlightClass(
+                                                opportunity.proFee,
+                                                opportunity.regularFee,
+                                            )}>
+                                            {opportunity.proFee}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            {opportunity.regularFee}%
+                                        </strong>
+                                    </td>
+                                </tr>
+                            )}
+                        </For>
+                    </Show>
                 </tbody>
             </table>
         </Show>
