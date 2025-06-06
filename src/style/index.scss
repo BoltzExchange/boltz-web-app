@@ -951,6 +951,7 @@ header {
     align-items: center;
     gap: 2rem;
 }
+
 .fee-comparison-table {
     width: 100%;
     table-layout: fixed;
@@ -1030,3 +1031,55 @@ header {
         0 0 8px var(--color-negative-fee-glow);
 }
 
+.accordion {
+    margin-top: 0.5rem;
+    border: 1px dashed var(--color-white-10);
+    background: var(--color-black-20);
+    border-radius: 0.5rem;
+    overflow: hidden;
+
+    .accordion-header {
+        background: var(--color-black-10);
+        color: var(--color-text);
+        padding: 0.3rem 0rem;
+        width: 100%;
+        text-align: left;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        border: none;
+        outline: none;
+        text-transform: uppercase;
+
+        transition: text-shadow 0.2s ease;
+
+        @media (hover: hover) {
+            &:hover {
+                text-shadow: 0 0 4px var(--color-text-glow);
+            }
+        }
+
+        .accordion-icon {
+            font-size: 1.25rem;
+            margin-bottom: -0.3rem;
+        }
+    }
+
+    .accordion-content {
+        animation: slideDown 0.25s ease-in;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
