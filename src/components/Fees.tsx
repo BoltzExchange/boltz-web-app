@@ -5,8 +5,10 @@ import {
     createMemo,
     createResource,
     createSignal,
+    onMount,
 } from "solid-js";
 
+import { config } from "../config";
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
@@ -37,8 +39,16 @@ const unconfidentialExtra = 5;
 const rifExtraGasCost = 157_000n;
 
 const Fees = () => {
-    const { t, pairs, fetchPairs, denomination, separator, notify } =
-        useGlobalContext();
+    const {
+        t,
+        pairs,
+        fetchPairs,
+        denomination,
+        separator,
+        notify,
+        regularPairs,
+        fetchRegularPairs,
+    } = useGlobalContext();
     const {
         assetSend,
         assetReceive,
@@ -174,7 +184,26 @@ const Fees = () => {
         }
     });
 
+    const shouldHighlightFee = () => {
+        if (!config.isPro) {
+            return false;
+        }
+
+        return (
+            getPair(pairs(), swapType(), assetSend(), assetReceive())?.fees
+                .percentage <
+            getPair(regularPairs(), swapType(), assetSend(), assetReceive())
+                ?.fees.percentage
+        );
+    };
+
     void fetchPairs();
+
+    onMount(() => {
+        if (config.isPro) {
+            void fetchRegularPairs();
+        }
+    });
 
     return (
         <div class="fees-dyn">
@@ -194,8 +223,14 @@ const Fees = () => {
                     />
                 </span>
                 <br />
-                {t("fee")} ({boltzFee().toString().replaceAll(".", separator())}
-                %):{" "}
+                {t("fee")} (
+                <span
+                    class={`${
+                        boltzFee() < 0 && shouldHighlightFee() && "negative-fee"
+                    } ${boltzFee() > 0 && shouldHighlightFee() && "lower-fee"}`}>
+                    {boltzFee().toString().replaceAll(".", separator())}%
+                </span>
+                ):{" "}
                 <span class="boltz-fee">
                     {formatAmount(
                         calculateBoltzFeeOnSend(
