@@ -51,6 +51,8 @@ export type GlobalContextType = {
     setOnline: Setter<boolean>;
     pairs: Accessor<Pairs | undefined>;
     setPairs: Setter<Pairs | undefined>;
+    regularPairs: Accessor<Pairs | undefined>;
+    setRegularPairs: Setter<Pairs | undefined>;
     wasmSupported: Accessor<boolean>;
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
@@ -88,6 +90,7 @@ export type GlobalContextType = {
     notify: notifyFn;
     playNotificationSound: () => void;
     fetchPairs: () => Promise<void>;
+    fetchRegularPairs: () => Promise<void>;
 
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
@@ -137,6 +140,9 @@ const GlobalContext = createContext<GlobalContextType>();
 const GlobalProvider = (props: { children: JSX.Element }) => {
     const [online, setOnline] = createSignal<boolean>(true);
     const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
+    const [regularPairs, setRegularPairs] = createSignal<Pairs | undefined>(
+        undefined,
+    );
 
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
@@ -294,6 +300,22 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         }
     };
 
+    const fetchRegularPairs = async () => {
+        try {
+            const data = await getPairs({
+                headers: {
+                    referral: isMobile()
+                        ? "boltz_webapp_mobile"
+                        : "boltz_webapp_desktop",
+                },
+            });
+            log.debug("getalternativepairs", data);
+            setRegularPairs(data);
+        } catch (error) {
+            log.debug(error);
+        }
+    };
+
     // Use IndexedDB if available; fallback to LocalStorage
     localforage.config({
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
@@ -438,6 +460,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setOnline,
                 pairs,
                 setPairs,
+                regularPairs,
+                setRegularPairs,
                 wasmSupported,
                 setWasmSupported,
                 refundAddress,
@@ -475,6 +499,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 notify,
                 playNotificationSound,
                 fetchPairs,
+                fetchRegularPairs,
                 getLogs,
                 clearLogs,
                 updateSwapStatus,
