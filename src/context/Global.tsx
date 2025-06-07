@@ -51,6 +51,8 @@ export type GlobalContextType = {
     setOnline: Setter<boolean>;
     pairs: Accessor<Pairs | undefined>;
     setPairs: Setter<Pairs | undefined>;
+    regularPairs: Accessor<Pairs | undefined>;
+    setRegularPairs: Setter<Pairs | undefined>;
     wasmSupported: Accessor<boolean>;
     setWasmSupported: Setter<boolean>;
     refundAddress: Accessor<string | null>;
@@ -88,6 +90,7 @@ export type GlobalContextType = {
     notify: notifyFn;
     playNotificationSound: () => void;
     fetchPairs: () => Promise<void>;
+    fetchRegularPairs: () => Promise<void>;
 
     getLogs: () => Promise<Record<string, string[]>>;
     clearLogs: () => Promise<void>;
@@ -118,12 +121,15 @@ export type GlobalContextType = {
     setRescueFileBackupDone: Setter<boolean>;
 };
 
+const regularReferral = () =>
+    isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
+
 const defaultReferral = () => {
     if (config.isPro) {
         return proReferral;
     }
 
-    return isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
+    return regularReferral();
 };
 
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
@@ -137,6 +143,9 @@ const GlobalContext = createContext<GlobalContextType>();
 const GlobalProvider = (props: { children: JSX.Element }) => {
     const [online, setOnline] = createSignal<boolean>(true);
     const [pairs, setPairs] = createSignal<Pairs | undefined>(undefined);
+    const [regularPairs, setRegularPairs] = createSignal<Pairs | undefined>(
+        undefined,
+    );
 
     const [wasmSupported, setWasmSupported] = createSignal<boolean>(true);
     const [refundAddress, setRefundAddress] = createSignal<string | null>(null);
@@ -289,8 +298,24 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
             setOnline(true);
             setPairs(data);
         } catch (error) {
-            log.debug(error);
+            log.error("Error fetching pairs", error);
             setOnline(false);
+            throw formatError(error);
+        }
+    };
+
+    const fetchRegularPairs = async () => {
+        try {
+            const data = await getPairs({
+                headers: {
+                    referral: regularReferral(),
+                },
+            });
+            log.debug("Regular pairs", data);
+            setRegularPairs(data);
+        } catch (error) {
+            log.error("Error fetching regular pairs", error);
+            throw formatError(error);
         }
     };
 
@@ -438,6 +463,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setOnline,
                 pairs,
                 setPairs,
+                regularPairs,
+                setRegularPairs,
                 wasmSupported,
                 setWasmSupported,
                 refundAddress,
@@ -475,6 +502,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 notify,
                 playNotificationSound,
                 fetchPairs,
+                fetchRegularPairs,
                 getLogs,
                 clearLogs,
                 updateSwapStatus,
