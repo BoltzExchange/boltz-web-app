@@ -65,6 +65,10 @@ const Privacy: Component = () => {
                     <a href="https://www.racknation.cr/contact-us">
                         contact Racknation directly
                     </a>
+                    . You can also access our API via{" "}
+                    <a href="http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api/">
+                        Tor
+                    </a>
                     .
                 </li>
             </ul>
@@ -76,7 +80,7 @@ const Privacy: Component = () => {
             </p>
 
             <p class="last-updated">
-                <strong>Last updated: March 21, 2025</strong>
+                <strong>Last updated: June 9, 2025</strong>
             </p>
         </div>
     );
