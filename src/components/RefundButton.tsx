@@ -237,29 +237,30 @@ export const RefundBtc = (props: {
                     timeoutBlockHeight={timeoutBlockheight}
                 />
             </Show>
-            <h3 style={{ color: "#fff" }}>
-                {props.swap()
-                    ? t("refund_address_header", {
-                          asset: props.swap()?.assetSend,
-                      })
-                    : t("refund_address_header_no_asset")}
-            </h3>
-            <input
-                data-testid="refundAddress"
-                id="refundAddress"
-                disabled={refundableUTXOs().length === 0}
-                value={refundAddress()}
-                onInput={(e) => setRefundAddress(e.target.value.trim())}
-                type="text"
-                name="refundAddress"
-                placeholder={
-                    props.swap()
-                        ? t("onchain_address", {
+            <Show when={refundableUTXOs().length > 0}>
+                <h3 style={{ color: "var(--color-text)" }}>
+                    {props.swap()
+                        ? t("refund_address_header", {
                               asset: props.swap()?.assetSend,
                           })
-                        : t("onchain_address_no_asset")
-                }
-            />
+                        : t("refund_address_header_no_asset")}
+                </h3>
+                <input
+                    data-testid="refundAddress"
+                    id="refundAddress"
+                    value={refundAddress()}
+                    onInput={(e) => setRefundAddress(e.target.value.trim())}
+                    type="text"
+                    name="refundAddress"
+                    placeholder={
+                        props.swap()
+                            ? t("onchain_address", {
+                                  asset: props.swap()?.assetSend,
+                              })
+                            : t("onchain_address_no_asset")
+                    }
+                />
+            </Show>
             <button
                 data-testid="refundButton"
                 class="btn"
