@@ -5,6 +5,11 @@ import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import { TestComponent, contextWrapper, signals } from "../helper";
+import { pairs } from "../pairs";
+
+vi.mock("../../src/utils/boltzClient", () => ({
+    getPairs: vi.fn(() => Promise.resolve(pairs)),
+}));
 
 describe("AssetSelect", () => {
     test.each`
