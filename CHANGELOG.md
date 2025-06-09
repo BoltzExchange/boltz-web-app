@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.7](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.6..v1.7.7) - 2025-06-09
+
+### Features
+
+- pro swap opportunities list (#930) - ([acaa15a](https://github.com/BoltzExchange/boltz-web-app/commit/acaa15a60ef3019816b42920f4e92e54c3c0af58))
+
+### Miscellaneous Chores
+
+- adjust Dockerfiles for pro builds (#926) - ([20843a2](https://github.com/BoltzExchange/boltz-web-app/commit/20843a27c0af0aa6bb8d84d59b8d2714cc6d27b6))
+- bump dependencies (#927) - ([f5ef3a3](https://github.com/BoltzExchange/boltz-web-app/commit/f5ef3a3c5a3bf9b0dddc82a2393b5bbaf8f631ed))
+- minor pp update (#934) - ([a7a0492](https://github.com/BoltzExchange/boltz-web-app/commit/a7a049299c4ea863b636e40542e6585fa8d09b11))
+
+---
 ## [1.7.6](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.5..v1.7.6) - 2025-06-04
 
 ### Features
@@ -15,6 +28,7 @@ All notable changes to this project will be documented in this file. See [conven
 
 - add Alby as integration (#920) - ([dc08b25](https://github.com/BoltzExchange/boltz-web-app/commit/dc08b25f06a0d1da11b2d8c16eb5d9e7aad5dbec))
 - add Cake Pay; rm Marina from integrations (#921) - ([54ace47](https://github.com/BoltzExchange/boltz-web-app/commit/54ace47b492346be70a66f2a1f9c47604c80d03d))
+- bump version to v1.7.6 (#925) - ([efa0642](https://github.com/BoltzExchange/boltz-web-app/commit/efa0642230753e084b72608ff061c7219672076a))
 
 ### Refactoring
 
