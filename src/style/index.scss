@@ -220,7 +220,7 @@ hr.spacer {
     .btn-small:hover,
     .btn:hover,
     .tag .btn:hover {
-        background-color: var(--color-text);
+        background-color: var(--color-secondary-200);
         color: var(--color-secondary-700);
     }
 }
@@ -228,8 +228,8 @@ hr.spacer {
     .btn-small:hover,
     .btn:hover,
     .tag .btn:hover {
-        background-color: #fff;
-        color: #14283f;
+        background-color: var(--color-secondary-200);
+        color: var(--color-secondary-700);
     }
 }
 
@@ -260,17 +260,17 @@ hr.spacer {
 
 @media (hover: hover) {
     .btn-success:hover {
-        background-color: var(--color-text);
+        background-color: var(--color-secondary-200);
     }
 }
 .btn-danger:disabled,
 .btn-danger {
     background-color: var(--color-error-700);
-    color: white;
+    color: var(--color-text);
 }
 @media (hover: hover) {
     .btn-danger:hover {
-        background: var(--color-error-500);
+        background: var(--color-secondary-200);
     }
 }
 .center,
@@ -817,6 +817,7 @@ header {
 
 .text-bold {
     font-weight: 600;
+    color: var(--color-secondary-200);
 }
 
 .text-highlight {
@@ -825,7 +826,7 @@ header {
 
 .mnemonic-number {
     min-width: 1.3rem;
-    color: #5f6871;
+    color: var(--color-medium-gray);
 }
 
 .backup-mnemonic-container {
@@ -835,9 +836,9 @@ header {
     padding: 1rem;
     margin: 0 auto;
 
-    color: white;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    color: var(--color-secondary-100);
+    background: var(--color-black-30);
+    border: 1px dashed var(--color-white-30);
     border-radius: 10px;
 
     user-select: none;
@@ -908,9 +909,9 @@ header {
         padding: 1rem;
         margin: 0 auto;
 
-        color: white;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px dashed rgba(255, 255, 255, 0.3);
+        color: var(--color-secondary-100);
+        background: var(--color-black-30);
+        border: 1px dashed var(--color-white-30);
         border-radius: 10px;
 
         .input-box {
@@ -921,13 +922,13 @@ header {
             .mnemonic-input {
                 padding: 0;
 
-                color: white;
+                color: var(--color-secondary-100);
                 background: transparent;
                 font-weight: 600;
                 text-align: left;
 
                 border: none;
-                border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+                border-bottom: 1px dashed var(--color-white-10);
                 border-radius: 0;
             }
             .mnemonic-input:focus {
