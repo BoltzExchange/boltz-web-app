@@ -951,3 +951,135 @@ header {
     align-items: center;
     gap: 2rem;
 }
+
+.fee-comparison-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    background: var(--color-black-10);
+    border-radius: 0.5rem;
+
+    th,
+    td {
+        text-align: center;
+    }
+
+    th {
+        padding: 0.2rem 1rem;
+    }
+
+    td {
+        padding: 0.7rem 1rem;
+    }
+
+    th {
+        border-top: 1px solid var(--color-white-05);
+        text-transform: uppercase;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--color-medium-gray);
+    }
+
+    tr {
+        border-bottom: 1px solid var(--color-white-05);
+    }
+
+    tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .no-data-row a {
+        display: inline-flex;
+        justify-content: center;
+        align-items: end;
+        gap: 0.3rem;
+    }
+
+    .fee-comparison-row:not(.no-data-row) td:first-child {
+        display: flex;
+        justify-content: center;
+    }
+
+    .fee-comparison-alerts {
+        margin-top: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .fee-comparison-row:not(.no-data-row) {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--color-secondary-700);
+            }
+        }
+    }
+}
+
+.lower-fee {
+    color: var(--color-lower-fee);
+    text-shadow:
+        0 0 4px var(--color-lower-fee-glow),
+        0 0 8px var(--color-lower-fee-glow);
+}
+
+.negative-fee {
+    color: var(--color-negative-fee);
+    text-shadow:
+        0 0 4px var(--color-negative-fee-glow),
+        0 0 8px var(--color-negative-fee-glow);
+}
+
+.accordion {
+    margin-top: 0.5rem;
+    border: 1px dashed var(--color-white-10);
+    background: var(--color-black-20);
+    border-radius: 0.5rem;
+    overflow: hidden;
+
+    .accordion-header {
+        background: var(--color-black-10);
+        color: var(--color-text);
+        padding: 0.3rem 0rem;
+        width: 100%;
+        text-align: left;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        border: none;
+        outline: none;
+        text-transform: uppercase;
+
+        transition: text-shadow 0.2s ease;
+
+        @media (hover: hover) {
+            &:hover {
+                text-shadow: 0 0 4px var(--color-text-glow);
+            }
+        }
+
+        .accordion-icon {
+            font-size: 1.25rem;
+            margin-bottom: -0.3rem;
+        }
+    }
+
+    .accordion-content {
+        animation: slideDown 0.25s ease-in;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}

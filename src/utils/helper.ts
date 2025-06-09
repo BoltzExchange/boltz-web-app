@@ -92,6 +92,7 @@ export const getPair = <
 export const fetcher = async <T = unknown>(
     url: string,
     params?: Record<string, unknown>,
+    options?: RequestInit,
 ): Promise<T> => {
     // We cannot use the context here, so we get the data directly from local storage
     const referral = localStorage.getItem(referralIdKey) || defaultReferral();
@@ -105,7 +106,7 @@ export const fetcher = async <T = unknown>(
         opts = {
             method: "POST",
             headers: {
-                ...opts.headers,
+                ...(options ? options.headers : opts.headers),
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(params),
@@ -113,7 +114,7 @@ export const fetcher = async <T = unknown>(
     }
 
     const apiUrl = getApiUrl() + url;
-    const response = await fetch(apiUrl, opts);
+    const response = await fetch(apiUrl, options || opts);
     if (!response.ok) {
         try {
             const body = await response.json();

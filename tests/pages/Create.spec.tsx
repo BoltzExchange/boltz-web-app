@@ -16,6 +16,10 @@ import {
 } from "../helper";
 import { pairs } from "../pairs";
 
+vi.mock("../../src/utils/boltzClient", () => ({
+    getPairs: vi.fn(() => Promise.resolve(pairs)),
+}));
+
 describe("Create", () => {
     test("should render Create", async () => {
         render(

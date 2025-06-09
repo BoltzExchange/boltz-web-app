@@ -280,6 +280,17 @@ const dict = {
         verify_boltz_rescue_key_mnemonic:
             "Please enter your rescue key below to import it.",
         hint_paste_mnemonic: "Hint: you can paste all 12 words at once.",
+        swap_opportunities: "Available Pro Opportunities",
+        swap_opportunities_subline:
+            "Earn sats or get a discount by swapping these pairs",
+        pro_fee: "Pro Rate",
+        regular_fee: "Regular Rate",
+        swap_opportunities_accordion: "Pro Opportunities",
+        no_opportunities_found: {
+            text: "No Pro opportunities found at the moment. Please check again later.",
+            telegram_bot_text: "For fee alerts, check out our",
+            telegram_bot: "Telegram Bot",
+        },
     },
     de: {
         language: "Deutsch",
@@ -574,6 +585,18 @@ const dict = {
             "Bitte gib deinen Rettungsschlüssel unten ein, um ihn zu importieren.",
         hint_paste_mnemonic:
             "Tipp: du kannst alle 12 Wörter gleichzeitig einfügen.",
+        swap_opportunities: "Verfügbare Pro-Optionen",
+        swap_opportunities_subline:
+            "Verdiene Sats oder erhalte einen Rabatt für diese Paare",
+        pro_fee: "Progebühr",
+        regular_fee: "Normale Gebühr",
+        swap_opportunities_accordion: "Pro-Optionen",
+        no_opportunities_found: {
+            text: "Aktuell keine Pro-Optionen verfügbar. Versuche es später noch einmal.",
+            telegram_bot_text:
+                "Für Benachrichtigungen über Progebührenupdates, nutze unseren",
+            telegram_bot: "Telegram-Bot",
+        },
     },
     es: {
         language: "Español",
@@ -831,7 +854,7 @@ const dict = {
         verify_key_failed:
             "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
         rescue_key: "Clave de Rescate Boltz",
-        no_swaps_found: "No se encontraron swaps",
+        no_swaps_found: "No se encontraron intercambios",
         rif_extra_fee:
             "El monedero no contiene suficientes RBTC, comisión ajustado para incluir comisión de RIF Relay!",
         no_refund_due: "Sin reembolso pendiente",
@@ -858,12 +881,23 @@ const dict = {
         incorrect_word:
             "Palabra incorrecta. Por favor, verifique su clave de rescate.",
         enter_mnemonic: "Ingrese clave de rescate",
-        scan_refundable_swaps: "Buscar swaps reembolsables",
+        scan_refundable_swaps: "Buscar intercambios reembolsables",
         upload_rescue_key: "Subir clave de rescate",
         verify_boltz_rescue_key_mnemonic:
             "Por favor, ingrese su clave de rescate a continuación para importarlo.",
         hint_paste_mnemonic:
             "Consejo: puedes pegar todas las 12 palabras a la vez.",
+        swap_opportunities: "Oportunidades Pro Disponibles",
+        swap_opportunities_subline:
+            "Gana sats o recibe descuentos intercambiando estos pares",
+        pro_fee: "Tarifa Pro",
+        regular_fee: "Tarifa Estándar",
+        swap_opportunities_accordion: "Oportunidades Pro",
+        no_opportunities_found: {
+            text: "No hay oportunidades Pro disponibles. Por favor, revisa más tarde.",
+            telegram_bot_text: "Para alertas de tarifas, consulta nuestro",
+            telegram_bot: "Bot de Telegram",
+        },
     },
     pt: {
         language: "Português",
@@ -1151,6 +1185,17 @@ const dict = {
         verify_boltz_rescue_key_mnemonic:
             "Por favor, digite sua chave de resgate abaixo para importá-la.",
         hint_paste_mnemonic: "Dica: você pode colar as 12 palavras de uma vez.",
+        swap_opportunities: "Oportunidades Pro Disponíveis",
+        swap_opportunities_subline:
+            "Ganhe sats ou obtenha descontos trocando estes pares",
+        pro_fee: "Taxa Pro",
+        regular_fee: "Taxa Regular",
+        swap_opportunities_accordion: "Oportunidades Pro",
+        no_opportunities_found: {
+            text: "Nenhuma oportunidade Pro encontrada. Verifique novamente mais tarde.",
+            telegram_bot_text: "Para alertas de taxas, acesse nosso",
+            telegram_bot: "Bot do Telegram",
+        },
     },
     zh: {
         language: "中文",
@@ -1411,7 +1456,18 @@ const dict = {
         upload_rescue_key: "上传救援密钥",
         verify_boltz_rescue_key_mnemonic: "请在下方输入你的救援密钥以导入。",
         hint_paste_mnemonic: "提示：你可以一次性粘贴全部 12 个单词。",
+        swap_opportunities: "可用Pro机会",
+        swap_opportunities_subline: "兑换这些交易对赚取聪或折扣",
+        pro_fee: "Pro费率",
+        regular_fee: "标准费率",
+        swap_opportunities_accordion: "Pro机会",
+        no_opportunities_found: {
+            text: "当前无专业交易机会，请稍后再试",
+            telegram_bot_text: "获取费率提醒请查看",
+            telegram_bot: "Telegram机器人",
+        },
     },
+
     ja: {
         language: "日本語",
         status: "ステータス",
@@ -1699,6 +1755,17 @@ const dict = {
             "下にレスキューキーを入力してインポートしてください。",
         hint_paste_mnemonic:
             "ヒント：12個の単語を一度に貼り付けることができます。",
+        swap_opportunities: "可能なProの機会",
+        swap_opportunities_subline:
+            "これらのペアをスワップしてサトシを獲得または割引を受ける",
+        pro_fee: "Pro料金",
+        regular_fee: "通常料金",
+        swap_opportunities_accordion: "Pro機会",
+        no_opportunities_found: {
+            text: "現在利用可能なPro機会はありません。後ほど再度確認してください。。",
+            telegram_bot_text: "手数料アラートについては、当社の",
+            telegram_bot: "Telegramボット",
+        },
     },
 };
 
