@@ -1,7 +1,9 @@
+import { UrlParam } from "../consts/Enums";
+
 const searchParams = () => new URLSearchParams(window.location.search);
 
 export const isEmbed = (): boolean => {
-    const param = searchParams().get("embed");
+    const param = searchParams().get(UrlParam.Embed);
     return param && param === "1";
 };
 

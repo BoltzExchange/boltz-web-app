@@ -14,7 +14,7 @@ import {
 import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
-import { Denomination } from "../consts/Enums";
+import { Denomination, UrlParam } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
 import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
@@ -30,7 +30,7 @@ import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
 import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
 import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import { getUrlParam, isEmbed } from "../utils/urlParams";
+import { getUrlParam, isEmbed, resetUrlParam } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -405,9 +405,10 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     if (!config.isPro) {
         // Get the referral from the URL parameters if this is not pro
-        const refParam = getUrlParam("ref");
+        const refParam = getUrlParam(UrlParam.Ref);
         if (refParam && refParam !== "") {
             setRef(refParam);
+            resetUrlParam(UrlParam.Ref);
         }
     } else {
         setRef(proReferral);
