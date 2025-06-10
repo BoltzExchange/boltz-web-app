@@ -13,3 +13,14 @@ export enum Side {
     Send = "send",
     Receive = "receive",
 }
+
+export enum UrlParam {
+    Destination = "destination",
+    SendAsset = "sendAsset",
+    ReceiveAsset = "receiveAsset",
+    SendAmount = "sendAmount",
+    ReceiveAmount = "receiveAmount",
+    Lang = "lang",
+    Embed = "embed",
+    Ref = "ref",
+}

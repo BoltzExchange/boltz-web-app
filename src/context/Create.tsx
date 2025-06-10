@@ -1,4 +1,6 @@
 import { makePersisted } from "@solid-primitives/storage";
+import type { Navigator } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import {
@@ -11,11 +13,11 @@ import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
 import { BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
-import { Side, SwapType } from "../consts/Enums";
+import { Side, SwapType, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
 import { getAddress, getNetwork } from "../utils/compat";
 import { isLnurl } from "../utils/invoice";
-import { getUrlParam, urlParamIsSet } from "../utils/urlParams";
+import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 
 const setDestination = (
     setAssetReceive: Setter<string>,
@@ -82,6 +84,7 @@ const handleUrlParams = (
     setAmountChanged: Setter<Side>,
     setSendAmount: Setter<BigNumber>,
     setReceiveAmount: Setter<BigNumber>,
+    navigate: Navigator,
 ) => {
     const { destinationAsset, destination } = setDestination(
         setAssetReceive,
@@ -89,14 +92,14 @@ const handleUrlParams = (
         setOnchainAddress,
     );
 
-    const sendAsset = getUrlParam("sendAsset");
+    const sendAsset = getUrlParam(UrlParam.SendAsset);
     if (isValidAsset(sendAsset)) {
         setAssetSend(sendAsset);
     }
 
     // The type of the destination takes precedence
     if (destinationAsset === undefined) {
-        const receiveAsset = getUrlParam("receiveAsset");
+        const receiveAsset = getUrlParam(UrlParam.ReceiveAsset);
         if (isValidAsset(receiveAsset)) {
             setAssetReceive(receiveAsset);
         }
@@ -104,14 +107,16 @@ const handleUrlParams = (
 
     // Lightning invoice amounts take precedence unless this is a LN addr
     if (destinationAsset !== LN || isLnurl(destination)) {
-        const sendAmount = parseAmount(getUrlParam("sendAmount"));
+        const sendAmount = parseAmount(getUrlParam(UrlParam.SendAmount));
         if (sendAmount) {
             setAmountChanged(Side.Send);
             setSendAmount(sendAmount);
         }
 
         if (sendAmount === undefined) {
-            const receiveAmount = parseAmount(getUrlParam("receiveAmount"));
+            const receiveAmount = parseAmount(
+                getUrlParam(UrlParam.ReceiveAmount),
+            );
 
             if (receiveAmount) {
                 setAmountChanged(Side.Receive);
@@ -119,6 +124,27 @@ const handleUrlParams = (
             }
         }
     }
+
+    const params = [
+        UrlParam.Destination,
+        UrlParam.SendAsset,
+        UrlParam.ReceiveAsset,
+        UrlParam.SendAmount,
+        UrlParam.ReceiveAmount,
+    ];
+
+    if (
+        config.isPro &&
+        params.some((param) => urlParamIsSet(getUrlParam(param)))
+    ) {
+        navigate("/swap");
+    }
+
+    params.forEach((param) => {
+        if (urlParamIsSet(getUrlParam(param))) {
+            resetUrlParam(param);
+        }
+    });
 };
 
 export type CreateContextType = {
@@ -175,6 +201,7 @@ const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: JSX.Element }) => {
     const defaultSelection = Object.keys(config.assets)[0];
+    const navigate = useNavigate();
 
     const [swapType, setSwapType] = createSignal<SwapType>(SwapType.Submarine);
     const [invoice, setInvoice] = createSignal<string>("");
@@ -257,6 +284,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         setAmountChanged,
         setSendAmount,
         setReceiveAmount,
+        navigate,
     );
 
     return (

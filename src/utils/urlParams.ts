@@ -1,15 +1,14 @@
+import { UrlParam } from "../consts/Enums";
+
 const searchParams = () => new URLSearchParams(window.location.search);
 
 export const isEmbed = (): boolean => {
-    const param = searchParams().get("embed");
+    const param = searchParams().get(UrlParam.Embed);
     return param && param === "1";
 };
 
 export const getUrlParam = (name: string): string => {
     const param = searchParams().get(name);
-    if (param) {
-        resetUrlParam(name);
-    }
     return param;
 };
 
