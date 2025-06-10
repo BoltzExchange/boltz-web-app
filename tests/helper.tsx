@@ -21,7 +21,7 @@ export const TestComponent = () => {
 };
 
 export const contextWrapper = (props: { children: Element }) => {
-    return (
+    const App = () => (
         <GlobalProvider>
             <Web3SignerProvider noFetch={true}>
                 <CreateProvider>
@@ -38,5 +38,11 @@ export const contextWrapper = (props: { children: Element }) => {
                 </CreateProvider>
             </Web3SignerProvider>
         </GlobalProvider>
+    );
+
+    return (
+        <Router root={App}>
+            <Route path="/" component={() => props.children} />
+        </Router>
     );
 };
