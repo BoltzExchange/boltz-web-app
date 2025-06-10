@@ -4,13 +4,7 @@ import { Signature } from "ethers";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
-import {
-    Show,
-    createEffect,
-    createMemo,
-    createResource,
-    createSignal,
-} from "solid-js";
+import { Show, createMemo, createResource, createSignal } from "solid-js";
 
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
@@ -132,9 +126,11 @@ export const RefundBtc = (props: {
     const [valid, setValid] = createSignal<boolean>(false);
     const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
 
-    createEffect(() => {
-        const asset = props.swap()?.assetSend;
-        if (!asset) return;
+    const validateRefundAddress = () => {
+        if (!refundAddress()) {
+            setValid(false);
+            return;
+        }
 
         const lockupAddress =
             props.swap().type === SwapType.Submarine
@@ -144,19 +140,23 @@ export const RefundBtc = (props: {
         if (refundAddress() === lockupAddress) {
             log.debug("refunds to lockup address are blocked");
             setValid(false);
-        } else {
-            try {
-                getAddress(asset).toOutputScript(
-                    refundAddress(),
-                    getNetwork(asset) as LiquidNetwork,
-                );
-                setValid(true);
-            } catch (e) {
-                log.debug("parsing refund address failed", e);
-                setValid(false);
-            }
+            return;
         }
-    });
+
+        const asset = props.swap()?.assetSend;
+        if (!asset) return;
+
+        try {
+            getAddress(asset).toOutputScript(
+                refundAddress(),
+                getNetwork(asset) as LiquidNetwork,
+            );
+            setValid(true);
+        } catch (e) {
+            log.debug("parsing refund address failed", e);
+            setValid(false);
+        }
+    };
 
     const refundAction = async () => {
         setRefundRunning(true);
@@ -249,7 +249,10 @@ export const RefundBtc = (props: {
                     data-testid="refundAddress"
                     id="refundAddress"
                     value={refundAddress()}
-                    onInput={(e) => setRefundAddress(e.target.value.trim())}
+                    onInput={(e) => {
+                        setRefundAddress(e.target.value.trim());
+                        validateRefundAddress();
+                    }}
                     type="text"
                     name="refundAddress"
                     placeholder={
