@@ -4,13 +4,7 @@ import { Signature } from "ethers";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
-import {
-    Show,
-    createEffect,
-    createMemo,
-    createResource,
-    createSignal,
-} from "solid-js";
+import { Show, createMemo, createResource, createSignal } from "solid-js";
 
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
@@ -132,9 +126,11 @@ export const RefundBtc = (props: {
     const [valid, setValid] = createSignal<boolean>(false);
     const [refundRunning, setRefundRunning] = createSignal<boolean>(false);
 
-    createEffect(() => {
-        const asset = props.swap()?.assetSend;
-        if (!asset) return;
+    const validateRefundAddress = () => {
+        if (!refundAddress()) {
+            setValid(false);
+            return;
+        }
 
         const lockupAddress =
             props.swap().type === SwapType.Submarine
@@ -144,19 +140,23 @@ export const RefundBtc = (props: {
         if (refundAddress() === lockupAddress) {
             log.debug("refunds to lockup address are blocked");
             setValid(false);
-        } else {
-            try {
-                getAddress(asset).toOutputScript(
-                    refundAddress(),
-                    getNetwork(asset) as LiquidNetwork,
-                );
-                setValid(true);
-            } catch (e) {
-                log.debug("parsing refund address failed", e);
-                setValid(false);
-            }
+            return;
         }
-    });
+
+        const asset = props.swap()?.assetSend;
+        if (!asset) return;
+
+        try {
+            getAddress(asset).toOutputScript(
+                refundAddress(),
+                getNetwork(asset) as LiquidNetwork,
+            );
+            setValid(true);
+        } catch (e) {
+            log.debug("parsing refund address failed", e);
+            setValid(false);
+        }
+    };
 
     const refundAction = async () => {
         setRefundRunning(true);
@@ -237,29 +237,37 @@ export const RefundBtc = (props: {
                     timeoutBlockHeight={timeoutBlockheight}
                 />
             </Show>
-            <h3 style={{ color: "#fff" }}>
-                {props.swap()
-                    ? t("refund_address_header", {
-                          asset: props.swap()?.assetSend,
-                      })
-                    : t("refund_address_header_no_asset")}
-            </h3>
-            <input
-                data-testid="refundAddress"
-                id="refundAddress"
-                disabled={refundableUTXOs().length === 0}
-                value={refundAddress()}
-                onInput={(e) => setRefundAddress(e.target.value.trim())}
-                type="text"
-                name="refundAddress"
-                placeholder={
-                    props.swap()
-                        ? t("onchain_address", {
+            <Show when={refundableUTXOs().length > 0}>
+                <h3 style={{ color: "var(--color-text)" }}>
+                    {props.swap()
+                        ? t("refund_address_header", {
                               asset: props.swap()?.assetSend,
                           })
-                        : t("onchain_address_no_asset")
-                }
-            />
+                        : t("refund_address_header_no_asset")}
+                </h3>
+                <input
+                    data-testid="refundAddress"
+                    id="refundAddress"
+                    value={refundAddress()}
+                    onInput={(e) => {
+                        setRefundAddress(e.target.value.trim());
+                        validateRefundAddress();
+                    }}
+                    type="text"
+                    name="refundAddress"
+                    placeholder={
+                        props.swap()
+                            ? t("onchain_address", {
+                                  asset: props.swap()?.assetSend,
+                              })
+                            : t("onchain_address_no_asset")
+                    }
+                />
+            </Show>
+            <Show
+                when={!props.buttonOverride && refundableUTXOs().length === 0}>
+                <p>{t("refresh_for_refund")}</p>
+            </Show>
             <button
                 data-testid="refundButton"
                 class="btn"
