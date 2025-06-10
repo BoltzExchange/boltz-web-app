@@ -261,6 +261,10 @@ export const RefundBtc = (props: {
                     }
                 />
             </Show>
+            <Show
+                when={!props.buttonOverride && refundableUTXOs().length === 0}>
+                <p>{t("refresh_for_refund")}</p>
+            </Show>
             <button
                 data-testid="refundButton"
                 class="btn"

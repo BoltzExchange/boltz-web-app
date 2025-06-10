@@ -291,6 +291,8 @@ const dict = {
             telegram_bot_text: "For fee alerts, check out our",
             telegram_bot: "Telegram Bot",
         },
+        refresh_for_refund:
+            "If you sent Bitcoin into this swap, refresh the page to check for a refund.",
     },
     de: {
         language: "Deutsch",
@@ -597,6 +599,8 @@ const dict = {
                 "Für Benachrichtigungen über Progebührenupdates, nutze unseren",
             telegram_bot: "Telegram-Bot",
         },
+        refresh_for_refund:
+            "Falls du Bitcoin in diesen Swap gesendet hast, aktualisiere die Seite um eine Rückerstattung zu prüfen.",
     },
     es: {
         language: "Español",
@@ -898,6 +902,8 @@ const dict = {
             telegram_bot_text: "Para alertas de tarifas, consulta nuestro",
             telegram_bot: "Bot de Telegram",
         },
+        refresh_for_refund:
+            "Si has enviado Bitcoin a este intercambio, actualice la página para comprobar si hay un reembolso disponsible.",
     },
     pt: {
         language: "Português",
@@ -1196,6 +1202,8 @@ const dict = {
             telegram_bot_text: "Para alertas de taxas, acesse nosso",
             telegram_bot: "Bot do Telegram",
         },
+        refresh_for_refund:
+            "Se enviou Bitcoin para esta troca, recarregue a página para verificar se existe um reembolso.",
     },
     zh: {
         language: "中文",
@@ -1466,8 +1474,9 @@ const dict = {
             telegram_bot_text: "获取费率提醒请查看",
             telegram_bot: "Telegram机器人",
         },
+        refresh_for_refund:
+            "如果您向本次交换发送了比特币，请刷新页面检查是否有退款。",
     },
-
     ja: {
         language: "日本語",
         status: "ステータス",
@@ -1766,6 +1775,8 @@ const dict = {
             telegram_bot_text: "手数料アラートについては、当社の",
             telegram_bot: "Telegramボット",
         },
+        refresh_for_refund:
+            "このスワップにビットコインを送金した場合は、ページを更新して払い戻しを確認してください。",
     },
 };
 
