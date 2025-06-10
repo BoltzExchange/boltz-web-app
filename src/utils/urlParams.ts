@@ -9,9 +9,6 @@ export const isEmbed = (): boolean => {
 
 export const getUrlParam = (name: string): string => {
     const param = searchParams().get(name);
-    if (param) {
-        resetUrlParam(name);
-    }
     return param;
 };
 

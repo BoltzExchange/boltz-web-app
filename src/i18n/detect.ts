@@ -2,8 +2,8 @@ import log from "loglevel";
 import type { Setter } from "solid-js";
 
 import { config } from "../config";
-import { getUrlParam } from "../utils/urlParams";
 import { UrlParam } from "../consts/Enums";
+import { getUrlParam, resetUrlParam } from "../utils/urlParams";
 import locales from "./i18n";
 
 const isValidLang = (lang: string) => Object.keys(locales).includes(lang);
@@ -48,6 +48,7 @@ export const detectLanguage = (
             } else {
                 log.warn("Invalid language URL parameter:", urlParam);
             }
+            resetUrlParam(UrlParam.Lang);
         }
 
         if (i18nUrl !== null && i18nUrl !== undefined) {
