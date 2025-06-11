@@ -483,7 +483,11 @@ const CreateButton = () => {
             disabled={
                 !online() ||
                 !(valid() || validWayToFetchInvoice()) ||
-                buttonDisable()
+                buttonDisable() ||
+                (onchainAddress() === "" &&
+                    invoice() === "" &&
+                    bolt12Offer() === undefined &&
+                    lnurl() === "")
             }
             onClick={buttonClick}>
             {loading() ? (
