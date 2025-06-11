@@ -150,8 +150,11 @@ const dict = {
         view: "View",
         id: "ID",
         headline: "Non-Custodial Bitcoin Bridge",
+        headline_pro: "Stack Sats Non-Custodially",
         subline:
             "Swap between different Bitcoin layers while staying in full control.",
+        subline_pro:
+            "Earn sats for swapping Bitcoin in directions that help balance our liquidity.",
         start_swapping: "Start Swapping",
         partners: "Partners",
         integrations: "Integrations",
@@ -1057,8 +1060,11 @@ const dict = {
         view: "Ver",
         id: "ID",
         headline: "Bitcoin Bridge Não-Custodial",
+        headline_pro: "Acumule Sats Com Autocustódia",
         subline:
             "Troque entre as diferentes camadas do Bitcoin, mantendo controle total.",
+        subline_pro:
+            "Ganhe sats por trocar Bitcoin em direções que ajudam a balancear nossa liquidez.",
         start_swapping: "Começar a trocar",
         partners: "Parceiros",
         integrations: "Integrações",

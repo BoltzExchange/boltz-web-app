@@ -65,8 +65,10 @@ export const Hero = () => {
             </div>
             <Show when={!hideHero()}>
                 <h1>
-                    {t("headline")}
-                    <small>{t("subline")}</small>
+                    {config.isPro ? t("headline_pro") : t("headline")}
+                    <small>
+                        {config.isPro ? t("subline_pro") : t("subline")}
+                    </small>
                 </h1>
                 <span class="btn btn-inline" onClick={() => navigate("swap")}>
                     {t("start_swapping")}
