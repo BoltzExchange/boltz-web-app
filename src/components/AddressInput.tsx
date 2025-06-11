@@ -80,9 +80,10 @@ const AddressInput = () => {
             if (
                 sendAmount().isGreaterThan(0) &&
                 swapType() !== SwapType.Submarine &&
-                assetReceive() !== RBTC
+                assetReceive() !== RBTC &&
+                onchainAddress() === ""
             ) {
-                validateAddress(inputRef);
+                setAddressValid(false);
             }
         }),
     );
