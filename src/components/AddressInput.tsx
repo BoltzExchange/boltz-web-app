@@ -27,7 +27,7 @@ const AddressInput = () => {
         sendAmount,
     } = useCreateContext();
 
-    const validateAddress = (input: HTMLInputElement) => {
+    const handleInputChange = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
@@ -80,9 +80,10 @@ const AddressInput = () => {
             if (
                 sendAmount().isGreaterThan(0) &&
                 swapType() !== SwapType.Submarine &&
-                assetReceive() !== RBTC
+                assetReceive() !== RBTC &&
+                onchainAddress() === ""
             ) {
-                validateAddress(inputRef);
+                setAddressValid(false);
             }
         }),
     );
@@ -91,9 +92,9 @@ const AddressInput = () => {
         <input
             ref={inputRef}
             required
-            onInput={(e) => validateAddress(e.currentTarget)}
-            onKeyUp={(e) => validateAddress(e.currentTarget)}
-            onPaste={(e) => validateAddress(e.currentTarget)}
+            onInput={(e) => handleInputChange(e.currentTarget)}
+            onKeyUp={(e) => handleInputChange(e.currentTarget)}
+            onPaste={(e) => handleInputChange(e.currentTarget)}
             type="text"
             id="onchainAddress"
             data-testid="onchainAddress"
