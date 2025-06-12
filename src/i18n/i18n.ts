@@ -452,8 +452,11 @@ const dict = {
         view: "Anzeigen",
         id: "ID",
         headline: "Non-Custodial Bitcoin Bridge",
+        headline_pro: "Stacke Sats mit voller Kontrolle",
         subline:
             "Tausche zwischen verschiedenen Bitcoin Layern, während du immer die volle Kontrolle behältst.",
+        subline_pro:
+            "Verdiene Sats für Swaps, die uns helfen unsere Liquidität zu managen.",
         start_swapping: "Starte Swap",
         partners: "Partner",
         integrations: "Integrationen",
@@ -759,8 +762,11 @@ const dict = {
         view: "Ver",
         id: "ID",
         headline: "Bitcoin Bridge Sin Custodia",
+        headline_pro: "Apilar Sats Con Autocustodia",
         subline:
             "Intercambia entre diferentes capas de Bitcoin mientras mantienes el control total.",
+        subline_pro:
+            "Gana sats por intercambiar Bitcoin en direcciones que ayudan a equilibrar nuestra liquidez.",
         start_swapping: "Comenzar a intercambiar",
         partners: "Socios",
         integrations: "Integraciones",
@@ -1350,7 +1356,9 @@ const dict = {
         view: "查看",
         id: "ID",
         headline: "非托管比特币跨链桥",
+        headline_pro: "积累聪，非托管！",
         subline: "在不同比特币层之间交换，同时保持完全控制。",
+        subline_pro: "通过交换比特币赚取聪，在有助于平衡我们的流动性方向上。",
         start_swapping: "开始交换",
         partners: "合作伙伴",
         integrations: "集成",
@@ -1638,7 +1646,10 @@ const dict = {
         id: "ID",
         headline:
             "プライバシーファースト、ノンカストディアル型のビットコイン取引所",
+        headline_pro: "聪を積み上げる、非托管で！",
         subline: "誰にも奪われない。常に、お金はあなたの管理下に。",
+        subline_pro:
+            "ビットコインをスワップするためサットを稼ぐ、私たちの流動性を調整する方向で。",
         start_swapping: "取引を開始する",
         partners: "パートナー",
         integrations: "インテグレーション",
