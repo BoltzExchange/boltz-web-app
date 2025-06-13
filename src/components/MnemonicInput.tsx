@@ -6,6 +6,7 @@ import { useGlobalContext } from "../context/Global";
 import { validateRescueFile } from "../utils/rescueFile";
 
 export const mnemonicLength = 12;
+export const rescueKeyMode = "rescue-key";
 
 const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
     const { t } = useGlobalContext();
