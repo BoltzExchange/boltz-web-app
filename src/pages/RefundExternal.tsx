@@ -323,6 +323,7 @@ export const RefundBtcLike = () => {
                 <Match when={searchParams.mode !== rescueKeyMode}>
                     <button
                         class="btn btn-light"
+                        data-testid="enterMnemonicBtn"
                         onClick={() => {
                             setRefundType(undefined);
                             setRefundJson(null);
@@ -340,6 +341,7 @@ export const RefundBtcLike = () => {
                 <Match when={searchParams.mode === rescueKeyMode}>
                     <button
                         class="btn btn-light"
+                        data-testid="backBtn"
                         onClick={() => {
                             setSearchParams({
                                 mode: null,

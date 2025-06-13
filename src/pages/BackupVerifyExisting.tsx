@@ -213,6 +213,7 @@ const BackupVerify = () => {
                     <Match when={searchParams.mode !== rescueKeyMode}>
                         <button
                             class="btn btn-light"
+                            data-testid="enterMnemonicBtn"
                             onClick={() =>
                                 setSearchParams({
                                     mode: rescueKeyMode,
@@ -224,6 +225,7 @@ const BackupVerify = () => {
                     <Match when={searchParams.mode === rescueKeyMode}>
                         <button
                             class="btn btn-light"
+                            data-testid="backBtn"
                             onClick={() =>
                                 setSearchParams({
                                     mode: null,
