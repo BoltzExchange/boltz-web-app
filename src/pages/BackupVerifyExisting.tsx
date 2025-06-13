@@ -1,10 +1,10 @@
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Match, Show, Switch, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
-import MnemonicInput from "../components/MnemonicInput";
+import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
@@ -19,6 +19,7 @@ export const existingBackupFileType = "existing";
 const BackupVerify = () => {
     const navigate = useNavigate();
     const params = useParams<{ type?: string }>();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const {
         t,
@@ -57,7 +58,6 @@ const BackupVerify = () => {
     >(false);
 
     const [inputProcessing, setInputProcessing] = createSignal(false);
-    const [enterMnemonic, setEnterMnemonic] = createSignal(false);
 
     const handleBackupDone = async () => {
         try {
@@ -181,7 +181,7 @@ const BackupVerify = () => {
                     </>
                 }>
                 <h2>{t("verify_boltz_rescue_key")}</h2>
-                <Show when={!enterMnemonic()}>
+                <Show when={searchParams.mode !== rescueKeyMode}>
                     <p style={{ margin: "1.2rem 0 1.2rem 0" }}>
                         {t("verify_boltz_rescue_key_subline")}
                     </p>
@@ -198,7 +198,7 @@ const BackupVerify = () => {
                         <LoadingSpinner />
                     </Show>
                 </Show>
-                <Show when={enterMnemonic()}>
+                <Show when={searchParams.mode === rescueKeyMode}>
                     <p style={{ "margin-top": "1.2rem" }}>
                         {t("verify_boltz_rescue_key_mnemonic")}
                     </p>
@@ -210,17 +210,27 @@ const BackupVerify = () => {
                 </Show>
 
                 <Switch>
-                    <Match when={!enterMnemonic()}>
+                    <Match when={searchParams.mode !== rescueKeyMode}>
                         <button
                             class="btn btn-light"
-                            onClick={() => setEnterMnemonic(true)}>
+                            data-testid="enterMnemonicBtn"
+                            onClick={() =>
+                                setSearchParams({
+                                    mode: rescueKeyMode,
+                                })
+                            }>
                             {t("enter_mnemonic")}
                         </button>
                     </Match>
-                    <Match when={enterMnemonic()}>
+                    <Match when={searchParams.mode === rescueKeyMode}>
                         <button
                             class="btn btn-light"
-                            onClick={() => setEnterMnemonic(false)}>
+                            data-testid="backBtn"
+                            onClick={() =>
+                                setSearchParams({
+                                    mode: null,
+                                })
+                            }>
                             {t("back")}
                         </button>
                     </Match>

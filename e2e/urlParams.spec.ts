@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import BigNumber from "bignumber.js";
 
@@ -8,6 +9,18 @@ import {
     getBitcoinAddress,
     getLiquidAddress,
 } from "./utils";
+
+const toggleRescueModeOnClick = async (page: Page) => {
+    const modeRescueKeyParam = /\?mode=rescue-key/;
+
+    await page.getByTestId("enterMnemonicBtn").click();
+    await expect(page.getByTestId("mnemonic-input-0")).toBeVisible();
+    await expect(page).toHaveURL(modeRescueKeyParam);
+
+    await page.getByTestId("backBtn").click();
+    await expect(page.getByTestId("mnemonic-input-0")).not.toBeVisible();
+    await expect(page).not.toHaveURL(modeRescueKeyParam);
+};
 
 test.describe("URL params", () => {
     test("BTC address destination", async ({ page }) => {
@@ -98,5 +111,31 @@ test.describe("URL params", () => {
         await expect(receiveAmount).toHaveValue(
             formatAmount(BigNumber(invoiceAmount), Denomination.Sat, "."),
         );
+    });
+
+    test("should use `?mode=rescue-key` param to display mnemonic input", async ({
+        page,
+    }) => {
+        const assertMnemonicVisible = async () => {
+            await expect(page.getByTestId("mnemonic-input-0")).toBeVisible();
+        };
+
+        await page.goto("/");
+        await page.getByRole("link", { name: "Refund" }).click();
+        await page
+            .getByRole("button", { name: "Refund External Swap" })
+            .click();
+
+        await toggleRescueModeOnClick(page);
+
+        await page.goto("/backup/verify/existing");
+
+        await toggleRescueModeOnClick(page);
+
+        await page.goto("/refund/external?mode=rescue-key");
+        await assertMnemonicVisible();
+
+        await page.goto("/backup/verify/existing?mode=rescue-key");
+        await assertMnemonicVisible();
     });
 });

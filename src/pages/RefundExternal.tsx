@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import log from "loglevel";
 import QrScanner from "qr-scanner";
 import type { Accessor } from "solid-js";
@@ -17,7 +17,7 @@ import {
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
-import MnemonicInput from "../components/MnemonicInput";
+import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
 import Pagination from "../components/Pagination";
 import RefundButton from "../components/RefundButton";
 import SwapList, { sortSwaps } from "../components/SwapList";
@@ -111,11 +111,11 @@ export const RefundBtcLike = () => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
     const rescueContext = useRescueContext();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const [refundInvalid, setRefundInvalid] = createSignal<
         RefundError | undefined
     >(undefined);
-    const [enterMnemonic, setEnterMnemonic] = createSignal(false);
     const [refundJson, setRefundJson] = createSignal(null);
     const [refundType, setRefundType] = createSignal<RefundType>();
     const [currentPage, setCurrentPage] = createSignal(1);
@@ -215,7 +215,7 @@ export const RefundBtcLike = () => {
 
     return (
         <>
-            <Show when={!enterMnemonic()}>
+            <Show when={searchParams.mode !== rescueKeyMode}>
                 <p>{t("refund_a_swap_subline")}</p>
                 <hr />
             </Show>
@@ -225,12 +225,16 @@ export const RefundBtcLike = () => {
                     refundInvalid={refundInvalid}
                 />
             </Show>
-            <Show when={refundInvalid() !== undefined && !enterMnemonic()}>
+            <Show
+                when={
+                    refundInvalid() !== undefined &&
+                    searchParams.mode !== rescueKeyMode
+                }>
                 <h3 style={{ margin: "3%", "margin-top": "4%" }}>
                     {t("invalid_refund_file")}
                 </h3>
             </Show>
-            <Show when={enterMnemonic()}>
+            <Show when={searchParams.mode === rescueKeyMode}>
                 <p>{t("refund_a_swap_mnemonic")}</p>
                 <MnemonicInput
                     onSubmit={(mnemonic) => {
@@ -240,7 +244,9 @@ export const RefundBtcLike = () => {
                         );
                         rescueContext.setRescueFile({ mnemonic: mnemonic });
                         setRefundInvalid(undefined);
-                        setEnterMnemonic(false);
+                        setSearchParams({
+                            mode: null,
+                        });
                     }}
                 />
             </Show>
@@ -303,7 +309,7 @@ export const RefundBtcLike = () => {
                     </Match>
                 </Switch>
             </Show>
-            <Show when={!enterMnemonic()}>
+            <Show when={searchParams.mode !== rescueKeyMode}>
                 <input
                     required
                     type="file"
@@ -314,24 +320,33 @@ export const RefundBtcLike = () => {
                 />
             </Show>
             <Switch>
-                <Match when={!enterMnemonic()}>
+                <Match when={searchParams.mode !== rescueKeyMode}>
                     <button
                         class="btn btn-light"
+                        data-testid="enterMnemonicBtn"
                         onClick={() => {
-                            setEnterMnemonic(true);
                             setRefundType(undefined);
                             setRefundJson(null);
                             setRefundInvalid(undefined);
                             rescueContext.setRescuableSwaps([]);
                             rescueContext.setRescueFile(undefined);
+                            setSearchParams({
+                                page: null,
+                                mode: rescueKeyMode,
+                            });
                         }}>
                         {t("enter_mnemonic")}
                     </button>
                 </Match>
-                <Match when={enterMnemonic()}>
+                <Match when={searchParams.mode === rescueKeyMode}>
                     <button
                         class="btn btn-light"
-                        onClick={() => setEnterMnemonic(false)}>
+                        data-testid="backBtn"
+                        onClick={() => {
+                            setSearchParams({
+                                mode: null,
+                            });
+                        }}>
                         {t("back")}
                     </button>
                 </Match>
