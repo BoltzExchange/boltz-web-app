@@ -296,6 +296,9 @@ const dict = {
         },
         refresh_for_refund:
             "If you sent Bitcoin into this swap, refresh the page to check for a refund.",
+        invalid_bip21_address_signature: "Invalid BIP-21 address signature",
+        invalid_bip21_asset: "Invalid BIP-21 asset",
+        invalid_bip21_amount: "Invalid BIP-21 amount",
     },
     de: {
         language: "Deutsch",

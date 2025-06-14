@@ -49,6 +49,8 @@ const BackupVerify = () => {
         setInvoice,
         setInvoiceValid,
         setAddressValid,
+        setAssetSend,
+        setAssetReceive,
     } = useCreateContext();
     const { signer, providers, getEtherSwap, hasBrowserWallet } =
         useWeb3Signer();
@@ -87,6 +89,8 @@ const BackupVerify = () => {
                 setOnchainAddress,
                 setAddressValid,
                 setSwapStorage,
+                setAssetSend,
+                setAssetReceive,
             );
         } catch (e) {
             log.error("Error creating swap", e);
