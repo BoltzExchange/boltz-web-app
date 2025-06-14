@@ -1,3 +1,4 @@
+import { useParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { Show, createMemo, createResource } from "solid-js";
 
@@ -11,6 +12,7 @@ import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";
 import CopyBox from "./CopyBox";
 import LoadingSpinner from "./LoadingSpinner";
+import Tooltip from "./settings/Tooltip";
 
 const PayOnchain = (props: {
     type: SwapType;
@@ -20,7 +22,9 @@ const PayOnchain = (props: {
     address: string;
     bip21: string;
 }) => {
-    const { t, denomination, separator, setPairs, pairs } = useGlobalContext();
+    const { t, denomination, separator, setPairs, pairs, getMrhSwapStorage } =
+        useGlobalContext();
+    const params = useParams<{ id: string }>();
 
     const [pairsFetch] = createResource(async () => {
         if (pairs() !== undefined) {
@@ -30,6 +34,10 @@ const PayOnchain = (props: {
         const p = await getPairs();
         setPairs(p);
         return p;
+    });
+
+    const [mrhSwap] = createResource(async () => {
+        return await getMrhSwapStorage(params.id);
     });
 
     const headerText = createMemo(() => {
@@ -77,6 +85,16 @@ const PayOnchain = (props: {
             fallback={<LoadingSpinner />}>
             <div>
                 <h2>{headerText()}</h2>
+                <Show when={mrhSwap()}>
+                    <span class="optimized-route">
+                        ✨ {t("optimized_route")}
+                        <Tooltip
+                            label={"applied_routing_hint"}
+                            size={18}
+                            direction={isMobile() ? "left" : "right"}
+                        />
+                    </span>
+                </Show>
                 <hr />
                 <a href={props.bip21}>
                     <QrCode asset={props.assetSend} data={props.bip21} />

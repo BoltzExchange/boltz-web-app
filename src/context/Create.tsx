@@ -149,6 +149,7 @@ const handleUrlParams = (
 
 export type CreateContextType = {
     swapType: Accessor<SwapType>;
+    setSwapType: Setter<SwapType>;
     invoice: Accessor<string>;
     setInvoice: Setter<string>;
     lnurl: Accessor<string>;
@@ -291,6 +292,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         <CreateContext.Provider
             value={{
                 swapType,
+                setSwapType,
                 invoice,
                 setInvoice,
                 lnurl,
