@@ -218,6 +218,13 @@ export const fetchBolt12Invoice = async (
     return res;
 };
 
+export const fetchBip21Invoice = async (invoice: string) => {
+    const res = await fetcher<{ bip21: string; signature: string }>(
+        `/v2/swap/reverse/${invoice}/bip21`,
+    );
+    return res;
+};
+
 export const createSubmarineSwap = (
     from: string,
     to: string,

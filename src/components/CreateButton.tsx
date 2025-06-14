@@ -1,12 +1,14 @@
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { crypto } from "bitcoinjs-lib";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
 import { createEffect, createSignal, on } from "solid-js";
 
-import { RBTC } from "../consts/Assets";
+import { config } from "../config";
+import { BTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { ButtonLabelParams, EIP6963ProviderDetail } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -16,12 +18,22 @@ import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import type { Pairs } from "../utils/boltzClient";
-import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
+import {
+    fetchBip21Invoice,
+    fetchBolt12Invoice,
+    getPairs,
+} from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
+import { ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { coalesceLn } from "../utils/helper";
-import { fetchBip353, fetchLnurl } from "../utils/invoice";
+import {
+    fetchBip353,
+    fetchLnurl,
+    getAssetByBip21Prefix,
+} from "../utils/invoice";
+import { findMagicRoutingHint, lbtcAssetHash } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import type { SomeSwap } from "../utils/swapCreator";
 import {
@@ -91,6 +103,7 @@ export const createSwap = async (
     providers: Accessor<Record<string, EIP6963ProviderDetail>>,
     getEtherSwap: () => EtherSwap,
     hasBrowserWallet: Accessor<boolean>,
+    onChainAddress: Accessor<string>,
 
     claimAddress: string,
     useRif: boolean,
@@ -101,6 +114,8 @@ export const createSwap = async (
     setOnchainAddress: Setter<string>,
     setAddressValid: Setter<boolean>,
     setSwapStorage: (swap: SomeSwap) => Promise<void>,
+    setAssetSend: Setter<string>,
+    setAssetReceive: Setter<string>,
 ): Promise<boolean> => {
     if (
         !rescueFileBackupDone() &&
@@ -114,19 +129,79 @@ export const createSwap = async (
     try {
         let data: SomeSwap;
         switch (swapType()) {
-            case SwapType.Submarine:
-                data = await createSubmarine(
+            case SwapType.Submarine: {
+                const { magicRoutingHint, decodedInvoice } =
+                    findMagicRoutingHint(invoice());
+
+                if (!magicRoutingHint) {
+                    data = await createSubmarine(
+                        pairs(),
+                        coalesceLn(assetSend()),
+                        coalesceLn(assetReceive()),
+                        sendAmount(),
+                        receiveAmount(),
+                        invoice(),
+                        ref(),
+                        useRif,
+                        newKey,
+                    );
+                    break;
+                }
+
+                // Redirect to onChain swap if routing hint exists
+                const bip21 = await fetchBip21Invoice(invoice());
+                const bip21Decoded = new URL(bip21.bip21);
+                const chainAddress = bip21Decoded.pathname;
+
+                const receiverPublicKey = ECPair.fromPublicKey(
+                    Buffer.from(magicRoutingHint.pubkey, "hex"),
+                );
+                const receiverSignature = Buffer.from(bip21.signature, "hex");
+                const addressHash = crypto.sha256(
+                    Buffer.from(chainAddress, "utf-8"),
+                );
+
+                if (
+                    !receiverPublicKey.verifySchnorr(
+                        addressHash,
+                        receiverSignature,
+                    )
+                ) {
+                    log.error("invalid bip21 address signature");
+                    throw t("invalid_bip21_address_signature");
+                }
+
+                if (
+                    config.network !== "regtest" &&
+                    bip21Decoded.searchParams.get("assetid") !== lbtcAssetHash
+                ) {
+                    throw t("invalid_bip21_asset");
+                }
+
+                if (
+                    Number(bip21Decoded.searchParams.get("amount")) * 10 ** 8 >
+                    Number(decodedInvoice.satoshis)
+                ) {
+                    throw t("invalid_bip21_amount");
+                }
+
+                setAssetSend(BTC);
+                setAssetReceive(getAssetByBip21Prefix(bip21Decoded.protocol));
+                setOnchainAddress(chainAddress);
+
+                data = await createChain(
                     pairs(),
-                    coalesceLn(assetSend()),
-                    coalesceLn(assetReceive()),
+                    assetSend(),
+                    assetReceive(),
                     sendAmount(),
                     receiveAmount(),
-                    invoice(),
+                    onChainAddress(),
                     ref(),
                     useRif,
                     newKey,
                 );
                 break;
+            }
 
             case SwapType.Reverse:
                 data = await createReverse(
@@ -240,6 +315,8 @@ const CreateButton = () => {
         invoiceError,
         bolt12Offer,
         setBolt12Offer,
+        setAssetSend,
+        setAssetReceive,
     } = useCreateContext();
     const { getEtherSwap, signer, providers, hasBrowserWallet } =
         useWeb3Signer();
@@ -432,8 +509,6 @@ const CreateButton = () => {
                 onchainAddress,
             );
 
-            if (!valid()) return;
-
             await createSwap(
                 navigate,
                 t,
@@ -453,6 +528,7 @@ const CreateButton = () => {
                 providers,
                 getEtherSwap,
                 hasBrowserWallet,
+                onchainAddress,
                 claimAddress,
                 useRif,
                 setPairs,
@@ -461,6 +537,8 @@ const CreateButton = () => {
                 setOnchainAddress,
                 setAddressValid,
                 setSwapStorage,
+                setAssetSend,
+                setAssetReceive,
             );
         } catch (e) {
             log.error("Error creating swap", e);
