@@ -68,7 +68,7 @@ const Terms: Component = () => {
                 Service in certain jurisdictions at any time.
             </p>
             <p>
-                4.4. You are at least 18 years old or meet the higher legal age
+                4.4. You are at least 18 years old or meet the minimum legal age
                 requirement (if applicable) in your jurisdiction to use our
                 Service.
             </p>
