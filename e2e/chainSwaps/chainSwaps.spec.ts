@@ -1,11 +1,18 @@
 import { expect, test } from "@playwright/test";
+import BigNumber from "bignumber.js";
 
+import { btcToSat, satToBtc } from "../../src/utils/denomination";
 import {
+    bitcoinSendToAddress,
+    elementsGetReceivedByAddress,
     elementsSendToAddress,
+    fetchBip21Invoice,
     generateBitcoinBlock,
+    generateInvoiceWithRoutingHint,
     generateLiquidBlock,
     getBitcoinAddress,
     getBitcoinWalletTx,
+    getLiquidAddress,
     verifyRescueFile,
 } from "../utils";
 
@@ -65,5 +72,77 @@ test.describe("Chain swap", () => {
 
         const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
         expect(txInfo.amount.toString()).toEqual(receiveAmount);
+    });
+
+    test("BTC/LN with Magic Routing Hint switches to BTC/L-BTC", async ({
+        page,
+    }) => {
+        await page.goto("/");
+
+        const btcAsset = page.locator("div[class='asset asset-BTC'] div");
+        await btcAsset.click();
+
+        const lnAsset = page.locator("div[data-testid='select-LN']");
+        await lnAsset.click();
+
+        const receiveAmount = "0.0009";
+
+        const inputInvoice = page.locator("textarea[data-testid='invoice']");
+        const liquidAddress = await getLiquidAddress();
+        const invoice = await generateInvoiceWithRoutingHint(
+            liquidAddress,
+            btcToSat(BigNumber(receiveAmount)).toNumber(),
+        );
+        await inputInvoice.fill(invoice);
+
+        const bip21 = new URL((await fetchBip21Invoice(invoice)).bip21);
+        const bip21Amount = BigNumber(bip21.searchParams.get("amount") ?? 0);
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await buttonCreateSwap.click();
+
+        await verifyRescueFile(page);
+
+        await expect(
+            page.locator("div[data-status='swap.created']"),
+        ).toBeVisible();
+
+        await expect(
+            page.locator("span[class='optimized-route']"),
+        ).toBeVisible();
+
+        await page.locator("p[data-testid='copy-box']").click();
+
+        const copyAddress = await page.evaluate(() => {
+            return navigator.clipboard.readText();
+        });
+        expect(copyAddress).toBeDefined();
+
+        await page
+            .getByTestId("pay-onchain-buttons")
+            .getByText("amount")
+            .click();
+
+        const sendAmount = await page.evaluate(() => {
+            return navigator.clipboard.readText();
+        });
+
+        await bitcoinSendToAddress(
+            copyAddress,
+            satToBtc(BigNumber(sendAmount)).toString(),
+        );
+
+        await generateBitcoinBlock();
+
+        await expect(
+            page.locator("div[data-status='transaction.claimed']"),
+        ).toBeVisible({ timeout: 15_000 });
+
+        // Recipient should receive original MRH invoice amount
+        expect(await elementsGetReceivedByAddress(liquidAddress, 0)).toBe(
+            bip21Amount.toNumber(),
+        );
     });
 });
