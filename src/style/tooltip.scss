@@ -12,7 +12,6 @@
         display: none;
         padding: 4px;
         background: var(--color-darker-gray);
-        left: 30px;
         width: 180px;
         border-radius: 5px;
         box-shadow: 0px 0 5px var(--color-black);
@@ -24,4 +23,15 @@
             display: block;
         }
     }
+}
+
+.input-tooltip {
+    position: absolute;
+    display: flex;
+    right: 0.6rem;
+    top: 75%;
+    transform: translateY(-75%);
+    pointer-events: auto;
+    cursor: pointer;
+    color: var(--color-text);
 }

@@ -2,6 +2,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import type { RoutingInfo } from "bolt11";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import {
     createContext,
@@ -195,6 +196,8 @@ export type CreateContextType = {
     setMinerFee: Setter<number>;
     setInvoiceError: Setter<DictKey>;
     invoiceError: Accessor<DictKey>;
+    routingHint: Accessor<RoutingInfo[number] | undefined>;
+    setRoutingHint: Setter<RoutingInfo[number] | undefined>;
 };
 
 const CreateContext = createContext<CreateContextType>();
@@ -210,6 +213,9 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         undefined,
     );
     const [onchainAddress, setOnchainAddress] = createSignal("");
+    const [routingHint, setRoutingHint] = createSignal<
+        RoutingInfo[number] | undefined
+    >(undefined);
 
     const [assetReceive, setAssetReceive] = makePersisted(
         // eslint-disable-next-line solid/reactivity
@@ -337,6 +343,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setMinerFee,
                 invoiceError,
                 setInvoiceError,
+                routingHint,
+                setRoutingHint,
             }}>
             {props.children}
         </CreateContext.Provider>

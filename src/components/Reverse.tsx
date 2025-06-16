@@ -9,9 +9,11 @@ const Reverse = () => {
         setAssetSend,
         setAssetReceive,
         setOnchainAddress,
+        setRoutingHint,
     } = useCreateContext();
     const setDirection = () => {
         setOnchainAddress("");
+        setRoutingHint(undefined);
         const sendOld = assetSend();
         setAssetSend(assetReceive());
         setAssetReceive(sendOld);
