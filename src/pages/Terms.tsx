@@ -68,8 +68,9 @@ const Terms: Component = () => {
                 Service in certain jurisdictions at any time.
             </p>
             <p>
-                4.4. You are at least 18 years old or of other legal age,
-                according to your relevant jurisdiction.
+                4.4. You are at least 18 years old or meet the minimum legal age
+                requirement (if applicable) in your jurisdiction to use our
+                Service.
             </p>
             <p>
                 4.5. You agree to pay the fees for transactions completed via
@@ -182,7 +183,7 @@ const Terms: Component = () => {
             </p>
 
             <p class="last-updated">
-                <strong>Last updated: March 19, 2025</strong>
+                <strong>Last updated: June 16, 2025</strong>
             </p>
         </div>
     );
