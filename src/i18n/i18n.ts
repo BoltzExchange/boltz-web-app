@@ -847,7 +847,7 @@ const dict = {
         refund_available_in: "Reembolso disponible en {{ blocks }} bloques",
         no_wallet_connected: "No hay monedero conectado",
         no_lockup_transaction: "No se encontró ninguna transacción de lockup",
-        routing_fee_limit: "Límite de la tarifa de enrutamiento",
+        routing_fee_limit: "Límite comisión enrutamiento",
         broadcast_setting: "Transmisión externa",
         broadcast_setting_tooltip:
             "También use el explorador de bloques para transmitir transacciones",
