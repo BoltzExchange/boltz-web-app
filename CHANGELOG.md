@@ -3,6 +3,32 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.8](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.7..v1.7.8) - 2025-06-17
+
+### Bug Fixes
+
+- URL params on Boltz Pro (#939) - ([21340ea](https://github.com/BoltzExchange/boltz-web-app/commit/21340ea1473f53642c94d8c7175af312faeaed5c))
+- prevent swap creation without claim address (#943) - ([8f625c1](https://github.com/BoltzExchange/boltz-web-app/commit/8f625c15bb406c1e3da5d88b83411e351b9aca5b))
+
+### Features
+
+- URL param to display mnemonic input (#947) - ([49b525d](https://github.com/BoltzExchange/boltz-web-app/commit/49b525da0c1e1268bf1eac8fcbb76a058243be85))
+
+### Miscellaneous Chores
+
+- update Ark Labs link (#936) - ([496f50a](https://github.com/BoltzExchange/boltz-web-app/commit/496f50a79b94ae1a06a2204b45f5738687f613fa))
+- update dependencies (#938) - ([7363b6e](https://github.com/BoltzExchange/boltz-web-app/commit/7363b6e913c5e3ea9b34522eb67b79ad5f5bdf03))
+- update Onion URL for pro (#940) - ([9691dd9](https://github.com/BoltzExchange/boltz-web-app/commit/9691dd9dcddecf4717ec02ad7043eac6f372ca3a))
+- update link previews (#941) - ([a4ee721](https://github.com/BoltzExchange/boltz-web-app/commit/a4ee7213429a428a33e8b4f10aa9b7915665f727))
+- minor tos update (#949) - ([2f3923a](https://github.com/BoltzExchange/boltz-web-app/commit/2f3923a99971bba7ba62f0cbeaed3b132327aba5))
+- shorten Spanish string to avoid line break (#951) - ([f49fdca](https://github.com/BoltzExchange/boltz-web-app/commit/f49fdca62b1f4ef0be31a05d558b730a8f4a4c1c))
+
+### Refactoring
+
+- missing theme CSS variables (#932) - ([908e21b](https://github.com/BoltzExchange/boltz-web-app/commit/908e21bd249d22a0e09904918f9fc8f1d161bd87))
+- failedToPay refund UX improvements (#937) - ([af4f6d6](https://github.com/BoltzExchange/boltz-web-app/commit/af4f6d62ef1b0907ecacc7c6e7c47be0c26041c3))
+
+---
 ## [1.7.7](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.6..v1.7.7) - 2025-06-09
 
 ### Features
@@ -14,6 +40,7 @@ All notable changes to this project will be documented in this file. See [conven
 - adjust Dockerfiles for pro builds (#926) - ([20843a2](https://github.com/BoltzExchange/boltz-web-app/commit/20843a27c0af0aa6bb8d84d59b8d2714cc6d27b6))
 - bump dependencies (#927) - ([f5ef3a3](https://github.com/BoltzExchange/boltz-web-app/commit/f5ef3a3c5a3bf9b0dddc82a2393b5bbaf8f631ed))
 - minor pp update (#934) - ([a7a0492](https://github.com/BoltzExchange/boltz-web-app/commit/a7a049299c4ea863b636e40542e6585fa8d09b11))
+- bump version to v1.7.7 (#935) - ([9a45ec7](https://github.com/BoltzExchange/boltz-web-app/commit/9a45ec77e73a6051a58c2466a79be7086011db45))
 
 ---
 ## [1.7.6](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.5..v1.7.6) - 2025-06-04
