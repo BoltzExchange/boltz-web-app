@@ -4,7 +4,7 @@ import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
 import "../../style/tooltip.scss";
 
-const Tooltip = (props: { label: DictKey }) => {
+const Tooltip = (props: { label: DictKey; position?: "left" | "right" }) => {
     const timeout_delay = 300;
     const timeout_delay_click = 2500;
 
@@ -41,7 +41,15 @@ const Tooltip = (props: { label: DictKey }) => {
                 onMouseLeave={tooltipLeave}>
                 <BiSolidHelpCircle />
             </span>
-            <span class="tooltip-text">{t(props.label)}</span>
+            <span
+                class="tooltip-text"
+                style={{
+                    [props.position === "right" || !props.position
+                        ? "left"
+                        : "right"]: "30px",
+                }}>
+                {t(props.label)}
+            </span>
         </span>
     );
 };

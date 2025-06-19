@@ -19,10 +19,12 @@ const Notification = () => {
                 notificationRef.classList.add("show");
                 notificationRef.classList.add(notificationType());
                 setTimeout(() => {
-                    notificationRef.classList.remove("show");
-                    notificationRef.classList.remove(notificationType());
-                    setNotification("");
-                    setNotificationType("");
+                    if (notificationType() && notification()) {
+                        notificationRef.classList.remove("show");
+                        notificationRef.classList.remove(notificationType());
+                        setNotification("");
+                        setNotificationType("");
+                    }
                 }, 4000);
             }
         }),

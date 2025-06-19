@@ -102,3 +102,11 @@ export const calculateDigits = (
 
     return digits;
 };
+
+export const btcToSat = (btc: BigNumber) => {
+    return btc.multipliedBy(10 ** 8);
+};
+
+export const satToBtc = (sat: BigNumber) => {
+    return sat.dividedBy(10 ** 8);
+};

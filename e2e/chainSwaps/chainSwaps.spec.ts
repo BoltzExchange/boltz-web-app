@@ -1,11 +1,15 @@
 import { expect, test } from "@playwright/test";
+import BigNumber from "bignumber.js";
 
+import { btcToSat } from "../../src/utils/denomination";
 import {
     elementsSendToAddress,
     generateBitcoinBlock,
+    generateInvoiceWithRoutingHint,
     generateLiquidBlock,
     getBitcoinAddress,
     getBitcoinWalletTx,
+    getLiquidAddress,
     verifyRescueFile,
 } from "../utils";
 
@@ -65,5 +69,41 @@ test.describe("Chain swap", () => {
 
         const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
         expect(txInfo.amount.toString()).toEqual(receiveAmount);
+    });
+
+    test("BTC/LN with routing hint switches to BTC/L-BTC", async ({ page }) => {
+        await page.goto("/");
+
+        const btcAsset = page.locator("div[class='asset asset-BTC'] div");
+        await btcAsset.click();
+
+        const lnAsset = page.locator("div[data-testid='select-LN']");
+        await lnAsset.click();
+
+        const receiveAmount = "0.0009";
+        const inputReceiveAmount = page.locator(
+            "input[data-testid='receiveAmount']",
+        );
+        await inputReceiveAmount.fill(receiveAmount);
+
+        const inputInvoice = page.locator("textarea[data-testid='invoice']");
+        const liquidAddress = await getLiquidAddress();
+        await inputInvoice.fill(
+            await generateInvoiceWithRoutingHint(
+                liquidAddress,
+                btcToSat(BigNumber(receiveAmount)).toNumber(),
+            ),
+        );
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await buttonCreateSwap.click();
+
+        await verifyRescueFile(page);
+
+        await expect(
+            page.locator("div[data-status='swap.created']"),
+        ).toBeVisible();
     });
 });

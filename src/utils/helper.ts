@@ -172,3 +172,8 @@ export const broadcastToExplorer = async (
         id: await response.text(),
     };
 };
+
+export const bufferToHex = (buffer: Buffer) =>
+    [...new Uint8Array(buffer)]
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");

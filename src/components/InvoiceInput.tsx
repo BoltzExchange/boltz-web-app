@@ -1,25 +1,30 @@
 import { BigNumber } from "bignumber.js";
-import { createEffect, on } from "solid-js";
+import { Show, createEffect, createSignal, on } from "solid-js";
 
-import { LN } from "../consts/Assets";
+import { BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { fetchBip21Invoice } from "../utils/boltzClient";
 import { calculateSendAmount } from "../utils/calculate";
 import { probeUserInput } from "../utils/compat";
+import { btcToSat } from "../utils/denomination";
 import {
     decodeInvoice,
     extractAddress,
     extractInvoice,
+    getAssetByBip21Prefix,
     isBolt12Offer,
     isLnurl,
 } from "../utils/invoice";
+import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { validateInvoice } from "../utils/validation";
+import LoadingSpinner from "./LoadingSpinner";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t, notify } = useGlobalContext();
+    const { t, notify, notification } = useGlobalContext();
     const {
         boltzFee,
         minerFee,
@@ -39,7 +44,10 @@ const InvoiceInput = () => {
         setAssetReceive,
         setOnchainAddress,
         setBolt12Offer,
+        setAddressValid,
+        setRoutingHint,
     } = useCreateContext();
+    const [loadingBip21, setLoadingBip21] = createSignal(false);
 
     const clearInputError = (input: HTMLTextAreaElement) => {
         input.classList.remove("invalid");
@@ -54,7 +62,7 @@ const InvoiceInput = () => {
     };
 
     const validate = async (input: HTMLTextAreaElement) => {
-        const val = input.value.trim();
+        const val = input.value.trim() || invoice();
 
         const address = extractAddress(val);
         const actualAsset = probeUserInput(LN, address);
@@ -79,10 +87,36 @@ const InvoiceInput = () => {
         try {
             if (isLnurl(inputValue)) {
                 setLnurl(inputValue);
-            } else if (await isBolt12Offer(inputValue)) {
+                clearInputError(input);
+                return;
+            }
+
+            if (await isBolt12Offer(inputValue)) {
                 setBolt12Offer(inputValue);
-            } else {
-                const sats = await validateInvoice(inputValue);
+                clearInputError(input);
+                return;
+            }
+
+            const sats = await validateInvoice(inputValue);
+            const magicRoutingHint = findMagicRoutingHint(inputValue);
+            setInvoice(inputValue);
+
+            if (magicRoutingHint) {
+                setLoadingBip21(true);
+                const bip21 = await fetchBip21Invoice(inputValue);
+                const bip21Decoded = new URL(bip21.bip21);
+                const chainAddress = bip21Decoded.pathname;
+                const bip21Amount = BigNumber(
+                    bip21Decoded.searchParams.get("amount") ?? 0,
+                );
+                if (btcToSat(bip21Amount).isGreaterThan(sats)) {
+                    throw t("invalid_bip21_amount");
+                }
+
+                setAssetSend(BTC);
+                setAssetReceive(getAssetByBip21Prefix(bip21Decoded.protocol));
+                setOnchainAddress(chainAddress);
+                setAddressValid(true);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
                     calculateSendAmount(
@@ -92,17 +126,37 @@ const InvoiceInput = () => {
                         swapType(),
                     ),
                 );
-                setInvoice(inputValue);
-                setBolt12Offer(undefined);
-                setLnurl("");
-                setInvoiceValid(true);
+                setLoadingBip21(false);
+                setRoutingHint(magicRoutingHint);
+                if (!notification()) {
+                    notify("success", t("magic_routing_hint_explainer"));
+                }
+                clearInputError(input);
+                return;
             }
+
+            setReceiveAmount(BigNumber(sats));
+            setSendAmount(
+                calculateSendAmount(
+                    BigNumber(sats),
+                    boltzFee(),
+                    minerFee(),
+                    swapType(),
+                ),
+            );
+
+            setInvoice(inputValue);
+            setBolt12Offer(undefined);
+            setLnurl("");
+            setInvoiceValid(true);
             clearInputError(input);
         } catch (e) {
             input.classList.add("invalid");
             input.setCustomValidity(t(e.message));
             resetInvoiceState();
             setInvoiceError(e.message);
+        } finally {
+            setLoadingBip21(false);
         }
     };
 
@@ -121,7 +175,8 @@ const InvoiceInput = () => {
             if (
                 invoice() !== "" &&
                 !isLnurl(invoice()) &&
-                !receiveAmount().isZero()
+                !receiveAmount().isZero() &&
+                !findMagicRoutingHint(invoice())
             ) {
                 try {
                     const inv = await decodeInvoice(invoice());
@@ -138,20 +193,20 @@ const InvoiceInput = () => {
     );
 
     return (
-        <textarea
-            required
-            ref={inputRef}
-            onInput={(e) => validate(e.currentTarget)}
-            onKeyUp={(e) => validate(e.currentTarget)}
-            onPaste={(e) => validate(e.currentTarget)}
-            id="invoice"
-            class="invoice-input"
-            data-testid="invoice"
-            name="invoice"
-            value={invoice()}
-            autocomplete="off"
-            placeholder={t("create_and_paste")}
-        />
+        <Show when={!loadingBip21()} fallback={<LoadingSpinner />}>
+            <textarea
+                required
+                ref={inputRef}
+                onInput={(e) => validate(e.currentTarget)}
+                id="invoice"
+                class="invoice-input"
+                data-testid="invoice"
+                name="invoice"
+                value={invoice()}
+                autocomplete="off"
+                placeholder={t("create_and_paste")}
+            />
+        </Show>
     );
 };
 

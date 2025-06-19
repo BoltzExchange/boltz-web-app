@@ -26,6 +26,7 @@ const SelectAsset = () => {
         setInvoice,
         setOnchainAddress,
         setPairValid,
+        setRoutingHint,
     } = useCreateContext();
 
     const changeAsset = (newAsset: string) => {
@@ -33,6 +34,7 @@ const SelectAsset = () => {
 
         // clear invoice every time asset changes
         setInvoice("");
+        setRoutingHint(undefined);
 
         // set new asset and swap assets if the other asset is the same
         if (assetSelected() === Side.Send) {
