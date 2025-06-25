@@ -296,6 +296,11 @@ const dict = {
         },
         refresh_for_refund:
             "If you sent Bitcoin into this swap, refresh the page to check for a refund.",
+        applied_routing_hint:
+            "Invoice supports direct Liquid payment, saving you fees. Recipient receives original amount.",
+        optimized_route: "Swap route optimized for fees",
+        optimized_route_amount:
+            "Swap route optimized, saving you ~{{ amount }} {{ denomination }}",
     },
     de: {
         language: "Deutsch",
