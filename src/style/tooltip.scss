@@ -12,10 +12,15 @@
         display: none;
         padding: 4px;
         background: var(--color-darker-gray);
-        left: 30px;
         width: 180px;
         border-radius: 5px;
         box-shadow: 0px 0 5px var(--color-black);
+    }
+    .tooltip-text.left {
+        right: 30px;
+    }
+    .tooltip-text.right {
+        left: 30px;
     }
     &.active {
         z-index: 1;
