@@ -76,6 +76,14 @@ const AddressInput = () => {
     };
 
     createEffect(
+        on([amountValid, onchainAddress], () => {
+            if (swapType() !== SwapType.Submarine && inputRef) {
+                handleInputChange(inputRef);
+            }
+        }),
+    );
+
+    createEffect(
         on([amountValid, onchainAddress, assetReceive], () => {
             if (
                 sendAmount().isGreaterThan(0) &&
