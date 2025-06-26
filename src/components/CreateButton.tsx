@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
-import { createEffect, createSignal, on } from "solid-js";
+import { createEffect, createSignal, on, onMount } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -46,6 +46,11 @@ import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
+
+export const enum BackupDone {
+    True = "true",
+    False = "false",
+}
 
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
@@ -233,6 +238,17 @@ const CreateButton = () => {
             },
         ),
     );
+
+    const clearBackupDoneState = () => {
+        if (location?.backupDone === BackupDone.True) {
+            navigate("/swap", {
+                replace: true,
+                state: {
+                    backupDone: BackupDone.False,
+                },
+            });
+        }
+    };
 
     const validWayToFetchInvoice = (): boolean => {
         return (
@@ -493,14 +509,7 @@ const CreateButton = () => {
             setOnchainAddress("");
             setAddressValid(false);
 
-            if (location?.backupDone === "true") {
-                navigate("/swap", {
-                    replace: true,
-                    state: {
-                        backupDone: "false",
-                    },
-                });
-            }
+            clearBackupDoneState();
 
             navigate("/swap/" + data.id);
 
@@ -512,6 +521,8 @@ const CreateButton = () => {
             } else {
                 notify("error", err);
             }
+
+            clearBackupDoneState();
 
             return false;
         }
@@ -543,10 +554,12 @@ const CreateButton = () => {
         }
     };
 
-    createEffect(() => {
-        if (location?.backupDone === "true") {
+    onMount(() => {
+        if (location?.backupDone === BackupDone.True) {
             void buttonClick();
+            return;
         }
+        clearBackupDoneState();
     });
 
     const getButtonLabel = (label: ButtonLabelParams) => {
