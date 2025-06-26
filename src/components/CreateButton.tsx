@@ -234,6 +234,17 @@ const CreateButton = () => {
         ),
     );
 
+    const clearBackupDoneState = () => {
+        if (location?.backupDone === "true") {
+            navigate("/swap", {
+                replace: true,
+                state: {
+                    backupDone: "false",
+                },
+            });
+        }
+    };
+
     const validWayToFetchInvoice = (): boolean => {
         return (
             swapType() === SwapType.Submarine &&
@@ -471,14 +482,7 @@ const CreateButton = () => {
             setOnchainAddress("");
             setAddressValid(false);
 
-            if (location?.backupDone === "true") {
-                navigate("/swap", {
-                    replace: true,
-                    state: {
-                        backupDone: "false",
-                    },
-                });
-            }
+            clearBackupDoneState();
 
             navigate("/swap/" + data.id);
 
@@ -490,6 +494,8 @@ const CreateButton = () => {
             } else {
                 notify("error", err);
             }
+
+            clearBackupDoneState();
 
             return false;
         }
@@ -522,9 +528,14 @@ const CreateButton = () => {
     };
 
     createEffect(() => {
-        if (location?.backupDone === "true") {
+        if (
+            location?.backupDone === "true" &&
+            (invoice() !== "" || onchainAddress() !== "")
+        ) {
             void buttonClick();
+            return;
         }
+        clearBackupDoneState();
     });
 
     const getButtonLabel = (label: ButtonLabelParams) => {

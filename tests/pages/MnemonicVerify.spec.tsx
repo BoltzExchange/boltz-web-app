@@ -2,7 +2,6 @@ import { generateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english";
 import { fireEvent, render, screen, within } from "@solidjs/testing-library";
 
-import * as BackupUtils from "../../src/pages/Backup";
 import MnemonicVerify from "../../src/pages/MnemonicVerify";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
@@ -98,8 +97,6 @@ describe("MnemonicVerify", () => {
             { wrapper: contextWrapper },
         );
 
-        vi.spyOn(BackupUtils, "backupDone");
-
         const mnemonic = generateMnemonic(wordlist);
         globalSignals.setRescueFile({
             mnemonic,
@@ -117,7 +114,9 @@ describe("MnemonicVerify", () => {
             fireEvent.click(correctButtonElement);
         }
 
-        expect(BackupUtils.backupDone).toHaveBeenCalled();
+        expect(navigate).toHaveBeenCalledWith("/swap", {
+            state: { backupDone: "true" },
+        });
     });
 
     it("should navigate to backup page when incorrect word is clicked", async () => {
