@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
-import { createEffect, createSignal, on } from "solid-js";
+import { createEffect, createSignal, on, onMount } from "solid-js";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -42,6 +42,7 @@ import {
 } from "../utils/swapCreator";
 import { validateInvoice, validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
+import { getSavedFees } from "./OptimizedRoute";
 
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
@@ -419,10 +420,23 @@ const CreateButton = () => {
                             useRif,
                             newKey,
                         );
+
+                        const savedFees = getSavedFees({
+                            pairs,
+                            assetSend,
+                            swap: data,
+                            sendAmount,
+                            assetReceive,
+                            addressValid,
+                            onchainAddress,
+                        });
+
                         await setMrhSwapStorage({
                             id: data.id,
                             from: assetSend(),
+                            savedFees,
                         });
+
                         break;
                     } catch (e) {
                         log.error("Error creating MRH swap", e);
@@ -532,11 +546,8 @@ const CreateButton = () => {
         }
     };
 
-    createEffect(() => {
-        if (
-            location?.backupDone === BackupDone.True &&
-            (invoice() !== "" || onchainAddress() !== "")
-        ) {
+    onMount(() => {
+        if (location?.backupDone === BackupDone.True) {
             void buttonClick();
             return;
         }

@@ -3,6 +3,7 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Match, Show, Switch, createSignal } from "solid-js";
 
+import { BackupDone } from "../components/CreateButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
 import { useGlobalContext } from "../context/Global";
@@ -84,7 +85,7 @@ const BackupVerify = () => {
                 data = JSON.parse(await inputFile.text());
             }
             await validateBackup(data);
-            navigate("/swap", { state: { backupDone: "true" } });
+            navigate("/swap", { state: { backupDone: BackupDone.True } });
         } catch (e) {
             log.error("invalid rescue file upload", e);
             setVerificationFailed(true);
@@ -96,7 +97,7 @@ const BackupVerify = () => {
     const submitMnemonic = async (mnemonic: string) => {
         try {
             await validateBackup({ mnemonic });
-            navigate("/swap", { state: { backupDone: "true" } });
+            navigate("/swap", { state: { backupDone: BackupDone.True } });
         } catch {
             setVerificationFailed(true);
         }

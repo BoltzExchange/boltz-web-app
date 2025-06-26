@@ -9,6 +9,7 @@ import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
+import OptimizedRoute from "./OptimizedRoute";
 
 const lockupGasUsage = 46_000n;
 
@@ -62,56 +63,63 @@ const LockupEvm = (props: {
     });
 
     return (
-        <Show
-            when={signerBalance() !== undefined}
-            fallback={
-                <Show
-                    when={signer() !== undefined}
-                    fallback={<ConnectWallet />}>
-                    <LoadingSpinner />
-                </Show>
-            }>
+        <>
+            <OptimizedRoute />
             <Show
-                when={signer() === undefined || signerBalance() > value()}
-                fallback={<InsufficientBalance />}>
-                <ContractTransaction
-                    /* eslint-disable-next-line solid/reactivity */
-                    onClick={async () => {
-                        const contract = getEtherSwap();
-                        const tx = await contract.lock(
-                            prefix0x(props.preimageHash),
-                            props.claimAddress,
-                            props.timeoutBlockHeight,
-                            {
-                                value: value(),
-                            },
-                        );
-                        const currentSwap = await getSwap(props.swapId);
-                        currentSwap.lockupTx = tx.hash;
-                        currentSwap.signer = signer().address;
+                when={signerBalance() !== undefined}
+                fallback={
+                    <Show
+                        when={signer() !== undefined}
+                        fallback={<ConnectWallet />}>
+                        <LoadingSpinner />
+                    </Show>
+                }>
+                <Show
+                    when={signer() === undefined || signerBalance() > value()}
+                    fallback={<InsufficientBalance />}>
+                    <ContractTransaction
+                        /* eslint-disable-next-line solid/reactivity */
+                        onClick={async () => {
+                            const contract = getEtherSwap();
+                            const tx = await contract.lock(
+                                prefix0x(props.preimageHash),
+                                props.claimAddress,
+                                props.timeoutBlockHeight,
+                                {
+                                    value: value(),
+                                },
+                            );
+                            const currentSwap = await getSwap(props.swapId);
+                            currentSwap.lockupTx = tx.hash;
+                            currentSwap.signer = signer().address;
 
-                        if (customDerivationPathRdns.includes(signer().rdns)) {
-                            currentSwap.derivationPath = (
-                                providers()[signer().rdns]
-                                    .provider as unknown as HardwareSigner
-                            ).getDerivationPath();
-                        }
+                            if (
+                                customDerivationPathRdns.includes(signer().rdns)
+                            ) {
+                                currentSwap.derivationPath = (
+                                    providers()[signer().rdns]
+                                        .provider as unknown as HardwareSigner
+                                ).getDerivationPath();
+                            }
 
-                        setSwap(currentSwap);
-                        await setSwapStorage(currentSwap);
-                    }}
-                    children={<ConnectWallet />}
-                    address={{
-                        address: props.signerAddress,
-                        derivationPath: props.derivationPath,
-                    }}
-                    buttonText={t("send")}
-                    promptText={t("transaction_prompt", { button: t("send") })}
-                    waitingText={t("tx_in_mempool_subline")}
-                    showHr={false}
-                />
+                            setSwap(currentSwap);
+                            await setSwapStorage(currentSwap);
+                        }}
+                        children={<ConnectWallet />}
+                        address={{
+                            address: props.signerAddress,
+                            derivationPath: props.derivationPath,
+                        }}
+                        buttonText={t("send")}
+                        promptText={t("transaction_prompt", {
+                            button: t("send"),
+                        })}
+                        waitingText={t("tx_in_mempool_subline")}
+                        showHr={false}
+                    />
+                </Show>
             </Show>
-        </Show>
+        </>
     );
 };
 

@@ -78,7 +78,7 @@ export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
 export type MrhSwap = {
     id: string;
     from: string;
-    savedFees?: BigNumber;
+    savedFees?: string;
 };
 
 export const getRelevantAssetForSwap = (swap: SwapBase) => {
