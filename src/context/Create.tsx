@@ -16,13 +16,16 @@ import { BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
 import { Side, SwapType, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
 import { getAddress, getNetwork } from "../utils/compat";
-import { isLnurl } from "../utils/invoice";
+import { isInvoice, isLnurl } from "../utils/invoice";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 
 const setDestination = (
     setAssetReceive: Setter<string>,
     setInvoice: Setter<string>,
     setOnchainAddress: Setter<string>,
+    setAddressValid: Setter<boolean>,
+    setInvoiceValid: Setter<boolean>,
+    receiveAsset: string,
 ): { destinationAsset?: string; destination?: string } => {
     const isValidForAsset = (
         asset: typeof BTC | typeof LBTC,
@@ -43,15 +46,39 @@ const setDestination = (
 
     const destination = getUrlParam("destination");
     if (urlParamIsSet(destination)) {
-        if (isValidForAsset(BTC, destination)) {
+        const btcDestination = isValidForAsset(BTC, destination);
+        const lbtcDestination = isValidForAsset(LBTC, destination);
+        const lnDestination = isInvoice(destination) || isLnurl(destination);
+
+        if (btcDestination) {
+            setOnchainAddress(destination);
             setAssetReceive(BTC);
-            setOnchainAddress(destination);
+            setAddressValid(true);
             return { destinationAsset: BTC, destination };
-        } else if (isValidForAsset(LBTC, destination)) {
-            setAssetReceive(LBTC);
+        }
+
+        if (lbtcDestination) {
             setOnchainAddress(destination);
+            setAssetReceive(LBTC);
+            setAddressValid(true);
             return { destinationAsset: LBTC, destination };
-        } else {
+        }
+
+        if (lnDestination) {
+            setAssetReceive(LN);
+            setInvoice(destination);
+            setInvoiceValid(true);
+            return { destinationAsset: LN, destination };
+        }
+
+        if (receiveAsset === BTC || receiveAsset === LBTC) {
+            setOnchainAddress(destination);
+            setAssetReceive(receiveAsset);
+            setAddressValid(false);
+            return { destinationAsset: receiveAsset, destination };
+        }
+
+        if (receiveAsset === LN) {
             setAssetReceive(LN);
             setInvoice(destination);
             return { destinationAsset: LN, destination };
@@ -84,22 +111,27 @@ const handleUrlParams = (
     setAmountChanged: Setter<Side>,
     setSendAmount: Setter<BigNumber>,
     setReceiveAmount: Setter<BigNumber>,
+    setAddressValid: Setter<boolean>,
+    setInvoiceValid: Setter<boolean>,
     navigate: Navigator,
 ) => {
+    const sendAsset = getUrlParam(UrlParam.SendAsset);
+    const receiveAsset = getUrlParam(UrlParam.ReceiveAsset);
     const { destinationAsset, destination } = setDestination(
         setAssetReceive,
         setInvoice,
         setOnchainAddress,
+        setAddressValid,
+        setInvoiceValid,
+        receiveAsset,
     );
 
-    const sendAsset = getUrlParam(UrlParam.SendAsset);
     if (isValidAsset(sendAsset)) {
         setAssetSend(sendAsset);
     }
 
     // The type of the destination takes precedence
     if (destinationAsset === undefined) {
-        const receiveAsset = getUrlParam(UrlParam.ReceiveAsset);
         if (isValidAsset(receiveAsset)) {
             setAssetReceive(receiveAsset);
         }
@@ -284,6 +316,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         setAmountChanged,
         setSendAmount,
         setReceiveAmount,
+        setAddressValid,
+        setInvoiceValid,
         navigate,
     );
 
