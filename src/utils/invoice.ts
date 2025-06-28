@@ -5,6 +5,7 @@ import bolt11 from "bolt11";
 import log from "loglevel";
 
 import { config } from "../config";
+import { BTC, LBTC, LN } from "../consts/Assets";
 import Bolt12 from "../lazy/bolt12";
 import { fetchBolt12Invoice } from "./boltzClient";
 import { lookup } from "./dnssec/dohLookup";
@@ -14,6 +15,17 @@ type LnurlResponse = {
     minSendable: number;
     maxSendable: number;
     callback: string;
+};
+
+type Bolt11Invoice = {
+    satoshis: number;
+    expiry: number;
+    preimageHash: string;
+};
+
+type Bolt12Invoice = {
+    satoshis: number;
+    preimageHash: string;
 };
 
 type LnurlCallbackResponse = {
@@ -38,7 +50,14 @@ const bip353Prefix = "₿";
 export const getExpiryEtaHours = async (invoice: string): Promise<number> => {
     const decoded = await decodeInvoice(invoice);
     const now = Date.now() / 1000;
-    const delta = (decoded.expiry || 0) - now;
+    let delta: number;
+
+    if ("expiry" in decoded) {
+        delta = (decoded.expiry || 0) - now;
+    } else {
+        return 0;
+    }
+
     if (delta < 0) {
         return 0;
     }
@@ -51,7 +70,7 @@ export const getExpiryEtaHours = async (invoice: string): Promise<number> => {
 
 export const decodeInvoice = async (
     invoice: string,
-): Promise<{ satoshis: number; preimageHash: string; expiry?: number }> => {
+): Promise<Bolt11Invoice | Bolt12Invoice> => {
     try {
         const decoded = bolt11.decode(invoice);
         const sats = BigNumber(decoded.millisatoshis || 0)
@@ -64,7 +83,7 @@ export const decodeInvoice = async (
             preimageHash: decoded.tags.find(
                 (tag) => tag.tagName === "payment_hash",
             ).data as string,
-        };
+        } as Bolt11Invoice;
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
@@ -74,7 +93,7 @@ export const decodeInvoice = async (
             const res = {
                 satoshis: Number(decoded.amount_msat / 1_000n),
                 preimageHash: Buffer.from(decoded.payment_hash).toString("hex"),
-            };
+            } as Bolt12Invoice;
 
             decoded.free();
             return res;
@@ -220,6 +239,19 @@ export const extractAddress = (data: string) => {
         return url.pathname;
     }
     return data;
+};
+
+export const getAssetByBip21Prefix = (prefix: string) => {
+    switch (prefix) {
+        case bitcoinPrefix:
+            return BTC;
+        case liquidPrefix:
+            return LBTC;
+        case invoicePrefix:
+            return LN;
+        default:
+            return "";
+    }
 };
 
 export const isInvoice = (data: string) => {

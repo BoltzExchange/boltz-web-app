@@ -38,11 +38,6 @@ footer {
     display: flex;
 }
 
-a,
-a:hover {
-    color: var(--color-primary);
-}
-
 .headline,
 h1 {
     color: var(--color-white-30);
@@ -1083,4 +1078,19 @@ header {
             transform: translateY(0);
         }
     }
+}
+
+.optimized-route {
+    color: var(--color-link-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+}
+
+.creating-swap-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30dvh;
 }

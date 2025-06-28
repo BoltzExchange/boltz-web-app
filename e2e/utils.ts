@@ -1,10 +1,17 @@
-import type { Page } from "@playwright/test";
+import { type Page, request } from "@playwright/test";
+import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
 import { exec } from "child_process";
+import { randomBytes } from "crypto";
+import ECPairFactory from "ecpair";
 import fs from "fs";
+import { networks } from "liquidjs-lib";
 import { promisify } from "util";
 
+import { BTC, LBTC } from "../src/consts/Assets";
 import dict from "../src/i18n/i18n";
+import { ecc } from "../src/utils/ecpair";
+import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 
 const execAsync = promisify(exec);
 
@@ -199,4 +206,56 @@ export const createAndVerifySwap = async (page: Page, rescueFile: string) => {
 
     await page.getByTestId("rescueFileUpload").setInputFiles(rescueFile);
     await page.getByText("address").click();
+};
+
+export const generateInvoiceWithRoutingHint = async (
+    claimAddress: string,
+    invoiceAmount: number,
+) => {
+    const requestContext = await request.newContext();
+    const ECPair = ECPairFactory(ecc);
+
+    const preimage = randomBytes(32);
+    const wif = "cVGhwm4Q1QjueJRmAttrbwQTmDuV5cUU9dbyHVuXUwF86GsXN2g4";
+    const claimKeys = ECPair.fromWIF(wif, networks.regtest);
+
+    const addressHash = crypto
+        .sha256(Buffer.from(claimAddress, "utf-8"))
+        .toString("hex");
+    const addressSignature = claimKeys.signSchnorr(
+        Buffer.from(addressHash, "hex"),
+    );
+
+    const swapRes = await (
+        await requestContext.post("http://localhost:9001/v2/swap/reverse", {
+            data: {
+                address: claimAddress,
+                from: BTC,
+                to: LBTC,
+                invoiceAmount,
+                addressSignature: Buffer.from(
+                    Object.values(addressSignature),
+                ).toString("hex"),
+                claimPublicKey: Buffer.from(
+                    Object.values(claimKeys.publicKey),
+                ).toString("hex"),
+                preimageHash: crypto.sha256(preimage).toString("hex"),
+            },
+        })
+    ).json();
+
+    const magicRoutingHint = findMagicRoutingHint(swapRes.invoice);
+
+    if (magicRoutingHint === null) {
+        throw new Error("no magic routing hint");
+    }
+
+    if (
+        magicRoutingHint.pubkey !==
+        Buffer.from(Object.values(claimKeys.publicKey)).toString("hex")
+    ) {
+        throw new Error("invalid public key in magic routing hint");
+    }
+
+    return swapRes.invoice as string;
 };
