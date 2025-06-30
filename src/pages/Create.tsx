@@ -176,7 +176,10 @@ const Create = () => {
 
     const validatePaste = (evt: ClipboardEvent) => {
         const clipboardData = evt.clipboardData || globalThis.clipboardData;
-        const pastedData = clipboardData.getData("Text").trim();
+        const pastedData = clipboardData
+            .getData("Text")
+            .replace(/\s+/g, "")
+            .trim();
         if (!getValidationRegex(maximum()).test(pastedData)) {
             evt.stopPropagation();
             evt.preventDefault();
