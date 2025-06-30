@@ -10,7 +10,7 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import type { LogRefundData } from "../utils/contractLogs";
 import { getLogsFromReceipt } from "../utils/contractLogs";
-import { formatAmount } from "../utils/denomination";
+import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
 
@@ -36,7 +36,7 @@ const RefundState = (props: {
                     denomination(),
                     separator(),
                 )}{" "}
-                {props.asset}
+                {formatDenomination(denomination(), props.asset)}
             </p>
 
             <Show when={!timelockExpired()}>
