@@ -275,17 +275,76 @@ describe("Create", () => {
         signals.setAssetSend(LN);
         signals.setAssetReceive(BTC);
 
+        const pasteEvent = new Event("paste");
+
+        // @ts-expect-error clipboardData is injected manually
+        pasteEvent.clipboardData = {
+            getData: vi.fn(() => "0.01"),
+        };
+
+        const preventDefaultSpy = vi.fn();
+        pasteEvent.preventDefault = preventDefaultSpy;
+
         const sendAmountInput = (await screen.findByTestId(
             "sendAmount",
         )) as HTMLInputElement;
+
+        sendAmountInput.dispatchEvent(pasteEvent);
         fireEvent.input(sendAmountInput, {
             target: {
                 value: `0,01`,
             },
         });
 
+        expect(preventDefaultSpy).not.toHaveBeenCalled(); // no errors on onPaste
         expect(globalSignals.denomination()).toEqual(Denomination.Btc);
         expect(globalSignals.separator()).toEqual(".");
         expect(sendAmountInput.value).toEqual("0.01");
+    });
+
+    test("should allow space in pasted amounts", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const amount = "50 000";
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Btc);
+        signals.setAssetSend(LN);
+        signals.setAssetReceive(BTC);
+
+        const pasteEvent = new Event("paste");
+
+        // @ts-expect-error clipboardData is injected manually
+        pasteEvent.clipboardData = {
+            getData: vi.fn(() => amount),
+        };
+
+        const preventDefaultSpy = vi.fn();
+        pasteEvent.preventDefault = preventDefaultSpy;
+
+        const sendAmountInput = (await screen.findByTestId(
+            "sendAmount",
+        )) as HTMLInputElement;
+
+        sendAmountInput.dispatchEvent(pasteEvent);
+        fireEvent.input(sendAmountInput, {
+            target: {
+                value: amount,
+            },
+        });
+
+        expect(preventDefaultSpy).not.toHaveBeenCalled(); // no errors on onPaste
+        expect(globalSignals.denomination()).toEqual(Denomination.Sat);
+        expect(sendAmountInput.value).toEqual(amount);
     });
 });
