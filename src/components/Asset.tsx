@@ -14,7 +14,9 @@ const Asset = (props: { side: Side; signal: Accessor<string> }) => {
 
     return (
         <div class="asset-wrap" onClick={openSelect}>
-            <div class={`asset asset-${props.signal()}`}>
+            <div
+                data-testid={`asset-${props.side}`}
+                class={`asset asset-${props.signal()}`}>
                 <div class="asset-selection">
                     <span class="icon" />
                     <span class="asset-text" />
