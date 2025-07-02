@@ -12,46 +12,112 @@ import {
 import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
-import { BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
+import { type AssetType, BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
 import { Side, SwapType, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
 import { getAddress, getNetwork } from "../utils/compat";
-import { isLnurl } from "../utils/invoice";
+import { isInvoice, isLnurl } from "../utils/invoice";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
+
+const isValidForAsset = (asset: typeof BTC | typeof LBTC, address: string) => {
+    try {
+        getAddress(asset).toOutputScript(
+            address,
+            getNetwork(asset) as LiquidNetwork,
+        );
+        return true;
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {
+        return false;
+    }
+};
+
+const handleDestination: Record<
+    Exclude<AssetType, typeof RBTC>,
+    {
+        isValid: (destination: string) => boolean;
+        action: (
+            destination: string,
+            setters: {
+                setOnchainAddress: Setter<string>;
+                setInvoice: Setter<string>;
+                setAssetReceive: Setter<string>;
+                setAddressValid: Setter<boolean>;
+                setInvoiceValid: Setter<boolean>;
+            },
+        ) => ReturnType<typeof setDestination>;
+    }
+> = {
+    [BTC]: {
+        isValid: (destination) => isValidForAsset(BTC, destination),
+        action: (
+            destination,
+            { setOnchainAddress, setAssetReceive, setAddressValid },
+        ) => {
+            setOnchainAddress(destination);
+            setAssetReceive(BTC);
+            setAddressValid(true);
+            return { destinationAsset: BTC, destination };
+        },
+    },
+    [LBTC]: {
+        isValid: (destination) => isValidForAsset(LBTC, destination),
+        action: (
+            destination,
+            { setOnchainAddress, setAssetReceive, setAddressValid },
+        ) => {
+            setOnchainAddress(destination);
+            setAssetReceive(LBTC);
+            setAddressValid(true);
+            return { destinationAsset: LBTC, destination };
+        },
+    },
+    [LN]: {
+        isValid: (destination) =>
+            isInvoice(destination) || isLnurl(destination),
+        action: (
+            destination,
+            { setAssetReceive, setInvoice, setInvoiceValid },
+        ) => {
+            setAssetReceive(LN);
+            setInvoice(destination);
+            setInvoiceValid(true);
+            return { destinationAsset: LN, destination };
+        },
+    },
+};
 
 const setDestination = (
     setAssetReceive: Setter<string>,
     setInvoice: Setter<string>,
     setOnchainAddress: Setter<string>,
+    setAddressValid: Setter<boolean>,
+    setInvoiceValid: Setter<boolean>,
+    receiveAsset: string,
 ): { destinationAsset?: string; destination?: string } => {
-    const isValidForAsset = (
-        asset: typeof BTC | typeof LBTC,
-        address: string,
-    ) => {
-        try {
-            getAddress(asset).toOutputScript(
-                address,
-                getNetwork(asset) as LiquidNetwork,
-            );
-            return true;
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
-            return false;
-        }
-    };
-
     const destination = getUrlParam("destination");
     if (urlParamIsSet(destination)) {
-        if (isValidForAsset(BTC, destination)) {
-            setAssetReceive(BTC);
+        for (const { isValid, action } of Object.values(handleDestination)) {
+            if (isValid(destination)) {
+                return action(destination, {
+                    setOnchainAddress,
+                    setAssetReceive,
+                    setAddressValid,
+                    setInvoice,
+                    setInvoiceValid,
+                });
+            }
+        }
+
+        if (receiveAsset === BTC || receiveAsset === LBTC) {
             setOnchainAddress(destination);
-            return { destinationAsset: BTC, destination };
-        } else if (isValidForAsset(LBTC, destination)) {
-            setAssetReceive(LBTC);
-            setOnchainAddress(destination);
-            return { destinationAsset: LBTC, destination };
-        } else {
+            setAssetReceive(receiveAsset);
+            setAddressValid(false);
+            return { destinationAsset: receiveAsset, destination };
+        }
+
+        if (receiveAsset === LN) {
             setAssetReceive(LN);
             setInvoice(destination);
             return { destinationAsset: LN, destination };
@@ -84,22 +150,27 @@ const handleUrlParams = (
     setAmountChanged: Setter<Side>,
     setSendAmount: Setter<BigNumber>,
     setReceiveAmount: Setter<BigNumber>,
+    setAddressValid: Setter<boolean>,
+    setInvoiceValid: Setter<boolean>,
     navigate: Navigator,
 ) => {
+    const sendAsset = getUrlParam(UrlParam.SendAsset);
+    const receiveAsset = getUrlParam(UrlParam.ReceiveAsset);
     const { destinationAsset, destination } = setDestination(
         setAssetReceive,
         setInvoice,
         setOnchainAddress,
+        setAddressValid,
+        setInvoiceValid,
+        receiveAsset,
     );
 
-    const sendAsset = getUrlParam(UrlParam.SendAsset);
     if (isValidAsset(sendAsset)) {
         setAssetSend(sendAsset);
     }
 
     // The type of the destination takes precedence
     if (destinationAsset === undefined) {
-        const receiveAsset = getUrlParam(UrlParam.ReceiveAsset);
         if (isValidAsset(receiveAsset)) {
             setAssetReceive(receiveAsset);
         }
@@ -284,6 +355,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         setAmountChanged,
         setSendAmount,
         setReceiveAmount,
+        setAddressValid,
+        setInvoiceValid,
         navigate,
     );
 

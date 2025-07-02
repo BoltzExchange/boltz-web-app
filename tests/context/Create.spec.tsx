@@ -89,6 +89,11 @@ describe("signals", () => {
             render(() => <TestComponent />, { wrapper: contextWrapper });
 
             expect(signals.assetReceive()).toEqual(expectedReceiveAsset);
+            if (expectedReceiveAsset === LN) {
+                expect(signals.invoiceValid()).toEqual(true);
+            } else {
+                expect(signals.addressValid()).toEqual(true);
+            }
         },
     );
 });
