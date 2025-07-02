@@ -10,6 +10,7 @@ export default [
     {
         ignores: [
             "dist",
+            "docs",
             "regtest",
             "coverage",
             "build/dist",
