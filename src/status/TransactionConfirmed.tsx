@@ -1,13 +1,16 @@
-import { Show } from "solid-js";
+import { Show, onMount } from "solid-js";
 
+import AddressInput from "../components/AddressInput";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { relayClaimTransaction } from "../rif/Signer";
+import { claim } from "../utils/claim";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
@@ -75,20 +78,59 @@ const ClaimEvm = (props: {
 };
 
 const TransactionConfirmed = () => {
-    const { t } = useGlobalContext();
-    const { swap } = usePayContext();
+    const { t, deriveKey, notify, getSwap, setSwapStorage, externalBroadcast } =
+        useGlobalContext();
+    const { onchainAddress, setOnchainAddress } = useCreateContext();
+    const { swap, setSwap, claimFailed, swapStatusTransaction } =
+        usePayContext();
 
     const chain = swap() as ChainSwap;
     const reverse = swap() as ReverseSwap;
+
+    const handleClaim = async () => {
+        setSwap({ ...swap(), claimAddress: onchainAddress() });
+
+        const res = await claim(
+            deriveKey,
+            swap() as ChainSwap,
+            swapStatusTransaction() as { hex: string },
+            true,
+            externalBroadcast(),
+        );
+        const claimedSwap = await getSwap(res.id);
+        claimedSwap.claimTx = res.claimTx;
+        await setSwapStorage(claimedSwap);
+
+        if (claimedSwap.id === swap().id) {
+            setSwap(claimedSwap);
+        }
+        notify("success", t("swap_completed", { id: res.id }), true, true);
+    };
+
+    onMount(() => {
+        setOnchainAddress("");
+    });
 
     return (
         <Show
             when={swap().assetReceive === RBTC}
             fallback={
                 <div>
-                    <h2>{t("tx_confirmed")}</h2>
-                    <p>{t("tx_ready_to_claim")}</p>
-                    <LoadingSpinner />
+                    <Show
+                        when={!claimFailed()}
+                        fallback={
+                            <>
+                                <p>{t("claim_address_prompt")}</p>
+                                <AddressInput />
+                                <button class="btn" onClick={handleClaim}>
+                                    {t("claim")}
+                                </button>
+                            </>
+                        }>
+                        <h2>{t("tx_confirmed")}</h2>
+                        <p>{t("tx_ready_to_claim")}</p>
+                        <LoadingSpinner />
+                    </Show>
                 </div>
             }>
             <Show

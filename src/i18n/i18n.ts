@@ -296,6 +296,8 @@ const dict = {
         },
         refresh_for_refund:
             "If you sent Bitcoin into this swap, refresh the page to check for a refund.",
+        claim: "Claim",
+        claim_address_prompt: "Enter the address to claim the swap to:",
     },
     de: {
         language: "Deutsch",

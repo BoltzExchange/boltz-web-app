@@ -166,6 +166,7 @@ export const SwapChecker = () => {
         setSwapStatus,
         setSwapStatusTransaction,
         setFailureReason,
+        setClaimFailed,
     } = usePayContext();
     const {
         notify,
@@ -306,6 +307,7 @@ export const SwapChecker = () => {
                 );
             } catch (e) {
                 const msg = t("claim_fail", { id: currentSwap.id });
+                setClaimFailed(true);
                 log.warn(msg, e);
                 notify("error", msg);
             }
