@@ -47,27 +47,6 @@ const bolt11Prefixes = {
 
 const bip353Prefix = "₿";
 
-export const getExpiryEtaHours = async (invoice: string): Promise<number> => {
-    const decoded = await decodeInvoice(invoice);
-    const now = Date.now() / 1000;
-    let delta: number;
-
-    if ("expiry" in decoded) {
-        delta = (decoded.expiry || 0) - now;
-    } else {
-        return 0;
-    }
-
-    if (delta < 0) {
-        return 0;
-    }
-    const eta = Math.round(delta / 60 / 60);
-    if (eta > maxExpiryHours) {
-        return maxExpiryHours;
-    }
-    return eta;
-};
-
 export const decodeInvoice = async (
     invoice: string,
 ): Promise<Bolt11Invoice | Bolt12Invoice> => {
