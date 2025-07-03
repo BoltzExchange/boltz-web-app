@@ -23,7 +23,10 @@
         "prettier:check": "npm run prettier -- --check",
         "tsc": "tsc",
         "lint": "eslint --max-warnings 0 .",
-        "changelog": "git-cliff -o CHANGELOG.md"
+        "changelog": "git-cliff -o CHANGELOG.md",
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs",
+        "docs:preview": "vitepress preview docs"
     },
     "devDependencies": {
         "@eslint/js": "^9.29.0",
@@ -48,6 +51,7 @@
         "vite-plugin-solid": "^2.11.7",
         "vite-plugin-top-level-await": "^1.5.0",
         "vite-plugin-wasm": "^3.4.1",
+        "vitepress": "^1.6.3",
         "vitest": "^3.2.4"
     },
     "dependencies": {
