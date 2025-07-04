@@ -11,6 +11,7 @@ import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";
 import CopyBox from "./CopyBox";
 import LoadingSpinner from "./LoadingSpinner";
+import OptimizedRoute from "./OptimizedRoute";
 
 const PayOnchain = (props: {
     type: SwapType;
@@ -77,6 +78,7 @@ const PayOnchain = (props: {
             fallback={<LoadingSpinner />}>
             <div>
                 <h2>{headerText()}</h2>
+                <OptimizedRoute />
                 <hr />
                 <a href={props.bip21}>
                     <QrCode asset={props.assetSend} data={props.bip21} />

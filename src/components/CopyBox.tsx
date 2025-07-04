@@ -19,7 +19,10 @@ const CopyBox = (props: { value: string }) => {
     };
 
     return (
-        <p onClick={copyBoxText} class="copy-box break-word">
+        <p
+            onClick={copyBoxText}
+            class="copy-box break-word"
+            data-testid="copy-box">
             <Show
                 when={copyBoxActive()}
                 fallback={<BiRegularCopy size={23} data-testid="copy-icon" />}>

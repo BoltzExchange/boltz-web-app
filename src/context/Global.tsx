@@ -29,7 +29,7 @@ import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
 import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
-import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { MrhSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import { getUrlParam, isEmbed, resetUrlParam } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
@@ -96,6 +96,8 @@ export type GlobalContextType = {
     clearLogs: () => Promise<void>;
 
     setSwapStorage: (swap: SomeSwap) => Promise<void>;
+    setMrhSwapStorage: (swap: MrhSwap) => Promise<void>;
+    getMrhSwapStorage: (id: string) => Promise<MrhSwap | null>;
     getSwap: <T = SomeSwap>(id: string) => Promise<T>;
     getSwaps: <T = SomeSwap>() => Promise<T[]>;
     deleteSwap: (id: string) => Promise<void>;
@@ -350,6 +352,9 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const swapsForage = localforage.createInstance({
         name: "swaps",
     });
+    const mrhForage = localforage.createInstance({
+        name: "mrhSwaps",
+    });
 
     migrateStorage(paramsForage, swapsForage).catch((e) =>
         log.error("Storage migration failed:", e),
@@ -359,7 +364,18 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         await swapsForage.setItem(swap.id, swap);
     };
 
-    const deleteSwap = (id: string) => swapsForage.removeItem(id);
+    const setMrhSwapStorage = async (swap: MrhSwap) => {
+        await mrhForage.setItem(swap.id, swap);
+    };
+
+    const getMrhSwapStorage = async (id: string) => {
+        return await mrhForage.getItem<MrhSwap>(id);
+    };
+
+    const deleteSwap = async (id: string) => {
+        await swapsForage.removeItem(id);
+        await mrhForage.removeItem(id);
+    };
 
     const getSwap = <T = SomeSwap,>(id: string) => swapsForage.getItem<T>(id);
 
@@ -508,6 +524,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 clearLogs,
                 updateSwapStatus,
                 setSwapStorage,
+                setMrhSwapStorage,
+                getMrhSwapStorage,
                 getSwap,
                 deleteSwap,
                 getSwaps,

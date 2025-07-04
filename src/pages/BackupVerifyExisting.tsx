@@ -3,16 +3,14 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Match, Show, Switch, createSignal } from "solid-js";
 
+import { BackupDone } from "../components/CreateButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
-import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
 import { getRescuableSwaps } from "../utils/boltzClient";
 import { rescueFileTypes } from "../utils/download";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
-import { backupDone } from "./Backup";
 
 export const existingBackupFileType = "existing";
 
@@ -24,75 +22,17 @@ const BackupVerify = () => {
     const {
         t,
         rescueFile,
-        rescueFileBackupDone,
-        notify,
-        newKey,
-        deriveKey,
-        ref,
-        pairs,
-        setPairs,
-        setSwapStorage,
         setRescueFileBackupDone,
         clearSwaps,
         setRescueFile,
         setLastUsedKey,
     } = useGlobalContext();
-    const {
-        swapType,
-        assetSend,
-        assetReceive,
-        sendAmount,
-        receiveAmount,
-        invoice,
-        onchainAddress,
-        setOnchainAddress,
-        setInvoice,
-        setInvoiceValid,
-        setAddressValid,
-    } = useCreateContext();
-    const { signer, providers, getEtherSwap, hasBrowserWallet } =
-        useWeb3Signer();
 
     const [verificationFailed, setVerificationFailed] = createSignal<
         boolean | undefined
     >(false);
 
     const [inputProcessing, setInputProcessing] = createSignal(false);
-
-    const handleBackupDone = async () => {
-        try {
-            await backupDone(
-                navigate,
-                t,
-                notify,
-                newKey,
-                deriveKey,
-                ref,
-                rescueFileBackupDone,
-                pairs,
-                swapType,
-                assetSend,
-                assetReceive,
-                sendAmount,
-                receiveAmount,
-                invoice,
-                onchainAddress,
-                signer,
-                providers,
-                getEtherSwap,
-                hasBrowserWallet,
-                setPairs,
-                setInvoice,
-                setInvoiceValid,
-                setOnchainAddress,
-                setAddressValid,
-                setSwapStorage,
-            );
-        } catch (e) {
-            log.error("Error creating swap", e);
-            notify("error", e);
-        }
-    };
 
     const validateBackup = async (data: RescueFile) => {
         validateRescueFile(data);
@@ -145,7 +85,7 @@ const BackupVerify = () => {
                 data = JSON.parse(await inputFile.text());
             }
             await validateBackup(data);
-            await handleBackupDone();
+            navigate("/swap", { state: { backupDone: BackupDone.True } });
         } catch (e) {
             log.error("invalid rescue file upload", e);
             setVerificationFailed(true);
@@ -157,7 +97,7 @@ const BackupVerify = () => {
     const submitMnemonic = async (mnemonic: string) => {
         try {
             await validateBackup({ mnemonic });
-            await handleBackupDone();
+            navigate("/swap", { state: { backupDone: BackupDone.True } });
         } catch {
             setVerificationFailed(true);
         }
