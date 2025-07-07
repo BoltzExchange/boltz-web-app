@@ -1,27 +1,38 @@
-import type { Navigator } from "@solidjs/router";
-import { useNavigate } from "@solidjs/router";
+import { useLocation, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import log from "loglevel";
-import type { Accessor, Setter } from "solid-js";
+import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import type { ButtonLabelParams, EIP6963ProviderDetail } from "../consts/Types";
+import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
-import type { deriveKeyFn, newKeyFn, notifyFn, tFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
 import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import type { Pairs } from "../utils/boltzClient";
-import { fetchBolt12Invoice, getPairs } from "../utils/boltzClient";
-import { formatAmount, formatDenomination } from "../utils/denomination";
+import {
+    fetchBip21Invoice,
+    fetchBolt12Invoice,
+    getPairs,
+} from "../utils/boltzClient";
+import { calculateSendAmount } from "../utils/calculate";
+import {
+    btcToSat,
+    formatAmount,
+    formatDenomination,
+} from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { coalesceLn } from "../utils/helper";
-import { fetchBip353, fetchLnurl } from "../utils/invoice";
+import { coalesceLn, getPair } from "../utils/helper";
+import {
+    fetchBip353,
+    fetchLnurl,
+    getAssetByBip21Prefix,
+    isBolt12Invoice,
+} from "../utils/invoice";
+import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import type { SomeSwap } from "../utils/swapCreator";
 import {
@@ -29,8 +40,9 @@ import {
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
-import { validateResponse } from "../utils/validation";
+import { validateInvoice, validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
+import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
@@ -71,137 +83,9 @@ export const getClaimAddress = async (
     };
 };
 
-export const createSwap = async (
-    navigate: Navigator,
-    t: tFn,
-    notify: notifyFn,
-    newKey: newKeyFn,
-    deriveKey: deriveKeyFn,
-
-    ref: Accessor<string>,
-    rescueFileBackupDone: Accessor<boolean>,
-    pairs: Accessor<Pairs>,
-    swapType: Accessor<SwapType>,
-    assetSend: Accessor<string>,
-    assetReceive: Accessor<string>,
-    sendAmount: Accessor<BigNumber>,
-    receiveAmount: Accessor<BigNumber>,
-    invoice: Accessor<string>,
-    signer: Accessor<Signer>,
-    providers: Accessor<Record<string, EIP6963ProviderDetail>>,
-    getEtherSwap: () => EtherSwap,
-    hasBrowserWallet: Accessor<boolean>,
-
-    claimAddress: string,
-    useRif: boolean,
-
-    setPairs: Setter<Pairs>,
-    setInvoice: Setter<string>,
-    setInvoiceValid: Setter<boolean>,
-    setOnchainAddress: Setter<string>,
-    setAddressValid: Setter<boolean>,
-    setSwapStorage: (swap: SomeSwap) => Promise<void>,
-): Promise<boolean> => {
-    if (
-        !rescueFileBackupDone() &&
-        assetSend() !== RBTC &&
-        swapType() !== SwapType.Reverse
-    ) {
-        navigate("/backup");
-        return false;
-    }
-
-    try {
-        let data: SomeSwap;
-        switch (swapType()) {
-            case SwapType.Submarine:
-                data = await createSubmarine(
-                    pairs(),
-                    coalesceLn(assetSend()),
-                    coalesceLn(assetReceive()),
-                    sendAmount(),
-                    receiveAmount(),
-                    invoice(),
-                    ref(),
-                    useRif,
-                    newKey,
-                );
-                break;
-
-            case SwapType.Reverse:
-                data = await createReverse(
-                    pairs(),
-                    coalesceLn(assetSend()),
-                    coalesceLn(assetReceive()),
-                    sendAmount(),
-                    receiveAmount(),
-                    claimAddress,
-                    ref(),
-                    useRif,
-                    newKey,
-                );
-                break;
-
-            case SwapType.Chain:
-                data = await createChain(
-                    pairs(),
-                    assetSend(),
-                    assetReceive(),
-                    sendAmount(),
-                    receiveAmount(),
-                    claimAddress,
-                    ref(),
-                    useRif,
-                    newKey,
-                );
-                break;
-        }
-
-        if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
-            navigate("/error");
-            return false;
-        }
-
-        await setSwapStorage({
-            ...data,
-            signer:
-                // We do not have to commit to a signer when creating submarine swaps
-                swapType() !== SwapType.Submarine
-                    ? signer()?.address
-                    : undefined,
-            derivationPath:
-                swapType() !== SwapType.Submarine &&
-                signer() !== undefined &&
-                customDerivationPathRdns.includes(signer().rdns)
-                    ? (
-                          providers()[signer().rdns]
-                              .provider as unknown as HardwareSigner
-                      ).getDerivationPath()
-                    : undefined,
-        });
-
-        setInvoice("");
-        setInvoiceValid(false);
-        setOnchainAddress("");
-        setAddressValid(false);
-
-        navigate("/swap/" + data.id);
-
-        return true;
-    } catch (err) {
-        if (err === "invalid pair hash") {
-            setPairs(await getPairs());
-            notify("error", t("feecheck"));
-        } else {
-            notify("error", err);
-        }
-
-        return false;
-    }
-};
-
 const CreateButton = () => {
     const navigate = useNavigate();
+    const location = useLocation<{ backupDone?: string }>().state;
     const {
         separator,
         setSwapStorage,
@@ -240,9 +124,14 @@ const CreateButton = () => {
         invoiceError,
         bolt12Offer,
         setBolt12Offer,
+        setAssetReceive,
+        setSwapType,
+        setSendAmount,
+        setReceiveAmount,
+        boltzFee,
+        minerFee,
     } = useCreateContext();
-    const { getEtherSwap, signer, providers, hasBrowserWallet } =
-        useWeb3Signer();
+    const { getEtherSwap, signer, providers } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [loading, setLoading] = createSignal(false);
@@ -418,6 +307,216 @@ const CreateButton = () => {
         }
     };
 
+    const createSwap = async (
+        claimAddress: string,
+        useRif: boolean,
+    ): Promise<boolean> => {
+        if (
+            !rescueFileBackupDone() &&
+            assetSend() !== RBTC &&
+            swapType() !== SwapType.Reverse
+        ) {
+            navigate("/backup");
+            return false;
+        }
+
+        try {
+            let data: SomeSwap;
+            switch (swapType()) {
+                case SwapType.Submarine: {
+                    const createSubmarineSwap = async () => {
+                        data = await createSubmarine(
+                            pairs(),
+                            coalesceLn(assetSend()),
+                            coalesceLn(assetReceive()),
+                            sendAmount(),
+                            receiveAmount(),
+                            invoice(),
+                            ref(),
+                            useRif,
+                            newKey,
+                        );
+                    };
+
+                    const isBolt12 = await isBolt12Invoice(invoice());
+
+                    const magicRoutingHint = !isBolt12
+                        ? findMagicRoutingHint(invoice())
+                        : undefined;
+
+                    const bip21 =
+                        magicRoutingHint || isBolt12
+                            ? (await fetchBip21Invoice(invoice()))?.bip21
+                            : undefined;
+
+                    const bip21Decoded = bip21 ? new URL(bip21) : undefined;
+
+                    const bip21Asset = bip21Decoded
+                        ? getAssetByBip21Prefix(bip21Decoded.protocol)
+                        : undefined;
+
+                    if (!bip21 || assetSend() === bip21Asset) {
+                        await createSubmarineSwap();
+                        break;
+                    }
+
+                    try {
+                        // Create swap using its Magic Routing Hint (MRH)
+                        const chainAddress = bip21Decoded.pathname;
+                        const bip21Amount = BigNumber(
+                            bip21Decoded.searchParams.get("amount") ?? 0,
+                        );
+
+                        // If bip21Amount is less than the minimal for the new pair, don't use the MRH
+                        const chainPair = getPair(
+                            pairs(),
+                            SwapType.Chain,
+                            assetSend(),
+                            bip21Asset,
+                        );
+                        if (
+                            !chainPair ||
+                            btcToSat(bip21Amount).isLessThan(
+                                chainPair.limits.minimal,
+                            )
+                        ) {
+                            await createSubmarineSwap();
+                            break;
+                        }
+
+                        const sats = await validateInvoice(invoice());
+
+                        if (btcToSat(bip21Amount).isGreaterThan(sats)) {
+                            throw new Error("invalid_bip21_amount");
+                        }
+
+                        setAssetReceive(bip21Asset);
+                        setOnchainAddress(chainAddress);
+                        setSwapType(SwapType.Chain);
+                        setReceiveAmount(btcToSat(bip21Amount));
+                        setSendAmount(
+                            calculateSendAmount(
+                                btcToSat(bip21Amount),
+                                boltzFee(),
+                                minerFee(),
+                                SwapType.Chain,
+                            ),
+                        );
+
+                        const chainSwap = await createChain(
+                            pairs(),
+                            assetSend(),
+                            assetReceive(),
+                            sendAmount(),
+                            receiveAmount(),
+                            onchainAddress(),
+                            ref(),
+                            useRif,
+                            newKey,
+                        );
+
+                        data = {
+                            ...chainSwap,
+                            magicRoutingHintSavedFees:
+                                getMagicRoutingHintSavedFees({
+                                    pairs,
+                                    assetSend,
+                                    swap: chainSwap,
+                                    sendAmount,
+                                    assetReceive,
+                                    addressValid,
+                                    onchainAddress,
+                                }),
+                        };
+
+                        break;
+                    } catch (e) {
+                        log.error("Error creating MRH swap", e);
+                        throw new Error(t("invalid_invoice"));
+                    }
+                }
+
+                case SwapType.Reverse:
+                    data = await createReverse(
+                        pairs(),
+                        coalesceLn(assetSend()),
+                        coalesceLn(assetReceive()),
+                        sendAmount(),
+                        receiveAmount(),
+                        claimAddress,
+                        ref(),
+                        useRif,
+                        newKey,
+                    );
+                    break;
+
+                case SwapType.Chain:
+                    data = await createChain(
+                        pairs(),
+                        assetSend(),
+                        assetReceive(),
+                        sendAmount(),
+                        receiveAmount(),
+                        claimAddress,
+                        ref(),
+                        useRif,
+                        newKey,
+                    );
+                    break;
+            }
+
+            if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
+                navigate("/error");
+                return false;
+            }
+
+            await setSwapStorage({
+                ...data,
+                signer:
+                    // We do not have to commit to a signer when creating submarine swaps
+                    swapType() !== SwapType.Submarine
+                        ? signer()?.address
+                        : undefined,
+                derivationPath:
+                    swapType() !== SwapType.Submarine &&
+                    signer() !== undefined &&
+                    customDerivationPathRdns.includes(signer().rdns)
+                        ? (
+                              providers()[signer().rdns]
+                                  .provider as unknown as HardwareSigner
+                          ).getDerivationPath()
+                        : undefined,
+            });
+
+            setInvoice("");
+            setInvoiceValid(false);
+            setOnchainAddress("");
+            setAddressValid(false);
+
+            if (location?.backupDone === "true") {
+                navigate("/swap", {
+                    replace: true,
+                    state: {
+                        backupDone: "false",
+                    },
+                });
+            }
+
+            navigate("/swap/" + data.id);
+
+            return true;
+        } catch (err) {
+            if (err === "invalid pair hash") {
+                setPairs(await getPairs());
+                notify("error", t("feecheck"));
+            } else {
+                notify("error", err);
+            }
+
+            return false;
+        }
+    };
+
     const buttonClick = async () => {
         setButtonDisable(true);
         setLoading(true);
@@ -434,34 +533,7 @@ const CreateButton = () => {
 
             if (!valid()) return;
 
-            await createSwap(
-                navigate,
-                t,
-                notify,
-                newKey,
-                deriveKey,
-                ref,
-                rescueFileBackupDone,
-                pairs,
-                swapType,
-                assetSend,
-                assetReceive,
-                sendAmount,
-                receiveAmount,
-                invoice,
-                signer,
-                providers,
-                getEtherSwap,
-                hasBrowserWallet,
-                claimAddress,
-                useRif,
-                setPairs,
-                setInvoice,
-                setInvoiceValid,
-                setOnchainAddress,
-                setAddressValid,
-                setSwapStorage,
-            );
+            await createSwap(claimAddress, useRif);
         } catch (e) {
             log.error("Error creating swap", e);
             notify("error", e);
@@ -470,6 +542,12 @@ const CreateButton = () => {
             setLoading(false);
         }
     };
+
+    createEffect(() => {
+        if (location?.backupDone === "true") {
+            void buttonClick();
+        }
+    });
 
     const getButtonLabel = (label: ButtonLabelParams) => {
         return t(label.key, label.params);

@@ -5,6 +5,7 @@ import bolt11 from "bolt11";
 import log from "loglevel";
 
 import { config } from "../config";
+import { BTC, LBTC, LN } from "../consts/Assets";
 import Bolt12 from "../lazy/bolt12";
 import { fetchBolt12Invoice } from "./boltzClient";
 import { lookup } from "./dnssec/dohLookup";
@@ -220,6 +221,20 @@ export const extractAddress = (data: string) => {
         return url.pathname;
     }
     return data;
+};
+
+export const getAssetByBip21Prefix = (prefix: string) => {
+    switch (prefix) {
+        case bitcoinPrefix:
+            return BTC;
+        case liquidPrefix:
+        case liquidTestnetPrefix:
+            return LBTC;
+        case invoicePrefix:
+            return LN;
+        default:
+            return "";
+    }
 };
 
 export const isInvoice = (data: string) => {

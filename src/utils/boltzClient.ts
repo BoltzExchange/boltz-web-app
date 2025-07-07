@@ -2,6 +2,7 @@ import type { Transaction } from "bitcoinjs-lib";
 import { Musig } from "boltz-core";
 import { Buffer } from "buffer";
 import type { Transaction as LiquidTransaction } from "liquidjs-lib";
+import log from "loglevel";
 
 import { config } from "../config";
 import { SwapType } from "../consts/Enums";
@@ -216,6 +217,19 @@ export const fetchBolt12Invoice = async (
     await validateInvoiceForOffer(offer, res.invoice);
 
     return res;
+};
+
+export const fetchBip21Invoice = async (invoice: string) => {
+    try {
+        log.debug("Fetching BIP21 for invoice", invoice);
+        const res = await fetcher<{ bip21: string; signature: string }>(
+            `/v2/swap/reverse/${invoice}/bip21`,
+        );
+        return res;
+    } catch {
+        log.debug("No BIP21 found for invoice");
+        return null;
+    }
 };
 
 export const createSubmarineSwap = (

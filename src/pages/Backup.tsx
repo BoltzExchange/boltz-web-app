@@ -54,6 +54,8 @@ export const backupDone = async (
     setOnchainAddress: Setter<string>,
     setAddressValid: Setter<boolean>,
     setSwapStorage: (swap: SomeSwap) => Promise<void>,
+    setAssetSend: Setter<string>,
+    setAssetReceive: Setter<string>,
 ) => {
     try {
         log.info("Creating swap");
@@ -83,6 +85,7 @@ export const backupDone = async (
                 providers,
                 getEtherSwap,
                 hasBrowserWallet,
+                onchainAddress,
                 claimAddress,
                 useRif,
                 setPairs,
@@ -91,6 +94,8 @@ export const backupDone = async (
                 setOnchainAddress,
                 setAddressValid,
                 setSwapStorage,
+                setAssetSend,
+                setAssetReceive,
             ))
         ) {
             navigate("/swap");
