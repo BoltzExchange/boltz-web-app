@@ -266,6 +266,16 @@ export const isBolt12Offer = async (offer: string) => {
     }
 };
 
+export const isBolt12Invoice = async (invoice: string) => {
+    try {
+        const { Invoice } = await Bolt12.get();
+        new Invoice(invoice).free();
+        return true;
+    } catch {
+        return false;
+    }
+};
+
 export const validateInvoiceForOffer = async (
     offer: string,
     invoice: string,
