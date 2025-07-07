@@ -36,23 +36,9 @@ const bolt11Prefixes = {
 
 const bip353Prefix = "₿";
 
-export const getExpiryEtaHours = async (invoice: string): Promise<number> => {
-    const decoded = await decodeInvoice(invoice);
-    const now = Date.now() / 1000;
-    const delta = (decoded.expiry || 0) - now;
-    if (delta < 0) {
-        return 0;
-    }
-    const eta = Math.round(delta / 60 / 60);
-    if (eta > maxExpiryHours) {
-        return maxExpiryHours;
-    }
-    return eta;
-};
-
 export const decodeInvoice = async (
     invoice: string,
-): Promise<{ satoshis: number; preimageHash: string; expiry?: number }> => {
+): Promise<{ satoshis: number; preimageHash: string }> => {
     try {
         const decoded = bolt11.decode(invoice);
         const sats = BigNumber(decoded.millisatoshis || 0)
@@ -61,7 +47,6 @@ export const decodeInvoice = async (
             .toNumber();
         return {
             satoshis: sats,
-            expiry: decoded.timeExpireDate,
             preimageHash: decoded.tags.find(
                 (tag) => tag.tagName === "payment_hash",
             ).data as string,
