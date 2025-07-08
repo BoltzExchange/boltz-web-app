@@ -257,7 +257,7 @@ export const isLnurl = (data: string | null | undefined) => {
 export const isBolt12Offer = async (offer: string) => {
     try {
         const { Offer } = await Bolt12.get();
-        new Offer(offer);
+        new Offer(offer).free();
         return true;
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
