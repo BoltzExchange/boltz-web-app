@@ -19,10 +19,11 @@ const Entry = (props: {
     settingElement: JSXElement;
 }) => {
     const { t } = useGlobalContext();
+
     return (
         <span class="setting">
             <label>{t(props.label)}: </label>
-            <Tooltip label={props.tooltipLabel} />
+            <Tooltip label={{ key: props.tooltipLabel }} />
             <div class="spacer" />
             {props.settingElement}
         </span>

@@ -5,7 +5,7 @@ import type { DictKey } from "../../i18n/i18n";
 import "../../style/tooltip.scss";
 
 const Tooltip = (props: {
-    label: DictKey;
+    label: { key: DictKey; variables?: Record<string, string> };
     size?: number;
     direction?: "left" | "right";
 }) => {
@@ -46,7 +46,7 @@ const Tooltip = (props: {
                 <BiSolidHelpCircle size={props.size} />
             </span>
             <span class={`tooltip-text ${props.direction || "right"}`}>
-                {t(props.label)}
+                {t(props.label.key, props.label.variables)}
             </span>
         </span>
     );
