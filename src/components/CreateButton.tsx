@@ -27,10 +27,11 @@ import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { coalesceLn, getPair } from "../utils/helper";
 import {
+    InvoiceType,
+    decodeInvoice,
     fetchBip353,
     fetchLnurl,
     getAssetByBip21Prefix,
-    isBolt12Invoice,
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
@@ -40,7 +41,7 @@ import {
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
-import { validateInvoice, validateResponse } from "../utils/validation";
+import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
 import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 
@@ -354,7 +355,8 @@ const CreateButton = () => {
                         );
                     };
 
-                    const isBolt12 = await isBolt12Invoice(invoice());
+                    const decodedInvoice = await decodeInvoice(invoice());
+                    const isBolt12 = decodedInvoice.type === InvoiceType.Bolt12;
 
                     const magicRoutingHint = !isBolt12
                         ? findMagicRoutingHint(invoice())
@@ -400,9 +402,11 @@ const CreateButton = () => {
                             break;
                         }
 
-                        const sats = await validateInvoice(invoice());
-
-                        if (btcToSat(bip21Amount).isGreaterThan(sats)) {
+                        if (
+                            btcToSat(bip21Amount).isGreaterThan(
+                                decodedInvoice.satoshis,
+                            )
+                        ) {
                             throw new Error("invalid_bip21_amount");
                         }
 
