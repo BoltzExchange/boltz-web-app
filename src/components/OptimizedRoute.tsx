@@ -160,6 +160,10 @@ const OptimizedRoute = () => {
     const { assetSend, assetReceive } = useCreateContext();
 
     const [swap] = createResource(async () => {
+        if (typeof params.id !== "string") {
+            return undefined;
+        }
+
         return await getSwap<ChainSwap>(params.id);
     });
 
