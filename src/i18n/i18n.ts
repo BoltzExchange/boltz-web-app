@@ -296,6 +296,10 @@ const dict = {
         },
         refresh_for_refund:
             "If you sent Bitcoin into this swap, refresh the page to check for a refund.",
+        applied_routing_hint:
+            "Your recipient supports receiving {{ asset }} directly. This saves you fees and they still get the full amount.",
+        optimized_route_amount:
+            "Swap route optimized, saving you ~{{ amount }} {{ denomination }}",
     },
     de: {
         language: "Deutsch",
@@ -607,6 +611,10 @@ const dict = {
         },
         refresh_for_refund:
             "Falls du Bitcoin in diesen Swap gesendet hast, aktualisiere die Seite um eine Rückerstattung zu prüfen.",
+        applied_routing_hint:
+            "Dein Empfänger unterstützt den direkten Empfang von {{ asset }}. So sparst du Gebühren und der Empfänger bekommt weiterhin den vollen Betrag.",
+        optimized_route_amount:
+            "Swap-Route optimiert, du sparst ~{{ amount }} {{ denomination }}",
     },
     es: {
         language: "Español",
@@ -913,6 +921,10 @@ const dict = {
         },
         refresh_for_refund:
             "Si has enviado Bitcoin a este intercambio, actualice la página para comprobar si hay un reembolso disponsible.",
+        applied_routing_hint:
+            "Tu destinatario admite recibir {{ asset }} directamente. Así te ahorras comisiones y ellos siguen recibiendo el importe íntegro.",
+        optimized_route_amount:
+            "Ruta de intercambio optimizada, ahorrándote ~{{ amount }} {{ denomination }}",
     },
     pt: {
         language: "Português",
@@ -1216,6 +1228,10 @@ const dict = {
         },
         refresh_for_refund:
             "Se enviou Bitcoin para esta troca, recarregue a página para verificar se existe um reembolso.",
+        applied_routing_hint:
+            "O teu destinatário suporta a receção direta de {{ asset }}. Assim, poupas em taxas e ele continua a receber o valor total.",
+        optimized_route_amount:
+            "Rota de troca otimizada, poupando-te ~{{ amount }} {{ denomination }}",
     },
     zh: {
         language: "中文",
@@ -1278,7 +1294,7 @@ const dict = {
         pay_timeout_blockheight: "超时区块高度",
         pay_expected_amount: "预期金额",
         send_to:
-            "请确保将准确的金额{{ amount }}{{ denomination }}发送到下面显示的地址。否则,交换将失败。最好使用“复制BIP21”按钮,并将其粘贴到您钱包的发送屏幕中。",
+            "请将准确的{{ amount }}{{ denomination }}发送到以下地址。您可以使用“BIP21”按钮，并将其粘贴到钱包。",
         send_between: "在 {{ min }} 和 {{ max }} {{ denomination }} 之间发送至",
         pay_invoice_to: "支付金额为{{ amount }}{{ denomination }}的发票",
         pay_address: "地址",
@@ -1490,6 +1506,10 @@ const dict = {
         },
         refresh_for_refund:
             "如果您向本次交换发送了比特币，请刷新页面检查是否有退款。",
+        applied_routing_hint:
+            "你的收款人支持直接接收 {{ asset }}。这为你节省了手续费，且对方仍会收到全额款项。",
+        optimized_route_amount:
+            "交换路径已优化，为你节省了约 {{ amount }} {{ denomination }}",
     },
     ja: {
         language: "日本語",
@@ -1794,6 +1814,10 @@ const dict = {
         },
         refresh_for_refund:
             "このスワップにビットコインを送金した場合は、ページを更新して払い戻しを確認してください。",
+        applied_routing_hint:
+            "受取人は{{ asset }}の直接受け取りに対応しています。これにより手数料が節約でき、相手は引き続き全額を受け取ります。",
+        optimized_route_amount:
+            "スワップ経路が最適化され、約{{ amount }} {{ denomination }}を節約できました。",
     },
 };
 

@@ -1,44 +1,15 @@
 import { wordlist } from "@scure/bip39/wordlists/english";
 import { useNavigate } from "@solidjs/router";
-import log from "loglevel";
 import { For, createMemo, createSignal } from "solid-js";
 import { Match, Show, Switch } from "solid-js";
 
-import { useCreateContext } from "../context/Create";
+import { BackupDone } from "../components/CreateButton";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
-import { backupDone } from "./Backup";
 
 const MnemonicVerify = () => {
     const navigate = useNavigate();
-    const {
-        t,
-        rescueFile,
-        notify,
-        setRescueFileBackupDone,
-        newKey,
-        deriveKey,
-        ref,
-        rescueFileBackupDone,
-        pairs,
-        setPairs,
-        setSwapStorage,
-    } = useGlobalContext();
-    const {
-        swapType,
-        assetSend,
-        assetReceive,
-        sendAmount,
-        receiveAmount,
-        invoice,
-        onchainAddress,
-        setOnchainAddress,
-        setInvoice,
-        setInvoiceValid,
-        setAddressValid,
-    } = useCreateContext();
-    const { signer, providers, getEtherSwap, hasBrowserWallet } =
-        useWeb3Signer();
+    const { t, rescueFile, notify, setRescueFileBackupDone } =
+        useGlobalContext();
 
     const [displayedGroup, setDisplayedGroup] = createSignal<number>(0);
 
@@ -80,41 +51,6 @@ const MnemonicVerify = () => {
 
     const getWordNumber = (index: number) =>
         index + 1 + displayedGroup() * groupSize;
-
-    const handleBackupDone = async () => {
-        try {
-            await backupDone(
-                navigate,
-                t,
-                notify,
-                newKey,
-                deriveKey,
-                ref,
-                rescueFileBackupDone,
-                pairs,
-                swapType,
-                assetSend,
-                assetReceive,
-                sendAmount,
-                receiveAmount,
-                invoice,
-                onchainAddress,
-                signer,
-                providers,
-                getEtherSwap,
-                hasBrowserWallet,
-                setPairs,
-                setInvoice,
-                setInvoiceValid,
-                setOnchainAddress,
-                setAddressValid,
-                setSwapStorage,
-            );
-        } catch (e) {
-            log.error("Error creating swap", e);
-            notify("error", e);
-        }
-    };
 
     return (
         <div class="frame">
@@ -174,7 +110,7 @@ const MnemonicVerify = () => {
                             <button
                                 class="btn btn-light"
                                 style={{ margin: "0.8rem 0" }}
-                                onClick={async () => {
+                                onClick={() => {
                                     if (
                                         wordIndex !==
                                         mnemonicGroups()[displayedGroup()]
@@ -188,7 +124,11 @@ const MnemonicVerify = () => {
                                         mnemonicGroups().length - 1
                                     ) {
                                         setRescueFileBackupDone(true);
-                                        await handleBackupDone();
+                                        navigate("/swap", {
+                                            state: {
+                                                backupDone: BackupDone.True,
+                                            },
+                                        });
                                     }
                                     setDisplayedGroup(displayedGroup() + 1);
                                 }}>

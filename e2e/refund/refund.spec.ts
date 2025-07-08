@@ -1,8 +1,10 @@
 import type { Page } from "@playwright/test";
-import { expect, request, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import axios from "axios";
 import fs from "fs";
 import path from "path";
 
+import { config } from "../../src/config";
 import type { UTXO } from "../../src/utils/blockchain";
 import {
     createAndVerifySwap,
@@ -19,15 +21,15 @@ const getCurrentSwapId = (page: Page) => {
 };
 
 const waitForUTXOsInMempool = async (address: string, amount: number) => {
-    const requestContext = request.newContext();
     await expect
         .poll(
             async () => {
-                const res = await (
-                    await requestContext
-                ).get(`http://localhost:4003/api/address/${address}/utxo`);
+                const utxos = (
+                    await axios.get<UTXO[]>(
+                        `${config.assets["L-BTC"].blockExplorerApis[0].normal}/address/${address}/utxo`,
+                    )
+                ).data;
 
-                const utxos = (await res.json()) as UTXO[];
                 return utxos.length === amount;
             },
             { timeout: 10_000 },

@@ -67,6 +67,7 @@ export type ChainSwap = SwapBase &
         claimAddress: string;
         claimPrivateKeyIndex?: number;
         refundPrivateKeyIndex?: number;
+        magicRoutingHintSavedFees?: string;
 
         // Deprecated; used for backwards compatibility
         claimPrivateKey?: string;

@@ -359,7 +359,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         await swapsForage.setItem(swap.id, swap);
     };
 
-    const deleteSwap = (id: string) => swapsForage.removeItem(id);
+    const deleteSwap = async (id: string) => await swapsForage.removeItem(id);
 
     const getSwap = <T = SomeSwap,>(id: string) => swapsForage.getItem<T>(id);
 
