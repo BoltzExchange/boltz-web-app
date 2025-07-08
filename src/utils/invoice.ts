@@ -11,6 +11,11 @@ import { fetchBolt12Invoice } from "./boltzClient";
 import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";
 
+export const enum InvoiceType {
+    Bolt11,
+    Bolt12,
+}
+
 type LnurlResponse = {
     minSendable: number;
     maxSendable: number;
@@ -38,7 +43,7 @@ const bip353Prefix = "₿";
 
 export const decodeInvoice = async (
     invoice: string,
-): Promise<{ satoshis: number; preimageHash: string }> => {
+): Promise<{ type: InvoiceType; satoshis: number; preimageHash: string }> => {
     try {
         const decoded = bolt11.decode(invoice);
         const sats = BigNumber(decoded.millisatoshis || 0)
@@ -47,6 +52,7 @@ export const decodeInvoice = async (
             .toNumber();
         return {
             satoshis: sats,
+            type: InvoiceType.Bolt11,
             preimageHash: decoded.tags.find(
                 (tag) => tag.tagName === "payment_hash",
             ).data as string,
@@ -58,6 +64,7 @@ export const decodeInvoice = async (
             const mod = await Bolt12.get();
             const decoded = new mod.Invoice(invoice);
             const res = {
+                type: InvoiceType.Bolt12,
                 satoshis: Number(decoded.amount_msat / 1_000n),
                 preimageHash: Buffer.from(decoded.payment_hash).toString("hex"),
             };
@@ -262,16 +269,6 @@ export const isBolt12Offer = async (offer: string) => {
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
-        return false;
-    }
-};
-
-export const isBolt12Invoice = async (invoice: string) => {
-    try {
-        const { Invoice } = await Bolt12.get();
-        new Invoice(invoice).free();
-        return true;
-    } catch {
         return false;
     }
 };
