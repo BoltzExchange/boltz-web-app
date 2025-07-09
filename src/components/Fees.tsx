@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+import type { Accessor } from "solid-js";
 import {
     Show,
     createEffect,
@@ -55,9 +56,9 @@ export const isToUnconfidentialLiquid = ({
     addressValid,
     onchainAddress,
 }: {
-    assetReceive: () => string;
-    addressValid: () => boolean;
-    onchainAddress: () => string;
+    assetReceive: Accessor<string>;
+    addressValid: Accessor<boolean>;
+    onchainAddress: Accessor<string>;
 }) =>
     assetReceive() === LBTC &&
     addressValid() &&
