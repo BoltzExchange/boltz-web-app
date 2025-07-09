@@ -1,10 +1,17 @@
 import { expect, test } from "@playwright/test";
+import BigNumber from "bignumber.js";
 
+import { btcToSat } from "../src/utils/denomination";
 import {
+    addReferral,
     bitcoinSendToAddress,
     generateBitcoinBlock,
     generateInvoiceLnd,
+    generateInvoiceWithRoutingHint,
+    getLiquidAddress,
+    getReferrals,
     lookupInvoiceLnd,
+    setReferral,
     verifyRescueFile,
     waitForNodesToSync,
 } from "./utils";
@@ -89,5 +96,51 @@ test.describe("Submarine swap", () => {
         await page.getByTestId("create-swap-button").click();
         // When we can click that button, the swap was created
         await verifyRescueFile(page);
+    });
+
+    test("BTC/LN with expensive MRH doesn't use MRH", async ({ page }) => {
+        await page.goto("/?ref=expensive");
+
+        if (!(await getReferrals())["expensive"]) {
+            await addReferral("expensive");
+        }
+
+        // Make L-BTC/BTC chain swaps more expensive than submarine swap
+        await setReferral("expensive", {
+            pairs: {
+                "L-BTC/BTC": { premiums: { "2": { "0": 100, "1": 100 } } },
+            },
+        });
+
+        const btcAsset = page.locator("div[class='asset asset-BTC'] div");
+        await btcAsset.click();
+
+        const lnAsset = page.locator("div[data-testid='select-LN']");
+        await lnAsset.click();
+
+        const receiveAmount = "0.0009";
+
+        const inputInvoice = page.locator("textarea[data-testid='invoice']");
+        const liquidAddress = await getLiquidAddress();
+        const invoice = await generateInvoiceWithRoutingHint(
+            liquidAddress,
+            btcToSat(BigNumber(receiveAmount)).toNumber(),
+        );
+        await inputInvoice.fill(invoice);
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await buttonCreateSwap.click();
+
+        await verifyRescueFile(page);
+
+        await expect(
+            page.locator("div[data-status='invoice.set']"),
+        ).toBeVisible();
+
+        await expect(
+            page.locator("span[class='optimized-route']"),
+        ).not.toBeVisible();
     });
 });
