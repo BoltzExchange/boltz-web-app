@@ -1,3 +1,9 @@
+---
+next:
+    text: "📲 Install as App"
+    link: "/pwa"
+---
+
 # 🖥 Run from Source
 
 We encourage our technical users to check the code and run the web app locally

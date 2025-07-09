@@ -6,20 +6,20 @@ const docsRoot = "https://docs.boltz.exchange";
 export default defineConfig({
     title: "Boltz Web App",
     description: "Boltz Web App Docs",
+    head: [["link", { rel: "icon", href: "/assets/logo.svg" }]],
     themeConfig: {
-        logo: "./assets/logo.svg",
+        logo: "/assets/logo.svg",
         search: {
             provider: "local",
         },
-        nav: [{ text: "Home", link: docsRoot }],
+        nav: [{ text: "🏠 Docs Home", link: docsRoot, target: "_self" }],
         sidebar: [
             {
                 items: [
                     { text: "🖥️ Run from Source", link: "/index" },
                     { text: "📲 Install as App", link: "/pwa" },
                     { text: "🔍 URL Parameters", link: "/urlParams" },
-
-                    { text: "🔙 Home", link: docsRoot },
+                    { text: "🏠 Docs Home", link: docsRoot, target: "_self" },
                 ],
             },
         ],
