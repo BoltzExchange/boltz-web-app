@@ -11,6 +11,10 @@ export const findMagicRoutingHint = (invoice: string) => {
             (tag) => tag.tagName === "routing_info",
         );
 
+        if (!routingInfo) {
+            return undefined;
+        }
+
         const magicRoutingHint = (
             routingInfo.data as unknown as RoutingInfo
         ).find((hint) => hint.short_channel_id === magicRoutingHintConstant);
