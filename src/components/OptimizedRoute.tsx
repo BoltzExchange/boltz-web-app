@@ -17,7 +17,7 @@ import type {
 import { calculateBoltzFeeOnSend } from "../utils/calculate";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";
-import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap } from "../utils/swapCreator";
 import {
     unconfidentialExtra as extraFee,
     isToUnconfidentialLiquid,
@@ -26,11 +26,11 @@ import Tooltip from "./settings/Tooltip";
 
 const getTotalChainFees = ({
     pairs,
-    swap,
+    sendAmount,
     assetSend,
     unconfidentialExtra,
 }: {
-    swap: SomeSwap;
+    sendAmount: Accessor<BigNumber>;
     pairs: Accessor<Pairs>;
     assetSend: Accessor<string>;
     unconfidentialExtra: number;
@@ -45,7 +45,7 @@ const getTotalChainFees = ({
     const chainMinerFees =
         chainPair.fees.minerFees.server + chainPair.fees.minerFees.user.claim;
     return calculateBoltzFeeOnSend(
-        BigNumber((swap as ChainSwap).lockupDetails.amount),
+        sendAmount(),
         chainPair.fees.percentage,
         chainMinerFees,
         SwapType.Chain,
@@ -56,11 +56,11 @@ const getTotalChainFees = ({
 
 const getTotalSubmarineFees = ({
     pairs,
-    swap,
+    sendAmount,
     assetSend,
 }: {
     pairs: Accessor<Pairs>;
-    swap: SomeSwap;
+    sendAmount: Accessor<BigNumber>;
     assetSend: Accessor<string>;
 }) => {
     const submarinePair = getPair(
@@ -71,7 +71,7 @@ const getTotalSubmarineFees = ({
     ) as SubmarinePairTypeTaproot;
 
     return calculateBoltzFeeOnSend(
-        BigNumber((swap as SubmarineSwap).sendAmount),
+        sendAmount(),
         submarinePair.fees.percentage,
         submarinePair.fees.minerFees,
         SwapType.Submarine,
@@ -107,7 +107,6 @@ const getTotalReverseFees = ({
 };
 
 export const getMagicRoutingHintSavedFees = ({
-    swap,
     pairs,
     assetSend,
     sendAmount,
@@ -115,7 +114,6 @@ export const getMagicRoutingHintSavedFees = ({
     addressValid,
     onchainAddress,
 }: {
-    swap: SomeSwap;
     pairs: Accessor<Pairs>;
     assetSend: Accessor<string>;
     sendAmount: Accessor<BigNumber>;
@@ -133,13 +131,13 @@ export const getMagicRoutingHintSavedFees = ({
 
     const chainFee = getTotalChainFees({
         pairs,
-        swap,
+        sendAmount,
         assetSend,
         unconfidentialExtra,
     });
     const submarineFee = getTotalSubmarineFees({
         pairs,
-        swap,
+        sendAmount,
         assetSend,
     });
     const reverseFee = getTotalReverseFees({

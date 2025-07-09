@@ -12,6 +12,7 @@ import { useGlobalContext } from "../context/Global";
 import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
+import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
     fetchBip21Invoice,
     fetchBolt12Invoice,
@@ -134,8 +135,6 @@ const CreateButton = () => {
         setSwapType,
         setSendAmount,
         setReceiveAmount,
-        boltzFee,
-        minerFee,
     } = useCreateContext();
     const { getEtherSwap, signer, providers } = useWeb3Signer();
 
@@ -374,19 +373,21 @@ const CreateButton = () => {
                         : undefined;
 
                     if (!bip21 || assetSend() === bip21Asset) {
+                        log.debug("Creating submarine swap");
                         await createSubmarineSwap();
                         break;
                     }
 
                     try {
                         // Create swap using its Magic Routing Hint (MRH)
+                        log.debug("MRH detected. Preparing swap");
                         const chainAddress = bip21Decoded.pathname;
                         const bip21Amount = BigNumber(
                             bip21Decoded.searchParams.get("amount") ?? 0,
                         );
 
                         // If bip21Amount is less than the minimal for the new pair, don't use the MRH
-                        const chainPair = getPair(
+                        const chainPair = getPair<ChainPairTypeTaproot>(
                             pairs(),
                             SwapType.Chain,
                             assetSend(),
@@ -398,6 +399,9 @@ const CreateButton = () => {
                                 chainPair.limits.minimal,
                             )
                         ) {
+                            log.debug(
+                                `BIP21 amount ${bip21Amount.toString()} is less than minimal ${chainPair.limits.minimal} for chain swap. Creating submarine swap.`,
+                            );
                             await createSubmarineSwap();
                             break;
                         }
@@ -410,19 +414,38 @@ const CreateButton = () => {
                             throw new Error("invalid_bip21_amount");
                         }
 
+                        const mrhSendAmount = calculateSendAmount(
+                            btcToSat(bip21Amount),
+                            chainPair.fees.percentage,
+                            chainPair.fees.minerFees.server +
+                                chainPair.fees.minerFees.user.claim,
+                            SwapType.Chain,
+                        );
+
+                        const savedFees = getMagicRoutingHintSavedFees({
+                            pairs,
+                            assetSend,
+                            addressValid,
+                            onchainAddress,
+                            sendAmount: () => mrhSendAmount,
+                            assetReceive: () => bip21Asset,
+                        });
+
+                        if (BigNumber(savedFees).isLessThanOrEqualTo(0)) {
+                            log.debug(
+                                "MRH is more expensive than submarine swap. Creating submarine swap",
+                            );
+                            await createSubmarineSwap();
+                            break;
+                        }
+
                         setAssetReceive(bip21Asset);
                         setOnchainAddress(chainAddress);
                         setSwapType(SwapType.Chain);
                         setReceiveAmount(btcToSat(bip21Amount));
-                        setSendAmount(
-                            calculateSendAmount(
-                                btcToSat(bip21Amount),
-                                boltzFee(),
-                                minerFee(),
-                                SwapType.Chain,
-                            ),
-                        );
+                        setSendAmount(mrhSendAmount);
 
+                        log.debug("Creating MRH swap");
                         const chainSwap = await createChain(
                             pairs(),
                             assetSend(),
@@ -437,16 +460,7 @@ const CreateButton = () => {
 
                         data = {
                             ...chainSwap,
-                            magicRoutingHintSavedFees:
-                                getMagicRoutingHintSavedFees({
-                                    pairs,
-                                    assetSend,
-                                    swap: chainSwap,
-                                    sendAmount,
-                                    assetReceive,
-                                    addressValid,
-                                    onchainAddress,
-                                }),
+                            magicRoutingHintSavedFees: savedFees,
                         };
 
                         break;
