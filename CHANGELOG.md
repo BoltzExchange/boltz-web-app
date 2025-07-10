@@ -3,6 +3,42 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.7.9](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.8..v1.7.9) - 2025-07-10
+
+### Bug Fixes
+
+- RSK denomination on refund page (#958) - ([4d00bf5](https://github.com/BoltzExchange/boltz-web-app/commit/4d00bf5204941acddb5c338f0740425a518de614))
+- pasting amounts with white space (#959) - ([49a3452](https://github.com/BoltzExchange/boltz-web-app/commit/49a3452689fcbc9b54b7d09e4fa6f0a0ca6efb3a))
+- Disabled `createButton` for addr pre-filled with url param - ([22cc274](https://github.com/BoltzExchange/boltz-web-app/commit/22cc274851e8cabd655763c2f14325849f96891e))
+- `AddressInput` filled with incorrect RBTC address (#960) - ([48819b6](https://github.com/BoltzExchange/boltz-web-app/commit/48819b65b4f9380b4fc6f59aaf9d683823494082))
+- undefined used as a key, but it is not a string in test - ([2793d22](https://github.com/BoltzExchange/boltz-web-app/commit/2793d220f89a4979c77f94afa583012f3bd1c7f5))
+- handle undefined `routingInfo` (#965) - ([94396b3](https://github.com/BoltzExchange/boltz-web-app/commit/94396b3aa7c7ae176ceea9912f9e2cb45b823c0f))
+
+### Documentation
+
+- fix misc issues - ([5817b93](https://github.com/BoltzExchange/boltz-web-app/commit/5817b935524ca599166bce6c25b888cc00087eee))
+
+### Features
+
+- magic routing hint shortcuts (#948) - ([a729560](https://github.com/BoltzExchange/boltz-web-app/commit/a729560db98f90c30fc45a04a0757e20596e4bc0))
+- avoid MRH when no fees are saved (#963) - ([7ab98f8](https://github.com/BoltzExchange/boltz-web-app/commit/7ab98f840321bb934255507ac32f523114abfe12))
+
+### Miscellaneous Chores
+
+- bump dependencies (#955) - ([df45d71](https://github.com/BoltzExchange/boltz-web-app/commit/df45d716d64eeb9f41ad86ab2a1b8863888ffde9))
+- only update deploy docs when changed - ([b736be1](https://github.com/BoltzExchange/boltz-web-app/commit/b736be170323b76a552c44228232346cb39e5895))
+
+### Refactoring
+
+- make destination parser type safe - ([4f55c00](https://github.com/BoltzExchange/boltz-web-app/commit/4f55c009d7104d4d5dfab7cadf5d8ffc9bfd8b8c))
+- switch to vitepress (#961) - ([ac13d8a](https://github.com/BoltzExchange/boltz-web-app/commit/ac13d8a32ab04297f8f5592ccf580d3435570b8e))
+- cleanup invoice parsing - ([2b62411](https://github.com/BoltzExchange/boltz-web-app/commit/2b62411723a27f9bbf5f4c1ea5e3bed6004ed890))
+
+### Tests
+
+- **(e2e)** Validate multiple url params combinations - ([1acf99d](https://github.com/BoltzExchange/boltz-web-app/commit/1acf99dad6c6cc7b1050daf15428ed9f0d3d7090))
+
+---
 ## [1.7.8](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.7..v1.7.8) - 2025-06-17
 
 ### Bug Fixes
@@ -22,6 +58,7 @@ All notable changes to this project will be documented in this file. See [conven
 - update link previews (#941) - ([a4ee721](https://github.com/BoltzExchange/boltz-web-app/commit/a4ee7213429a428a33e8b4f10aa9b7915665f727))
 - minor tos update (#949) - ([2f3923a](https://github.com/BoltzExchange/boltz-web-app/commit/2f3923a99971bba7ba62f0cbeaed3b132327aba5))
 - shorten Spanish string to avoid line break (#951) - ([f49fdca](https://github.com/BoltzExchange/boltz-web-app/commit/f49fdca62b1f4ef0be31a05d558b730a8f4a4c1c))
+- bump version to v1.7.8 (#952) - ([d094788](https://github.com/BoltzExchange/boltz-web-app/commit/d094788304a3096d689c796e97221430867b195a))
 
 ### Refactoring
 
