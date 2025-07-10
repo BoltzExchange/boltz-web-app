@@ -52,7 +52,7 @@ const defaults = {
     githubUrl: "https://github.com/BoltzExchange",
     repoUrl: "https://github.com/BoltzExchange/boltz-web-app",
     docsUrl: "https://docs.boltz.exchange",
-    blogUrl: "https://blog.boltz.exchange/archive",
+    blogUrl: "https://blog.boltz.exchange",
     nostrUrl:
         "https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970",
     statusUrl: "https://status.boltz.exchange",
