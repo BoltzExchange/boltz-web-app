@@ -18,9 +18,9 @@ const Reverse = () => {
     };
 
     return (
-        <div id="flip-assets" onClick={() => setDirection()}>
+        <button id="flip-assets" onClick={() => setDirection()}>
             <ImArrowDown size={14} />
-        </div>
+        </button>
     );
 };
 

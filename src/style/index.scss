@@ -584,6 +584,11 @@ textarea.invalid {
     cursor: pointer;
     z-index: 1;
     box-shadow: 0 0 7px var(--color-black-40);
+    color: var(--color-secondary-100);
+    position: absolute;
+    display: inline-block;
+    left: 50%;
+    transform: translateX(-50%);
 }
 @media (hover: hover) {
     #flip-assets:hover {
