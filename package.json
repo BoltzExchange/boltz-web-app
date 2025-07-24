@@ -36,7 +36,7 @@
         "@trivago/prettier-plugin-sort-imports": "^5.2.2",
         "@types/node": "^22.15.29",
         "@webbtc/webln-types": "^3.0.0",
-        "axios": "^1.10.0",
+        "axios": "^1.11.0",
         "eslint": "^9.29.0",
         "eslint-plugin-solid": "^0.14.5",
         "git-cliff": "^2.9.1",
