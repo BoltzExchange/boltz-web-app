@@ -789,7 +789,7 @@ const dict = {
         warning_return:
             "Regresa a esta página después de pagar la factura! El pago puede aparecer como pendiente hasta que vuelvas a esta página.",
         warning_expiry:
-            "No cierre esta página hasta que el intercambio se haya completado y asegúrete de que la transacción se confirma en ~24 horas!",
+            "No cierre esta página hasta que el intercambio se haya completado y asegúrete de que la transacción se confirma en ~12 horas!",
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
