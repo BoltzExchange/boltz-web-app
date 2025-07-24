@@ -169,7 +169,7 @@ const dict = {
         warning_return:
             "Return to this page after paying the invoice! The payment might show pending until you return to this page.",
         warning_expiry:
-            "Make sure your transaction confirms within ~24 hours after creation of this swap!",
+            "Do not close this page until the swap completed and make sure your transaction confirms within ~12 hours!",
         not_found: "404 - Page Not Found",
         not_found_subline: "The page you are looking for does not exist.",
         back_to_home: "Back to Home",
@@ -475,7 +475,7 @@ const dict = {
         warning_return:
             "Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück! Die Zahlung wird möglicherweise als ausstehend angezeigt, bis du zu dieser Seite zurückkehrst.",
         warning_expiry:
-            "Wichtig: Die Transaktion muss innerhalb ~24 Stunden nach Erstellung dieses Swaps bestätigt sein!",
+            "Schließe diese Seite nicht, bis der Swap abgeschlossen ist und stelle sicher, dass deine Transaktion innerhalb von ~12 Stunden bestätigt ist!",
         not_found: "404 - Seite nicht gefunden",
         not_found_subline: "Die gesuchte Seite existiert nicht.",
         back_to_home: "Zurück zur Startseite",
@@ -789,7 +789,7 @@ const dict = {
         warning_return:
             "Regresa a esta página después de pagar la factura! El pago puede aparecer como pendiente hasta que vuelvas a esta página.",
         warning_expiry:
-            "Importante: Asegúrese de que la transacción se confirma en ~24 horas",
+            "No cierre esta página hasta que el intercambio se haya completado y asegúrete de que la transacción se confirma en ~24 horas!",
         not_found: "404 - Página no encontrada",
         not_found_subline: "La página buscada no existe.",
         back_to_home: "Volver al inicio",
@@ -1097,7 +1097,7 @@ const dict = {
         warning_return:
             "Volte a esta página após pagar o invoice! O pagamento pode aparecer como pendente até que volte a esta página.",
         warning_expiry:
-            "Certifique-se de que sua transação seja confirmada em até 24h após a criação da troca!",
+            "Não feche esta página até a troca estar concluída e certifique-se de que sua transação seja confirmada em até 12h após a criação da troca!",
         not_found: "404 - Página não encontrada",
         not_found_subline: "A página que procuras não existe.",
         back_to_home: "Voltar à página inicial",
@@ -1388,7 +1388,8 @@ const dict = {
         pro_banner: "想要通过 API 使用 Boltz Pro？",
         warning_return:
             "重要：支付发票后返回此页面！在您返回此页面之前，付款可能显示为待定。",
-        warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
+        warning_expiry:
+            "在交换完成之前，请不要关闭此页面，并确保您的交易在 ~12 小时内确认！",
         not_found: "404 - 页面未找到",
         not_found_subline: "您要查找的页面不存在。",
         back_to_home: "返回首页",
@@ -1684,7 +1685,7 @@ const dict = {
         warning_return:
             "重要：インボイスのお支払い後、このページへ戻ってください！このページに戻るまで、支払いは保留中と表示される場合があります。",
         warning_expiry:
-            "必ず24時間以内にトランザクションが承認されるようにしてください",
+            "スワップが完了するまでこのページを閉じず、取引が12時間以内に確認できるようにしてください！",
         not_found: "404 - Page Not Found",
         not_found_subline: "お探しのページは存在しません",
         back_to_home: "ホームに戻る",
