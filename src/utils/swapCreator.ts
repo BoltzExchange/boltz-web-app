@@ -17,7 +17,9 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
+import { derivePreimageFromRescueKey } from "./claim";
 import { getPair } from "./helper";
+import type { RescueFile } from "./rescueFile";
 
 export type SwapBase = {
     type: SwapType;
@@ -136,12 +138,15 @@ export const createReverse = async (
     claimAddress: string,
     referralId: string,
     useRif: boolean,
+    rescueFile: RescueFile,
     newKey: newKeyFn,
 ): Promise<ReverseSwap> => {
     const isRsk = assetReceive === RBTC;
 
-    const preimage = randomBytes(32);
     const key = !isRsk ? newKey() : undefined;
+    const preimage = isRsk
+        ? randomBytes(32)
+        : derivePreimageFromRescueKey(rescueFile, key?.index);
 
     const res = await createReverseSwap(
         assetSend,
@@ -181,11 +186,15 @@ export const createChain = async (
     claimAddress: string,
     referralId: string,
     useRif: boolean,
+    rescueFile: RescueFile,
     newKey: newKeyFn,
 ): Promise<ChainSwap> => {
-    const preimage = randomBytes(32);
     const claimKey = assetReceive !== RBTC ? newKey() : undefined;
     const refundKey = assetSend !== RBTC ? newKey() : undefined;
+    const isRsk = assetReceive === RBTC || assetSend === RBTC;
+    const preimage = isRsk
+        ? randomBytes(32)
+        : derivePreimageFromRescueKey(rescueFile, claimKey?.index);
 
     const res = await createChainSwap(
         assetSend,
