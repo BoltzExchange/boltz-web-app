@@ -38,7 +38,7 @@ const waitForUTXOsInMempool = async (address: string, amount: number) => {
 };
 
 const navigateToSwapDetails = async (page: Page, swapId: string) => {
-    await page.getByRole("link", { name: "Refund" }).click();
+    await page.getByRole("link", { name: "Rescue" }).click();
     const swapItem = page.locator(`div[data-testid='swaplist-item-${swapId}']`);
     await expect(page.getByTestId("loading-spinner")).not.toBeVisible();
     await expect(swapItem.getByRole("link", { name: "Refund" })).toBeVisible();
