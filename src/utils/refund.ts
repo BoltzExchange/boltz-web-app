@@ -329,7 +329,19 @@ export const createRefundList = async (swaps: SomeSwap[]) => {
                 const utxos = await getRefundableUTXOs(swap);
 
                 if (utxos.length > 0) {
-                    return swap;
+                    return { ...swap, refundable: true };
+                }
+
+                if (
+                    (swap.type === SwapType.Chain ||
+                        swap.type === SwapType.Reverse) &&
+                    (swap.status ===
+                        swapStatusPending.TransactionClaimPending ||
+                        swap.status ===
+                            swapStatusPending.TransactionServerConfirmed ||
+                        swap.status === swapStatusPending.TransactionConfirmed)
+                ) {
+                    return { ...swap, claimable: true };
                 }
 
                 return { ...swap, disabled: true };

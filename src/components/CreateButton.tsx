@@ -106,6 +106,7 @@ const CreateButton = () => {
         newKey,
         deriveKey,
         rescueFileBackupDone,
+        rescueFile,
     } = useGlobalContext();
     const {
         invoice,
@@ -327,11 +328,7 @@ const CreateButton = () => {
         claimAddress: string,
         useRif: boolean,
     ): Promise<boolean> => {
-        if (
-            !rescueFileBackupDone() &&
-            assetSend() !== RBTC &&
-            swapType() !== SwapType.Reverse
-        ) {
+        if (!rescueFileBackupDone() && assetSend() !== RBTC) {
             navigate("/backup");
             return false;
         }
@@ -455,6 +452,7 @@ const CreateButton = () => {
                             onchainAddress(),
                             ref(),
                             useRif,
+                            rescueFile(),
                             newKey,
                         );
 
@@ -480,6 +478,7 @@ const CreateButton = () => {
                         claimAddress,
                         ref(),
                         useRif,
+                        rescueFile(),
                         newKey,
                     );
                     break;
@@ -494,6 +493,7 @@ const CreateButton = () => {
                         claimAddress,
                         ref(),
                         useRif,
+                        rescueFile(),
                         newKey,
                     );
                     break;

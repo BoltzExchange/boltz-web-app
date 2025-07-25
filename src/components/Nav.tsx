@@ -69,8 +69,8 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                     <A href="/swap" onClick={() => setHamburger(false)}>
                         {t("swap")}
                     </A>
-                    <A href="/refund" onClick={() => setHamburger(false)}>
-                        {t("refund")}
+                    <A href="/rescue" onClick={() => setHamburger(false)}>
+                        {t("rescue")}
                     </A>
                     <A href="/history" onClick={() => setHamburger(false)}>
                         {t("history")}

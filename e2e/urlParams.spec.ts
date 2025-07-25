@@ -122,9 +122,9 @@ test.describe("URL params", () => {
         };
 
         await page.goto("/");
-        await page.getByRole("link", { name: "Refund" }).click();
+        await page.getByRole("link", { name: "Rescue" }).click();
         await page
-            .getByRole("button", { name: "Refund External Swap" })
+            .getByRole("button", { name: "Rescue external swap" })
             .click();
 
         await toggleRescueModeOnClick(page);

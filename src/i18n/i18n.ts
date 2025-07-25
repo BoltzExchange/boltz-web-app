@@ -89,25 +89,25 @@ const dict = {
         copy_bip21: "BIP21",
         copied: "Copied!",
         refund_swap: "Refund Swap",
-        refund_a_swap_subline:
-            "If you sent BTC or L-BTC into a Boltz swap, upload or enter your rescue key to refund a swap that is not available in this browser’s swap history.",
+        rescue_a_swap_subline:
+            "If you sent BTC or L-BTC into a Boltz swap, use your rescue key to claim or refund a swap that is not available in this browser’s history.",
         refund_a_swap_mnemonic:
-            "Enter your rescue key to refund a swap that is not available in this browser’s swap history.",
+            "Enter your rescue key to claim or refund a swap that is not available in this browser’s history.",
         refund_past_swaps: "Past swaps",
         refund_past_swaps_subline:
             "Swaps that got saved into your browsers storage",
         no_refundable_swaps:
             "No refundable swaps found in your browser history",
         cant_find_swap: "Can't find your swap?",
-        refund_external_explainer:
-            "Try refunding an external swap via rescue key and other emergency methods.",
+        rescue_external_explainer:
+            "Try rescuing an external swap via rescue key and other emergency methods.",
         refund_external_explainer_rsk:
             "If you sent RBTC into a Boltz swap, connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
         refund_external_scanning_rsk:
             "Scanning for refundable swaps in your Rootstock Wallet...",
         connected_wallet_no_swaps:
             "The connected Rootstock Wallet does not contain any refundable swaps.",
-        refund_external_swap: "Refund External Swap",
+        rescue_external_swap: "Rescue External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
             "Enter a {{ asset }} address to receive your refund on:",
@@ -297,9 +297,17 @@ const dict = {
         refresh_for_refund:
             "If you sent Bitcoin into this swap, refresh the page to check for a refund.",
         applied_routing_hint:
-            "Your recipient supports receiving {{ asset }} directly. This saves you fees and they still get the full amount.",
+            "Invoice supports direct Liquid payment, saving you fees. Recipient receives original amount.",
+        optimized_route: "Swap route optimized for fees",
         optimized_route_amount:
             "Swap route optimized, saving you ~{{ amount }} {{ denomination }}",
+        claim_address_prompt: "Enter the address to claim the swap to:",
+        claim: "Claim",
+        claimed: "Swap has been claimed successfully!",
+        rescue: "Rescue",
+        rescue_swap: "Rescue Swap",
+        claim_swap: "Claim: {{ id }}",
+        failed_get_swap: "Could not get swap {{ id }}: {{ error }}",
     },
     de: {
         language: "Deutsch",
@@ -393,7 +401,7 @@ const dict = {
         copy_bip21: "BIP21",
         copied: "kopiert!",
         refund_swap: "Swap Rückerstatten",
-        refund_a_swap_subline:
+        rescue_a_swap_subline:
             "Lade deinen Rettungsschlüssel hoch oder gib ihn ein, um einen Swap zu erstatten, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
         refund_a_swap_mnemonic:
             "Gib deinen Rettungsschlüssel ein, um einen Swap zu erstatten, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
@@ -403,7 +411,7 @@ const dict = {
         no_refundable_swaps:
             "Keine erstattungsfähigen Swaps in Browserverlauf gefunden",
         cant_find_swap: "Swap nicht gefunden?",
-        refund_external_explainer:
+        rescue_external_explainer:
             "Versuche einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden zu erstatten.",
         refund_external_explainer_rsk:
             "Wenn du RBTC in einen Boltz-Swap geschickt hast, verbinde dein Rootstock Wallet um nach erstattungsfähigen Swaps zu suchen, die nicht im Swapverlauf dieses Browsers gespeichert sind.",
@@ -411,7 +419,7 @@ const dict = {
             "Scanne nach erstattungsfähigen Swaps in Rootstock-Wallet...",
         connected_wallet_no_swaps:
             "Das angeschlossene Rootstock Wallet enthält keine erstattungsfähigen Swaps.",
-        refund_external_swap: "Externen Swap Rückerstatten",
+        rescue_external_swap: "Externen Swap Rückerstatten",
         history_no_swaps:
             "Es sieht so aus, als hättest du noch nicht geswappt.",
         refund_address_header: "Adresse deines {{ asset }} Wallets eingeben",
@@ -611,10 +619,6 @@ const dict = {
         },
         refresh_for_refund:
             "Falls du Bitcoin in diesen Swap gesendet hast, aktualisiere die Seite um eine Rückerstattung zu prüfen.",
-        applied_routing_hint:
-            "Dein Empfänger unterstützt den direkten Empfang von {{ asset }}. So sparst du Gebühren und der Empfänger bekommt weiterhin den vollen Betrag.",
-        optimized_route_amount:
-            "Swap-Route optimiert, du sparst ~{{ amount }} {{ denomination }}",
     },
     es: {
         language: "Español",
@@ -705,7 +709,7 @@ const dict = {
         copy_bip21: "BIP21",
         copied: "Copiado",
         refund_swap: "Reembolsar Intercambio",
-        refund_a_swap_subline:
+        rescue_a_swap_subline:
             "Si enviaste BTC o L-BTC a un intercambio Boltz, cargue o introduzca su clave de rescate para reembolsar un swap que no esté disponible en el historial de swaps de este navegador",
         refund_a_swap_mnemonic:
             "Ingrese tu clave de rescate y recupere tus fondos bloqueados.",
@@ -715,7 +719,7 @@ const dict = {
         no_refundable_swaps:
             "No se han encontrado swaps reembolsables en el historial de tu navegador",
         cant_find_swap: "¿No encuentras tu intercambio?",
-        refund_external_explainer:
+        rescue_external_explainer:
             "Intenta reembolsar un swap externo mediante una clave de rescate y otros métodos de emergencia.",
         refund_external_explainer_rsk:
             "Si enviaste RBTC a un swap de Boltz, conecta tu monedero Rootstock para buscar swaps reembolsables que no estén guardados en el historial de swaps de este navegador.",
@@ -723,7 +727,7 @@ const dict = {
             "Escaneando en busca de swaps reembolsables en tu monedero Rootstock...",
         connected_wallet_no_swaps:
             "El monedero Rootstock conectada no contiene ningún swap reembolsable.",
-        refund_external_swap: "Reembolsar Swap Externo",
+        rescue_external_swap: "Reembolsar Swap Externo",
         history_no_swaps: "Parece que aún no has realizado ningún intercambio.",
         refund_address_header:
             "Introduzca la dirección de tu monedero {{ asset }} para reembolsar",
@@ -921,10 +925,6 @@ const dict = {
         },
         refresh_for_refund:
             "Si has enviado Bitcoin a este intercambio, actualice la página para comprobar si hay un reembolso disponsible.",
-        applied_routing_hint:
-            "Tu destinatario admite recibir {{ asset }} directamente. Así te ahorras comisiones y ellos siguen recibiendo el importe íntegro.",
-        optimized_route_amount:
-            "Ruta de intercambio optimizada, ahorrándote ~{{ amount }} {{ denomination }}",
     },
     pt: {
         language: "Português",
@@ -1017,7 +1017,7 @@ const dict = {
         copy_bip21: "BIP21",
         copied: "Copiado!",
         refund_swap: "Reembolsar troca",
-        refund_a_swap_subline:
+        rescue_a_swap_subline:
             "Se enviou BTC ou L-BTC para uma troca Boltz, faça upload ou insira sua chave de resgate para reembolsar uma troca que não está no histórico deste navegador.",
         refund_a_swap_mnemonic:
             "Insira sua chave de resgate para reembolsar uma troca que não está no histórico deste navegador.",
@@ -1027,7 +1027,7 @@ const dict = {
         no_refundable_swaps:
             "Nenhuma troca reembolsável encontrada no histórico do navegador",
         cant_find_swap: "Não consegue encontrar sua troca?",
-        refund_external_explainer:
+        rescue_external_explainer:
             "Tente reembolsar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
         refund_external_explainer_rsk:
             "Se enviou RBTC para uma troca Boltz, conecte sua carteira Rootstock para procurar por trocas reembolsáveis que não estão no histórico do navegador.",
@@ -1035,7 +1035,7 @@ const dict = {
             "Procurando trocas reembolsáveis na sua carteira Rootstock...",
         connected_wallet_no_swaps:
             "A carteira Rootstock conectada não contém trocas reembolsáveis.",
-        refund_external_swap: "Reembolsar troca externa",
+        rescue_external_swap: "Reembolsar troca externa",
         history_no_swaps: "Parece que ainda não foram feitas trocas.",
         refund_address_header:
             "Informe um endereço {{ asset }} para receber seu reembolso:",
@@ -1228,10 +1228,6 @@ const dict = {
         },
         refresh_for_refund:
             "Se enviou Bitcoin para esta troca, recarregue a página para verificar se existe um reembolso.",
-        applied_routing_hint:
-            "O teu destinatário suporta a receção direta de {{ asset }}. Assim, poupas em taxas e ele continua a receber o valor total.",
-        optimized_route_amount:
-            "Rota de troca otimizada, poupando-te ~{{ amount }} {{ denomination }}",
     },
     zh: {
         language: "中文",
@@ -1294,7 +1290,7 @@ const dict = {
         pay_timeout_blockheight: "超时区块高度",
         pay_expected_amount: "预期金额",
         send_to:
-            "请将准确的{{ amount }}{{ denomination }}发送到以下地址。您可以使用“BIP21”按钮，并将其粘贴到钱包。",
+            "请确保将准确的金额{{ amount }}{{ denomination }}发送到下面显示的地址。否则,交换将失败。最好使用“复制BIP21”按钮,并将其粘贴到您钱包的发送屏幕中。",
         send_between: "在 {{ min }} 和 {{ max }} {{ denomination }} 之间发送至",
         pay_invoice_to: "支付金额为{{ amount }}{{ denomination }}的发票",
         pay_address: "地址",
@@ -1319,14 +1315,14 @@ const dict = {
         copy_bip21: "BIP21",
         copied: "已复制",
         refund_swap: "退还交换",
-        refund_a_swap_subline:
+        rescue_a_swap_subline:
             "如果您向 Boltz 互换发送了 BTC 或 L-BTC，请上传或输入您的解救密钥，以退还此浏览器互换历史中不可用的互换。",
         refund_a_swap_mnemonic: "输入您的救援钥匙，取回被锁定的资金。",
         refund_past_swaps: "过去的交换",
         refund_past_swaps_subline: "保存在浏览器存储中的交换",
         no_refundable_swaps: "在您的浏览器历史中未发现可退款的交换。",
         cant_find_swap: "找不到您的交换？",
-        refund_external_explainer:
+        rescue_external_explainer:
             "尝试通过救援钥匙和其他紧急方法退款外部交换。",
         refund_external_explainer_rsk:
             "如果您将 RBTC 发送到 Boltz 交换中，请连接您的 Rootstock 钱包，扫描未保存在此浏览器交换历史记录中的可退款交换。",
@@ -1334,7 +1330,7 @@ const dict = {
             "正在扫描您的 Rootstock 钱包中的可退款掉期。。。",
         connected_wallet_no_swaps:
             "已连接的 Rootstock 钱包不包含任何可退款掉期。",
-        refund_external_swap: "退款外部交换",
+        rescue_external_swap: "退款外部交换",
         history_no_swaps: "看起来您还没有进行任何交换。",
         refund_address_header: "输入要退款的 {{ asset }} 钱包地址",
         refund_address_header_no_asset: "输入要退款的钱包地址",
@@ -1506,10 +1502,6 @@ const dict = {
         },
         refresh_for_refund:
             "如果您向本次交换发送了比特币，请刷新页面检查是否有退款。",
-        applied_routing_hint:
-            "你的收款人支持直接接收 {{ asset }}。这为你节省了手续费，且对方仍会收到全额款项。",
-        optimized_route_amount:
-            "交换路径已优化，为你节省了约 {{ amount }} {{ denomination }}",
     },
     ja: {
         language: "日本語",
@@ -1604,7 +1596,7 @@ const dict = {
         copy_bip21: "BIP21をコピー",
         copied: "クリップボードにコピーしました！",
         refund_swap: "スワップを返金する",
-        refund_a_swap_subline:
+        rescue_a_swap_subline:
             "BTCまたはL-BTCをBoltzスワップに送信した場合、このブラウザのスワップ履歴にないスワップを払い戻すには、レスキューキーをアップロードまたは入力してください。",
         refund_a_swap_mnemonic:
             "このブラウザのスワップ履歴にないスワップを払い戻すには、レスキューキーを挿入してください。",
@@ -1613,7 +1605,7 @@ const dict = {
         no_refundable_swaps:
             "ブラウザの履歴に返金可能なスワップが見つかりません。",
         cant_find_swap: "スワップが見つからない？",
-        refund_external_explainer:
+        rescue_external_explainer:
             "レスキューキーやその他の緊急手段で外部スワップの払い戻しを試みる。",
         refund_external_explainer_rsk:
             "BoltzスワップにRBTCを送信した場合、Rootstock Walletを接続して、このブラウザのスワップ履歴に保存されていない返金可能スワップをスキャンします。",
@@ -1621,7 +1613,7 @@ const dict = {
             "Rootstockウォレットにある払い戻し可能なスワップをスキャンしています...",
         connected_wallet_no_swaps:
             "接続されているRootstockウォレットには返金可能なスワップが含まれていません。",
-        refund_external_swap: "払い戻し外部スワップ",
+        rescue_external_swap: "払い戻し外部スワップ",
         history_no_swaps: "まだスワップを行っていないようです。",
         refund_address_header:
             "返金用の {{ asset }} ウォレットのアドレスを入力",
@@ -1814,10 +1806,6 @@ const dict = {
         },
         refresh_for_refund:
             "このスワップにビットコインを送金した場合は、ページを更新して払い戻しを確認してください。",
-        applied_routing_hint:
-            "受取人は{{ asset }}の直接受け取りに対応しています。これにより手数料が節約でき、相手は引き続き全額を受け取ります。",
-        optimized_route_amount:
-            "スワップ経路が最適化され、約{{ amount }} {{ denomination }}を節約できました。",
     },
 };
 
