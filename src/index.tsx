@@ -31,10 +31,10 @@ import MnemonicVerify from "./pages/MnemonicVerify";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
 import Privacy from "./pages/Privacy";
-import Refund from "./pages/Refund";
 import RefundEvm from "./pages/RefundEvm";
-import RefundExternal from "./pages/RefundExternal";
 import RefundRescue from "./pages/RefundRescue";
+import Rescue from "./pages/Rescue";
+import RescueExternal from "./pages/RescueExternal";
 import Terms from "./pages/Terms";
 import "./style/index.scss";
 import { initEcc } from "./utils/ecpair";
@@ -110,10 +110,10 @@ const cleanup = render(
                 component={RefundEvm}
             />
             <Route path="/error" component={() => <Error />} />
-            <Route path="/refund" component={Refund} />
-            <Route path="/refund/external" component={RefundExternal} />
-            <Route path="/refund/external/:type" component={RefundExternal} />
-            <Route path="/refund/rescue/:id" component={RefundRescue} />
+            <Route path="/rescue" component={Rescue} />
+            <Route path="/rescue/external" component={RescueExternal} />
+            <Route path="/rescue/external/:type" component={RescueExternal} />
+            <Route path="/rescue/refund/:id" component={RefundRescue} />
             <Route path="/history" component={History} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />

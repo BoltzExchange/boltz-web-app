@@ -278,7 +278,7 @@ export const RefundBtcLike = () => {
                                             surroundingSeparators={false}
                                             onClick={(swap) => {
                                                 navigate(
-                                                    `/refund/rescue/${swap.id}`,
+                                                    `/rescue/refund/${swap.id}`,
                                                 );
                                             }}
                                             hideDateOnMobile
@@ -431,7 +431,7 @@ export const RefundRsk = () => {
     );
 };
 
-const RefundExternal = () => {
+const RescueExternal = () => {
     const { wasmSupported, t } = useGlobalContext();
 
     const params = useParams();
@@ -464,7 +464,7 @@ const RefundExternal = () => {
                                         class={`tab ${selected() === tab.value ? "active" : ""}`}
                                         onClick={() =>
                                             navigate(
-                                                `/refund/external/${tab.value}`,
+                                                `/rescue/external/${tab.value}`,
                                             )
                                         }>
                                         {tab.name}
@@ -486,4 +486,4 @@ const RefundExternal = () => {
     );
 };
 
-export default RefundExternal;
+export default RescueExternal;
