@@ -10,16 +10,20 @@ import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
-import type { RescuableSwap } from "../utils/boltzClient";
+import type { RestorableSwap } from "../utils/boltzClient";
 import { getSwapStatus } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import { getRefundableUTXOs } from "../utils/refund";
 import { deriveKey } from "../utils/rescueFile";
-import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type {
+    ChainSwap,
+    ReverseSwap,
+    SubmarineSwap,
+} from "../utils/swapCreator";
 
 export const mapSwap = (
-    swap?: RescuableSwap,
-): SubmarineSwap | ChainSwap | undefined => {
+    swap?: RestorableSwap,
+): SubmarineSwap | ChainSwap | ReverseSwap | undefined => {
     if (swap === undefined) {
         return undefined;
     }
@@ -27,26 +31,49 @@ export const mapSwap = (
     if (swap.type === SwapType.Submarine) {
         return {
             ...swap,
-            swapTree: swap.tree,
-            assetSend: swap.symbol,
+            swapTree: swap.refundDetails.tree,
+            assetSend: swap.from,
+            assetReceive: swap.to,
             version: OutputType.Taproot,
-            address: swap.lockupAddress,
-            refundPrivateKeyIndex: swap.keyIndex,
-            claimPublicKey: swap.serverPublicKey,
+            blindingKey: swap.refundDetails.blindingKey,
+            address: swap.refundDetails.lockupAddress,
+            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+            claimPublicKey: swap.refundDetails.serverPublicKey,
+            preimageHash: swap.preimageHash,
         } as Partial<SubmarineSwap> as SubmarineSwap;
-    } else if (swap.type === SwapType.Chain) {
+    }
+    if (swap.type === SwapType.Chain) {
         return {
             ...swap,
-            assetSend: swap.symbol,
+            assetSend: swap.from,
+            assetReceive: swap.to,
             version: OutputType.Taproot,
-            refundPrivateKeyIndex: swap.keyIndex,
+            address: swap.claimDetails.lockupAddress,
+            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+            claimPublicKey: swap.claimDetails.serverPublicKey,
+            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+            claimDetails: {
+                ...swap.claimDetails,
+                swapTree: swap.claimDetails.tree,
+            },
             lockupDetails: {
-                swapTree: swap.tree,
-                blindingKey: swap.blindingKey,
-                lockupAddress: swap.lockupAddress,
-                serverPublicKey: swap.serverPublicKey,
-            } as Partial<ChainSwap["lockupDetails"]>,
+                ...swap.refundDetails,
+                swapTree: swap.refundDetails.tree,
+            },
+            preimageHash: swap.preimageHash,
         } as Partial<ChainSwap> as ChainSwap;
+    } else if (swap.type === SwapType.Reverse) {
+        return {
+            ...swap,
+            assetSend: swap.from,
+            assetReceive: swap.to,
+            version: OutputType.Taproot,
+            address: swap.claimDetails.lockupAddress,
+            claimPublicKey: swap.claimDetails.serverPublicKey,
+            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+            sendAmount: swap.claimDetails.amount,
+            preimageHash: swap.preimageHash,
+        } as Partial<ReverseSwap> as ReverseSwap;
     }
 
     return undefined;

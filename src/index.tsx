@@ -23,6 +23,7 @@ import Backup from "./pages/Backup";
 import { BackupMnemonic } from "./pages/BackupMnemonic";
 import BackupVerify from "./pages/BackupVerify";
 import BackupVerifyExisting from "./pages/BackupVerifyExisting";
+import ClaimRescue from "./pages/ClaimRescue";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
 import Hero from "./pages/Hero";
@@ -97,6 +98,7 @@ const cleanup = render(
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
+            <Route path="/swap/:id/claim" component={ClaimRescue} />
             <Route path="/backup" component={Backup} />
             <Route path="/backup/mnemonic" component={BackupMnemonic} />
             <Route path="/backup/mnemonic/verify" component={MnemonicVerify} />
@@ -113,6 +115,7 @@ const cleanup = render(
             <Route path="/rescue" component={Rescue} />
             <Route path="/rescue/external" component={RescueExternal} />
             <Route path="/rescue/external/:type" component={RescueExternal} />
+            <Route path="/rescue/claim/:id" component={ClaimRescue} />
             <Route path="/rescue/refund/:id" component={RefundRescue} />
             <Route path="/history" component={History} />
             <Route path="/terms" component={Terms} />

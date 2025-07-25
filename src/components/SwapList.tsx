@@ -9,7 +9,11 @@ import type { RescuableSwap } from "../utils/boltzClient";
 import type { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
-type Swap = (SomeSwap | RescuableSwap) & { disabled?: boolean };
+type Swap = (SomeSwap | RescuableSwap) & {
+    disabled?: boolean;
+    claimable?: boolean;
+    refundable?: boolean;
+};
 
 const getSwapDate = <T extends Swap>(swap: T) => {
     if ("date" in swap) {
