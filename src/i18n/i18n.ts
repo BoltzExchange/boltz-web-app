@@ -305,6 +305,7 @@ const dict = {
         claim: "Claim",
         claimed: "Swap has been claimed successfully!",
         rescue: "Rescue",
+        rescue_swap: "Rescue Swap",
         claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Could not get swap {{ id }}: {{ error }}",
     },
