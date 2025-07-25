@@ -8,6 +8,8 @@ import log from "loglevel";
 import { LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
+import type { RescueFile } from "../utils/rescueFile";
+import { deriveKey } from "../utils/rescueFile";
 import type { TransactionInterface } from "./boltzClient";
 import {
     broadcastTransaction,
@@ -54,6 +56,7 @@ const createAdjustedClaim = async <
     const feeBudget = Math.floor(inputSum - swap.receiveAmount);
 
     const constructClaimTransaction = getConstructClaimTransaction(asset);
+
     return constructClaimTransaction(
         claimDetails as ClaimDetails[] | LiquidClaimDetails[],
         destination,
@@ -385,4 +388,13 @@ export const createSubmarineSignature = async (
         musig.getPublicNonce(),
         musig.signPartial(),
     );
+};
+
+export const derivePreimageFromRescueKey = (
+    rescueKey: RescueFile,
+    keyIndex: number,
+): Buffer => {
+    const privateKey = deriveKey(rescueKey, keyIndex).privateKey;
+
+    return crypto.sha256(Buffer.from(privateKey));
 };
