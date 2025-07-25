@@ -5,6 +5,7 @@ import {
     getBitcoinAddress,
     getBitcoinWalletTx,
     payInvoiceLnd,
+    verifyRescueFile,
 } from "./utils";
 
 test.describe("reverseSwap", () => {
@@ -33,6 +34,8 @@ test.describe("reverseSwap", () => {
             "button[data-testid='create-swap-button']",
         );
         await buttonCreateSwap.click();
+
+        await verifyRescueFile(page);
 
         const payInvoiceTitle = page.locator(
             "h2[data-testid='pay-invoice-title']",
