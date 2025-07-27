@@ -1062,7 +1062,7 @@ const dict = {
         pay_invoice_webln: "pagar invoice via WebLN",
         select_asset: "Selecionar ativo de {{ direction }}",
         tx_confirmed: "Transação confirmada",
-        tx_ready_to_claim: "Recebendo transação agora...",
+        tx_ready_to_claim: "Resgatando transação agora...",
         transaction_refunded: "A Boltz reembolsou a transação",
         refunded: "Troca reembolsada com sucesso!",
         broadcasted: "Reembolso transmitido",
