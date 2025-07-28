@@ -9,13 +9,13 @@ import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
 import "../style/tabs.scss";
 import { isMobile } from "../utils/helper";
-import { createRefundList } from "../utils/refund";
+import { RescueAction, createRescueList } from "../utils/rescue";
 import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 const swapsPerPage = 10;
 
-const Refund = () => {
+const Rescue = () => {
     const navigate = useNavigate();
     const { getSwaps, wasmSupported, t } = useGlobalContext();
 
@@ -32,7 +32,7 @@ const Refund = () => {
         currentSwaps,
         async (swaps: SomeSwap[]) => {
             setLoading(true);
-            return await createRefundList(swaps).finally(() =>
+            return await createRescueList(swaps).finally(() =>
                 setLoading(false),
             );
         },
@@ -50,13 +50,13 @@ const Refund = () => {
                 <div class="frame refund" data-testid="refundFrame">
                     <header>
                         <SettingsCog />
-                        <h2>{t("refund_swap")}</h2>
+                        <h2>{t("rescue_swap")}</h2>
                     </header>
                     <Show
                         when={allSwaps()?.length > 0}
                         fallback={
                             <>
-                                <p>{t("no_refundable_swaps")}</p>
+                                <p>{t("no_rescuable_swaps")}</p>
                                 <hr />
                             </>
                         }>
@@ -71,7 +71,7 @@ const Refund = () => {
                                 <SwapList
                                     swapsSignal={refundList}
                                     action={(swap) =>
-                                        swap.disabled
+                                        swap.action === RescueAction.None
                                             ? t("no_refund_due")
                                             : t("refund")
                                     }
@@ -96,8 +96,8 @@ const Refund = () => {
                     <p>{t("refund_external_explainer")}</p>
                     <button
                         class="btn"
-                        onClick={() => navigate(`/refund/external`)}>
-                        {t("refund_external_swap")}
+                        onClick={() => navigate(`/rescue/external`)}>
+                        {t("rescue_external_swap")}
                     </button>
                     <SettingsMenu />
                 </div>
@@ -106,4 +106,4 @@ const Refund = () => {
     );
 };
 
-export default Refund;
+export default Rescue;

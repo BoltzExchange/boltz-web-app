@@ -13,7 +13,7 @@ import { useRescueContext } from "../context/Rescue";
 import type { RescuableSwap } from "../utils/boltzClient";
 import { getSwapStatus } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
-import { getRefundableUTXOs } from "../utils/refund";
+import { getRefundableUTXOs } from "../utils/rescue";
 import { deriveKey } from "../utils/rescueFile";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 

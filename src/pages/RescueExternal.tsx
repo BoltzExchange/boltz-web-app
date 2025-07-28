@@ -35,9 +35,12 @@ import type { LogRefundData } from "../utils/contractLogs";
 import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
-import { getRefundableUTXOs } from "../utils/refund";
-import { createRefundList } from "../utils/refund";
 import { validateRefundFile } from "../utils/refundFile";
+import {
+    RescueAction,
+    createRescueList,
+    getRefundableUTXOs,
+} from "../utils/rescue";
 import type { RescueFile } from "../utils/rescueFile";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
@@ -142,7 +145,7 @@ export const RefundBtcLike = () => {
         currentSwaps,
         async (swaps: (SubmarineSwap & RescuableSwap)[]) => {
             setLoading(true);
-            return await createRefundList(swaps).finally(() =>
+            return await createRescueList(swaps).finally(() =>
                 setLoading(false),
             );
         },
@@ -235,7 +238,7 @@ export const RefundBtcLike = () => {
                 </h3>
             </Show>
             <Show when={searchParams.mode === rescueKeyMode}>
-                <p>{t("refund_a_swap_mnemonic")}</p>
+                <p>{t("rescue_a_swap_mnemonic")}</p>
                 <MnemonicInput
                     onSubmit={(mnemonic) => {
                         setRefundType(RefundType.Rescue);
@@ -278,7 +281,7 @@ export const RefundBtcLike = () => {
                                             surroundingSeparators={false}
                                             onClick={(swap) => {
                                                 navigate(
-                                                    `/refund/rescue/${swap.id}`,
+                                                    `/rescue/refund/${swap.id}`,
                                                 );
                                             }}
                                             hideDateOnMobile
@@ -431,7 +434,7 @@ export const RefundRsk = () => {
     );
 };
 
-const RefundExternal = () => {
+const RescueExternal = () => {
     const { wasmSupported, t } = useGlobalContext();
 
     const params = useParams();
@@ -464,7 +467,7 @@ const RefundExternal = () => {
                                         class={`tab ${selected() === tab.value ? "active" : ""}`}
                                         onClick={() =>
                                             navigate(
-                                                `/refund/external/${tab.value}`,
+                                                `/rescue/external/${tab.value}`,
                                             )
                                         }>
                                         {tab.name}
@@ -486,4 +489,4 @@ const RefundExternal = () => {
     );
 };
 
-export default RefundExternal;
+export default RescueExternal;

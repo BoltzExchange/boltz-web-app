@@ -17,7 +17,7 @@ import { getEipRefundSignature } from "../utils/boltzClient";
 import { getAddress, getNetwork } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { decodeInvoice } from "../utils/invoice";
-import { refund } from "../utils/refund";
+import { refund } from "../utils/rescue";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ContractTransaction from "./ContractTransaction";

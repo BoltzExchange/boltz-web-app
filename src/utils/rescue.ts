@@ -32,6 +32,12 @@ import type { ChainSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 import { isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
+export enum RescueAction {
+    None,
+    Claim,
+    Refund,
+}
+
 const refundTaproot = async <T extends TransactionInterface>(
     swap: SubmarineSwap | ChainSwap,
     lockupTxs: TransactionInterface[],
@@ -318,24 +324,39 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     }
 
     // if both requests were "rejected"
-    log.error("failed to fetch utxo data for swap: ", currentSwap.id);
+    log.error("failed to fetch utxo data for swap:", currentSwap.id);
     return [];
 };
 
-export const createRefundList = async (swaps: SomeSwap[]) => {
+export const createRescueList = async (swaps: SomeSwap[]) => {
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
                 const utxos = await getRefundableUTXOs(swap);
 
                 if (utxos.length > 0) {
-                    return swap;
+                    return { ...swap, action: RescueAction.Refund };
                 }
 
-                return { ...swap, disabled: true };
+                if (
+                    (swap.type === SwapType.Chain ||
+                        swap.type === SwapType.Reverse) &&
+                    [
+                        swapStatusPending.TransactionConfirmed,
+                        swapStatusPending.TransactionClaimPending,
+                        swapStatusPending.TransactionServerConfirmed,
+                    ].includes(swap.status)
+                ) {
+                    return { ...swap, action: RescueAction.Claim };
+                }
+
+                return { ...swap, action: RescueAction.None };
             } catch (e) {
-                log.error("error creating refund list: ", e.stack);
-                return { ...swap, disabled: true };
+                log.error(
+                    `error creating rescue list for swap ${swap.id}:`,
+                    formatError(e),
+                );
+                return { ...swap, action: RescueAction.None };
             }
         }),
     );

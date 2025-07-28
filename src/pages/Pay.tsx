@@ -38,7 +38,7 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { getRefundableUTXOs, isSwapRefundable } from "../utils/refund";
+import { getRefundableUTXOs, isSwapRefundable } from "../utils/rescue";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Pay = () => {
