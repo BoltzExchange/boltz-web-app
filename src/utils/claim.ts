@@ -53,6 +53,7 @@ const createAdjustedClaim = async <
     for (const details of claimDetails) {
         inputSum += await getOutputAmount(asset, details);
     }
+
     const feeBudget = Math.floor(inputSum - swap.receiveAmount);
 
     const constructClaimTransaction = getConstructClaimTransaction(asset);
@@ -89,6 +90,11 @@ const claimReverseSwap = async (
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
     const tweakedKey = tweakMusig(asset, musig, tree.tree);
     const swapOutput = detectSwap(tweakedKey, lockupTx);
+
+    if (swapOutput === undefined) {
+        throw new Error("Swap output is undefined");
+    }
+
     const details = [
         {
             ...swapOutput,
