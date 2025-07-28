@@ -9,7 +9,7 @@ const RescueFile = () => {
     const { rescueFile } = useGlobalContext();
 
     return (
-        <div class="flex">
+        <div class="flex" data-testid="rescue-key-download">
             <span
                 class="btn-small"
                 onClick={() => downloadRescueFile(rescueFile)}>
