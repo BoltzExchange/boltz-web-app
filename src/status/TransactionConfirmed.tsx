@@ -88,6 +88,9 @@ const TransactionConfirmed = () => {
                 <div>
                     <h2>{t("tx_confirmed")}</h2>
                     <p>{t("tx_ready_to_claim")}</p>
+                    <Show when={[SwapType.Chain].includes(swap().type)}>
+                        <h3>{t("tx_in_mempool_warning")}</h3>
+                    </Show>
                     <LoadingSpinner />
                 </div>
             }>

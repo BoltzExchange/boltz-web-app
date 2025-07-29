@@ -4,7 +4,6 @@ import type { Accessor } from "solid-js";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { isMobile } from "../utils/helper";
 import type { SomeSwap } from "../utils/swapCreator";
 
 const TransactionMempool = (props: { swap: Accessor<SomeSwap> }) => {
@@ -14,13 +13,7 @@ const TransactionMempool = (props: { swap: Accessor<SomeSwap> }) => {
         <div>
             <h2>{t("tx_in_mempool")}</h2>
             <p>{t("tx_in_mempool_subline")}</p>
-            <Show
-                when={
-                    isMobile() &&
-                    [SwapType.Chain, SwapType.Reverse].includes(
-                        props.swap().type,
-                    )
-                }>
+            <Show when={props.swap().type === SwapType.Chain}>
                 <h3>{t("tx_in_mempool_warning")}</h3>
             </Show>
             <LoadingSpinner />
