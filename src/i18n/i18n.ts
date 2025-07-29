@@ -125,7 +125,7 @@ const dict = {
         tx_in_mempool: "Transaction is in mempool",
         tx_in_mempool_subline: "Waiting for confirmation to complete the swap.",
         tx_in_mempool_warning:
-            "Please keep this tab open until the swap completed!",
+            "Keep this page open, otherwise your swap can't complete!",
         expired: "Swap expired!",
         invoice_pending: "Transaction received, paying invoice.",
         invoice_expired: "Invoice expired, try again!",
@@ -429,7 +429,7 @@ const dict = {
         tx_in_mempool_subline:
             "Warte auf Bestätigung, um den Swap abzuschließen.",
         tx_in_mempool_warning:
-            "Tab nicht schließen, bis der Swap abgeschlossen ist!",
+            "Seite nicht schließen, sonst kann Swap nicht abgeschlossen werden!",
         expired: "Swap ist abgelaufen!",
         invoice_pending: "Transaktion erhalten, Rechnung wird bezahlt.",
         invoice_expired: "Rechnung ist abgelaufen, bitte erneut versuchen!",
@@ -742,7 +742,7 @@ const dict = {
         tx_in_mempool_subline:
             "Esperando confirmación para completar el intercambio.",
         tx_in_mempool_warning:
-            "Por favor, mantenga esta pestaña abierta hasta que se complete el intercambio!",
+            "Mantenga la página abierta, o el intercambio no se completará!",
         expired: "¡El intercambio ha expirado!",
         invoice_pending: "Transacción recibida, pagando la factura...",
         invoice_expired: "La factura ha expirado, ¡intente nuevamente!",
@@ -1053,7 +1053,7 @@ const dict = {
         tx_in_mempool: "Transação na mempool",
         tx_in_mempool_subline: "Aguardando confirmação para concluir a troca.",
         tx_in_mempool_warning:
-            "Por favor, mantenha esta aba aberta até que a troca seja concluída!",
+            "Mantenha esta página aberta, senão a troca não termina!",
         expired: "Troca expirada!",
         invoice_pending: "Transação recebida, a pagar o invoice.",
         invoice_expired: "Invoice expirado, tente novamente!",
@@ -1062,7 +1062,7 @@ const dict = {
         pay_invoice_webln: "pagar invoice via WebLN",
         select_asset: "Selecionar ativo de {{ direction }}",
         tx_confirmed: "Transação confirmada",
-        tx_ready_to_claim: "Recebendo transação agora...",
+        tx_ready_to_claim: "Resgatando transação agora...",
         transaction_refunded: "A Boltz reembolsou a transação",
         refunded: "Troca reembolsada com sucesso!",
         broadcasted: "Reembolso transmitido",
@@ -1348,7 +1348,7 @@ const dict = {
         delete_logs: "您确定要删除日志吗？",
         tx_in_mempool: "事务在内存池中",
         tx_in_mempool_subline: "等待确认以完成交换",
-        tx_in_mempool_warning: "请保持打开此选项卡，直至交换完成！",
+        tx_in_mempool_warning: "请保持此页打开，否则兑换无法完成！",
         expired: "交换已过期！",
         invoice_pending: "收到交易，正在支付发票。",
         invoice_expired: "发票已过期，请重试！",
@@ -1638,7 +1638,7 @@ const dict = {
         tx_in_mempool: "トランザクションがメモリプール内にあります",
         tx_in_mempool_subline: "スワップを完了するために確認を待っています",
         tx_in_mempool_warning:
-            "スワップが完了するまでこのタブを開いておいてください！",
+            "ページを開いたままにしないと、スワップは完了しません！",
         expired: "スワップが期限切れです！",
         invoice_pending:
             "トランザクションを受け取りました。インボイスを支払っています",
