@@ -174,12 +174,38 @@ export type RescuableSwap = {
     tree: SwapTree;
     status: string;
     symbol: string;
+    toSymbol: string;
     keyIndex: number;
     blindingKey?: string;
     lockupAddress: string;
     serverPublicKey: string;
     transaction?: { id: string; vout: number };
     createdAt: number;
+    claimPrivateKey?: string;
+};
+
+type RestorableSwapDetails = {
+    tree: SwapTree;
+    keyIndex: number;
+    lockupAddress: string;
+    serverPublicKey: string;
+    timeoutBlockHeight: number;
+    blindingKey?: string;
+    amount?: number;
+    transaction?: { id: string; vout: number };
+};
+
+export type RestorableSwap = {
+    id: string;
+    type: SwapType;
+    status: string;
+    from: string;
+    to: string;
+    createdAt: number;
+    claimPrivateKey?: string;
+    claimDetails?: RestorableSwapDetails;
+    refundDetails?: RestorableSwapDetails;
+    preimageHash?: string;
 };
 
 export type LockupTransaction = {
@@ -187,6 +213,16 @@ export type LockupTransaction = {
     hex: string;
     timeoutBlockHeight: number;
     timeoutEta?: number;
+};
+
+export type SwapStatus = {
+    status: string;
+    failureReason?: string;
+    zeroConfRejected?: boolean;
+    transaction?: {
+        id: string;
+        hex: string;
+    };
 };
 
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
@@ -455,15 +491,7 @@ export const getReverseTransaction = (id: string) =>
     }>(`/v2/swap/reverse/${id}/transaction`);
 
 export const getSwapStatus = (id: string) =>
-    fetcher<{
-        status: string;
-        failureReason?: string;
-        zeroConfRejected?: boolean;
-        transaction?: {
-            id: string;
-            hex: string;
-        };
-    }>(`/v2/swap/${id}`);
+    fetcher<SwapStatus>(`/v2/swap/${id}`);
 
 export const getChainSwapClaimDetails = (id: string) =>
     fetcher<{
@@ -506,6 +534,9 @@ export const getSubmarinePreimage = (id: string) =>
 
 export const getRescuableSwaps = (xpub: string) =>
     fetcher<RescuableSwap[]>(`/v2/swap/rescue`, { xpub });
+
+export const getRestorableSwaps = (xpub: string) =>
+    fetcher<RestorableSwap[]>(`/v2/swap/restore`, { xpub });
 
 export {
     Pairs,

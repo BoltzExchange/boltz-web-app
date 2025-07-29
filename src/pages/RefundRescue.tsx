@@ -10,16 +10,16 @@ import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
-import type { RescuableSwap } from "../utils/boltzClient";
+import type { ChainSwapDetails, RestorableSwap } from "../utils/boltzClient";
 import { getSwapStatus } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import { getRefundableUTXOs } from "../utils/rescue";
 import { deriveKey } from "../utils/rescueFile";
-import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 
 export const mapSwap = (
-    swap?: RescuableSwap,
-): SubmarineSwap | ChainSwap | undefined => {
+    swap?: RestorableSwap,
+): Partial<SomeSwap> | undefined => {
     if (swap === undefined) {
         return undefined;
     }
@@ -27,26 +27,42 @@ export const mapSwap = (
     if (swap.type === SwapType.Submarine) {
         return {
             ...swap,
-            swapTree: swap.tree,
-            assetSend: swap.symbol,
+            swapTree: swap.refundDetails.tree,
+            assetSend: swap.from,
+            assetReceive: swap.to,
             version: OutputType.Taproot,
-            address: swap.lockupAddress,
-            refundPrivateKeyIndex: swap.keyIndex,
-            claimPublicKey: swap.serverPublicKey,
-        } as Partial<SubmarineSwap> as SubmarineSwap;
-    } else if (swap.type === SwapType.Chain) {
+            blindingKey: swap.refundDetails.blindingKey,
+            address: swap.refundDetails.lockupAddress,
+            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+            claimPublicKey: swap.refundDetails.serverPublicKey,
+        };
+    }
+    if (swap.type === SwapType.Chain) {
         return {
             ...swap,
-            assetSend: swap.symbol,
+            assetSend: swap.from,
+            assetReceive: swap.to,
             version: OutputType.Taproot,
-            refundPrivateKeyIndex: swap.keyIndex,
+            address: swap.claimDetails.lockupAddress,
+            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+            claimPublicKey: swap.claimDetails.serverPublicKey,
+            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
             lockupDetails: {
-                swapTree: swap.tree,
-                blindingKey: swap.blindingKey,
-                lockupAddress: swap.lockupAddress,
-                serverPublicKey: swap.serverPublicKey,
-            } as Partial<ChainSwap["lockupDetails"]>,
-        } as Partial<ChainSwap> as ChainSwap;
+                ...swap.refundDetails,
+                swapTree: swap.refundDetails.tree,
+            } as ChainSwapDetails,
+        };
+    } else if (swap.type === SwapType.Reverse) {
+        return {
+            ...swap,
+            assetSend: swap.from,
+            assetReceive: swap.to,
+            version: OutputType.Taproot,
+            address: swap.claimDetails.lockupAddress,
+            claimPublicKey: swap.claimDetails.serverPublicKey,
+            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+            sendAmount: swap.claimDetails.amount,
+        };
     }
 
     return undefined;
@@ -75,12 +91,12 @@ const RefundRescue = () => {
         if (rescuableSwap()) {
             const res = await getSwapStatus(rescuableSwap().id);
             log.debug("selecting swap", rescuableSwap());
-            setSwap(rescuableSwap());
+            setSwap(rescuableSwap() as SomeSwap);
             setSwapStatus(res.status);
             setSwapStatusTransaction(res.transaction);
             setFailureReason(res.failureReason);
 
-            const utxos = await getRefundableUTXOs(rescuableSwap());
+            const utxos = await getRefundableUTXOs(rescuableSwap() as SomeSwap);
             setRefundableUTXOs(utxos);
         }
     });

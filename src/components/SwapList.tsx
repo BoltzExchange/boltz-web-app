@@ -6,10 +6,13 @@ import { For, Show, createEffect, createSignal } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 import type { RescuableSwap } from "../utils/boltzClient";
+import { RescueAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
-type Swap = (SomeSwap | RescuableSwap) & { disabled?: boolean };
+type Swap = (SomeSwap | RescuableSwap) & {
+    action?: RescueAction;
+};
 
 const getSwapDate = <T extends Swap>(swap: T) => {
     if ("date" in swap) {
@@ -24,8 +27,8 @@ export const sortSwaps = <T extends Swap>(swaps: T[]) => {
         const aDate = getSwapDate(a);
         const bDate = getSwapDate(b);
 
-        if (a.disabled !== b.disabled) {
-            return a.disabled ? 1 : -1;
+        if (a.action !== b.action) {
+            return a.action ? 1 : -1;
         }
 
         // Within each group (disabled/enabled), sort by date descending
@@ -78,9 +81,21 @@ const SwapList = (props: {
                     <>
                         <div
                             data-testid={`swaplist-item-${swap.id}`}
-                            class={`swaplist-item ${swap.disabled ? "disabled" : ""}`}
+                            class={`swaplist-item ${
+                                [
+                                    RescueAction.None,
+                                    RescueAction.Pending,
+                                ].includes(swap.action)
+                                    ? "disabled"
+                                    : ""
+                            }`}
                             onClick={() => {
-                                if (swap.disabled) {
+                                if (
+                                    [
+                                        RescueAction.None,
+                                        RescueAction.Pending,
+                                    ].includes(swap.action)
+                                ) {
                                     return;
                                 }
 

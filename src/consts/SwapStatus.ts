@@ -4,6 +4,7 @@ export const swapStatusPending = {
     SwapCreated: "swap.created",
     TransactionConfirmed: "transaction.confirmed",
     TransactionMempool: "transaction.mempool",
+    TransactionZeroConfRejected: "transaction.zeroconf.rejected",
     TransactionClaimPending: "transaction.claim.pending",
     TransactionServerMempool: "transaction.server.mempool",
     TransactionServerConfirmed: "transaction.server.confirmed",

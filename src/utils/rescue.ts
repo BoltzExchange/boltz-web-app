@@ -36,6 +36,7 @@ export enum RescueAction {
     None,
     Claim,
     Refund,
+    Pending,
 }
 
 const refundTaproot = async <T extends TransactionInterface>(
@@ -332,22 +333,28 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
-                const utxos = await getRefundableUTXOs(swap);
-
-                if (utxos.length > 0) {
-                    return { ...swap, action: RescueAction.Refund };
-                }
-
                 if (
                     (swap.type === SwapType.Chain ||
                         swap.type === SwapType.Reverse) &&
                     [
+                        swapStatusPending.TransactionMempool,
                         swapStatusPending.TransactionConfirmed,
                         swapStatusPending.TransactionClaimPending,
+                        swapStatusPending.TransactionServerMempool,
                         swapStatusPending.TransactionServerConfirmed,
                     ].includes(swap.status)
                 ) {
                     return { ...swap, action: RescueAction.Claim };
+                }
+
+                if (Object.values(swapStatusPending).includes(swap.status)) {
+                    return { ...swap, action: RescueAction.Pending };
+                }
+
+                const utxos = await getRefundableUTXOs(swap);
+
+                if (utxos.length > 0) {
+                    return { ...swap, action: RescueAction.Refund };
                 }
 
                 return { ...swap, action: RescueAction.None };

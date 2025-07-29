@@ -93,7 +93,7 @@ const Rescue = () => {
                         <hr />
                     </Show>
                     <h4>{t("cant_find_swap")}</h4>
-                    <p>{t("refund_external_explainer")}</p>
+                    <p>{t("rescue_external_explainer")}</p>
                     <button
                         class="btn"
                         onClick={() => navigate(`/rescue/external`)}>
