@@ -10,11 +10,11 @@ import { RescueAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
-type Swap = (SomeSwap | RescuableSwap) & {
+export type SwapItem = (SomeSwap | RescuableSwap) & {
     action?: RescueAction;
 };
 
-const getSwapDate = <T extends Swap>(swap: T) => {
+const getSwapDate = <T extends SwapItem>(swap: T) => {
     if ("date" in swap) {
         return swap.date;
     }
@@ -22,7 +22,7 @@ const getSwapDate = <T extends Swap>(swap: T) => {
     return swap.createdAt * 1_000;
 };
 
-export const sortSwaps = <T extends Swap>(swaps: T[]) => {
+export const sortSwaps = <T extends SwapItem>(swaps: T[]) => {
     return swaps.sort((a, b) => {
         const aDate = getSwapDate(a);
         const bDate = getSwapDate(b);
@@ -32,17 +32,17 @@ export const sortSwaps = <T extends Swap>(swaps: T[]) => {
 };
 
 const SwapList = (props: {
-    swapsSignal: Accessor<Swap[]>;
-    action: (swap: Swap) => string;
+    swapsSignal: Accessor<SwapItem[]>;
+    action: (swap: SwapItem) => string;
     onDelete?: () => Promise<unknown>;
-    onClick?: (swap: Swap) => void;
+    onClick?: (swap: SwapItem) => void;
     surroundingSeparators?: boolean;
     hideStatusOnMobile?: boolean;
     hideDateOnMobile?: boolean;
 }) => {
     const navigate = useNavigate();
     const { deleteSwap, t } = useGlobalContext();
-    const [sortedSwaps, setSortedSwaps] = createSignal<Swap[]>([]);
+    const [sortedSwaps, setSortedSwaps] = createSignal<SwapItem[]>([]);
     const [lastSwap, setLastSwap] = createSignal();
 
     createEffect(() => {
