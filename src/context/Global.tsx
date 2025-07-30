@@ -16,7 +16,6 @@ import type { Accessor, JSX, Setter } from "solid-js";
 import { config } from "../config";
 import { Denomination, UrlParam } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
-import { swapStatusFinal } from "../consts/SwapStatus";
 import { detectLanguage } from "../i18n/detect";
 import type { DictKey } from "../i18n/i18n";
 import dict from "../i18n/i18n";
@@ -375,14 +374,17 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     };
 
     const updateSwapStatus = async (id: string, newStatus: string) => {
-        if (swapStatusFinal.includes(newStatus)) {
-            const swap = await getSwap<SubmarineSwap & { status: string }>(id);
+        const swap = await getSwap<SubmarineSwap & { status: string }>(id);
 
-            if (swap.status !== newStatus) {
-                swap.status = newStatus;
-                await setSwapStorage(swap);
-                return true;
-            }
+        if (swap === undefined) {
+            log.warn(`can't update swap ${id} status: swap not found`);
+            return false;
+        }
+
+        if (swap.status !== newStatus) {
+            swap.status = newStatus;
+            await setSwapStorage(swap);
+            return true;
         }
 
         return false;
