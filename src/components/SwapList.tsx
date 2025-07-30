@@ -27,11 +27,6 @@ export const sortSwaps = <T extends Swap>(swaps: T[]) => {
         const aDate = getSwapDate(a);
         const bDate = getSwapDate(b);
 
-        if (a.action !== b.action) {
-            return a.action ? 1 : -1;
-        }
-
-        // Within each group (disabled/enabled), sort by date descending
         return aDate > bDate ? -1 : aDate === bDate ? 0 : 1;
     });
 };
