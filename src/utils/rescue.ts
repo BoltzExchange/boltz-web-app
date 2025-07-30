@@ -33,10 +33,10 @@ import { isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export enum RescueAction {
-    None,
-    Claim,
-    Refund,
-    Pending,
+    None = "none",
+    Claim = "claim",
+    Refund = "refund",
+    Pending = "pending",
 }
 
 const refundTaproot = async <T extends TransactionInterface>(
