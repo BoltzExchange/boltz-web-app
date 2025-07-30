@@ -255,7 +255,7 @@ const dict = {
         no_swaps_found: "No swaps found",
         rif_extra_fee:
             "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
-        no_refund_due: "No refund due",
+        completed: "Completed",
         back: "Back",
         next: "Next",
         pagination_info: "Page {{ start }} of {{ end }}",
