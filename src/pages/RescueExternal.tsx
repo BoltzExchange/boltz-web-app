@@ -45,6 +45,7 @@ import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
+import { rescueListAction } from "./Rescue";
 
 export enum RefundError {
     InvalidData,
@@ -276,27 +277,10 @@ export const RefundBtcLike = () => {
                                         <SwapList
                                             swapsSignal={refundList}
                                             action={(swap) => {
-                                                if (
-                                                    swap.action ===
-                                                    RescueAction.None
-                                                ) {
-                                                    return t("no_refund_due");
-                                                }
-
-                                                if (
-                                                    swap.action ===
-                                                    RescueAction.Pending
-                                                ) {
-                                                    return t("in_progress");
-                                                }
-
-                                                if (
-                                                    swap.action ===
-                                                    RescueAction.Claim
-                                                ) {
-                                                    return t("claim");
-                                                }
-                                                return t("refund");
+                                                return rescueListAction({
+                                                    swap,
+                                                    t,
+                                                });
                                             }}
                                             surroundingSeparators={false}
                                             onClick={(swap) => {
