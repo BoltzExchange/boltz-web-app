@@ -90,6 +90,21 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
 
 export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;
 
+const generatePreimage = ({
+    isRsk,
+    keyIndex,
+    rescueFile,
+}: {
+    isRsk: boolean;
+    keyIndex: number;
+    rescueFile: RescueFile;
+}) => {
+    if (isRsk) {
+        return randomBytes(32);
+    }
+    return derivePreimageFromRescueKey(rescueFile, keyIndex);
+};
+
 export const createSubmarine = async (
     pairs: Pairs,
     assetSend: string,
@@ -144,9 +159,11 @@ export const createReverse = async (
     const isRsk = assetReceive === RBTC;
 
     const key = !isRsk ? newKey() : undefined;
-    const preimage = isRsk
-        ? randomBytes(32)
-        : derivePreimageFromRescueKey(rescueFile, key?.index);
+    const preimage = generatePreimage({
+        isRsk,
+        keyIndex: key?.index,
+        rescueFile,
+    });
 
     const res = await createReverseSwap(
         assetSend,
@@ -192,10 +209,11 @@ export const createChain = async (
     const claimKey = assetReceive !== RBTC ? newKey() : undefined;
     const refundKey = assetSend !== RBTC ? newKey() : undefined;
     const isRsk = assetReceive === RBTC || assetSend === RBTC;
-    const preimage = isRsk
-        ? randomBytes(32)
-        : derivePreimageFromRescueKey(rescueFile, claimKey?.index);
-
+    const preimage = generatePreimage({
+        isRsk,
+        keyIndex: claimKey?.index,
+        rescueFile,
+    });
     const res = await createChainSwap(
         assetSend,
         assetReceive,
