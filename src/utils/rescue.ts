@@ -47,7 +47,7 @@ export const isSwapClaimable = (status: string, type: SwapType) =>
             swapStatusPending.TransactionConfirmed,
             swapStatusPending.TransactionMempool,
             swapStatusSuccess.InvoiceSettled,
-        ].includes(type)) ||
+        ].includes(status)) ||
     (type === SwapType.Chain &&
         [
             swapStatusPending.TransactionServerConfirmed,
