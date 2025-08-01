@@ -2,7 +2,7 @@ import { render, screen } from "@solidjs/testing-library";
 import { userEvent } from "@testing-library/user-event";
 
 import i18n from "../../src/i18n/i18n";
-import RefundExternal, { RefundBtcLike } from "../../src/pages/RefundExternal";
+import RescueExternal, { RefundBtcLike } from "../../src/pages/RescueExternal";
 import {
     TestComponent,
     contextWrapper,
@@ -32,13 +32,13 @@ vi.mock("../../src/utils/blockchain", () => {
     };
 });
 
-describe("RefundExternal", () => {
+describe("RescueExternal", () => {
     test("should render WASM error", async () => {
         render(
             () => (
                 <>
                     <TestComponent />
-                    <RefundExternal />
+                    <RescueExternal />
                 </>
             ),
             {

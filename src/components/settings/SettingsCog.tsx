@@ -6,7 +6,10 @@ const SettingsCog = () => {
     const { setSettingsMenu } = useGlobalContext();
 
     return (
-        <span id="settings-cog" onClick={() => setSettingsMenu(true)}>
+        <span
+            id="settings-cog"
+            data-testid="settings-cog"
+            onClick={() => setSettingsMenu(true)}>
             <ImCog />
         </span>
     );

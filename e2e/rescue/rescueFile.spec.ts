@@ -6,7 +6,7 @@ import path from "path";
 import { config } from "../../src/config";
 import dict from "../../src/i18n/i18n";
 import type { UTXO } from "../../src/utils/blockchain";
-import { getRescuableSwaps } from "../boltzClient";
+import { getRestorableSwaps } from "../boltzClient";
 import {
     createAndVerifySwap,
     elementsSendToAddress,
@@ -50,13 +50,13 @@ test.describe("Rescue file", () => {
     test("should create swap after new backup download", async ({ page }) => {
         await createAndVerifySwap(page, rescueFileJson);
         // Verify that the swap was created
-        expect(await getRescuableSwaps(rescueFileJson)).toHaveLength(1);
+        expect(await getRestorableSwaps(rescueFileJson)).toHaveLength(1);
     });
 
     test("should create swap after existing backup verification", async ({
         page,
     }) => {
-        const existingSwaps = await getRescuableSwaps(existingFilePath);
+        const existingSwaps = await getRestorableSwaps(existingFilePath);
 
         await page.goto("/");
         await setupSwapAssets(page);
@@ -71,7 +71,7 @@ test.describe("Rescue file", () => {
         await page.getByText("address").click();
 
         // Verify that a new swap was created
-        expect(await getRescuableSwaps(existingFilePath)).toHaveLength(
+        expect(await getRestorableSwaps(existingFilePath)).toHaveLength(
             existingSwaps.length + 1,
         );
     });
@@ -113,8 +113,8 @@ test.describe("Rescue file", () => {
             .setInputFiles(existingFilePath);
         await page.getByText("address").click();
 
-        const swaps = await getRescuableSwaps(existingFilePath);
-        const keyIndices = swaps.map((swap) => swap.keyIndex);
+        const swaps = await getRestorableSwaps(existingFilePath);
+        const keyIndices = swaps.map((swap) => swap.refundDetails?.keyIndex);
         for (let i = 0; i < keyIndices.length - 1; i++) {
             expect(keyIndices[i + 1]).toEqual(keyIndices[i] + 1);
         }
@@ -125,9 +125,9 @@ test.describe("Rescue file", () => {
     }) => {
         await createAndVerifySwap(page, rescueFileJson);
 
-        await page.getByRole("link", { name: "Refund" }).click();
+        await page.getByRole("link", { name: "Rescue" }).click();
         await page
-            .getByRole("button", { name: "Refund External Swap" })
+            .getByRole("button", { name: "Rescue external swap" })
             .click();
 
         await page.getByTestId("refundUpload").setInputFiles(rescueFileJson);
@@ -176,9 +176,9 @@ test.describe("Rescue file", () => {
             )
             .toBe(true);
 
-        await page.getByRole("link", { name: "Refund" }).click();
+        await page.getByRole("link", { name: "Rescue" }).click();
         await page
-            .getByRole("button", { name: "Refund External Swap" })
+            .getByRole("button", { name: "Rescue external swap" })
             .click();
 
         await page.getByTestId("refundUpload").setInputFiles(rescueFileJson);

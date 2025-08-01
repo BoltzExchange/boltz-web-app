@@ -2,7 +2,7 @@ import { type Page, request } from "@playwright/test";
 import axios from "axios";
 import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { randomBytes } from "crypto";
 import ECPairFactory from "ecpair";
 import fs from "fs";
@@ -19,6 +19,20 @@ const execAsync = promisify(exec);
 
 const executeInScriptsContainer =
     'docker exec boltz-scripts bash -c "source /etc/profile.d/utils.sh && ';
+
+/**
+ * Execute a command in the background without waiting for its completion.
+ */
+const execCommandBackground = (command: string): void => {
+    const child = spawn(`${executeInScriptsContainer}${command}"`, [], {
+        shell: "/bin/bash",
+        stdio: "ignore",
+        detached: true,
+        timeout: 15_000,
+    });
+
+    child.unref();
+};
 
 const execCommand = async (command: string): Promise<string> => {
     try {
@@ -88,6 +102,10 @@ export const getElementsWalletTx = (txId: string): Promise<string> =>
 
 export const payInvoiceLnd = (invoice: string): Promise<string> =>
     execCommand(`lncli-sim 1 payinvoice -f ${invoice}`);
+
+export const payInvoiceLndBackground = (invoice: string): void => {
+    execCommandBackground(`lncli-sim 1 payinvoice -f ${invoice}`);
+};
 
 export const decodeLiquidRawTransaction = (tx: string): Promise<string> =>
     execCommand(`elements-cli-sim-client decoderawtransaction "${tx}"`);

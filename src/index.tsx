@@ -3,7 +3,7 @@ import "@fontsource/noto-mono";
 import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/800.css";
 import type { RouteSectionProps } from "@solidjs/router";
-import { Route, Router } from "@solidjs/router";
+import { Navigate, Route, Router } from "@solidjs/router";
 import log from "loglevel";
 import { Show } from "solid-js";
 import { render } from "solid-js/web";
@@ -23,6 +23,7 @@ import Backup from "./pages/Backup";
 import { BackupMnemonic } from "./pages/BackupMnemonic";
 import BackupVerify from "./pages/BackupVerify";
 import BackupVerifyExisting from "./pages/BackupVerifyExisting";
+import ClaimRescue from "./pages/ClaimRescue";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
 import Hero from "./pages/Hero";
@@ -31,10 +32,10 @@ import MnemonicVerify from "./pages/MnemonicVerify";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
 import Privacy from "./pages/Privacy";
-import Refund from "./pages/Refund";
 import RefundEvm from "./pages/RefundEvm";
-import RefundExternal from "./pages/RefundExternal";
 import RefundRescue from "./pages/RefundRescue";
+import Rescue from "./pages/Rescue";
+import RescueExternal from "./pages/RescueExternal";
 import Terms from "./pages/Terms";
 import "./style/index.scss";
 import { initEcc } from "./utils/ecpair";
@@ -88,6 +89,37 @@ const App = (props: RouteSectionProps) => {
     );
 };
 
+const redirectRefundToRescue = () => {
+    const params = window.location.search;
+
+    return (
+        <>
+            <Route
+                path="/refund"
+                component={() => <Navigate href={`/rescue${params}`} />}
+            />
+            <Route
+                path="/refund/external"
+                component={() => (
+                    <Navigate href={`/rescue/external${params}`} />
+                )}
+            />
+            <Route
+                path="/refund/external/:type"
+                component={() => (
+                    <Navigate href={`/rescue/external/:type${params}`} />
+                )}
+            />
+            <Route
+                path="/refund/rescue/:id"
+                component={() => (
+                    <Navigate href={`/rescue/refund/:id${params}`} />
+                )}
+            />
+        </>
+    );
+};
+
 const cleanup = render(
     () => (
         <Router root={App}>
@@ -97,6 +129,7 @@ const cleanup = render(
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
             <Route path="/swapbox" component={Create} />
             <Route path="/swap/:id" component={Pay} />
+            <Route path="/swap/:id/claim" component={ClaimRescue} />
             <Route path="/backup" component={Backup} />
             <Route path="/backup/mnemonic" component={BackupMnemonic} />
             <Route path="/backup/mnemonic/verify" component={MnemonicVerify} />
@@ -110,10 +143,12 @@ const cleanup = render(
                 component={RefundEvm}
             />
             <Route path="/error" component={() => <Error />} />
-            <Route path="/refund" component={Refund} />
-            <Route path="/refund/external" component={RefundExternal} />
-            <Route path="/refund/external/:type" component={RefundExternal} />
-            <Route path="/refund/rescue/:id" component={RefundRescue} />
+            <Route path="/rescue" component={Rescue} />
+            <Route path="/rescue/external" component={RescueExternal} />
+            <Route path="/rescue/external/:type" component={RescueExternal} />
+            <Route path="/rescue/claim/:id" component={ClaimRescue} />
+            <Route path="/rescue/refund/:id" component={RefundRescue} />
+            {redirectRefundToRescue()}
             <Route path="/history" component={History} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />

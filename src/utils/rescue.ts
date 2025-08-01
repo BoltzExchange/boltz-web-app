@@ -32,6 +32,27 @@ import type { ChainSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
 import { isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
+export enum RescueAction {
+    None = "none",
+    Claim = "claim",
+    Refund = "refund",
+    Pending = "pending",
+}
+
+export const RescueNoAction = [RescueAction.None, RescueAction.Pending];
+
+export const isSwapClaimable = (status: string, type: SwapType) =>
+    (type === SwapType.Reverse &&
+        [
+            swapStatusPending.TransactionConfirmed,
+            swapStatusPending.TransactionMempool,
+        ].includes(status)) ||
+    (type === SwapType.Chain &&
+        [
+            swapStatusPending.TransactionServerConfirmed,
+            swapStatusPending.TransactionServerMempool,
+        ].includes(status));
+
 const refundTaproot = async <T extends TransactionInterface>(
     swap: SubmarineSwap | ChainSwap,
     lockupTxs: TransactionInterface[],
@@ -294,7 +315,7 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     };
 
     if (!isSwapRefundable(currentSwap)) {
-        log.warn(`swap ${currentSwap.id} is not refundable`);
+        log.debug(`swap ${currentSwap.id} is not refundable`);
         return [];
     }
 
@@ -318,24 +339,35 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     }
 
     // if both requests were "rejected"
-    log.error("failed to fetch utxo data for swap: ", currentSwap.id);
+    log.error("failed to fetch utxo data for swap:", currentSwap.id);
     return [];
 };
 
-export const createRefundList = async (swaps: SomeSwap[]) => {
+export const createRescueList = async (swaps: SomeSwap[]) => {
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
+                if (isSwapClaimable(swap.status, swap.type)) {
+                    return { ...swap, action: RescueAction.Claim };
+                }
+
+                if (Object.values(swapStatusPending).includes(swap.status)) {
+                    return { ...swap, action: RescueAction.Pending };
+                }
+
                 const utxos = await getRefundableUTXOs(swap);
 
                 if (utxos.length > 0) {
-                    return swap;
+                    return { ...swap, action: RescueAction.Refund };
                 }
 
-                return { ...swap, disabled: true };
+                return { ...swap, action: RescueAction.None };
             } catch (e) {
-                log.error("error creating refund list: ", e.stack);
-                return { ...swap, disabled: true };
+                log.error(
+                    `error creating rescue list for swap ${swap.id}:`,
+                    formatError(e),
+                );
+                return { ...swap, action: RescueAction.None };
             }
         }),
     );
