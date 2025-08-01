@@ -1,6 +1,13 @@
 import type { Config } from "src/configs/base";
 import { baseConfig, chooseUrl } from "src/configs/base";
 
+const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
+
+const rskRpcUrls = ["https://public-node.rsk.co"];
+if (rskFallback) {
+    rskRpcUrls.push(rskFallback);
+}
+
 const config = {
     ...baseConfig,
     torUrl: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
@@ -50,7 +57,7 @@ const config = {
             network: {
                 chainName: "Rootstock",
                 chainId: 30,
-                rpcUrls: ["https://public-node.rsk.co"],
+                rpcUrls: rskRpcUrls,
                 nativeCurrency: {
                     name: "RBTC",
                     symbol: "RBTC",

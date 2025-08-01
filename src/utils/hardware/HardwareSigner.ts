@@ -1,4 +1,4 @@
-import type { JsonRpcProvider } from "ethers";
+import { type Provider } from "../provider";
 
 export const derivationPaths = {
     Ethereum: "44'/60'/0'/0",
@@ -18,7 +18,7 @@ export type DerivedAddress = {
 };
 
 export interface HardwareSigner {
-    getProvider(): JsonRpcProvider;
+    getProvider(): Provider;
 
     deriveAddresses(
         basePath: string,

@@ -4,6 +4,7 @@ log.setLevel("error");
 
 vi.mock("ethers", () => ({
     JsonRpcProvider: vi.fn(),
+    FallbackProvider: vi.fn(),
 }));
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
