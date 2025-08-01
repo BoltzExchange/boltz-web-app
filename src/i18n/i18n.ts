@@ -255,7 +255,6 @@ const dict = {
         no_swaps_found: "No swaps found",
         rif_extra_fee:
             "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
-        no_refund_due: "No refund due",
         back: "Back",
         next: "Next",
         pagination_info: "Page {{ start }} of {{ end }}",
@@ -576,7 +575,6 @@ const dict = {
         no_swaps_found: "Keine Swaps gefunden",
         rif_extra_fee:
             "Wallet enthält nicht genug RBTC, Gebühr um RIF-Relay-Gebühr angepasst!",
-        no_refund_due: "Kein Refund fällig",
         back: "Zurück",
         next: "Weiter",
         pagination_info: "Seite {{ start }} von {{ end }}",
@@ -634,6 +632,7 @@ const dict = {
         failed_get_swap: "Swap {{ id }} konnte nicht abgerufen werden",
         not_claimable: "Swap nicht claimbar",
         in_progress: "In Bearbeitung",
+        completed: "Abgeschlossen",
     },
     es: {
         language: "Español",
@@ -897,7 +896,6 @@ const dict = {
         no_swaps_found: "No se encontraron intercambios",
         rif_extra_fee:
             "El monedero no contiene suficientes RBTC, comisión ajustado para incluir comisión de RIF Relay!",
-        no_refund_due: "Sin reembolso pendiente",
         back: "Atrás",
         next: "Siguiente",
         pagination_info: "Página {{ start }} de {{ end }}",
@@ -954,6 +952,7 @@ const dict = {
         failed_get_swap: "No se pudo obtener el intercambio {{ id }}",
         not_claimable: "Intercambio no reclamable",
         in_progress: "En progreso",
+        completed: "Completado",
     },
     pt: {
         language: "Português",
@@ -1215,7 +1214,6 @@ const dict = {
         no_swaps_found: "Nenhuma troca encontrada",
         rif_extra_fee:
             "A carteira não tem RBTC suficiente, taxa ajustada para incluir taxa do RIF Relay!",
-        no_refund_due: "Nada a reembolsar",
         back: "Voltar",
         next: "Próximo",
         pagination_info: "Página {{ start }} de {{ end }}",
@@ -1270,6 +1268,7 @@ const dict = {
         failed_get_swap: "Não foi possível obter a troca {{ id }}",
         not_claimable: "Troca não pode ser recebida",
         in_progress: "Em curso",
+        completed: "Completado",
     },
     zh: {
         language: "中文",
@@ -1506,7 +1505,6 @@ const dict = {
         rescue_key: "救援钥匙",
         no_swaps_found: "未找到交换",
         rif_extra_fee: "钱包中没有足够的 RBTC，费用已调整为包括 RIF 中继费！",
-        no_refund_due: "暂无退款",
         back: "回一页",
         next: "下一页",
         pagination_info: "{{ start }} 的 {{ end }} 页",
@@ -1557,6 +1555,7 @@ const dict = {
         failed_get_swap: "无法获取交换 {{ id }}",
         not_claimable: "交换无法索赔",
         in_progress: "进行中",
+        completed: "已完成",
     },
     ja: {
         language: "日本語",
@@ -1818,7 +1817,6 @@ const dict = {
         no_swaps_found: "スワップが見つからない",
         rif_extra_fee:
             "ウォレットに十分なRBTCがないため、RIFリレー手数料を含めて手数料を調整！",
-        no_refund_due: "返金予定なし",
         back: "戻る",
         next: "次へ",
         pagination_info: "{{ end }} ページ中 {{ start }} ページ目",
@@ -1875,6 +1873,7 @@ const dict = {
         failed_get_swap: "スワップ {{ id }} を取得できませんでした",
         not_claimable: "スワップはクレームできません",
         in_progress: "進行中",
+        completed: "完了",
     },
 };
 
