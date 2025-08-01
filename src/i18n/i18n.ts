@@ -299,7 +299,7 @@ const dict = {
             "Your recipient supports receiving {{ asset }} directly. This saves you fees and they still get the full amount.",
         optimized_route_amount:
             "Swap route optimized, saving you ~{{ amount }} {{ denomination }}",
-        claim_address_prompt: "Enter the address to claim the swap to:",
+        claim_address_prompt: "Enter an address to claim the swap to:",
         claim: "Claim",
         claimed: "Swap has been claimed successfully!",
         rescue: "Rescue",
@@ -308,6 +308,7 @@ const dict = {
         failed_get_swap: "Could not get swap {{ id }}",
         not_claimable: "Swap not claimable",
         in_progress: "In progress",
+        completed: "Completed",
     },
     de: {
         language: "Deutsch",
@@ -624,7 +625,7 @@ const dict = {
         optimized_route_amount:
             "Swap-Route optimiert, du sparst ~{{ amount }} {{ denomination }}",
         claim_address_prompt:
-            "Gib die Adresse ein, an die der Swap geclaimt werden soll:",
+            "Gib eine Adresse ein, an die der Swap geclaimt werden soll:",
         claim: "Claimen",
         claimed: "Swap wurde erfolgreich geclaimt!",
         rescue: "Rettung",
@@ -944,7 +945,7 @@ const dict = {
         optimized_route_amount:
             "Ruta de intercambio optimizada, ahorrándote ~{{ amount }} {{ denomination }}",
         claim_address_prompt:
-            "Introduce la dirección para reclamar el intercambio:",
+            "Introduce una dirección para reclamar el intercambio:",
         claim: "Reclamar",
         claimed: "¡El intercambio ha sido reclamado exitosamente!",
         rescue: "Rescate",
@@ -1260,7 +1261,7 @@ const dict = {
             "O teu destinatário suporta a receção direta de {{ asset }}. Assim, poupas em taxas e ele continua a receber o valor total.",
         optimized_route_amount:
             "Rota de troca otimizada, poupando-te ~{{ amount }} {{ denomination }}",
-        claim_address_prompt: "Digite o endereço para receber a troca:",
+        claim_address_prompt: "Digite um endereço para receber a troca:",
         claim: "Receber",
         claimed: "Troca foi recebida com sucesso!",
         rescue: "Resgate",
