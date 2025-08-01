@@ -70,7 +70,6 @@ const mapClaimableSwap = ({
             receiveAmount:
                 swap.claimDetails.amount -
                 ((pair as ChainPairTypeTaproot).fees.minerFees.user.claim +
-                    (pair as ChainPairTypeTaproot).fees.minerFees.server +
                     unconfidentialExtraFee),
             version: OutputType.Taproot,
             claimPrivateKeyIndex: swap.claimDetails.keyIndex,
@@ -79,6 +78,10 @@ const mapClaimableSwap = ({
             claimDetails: {
                 ...swap.claimDetails,
                 swapTree: swap.claimDetails.tree,
+            } as ChainSwapDetails,
+            lockupDetails: {
+                ...swap.refundDetails,
+                swapTree: swap.refundDetails.tree,
             } as ChainSwapDetails,
         };
     } else if (swap.type === SwapType.Reverse) {
@@ -94,7 +97,6 @@ const mapClaimableSwap = ({
             receiveAmount:
                 swap.claimDetails.amount -
                 ((pair as ReversePairTypeTaproot).fees.minerFees.claim +
-                    (pair as ReversePairTypeTaproot).fees.minerFees.lockup +
                     unconfidentialExtraFee),
         };
     }

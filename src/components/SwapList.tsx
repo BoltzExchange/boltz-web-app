@@ -23,7 +23,7 @@ const getSwapDate = <T extends Swap>(swap: T) => {
 };
 
 export const sortSwaps = <T extends Swap>(swaps: T[]) => {
-    const actionPriority = {
+    const actionPriority: Record<RescueAction, number> = {
         [RescueAction.Claim]: 0,
         [RescueAction.Refund]: 0,
         [RescueAction.Pending]: 1,

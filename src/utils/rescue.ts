@@ -8,7 +8,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
+import { swapStatusPending } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { getSwapUTXOs } from "./blockchain";
@@ -46,7 +46,6 @@ export const isSwapClaimable = (status: string, type: SwapType) =>
         [
             swapStatusPending.TransactionConfirmed,
             swapStatusPending.TransactionMempool,
-            swapStatusSuccess.InvoiceSettled,
         ].includes(status)) ||
     (type === SwapType.Chain &&
         [
@@ -316,7 +315,7 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     };
 
     if (!isSwapRefundable(currentSwap)) {
-        log.warn(`swap ${currentSwap.id} is not refundable`);
+        log.debug(`swap ${currentSwap.id} is not refundable`);
         return [];
     }
 
