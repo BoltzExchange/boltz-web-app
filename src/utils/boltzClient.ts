@@ -168,22 +168,6 @@ type ChainSwapTransaction = {
 
 type TransactionInterface = Transaction | LiquidTransaction;
 
-export type RescuableSwap = {
-    id: string;
-    type: SwapType;
-    tree: SwapTree;
-    status: string;
-    symbol: string;
-    toSymbol: string;
-    keyIndex: number;
-    blindingKey?: string;
-    lockupAddress: string;
-    serverPublicKey: string;
-    transaction?: { id: string; vout: number };
-    createdAt: number;
-    claimPrivateKey?: string;
-};
-
 type RestorableSwapDetails = {
     tree: SwapTree;
     keyIndex: number;
@@ -531,9 +515,6 @@ export const acceptChainSwapNewQuote = (id: string, amount: number) =>
 
 export const getSubmarinePreimage = (id: string) =>
     fetcher<{ preimage: string }>(`/v2/swap/submarine/${id}/preimage`);
-
-export const getRescuableSwaps = (xpub: string) =>
-    fetcher<RescuableSwap[]>(`/v2/swap/rescue`, { xpub });
 
 export const getRestorableSwaps = (xpub: string) =>
     fetcher<RestorableSwap[]>(`/v2/swap/restore`, { xpub });

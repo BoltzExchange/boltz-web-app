@@ -7,7 +7,7 @@ import { BackupDone } from "../components/CreateButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
 import { useGlobalContext } from "../context/Global";
-import { getRescuableSwaps } from "../utils/boltzClient";
+import { getRestorableSwaps } from "../utils/boltzClient";
 import { rescueFileTypes } from "../utils/download";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
@@ -38,9 +38,9 @@ const BackupVerify = () => {
         validateRescueFile(data);
 
         if (params.type === existingBackupFileType) {
-            const existingSwaps = await getRescuableSwaps(getXpub(data));
+            const existingSwaps = await getRestorableSwaps(getXpub(data));
             const highestIndex = existingSwaps.reduce(
-                (max, swap) => Math.max(max, swap.keyIndex),
+                (max, swap) => Math.max(max, swap.refundDetails.keyIndex),
                 -1,
             );
             log.debug(`Found highest index: ${highestIndex}`);
