@@ -3,10 +3,10 @@ import { Show, createResource, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import Pagination from "../components/Pagination";
-import SwapList, { sortSwaps } from "../components/SwapList";
+import SwapList, { type Swap, sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { useGlobalContext } from "../context/Global";
+import { type tFn, useGlobalContext } from "../context/Global";
 import "../style/tabs.scss";
 import { isMobile } from "../utils/helper";
 import { RescueAction, createRescueList } from "../utils/rescue";
@@ -14,6 +14,20 @@ import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 
 const swapsPerPage = 10;
+
+export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
+    switch (swap.action) {
+        case RescueAction.Pending:
+            return t("in_progress");
+        case RescueAction.Claim:
+            return t("claim");
+        case RescueAction.Refund:
+            return t("refund");
+        case RescueAction.None:
+        default:
+            return t("completed");
+    }
+};
 
 const Rescue = () => {
     const navigate = useNavigate();
@@ -70,11 +84,9 @@ const Rescue = () => {
                                 }>
                                 <SwapList
                                     swapsSignal={refundList}
-                                    action={(swap) =>
-                                        swap.action === RescueAction.None
-                                            ? t("no_refund_due")
-                                            : t("refund")
-                                    }
+                                    action={(swap) => {
+                                        return rescueListAction({ t, swap });
+                                    }}
                                     hideDateOnMobile
                                 />
                             </Show>

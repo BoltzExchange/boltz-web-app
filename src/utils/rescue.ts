@@ -8,7 +8,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { swapStatusPending } from "../consts/SwapStatus";
+import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { getSwapUTXOs } from "./blockchain";
@@ -33,11 +33,26 @@ import { isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export enum RescueAction {
-    None,
-    Claim,
-    Refund,
-    Pending,
+    None = "none",
+    Claim = "claim",
+    Refund = "refund",
+    Pending = "pending",
 }
+
+export const RescueNoAction = [RescueAction.None, RescueAction.Pending];
+
+export const isSwapClaimable = (status: string, type: SwapType) =>
+    (type === SwapType.Reverse &&
+        [
+            swapStatusPending.TransactionConfirmed,
+            swapStatusPending.TransactionMempool,
+            swapStatusSuccess.InvoiceSettled,
+        ].includes(type)) ||
+    (type === SwapType.Chain &&
+        [
+            swapStatusPending.TransactionServerConfirmed,
+            swapStatusPending.TransactionServerMempool,
+        ].includes(status));
 
 const refundTaproot = async <T extends TransactionInterface>(
     swap: SubmarineSwap | ChainSwap,
@@ -333,17 +348,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
-                if (
-                    (swap.type === SwapType.Chain ||
-                        swap.type === SwapType.Reverse) &&
-                    [
-                        swapStatusPending.TransactionMempool,
-                        swapStatusPending.TransactionConfirmed,
-                        swapStatusPending.TransactionClaimPending,
-                        swapStatusPending.TransactionServerMempool,
-                        swapStatusPending.TransactionServerConfirmed,
-                    ].includes(swap.status)
-                ) {
+                if (isSwapClaimable(swap.status, swap.type)) {
                     return { ...swap, action: RescueAction.Claim };
                 }
 

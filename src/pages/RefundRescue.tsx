@@ -24,48 +24,48 @@ export const mapSwap = (
         return undefined;
     }
 
-    if (swap.type === SwapType.Submarine) {
-        return {
-            ...swap,
-            swapTree: swap.refundDetails.tree,
-            assetSend: swap.from,
-            assetReceive: swap.to,
-            version: OutputType.Taproot,
-            blindingKey: swap.refundDetails.blindingKey,
-            address: swap.refundDetails.lockupAddress,
-            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
-            claimPublicKey: swap.refundDetails.serverPublicKey,
-        };
-    }
-    if (swap.type === SwapType.Chain) {
-        return {
-            ...swap,
-            assetSend: swap.from,
-            assetReceive: swap.to,
-            version: OutputType.Taproot,
-            address: swap.claimDetails.lockupAddress,
-            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
-            claimPublicKey: swap.claimDetails.serverPublicKey,
-            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
-            lockupDetails: {
-                ...swap.refundDetails,
+    switch (swap.type) {
+        case SwapType.Submarine:
+            return {
+                ...swap,
                 swapTree: swap.refundDetails.tree,
-            } as ChainSwapDetails,
-        };
-    } else if (swap.type === SwapType.Reverse) {
-        return {
-            ...swap,
-            assetSend: swap.from,
-            assetReceive: swap.to,
-            version: OutputType.Taproot,
-            address: swap.claimDetails.lockupAddress,
-            claimPublicKey: swap.claimDetails.serverPublicKey,
-            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
-            sendAmount: swap.claimDetails.amount,
-        };
+                assetSend: swap.from,
+                assetReceive: swap.to,
+                version: OutputType.Taproot,
+                blindingKey: swap.refundDetails.blindingKey,
+                address: swap.refundDetails.lockupAddress,
+                refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+                claimPublicKey: swap.refundDetails.serverPublicKey,
+            };
+        case SwapType.Chain:
+            return {
+                ...swap,
+                assetSend: swap.from,
+                assetReceive: swap.to,
+                version: OutputType.Taproot,
+                address: swap.claimDetails.lockupAddress,
+                refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+                claimPublicKey: swap.claimDetails.serverPublicKey,
+                claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+                lockupDetails: {
+                    ...swap.refundDetails,
+                    swapTree: swap.refundDetails.tree,
+                } as ChainSwapDetails,
+            };
+        case SwapType.Reverse:
+            return {
+                ...swap,
+                assetSend: swap.from,
+                assetReceive: swap.to,
+                version: OutputType.Taproot,
+                address: swap.claimDetails.lockupAddress,
+                claimPublicKey: swap.claimDetails.serverPublicKey,
+                claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+                sendAmount: swap.claimDetails.amount,
+            };
+        default:
+            return undefined;
     }
-
-    return undefined;
 };
 
 const RefundRescue = () => {

@@ -113,7 +113,7 @@ const redirectRefundToRescue = () => {
             <Route
                 path="/refund/rescue/:id"
                 component={() => (
-                    <Navigate href={`/rescue/claim/:id${params}`} />
+                    <Navigate href={`/rescue/refund/:id${params}`} />
                 )}
             />
         </>

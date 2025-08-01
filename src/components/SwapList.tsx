@@ -5,12 +5,12 @@ import { For, Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
-import type { RescuableSwap } from "../utils/boltzClient";
-import { RescueAction } from "../utils/rescue";
+import type { RestorableSwap } from "../utils/boltzClient";
+import { RescueAction, RescueNoAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
 
-type Swap = (SomeSwap | RescuableSwap) & {
+export type Swap = (SomeSwap | RestorableSwap) & {
     action?: RescueAction;
 };
 
@@ -23,10 +23,24 @@ const getSwapDate = <T extends Swap>(swap: T) => {
 };
 
 export const sortSwaps = <T extends Swap>(swaps: T[]) => {
+    const actionPriority = {
+        [RescueAction.Claim]: 0,
+        [RescueAction.Refund]: 0,
+        [RescueAction.Pending]: 1,
+        [RescueAction.None]: 1,
+    };
+
     return swaps.sort((a, b) => {
+        const aPriority = actionPriority[a.action];
+        const bPriority = actionPriority[b.action];
+
+        if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+        }
+
+        // Within the same priority group, sort by date descending
         const aDate = getSwapDate(a);
         const bDate = getSwapDate(b);
-
         return aDate > bDate ? -1 : aDate === bDate ? 0 : 1;
     });
 };
@@ -77,20 +91,12 @@ const SwapList = (props: {
                         <div
                             data-testid={`swaplist-item-${swap.id}`}
                             class={`swaplist-item ${
-                                [
-                                    RescueAction.None,
-                                    RescueAction.Pending,
-                                ].includes(swap.action)
+                                RescueNoAction.includes(swap.action)
                                     ? "disabled"
                                     : ""
                             }`}
                             onClick={() => {
-                                if (
-                                    [
-                                        RescueAction.None,
-                                        RescueAction.Pending,
-                                    ].includes(swap.action)
-                                ) {
+                                if (RescueNoAction.includes(swap.action)) {
                                     return;
                                 }
 

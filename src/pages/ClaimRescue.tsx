@@ -118,7 +118,7 @@ const ClaimRescue = () => {
     const [claimableSwap] = createResource(pairs, async () => {
         try {
             if (rescueFile() === undefined || pairs() === undefined) {
-                throw Error("Rescue file or pairs not found");
+                throw Error("rescue file or pairs not found");
             }
 
             const swapById = (swap: RestorableSwap) => swap.id === params.id;
@@ -132,14 +132,14 @@ const ClaimRescue = () => {
 
             if (restorableSwap === undefined) {
                 throw Error(
-                    `Failed to find a restorable swap with ID ${params.id}`,
+                    `failed to find a restorable swap with ID ${params.id}`,
                 );
             }
 
             const swapStatus = await getSwapStatus(params.id);
 
             if (swapStatus?.transaction?.hex === undefined) {
-                throw Error(`Failed to fetch swap ${params.id}`);
+                throw Error(`failed to fetch swap ${params.id}`);
             }
 
             if (restorableSwap.type === SwapType.Reverse) {
@@ -152,7 +152,7 @@ const ClaimRescue = () => {
 
                 if (reversePair === undefined) {
                     throw Error(
-                        `Failed to find a reverse pair for ${params.id}`,
+                        `failed to find a reverse pair for ${params.id}`,
                     );
                 }
 
@@ -181,7 +181,7 @@ const ClaimRescue = () => {
                 ) as ChainPairTypeTaproot;
 
                 if (chainPair === undefined) {
-                    throw Error(`Failed to find a chain pair for ${params.id}`);
+                    throw Error(`failed to find a chain pair for ${params.id}`);
                 }
 
                 const derivedKey = derivePreimageFromRescueKey(
@@ -203,11 +203,11 @@ const ClaimRescue = () => {
                 });
             }
 
-            return undefined;
+            throw Error(`failed to construct claimable swap ${params.id}`);
         } catch (e) {
             notify("error", t("failed_get_swap", { id: params.id }));
             throw Error(
-                `Failed to construct claimable swap ${params.id}: ${formatError(e)}`,
+                `failed to construct claimable swap ${params.id}: ${formatError(e)}`,
             );
         }
     });
@@ -278,7 +278,6 @@ const ClaimRescue = () => {
     });
 
     onCleanup(() => {
-        log.debug("cleanup ClaimRescue");
         setOnchainAddress("");
         setAddressValid(false);
     });
@@ -324,14 +323,23 @@ const ClaimRescue = () => {
                                         asset: claimableSwap().assetReceive,
                                     })}
                                     value={onchainAddress()}
+                                    disabled={claimRunning()}
                                 />
                                 <button
                                     class="btn"
                                     onClick={handleClaim}
                                     disabled={
-                                        !addressValid() || !claimableSwap()
+                                        !addressValid() ||
+                                        !claimableSwap() ||
+                                        claimRunning()
                                     }>
-                                    {btnErrorMsg() ? btnErrorMsg() : t("claim")}
+                                    {claimRunning() ? (
+                                        <LoadingSpinner class="inner-spinner" />
+                                    ) : btnErrorMsg() ? (
+                                        btnErrorMsg()
+                                    ) : (
+                                        t("claim")
+                                    )}
                                 </button>
                             </Match>
                             <Match when={claimTxId() !== ""}>
@@ -342,10 +350,6 @@ const ClaimRescue = () => {
                                     asset={claimableSwap().assetReceive}
                                     txId={claimTxId()}
                                 />
-                            </Match>
-                            <Match when={claimRunning()}>
-                                <p>{t("tx_ready_to_claim")}</p>
-                                <LoadingSpinner />
                             </Match>
                         </Switch>
                     </Match>
