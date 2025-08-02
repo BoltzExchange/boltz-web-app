@@ -1,10 +1,5 @@
 import type { TransactionLike } from "ethers";
-import {
-    JsonRpcProvider,
-    Signature,
-    Transaction,
-    TypedDataEncoder,
-} from "ethers";
+import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
 
 import { config } from "../../config";
@@ -16,26 +11,27 @@ import type {
     Unsuccessful,
 } from "../../lazy/trezor";
 import trezorLoader from "../../lazy/trezor";
+import { type Provider, createProvider } from "../provider";
 import { trimPrefix } from "../strings";
 import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
 import { derivationPaths } from "./HardwareSigner";
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
-    private readonly provider: JsonRpcProvider;
+    private readonly provider: Provider;
     private readonly loader: typeof trezorLoader;
 
     private initialized = false;
     private derivationPath!: string;
 
     constructor() {
-        this.provider = new JsonRpcProvider(
-            config.assets["RBTC"]?.network?.rpcUrls[0],
+        this.provider = createProvider(
+            config.assets["RBTC"]?.network?.rpcUrls || [],
         );
         this.setDerivationPath(derivationPaths.Ethereum);
         this.loader = trezorLoader;
     }
 
-    public getProvider = (): JsonRpcProvider => this.provider;
+    public getProvider = () => this.provider;
 
     public deriveAddresses = async (
         basePath: string,

@@ -1,10 +1,5 @@
 import type { TransactionLike } from "ethers";
-import {
-    JsonRpcProvider,
-    Signature,
-    Transaction,
-    TypedDataEncoder,
-} from "ethers";
+import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
 
 import { config } from "../../config";
@@ -12,13 +7,14 @@ import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import type { Transport } from "../../lazy/ledger";
 import ledgerLoader from "../../lazy/ledger";
+import { type Provider, createProvider } from "../provider";
 import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
 import { derivationPaths } from "./HardwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];
 
-    private readonly provider: JsonRpcProvider;
+    private readonly provider: Provider;
     private readonly loader: typeof ledgerLoader;
 
     private transport?: Transport;
@@ -30,14 +26,14 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             values?: Record<string, unknown>,
         ) => string,
     ) {
-        this.provider = new JsonRpcProvider(
-            config.assets["RBTC"]?.network?.rpcUrls[0],
+        this.provider = createProvider(
+            config.assets["RBTC"]?.network?.rpcUrls || [],
         );
 
         this.loader = ledgerLoader;
     }
 
-    public getProvider = (): JsonRpcProvider => this.provider;
+    public getProvider = (): Provider => this.provider;
 
     public deriveAddresses = async (
         basePath: string,
