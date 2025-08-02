@@ -8,7 +8,7 @@ const ProBanner = () => {
     return (
         <div class="banner banner-yellow">
             <a
-                href="https://docs.boltz.exchange/api/pro"
+                href="https://api.docs.boltz.exchange/pro.html"
                 target="_blank"
                 rel="noopener noreferrer">
                 {t("pro_banner").toUpperCase()}
