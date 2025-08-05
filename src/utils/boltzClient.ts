@@ -177,6 +177,7 @@ type RestorableSwapDetails = {
     blindingKey?: string;
     amount?: number;
     transaction?: { id: string; vout: number };
+    preimageHash?: string;
 };
 
 export type RestorableSwap = {
@@ -189,7 +190,6 @@ export type RestorableSwap = {
     claimPrivateKey?: string;
     claimDetails?: RestorableSwapDetails;
     refundDetails?: RestorableSwapDetails;
-    preimageHash?: string;
 };
 
 export type LockupTransaction = {
