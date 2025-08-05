@@ -305,7 +305,8 @@ const dict = {
         rescue_swap: "Rescue Swap",
         claim_swap: "Claim: {{ id }}",
         failed_get_swap: "Could not get swap {{ id }}",
-        not_claimable: "Swap not claimable",
+        failed_get_swap_subline:
+            "Please re-insert the rescue key and try again.",
         in_progress: "In progress",
         completed: "Completed",
     },
@@ -983,7 +984,7 @@ const dict = {
         blockexplorer: "abrir {{ typeLabel }}",
         blockexplorer_lockup_address: "endereço de lockup",
         blockexplorer_lockup_tx: "transação de lockup",
-        blockexplorer_claim_tx: "transação de recebimento",
+        blockexplorer_claim_tx: "transação de reivindicação",
         blockexplorer_refund_tx: "transação de reembolso",
         help: "Suporte",
         network_fee: "Taxa da rede",
@@ -1046,24 +1047,24 @@ const dict = {
         copied: "Copiado!",
         refund_swap: "Reembolsar troca",
         rescue_a_swap_subline:
-            "Se enviou BTC ou L-BTC para uma troca Boltz, faça upload ou insira sua chave de resgate para reembolsar uma troca que não está no histórico deste navegador.",
+            "Se enviou BTC ou L-BTC para uma troca Boltz, faça upload ou insira sua chave de resgate para resgatar uma troca que não está no histórico deste navegador.",
         rescue_a_swap_mnemonic:
-            "Insira sua chave de resgate para reembolsar uma troca que não está no histórico deste navegador.",
+            "Insira sua chave de resgate para resgatar uma troca que não está no histórico deste navegador.",
         refund_past_swaps: "Trocas passadas",
         refund_past_swaps_subline:
             "Trocas que foram salvas no armazenamento do seu navegador",
         no_rescuable_swaps:
-            "Nenhuma troca reembolsável encontrada no histórico do navegador",
+            "Nenhuma troca resgatável encontrada no histórico do navegador",
         cant_find_swap: "Não consegue encontrar sua troca?",
         rescue_external_explainer:
-            "Tente reembolsar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
+            "Tente resgatar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
         refund_external_explainer_rsk:
             "Se enviou RBTC para uma troca Boltz, conecte sua carteira Rootstock para procurar por trocas reembolsáveis que não estão no histórico do navegador.",
         refund_external_scanning_rsk:
             "Procurando trocas reembolsáveis na sua carteira Rootstock...",
         connected_wallet_no_swaps:
             "A carteira Rootstock conectada não contém trocas reembolsáveis.",
-        rescue_external_swap: "Reembolsar troca externa",
+        rescue_external_swap: "Resgatar troca externa",
         history_no_swaps: "Parece que ainda não foram feitas trocas.",
         refund_address_header:
             "Informe um endereço {{ asset }} para receber seu reembolso:",
@@ -1090,7 +1091,7 @@ const dict = {
         pay_invoice_webln: "pagar invoice via WebLN",
         select_asset: "Selecionar ativo de {{ direction }}",
         tx_confirmed: "Transação confirmada",
-        tx_ready_to_claim: "Resgatando transação agora...",
+        tx_ready_to_claim: "Reivindicando transação agora...",
         transaction_refunded: "A Boltz reembolsou a transação",
         refunded: "Troca reembolsada com sucesso!",
         broadcasted: "Reembolso transmitido",
@@ -1140,7 +1141,7 @@ const dict = {
         open_in_wallet: "Abrir na carteira",
         branding: "Identidade Visual",
         testnet: "Testnet",
-        broadcasting_claim: "Transmitindo transação de recebimento...",
+        broadcasting_claim: "Transmitindo transação de reivindicação...",
         open_swap: "Abrir troca",
         swap_in_history: "Troca encontrada no histórico.",
         paste_invalid:
@@ -1153,7 +1154,7 @@ const dict = {
         denomination_tooltip: "Escolha a denominação preferida: BTC ou sats",
         decimal_tooltip: "Escolha o separador decimal: ponto ou vírgula",
         swap_completed: "Troca {{ id }} concluída com sucesso!",
-        claim_fail: "Falha ao receber troca: {{ id }}",
+        claim_fail: "Falha ao reivindicar troca: {{ id }}",
         logs: "Logs",
         logs_tooltip: "Logs do app, útil para debugging",
         enable_audio_notifications: "Notificações sonoras",
@@ -1259,14 +1260,15 @@ const dict = {
             "O teu destinatário suporta a receção direta de {{ asset }}. Assim, poupas em taxas e ele continua a receber o valor total.",
         optimized_route_amount:
             "Rota de troca otimizada, poupando-te ~{{ amount }} {{ denomination }}",
-        claim_address_prompt: "Digite um endereço para receber a troca:",
-        claim: "Receber",
-        claimed: "Troca foi recebida com sucesso!",
-        rescue: "Resgate",
+        claim_address_prompt: "Digite um endereço para reivindicar a troca:",
+        claim: "Reivindicar",
+        claimed: "Troca reivindicada com sucesso!",
+        rescue: "Resgatar",
         rescue_swap: "Resgatar Troca",
-        claim_swap: "Recebimento: {{ id }}",
+        claim_swap: "Reivindicar: {{ id }}",
         failed_get_swap: "Não foi possível obter a troca {{ id }}",
-        not_claimable: "Troca não pode ser recebida",
+        failed_get_swap_subline:
+            "Por favor, re-insira a chave de resgate e tente novamente.",
         in_progress: "Em curso",
         completed: "Completado",
     },
