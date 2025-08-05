@@ -39,9 +39,16 @@ const BackupVerify = () => {
 
         if (params.type === verifyExisting) {
             const existingSwaps = await getRestorableSwaps(getXpub(data));
+            const negativeIndex = -1;
             const highestIndex = existingSwaps.reduce(
-                (max, swap) => Math.max(max, swap.refundDetails.keyIndex),
-                -1,
+                (max, swap) =>
+                    Math.max(
+                        max,
+                        swap.refundDetails?.keyIndex ??
+                            swap.claimDetails?.keyIndex ??
+                            negativeIndex,
+                    ),
+                negativeIndex,
             );
             log.debug(`Found highest index: ${highestIndex}`);
             setLastUsedKey(highestIndex + 1);
