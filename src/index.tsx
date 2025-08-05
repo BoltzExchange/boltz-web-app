@@ -22,7 +22,6 @@ import { Web3SignerProvider } from "./context/Web3";
 import Backup from "./pages/Backup";
 import { BackupMnemonic } from "./pages/BackupMnemonic";
 import BackupVerify from "./pages/BackupVerify";
-import BackupVerifyExisting from "./pages/BackupVerifyExisting";
 import ClaimRescue from "./pages/ClaimRescue";
 import Create from "./pages/Create";
 import Error from "./pages/Error";
@@ -134,10 +133,7 @@ const cleanup = render(
             <Route path="/backup/mnemonic" component={BackupMnemonic} />
             <Route path="/backup/mnemonic/verify" component={MnemonicVerify} />
             <Route path="/backup/verify" component={BackupVerify} />
-            <Route
-                path="/backup/verify/:type"
-                component={BackupVerifyExisting}
-            />
+            <Route path="/backup/verify/:type" component={BackupVerify} />
             <Route
                 path="/swap/refund/evm/:asset/:txHash"
                 component={RefundEvm}
