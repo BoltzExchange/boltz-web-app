@@ -207,7 +207,6 @@ const ClaimRescue = () => {
 
             throw Error(`failed to construct claimable swap ${params.id}`);
         } catch (e) {
-            notify("error", t("failed_get_swap", { id: params.id }));
             throw Error(
                 `failed to construct claimable swap ${params.id}: ${formatError(e)}`,
             );
@@ -361,7 +360,13 @@ const ClaimRescue = () => {
                     <Match when={claimableSwap.state === "errored"}>
                         <h2>{t("error")}</h2>
                         <hr />
-                        <p>{t("not_claimable")}</p>
+                        <p>
+                            <strong>
+                                {t("failed_get_swap", { id: params.id })}
+                            </strong>
+                            <br />
+                            {t("failed_get_swap_subline")}
+                        </p>
                     </Match>
                 </Switch>
             </div>
