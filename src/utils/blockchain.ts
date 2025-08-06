@@ -2,7 +2,7 @@ import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
 import { SwapType } from "../consts/Enums";
-import type { LockupTransaction } from "./boltzClient";
+import { formatError } from "./errors";
 import type { ChainSwap, SubmarineSwap } from "./swapCreator";
 
 export type UTXO = {
@@ -10,23 +10,41 @@ export type UTXO = {
     vout: number;
 };
 
-export const fetchUTXOsWithFailover = async (
-    asset: string,
-    address: string,
-): Promise<UTXO[]> => {
+const fetchBlockExplorer = async <T>({
+    asset,
+    endpoint,
+    opts = {},
+}: {
+    asset: string;
+    endpoint: string;
+    opts?: RequestInit;
+}) => {
     for (const url of config.assets[asset].blockExplorerApis) {
         try {
             const basePath = chooseUrl(url);
-            const response = await fetch(`${basePath}/address/${address}/utxo`);
+            const response = await fetch(`${basePath}${endpoint}`, opts);
 
             if (!response.ok) {
-                log.error(`Failed to fetch UTXOs for ${address}`);
-                continue;
+                try {
+                    const body = await response.json();
+                    log.error(`failed to fetch ${endpoint}`, formatError(body));
+                    continue;
+                } catch {
+                    // If parsing JSON fails, throw a generic error with status text
+                    log.error(response.statusText);
+                    continue;
+                }
             }
 
-            return (await response.json()) as UTXO[];
+            const contentType = response.headers.get("content-type");
+
+            if (contentType?.includes("application/json")) {
+                return (await response.json()) as T;
+            }
+
+            return (await response.text()) as T;
         } catch (e) {
-            log.error(`Failed to fetch UTXOs for ${address}: ${e.stack}`);
+            log.error(`failed to fetch ${endpoint}`, e);
             continue;
         }
     }
@@ -34,28 +52,18 @@ export const fetchUTXOsWithFailover = async (
     throw new Error("all block explorer APIs failed");
 };
 
-export const fetchRawTxWithFailover = async (
-    asset: string,
-    txid: string,
-): Promise<Pick<LockupTransaction, "hex">> => {
-    for (const url of config.assets[asset].blockExplorerApis) {
-        try {
-            const basePath = chooseUrl(url);
-            const response = await fetch(`${basePath}/tx/${txid}/hex`);
+const getAddressUTXOs = async (asset: string, address: string) => {
+    return await fetchBlockExplorer<UTXO[]>({
+        asset,
+        endpoint: `/address/${address}/utxo`,
+    });
+};
 
-            if (!response.ok) {
-                log.error(`Failed to fetch raw tx for ${txid}`);
-                continue;
-            }
-
-            return { hex: await response.text() };
-        } catch (e) {
-            log.error(`Failed to fetch raw tx for ${txid}: ${e.stack}`);
-            continue;
-        }
-    }
-
-    throw new Error("all block explorer APIs failed");
+const getRawTransaction = async (asset: string, txid: string) => {
+    return await fetchBlockExplorer<string>({
+        asset,
+        endpoint: `/tx/${txid}/hex`,
+    });
 };
 
 export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
@@ -64,16 +72,15 @@ export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
             ? (swap as ChainSwap).lockupDetails.lockupAddress
             : (swap as SubmarineSwap).address;
 
-    const utxos = await fetchUTXOsWithFailover(swap.assetSend, address);
+    const utxos = await getAddressUTXOs(swap.assetSend, address);
 
-    const rawTxs: Pick<LockupTransaction, "hex">[] = [];
+    const rawTxPromises = utxos.map((utxo) =>
+        getRawTransaction(swap.assetSend, utxo.txid),
+    );
 
-    for (const utxo of utxos) {
-        const rawTx = await fetchRawTxWithFailover(swap.assetSend, utxo.txid);
-        rawTxs.push({
-            hex: rawTx.hex,
-        });
-    }
+    const rawTxs = (await Promise.all(rawTxPromises)).map((rawTx) => ({
+        hex: rawTx,
+    }));
 
     return rawTxs;
 };
