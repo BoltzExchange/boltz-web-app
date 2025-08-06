@@ -7,7 +7,7 @@ import { useWeb3Signer } from "../context/Web3";
 import { downloadJson } from "../utils/download";
 import { isMobile } from "../utils/helper";
 import type { RescueFile } from "../utils/rescueFile";
-import { existingBackupFileType } from "./BackupVerifyExisting";
+import { verifyExisting } from "./BackupVerify";
 
 const rescueFileName = "boltz-rescue-key-DO-NOT-DELETE";
 
@@ -24,9 +24,7 @@ const Backup = () => {
 
     const navigateToVerification = (existingFile: boolean) => {
         const basePath = "/backup/verify";
-        navigate(
-            existingFile ? `${basePath}/${existingBackupFileType}` : basePath,
-        );
+        navigate(existingFile ? `${basePath}/${verifyExisting}` : basePath);
     };
 
     return (
