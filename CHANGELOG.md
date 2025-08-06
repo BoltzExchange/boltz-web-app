@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.9..v1.8.0) - 2025-08-06
+
+### Bug Fixes
+
+- Improve flip assets button's UX (#968) - ([cdcce46](https://github.com/BoltzExchange/boltz-web-app/commit/cdcce468361f013f708c7ac74291e24e087b2771))
+- Boltz Pro Telegram bot link CSS (#986) - ([3707ece](https://github.com/BoltzExchange/boltz-web-app/commit/3707ece544097df26c2c927b38bac800b76c4bf7))
+
+### Documentation
+
+- enable search detailed view - ([fe5e46d](https://github.com/BoltzExchange/boltz-web-app/commit/fe5e46d884af4a78ca5bcad523703d08e69d573f))
+
+### Features
+
+- claim pending chain/reverse swaps with rescue key (#973) - ([cdee6e7](https://github.com/BoltzExchange/boltz-web-app/commit/cdee6e7da7e8c3095ea623598f8c33cbf88109de))
+- RSK fallback provider (#981) - ([cab7f4d](https://github.com/BoltzExchange/boltz-web-app/commit/cab7f4de91dc8dd492b482823dd8b0b400f230f6))
+
+### Miscellaneous Chores
+
+- update blog link - ([db71275](https://github.com/BoltzExchange/boltz-web-app/commit/db712752b41fe479e73a48ec2d75f8fc8cfaffd8))
+- bump form-data from 4.0.1 to 4.0.4 (#970) - ([a387b24](https://github.com/BoltzExchange/boltz-web-app/commit/a387b245303ec8e7d356b6149c8eac6802677cd2))
+- bump axios from 1.10.0 to 1.11.0 (#971) - ([538275b](https://github.com/BoltzExchange/boltz-web-app/commit/538275bca1b3be8ff21082e55e0df7be47878174))
+- show transaction mempool warning on desktop (#972) - ([188fffa](https://github.com/BoltzExchange/boltz-web-app/commit/188fffa6e0e407d795ad87f02606f70f652cec88))
+- update dependencies - ([e7bdf51](https://github.com/BoltzExchange/boltz-web-app/commit/e7bdf5124792f789c5d188febfd2eea069a37c0f))
+- update pro banner docs link - ([c8d9091](https://github.com/BoltzExchange/boltz-web-app/commit/c8d909137cdda4812590c60141216f456123a42f))
+
+### Refactoring
+
+- rescue swap improvements (#983) - ([4d9edf1](https://github.com/BoltzExchange/boltz-web-app/commit/4d9edf11f3ce815239c255a09b8a2c1ca2a2fb7d))
+
+---
 ## [1.7.9](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.8..v1.7.9) - 2025-07-10
 
 ### Bug Fixes
@@ -27,6 +57,7 @@ All notable changes to this project will be documented in this file. See [conven
 
 - bump dependencies (#955) - ([df45d71](https://github.com/BoltzExchange/boltz-web-app/commit/df45d716d64eeb9f41ad86ab2a1b8863888ffde9))
 - only update deploy docs when changed - ([b736be1](https://github.com/BoltzExchange/boltz-web-app/commit/b736be170323b76a552c44228232346cb39e5895))
+- bump version to v1.7.9 (#966) - ([11e0448](https://github.com/BoltzExchange/boltz-web-app/commit/11e0448575fff66405fe416a7612052a4b71231a))
 
 ### Refactoring
 
