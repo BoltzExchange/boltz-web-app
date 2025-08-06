@@ -1061,9 +1061,9 @@ const dict = {
         rescue_external_explainer:
             "Tente resgatar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
         refund_external_explainer_rsk:
-            "Se enviou RBTC para uma troca Boltz, conecte sua carteira Rootstock para procurar por trocas resgatável que não estão no histórico do navegador.",
+            "Se enviou RBTC para uma troca Boltz, conecte sua carteira Rootstock para procurar por trocas resgatáveis que não estão no histórico do navegador.",
         refund_external_scanning_rsk:
-            "Procurando trocas resgatável na sua carteira Rootstock...",
+            "Procurando trocas resgatáveis na sua carteira Rootstock...",
         connected_wallet_no_swaps:
             "A carteira Rootstock conectada não contém nenhuma troca resgatável.",
         rescue_external_swap: "Resgatar troca externa",
