@@ -66,6 +66,24 @@ const getRawTransaction = async (asset: string, txid: string) => {
     });
 };
 
+export const broadcastToExplorer = async (
+    asset: string,
+    txHex: string,
+): Promise<{ id: string }> => {
+    const txId = await fetchBlockExplorer<string>({
+        asset,
+        endpoint: "/tx",
+        opts: {
+            method: "POST",
+            body: txHex,
+        },
+    });
+
+    return {
+        id: txId,
+    };
+};
+
 export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
     const address =
         swap.type === SwapType.Chain
