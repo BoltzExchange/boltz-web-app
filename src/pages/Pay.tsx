@@ -38,7 +38,7 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { getRefundableUTXOs, isSwapRefundable } from "../utils/rescue";
+import { getRefundableUTXOs, isRefundableSwapType } from "../utils/rescue";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Pay = () => {
@@ -94,7 +94,7 @@ const Pay = () => {
             prevSwapStatus.value !== swapStatusPending.InvoiceSet &&
             swapStatus() !== swapStatusPending.SwapCreated &&
             prevSwapStatus.value !== swapStatusPending.SwapCreated &&
-            isSwapRefundable(swap());
+            isRefundableSwapType(swap());
 
         try {
             const utxos = shouldCheckBlockExplorer

@@ -66,6 +66,13 @@ const getRawTransaction = async (asset: string, txid: string) => {
     });
 };
 
+export const getBlockTipHeight = async (asset: string) => {
+    return await fetchBlockExplorer<string>({
+        asset,
+        endpoint: "/blocks/tip/height",
+    });
+};
+
 export const broadcastToExplorer = async (
     asset: string,
     txHex: string,
