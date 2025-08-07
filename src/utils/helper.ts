@@ -146,29 +146,3 @@ export const parsePrivateKey = (
         return ECPair.fromWIF(privateKeyHex);
     }
 };
-
-// posts transaction to a block explorer
-export const broadcastToExplorer = async (
-    asset: string,
-    txHex: string,
-): Promise<{ id: string }> => {
-    const basePath = chooseUrl(config.assets[asset].blockExplorerUrl);
-    const response = await fetch(`${basePath}/api/tx`, {
-        method: "POST",
-        body: txHex,
-    });
-
-    if (!response.ok) {
-        try {
-            const body = await response.json();
-            throw formatError(body);
-        } catch {
-            // If parsing JSON fails, throw a generic error with status text
-            throw response.statusText;
-        }
-    }
-
-    return {
-        id: await response.text(),
-    };
-};
