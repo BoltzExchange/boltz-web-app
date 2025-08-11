@@ -9,6 +9,7 @@ import {
     globalSignals,
     payContext,
 } from "../helper";
+import { pairs } from "../pairs";
 
 /* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
 
@@ -22,6 +23,7 @@ vi.mock("../../src/utils/boltzClient", () => {
                 timeoutEta: 10,
             }),
         ),
+        getPairs: vi.fn(() => Promise.resolve(pairs)),
     };
 });
 
