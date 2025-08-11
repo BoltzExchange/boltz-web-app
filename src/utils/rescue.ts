@@ -8,7 +8,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { swapStatusPending } from "../consts/SwapStatus";
+import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { getSwapUTXOs } from "./blockchain";
@@ -41,14 +41,17 @@ export enum RescueAction {
 
 export const RescueNoAction = [RescueAction.None, RescueAction.Pending];
 
+// Shared with SwapChecker.tsx. All these statuses are necessary to ensure consistent claimability
 export const isSwapClaimable = (status: string, type: SwapType) =>
     (type === SwapType.Reverse &&
         [
+            swapStatusSuccess.InvoiceSettled,
             swapStatusPending.TransactionConfirmed,
             swapStatusPending.TransactionMempool,
         ].includes(status)) ||
     (type === SwapType.Chain &&
         [
+            swapStatusSuccess.TransactionClaimed,
             swapStatusPending.TransactionServerConfirmed,
             swapStatusPending.TransactionServerMempool,
         ].includes(status));
