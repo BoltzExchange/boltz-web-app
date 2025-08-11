@@ -16,12 +16,12 @@ import type {
 } from "../utils/boltzClient";
 import { calculateBoltzFeeOnSend } from "../utils/calculate";
 import { formatAmount, formatDenomination } from "../utils/denomination";
-import { getPair, isMobile } from "../utils/helper";
-import type { ChainSwap } from "../utils/swapCreator";
 import {
     unconfidentialExtra as extraFee,
     isToUnconfidentialLiquid,
-} from "./Fees";
+} from "../utils/fees";
+import { getPair, isMobile } from "../utils/helper";
+import type { ChainSwap } from "../utils/swapCreator";
 import Tooltip from "./settings/Tooltip";
 
 const getTotalChainFees = ({
