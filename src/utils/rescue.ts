@@ -47,7 +47,7 @@ export enum RescueAction {
 export const RescueNoAction = [RescueAction.None, RescueAction.Pending];
 
 // Shared with SwapChecker.tsx. All these statuses are necessary to ensure consistent claimability
-export const isSwapClaimable = (status: string, type: SwapType) =>
+export const isSwapStatusClaimable = (status: string, type: SwapType) =>
     (type === SwapType.Reverse &&
         [
             swapStatusSuccess.InvoiceSettled,
@@ -365,7 +365,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
         swaps.map(async (swap) => {
             try {
                 if (
-                    isSwapClaimable(swap.status, swap.type) &&
+                    isSwapStatusClaimable(swap.status, swap.type) &&
                     (await getClaimableUTXOs(swap as ChainSwap | ReverseSwap))
                         .length > 0
                 ) {
