@@ -11,7 +11,7 @@ import { SwapType } from "../consts/Enums";
 import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
-import { getSwapUTXOs } from "./blockchain";
+import { fetchUTXOsWithFailover, getSwapUTXOs } from "./blockchain";
 import type { LockupTransaction, TransactionInterface } from "./boltzClient";
 import {
     broadcastTransaction,
@@ -28,7 +28,12 @@ import {
 } from "./compat";
 import { formatError } from "./errors";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
-import type { ChainSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
+import type {
+    ChainSwap,
+    ReverseSwap,
+    SomeSwap,
+    SubmarineSwap,
+} from "./swapCreator";
 import { isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
@@ -346,11 +351,24 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     return [];
 };
 
+export const getClaimableUTXOs = async (swap: ChainSwap | ReverseSwap) => {
+    return await fetchUTXOsWithFailover(
+        swap.assetReceive,
+        swap.type === SwapType.Chain
+            ? (swap as ChainSwap).claimDetails.lockupAddress
+            : (swap as ReverseSwap).lockupAddress,
+    );
+};
+
 export const createRescueList = async (swaps: SomeSwap[]) => {
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
-                if (isSwapClaimable(swap.status, swap.type)) {
+                if (
+                    isSwapClaimable(swap.status, swap.type) &&
+                    (await getClaimableUTXOs(swap as ChainSwap | ReverseSwap))
+                        .length > 0
+                ) {
                     return { ...swap, action: RescueAction.Claim };
                 }
 
