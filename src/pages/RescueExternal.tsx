@@ -12,6 +12,7 @@ import {
     createResource,
     createSignal,
     onCleanup,
+    onMount,
 } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
@@ -39,12 +40,12 @@ import {
     RescueAction,
     createRescueList,
     getRefundableUTXOs,
+    mapRestorableToSomeSwap,
 } from "../utils/rescue";
 import type { RescueFile } from "../utils/rescueFile";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
-import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
 
 export enum RefundError {
@@ -112,7 +113,7 @@ const BtcLikeLegacy = (props: {
 
 export const RefundBtcLike = () => {
     const navigate = useNavigate();
-    const { t } = useGlobalContext();
+    const { t, pairs, fetchPairs } = useGlobalContext();
     const rescueContext = useRescueContext();
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -128,7 +129,11 @@ export const RefundBtcLike = () => {
     const [loading, setLoading] = createSignal(false);
 
     const [rescuableSwaps] = createResource(
-        () => ({ refundJson: refundJson(), type: refundType() }),
+        () => ({
+            refundJson: refundJson(),
+            type: refundType(),
+            pairs: pairs(),
+        }),
         async (source) => {
             if (
                 source.type !== RefundType.Rescue ||
@@ -138,9 +143,13 @@ export const RefundBtcLike = () => {
             }
 
             const res = await getRestorableSwaps(getXpub(source.refundJson));
-            rescueContext.setRescuableSwaps(res);
+            const rescuableSwaps = res.map((swap) =>
+                mapRestorableToSomeSwap({ swap, pairs: pairs() }),
+            );
 
-            return res.map((swap) => mapSwap(swap));
+            rescueContext.setRescuableSwaps(rescuableSwaps as SomeSwap[]);
+
+            return rescuableSwaps;
         },
     );
 
@@ -217,6 +226,12 @@ export const RefundBtcLike = () => {
             rescuableSwaps()?.length > swapsPerPage
                 ? `${45 * swapsPerPage}px`
                 : "0",
+    });
+
+    onMount(() => {
+        if (!pairs()) {
+            void fetchPairs();
+        }
     });
 
     return (

@@ -1,5 +1,4 @@
 import { useParams } from "@solidjs/router";
-import { OutputType } from "boltz-core";
 import log from "loglevel";
 import {
     Match,
@@ -11,98 +10,22 @@ import {
 } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
-import {
-    isToUnconfidentialLiquid,
-    unconfidentialExtra,
-} from "../components/Fees";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
-import type {
-    ChainPairTypeTaproot,
-    ChainSwapDetails,
-    RestorableSwap,
-    ReversePairTypeTaproot,
-    SwapStatus,
-} from "../utils/boltzClient";
 import { getRestorableSwaps, getSwapStatus } from "../utils/boltzClient";
 import { claim, derivePreimageFromRescueKey } from "../utils/claim";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
-import { getPair } from "../utils/helper";
 import { extractAddress } from "../utils/invoice";
+import { mapRestorableToSomeSwap } from "../utils/rescue";
 import { getXpub } from "../utils/rescueFile";
 import type { ChainSwap, ReverseSwap, SomeSwap } from "../utils/swapCreator";
-
-const mapClaimableSwap = ({
-    swap,
-    pair,
-}: {
-    swap: RestorableSwap &
-        Pick<SwapStatus, "transaction"> & { preimage?: string };
-    pair: ChainPairTypeTaproot | ReversePairTypeTaproot;
-}):
-    | (Partial<ChainSwap | ReverseSwap> & Pick<SwapStatus, "transaction">)
-    | undefined => {
-    if (swap === undefined) {
-        return undefined;
-    }
-
-    const unconfidentialExtraFee = isToUnconfidentialLiquid({
-        assetReceive: () => swap.to,
-        addressValid: () => true,
-        onchainAddress: () => swap.claimDetails.lockupAddress,
-    })
-        ? unconfidentialExtra
-        : 0;
-
-    if (swap.type === SwapType.Chain) {
-        return {
-            ...swap,
-            assetSend: swap.from,
-            assetReceive: swap.to,
-            receiveAmount:
-                swap.claimDetails.amount -
-                ((pair as ChainPairTypeTaproot).fees.minerFees.user.claim +
-                    unconfidentialExtraFee),
-            version: OutputType.Taproot,
-            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
-            refundPrivateKeyIndex: swap.refundDetails.keyIndex,
-            refundPrivateKey: swap.refundDetails.serverPublicKey,
-            claimDetails: {
-                ...swap.claimDetails,
-                swapTree: swap.claimDetails.tree,
-            } as ChainSwapDetails,
-            lockupDetails: {
-                ...swap.refundDetails,
-                swapTree: swap.refundDetails.tree,
-            } as ChainSwapDetails,
-        };
-    } else if (swap.type === SwapType.Reverse) {
-        return {
-            ...swap,
-            assetSend: swap.from,
-            assetReceive: swap.to,
-            version: OutputType.Taproot,
-            blindingKey: swap.claimDetails.blindingKey,
-            claimPrivateKeyIndex: swap.claimDetails.keyIndex,
-            refundPublicKey: swap.claimDetails.serverPublicKey,
-            swapTree: swap.claimDetails.tree,
-            receiveAmount:
-                swap.claimDetails.amount -
-                ((pair as ReversePairTypeTaproot).fees.minerFees.claim +
-                    unconfidentialExtraFee),
-        };
-    }
-
-    return undefined;
-};
 
 const ClaimRescue = () => {
     const params = useParams<{ id: string }>();
@@ -123,14 +46,16 @@ const ClaimRescue = () => {
                 throw Error("rescue file or pairs not found");
             }
 
-            const swapById = (swap: RestorableSwap) => swap.id === params.id;
+            const swapById = (swap: SomeSwap) => swap.id === params.id;
 
             // Fetch swap if it's not in the location state
             const restorableSwap =
                 rescuableSwaps()?.find(swapById) ||
-                (await getRestorableSwaps(getXpub(rescueFile())))?.find(
-                    swapById,
-                );
+                (await getRestorableSwaps(getXpub(rescueFile())))
+                    .map((swap) =>
+                        mapRestorableToSomeSwap({ swap, pairs: pairs() }),
+                    )
+                    ?.find(swapById);
 
             if (restorableSwap === undefined) {
                 throw Error(
@@ -145,64 +70,34 @@ const ClaimRescue = () => {
             }
 
             if (restorableSwap.type === SwapType.Reverse) {
-                const reversePair = getPair(
-                    pairs(),
-                    SwapType.Reverse,
-                    LN,
-                    restorableSwap.to,
-                ) as ReversePairTypeTaproot;
-
-                if (reversePair === undefined) {
-                    throw Error(
-                        `failed to find a reverse pair for ${params.id}`,
-                    );
-                }
-
-                return mapClaimableSwap({
-                    swap: {
-                        ...restorableSwap,
-                        preimage: derivePreimageFromRescueKey(
-                            rescueFile(),
-                            restorableSwap.claimDetails.keyIndex,
-                        ).toString("hex"),
-                        transaction: {
-                            id: swapStatus.transaction?.id,
-                            hex: swapStatus.transaction?.hex,
-                        },
+                return {
+                    ...restorableSwap,
+                    preimage: derivePreimageFromRescueKey(
+                        rescueFile(),
+                        (restorableSwap as ReverseSwap).claimPrivateKeyIndex,
+                    ).toString("hex"),
+                    transaction: {
+                        id: swapStatus.transaction?.id,
+                        hex: swapStatus.transaction?.hex,
                     },
-                    pair: reversePair,
-                });
+                };
             }
 
             if (restorableSwap.type === SwapType.Chain) {
-                const chainPair = getPair(
-                    pairs(),
-                    SwapType.Chain,
-                    restorableSwap.from,
-                    restorableSwap.to,
-                ) as ChainPairTypeTaproot;
-
-                if (chainPair === undefined) {
-                    throw Error(`failed to find a chain pair for ${params.id}`);
-                }
-
                 const derivedKey = derivePreimageFromRescueKey(
                     rescueFile(),
-                    restorableSwap.claimDetails.keyIndex,
+                    (restorableSwap as ChainSwap).claimPrivateKeyIndex,
                 ).toString("hex");
 
-                return mapClaimableSwap({
-                    swap: {
-                        ...restorableSwap,
-                        claimPrivateKey: derivedKey,
-                        preimage: derivedKey,
-                        transaction: {
-                            id: swapStatus.transaction?.id,
-                            hex: swapStatus.transaction?.hex,
-                        },
+                return {
+                    ...restorableSwap,
+                    claimPrivateKey: derivedKey,
+                    preimage: derivedKey,
+                    transaction: {
+                        id: swapStatus.transaction?.id,
+                        hex: swapStatus.transaction?.hex,
                     },
-                    pair: chainPair,
-                });
+                };
             }
 
             throw Error(`failed to construct claimable swap ${params.id}`);

@@ -6,13 +6,21 @@ import type { ECPairInterface } from "ecpair";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { LBTC } from "../consts/Assets";
+import { LBTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { fetchUTXOsWithFailover, getSwapUTXOs } from "./blockchain";
-import type { LockupTransaction, TransactionInterface } from "./boltzClient";
+import type {
+    ChainPairTypeTaproot,
+    ChainSwapDetails,
+    LockupTransaction,
+    Pairs,
+    RestorableSwap,
+    ReversePairTypeTaproot,
+    TransactionInterface,
+} from "./boltzClient";
 import {
     broadcastTransaction,
     getFeeEstimations,
@@ -27,7 +35,8 @@ import {
     getTransaction,
 } from "./compat";
 import { formatError } from "./errors";
-import { parseBlindingKey, parsePrivateKey } from "./helper";
+import { isToUnconfidentialLiquid, unconfidentialExtra } from "./fees";
+import { getPair, parseBlindingKey, parsePrivateKey } from "./helper";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -392,4 +401,106 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
             }
         }),
     );
+};
+
+export const mapRestorableToSomeSwap = ({
+    swap,
+    pairs,
+}: {
+    swap: RestorableSwap;
+    pairs: Pairs;
+}): Partial<SomeSwap> | undefined => {
+    if (swap === undefined) {
+        return undefined;
+    }
+
+    const unconfidentialExtraFee = isToUnconfidentialLiquid({
+        assetReceive: () => swap.to,
+        addressValid: () => true,
+        onchainAddress: () => swap.claimDetails.lockupAddress,
+    })
+        ? unconfidentialExtra
+        : 0;
+
+    switch (swap.type) {
+        case SwapType.Submarine:
+            return {
+                ...swap,
+                swapTree: swap.refundDetails.tree,
+                assetSend: swap.from,
+                assetReceive: swap.to,
+                version: OutputType.Taproot,
+                blindingKey: swap.refundDetails.blindingKey,
+                address: swap.refundDetails.lockupAddress,
+                refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+                claimPublicKey: swap.refundDetails.serverPublicKey,
+            };
+        case SwapType.Chain: {
+            const chainPair = getPair(
+                pairs,
+                SwapType.Chain,
+                swap.from,
+                swap.to,
+            ) as ChainPairTypeTaproot;
+
+            if (chainPair === undefined) {
+                throw new Error(`No chain pair found for ${swap.type} swap`);
+            }
+
+            return {
+                ...swap,
+                assetSend: swap.from,
+                assetReceive: swap.to,
+                receiveAmount:
+                    swap.claimDetails.amount -
+                    (chainPair.fees.minerFees.user.claim +
+                        unconfidentialExtraFee),
+                version: OutputType.Taproot,
+                address: swap.claimDetails.lockupAddress,
+                claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+                claimPublicKey: swap.claimDetails.serverPublicKey,
+                refundPrivateKeyIndex: swap.refundDetails.keyIndex,
+                refundPrivateKey: swap.refundDetails.serverPublicKey,
+                claimDetails: {
+                    ...swap.claimDetails,
+                    swapTree: swap.claimDetails.tree,
+                } as ChainSwapDetails,
+                lockupDetails: {
+                    ...swap.refundDetails,
+                    swapTree: swap.refundDetails.tree,
+                } as ChainSwapDetails,
+            };
+        }
+        case SwapType.Reverse: {
+            const reversePair = getPair(
+                pairs,
+                SwapType.Reverse,
+                LN,
+                swap.to,
+            ) as ReversePairTypeTaproot;
+
+            if (reversePair === undefined) {
+                throw new Error(`No reverse pair found for ${swap.type} swap`);
+            }
+
+            return {
+                ...swap,
+                assetSend: swap.from,
+                assetReceive: swap.to,
+                version: OutputType.Taproot,
+                lockupAddress: swap.claimDetails.lockupAddress,
+                address: swap.claimDetails.lockupAddress,
+                refundPublicKey: swap.claimDetails.serverPublicKey,
+                claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+                blindingKey: swap.claimDetails.blindingKey,
+                swapTree: swap.claimDetails.tree,
+                sendAmount: swap.claimDetails.amount,
+                receiveAmount:
+                    swap.claimDetails.amount -
+                    (reversePair.fees.minerFees.claim + unconfidentialExtraFee),
+            };
+        }
+        default:
+            return undefined;
+    }
 };
