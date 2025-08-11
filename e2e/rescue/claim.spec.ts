@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import axios from "axios";
 import fs from "fs";
 
+import { config } from "../../src/config";
 import { BTC, LBTC } from "../../src/consts/Assets";
 import dict from "../../src/i18n/i18n";
 import {
@@ -16,6 +18,27 @@ import {
 } from "../utils";
 
 const fileName = "rescue-file.json";
+
+const waitForTxInMempool = async (asset: string) => {
+    await expect
+        .poll(
+            async () => {
+                try {
+                    const txids = (
+                        await axios.get<string[]>(
+                            `${config.assets[asset].blockExplorerApis[0].normal}/mempool/txids`,
+                        )
+                    ).data;
+                    return txids.length > 0;
+                } catch (error) {
+                    console.error(`Failed to poll mempool for ${asset}`, error);
+                    return false;
+                }
+            },
+            { timeout: 30_000 },
+        )
+        .toBe(true);
+};
 
 const clearStorage = async (page: Page) => {
     await page.evaluate(() => window.localStorage.clear());
@@ -149,11 +172,17 @@ test.describe("Claim", () => {
                 await bitcoinSendToAddress(address, sendAmount);
                 await generateBitcoinBlock();
                 await waitForNodesToSync();
+                await waitForTxInMempool(assetReceive); // Wait for the claimable UTXO to appear in the mempool
+                await generateLiquidBlock();
+                await waitForNodesToSync();
             }
 
             if (assetSend === LBTC) {
                 await elementsSendToAddress(address, sendAmount);
                 await generateLiquidBlock();
+                await waitForNodesToSync();
+                await waitForTxInMempool(assetReceive); // Wait for the claimable UTXO to appear in the mempool
+                await generateBitcoinBlock();
                 await waitForNodesToSync();
             }
 
@@ -229,6 +258,7 @@ test.describe("Claim", () => {
 
             payInvoiceLndBackground(lightningInvoice);
             await waitForNodesToSync();
+            await waitForTxInMempool(asset); // Wait for the claimable UTXO to appear in the mempool
 
             if (asset === BTC) {
                 await generateBitcoinBlock();
