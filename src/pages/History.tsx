@@ -7,7 +7,6 @@ import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
 import { downloadJson, getBackupFileName } from "../utils/download";
-import { isIos } from "../utils/helper";
 import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
 import { Errors, validateRescueFile } from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
@@ -149,13 +148,11 @@ const History = () => {
                         hideStatusOnMobile
                     />
                     <Show when={swaps().length > 0}>
-                        <Show when={!isIos()}>
-                            <button
-                                class="btn btn-success"
-                                onClick={backupLocalStorage}>
-                                {t("refund_backup")}
-                            </button>
-                        </Show>
+                        <button
+                            class="btn btn-success"
+                            onClick={backupLocalStorage}>
+                            {t("refund_backup")}
+                        </button>
                         <button
                             class="btn btn-danger"
                             onClick={deleteLocalStorage}>
