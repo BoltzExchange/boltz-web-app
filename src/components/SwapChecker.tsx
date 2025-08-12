@@ -271,7 +271,11 @@ export const SwapChecker = () => {
         if (
             currentSwap.claimTx === undefined &&
             data.transaction !== undefined &&
-            isSwapClaimable(data.status, currentSwap.type)
+            isSwapClaimable({
+                status: data.status,
+                type: currentSwap.type,
+                includeSuccess: true,
+            })
         ) {
             try {
                 const res = await claim(
