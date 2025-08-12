@@ -8,7 +8,7 @@ import log from "loglevel";
 
 import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { swapStatusPending } from "../consts/SwapStatus";
+import { swapStatusPending, swapStatusSuccess } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { getSwapUTXOs } from "./blockchain";
@@ -41,17 +41,44 @@ export enum RescueAction {
 
 export const RescueNoAction = [RescueAction.None, RescueAction.Pending];
 
-export const isSwapClaimable = (status: string, type: SwapType) =>
-    (type === SwapType.Reverse &&
-        [
-            swapStatusPending.TransactionConfirmed,
-            swapStatusPending.TransactionMempool,
-        ].includes(status)) ||
-    (type === SwapType.Chain &&
-        [
-            swapStatusPending.TransactionServerConfirmed,
-            swapStatusPending.TransactionServerMempool,
-        ].includes(status));
+export const isSwapClaimable = ({
+    status,
+    type,
+    includeSuccess = false,
+}: {
+    status: string;
+    type: SwapType;
+    includeSuccess?: boolean;
+}) => {
+    switch (type) {
+        case SwapType.Reverse: {
+            const statuses = [
+                swapStatusPending.TransactionConfirmed,
+                swapStatusPending.TransactionMempool,
+            ];
+
+            if (includeSuccess) {
+                statuses.push(swapStatusSuccess.InvoiceSettled);
+            }
+
+            return statuses.includes(status);
+        }
+        case SwapType.Chain: {
+            const statuses = [
+                swapStatusPending.TransactionServerConfirmed,
+                swapStatusPending.TransactionServerMempool,
+            ];
+
+            if (includeSuccess) {
+                statuses.push(swapStatusSuccess.TransactionClaimed);
+            }
+
+            return statuses.includes(status);
+        }
+        default:
+            return false;
+    }
+};
 
 const refundTaproot = async <T extends TransactionInterface>(
     swap: SubmarineSwap | ChainSwap,
@@ -347,7 +374,12 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
-                if (isSwapClaimable(swap.status, swap.type)) {
+                if (
+                    isSwapClaimable({
+                        status: swap.status,
+                        type: swap.type,
+                    })
+                ) {
                     return { ...swap, action: RescueAction.Claim };
                 }
 
