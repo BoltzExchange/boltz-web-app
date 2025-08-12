@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.0..v1.8.1) - 2025-08-12
+
+### Bug Fixes
+
+- show "Backup" button on iOS (#989) - ([644506b](https://github.com/BoltzExchange/boltz-web-app/commit/644506b2aab46cefaee82a47d87601dd3dedc02f))
+- restore previous `SwapChecker` behavior (#991) - ([3b049a6](https://github.com/BoltzExchange/boltz-web-app/commit/3b049a64c0e7a79c172f2a83a9db201ad5f4e13c))
+
+---
 ## [1.8.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.9..v1.8.0) - 2025-08-06
 
 ### Bug Fixes
@@ -27,6 +35,7 @@ All notable changes to this project will be documented in this file. See [conven
 - show transaction mempool warning on desktop (#972) - ([188fffa](https://github.com/BoltzExchange/boltz-web-app/commit/188fffa6e0e407d795ad87f02606f70f652cec88))
 - update dependencies - ([e7bdf51](https://github.com/BoltzExchange/boltz-web-app/commit/e7bdf5124792f789c5d188febfd2eea069a37c0f))
 - update pro banner docs link - ([c8d9091](https://github.com/BoltzExchange/boltz-web-app/commit/c8d909137cdda4812590c60141216f456123a42f))
+- update version to v1.8.0 (#988) - ([c6a99d9](https://github.com/BoltzExchange/boltz-web-app/commit/c6a99d999882b9759f64e9222f69628df8d4ab63))
 
 ### Refactoring
 
