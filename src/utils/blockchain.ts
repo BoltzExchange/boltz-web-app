@@ -10,6 +10,10 @@ export type UTXO = {
     vout: number;
 };
 
+const requestTimeout = () => ({
+    signal: AbortSignal.timeout(10_000),
+});
+
 export const fetchUTXOsWithFailover = async (
     asset: string,
     address: string,
@@ -17,7 +21,10 @@ export const fetchUTXOsWithFailover = async (
     for (const url of config.assets[asset].blockExplorerApis) {
         try {
             const basePath = chooseUrl(url);
-            const response = await fetch(`${basePath}/address/${address}/utxo`);
+            const response = await fetch(
+                `${basePath}/address/${address}/utxo`,
+                requestTimeout(),
+            );
 
             if (!response.ok) {
                 log.error(`Failed to fetch UTXOs for ${address}`);
@@ -41,7 +48,10 @@ export const fetchRawTxWithFailover = async (
     for (const url of config.assets[asset].blockExplorerApis) {
         try {
             const basePath = chooseUrl(url);
-            const response = await fetch(`${basePath}/tx/${txid}/hex`);
+            const response = await fetch(
+                `${basePath}/tx/${txid}/hex`,
+                requestTimeout(),
+            );
 
             if (!response.ok) {
                 log.error(`Failed to fetch raw tx for ${txid}`);
