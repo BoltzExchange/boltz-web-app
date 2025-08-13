@@ -96,10 +96,15 @@ export const fetcher = async <T = unknown>(
 ): Promise<T> => {
     // We cannot use the context here, so we get the data directly from local storage
     const referral = localStorage.getItem(referralIdKey) || defaultReferral();
+
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(() => controller.abort(), 10_000);
+
     let opts: RequestInit = {
         headers: {
             referral,
         },
+        signal: controller.signal,
     };
 
     if (params) {
@@ -109,12 +114,16 @@ export const fetcher = async <T = unknown>(
                 ...(options ? options.headers : opts.headers),
                 "Content-Type": "application/json",
             },
+            signal: controller.signal,
             body: JSON.stringify(params),
         };
     }
 
     const apiUrl = getApiUrl() + url;
     const response = await fetch(apiUrl, options || opts);
+
+    clearTimeout(requestTimeout);
+
     if (!response.ok) {
         try {
             const body = await response.json();
