@@ -266,7 +266,6 @@ const claimChainSwap = async (
     }
 
     try {
-        throw new Error("test");
         // Post our partial signature to ask for theirs
         const theirPartial = await postChainSwapDetails(
             swap.id,
