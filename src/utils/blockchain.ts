@@ -1,6 +1,8 @@
 import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
+import { BTC } from "../consts/Assets";
+import { LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { formatError } from "./errors";
 import type { ChainSwap, SubmarineSwap } from "./swapCreator";
@@ -92,7 +94,7 @@ const fetchBlockExplorerParallel = async <T>(
     const urls = config.assets[asset].blockExplorerApis;
 
     try {
-        const broadcastPromises = urls.map(async (url) => {
+        const parallelPromises = urls.map(async (url) => {
             const { opts, requestTimeout } = constructRequestOptions(options);
             try {
                 const basePath = chooseUrl(url);
@@ -111,18 +113,18 @@ const fetchBlockExplorerParallel = async <T>(
             }
         });
 
-        const response = await Promise.any(broadcastPromises);
+        const response = await Promise.any(parallelPromises);
 
         return await processResponse<T>(response);
     } catch (err) {
         if (err instanceof AggregateError) {
             err.errors.forEach((e, i) => {
-                log.error(`Broadcast to ${chooseUrl(urls[i])} failed: ${e}`);
+                log.error(
+                    `fetch to external explorer ${chooseUrl(urls[i])} failed: ${e}`,
+                );
             });
         }
-        throw new Error(`all ${asset} transaction broadcast attempts failed`, {
-            cause: err,
-        });
+        throw new Error(`all external fetch attempts to ${endpoint} failed`);
     }
 };
 
@@ -132,6 +134,17 @@ const getAddressUTXOs = async (asset: string, address: string) => {
 
 const getRawTransaction = async (asset: string, txid: string) => {
     return await fetchBlockExplorer<string>(asset, `/tx/${txid}/hex`);
+};
+
+export const getBlockTipHeight = async (asset: string) => {
+    return await fetchBlockExplorer<string>(asset, "/blocks/tip/height");
+};
+
+export const getFeeEstimationsExternal = async (asset: string) => {
+    return await fetchBlockExplorer<Record<string, number>>(
+        asset,
+        "/fee-estimates",
+    );
 };
 
 export const broadcastToExplorer = async (
@@ -154,14 +167,27 @@ export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
 
     const utxos = await getAddressUTXOs(swap.assetSend, address);
 
-    const rawTxs: { hex: string }[] = [];
+    const rawTxs: string[] = [];
 
     for (const utxo of utxos) {
         const rawTx = await getRawTransaction(swap.assetSend, utxo.txid);
-        rawTxs.push({
-            hex: rawTx,
-        });
+        rawTxs.push(rawTx);
     }
 
-    return rawTxs;
+    const transactions = rawTxs.map((rawTx) => {
+        if ([BTC, LBTC].includes(swap.assetSend)) {
+            return {
+                hex: rawTx,
+                // Important to know if the swap has timed out or not
+                timeoutBlockHeight:
+                    swap.type === SwapType.Chain
+                        ? (swap as ChainSwap).lockupDetails.timeoutBlockHeight
+                        : (swap as SubmarineSwap).timeoutBlockHeight,
+            };
+        }
+
+        return { hex: rawTx };
+    });
+
+    return transactions;
 };
