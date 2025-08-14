@@ -108,9 +108,6 @@ export type GlobalContextType = {
     getRdnsAll: () => Promise<{ address: string; rdns: string }[]>;
     getRdnsForAddress: (address: string) => Promise<string | null>;
 
-    externalBroadcast: Accessor<boolean>;
-    setExternalBroadcast: Setter<boolean>;
-
     newKey: newKeyFn;
     deriveKey: deriveKeyFn;
     getXpub: () => string;
@@ -462,14 +459,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         values?: Record<string, unknown>,
     ) => string;
 
-    const [externalBroadcast, setExternalBroadcast] = makePersisted(
-        // eslint-disable-next-line solid/reactivity
-        createSignal<boolean>(false),
-        {
-            name: "externalBroadcast",
-        },
-    );
-
     return (
         <GlobalContext.Provider
             value={{
@@ -531,9 +520,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 getRdnsAll,
                 hardwareDerivationPath,
                 setHardwareDerivationPath,
-
-                externalBroadcast,
-                setExternalBroadcast,
 
                 newKey,
                 rescueFile,
