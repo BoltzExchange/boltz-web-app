@@ -107,8 +107,7 @@ const mapClaimableSwap = ({
 const ClaimRescue = () => {
     const params = useParams<{ id: string }>();
 
-    const { t, pairs, notify, fetchPairs, externalBroadcast } =
-        useGlobalContext();
+    const { t, pairs, notify, fetchPairs } = useGlobalContext();
     const { rescuableSwaps, rescueFile, deriveKey } = useRescueContext();
     const { onchainAddress, addressValid, setOnchainAddress, setAddressValid } =
         useCreateContext();
@@ -260,7 +259,6 @@ const ClaimRescue = () => {
                 },
                 claimableSwap().transaction as { hex: string },
                 true,
-                externalBroadcast(),
             );
             notify("success", t("swap_completed", { id: res.id }), true, true);
             setClaimTxId(res.claimTx);
