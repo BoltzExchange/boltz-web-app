@@ -391,14 +391,12 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
 
 const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
     try {
-        const assetSet = new Set<AssetType>(
-            swaps.map((swap) => swap.assetSend as AssetType),
-        );
-
         type RefundableAsset = typeof BTC | typeof LBTC | typeof RBTC;
-        const assets: RefundableAsset[] = Array.from(assetSet).filter(
-            (asset) => asset !== LN,
-        );
+        const assets: RefundableAsset[] = Array.from(
+            new Set<AssetType>(
+                swaps.map((swap) => swap.assetSend as AssetType),
+            ),
+        ).filter((asset) => asset !== LN);
 
         const blockHeights = await Promise.allSettled(
             assets.map(getBlockTipHeight),
@@ -410,14 +408,6 @@ const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
             const asset = assets[index];
             if (res.status === "rejected") {
                 log.warn(`could not get block tip height for asset ${asset}`);
-                return;
-            }
-
-            const height = Number(res.value);
-            if (!Number.isFinite(height)) {
-                log.warn(
-                    `invalid block tip height for asset ${asset}: ${res.value}`,
-                );
                 return;
             }
 

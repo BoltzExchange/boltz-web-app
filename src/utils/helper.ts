@@ -94,47 +94,52 @@ export const fetcher = async <T = unknown>(
     params?: Record<string, unknown>,
     options?: RequestInit,
 ): Promise<T> => {
-    // We cannot use the context here, so we get the data directly from local storage
-    const referral = localStorage.getItem(referralIdKey) || defaultReferral();
-
     const controller = new AbortController();
     const requestTimeout = setTimeout(() => controller.abort(), 10_000);
 
-    let opts: RequestInit = {
-        headers: {
-            referral,
-        },
-        signal: controller.signal,
-    };
+    try {
+        // We cannot use the context here, so we get the data directly from local storage
+        const referral =
+            localStorage.getItem(referralIdKey) || defaultReferral();
 
-    if (params) {
-        opts = {
-            method: "POST",
+        let opts: RequestInit = {
             headers: {
-                ...(options ? options.headers : opts.headers),
-                "Content-Type": "application/json",
+                referral,
             },
             signal: controller.signal,
-            body: JSON.stringify(params),
         };
-    }
 
-    const apiUrl = getApiUrl() + url;
-    const response = await fetch(apiUrl, options || opts);
-
-    clearTimeout(requestTimeout);
-
-    if (!response.ok) {
-        try {
-            const body = await response.json();
-            return Promise.reject(formatError(body));
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
-            return Promise.reject(response);
+        if (params) {
+            opts = {
+                method: "POST",
+                headers: {
+                    ...(options ? options.headers : opts.headers),
+                    "Content-Type": "application/json",
+                },
+                signal: controller.signal,
+                body: JSON.stringify(params),
+            };
         }
+
+        const apiUrl = getApiUrl() + url;
+        const response = await fetch(apiUrl, options || opts);
+
+        if (!response.ok) {
+            try {
+                const body = await response.json();
+                return Promise.reject(formatError(body));
+
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            } catch (e) {
+                return Promise.reject(response);
+            }
+        }
+        return (await response.json()) as T;
+    } catch (e) {
+        throw new Error(e);
+    } finally {
+        clearTimeout(requestTimeout);
     }
-    return (await response.json()) as T;
 };
 
 export const parsePrivateKey = (

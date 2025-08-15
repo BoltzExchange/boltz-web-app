@@ -1,6 +1,9 @@
 import log from "loglevel";
 
-import { getFeeEstimationsExternal } from "./blockchain";
+import {
+    getEsploraFeeEstimations,
+    getMempoolFeeEstimations,
+} from "./blockchain";
 import { getFeeEstimations } from "./boltzClient";
 
 export const getFeeEstimationsFailover = async (asset: string) => {
@@ -10,18 +13,32 @@ export const getFeeEstimationsFailover = async (asset: string) => {
         return feeEstimations[asset];
     } catch (e) {
         log.warn(
-            `failed to get fee estimations via Boltz client for ${asset}: ${e}`,
+            `failed to get fee estimations via Boltz API for ${asset}: ${e}`,
         );
     }
 
     try {
-        log.info(`falling back to external fee estimations`);
-        const feeEstimations = await getFeeEstimationsExternal(asset);
+        log.info(`falling back to Mempool fee estimations`);
+        const feeEstimations = await getMempoolFeeEstimations(asset);
+
+        return feeEstimations.halfHourFee;
+    } catch (e) {
+        log.warn(
+            `failed to get fee estimations via Mempool API for ${asset}: ${e}`,
+        );
+    }
+
+    try {
+        log.info(`falling back to Esplora fee estimations`);
+        const feeEstimations = await getEsploraFeeEstimations(asset);
 
         const expectedBlocksToConfirm = "3";
 
         return feeEstimations[expectedBlocksToConfirm];
     } catch (e) {
-        throw new Error(`failed to get fee estimations for ${asset}: ${e}`);
+        log.warn(
+            `failed to get fee estimations via Esplora API for ${asset}: ${e}`,
+        );
+        throw new Error(`could not get fee estimations for ${asset}`);
     }
 };
