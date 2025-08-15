@@ -1,5 +1,5 @@
 import type { Config } from "src/configs/base";
-import { baseConfig, chooseUrl } from "src/configs/base";
+import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
 
 const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
 
@@ -20,15 +20,18 @@ const config = {
     assets: {
         BTC: {
             blockExplorerUrl: {
+                id: Explorer.Mempool,
                 normal: "https://mempool.space",
                 tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion",
             },
             blockExplorerApis: [
                 {
+                    id: Explorer.Esplora,
                     normal: "https://blockstream.info/api",
                     tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/api",
                 },
                 {
+                    id: Explorer.Mempool,
                     normal: "https://mempool.space/api",
                     tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion/api",
                 },
@@ -36,15 +39,18 @@ const config = {
         },
         "L-BTC": {
             blockExplorerUrl: {
+                id: Explorer.Esplora,
                 normal: "https://blockstream.info/liquid",
                 tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquid",
             },
             blockExplorerApis: [
                 {
+                    id: Explorer.Esplora,
                     normal: "https://blockstream.info/liquid/api",
                     tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquid/api",
                 },
                 {
+                    id: Explorer.Mempool,
                     normal: "https://liquid.network/api",
                     tor: "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion/api",
                 },
@@ -52,6 +58,7 @@ const config = {
         },
         RBTC: {
             blockExplorerUrl: {
+                id: Explorer.Blockscout,
                 normal: "https://rootstock.blockscout.com",
             },
             network: {

@@ -80,7 +80,7 @@ const Pay = () => {
             log.info(
                 `refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
             );
-            setSwapStatus(swapStatusFailed.TransactionRefunded);
+            setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
             return;
         }
 
@@ -143,15 +143,15 @@ const Pay = () => {
     >(undefined);
 
     const isWaitingForRefund = () =>
-        swap() &&
-        (swap().type === SwapType.Chain ||
-            swap().type === SwapType.Submarine) &&
-        swapStatus() === swapStatusFailed.TransactionRefunded;
+        (swap() &&
+            swap().type === SwapType.Chain &&
+            swapStatus() === swapStatusFailed.TransactionRefunded) ||
+        timedOutRefund;
 
     const renameSwapStatus = (status: string) => {
         if (isWaitingForRefund()) {
             // Rename because the previous name was confusing users
-            return "swap.waitingForRefund";
+            return swapStatusFailed.SwapWaitingForRefund;
         }
         return status;
     };
@@ -225,7 +225,11 @@ const Pay = () => {
                             </Match>
                             <Match when={isWaitingForRefund()}>
                                 <RefundButton
-                                    swap={swap as Accessor<ChainSwap>}
+                                    swap={
+                                        swap as Accessor<
+                                            ChainSwap | SubmarineSwap
+                                        >
+                                    }
                                 />
                             </Match>
                             <Match

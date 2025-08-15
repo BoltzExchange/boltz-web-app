@@ -22,7 +22,14 @@ type Asset = {
     };
 };
 
+export enum Explorer {
+    Mempool = "mempool",
+    Esplora = "esplora",
+    Blockscout = "blockscout",
+}
+
 type Url = {
+    id?: Explorer;
     normal: string;
     tor?: string;
 };

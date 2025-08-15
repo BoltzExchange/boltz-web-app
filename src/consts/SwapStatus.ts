@@ -13,6 +13,7 @@ export const swapStatusPending = {
 export const swapStatusFailed = {
     SwapExpired: "swap.expired",
     SwapRefunded: "swap.refunded",
+    SwapWaitingForRefund: "swap.waitingForRefund",
     InvoiceExpired: "invoice.expired",
     InvoiceFailedToPay: "invoice.failedToPay",
     TransactionFailed: "transaction.failed",

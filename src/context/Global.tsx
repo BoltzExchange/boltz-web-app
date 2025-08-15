@@ -374,7 +374,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         const swap = await getSwap<SubmarineSwap & { status: string }>(id);
 
         if (swap === undefined) {
-            log.warn(`can't update swap ${id} status: swap not found`);
+            log.warn(`cannot update swap ${id} status: not found`);
             return false;
         }
 
