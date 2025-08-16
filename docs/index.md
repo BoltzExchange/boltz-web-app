@@ -30,5 +30,8 @@ swapping!
 
 ```bash
 docker build -t boltz-webapp .
-docker run -d --rm -p 4173:80 --name my-boltz-webapp boltz-webapp
+docker run -d --rm -p 3000:80 --name my-boltz-webapp boltz-webapp
 ```
+
+Just like the native build, the Docker container will serve the web app on
+[http://localhost:3000](http://localhost:3000).
