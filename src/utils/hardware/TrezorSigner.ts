@@ -107,13 +107,14 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     this.provider.getFeeData(),
                 ]);
 
+                const value = BigInt(txParams.value || 0);
                 const trezorTx = {
                     to: txParams.to,
                     data: txParams.data,
                     nonce: nonce.toString(16),
                     chainId: Number(network.chainId),
                     gasPrice: feeData.gasPrice.toString(16),
-                    value: BigInt(txParams.value || 0).toString(16),
+                    value: value.toString(16),
                     gasLimit: (txParams as unknown as { gas: number }).gas,
                 };
 
@@ -124,10 +125,11 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     } as unknown as never),
                 );
 
+                log.debug("Broadcasting Trezor transaction");
                 const tx = Transaction.from({
                     ...trezorTx,
+                    value,
                     type: 0,
-                    value: txParams.value,
                     gasPrice: feeData.gasPrice,
                     nonce: Number(trezorTx.nonce),
                     signature: Signature.from(signature.payload),
