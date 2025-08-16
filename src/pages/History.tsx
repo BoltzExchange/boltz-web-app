@@ -47,11 +47,13 @@ const History = () => {
         setRescueFile,
         setRescueFileBackupDone,
         getSwaps,
+        getRdnsAll,
         clearSwaps,
         setSwapStorage,
         setNotification,
         setNotificationType,
         t,
+        setRdns,
     } = useGlobalContext();
 
     const [swaps, setSwaps] = createSignal<SomeSwap[]>([]);
@@ -68,39 +70,44 @@ const History = () => {
             version: latestStorageVersion,
             mnemonic: rescueFile().mnemonic,
             swaps: await getSwaps(),
+            rdns: await getRdnsAll(),
         });
     };
 
-    const importLocalStorage = (e: Event) => {
+    const importLocalStorage = async (e: Event) => {
         const input = e.currentTarget as HTMLInputElement;
         const inputFile = input.files[0];
         input.setCustomValidity("");
-        new Response(inputFile)
-            .json()
-            .then(async (result: BackupFileType) => {
-                const parsedFile = validateBackupFile(result);
-                log.debug(
-                    `Found backup file of version: ${parsedFile.version}`,
-                );
-                await clearSwaps();
+        try {
+            const result = await new Response(inputFile).json();
 
-                const swaps = migrateBackupFile(
-                    parsedFile.version,
-                    parsedFile.swaps,
-                );
+            const parsedFile = validateBackupFile(result);
+            log.debug(`Found backup file of version: ${parsedFile.version}`);
+            await clearSwaps();
 
-                for (const swap of swaps) {
-                    await setSwapStorage(swap);
+            const swaps = migrateBackupFile(
+                parsedFile.version,
+                parsedFile.swaps,
+            );
+
+            for (const swap of swaps) {
+                await setSwapStorage(swap);
+            }
+            setSwaps(swaps);
+            setRescueFile({ mnemonic: parsedFile.mnemonic });
+            setRescueFileBackupDone(true);
+
+            if (result.rdns !== undefined) {
+                log.debug(`Importing ${result.rdns.length} RDNS records`);
+                for (const rdns of result.rdns) {
+                    await setRdns(rdns.address, rdns.rdns);
                 }
-                setSwaps(swaps);
-                setRescueFile({ mnemonic: parsedFile.mnemonic });
-                setRescueFileBackupDone(true);
-            })
-            .catch((e) => {
-                log.error("invalid file upload", e);
-                setNotificationType("error");
-                setNotification(t("invalid_backup_file"));
-            });
+            }
+        } catch (e) {
+            log.error("invalid file upload", e);
+            setNotificationType("error");
+            setNotification(t("invalid_backup_file"));
+        }
     };
 
     onMount(async () => {
