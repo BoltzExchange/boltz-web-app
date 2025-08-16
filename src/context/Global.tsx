@@ -106,6 +106,7 @@ export type GlobalContextType = {
     setHardwareDerivationPath: Setter<string>;
 
     setRdns: (address: string, rdns: string) => Promise<string>;
+    getRdnsAll: () => Promise<{ address: string; rdns: string }[]>;
     getRdnsForAddress: (address: string) => Promise<string | null>;
 
     externalBroadcast: Accessor<boolean>;
@@ -396,6 +397,16 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const setRdns = (address: string, rdns: string) =>
         rdnsForage.setItem(address.toLowerCase(), rdns);
 
+    const getRdnsAll = async () => {
+        const result: { address: string; rdns: string }[] = [];
+
+        await rdnsForage.iterate<string, unknown>((rdns, address) => {
+            result.push({ address, rdns });
+        });
+
+        return result;
+    };
+
     const getRdnsForAddress = (address: string) =>
         rdnsForage.getItem<string>(address.toLowerCase());
 
@@ -515,6 +526,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
                 setRdns,
                 getRdnsForAddress,
+                getRdnsAll,
                 hardwareDerivationPath,
                 setHardwareDerivationPath,
 
