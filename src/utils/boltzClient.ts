@@ -412,7 +412,6 @@ export const getContracts = () =>
 export const broadcastTransaction = async (
     asset: string,
     txHex: string,
-    externalBroadcast: boolean = false,
 ): Promise<{
     id: string;
 }> => {
@@ -422,11 +421,8 @@ export const broadcastTransaction = async (
         fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, {
             hex: txHex,
         }),
+        broadcastToExplorer(asset, txHex),
     ];
-
-    if (externalBroadcast) {
-        promises.push(broadcastToExplorer(asset, txHex));
-    }
 
     const results = await Promise.allSettled(promises);
     const successfulResult = results.find(

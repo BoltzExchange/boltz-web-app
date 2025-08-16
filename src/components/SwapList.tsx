@@ -12,6 +12,7 @@ import { SwapIcons } from "./SwapIcons";
 
 export type Swap = (SomeSwap | RestorableSwap) & {
     action?: RescueAction;
+    timedOut?: boolean;
 };
 
 const getSwapDate = <T extends Swap>(swap: T) => {

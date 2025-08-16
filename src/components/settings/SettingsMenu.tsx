@@ -5,7 +5,6 @@ import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
 import "../../style/settings.scss";
 import AudioNotificationSetting from "./AudioNotificationSetting";
-import BroadcastSetting from "./BroadcastSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
 import Logs from "./Logs";
@@ -64,11 +63,6 @@ const SettingsMenu = () => {
                     label={"browsernotification"}
                     tooltipLabel={"browsernotification_tooltip"}
                     settingElement={<BrowserNotification />}
-                />
-                <Entry
-                    label={"broadcast_setting"}
-                    tooltipLabel={"broadcast_setting_tooltip"}
-                    settingElement={<BroadcastSetting />}
                 />
                 <Entry
                     label={"rescue_key"}
