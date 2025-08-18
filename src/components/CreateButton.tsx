@@ -318,7 +318,7 @@ const CreateButton = () => {
                 setInvoiceValid(true);
             } catch (e) {
                 notify("error", formatError(e));
-                log.warn("Fetching invoice from bol12 failed", e);
+                log.warn("Fetching invoice from bolt12 offer failed", e);
                 return;
             }
         }
