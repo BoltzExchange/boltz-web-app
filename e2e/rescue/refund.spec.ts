@@ -11,14 +11,10 @@ import {
     decodeLiquidRawTransaction,
     elementsSendToAddress,
     generateLiquidBlock,
+    getCurrentSwapId,
     getLiquidAddress,
     setFailedToPay,
 } from "../utils";
-
-const getCurrentSwapId = (page: Page) => {
-    const url = new URL(page.url());
-    return url.pathname.split("/").pop();
-};
 
 const waitForUTXOsInMempool = async (address: string, amount: number) => {
     await expect

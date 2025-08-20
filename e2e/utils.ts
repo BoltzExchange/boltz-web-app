@@ -301,3 +301,8 @@ export const fetchBip21Invoice = async (invoice: string) => {
 
     return data;
 };
+
+export const getCurrentSwapId = (page: Page) => {
+    const url = new URL(page.url());
+    return url.pathname.split("/").pop();
+};
