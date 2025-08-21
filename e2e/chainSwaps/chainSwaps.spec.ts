@@ -8,17 +8,26 @@ import {
     elementsSendToAddress,
     fetchBip21Invoice,
     generateBitcoinBlock,
+    generateBitcoinBlocks,
     generateInvoiceWithRoutingHint,
     generateLiquidBlock,
     getBitcoinAddress,
     getBitcoinWalletTx,
+    getCurrentSwapId,
     getLiquidAddress,
+    setDisableCooperativeSignatures,
     verifyRescueFile,
+    waitForExplorersToSync,
+    waitForNodesToSync,
 } from "../utils";
 
 test.describe("Chain swap", () => {
     test.beforeEach(async () => {
         await generateBitcoinBlock();
+    });
+
+    test.afterEach(async () => {
+        await setDisableCooperativeSignatures(false);
     });
 
     test("BTC/L-BTC", async ({ page }) => {
@@ -144,5 +153,83 @@ test.describe("Chain swap", () => {
         expect(await elementsGetReceivedByAddress(liquidAddress, 0)).toBe(
             bip21Amount.toNumber(),
         );
+    });
+
+    test("BTC/L-BTC uncooperative refund after blockHeightTimeout", async ({
+        page,
+    }) => {
+        await page.goto("/");
+        await setDisableCooperativeSignatures(true);
+
+        const assetSelector = page.locator("div[class='asset asset-LN'] div");
+        await assetSelector.click();
+
+        const lbtcAsset = page.locator("div[data-testid='select-L-BTC']");
+        await lbtcAsset.click();
+
+        const receiveAmount = "0.01";
+        const inputReceiveAmount = page.locator(
+            "input[data-testid='receiveAmount']",
+        );
+        await inputReceiveAmount.fill(receiveAmount);
+
+        const inputOnchainAddress = page.locator(
+            "input[data-testid='onchainAddress']",
+        );
+        await inputOnchainAddress.fill(await getLiquidAddress());
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await buttonCreateSwap.click();
+
+        await verifyRescueFile(page);
+
+        await expect(
+            page.locator("div[data-status='swap.created']"),
+        ).toBeVisible();
+
+        const buttons = page.locator("div[data-testid='pay-onchain-buttons']");
+        const amountButton = buttons.getByText("amount");
+        const addressButton = buttons.getByText("address");
+        expect(amountButton).toBeDefined();
+        expect(addressButton).toBeDefined();
+
+        await amountButton.click();
+        const sendAmount = await page.evaluate(() => {
+            return navigator.clipboard.readText();
+        });
+
+        await addressButton.click();
+        const address = await page.evaluate(() => {
+            return navigator.clipboard.readText();
+        });
+
+        await bitcoinSendToAddress(address, sendAmount);
+        await generateBitcoinBlocks(216);
+        await waitForNodesToSync();
+        await waitForExplorersToSync();
+
+        const swapId = getCurrentSwapId(page);
+
+        await page.getByRole("link", { name: "Rescue" }).click();
+        await expect(page.getByTestId("loading-spinner")).not.toBeVisible();
+
+        const swapItem = page.locator(
+            `div[data-testid='swaplist-item-${swapId}']`,
+        );
+
+        await expect(swapItem).toBeVisible();
+        await expect(swapItem).not.toBeDisabled();
+
+        await swapItem.click();
+
+        await page.getByTestId("refundAddress").fill(await getBitcoinAddress());
+        await page.getByTestId("refundButton").click();
+
+        const refundTxLink = page.getByText("open refund transaction");
+        const txId = (await refundTxLink.getAttribute("href")).split("/").pop();
+
+        expect(txId).toBeDefined();
     });
 });

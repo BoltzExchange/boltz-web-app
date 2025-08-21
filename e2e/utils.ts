@@ -1,4 +1,4 @@
-import { type Page, request } from "@playwright/test";
+import { type Page, expect, request } from "@playwright/test";
 import axios from "axios";
 import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
@@ -28,10 +28,18 @@ const execCommandBackground = (command: string): void => {
         shell: "/bin/bash",
         stdio: "ignore",
         detached: true,
-        timeout: 15_000,
     });
 
     child.unref();
+
+    const timer = setTimeout(() => {
+        try {
+            if (child.pid) process.kill(child.pid);
+        } catch {
+            /* no-op */
+        }
+    }, 15_000);
+    child.on("exit", () => clearTimeout(timer));
 };
 
 const execCommand = async (command: string): Promise<string> => {
@@ -91,6 +99,9 @@ export const elementsSendToAddress = (
 export const generateBitcoinBlock = (): Promise<string> =>
     execCommand("bitcoin-cli-sim-client -generate");
 
+export const generateBitcoinBlocks = (blocks: number): Promise<string> =>
+    execCommand(`bitcoin-cli-sim-client -generate ${blocks}`);
+
 export const generateLiquidBlock = (): Promise<string> =>
     execCommand("elements-cli-sim-client -generate");
 
@@ -106,6 +117,10 @@ export const payInvoiceLnd = (invoice: string): Promise<string> =>
 export const payInvoiceLndBackground = (invoice: string): void => {
     execCommandBackground(`lncli-sim 1 payinvoice -f ${invoice}`);
 };
+
+export const setDisableCooperativeSignatures = (
+    disable: boolean,
+): Promise<string> => boltzCli(`dev-disablecooperative ${disable}`);
 
 export const decodeLiquidRawTransaction = (tx: string): Promise<string> =>
     execCommand(`elements-cli-sim-client decoderawtransaction "${tx}"`);
@@ -153,6 +168,56 @@ export const waitForNodesToSync = async (): Promise<void> => {
             await new Promise((resolve) => setTimeout(resolve, 1_000));
         }
     }
+};
+
+export const waitForExplorersToSync = async (): Promise<void> => {
+    const bitcoinHeight = JSON.parse(
+        await execCommand("bitcoin-cli-sim-client getblockchaininfo"),
+    ).blocks;
+
+    await expect
+        .poll(
+            async () => {
+                try {
+                    const esploraHeight = Number(
+                        (
+                            await axios.get<string>(
+                                `${config.assets["BTC"].blockExplorerApis[0].normal}/blocks/tip/height`,
+                            )
+                        ).data,
+                    );
+                    return esploraHeight >= bitcoinHeight;
+                } catch {
+                    return false;
+                }
+            },
+            { timeout: 10_000 },
+        )
+        .toBe(true);
+
+    const liquidHeight = JSON.parse(
+        await execCommand("elements-cli-sim-client getblockchaininfo"),
+    ).blocks;
+
+    await expect
+        .poll(
+            async () => {
+                try {
+                    const liquidEsploraHeight = Number(
+                        (
+                            await axios.get<string>(
+                                `${config.assets["L-BTC"].blockExplorerApis[0].normal}/blocks/tip/height`,
+                            )
+                        ).data,
+                    );
+                    return liquidEsploraHeight >= liquidHeight;
+                } catch {
+                    return false;
+                }
+            },
+            { timeout: 10_000 },
+        )
+        .toBe(true);
 };
 
 export const addReferral = (name: string): Promise<string> =>
