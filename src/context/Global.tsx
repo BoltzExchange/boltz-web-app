@@ -28,7 +28,7 @@ import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
 import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
-import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import type { SomeSwap } from "../utils/swapCreator";
 import { getUrlParam, isEmbed, resetUrlParam } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
@@ -371,7 +371,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     };
 
     const updateSwapStatus = async (id: string, newStatus: string) => {
-        const swap = await getSwap<SubmarineSwap & { status: string }>(id);
+        const swap = await getSwap<SomeSwap & { status: string }>(id);
 
         if (swap === undefined) {
             log.warn(`cannot update swap ${id} status: not found`);
