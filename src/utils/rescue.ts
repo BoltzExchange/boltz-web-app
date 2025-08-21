@@ -373,14 +373,15 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     const lockupTx =
         lockupTxResult.status === "fulfilled" ? lockupTxResult.value : null;
     const utxos = utxosResult.status === "fulfilled" ? utxosResult.value : null;
+    const hasUTXOs = utxos && utxos.length > 0;
 
-    if (lockupTx && utxos) {
+    if (lockupTx && hasUTXOs) {
         return mergeLockupWithUTXOs(lockupTx, utxos);
     }
-    if (lockupTx && !utxos) {
+    if (lockupTx && !hasUTXOs) {
         return [lockupTx];
     }
-    if (!lockupTx && utxos) {
+    if (!lockupTx && hasUTXOs) {
         return utxos;
     }
 
