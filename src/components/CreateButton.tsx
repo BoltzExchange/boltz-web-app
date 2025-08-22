@@ -35,6 +35,7 @@ import {
     getAssetByBip21Prefix,
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
+import Pair, { RequiredInput } from "../utils/pair";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import type { SomeSwap } from "../utils/swapCreator";
 import {
@@ -111,14 +112,10 @@ const CreateButton = () => {
     const {
         invoice,
         lnurl,
-        assetSend,
-        assetReceive,
         onchainAddress,
         receiveAmount,
-        swapType,
         sendAmount,
         amountValid,
-        pairValid,
         setInvoice,
         setInvoiceValid,
         setLnurl,
@@ -126,14 +123,14 @@ const CreateButton = () => {
         valid,
         addressValid,
         setAddressValid,
+        pair,
+        setPair,
         minimum,
         maximum,
         invoiceValid,
         invoiceError,
         bolt12Offer,
         setBolt12Offer,
-        setAssetReceive,
-        setSwapType,
         setSendAmount,
         setReceiveAmount,
     } = useCreateContext();
@@ -158,12 +155,10 @@ const CreateButton = () => {
                 addressValid,
                 invoiceValid,
                 invoiceError,
-                pairValid,
-                swapType,
+                pair,
                 lnurl,
                 online,
                 minimum,
-                assetReceive,
                 bolt12Offer,
                 denomination,
             ],
@@ -172,18 +167,17 @@ const CreateButton = () => {
                     setButtonLabel({ key: "api_offline" });
                     return;
                 }
-                if (!pairValid()) {
+                if (!pair().isRoutable) {
                     setButtonLabel({ key: "invalid_pair" });
                     return;
                 }
 
                 const isChainSwapWithZeroAmount = () =>
-                    swapType() === SwapType.Chain &&
-                    assetSend() !== RBTC &&
-                    sendAmount().isZero();
+                    pair().canZeroAmount && sendAmount().isZero();
 
                 const isSubmarineSwapInvoiceValid = () =>
-                    swapType() === SwapType.Submarine && !invoiceError();
+                    pair().requiredInput === RequiredInput.Invoice &&
+                    !invoiceError();
 
                 const shouldShowAmountError = () =>
                     !amountValid() &&
@@ -191,7 +185,7 @@ const CreateButton = () => {
                     // can skip this check
                     !isChainSwapWithZeroAmount() &&
                     (isSubmarineSwapInvoiceValid() ||
-                        swapType() !== SwapType.Submarine);
+                        pair().requiredInput !== RequiredInput.Invoice);
 
                 if (shouldShowAmountError()) {
                     const lessThanMin = Number(sendAmount()) < minimum();
@@ -205,21 +199,24 @@ const CreateButton = () => {
                             ),
                             denomination: formatDenomination(
                                 denomination(),
-                                assetSend(),
+                                pair().fromAsset,
                             ),
                         },
                     });
                     return;
                 }
-                if (assetReceive() === RBTC && !addressValid()) {
+                if (
+                    pair().requiredInput === RequiredInput.Web3 &&
+                    !addressValid()
+                ) {
                     setButtonLabel({ key: "please_connect_wallet" });
                     return;
                 }
-                if (swapType() !== SwapType.Submarine) {
+                if (pair().requiredInput === RequiredInput.Address) {
                     if (!addressValid()) {
                         setButtonLabel({
                             key: "invalid_address",
-                            params: { asset: assetReceive() },
+                            params: { asset: pair().toAsset },
                         });
                         return;
                     }
@@ -253,11 +250,11 @@ const CreateButton = () => {
 
     const validWayToFetchInvoice = (): boolean => {
         return (
-            swapType() === SwapType.Submarine &&
+            pair().requiredInput === RequiredInput.Invoice &&
             (lnurl() !== "" || bolt12Offer() !== undefined) &&
             amountValid() &&
             sendAmount().isGreaterThan(0) &&
-            assetReceive() !== assetSend()
+            pair().toAsset !== pair().fromAsset
         );
     };
 
@@ -328,24 +325,23 @@ const CreateButton = () => {
         claimAddress: string,
         useRif: boolean,
     ): Promise<boolean> => {
-        if (
-            !rescueFileBackupDone() &&
-            assetSend() !== RBTC &&
-            swapType() !== SwapType.Reverse
-        ) {
+        if (!rescueFileBackupDone() && pair().needsBackup) {
             navigate("/backup");
             return false;
         }
 
         try {
+            // TODO: swap creation with route
             let data: SomeSwap;
-            switch (swapType()) {
+
+            const swapToCreate = pair().swapToCreate;
+            switch (swapToCreate.type) {
                 case SwapType.Submarine: {
                     const createSubmarineSwap = async () => {
                         data = await createSubmarine(
                             pairs(),
-                            coalesceLn(assetSend()),
-                            coalesceLn(assetReceive()),
+                            coalesceLn(pair().fromAsset),
+                            coalesceLn(pair().toAsset),
                             sendAmount(),
                             receiveAmount(),
                             invoice(),
@@ -373,7 +369,7 @@ const CreateButton = () => {
                         ? getAssetByBip21Prefix(bip21Decoded.protocol)
                         : undefined;
 
-                    if (!bip21 || assetSend() === bip21Asset) {
+                    if (!bip21 || swapToCreate.from === bip21Asset) {
                         log.debug("Creating submarine swap");
                         await createSubmarineSwap();
                         break;
@@ -391,7 +387,7 @@ const CreateButton = () => {
                         const chainPair = getPair<ChainPairTypeTaproot>(
                             pairs(),
                             SwapType.Chain,
-                            assetSend(),
+                            swapToCreate.from,
                             bip21Asset,
                         );
                         if (
@@ -425,7 +421,7 @@ const CreateButton = () => {
 
                         const savedFees = getMagicRoutingHintSavedFees({
                             pairs,
-                            assetSend,
+                            assetSend: () => swapToCreate.from,
                             addressValid,
                             onchainAddress,
                             sendAmount: () => mrhSendAmount,
@@ -440,17 +436,18 @@ const CreateButton = () => {
                             break;
                         }
 
-                        setAssetReceive(bip21Asset);
+                        setPair(
+                            new Pair(pairs(), swapToCreate.from, bip21Asset),
+                        );
                         setOnchainAddress(chainAddress);
-                        setSwapType(SwapType.Chain);
                         setReceiveAmount(btcToSat(bip21Amount));
                         setSendAmount(mrhSendAmount);
 
                         log.debug("Creating MRH swap");
                         const chainSwap = await createChain(
                             pairs(),
-                            assetSend(),
-                            assetReceive(),
+                            swapToCreate.from,
+                            bip21Asset,
                             sendAmount(),
                             receiveAmount(),
                             onchainAddress(),
@@ -475,8 +472,8 @@ const CreateButton = () => {
                 case SwapType.Reverse:
                     data = await createReverse(
                         pairs(),
-                        coalesceLn(assetSend()),
-                        coalesceLn(assetReceive()),
+                        coalesceLn(swapToCreate.from),
+                        coalesceLn(swapToCreate.to),
                         sendAmount(),
                         receiveAmount(),
                         claimAddress,
@@ -490,8 +487,8 @@ const CreateButton = () => {
                 case SwapType.Chain:
                     data = await createChain(
                         pairs(),
-                        assetSend(),
-                        assetReceive(),
+                        swapToCreate.from,
+                        swapToCreate.to,
                         sendAmount(),
                         receiveAmount(),
                         claimAddress,
@@ -512,11 +509,11 @@ const CreateButton = () => {
                 ...data,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
-                    swapType() !== SwapType.Submarine
+                    swapToCreate.type !== SwapType.Submarine
                         ? signer()?.address
                         : undefined,
                 derivationPath:
-                    swapType() !== SwapType.Submarine &&
+                    swapToCreate.type !== SwapType.Submarine &&
                     signer() !== undefined &&
                     customDerivationPathRdns.includes(signer().rdns)
                         ? (
@@ -559,7 +556,7 @@ const CreateButton = () => {
             }
 
             const { useRif, claimAddress } = await getClaimAddress(
-                assetReceive,
+                () => pair().toAsset,
                 signer,
                 onchainAddress,
             );

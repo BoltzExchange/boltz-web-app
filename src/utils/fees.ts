@@ -1,7 +1,7 @@
 import log from "loglevel";
 
 import { config } from "../config";
-import { Explorer } from "../configs/base";
+import { ExplorerType } from "../configs/base";
 import { BTC, LBTC } from "../consts/Assets";
 import { getFeeEstimations as getFeeEstimationsFromExplorer } from "./blockchain";
 import { getFeeEstimations } from "./boltzClient";
@@ -12,9 +12,9 @@ const feeFloors = {
     [LBTC]: 0.1,
 };
 
-const blockExplorerFeePriority = [Explorer.Mempool, Explorer.Esplora];
+const blockExplorerFeePriority = [ExplorerType.Mempool, ExplorerType.Esplora];
 
-const priorityOfBlockExplorer = (id: Explorer) => {
+const priorityOfBlockExplorer = (id: ExplorerType) => {
     const idx = blockExplorerFeePriority.indexOf(id);
     return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
 };

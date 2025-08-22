@@ -18,14 +18,9 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
-import { Denomination, Side, SwapType } from "../consts/Enums";
+import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import {
-    calculateReceiveAmount,
-    calculateSendAmount,
-} from "../utils/calculate";
 import {
     calculateDigits,
     convertAmount,
@@ -34,6 +29,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
+import Pair, { RequiredInput } from "../utils/pair";
 import ErrorWasm from "./ErrorWasm";
 
 const Create = () => {
@@ -57,9 +53,8 @@ const Create = () => {
         regularPairs,
     } = useGlobalContext();
     const {
-        swapType,
-        assetSend,
-        assetReceive,
+        pair,
+        setPair,
         assetSelect,
         assetSelected,
         invoiceValid,
@@ -79,9 +74,6 @@ const Create = () => {
         setAmountValid,
         boltzFee,
         minerFee,
-        pairValid,
-        setAssetSend,
-        setAssetReceive,
     } = useCreateContext();
 
     // if btc and amount > 10, switch to sat
@@ -104,7 +96,7 @@ const Create = () => {
         setSendAmount(BigNumber(0));
     };
 
-    const changeReceiveAmount = (evt: InputEvent) => {
+    const changeReceiveAmount = async (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value
             .trim()
@@ -117,19 +109,14 @@ const Create = () => {
         }
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
-        const sendAmount = calculateSendAmount(
-            satAmount,
-            boltzFee(),
-            minerFee(),
-            swapType(),
-        );
+        const sendAmount = await pair().calculateSendAmount(satAmount);
         setAmountChanged(Side.Receive);
         setReceiveAmount(satAmount);
         setSendAmount(sendAmount);
         validateAmount();
     };
 
-    const changeSendAmount = (evt: InputEvent) => {
+    const changeSendAmount = async (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value
             .trim()
@@ -142,12 +129,7 @@ const Create = () => {
         }
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
-        const receiveAmount = calculateReceiveAmount(
-            satAmount,
-            boltzFee(),
-            minerFee(),
-            swapType(),
-        );
+        const receiveAmount = await pair().calculateReceiveAmount(satAmount);
         setAmountChanged(Side.Send);
         setSendAmount(satAmount);
         setReceiveAmount(receiveAmount);
@@ -222,11 +204,7 @@ const Create = () => {
         setCustomValidity("", false);
 
         const amount = Number(sendAmount());
-        if (
-            swapType() === SwapType.Chain &&
-            assetSend() !== RBTC &&
-            amount === 0
-        ) {
+        if (pair().canZeroAmount && amount === 0) {
             setAmountValid(true);
             return;
         }
@@ -240,7 +218,10 @@ const Create = () => {
                     denomination(),
                     separator(),
                 ),
-                denomination: formatDenomination(denomination(), assetSend()),
+                denomination: formatDenomination(
+                    denomination(),
+                    pair().fromAsset,
+                ),
             };
             const label = lessThanMin ? "minimum_amount" : "maximum_amount";
             const errorMsg = t(label, params);
@@ -251,15 +232,10 @@ const Create = () => {
         setAmountValid(true);
     };
 
-    const setAmount = (amount: number) => {
+    const setAmount = async (amount: number) => {
         setSendAmount(BigNumber(amount));
         setReceiveAmount(
-            calculateReceiveAmount(
-                BigNumber(amount),
-                boltzFee(),
-                minerFee(),
-                swapType(),
-            ),
+            await pair().calculateReceiveAmount(BigNumber(amount)),
         );
         validateAmount();
         sendAmountRef?.focus();
@@ -270,24 +246,14 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, swapType, assetReceive], () => {
+        on([boltzFee, minerFee, pair], async () => {
             if (amountChanged() === Side.Receive) {
                 setSendAmount(
-                    calculateSendAmount(
-                        receiveAmount(),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
+                    await pair().calculateSendAmount(receiveAmount()),
                 );
             } else {
                 setReceiveAmount(
-                    calculateReceiveAmount(
-                        sendAmount(),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
+                    await pair().calculateReceiveAmount(sendAmount()),
                 );
             }
             if (receiveAmount().isGreaterThan(0)) validateAmount();
@@ -333,10 +299,22 @@ const Create = () => {
 
     createEffect(() => {
         if (searchParams.sendAsset) {
-            setAssetSend(searchParams.sendAsset as string);
+            setPair(
+                new Pair(
+                    pairs(),
+                    searchParams.sendAsset as string,
+                    pair().toAsset,
+                ),
+            );
         }
         if (searchParams.receiveAsset) {
-            setAssetReceive(searchParams.receiveAsset as string);
+            setPair(
+                new Pair(
+                    pairs(),
+                    pair().fromAsset,
+                    searchParams.receiveAsset as string,
+                ),
+            );
         }
     });
 
@@ -418,13 +396,17 @@ const Create = () => {
                                 regularPairs={regularPairs()}
                                 onSelect={(opportunity) => {
                                     if (
-                                        assetSend() !== opportunity.assetSend ||
-                                        assetReceive() !==
+                                        pair().fromAsset !==
+                                            opportunity.assetSend ||
+                                        pair().toAsset !==
                                             opportunity.assetReceive
                                     ) {
-                                        setAssetSend(opportunity.assetSend);
-                                        setAssetReceive(
-                                            opportunity.assetReceive,
+                                        setPair(
+                                            new Pair(
+                                                pairs(),
+                                                opportunity.assetSend,
+                                                opportunity.assetReceive,
+                                            ),
                                         );
                                     }
                                     setIsAccordionOpen(false);
@@ -434,7 +416,10 @@ const Create = () => {
                     </Show>
                     <div class="icons">
                         <div>
-                            <Asset side={Side.Send} signal={assetSend} />
+                            <Asset
+                                side={Side.Send}
+                                signal={() => pair().fromAsset}
+                            />
                             <input
                                 ref={sendAmountRef}
                                 autofocus
@@ -461,7 +446,10 @@ const Create = () => {
                         </div>
                         <Reverse />
                         <div>
-                            <Asset side={Side.Receive} signal={assetReceive} />
+                            <Asset
+                                side={Side.Receive}
+                                signal={() => pair().toAsset}
+                            />
                             <input
                                 ref={receiveAmountRef}
                                 required
@@ -488,25 +476,25 @@ const Create = () => {
                     </div>
                     <Fees />
                     <hr class="spacer" />
-                    <Show when={assetReceive() === RBTC}>
-                        <ConnectWallet disabled={() => !pairValid()} />
+                    <Show when={pair().requiredInput === RequiredInput.Web3}>
+                        <ConnectWallet disabled={() => !pair().isRoutable} />
                         <hr class="spacer" />
                     </Show>
-                    <Show
-                        when={
-                            swapType() !== SwapType.Submarine &&
-                            assetReceive() !== RBTC
-                        }>
+                    <Show when={pair().requiredInput === RequiredInput.Address}>
                         <AddressInput />
                     </Show>
-                    <Show when={swapType() === SwapType.Submarine}>
+                    <Show when={pair().requiredInput === RequiredInput.Invoice}>
                         <Show when={webln()}>
                             <WeblnButton />
                             <hr class="spacer" />
                         </Show>
                         <InvoiceInput />
                     </Show>
-                    <Show when={isMobile() && assetReceive() !== RBTC}>
+                    <Show
+                        when={
+                            isMobile() &&
+                            pair().requiredInput !== RequiredInput.Web3
+                        }>
                         <QrScan />
                     </Show>
                     <CreateButton />

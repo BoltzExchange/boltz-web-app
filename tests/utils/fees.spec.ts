@@ -1,7 +1,7 @@
 import { beforeEach, vi } from "vitest";
 
 import { config } from "../../src/config";
-import { Explorer } from "../../src/configs/base";
+import { ExplorerType } from "../../src/configs/base";
 import { BTC, LBTC } from "../../src/consts/Assets";
 import { getFeeEstimationsFailover } from "../../src/utils/fees";
 
@@ -76,8 +76,14 @@ describe("fees", () => {
             const originalApis = config.assets![BTC].blockExplorerApis!;
             try {
                 config.assets![BTC].blockExplorerApis = [
-                    { id: Explorer.Mempool, normal: "https://mempool.example" },
-                    { id: Explorer.Esplora, normal: "https://esplora.example" },
+                    {
+                        id: ExplorerType.Mempool,
+                        normal: "https://mempool.example",
+                    },
+                    {
+                        id: ExplorerType.Esplora,
+                        normal: "https://esplora.example",
+                    },
                 ];
 
                 mockGetFeeEstimationsFromBoltz.mockRejectedValue(
@@ -102,8 +108,14 @@ describe("fees", () => {
             const originalApis = config.assets![BTC].blockExplorerApis!;
             try {
                 config.assets![BTC].blockExplorerApis = [
-                    { id: Explorer.Mempool, normal: "https://mempool.example" },
-                    { id: Explorer.Esplora, normal: "https://esplora.example" },
+                    {
+                        id: ExplorerType.Mempool,
+                        normal: "https://mempool.example",
+                    },
+                    {
+                        id: ExplorerType.Esplora,
+                        normal: "https://esplora.example",
+                    },
                 ];
 
                 mockGetFeeEstimationsFromBoltz.mockRejectedValue(

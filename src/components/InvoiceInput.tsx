@@ -2,10 +2,8 @@ import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
 import { LN } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { calculateSendAmount } from "../utils/calculate";
 import { probeUserInput } from "../utils/compat";
 import {
     decodeInvoice,
@@ -14,18 +12,18 @@ import {
     isBolt12Offer,
     isLnurl,
 } from "../utils/invoice";
+import Pair, { RequiredInput } from "../utils/pair";
 import { validateInvoice } from "../utils/validation";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t, notify } = useGlobalContext();
+    const { t, notify, pairs } = useGlobalContext();
     const {
-        boltzFee,
-        minerFee,
+        pair,
+        setPair,
         invoice,
         receiveAmount,
-        swapType,
         sendAmount,
         amountValid,
         setInvoice,
@@ -34,9 +32,6 @@ const InvoiceInput = () => {
         setLnurl,
         setReceiveAmount,
         setSendAmount,
-        setAssetSend,
-        assetSend,
-        setAssetReceive,
         setOnchainAddress,
         setBolt12Offer,
     } = useCreateContext();
@@ -61,8 +56,14 @@ const InvoiceInput = () => {
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
-            setAssetSend(assetSend() === actualAsset ? LN : assetSend());
-            setAssetReceive(actualAsset);
+            setPair(
+                new Pair(
+                    pairs(),
+                    pair().fromAsset === actualAsset ? LN : pair().fromAsset,
+                    actualAsset,
+                ),
+            );
+
             setOnchainAddress(address);
             notify("success", t("switch_paste"));
             return;
@@ -85,12 +86,7 @@ const InvoiceInput = () => {
                 const sats = await validateInvoice(inputValue);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
-                    calculateSendAmount(
-                        BigNumber(sats),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
+                    await pair().calculateSendAmount(BigNumber(sats)),
                 );
                 setInvoice(inputValue);
                 setBolt12Offer(undefined);
@@ -108,7 +104,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([amountValid, invoice], async () => {
-            if (swapType() === SwapType.Submarine) {
+            if (pair().requiredInput === RequiredInput.Invoice) {
                 await validate(inputRef);
             }
         }),
