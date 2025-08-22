@@ -1,10 +1,8 @@
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
-import { calculateSendAmount } from "src/utils/calculate";
 import { btcToSat } from "src/utils/denomination";
 
-import { LN, RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { LN } from "../consts/Assets";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { probeUserInput } from "../utils/compat";
@@ -14,22 +12,18 @@ import {
     extractBip21Amount,
     extractInvoice,
 } from "../utils/invoice";
+import Pair, { RequiredInput } from "../utils/pair";
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
-    const { t, notify } = useGlobalContext();
+    const { t, notify, pairs } = useGlobalContext();
     const {
-        assetReceive,
-        boltzFee,
-        minerFee,
-        swapType,
+        pair,
+        setPair,
         amountValid,
         onchainAddress,
         setAddressValid,
-        setAssetReceive,
-        setAssetSend,
-        assetSend,
         setOnchainAddress,
         setInvoice,
         sendAmount,
@@ -55,26 +49,21 @@ const AddressInput = () => {
         if (bip21Amount) {
             setReceiveAmount(btcToSat(bip21Amount));
             setSendAmount(
-                calculateSendAmount(
-                    btcToSat(bip21Amount),
-                    boltzFee(),
-                    minerFee(),
-                    swapType(),
-                ),
+                await pair().calculateSendAmount(btcToSat(bip21Amount)),
             );
         }
 
         try {
-            const assetName = assetReceive();
+            const assetName = pair().toAsset;
             const actualAsset =
                 (await probeUserInput(assetName, invoice)) ??
                 (await probeUserInput(assetName, address));
 
             switch (actualAsset) {
                 case LN: {
-                    setAssetReceive(LN);
-                    if (assetSend() === LN) {
-                        setAssetSend(assetName);
+                    setPair(new Pair(pairs(), pair().fromAsset, LN));
+                    if (pair().fromAsset === LN) {
+                        setPair(new Pair(pairs(), assetName, LN));
                     }
                     setOnchainAddress("");
                     setInvoice(invoice);
@@ -87,8 +76,7 @@ const AddressInput = () => {
 
                 default: {
                     if (assetName !== actualAsset) {
-                        setAssetSend(assetReceive());
-                        setAssetReceive(actualAsset);
+                        setPair(new Pair(pairs(), pair().toAsset, actualAsset));
                         notify("success", t("switch_paste"));
                     }
 
@@ -105,7 +93,7 @@ const AddressInput = () => {
             if (inputValue.length !== 0) {
                 log.debug(`Invalid address input: ${formatError(e)}`);
 
-                const msg = t("invalid_address", { asset: assetReceive() });
+                const msg = t("invalid_address", { asset: pair().toAsset });
                 input.classList.add("invalid");
                 input.setCustomValidity(msg);
             }
@@ -113,11 +101,18 @@ const AddressInput = () => {
     };
 
     createEffect(
-        on([amountValid, onchainAddress, assetReceive], () => {
+        on([amountValid, onchainAddress, pair], () => {
+            if (pair().requiredInput === RequiredInput.Address && inputRef) {
+                void handleInputChange(inputRef);
+            }
+        }),
+    );
+
+    createEffect(
+        on([amountValid, onchainAddress, pair], () => {
             if (
                 sendAmount().isGreaterThan(0) &&
-                swapType() !== SwapType.Submarine &&
-                assetReceive() !== RBTC &&
+                pair().requiredInput === RequiredInput.Address &&
                 onchainAddress() === ""
             ) {
                 setAddressValid(false);
@@ -135,7 +130,7 @@ const AddressInput = () => {
             data-testid="onchainAddress"
             name="onchainAddress"
             autocomplete="off"
-            placeholder={t("onchain_address", { asset: assetReceive() })}
+            placeholder={t("onchain_address", { asset: pair().toAsset })}
             value={onchainAddress()}
         />
     );
