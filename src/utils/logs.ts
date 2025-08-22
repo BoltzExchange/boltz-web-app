@@ -68,6 +68,10 @@ export const injectLogWriter = (logsForage: LocalForage) => {
 
             const currentDate = getDate();
 
+            if (navigator.locks === undefined) {
+                throw new Error("Window is not in a secure context");
+            }
+
             void navigator.locks
                 .request("logLock", async () => {
                     await logsForage.setItem(
