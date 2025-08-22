@@ -84,6 +84,10 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
             });
             setRescueKey(words);
             validateMnemonic();
+
+            const lastIndex = words.length - 1;
+            setFocusedIndex(lastIndex);
+            inputRefs[lastIndex]?.focus();
             return;
         }
 
