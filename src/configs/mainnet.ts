@@ -1,5 +1,5 @@
 import type { Config } from "src/configs/base";
-import { baseConfig, chooseUrl } from "src/configs/base";
+import { AssetType, baseConfig, chooseUrl } from "src/configs/base";
 
 const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
 
@@ -19,6 +19,7 @@ const config = {
     },
     assets: {
         BTC: {
+            type: AssetType.Native,
             blockExplorerUrl: {
                 normal: "https://mempool.space",
                 tor: "http://mempoolhqx4isw62xs7abwphsq7ldayuidyx2v2oethdhhj6mlo2r6ad.onion",
@@ -35,6 +36,7 @@ const config = {
             ],
         },
         "L-BTC": {
+            type: AssetType.Native,
             blockExplorerUrl: {
                 normal: "https://blockstream.info/liquid",
                 tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquid",
@@ -51,6 +53,7 @@ const config = {
             ],
         },
         RBTC: {
+            type: AssetType.Native,
             blockExplorerUrl: {
                 normal: "https://rootstock.blockscout.com",
             },

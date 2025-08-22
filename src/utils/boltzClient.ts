@@ -1,6 +1,7 @@
 import type { Transaction } from "bitcoinjs-lib";
 import { Musig } from "boltz-core";
 import { Buffer } from "buffer";
+import { ZeroAddress } from "ethers";
 import type { Transaction as LiquidTransaction } from "liquidjs-lib";
 import log from "loglevel";
 
@@ -210,6 +211,11 @@ export type SwapStatus = {
     };
 };
 
+export type QuoteData = {
+    quote: string;
+    data: unknown;
+};
+
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", null, options),
@@ -222,6 +228,19 @@ export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
         [SwapType.Reverse]: reverse,
         [SwapType.Submarine]: submarine,
     };
+};
+
+export const quoteToToken = async (
+    chain: string,
+    tokenOut: string,
+    amountIn: string,
+): Promise<QuoteData[]> => {
+    const params = new URLSearchParams();
+    params.set("tokenIn", ZeroAddress);
+    params.set("tokenOut", tokenOut);
+    params.set("amountIn", amountIn);
+
+    return await fetcher(`/v2/quote/${chain}?${params.toString()}`);
 };
 
 export const fetchBolt12Invoice = async (

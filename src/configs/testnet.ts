@@ -1,5 +1,5 @@
 import type { Config } from "src/configs/base";
-import { baseConfig, chooseUrl } from "src/configs/base";
+import { AssetType, baseConfig, chooseUrl } from "src/configs/base";
 
 const config = {
     ...baseConfig,
@@ -10,6 +10,7 @@ const config = {
     },
     assets: {
         BTC: {
+            type: AssetType.Native,
             blockExplorerUrl: {
                 normal: "https://blockstream.info/testnet",
                 tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/testnet",
@@ -26,6 +27,7 @@ const config = {
             ],
         },
         "L-BTC": {
+            type: AssetType.Native,
             blockExplorerUrl: {
                 normal: "https://blockstream.info/liquidtestnet",
                 tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquidtestnet",
@@ -42,6 +44,7 @@ const config = {
             ],
         },
         RBTC: {
+            type: AssetType.Native,
             blockExplorerUrl: {
                 normal: "https://rootstock-testnet.blockscout.com",
                 tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/testnet",

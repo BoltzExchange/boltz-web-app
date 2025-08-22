@@ -1,6 +1,13 @@
 import type log from "loglevel";
 
+export enum AssetType {
+    Native,
+    ERC20,
+}
+
 type Asset = {
+    type: AssetType;
+
     blockExplorerUrl?: Url;
     blockExplorerApis?: Url[];
 
@@ -19,6 +26,11 @@ type Asset = {
             symbol: string;
             decimals: number;
         };
+    };
+
+    erc20?: {
+        chain: string;
+        address: string;
     };
 };
 
@@ -69,9 +81,7 @@ const defaults = {
 
 const isTor = () => window?.location.hostname.endsWith(".onion");
 
-const chooseUrl = (url?: Url) =>
+export const chooseUrl = (url?: Url) =>
     url ? (isTor() && url.tor ? url.tor : url.normal) : undefined;
 
-const baseConfig: Config = defaults;
-
-export { baseConfig, chooseUrl };
+export const baseConfig: Config = defaults;
