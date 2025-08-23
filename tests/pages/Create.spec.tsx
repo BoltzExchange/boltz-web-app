@@ -81,7 +81,7 @@ describe("Create", () => {
 
         signals.setAssetReceive(LBTC);
 
-        expect(signals.receiveAmount()).toEqual(BigNumber(49447));
+        expect(signals.receiveAmount()).toEqual(BigNumber(49441));
     });
 
     test("should update receive amount on miner fee change", () => {

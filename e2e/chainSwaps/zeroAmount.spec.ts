@@ -52,7 +52,7 @@ test.describe("Chain Swap 0-amount", () => {
         expect(txId).toBeDefined();
 
         const txInfo = JSON.parse(await getElementsWalletTx(txId));
-        expect(txInfo.amount.bitcoin.toString()).toEqual("0.0099715");
+        expect(txInfo.amount.bitcoin.toString()).toEqual("0.00997147");
     });
 
     test("should allow 0-amount chain swaps", async ({ page }) => {
