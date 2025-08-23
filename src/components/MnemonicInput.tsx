@@ -75,7 +75,7 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
     const handlePaste = (e: ClipboardEvent) => {
         e.preventDefault();
         const pastedText = e.clipboardData.getData("text/plain").trim();
-        const words = pastedText.split(" ");
+        const words = pastedText.split(/[\s\n]+/);
         const is12WordMnemonic = words.length === mnemonicLength;
 
         if (is12WordMnemonic) {
