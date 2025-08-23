@@ -74,8 +74,8 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
 
     const handlePaste = (e: ClipboardEvent) => {
         e.preventDefault();
-        const pastedText = e.clipboardData.getData("text/plain");
-        const words = pastedText.split(" ");
+        const pastedText = e.clipboardData.getData("text/plain").trim();
+        const words = pastedText.split(/[\s\n]+/);
         const is12WordMnemonic = words.length === mnemonicLength;
 
         if (is12WordMnemonic) {
@@ -84,6 +84,10 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
             });
             setRescueKey(words);
             validateMnemonic();
+
+            const lastIndex = words.length - 1;
+            setFocusedIndex(lastIndex);
+            inputRefs[lastIndex]?.focus();
             return;
         }
 
