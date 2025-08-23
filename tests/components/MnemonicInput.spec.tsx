@@ -65,6 +65,79 @@ describe("MnemonicInput", () => {
         });
     });
 
+    it("should trim text when pasting mnemonic", () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <MnemonicInput onSubmit={() => {}} />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const mnemonicWithWhitespace =
+            "\t    quarter fortune entry they hello umbrella discover can talent then laugh bar  \n";
+        const expectedWords = mnemonicWithWhitespace.trim().split(" ");
+
+        const inputs = screen.getAllByTestId(/mnemonic-input-\d/);
+
+        fireEvent.paste(inputs[0], {
+            clipboardData: {
+                getData: () => mnemonicWithWhitespace,
+            },
+        });
+
+        inputs.forEach((input, index) => {
+            expect((input as HTMLInputElement).value).toEqual(
+                expectedWords[index],
+            );
+        });
+    });
+
+    it("should handle vertically formatted mnemonic with newlines", () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <MnemonicInput onSubmit={() => {}} />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        const verticalMnemonic = [
+            "quarter",
+            "fortune",
+            "entry",
+            "they",
+            "hello",
+            "umbrella",
+            "discover",
+            "can",
+            "talent",
+            "then",
+            "laugh",
+            "bar",
+        ].join("\n");
+
+        const expectedWords = verticalMnemonic.split("\n");
+
+        const inputs = screen.getAllByTestId(/mnemonic-input-\d/);
+
+        fireEvent.paste(inputs[0], {
+            clipboardData: {
+                getData: () => verticalMnemonic,
+            },
+        });
+
+        inputs.forEach((input, index) => {
+            expect((input as HTMLInputElement).value).toEqual(
+                expectedWords[index],
+            );
+        });
+    });
+
     it("should change input color to red when inserting wrong word", () => {
         render(
             () => (
