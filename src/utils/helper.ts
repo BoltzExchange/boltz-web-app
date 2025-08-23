@@ -22,6 +22,8 @@ import type {
     SubmarineSwap,
 } from "./swapCreator";
 
+export const requestTimeoutDuration = 10_000;
+
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
 
@@ -95,7 +97,10 @@ export const fetcher = async <T = unknown>(
     options?: RequestInit,
 ): Promise<T> => {
     const controller = new AbortController();
-    const requestTimeout = setTimeout(() => controller.abort(), 10_000);
+    const requestTimeout = setTimeout(
+        () => controller.abort(),
+        requestTimeoutDuration,
+    );
 
     try {
         // We cannot use the context here, so we get the data directly from local storage

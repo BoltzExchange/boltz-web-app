@@ -10,8 +10,9 @@ import { networks } from "liquidjs-lib";
 import { promisify } from "util";
 
 import { config } from "../src/config";
-import { BTC, LBTC } from "../src/consts/Assets";
+import { type AssetType, BTC, LBTC } from "../src/consts/Assets";
 import dict from "../src/i18n/i18n";
+import { type UTXO } from "../src/utils/blockchain";
 import { ecc } from "../src/utils/ecpair";
 import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 
@@ -28,18 +29,10 @@ const execCommandBackground = (command: string): void => {
         shell: "/bin/bash",
         stdio: "ignore",
         detached: true,
+        timeout: 15_000,
     });
 
     child.unref();
-
-    const timer = setTimeout(() => {
-        try {
-            if (child.pid) process.kill(child.pid);
-        } catch {
-            /* no-op */
-        }
-    }, 15_000);
-    child.on("exit", () => clearTimeout(timer));
 };
 
 const execCommand = async (command: string): Promise<string> => {
@@ -168,56 +161,6 @@ export const waitForNodesToSync = async (): Promise<void> => {
             await new Promise((resolve) => setTimeout(resolve, 1_000));
         }
     }
-};
-
-export const waitForExplorersToSync = async (): Promise<void> => {
-    const bitcoinHeight = JSON.parse(
-        await execCommand("bitcoin-cli-sim-client getblockchaininfo"),
-    ).blocks;
-
-    await expect
-        .poll(
-            async () => {
-                try {
-                    const esploraHeight = Number(
-                        (
-                            await axios.get<string>(
-                                `${config.assets["BTC"].blockExplorerApis[0].normal}/blocks/tip/height`,
-                            )
-                        ).data,
-                    );
-                    return esploraHeight >= bitcoinHeight;
-                } catch {
-                    return false;
-                }
-            },
-            { timeout: 10_000 },
-        )
-        .toBe(true);
-
-    const liquidHeight = JSON.parse(
-        await execCommand("elements-cli-sim-client getblockchaininfo"),
-    ).blocks;
-
-    await expect
-        .poll(
-            async () => {
-                try {
-                    const liquidEsploraHeight = Number(
-                        (
-                            await axios.get<string>(
-                                `${config.assets["L-BTC"].blockExplorerApis[0].normal}/blocks/tip/height`,
-                            )
-                        ).data,
-                    );
-                    return liquidEsploraHeight >= liquidHeight;
-                } catch {
-                    return false;
-                }
-            },
-            { timeout: 10_000 },
-        )
-        .toBe(true);
 };
 
 export const addReferral = (name: string): Promise<string> =>
@@ -370,4 +313,25 @@ export const fetchBip21Invoice = async (invoice: string) => {
 export const getCurrentSwapId = (page: Page) => {
     const url = new URL(page.url());
     return url.pathname.split("/").pop();
+};
+
+export const waitForUTXOs = async (
+    asset: AssetType,
+    address: string,
+    amount: number,
+) => {
+    await expect
+        .poll(
+            async () => {
+                const utxos = (
+                    await axios.get<UTXO[]>(
+                        `${config.assets[asset].blockExplorerApis[0].normal}/address/${address}/utxo`,
+                    )
+                ).data;
+
+                return utxos.length === amount;
+            },
+            { timeout: 10_000 },
+        )
+        .toBe(true);
 };

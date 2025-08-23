@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import BigNumber from "bignumber.js";
 
+import { BTC } from "../../src/consts/Assets";
 import { btcToSat, satToBtc } from "../../src/utils/denomination";
 import {
     bitcoinSendToAddress,
@@ -17,8 +18,8 @@ import {
     getLiquidAddress,
     setDisableCooperativeSignatures,
     verifyRescueFile,
-    waitForExplorersToSync,
     waitForNodesToSync,
+    waitForUTXOs,
 } from "../utils";
 
 test.describe("Chain swap", () => {
@@ -199,16 +200,18 @@ test.describe("Chain swap", () => {
         const sendAmount = await page.evaluate(() => {
             return navigator.clipboard.readText();
         });
+        expect(sendAmount).toBeDefined();
 
         await addressButton.click();
         const address = await page.evaluate(() => {
             return navigator.clipboard.readText();
         });
+        expect(address).toBeDefined();
 
         await bitcoinSendToAddress(address, sendAmount);
+        await waitForUTXOs(BTC, address, 1);
         await generateBitcoinBlocks(216);
         await waitForNodesToSync();
-        await waitForExplorersToSync();
 
         const swapId = getCurrentSwapId(page);
 

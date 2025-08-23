@@ -5,6 +5,7 @@ import { Explorer } from "../configs/base";
 import { BTC, LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { formatError } from "./errors";
+import { requestTimeoutDuration } from "./helper";
 import type { ChainSwap, SubmarineSwap } from "./swapCreator";
 
 export type UTXO = {
@@ -38,7 +39,10 @@ const handleResponseError = async (response: Response) => {
 
 const constructRequestOptions = (options: RequestInit = {}) => {
     const controller = new AbortController();
-    const requestTimeout = setTimeout(() => controller.abort(), 10_000);
+    const requestTimeout = setTimeout(
+        () => controller.abort(),
+        requestTimeoutDuration,
+    );
 
     const opts: RequestInit = {
         signal: controller.signal, // Default abort signal, can be overridden by options.signal
@@ -165,7 +169,7 @@ export const getBlockTipHeight = async (asset: string) => {
     return height;
 };
 
-export const getEsploraFeeEstimations = async (asset: string) => {
+const getEsploraFeeEstimations = async (asset: string) => {
     const { opts, requestTimeout } = constructRequestOptions();
     try {
         const esploraApi = getExplorerApi(asset, Explorer.Esplora);
@@ -188,7 +192,7 @@ export const getEsploraFeeEstimations = async (asset: string) => {
     }
 };
 
-export const getMempoolFeeEstimations = async (asset: string) => {
+const getMempoolFeeEstimations = async (asset: string) => {
     type MempoolFeeEstimation = Record<
         "fastestFee" | "halfHourFee" | "hourFee" | "economyFee" | "minimumFee",
         number
@@ -202,7 +206,7 @@ export const getMempoolFeeEstimations = async (asset: string) => {
             throw new Error(`no mempool API found for asset ${asset}`);
         }
 
-        const endpoint = `${chooseUrl(mempoolApi)}/fees/recommended`;
+        const endpoint = `${chooseUrl(mempoolApi)}/v1/fees/recommended`;
 
         const res = await fetch(endpoint, opts);
 
@@ -213,6 +217,33 @@ export const getMempoolFeeEstimations = async (asset: string) => {
         return (await res.json()) as MempoolFeeEstimation;
     } finally {
         clearTimeout(requestTimeout);
+    }
+};
+
+export const getExplorerFeeEstimations = async (asset: string) => {
+    try {
+        log.info(`falling back to Mempool fee estimations`);
+        const feeEstimations = await getMempoolFeeEstimations(asset);
+
+        return feeEstimations.halfHourFee;
+    } catch (e) {
+        log.warn(
+            `failed to get fee estimations via Mempool API for ${asset}: ${e}`,
+        );
+    }
+
+    try {
+        log.info(`falling back to Esplora fee estimations`);
+        const feeEstimations = await getEsploraFeeEstimations(asset);
+
+        const expectedBlocksToConfirm = "3";
+
+        return feeEstimations[expectedBlocksToConfirm];
+    } catch (e) {
+        log.warn(
+            `failed to get fee estimations via Esplora API for ${asset}: ${e}`,
+        );
+        throw new Error(`could not get fee estimations for ${asset}`);
     }
 };
 

@@ -95,7 +95,7 @@ export const isSwapClaimable = ({
     }
 };
 
-const hasSwapTimedOut = (swap: SomeSwap, currentBlockHeight: number) => {
+export const hasSwapTimedOut = (swap: SomeSwap, currentBlockHeight: number) => {
     if (typeof currentBlockHeight !== "number") {
         return false;
     }
@@ -390,7 +390,7 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     return [];
 };
 
-const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
+export const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
     try {
         type RefundableAsset = typeof BTC | typeof LBTC | typeof RBTC;
         const assets: RefundableAsset[] = Array.from(
@@ -445,7 +445,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
 
                 // Prioritize refunding for expired swaps with UTXOs
                 if (
-                    [SwapType.Chain, SwapType.Submarine].includes(swap.type) &&
+                    isRefundableSwapType(swap) &&
                     hasSwapTimedOut(swap, currentBlockHeight[swap.assetSend]) &&
                     utxos.length > 0
                 ) {
