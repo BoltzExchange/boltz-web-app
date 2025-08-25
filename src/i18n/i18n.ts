@@ -233,9 +233,6 @@ const dict = {
         no_wallet_connected: "No wallet connected",
         no_lockup_transaction: "No lockup transaction found",
         routing_fee_limit: "Routing fee limit",
-        broadcast_setting: "External Broadcast",
-        broadcast_setting_tooltip:
-            "Also use the block explorer to broadcast transactions",
         download_boltz_rescue_key: "Boltz Rescue Key",
         download_boltz_rescue_key_subline:
             "We replaced per-swap refund files with a single Rescue Key 🙌",
@@ -553,9 +550,6 @@ const dict = {
         no_wallet_connected: "Kein Wallet verbunden",
         no_lockup_transaction: "Keine Lockup-Transaktion gefunden",
         routing_fee_limit: "Routing Gebühr Limit",
-        broadcast_setting: "Externer Broadcast",
-        broadcast_setting_tooltip:
-            "Verwende auch den Block Explorer, um Transaktionen zu senden",
         download_boltz_rescue_key: "Boltz Rettungsschlüssel",
         download_boltz_rescue_key_subline:
             "Wir haben pro-Swap Rückerstattungsdateien mit einem einzigen Boltz Rettungsschlüssel ersetzt 🙌",
@@ -876,9 +870,6 @@ const dict = {
         no_wallet_connected: "No hay monedero conectado",
         no_lockup_transaction: "No se encontró ninguna transacción de lockup",
         routing_fee_limit: "Límite comisión enrutamiento",
-        broadcast_setting: "Transmisión externa",
-        broadcast_setting_tooltip:
-            "También use el explorador de bloques para transmitir transacciones",
         download_boltz_rescue_key: "Clave de rescate Boltz",
         download_boltz_rescue_key_subline:
             "Hemos sustituido los archivos de reembolso por una única clave de rescate 🙌",
@@ -1195,9 +1186,6 @@ const dict = {
         no_wallet_connected: "Nenhuma carteira conectada",
         no_lockup_transaction: "Nenhuma transação de lockup encontrada",
         routing_fee_limit: "Limite da taxa de roteamento",
-        broadcast_setting: "Transmissão externa",
-        broadcast_setting_tooltip:
-            "Também usar o block explorer para transmitir transações",
         download_boltz_rescue_key: "Chave de resgate da Boltz",
         download_boltz_rescue_key_subline:
             "Substituímos os arquivos de reembolso por uma única chave de resgate 🙌",
@@ -1489,8 +1477,6 @@ const dict = {
         no_wallet_connected: "未连接钱包",
         no_lockup_transaction: "未找到锁仓交易",
         routing_fee_limit: "最大路由费用",
-        broadcast_setting: "外部广播",
-        broadcast_setting_tooltip: "使用区块浏览器发送认领和退款交易",
         download_boltz_rescue_key: "Boltz 救援密钥",
         download_boltz_rescue_key_subline:
             "我们用单个救援密钥取代了每个交换的退款文件 🙌",
@@ -1799,9 +1785,6 @@ const dict = {
         no_wallet_connected: "財布はつながっていない！",
         no_lockup_transaction: "ロックアップトランザクションが見つかりません",
         routing_fee_limit: "ルーティング料金の上限",
-        broadcast_setting: "外部放送",
-        broadcast_setting_tooltip:
-            "ブロック・エクスプローラーを使ってトランザクションをブロードキャストする",
         download_boltz_rescue_key: "Boltzレスキューキー",
         download_boltz_rescue_key_subline:
             "スワップごとの払い戻しファイルを、単一のレスキュー・キー🙌に置き換えた。",

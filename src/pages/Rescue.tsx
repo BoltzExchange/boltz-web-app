@@ -87,6 +87,16 @@ const Rescue = () => {
                                     action={(swap) => {
                                         return rescueListAction({ t, swap });
                                     }}
+                                    onClick={(swap) => {
+                                        navigate(`/swap/${swap.id}`, {
+                                            state: {
+                                                timedOutRefund:
+                                                    swap.timedOut &&
+                                                    swap.action ===
+                                                        RescueAction.Refund,
+                                            },
+                                        });
+                                    }}
                                     hideDateOnMobile
                                 />
                             </Show>
