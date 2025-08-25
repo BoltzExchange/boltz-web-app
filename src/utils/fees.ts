@@ -14,5 +14,15 @@ export const getFeeEstimationsFailover = async (asset: string) => {
         );
     }
 
-    return getExplorerFeeEstimations(asset);
+    const feeEstimations = await getExplorerFeeEstimations(asset);
+
+    if (typeof feeEstimations !== "number") {
+        throw new Error(
+            `failed to get fee estimations for ${asset}: ${JSON.stringify(
+                feeEstimations,
+            )}`,
+        );
+    }
+
+    return feeEstimations;
 };

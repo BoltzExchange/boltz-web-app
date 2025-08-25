@@ -175,7 +175,7 @@ const getEsploraFeeEstimations = async (asset: string) => {
         const esploraApi = getExplorerApi(asset, Explorer.Esplora);
 
         if (!esploraApi) {
-            throw new Error(`no esplora API found for asset ${asset}`);
+            throw new Error(`esplora API not configured for asset ${asset}`);
         }
 
         const endpoint = `${chooseUrl(esploraApi)}/fee-estimates`;
@@ -203,7 +203,7 @@ const getMempoolFeeEstimations = async (asset: string) => {
         const mempoolApi = getExplorerApi(asset, Explorer.Mempool);
 
         if (!mempoolApi) {
-            throw new Error(`no mempool API found for asset ${asset}`);
+            throw new Error(`mempool API not configured ${asset}`);
         }
 
         const endpoint = `${chooseUrl(mempoolApi)}/v1/fees/recommended`;
