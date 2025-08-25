@@ -212,11 +212,7 @@ const refundTaproot = async <T extends TransactionInterface>(
             throw e;
         }
 
-        const errorMsg = typeof e.json === "function" ? await e.json() : e;
-        log.warn(
-            "Cooperative Taproot refund failed because",
-            formatError(errorMsg),
-        );
+        log.warn("Cooperative Taproot refund failed because", formatError(e));
 
         try {
             return await refundTaproot(
@@ -227,7 +223,7 @@ const refundTaproot = async <T extends TransactionInterface>(
                 feePerVbyte,
                 false,
                 timeoutBlockHeight,
-                formatError(errorMsg),
+                formatError(e),
             );
         } catch (uncoopError) {
             log.warn(

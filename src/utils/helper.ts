@@ -131,8 +131,12 @@ export const fetcher = async <T = unknown>(
 
         if (!response.ok) {
             try {
-                const body = await response.json();
-                return Promise.reject(formatError(body));
+                const contentType = response.headers.get("content-type");
+                if (contentType?.includes("application/json")) {
+                    const body = await response.json();
+                    return Promise.reject(formatError(body));
+                }
+                return Promise.reject(await response.text());
 
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (e) {
