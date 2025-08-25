@@ -221,15 +221,32 @@ const getMempoolFeeEstimations = async (asset: string) => {
 };
 
 export const getExplorerFeeEstimations = async (asset: string) => {
-    try {
-        log.info(`falling back to Mempool fee estimations`);
-        const feeEstimations = await getMempoolFeeEstimations(asset);
-
-        return feeEstimations.halfHourFee;
-    } catch (e) {
-        log.warn(
-            `failed to get fee estimations via Mempool API for ${asset}: ${e}`,
+    const handleUnexpectedResponse = (
+        feeEstimations: Record<string, number>,
+    ) => {
+        throw new Error(
+            `unexpected fee estimation response for ${asset}: ${JSON.stringify(
+                feeEstimations,
+            )}`,
         );
+    };
+
+    // we don't have mempool on regtest
+    if (config.network !== "regtest") {
+        try {
+            log.info(`falling back to Mempool fee estimations`);
+            const feeEstimations = await getMempoolFeeEstimations(asset);
+
+            if (typeof feeEstimations.halfHourFee !== "number") {
+                handleUnexpectedResponse(feeEstimations);
+            }
+
+            return feeEstimations.halfHourFee;
+        } catch (e) {
+            log.warn(
+                `failed to get fee estimations via Mempool API for ${asset}: ${e}`,
+            );
+        }
     }
 
     try {
@@ -237,6 +254,10 @@ export const getExplorerFeeEstimations = async (asset: string) => {
         const feeEstimations = await getEsploraFeeEstimations(asset);
 
         const expectedBlocksToConfirm = "3";
+
+        if (typeof feeEstimations[expectedBlocksToConfirm] !== "number") {
+            handleUnexpectedResponse(feeEstimations);
+        }
 
         return feeEstimations[expectedBlocksToConfirm];
     } catch (e) {
