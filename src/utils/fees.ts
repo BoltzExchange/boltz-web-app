@@ -14,11 +14,15 @@ const feeFloors = {
 
 const blockExplorerFeePriority = [Explorer.Mempool, Explorer.Esplora];
 
+const priorityOfBlockExplorer = (id: Explorer) => {
+    const idx = blockExplorerFeePriority.indexOf(id);
+    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+};
+
 const getExplorerFeeEstimations = async (asset: string) => {
-    for (const api of config.assets[asset].blockExplorerApis.sort(
-        (a, b) =>
-            blockExplorerFeePriority.indexOf(a.id) -
-            blockExplorerFeePriority.indexOf(b.id),
+    const apis = config.assets[asset].blockExplorerApis;
+    for (const api of [...apis].sort(
+        (a, b) => priorityOfBlockExplorer(a.id) - priorityOfBlockExplorer(b.id),
     )) {
         log.debug(`trying to get ${asset} fee estimations from ${api.id}`);
 
