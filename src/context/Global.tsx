@@ -14,6 +14,7 @@ import {
 import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
+import { LBTC } from "../consts/Assets";
 import { Denomination, UrlParam } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
 import { swapStatusFinal } from "../consts/SwapStatus";
@@ -34,6 +35,7 @@ import { getUrlParam, isEmbed, resetUrlParam } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
+export const liquidUncooperativeExtra = 3;
 const proReferral = "pro";
 
 export type deriveKeyFn = (index: number) => ECPairInterface;
@@ -292,9 +294,28 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         void audio.play();
     };
 
+    const addUncooperativeExtra = (pairs: Pairs) => {
+        Object.values(pairs.chain).forEach((assetPairs) => {
+            if (assetPairs[LBTC]) {
+                assetPairs[LBTC].fees.minerFees.user.claim +=
+                    liquidUncooperativeExtra;
+            }
+        });
+
+        Object.values(pairs.reverse).forEach((assetPairs) => {
+            if (assetPairs[LBTC]) {
+                assetPairs[LBTC].fees.minerFees.claim +=
+                    liquidUncooperativeExtra;
+            }
+        });
+    };
+
     const fetchPairs = async () => {
         try {
             const data = await getPairs();
+
+            addUncooperativeExtra(data);
+
             log.debug("getpairs", data);
             setOnline(true);
             setPairs(data);
@@ -312,6 +333,9 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                     referral: regularReferral(),
                 },
             });
+
+            addUncooperativeExtra(data);
+
             log.debug("Regular pairs", data);
             setRegularPairs(data);
         } catch (error) {
