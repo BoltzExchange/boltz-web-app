@@ -28,12 +28,12 @@ export enum Explorer {
     Blockscout = "blockscout",
 }
 
-type Url = {
+export type Url = {
     normal: string;
     tor?: string;
 };
 
-type ExplorerUrl = Url & {
+export type ExplorerUrl = Url & {
     id: Explorer;
 };
 
