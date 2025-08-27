@@ -174,7 +174,6 @@ export const SwapChecker = () => {
         getSwap,
         getSwaps,
         setSwapStorage,
-        externalBroadcast,
         t,
         deriveKey,
         pairs,
@@ -283,7 +282,6 @@ export const SwapChecker = () => {
                     currentSwap as ReverseSwap | ChainSwap,
                     data.transaction as { hex: string },
                     true,
-                    externalBroadcast(),
                 );
                 const claimedSwap = await getSwap(res.id);
                 claimedSwap.claimTx = res.claimTx;

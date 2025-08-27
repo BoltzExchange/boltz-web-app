@@ -1,4 +1,4 @@
-import { type Page, request } from "@playwright/test";
+import { type Page, expect, request } from "@playwright/test";
 import axios from "axios";
 import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
@@ -10,8 +10,9 @@ import { networks } from "liquidjs-lib";
 import { promisify } from "util";
 
 import { config } from "../src/config";
-import { BTC, LBTC } from "../src/consts/Assets";
+import { type AssetType, BTC, LBTC } from "../src/consts/Assets";
 import dict from "../src/i18n/i18n";
+import { type UTXO } from "../src/utils/blockchain";
 import { ecc } from "../src/utils/ecpair";
 import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 
@@ -91,6 +92,9 @@ export const elementsSendToAddress = (
 export const generateBitcoinBlock = (): Promise<string> =>
     execCommand("bitcoin-cli-sim-client -generate");
 
+export const generateBitcoinBlocks = (blocks: number): Promise<string> =>
+    execCommand(`bitcoin-cli-sim-client -generate ${blocks}`);
+
 export const generateLiquidBlock = (): Promise<string> =>
     execCommand("elements-cli-sim-client -generate");
 
@@ -106,6 +110,10 @@ export const payInvoiceLnd = (invoice: string): Promise<string> =>
 export const payInvoiceLndBackground = (invoice: string): void => {
     execCommandBackground(`lncli-sim 1 payinvoice -f ${invoice}`);
 };
+
+export const setDisableCooperativeSignatures = (
+    disable: boolean,
+): Promise<string> => boltzCli(`dev-disablecooperative ${disable}`);
 
 export const decodeLiquidRawTransaction = (tx: string): Promise<string> =>
     execCommand(`elements-cli-sim-client decoderawtransaction "${tx}"`);
@@ -300,4 +308,30 @@ export const fetchBip21Invoice = async (invoice: string) => {
     const data = (await res.json()) as { bip21: string; signature: string };
 
     return data;
+};
+
+export const getCurrentSwapId = (page: Page) => {
+    const url = new URL(page.url());
+    return url.pathname.split("/").pop();
+};
+
+export const waitForUTXOs = async (
+    asset: AssetType,
+    address: string,
+    amount: number,
+) => {
+    await expect
+        .poll(
+            async () => {
+                const utxos = (
+                    await axios.get<UTXO[]>(
+                        `${config.assets[asset].blockExplorerApis[0].normal}/address/${address}/utxo`,
+                    )
+                ).data;
+
+                return utxos.length === amount;
+            },
+            { timeout: 10_000 },
+        )
+        .toBe(true);
 };

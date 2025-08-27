@@ -112,7 +112,6 @@ export const RefundBtc = (props: {
         setRefundAddress,
         refundAddress,
         notify,
-        externalBroadcast,
         t,
         deriveKey,
     } = useGlobalContext();
@@ -168,7 +167,6 @@ export const RefundBtc = (props: {
                 refundAddress(),
                 refundableUTXOs(),
                 true,
-                externalBroadcast(),
             );
 
             // save refundTx into swaps json and set it to the current swap
@@ -253,6 +251,7 @@ export const RefundBtc = (props: {
                         setRefundAddress(e.target.value.trim());
                         validateRefundAddress();
                     }}
+                    disabled={refundRunning()}
                     type="text"
                     name="refundAddress"
                     placeholder={
@@ -273,7 +272,11 @@ export const RefundBtc = (props: {
                 class="btn"
                 disabled={!valid() || refundRunning()}
                 onClick={() => refundAction()}>
-                {props.buttonOverride ?? buttonMessage()}
+                {refundRunning() ? (
+                    <LoadingSpinner class="inner-spinner" />
+                ) : (
+                    (props.buttonOverride ?? buttonMessage())
+                )}
             </button>
         </Show>
     );

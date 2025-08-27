@@ -1,8 +1,8 @@
 import type log from "loglevel";
 
 type Asset = {
-    blockExplorerUrl?: Url;
-    blockExplorerApis?: Url[];
+    blockExplorerUrl?: ExplorerUrl;
+    blockExplorerApis?: ExplorerUrl[];
 
     rifRelay?: string;
     contracts?: {
@@ -22,9 +22,19 @@ type Asset = {
     };
 };
 
-type Url = {
+export enum Explorer {
+    Mempool = "mempool",
+    Esplora = "esplora",
+    Blockscout = "blockscout",
+}
+
+export type Url = {
     normal: string;
     tor?: string;
+};
+
+export type ExplorerUrl = Url & {
+    id: Explorer;
 };
 
 export type Config = {

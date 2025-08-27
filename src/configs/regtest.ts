@@ -1,5 +1,5 @@
 import type { Config } from "src/configs/base";
-import { baseConfig, chooseUrl } from "src/configs/base";
+import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
 
 const config = {
     ...baseConfig,
@@ -11,26 +11,31 @@ const config = {
     assets: {
         BTC: {
             blockExplorerUrl: {
+                id: Explorer.Esplora,
                 normal: "http://localhost:4002",
             },
             blockExplorerApis: [
                 {
+                    id: Explorer.Esplora,
                     normal: "http://localhost:4002/api",
                 },
             ],
         },
         "L-BTC": {
             blockExplorerUrl: {
+                id: Explorer.Esplora,
                 normal: "http://localhost:4003",
             },
             blockExplorerApis: [
                 {
+                    id: Explorer.Esplora,
                     normal: "http://localhost:4003/api",
                 },
             ],
         },
         RBTC: {
             blockExplorerUrl: {
+                id: Explorer.Blockscout,
                 normal: "http://localhost:5100",
             },
             network: {

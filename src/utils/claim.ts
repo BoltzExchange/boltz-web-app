@@ -312,7 +312,6 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     swap: T,
     swapStatusTransaction: { hex: string },
     cooperative: boolean,
-    externalBroadcast: boolean,
 ): Promise<T | undefined> => {
     const asset = getRelevantAssetForSwap(swap);
     if (asset === RBTC) {
@@ -341,11 +340,7 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     }
 
     log.debug("Broadcasting claim transaction");
-    const res = await broadcastTransaction(
-        asset,
-        claimTransaction.toHex(),
-        externalBroadcast,
-    );
+    const res = await broadcastTransaction(asset, claimTransaction.toHex());
     log.debug("Claim transaction broadcast result", res);
 
     if (res.id) {

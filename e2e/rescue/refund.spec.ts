@@ -1,41 +1,19 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import axios from "axios";
 import fs from "fs";
 import path from "path";
 
-import { config } from "../../src/config";
-import type { UTXO } from "../../src/utils/blockchain";
+import { LBTC } from "../../src/consts/Assets";
 import {
     createAndVerifySwap,
     decodeLiquidRawTransaction,
     elementsSendToAddress,
     generateLiquidBlock,
+    getCurrentSwapId,
     getLiquidAddress,
     setFailedToPay,
+    waitForUTXOs,
 } from "../utils";
-
-const getCurrentSwapId = (page: Page) => {
-    const url = new URL(page.url());
-    return url.pathname.split("/").pop();
-};
-
-const waitForUTXOsInMempool = async (address: string, amount: number) => {
-    await expect
-        .poll(
-            async () => {
-                const utxos = (
-                    await axios.get<UTXO[]>(
-                        `${config.assets["L-BTC"].blockExplorerApis[0].normal}/address/${address}/utxo`,
-                    )
-                ).data;
-
-                return utxos.length === amount;
-            },
-            { timeout: 10_000 },
-        )
-        .toBe(true);
-};
 
 const navigateToSwapDetails = async (page: Page, swapId: string) => {
     await page.getByRole("link", { name: "Rescue" }).click();
@@ -89,7 +67,7 @@ test.describe("Refund", () => {
         await elementsSendToAddress(address, amount);
         await elementsSendToAddress(address, amount);
 
-        await waitForUTXOsInMempool(address, utxoCount);
+        await waitForUTXOs(LBTC, address, utxoCount);
 
         await navigateToSwapDetails(page, swapId);
 
@@ -123,7 +101,7 @@ test.describe("Refund", () => {
         await elementsSendToAddress(address, amount);
         await elementsSendToAddress(address, amount);
 
-        await waitForUTXOsInMempool(address, utxoCount);
+        await waitForUTXOs(LBTC, address, utxoCount);
 
         await navigateToSwapDetails(page, swapId);
 

@@ -10,6 +10,7 @@ import {
     generateBitcoinBlock,
     generateLiquidBlock,
     getBitcoinAddress,
+    getCurrentSwapId,
     getLiquidAddress,
     payInvoiceLndBackground,
     waitForNodesToSync,
@@ -66,11 +67,6 @@ const claimPendingSwap = async ({
     await expect(page.getByTestId("claimed")).toBeVisible();
 };
 
-const getCurrentSwapId = (page: Page) => {
-    const url = new URL(page.url());
-    return url.pathname.split("/").pop();
-};
-
 const createChainSwap = async (page: Page, assetSend: string) => {
     await page.goto("/");
 
@@ -91,7 +87,7 @@ const createChainSwap = async (page: Page, assetSend: string) => {
     );
     await inputReceiveAmount.fill(receiveAmount);
 
-    const inputSendAmount = page
+    const inputSendAmount = await page
         .locator("input[data-testid='sendAmount']")
         .inputValue();
 

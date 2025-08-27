@@ -1,8 +1,11 @@
 import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
+import { Explorer, type ExplorerUrl, type Url } from "../configs/base";
+import { BTC, LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { formatError } from "./errors";
+import { requestTimeoutDuration } from "./helper";
 import type { ChainSwap, SubmarineSwap } from "./swapCreator";
 
 export type UTXO = {
@@ -10,7 +13,12 @@ export type UTXO = {
     vout: number;
 };
 
-const processResponse = async <T>(response: Response): Promise<T> => {
+type MempoolFeeEstimation = Record<
+    "fastestFee" | "halfHourFee" | "hourFee" | "economyFee" | "minimumFee",
+    number
+>;
+
+const handleResponseSuccess = async <T>(response: Response): Promise<T> => {
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
         return (await response.json()) as T;
@@ -18,9 +26,22 @@ const processResponse = async <T>(response: Response): Promise<T> => {
     return (await response.text()) as T;
 };
 
-const constructRequestOptions = (options: RequestInit) => {
+const handleResponseError = async (response: Response) => {
+    const errorMessage = `HTTP ${response.status} from ${response.url}`;
+    try {
+        const body = await response.json();
+        throw new Error(`${errorMessage}: ${formatError(body)}`);
+    } catch {
+        throw new Error(errorMessage);
+    }
+};
+
+const constructRequestOptions = (options: RequestInit = {}) => {
     const controller = new AbortController();
-    const requestTimeout = setTimeout(() => controller.abort(), 10_000);
+    const requestTimeout = setTimeout(
+        () => controller.abort(),
+        requestTimeoutDuration,
+    );
 
     const opts: RequestInit = {
         signal: controller.signal, // Default abort signal, can be overridden by options.signal
@@ -64,7 +85,7 @@ const fetchBlockExplorer = async <T>(
                 }
             }
 
-            return await processResponse<T>(res);
+            return await handleResponseSuccess<T>(res);
         } catch (e) {
             log.error(
                 `block explorer fetch ${endpoint} for asset ${asset} failed`,
@@ -92,7 +113,7 @@ const fetchBlockExplorerParallel = async <T>(
     const urls = config.assets[asset].blockExplorerApis;
 
     try {
-        const broadcastPromises = urls.map(async (url) => {
+        const parallelPromises = urls.map(async (url) => {
             const { opts, requestTimeout } = constructRequestOptions(options);
             try {
                 const basePath = chooseUrl(url);
@@ -100,9 +121,7 @@ const fetchBlockExplorerParallel = async <T>(
                 const res = await fetch(`${basePath}${endpoint}`, opts);
 
                 if (!res.ok) {
-                    throw new Error(
-                        `HTTP ${res.status} from ${basePath}${endpoint}`,
-                    );
+                    await handleResponseError(res);
                 }
 
                 return res;
@@ -111,18 +130,18 @@ const fetchBlockExplorerParallel = async <T>(
             }
         });
 
-        const response = await Promise.any(broadcastPromises);
+        const response = await Promise.any(parallelPromises);
 
-        return await processResponse<T>(response);
+        return await handleResponseSuccess<T>(response);
     } catch (err) {
         if (err instanceof AggregateError) {
             err.errors.forEach((e, i) => {
-                log.error(`Broadcast to ${chooseUrl(urls[i])} failed: ${e}`);
+                log.error(
+                    `fetch to external explorer ${chooseUrl(urls[i])} failed: ${e}`,
+                );
             });
         }
-        throw new Error(`all ${asset} transaction broadcast attempts failed`, {
-            cause: err,
-        });
+        throw new Error(`all external fetch attempts to ${endpoint} failed`);
     }
 };
 
@@ -132,6 +151,21 @@ const getAddressUTXOs = async (asset: string, address: string) => {
 
 const getRawTransaction = async (asset: string, txid: string) => {
     return await fetchBlockExplorer<string>(asset, `/tx/${txid}/hex`);
+};
+
+export const getBlockTipHeight = async (asset: string) => {
+    const height = await fetchBlockExplorer<string>(
+        asset,
+        "/blocks/tip/height",
+    );
+
+    if (!Number.isFinite(Number(height))) {
+        throw new Error(
+            `invalid block tip height for asset ${asset}: ${height}`,
+        );
+    }
+
+    return height;
 };
 
 export const broadcastToExplorer = async (
@@ -154,14 +188,72 @@ export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
 
     const utxos = await getAddressUTXOs(swap.assetSend, address);
 
-    const rawTxs: { hex: string }[] = [];
+    const rawTxs: string[] = [];
 
     for (const utxo of utxos) {
         const rawTx = await getRawTransaction(swap.assetSend, utxo.txid);
-        rawTxs.push({
-            hex: rawTx,
-        });
+        rawTxs.push(rawTx);
     }
 
-    return rawTxs;
+    return rawTxs.map((rawTx) => {
+        if ([BTC, LBTC].includes(swap.assetSend)) {
+            return {
+                hex: rawTx,
+                // Important to know if the swap has timed out or not
+                timeoutBlockHeight:
+                    swap.type === SwapType.Chain
+                        ? (swap as ChainSwap).lockupDetails.timeoutBlockHeight
+                        : (swap as SubmarineSwap).timeoutBlockHeight,
+            };
+        }
+
+        return { hex: rawTx };
+    });
+};
+
+const getEsploraFeeEstimations = async (apiEndpoint: Url) => {
+    const { opts, requestTimeout } = constructRequestOptions();
+    try {
+        const res = await fetch(
+            `${chooseUrl(apiEndpoint)}/fee-estimates`,
+            opts,
+        );
+
+        if (!res.ok) {
+            await handleResponseError(res);
+        }
+
+        return ((await res.json()) as Record<string, number>)[3];
+    } finally {
+        clearTimeout(requestTimeout);
+    }
+};
+
+const getMempoolFeeEstimations = async (mempoolApi: Url) => {
+    const { opts, requestTimeout } = constructRequestOptions();
+    try {
+        const res = await fetch(
+            `${chooseUrl(mempoolApi)}/v1/fees/recommended`,
+            opts,
+        );
+
+        if (!res.ok) {
+            await handleResponseError(res);
+        }
+
+        return ((await res.json()) as MempoolFeeEstimation).halfHourFee;
+    } finally {
+        clearTimeout(requestTimeout);
+    }
+};
+
+export const getFeeEstimations = async (url: ExplorerUrl) => {
+    switch (url.id) {
+        case Explorer.Mempool:
+            return await getMempoolFeeEstimations(url);
+        case Explorer.Esplora:
+            return await getEsploraFeeEstimations(url);
+        default:
+            throw new Error(`unknown explorer type: ${url.id}`);
+    }
 };
