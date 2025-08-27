@@ -191,16 +191,8 @@ test.describe("Chain swap", () => {
         ).toBeVisible();
 
         const buttons = page.locator("div[data-testid='pay-onchain-buttons']");
-        const amountButton = buttons.getByText("amount");
         const addressButton = buttons.getByText("address");
-        expect(amountButton).toBeDefined();
         expect(addressButton).toBeDefined();
-
-        await amountButton.click();
-        const sendAmount = await page.evaluate(() => {
-            return navigator.clipboard.readText();
-        });
-        expect(sendAmount).toBeDefined();
 
         await addressButton.click();
         const address = await page.evaluate(() => {
@@ -208,7 +200,7 @@ test.describe("Chain swap", () => {
         });
         expect(address).toBeDefined();
 
-        await bitcoinSendToAddress(address, sendAmount);
+        await bitcoinSendToAddress(address, receiveAmount); // underpaying it to prevent automatic claim
         await waitForUTXOs(BTC, address, 1);
         await generateBitcoinBlocks(216);
         await waitForNodesToSync();
