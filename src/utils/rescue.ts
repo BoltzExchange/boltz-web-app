@@ -22,7 +22,7 @@ import {
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import { getBlockTipHeight, getSwapUTXOs } from "./blockchain";
-import type { LockupTransaction, TransactionInterface } from "./boltzClient";
+import type { TransactionInterface } from "./boltzClient";
 import {
     broadcastTransaction,
     getLockupTransaction,
@@ -346,21 +346,6 @@ export const isRefundableSwapType = (swap: SomeSwap) =>
     !isRsk(swap) && [SwapType.Chain, SwapType.Submarine].includes(swap.type);
 
 export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
-    const mergeLockupWithUTXOs = (
-        lockupTx: LockupTransaction,
-        utxos: Pick<LockupTransaction, "hex">[],
-    ) => {
-        const isLockupTx = (utxo: Pick<LockupTransaction, "hex">) =>
-            utxo.hex === lockupTx.hex;
-
-        if (utxos.some(isLockupTx)) {
-            // If the utxo is also a lockup tx, prefer using it
-            return [lockupTx, ...utxos.filter((tx) => !isLockupTx(tx))];
-        }
-
-        return utxos;
-    };
-
     const [lockupTxResult, utxosResult] = await Promise.allSettled([
         getLockupTransaction(currentSwap.id, currentSwap.type),
         getSwapUTXOs(currentSwap as ChainSwap | SubmarineSwap),
@@ -369,16 +354,20 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     const lockupTx =
         lockupTxResult.status === "fulfilled" ? lockupTxResult.value : null;
     const utxos = utxosResult.status === "fulfilled" ? utxosResult.value : null;
-    const hasUTXOs = utxos && utxos.length > 0;
 
-    if (lockupTx && hasUTXOs) {
-        return mergeLockupWithUTXOs(lockupTx, utxos);
-    }
-    if (lockupTx && !hasUTXOs) {
-        return [lockupTx];
-    }
-    if (!lockupTx && hasUTXOs) {
+    if (utxos) {
+        if (utxos.length === 0) {
+            return [];
+        }
         return utxos;
+    }
+
+    // Fallback to lockup tx if 3rd party utxo data is not available and swap status is not final
+    if (
+        lockupTx &&
+        !Object.values(swapStatusFinal).includes(currentSwap.status)
+    ) {
+        return [lockupTx];
     }
 
     // if both requests were "rejected"
@@ -462,6 +451,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
                 }
 
                 if (
+                    isRefundableSwapType(swap) &&
                     !Object.values(swapStatusPending).includes(swap.status) &&
                     utxos.length > 0
                 ) {
