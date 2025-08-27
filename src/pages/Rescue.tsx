@@ -90,7 +90,7 @@ const Rescue = () => {
                                     onClick={(swap) => {
                                         navigate(`/swap/${swap.id}`, {
                                             state: {
-                                                timedOutRefund:
+                                                timedOutRefundable:
                                                     swap.timedOut &&
                                                     swap.action ===
                                                         RescueAction.Refund,

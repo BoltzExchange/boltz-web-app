@@ -43,8 +43,10 @@ import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
-    const location = useLocation<{ timedOutRefund?: boolean }>();
-    const timedOutRefund = location.state?.timedOutRefund;
+    const location = useLocation<{
+        timedOutRefundable?: boolean | undefined;
+    }>();
+    const timedOutRefundable = location.state?.timedOutRefundable ?? false;
 
     const { getSwap, t } = useGlobalContext();
 
@@ -56,6 +58,7 @@ const Pay = () => {
         setSwapStatusTransaction,
         setFailureReason,
         setRefundableUTXOs,
+        setTimedOutRefundable,
     } = usePayContext();
 
     const [loading, setLoading] = createSignal<boolean>(false);
@@ -73,10 +76,11 @@ const Pay = () => {
             return;
         }
 
+        setTimedOutRefundable(timedOutRefundable);
         setSwap(currentSwap);
 
         // If the swap timeoutBlockHeight was reached, we don't rely on backend for the swap status
-        if (timedOutRefund) {
+        if (timedOutRefundable) {
             log.info(
                 `refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
             );
@@ -146,7 +150,7 @@ const Pay = () => {
         (swap() &&
             swap().type === SwapType.Chain &&
             swapStatus() === swapStatusFailed.TransactionRefunded) ||
-        timedOutRefund;
+        timedOutRefundable;
 
     const renameSwapStatus = (status: string) => {
         if (isWaitingForRefund()) {

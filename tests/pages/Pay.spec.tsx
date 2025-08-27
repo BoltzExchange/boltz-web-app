@@ -153,14 +153,14 @@ describe("Pay", () => {
         expect(button).not.toBeTruthy();
     });
 
-    test("should set status to swap.waitingForRefund when timedOutRefund is true", async () => {
+    test("should set status to swap.waitingForRefund when timedOutRefundable is true", async () => {
         mockUseLocation.mockReturnValue({
             ...mockUseLocation(),
-            state: { timedOutRefund: true },
+            state: { timedOutRefundable: true },
         } as ReturnType<typeof useLocation>);
 
         mockGetSwapStatus.mockResolvedValue({
-            status: swapStatusSuccess.TransactionClaimed, // Frontend should ignore this status when timedOutRefund is true
+            status: swapStatusSuccess.TransactionClaimed, // Frontend should ignore this status when timedOutRefundable is true
         });
 
         render(
