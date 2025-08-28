@@ -3,6 +3,11 @@ import { render, screen } from "@solidjs/testing-library";
 import Nav from "../../src/components/Nav";
 import { contextWrapper } from "../helper";
 
+vi.mock("../../src/index", () => ({
+    HistoryLazy: vi.fn(),
+    RescueLazy: vi.fn(),
+}));
+
 describe("Nav", () => {
     test.each(["testnet", "regtest", "random"])(
         "should show network on network %s",

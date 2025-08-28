@@ -4,6 +4,7 @@ import { For, Show, createMemo } from "solid-js";
 
 import type { AssetType } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
+import { RefundEvmLazy } from "../index";
 import "../style/swaplist.scss";
 import type { LogRefundData } from "../utils/contractLogs";
 import { cropString } from "../utils/helper";
@@ -32,6 +33,7 @@ const SwapListLogs = (props: { swaps: Accessor<LogRefundData[]> }) => {
                     <>
                         <div
                             class="swaplist-item"
+                            onMouseEnter={() => RefundEvmLazy.preload()}
                             onClick={() =>
                                 navigate(
                                     `/swap/refund/evm/${swap.asset}/${swap.transactionHash}`,

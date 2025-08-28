@@ -54,6 +54,7 @@ const SwapList = (props: {
     surroundingSeparators?: boolean;
     hideStatusOnMobile?: boolean;
     hideDateOnMobile?: boolean;
+    onMouseEnter?: (swap: Swap) => void;
 }) => {
     const navigate = useNavigate();
     const { deleteSwap, t } = useGlobalContext();
@@ -96,6 +97,7 @@ const SwapList = (props: {
                                     ? "disabled"
                                     : ""
                             }`}
+                            onMouseEnter={() => props.onMouseEnter?.(swap)}
                             onClick={() => {
                                 if (RescueNoAction.includes(swap.action)) {
                                     return;

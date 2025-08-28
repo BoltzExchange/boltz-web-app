@@ -5,7 +5,7 @@ import "@fontsource/noto-sans/800.css";
 import type { RouteSectionProps } from "@solidjs/router";
 import { Navigate, Route, Router } from "@solidjs/router";
 import log from "loglevel";
-import { Show } from "solid-js";
+import { Show, lazy } from "solid-js";
 import { render } from "solid-js/web";
 
 import Chatwoot from "./chatwoot";
@@ -13,6 +13,7 @@ import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
+import WithSuspense from "./components/WithSuspense";
 import { config } from "./config";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider, useGlobalContext } from "./context/Global";
@@ -22,23 +23,33 @@ import { Web3SignerProvider } from "./context/Web3";
 import Backup from "./pages/Backup";
 import { BackupMnemonic } from "./pages/BackupMnemonic";
 import BackupVerify from "./pages/BackupVerify";
-import ClaimRescue from "./pages/ClaimRescue";
 import Create from "./pages/Create";
-import Error from "./pages/Error";
 import Hero from "./pages/Hero";
-import History from "./pages/History";
 import MnemonicVerify from "./pages/MnemonicVerify";
-import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
-import Privacy from "./pages/Privacy";
-import RefundEvm from "./pages/RefundEvm";
-import RefundRescue from "./pages/RefundRescue";
-import Rescue from "./pages/Rescue";
-import RescueExternal from "./pages/RescueExternal";
-import Terms from "./pages/Terms";
 import "./style/index.scss";
 import { initEcc } from "./utils/ecpair";
 import "./utils/patches";
+
+export const HistoryLazy = lazy(() => import("./pages/History"));
+export const RescueLazy = lazy(() => import("./pages/Rescue"));
+export const RefundEvmLazy = lazy(() => import("./pages/RefundEvm"));
+export const RescueExternalLazy = lazy(() => import("./pages/RescueExternal"));
+export const ClaimRescueLazy = lazy(() => import("./pages/ClaimRescue"));
+export const RefundRescueLazy = lazy(() => import("./pages/RefundRescue"));
+export const PrivacyLazy = lazy(() => import("./pages/Privacy"));
+export const TermsLazy = lazy(() => import("./pages/Terms"));
+
+const History = WithSuspense(HistoryLazy);
+const Rescue = WithSuspense(RescueLazy);
+const RefundEvm = WithSuspense(RefundEvmLazy);
+const RescueExternal = WithSuspense(RescueExternalLazy);
+const ClaimRescue = WithSuspense(ClaimRescueLazy);
+const RefundRescue = WithSuspense(RefundRescueLazy);
+const Privacy = WithSuspense(PrivacyLazy);
+const Terms = WithSuspense(TermsLazy);
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Error = lazy(() => import("./pages/Error"));
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker

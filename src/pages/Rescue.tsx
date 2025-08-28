@@ -7,6 +7,11 @@ import SwapList, { type Swap, sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { type tFn, useGlobalContext } from "../context/Global";
+import {
+    ClaimRescueLazy,
+    RefundRescueLazy,
+    RescueExternalLazy,
+} from "../index";
 import "../style/tabs.scss";
 import { isMobile } from "../utils/helper";
 import { RescueAction, createRescueList } from "../utils/rescue";
@@ -97,6 +102,18 @@ const Rescue = () => {
                                             },
                                         });
                                     }}
+                                    onMouseEnter={(swap) => {
+                                        switch (swap.action) {
+                                            case RescueAction.Refund:
+                                                void RefundRescueLazy.preload();
+                                                break;
+                                            case RescueAction.Claim:
+                                                void ClaimRescueLazy.preload();
+                                                break;
+                                            default:
+                                                break;
+                                        }
+                                    }}
                                     hideDateOnMobile
                                 />
                             </Show>
@@ -118,6 +135,7 @@ const Rescue = () => {
                     <p>{t("rescue_external_explainer")}</p>
                     <button
                         class="btn"
+                        onMouseEnter={() => RescueExternalLazy.preload()}
                         onClick={() => navigate(`/rescue/external`)}>
                         {t("rescue_external_swap")}
                     </button>
