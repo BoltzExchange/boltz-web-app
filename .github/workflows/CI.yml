@@ -18,6 +18,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run check:assets
+
       - run: npm run lint
 
       - run: npm run prettier:check

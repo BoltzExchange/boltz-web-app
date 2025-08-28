@@ -1,0 +1,17 @@
+User-agent: *
+
+Allow: /
+Allow: /swap
+Allow: /rescue
+Allow: /terms
+Allow: /privacy
+
+Disallow: /swapbox
+Disallow: /swap/*/claim
+Disallow: /swap/refund/
+Disallow: /backup/
+Disallow: /history
+Disallow: /error
+Disallow: /404
+
+Disallow: /*?
