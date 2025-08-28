@@ -8,10 +8,9 @@ import log from "loglevel";
 
 import {
     type AssetType,
-    type BTC,
     LBTC,
-    LN,
-    type RBTC,
+    type RefundableAssetType,
+    refundableAssets,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
@@ -377,18 +376,20 @@ export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
 
 export const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
     try {
-        type RefundableAsset = typeof BTC | typeof LBTC | typeof RBTC;
-        const assets: RefundableAsset[] = Array.from(
+        const assets: RefundableAssetType[] = Array.from(
             new Set<AssetType>(
                 swaps.map((swap) => swap.assetSend as AssetType),
             ),
-        ).filter((asset) => asset !== LN);
+        ).filter((asset): asset is RefundableAssetType =>
+            refundableAssets.includes(asset),
+        );
 
         const blockHeights = await Promise.allSettled(
             assets.map(getBlockTipHeight),
         );
 
-        const currentBlockHeight: Partial<Record<RefundableAsset, number>> = {};
+        const currentBlockHeight: Partial<Record<RefundableAssetType, number>> =
+            {};
 
         blockHeights.forEach((res, index) => {
             const asset = assets[index];

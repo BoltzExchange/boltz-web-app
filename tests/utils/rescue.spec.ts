@@ -1,5 +1,6 @@
 import { type Mock, beforeEach, vi } from "vitest";
 
+import { BTC, LBTC, RBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import {
     swapStatusFailed,
@@ -231,18 +232,22 @@ describe("rescue", () => {
                     id: "swap-1",
                     status: swapStatusPending.TransactionConfirmed,
                     timeoutBlockHeight: 900,
+                    assetSend: BTC,
                 }),
                 createMockReverseSwap({
                     id: "swap-2",
                     status: swapStatusPending.TransactionConfirmed,
+                    assetSend: BTC,
                 }),
                 createMockSubmarineSwap({
                     id: "swap-3",
                     status: swapStatusFinal[0],
+                    assetSend: LBTC,
                 }),
-                createMockSubmarineSwap({
+                createMockReverseSwap({
                     id: "swap-4",
                     status: swapStatusPending.SwapCreated,
+                    assetSend: LBTC,
                 }),
             ];
 
@@ -267,6 +272,7 @@ describe("rescue", () => {
                 createMockSubmarineSwap({
                     status: swapStatusPending.TransactionConfirmed,
                     timeoutBlockHeight: 900,
+                    assetSend: BTC,
                 }),
             ];
 
@@ -276,6 +282,20 @@ describe("rescue", () => {
             expect(result).toHaveLength(1);
             expect(result[0].action).toBe(RescueAction.Refund);
             expect(result[0].timedOut).toBe(true);
+        });
+
+        test("should not show RBTC as Refundable", async () => {
+            const swaps = [
+                createMockSubmarineSwap({
+                    status: swapStatusPending.TransactionConfirmed,
+                    timeoutBlockHeight: 900,
+                    assetSend: RBTC,
+                }),
+            ];
+
+            const result = await createRescueList(swaps);
+            expect(result).toHaveLength(1);
+            expect(result[0].action).toBe(RescueAction.Pending);
         });
 
         test.each([
