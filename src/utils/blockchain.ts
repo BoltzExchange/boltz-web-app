@@ -2,7 +2,7 @@ import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
 import { Explorer, type ExplorerUrl, type Url } from "../configs/base";
-import { BTC, LBTC } from "../consts/Assets";
+import { refundableAssets } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { formatError } from "./errors";
 import { requestTimeoutDuration } from "./helper";
@@ -196,7 +196,7 @@ export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
     }
 
     return rawTxs.map((rawTx) => {
-        if ([BTC, LBTC].includes(swap.assetSend)) {
+        if (refundableAssets.includes(swap.assetSend)) {
             return {
                 hex: rawTx,
                 // Important to know if the swap has timed out or not
