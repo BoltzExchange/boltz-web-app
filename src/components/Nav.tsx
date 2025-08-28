@@ -7,6 +7,7 @@ import Warnings from "../components/Warnings";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
+import { HistoryLazy, RescueLazy } from "../index";
 import "../style/nav.scss";
 
 const Nav = (props: { network: string; isPro?: boolean }) => {
@@ -69,10 +70,16 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                     <A href="/swap" onClick={() => setHamburger(false)}>
                         {t("swap")}
                     </A>
-                    <A href="/rescue" onClick={() => setHamburger(false)}>
+                    <A
+                        href="/rescue"
+                        onMouseEnter={() => RescueLazy.preload()}
+                        onClick={() => setHamburger(false)}>
                         {t("rescue")}
                     </A>
-                    <A href="/history" onClick={() => setHamburger(false)}>
+                    <A
+                        href="/history"
+                        onMouseEnter={() => HistoryLazy.preload()}
+                        onClick={() => setHamburger(false)}>
                         {t("history")}
                     </A>
 

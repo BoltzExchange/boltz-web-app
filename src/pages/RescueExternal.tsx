@@ -28,6 +28,7 @@ import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
+import { ClaimRescueLazy, RefundRescueLazy } from "../index";
 import "../style/tabs.scss";
 import { getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData } from "../utils/contractLogs";
@@ -279,6 +280,18 @@ export const RefundBtcLike = () => {
                                             action={(swap) =>
                                                 rescueListAction({ swap, t })
                                             }
+                                            onMouseEnter={(swap) => {
+                                                switch (swap.action) {
+                                                    case RescueAction.Refund:
+                                                        void RefundRescueLazy.preload();
+                                                        break;
+                                                    case RescueAction.Claim:
+                                                        void ClaimRescueLazy.preload();
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                            }}
                                             surroundingSeparators={false}
                                             onClick={(swap) => {
                                                 if (

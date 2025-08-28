@@ -10,6 +10,7 @@ import {
 import nostr from "../assets/nostr.svg";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
+import { PrivacyLazy, TermsLazy } from "../index";
 import "../style/footer.scss";
 
 const Footer = () => {
@@ -86,8 +87,12 @@ const Footer = () => {
                 </a>
             </p>
             <p class="legal-nav">
-                <a href="/terms">{t("terms")}</a>
-                <a href="/privacy">{t("privacy")}</a>
+                <a href="/terms" onMouseEnter={() => TermsLazy.preload()}>
+                    {t("terms")}
+                </a>
+                <a href="/privacy" onMouseEnter={() => PrivacyLazy.preload()}>
+                    {t("privacy")}
+                </a>
             </p>
             <p class="version">
                 {t("version")}:{" "}

@@ -12,6 +12,11 @@ import {
 
 /* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
 
+vi.mock("../../src/index", () => ({
+    ClaimRescueLazy: vi.fn(),
+    RefundRescueLazy: vi.fn(),
+}));
+
 vi.mock("../../src/utils/boltzClient", () => {
     return {
         getLockupTransaction: vi.fn(() =>

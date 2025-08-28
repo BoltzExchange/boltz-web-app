@@ -53,6 +53,7 @@ export default defineConfig({
         cors: { origin: "*" },
     },
     build: {
+        cssCodeSplit: true,
         commonjsOptions: {
             transformMixedEsModules: true,
         },
