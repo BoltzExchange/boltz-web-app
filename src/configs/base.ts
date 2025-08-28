@@ -64,7 +64,7 @@ const defaults = {
     docsUrl: "https://docs.boltz.exchange",
     blogUrl: "https://blog.boltz.exchange",
     nostrUrl:
-        "https://snort.social/p/npub1psm37hke2pmxzdzraqe3cjmqs28dv77da74pdx8mtn5a0vegtlas9q8970",
+        "https://primal.net/p/nprofile1qqsqcdcltmv4qanpx3p7svcufdsg9rkk00x7l2sknra4e6whkv59l7clgcdzj",
     statusUrl: "https://status.boltz.exchange",
     youtubeUrl:
         "https://www.youtube.com/playlist?list=PLkqOa9SGBeZfAEHvKkGKjeRIASeu6bNO3",

@@ -18,7 +18,7 @@
         "testnet": "cp src/configs/testnet.ts src/config.ts",
         "regtest": "cp src/configs/regtest.ts src/config.ts",
         "postinstall": "npm run regtest",
-        "prettier": "npx prettier src public tests e2e docs *.ts *.mjs *.json",
+        "prettier": "npx prettier src public tests e2e docs *.ts *.mjs *.json README.md",
         "prettier:write": "npm run prettier -- --write",
         "prettier:check": "npm run prettier -- --check",
         "tsc": "tsc",
