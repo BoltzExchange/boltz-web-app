@@ -72,7 +72,10 @@ const InvoiceInput = () => {
         if (bip21Amount) {
             setReceiveAmount(btcToSat(bip21Amount));
             setSendAmount(
-                await pair().calculateSendAmount(btcToSat(bip21Amount)),
+                await pair().calculateSendAmount(
+                    btcToSat(bip21Amount),
+                    pair().minerFees,
+                ),
             );
         }
 
@@ -103,7 +106,10 @@ const InvoiceInput = () => {
                 const sats = await validateInvoice(invoice);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
-                    await pair().calculateSendAmount(BigNumber(sats)),
+                    await pair().calculateSendAmount(
+                        BigNumber(sats),
+                        pair().minerFees,
+                    ),
                 );
                 setInvoice(invoice);
                 setBolt12Offer(undefined);

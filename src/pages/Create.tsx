@@ -34,6 +34,9 @@ import { isMobile } from "../utils/helper";
 import Pair, { RequiredInput } from "../utils/pair";
 import ErrorWasm from "./ErrorWasm";
 
+// TODO: debounce amount calculations
+// TODO: loading spinner for amount calculations
+
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined;
     let sendAmountRef: HTMLInputElement | undefined;
@@ -113,7 +116,10 @@ const Create = () => {
         }
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
-        const sendAmount = await pair().calculateSendAmount(satAmount);
+        const sendAmount = await pair().calculateSendAmount(
+            satAmount,
+            minerFee(),
+        );
         setAmountChanged(Side.Receive);
         setReceiveAmount(satAmount);
         setSendAmount(sendAmount);
@@ -133,7 +139,10 @@ const Create = () => {
         }
         changeDenomination(amount);
         const satAmount = convertAmount(BigNumber(amount), denomination());
-        const receiveAmount = await pair().calculateReceiveAmount(satAmount);
+        const receiveAmount = await pair().calculateReceiveAmount(
+            satAmount,
+            minerFee(),
+        );
         setAmountChanged(Side.Send);
         setSendAmount(satAmount);
         setReceiveAmount(receiveAmount);
@@ -218,6 +227,7 @@ const Create = () => {
         if (lessThanMin || amount > maximum()) {
             const params = {
                 amount: formatAmount(
+                    pair().fromAsset,
                     BigNumber(lessThanMin ? minimum() : maximum()),
                     denomination(),
                     separator(),
@@ -239,7 +249,7 @@ const Create = () => {
     const setAmount = async (amount: number) => {
         setSendAmount(BigNumber(amount));
         setReceiveAmount(
-            await pair().calculateReceiveAmount(BigNumber(amount)),
+            await pair().calculateReceiveAmount(BigNumber(amount), minerFee()),
         );
         validateAmount();
         sendAmountRef?.focus();
@@ -247,17 +257,42 @@ const Create = () => {
 
     onMount(() => {
         sendAmountRef?.focus();
+
+        if (searchParams.sendAsset) {
+            setPair(
+                new Pair(
+                    pairs(),
+                    searchParams.sendAsset as string,
+                    pair().toAsset,
+                ),
+            );
+        }
+        if (searchParams.receiveAsset) {
+            setPair(
+                new Pair(
+                    pairs(),
+                    pair().fromAsset,
+                    searchParams.receiveAsset as string,
+                ),
+            );
+        }
     });
 
     createEffect(
         on([boltzFee, minerFee, pair], async () => {
             if (amountChanged() === Side.Receive) {
                 setSendAmount(
-                    await pair().calculateSendAmount(receiveAmount()),
+                    await pair().calculateSendAmount(
+                        receiveAmount(),
+                        minerFee(),
+                    ),
                 );
             } else {
                 setReceiveAmount(
-                    await pair().calculateReceiveAmount(sendAmount()),
+                    await pair().calculateReceiveAmount(
+                        sendAmount(),
+                        minerFee(),
+                    ),
                 );
             }
             if (receiveAmount().isGreaterThan(0)) validateAmount();
@@ -279,6 +314,7 @@ const Create = () => {
         if (rAmount > 0) {
             setReceiveAmountFormatted(
                 formatAmount(
+                    pair().toAsset,
                     BigNumber(rAmount),
                     denomination(),
                     separator(),
@@ -287,10 +323,12 @@ const Create = () => {
         } else {
             setReceiveAmountFormatted("");
         }
+
         const sAmount = Number(sendAmount());
         if (sAmount > 0) {
             setSendAmountFormatted(
                 formatAmount(
+                    pair().fromAsset,
                     BigNumber(sAmount),
                     denomination(),
                     separator(),
@@ -298,27 +336,6 @@ const Create = () => {
             );
         } else {
             setSendAmountFormatted("");
-        }
-    });
-
-    createEffect(() => {
-        if (searchParams.sendAsset) {
-            setPair(
-                new Pair(
-                    pairs(),
-                    searchParams.sendAsset as string,
-                    pair().toAsset,
-                ),
-            );
-        }
-        if (searchParams.receiveAsset) {
-            setPair(
-                new Pair(
-                    pairs(),
-                    pair().fromAsset,
-                    searchParams.receiveAsset as string,
-                ),
-            );
         }
     });
 
@@ -365,6 +382,7 @@ const Create = () => {
                                 onClick={() => setAmount(minimum())}
                                 class="btn-small btn-light">
                                 {formatAmount(
+                                    pair().fromAsset,
                                     BigNumber(minimum()),
                                     denomination(),
                                     separator(),
@@ -381,6 +399,7 @@ const Create = () => {
                                 onClick={() => setAmount(maximum())}
                                 class="btn-small btn-light">
                                 {formatAmount(
+                                    pair().fromAsset,
                                     BigNumber(maximum()),
                                     denomination(),
                                     separator(),

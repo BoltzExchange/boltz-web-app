@@ -31,6 +31,7 @@ type Asset = {
     erc20?: {
         chain: string;
         address: string;
+        decimals: number;
     };
 };
 

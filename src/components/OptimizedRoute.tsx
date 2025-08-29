@@ -176,6 +176,7 @@ const OptimizedRoute = () => {
                 ✨{" "}
                 {t("optimized_route_amount", {
                     amount: formatAmount(
+                        pair().fromAsset,
                         BigNumber(swap().magicRoutingHintSavedFees),
                         denomination(),
                         separator(),

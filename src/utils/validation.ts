@@ -14,7 +14,7 @@ import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 import log from "loglevel";
 
-import { LBTC, RBTC } from "../consts/Assets";
+import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
@@ -125,6 +125,7 @@ const validateBip21 = (
     if (
         params.get("amount") !==
         formatAmountDenomination(
+            BTC,
             BigNumber(expectedAmount),
             Denomination.Btc,
             ".",

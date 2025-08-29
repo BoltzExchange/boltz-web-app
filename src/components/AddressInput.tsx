@@ -49,7 +49,10 @@ const AddressInput = () => {
         if (bip21Amount) {
             setReceiveAmount(btcToSat(bip21Amount));
             setSendAmount(
-                await pair().calculateSendAmount(btcToSat(bip21Amount)),
+                await pair().calculateSendAmount(
+                    btcToSat(bip21Amount),
+                    pair().minerFees,
+                ),
             );
         }
 
