@@ -34,6 +34,7 @@ const InvoiceInput = () => {
         setSendAmount,
         setOnchainAddress,
         setBolt12Offer,
+        minerFee,
     } = useCreateContext();
 
     const clearInputError = (input: HTMLTextAreaElement) => {
@@ -86,7 +87,10 @@ const InvoiceInput = () => {
                 const sats = await validateInvoice(inputValue);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
-                    await pair().calculateSendAmount(BigNumber(sats)),
+                    await pair().calculateSendAmount(
+                        BigNumber(sats),
+                        minerFee(),
+                    ),
                 );
                 setInvoice(inputValue);
                 setBolt12Offer(undefined);

@@ -193,6 +193,7 @@ const CreateButton = () => {
                         key: lessThanMin ? "minimum_amount" : "maximum_amount",
                         params: {
                             amount: formatAmount(
+                                pair().fromAsset,
                                 BigNumber(lessThanMin ? minimum() : maximum()),
                                 denomination(),
                                 separator(),

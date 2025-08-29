@@ -1,3 +1,4 @@
+import { makePersisted } from "@solid-primitives/storage";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
@@ -6,6 +7,7 @@ import {
     createContext,
     createEffect,
     createSignal,
+    on,
     useContext,
 } from "solid-js";
 import type { Accessor, JSX, Setter } from "solid-js";
@@ -25,6 +27,7 @@ import { getAddress, getNetwork } from "../utils/compat";
 import { isInvoice, isLnurl } from "../utils/invoice";
 import Pair, { RequiredInput } from "../utils/pair";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
+import { useGlobalContext } from "./Global";
 
 const isValidForAsset = (asset: typeof BTC | typeof LBTC, address: string) => {
     try {
@@ -282,6 +285,7 @@ const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: JSX.Element }) => {
     const navigate = useNavigate();
+    const { pairs, regularPairs } = useGlobalContext();
 
     const [invoice, setInvoice] = createSignal<string>("");
     const [lnurl, setLnurl] = createSignal("");
@@ -290,8 +294,19 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     );
     const [onchainAddress, setOnchainAddress] = createSignal("");
 
-    // TODO: persist from and to assets
-    const [pair, setPair] = createSignal<Pair>(new Pair(undefined, LN, BTC));
+    // eslint-disable-next-line solid/reactivity
+    const [assetFrom, setAssetFrom] = makePersisted(createSignal(LN), {
+        name: "assetSend",
+    });
+    const [assetTo, setAssetTo] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal(BTC),
+        { name: "assetReceive" },
+    );
+
+    const [pair, setPair] = createSignal<Pair>(
+        new Pair(undefined, assetFrom(), assetTo()),
+    );
 
     // asset selection
     const [assetSelect, setAssetSelect] = createSignal(false);
@@ -320,6 +335,25 @@ const CreateProvider = (props: { children: JSX.Element }) => {
             }
         }
         setValid(false);
+    });
+
+    createEffect(
+        on([pairs, regularPairs], () => {
+            setPair(
+                new Pair(
+                    pairs(),
+                    pair().fromAsset,
+                    pair().toAsset,
+                    regularPairs(),
+                ),
+            );
+        }),
+    );
+
+    createEffect(() => {
+        const latest = pair();
+        setAssetFrom(latest.fromAsset);
+        setAssetTo(latest.toAsset);
     });
 
     // amounts

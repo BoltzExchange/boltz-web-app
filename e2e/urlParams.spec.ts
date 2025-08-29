@@ -59,7 +59,7 @@ test.describe("URL params", () => {
 
         const receiveAmount = page.getByTestId("receiveAmount");
         await expect(receiveAmount).toHaveValue(
-            formatAmount(BigNumber(amount), Denomination.Sat, "."),
+            formatAmount(BTC, BigNumber(amount), Denomination.Sat, "."),
         );
     });
 
@@ -69,7 +69,7 @@ test.describe("URL params", () => {
 
         const sendAmount = page.getByTestId("sendAmount");
         await expect(sendAmount).toHaveValue(
-            formatAmount(BigNumber(amount), Denomination.Sat, "."),
+            formatAmount(BTC, BigNumber(amount), Denomination.Sat, "."),
         );
     });
 
@@ -79,7 +79,7 @@ test.describe("URL params", () => {
 
         const receiveAmount = page.getByTestId("receiveAmount");
         await expect(receiveAmount).toHaveValue(
-            formatAmount(BigNumber(amount), Denomination.Sat, "."),
+            formatAmount(BTC, BigNumber(amount), Denomination.Sat, "."),
         );
     });
 
@@ -94,7 +94,7 @@ test.describe("URL params", () => {
 
         const sendAmountInput = page.getByTestId("sendAmount");
         await expect(sendAmountInput).toHaveValue(
-            formatAmount(BigNumber(sendAmount), Denomination.Sat, "."),
+            formatAmount(BTC, BigNumber(sendAmount), Denomination.Sat, "."),
         );
     });
 
@@ -110,7 +110,7 @@ test.describe("URL params", () => {
 
         const receiveAmount = page.getByTestId("receiveAmount");
         await expect(receiveAmount).toHaveValue(
-            formatAmount(BigNumber(invoiceAmount), Denomination.Sat, "."),
+            formatAmount(BTC, BigNumber(invoiceAmount), Denomination.Sat, "."),
         );
     });
 
@@ -257,6 +257,7 @@ test.describe("URL params", () => {
                 const sendAmountInput = page.getByTestId("sendAmount");
                 await expect(sendAmountInput).toHaveValue(
                     formatAmount(
+                        BTC,
                         BigNumber(condition.expectedSendAmount),
                         Denomination.Sat,
                         ".",
@@ -268,6 +269,7 @@ test.describe("URL params", () => {
                 const receiveAmountInput = page.getByTestId("receiveAmount");
                 await expect(receiveAmountInput).toHaveValue(
                     formatAmount(
+                        BTC,
                         BigNumber(condition.expectedReceiveAmount),
                         Denomination.Sat,
                         ".",

@@ -1,17 +1,24 @@
 import BigNumber from "bignumber.js";
+import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
 import { AssetType } from "../configs/base";
 import { BTC, LN, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import type {
-    ChainPairTypeTaproot,
-    Pairs,
-    ReversePairTypeTaproot,
-    SubmarinePairTypeTaproot,
+import {
+    type ChainPairTypeTaproot,
+    type Pairs,
+    type ReversePairTypeTaproot,
+    type SubmarinePairTypeTaproot,
+    quoteDexAmountIn,
 } from "./boltzClient";
-import { calculateBoltzFeeOnSend, calculateSendAmount } from "./calculate";
+import {
+    calculateBoltzFeeOnSend,
+    calculateReceiveAmount,
+    calculateSendAmount,
+} from "./calculate";
+import { satoshiToWei } from "./rootstock";
 
 export const enum RequiredInput {
     Address,
@@ -22,12 +29,16 @@ export const enum RequiredInput {
 
 type Hop = {
     type: SwapType;
+    from: string;
+    to: string;
     pair?:
         | SubmarinePairTypeTaproot
         | ReversePairTypeTaproot
         | ChainPairTypeTaproot;
-    from: string;
-    to: string;
+    dexDetails?: {
+        tokenIn: string;
+        tokenOut: string;
+    };
 };
 
 export default class Pair {
@@ -37,6 +48,7 @@ export default class Pair {
         public readonly pairs: Pairs | undefined,
         private readonly from: string,
         private readonly to: string,
+        private readonly regularPairs?: Pairs,
     ) {
         const pair = Pair.findPair(pairs, from, to);
         if (pair !== undefined) {
@@ -53,7 +65,7 @@ export default class Pair {
         }
 
         const toAsset = config.assets[to];
-        if (toAsset.type === AssetType.ERC20) {
+        if (toAsset !== undefined && toAsset.type === AssetType.ERC20) {
             const hopAsset = toAsset.erc20.chain;
             const hopPair = Pair.findPair(pairs, from, hopAsset);
 
@@ -70,11 +82,17 @@ export default class Pair {
                         type: SwapType.Dex,
                         from: hopAsset,
                         to,
+                        dexDetails: {
+                            tokenIn: ZeroAddress,
+                            tokenOut: toAsset.erc20.address,
+                        },
                     },
                 ];
                 return;
             }
         }
+
+        log.info(`No pair found for ${from} -> ${to}`);
     }
 
     private static findPair = (
@@ -189,11 +207,10 @@ export default class Pair {
                 (hop) =>
                     hop.pair !== undefined && hop.type === SwapType.Submarine,
             )
-            .reduce((max, hop) => {
-                const fee = (
-                    hop.pair.fees as unknown as SubmarinePairTypeTaproot
-                ).fees.maximalRoutingFee;
-                return Math.max(max, fee);
+            .reduce((min, hop) => {
+                const fee = (hop.pair as SubmarinePairTypeTaproot).fees
+                    .maximalRoutingFee;
+                return Math.min(min, fee || 0);
             }, 0);
 
         if (maxFee === 0) {
@@ -211,19 +228,17 @@ export default class Pair {
                     case SwapType.Submarine:
                         return (
                             acc +
-                            (hop.pair as unknown as SubmarinePairTypeTaproot)
-                                .fees.minerFees
+                            (hop.pair as SubmarinePairTypeTaproot).fees
+                                .minerFees
                         );
                     case SwapType.Reverse: {
-                        const pair = (
-                            hop.pair as unknown as ReversePairTypeTaproot
-                        ).fees.minerFees;
+                        const pair = (hop.pair as ReversePairTypeTaproot).fees
+                            .minerFees;
                         return acc + pair.claim + pair.lockup;
                     }
                     case SwapType.Chain: {
-                        const chainPair = (
-                            hop.pair as unknown as ChainPairTypeTaproot
-                        ).fees.minerFees;
+                        const chainPair = (hop.pair as ChainPairTypeTaproot)
+                            .fees.minerFees;
                         return acc + chainPair.server + chainPair.user.claim;
                     }
                     default:
@@ -266,15 +281,28 @@ export default class Pair {
     }
 
     public get feeWithoutPro() {
-        // TODO
-        return 0;
+        if (this.regularPairs === undefined) {
+            return this.feePercentage;
+        }
+
+        const fee = this.route
+            .filter((hop) => hop.pair !== undefined)
+            .reduce((acc, hop) => {
+                const pair = Pair.findPair(this.regularPairs, hop.from, hop.to);
+                if (pair === undefined) {
+                    return acc;
+                }
+
+                return acc + pair.pair.fees.percentage;
+            }, 0);
+        return fee;
     }
 
     public get swapToCreate() {
         return this.route.find((hop) => hop.type !== SwapType.Dex);
     }
 
-    public feeOnSend(sendAmount: BigNumber) {
+    public feeOnSend = (sendAmount: BigNumber) => {
         if (!this.isRoutable) {
             return BigNumber(0);
         }
@@ -285,13 +313,81 @@ export default class Pair {
             this.minerFees,
             this.route[0].type,
         );
-    }
-
-    public calculateSendAmount = async (receiveAmount: BigNumber) => {
-        return BigNumber(21_000);
     };
 
-    public calculateReceiveAmount = async (sendAmount: BigNumber) => {
-        return BigNumber(42_000);
+    public calculateReceiveAmount = async (
+        sendAmount: BigNumber,
+        minerFees: number,
+    ) => {
+        if (!this.isRoutable) {
+            return BigNumber(0);
+        }
+
+        let amount = sendAmount;
+
+        for (const hop of this.route) {
+            switch (hop.type) {
+                case SwapType.Dex: {
+                    if (Number.isNaN(sendAmount.toNumber())) {
+                        amount = BigNumber(0);
+                        continue;
+                    }
+
+                    const quote = await quoteDexAmountIn(
+                        hop.from,
+                        hop.dexDetails.tokenIn,
+                        hop.dexDetails.tokenOut,
+                        BigInt(satoshiToWei(sendAmount.toNumber())),
+                    );
+                    amount = BigNumber(
+                        quote.reduce((max, q) => {
+                            const amountOut = BigNumber(q.quote);
+                            return amountOut.gt(max) ? amountOut : max;
+                        }, BigNumber(0)),
+                    );
+                    break;
+                }
+
+                default:
+                    amount = calculateReceiveAmount(
+                        amount,
+                        hop.pair!.fees.percentage,
+                        minerFees,
+                        hop.type,
+                    );
+            }
+        }
+
+        return amount;
+    };
+
+    public calculateSendAmount = async (
+        receiveAmount: BigNumber,
+        minerFees: number,
+    ) => {
+        if (!this.isRoutable) {
+            return BigNumber(0);
+        }
+
+        let amount = receiveAmount;
+
+        for (const hop of this.route) {
+            switch (hop.type) {
+                case SwapType.Dex:
+                    // TODO
+                    amount = await Promise.resolve(BigNumber(0));
+                    break;
+
+                default:
+                    amount = calculateSendAmount(
+                        amount,
+                        hop.pair!.fees.percentage,
+                        minerFees,
+                        hop.type,
+                    );
+            }
+        }
+
+        return amount;
     };
 }

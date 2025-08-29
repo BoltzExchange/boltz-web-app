@@ -110,10 +110,6 @@ const Fees = () => {
     );
 
     createEffect(() => {
-        // Reset routing fee when changing the pair
-        // (which might not be submarine and not set the signal)
-        setRoutingFee(undefined);
-
         // Updating the miner fee with "setMinerFee(minerFee() + rifExtraCost())"
         // causes an endless loop of triggering the effect again
         const updateMinerFee = (fee: number) => {
@@ -158,6 +154,7 @@ const Fees = () => {
                 {t("network_fee")}:{" "}
                 <span class="network-fee">
                     {formatAmount(
+                        pair().fromAsset,
                         BigNumber(minerFee()),
                         denomination(),
                         separator(),
@@ -180,7 +177,8 @@ const Fees = () => {
                 ):{" "}
                 <span class="boltz-fee">
                     {formatAmount(
-                        pair()?.feeOnSend(sendAmount()) ?? BigNumber(0),
+                        pair().fromAsset,
+                        pair().feeOnSend(sendAmount()),
                         denomination(),
                         separator(),
                         true,

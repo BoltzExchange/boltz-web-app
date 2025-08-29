@@ -151,6 +151,7 @@ const HwAddressSelection = (props: {
                             </h4>
                             <span>
                                 {formatAmount(
+                                    RBTC,
                                     new BigNumber(
                                         weiToSatoshi(balance).toString(),
                                     ),

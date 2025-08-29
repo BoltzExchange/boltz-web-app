@@ -68,6 +68,7 @@ const config = {
             type: AssetType.ERC20,
             erc20: {
                 chain: "RBTC",
+                decimals: 6,
                 address: "0x779dED0C9e1022225F8e0630b35A9B54Be713736",
             },
         },
