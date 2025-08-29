@@ -90,8 +90,7 @@ export const getClaimAddress = async (
         claimAddress: onchainAddress(),
     };
 };
-
-const CreateButton = () => {
+const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
     const navigate = useNavigate();
     const location = useLocation<{ backupDone?: string }>().state;
     const {
@@ -601,7 +600,7 @@ const CreateButton = () => {
                     lnurl() === "")
             }
             onClick={buttonClick}>
-            {loading() ? (
+            {props.isLoading() || loading() ? (
                 <LoadingSpinner class="inner-spinner" />
             ) : (
                 getButtonLabel(buttonLabel())

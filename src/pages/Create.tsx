@@ -1,3 +1,4 @@
+import { debounce } from "@solid-primitives/scheduled";
 import { useLocation, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { Show, createEffect, createSignal, on, onMount } from "solid-js";
@@ -32,8 +33,7 @@ import { isMobile } from "../utils/helper";
 import Pair, { RequiredInput } from "../utils/pair";
 import ErrorWasm from "./ErrorWasm";
 
-// TODO: debounce amount calculations
-// TODO: loading spinner for amount calculations
+// TODO: formatted amounts should be *instant* and not depend on quote being calculated
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined;
@@ -42,6 +42,7 @@ const Create = () => {
     const location = useLocation<{ backupDone?: string }>();
     const [searchParams] = useSearchParams();
     const [isAccordionOpen, setIsAccordionOpen] = createSignal(false);
+    const [isLoading, setIsLoading] = createSignal(false);
 
     const {
         separator,
@@ -79,6 +80,23 @@ const Create = () => {
         minerFee,
     } = useCreateContext();
 
+    const debouncer = debounce(async (fn: () => Promise<void>) => {
+        setIsLoading(true);
+        try {
+            await fn();
+        } finally {
+            setIsLoading(false);
+        }
+    }, 500);
+
+    const loadingGuard = (fn: () => Promise<void>) => {
+        if (pair().needsNetworkForQuote) {
+            debouncer(fn);
+        } else {
+            void fn();
+        }
+    };
+
     // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
     const changeDenomination = (amount: string) => {
@@ -99,50 +117,56 @@ const Create = () => {
         setSendAmount(BigNumber(0));
     };
 
-    const changeReceiveAmount = async (evt: InputEvent) => {
+    const changeReceiveAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value
             .trim()
             .replaceAll(" ", "")
             .replaceAll(",", ".");
-        if (isEmptyAmount(amount)) {
-            resetAmounts();
+
+        loadingGuard(async () => {
+            if (isEmptyAmount(amount)) {
+                resetAmounts();
+                validateAmount();
+                return;
+            }
+            changeDenomination(amount);
+            const satAmount = convertAmount(BigNumber(amount), denomination());
+            const sendAmount = await pair().calculateSendAmount(
+                satAmount,
+                minerFee(),
+            );
+            setAmountChanged(Side.Receive);
+            setReceiveAmount(satAmount);
+            setSendAmount(sendAmount);
             validateAmount();
-            return;
-        }
-        changeDenomination(amount);
-        const satAmount = convertAmount(BigNumber(amount), denomination());
-        const sendAmount = await pair().calculateSendAmount(
-            satAmount,
-            minerFee(),
-        );
-        setAmountChanged(Side.Receive);
-        setReceiveAmount(satAmount);
-        setSendAmount(sendAmount);
-        validateAmount();
+        });
     };
 
-    const changeSendAmount = async (evt: InputEvent) => {
+    const changeSendAmount = (evt: InputEvent) => {
         const target = evt.currentTarget as HTMLInputElement;
         const amount = target.value
             .trim()
             .replaceAll(" ", "")
             .replaceAll(",", ".");
-        if (isEmptyAmount(amount)) {
-            resetAmounts();
+
+        loadingGuard(async () => {
+            if (isEmptyAmount(amount)) {
+                resetAmounts();
+                validateAmount();
+                return;
+            }
+            changeDenomination(amount);
+            const satAmount = convertAmount(BigNumber(amount), denomination());
+            const receiveAmount = await pair().calculateReceiveAmount(
+                satAmount,
+                minerFee(),
+            );
+            setAmountChanged(Side.Send);
+            setSendAmount(satAmount);
+            setReceiveAmount(receiveAmount);
             validateAmount();
-            return;
-        }
-        changeDenomination(amount);
-        const satAmount = convertAmount(BigNumber(amount), denomination());
-        const receiveAmount = await pair().calculateReceiveAmount(
-            satAmount,
-            minerFee(),
-        );
-        setAmountChanged(Side.Send);
-        setSendAmount(satAmount);
-        setReceiveAmount(receiveAmount);
-        validateAmount();
+        });
     };
 
     const validateInput = (evt: KeyboardEvent) => {
@@ -242,13 +266,18 @@ const Create = () => {
         setAmountValid(true);
     };
 
-    const setAmount = async (amount: number) => {
-        setSendAmount(BigNumber(amount));
-        setReceiveAmount(
-            await pair().calculateReceiveAmount(BigNumber(amount), minerFee()),
-        );
-        validateAmount();
-        sendAmountRef?.focus();
+    const setAmount = (amount: number) => {
+        loadingGuard(async () => {
+            setSendAmount(BigNumber(amount));
+            setReceiveAmount(
+                await pair().calculateReceiveAmount(
+                    BigNumber(amount),
+                    minerFee(),
+                ),
+            );
+            validateAmount();
+            sendAmountRef?.focus();
+        });
     };
 
     onMount(() => {
@@ -275,23 +304,25 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, pair], async () => {
-            if (amountChanged() === Side.Receive) {
-                setSendAmount(
-                    await pair().calculateSendAmount(
-                        receiveAmount(),
-                        minerFee(),
-                    ),
-                );
-            } else {
-                setReceiveAmount(
-                    await pair().calculateReceiveAmount(
-                        sendAmount(),
-                        minerFee(),
-                    ),
-                );
-            }
-            if (receiveAmount().isGreaterThan(0)) validateAmount();
+        on([boltzFee, minerFee, pair], () => {
+            loadingGuard(async () => {
+                if (amountChanged() === Side.Receive) {
+                    setSendAmount(
+                        await pair().calculateSendAmount(
+                            receiveAmount(),
+                            minerFee(),
+                        ),
+                    );
+                } else {
+                    setReceiveAmount(
+                        await pair().calculateReceiveAmount(
+                            sendAmount(),
+                            minerFee(),
+                        ),
+                    );
+                }
+                if (receiveAmount().isGreaterThan(0)) validateAmount();
+            });
         }),
     );
 
@@ -516,7 +547,7 @@ const Create = () => {
                         }>
                         <QrScan />
                     </Show>
-                    <CreateButton />
+                    <CreateButton isLoading={isLoading} />
                     <AssetSelect />
                     <SettingsMenu />
                 </div>

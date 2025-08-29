@@ -148,6 +148,10 @@ export default class Pair {
         return this.route.length > 0;
     }
 
+    public get needsNetworkForQuote() {
+        return this.route.some((hop) => hop.type === SwapType.Dex);
+    }
+
     public get requiredInput() {
         if (!this.isRoutable) {
             return RequiredInput.Unknown;

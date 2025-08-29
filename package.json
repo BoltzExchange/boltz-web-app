@@ -66,6 +66,7 @@
         "@scure/bip32": "^1.7.0",
         "@scure/bip39": "^1.6.0",
         "@solid-primitives/i18n": "^2.2.1",
+        "@solid-primitives/scheduled": "^1.5.2",
         "@solid-primitives/storage": "^4.3.3",
         "@solidjs/router": "^0.15.3",
         "@trezor/connect-web": "^9.6.2",
