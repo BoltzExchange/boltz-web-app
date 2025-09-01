@@ -59,6 +59,7 @@ const config = {
             rifRelay: "http://localhost:8090",
             contracts: {
                 deployHeight: 0,
+                router: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
                 smartWalletFactory:
                     "0x59b670e9fA9D0A427751Af201D676719a970857b",
                 deployVerifier: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
@@ -69,7 +70,7 @@ const config = {
             erc20: {
                 chain: "RBTC",
                 decimals: 6,
-                address: "0x779dED0C9e1022225F8e0630b35A9B54Be713736",
+                address: "0x779ded0c9e1022225f8e0630b35a9b54be713736",
             },
         },
     },

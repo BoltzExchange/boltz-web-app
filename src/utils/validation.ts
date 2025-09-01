@@ -43,7 +43,15 @@ const validateContract = async (getEtherSwap: ContractGetter) => {
     }
 
     const code = await getEtherSwap().getDeployedCode();
-    return codeHashes.includes(ethers.keccak256(code));
+    const codeHash = ethers.keccak256(code);
+
+    const valid = codeHashes.includes(codeHash);
+
+    if (!valid) {
+        log.warn("Invalid contract hash", codeHash);
+    }
+
+    return valid;
 };
 
 const validateAddress = async (
@@ -115,9 +123,10 @@ const validateReverse = async (
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
+    log.debug("Validating reverse swap");
+
     const invoiceData = await decodeInvoice(swap.invoice);
 
-    // Amounts
     if (
         invoiceData.satoshis !== swap.sendAmount ||
         swap.onchainAmount <= swap.receiveAmount
@@ -170,6 +179,8 @@ const validateSubmarine = async (
     getEtherSwap: ContractGetter,
     buffer: typeof BufferBrowser.Buffer,
 ) => {
+    log.debug("Validating submarine swap");
+
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
         return false;
@@ -223,6 +234,8 @@ const validateChainSwap = async (
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
+    log.debug("Validating chain swap");
+
     const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
 
     const validateSide = async (

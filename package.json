@@ -75,7 +75,7 @@
         "bitcoinjs-lib": "^6.1.7",
         "bolt11": "^1.4.1",
         "boltz-bolt12": "^0.2.0",
-        "boltz-core": "^3.0.0",
+        "boltz-core": "^3.1.0-alpha.1",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
         "ecpair": "^3.0.0",

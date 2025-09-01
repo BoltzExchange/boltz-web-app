@@ -215,6 +215,12 @@ export type QuoteData = {
     data: unknown;
 };
 
+export type QuoteCalldata = {
+    to: string;
+    value: string;
+    data: string;
+};
+
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", null, options),
@@ -533,6 +539,20 @@ export const quoteDexAmountIn = async (
     params.set("amountIn", amountIn.toString());
     return await fetcher(`/v2/quote/${chain}?${params.toString()}`);
 };
+
+export const encodeDexQuote = (
+    chain: string,
+    recipient: string,
+    amountIn: bigint,
+    amountOutMin: bigint,
+    data: QuoteData["data"],
+) =>
+    fetcher<{ calls: QuoteCalldata[] }>(`/v2/quote/${chain}/encode`, {
+        recipient,
+        amountIn: amountIn.toString(),
+        amountOutMin: amountOutMin.toString(),
+        data,
+    });
 
 export {
     Pairs,
