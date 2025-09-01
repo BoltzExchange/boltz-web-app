@@ -28,7 +28,7 @@ import {
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { coalesceLn, getDestinationAddress, getPair } from "../utils/helper";
+import { getDestinationAddress, getPair } from "../utils/helper";
 import {
     InvoiceType,
     decodeInvoice,
@@ -133,6 +133,7 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
         bolt12Offer,
         setBolt12Offer,
         setSendAmount,
+        minerFee,
         setReceiveAmount,
     } = useCreateContext();
     const { getEtherSwap, signer, providers, walletConnected } =
@@ -212,16 +213,16 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                     });
                     return;
                 }
-
                 if (
                     pair().requiredInput === RequiredInput.Web3 &&
                     !walletConnected()
                 ) {
-                    setButtonLabel({ key: "please_connect_wallet" });
-                    setButtonDisable(true);
-                    return;
-                }
-                if (pair().requiredInput === RequiredInput.Address) {
+                    if (!addressValid()) {
+                        setButtonLabel({ key: "please_connect_wallet" });
+                        setButtonDisable(true);
+                        return;
+                    }
+                } else if (pair().requiredInput === RequiredInput.Address) {
                     if (!addressValid()) {
                         setButtonLabel({
                             key: "invalid_address",
@@ -295,6 +296,7 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                                     );
                                     const value = {
                                         amount: formatAmount(
+                                            pair().fromAsset,
                                             BigNumber(satsAmount),
                                             denomination(),
                                             separator(),
@@ -377,20 +379,24 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
             return false;
         }
 
+        const creationData = await pair().creationData(
+            sendAmount(),
+            minerFee(),
+        );
+
         try {
             // TODO: swap creation with route
             let data: SomeSwap;
 
-            const swapToCreate = pair().swapToCreate;
-            switch (swapToCreate.type) {
+            switch (creationData.type) {
                 case SwapType.Submarine: {
                     const createSubmarineSwap = async () => {
                         data = await createSubmarine(
                             pairs(),
-                            coalesceLn(pair().fromAsset),
-                            coalesceLn(pair().toAsset),
-                            sendAmount(),
-                            receiveAmount(),
+                            creationData.from,
+                            creationData.to,
+                            creationData.sendAmount,
+                            creationData.receiveAmount,
                             invoice(),
                             ref(),
                             useRif,
@@ -416,7 +422,7 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                         ? getAssetByBip21Prefix(bip21Decoded.protocol)
                         : undefined;
 
-                    if (!bip21 || swapToCreate.from === bip21Asset) {
+                    if (!bip21 || creationData.from === bip21Asset) {
                         log.debug("Creating submarine swap");
                         await createSubmarineSwap();
                         break;
@@ -434,7 +440,7 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                         const chainPair = getPair<ChainPairTypeTaproot>(
                             pairs(),
                             SwapType.Chain,
-                            swapToCreate.from,
+                            creationData.from,
                             bip21Asset,
                         );
                         if (
@@ -468,7 +474,7 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
 
                         const savedFees = getMagicRoutingHintSavedFees({
                             pairs,
-                            assetSend: () => swapToCreate.from,
+                            assetSend: () => creationData.from,
                             addressValid,
                             onchainAddress,
                             sendAmount: () => mrhSendAmount,
@@ -484,7 +490,7 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                         }
 
                         setPair(
-                            new Pair(pairs(), swapToCreate.from, bip21Asset),
+                            new Pair(pairs(), creationData.from, bip21Asset),
                         );
                         setOnchainAddress(chainAddress);
                         setReceiveAmount(btcToSat(bip21Amount));
@@ -493,10 +499,10 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                         log.debug("Creating MRH swap");
                         const chainSwap = await createChain(
                             pairs(),
-                            swapToCreate.from,
+                            creationData.from,
                             bip21Asset,
-                            sendAmount(),
-                            receiveAmount(),
+                            creationData.sendAmount,
+                            creationData.receiveAmount,
                             onchainAddress(),
                             ref(),
                             useRif,
@@ -519,10 +525,10 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                 case SwapType.Reverse:
                     data = await createReverse(
                         pairs(),
-                        coalesceLn(swapToCreate.from),
-                        coalesceLn(swapToCreate.to),
-                        sendAmount(),
-                        receiveAmount(),
+                        creationData.from,
+                        creationData.to,
+                        creationData.sendAmount,
+                        creationData.receiveAmount,
                         claimAddress,
                         ref(),
                         useRif,
@@ -534,10 +540,10 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
                 case SwapType.Chain:
                     data = await createChain(
                         pairs(),
-                        swapToCreate.from,
-                        swapToCreate.to,
-                        sendAmount(),
-                        receiveAmount(),
+                        creationData.from,
+                        creationData.to,
+                        creationData.sendAmount,
+                        creationData.receiveAmount,
                         claimAddress,
                         ref(),
                         useRif,
@@ -549,7 +555,7 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
 
             if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
                 log.error(
-                    `failed to create ${swapToCreate.type} swap, unexpected response:`,
+                    `failed to create ${data.type} swap, unexpected response:`,
                     data,
                 );
                 navigate("/error");
@@ -563,13 +569,14 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
 
             await setSwapStorage({
                 ...data,
+                hops: creationData.hops,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
-                    swapToCreate.type !== SwapType.Submarine
+                    creationData.type !== SwapType.Submarine
                         ? signer()?.address
                         : undefined,
                 derivationPath:
-                    swapToCreate.type !== SwapType.Submarine &&
+                    creationData.type !== SwapType.Submarine &&
                     signer() !== undefined &&
                     customDerivationPathRdns.includes(signer().rdns)
                         ? (

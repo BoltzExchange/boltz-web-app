@@ -18,6 +18,7 @@ import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "./calculate";
+import { coalesceLn } from "./helper";
 import { satoshiToWei } from "./rootstock";
 
 export const enum RequiredInput {
@@ -38,6 +39,17 @@ type Hop = {
     dexDetails?: {
         tokenIn: string;
         tokenOut: string;
+    };
+};
+
+export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
+
+const toEncodedHop = (hop: Hop) => {
+    return {
+        type: hop.type,
+        from: hop.from,
+        to: hop.to,
+        dexDetails: hop.dexDetails,
     };
 };
 
@@ -321,7 +333,9 @@ export default class Pair {
 
     public calculateReceiveAmount = async (
         sendAmount: BigNumber,
+        // TODO: only include lockup miner fees
         minerFees: number,
+        route: Hop[] = this.route,
     ) => {
         if (!this.isRoutable) {
             return BigNumber(0);
@@ -329,10 +343,10 @@ export default class Pair {
 
         let amount = sendAmount;
 
-        for (const hop of this.route) {
+        for (const hop of route) {
             switch (hop.type) {
                 case SwapType.Dex: {
-                    if (Number.isNaN(sendAmount.toNumber())) {
+                    if (Number.isNaN(amount.toNumber())) {
                         amount = BigNumber(0);
                         continue;
                     }
@@ -341,7 +355,7 @@ export default class Pair {
                         hop.from,
                         hop.dexDetails.tokenIn,
                         hop.dexDetails.tokenOut,
-                        BigInt(satoshiToWei(sendAmount.toNumber())),
+                        BigInt(satoshiToWei(amount.toNumber())),
                     );
                     amount = BigNumber(
                         quote.reduce((max, q) => {
@@ -393,5 +407,24 @@ export default class Pair {
         }
 
         return amount;
+    };
+
+    public creationData = async (sendAmount: BigNumber, minerFees: number) => {
+        const receiveAmount = await this.calculateReceiveAmount(
+            sendAmount,
+            minerFees,
+            [this.route[0]],
+        );
+
+        return {
+            type: this.route[0].type,
+            sendAmount,
+            receiveAmount,
+            from: coalesceLn(this.route[0].from),
+            to: coalesceLn(this.route[0].to),
+            hops: this.route
+                .filter((hop) => hop.type === SwapType.Dex)
+                .map(toEncodedHop),
+        };
     };
 }
