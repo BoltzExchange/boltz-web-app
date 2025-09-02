@@ -1,0 +1,31 @@
+{
+    "short_name": "Boltz Pro",
+    "name": "Boltz Pro",
+    "icons": [
+        {
+            "src": "android-chrome-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png"
+        },
+        {
+            "src": "android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "android-chrome-256x256.png",
+            "sizes": "256x256",
+            "type": "image/png"
+        },
+        {
+            "src": "android-chrome-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "orientation": "portrait",
+    "start_url": "./swap",
+    "display": "standalone",
+    "theme_color": "#9fa8b1",
+    "background_color": "#081e36"
+}

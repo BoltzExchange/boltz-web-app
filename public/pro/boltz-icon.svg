@@ -1,0 +1,26 @@
+<svg width="30px" height="30px" version="1.1" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="linearGradient-1" x1="37.168" x2="37.168" y1="13.776" y2="40.203"
+            gradientTransform="scale(.9184 1.0889)" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#c8cfd6" offset="0" />
+            <stop stop-color="#9fa8b1" offset="1" />
+        </linearGradient>
+        <linearGradient id="linearGradient-2" x1="44.357" x2="44.357" y1="32.928" y2="60.387"
+            gradientTransform="scale(.94686 1.0561)" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#d7deec" offset="0" />
+            <stop stop-color="#c8cfd6" offset=".62351" />
+            <stop stop-color="#9fa8b1" offset="1" />
+        </linearGradient>
+    </defs>
+    <g id="Logo" transform="scale(.38419)" fill="none" fill-rule="evenodd">
+        <g id="Group">
+            <circle cx="39" cy="39" r="37.5" fill="#081e36" stroke="#9fa8b1" stroke-width="3" />
+            <path id="Path"
+                d="m36.458 43.776 4.0813-8.5439h-1.1072l6.643-17.624c.21709-.58677.25327-1.0912.10855-1.5134-.14473-.42218-.398-.7263-.75982-.91235-.36182-.18605-.77068-.22898-1.2266-.1288-.45589.10018-.87198.39356-1.2483.88015l-20.342 24.837c-.40524.5009-.60786.98749-.60786 1.4598 0 .44365.1592.81217.4776 1.1056.3184.29338.7164.44012 1.194.44012z"
+                fill="url(#linearGradient-1)" style="fill:url(#linearGradient-1)" />
+            <path id="Path-Copy" transform="rotate(180 42 49.276)"
+                d="m44.488 63.776 4.3721-8.6105h-1.186l7.1163-17.762c.23256-.59134.27132-1.0998.11628-1.5252-.15504-.42548-.42636-.73197-.81395-.91947s-.82558-.23077-1.314-.12981c-.48837.10096-.93411.39663-1.3372.88701l-21.791 25.031c-.43411.5048-.65116.99519-.65116 1.4711 0 .44711.17054.81851.51163 1.1142.34108.29567.76744.44355 1.2791.44355z"
+                fill="url(#linearGradient-2)" style="fill:url(#linearGradient-2)" />
+        </g>
+    </g>
+</svg>
