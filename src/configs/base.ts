@@ -14,7 +14,7 @@ type Asset = {
     rifRelay?: string;
     contracts?: {
         deployHeight: number;
-        router: string;
+        router?: string;
         smartWalletFactory?: string;
         deployVerifier?: string;
     };

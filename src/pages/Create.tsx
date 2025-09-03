@@ -131,7 +131,11 @@ const Create = () => {
                 return;
             }
             changeDenomination(amount);
-            const satAmount = convertAmount(BigNumber(amount), denomination());
+            const satAmount = convertAmount(
+                pair().toAsset,
+                BigNumber(amount),
+                denomination(),
+            );
             const sendAmount = await pair().calculateSendAmount(
                 satAmount,
                 minerFee(),
@@ -157,7 +161,11 @@ const Create = () => {
                 return;
             }
             changeDenomination(amount);
-            const satAmount = convertAmount(BigNumber(amount), denomination());
+            const satAmount = convertAmount(
+                pair().fromAsset,
+                BigNumber(amount),
+                denomination(),
+            );
             const receiveAmount = await pair().calculateReceiveAmount(
                 satAmount,
                 minerFee(),

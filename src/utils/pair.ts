@@ -12,6 +12,7 @@ import {
     type ReversePairTypeTaproot,
     type SubmarinePairTypeTaproot,
     quoteDexAmountIn,
+    quoteDexAmountOut,
 } from "./boltzClient";
 import {
     calculateBoltzFeeOnSend,
@@ -19,7 +20,7 @@ import {
     calculateSendAmount,
 } from "./calculate";
 import { coalesceLn } from "./helper";
-import { satoshiToWei } from "./rootstock";
+import { satoshiToWei, weiToSatoshi } from "./rootstock";
 
 export const enum RequiredInput {
     Address,
@@ -389,12 +390,28 @@ export default class Pair {
 
         let amount = receiveAmount;
 
-        for (const hop of this.route) {
+        for (const hop of [...this.route].reverse()) {
             switch (hop.type) {
-                case SwapType.Dex:
-                    // TODO
-                    amount = await Promise.resolve(BigNumber(0));
+                case SwapType.Dex: {
+                    const quote = await quoteDexAmountOut(
+                        hop.from,
+                        hop.dexDetails.tokenIn,
+                        hop.dexDetails.tokenOut,
+                        BigInt(amount.toNumber()),
+                    );
+
+                    amount = BigNumber(
+                        weiToSatoshi(
+                            quote.reduce((min, q) => {
+                                const amountIn = BigInt(q.quote);
+                                return min === BigInt(0) || amountIn < min
+                                    ? amountIn
+                                    : min;
+                            }, BigInt(0)),
+                        ),
+                    );
                     break;
+                }
 
                 default:
                     amount = calculateSendAmount(

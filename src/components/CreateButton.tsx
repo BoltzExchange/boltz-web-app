@@ -335,7 +335,6 @@ const CreateButton = (props: { isLoading: Accessor<boolean> }) => {
         );
 
         try {
-            // TODO: swap creation with route
             let data: SomeSwap;
 
             switch (creationData.type) {
