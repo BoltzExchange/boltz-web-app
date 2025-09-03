@@ -13,5 +13,3 @@ Disallow: /backup/
 Disallow: /history
 Disallow: /error
 Disallow: /404
-
-Disallow: /*?
