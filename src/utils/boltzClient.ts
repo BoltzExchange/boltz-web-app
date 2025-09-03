@@ -537,7 +537,20 @@ export const quoteDexAmountIn = async (
     params.set("tokenIn", tokenIn);
     params.set("tokenOut", tokenOut);
     params.set("amountIn", amountIn.toString());
-    return await fetcher(`/v2/quote/${chain}?${params.toString()}`);
+    return await fetcher(`/v2/quote/${chain}/in?${params.toString()}`);
+};
+
+export const quoteDexAmountOut = async (
+    chain: string,
+    tokenIn: string,
+    tokenOut: string,
+    amountOut: bigint,
+): Promise<QuoteData[]> => {
+    const params = new URLSearchParams();
+    params.set("tokenIn", tokenIn);
+    params.set("tokenOut", tokenOut);
+    params.set("amountOut", amountOut.toString());
+    return await fetcher(`/v2/quote/${chain}/out?${params.toString()}`);
 };
 
 export const encodeDexQuote = (

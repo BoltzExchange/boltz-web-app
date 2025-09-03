@@ -32,13 +32,9 @@ export const formatAmountDenomination = (
     separator: string,
     fixed: boolean = false,
 ): string => {
-    const isErc20 = config.assets?.[asset]?.type === AssetType.ERC20;
+    const { isErc20, decimals } = getDecimals(asset);
 
     if (denomination === Denomination.Btc || isErc20) {
-        const decimals = isErc20
-            ? config.assets?.[asset]?.erc20?.decimals
-            : satDecimals;
-
         const amountBig = amount.div(
             isErc20 ? BigNumber(10).pow(decimals) : satFactor,
         );
@@ -88,12 +84,17 @@ export const formatAmountDenomination = (
 export const formatDenomination = (denom: Denomination, asset: string) =>
     denom === Denomination.Sat ? "sats" : asset;
 
-export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
-    switch (denom) {
-        case Denomination.Btc:
-            return amount.multipliedBy(satFactor);
-        default:
-            return amount;
+export const convertAmount = (
+    asset: string,
+    amount: BigNumber,
+    denom: string,
+): BigNumber => {
+    const { isErc20, decimals } = getDecimals(asset);
+
+    if (isErc20 || denom === Denomination.Btc) {
+        return amount.multipliedBy(BigNumber(10).pow(decimals));
+    } else {
+        return amount;
     }
 };
 
@@ -129,4 +130,14 @@ export const satToMiliSat = (sat: BigNumber) => {
 
 export const miliSatToSat = (sat: BigNumber) => {
     return sat.dividedBy(miliFactor);
+};
+
+const getDecimals = (asset: string) => {
+    const isErc20 = config.assets?.[asset]?.type === AssetType.ERC20;
+    return {
+        isErc20,
+        decimals: isErc20
+            ? config.assets?.[asset]?.erc20?.decimals
+            : satDecimals,
+    };
 };
