@@ -14,9 +14,11 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - run: git apply --check pro-theme.patch
-
       - run: npm ci
+
+      - run: npm run check:assets
+
+      - run: npm run check:html-template
 
       - run: npm run lint
 

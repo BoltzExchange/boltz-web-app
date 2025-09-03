@@ -10,7 +10,9 @@
         "dev": "vite",
         "preview": "vite preview",
         "build": "./build.py && vite build; cp dist/index.html dist/404.html",
-        "build:pro": "git apply pro-theme.patch && npm run build",
+        "build:regular": "node index-template-vars.mjs --regular && npm run build",
+        "build:pro": "node index-template-vars.mjs --pro && npm run build",
+        "check:html-template": "node index-template-vars.mjs --regular && node index-template-vars.mjs --pro",
         "build:docker": "docker build --build-arg NETWORK=mainnet . -o build -f build/Dockerfile && docker build --build-arg NETWORK=pro . -o build -f build/Dockerfile",
         "mainnet": "cp src/configs/mainnet.ts src/config.ts",
         "beta": "cp src/configs/beta.ts src/config.ts",
@@ -26,7 +28,9 @@
         "changelog": "git-cliff -o CHANGELOG.md",
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
-        "docs:preview": "vitepress preview docs"
+        "docs:preview": "vitepress preview docs",
+        "optimize:assets": "node optimize-assets.mjs",
+        "check:assets": "node check-assets.mjs"
     },
     "devDependencies": {
         "@eslint/js": "^9.33.0",
@@ -43,6 +47,7 @@
         "globals": "^16.3.0",
         "prettier": "^3.6.2",
         "sass-embedded": "^1.90.0",
+        "svgo": "^4.0.0",
         "typescript": "^5.9.2",
         "typescript-eslint": "^8.40.0",
         "vite": "^7.1.3",

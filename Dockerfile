@@ -11,7 +11,7 @@ COPY . .
 ARG NETWORK=mainnet
 
 RUN npm run $NETWORK
-RUN if [ "$NETWORK" = "pro" ]; then npm run build:pro; else npm run build; fi
+RUN if [ "$NETWORK" = "pro" ]; then npm run build:pro; else npm run build:regular; fi
 
 FROM nginx:alpine AS final
 

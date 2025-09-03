@@ -14,3 +14,4 @@ src/config.ts
 /blob-report/
 /playwright/.cache/
 docs/.vitepress/cache/
+index.html

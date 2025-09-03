@@ -2,65 +2,53 @@
 <html lang="en" boltz-theme="default" style="height: 100%">
     <head>
         <meta charset="utf-8" />
-        <meta
-            name="viewport"
-            content="width=device-width,initial-scale=1,maximum-scale=1" />
-        <link rel="shortcut icon" type="image/ico" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <link
+            rel="shortcut icon"
+            type="image/ico"
+            href="${assetsPath}/favicon.ico" />
         <link
             rel="apple-touch-icon"
             sizes="180x180"
-            href="/apple-touch-icon.png" />
+            href="${assetsPath}/apple-touch-icon.png" />
         <link
             rel="icon"
             type="image/png"
-            href="/favicon-32x32.png"
+            href="${assetsPath}/favicon-32x32.png"
             sizes="32x32" />
         <link
             rel="icon"
             type="image/png"
-            href="/favicon-16x16.png"
+            href="${assetsPath}/favicon-16x16.png"
             sizes="16x16" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="${assetsPath}/manifest.json" />
 
         <!-- Open Graph -->
-        <meta
-            property="og:title"
-            content="Boltz | Non-Custodial Bitcoin Bridge" />
-        <meta
-            property="og:description"
-            content="Swap between different Bitcoin layers while staying in full control." />
-        <meta property="og:url" content="https://boltz.exchange" />
+        <meta property="og:title" content="${boltzTitle}" />
+        <meta property="og:description" content="${boltzDescription}" />
+        <meta property="og:url" content="${boltzUrl}" />
         <meta property="og:type" content="website" />
-        <meta
-            property="og:site_name"
-            content="Boltz | Non-Custodial Bitcoin Bridge" />
-        <meta
-            property="og:image"
-            content="https://boltz.exchange/boltz-preview.jpg" />
+        <meta property="og:site_name" content="${boltzTitle}" />
+        <meta property="og:image" content="${boltzUrl}/boltz-preview.jpg" />
         <meta property="og:image:type" content="image/jpeg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
 
         <!-- Twitter -->
-        <meta
-            name="twitter:title"
-            content="Boltz | Non-Custodial Bitcoin Bridge" />
-        <meta
-            name="twitter:description"
-            content="Swap between different Bitcoin layers while staying in full control." />
+        <meta name="twitter:title" content="${boltzTitle}" />
+        <meta name="twitter:description" content="${boltzDescription}" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta
-            name="twitter:image"
-            content="https://boltz.exchange/boltz-preview.jpg" />
+        <meta name="twitter:image" content="${boltzUrl}/boltz-preview.jpg" />
         <meta name="twitter:site" content="@boltzhq" />
 
-        <meta
-            name="description"
-            content="Swap between different Bitcoin layers while staying in full control." />
+        <meta name="description" content="${boltzDescription}" />
         <meta name="mobile-web-app-capable" content="yes" />
 
-        <title>Boltz | Non-Custodial Bitcoin Bridge</title>
+        <title>${boltzTitle}</title>
         <style>
+            :root {
+                --backgroundColor: $backgroundColor;
+            }
             @keyframes boltzing {
                 0% {
                     transform: translate(-50%, -50%) scale(1);
@@ -76,7 +64,7 @@
                 display: none;
             }
             .loading {
-                background: #142840;
+                background: var(--backgroundColor);
             }
             .loading > svg {
                 position: absolute;
@@ -103,8 +91,8 @@
                     x2="0"
                     y2="49"
                     gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#FFE96D" offset="0" />
-                    <stop stop-color="#E1C218" offset="1" />
+                    <stop stop-color="${boltzColor100}" offset="0" />
+                    <stop stop-color="${boltzColor200}" offset="1" />
                 </linearGradient>
                 <linearGradient
                     id="paint0_linear-3"
@@ -113,8 +101,8 @@
                     y1="-11"
                     y2="56"
                     gradientUnits="userSpaceOnUse">
-                    <stop stop-color="#FFE96D" offset="0" />
-                    <stop stop-color="#E1C218" offset="1" />
+                    <stop stop-color="${boltzColor100}" offset="0" />
+                    <stop stop-color="${boltzColor200}" offset="1" />
                 </linearGradient>
             </defs>
             <g transform="translate(-69.488 -50.153)">
@@ -143,5 +131,8 @@
         <script
             src="/node_modules/iframe-resizer/js/iframeResizer.contentWindow.js"
             type="module"></script>
+        <script type="application/ld+json">
+            ${ldJson}
+        </script>
     </body>
 </html>
