@@ -28,7 +28,7 @@ export default [
             parserOptions: {
                 projectService: {
                     defaultProject: "tsconfig.json",
-                    allowDefaultProject: ["public/*.js", "*.mjs"],
+                    allowDefaultProject: ["public/*.js", "*.mjs", "*.js"],
                 },
                 tsconfigRootDir: import.meta.dirname,
             },
