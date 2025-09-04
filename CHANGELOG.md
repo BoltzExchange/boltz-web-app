@@ -3,12 +3,51 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.1..v1.8.2) - 2025-09-04
+
+### Bug Fixes
+
+- bolt12 error typo (#998) - ([f9d66e8](https://github.com/BoltzExchange/boltz-web-app/commit/f9d66e8874e2a58f16e75188812d2b65c8ba7a1e))
+- NaN value in Trezor signer - ([59cd8c8](https://github.com/BoltzExchange/boltz-web-app/commit/59cd8c8614340eb5ec12cb27a7658699f0eb2e26))
+- min-relay fee not met (#1006) - ([fa64938](https://github.com/BoltzExchange/boltz-web-app/commit/fa64938b36d61279f5bd53797f8d331f88bf8bea))
+- ignore backend status for timed out swaps (#1008) - ([f5bceba](https://github.com/BoltzExchange/boltz-web-app/commit/f5bcebaa49e942430589ffcc834d0ff3fcb5e1c1))
+
+### Documentation
+
+- add secure context section (#1002) - ([e3c817a](https://github.com/BoltzExchange/boltz-web-app/commit/e3c817a662d1e44bd0c37827f38b7ec2f0851927))
+
+### Features
+
+- include RDNS records in backup - ([6168602](https://github.com/BoltzExchange/boltz-web-app/commit/6168602247fff73c81411d4a68bc4ca3fb65a21d))
+- independent uncooperative refunds (#995) - ([4f9fa9b](https://github.com/BoltzExchange/boltz-web-app/commit/4f9fa9b8b3c82f4db37a730dbdd7d093e47a7bc5))
+
+### Miscellaneous Chores
+
+- clarify Docker build port (#996) - ([2109451](https://github.com/BoltzExchange/boltz-web-app/commit/2109451d5133ae3a32398ea0337d5e788e8ecc0a))
+- bump sha.js from 2.4.11 to 2.4.12 (#1000) - ([1201c9e](https://github.com/BoltzExchange/boltz-web-app/commit/1201c9e21cb1e83ab770b401358257e9fe431422))
+- bump cipher-base from 1.0.4 to 1.0.6 (#1001) - ([5006f0d](https://github.com/BoltzExchange/boltz-web-app/commit/5006f0d1e359000ed5148da5931f52266ba523fc))
+- update dependencies (#1004) - ([28822b2](https://github.com/BoltzExchange/boltz-web-app/commit/28822b2b340a54fa08462546d97e76011f0feae3))
+- extend BOLT12 E2E test - ([59ff005](https://github.com/BoltzExchange/boltz-web-app/commit/59ff0050761395b3f607770ad60e7b7ebbe9cbb5))
+- use Primal for nostr links (#1009) - ([8fecc81](https://github.com/BoltzExchange/boltz-web-app/commit/8fecc8188ea665a7c14bb52c6ef7cf30c9c14c77))
+
+### Refactoring
+
+- fetch mechanism for 3rd party explorers (#993) - ([a01d907](https://github.com/BoltzExchange/boltz-web-app/commit/a01d90780ad2e7862c6f6aea7cc2ab174ab89d86))
+- mnemonic input improvements (#999) - ([cb4eee8](https://github.com/BoltzExchange/boltz-web-app/commit/cb4eee865fef8e9a76b1eb0a98d4361ba628f021))
+- refundable assets type safety (#1010) - ([142520c](https://github.com/BoltzExchange/boltz-web-app/commit/142520cdec5def16a0308170a95fcdb1faaaada3))
+- SEO and performance improvements (#1011) - ([f516815](https://github.com/BoltzExchange/boltz-web-app/commit/f5168154b93ad31c5d316b1f80611341b4f55ed4))
+
+---
 ## [1.8.1](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.0..v1.8.1) - 2025-08-12
 
 ### Bug Fixes
 
 - show "Backup" button on iOS (#989) - ([644506b](https://github.com/BoltzExchange/boltz-web-app/commit/644506b2aab46cefaee82a47d87601dd3dedc02f))
 - restore previous `SwapChecker` behavior (#991) - ([3b049a6](https://github.com/BoltzExchange/boltz-web-app/commit/3b049a64c0e7a79c172f2a83a9db201ad5f4e13c))
+
+### Miscellaneous Chores
+
+- bump version to v1.8.1 - ([98d9e37](https://github.com/BoltzExchange/boltz-web-app/commit/98d9e3758f9c5f2a6e84d404cbcbd4d29ab077ee))
 
 ---
 ## [1.8.0](https://github.com/BoltzExchange/boltz-web-app/compare/v1.7.9..v1.8.0) - 2025-08-06
