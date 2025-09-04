@@ -40,6 +40,7 @@ const PayOnchain = (props: {
             return t("send_to", {
                 denomination: denom,
                 amount: formatAmount(
+                    props.assetSend,
                     BigNumber(props.expectedAmount),
                     denomination(),
                     separator(),
@@ -60,11 +61,13 @@ const PayOnchain = (props: {
         return t("send_between", {
             denomination: denom,
             min: formatAmount(
+                props.assetSend,
                 BigNumber(pair.limits.minimal),
                 denomination(),
                 separator(),
             ),
             max: formatAmount(
+                props.assetSend,
                 BigNumber(pair.limits.maximal),
                 denomination(),
                 separator(),
@@ -102,6 +105,7 @@ const PayOnchain = (props: {
                             label="copy_amount"
                             data={() =>
                                 formatAmount(
+                                    props.assetSend,
                                     BigNumber(props.expectedAmount),
                                     denomination(),
                                     separator(),

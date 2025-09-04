@@ -210,6 +210,17 @@ export type SwapStatus = {
     };
 };
 
+export type QuoteData = {
+    quote: string;
+    data: unknown;
+};
+
+export type QuoteCalldata = {
+    to: string;
+    value: string;
+    data: string;
+};
+
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", null, options),
@@ -515,6 +526,46 @@ export const getSubmarinePreimage = (id: string) =>
 
 export const getRestorableSwaps = (xpub: string) =>
     fetcher<RestorableSwap[]>(`/v2/swap/restore`, { xpub });
+
+export const quoteDexAmountIn = async (
+    chain: string,
+    tokenIn: string,
+    tokenOut: string,
+    amountIn: bigint,
+): Promise<QuoteData[]> => {
+    const params = new URLSearchParams();
+    params.set("tokenIn", tokenIn);
+    params.set("tokenOut", tokenOut);
+    params.set("amountIn", amountIn.toString());
+    return await fetcher(`/v2/quote/${chain}/in?${params.toString()}`);
+};
+
+export const quoteDexAmountOut = async (
+    chain: string,
+    tokenIn: string,
+    tokenOut: string,
+    amountOut: bigint,
+): Promise<QuoteData[]> => {
+    const params = new URLSearchParams();
+    params.set("tokenIn", tokenIn);
+    params.set("tokenOut", tokenOut);
+    params.set("amountOut", amountOut.toString());
+    return await fetcher(`/v2/quote/${chain}/out?${params.toString()}`);
+};
+
+export const encodeDexQuote = (
+    chain: string,
+    recipient: string,
+    amountIn: bigint,
+    amountOutMin: bigint,
+    data: QuoteData["data"],
+) =>
+    fetcher<{ calls: QuoteCalldata[] }>(`/v2/quote/${chain}/encode`, {
+        recipient,
+        amountIn: amountIn.toString(),
+        amountOutMin: amountOutMin.toString(),
+        data,
+    });
 
 export {
     Pairs,
