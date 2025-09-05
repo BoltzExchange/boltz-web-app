@@ -105,8 +105,8 @@ const Pay = () => {
             (swapStatus() === swapStatusPending.SwapCreated ||
                 swapStatus() === swapStatusPending.InvoiceSet);
 
-        // No need to fetch UTXO data for a swap just created
-        if (isInitialSwapState) {
+        // No need to fetch UTXO data for a reverse swap or a swap just created
+        if (isInitialSwapState || swap().type === SwapType.Reverse) {
             return;
         }
 
