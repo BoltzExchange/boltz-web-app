@@ -259,6 +259,8 @@ const ClaimRescue = () => {
                 },
                 claimableSwap().transaction as { hex: string },
                 true,
+                notify,
+                t,
             );
             notify("success", t("swap_completed", { id: res.id }), true, true);
             setClaimTxId(res.claimTx);

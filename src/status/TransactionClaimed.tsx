@@ -74,12 +74,16 @@ const TransactionClaimed = () => {
         }
 
         // If it is a normal swap or a reverse one to RBTC we don't need to check for the claim transaction
+        if (
+            [SwapType.Submarine, SwapType.Reverse].includes(s.type) ||
+            s.assetReceive === RBTC
+        ) {
+            setClaimBroadcast(true);
+            return;
+        }
+
         // Else make sure the transaction was actually broadcast
-        setClaimBroadcast(
-            s.type !== SwapType.Reverse ||
-                s.assetReceive === RBTC ||
-                s.claimTx !== undefined,
-        );
+        setClaimBroadcast(s.claimTx !== undefined);
     });
 
     return (

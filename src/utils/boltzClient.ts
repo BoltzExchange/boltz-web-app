@@ -423,7 +423,6 @@ export const broadcastTransaction = async (
         }),
         broadcastToExplorer(asset, txHex),
     ];
-
     const results = await Promise.allSettled(promises);
     const successfulResult = results.find(
         (result) => result.status === "fulfilled",

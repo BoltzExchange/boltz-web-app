@@ -306,6 +306,10 @@ const dict = {
             "Please re-insert the rescue key and try again.",
         in_progress: "In progress",
         completed: "Completed",
+        broadcast_attempts_failed:
+            "Transaction broadcast for {{ id }} failed. Retrying...",
+        all_broadcast_attempts_failed:
+            "Unable to broadcast claim transaction for {{ id }}. Please check your connection and/or try again later.",
     },
     de: {
         language: "Deutsch",

@@ -13,6 +13,7 @@ import {
 import { useGlobalContext } from "../context/Global";
 import type { SwapStatusTransaction } from "../context/Pay";
 import { usePayContext } from "../context/Pay";
+import i18n from "../i18n/i18n";
 import {
     getChainSwapTransactions,
     getReverseTransaction,
@@ -286,6 +287,8 @@ export const SwapChecker = () => {
                     currentSwap as ReverseSwap | ChainSwap,
                     data.transaction as { hex: string },
                     true,
+                    notify,
+                    t,
                 );
                 const claimedSwap = await getSwap(res.id);
                 claimedSwap.claimTx = res.claimTx;
@@ -301,6 +304,11 @@ export const SwapChecker = () => {
                     true,
                 );
             } catch (e) {
+                if (i18n.en[e.message] !== undefined) {
+                    notify("error", t(e.message, { id: currentSwap.id }));
+                    return;
+                }
+
                 const msg = t("claim_fail", { id: currentSwap.id });
                 log.warn(msg, e);
                 notify("error", msg);
