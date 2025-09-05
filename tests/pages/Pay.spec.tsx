@@ -2,25 +2,40 @@ import type * as SolidRouter from "@solidjs/router";
 import { useLocation } from "@solidjs/router";
 import { render, screen } from "@solidjs/testing-library";
 
-import { BTC, LBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import {
     swapStatusFailed,
+    swapStatusPending,
     swapStatusSuccess,
 } from "../../src/consts/SwapStatus";
 import Pay from "../../src/pages/Pay";
-import { getSwapStatus } from "../../src/utils/boltzClient";
-import type { ChainSwap, ReverseSwap } from "../../src/utils/swapCreator";
+import {
+    getLockupTransaction,
+    getSwapStatus,
+} from "../../src/utils/boltzClient";
+import { getRefundableUTXOs } from "../../src/utils/rescue";
+import type {
+    ChainSwap,
+    ReverseSwap,
+    SomeSwap,
+} from "../../src/utils/swapCreator";
 import { TestComponent } from "../helper";
 import { contextWrapper, payContext } from "../helper";
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getSwapStatus: vi.fn(),
+    getLockupTransaction: vi.fn(),
+}));
+vi.mock("../../src/utils/rescue", () => ({
+    getRefundableUTXOs: vi.fn(),
 }));
 const mockGetSwapStatus = vi.mocked(getSwapStatus);
 mockGetSwapStatus.mockResolvedValue({
     status: swapStatusFailed.TransactionRefunded,
 });
+const mockGetRefundableUTXOs = vi.mocked(getRefundableUTXOs);
+const mockGetLockupTransaction = vi.mocked(getLockupTransaction);
 
 vi.mock("localforage", () => ({
     default: {
@@ -176,4 +191,51 @@ describe("Pay", () => {
         const status = await screen.findByText("swap.waitingForRefund");
         expect(status).toBeVisible();
     });
+
+    test.each([
+        {
+            swapType: SwapType.Submarine,
+            assetReceive: LN,
+            assetSend: BTC,
+        },
+        {
+            swapType: SwapType.Chain,
+            assetReceive: LBTC,
+            assetSend: BTC,
+        },
+    ])(
+        "should not attempt to fetch UTXOs for $swapType swap during initial phase",
+        ({ swapType, assetReceive, assetSend }) => {
+            mockGetSwapStatus.mockResolvedValue({
+                status: swapStatusPending.SwapCreated,
+            });
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Pay />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+            payContext.setSwap({
+                type: swapType,
+                assetReceive,
+                assetSend,
+                lockupDetails: {},
+                invoice:
+                    swapType === SwapType.Submarine ? "invoice" : undefined,
+            } as unknown as SomeSwap);
+
+            // Check for all possible values of prevSwapStatus
+            const prevSwapStatuses = ["", null, undefined];
+            for (const prevSwapStatus of prevSwapStatuses) {
+                payContext.setSwapStatus(prevSwapStatus);
+                payContext.setSwapStatus(swapStatusPending.SwapCreated);
+            }
+
+            expect(mockGetRefundableUTXOs).not.toHaveBeenCalled();
+            expect(mockGetLockupTransaction).not.toHaveBeenCalled();
+        },
+    );
 });
