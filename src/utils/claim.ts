@@ -7,7 +7,7 @@ import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import type { deriveKeyFn } from "../context/Global";
+import type { deriveKeyFn, notifyFn, tFn } from "../context/Global";
 import type { RescueFile } from "../utils/rescueFile";
 import { deriveKey } from "../utils/rescueFile";
 import type { TransactionInterface } from "./boltzClient";
@@ -312,6 +312,8 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     swap: T,
     swapStatusTransaction: { hex: string },
     cooperative: boolean,
+    notify: notifyFn,
+    t: tFn,
 ): Promise<T | undefined> => {
     const asset = getRelevantAssetForSwap(swap);
     if (asset === RBTC) {
@@ -340,8 +342,30 @@ export const claim = async <T extends ReverseSwap | ChainSwap>(
     }
 
     log.debug("Broadcasting claim transaction");
-    const res = await broadcastTransaction(asset, claimTransaction.toHex());
-    log.debug("Claim transaction broadcast result", res);
+
+    const maxAttempts = 6;
+    let res: { id: string };
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            res = await broadcastTransaction(asset, claimTransaction.toHex());
+            log.debug("Claim transaction broadcast result", res);
+            break;
+        } catch (e) {
+            if (attempt === maxAttempts) {
+                log.error(`all broadcast attempts failed for swap ${swap.id}`);
+                throw new Error("all_broadcast_attempts_failed");
+            }
+
+            const retryDelay = 15_000;
+            log.error(
+                `broadcast attempt failed (attempt ${attempt}), retrying in ${retryDelay / 1000} seconds...`,
+                e,
+            );
+            notify("error", t("broadcast_attempts_failed", { id: swap.id }));
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        }
+    }
 
     if (res.id) {
         swap.claimTx = res.id;
