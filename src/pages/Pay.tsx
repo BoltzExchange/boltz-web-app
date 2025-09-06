@@ -95,14 +95,18 @@ const Pay = () => {
     });
 
     createResource(swapStatus, async () => {
-        const isInitialSwapState =
-            (swapStatus() === swapStatusPending.SwapCreated &&
-                prevSwapStatus.value === "") ||
-            (swapStatus() === swapStatusPending.InvoiceSet &&
-                prevSwapStatus.value === "");
+        const emptyPrevSwapStatus =
+            prevSwapStatus.value === undefined ||
+            prevSwapStatus.value === null ||
+            prevSwapStatus.value === "";
 
-        // No need to fetch UTXO data for a swap just created
-        if (isInitialSwapState) {
+        const isInitialSwapState =
+            emptyPrevSwapStatus &&
+            (swapStatus() === swapStatusPending.SwapCreated ||
+                swapStatus() === swapStatusPending.InvoiceSet);
+
+        // No need to fetch UTXO data for a reverse swap or a swap just created
+        if (isInitialSwapState || swap().type === SwapType.Reverse) {
             return;
         }
 
