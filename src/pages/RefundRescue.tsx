@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "@solidjs/router";
+import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
@@ -84,6 +84,7 @@ export const mapSwap = (
 
 const RefundRescue = () => {
     const params = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const location = useLocation<{
         waitForSwapTimeout?: boolean | undefined;
     }>();
@@ -207,6 +208,24 @@ const RefundRescue = () => {
                                 timeoutBlockHeight={timeoutBlockHeight}
                                 refundableAsset={swap().assetSend}
                             />
+                            <BlockExplorer
+                                asset={swap().assetSend}
+                                txId={swap().lockupTx}
+                                address={
+                                    swap().type === SwapType.Submarine
+                                        ? (swap() as SubmarineSwap).address
+                                        : (swap() as ChainSwap).lockupDetails
+                                              .lockupAddress
+                                }
+                            />
+                            <button
+                                class="btn btn-light"
+                                data-testid="backBtn"
+                                onClick={() => {
+                                    navigate(-1);
+                                }}>
+                                {t("back")}
+                            </button>
                         </Match>
                         <Match when={!waitForSwapTimeout()}>
                             <Show when={refundTxId() === ""}>
