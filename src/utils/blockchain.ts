@@ -2,7 +2,12 @@ import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
 import { Explorer, type ExplorerUrl, type Url } from "../configs/base";
-import { refundableAssets } from "../consts/Assets";
+import {
+    BTC,
+    LBTC,
+    type RefundableAssetType,
+    refundableAssets,
+} from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { formatError } from "./errors";
 import { requestTimeoutDuration } from "./helper";
@@ -17,6 +22,22 @@ type MempoolFeeEstimation = Record<
     "fastestFee" | "halfHourFee" | "hourFee" | "economyFee" | "minimumFee",
     number
 >;
+
+export const blockTimeMinutes: Record<RefundableAssetType, number> = {
+    [BTC]: 10,
+    [LBTC]: 1,
+};
+
+export const getNetworkName = (asset: string) => {
+    switch (asset) {
+        case BTC:
+            return "Bitcoin";
+        case LBTC:
+            return "Liquid";
+        default:
+            return "";
+    }
+};
 
 const handleResponseSuccess = async <T>(response: Response): Promise<T> => {
     const contentType = response.headers.get("content-type");

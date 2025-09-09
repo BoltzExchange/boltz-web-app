@@ -8,7 +8,6 @@ import log from "loglevel";
 
 import {
     type AssetType,
-    BTC,
     LBTC,
     type RefundableAssetType,
     refundableAssets,
@@ -21,7 +20,11 @@ import {
 } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
-import { getBlockTipHeight, getSwapUTXOs } from "./blockchain";
+import {
+    blockTimeMinutes,
+    getBlockTipHeight,
+    getSwapUTXOs,
+} from "./blockchain";
 import type { TransactionInterface } from "./boltzClient";
 import {
     broadcastTransaction,
@@ -460,9 +463,9 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
                     return {
                         ...swap,
                         action: RescueAction.Refund,
-                        waitForSwapTimeout:
-                            swap.status ===
-                            swapStatusSuccess.TransactionClaimed,
+                        waitForSwapTimeout: Object.values(
+                            swapStatusSuccess,
+                        ).includes(swap.status),
                     };
                 }
 
@@ -478,19 +481,11 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
     );
 };
 
-export const getTimeoutEta = ({
-    asset,
-    timeoutBlockHeight,
-    currentBlockHeight,
-}: {
-    asset: RefundableAssetType;
-    timeoutBlockHeight: number;
-    currentBlockHeight: number;
-}): number => {
-    const blockTimeMinutes: Record<RefundableAssetType, number> = {
-        [BTC]: 10,
-        [LBTC]: 1,
-    };
+export const getTimeoutEta = (
+    asset: RefundableAssetType,
+    timeoutBlockHeight: number,
+    currentBlockHeight: number,
+) => {
     const blocksRemaining = timeoutBlockHeight - currentBlockHeight;
     const secondsRemaining = blocksRemaining * blockTimeMinutes[asset] * 60;
     return Math.floor(Date.now() / 1000) + secondsRemaining;

@@ -87,9 +87,8 @@ const RefundRescue = () => {
     const location = useLocation<{
         waitForSwapTimeout?: boolean | undefined;
     }>();
-    const waitForSwapTimeoutState = location.state?.waitForSwapTimeout ?? false;
 
-    const { t } = useGlobalContext();
+    const { t, notify } = useGlobalContext();
     const {
         swap,
         setSwap,
@@ -97,10 +96,13 @@ const RefundRescue = () => {
         setSwapStatusTransaction,
         setFailureReason,
         setRefundableUTXOs,
-        waitForSwapTimeout,
-        setWaitForSwapTimeout,
+        setShouldIgnoreBackendStatus,
     } = usePayContext();
     const { rescuableSwaps, rescueFile } = useRescueContext();
+
+    const [waitForSwapTimeout, setWaitForTimeout] = createSignal<boolean>(
+        location.state?.waitForSwapTimeout ?? false,
+    );
 
     const rescuableSwap = () =>
         mapSwap(rescuableSwaps().find((swap) => swap.id === params.id));
@@ -111,52 +113,77 @@ const RefundRescue = () => {
     const [loading, setLoading] = createSignal<boolean>(false);
 
     createResource(async () => {
-        setLoading(true);
-        if (rescuableSwap()) {
-            const res = await getSwapStatus(rescuableSwap().id);
-            log.debug("selecting swap", rescuableSwap());
-            setSwap(rescuableSwap() as SomeSwap);
-            setSwapStatus(res.status);
-            setSwapStatusTransaction(res.transaction);
-            setFailureReason(res.failureReason);
-            setWaitForSwapTimeout(waitForSwapTimeoutState);
-
-            const utxos = await getRefundableUTXOs(rescuableSwap() as SomeSwap);
-            setRefundableUTXOs(utxos);
-
-            if (waitForSwapTimeout()) {
+        try {
+            if (rescuableSwap()) {
+                setLoading(true);
                 try {
-                    const currentBlockHeight = (
-                        await getCurrentBlockHeight([
-                            rescuableSwap() as SomeSwap,
-                        ])
-                    )?.[rescuableSwap().assetSend];
-
-                    const timeoutBlockHeight = (
-                        rescuableSwap() as RestorableSwap
-                    ).refundDetails.timeoutBlockHeight;
-
-                    const timeoutEta = getTimeoutEta({
-                        asset: rescuableSwap().assetSend as RefundableAssetType,
-                        currentBlockHeight,
-                        timeoutBlockHeight,
-                    });
-
-                    setTimeoutEta(timeoutEta);
-                    setTimeoutBlockHeight(timeoutBlockHeight);
+                    const res = await getSwapStatus(rescuableSwap().id);
+                    log.debug("selecting swap", rescuableSwap());
+                    setSwap(rescuableSwap() as SomeSwap);
+                    setSwapStatus(res.status);
+                    setSwapStatusTransaction(res.transaction);
+                    setFailureReason(res.failureReason);
                 } catch (e) {
                     log.error(
-                        `failed to get uncooperative timeout ETA for swap ${swap().id}:`,
+                        `failed to get swap status for swap ${swap().id}:`,
                         e,
                     );
-                    // if we can't obtain block height data because 3rd party explorer is down, we allow the user to attempt an uncoop refund anyway
-                    setWaitForSwapTimeout(false);
-                } finally {
-                    setLoading(false);
+                }
+
+                // For uncooperative swaps, we don't rely on backend for status updates
+                setShouldIgnoreBackendStatus(waitForSwapTimeout());
+
+                const utxos = await getRefundableUTXOs(
+                    rescuableSwap() as SomeSwap,
+                );
+
+                if (utxos.length === 0) {
+                    throw new Error(
+                        `failed to get refundable UTXOs for swap ${swap().id}`,
+                    );
+                }
+
+                setRefundableUTXOs(utxos);
+
+                if (waitForSwapTimeout()) {
+                    try {
+                        const currentBlockHeight: number = (
+                            await getCurrentBlockHeight([
+                                rescuableSwap() as SomeSwap,
+                            ])
+                        )?.[rescuableSwap().assetSend];
+
+                        if (typeof currentBlockHeight !== "number") {
+                            throw new Error("block height unavailable");
+                        }
+
+                        const timeoutBlockHeight = (
+                            rescuableSwap() as RestorableSwap
+                        ).refundDetails.timeoutBlockHeight;
+
+                        const timeoutEta = getTimeoutEta(
+                            rescuableSwap().assetSend as RefundableAssetType,
+                            currentBlockHeight,
+                            timeoutBlockHeight,
+                        );
+
+                        setTimeoutEta(timeoutEta);
+                        setTimeoutBlockHeight(timeoutBlockHeight);
+                    } catch (e) {
+                        log.error(
+                            `failed to get uncooperative timeout ETA for swap ${swap().id}:`,
+                            e,
+                        );
+                        // if we can't obtain block height data because 3rd party explorer is down, we allow the user to attempt an uncoop refund anyway
+                        setWaitForTimeout(false);
+                    }
                 }
             }
+        } catch {
+            notify("error", t("get_refundable_error"));
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     });
 
     onCleanup(() => {
@@ -178,6 +205,7 @@ const RefundRescue = () => {
                             <RefundEta
                                 timeoutEta={timeoutEta}
                                 timeoutBlockHeight={timeoutBlockHeight}
+                                refundableAsset={swap().assetSend}
                             />
                         </Match>
                         <Match when={!waitForSwapTimeout()}>

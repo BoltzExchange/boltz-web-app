@@ -38,15 +38,14 @@ const TransactionClaimed = () => {
 
     const { notify } = useGlobalContext();
     const { swap } = usePayContext();
-    const { t, denomination, separator, setSwapStorage, getSwap } =
-        useGlobalContext();
+    const { t, denomination, separator, setSwapStorage } = useGlobalContext();
 
     const [claimBroadcast, setClaimBroadcast] = createSignal<
         boolean | undefined
     >(undefined);
 
     const [preimage] = createResource(async () => {
-        const submarine = (await getSwap(swap().id)) as SubmarineSwap; // get latest swap data from storage before updating it
+        const submarine = swap() as SubmarineSwap;
         if (submarine?.type !== SwapType.Submarine) {
             return undefined;
         }

@@ -167,8 +167,7 @@ export const SwapChecker = () => {
         setSwapStatus,
         setSwapStatusTransaction,
         setFailureReason,
-        timedOutRefundable,
-        waitForSwapTimeout,
+        shouldIgnoreBackendStatus,
     } = usePayContext();
     const {
         notify,
@@ -212,9 +211,9 @@ export const SwapChecker = () => {
             return;
         }
         if (swap() && swap().id === currentSwap.id) {
-            // Ignore backend status updates if the swap has timed out or should be refunded uncooperatively
-            if (!timedOutRefundable() && !waitForSwapTimeout()) {
+            if (!shouldIgnoreBackendStatus()) {
                 setSwapStatus(data.status);
+                setSwap({ ...swap(), status: data.status });
             }
             if (data.transaction) {
                 setSwapStatusTransaction(data.transaction);

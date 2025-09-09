@@ -19,10 +19,8 @@ export type PayContextType = {
     setRefundableUTXOs: Setter<
         (Partial<LockupTransaction> & Pick<LockupTransaction, "hex">)[]
     >;
-    timedOutRefundable: Accessor<boolean>;
-    setTimedOutRefundable: Setter<boolean>;
-    waitForSwapTimeout: Accessor<boolean>;
-    setWaitForSwapTimeout: Setter<boolean>;
+    shouldIgnoreBackendStatus: Accessor<boolean>;
+    setShouldIgnoreBackendStatus: Setter<boolean>;
 };
 
 const PayContext = createContext<PayContextType>();
@@ -44,9 +42,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
     const [refundableUTXOs, setRefundableUTXOs] = createSignal<
         (Partial<LockupTransaction> & Pick<LockupTransaction, "hex">)[]
     >([]);
-    const [timedOutRefundable, setTimedOutRefundable] =
-        createSignal<boolean>(false);
-    const [waitForSwapTimeout, setWaitForSwapTimeout] =
+    const [shouldIgnoreBackendStatus, setShouldIgnoreBackendStatus] =
         createSignal<boolean>(false);
 
     return (
@@ -62,10 +58,8 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 setSwapStatusTransaction,
                 refundableUTXOs,
                 setRefundableUTXOs,
-                timedOutRefundable,
-                setTimedOutRefundable,
-                waitForSwapTimeout,
-                setWaitForSwapTimeout,
+                shouldIgnoreBackendStatus,
+                setShouldIgnoreBackendStatus,
             }}>
             {props.children}
         </PayContext.Provider>
