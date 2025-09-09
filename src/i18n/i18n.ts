@@ -52,7 +52,8 @@ const dict = {
         success_swap: "Swap Success",
         feecheck:
             "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
-        create_and_paste: "Paste a Lightning invoice, offer or LNURL",
+        create_and_paste:
+            "Paste a Lightning invoice, BOLT12 or LNURL to receive funds",
         congrats: "Congratulations!",
         successfully_swapped:
             "You successfully received {{ amount }} {{ denomination }}!",
@@ -77,11 +78,12 @@ const dict = {
             "Your lockup transaction failed, wait for the timeout to refund.",
         failure_reason: "Failure reason",
         invoice_payment_failure: "Could not pay your lightning invoice",
-        onchain_address: "Enter {{ asset }} address",
+        onchain_address: "Enter {{ asset }} address to receive funds",
         onchain_address_no_asset: "Enter address",
         invalid_refund_file: "Invalid rescue key",
         invalid_backup_file: "Invalid backup file",
-        invalid_invoice: "Please provide a valid invoice, offer or LNURL",
+        invalid_invoice:
+            "Please provide a valid Lightning invoice, BOLT12 or LNURL",
         invalid_0_amount: "Invoices without amount are not supported",
         copy_invoice: "lightning invoice",
         copy_address: "address",
@@ -322,7 +324,7 @@ const dict = {
         lightningnode: "Lightning Knoten anzeigen",
         error: "Fehler",
         error_subline:
-            "Ungültige Antwort von der API, irgendwas ist hier falsch.",
+            "Ungültige Antwort von der API, irgendwas ist hier falsch gelaufen.",
         error_wasm: "WebAssembly nicht unterstützt",
         history: "Historie",
         swap: "Swap",
@@ -361,7 +363,8 @@ const dict = {
         success_swap: "Swap erfolgreich!",
         feecheck:
             "Die Netzwerkgebühr wurde aufgrund der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
-        create_and_paste: "Füge Lightning Invoice, Offer oder LNURL hier ein",
+        create_and_paste:
+            "Füge eine Lightning-Rechnung, BOLT12 oder LNURL des Empfängers ein",
         congrats: "Herzlichen Glückwunsch!",
         successfully_swapped:
             "Du hast erfolgreich {{ amount }} {{ denomination }} empfangen!",
@@ -387,12 +390,13 @@ const dict = {
         failure_reason: "Grund für den Fehler",
         invoice_payment_failure:
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
-        onchain_address: "{{ asset }}-Adresse eingeben",
+        onchain_address: "Gib eine {{ asset }} Empfangsadresse ein",
         onchain_address_no_asset: "Adresse",
         invalid_refund_file: "Ungültiger Rettungsschlüssel",
         invalid_backup_file: "Ungültige Backupdatei",
-        invalid_invoice: "Bitte gültige Invoice, Offer oder LNURL eingeben",
-        invalid_0_amount: "Lightning Rechnungen ohne Betrag nicht unterstützt",
+        invalid_invoice:
+            "Bitte eine gültige Lightning-Rechnung, BOLT12 oder LNURL eingeben",
+        invalid_0_amount: "Lightning-Rechnungen ohne Betrag nicht unterstützt",
         copy_invoice: "Lightning-Rechnung",
         copy_address: "Adresse",
         copy_amount: "Betrag",
@@ -684,7 +688,8 @@ const dict = {
         success_swap: "Intercambio realizado con éxito!",
         feecheck:
             "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
-        create_and_paste: "Pegar Lightning Invoice, Offer o LNURL",
+        create_and_paste:
+            "Pega una factura Lightning, una dirección BOLT12 o una LNURL para recibir los fondos",
         congrats: "¡Felicitaciones!",
         successfully_swapped:
             "Has recibido con éxito {{ amount }} {{ denomination }}!",
@@ -707,11 +712,13 @@ const dict = {
             "Tu transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
         failure_reason: "Motivo del fallo",
         invoice_payment_failure: "No se pudo pagar tu factura Lightning",
-        onchain_address: "Ingrese la dirección de {{ asset }}",
+        onchain_address:
+            "Ingrese una dirección {{ asset }} para recibir los fondos",
         onchain_address_no_asset: "Ingrese la dirección",
         invalid_refund_file: "'Clave de rescate no válido",
         invalid_backup_file: "Archivo de backup no válido",
-        invalid_invoice: "Por favor, pegue Invoice, Offer o LNURL válida",
+        invalid_invoice:
+            "Por favor, pegue una factura Lightning, BOLT12 o LNURL válida",
         invalid_0_amount: "No se admiten facturas sin importe",
         copy_invoice: "factura Lightning",
         copy_address: "dirección",
@@ -1002,7 +1009,8 @@ const dict = {
         success_swap: "Troca realizada",
         feecheck:
             "A taxa da rede foi atualizada conforme a situação atual, por favor confirme os novos valores e continue a troca.",
-        create_and_paste: "Cole um invoice Lightning, offer ou LNURL",
+        create_and_paste:
+            "Cole um invoice Lightning, um endereço BOLT12 ou um LNURL para receber os fundos",
         congrats: "Parabéns!",
         successfully_swapped:
             "{{ amount }} {{ denomination }} recebidos com sucesso!",
@@ -1027,11 +1035,13 @@ const dict = {
             "Sua transação de lockup falhou, aguarde o tempo limite para o reembolso.",
         failure_reason: "Motivo da falha",
         invoice_payment_failure: "Não foi possível pagar seu invoice Lightning",
-        onchain_address: "Digite o endereço de {{ asset }}",
+        onchain_address:
+            "Digite um endereço {{ asset }} para receber os fundos",
         onchain_address_no_asset: "Digite o endereço",
         invalid_refund_file: "Chave de resgate inválida",
         invalid_backup_file: "Arquivo de backup inválido",
-        invalid_invoice: "Por favor, forneça um invoice, offer ou LNURL válido",
+        invalid_invoice:
+            "Por favor, forneça um invoice Lightning, BOLT12 ou LNURL válido",
         invalid_0_amount: "Invoices sem valor não são suportadas",
         copy_invoice: "invoice lightning",
         copy_address: "endereço",
@@ -1314,7 +1324,7 @@ const dict = {
         new_swap: "新的交换",
         success_swap: "交换成功",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
-        create_and_paste: "粘贴闪电发票,offer或LNURL",
+        create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
         congrats: "恭喜！",
         successfully_swapped: "您成功收到{{ amount }}{{ denomination }}！",
         timeout_eta: "超过预期时间",
@@ -1336,11 +1346,11 @@ const dict = {
         lockup_failed_subline: "您的锁仓交易失败，请等待超时进行退款。",
         failure_reason: "失败原因",
         invoice_payment_failure: "无法支付您的闪电发票",
-        onchain_address: "输入{{ asset }}地址",
+        onchain_address: "输入{{ asset }}地址以接收资金",
         onchain_address_no_asset: "地址",
         invalid_refund_file: "无效的救援钥匙",
         invalid_backup_file: "无效的备份文件",
-        invalid_invoice: "请提供有效的发票,offer或LNURL",
+        invalid_invoice: "请提供有效的发票,BOLT12或LNURL",
         invalid_0_amount: "不支持没有金额的发票",
         copy_invoice: "闪电网络发票",
         copy_address: "地址",
@@ -1603,7 +1613,7 @@ const dict = {
         feecheck:
             "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",
         create_and_paste:
-            "ライトニングインボイス、Offer、またはLNURLを貼り付ける",
+            "資金を受け取るために、ライトニングインボイス、BOLT12、またはLNURLを貼り付けてください",
         congrats: "おめでとうございます！",
         successfully_swapped: "スワップが正常に完了しました",
         timeout_eta: "タイムアウト予想時間",
@@ -1628,11 +1638,12 @@ const dict = {
             "ロックアップトランザクションが失敗しました。タイムアウトまで待って返金してください",
         failure_reason: "失敗の理由",
         invoice_payment_failure: "インボイスを支払うことができませんでした",
-        onchain_address: "{{ asset }}アドレスを入力してください",
+        onchain_address:
+            "資金を受け取るために、{{ asset }}アドレスを入力してください",
         onchain_address_no_asset: "アドレスを入力してください",
         invalid_refund_file: "無効なレスキューキー",
         invalid_backup_file: "無効なバックアップファイル",
-        invalid_invoice: "有効なインボイス、Offer、LNURLを入力してください",
+        invalid_invoice: "有効なインボイス、BOLT12、LNURLを入力してください",
         invalid_0_amount: "金額のない空インボイスは対応していません",
         copy_invoice: "インボイスをコピー",
         copy_address: "アドレスをコピー",
