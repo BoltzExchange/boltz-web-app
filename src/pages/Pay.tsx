@@ -202,13 +202,15 @@ const Pay = () => {
         string | undefined
     >(undefined);
 
-    const renameSwapStatus = (status: string) => {
-        const backendRefunded =
+    const backendRefunded = createMemo(
+        () =>
             swap() &&
             swap().type === SwapType.Chain &&
-            swapStatus() === swapStatusFailed.TransactionRefunded; // this status means backend refunded its own tx. We rename it to avoid confusing users.
+            swapStatus() === swapStatusFailed.TransactionRefunded,
+    ); // this status means backend refunded its own tx. We rename it to avoid confusing users.
 
-        if (backendRefunded || waitForSwapTimeout() || timedOutRefundable()) {
+    const renameSwapStatus = (status: string) => {
+        if (backendRefunded() || waitForSwapTimeout() || timedOutRefundable()) {
             return swapStatusFailed.SwapWaitingForRefund;
         }
 
@@ -313,7 +315,11 @@ const Pay = () => {
                                         setStatusOverride={setStatusOverride}
                                     />
                                 </Match>
-                                <Match when={timedOutRefundable()}>
+                                <Match
+                                    when={
+                                        timedOutRefundable() ||
+                                        backendRefunded()
+                                    }>
                                     <RefundButton
                                         swap={
                                             swap as Accessor<

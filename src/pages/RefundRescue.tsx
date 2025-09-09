@@ -118,9 +118,9 @@ const RefundRescue = () => {
             if (rescuableSwap()) {
                 setLoading(true);
                 try {
-                    const res = await getSwapStatus(rescuableSwap().id);
-                    log.debug("selecting swap", rescuableSwap());
                     setSwap(rescuableSwap() as SomeSwap);
+                    log.debug("selecting swap", rescuableSwap());
+                    const res = await getSwapStatus(rescuableSwap().id);
                     setSwapStatus(res.status);
                     setSwapStatusTransaction(res.transaction);
                     setFailureReason(res.failureReason);
