@@ -166,8 +166,8 @@ const Pay = () => {
 
                         const timeoutEta = getTimeoutEta(
                             swap().assetSend as RefundableAssetType,
-                            currentBlockHeight,
                             timeoutBlockHeight,
+                            currentBlockHeight,
                         );
 
                         setTimeoutEta(timeoutEta);

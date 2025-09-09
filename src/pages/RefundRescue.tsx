@@ -190,6 +190,7 @@ const RefundRescue = () => {
     onCleanup(() => {
         log.debug("cleanup RefundRescue");
         setRefundableUTXOs([]);
+        setShouldIgnoreBackendStatus(false);
     });
 
     return (
