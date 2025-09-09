@@ -2,16 +2,16 @@ import log from "loglevel";
 import QrScanner from "qr-scanner";
 import { Show, createSignal, onCleanup, onMount } from "solid-js";
 
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import "../style/qrscan.scss";
+import { RequiredInput } from "../utils/pair";
 
 const QrScan = () => {
     let qrRef: HTMLVideoElement;
     let qrScanner: QrScanner;
 
-    const { swapType, setInvoice, setOnchainAddress } = useCreateContext();
+    const { pair, setInvoice, setOnchainAddress } = useCreateContext();
     const { t, notify } = useGlobalContext();
 
     const [camera, setCamera] = createSignal<boolean>(false);
@@ -29,7 +29,7 @@ const QrScan = () => {
                 qrRef,
                 (result) => {
                     log.debug("scanned qr code:", result.data);
-                    if (swapType() === SwapType.Submarine) {
+                    if (pair().requiredInput === RequiredInput.Invoice) {
                         setInvoice("");
                         setInvoice(result.data);
                     } else {
