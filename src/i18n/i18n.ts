@@ -59,7 +59,7 @@ const dict = {
         timeout_eta: "Timeout ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
-        pay_timeout_blockheight: "Timeout block height",
+        pay_timeout_blockheight: "Timeout Block Height ({{ network }})",
         pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
         send_between:
@@ -142,7 +142,7 @@ const dict = {
         api_offline: "API is offline",
         api_offline_msg:
             "Could not connect to the Boltz API, please try again later",
-        refund_explainer: "You will be able to refund after the timeout",
+        refund_explainer: "You will be able to refund after the swap timeout!",
         swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",
         created: "Created",
@@ -306,6 +306,8 @@ const dict = {
             "Please re-insert the rescue key and try again.",
         in_progress: "In progress",
         completed: "Completed",
+        get_refundable_error:
+            "Failed to load refundable UTXO data. Check your connection or contact us if this persists.",
     },
     de: {
         language: "Deutsch",
@@ -1006,10 +1008,10 @@ const dict = {
         congrats: "Parabéns!",
         successfully_swapped:
             "{{ amount }} {{ denomination }} recebidos com sucesso!",
-        timeout_eta: "Tempo limite estimado",
+        timeout_eta: "Estimativa de Expiração",
         pay_invoice: "Troca: {{ id }}",
         pay_swap_404: "Troca não encontrada!",
-        pay_timeout_blockheight: "Altura do bloco de timeout",
+        pay_timeout_blockheight: "Altura do Bloco de Expiração ({{ network }})",
         pay_expected_amount: "Valor esperado",
         send_to: "Envie {{ amount }} {{ denomination }} para",
         send_between:
@@ -1093,7 +1095,8 @@ const dict = {
         api_offline: "A API está offline",
         api_offline_msg:
             "Não foi possível conectar à API da Boltz, por favor tente novamente mais tarde",
-        refund_explainer: "Será possível reembolsar após o prazo limite",
+        refund_explainer:
+            "Será possível reembolsar a troca após o prazo de expiração!",
         swap_not_refundable_yet: "Sua troca ainda não pode ser reembolsada",
         wasm_not_supported: "Ative o WebAssembly no seu navegador",
         created: "Criado",
