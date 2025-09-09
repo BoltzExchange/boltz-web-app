@@ -91,9 +91,9 @@ const Rescue = () => {
                                         navigate(`/swap/${swap.id}`, {
                                             state: {
                                                 timedOutRefundable:
-                                                    swap.timedOut &&
-                                                    swap.action ===
-                                                        RescueAction.Refund,
+                                                    swap.timedOut,
+                                                waitForSwapTimeout:
+                                                    swap.waitForSwapTimeout,
                                             },
                                         });
                                     }}

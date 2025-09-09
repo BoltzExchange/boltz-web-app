@@ -292,6 +292,12 @@ export const RefundBtcLike = () => {
                                                 }
                                                 navigate(
                                                     `/rescue/refund/${swap.id}`,
+                                                    {
+                                                        state: {
+                                                            waitForSwapTimeout:
+                                                                swap.waitForSwapTimeout,
+                                                        },
+                                                    },
                                                 );
                                             }}
                                             hideDateOnMobile

@@ -15,9 +15,11 @@ import {
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
+import RefundEta from "../components/RefundEta";
 import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { type RefundableAssetType } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     swapStatusFailed,
@@ -38,15 +40,22 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { getRefundableUTXOs, isRefundableSwapType } from "../utils/rescue";
+import {
+    getCurrentBlockHeight,
+    getRefundableUTXOs,
+    getTimeoutEta,
+    isRefundableSwapType,
+} from "../utils/rescue";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 
 const Pay = () => {
     const params = useParams();
     const location = useLocation<{
         timedOutRefundable?: boolean | undefined;
+        waitForSwapTimeout?: boolean | undefined;
     }>();
-    const timedOutRefundable = location.state?.timedOutRefundable ?? false;
+    const timedOutRefundableState = location.state?.timedOutRefundable ?? false;
+    const waitForSwapTimeoutState = location.state?.waitForSwapTimeout ?? false;
 
     const { getSwap, t } = useGlobalContext();
 
@@ -58,9 +67,14 @@ const Pay = () => {
         setSwapStatusTransaction,
         setFailureReason,
         setRefundableUTXOs,
+        timedOutRefundable,
         setTimedOutRefundable,
+        waitForSwapTimeout,
+        setWaitForSwapTimeout,
     } = usePayContext();
 
+    const [timeoutEta, setTimeoutEta] = createSignal<number>(0);
+    const [timeoutBlockHeight, setTimeoutBlockHeight] = createSignal<number>(0);
     const [loading, setLoading] = createSignal<boolean>(false);
 
     const prevSwapStatus = { value: "" };
@@ -76,11 +90,12 @@ const Pay = () => {
             return;
         }
 
-        setTimedOutRefundable(timedOutRefundable);
+        setTimedOutRefundable(timedOutRefundableState);
+        setWaitForSwapTimeout(waitForSwapTimeoutState);
         setSwap(currentSwap);
 
         // If the swap timeoutBlockHeight was reached, we don't rely on backend for the swap status
-        if (timedOutRefundable) {
+        if (timedOutRefundable()) {
             log.info(
                 `refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
             );
@@ -131,6 +146,39 @@ const Pay = () => {
             if (utxos.length > 0) {
                 // if there are remaining UTXOs, we consider we don't have a refundTx yet
                 setSwap({ ...swap(), refundTx: "" });
+
+                if (waitForSwapTimeout()) {
+                    try {
+                        const timeoutBlockHeight =
+                            swap().type === SwapType.Submarine
+                                ? (swap() as SubmarineSwap).timeoutBlockHeight
+                                : (swap() as ChainSwap).lockupDetails
+                                      .timeoutBlockHeight;
+
+                        const currentBlockHeight = (
+                            await getCurrentBlockHeight([swap()])
+                        )?.[swap().assetSend];
+
+                        const timeoutEta = getTimeoutEta({
+                            asset: swap().assetSend as RefundableAssetType,
+                            currentBlockHeight,
+                            timeoutBlockHeight,
+                        });
+
+                        setTimeoutEta(timeoutEta);
+                        setTimeoutBlockHeight(timeoutBlockHeight);
+                        setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
+                    } catch (e) {
+                        log.error(
+                            `failed to get uncooperative timeout ETA for swap ${swap().id}:`,
+                            e,
+                        );
+                        // if we can't obtain block height data because 3rd party explorer is down, we allow the user to attempt an uncoop refund anyway
+                        setWaitForSwapTimeout(false);
+                        setTimedOutRefundable(true);
+                        setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
+                    }
+                }
             }
         } catch (e) {
             log.debug("error fetching UTXOs:", e);
@@ -144,6 +192,7 @@ const Pay = () => {
         setSwap(null);
         setSwapStatus(null);
         setRefundableUTXOs([]);
+        setWaitForSwapTimeout(false);
     });
 
     const [statusOverride, setStatusOverride] = createSignal<
@@ -154,7 +203,7 @@ const Pay = () => {
         (swap() &&
             swap().type === SwapType.Chain &&
             swapStatus() === swapStatusFailed.TransactionRefunded) ||
-        timedOutRefundable;
+        timedOutRefundable();
 
     const renameSwapStatus = (status: string) => {
         if (isWaitingForRefund()) {
@@ -199,6 +248,12 @@ const Pay = () => {
                                 <span class="btn-small">{status()}</span>
                             </p>
                             <hr />
+                            <Show when={waitForSwapTimeout()}>
+                                <RefundEta
+                                    timeoutEta={timeoutEta}
+                                    timeoutBlockHeight={timeoutBlockHeight}
+                                />
+                            </Show>
                         </Show>
                         <Switch>
                             <Match

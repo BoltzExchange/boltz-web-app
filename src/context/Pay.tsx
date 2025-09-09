@@ -21,6 +21,8 @@ export type PayContextType = {
     >;
     timedOutRefundable: Accessor<boolean>;
     setTimedOutRefundable: Setter<boolean>;
+    waitForSwapTimeout: Accessor<boolean>;
+    setWaitForSwapTimeout: Setter<boolean>;
 };
 
 const PayContext = createContext<PayContextType>();
@@ -44,6 +46,8 @@ const PayProvider = (props: { children: JSX.Element }) => {
     >([]);
     const [timedOutRefundable, setTimedOutRefundable] =
         createSignal<boolean>(false);
+    const [waitForSwapTimeout, setWaitForSwapTimeout] =
+        createSignal<boolean>(false);
 
     return (
         <PayContext.Provider
@@ -60,6 +64,8 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 setRefundableUTXOs,
                 timedOutRefundable,
                 setTimedOutRefundable,
+                waitForSwapTimeout,
+                setWaitForSwapTimeout,
             }}>
             {props.children}
         </PayContext.Provider>
