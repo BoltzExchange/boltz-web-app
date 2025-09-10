@@ -160,8 +160,8 @@ const RefundRescue = () => {
 
                         const timeoutEta = getTimeoutEta(
                             rescuableSwap().assetSend as RefundableAssetType,
-                            currentBlockHeight,
                             timeoutBlockHeight,
+                            currentBlockHeight,
                         );
 
                         setTimeoutEta(timeoutEta);

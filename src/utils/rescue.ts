@@ -408,7 +408,7 @@ export const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
         return currentBlockHeight;
     } catch (e) {
         log.error("failed to fetch current block height:", formatError(e));
-        throw new Error(e);
+        throw e;
     }
 };
 
