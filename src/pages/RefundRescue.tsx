@@ -180,7 +180,8 @@ const RefundRescue = () => {
                     }
                 }
             }
-        } catch {
+        } catch (e) {
+            log.error(e);
             notify("error", t("get_refundable_error"));
         } finally {
             setLoading(false);

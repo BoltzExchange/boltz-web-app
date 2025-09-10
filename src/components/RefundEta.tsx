@@ -22,7 +22,7 @@ const RefundEta = (props: {
                 : {props.timeoutBlockHeight()}
                 <Show when={props.timeoutEta()}>
                     <br />
-                    {t("timeout_eta")}: {getDateString(props.timeoutEta())}{" "}
+                    {t("timeout_eta")}: {getDateString(props.timeoutEta())}
                 </Show>
             </p>
         </div>
