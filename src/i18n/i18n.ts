@@ -60,7 +60,7 @@ const dict = {
         timeout_eta: "Timeout ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
-        pay_timeout_blockheight: "Timeout block height",
+        pay_timeout_blockheight: "Timeout Block Height ({{ network }})",
         pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
         send_between:
@@ -144,7 +144,7 @@ const dict = {
         api_offline: "API is offline",
         api_offline_msg:
             "Could not connect to the Boltz API, please try again later",
-        refund_explainer: "You will be able to refund after the timeout",
+        refund_explainer: "You will be able to refund after the swap timeout!",
         swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",
         created: "Created",
@@ -308,6 +308,8 @@ const dict = {
             "Please re-insert the rescue key and try again.",
         in_progress: "In progress",
         completed: "Completed",
+        get_refundable_error:
+            "Failed to load UTXO data. Refresh to try again or check your internet connection if the problem persists.",
     },
     de: {
         language: "Deutsch",
@@ -371,7 +373,7 @@ const dict = {
         timeout_eta: "Timeout-ETA",
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap nicht gefunden!",
-        pay_timeout_blockheight: "Timeout Blockhöhe",
+        pay_timeout_blockheight: "Timeout Blockhöhe ({{ network }})",
         pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
         send_between:
@@ -458,7 +460,7 @@ const dict = {
         api_offline_msg:
             "Konnte keine Verbindung zur Boltz API herstellen. Bitte versuche es später noch einmal.",
         refund_explainer:
-            "Du kannst nach dem Timeout eine Rückerstattung beantragen",
+            "Du kannst nach dem Timeout eine Rückerstattung beantragen!",
         swap_not_refundable_yet:
             "Dein Swap kann noch nicht erstattet werden. Warte auf den Timeout, um eine Rückerstattung zu starten.",
         wasm_not_supported: "Bitte aktiviere WebAssembly in deinem Browser!",
@@ -633,6 +635,8 @@ const dict = {
             "Bitte gebe den Rettungsschlüssel erneut ein und versuche es noch einmal.",
         in_progress: "In Bearbeitung",
         completed: "Abgeschlossen",
+        get_refundable_error:
+            "UTXO-Daten konnten nicht geladen werden. Aktualisiere die Seite um es erneut zu versuchen oder überprüfe deine Internetverbindung, falls das Problem weiterhin besteht.",
     },
     es: {
         language: "Español",
@@ -696,7 +700,8 @@ const dict = {
         timeout_eta: "Tiempo de espera estimado",
         pay_invoice: "Intercambio: {{ id }}",
         pay_swap_404: "¡Intercambio no encontrado!",
-        pay_timeout_blockheight: "Altura del bloque de tiempo de espera",
+        pay_timeout_blockheight:
+            "Altura del bloque de tiempo de espera ({{ network }})",
         pay_expected_amount: "Importe esperado",
         send_to: "Enviar {{ amount }} {{ denomination }} a",
         send_between: "Enviar entre {{ min }} y {{ max }} {{ denomination }} a",
@@ -783,7 +788,7 @@ const dict = {
         api_offline_msg:
             "No se pudo conectar a la API de Boltz, por favor inténtelo de nuevo más tarde!",
         refund_explainer:
-            "Podrás solicitar un reembolso después del tiempo de espera.",
+            "Podrás solicitar un reembolso después del tiempo de espera!",
         swap_not_refundable_yet:
             "Tu intercambio aún no es reembolsable, por favor inténtelo de nuevo más tarde!",
         wasm_not_supported: "Por favor, activa WebAssembly en tu navegador!",
@@ -954,6 +959,8 @@ const dict = {
             "Por favor, vuelva a introducir la clave de rescate e inténtelo de nuevo.",
         in_progress: "En progreso",
         completed: "Completado",
+        get_refundable_error:
+            "No se pudieron cargar los datos de UTXO. Actualiza la página para volver a intentarlo o verifica tu conexión a Internet si el problema persiste.",
     },
     pt: {
         language: "Português",
@@ -1014,10 +1021,10 @@ const dict = {
         congrats: "Parabéns!",
         successfully_swapped:
             "{{ amount }} {{ denomination }} recebidos com sucesso!",
-        timeout_eta: "Tempo limite estimado",
+        timeout_eta: "Estimativa de Expiração",
         pay_invoice: "Troca: {{ id }}",
         pay_swap_404: "Troca não encontrada!",
-        pay_timeout_blockheight: "Altura do bloco de timeout",
+        pay_timeout_blockheight: "Altura do Bloco de Expiração ({{ network }})",
         pay_expected_amount: "Valor esperado",
         send_to: "Envie {{ amount }} {{ denomination }} para",
         send_between:
@@ -1103,7 +1110,8 @@ const dict = {
         api_offline: "A API está offline",
         api_offline_msg:
             "Não foi possível conectar à API da Boltz, por favor tente novamente mais tarde",
-        refund_explainer: "Será possível reembolsar após o prazo limite",
+        refund_explainer:
+            "Será possível reembolsar a troca após o prazo de expiração!",
         swap_not_refundable_yet: "Sua troca ainda não pode ser reembolsada",
         wasm_not_supported: "Ative o WebAssembly no seu navegador",
         created: "Criado",
@@ -1271,6 +1279,8 @@ const dict = {
             "Por favor, re-insira a chave de resgate e tente novamente.",
         in_progress: "Em curso",
         completed: "Completado",
+        get_refundable_error:
+            "Não foi possível carregar os dados de UTXO. Recarregue a página para voltar a tentar ou verifique sua conexão com a Internet se o problema persistir.",
     },
     zh: {
         language: "中文",
@@ -1330,7 +1340,7 @@ const dict = {
         timeout_eta: "超过预期时间",
         pay_invoice: "交换：{{ id }}",
         pay_swap_404: "找不到交换！",
-        pay_timeout_blockheight: "超时区块高度",
+        pay_timeout_blockheight: "超时区块高度 ({{ network }})",
         pay_expected_amount: "预期金额",
         send_to:
             "请将准确的{{ amount }}{{ denomination }}发送到以下地址。您可以使用“BIP21”按钮，并将其粘贴到钱包。",
@@ -1404,7 +1414,7 @@ const dict = {
         already_refunded: "交换已经退还",
         api_offline: "API离线",
         api_offline_msg: "无法连接到Boltz API,请稍后重试",
-        refund_explainer: "您将能够在超时后退款",
+        refund_explainer: "您将能够在超时后退款!",
         swap_not_refundable_yet: "您的交换尚不可退还",
         wasm_not_supported: "请在您的浏览器中激活WebAssembly",
         created: "已创建",
@@ -1556,6 +1566,8 @@ const dict = {
         failed_get_swap_subline: "请重新插入救援钥匙并再次尝试。",
         in_progress: "进行中",
         completed: "已完成",
+        get_refundable_error:
+            "无法加载 UTXO 数据。请刷新页面后重试，或检查您的网络连接如果问题仍然存在。",
     },
     ja: {
         language: "日本語",
@@ -1619,7 +1631,7 @@ const dict = {
         timeout_eta: "タイムアウト予想時間",
         pay_invoice: "スワップ：{{ id }}",
         pay_swap_404: "スワップが見つかりません！",
-        pay_timeout_blockheight: "タイムアウトブロック高",
+        pay_timeout_blockheight: "タイムアウトブロック高 ({{ network }})",
         pay_expected_amount: "予想金額",
         send_to:
             "{{ amount }} {{ denomination }} を以下のアドレスへ送金して下さい",
@@ -1705,7 +1717,7 @@ const dict = {
         api_offline: "APIがオフラインです",
         api_offline_msg:
             "Boltz APIに接続できませんでした。後でもう一度お試しください",
-        refund_explainer: "タイムアウト後に返金できます",
+        refund_explainer: "タイムアウト後に返金できます!",
         swap_not_refundable_yet: "まだスワップは返金できません",
         wasm_not_supported: "ブラウザでWebAssemblyを有効にしてください",
         created: "作成済み",
@@ -1873,6 +1885,8 @@ const dict = {
             "レスキューキーを再挿入し、もう一度お試しください。",
         in_progress: "進行中",
         completed: "完了",
+        get_refundable_error:
+            "UTXO データの読み込みに失敗しました。ページを更新して再試行するか、問題が続く場合はインターネット接続を確認してください。",
     },
 };
 

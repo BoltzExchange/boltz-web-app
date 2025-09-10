@@ -20,7 +20,11 @@ import {
 } from "../consts/SwapStatus";
 import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
-import { getBlockTipHeight, getSwapUTXOs } from "./blockchain";
+import {
+    blockTimeMinutes,
+    getBlockTipHeight,
+    getSwapUTXOs,
+} from "./blockchain";
 import type { TransactionInterface } from "./boltzClient";
 import {
     broadcastTransaction,
@@ -404,7 +408,7 @@ export const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
         return currentBlockHeight;
     } catch (e) {
         log.error("failed to fetch current block height:", formatError(e));
-        return {};
+        throw e;
     }
 };
 
@@ -456,7 +460,13 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
                     !Object.values(swapStatusPending).includes(swap.status) &&
                     utxos.length > 0
                 ) {
-                    return { ...swap, action: RescueAction.Refund };
+                    return {
+                        ...swap,
+                        action: RescueAction.Refund,
+                        waitForSwapTimeout: Object.values(
+                            swapStatusSuccess,
+                        ).includes(swap.status),
+                    };
                 }
 
                 return { ...swap, action: RescueAction.Pending };
@@ -469,4 +479,14 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
             }
         }),
     );
+};
+
+export const getTimeoutEta = (
+    asset: RefundableAssetType,
+    timeoutBlockHeight: number,
+    currentBlockHeight: number,
+) => {
+    const blocksRemaining = timeoutBlockHeight - currentBlockHeight;
+    const secondsRemaining = blocksRemaining * blockTimeMinutes[asset] * 60;
+    return Math.floor(Date.now() / 1000) + secondsRemaining;
 };

@@ -33,9 +33,7 @@ describe("TransactionLockupFailed", () => {
                     wrapper: contextWrapper,
                 },
             );
-            payContext.setFailureReason(
-                "You will be able to refund after the timeout",
-            );
+            payContext.setFailureReason(i18n.en.refund_explainer);
             payContext.setSwap({
                 assetReceive: BTC,
                 version: type,
