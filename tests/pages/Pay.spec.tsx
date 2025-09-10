@@ -14,7 +14,12 @@ import {
     getLockupTransaction,
     getSwapStatus,
 } from "../../src/utils/boltzClient";
-import { getRefundableUTXOs } from "../../src/utils/rescue";
+import {
+    getCurrentBlockHeight,
+    getRefundableUTXOs,
+    getTimeoutEta,
+    isRefundableSwapType,
+} from "../../src/utils/rescue";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -29,6 +34,9 @@ vi.mock("../../src/utils/boltzClient", () => ({
 }));
 vi.mock("../../src/utils/rescue", () => ({
     getRefundableUTXOs: vi.fn(),
+    getCurrentBlockHeight: vi.fn(),
+    getTimeoutEta: vi.fn(),
+    isRefundableSwapType: vi.fn(),
 }));
 const mockGetSwapStatus = vi.mocked(getSwapStatus);
 mockGetSwapStatus.mockResolvedValue({
@@ -36,6 +44,9 @@ mockGetSwapStatus.mockResolvedValue({
 });
 const mockGetRefundableUTXOs = vi.mocked(getRefundableUTXOs);
 const mockGetLockupTransaction = vi.mocked(getLockupTransaction);
+const mockGetCurrentBlockHeight = vi.mocked(getCurrentBlockHeight);
+const mockGetTimeoutEta = vi.mocked(getTimeoutEta);
+const mockIsRefundableSwapType = vi.mocked(isRefundableSwapType);
 
 vi.mock("localforage", () => ({
     default: {
@@ -238,4 +249,45 @@ describe("Pay", () => {
             expect(mockGetLockupTransaction).not.toHaveBeenCalled();
         },
     );
+
+    test("should display RefundEta for claimed, non-expired swap with UTXOs", async () => {
+        const timeoutEta = 1700000000;
+
+        mockUseLocation.mockReturnValue({
+            ...mockUseLocation(),
+            state: { waitForSwapTimeout: true },
+        } as ReturnType<typeof useLocation>);
+
+        mockGetRefundableUTXOs.mockResolvedValue([
+            { hex: "mock-utxo-hex-1" },
+            { hex: "mock-utxo-hex-2" },
+        ]);
+
+        mockGetCurrentBlockHeight.mockResolvedValue({ "L-BTC": 799500 });
+        mockGetTimeoutEta.mockReturnValue(timeoutEta);
+        mockIsRefundableSwapType.mockReturnValue(true);
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Pay />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        payContext.setSwap({
+            type: SwapType.Chain,
+            assetReceive: BTC,
+            assetSend: LBTC,
+            lockupDetails: { timeoutBlockHeight: 800000 },
+        } as ChainSwap);
+
+        payContext.setSwapStatus(swapStatusSuccess.TransactionClaimed);
+
+        const refundEta = await screen.findByTestId("refund-eta");
+        const expectedDate = new Date(timeoutEta * 1000).toLocaleString();
+        expect(refundEta).toHaveTextContent(expectedDate);
+    });
 });
