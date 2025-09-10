@@ -165,9 +165,7 @@ const Pay = () => {
                         )?.[swap().assetSend];
 
                         if (typeof currentBlockHeight !== "number") {
-                            throw new Error(
-                                "could not get current block height",
-                            );
+                            throw new Error("block height unavailable");
                         }
 
                         const timeoutEta = getTimeoutEta(
