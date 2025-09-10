@@ -154,10 +154,6 @@ const RefundRescue = () => {
                             ])
                         )?.[rescuableSwap().assetSend];
 
-                        if (typeof currentBlockHeight !== "number") {
-                            throw new Error("block height unavailable");
-                        }
-
                         const timeoutBlockHeight = (
                             rescuableSwap() as RestorableSwap
                         ).refundDetails.timeoutBlockHeight;

@@ -164,10 +164,6 @@ const Pay = () => {
                             await getCurrentBlockHeight([swap()])
                         )?.[swap().assetSend];
 
-                        if (typeof currentBlockHeight !== "number") {
-                            throw new Error("block height unavailable");
-                        }
-
                         const timeoutEta = getTimeoutEta(
                             swap().assetSend as RefundableAssetType,
                             timeoutBlockHeight,
