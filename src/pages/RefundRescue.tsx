@@ -50,6 +50,7 @@ export const mapSwap = (
                 address: swap.refundDetails.lockupAddress,
                 refundPrivateKeyIndex: swap.refundDetails.keyIndex,
                 claimPublicKey: swap.refundDetails.serverPublicKey,
+                timeoutBlockHeight: swap.refundDetails.timeoutBlockHeight,
             };
         case SwapType.Chain:
             return {
@@ -61,6 +62,7 @@ export const mapSwap = (
                 refundPrivateKeyIndex: swap.refundDetails.keyIndex,
                 claimPublicKey: swap.claimDetails.serverPublicKey,
                 claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+                timeoutBlockHeight: swap.refundDetails.timeoutBlockHeight,
                 lockupDetails: {
                     ...swap.refundDetails,
                     swapTree: swap.refundDetails.tree,
@@ -73,6 +75,7 @@ export const mapSwap = (
                 assetReceive: swap.to,
                 version: OutputType.Taproot,
                 address: swap.claimDetails.lockupAddress,
+                timeoutBlockHeight: swap.claimDetails.timeoutBlockHeight,
                 claimPublicKey: swap.claimDetails.serverPublicKey,
                 claimPrivateKeyIndex: swap.claimDetails.keyIndex,
                 sendAmount: swap.claimDetails.amount,
