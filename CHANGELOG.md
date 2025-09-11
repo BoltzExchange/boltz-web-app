@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.3](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.2..v1.8.3) - 2025-09-11
+
+### Bug Fixes
+
+- missing timeout block heights for uncooperative refunds - ([8a7a599](https://github.com/BoltzExchange/boltz-web-app/commit/8a7a599d0e36bfabe1ba864d7d1a85f9730048b6))
+
+---
 ## [1.8.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.1..v1.8.2) - 2025-09-04
 
 ### Bug Fixes
@@ -29,6 +36,7 @@ All notable changes to this project will be documented in this file. See [conven
 - update dependencies (#1004) - ([28822b2](https://github.com/BoltzExchange/boltz-web-app/commit/28822b2b340a54fa08462546d97e76011f0feae3))
 - extend BOLT12 E2E test - ([59ff005](https://github.com/BoltzExchange/boltz-web-app/commit/59ff0050761395b3f607770ad60e7b7ebbe9cbb5))
 - use Primal for nostr links (#1009) - ([8fecc81](https://github.com/BoltzExchange/boltz-web-app/commit/8fecc8188ea665a7c14bb52c6ef7cf30c9c14c77))
+- bump version to v1.8.2 (#1015) - ([cd09ad4](https://github.com/BoltzExchange/boltz-web-app/commit/cd09ad440f861172f2b8975d3d65e3b455075877))
 
 ### Refactoring
 
