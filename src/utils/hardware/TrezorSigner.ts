@@ -114,7 +114,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     nonce: nonce.toString(16),
                     chainId: Number(network.chainId),
                     gasPrice: feeData.gasPrice.toString(16),
-                    value: value.toString(16),
+                    value: "0x" + value.toString(16),
                     gasLimit: (txParams as unknown as { gas: number }).gas,
                 };
 
