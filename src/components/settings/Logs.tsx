@@ -22,12 +22,12 @@ const Logs = () => {
     const copy = async (evt: MouseEvent) => {
         evt.stopPropagation();
         const logs = await getLogs();
-        clipboard(JSON.stringify(logs));
+        clipboard(JSON.stringify(logs, null, 2));
     };
 
     const download = async (evt: MouseEvent) => {
         evt.stopPropagation();
-        downloadJson("boltz-logs", await getLogs());
+        downloadJson("boltz-logs", await getLogs(), true);
     };
 
     return (

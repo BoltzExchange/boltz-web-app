@@ -16,11 +16,12 @@ export const download = (file: string, content: string) => {
 export const downloadJson = <T>(
     file: string,
     content: T extends Promise<T> ? never : T,
+    pretty: boolean = false,
 ) => {
     download(
         `${file}.json`,
         `data:application/json;charset=utf-8,${encodeURI(
-            JSON.stringify(content),
+            JSON.stringify(content, null, pretty ? 2 : 0),
         )}`,
     );
 };
