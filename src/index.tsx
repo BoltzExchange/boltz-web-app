@@ -5,7 +5,6 @@ import "@fontsource/noto-sans/800.css";
 import type { RouteSectionProps } from "@solidjs/router";
 import { Navigate, Route, Router } from "@solidjs/router";
 import log from "loglevel";
-import { Show } from "solid-js";
 import { render } from "solid-js/web";
 
 import Chatwoot from "./chatwoot";
@@ -15,7 +14,7 @@ import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
 import { config } from "./config";
 import { CreateProvider } from "./context/Create";
-import { GlobalProvider, useGlobalContext } from "./context/Global";
+import { GlobalProvider } from "./context/Global";
 import { PayProvider } from "./context/Pay";
 import { RescueProvider } from "./context/Rescue";
 import { Web3SignerProvider } from "./context/Web3";
@@ -48,10 +47,6 @@ if ("serviceWorker" in navigator) {
         });
 }
 
-const isEmbedded = () => {
-    return useGlobalContext().embedded();
-};
-
 log.setLevel(config.loglevel as log.LogLevelDesc);
 document.documentElement.setAttribute(
     "boltz-theme",
@@ -69,17 +64,13 @@ const App = (props: RouteSectionProps) => {
                         <RescueProvider>
                             <SwapChecker />
                             <Chatwoot />
-                            <Show when={!isEmbedded()}>
-                                <Nav
-                                    isPro={config.isPro}
-                                    network={config.network}
-                                />
-                            </Show>
+                            <Nav
+                                isPro={config.isPro}
+                                network={config.network}
+                            />
                             {props.children}
                             <Notification />
-                            <Show when={!isEmbedded()}>
-                                <Footer />
-                            </Show>
+                            <Footer />
                         </RescueProvider>
                     </PayProvider>
                 </CreateProvider>
