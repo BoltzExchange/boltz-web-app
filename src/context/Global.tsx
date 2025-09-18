@@ -30,7 +30,7 @@ import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
 import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
-import { getUrlParam, isEmbed, resetUrlParam } from "../utils/urlParams";
+import { getUrlParam, resetUrlParam } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
@@ -76,8 +76,6 @@ export type GlobalContextType = {
     setDenomination: Setter<Denomination>;
     hideHero: Accessor<boolean>;
     setHideHero: Setter<boolean>;
-    embedded: Accessor<boolean>;
-    setEmbedded: Setter<boolean>;
     separator: Accessor<string>;
     setSeparator: Setter<string>;
     settingsMenu: Accessor<boolean>;
@@ -159,8 +157,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const [notificationType, setNotificationType] = createSignal<string>("");
 
     const [webln, setWebln] = createSignal<boolean>(false);
-
-    const [embedded, setEmbedded] = createSignal<boolean>(false);
 
     const [hideHero, setHideHero] = createSignal<boolean>(false);
 
@@ -448,11 +444,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         setRef(proReferral);
     }
 
-    if (isEmbed()) {
-        setEmbedded(true);
-        setHideHero(true);
-    }
-
     const [browserNotification, setBrowserNotification] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
@@ -514,8 +505,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setDenomination,
                 hideHero,
                 setHideHero,
-                embedded,
-                setEmbedded,
                 separator,
                 setSeparator,
                 settingsMenu,

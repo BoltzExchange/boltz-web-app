@@ -21,6 +21,5 @@ export enum UrlParam {
     SendAmount = "sendAmount",
     ReceiveAmount = "receiveAmount",
     Lang = "lang",
-    Embed = "embed",
     Ref = "ref",
 }

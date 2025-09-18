@@ -7,10 +7,6 @@ next: false
 To prefill certain inputs of the the site, URL query parameters can be used.
 Those parameters are documented here.
 
-## Embedding
-
-When `embed` is set to `1`, only the swap box will be shown.
-
 ## Destination
 
 `destination` prefills either the onchain address or invoice input field. The
