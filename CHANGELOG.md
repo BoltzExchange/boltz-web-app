@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.2..v1.8.4) - 2025-09-19
+
+### Bug Fixes
+
+- avoid fetching UTXOs during initial swap phase (#1018) - ([1118868](https://github.com/BoltzExchange/boltz-web-app/commit/1118868e9099f678e7de13dc91d6e82fba1f3b96))
+- Trezor tx value NaN (#1027) - ([4969a01](https://github.com/BoltzExchange/boltz-web-app/commit/4969a0149d6a2f9b1da6be2c30f3136147d39d7f))
+- missing timeout block heights for uncooperative refunds (#1024) - ([ab7cfdb](https://github.com/BoltzExchange/boltz-web-app/commit/ab7cfdb0746af7488db71d3ebd975370a780dd40))
+
+### Features
+
+- show timeout block height (#1021) - ([81cf5a9](https://github.com/BoltzExchange/boltz-web-app/commit/81cf5a9e06ff605eb89edf004d347bb70b46d47b))
+
+### Miscellaneous Chores
+
+- add "receive" hint to address/invoice field (#1020) - ([cf72302](https://github.com/BoltzExchange/boltz-web-app/commit/cf7230225b68d5b94fca9a1c3f301ce43b168a87))
+- update dependencies - ([5e49c79](https://github.com/BoltzExchange/boltz-web-app/commit/5e49c79a2dba88932038823f4462cf7a0623a84d))
+- bump axios from 1.11.0 to 1.12.0 (#1025) - ([21528c7](https://github.com/BoltzExchange/boltz-web-app/commit/21528c78139973239730d6bfac3cc6a219f3e574))
+- pretty print logs - ([d4b0fd7](https://github.com/BoltzExchange/boltz-web-app/commit/d4b0fd72137c44254693991465cbb5bac1067423))
+- update regtest submodule (#1029) - ([b1315ed](https://github.com/BoltzExchange/boltz-web-app/commit/b1315eda961215e33d1569323b2f4fbaecbabbde))
+-  [**breaking**]remove support for `embed` param - ([072df95](https://github.com/BoltzExchange/boltz-web-app/commit/072df952e3bea6cb1bb8d9467aac1830906bf701))
+
+---
 ## [1.8.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.1..v1.8.2) - 2025-09-04
 
 ### Bug Fixes
@@ -29,6 +51,7 @@ All notable changes to this project will be documented in this file. See [conven
 - update dependencies (#1004) - ([28822b2](https://github.com/BoltzExchange/boltz-web-app/commit/28822b2b340a54fa08462546d97e76011f0feae3))
 - extend BOLT12 E2E test - ([59ff005](https://github.com/BoltzExchange/boltz-web-app/commit/59ff0050761395b3f607770ad60e7b7ebbe9cbb5))
 - use Primal for nostr links (#1009) - ([8fecc81](https://github.com/BoltzExchange/boltz-web-app/commit/8fecc8188ea665a7c14bb52c6ef7cf30c9c14c77))
+- bump version to v1.8.2 (#1015) - ([cd09ad4](https://github.com/BoltzExchange/boltz-web-app/commit/cd09ad440f861172f2b8975d3d65e3b455075877))
 
 ### Refactoring
 
