@@ -3,8 +3,8 @@ import type { Page } from "@playwright/test";
 import fs from "fs";
 
 import { BTC, LBTC } from "../../src/consts/Assets";
-import dict from "../../src/i18n/i18n";
 import {
+    backupRescueFile,
     bitcoinSendToAddress,
     elementsSendToAddress,
     generateBitcoinBlock,
@@ -21,15 +21,6 @@ const fileName = "rescue-file.json";
 const clearStorage = async (page: Page) => {
     await page.evaluate(() => window.localStorage.clear());
     await page.reload();
-};
-
-const backupRescueFile = async (page: Page) => {
-    const downloadPromise = page.waitForEvent("download");
-    await page.getByRole("button", { name: dict.en.download_new_key }).click();
-
-    await (await downloadPromise).saveAs(fileName);
-
-    await page.getByTestId("rescueFileUpload").setInputFiles(fileName);
 };
 
 const claimPendingSwap = async ({
@@ -129,7 +120,7 @@ test.describe("Claim", () => {
         }) => {
             const sendAmount = await createChainSwap(page, assetSend);
 
-            await backupRescueFile(page);
+            await backupRescueFile(page, fileName);
 
             await page.locator("p[data-testid='copy-box']").click();
 

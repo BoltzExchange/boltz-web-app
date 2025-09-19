@@ -98,6 +98,9 @@ export const generateBitcoinBlocks = (blocks: number): Promise<string> =>
 export const generateLiquidBlock = (): Promise<string> =>
     execCommand("elements-cli-sim-client -generate");
 
+export const generateLiquidBlocks = (blocks: number): Promise<string> =>
+    execCommand(`elements-cli-sim-client -generate ${blocks}`);
+
 export const getBitcoinWalletTx = (txId: string): Promise<string> =>
     execCommand(`bitcoin-cli-sim-client gettransaction ${txId}`);
 
@@ -217,6 +220,15 @@ export const verifyRescueFile = async (page: Page) => {
     }
 };
 
+export const backupRescueFile = async (page: Page, fileName: string) => {
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: dict.en.download_new_key }).click();
+
+    await (await downloadPromise).saveAs(fileName);
+
+    await page.getByTestId("rescueFileUpload").setInputFiles(fileName);
+};
+
 export const setupSwapAssets = async (page: Page) => {
     await page.locator(".arrow-down").first().click();
     await page.getByTestId("select-L-BTC").click();
@@ -331,7 +343,7 @@ export const waitForUTXOs = async (
 
                 return utxos.length === amount;
             },
-            { timeout: 10_000 },
+            { timeout: 30_000 },
         )
         .toBe(true);
 };
