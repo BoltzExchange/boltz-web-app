@@ -44,6 +44,8 @@ jobs:
           git submodule init
           git submodule update
           chmod -R 777 regtest
+          git apply --check boltz.conf.patch
+          git apply boltz.conf.patch
           cd regtest
           ./start.sh
 
