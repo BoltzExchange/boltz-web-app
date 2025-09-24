@@ -98,6 +98,9 @@ export const generateBitcoinBlocks = (blocks: number): Promise<string> =>
 export const generateLiquidBlock = (): Promise<string> =>
     execCommand("elements-cli-sim-client -generate");
 
+export const generateLiquidBlocks = (blocks: number): Promise<string> =>
+    execCommand(`elements-cli-sim-client -generate ${blocks}`);
+
 export const getBitcoinWalletTx = (txId: string): Promise<string> =>
     execCommand(`bitcoin-cli-sim-client gettransaction ${txId}`);
 
@@ -109,6 +112,18 @@ export const payInvoiceLnd = (invoice: string): Promise<string> =>
 
 export const payInvoiceLndBackground = (invoice: string): void => {
     execCommandBackground(`lncli-sim 1 payinvoice -f ${invoice}`);
+};
+
+export const getBitcoinBlockHeight = async (): Promise<number> => {
+    return JSON.parse(
+        await execCommand("bitcoin-cli-sim-client getblockchaininfo"),
+    ).blocks as number;
+};
+
+export const getLiquidBlockHeight = async (): Promise<number> => {
+    return JSON.parse(
+        await execCommand("elements-cli-sim-client getblockchaininfo"),
+    ).blocks as number;
 };
 
 export const setDisableCooperativeSignatures = (
@@ -141,6 +156,14 @@ export const waitForNodesToSync = async (): Promise<void> => {
     ).blocks;
 
     const nodesToCheck = [
+        async (): Promise<number> => {
+            return JSON.parse(await execCommand("lncli-sim 1 getinfo"))
+                .block_height as number;
+        },
+        async (): Promise<number> => {
+            return JSON.parse(await execCommand("lightning-cli-sim 1 getinfo"))
+                .blockheight as number;
+        },
         async (): Promise<number> => {
             return JSON.parse(await execCommand("lncli-sim 2 getinfo"))
                 .block_height as number;
@@ -215,6 +238,15 @@ export const verifyRescueFile = async (page: Page) => {
     if (fs.existsSync(fileName)) {
         fs.unlinkSync(fileName);
     }
+};
+
+export const backupRescueFile = async (page: Page, fileName: string) => {
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: dict.en.download_new_key }).click();
+
+    await (await downloadPromise).saveAs(fileName);
+
+    await page.getByTestId("rescueFileUpload").setInputFiles(fileName);
 };
 
 export const setupSwapAssets = async (page: Page) => {
@@ -331,7 +363,23 @@ export const waitForUTXOs = async (
 
                 return utxos.length === amount;
             },
-            { timeout: 10_000 },
+            { timeout: 30_000 },
+        )
+        .toBe(true);
+};
+
+export const waitForBlockHeight = async (asset: string, height: number) => {
+    await expect
+        .poll(
+            async () => {
+                const currentHeight = (
+                    await axios.get<string>(
+                        `${config.assets[asset].blockExplorerApis[0].normal}/blocks/tip/height`,
+                    )
+                ).data;
+                return Number(currentHeight) >= height;
+            },
+            { timeout: 30_000 },
         )
         .toBe(true);
 };
