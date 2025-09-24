@@ -377,7 +377,6 @@ export const waitForBlockHeight = async (asset: string, height: number) => {
                         `${config.assets[asset].blockExplorerApis[0].normal}/blocks/tip/height`,
                     )
                 ).data;
-                console.log("poll currentHeight", currentHeight);
                 return Number(currentHeight) >= height;
             },
             { timeout: 30_000 },
