@@ -56,7 +56,7 @@ const execCommand = async (command: string): Promise<string> => {
 const boltzCli = async (command: string): Promise<string> => {
     try {
         const { stdout, stderr } = await execAsync(
-            `docker exec boltz-backend boltz-cli ${command}`,
+            `docker exec boltz-backend boltz-cli --rpc.certificates /boltz-data/certificates ${command}`,
             { shell: "/bin/bash" },
         );
 
