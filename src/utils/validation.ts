@@ -34,6 +34,11 @@ import { createMusig, tweakMusig } from "./taproot/musig";
 // TODO: sanity check timeout block height?
 // TODO: buffers for amounts
 
+const invalidSendAmountMsg = (expected: number, got: number) =>
+    `invalid send amount. Expected ${expected}, got ${got}`;
+const invalidReceiveAmountMsg = (expected: number, got: number) =>
+    `invalid receive amount. Expected ${expected} to be bigger than ${got}`;
+
 type ContractGetter = () => BaseContract;
 
 const validateContract = async (getEtherSwap: ContractGetter) => {
@@ -43,7 +48,12 @@ const validateContract = async (getEtherSwap: ContractGetter) => {
     }
 
     const code = await getEtherSwap().getDeployedCode();
-    return codeHashes.includes(ethers.keccak256(code));
+    if (!codeHashes.includes(ethers.keccak256(code))) {
+        log.error("invalid contract code:", code);
+        return false;
+    }
+
+    return true;
 };
 
 const validateAddress = async (
@@ -65,16 +75,22 @@ const validateAddress = async (
     const decodedAddress = decodeAddress(chain, address);
 
     if (!decodedAddress.script.equals(compareScript)) {
+        log.error("decoded address script mismatch");
         return false;
     }
 
-    if (chain === "L-BTC") {
+    if (chain === LBTC) {
+        if (!blindingKey) {
+            log.error("missing blindingKey for LBTC address validation");
+            return false;
+        }
         const blindingPrivateKey = buffer.from(blindingKey, "hex");
         const blindingPublicKey = buffer.from(
             ecc.pointFromScalar(blindingPrivateKey),
         );
 
         if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
+            log.error("blinding public key mismatch");
             return false;
         }
     }
@@ -89,23 +105,37 @@ const validateBip21 = (
 ) => {
     const bip21Split = bip21.split("?");
     if (bip21Split[0].split(":")[1] !== address) {
+        log.error("invalid BIP21 format");
         return false;
     }
 
     const params = new URLSearchParams(bip21Split[1]);
 
     if (expectedAmount === 0) {
-        return !params.has("amount");
+        const hasAmount = params.has("amount");
+        if (hasAmount) {
+            log.error(
+                `unexpected amount in BIP21. Expected 0, got ${params.get("amount")}`,
+            );
+            return false;
+        }
+        return true;
     }
 
-    return (
-        params.get("amount") ===
+    if (
+        params.get("amount") !==
         formatAmountDenomination(
             BigNumber(expectedAmount),
             Denomination.Btc,
             ".",
         )
-    );
+    ) {
+        log.error(
+            `invalid BIP21 amount. Expected ${expectedAmount}, got ${params.get("amount")}`,
+        );
+        return false;
+    }
+    return true;
 };
 
 const validateReverse = async (
@@ -117,16 +147,26 @@ const validateReverse = async (
     const invoiceData = await decodeInvoice(swap.invoice);
 
     // Amounts
-    if (
-        invoiceData.satoshis !== swap.sendAmount ||
-        swap.onchainAmount <= swap.receiveAmount
-    ) {
+    const invalidSendAmount = invoiceData.satoshis !== swap.sendAmount;
+    if (invalidSendAmount) {
+        log.error(invalidSendAmountMsg(invoiceData.satoshis, swap.sendAmount));
+        return false;
+    }
+
+    const invalidReceiveAmount = swap.onchainAmount <= swap.receiveAmount;
+    if (invalidReceiveAmount) {
+        log.error(
+            invalidReceiveAmountMsg(swap.onchainAmount, swap.receiveAmount),
+        );
         return false;
     }
 
     // Invoice
     const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
     if (invoiceData.preimageHash !== preimageHash.toString("hex")) {
+        log.error(
+            `invalid swap preimage hash. Expected ${preimageHash.toString("hex")}, got ${invoiceData.preimageHash}`,
+        );
         return false;
     }
 
@@ -141,7 +181,7 @@ const validateReverse = async (
     const theirPublicKey = buffer.from(swap.refundPublicKey, "hex");
 
     const compareTree = reverseSwapTree(
-        swap.assetReceive === "L-BTC",
+        swap.assetReceive === LBTC,
         preimageHash,
         Buffer.from(ourKeys.publicKey),
         theirPublicKey,
@@ -149,6 +189,7 @@ const validateReverse = async (
     );
 
     if (!compareTrees(tree, compareTree)) {
+        log.error("swap tree mismatch");
         return false;
     }
 
@@ -171,6 +212,7 @@ const validateSubmarine = async (
 ) => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
+        log.error(invalidSendAmountMsg(swap.expectedAmount, swap.sendAmount));
         return false;
     }
 
@@ -187,7 +229,7 @@ const validateSubmarine = async (
     const theirPublicKey = buffer.from(swap.claimPublicKey, "hex");
 
     const compareTree = swapTree(
-        swap.assetSend === "L-BTC",
+        swap.assetSend === LBTC,
         buffer.from(invoiceData.preimageHash, "hex"),
         theirPublicKey,
         Buffer.from(ourKeys.publicKey),
@@ -195,6 +237,7 @@ const validateSubmarine = async (
     );
 
     if (!compareTrees(tree, compareTree)) {
+        log.error("swap tree mismatch");
         return false;
     }
 
@@ -231,6 +274,9 @@ const validateChainSwap = async (
     ) => {
         if (side === Side.Send) {
             if (swap.sendAmount > 0 && details.amount !== swap.sendAmount) {
+                log.error(
+                    invalidSendAmountMsg(swap.sendAmount, details.amount),
+                );
                 return false;
             }
         } else {
@@ -238,6 +284,9 @@ const validateChainSwap = async (
                 swap.receiveAmount > 0 &&
                 details.amount <= swap.receiveAmount
             ) {
+                log.error(
+                    invalidReceiveAmountMsg(swap.receiveAmount, details.amount),
+                );
                 return false;
             }
         }
@@ -266,6 +315,7 @@ const validateChainSwap = async (
         );
 
         if (!compareTrees(tree, compareTree)) {
+            log.error("swap tree mismatch");
             return false;
         }
 
