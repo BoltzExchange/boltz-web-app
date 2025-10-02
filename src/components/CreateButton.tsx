@@ -166,8 +166,11 @@ const CreateButton = () => {
                 assetReceive,
                 bolt12Offer,
                 denomination,
+                sendAmount,
+                receiveAmount,
             ],
             () => {
+                setButtonDisable(false);
                 if (!online()) {
                     setButtonLabel({ key: "api_offline" });
                     return;
@@ -279,7 +282,30 @@ const CreateButton = () => {
                                     "Fetching invoice for LNURL failed:",
                                     e,
                                 );
-                                throw formatError(e);
+                                if (
+                                    e.message === "min_amount_identifier" ||
+                                    e.message === "max_amount_identifier"
+                                ) {
+                                    const value = {
+                                        amount: formatAmount(
+                                            BigNumber(e.cause),
+                                            denomination(),
+                                            separator(),
+                                        ),
+                                        denomination: formatDenomination(
+                                            denomination(),
+                                            assetSend(),
+                                        ),
+                                    };
+                                    setButtonDisable(true);
+                                    setButtonLabel({
+                                        key: e.message,
+                                        params: value,
+                                    });
+                                    throw t(e.message, value);
+                                }
+                                const error = e.json ? await e.json() : e;
+                                throw formatError(error);
                             }
                         })(),
                         (async () => {
@@ -555,7 +581,6 @@ const CreateButton = () => {
     };
 
     const buttonClick = async () => {
-        setButtonDisable(true);
         setLoading(true);
         try {
             if (validWayToFetchInvoice()) {
@@ -575,7 +600,6 @@ const CreateButton = () => {
             log.error("Error creating swap", e);
             notify("error", e);
         } finally {
-            setButtonDisable(false);
             setLoading(false);
         }
     };
@@ -601,6 +625,7 @@ const CreateButton = () => {
                 !online() ||
                 !(valid() || validWayToFetchInvoice()) ||
                 buttonDisable() ||
+                loading() ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&

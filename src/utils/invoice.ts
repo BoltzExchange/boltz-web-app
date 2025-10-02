@@ -159,14 +159,16 @@ export const fetchBip353 = async (
 };
 
 const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
-    log.debug(
-        "amount check: (x, min, max)",
-        amount,
-        data.minSendable,
-        data.maxSendable,
-    );
-    if (amount < data.minSendable || amount > data.maxSendable) {
-        throw new Error("Amount not in LNURL range.");
+    const minSendable = Math.round(data.minSendable * 1000);
+    const maxSendable = Math.round(data.maxSendable * 1000);
+
+    log.debug("amount check: (x, min, max)", amount, minSendable, maxSendable);
+
+    if (amount < minSendable) {
+        throw new Error("min_amount_identifier", { cause: data.minSendable });
+    }
+    if (amount > maxSendable) {
+        throw new Error("max_amount_identifier", { cause: data.maxSendable });
     }
     return data;
 };
