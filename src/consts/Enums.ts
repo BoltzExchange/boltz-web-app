@@ -23,3 +23,8 @@ export enum UrlParam {
     Lang = "lang",
     Ref = "ref",
 }
+
+export enum InvoiceValidation {
+    MinAmount = "minAmount",
+    MaxAmount = "maxAmount",
+}

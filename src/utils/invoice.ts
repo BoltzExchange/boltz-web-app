@@ -6,6 +6,7 @@ import log from "loglevel";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
+import { InvoiceValidation } from "../consts/Enums";
 import Bolt12 from "../lazy/bolt12";
 import { fetchBolt12Invoice } from "./boltzClient";
 import { lookup } from "./dnssec/dohLookup";
@@ -165,10 +166,14 @@ const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
     log.debug("amount check: (x, min, max)", amount, minSendable, maxSendable);
 
     if (amount < minSendable) {
-        throw new Error("min_amount_identifier", { cause: data.minSendable });
+        throw new Error(InvoiceValidation.MinAmount, {
+            cause: data.minSendable,
+        });
     }
     if (amount > maxSendable) {
-        throw new Error("max_amount_identifier", { cause: data.maxSendable });
+        throw new Error(InvoiceValidation.MaxAmount, {
+            cause: data.maxSendable,
+        });
     }
     return data;
 };

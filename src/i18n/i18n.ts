@@ -310,10 +310,14 @@ const dict = {
         completed: "Completed",
         get_refundable_error:
             "Failed to load UTXO data. Refresh to try again or check your internet connection if the problem persists.",
-        min_amount_identifier:
-            "Minimum amount for this identifier is {{ amount }} {{ denomination }}",
-        max_amount_identifier:
-            "Maximum amount for this identifier is {{ amount }} {{ denomination }}",
+        min_amount_lnurl:
+            "Minimum amount for this lnUrl is {{ amount }} {{ denomination }}",
+        max_amount_lnurl:
+            "Maximum amount for this lnUrl is {{ amount }} {{ denomination }}",
+        min_amount_lnaddress:
+            "Minimum amount for this lnAddress is {{ amount }} {{ denomination }}",
+        max_amount_lnaddress:
+            "Maximum amount for this lnAddress is {{ amount }} {{ denomination }}",
     },
     de: {
         language: "Deutsch",

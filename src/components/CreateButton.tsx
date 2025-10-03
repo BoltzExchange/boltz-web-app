@@ -5,12 +5,13 @@ import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
+import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
@@ -283,8 +284,9 @@ const CreateButton = () => {
                                     e,
                                 );
                                 if (
-                                    e.message === "min_amount_identifier" ||
-                                    e.message === "max_amount_identifier"
+                                    Object.values(InvoiceValidation).includes(
+                                        e.message,
+                                    )
                                 ) {
                                     const value = {
                                         amount: formatAmount(
@@ -297,12 +299,27 @@ const CreateButton = () => {
                                             assetSend(),
                                         ),
                                     };
+
                                     setButtonDisable(true);
+
+                                    const minOrMax =
+                                        InvoiceValidation.MinAmount ===
+                                        e.message
+                                            ? "min"
+                                            : "max";
+
+                                    const isLnAddress = lnurl().includes("@");
+
+                                    const errorMsg: DictKey = isLnAddress
+                                        ? `${minOrMax}_amount_lnaddress`
+                                        : `${minOrMax}_amount_lnurl`;
+
                                     setButtonLabel({
-                                        key: e.message,
+                                        key: errorMsg,
                                         params: value,
                                     });
-                                    throw t(e.message, value);
+
+                                    throw t(errorMsg, value);
                                 }
                                 const error = e.json ? await e.json() : e;
                                 throw formatError(error);

@@ -265,7 +265,7 @@ describe("CreateButton", () => {
         btn.click();
 
         const errorBtn = (await screen.findByText(
-            i18n.en.min_amount_identifier
+            i18n.en.min_amount_lnaddress
                 .replace("{{ amount }}", "100 000")
                 .replace("{{ denomination }}", "sats"),
         )) as HTMLButtonElement;
@@ -313,7 +313,7 @@ describe("CreateButton", () => {
         btn.click();
 
         const errorBtn = (await screen.findByText(
-            i18n.en.max_amount_identifier
+            i18n.en.max_amount_lnaddress
                 .replace("{{ amount }}", "200 000")
                 .replace("{{ denomination }}", "sats"),
         )) as HTMLButtonElement;
