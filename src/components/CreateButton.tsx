@@ -24,6 +24,7 @@ import {
     btcToSat,
     formatAmount,
     formatDenomination,
+    miliSatToSat,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
@@ -288,9 +289,12 @@ const CreateButton = () => {
                                         e.message,
                                     )
                                 ) {
+                                    const satsAmount = miliSatToSat(
+                                        BigNumber(e.cause),
+                                    );
                                     const value = {
                                         amount: formatAmount(
-                                            BigNumber(e.cause),
+                                            BigNumber(satsAmount),
                                             denomination(),
                                             separator(),
                                         ),
@@ -308,11 +312,7 @@ const CreateButton = () => {
                                             ? "min"
                                             : "max";
 
-                                    const isLnAddress = lnurl().includes("@");
-
-                                    const errorMsg: DictKey = isLnAddress
-                                        ? `${minOrMax}_amount_lnaddress`
-                                        : `${minOrMax}_amount_lnurl`;
+                                    const errorMsg: DictKey = `${minOrMax}_amount_destination`;
 
                                     setButtonLabel({
                                         key: errorMsg,

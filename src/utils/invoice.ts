@@ -9,6 +9,7 @@ import { BTC, LBTC, LN } from "../consts/Assets";
 import { InvoiceValidation } from "../consts/Enums";
 import Bolt12 from "../lazy/bolt12";
 import { fetchBolt12Invoice } from "./boltzClient";
+import { satToMiliSat } from "./denomination";
 import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";
 
@@ -95,7 +96,7 @@ export const fetchLnurl = async (
         url = utf8.encode(bytes);
     }
 
-    const amount = Math.round(amount_sat * 1000);
+    const amount = satToMiliSat(BigNumber(amount_sat));
 
     log.debug("Fetching LNURL:", url);
 
@@ -159,18 +160,20 @@ export const fetchBip353 = async (
     return invoice;
 };
 
-const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
-    const minSendable = Math.round(data.minSendable * 1000);
-    const maxSendable = Math.round(data.maxSendable * 1000);
+const checkLnurlResponse = (amount: BigNumber, data: LnurlResponse) => {
+    log.debug(
+        "amount check: (x, min, max)",
+        amount,
+        data.minSendable,
+        data.maxSendable,
+    );
 
-    log.debug("amount check: (x, min, max)", amount, minSendable, maxSendable);
-
-    if (amount < minSendable) {
+    if (amount.isLessThan(BigNumber(data.minSendable))) {
         throw new Error(InvoiceValidation.MinAmount, {
             cause: data.minSendable,
         });
     }
-    if (amount > maxSendable) {
+    if (amount.isGreaterThan(BigNumber(data.maxSendable))) {
         throw new Error(InvoiceValidation.MaxAmount, {
             cause: data.maxSendable,
         });
@@ -179,7 +182,7 @@ const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
 };
 
 export const fetchLnurlInvoice = async (
-    amount: number,
+    amount: BigNumber,
     data: LnurlResponse,
 ) => {
     const url = new URL(data.callback);

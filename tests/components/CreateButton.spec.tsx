@@ -232,8 +232,9 @@ describe("CreateButton", () => {
                 ok: true,
                 json: () =>
                     Promise.resolve({
-                        minSendable: 100_000,
-                        maxSendable: 1_000_000,
+                        // response in milisats
+                        minSendable: 100_000, // 100 sats
+                        maxSendable: 200_000, // 200 sats
                     }),
             }),
         );
@@ -248,8 +249,8 @@ describe("CreateButton", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setOnline(true);
-        signals.setSendAmount(BigNumber(90_000));
-        signals.setReceiveAmount(BigNumber(80_000));
+        signals.setSendAmount(BigNumber(90));
+        signals.setReceiveAmount(BigNumber(80));
         signals.setAmountValid(true);
         signals.setAddressValid(true);
         signals.setAssetSend(LBTC);
@@ -265,8 +266,8 @@ describe("CreateButton", () => {
         btn.click();
 
         const errorBtn = (await screen.findByText(
-            i18n.en.min_amount_lnaddress
-                .replace("{{ amount }}", "100 000")
+            i18n.en.min_amount_destination
+                .replace("{{ amount }}", "100")
                 .replace("{{ denomination }}", "sats"),
         )) as HTMLButtonElement;
         expect(errorBtn).not.toBeUndefined();
@@ -280,8 +281,9 @@ describe("CreateButton", () => {
                 ok: true,
                 json: () =>
                     Promise.resolve({
-                        minSendable: 100_000,
-                        maxSendable: 200_000,
+                        // response in milisats
+                        minSendable: 100_000, // 100 sats
+                        maxSendable: 200_000, // 200 sats
                     }),
             }),
         );
@@ -296,8 +298,8 @@ describe("CreateButton", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setOnline(true);
-        signals.setSendAmount(BigNumber(400_000));
-        signals.setReceiveAmount(BigNumber(300_000));
+        signals.setSendAmount(BigNumber(400));
+        signals.setReceiveAmount(BigNumber(300));
         signals.setAmountValid(true);
         signals.setAddressValid(true);
         signals.setAssetSend(LBTC);
@@ -313,8 +315,8 @@ describe("CreateButton", () => {
         btn.click();
 
         const errorBtn = (await screen.findByText(
-            i18n.en.max_amount_lnaddress
-                .replace("{{ amount }}", "200 000")
+            i18n.en.max_amount_destination
+                .replace("{{ amount }}", "200")
                 .replace("{{ denomination }}", "sats"),
         )) as HTMLButtonElement;
         expect(errorBtn).not.toBeUndefined();
