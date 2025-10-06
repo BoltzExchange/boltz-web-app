@@ -1,3 +1,5 @@
+import { BigNumber } from "bignumber.js";
+
 import { fetchLnurlInvoice } from "../../src/utils/invoice";
 
 describe("fetchLnurlInvoice", () => {
