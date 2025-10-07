@@ -512,6 +512,14 @@ const CreateButton = () => {
                 return false;
             }
 
+            log.debug(`Created swap ${data.id}:`, {
+                destination:
+                    swapType() === SwapType.Submarine
+                        ? invoice()
+                        : data.claimAddress,
+                receiveAmount: data.receiveAmount,
+            });
+
             await setSwapStorage({
                 ...data,
                 signer:
