@@ -4,7 +4,7 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { RBTC } from "../consts/Assets";
+import { BTC, RBTC } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -300,7 +300,7 @@ const CreateButton = () => {
                                         ),
                                         denomination: formatDenomination(
                                             denomination(),
-                                            assetSend(),
+                                            BTC,
                                         ),
                                     };
 
