@@ -6,8 +6,10 @@ import log from "loglevel";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
+import { InvoiceValidation } from "../consts/Enums";
 import Bolt12 from "../lazy/bolt12";
 import { fetchBolt12Invoice } from "./boltzClient";
+import { satToMiliSat } from "./denomination";
 import { lookup } from "./dnssec/dohLookup";
 import { checkResponse } from "./http";
 
@@ -94,7 +96,7 @@ export const fetchLnurl = async (
         url = utf8.encode(bytes);
     }
 
-    const amount = Math.round(amount_sat * 1000);
+    const amount = satToMiliSat(BigNumber(amount_sat));
 
     log.debug("Fetching LNURL:", url);
 
@@ -158,21 +160,29 @@ export const fetchBip353 = async (
     return invoice;
 };
 
-const checkLnurlResponse = (amount: number, data: LnurlResponse) => {
+const checkLnurlResponse = (amount: BigNumber, data: LnurlResponse) => {
     log.debug(
         "amount check: (x, min, max)",
         amount,
         data.minSendable,
         data.maxSendable,
     );
-    if (amount < data.minSendable || amount > data.maxSendable) {
-        throw new Error("Amount not in LNURL range.");
+
+    if (amount.isLessThan(BigNumber(data.minSendable))) {
+        throw new Error(InvoiceValidation.MinAmount, {
+            cause: data.minSendable,
+        });
+    }
+    if (amount.isGreaterThan(BigNumber(data.maxSendable))) {
+        throw new Error(InvoiceValidation.MaxAmount, {
+            cause: data.maxSendable,
+        });
     }
     return data;
 };
 
 export const fetchLnurlInvoice = async (
-    amount: number,
+    amount: BigNumber,
     data: LnurlResponse,
 ) => {
     const url = new URL(data.callback);

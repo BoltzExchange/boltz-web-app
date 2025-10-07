@@ -15,6 +15,10 @@ const invoice =
     "lnbcrt600u1p5ynhmgpp5l8j7lnaql4mqeukvcqmhr8zp9vh3rngfgmla6km2fh9vf8pt678sdqqcqzzsxqrpwusp56gha98s9xk2f4eeyhs7dcsx4j4rt79llks72nf6l6hc9cna6vfgs9qxpqysgqqnt8lqcrujmuuv3ajvrlu5z7ydvvge4efv39hj28etf8v72vpcl597evz5e0tvq04tv3z089wxtugee4xh5hvu6309ymrfddrlzfhzgqumsrpk";
 
 describe("CreateButton", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     test("should render CreateButton", () => {
         render(() => <CreateButton />, {
             wrapper: contextWrapper,
@@ -219,5 +223,103 @@ describe("CreateButton", () => {
         )) as HTMLButtonElement;
         expect(btn).not.toBeUndefined();
         expect(btn.disabled).toBeTruthy();
+    });
+
+    test("should be disabled with LNURL min amount error", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: () =>
+                    Promise.resolve({
+                        // response in milisats
+                        minSendable: 100_000, // 100 sats
+                        maxSendable: 200_000, // 200 sats
+                    }),
+            }),
+        );
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(90));
+        signals.setReceiveAmount(BigNumber(80));
+        signals.setAmountValid(true);
+        signals.setAddressValid(true);
+        signals.setAssetSend(LBTC);
+        signals.setAssetReceive(LN);
+        signals.setLnurl("test@example.com");
+
+        const btn = (await screen.findByText(
+            i18n.en.create_swap,
+        )) as HTMLButtonElement;
+        expect(btn).not.toBeUndefined();
+        expect(btn.disabled).toBeFalsy();
+
+        btn.click();
+
+        const errorBtn = (await screen.findByText(
+            i18n.en.min_amount_destination
+                .replace("{{ amount }}", "100")
+                .replace("{{ denomination }}", "sats"),
+        )) as HTMLButtonElement;
+        expect(errorBtn).not.toBeUndefined();
+        expect(errorBtn.disabled).toBeTruthy();
+    });
+
+    test("should be disabled with LNURL max amount error", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: () =>
+                    Promise.resolve({
+                        // response in milisats
+                        minSendable: 100_000, // 100 sats
+                        maxSendable: 200_000, // 200 sats
+                    }),
+            }),
+        );
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(400));
+        signals.setReceiveAmount(BigNumber(300));
+        signals.setAmountValid(true);
+        signals.setAddressValid(true);
+        signals.setAssetSend(LBTC);
+        signals.setAssetReceive(LN);
+        signals.setLnurl("test@example.com");
+
+        const btn = (await screen.findByText(
+            i18n.en.create_swap,
+        )) as HTMLButtonElement;
+        expect(btn).not.toBeUndefined();
+        expect(btn.disabled).toBeFalsy();
+
+        btn.click();
+
+        const errorBtn = (await screen.findByText(
+            i18n.en.max_amount_destination
+                .replace("{{ amount }}", "200")
+                .replace("{{ denomination }}", "sats"),
+        )) as HTMLButtonElement;
+        expect(errorBtn).not.toBeUndefined();
+        expect(errorBtn.disabled).toBeTruthy();
     });
 });

@@ -2,6 +2,7 @@ import { BigNumber } from "bignumber.js";
 
 import { Denomination } from "../consts/Enums";
 
+const miliFactor = 1_000;
 const satFactor = 100_000_000;
 
 export const getValidationRegex = (maximum: number): RegExp => {
@@ -109,4 +110,12 @@ export const btcToSat = (btc: BigNumber) => {
 
 export const satToBtc = (sat: BigNumber) => {
     return sat.dividedBy(satFactor);
+};
+
+export const satToMiliSat = (sat: BigNumber) => {
+    return sat.multipliedBy(miliFactor);
+};
+
+export const miliSatToSat = (sat: BigNumber) => {
+    return sat.dividedBy(miliFactor);
 };

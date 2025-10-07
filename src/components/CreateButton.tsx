@@ -4,13 +4,14 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { BTC, RBTC } from "../consts/Assets";
+import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
+import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
@@ -23,6 +24,7 @@ import {
     btcToSat,
     formatAmount,
     formatDenomination,
+    miliSatToSat,
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
@@ -166,8 +168,11 @@ const CreateButton = () => {
                 assetReceive,
                 bolt12Offer,
                 denomination,
+                sendAmount,
+                receiveAmount,
             ],
             () => {
+                setButtonDisable(false);
                 if (!online()) {
                     setButtonLabel({ key: "api_offline" });
                     return;
@@ -279,7 +284,45 @@ const CreateButton = () => {
                                     "Fetching invoice for LNURL failed:",
                                     e,
                                 );
-                                throw formatError(e);
+                                if (
+                                    Object.values(InvoiceValidation).includes(
+                                        e.message,
+                                    )
+                                ) {
+                                    const satsAmount = miliSatToSat(
+                                        BigNumber(e.cause),
+                                    );
+                                    const value = {
+                                        amount: formatAmount(
+                                            BigNumber(satsAmount),
+                                            denomination(),
+                                            separator(),
+                                        ),
+                                        denomination: formatDenomination(
+                                            denomination(),
+                                            BTC,
+                                        ),
+                                    };
+
+                                    setButtonDisable(true);
+
+                                    const minOrMax =
+                                        InvoiceValidation.MinAmount ===
+                                        e.message
+                                            ? "min"
+                                            : "max";
+
+                                    const errorMsg: DictKey = `${minOrMax}_amount_destination`;
+
+                                    setButtonLabel({
+                                        key: errorMsg,
+                                        params: value,
+                                    });
+
+                                    throw t(errorMsg, value);
+                                }
+                                const error = e.json ? await e.json() : e;
+                                throw formatError(error);
                             }
                         })(),
                         (async () => {
@@ -555,7 +598,6 @@ const CreateButton = () => {
     };
 
     const buttonClick = async () => {
-        setButtonDisable(true);
         setLoading(true);
         try {
             if (validWayToFetchInvoice()) {
@@ -575,7 +617,6 @@ const CreateButton = () => {
             log.error("Error creating swap", e);
             notify("error", e);
         } finally {
-            setButtonDisable(false);
             setLoading(false);
         }
     };
@@ -601,6 +642,7 @@ const CreateButton = () => {
                 !online() ||
                 !(valid() || validWayToFetchInvoice()) ||
                 buttonDisable() ||
+                loading() ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&

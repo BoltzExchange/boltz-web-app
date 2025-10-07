@@ -1,3 +1,5 @@
+import { BigNumber } from "bignumber.js";
+
 import { fetchLnurlInvoice } from "../../src/utils/invoice";
 
 describe("fetchLnurlInvoice", () => {
@@ -43,7 +45,7 @@ describe("fetchLnurlInvoice", () => {
                 maxSendable: 1000000,
                 tag: "payRequest",
             };
-            const result = await fetchLnurlInvoice(amount, data);
+            const result = await fetchLnurlInvoice(BigNumber(amount), data);
 
             expect(fetch).toHaveBeenCalledTimes(1);
             expect(fetch).toHaveBeenCalledWith(expectedUrl);

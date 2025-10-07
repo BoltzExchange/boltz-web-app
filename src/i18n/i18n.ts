@@ -310,6 +310,10 @@ const dict = {
         completed: "Completed",
         get_refundable_error:
             "Failed to load UTXO data. Refresh to try again or check your internet connection if the problem persists.",
+        min_amount_destination:
+            "Minimum amount for the destination address is {{ amount }} {{ denomination }}",
+        max_amount_destination:
+            "Maximum amount for the destination address is {{ amount }} {{ denomination }}",
     },
     de: {
         language: "Deutsch",
@@ -637,6 +641,10 @@ const dict = {
         completed: "Abgeschlossen",
         get_refundable_error:
             "UTXO-Daten konnten nicht geladen werden. Aktualisiere die Seite um es erneut zu versuchen oder überprüfe deine Internetverbindung, falls das Problem weiterhin besteht.",
+        min_amount_destination:
+            "Mindestbetrag für die Zieladresse ist {{ amount }} {{ denomination }}",
+        max_amount_destination:
+            "Höchstbetrag für die Zieladresse ist {{ amount }} {{ denomination }}",
     },
     es: {
         language: "Español",
@@ -961,6 +969,10 @@ const dict = {
         completed: "Completado",
         get_refundable_error:
             "No se pudieron cargar los datos de UTXO. Actualiza la página para volver a intentarlo o verifica tu conexión a Internet si el problema persiste.",
+        min_amount_destination:
+            "La cantidad mínima para la dirección de destino es {{ amount }} {{ denomination }}",
+        max_amount_destination:
+            "La cantidad máxima para la dirección de destino es {{ amount }} {{ denomination }}",
     },
     pt: {
         language: "Português",
@@ -1281,6 +1293,10 @@ const dict = {
         completed: "Completado",
         get_refundable_error:
             "Não foi possível carregar os dados de UTXO. Recarregue a página para voltar a tentar ou verifique sua conexão com a Internet se o problema persistir.",
+        min_amount_destination:
+            "O valor mínimo para o endereço de destino é {{ amount }} {{ denomination }}",
+        max_amount_destination:
+            "O valor máximo para o endereço de destino é {{ amount }} {{ denomination }}",
     },
     zh: {
         language: "中文",
@@ -1568,6 +1584,10 @@ const dict = {
         completed: "已完成",
         get_refundable_error:
             "无法加载 UTXO 数据。请刷新页面后重试，或检查您的网络连接如果问题仍然存在。",
+        min_amount_destination:
+            "目标地址的最小金额为{{ amount }}{{ denomination }}",
+        max_amount_destination:
+            "目标地址的最大金额为{{ amount }}{{ denomination }}",
     },
     ja: {
         language: "日本語",
@@ -1887,6 +1907,10 @@ const dict = {
         completed: "完了",
         get_refundable_error:
             "UTXO データの読み込みに失敗しました。ページを更新して再試行するか、問題が続く場合はインターネット接続を確認してください。",
+        min_amount_destination:
+            "宛先アドレスの最小金額は{{ amount }} {{ denomination }}です",
+        max_amount_destination:
+            "宛先アドレスの最大金額は{{ amount }} {{ denomination }}です",
     },
 };
 
