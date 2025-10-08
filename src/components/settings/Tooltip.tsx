@@ -1,4 +1,4 @@
-import type { JSX } from "solid-js";
+import { type JSX, createMemo } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
@@ -10,6 +10,7 @@ const Tooltip = (props: {
     label: { key: DictKey; variables?: Record<string, string> };
     children: JSX.Element;
     direction?: Direction[];
+    pxDistance?: number;
 }) => {
     const timeout_delay = 300;
     const timeout_delay_click = 2500;
@@ -39,6 +40,29 @@ const Tooltip = (props: {
         }, timeout_delay);
     };
 
+    const getTooltipPosition = createMemo(() => {
+        const oppositePosition = {
+            left: "right",
+            right: "left",
+            top: "bottom",
+            bottom: "top",
+        };
+
+        const directions = props.direction || ["right"];
+        const offset = props.pxDistance ? `${props.pxDistance}px` : "30px";
+
+        return directions.reduce(
+            (acc, direction) => {
+                const opposite = oppositePosition[direction];
+                if (opposite) {
+                    acc[opposite] = offset;
+                }
+                return acc;
+            },
+            {} as Record<string, string>,
+        );
+    });
+
     return (
         <span class="tooltip">
             <span
@@ -48,7 +72,8 @@ const Tooltip = (props: {
                 {props.children}
             </span>
             <span
-                class={`tooltip-text ${props.direction?.join(" ") || "right"}`}>
+                class={`tooltip-text ${props.direction?.join(" ") || "right"}`}
+                style={getTooltipPosition()}>
                 {t(props.label.key, props.label.variables)}
             </span>
         </span>

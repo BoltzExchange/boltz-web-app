@@ -279,6 +279,7 @@ const Pay = () => {
                                     }>
                                     <span class="vertical-line" />
                                     <Tooltip
+                                        pxDistance={20}
                                         label={{
                                             key: "destination_address",
                                             variables: {
