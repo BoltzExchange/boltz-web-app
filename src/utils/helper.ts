@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 import type { ECPairInterface } from "ecpair";
 
 import { chooseUrl, config } from "../config";
-import { BTC, LN } from "../consts/Assets";
+import { BTC, LN, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
 import type { deriveKeyFn } from "../context/Global";
@@ -168,4 +168,20 @@ export const parsePrivateKey = (
         // When the private key is not HEX, we try to decode it as WIF
         return ECPair.fromWIF(privateKeyHex);
     }
+};
+
+export const getDestinationAddress = (swap: SomeSwap) => {
+    if (swap === null || swap === undefined) {
+        return "";
+    }
+
+    if (swap.assetReceive === RBTC) {
+        return swap.signer;
+    }
+
+    if (swap.type === SwapType.Submarine) {
+        return (swap as SubmarineSwap).invoice;
+    }
+
+    return swap.claimAddress;
 };

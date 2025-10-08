@@ -23,7 +23,7 @@ import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
-import { RBTC, type RefundableAssetType } from "../consts/Assets";
+import { type RefundableAssetType } from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
@@ -45,7 +45,12 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
-import { clipboard, cropString, isMobile } from "../utils/helper";
+import {
+    clipboard,
+    cropString,
+    getDestinationAddress,
+    isMobile,
+} from "../utils/helper";
 import {
     getCurrentBlockHeight,
     getRefundableUTXOs,
@@ -236,12 +241,6 @@ const Pay = () => {
         () => statusOverride() || renameSwapStatus(swapStatus()),
     );
 
-    const destinationAddress = createMemo(() =>
-        swap()?.assetReceive === RBTC
-            ? swap().signer
-            : swap()?.claimAddress || (swap() as SubmarineSwap)?.invoice,
-    );
-
     return (
         <div data-status={status()} class="frame">
             <span class="frame-header">
@@ -273,7 +272,7 @@ const Pay = () => {
                                 <span class="btn-small">{status()}</span>
                                 <Show
                                     when={
-                                        destinationAddress() &&
+                                        getDestinationAddress(swap()) &&
                                         (swap().status ===
                                             swapStatusPending.SwapCreated ||
                                             swap().status ===
@@ -286,7 +285,9 @@ const Pay = () => {
                                             key: "destination_address",
                                             variables: {
                                                 address: cropString(
-                                                    destinationAddress(),
+                                                    getDestinationAddress(
+                                                        swap(),
+                                                    ),
                                                     14,
                                                     8,
                                                 ),
@@ -300,7 +301,9 @@ const Pay = () => {
                                             id="copy-destination"
                                             onClick={() =>
                                                 copyBoxText(
-                                                    destinationAddress(),
+                                                    getDestinationAddress(
+                                                        swap(),
+                                                    ),
                                                 )
                                             }>
                                             <Show
