@@ -1,3 +1,4 @@
+import { BiSolidHelpCircle } from "solid-icons/bi";
 import { IoClose } from "solid-icons/io";
 import type { JSXElement } from "solid-js";
 
@@ -22,7 +23,9 @@ const Entry = (props: {
     return (
         <span class="setting">
             <label>{t(props.label)}: </label>
-            <Tooltip label={{ key: props.tooltipLabel }} />
+            <Tooltip label={{ key: props.tooltipLabel }}>
+                <BiSolidHelpCircle size={22} opacity={0.5} />
+            </Tooltip>
             <div class="spacer" />
             {props.settingElement}
         </span>

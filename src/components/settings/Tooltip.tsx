@@ -1,13 +1,15 @@
-import { BiSolidHelpCircle } from "solid-icons/bi";
+import type { JSX } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
 import "../../style/tooltip.scss";
 
+type Direction = "left" | "right" | "top" | "bottom";
+
 const Tooltip = (props: {
     label: { key: DictKey; variables?: Record<string, string> };
-    size?: number;
-    direction?: "left" | "right";
+    children: JSX.Element;
+    direction?: Direction[];
 }) => {
     const timeout_delay = 300;
     const timeout_delay_click = 2500;
@@ -43,9 +45,10 @@ const Tooltip = (props: {
                 onClick={tooltipClick}
                 onMouseEnter={tooltipEnter}
                 onMouseLeave={tooltipLeave}>
-                <BiSolidHelpCircle size={props.size} />
+                {props.children}
             </span>
-            <span class={`tooltip-text ${props.direction || "right"}`}>
+            <span
+                class={`tooltip-text ${props.direction?.join(" ") || "right"}`}>
                 {t(props.label.key, props.label.variables)}
             </span>
         </span>

@@ -1,5 +1,6 @@
 import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { BiSolidHelpCircle } from "solid-icons/bi";
 import type { Accessor } from "solid-js";
 import { createResource } from "solid-js";
 import { Show } from "solid-js";
@@ -191,9 +192,9 @@ const OptimizedRoute = () => {
                             asset: assetReceive(),
                         },
                     }}
-                    size={18}
-                    direction={isMobile() ? "left" : "right"}
-                />
+                    direction={[isMobile() ? "left" : "right"]}>
+                    <BiSolidHelpCircle size={18} opacity={0.5} />
+                </Tooltip>
             </span>
         </Show>
     );
