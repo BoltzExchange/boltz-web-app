@@ -23,7 +23,7 @@ import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
-import { type RefundableAssetType } from "../consts/Assets";
+import { RBTC, type RefundableAssetType } from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
@@ -236,8 +236,10 @@ const Pay = () => {
         () => statusOverride() || renameSwapStatus(swapStatus()),
     );
 
-    const destinationAddress = createMemo(
-        () => swap()?.claimAddress || (swap() as SubmarineSwap)?.invoice,
+    const destinationAddress = createMemo(() =>
+        swap()?.assetReceive === RBTC
+            ? swap().signer
+            : swap()?.claimAddress || (swap() as SubmarineSwap)?.invoice,
     );
 
     return (
