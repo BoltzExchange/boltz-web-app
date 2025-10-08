@@ -314,6 +314,8 @@ const dict = {
             "Minimum amount for the destination address is {{ amount }} {{ denomination }}",
         max_amount_destination:
             "Maximum amount for the destination address is {{ amount }} {{ denomination }}",
+        destination: "Destination",
+        destination_address: "{{ address }}",
     },
     de: {
         language: "Deutsch",

@@ -1,5 +1,7 @@
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import log from "loglevel";
+import { BiRegularCopy } from "solid-icons/bi";
+import { IoCheckmark } from "solid-icons/io";
 import type { Accessor } from "solid-js";
 import {
     Match,
@@ -20,7 +22,9 @@ import RefundEta from "../components/RefundEta";
 import { SwapIcons } from "../components/SwapIcons";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import Tooltip from "../components/settings/Tooltip";
 import { type RefundableAssetType } from "../consts/Assets";
+import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
     swapStatusFailed,
@@ -41,6 +45,7 @@ import TransactionConfirmed from "../status/TransactionConfirmed";
 import TransactionLockupFailed from "../status/TransactionLockupFailed";
 import TransactionMempool from "../status/TransactionMempool";
 import { getLockupTransaction, getSwapStatus } from "../utils/boltzClient";
+import { clipboard, cropString, isMobile } from "../utils/helper";
 import {
     getCurrentBlockHeight,
     getRefundableUTXOs,
@@ -78,9 +83,19 @@ const Pay = () => {
     const [waitForSwapTimeout, setWaitForTimeout] = createSignal<boolean>(
         location.state?.waitForSwapTimeout ?? false,
     );
+    const [copyDestinationActive, setCopyDestinationActive] =
+        createSignal(false);
     const [loading, setLoading] = createSignal<boolean>(false);
 
     const prevSwapStatus = { value: "" };
+
+    const copyBoxText = (content: string) => {
+        clipboard(content);
+        setCopyDestinationActive(true);
+        setTimeout(() => {
+            setCopyDestinationActive(false);
+        }, copyIconTimeout);
+    };
 
     createEffect(() => {
         prevSwapStatus.value = swapStatus();
@@ -221,6 +236,10 @@ const Pay = () => {
         () => statusOverride() || renameSwapStatus(swapStatus()),
     );
 
+    const destinationAddress = createMemo(
+        () => swap()?.claimAddress || (swap() as SubmarineSwap)?.invoice,
+    );
+
     return (
         <div data-status={status()} class="frame">
             <span class="frame-header">
@@ -247,10 +266,52 @@ const Pay = () => {
 
                     <Show when={!swap().refundTx}>
                         <Show when={swapStatus()} fallback={<LoadingSpinner />}>
-                            <p class="swap-status">
-                                {t("status")}:{" "}
+                            <div class="swap-status">
+                                {t("status")}:
                                 <span class="btn-small">{status()}</span>
-                            </p>
+                                <Show
+                                    when={
+                                        destinationAddress() &&
+                                        (swap().status ===
+                                            swapStatusPending.SwapCreated ||
+                                            swap().status ===
+                                                swapStatusPending.InvoiceSet)
+                                    }>
+                                    <span class="vertical-line" />
+                                    <Tooltip
+                                        label={{
+                                            key: "destination_address",
+                                            variables: {
+                                                address: cropString(
+                                                    destinationAddress(),
+                                                    14,
+                                                    8,
+                                                ),
+                                            },
+                                        }}
+                                        direction={[
+                                            "top",
+                                            isMobile() ? "left" : "right",
+                                        ]}>
+                                        <div
+                                            id="copy-destination"
+                                            onClick={() =>
+                                                copyBoxText(
+                                                    destinationAddress(),
+                                                )
+                                            }>
+                                            <Show
+                                                when={copyDestinationActive()}
+                                                fallback={
+                                                    <BiRegularCopy size={14} />
+                                                }>
+                                                <IoCheckmark size={14} />
+                                            </Show>
+                                            {t("destination")}
+                                        </div>
+                                    </Tooltip>
+                                </Show>
+                            </div>
                             <hr />
                         </Show>
                         <Show

@@ -525,6 +525,18 @@ textarea.invalid {
     border-right: 0;
     background: var(--color-secondary-700);
 }
+.swap-status {
+    display: inline-flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.6rem;
+}
+.vertical-line {
+    border-left: 1px solid var(--color-white-10);
+    align-self: stretch;
+    height: auto;
+}
 .refund {
     max-width: fit-content;
 
@@ -562,7 +574,7 @@ textarea.invalid {
         }
     }
     .swap-status {
-        margin-top: 0;
+        margin-top: 0.25rem;
     }
 }
 
@@ -1105,4 +1117,12 @@ header {
     align-items: center;
     justify-content: center;
     height: 30dvh;
+}
+
+#copy-destination {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    opacity: 0.5;
+    border-bottom: 1px dotted var(--color-white-50);
 }
