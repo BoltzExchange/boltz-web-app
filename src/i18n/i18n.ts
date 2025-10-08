@@ -647,6 +647,8 @@ const dict = {
             "Mindestbetrag für die Zieladresse ist {{ amount }} {{ denomination }}",
         max_amount_destination:
             "Höchstbetrag für die Zieladresse ist {{ amount }} {{ denomination }}",
+        destination: "Zieladresse",
+        destination_address: "{{ address }}",
     },
     es: {
         language: "Español",
@@ -975,6 +977,8 @@ const dict = {
             "La cantidad mínima para la dirección de destino es {{ amount }} {{ denomination }}",
         max_amount_destination:
             "La cantidad máxima para la dirección de destino es {{ amount }} {{ denomination }}",
+        destination: "Destino",
+        destination_address: "{{ address }}",
     },
     pt: {
         language: "Português",
@@ -1299,6 +1303,8 @@ const dict = {
             "O valor mínimo para o endereço de destino é {{ amount }} {{ denomination }}",
         max_amount_destination:
             "O valor máximo para o endereço de destino é {{ amount }} {{ denomination }}",
+        destination: "Destino",
+        destination_address: "{{ address }}",
     },
     zh: {
         language: "中文",
@@ -1590,6 +1596,8 @@ const dict = {
             "目标地址的最小金额为{{ amount }}{{ denomination }}",
         max_amount_destination:
             "目标地址的最大金额为{{ amount }}{{ denomination }}",
+        destination: "目标地址",
+        destination_address: "{{ address }}",
     },
     ja: {
         language: "日本語",
@@ -1913,6 +1921,8 @@ const dict = {
             "宛先アドレスの最小金額は{{ amount }} {{ denomination }}です",
         max_amount_destination:
             "宛先アドレスの最大金額は{{ amount }} {{ denomination }}です",
+        destination: "宛先アドレス",
+        destination_address: "{{ address }}",
     },
 };
 
