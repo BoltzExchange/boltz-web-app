@@ -297,7 +297,7 @@ const Pay = () => {
                                             "top",
                                             isMobile() ? "left" : "right",
                                         ]}>
-                                        <div
+                                        <button
                                             id="copy-destination"
                                             onClick={() =>
                                                 copyBoxText(
@@ -314,7 +314,7 @@ const Pay = () => {
                                                 <IoCheckmark size={14} />
                                             </Show>
                                             {t("destination")}
-                                        </div>
+                                        </button>
                                     </Tooltip>
                                 </Show>
                             </div>
