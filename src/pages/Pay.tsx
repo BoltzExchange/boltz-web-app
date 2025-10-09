@@ -273,9 +273,9 @@ const Pay = () => {
                                 <Show
                                     when={
                                         getDestinationAddress(swap()) &&
-                                        (swap().status ===
+                                        (swapStatus() ===
                                             swapStatusPending.SwapCreated ||
-                                            swap().status ===
+                                            swapStatus() ===
                                                 swapStatusPending.InvoiceSet)
                                     }>
                                     <span class="vertical-line" />
