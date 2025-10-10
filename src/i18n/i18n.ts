@@ -316,6 +316,55 @@ const dict = {
             "Maximum amount for the destination address is {{ amount }} {{ denomination }}",
         destination: "Destination",
         destination_address: "{{ address }}",
+
+        // Products page
+        products: "Products",
+        products_name: "Boltz Products",
+        products_description:
+            "A suite of products that make Bitcoin layers integration seamless",
+        products_plugin_title: "Boltz BTCPay Plugin",
+        products_plugin_description:
+            "A plugin that allows any merchant to accept Lightning payments in a non-custodial",
+        products_client_title: "Boltz Client",
+        products_client_description:
+            "Enterprise-grade swap daemon for automating Lightning node's liquidity management",
+        products_pro_title: "Boltz Pro",
+        products_pro_description:
+            "A platform for earning sats non-custodially.",
+        learn_more: "Learn more",
+
+        // Plugin page
+        boltz_plugin_name: "Boltz BTCPay Plugin",
+        boltz_plugin_description:
+            "A self-custodial solution to easily accept Lightning payments",
+        boltz_plugin_steps_title: "Getting started",
+        boltz_plugin_step_install_title: "Install the Plugin",
+        boltz_plugin_step_install_description:
+            "Add the Boltz plugin to your BTCPay Server instance",
+        boltz_plugin_step_setup_title: "Setup your wallet",
+        boltz_plugin_step_setup_description:
+            "Connect your Lightning wallet to start receiving payments",
+        boltz_plugin_step_paid_title: "Get paid",
+        boltz_plugin_step_paid_description:
+            "Accept Lightning payments with automatic on-chain settlement",
+        boltz_plugin_features_title: "Why use it?",
+        boltz_plugin_feature_flexible_title: "Flexible",
+        boltz_plugin_feature_flexible_description:
+            "Accept Lightning payments without running a Lightning node or fully manage liquidity of an existing node",
+        boltz_plugin_feature_liquid_title: "Powered by Liquid",
+        boltz_plugin_feature_liquid_description:
+            "Fully leveraging the power of Liquid Taproot Swaps for low fees and increased privacy",
+        boltz_plugin_feature_autoswap_title: "Autoswap to mainchain",
+        boltz_plugin_feature_autoswap_description:
+            "Trigger autoswaps to the mainchain based on a set of preferences",
+        boltz_plugin_feature_self_custodial_title: "Self-custodial",
+        boltz_plugin_feature_self_custodial_description:
+            "All mentioned features are powered by Boltz Atomic Swaps, allowing you to stay in control of your money",
+        boltz_plugin_documentation_button: "Documentation",
+        boltz_plugin_github_button: "View on GitHub",
+        boltz_plugin_questions_title: "Still have questions?",
+        boltz_plugin_questions_subtitle: "We'd love to hear from you!",
+        boltz_plugin_chat_button: "Chat with us",
     },
     de: {
         language: "Deutsch",

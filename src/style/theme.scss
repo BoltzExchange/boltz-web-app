@@ -5,6 +5,10 @@ $rootstock_icon: url(../assets/rootstock-icon.svg);
 $boltz_icon: url(/boltz-icon.svg);
 
 :root {
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 16px;
+
     // Base colors
     --color-white: #ffffff;
     --color-black: #000000;
@@ -12,8 +16,8 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-light-gray: #d0d0d0;
     --color-medium-gray: #545c65;
     --color-darker-gray: #191919;
-    --color-link: #4a9eff;
-    --color-link-hover: #7ab8ff;
+    --color-link: #6b9da8;
+    --color-link-hover: #68b6c8;
 
     // Orange opacity levels
     --color-btc-orange-15: color-mix(
@@ -58,13 +62,14 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-secondary-200: #a1a9b2;
     --color-secondary-300: #727e8c;
     --color-secondary-500: #1e2d3c;
-    --color-secondary-600: #14283f;
-    --color-secondary-700: #102133;
-    --color-secondary-800: #081422;
+    --color-secondary-600: #12253a;
+    --color-secondary-700: #0f1f30;
+    --color-secondary-800: #091625;
+    --color-secondary-900: #09141f;
 
     --color-tertiary: #533180;
 
-    --color-text: #e6ebf0;
+    --color-text: #d7dee4;
     --color-dark-gray: #17222e;
     --color-hero-gradient-1: #eac806;
     --color-hero-gradient-2: #2084f6;

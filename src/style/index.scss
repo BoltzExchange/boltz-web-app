@@ -19,6 +19,7 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
+    transition: background-color 0.3s ease-in;
 }
 body::-webkit-scrollbar {
     display: none;
@@ -156,6 +157,7 @@ hr.spacer {
     width: 100%;
     display: flex;
     justify-content: center;
+    align-items: center;
     svg {
         margin-right: 3px;
     }
