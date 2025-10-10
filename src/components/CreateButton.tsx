@@ -28,7 +28,7 @@ import {
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { coalesceLn, getPair } from "../utils/helper";
+import { coalesceLn, getDestinationAddress, getPair } from "../utils/helper";
 import {
     InvoiceType,
     decodeInvoice,
@@ -556,10 +556,7 @@ const CreateButton = () => {
             }
 
             log.debug(`Created swap ${data.id}:`, {
-                destination:
-                    swapType() === SwapType.Submarine
-                        ? invoice()
-                        : data.claimAddress,
+                destination: getDestinationAddress(data),
                 receiveAmount: data.receiveAmount,
             });
 
