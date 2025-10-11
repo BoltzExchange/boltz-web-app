@@ -3,6 +3,36 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.5](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.4..v1.8.5) - 2025-10-11
+
+### Bug Fixes
+
+- update boltz-cli data path - ([a8e501e](https://github.com/BoltzExchange/boltz-web-app/commit/a8e501e4042057d317dc66ebac4e992980ccb6bf))
+- err message and mSat unit - ([1f0bcd1](https://github.com/BoltzExchange/boltz-web-app/commit/1f0bcd17841f619251c484097633530ff0bf420d))
+
+### Features
+
+- Show lnurl/lnaddress min/max amount errors - ([d5b3263](https://github.com/BoltzExchange/boltz-web-app/commit/d5b32633c7e2472f36f113261d0105a899d6f13d))
+- show destination on swap send screen (#1035) - ([9828463](https://github.com/BoltzExchange/boltz-web-app/commit/9828463acec1bc30e8580469ee83b080a9f77d72))
+
+### Miscellaneous Chores
+
+- add error logs during swap creation - ([f222897](https://github.com/BoltzExchange/boltz-web-app/commit/f222897ccba2fed27eef31bc8f906e416607eaa5))
+- update regtest submodule - ([26ea365](https://github.com/BoltzExchange/boltz-web-app/commit/26ea3655e0660e513afc6972f636114c59e076ca))
+- update i18n translations - ([3a48f1e](https://github.com/BoltzExchange/boltz-web-app/commit/3a48f1e7fdb01f28e439669f465b1dc811e144b5))
+- hardcode btc as denomination, add missing language strings - ([cfa879f](https://github.com/BoltzExchange/boltz-web-app/commit/cfa879fde80787e2300c94e406b67eae978a78fa))
+- log swap creations with destination (#1034) - ([21a48b3](https://github.com/BoltzExchange/boltz-web-app/commit/21a48b3576af292587c075744c6dc3a4657c3487))
+- bump dependencies (#1036) - ([c35a634](https://github.com/BoltzExchange/boltz-web-app/commit/c35a6341999c266d488d5fbed60559f8355b7f59))
+
+### Tests
+
+- Show lnurl/lnaddress min/max amount errors - ([8b4483f](https://github.com/BoltzExchange/boltz-web-app/commit/8b4483f4e3b0fbc3c4b6256e309a023f64879811))
+
+### E2e
+
+- Uncooperative refunds via Rescue/External Rescue (#1030) - ([b17da3b](https://github.com/BoltzExchange/boltz-web-app/commit/b17da3b3805b0e76eb36023fe441a0253d9a21dd))
+
+---
 ## [1.8.4](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.2..v1.8.4) - 2025-09-19
 
 ### Bug Fixes
@@ -23,6 +53,7 @@ All notable changes to this project will be documented in this file. See [conven
 - pretty print logs - ([d4b0fd7](https://github.com/BoltzExchange/boltz-web-app/commit/d4b0fd72137c44254693991465cbb5bac1067423))
 - update regtest submodule (#1029) - ([b1315ed](https://github.com/BoltzExchange/boltz-web-app/commit/b1315eda961215e33d1569323b2f4fbaecbabbde))
 -  [**breaking**]remove support for `embed` param - ([072df95](https://github.com/BoltzExchange/boltz-web-app/commit/072df952e3bea6cb1bb8d9467aac1830906bf701))
+- bump version to v1.8.4 (#1031) - ([94a96d4](https://github.com/BoltzExchange/boltz-web-app/commit/94a96d4ab59c59056f84d592282b32c848ef55ad))
 
 ---
 ## [1.8.2](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.1..v1.8.2) - 2025-09-04
