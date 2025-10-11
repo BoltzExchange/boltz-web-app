@@ -1,0 +1,192 @@
+@use "sass:color";
+@use "vars";
+@use "theme";
+@use "products";
+
+// Client-specific styles that extend the base products styles
+.products-client {
+    @extend %products-base;
+
+    .features {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    .features-header {
+        display: flex;
+        flex-direction: column;
+        grid-column: 1/12;
+        h2 {
+            font-weight: 600;
+        }
+    }
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        align-items: flex-start;
+        text-align: left;
+        gap: 1.25rem;
+        column-gap: 1.25rem;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            column-gap: 0;
+        }
+
+        .content-item {
+            display: flex;
+            align-items: flex-start;
+            width: 100%;
+            height: 100%;
+            text-align: left;
+            gap: 1.6rem;
+
+            @media (max-width: 768px) {
+                gap: 0.75rem;
+            }
+            .content-item-icon {
+                color: var(--color-white-50);
+
+                @media (max-width: 768px) {
+                    font-size: 1.25rem;
+                }
+            }
+
+            .content-item-body {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+    }
+
+    .cli-section {
+        display: grid;
+        align-items: center;
+        grid-template-columns: repeat(2, 1fr);
+        column-gap: 1.25rem;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            row-gap: 2rem;
+        }
+
+        .cli-details {
+            display: grid;
+            gap: 1rem;
+            grid-column: span 1;
+            text-align: left;
+
+            @media (max-width: 768px) {
+                grid-column: 1 / -1;
+            }
+
+            h2 {
+                font-weight: 600;
+            }
+            p {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        .cli {
+            grid-column: 2 / 12;
+            max-width: 150%;
+            height: 300px;
+            background: var(--color-secondary-800);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            box-shadow:
+                4px 4px 20px var(--color-black-50),
+                10px 10px 200px rgba(0, 44, 176, 0.12);
+            position: relative;
+            text-align: left;
+
+            @media (max-width: 768px) {
+                font-size: 0.8rem;
+                grid-column: 1 / -1;
+                max-width: 100%;
+            }
+
+            .green {
+                color: #9ece6a;
+            }
+
+            .blue {
+                color: #7aa2f7;
+            }
+
+            .cyan {
+                color: #449dab;
+            }
+
+            .indent {
+                margin-left: 11px;
+            }
+
+            &::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 30px;
+                background: var(--color-black-30);
+                border-radius: 8px 8px 0 0;
+                display: flex;
+                align-items: center;
+                padding: 0 1rem;
+            }
+
+            &::after {
+                content: "kilrau@pc:~/boltz-client";
+                position: absolute;
+                top: 8px;
+                left: 1rem;
+                color: var(--color-text);
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+
+            .terminal-content {
+                margin-top: 1rem;
+                padding: 0.5rem 0;
+            }
+
+            .terminal-line {
+                margin: 0.15rem 0;
+
+                &.prompt {
+                    font-weight: 600;
+                }
+
+                &.output &.command {
+                    color: var(--color-white-50);
+                }
+            }
+
+            // .cursor {
+            //     display: inline-block;
+            //     width: 2px;
+            //     height: 1em;
+            //     background: var(--color-text);
+            //     animation: blink 1s infinite;
+            //     margin-left: 4px;
+            // }
+        }
+    }
+
+    @keyframes blink {
+        0%,
+        50% {
+            opacity: 1;
+        }
+        51%,
+        100% {
+            opacity: 0;
+        }
+    }
+}
