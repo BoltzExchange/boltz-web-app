@@ -11,7 +11,6 @@ const dict = {
         non_custodial_sub:
             "Swaps on Boltz are atomic, cryptography ensures that users are always in control of their money",
         node: "Lightning Nodes",
-        lightningnode: "View Lightning Nodes",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",
         error_wasm: "WebAssembly not supported",
@@ -329,7 +328,6 @@ const dict = {
         non_custodial_sub:
             "Swaps auf Boltz sind atomar, Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihre Bitcoin behalten",
         node: "Lightning Knoten",
-        lightningnode: "Lightning Knoten anzeigen",
         error: "Fehler",
         error_subline:
             "Ungültige Antwort von der API, irgendwas ist hier falsch gelaufen.",
@@ -662,7 +660,6 @@ const dict = {
         non_custodial_sub:
             "Los intercambios en Boltz son atomicos, la criptografía garantiza que los usuarios siempre tienen el control de su Bitcoin",
         node: "Nodos de Lightning",
-        lightningnode: "Ver nodos de Lightning",
         error: "Error",
         error_subline: "Respuesta inválida de la API, algo está mal :/",
         error_wasm: "WebAssembly no soportado",
@@ -992,7 +989,6 @@ const dict = {
         non_custodial_sub:
             "As trocas na Boltz são atômicas, a criptografia garante que os usuários sempre tenham controle sobre seu Bitcoin",
         node: "Nós Lightning",
-        lightningnode: "Ver nós Lightning",
         error: "Erro",
         error_subline: "Resposta inválida da API, algo deu errado.",
         error_wasm: "WebAssembly não suportado",
@@ -1318,7 +1314,6 @@ const dict = {
         non_custodial_sub:
             "Boltz上的交换是原子式,密码学确保用户始终掌握自己的资金",
         node: "闪电网络节点",
-        lightningnode: "查看闪电网络节点",
         error: "错误",
         error_subline: "API的响应无效，出现异常。",
         error_wasm: "不支持WebAssembly",
@@ -1611,7 +1606,6 @@ const dict = {
         non_custodial_sub:
             "Boltzのスワップはノンカストディアル型です。暗号技術により、ユーザーは常に資金を自己管理できます",
         node: "ノード",
-        lightningnode: "Lightningノードを表示",
         error: "エラー",
         error_subline: "APIからの無効な応答です。何かが間違っています",
         error_wasm: "WebAssemblyはサポートされていません",
