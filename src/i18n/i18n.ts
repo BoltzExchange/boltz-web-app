@@ -333,7 +333,7 @@ const dict = {
             "A platform for earning sats non-custodially.",
         learn_more: "Learn more",
 
-        // Plugin page
+        // Plugin
         boltz_plugin_name: "Boltz BTCPay Plugin",
         boltz_plugin_description:
             "A self-custodial solution to easily accept Lightning payments",
@@ -365,6 +365,34 @@ const dict = {
         boltz_plugin_questions_title: "Still have questions?",
         boltz_plugin_questions_subtitle: "We'd love to hear from you!",
         boltz_plugin_chat_button: "Chat with us",
+
+        // Client
+        boltz_client_name: "Boltz Client",
+        boltz_client_description:
+            "Enterprise-grade swap daemon for cheap Lightning channels rebalancing",
+        boltz_client_features_title: "Built for Node Runners",
+        boltz_client_features_description:
+            "Powerful features designed for professional Lightning infrastructure",
+        boltz_client_feature_taproot_title: "Taproot-First",
+        boltz_client_feature_taproot_description:
+            "Full support of Taproot Swaps for enhanced privacy",
+        boltz_client_cln_support_title: "CLN-first Support",
+        boltz_client_cln_support_description:
+            "First-class citizen support for Core Lightning in addition to LND, giving you complete flexibility in your node infrastructure setup",
+        boltz_client_autoswap_title: "Intelligent Autoswap",
+        boltz_client_autoswap_description:
+            "Fine-grained control for automated channel rebalancing with customizable thresholds, preferences, and smart routing",
+        boltz_client_liquid_title: "Liquid-First",
+        boltz_client_liquid_description:
+            "Optimized UX for channel rebalancing using Liquid swaps with low fees and fast settlement times",
+        boltz_client_cli_title: "Powerful API & CLI",
+        boltz_client_cli_first_paragraph:
+            "Built-in wallet system and comprehensive API for seamless integration into your Lightning infrastructure.",
+        boltz_client_cli_second_paragraph:
+            "Monitor, control, and automate everything from the command line or your own applications.",
+        boltz_client_cta_title: "Ready to automate your liquidity?",
+        boltz_client_cta_subtitle:
+            "Join node runners worldwide who trust Boltz Client for enterprise-grade Lightning liquidity management",
     },
     de: {
         language: "Deutsch",
