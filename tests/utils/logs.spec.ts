@@ -33,19 +33,34 @@ describe("logs", () => {
         log.setLevel("error");
     });
 
-    test("should get current date", () => {
-        const date = new Date();
+    describe("getDate", () => {
+        test("should add 1 to month", () => {
+            const date = new Date("2025-11-16T12:00:00Z");
+            vi.setSystemTime(date);
 
-        expect(getDate()).toEqual(
-            `${date.getUTCFullYear()}/${date.getUTCMonth()}/${date.getUTCDate()}`,
-        );
+            expect(getDate()).toEqual(`2025/11/16`);
+        });
+
+        test("should 0 pad the day", () => {
+            const date = new Date("2025-11-03T12:00:00Z");
+            vi.setSystemTime(date);
+
+            expect(getDate()).toEqual(`2025/11/03`);
+        });
+
+        test("should 0 pad the month", () => {
+            const date = new Date("2025-02-13T12:00:00Z");
+            vi.setSystemTime(date);
+
+            expect(getDate()).toEqual(`2025/02/13`);
+        });
     });
 
     test("should parse date", () => {
         const date = parseDate("2024/05/16");
 
         expect(date.getUTCFullYear()).toEqual(2024);
-        expect(date.getUTCMonth()).toEqual(5);
+        expect(date.getUTCMonth()).toEqual(5 - 1);
         expect(date.getUTCDate()).toEqual(16);
     });
 

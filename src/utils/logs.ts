@@ -3,9 +3,13 @@ import log from "loglevel";
 // One week
 export const logDeletionTime = 60 * 60 * 24 * 7;
 
+const zeroPad = (value: number) => {
+    return value < 10 ? `0${value}` : `${value}`;
+};
+
 export const getDate = (): string => {
     const date = new Date();
-    return `${date.getUTCFullYear()}/${date.getUTCMonth()}/${date.getUTCDate()}`;
+    return `${date.getUTCFullYear()}/${zeroPad(date.getUTCMonth() + 1)}/${zeroPad(date.getUTCDate())}`;
 };
 
 export const parseDate = (date: string): Date => {
@@ -14,7 +18,7 @@ export const parseDate = (date: string): Date => {
     const parsed = new Date();
     parsed.setTime(0);
     parsed.setUTCFullYear(split[0]);
-    parsed.setUTCMonth(split[1]);
+    parsed.setUTCMonth(split[1] - 1);
     parsed.setUTCDate(split[2]);
 
     return parsed;
