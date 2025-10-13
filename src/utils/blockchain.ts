@@ -60,7 +60,7 @@ const handleResponseError = async (response: Response) => {
 const constructRequestOptions = (options: RequestInit = {}) => {
     const controller = new AbortController();
     const requestTimeout = setTimeout(
-        () => controller.abort(),
+        () => controller.abort({ reason: "Request timed out" }),
         requestTimeoutDuration,
     );
 
