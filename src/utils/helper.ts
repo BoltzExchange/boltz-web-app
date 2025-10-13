@@ -22,7 +22,7 @@ import type {
     SubmarineSwap,
 } from "./swapCreator";
 
-export const requestTimeoutDuration = 10_000;
+export const requestTimeoutDuration = 15_000;
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
@@ -98,7 +98,7 @@ export const fetcher = async <T = unknown>(
 ): Promise<T> => {
     const controller = new AbortController();
     const requestTimeout = setTimeout(
-        () => controller.abort(),
+        () => controller.abort({ reason: "Request timed out" }),
         requestTimeoutDuration,
     );
 
