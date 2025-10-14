@@ -21,59 +21,6 @@ const Client = () => {
                 <h2>{t("boltz_client_description")}</h2>
             </div>
             <div class="content">
-                <div class="features">
-                    <div class="features-header">
-                        <h2>{t("boltz_client_features_title")}</h2>
-                        <p>{t("boltz_client_features_description")}</p>
-                    </div>
-                    <div class="features-grid">
-                        <For
-                            each={[
-                                {
-                                    icon: <TaprootIcon size={iconSize} />,
-                                    title: t(
-                                        "boltz_client_feature_taproot_title",
-                                    ),
-                                    description: t(
-                                        "boltz_client_feature_taproot_description",
-                                    ),
-                                },
-                                {
-                                    icon: <BiSolidServer size={iconSize} />,
-                                    title: t("boltz_client_cln_support_title"),
-                                    description: t(
-                                        "boltz_client_cln_support_description",
-                                    ),
-                                },
-                                {
-                                    icon: <AutoSwapIcon size={iconSize} />,
-                                    title: t("boltz_client_autoswap_title"),
-                                    description: t(
-                                        "boltz_client_autoswap_description",
-                                    ),
-                                },
-                                {
-                                    icon: <LiquidIcon size={iconSize} />,
-                                    title: t("boltz_client_liquid_title"),
-                                    description: t(
-                                        "boltz_client_liquid_description",
-                                    ),
-                                },
-                            ]}>
-                            {(feature) => (
-                                <div class="content-item card glow">
-                                    <span class="content-item-icon">
-                                        {feature.icon}
-                                    </span>
-                                    <div class="content-item-body">
-                                        <h3>{feature.title}</h3>
-                                        <p>{feature.description}</p>
-                                    </div>
-                                </div>
-                            )}
-                        </For>
-                    </div>
-                </div>
                 <div class="cli-section">
                     <div class="cli-details">
                         <h3>{t("boltz_client_cli_title")}</h3>

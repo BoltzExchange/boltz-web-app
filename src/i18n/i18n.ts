@@ -21,7 +21,7 @@ const dict = {
         refund: "Refund",
         blog: "Blog",
         support: "Support",
-        documentation: "Docs",
+        docs: "Docs",
         onion: "Onion",
         terms: "Terms",
         privacy: "Privacy",
@@ -332,6 +332,10 @@ const dict = {
         products_pro_description:
             "A platform for earning sats non-custodially.",
         learn_more: "Learn more",
+        get_started: "Get started",
+        documentation: "Documentation",
+        view_on_github: "View on Github",
+        chat_with_us: "Chat with us",
 
         // Plugin
         boltz_plugin_name: "Boltz BTCPay Plugin",
@@ -376,8 +380,8 @@ const dict = {
         boltz_client_feature_taproot_title: "Taproot-First",
         boltz_client_feature_taproot_description:
             "Full support of Taproot Swaps for enhanced privacy",
-        boltz_client_cln_support_title: "CLN-first Support",
-        boltz_client_cln_support_description:
+        boltz_client_node_agnostic_title: "Node Agnostic",
+        boltz_client_node_agnostic_description:
             "First-class citizen support for Core Lightning in addition to LND, giving you complete flexibility in your node infrastructure setup",
         boltz_client_autoswap_title: "Intelligent Autoswap",
         boltz_client_autoswap_description:
@@ -393,6 +397,48 @@ const dict = {
         boltz_client_cta_title: "Ready to automate your liquidity?",
         boltz_client_cta_subtitle:
             "Join node runners worldwide who trust Boltz Client for enterprise-grade Lightning liquidity management",
+
+        // Pro
+        boltz_pro_name: "Boltz Pro",
+        boltz_pro_description: "A platform for earning sats non-custodially",
+        boltz_pro_how_it_works_title: "How it works?",
+        boltz_pro_how_it_works_description:
+            "Similar to regular Boltz, except that you get paid for swapping in directions that help us rebalance our liquidity",
+        boltz_pro_chart_title: "Boltz Pro Fee History Sample",
+        boltz_pro_chart_y_axis: "Boltz Fee",
+        boltz_pro_chart_x_axis: "Date",
+        boltz_pro_negative_fee: "You earn sats",
+        boltz_pro_lower_fee: "You save sats",
+        boltz_pro_target_audience_title: "Who is Boltz Pro For?",
+        boltz_pro_target_audience_subtitle:
+            "Perfect for professionals, not for time-critical payments",
+        boltz_pro_perfect_for_title: "Perfect For",
+        boltz_pro_perfect_for_1:
+            "Lightning node operators looking to decrease excess inbound liquidity and earn sats",
+        boltz_pro_perfect_for_2:
+            "Professionals collaborating with external node operators to manage liquidity",
+        boltz_pro_perfect_for_3:
+            "Users topping up Lightning wallets within routing limits",
+        boltz_pro_not_designed_for_title: "Not Designed For",
+        boltz_pro_not_designed_for_1: "Paying with Lightning in a coffee shop",
+        boltz_pro_not_designed_for_2:
+            "Payment reliability to destinations with high routing fees",
+        boltz_pro_not_designed_for_3:
+            "Scenarios requiring guaranteed instant settlement",
+        boltz_pro_cta_title: "Start earning sats now",
+        boltz_pro_cta_subtitle:
+            "Head over to Boltz Pro and check out the latest earning opportunities.",
+        boltz_pro_options_title: "Three ways of using it",
+        boltz_pro_options_subtitle: "Flexibility to choose what fits you best",
+        boltz_pro_option_client_title: "Boltz Client",
+        boltz_pro_option_client_description:
+            "Tight integration with Boltz Client enables full automation via API",
+        boltz_pro_option_web_title: "Web App",
+        boltz_pro_option_web_description:
+            "User-friendly interface to monitor swap opportunities",
+        boltz_pro_option_telegram_title: "Telegram Bot",
+        boltz_pro_option_telegram_description:
+            "Get instant alerts about earning opportunities directly in Telegram",
     },
     de: {
         language: "Deutsch",

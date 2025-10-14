@@ -967,6 +967,22 @@ header {
     gap: 2rem;
 }
 
+.lower-fee {
+    color: var(--color-lower-fee);
+    text-shadow:
+        0 0 4px var(--color-lower-fee-glow),
+        0 0 8px var(--color-lower-fee-glow);
+}
+
+.negative-fee {
+    color: var(--color-negative-fee);
+    text-shadow:
+        0 0 4px var(--color-negative-fee-glow),
+        0 0 8px var(--color-negative-fee-glow);
+}
+.regular-fee {
+    color: var(--color-regular-fee);
+}
 .fee-comparison-table {
     width: 100%;
     table-layout: fixed;
@@ -1037,20 +1053,6 @@ header {
             }
         }
     }
-}
-
-.lower-fee {
-    color: var(--color-lower-fee);
-    text-shadow:
-        0 0 4px var(--color-lower-fee-glow),
-        0 0 8px var(--color-lower-fee-glow);
-}
-
-.negative-fee {
-    color: var(--color-negative-fee);
-    text-shadow:
-        0 0 4px var(--color-negative-fee-glow),
-        0 0 8px var(--color-negative-fee-glow);
 }
 
 .accordion {

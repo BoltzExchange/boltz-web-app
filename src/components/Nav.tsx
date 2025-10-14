@@ -92,7 +92,7 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                             class="external"
                             target="_blank"
                             href={config.docsUrl}>
-                            {t("documentation")}
+                            {t("docs")}
                             <OcLinkexternal2 size={23} />
                         </a>
                     </Show>
