@@ -376,8 +376,8 @@ const dict = {
         boltz_client_feature_taproot_title: "Taproot-First",
         boltz_client_feature_taproot_description:
             "Full support of Taproot Swaps for enhanced privacy",
-        boltz_client_cln_support_title: "CLN-first Support",
-        boltz_client_cln_support_description:
+        boltz_client_node_agnostic_title: "Node Agnostic",
+        boltz_client_node_agnostic_description:
             "First-class citizen support for Core Lightning in addition to LND, giving you complete flexibility in your node infrastructure setup",
         boltz_client_autoswap_title: "Intelligent Autoswap",
         boltz_client_autoswap_description:
@@ -385,7 +385,6 @@ const dict = {
         boltz_client_liquid_title: "Liquid-first",
         boltz_client_liquid_description:
             "Optimized UX for channel rebalancing using Liquid swaps with low fees and fast settlement times",
-
         botz_client_cli_title: "Powerful API & CLI",
         boltz_client_cli_first_paragraph:
             "Built-in wallet system and comprehensive API for seamless integration into your Lightning infrastructure.",
@@ -394,6 +393,10 @@ const dict = {
         boltz_client_cta_title: "Ready to automate your liquidity?",
         boltz_client_cta_subtitle:
             "Join node runners worldwide who trust Boltz Client for enterprise-grade Lightning liquidity management",
+
+        // Pro
+        boltz_pro_name: "Boltz Pro",
+        boltz_pro_description: "Get paid to swap. Stack sats self-custodially",
     },
     de: {
         language: "Deutsch",

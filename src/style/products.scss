@@ -130,8 +130,12 @@
         padding: 5rem 0 5rem 0;
         gap: 12rem;
 
+        h2 {
+            font-weight: 700;
+        }
+
         @media (max-width: 480px) {
-            padding: 0 1rem 0 1rem;
+            padding: 0 1rem 5.5rem 1rem;
             gap: 6rem;
         }
     }
@@ -361,7 +365,8 @@
 // Body styles for products pages
 body:has(.products),
 body:has(.products-plugin),
-body:has(.products-client) {
+body:has(.products-client),
+body:has(.products-pro) {
     background: var(--color-secondary-900);
     transition: background-color 0.3s ease-in-out;
 
