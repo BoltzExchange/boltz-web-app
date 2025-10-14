@@ -336,7 +336,6 @@ const dict = {
         boltz_plugin_name: "Boltz BTCPay Plugin",
         boltz_plugin_description:
             "A self-custodial solution to easily accept Lightning payments",
-        boltz_plugin_steps_title: "Getting started",
         boltz_plugin_step_install_title: "Install the Plugin",
         boltz_plugin_step_install_description:
             "Add the Boltz plugin to your BTCPay Server instance",
@@ -347,6 +346,8 @@ const dict = {
         boltz_plugin_step_paid_description:
             "Accept Lightning payments with automatic on-chain settlement",
         boltz_plugin_features_title: "Why use it?",
+        boltz_plugin_features_description:
+            "Built for merchants who want full control without complexity",
         boltz_plugin_feature_flexible_title: "Flexible",
         boltz_plugin_feature_flexible_description:
             "Accept Lightning payments without running a Lightning node or fully manage liquidity of an existing node",
