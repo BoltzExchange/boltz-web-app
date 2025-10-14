@@ -42,20 +42,24 @@ export const deleteOldLogs = async (logsForage: LocalForage) => {
     });
 };
 
-export const formatLogLine = (message: unknown[]) =>
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    message
-        .map((entry: unknown) => {
-            if (entry instanceof Error) {
-                return entry;
-            }
-            if (typeof entry === "object") {
-                return JSON.stringify(entry);
-            }
+export const formatLogLine = (message: unknown[]) => {
+    const timestamp = new Date().toISOString(); // ISO 8601 format with milliseconds (UTC)
+    const formattedMessage =
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        message
+            .map((entry: unknown) => {
+                if (entry instanceof Error) {
+                    return entry;
+                }
+                if (typeof entry === "object") {
+                    return JSON.stringify(entry);
+                }
 
-            return entry;
-        })
-        .join(" ");
+                return entry;
+            })
+            .join(" ");
+    return `${timestamp} ${formattedMessage}`;
+};
 
 export const injectLogWriter = (logsForage: LocalForage) => {
     const originalLogFactory = log.methodFactory;
