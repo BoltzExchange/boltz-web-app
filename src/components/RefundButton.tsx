@@ -194,7 +194,7 @@ export const RefundBtc = (props: {
                 ) {
                     msg = t("already_refunded");
                 } else if (
-                    msg === "mandatory-script-verify-flag-failed" ||
+                    msg.endsWith("script-verify-flag-failed") ||
                     msg === "non-final"
                 ) {
                     msg = t("locktime_not_satisfied");
