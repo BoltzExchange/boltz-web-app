@@ -1,0 +1,334 @@
+@use "sass:color";
+@use "vars";
+@use "theme";
+@use "products";
+
+// Pro-specific styles that extend the base products styles
+.products-pro {
+    @extend %products-base;
+
+    .features {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .features-header {
+        display: flex;
+        flex-direction: column;
+        grid-column: 1/12;
+        h2 {
+            font-weight: 600;
+        }
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        align-items: flex-start;
+        text-align: left;
+        gap: 1.25rem;
+        column-gap: 1.25rem;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            column-gap: 0;
+        }
+
+        .content-item {
+            display: flex;
+            align-items: flex-start;
+            width: 100%;
+            height: 100%;
+            text-align: left;
+            gap: 1.6rem;
+
+            @media (max-width: 768px) {
+                gap: 0.75rem;
+            }
+
+            .content-item-icon {
+                color: var(--color-white-50);
+
+                @media (max-width: 768px) {
+                    font-size: 1.25rem;
+                }
+            }
+
+            .content-item-body {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+        }
+    }
+
+    .intro-section {
+        display: grid;
+        align-items: center;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 1.25rem;
+        position: relative;
+
+        @media (max-width: 768px) {
+            padding: 2rem 0;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+
+        .intro-details {
+            display: grid;
+            gap: 1rem;
+            grid-column: 1 / 6;
+            text-align: left;
+
+            @media (max-width: 768px) {
+                grid-column: 1 / -1;
+            }
+
+            h1 {
+                margin: 0;
+            }
+
+            p {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        img {
+            grid-column: 6 / 13;
+            max-width: 40%;
+            height: auto;
+            border-radius: 4px;
+            position: relative;
+            z-index: 2;
+            justify-self: center;
+
+            @media (max-width: 768px) {
+                grid-column: 1 / -1;
+                max-width: 75%;
+                justify-self: center;
+            }
+        }
+
+        &::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 72%;
+            transform: translate(-50%, -50%);
+            width: 40%;
+            height: 80%;
+            background: radial-gradient(
+                ellipse,
+                var(--color-primary) 0%,
+                transparent 70%
+            );
+            z-index: -2;
+            opacity: 0.4;
+            filter: blur(80px);
+        }
+    }
+
+    .target-audience-section {
+        margin: 3rem 0;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1rem;
+        align-items: start;
+
+        .section-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 2rem;
+
+            h2 {
+                margin: 0 0 0.5rem 0;
+                font-size: 2rem;
+                font-weight: 600;
+                color: var(--color-text);
+            }
+
+            p {
+                margin: 0;
+            }
+        }
+
+        .card {
+            text-align: left;
+            min-height: 100%;
+            &.perfect-for {
+                border: 1px solid var(--color-primary-glow);
+                grid-column: 1 / 7;
+                color: var(--color-white-50);
+
+                h3 {
+                    margin: 0 0 1rem 0;
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                }
+            }
+
+            &.not-designed-for {
+                grid-column: 7 / 13;
+                color: var(--color-white-50);
+
+                h3 {
+                    color: var(--color-text);
+                    margin: 0 0 1rem 0;
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                }
+            }
+
+            ul {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+
+                li {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 0.75rem;
+                    margin-bottom: 0.75rem;
+                    font-size: 0.9rem;
+                    line-height: 1.4;
+                    color: var(--color-white-50);
+
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+
+                    svg {
+                        flex-shrink: 0;
+                        margin-top: 0.125rem;
+                        color: #e8cb2b;
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            .section-header {
+                margin-bottom: 1.5rem;
+
+                h2 {
+                    font-size: 1.5rem;
+                }
+
+                p {
+                    font-size: 1rem;
+                }
+            }
+
+            .card {
+                &.perfect-for,
+                &.not-designed-for {
+                    grid-column: 1 / -1;
+                }
+
+                &.not-designed-for {
+                    margin-top: 1rem;
+                }
+            }
+        }
+    }
+
+    .chart-section {
+        margin: 2rem 0;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 1.25rem;
+
+        img {
+            margin-top: 2rem;
+            grid-column: 1 / 5;
+            max-width: 100%;
+            align-self: self-start;
+
+            @media (max-width: 768px) {
+                grid-column: 1 / -1;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .chart-content {
+            grid-column: 6 / 12;
+            display: flex;
+            align-self: self-start;
+            flex-direction: column;
+            gap: 1.5rem;
+
+            @media (max-width: 768px) {
+                grid-column: 1 / -1;
+            }
+
+            .card {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+                border-radius: 8px;
+                padding: 1rem;
+
+                h2 {
+                    color: var(--color-text);
+                }
+
+                p {
+                    margin-bottom: 1rem;
+                    color: var(--color-text-secondary);
+                }
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    top: 50%;
+                    left: 70%;
+                    transform: translate(-50%, -50%);
+                    width: 40%;
+                    height: 80%;
+                    background: radial-gradient(
+                        ellipse,
+                        var(--color-link) 0%,
+                        transparent 70%
+                    );
+                    z-index: -2;
+                    opacity: 0.8;
+                    filter: blur(80px);
+                }
+            }
+        }
+
+        .caption {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-top: 1rem;
+
+            p {
+                font-size: 0.75rem;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin: 0;
+
+                &::before {
+                    content: "";
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 2px;
+                    flex-shrink: 0;
+                }
+
+                &[data-type="negative"]::before {
+                    background-color: #11c87c;
+                }
+
+                &[data-type="positive"]::before {
+                    background-color: #23a7d7;
+                }
+            }
+        }
+    }
+}

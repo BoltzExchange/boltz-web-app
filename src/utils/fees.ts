@@ -5,6 +5,7 @@ import { Explorer } from "../configs/base";
 import { BTC, LBTC } from "../consts/Assets";
 import { getFeeEstimations as getFeeEstimationsFromExplorer } from "./blockchain";
 import { getFeeEstimations } from "./boltzClient";
+import { fetcher } from "./helper";
 
 // HTLCs are time sensitive, so we need to add a floor to the fee estimations
 const feeFloors = {
@@ -64,3 +65,10 @@ export const getFeeEstimationsFailover = async (asset: string) => {
 
     return await getExplorerFeeEstimations(asset);
 };
+
+export const getBoltzProHistoricalFees = async () =>
+    await fetcher(
+        "/v2/swap/submarine/stats/BTC/BTC",
+        {},
+        { headers: { referral: "pro" } },
+    );
