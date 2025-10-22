@@ -59,6 +59,15 @@ export const cropString = (str: string, maxLen = 40, subStrSize = 19) => {
     );
 };
 
+export const formatAddress = (address: string): string => {
+    const GROUP_SIZE = 5;
+    if (!address) return "";
+    const groups: string[] = [];
+    for (let i = 0; i < address.length; i += GROUP_SIZE)
+        groups.push(address.substring(i, i + GROUP_SIZE));
+    return groups.join(" ");
+};
+
 export const clipboard = (text: string) => {
     void navigator.clipboard.writeText(text);
 };

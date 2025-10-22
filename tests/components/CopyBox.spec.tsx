@@ -45,4 +45,36 @@ describe("CopyBox", () => {
         await new Promise((resolve) => setTimeout(resolve, 300));
         expect(screen.getByTestId("copy-icon")).toBeTruthy();
     });
+
+    test("should format address in groups of 5 characters", () => {
+        const address = "bcrt1qrhg8z3ccu8vmnz7xvwx8t92mykw6ru64k96e4v";
+        const expectedFormatted =
+            "bcrt1 qrhg8 z3ccu 8vmnz 7xvwx 8t92m ykw6r u64k9 6e4v";
+
+        const {
+            container: { firstChild },
+        } = render(() => <CopyBox value={address} />, {
+            wrapper: contextWrapper,
+        });
+
+        const copyBox = firstChild as HTMLParagraphElement;
+
+        expect(copyBox.textContent).toContain(expectedFormatted);
+    });
+
+    test("should copy unformatted address to clipboard", () => {
+        const address = "bcrt1qrhg8z3ccu8vmnz7xvwx8t92mykw6ru64k96e4v";
+
+        const {
+            container: { firstChild },
+        } = render(() => <CopyBox value={address} />, {
+            wrapper: contextWrapper,
+        });
+
+        const copyBox = firstChild as HTMLParagraphElement;
+
+        fireEvent.click(copyBox);
+
+        expect(navigator.clipboard.writeText).toHaveBeenCalledWith(address);
+    });
 });
