@@ -79,12 +79,16 @@ const AddressInput = () => {
                         .replace(/\s/g, "").length;
 
                     let newCursorPos = 0;
-                    let charCount = 0;
-                    for (let i = 0; i < formattedAddress.length; i++) {
-                        if (formattedAddress[i] !== " ") charCount++;
-                        if (charCount >= charsBeforeCursor) {
-                            newCursorPos = i + 1;
-                            break;
+                    if (charsBeforeCursor > 0) {
+                        let charCount = 0;
+                        for (let i = 0; i < formattedAddress.length; i++) {
+                            if (formattedAddress[i] !== " ") {
+                                charCount++;
+                                if (charCount === charsBeforeCursor) {
+                                    newCursorPos = i + 1;
+                                    break;
+                                }
+                            }
                         }
                     }
 
