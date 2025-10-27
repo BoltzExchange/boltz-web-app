@@ -27,7 +27,7 @@ const CopyBox = (props: { value: string }) => {
     const renderAddress = () => {
         const groups = formatAddress(props.value);
         return (
-            <span class="address-groups">
+            <span>
                 <For each={groups}>
                     {(group, index) => (
                         <>
