@@ -20,9 +20,8 @@ body {
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     transition: background-color 0.3s ease-in;
-}
-body::-webkit-scrollbar {
-    display: none;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 ::selection {
     background: var(--color-primary);
@@ -518,7 +517,6 @@ textarea.invalid {
 .frame {
     color: var(--color-text);
     padding: 12px;
-    min-width: 360px;
     max-width: 480px;
     margin: 0 auto;
     border: 1px solid var(--color-white-10);
