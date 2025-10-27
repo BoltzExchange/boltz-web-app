@@ -750,6 +750,18 @@ textarea.invalid {
     color: var(--color-white-50);
     margin: 0;
     cursor: pointer;
+
+    .address-groups {
+        word-break: break-word;
+    }
+
+    .address-highlight {
+        color: var(--color-white-80);
+    }
+
+    .address-normal {
+        color: var(--color-white-50);
+    }
 }
 
 .bulletpoints {

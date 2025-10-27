@@ -1,6 +1,6 @@
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
-import { Show, createSignal } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
 import { isInvoice } from "src/utils/invoice";
 
 import { copyIconTimeout } from "../consts/CopyContent";
@@ -24,6 +24,33 @@ const CopyBox = (props: { value: string }) => {
         }, copyIconTimeout);
     };
 
+    const renderAddress = () => {
+        const groups = formatAddress(props.value);
+        return (
+            <span class="address-groups">
+                <For each={groups}>
+                    {(group, index) => {
+                        const isHighlighted =
+                            index() < 2 || index() >= groups.length - 2;
+                        return (
+                            <>
+                                <span
+                                    class={
+                                        isHighlighted
+                                            ? "address-highlight"
+                                            : "address-normal"
+                                    }>
+                                    {group}
+                                </span>
+                                {index() < groups.length - 1 && " "}
+                            </>
+                        );
+                    }}
+                </For>
+            </span>
+        );
+    };
+
     return (
         <p
             onClick={copyBoxText}
@@ -36,7 +63,7 @@ const CopyBox = (props: { value: string }) => {
             </Show>
             {isInvoice(props.value)
                 ? cropString(props.value, baseStrLength, maxStrLength)
-                : formatAddress(props.value)}
+                : renderAddress()}
         </p>
     );
 };
