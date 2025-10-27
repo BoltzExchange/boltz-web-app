@@ -29,23 +29,19 @@ const CopyBox = (props: { value: string }) => {
         return (
             <span class="address-groups">
                 <For each={groups}>
-                    {(group, index) => {
-                        const isHighlighted =
-                            index() < 2 || index() >= groups.length - 2;
-                        return (
-                            <>
-                                <span
-                                    class={
-                                        isHighlighted
-                                            ? "address-highlight"
-                                            : "address-normal"
-                                    }>
-                                    {group}
-                                </span>
-                                {index() < groups.length - 1 && " "}
-                            </>
-                        );
-                    }}
+                    {(group, index) => (
+                        <>
+                            <span
+                                class={
+                                    index() < 2 || index() >= groups.length - 2
+                                        ? "address-highlight"
+                                        : "address-normal"
+                                }>
+                                {group}
+                            </span>
+                            {index() < groups.length - 1 && " "}
+                        </>
+                    )}
                 </For>
             </span>
         );
