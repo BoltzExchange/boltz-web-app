@@ -925,6 +925,15 @@ const dict = {
         verify_key_failed:
             "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
         rescue_key: "Clave de Rescate Boltz",
+        reset_rescue_key: "Get New Rescue Key",
+        reset_rescue_key_tooltip:
+            "Generate a new Rescue Key and wipe all swap data",
+        reset_rescue_key_prompt:
+            "⚠️ WARNING: This will delete ALL your swap data and generate a new Rescue Key.\n\nSwaps created with the old Rescue Key will no longer be recoverable!\n\nType 'confirm' to proceed:",
+        reset_rescue_key_invalid_confirmation:
+            "Invalid confirmation. Please type 'confirm' to proceed.",
+        reset_rescue_key_error:
+            "An error occurred while resetting the Rescue Key. Please try again.\n\nError: {{ error }}",
         no_swaps_found: "No se encontraron intercambios",
         rif_extra_fee:
             "El monedero no contiene suficientes RBTC, comisión ajustado para incluir comisión de RIF Relay!",
@@ -1252,6 +1261,15 @@ const dict = {
         verify_key_failed:
             "Falha ao verificar a chave de resgate. Recomendamos baixar uma nova chave.",
         rescue_key: "Chave de resgate",
+        reset_rescue_key: "Get New Rescue Key",
+        reset_rescue_key_tooltip:
+            "Generate a new Rescue Key and wipe all swap data",
+        reset_rescue_key_prompt:
+            "⚠️ WARNING: This will delete ALL your swap data and generate a new Rescue Key.\n\nSwaps created with the old Rescue Key will no longer be recoverable!\n\nType 'confirm' to proceed:",
+        reset_rescue_key_invalid_confirmation:
+            "Invalid confirmation. Please type 'confirm' to proceed.",
+        reset_rescue_key_error:
+            "An error occurred while resetting the Rescue Key. Please try again.\n\nError: {{ error }}",
         no_swaps_found: "Nenhuma troca encontrada",
         rif_extra_fee:
             "A carteira não tem RBTC suficiente, taxa ajustada para incluir taxa do RIF Relay!",
@@ -1549,6 +1567,15 @@ const dict = {
         verify_key_failed:
             "Boltz 救援密钥验证失败。我们建议下载新的 Boltz 救援密钥以继续。",
         rescue_key: "救援钥匙",
+        reset_rescue_key: "Get New Rescue Key",
+        reset_rescue_key_tooltip:
+            "Generate a new Rescue Key and wipe all swap data",
+        reset_rescue_key_prompt:
+            "⚠️ WARNING: This will delete ALL your swap data and generate a new Rescue Key.\n\nSwaps created with the old Rescue Key will no longer be recoverable!\n\nType 'confirm' to proceed:",
+        reset_rescue_key_invalid_confirmation:
+            "Invalid confirmation. Please type 'confirm' to proceed.",
+        reset_rescue_key_error:
+            "An error occurred while resetting the Rescue Key. Please try again.\n\nError: {{ error }}",
         no_swaps_found: "未找到交换",
         rif_extra_fee: "钱包中没有足够的 RBTC，费用已调整为包括 RIF 中继费！",
         back: "回一页",
