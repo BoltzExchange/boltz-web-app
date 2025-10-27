@@ -140,6 +140,9 @@ nav a.active {
 #hamburger.active {
     transform: rotate(45deg);
 }
+body:has(#hamburger.active) {
+    overflow: hidden;
+}
 
 #hamburger .line {
     fill: none;
