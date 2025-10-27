@@ -732,12 +732,13 @@ textarea.invalid {
 }
 
 .break-word {
-    word-break: break-all;
+    word-break: break-word;
 }
 
 .copy-box {
     display: flex;
-    align-items: end;
+    align-items: center;
+    text-align: justify;
     justify-content: center;
     gap: 0.63rem;
     user-select: none;
