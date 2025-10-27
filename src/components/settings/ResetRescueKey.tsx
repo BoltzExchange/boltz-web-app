@@ -6,7 +6,8 @@ import { generateRescueFile } from "../../utils/rescueFile";
 const ResetRescueKey = () => {
     const iconSize = 16;
 
-    const { t, setRescueFile, clearSwaps } = useGlobalContext();
+    const { t, setRescueFile, clearSwaps, setRescueFileBackupDone } =
+        useGlobalContext();
 
     const handleReset = () => {
         const confirmText = window.prompt(t("reset_rescue_key_prompt"));
@@ -25,8 +26,7 @@ const ResetRescueKey = () => {
             .then(() => {
                 const newRescueFile = generateRescueFile();
                 setRescueFile(newRescueFile);
-
-                localStorage.clear();
+                setRescueFileBackupDone(false);
 
                 window.location.reload();
             })
