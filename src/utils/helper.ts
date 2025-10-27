@@ -59,13 +59,14 @@ export const cropString = (str: string, maxLen = 40, subStrSize = 19) => {
     );
 };
 
-export const formatAddress = (address?: string | null | undefined): string => {
+export const formatAddress = (address?: string | null): string => {
     const GROUP_SIZE = 5;
     if (!address) return "";
     const clean = address.replace(/\s/g, "");
     const groups: string[] = [];
-    for (let i = 0; i < clean.length; i += GROUP_SIZE)
+    for (let i = 0; i < clean.length; i += GROUP_SIZE) {
         groups.push(clean.substring(i, i + GROUP_SIZE));
+    }
     return groups.join(" ");
 };
 

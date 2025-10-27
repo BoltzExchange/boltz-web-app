@@ -3,10 +3,17 @@ import { IoCheckmark } from "solid-icons/io";
 import { Show, createSignal } from "solid-js";
 
 import { copyIconTimeout } from "../consts/CopyContent";
-import { clipboard, formatAddress } from "../utils/helper";
+import {
+    clipboard,
+    cropString,
+    formatAddress,
+    isMobile,
+} from "../utils/helper";
 
 const CopyBox = (props: { value: string }) => {
     const [copyBoxActive, setCopyBoxActive] = createSignal(false);
+    const baseStrLength = isMobile() ? 8 : 13;
+    const maxStrLength = baseStrLength + 3; // 3 is the length of the ellipsis
 
     const copyBoxText = () => {
         clipboard(props.value);
@@ -26,7 +33,9 @@ const CopyBox = (props: { value: string }) => {
                 fallback={<BiRegularCopy size={23} data-testid="copy-icon" />}>
                 <IoCheckmark size={23} data-testid="checkmark-icon" />
             </Show>
-            {formatAddress(props.value)}
+            {props.value.startsWith("ln")
+                ? cropString(props.value, baseStrLength, maxStrLength)
+                : formatAddress(props.value)}
         </p>
     );
 };
