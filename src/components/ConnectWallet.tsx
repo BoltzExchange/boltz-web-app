@@ -162,10 +162,14 @@ const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
-    const { t } = useGlobalContext();
+    const { t, hideWalletAddress } = useGlobalContext();
     const { clearSigner } = useWeb3Signer();
 
     const formatAddress = (addr: string) => {
+        if (hideWalletAddress()) {
+            return "0x • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • ";
+        }
+
         if (isMobile()) {
             return cropString(addr);
         }
