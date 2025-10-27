@@ -79,28 +79,30 @@
     }
 }
 
-.slideUp {
-    animation: text-slide-up 1s ease-out;
-    animation-timeline: view();
-    animation-range: entry 0% cover 30%;
-}
+@media (prefers-reduced-motion: no-preference) {
+    .slideUp {
+        animation: text-slide-up 1s ease-out forwards;
+        animation-timeline: view();
+        animation-range: entry 0% contain 10%;
+    }
 
-.slideLeft {
-    animation: text-slide-left 1s ease-out;
-    animation-timeline: view();
-    animation-range: entry 0% cover 30%;
-}
+    .slideLeft {
+        animation: text-slide-left 1s ease-out forwards;
+        animation-timeline: view();
+        animation-range: entry 0% contain 10%;
+    }
 
-.slideRight {
-    animation: text-slide-right 1s ease-out;
-    animation-timeline: view();
-    animation-range: entry 0% cover 30%;
-}
+    .slideRight {
+        animation: text-slide-right 1s ease-out forwards;
+        animation-timeline: view();
+        animation-range: entry 0% contain 10%;
+    }
 
-.fadeIn {
-    animation: fade-in 1s ease-out;
-    animation-timeline: view();
-    animation-range: entry 0% cover 30%;
+    .fadeIn {
+        animation: fade-in 1s ease-out forwards;
+        animation-timeline: view();
+        animation-range: entry 0% contain 10%;
+    }
 }
 
 %products-common {
