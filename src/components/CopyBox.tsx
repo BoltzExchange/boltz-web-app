@@ -1,6 +1,7 @@
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
 import { Show, createSignal } from "solid-js";
+import { isInvoice } from "src/utils/invoice";
 
 import { copyIconTimeout } from "../consts/CopyContent";
 import {
@@ -33,7 +34,7 @@ const CopyBox = (props: { value: string }) => {
                 fallback={<BiRegularCopy size={23} data-testid="copy-icon" />}>
                 <IoCheckmark size={23} data-testid="checkmark-icon" />
             </Show>
-            {props.value.startsWith("ln")
+            {isInvoice(props.value)
                 ? cropString(props.value, baseStrLength, maxStrLength)
                 : formatAddress(props.value)}
         </p>
