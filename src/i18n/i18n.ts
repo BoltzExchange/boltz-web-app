@@ -250,6 +250,15 @@ const dict = {
         verify_key_failed:
             "Verification of the Boltz Rescue Key failed. We recommend downloading a new Boltz Rescue Key to continue.",
         rescue_key: "Rescue Key",
+        reset_rescue_key: "Get New Rescue Key",
+        reset_rescue_key_tooltip:
+            "Generate a new Rescue Key and wipe all swap data",
+        reset_rescue_key_prompt:
+            "⚠️ WARNING: This will delete ALL your swap data and generate a new Rescue Key.\n\nSwaps created with the old Rescue Key will no longer be recoverable!\n\nType 'confirm' to proceed:",
+        reset_rescue_key_invalid_confirmation:
+            "Invalid confirmation. Please type 'confirm' to proceed.",
+        reset_rescue_key_error:
+            "An error occurred while resetting the Rescue Key. Please try again.\n\nError: {{ error }}",
         no_swaps_found: "No swaps found",
         rif_extra_fee:
             "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
