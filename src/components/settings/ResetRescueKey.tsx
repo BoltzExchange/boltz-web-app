@@ -1,3 +1,4 @@
+import log from "loglevel";
 import { BiRegularRefresh } from "solid-icons/bi";
 
 import { useGlobalContext } from "../../context/Global";
@@ -9,7 +10,7 @@ const ResetRescueKey = () => {
     const { t, setRescueFile, clearSwaps, setRescueFileBackupDone } =
         useGlobalContext();
 
-    const handleReset = () => {
+    const handleReset = async () => {
         const confirmText = window.prompt(t("reset_rescue_key_prompt"));
 
         if (confirmText === null) {
@@ -22,17 +23,18 @@ const ResetRescueKey = () => {
             return;
         }
 
-        clearSwaps()
-            .then(() => {
-                const newRescueFile = generateRescueFile();
-                setRescueFile(newRescueFile);
-                setRescueFileBackupDone(false);
+        try {
+            await clearSwaps();
+            const newRescueFile = generateRescueFile();
+            setRescueFile(newRescueFile);
+            setRescueFileBackupDone(false);
+            log.info("Rescue key reset successfully");
 
-                window.location.reload();
-            })
-            .catch((error) => {
-                alert(t("reset_rescue_key_error", { error }));
-            });
+            window.location.reload();
+        } catch (error) {
+            alert(t("reset_rescue_key_error", { error }));
+            log.error("Failed to reset rescue key", error);
+        }
     };
 
     return (

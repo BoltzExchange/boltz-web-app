@@ -254,11 +254,11 @@ const dict = {
         reset_rescue_key_tooltip:
             "Generate a new Rescue Key and wipe all swap data",
         reset_rescue_key_prompt:
-            "⚠️ WARNING: This will delete ALL your swap data and generate a new Rescue Key.\n\nSwaps created with the old Rescue Key will no longer be recoverable!\n\nType 'confirm' to proceed:",
+            "⚠️ WARNING: This will delete ALL your swap data and generate a new Rescue Key.\n\nDon't proceed unless you have a backup of your existing Rescue Key or you're absolutely sure you won't need it. \n\nType 'confirm' to proceed:",
         reset_rescue_key_invalid_confirmation:
             "Invalid confirmation. Please type 'confirm' to proceed.",
         reset_rescue_key_error:
-            "An error occurred while resetting the Rescue Key. Please try again.\n\nError: {{ error }}",
+            "An error occurred while resetting the Rescue Key. Please reload this page and try again.\n\nError: {{ error }}",
         no_swaps_found: "No swaps found",
         rif_extra_fee:
             "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
