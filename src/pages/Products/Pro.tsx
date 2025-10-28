@@ -118,22 +118,18 @@ const Pro = () => {
                             },
                         ]}>
                         {(item) => (
-                            <div class="card options-card sequentialFadeUp">
+                            <a
+                                href={item.href}
+                                class="card options-card sequentialFadeUp"
+                                {...(item.external && {
+                                    target: "_blank",
+                                    rel: "noopener noreferrer",
+                                })}>
                                 <h4>
-                                    <a
-                                        href={item.href}
-                                        {...(item.external && {
-                                            target: "_blank",
-                                            rel: "noopener noreferrer",
-                                        })}>
-                                        {item.icon} {item.title}{" "}
-                                        {item.external && (
-                                            <OcLinkexternal2 size={18} />
-                                        )}
-                                    </a>
+                                    {item.icon} {item.title}
                                 </h4>
                                 <p>{item.description}</p>
-                            </div>
+                            </a>
                         )}
                     </For>
                 </div>

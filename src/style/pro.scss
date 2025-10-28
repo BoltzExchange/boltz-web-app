@@ -157,19 +157,31 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease-in-out;
 
         p {
             margin-top: 0.3rem;
         }
 
-        a {
+        h4 {
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            text-decoration: none;
             color: var(--color-link);
-            &:hover {
+        }
+
+        &:hover {
+            h4 {
                 color: var(--color-link-hover);
+            }
+            transform: scale(1.02);
+            border: 1px solid var(--color-link);
+            box-shadow: 0 0 12px var(--color-link);
+
+            @media (max-width: 768px) {
+                transform: scale(1.02);
             }
         }
     }
