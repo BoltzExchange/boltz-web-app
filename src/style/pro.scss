@@ -11,17 +11,17 @@
         display: flex;
         flex-direction: column;
 
-        .regular-fee {
+        .regular {
             color: var(--color-chart-purple);
             font-weight: 600;
         }
 
-        .negative-fee {
+        .negative {
             color: var(--color-chart-green);
             font-weight: 600;
         }
 
-        .lower-fee {
+        .positive {
             color: var(--color-chart-blue);
             font-weight: 600;
         }

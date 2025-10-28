@@ -59,16 +59,6 @@
         }
     }
 
-    @media (max-width: 768px) {
-        column-gap: 1rem;
-        row-gap: 1rem;
-    }
-
-    @media (max-width: 480px) {
-        column-gap: 0.75rem;
-        row-gap: 0.75rem;
-    }
-
     .step {
         display: flex;
         flex-direction: column;

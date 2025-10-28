@@ -55,10 +55,10 @@ const Pro = () => {
                                     <span
                                         class={
                                             point.y === 0.1
-                                                ? "regular-fee"
+                                                ? "regular"
                                                 : (point.y as number) < 0
-                                                  ? "negative-fee"
-                                                  : "lower-fee"
+                                                  ? "negative"
+                                                  : "positive"
                                         }>
                                         {point.y as number}%
                                     </span>
