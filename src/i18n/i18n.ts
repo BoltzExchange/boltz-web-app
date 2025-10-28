@@ -321,16 +321,16 @@ const dict = {
         products: "Products",
         products_name: "Boltz Products",
         products_description:
-            "A suite of products that make Bitcoin layers integration seamless",
+            "A suite of products for seamless interoperability between Bitcoin layers",
         products_plugin_title: "Boltz BTCPay Plugin",
         products_plugin_description:
-            "A plugin that allows any merchant to accept Lightning payments in a non-custodial",
+            "A non-custodial solution to easily accept Lightning payments without running a Lightning node",
         products_client_title: "Boltz Client",
         products_client_description:
-            "Enterprise-grade swap daemon for automating Lightning node's liquidity management",
+            "Our enterprise-grade swap daemon for server integrations and liquidity management",
         products_pro_title: "Boltz Pro",
         products_pro_description:
-            "A platform for earning sats non-custodially.",
+            "A platform for earning sats non-custodially by providing just-in-time liquidity",
         learn_more: "Learn more",
         get_started: "Get started",
         documentation: "Documentation",
@@ -340,82 +340,82 @@ const dict = {
         // Plugin
         boltz_plugin_name: "Boltz BTCPay Plugin",
         boltz_plugin_description:
-            "A self-custodial solution to easily accept Lightning payments",
-        boltz_plugin_step_install_title: "Install the Plugin",
+            "Non-custodial solution to easily accept Lightning payments",
+        boltz_plugin_step_install_title: "Add the plugin",
         boltz_plugin_step_install_description:
-            "Add the Boltz plugin to your BTCPay Server instance",
-        boltz_plugin_step_setup_title: "Setup your wallet",
+            "Install the Boltz plugin on your BTCPay Server",
+        boltz_plugin_step_setup_title: "Set up your wallet",
         boltz_plugin_step_setup_description:
-            "Connect your Lightning wallet to start receiving payments",
-        boltz_plugin_step_paid_title: "Get paid",
+            "Connect your external wallet or create a new one",
+        boltz_plugin_step_paid_title: "Accept Lightning",
         boltz_plugin_step_paid_description:
-            "Accept Lightning payments with automatic on-chain settlement",
+            "Receive Lightning payments that auto-settle to mainchain Bitcoin",
         boltz_plugin_features_title: "Why use it?",
         boltz_plugin_features_description:
             "Built for merchants who want full control without complexity",
         boltz_plugin_feature_flexible_title: "Flexible",
         boltz_plugin_feature_flexible_description:
-            "Accept Lightning payments without running a Lightning node or fully manage liquidity of an existing node",
+            "Accept Lightning payments without running a node or fully manage liquidity of an existing Lightning node",
         boltz_plugin_feature_liquid_title: "Powered by Liquid",
         boltz_plugin_feature_liquid_description:
-            "Fully leveraging the power of Liquid Taproot Swaps for low fees and increased privacy",
-        boltz_plugin_feature_autoswap_title: "Autoswap to mainchain",
+            "Fully leverage the power of Liquid Taproot Swaps for low fees and increased privacy",
+        boltz_plugin_feature_autoswap_title: "Settle on Bitcoin",
         boltz_plugin_feature_autoswap_description:
-            "Trigger autoswaps to the mainchain based on a set of preferences",
-        boltz_plugin_feature_self_custodial_title: "Self-custodial",
+            "Autoswap to mainchain Bitcoin based on your preferences",
+        boltz_plugin_feature_self_custodial_title: "Non-custodial",
         boltz_plugin_feature_self_custodial_description:
-            "All mentioned features are powered by Boltz Atomic Swaps, allowing you to stay in control of your money",
+            "Stay in full control of your Bitcoin, powered by Boltz Atomic Swaps",
 
-        boltz_plugin_questions_title: "Still have questions?",
+        boltz_plugin_questions_title: "Questions?",
         boltz_plugin_questions_subtitle: "We'd love to hear from you!",
         boltz_plugin_chat_button: "Chat with us",
 
         // Client
         boltz_client_name: "Boltz Client",
         boltz_client_description:
-            "Enterprise-grade swap daemon for cheap Lightning channels rebalancing",
-        boltz_client_features_title: "Built for Node Runners",
+            "Enterprise-grade swap daemon for server integrations and liquidity management",
+        boltz_client_features_title: "Built for Professionals",
         boltz_client_features_description:
-            "Powerful features designed for professional Lightning infrastructure",
+            "Powerful features designed for professional Lightning node operators",
         boltz_client_feature_taproot_title: "Taproot-First",
         boltz_client_feature_taproot_description:
-            "Full support of Taproot Swaps for enhanced privacy",
+            "Leveraging Taproot Swaps for enhanced efficiency and privacy",
         boltz_client_node_agnostic_title: "Node Agnostic",
         boltz_client_node_agnostic_description:
-            "First-class citizen support for Core Lightning in addition to LND, giving you complete flexibility in your node infrastructure setup",
+            "First-class citizen support for CLN in addition to LND, giving you flexibility in your node infrastructure setup",
         boltz_client_autoswap_title: "Intelligent Autoswap",
         boltz_client_autoswap_description:
-            "Fine-grained control for automated channel rebalancing with customizable thresholds, preferences, and smart routing",
+            "Fine-grained control for automated channel rebalancing with customizable thresholds, preferences, and smart settlement on Bitcoin",
         boltz_client_liquid_title: "Liquid-First",
         boltz_client_liquid_description:
-            "Optimized UX for channel rebalancing using Liquid swaps with low fees and fast settlement times",
+            "Optimized for channel rebalancing using Liquid swaps for low fees and fast execution",
         boltz_client_cli_title: "Powerful API & CLI",
         boltz_client_cli_first_paragraph:
-            "Built-in wallet system and comprehensive API for seamless integration into your Lightning infrastructure.",
+            "Built-in wallet system and comprehensive API for seamless integration into your infrastructure.",
         boltz_client_cli_second_paragraph:
             "Monitor, control, and automate everything from the command line or your own applications.",
-        boltz_client_cta_title: "Ready to automate your liquidity?",
+        boltz_client_cta_title: "Ready to add Boltz to your infrastructure?",
         boltz_client_cta_subtitle:
-            "Join node runners worldwide who trust Boltz Client for enterprise-grade Lightning liquidity management",
+            "Join enterprises and node runners trusting Boltz Client",
 
         // Pro
         boltz_pro_name: "Boltz Pro",
         boltz_pro_description: "A platform for earning sats non-custodially",
-        boltz_pro_how_it_works_title: "How it works?",
+        boltz_pro_how_it_works_title: "How it works",
         boltz_pro_how_it_works_description:
-            "Similar to regular Boltz, except that you get paid for swapping in directions that help us rebalance our liquidity",
+            "You get paid for swapping in directions that help us rebalance our liquidity",
         boltz_pro_chart_title: "Boltz Pro Fee History Sample",
-        boltz_pro_chart_y_axis: "Boltz Fee",
+        boltz_pro_chart_y_axis: "Boltz Pro Fee",
         boltz_pro_chart_x_axis: "Date",
         boltz_pro_negative_fee: "You earn sats",
         boltz_pro_lower_fee: "You save sats",
-        boltz_pro_regular_fee: "Regular Fee",
+        boltz_pro_regular_fee: "Regular Boltz Fee",
         boltz_pro_target_audience_title: "Who is Boltz Pro For?",
         boltz_pro_target_audience_subtitle:
-            "Perfect for professionals, not for time-critical payments",
-        boltz_pro_perfect_for_title: "Perfect For",
+            "Built for professionals seeking earn opportunities, not for everyday payments",
+        boltz_pro_perfect_for_title: "Built For",
         boltz_pro_perfect_for_1:
-            "Lightning node operators looking to decrease excess inbound liquidity and earn sats",
+            "Lightning node operators looking to decrease excess inbound liquidity to earn sats",
         boltz_pro_perfect_for_2:
             "Professionals collaborating with external node operators to manage liquidity",
         boltz_pro_perfect_for_3:
@@ -428,18 +428,18 @@ const dict = {
             "Scenarios requiring guaranteed instant settlement",
         boltz_pro_cta_title: "Start earning sats now",
         boltz_pro_cta_subtitle:
-            "Head over to Boltz Pro and check out the latest earning opportunities.",
-        boltz_pro_options_title: "Three ways of using it",
-        boltz_pro_options_subtitle: "Flexibility to choose what fits you best",
+            "Head over to Boltz Pro and check out the latest earn opportunities.",
+        boltz_pro_options_title: "3 ways to use it",
+        boltz_pro_options_subtitle: "Choose what fits you best",
         boltz_pro_option_client_title: "Boltz Client",
         boltz_pro_option_client_description:
-            "Tight integration with Boltz Client enables full automation via API",
+            "Enables full automation of Boltz Pro via API & CLI",
         boltz_pro_option_web_title: "Web App",
         boltz_pro_option_web_description:
-            "User-friendly interface to monitor swap opportunities",
+            "Monitor and execute swap opportunities via web",
         boltz_pro_option_telegram_title: "Telegram Bot",
         boltz_pro_option_telegram_description:
-            "Get instant alerts about earning opportunities directly in Telegram",
+            "Get instant alerts about earn opportunities in Telegram",
     },
     de: {
         language: "Deutsch",

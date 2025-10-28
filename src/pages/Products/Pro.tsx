@@ -92,15 +92,6 @@ const Pro = () => {
                     <For
                         each={[
                             {
-                                icon: <FaSolidCode size={18} />,
-                                title: t("boltz_pro_option_client_title"),
-                                href: "/products/client",
-                                description: t(
-                                    "boltz_pro_option_client_description",
-                                ),
-                                external: false,
-                            },
-                            {
                                 icon: <BsGlobe size={18} />,
                                 title: t("boltz_pro_option_web_title"),
                                 href: "https://pro.boltz.exchange",
@@ -108,6 +99,15 @@ const Pro = () => {
                                     "boltz_pro_option_web_description",
                                 ),
                                 external: true,
+                            },
+                            {
+                                icon: <FaSolidCode size={18} />,
+                                title: t("boltz_pro_option_client_title"),
+                                href: "/products/client",
+                                description: t(
+                                    "boltz_pro_option_client_description",
+                                ),
+                                external: false,
                             },
                             {
                                 icon: <BsTelegram size={18} />,
