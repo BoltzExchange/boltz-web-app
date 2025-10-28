@@ -359,7 +359,7 @@ const dict = {
         boltz_plugin_feature_liquid_title: "Powered by Liquid",
         boltz_plugin_feature_liquid_description:
             "Fully leverage the power of Liquid Taproot Swaps for low fees and increased privacy",
-        boltz_plugin_feature_autoswap_title: "Settle on Bitcoin",
+        boltz_plugin_feature_autoswap_title: "Settle in Bitcoin",
         boltz_plugin_feature_autoswap_description:
             "Autoswap to mainchain Bitcoin based on your preferences",
         boltz_plugin_feature_self_custodial_title: "Non-custodial",
@@ -423,9 +423,9 @@ const dict = {
         boltz_pro_not_designed_for_title: "Not Designed For",
         boltz_pro_not_designed_for_1: "Paying with Lightning in a coffee shop",
         boltz_pro_not_designed_for_2:
-            "Payment reliability to destinations with high routing fees",
+            "Payments to destinations with high routing fees",
         boltz_pro_not_designed_for_3:
-            "Scenarios requiring guaranteed instant settlement",
+            "Scenarios requiring quick Lightning payments",
         boltz_pro_cta_title: "Start earning sats now",
         boltz_pro_cta_subtitle:
             "Head over to Boltz Pro and check out the latest earn opportunities.",

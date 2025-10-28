@@ -1,4 +1,3 @@
-import { useNavigate } from "@solidjs/router";
 import { For } from "solid-js";
 
 import lnCircuitPro from "../../assets/ln-circuit-pro.svg";
@@ -9,7 +8,6 @@ import "../../style/products.scss";
 
 const Products = () => {
     const { t } = useGlobalContext();
-    const navigate = useNavigate();
 
     return (
         <div class="products">
@@ -45,13 +43,13 @@ const Products = () => {
                                 },
                             ]}>
                             {(product) => (
-                                <div
+                                <a
                                     class="product-item-body card fadeUp"
                                     data-type={product.id}
-                                    onClick={() => navigate(product.href)}>
+                                    href={product.href}>
                                     <h4>{product.title}</h4>
                                     <p>{product.description}</p>
-                                </div>
+                                </a>
                             )}
                         </For>
                     </div>

@@ -9,8 +9,8 @@ import { OcLinkexternal2 } from "solid-icons/oc";
 import { RiArrowsDragMove2Fill as FlexibleIcon } from "solid-icons/ri";
 import { For } from "solid-js";
 
-import pluginIllustration from "../../assets/plugin-illustration.svg";
-import pluginScreenshot from "../../assets/plugin-screenshot.svg";
+import btcPayIllustration from "../../assets/btcpay-illustration.webp";
+import btcPayScreenshot from "../../assets/btcpay-screenshot.svg";
 import { useGlobalContext } from "../../context/Global";
 import "../../style/btcpay.scss";
 
@@ -27,8 +27,8 @@ const Btcpay = () => {
             </div>
             <div class="content">
                 <div class="illustration">
-                    <img src={pluginIllustration} alt="Plugin illustration" />
-                    <div class="bg-neon" />
+                    <img src={btcPayIllustration} alt="BTCPay illustration" />
+                    <div class="neon-tube" />
                 </div>
                 <div class="steps-container grid">
                     <For
@@ -139,7 +139,7 @@ const Btcpay = () => {
                     </div>
                     <img
                         class="product-screenshot slideLeft"
-                        src={pluginScreenshot}
+                        src={btcPayScreenshot}
                         alt="Plugin screenshot"
                     />
                 </div>

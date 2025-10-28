@@ -18,6 +18,8 @@ const formatDate = (timestamp: number): string => {
         day: "numeric",
         month: "short",
         year: "numeric",
+        hour: "numeric",
+        minute: "numeric",
     });
 
     return dateFormatter.format(date);

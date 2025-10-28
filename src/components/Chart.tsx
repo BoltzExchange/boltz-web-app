@@ -537,16 +537,6 @@ const Chart = (props: {
             ctx.restore();
         }
 
-        // X-axis label
-        // if (props.axesLabels && props.axesLabels.x) {
-        //     const canvasDims = getCanvasDimensions();
-        //     ctx.fillText(
-        //         props.axesLabels.x,
-        //         dimensions.offsets.xOffset + chartWidth / 2,
-        //         canvasDims.height - ChartConstants.xAxisLabelOffset,
-        //     );
-        // }
-
         ctx.textAlign = "left"; // Reset to default
     };
 

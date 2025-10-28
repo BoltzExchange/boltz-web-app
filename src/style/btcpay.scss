@@ -16,22 +16,22 @@
 
         img {
             grid-column: 1 / -1;
-            max-width: 90%;
+            width: 80%;
             animation: slide-up-fade 1.2s ease-out 0.3s both;
         }
 
-        .bg-neon {
+        .neon-tube {
             position: absolute;
-            top: 55%;
-            left: 49%;
+            top: 78%;
+            left: 50%;
             transform: translateX(-50%);
-            background: url("../assets/bg_neon.svg");
-            background-size: cover;
+            background: url("../assets/neon-tube.webp");
+            background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
             mix-blend-mode: color-dodge;
-            width: 100vw;
-            height: 50vh;
+            width: 100%;
+            height: 100%;
             z-index: -1;
 
             @media (max-width: 488px) {
