@@ -146,14 +146,14 @@ const Pro = () => {
                             <ul>
                                 <For
                                     each={[
-                                        { text: t("boltz_pro_perfect_for_1") },
-                                        { text: t("boltz_pro_perfect_for_2") },
-                                        { text: t("boltz_pro_perfect_for_3") },
+                                        t("boltz_pro_perfect_for_1"),
+                                        t("boltz_pro_perfect_for_2"),
+                                        t("boltz_pro_perfect_for_3"),
                                     ]}>
                                     {(item) => (
                                         <li>
                                             <VsCheck />
-                                            {item.text}
+                                            {item}
                                         </li>
                                     )}
                                 </For>
