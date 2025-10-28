@@ -626,7 +626,7 @@
 
 // Body styles for products pages
 body:has(.products),
-body:has(.products-plugin),
+body:has(.products-btcpay),
 body:has(.products-client),
 body:has(.products-pro) {
     background: var(--color-secondary-800);

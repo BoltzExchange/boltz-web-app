@@ -31,8 +31,8 @@ import MnemonicVerify from "./pages/MnemonicVerify";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
 import Privacy from "./pages/Privacy";
+import Btcpay from "./pages/Products/Btcpay";
 import Client from "./pages/Products/Client";
-import Plugin from "./pages/Products/Plugin";
 import Pro from "./pages/Products/Pro";
 import Products from "./pages/Products/Products";
 import RefundEvm from "./pages/RefundEvm";
@@ -121,7 +121,7 @@ const cleanup = render(
             <Route path="/" component={Hero} />
             <Route path="/swap" component={Create} />
             <Route path="/products" component={Products} />
-            <Route path="/products/plugin" component={Plugin} />
+            <Route path="/products/btcpay" component={Btcpay} />
             <Route path="/products/client" component={Client} />
             <Route path="/products/pro" component={Pro} />
             {/* Compatibility with link in Breez:

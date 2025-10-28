@@ -41,11 +41,6 @@ const Client = () => {
                                 </span>
                             </div>
                             <div class="terminal-line">
-                                <span class="green">? </span>You already have an
-                                autoswap configuration. Do you want to reset it?{" "}
-                                <span class="cyan">Yes</span>
-                            </div>
-                            <div class="terminal-line">
                                 <span class="green">? </span>Which currency
                                 should autoswaps be performed on?{" "}
                                 <span class="cyan">LBTC</span>
@@ -138,7 +133,7 @@ const Client = () => {
                         </a>
                         <a
                             class="btn-secondary"
-                            href="https://github.com/BoltzExchange/boltz-btcpay-plugin"
+                            href="https://github.com/BoltzExchange/boltz-client"
                             target="_blank"
                             rel="noopener noreferrer">
                             <span>{t("view_on_github")}</span>

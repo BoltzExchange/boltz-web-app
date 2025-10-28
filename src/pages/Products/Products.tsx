@@ -22,12 +22,12 @@ const Products = () => {
                         <For
                             each={[
                                 {
-                                    id: "plugin",
+                                    id: "btcpay",
                                     title: t("products_plugin_title"),
                                     description: t(
                                         "products_plugin_description",
                                     ),
-                                    href: "/products/plugin",
+                                    href: "/products/btcpay",
                                 },
                                 {
                                     id: "client",

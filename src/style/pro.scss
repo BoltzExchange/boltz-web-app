@@ -10,6 +10,21 @@
     .tooltip {
         display: flex;
         flex-direction: column;
+
+        .regular-fee {
+            color: var(--color-chart-purple);
+            font-weight: 600;
+        }
+
+        .negative-fee {
+            color: var(--color-chart-green);
+            font-weight: 600;
+        }
+
+        .lower-fee {
+            color: var(--color-chart-blue);
+            font-weight: 600;
+        }
     }
 
     .intro-section {

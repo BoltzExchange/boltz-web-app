@@ -72,7 +72,9 @@ const Pro = () => {
                                 <VsArrowSmallRight />
                                 <span data-asset={LN} />
                             </div>
-                            <p data-type="regular">Regular Fee</p>
+                            <p data-type="regular">
+                                {t("boltz_pro_regular_fee")}
+                            </p>
                             <p data-type="negative">
                                 {t("boltz_pro_negative_fee")}
                             </p>
@@ -162,26 +164,14 @@ const Pro = () => {
                             <ul>
                                 <For
                                     each={[
-                                        {
-                                            text: t(
-                                                "boltz_pro_not_designed_for_1",
-                                            ),
-                                        },
-                                        {
-                                            text: t(
-                                                "boltz_pro_not_designed_for_2",
-                                            ),
-                                        },
-                                        {
-                                            text: t(
-                                                "boltz_pro_not_designed_for_3",
-                                            ),
-                                        },
+                                        t("boltz_pro_not_designed_for_1"),
+                                        t("boltz_pro_not_designed_for_2"),
+                                        t("boltz_pro_not_designed_for_3"),
                                     ]}>
                                     {(item) => (
                                         <li>
                                             <HiSolidXMark />
-                                            {item.text}
+                                            {item}
                                         </li>
                                     )}
                                 </For>
@@ -206,7 +196,7 @@ const Pro = () => {
                         </a>
                         <a
                             class="btn-secondary"
-                            href="https://blog.boltz.exchange/p/boltz-pro-launches-out-of-beta-stack"
+                            href="https://api.docs.boltz.exchange/pro.html"
                             target="_blank"
                             rel="noopener noreferrer">
                             <span>{t("learn_more")}</span>

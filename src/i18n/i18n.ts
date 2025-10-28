@@ -409,6 +409,7 @@ const dict = {
         boltz_pro_chart_x_axis: "Date",
         boltz_pro_negative_fee: "You earn sats",
         boltz_pro_lower_fee: "You save sats",
+        boltz_pro_regular_fee: "Regular Fee",
         boltz_pro_target_audience_title: "Who is Boltz Pro For?",
         boltz_pro_target_audience_subtitle:
             "Perfect for professionals, not for time-critical payments",
