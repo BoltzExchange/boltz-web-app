@@ -28,9 +28,12 @@ const ResetRescueKey = () => {
             const newRescueFile = generateRescueFile();
             setRescueFile(newRescueFile);
             setRescueFileBackupDone(false);
+            setSettingsMenu(false);
+            setSendAmount(BigNumber(0));
+            setReceiveAmount(BigNumber(0));
+            navigate("/");
             log.info("Rescue key reset successfully");
-
-            window.location.reload();
+            notify("success", "Successfully generated new Rescue Key");
         } catch (error) {
             alert(t("reset_rescue_key_error", { error }));
             log.error("Failed to reset rescue key", error);
