@@ -6,6 +6,7 @@ import { VsArrowSmallRight, VsCheck } from "solid-icons/vs";
 import { For } from "solid-js";
 
 import Chart, { type Point } from "../../components/Chart";
+import { config } from "../../config";
 import { BTC, LN } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
 import "../../style/pro.scss";
@@ -96,11 +97,13 @@ const Pro = () => {
                             {
                                 icon: <BsGlobe size={18} />,
                                 title: t("boltz_pro_option_web_title"),
-                                href: "https://pro.boltz.exchange",
+                                href: config.isPro
+                                    ? "/"
+                                    : "https://pro.boltz.exchange",
                                 description: t(
                                     "boltz_pro_option_web_description",
                                 ),
-                                external: true,
+                                external: config.isPro ? false : true,
                             },
                             {
                                 icon: <FaSolidCode size={18} />,
@@ -190,8 +193,12 @@ const Pro = () => {
                     <div class="cta-buttons">
                         <a
                             class="btn-primary"
-                            href="https://pro.boltz.exchange/"
-                            target="_blank"
+                            href={
+                                config.isPro
+                                    ? "/"
+                                    : "https://pro.boltz.exchange/"
+                            }
+                            target={config.isPro ? "" : "_blank"}
                             rel="noopener noreferrer">
                             <span>{t("get_started")}</span>
                             <OcLinkexternal2 />
