@@ -8,10 +8,13 @@
 
     .illustration {
         position: relative;
-        min-height: 260px;
+        min-height: 320px;
 
         @media (max-width: 768px) {
-            min-height: 105px;
+            min-height: 220px;
+        }
+        @media (max-width: 480px) {
+            min-height: 115px;
         }
 
         img {
@@ -22,11 +25,11 @@
 
         .neon-tube {
             position: absolute;
-            top: 78%;
+            top: 80%;
             left: 50%;
             transform: translateX(-50%);
             background: url("../assets/neon-tube.webp");
-            background-size: contain;
+            background-size: 100%;
             background-repeat: no-repeat;
             background-position: center;
             mix-blend-mode: color-dodge;
@@ -34,9 +37,8 @@
             height: 100%;
             z-index: -1;
 
-            @media (max-width: 488px) {
-                top: 0;
-                background-size: 200%;
+            @media (max-width: 480px) {
+                top: 90%;
             }
         }
     }
@@ -63,6 +65,7 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        height: 100%;
         grid-column: span 4;
         text-align: left;
         gap: 0.5rem;
@@ -132,7 +135,7 @@
 
     @media (max-width: 768px) {
         grid-column: 1 / -1;
-        gap: 1.5rem;
+        gap: 1.8rem;
     }
 
     .features-header {
