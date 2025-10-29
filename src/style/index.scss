@@ -19,9 +19,9 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
-}
-body::-webkit-scrollbar {
-    display: none;
+    transition: background-color 0.3s ease-in;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 ::selection {
     background: var(--color-primary);
@@ -156,6 +156,7 @@ hr.spacer {
     width: 100%;
     display: flex;
     justify-content: center;
+    align-items: center;
     svg {
         margin-right: 3px;
     }
@@ -515,7 +516,6 @@ textarea.invalid {
 .frame {
     color: var(--color-text);
     padding: 12px;
-    min-width: 360px;
     max-width: 480px;
     margin: 0 auto;
     border: 1px solid var(--color-white-10);
@@ -973,6 +973,22 @@ header {
     gap: 2rem;
 }
 
+.lower-fee {
+    color: var(--color-lower-fee);
+    text-shadow:
+        0 0 4px var(--color-lower-fee-glow),
+        0 0 8px var(--color-lower-fee-glow);
+}
+
+.negative-fee {
+    color: var(--color-negative-fee);
+    text-shadow:
+        0 0 4px var(--color-negative-fee-glow),
+        0 0 8px var(--color-negative-fee-glow);
+}
+.regular-fee {
+    color: var(--color-regular-fee);
+}
 .fee-comparison-table {
     width: 100%;
     table-layout: fixed;
@@ -1043,20 +1059,6 @@ header {
             }
         }
     }
-}
-
-.lower-fee {
-    color: var(--color-lower-fee);
-    text-shadow:
-        0 0 4px var(--color-lower-fee-glow),
-        0 0 8px var(--color-lower-fee-glow);
-}
-
-.negative-fee {
-    color: var(--color-negative-fee);
-    text-shadow:
-        0 0 4px var(--color-negative-fee-glow),
-        0 0 8px var(--color-negative-fee-glow);
 }
 
 .accordion {

@@ -1,6 +1,7 @@
 /* @refresh reload */
 import "@fontsource/noto-mono";
 import "@fontsource/noto-sans";
+import "@fontsource/noto-sans/200.css";
 import "@fontsource/noto-sans/800.css";
 import type { RouteSectionProps } from "@solidjs/router";
 import { Navigate, Route, Router } from "@solidjs/router";
@@ -35,6 +36,10 @@ import RefundRescue from "./pages/RefundRescue";
 import Rescue from "./pages/Rescue";
 import RescueExternal from "./pages/RescueExternal";
 import Terms from "./pages/Terms";
+import Btcpay from "./pages/products/Btcpay";
+import Client from "./pages/products/Client";
+import Pro from "./pages/products/Pro";
+import Products from "./pages/products/Products";
 import "./style/index.scss";
 import { initEcc } from "./utils/ecpair";
 import "./utils/patches";
@@ -115,6 +120,10 @@ const cleanup = render(
         <Router root={App}>
             <Route path="/" component={Hero} />
             <Route path="/swap" component={Create} />
+            <Route path="/products" component={Products} />
+            <Route path="/products/btcpay" component={Btcpay} />
+            <Route path="/products/client" component={Client} />
+            <Route path="/products/pro" component={Pro} />
             {/* Compatibility with link in Breez:
                                 https://github.com/breez/breezmobile/blob/a1b0ffff902dfa2210af8fdb047b715535ff11e9/src/json/vendors.json#L30 */}
             <Route path="/swapbox" component={Create} />

@@ -19,6 +19,7 @@ nav {
     width: 100%;
     background: var(--color-secondary-700);
     position: relative;
+    transition: background-color 0.3s ease-in;
 }
 nav a {
     color: var(--color-text);
@@ -138,6 +139,9 @@ nav a.active {
 
 #hamburger.active {
     transform: rotate(45deg);
+}
+body:has(#hamburger.active) {
+    overflow: hidden;
 }
 
 #hamburger .line {

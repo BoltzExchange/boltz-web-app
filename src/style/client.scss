@@ -1,0 +1,151 @@
+@use "sass:color";
+@use "vars";
+@use "theme";
+@use "products";
+
+.products-client {
+    @extend %products-common;
+
+    .features {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    .features-header {
+        display: flex;
+        flex-direction: column;
+        grid-column: 1/12;
+        h2 {
+            font-weight: 600;
+        }
+    }
+
+    .cli-section {
+        display: grid;
+        align-items: center;
+        grid-template-columns: repeat(2, 1fr);
+        column-gap: 1.25rem;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            row-gap: 2rem;
+        }
+
+        .cli-details {
+            display: grid;
+            gap: 1rem;
+            text-align: left;
+            animation: text-slide-left 0.7s ease-out;
+
+            @media (max-width: 768px) {
+                grid-column: 1 / -1;
+                animation: text-slide-up 0.7s ease-out;
+            }
+
+            h2 {
+                font-weight: 600;
+            }
+            p {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        .cli {
+            animation: fade-in 0.5s ease-out;
+            grid-column: 2 / 12;
+            max-width: 150%;
+            height: 300px;
+            background: var(--color-secondary-800);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+            font-size: 0.875rem;
+            line-height: 1.4;
+            border: 1px solid var(--color-white-05);
+            box-shadow:
+                4px 4px 20px var(--color-black-50),
+                10px 10px 200px var(--color-shadow-blue-light);
+            position: relative;
+            text-align: left;
+            transition: transform 0.3s ease-in-out;
+
+            &:hover {
+                transform: scale(1.05);
+            }
+
+            @media (max-width: 768px) {
+                font-size: 0.8rem;
+                grid-column: 1 / -1;
+                max-width: 100%;
+            }
+
+            .green {
+                color: var(--color-terminal-green);
+            }
+
+            .blue {
+                color: var(--color-terminal-blue);
+            }
+
+            .cyan {
+                color: var(--color-terminal-cyan);
+            }
+
+            .indent {
+                margin-left: 11px;
+            }
+
+            &::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 30px;
+                background: var(--color-black-30);
+                border-radius: 8px 8px 0 0;
+                display: flex;
+                align-items: center;
+                padding: 0 1rem;
+            }
+
+            &::after {
+                content: "kilrau@pc:~/boltz-client";
+                position: absolute;
+                top: 8px;
+                left: 1rem;
+                color: var(--color-text);
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+
+            .terminal-content {
+                margin-top: 1rem;
+                padding: 0.5rem 0;
+            }
+
+            .terminal-line {
+                margin: 0.15rem 0;
+
+                &.prompt {
+                    font-weight: 600;
+                }
+
+                &.output &.command {
+                    color: var(--color-white-50);
+                }
+            }
+        }
+    }
+
+    @keyframes blink {
+        0%,
+        50% {
+            opacity: 1;
+        }
+        51%,
+        100% {
+            opacity: 0;
+        }
+    }
+}

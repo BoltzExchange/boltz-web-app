@@ -13,6 +13,7 @@ declare global {
         };
         $chatwoot: {
             setCustomAttributes: (attributes: { swapId: string }) => void;
+            toggle: (state?: "open" | "close") => void;
         };
     }
 }

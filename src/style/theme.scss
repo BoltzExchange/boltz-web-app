@@ -5,6 +5,10 @@ $rootstock_icon: url(../assets/rootstock-icon.svg);
 $boltz_icon: url(/boltz-icon.svg);
 
 :root {
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 16px;
+
     // Base colors
     --color-white: #ffffff;
     --color-black: #000000;
@@ -12,8 +16,6 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-light-gray: #d0d0d0;
     --color-medium-gray: #545c65;
     --color-darker-gray: #191919;
-    --color-link: #4a9eff;
-    --color-link-hover: #7ab8ff;
 
     // Orange opacity levels
     --color-btc-orange-15: color-mix(
@@ -43,6 +45,43 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-black-30: color-mix(in srgb, var(--color-black) 30%, transparent);
     --color-black-40: color-mix(in srgb, var(--color-black) 40%, transparent);
     --color-black-50: color-mix(in srgb, var(--color-black) 50%, transparent);
+
+    --color-chart-purple: #a648b7;
+    --color-chart-green: #48b789;
+    --color-chart-blue: #559cb6;
+    --color-grid: #dddddd10;
+
+    --color-regular-fee: #c334dd;
+    --color-regular-fee-glow: color-mix(
+        in srgb,
+        var(--color-regular-fee) 50%,
+        transparent
+    );
+    --color-negative-fee: #11c87c;
+    --color-negative-fee-glow: color-mix(
+        in srgb,
+        var(--color-negative-fee) 50%,
+        transparent
+    );
+    --color-lower-fee: #23a7d7;
+    --color-lower-fee-glow: color-mix(
+        in srgb,
+        var(--color-lower-fee) 50%,
+        transparent
+    );
+
+    // Terminal colors
+    --color-terminal-green: #9ece6a;
+    --color-terminal-blue: #7aa2f7;
+    --color-terminal-cyan: #449dab;
+
+    // Error colors
+    --color-error: #ff4444;
+
+    // Box shadow colors
+    --color-shadow-blue: rgba(0, 44, 176, 0.12);
+    --color-shadow-blue-light: rgba(113, 148, 251, 0.04);
+    --color-shadow-blue-dark: rgba(0, 44, 176, 0.04);
 }
 
 :root[boltz-theme="default"] {
@@ -58,13 +97,14 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-secondary-200: #a1a9b2;
     --color-secondary-300: #727e8c;
     --color-secondary-500: #1e2d3c;
-    --color-secondary-600: #14283f;
-    --color-secondary-700: #102133;
-    --color-secondary-800: #081422;
+    --color-secondary-600: #12253a;
+    --color-secondary-700: #0f1f30;
+    --color-secondary-800: #091625;
+    --color-secondary-900: #09141f;
 
     --color-tertiary: #533180;
 
-    --color-text: #e6ebf0;
+    --color-text: #d7dee4;
     --color-dark-gray: #17222e;
     --color-hero-gradient-1: #eac806;
     --color-hero-gradient-2: #2084f6;
@@ -73,6 +113,14 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-success-400: #419a41;
     --color-success-500: #246c24;
     --color-success-700: #003300;
+
+    --color-link: #4fadc2;
+    --color-link-hover: #70cde2;
+    --color-link-glow: color-mix(
+        in srgb,
+        var(--color-link-hover) 80%,
+        transparent
+    );
 }
 
 :root[boltz-theme="pro"] {
@@ -89,7 +137,8 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-secondary-500: #1f262e;
     --color-secondary-600: #14191e;
     --color-secondary-700: #0d1216;
-    --color-secondary-800: #080b0e;
+    --color-secondary-800: #090d11;
+    --color-secondary-900: #070a0e;
 
     --color-tertiary: #4f1d85;
 
@@ -103,16 +152,11 @@ $boltz_icon: url(/boltz-icon.svg);
     --color-success-500: #0a5217;
     --color-success-700: #043017;
 
-    --color-negative-fee: #11c87c;
-    --color-negative-fee-glow: color-mix(
+    --color-link: #b56f31;
+    --color-link-hover: #da9457;
+    --color-link-glow: color-mix(
         in srgb,
-        var(--color-negative-fee) 50%,
-        transparent
-    );
-    --color-lower-fee: #23a7d7;
-    --color-lower-fee-glow: color-mix(
-        in srgb,
-        var(--color-lower-fee) 50%,
+        var(--color-link-hover) 80%,
         transparent
     );
 }
