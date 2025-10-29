@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.6](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.5..v1.8.6) - 2025-10-29
+
+### Bug Fixes
+
+- log timestamps (#1043) - ([f455ea2](https://github.com/BoltzExchange/boltz-web-app/commit/f455ea2cc97e415aded3c9bf6fc02940f2b747bc))
+- highlight first and last blocks in address (#1052) - ([9dbef5f](https://github.com/BoltzExchange/boltz-web-app/commit/9dbef5f0df370f3c40b4de5ae0506684b95b3a59))
+
+### Features
+
+- improve "Accept quote" UX (#1044) - ([c939e9b](https://github.com/BoltzExchange/boltz-web-app/commit/c939e9bf0f8e02a5757b477607428a7e63b3b069))
+- add timestamp to logs (#1045) - ([21410c8](https://github.com/BoltzExchange/boltz-web-app/commit/21410c810244e41ea741f7ab05193632caa2d1c7))
+- display all characters of addresses (#1050) - ([8f4ee98](https://github.com/BoltzExchange/boltz-web-app/commit/8f4ee9823105266fc606145a8babc7e2b8b0fe5d))
+- Add Products page (#1038) - ([f5d3d0c](https://github.com/BoltzExchange/boltz-web-app/commit/f5d3d0c57976260519a53c660510d9908cdcd8b7))
+
+### Miscellaneous Chores
+
+- improve i18n pt translations (#1040) - ([a45b1b4](https://github.com/BoltzExchange/boltz-web-app/commit/a45b1b437490b959ac21c5e37563b776d04822a9))
+- update RPC error message (#1048) - ([52b24a6](https://github.com/BoltzExchange/boltz-web-app/commit/52b24a6f0ecc6d3efaeec2c5e3b6c33e84649c9d))
+- change link from testnet to regtest in footer (#1056) - ([1d5a965](https://github.com/BoltzExchange/boltz-web-app/commit/1d5a9651980614d53878e8fa860b467c16645bfa))
+
+### Tests
+
+- improve i18n coverage (#1041) - ([dfaf364](https://github.com/BoltzExchange/boltz-web-app/commit/dfaf364f210ece977309bac34643155797e48180))
+
+---
 ## [1.8.5](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.4..v1.8.5) - 2025-10-11
 
 ### Bug Fixes
@@ -23,6 +48,7 @@ All notable changes to this project will be documented in this file. See [conven
 - hardcode btc as denomination, add missing language strings - ([cfa879f](https://github.com/BoltzExchange/boltz-web-app/commit/cfa879fde80787e2300c94e406b67eae978a78fa))
 - log swap creations with destination (#1034) - ([21a48b3](https://github.com/BoltzExchange/boltz-web-app/commit/21a48b3576af292587c075744c6dc3a4657c3487))
 - bump dependencies (#1036) - ([c35a634](https://github.com/BoltzExchange/boltz-web-app/commit/c35a6341999c266d488d5fbed60559f8355b7f59))
+- bump version to v1.8.5 (#1039) - ([62477ca](https://github.com/BoltzExchange/boltz-web-app/commit/62477ca3c46189351d474ae6a083c3c89822f020))
 
 ### Tests
 
