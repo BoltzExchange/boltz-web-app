@@ -69,7 +69,7 @@ const defaults = {
     youtubeUrl:
         "https://www.youtube.com/playlist?list=PLkqOa9SGBeZfAEHvKkGKjeRIASeu6bNO3",
     brandingUrl: "https://github.com/BoltzExchange/logo",
-    testnetUrl: "https://testnet.boltz.exchange",
+    regtestUrl: "https://github.com/BoltzExchange/regtest/",
     telegramUrl: "https://t.me/boltzhq",
     email: "hi@bol.tz",
     dnsOverHttps: "https://1.1.1.1/dns-query",

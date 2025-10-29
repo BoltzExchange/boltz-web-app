@@ -81,8 +81,8 @@ const Footer = () => {
                     {t("status")}
                 </a>{" "}
                 |{" "}
-                <a target="_blank" href={config.testnetUrl}>
-                    {t("testnet")}
+                <a target="_blank" href={config.regtestUrl}>
+                    {t("regtest")}
                 </a>
             </p>
             <p class="legal-nav">
