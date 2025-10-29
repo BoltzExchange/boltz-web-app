@@ -1681,16 +1681,16 @@ const dict = {
         products: "Produtos",
         products_name: "Produtos Boltz",
         products_description:
-            "Um conjunto de produtos para interoperabilidade perfeita entre as camadas do Bitcoin",
-        products_plugin_title: "Plugin Boltz BTCPay",
+            "Um conjunto de produtos para integração perfeita entre as camadas do Bitcoin",
+        products_plugin_title: "Boltz BTCPay Plugin",
         products_plugin_description:
-            "Uma solução não custodial para aceitar facilmente pagamentos Lightning sem executar um nó Lightning",
-        products_client_title: "Cliente Boltz",
+            "Uma solução não-custodial para aceitar pagamentos Lightning facilmente, sem ter um nó Lightning",
+        products_client_title: "Boltz Client",
         products_client_description:
-            "Nosso daemon de troca de nível empresarial para integrações de servidor e gestão de liquidez",
+            "Nosso daemon empresarial de trocas, para integrações em servidores e gestão de liquidez",
         products_pro_title: "Boltz Pro",
         products_pro_description:
-            "Uma plataforma que permite ganhar sats com trocas",
+            "Uma plataforma que permite ganhar sats através de trocas",
         learn_more: "Saiba mais",
         get_started: "Abrir Boltz Pro",
         documentation: "Documentação",
@@ -1700,108 +1700,108 @@ const dict = {
         // Plugin
         boltz_plugin_name: "Plugin Boltz BTCPay",
         boltz_plugin_description:
-            "Solução não custodial para aceitar facilmente pagamentos Lightning",
-        boltz_plugin_step_install_title: "Adicionar o plugin",
+            "Solução não-custodial para aceitar pagamentos Lightning facilmente",
+        boltz_plugin_step_install_title: "Instale o plugin",
         boltz_plugin_step_install_description:
             "Instale o plugin Boltz no seu servidor BTCPay",
-        boltz_plugin_step_setup_title: "Configurar sua carteira",
+        boltz_plugin_step_setup_title: "Configure sua carteira",
         boltz_plugin_step_setup_description:
             "Conecte sua carteira externa ou crie uma nova",
-        boltz_plugin_step_paid_title: "Aceitar Lightning",
+        boltz_plugin_step_paid_title: "Receba Lightning",
         boltz_plugin_step_paid_description:
-            "Receba pagamentos Lightning que são automaticamente liquidados em Bitcoin mainchain",
+            "Receba pagamentos Lightning com liquidação automática em Bitcoin mainchain",
         boltz_plugin_features_title: "Por que usar?",
         boltz_plugin_features_description:
-            "Construído para comerciantes que querem controle total sem complexidade",
+            "Feito para comerciantes que querem controle total, sem complexidades",
         boltz_plugin_feature_flexible_title: "Flexível",
         boltz_plugin_feature_flexible_description:
-            "Aceite pagamentos Lightning sem executar um nó ou gerencie totalmente a liquidez de um nó Lightning existente",
-        boltz_plugin_feature_liquid_title: "Alimentado por Liquid",
+            "Aceite pagamentos Lightning sem ter um nó ou gerencie 100% da liquidez de um nó Lightning existente",
+        boltz_plugin_feature_liquid_title: "Impulsionado pela Liquid",
         boltz_plugin_feature_liquid_description:
-            "Aproveite totalmente o poder dos Liquid Taproot Swaps para taxas baixas e maior privacidade",
-        boltz_plugin_feature_autoswap_title: "Liquidar em Bitcoin",
+            "Aproveite o poder de trocas Taproot via Liquid para taxas menores e maior privacidade",
+        boltz_plugin_feature_autoswap_title: "Liquidação em Bitcoin",
         boltz_plugin_feature_autoswap_description:
-            "Autoswap para Bitcoin mainchain com base nas suas preferências",
-        boltz_plugin_feature_self_custodial_title: "Não custodial",
+            "Troca automática para Bitcoin mainchain com base nas suas preferências",
+        boltz_plugin_feature_self_custodial_title: "Não-custodial",
         boltz_plugin_feature_self_custodial_description:
-            "Mantenha o controle total dos seus Bitcoin, alimentado por Boltz Atomic Swaps",
+            "Mantenha o controle total dos seus Bitcoin com o poder das trocas atômicas da Boltz",
 
-        boltz_plugin_questions_title: "Perguntas?",
+        boltz_plugin_questions_title: "Dúvidas?",
         boltz_plugin_questions_subtitle: "Adoraríamos ouvir você!",
         boltz_plugin_chat_button: "Converse conosco",
 
         // Client
-        boltz_client_name: "Cliente Boltz",
+        boltz_client_name: "Boltz Client",
         boltz_client_description:
-            "Daemon de troca de nível empresarial para integrações de servidor e gestão de liquidez",
-        boltz_client_features_title: "Construído para Empresas e Profissionais",
+            "Daemon empresarial de trocas para integrações em servidores e gestão de liquidez",
+        boltz_client_features_title: "Feito para empresas e profissionais",
         boltz_client_features_description:
-            "Recursos poderosos projetados para operadores profissionais de nós Lightning",
+            "Recursos avançados, projetados para operadores profissionais de nós Lightning",
         boltz_client_feature_taproot_title: "Taproot-First",
         boltz_client_feature_taproot_description:
-            "Aproveitando Taproot Swaps para maior eficiência e privacidade",
+            "Utiliza trocas Taproot para maior eficiência e privacidade",
         boltz_client_node_agnostic_title: "Agnóstico de Nó",
         boltz_client_node_agnostic_description:
-            "Suporte de primeira classe para CLN além de LND, dando-lhe flexibilidade na sua infraestrutura",
-        boltz_client_autoswap_title: "Autoswap Inteligente",
+            "Suporte de primeira classe para CLN, além de LND, dando flexibilidade à sua infraestrutura",
+        boltz_client_autoswap_title: "Auto-Troca Inteligente",
         boltz_client_autoswap_description:
-            "Controle granular para reequilíbrio automático de canais com configurações personalizáveis e liquidação inteligente em Bitcoin",
+            "Controle granular para rebalanceamento automático de canais, com configurações ajustáveis e liquidação inteligente em Bitcoin",
         boltz_client_liquid_title: "Liquid-First",
         boltz_client_liquid_description:
-            "Otimizado para reequilíbrio de canais usando trocas Liquid para taxas baixas, execução rápida e maior privacidade",
-        boltz_client_cli_title: "API e CLI Poderosos",
+            "Otimizado para rebalanceamento de canais usando trocas Liquid para taxas baixas, execução rápida e maior privacidade",
+        boltz_client_cli_title: "API e CLI robustas",
         boltz_client_cli_first_paragraph:
-            "Sistema de carteira integrado e API abrangente para integração perfeita na sua infraestrutura.",
+            "Carteira integrada e API abrangente para integração perfeita na sua infraestrutura.",
         boltz_client_cli_second_paragraph:
-            "Monitore, controle e automatize com suas próprias aplicações ou via CLI.",
-        boltz_client_cta_title: "Adicione Boltz à sua infraestrutura!",
+            "Monitore, controle e automatize tudo via linha de comando ou com seus próprios apps.",
+        boltz_client_cta_title: "Adicione a Boltz à sua infraestrutura!",
         boltz_client_cta_subtitle:
             "Junte-se à comunidade de empresas e operadores de nós que usam o Boltz Client",
 
         // Pro
         boltz_pro_name: "Boltz Pro",
         boltz_pro_description:
-            "Uma plataforma que permite ganhar sats com trocas",
+            "Uma plataforma que permite ganhar sats através de trocas",
         boltz_pro_how_it_works_title: "Como funciona",
         boltz_pro_how_it_works_description:
             "Você é pago por fazer trocas em direções que nos ajudam a reequilibrar nossa liquidez",
-        boltz_pro_chart_title: "Exemplo de Histórico de Taxas Boltz Pro",
+        boltz_pro_chart_title: "Amostra de Histórico de Taxas Boltz Pro",
         boltz_pro_chart_y_axis: "Taxa Boltz Pro",
         boltz_pro_chart_x_axis: "Data",
         boltz_pro_negative_fee: "Você ganha sats",
         boltz_pro_lower_fee: "Você economiza sats",
         boltz_pro_regular_fee: "Taxa Regular Boltz",
-        boltz_pro_target_audience_title: "Para quem é o Boltz Pro?",
+        boltz_pro_target_audience_title: "Para quem é a Boltz Pro?",
         boltz_pro_target_audience_subtitle:
-            "Construído para profissionais que querem ganhar sats, não para pagamentos cotidianos",
-        boltz_pro_perfect_for_title: "Construído Para",
+            "Feita para profissionais que querem ganhar sats, não para pagamentos do dia a dia",
+        boltz_pro_perfect_for_title: "Feita para",
         boltz_pro_perfect_for_1:
-            "Operadores de nós Lightning que buscam reduzir o excesso de liquidez de entrada para ganhar sats",
+            "Operadores de nós Lightning que buscam reduzir o excesso de liquidez inbound para ganhar sats",
         boltz_pro_perfect_for_2:
             "Profissionais colaborando com operadores de nós externos para gerenciar liquidez",
         boltz_pro_perfect_for_3:
-            "Usuários recarregando carteiras Lightning dentro dos limites de roteamento do Boltz Pro",
-        boltz_pro_not_designed_for_title: "Não Adequado Para",
+            "Usuários recarregando carteiras Lightning dentro dos limites de roteamento da Boltz Pro",
+        boltz_pro_not_designed_for_title: "Não adequada para",
         boltz_pro_not_designed_for_1:
-            "Pagamentos Lightning cotidianos, como comprar um café",
+            "Pagamentos Lightning do dia a dia, como comprar um café",
         boltz_pro_not_designed_for_2:
-            "Pagamentos confiáveis para destinos com altas taxas de roteamento",
+            "Confiabilidade no pagamento a destinos com altas taxas de roteamento",
         boltz_pro_not_designed_for_3:
-            "Cenários que exigem execução de pagamento instantânea garantida",
+            "Cenários que exigem garantia de execução de pagamento instantâneo",
         boltz_pro_cta_title: "Comece a ganhar sats agora!",
         boltz_pro_cta_subtitle:
             "Descubra as oportunidades atuais para ganhar sats",
-        boltz_pro_options_title: "3 maneiras de usar o Boltz Pro",
-        boltz_pro_options_subtitle: "Escolha o que melhor se adapta a você",
-        boltz_pro_option_client_title: "Cliente Boltz",
+        boltz_pro_options_title: "3 maneiras de usar a Boltz Pro",
+        boltz_pro_options_subtitle: "Escolha a que melhor se adapta a você",
+        boltz_pro_option_client_title: "Boltz Client",
         boltz_pro_option_client_description:
-            "Automatize completamente o Boltz Pro com API e CLI",
-        boltz_pro_option_web_title: "Aplicativo Web",
+            "Automatize completamente a Boltz Pro com API e CLI",
+        boltz_pro_option_web_title: "App Web",
         boltz_pro_option_web_description:
-            "Observe e execute trocas com nosso aplicativo web Boltz Pro",
+            "Observe e execute trocas com nosso app web Boltz Pro",
         boltz_pro_option_telegram_title: "Bot do Telegram",
         boltz_pro_option_telegram_description:
-            "Receba notificações sobre oportunidades do Boltz Pro",
+            "Receba notificações sobre oportunidades da Boltz Pro",
     },
     zh: {
         language: "中文",
