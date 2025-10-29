@@ -11,7 +11,6 @@ const dict = {
         non_custodial_sub:
             "Swaps on Boltz are atomic, cryptography ensures that users are always in control of their money",
         node: "Lightning Nodes",
-        lightningnode: "View Lightning Nodes",
         error: "Error",
         error_subline: "Invalid response from the API, something is wrong.",
         error_wasm: "WebAssembly not supported",
@@ -454,7 +453,6 @@ const dict = {
         non_custodial_sub:
             "Swaps auf Boltz sind atomar, Kryptografie stellt sicher, dass Nutzer stets die Kontrolle über ihre Bitcoin behalten",
         node: "Lightning-Knoten",
-        lightningnode: "Lightning-Knoten anzeigen",
         error: "Fehler",
         error_subline:
             "Ungültige Antwort von der API, irgendwas ist hier falsch gelaufen.",
@@ -912,7 +910,6 @@ const dict = {
         non_custodial_sub:
             "Los intercambios en Boltz son atomicos, la criptografía garantiza que los usuarios siempre tienen el control de su Bitcoin",
         node: "Nodos de Lightning",
-        lightningnode: "Ver nodos de Lightning",
         error: "Error",
         error_subline: "Respuesta inválida de la API, algo está mal :/",
         error_wasm: "WebAssembly no soportado",
@@ -1368,7 +1365,6 @@ const dict = {
         non_custodial_sub:
             "As trocas na Boltz são atômicas, a criptografia garante que os usuários sempre tenham controle sobre seu Bitcoin",
         node: "Nós Lightning",
-        lightningnode: "Ver nós Lightning",
         error: "Erro",
         error_subline: "Resposta inválida da API, algo deu errado.",
         error_wasm: "WebAssembly não suportado",
@@ -1476,8 +1472,8 @@ const dict = {
             "Informe um endereço para receber seu reembolso:",
         refund_backup: "Backup",
         refund_import: "Importar backup",
-        refund_clear: "Excluir armazenamento",
-        delete_swap: "Excluir troca do armazenamento",
+        refund_clear: "Apagar armazenamento",
+        delete_swap: "Apagar troca do armazenamento",
         delete_storage:
             "Tem certeza de que deseja limpar seu armazenamento?\nAs informações das suas trocas e as chaves privadas de reembolso/recebimento serão perdidas.",
         delete_storage_single_swap:
@@ -1533,14 +1529,14 @@ const dict = {
         warning_expiry:
             "Certifique-se de que sua transação seja confirmada em até 24h após a criação da troca!",
         not_found: "404 - Página não encontrada",
-        not_found_subline: "A página que procuras não existe.",
+        not_found_subline: "A página solicitada não existe.",
         back_to_home: "Voltar à página inicial",
         transaction_prompt:
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação exibida.',
         transaction_prompt_receive:
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação para receber {{ asset }}.',
         invalid_address: "Endereço {{ asset }} inválido",
-        scan_qr_code: "Escanear QR Code",
+        scan_qr_code: "Ler QR Code",
         version: "Versão",
         commithash: "Hash do Commit",
         open_in_wallet: "Abrir na carteira",
@@ -1628,8 +1624,7 @@ const dict = {
             "Esta nova chave funciona em qualquer dispositivo e funciona para todas as trocas criadas com ela.",
         backup_boltz_rescue_key_subline_third:
             "Por favor, escreva ou copie esta chave e armazene-a em um local seguro e permanente.",
-        backup_boltz_rescue_key_reminder:
-            "Guarde com segurança. Não compartilhe.",
+        backup_boltz_rescue_key_reminder: "Guarde com segurança. Não partilhe.",
         copy_rescue_key: "Copiar chave de resgate",
         user_saved_key: "Eu guardei a chave de resgate",
         verify_mnemonic_word: {
@@ -1657,9 +1652,9 @@ const dict = {
             telegram_bot: "Bot do Telegram",
         },
         refresh_for_refund:
-            "Se enviou Bitcoin para esta troca, recarregue a página para verificar se existe um reembolso.",
+            "Se enviou Bitcoin para esta troca, atualize a página para verificar se existe um reembolso.",
         applied_routing_hint:
-            "O teu destinatário suporta a receção direta de {{ asset }}. Assim, poupas em taxas e ele continua a receber o valor total.",
+            "O seu destinatário suporta o recebimento direto de {{ asset }}. Assim, você poupa em taxas e ele continua a receber o valor total.",
         optimized_route_amount:
             "Rota de troca otimizada, poupando-te ~{{ amount }} {{ denomination }}",
         claim_address_prompt: "Digite um endereço para reivindicar a troca:",
@@ -1672,9 +1667,9 @@ const dict = {
         failed_get_swap_subline:
             "Por favor, re-insira a chave de resgate e tente novamente.",
         in_progress: "Em curso",
-        completed: "Completado",
+        completed: "Finalizada",
         get_refundable_error:
-            "Não foi possível carregar os dados de UTXO. Recarregue a página para voltar a tentar ou verifique sua conexão com a Internet se o problema persistir.",
+            "Não foi possível carregar os dados de UTXO. Atualize a página para voltar a tentar ou verifique sua conexão com a Internet se o problema persistir.",
         min_amount_destination:
             "O valor mínimo para o endereço de destino é {{ amount }} {{ denomination }}",
         max_amount_destination:
@@ -1820,7 +1815,6 @@ const dict = {
         non_custodial_sub:
             "Boltz上的交换是原子式,密码学确保用户始终掌握自己的资金",
         node: "闪电网络节点",
-        lightningnode: "查看闪电网络节点",
         error: "错误",
         error_subline: "API的响应无效，出现异常。",
         error_wasm: "不支持WebAssembly",
@@ -2228,7 +2222,6 @@ const dict = {
         non_custodial_sub:
             "Boltzのスワップはノンカストディアル型です。暗号技術により、ユーザーは常に資金を自己管理できます",
         node: "ノード",
-        lightningnode: "Lightningノードを表示",
         error: "エラー",
         error_subline: "APIからの無効な応答です。何かが間違っています",
         error_wasm: "WebAssemblyはサポートされていません",

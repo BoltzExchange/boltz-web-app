@@ -22,7 +22,7 @@ import type {
     SubmarineSwap,
 } from "./swapCreator";
 
-export const requestTimeoutDuration = 10_000;
+export const requestTimeoutDuration = 15_000;
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
@@ -57,6 +57,17 @@ export const cropString = (str: string, maxLen = 40, subStrSize = 19) => {
         "..." +
         str.substring(str.length - subStrSize)
     );
+};
+
+export const formatAddress = (address?: string | null): string[] => {
+    const GROUP_SIZE = 5;
+    if (!address) return [];
+    const clean = address.replace(/\s/g, "");
+    const groups: string[] = [];
+    for (let i = 0; i < clean.length; i += GROUP_SIZE) {
+        groups.push(clean.substring(i, i + GROUP_SIZE));
+    }
+    return groups;
 };
 
 export const clipboard = (text: string) => {
@@ -98,7 +109,7 @@ export const fetcher = async <T = unknown>(
 ): Promise<T> => {
     const controller = new AbortController();
     const requestTimeout = setTimeout(
-        () => controller.abort(),
+        () => controller.abort({ reason: "Request timed out" }),
         requestTimeoutDuration,
     );
 

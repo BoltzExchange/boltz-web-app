@@ -1,9 +1,15 @@
 import { BiRegularCopy } from "solid-icons/bi";
 import { IoCheckmark } from "solid-icons/io";
-import { Show, createSignal } from "solid-js";
+import { For, Show, createSignal } from "solid-js";
+import { isInvoice } from "src/utils/invoice";
 
 import { copyIconTimeout } from "../consts/CopyContent";
-import { clipboard, cropString, isMobile } from "../utils/helper";
+import {
+    clipboard,
+    cropString,
+    formatAddress,
+    isMobile,
+} from "../utils/helper";
 
 const CopyBox = (props: { value: string }) => {
     const [copyBoxActive, setCopyBoxActive] = createSignal(false);
@@ -18,6 +24,29 @@ const CopyBox = (props: { value: string }) => {
         }, copyIconTimeout);
     };
 
+    const renderAddress = () => {
+        const groups = formatAddress(props.value);
+        return (
+            <span>
+                <For each={groups}>
+                    {(group, index) => (
+                        <>
+                            <span
+                                class={
+                                    index() < 2 || index() >= groups.length - 2
+                                        ? "address-highlight"
+                                        : "address-normal"
+                                }>
+                                {group}
+                            </span>
+                            {index() < groups.length - 1 && " "}
+                        </>
+                    )}
+                </For>
+            </span>
+        );
+    };
+
     return (
         <p
             onClick={copyBoxText}
@@ -28,7 +57,9 @@ const CopyBox = (props: { value: string }) => {
                 fallback={<BiRegularCopy size={23} data-testid="copy-icon" />}>
                 <IoCheckmark size={23} data-testid="checkmark-icon" />
             </Show>
-            {cropString(props.value, baseStrLength, maxStrLength)}
+            {isInvoice(props.value)
+                ? cropString(props.value, baseStrLength, maxStrLength)
+                : renderAddress()}
         </p>
     );
 };

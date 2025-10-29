@@ -1,6 +1,10 @@
 import type { Pairs } from "../../src/utils/boltzClient";
 import { ECPair } from "../../src/utils/ecpair";
-import { getPair, parsePrivateKey } from "../../src/utils/helper";
+import {
+    formatAddress,
+    getPair,
+    parsePrivateKey,
+} from "../../src/utils/helper";
 
 vi.mock("../../src/utils/ecpair", () => {
     return {
@@ -80,6 +84,39 @@ describe("helper", () => {
             expect(mockDerive).not.toHaveBeenCalled();
             // eslint-disable-next-line @typescript-eslint/unbound-method
             expect(ECPair.fromPrivateKey).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe("formatAddress", () => {
+        test("should format Bitcoin address in groups of 5 characters", () => {
+            const address = "bcrt1qrhg8z3ccu8vmnz7xvwx8t92mykw6ru64k96e4v";
+            const expected = [
+                "bcrt1",
+                "qrhg8",
+                "z3ccu",
+                "8vmnz",
+                "7xvwx",
+                "8t92m",
+                "ykw6r",
+                "u64k9",
+                "6e4v",
+            ];
+            expect(formatAddress(address)).toEqual(expected);
+        });
+
+        test("should handle empty string", () => {
+            expect(formatAddress("")).toEqual([]);
+        });
+
+        test("should format short addresses", () => {
+            expect(formatAddress("abc")).toEqual(["abc"]);
+            expect(formatAddress("abcde")).toEqual(["abcde"]);
+            expect(formatAddress("abcdef")).toEqual(["abcde", "f"]);
+        });
+
+        test("should handle null or undefined gracefully", () => {
+            expect(formatAddress(null)).toEqual([]);
+            expect(formatAddress(undefined)).toEqual([]);
         });
     });
 });

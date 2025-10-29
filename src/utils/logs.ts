@@ -3,9 +3,13 @@ import log from "loglevel";
 // One week
 export const logDeletionTime = 60 * 60 * 24 * 7;
 
+const zeroPad = (value: number) => {
+    return value < 10 ? `0${value}` : `${value}`;
+};
+
 export const getDate = (): string => {
     const date = new Date();
-    return `${date.getUTCFullYear()}/${date.getUTCMonth()}/${date.getUTCDate()}`;
+    return `${date.getUTCFullYear()}/${zeroPad(date.getUTCMonth() + 1)}/${zeroPad(date.getUTCDate())}`;
 };
 
 export const parseDate = (date: string): Date => {
@@ -14,7 +18,7 @@ export const parseDate = (date: string): Date => {
     const parsed = new Date();
     parsed.setTime(0);
     parsed.setUTCFullYear(split[0]);
-    parsed.setUTCMonth(split[1]);
+    parsed.setUTCMonth(split[1] - 1);
     parsed.setUTCDate(split[2]);
 
     return parsed;
@@ -38,20 +42,24 @@ export const deleteOldLogs = async (logsForage: LocalForage) => {
     });
 };
 
-export const formatLogLine = (message: unknown[]) =>
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    message
-        .map((entry: unknown) => {
-            if (entry instanceof Error) {
-                return entry;
-            }
-            if (typeof entry === "object") {
-                return JSON.stringify(entry);
-            }
+export const formatLogLine = (message: unknown[]) => {
+    const timestamp = new Date().toISOString(); // ISO 8601 format with milliseconds (UTC)
+    const formattedMessage =
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        message
+            .map((entry: unknown) => {
+                if (entry instanceof Error) {
+                    return entry;
+                }
+                if (typeof entry === "object") {
+                    return JSON.stringify(entry);
+                }
 
-            return entry;
-        })
-        .join(" ");
+                return entry;
+            })
+            .join(" ");
+    return `${timestamp} ${formattedMessage}`;
+};
 
 export const injectLogWriter = (logsForage: LocalForage) => {
     const originalLogFactory = log.methodFactory;

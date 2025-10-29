@@ -33,19 +33,34 @@ describe("logs", () => {
         log.setLevel("error");
     });
 
-    test("should get current date", () => {
-        const date = new Date();
+    describe("getDate", () => {
+        test("should add 1 to month", () => {
+            const date = new Date("2025-11-16T12:00:00Z");
+            vi.setSystemTime(date);
 
-        expect(getDate()).toEqual(
-            `${date.getUTCFullYear()}/${date.getUTCMonth()}/${date.getUTCDate()}`,
-        );
+            expect(getDate()).toEqual(`2025/11/16`);
+        });
+
+        test("should 0 pad the day", () => {
+            const date = new Date("2025-11-03T12:00:00Z");
+            vi.setSystemTime(date);
+
+            expect(getDate()).toEqual(`2025/11/03`);
+        });
+
+        test("should 0 pad the month", () => {
+            const date = new Date("2025-02-13T12:00:00Z");
+            vi.setSystemTime(date);
+
+            expect(getDate()).toEqual(`2025/02/13`);
+        });
     });
 
     test("should parse date", () => {
         const date = parseDate("2024/05/16");
 
         expect(date.getUTCFullYear()).toEqual(2024);
-        expect(date.getUTCMonth()).toEqual(5);
+        expect(date.getUTCMonth()).toEqual(5 - 1);
         expect(date.getUTCDate()).toEqual(16);
     });
 
@@ -79,7 +94,10 @@ describe("logs", () => {
         ${["some", "strings"]}           | ${"some strings"}
         ${["some", { data: "objects" }]} | ${'some {"data":"objects"}'}
     `("should format log lines for storage", ({ line, expected }) => {
-        expect(formatLogLine(line)).toEqual(expected);
+        const fixedDate = new Date("2025-10-14T08:14:36.616Z");
+        vi.setSystemTime(fixedDate);
+        const timestamp = fixedDate.toISOString();
+        expect(formatLogLine(line)).toEqual(`${timestamp} ${expected}`);
     });
 
     test.each`
@@ -99,6 +117,8 @@ describe("logs", () => {
             log.setLevel("trace");
 
             const logMessage = "test message";
+            const fixedDate = new Date("2025-10-14T08:14:36.616Z");
+            vi.setSystemTime(fixedDate);
             log.debug(logMessage);
 
             await new Promise((resolve) => {
@@ -108,8 +128,9 @@ describe("logs", () => {
             expect(forage.getItem).toHaveBeenCalledTimes(1);
             expect(forage.getItem).toHaveBeenCalledWith(getDate());
             expect(forage.setItem).toHaveBeenCalledTimes(1);
+            const timestamp = fixedDate.toISOString();
             expect(forage.setItem).toHaveBeenCalledWith(getDate(), [
-                logMessage,
+                `${timestamp} ${logMessage}`,
             ]);
         },
     );
@@ -126,6 +147,8 @@ describe("logs", () => {
         log.setLevel("trace");
 
         const logMessage = "test message";
+        const fixedDate = new Date("2025-10-14T08:14:36.616Z");
+        vi.setSystemTime(fixedDate);
         log.debug(logMessage);
 
         await new Promise((resolve) => {
@@ -135,9 +158,10 @@ describe("logs", () => {
         expect(forage.getItem).toHaveBeenCalledTimes(1);
         expect(forage.getItem).toHaveBeenCalledWith(getDate());
         expect(forage.setItem).toHaveBeenCalledTimes(1);
+        const timestamp = fixedDate.toISOString();
         expect(forage.setItem).toHaveBeenCalledWith(getDate(), [
             ...existingLogs,
-            logMessage,
+            `${timestamp} ${logMessage}`,
         ]);
     });
 
