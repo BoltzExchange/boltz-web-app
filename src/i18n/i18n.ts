@@ -318,7 +318,6 @@ const dict = {
 
         // Products page
         products: "Products",
-        products_name: "Boltz Products",
         products_description:
             "A suite of products for seamless interoperability between Bitcoin layers",
         products_plugin_title: "Boltz BTCPay Plugin",
@@ -775,7 +774,6 @@ const dict = {
 
         // Products page
         products: "Produkte",
-        products_name: "Boltz Produkte",
         products_description:
             "Eine Produktsuite für nahtlose Interoperabilität zwischen Bitcoin-Layern",
         products_plugin_title: "Boltz BTCPay Plugin",
@@ -1229,7 +1227,6 @@ const dict = {
 
         // Products page
         products: "Productos",
-        products_name: "Productos Boltz",
         products_description:
             "Una suite de productos para interoperabilidad perfecta entre las capas de Bitcoin",
         products_plugin_title: "Plugin Boltz BTCPay",
@@ -1679,7 +1676,6 @@ const dict = {
 
         // Products page
         products: "Produtos",
-        products_name: "Produtos Boltz",
         products_description:
             "Um conjunto de produtos para integração perfeita entre as camadas do Bitcoin",
         products_plugin_title: "Boltz BTCPay Plugin",
@@ -2097,7 +2093,6 @@ const dict = {
 
         // Products page
         products: "产品",
-        products_name: "Boltz 产品",
         products_description: "一套产品，可实现比特币各层之间的无缝互操作性",
         products_plugin_title: "Boltz BTCPay 插件",
         products_plugin_description:
@@ -2536,7 +2531,6 @@ const dict = {
 
         // Products page
         products: "製品",
-        products_name: "Boltz製品",
         products_description:
             "Bitcoinレイヤー間のシームレスな相互運用性を実現する製品スイート",
         products_plugin_title: "Boltz BTCPayプラグイン",
