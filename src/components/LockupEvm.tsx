@@ -1,9 +1,13 @@
 import log from "loglevel";
-import { Show, createEffect, createSignal } from "solid-js";
+import { type Accessor, Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
+import {
+    type Signer,
+    customDerivationPathRdns,
+    useWeb3Signer,
+} from "../context/Web3";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ConnectWallet from "./ConnectWallet";
@@ -12,6 +16,26 @@ import LoadingSpinner from "./LoadingSpinner";
 import OptimizedRoute from "./OptimizedRoute";
 
 const lockupGasUsage = 46_000n;
+
+export const getSpendableBalance = async (
+    signer: Accessor<Signer | undefined>,
+) => {
+    if (signer === undefined) {
+        return undefined;
+    }
+    const [balance, gasPrice] = await Promise.all([
+        signer().provider.getBalance(await signer().getAddress()),
+        signer()
+            .provider.getFeeData()
+            .then((data) => data.gasPrice),
+    ]);
+
+    const spendable = balance - gasPrice * lockupGasUsage;
+
+    log.info("EVM signer spendable balance", spendable);
+
+    return spendable;
+};
 
 const InsufficientBalance = () => {
     const { t } = useGlobalContext();
@@ -50,15 +74,8 @@ const LockupEvm = (props: {
             return;
         }
 
-        const [balance, gasPrice] = await Promise.all([
-            signer().provider.getBalance(await signer().getAddress()),
-            signer()
-                .provider.getFeeData()
-                .then((data) => data.gasPrice),
-        ]);
+        const spendable = await getSpendableBalance(signer);
 
-        const spendable = balance - gasPrice * lockupGasUsage;
-        log.info("EVM signer spendable balance", spendable);
         setSignerBalance(spendable);
     });
 
