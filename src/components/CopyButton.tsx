@@ -40,7 +40,7 @@ const CopyButton = (props: {
     };
 
     return (
-        <span class={buttonClass()} onClick={onClick}>
+        <span class={buttonClass()} data-testid={props.label} onClick={onClick}>
             <Show
                 when={buttonActive() === true}
                 fallback={<BiRegularCopy size={21} />}>

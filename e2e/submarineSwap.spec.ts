@@ -48,7 +48,7 @@ test.describe("Submarine swap", () => {
 
         await verifyRescueFile(page);
 
-        const copyAddressButton = page.getByText("address");
+        const copyAddressButton = page.getByTestId("copy_address");
         expect(copyAddressButton).toBeDefined();
         await copyAddressButton.click();
 
