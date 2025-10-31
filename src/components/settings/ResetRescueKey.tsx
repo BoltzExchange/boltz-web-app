@@ -1,14 +1,24 @@
+import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { BiRegularRefresh } from "solid-icons/bi";
 
+import { useCreateContext } from "../../context/Create";
 import { useGlobalContext } from "../../context/Global";
 import { generateRescueFile } from "../../utils/rescueFile";
 
 const ResetRescueKey = () => {
     const iconSize = 16;
+    const navigate = useNavigate();
 
-    const { t, setRescueFile, clearSwaps, setRescueFileBackupDone } =
-        useGlobalContext();
+    const {
+        t,
+        setRescueFile,
+        clearSwaps,
+        setRescueFileBackupDone,
+        setSettingsMenu,
+        notify,
+    } = useGlobalContext();
+    const { setSendAmount, setReceiveAmount } = useCreateContext();
 
     const handleReset = async () => {
         const confirmText = window.prompt(t("reset_rescue_key_prompt"));
