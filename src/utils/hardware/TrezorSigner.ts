@@ -125,15 +125,17 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     } as unknown as never),
                 );
 
-                log.debug("Broadcasting Trezor transaction");
-                const tx = Transaction.from({
+                const transactionLike = {
                     ...trezorTx,
-                    value,
                     type: 0,
                     gasPrice: feeData.gasPrice,
-                    nonce: Number(trezorTx.nonce),
+                    nonce: parseInt(trezorTx.nonce, 16),
                     signature: Signature.from(signature.payload),
-                });
+                };
+
+                log.debug("Broadcasting Trezor transaction", transactionLike);
+
+                const tx = Transaction.from(transactionLike);
 
                 await this.provider.send("eth_sendRawTransaction", [
                     tx.serialized,
