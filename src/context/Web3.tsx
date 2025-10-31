@@ -81,6 +81,9 @@ const Web3SignerContext = createContext<{
 
     openWalletConnectModal: Accessor<boolean>;
     setOpenWalletConnectModal: Setter<boolean>;
+
+    walletConnected: Accessor<boolean>;
+    setWalletConnected: Setter<boolean>;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -124,6 +127,7 @@ const Web3SignerProvider = (props: {
         createSignal<boolean>(false);
     const [openWalletConnectModal, setOpenWalletConnectModal] =
         createSignal<boolean>(false);
+    const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
@@ -301,6 +305,8 @@ const Web3SignerProvider = (props: {
                 openWalletConnectModal,
                 setOpenWalletConnectModal,
                 connectProviderForAddress,
+                walletConnected,
+                setWalletConnected,
                 getContracts: contracts,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
@@ -308,6 +314,7 @@ const Web3SignerProvider = (props: {
                         rawProvider().removeAllListeners("chainChanged");
                     }
 
+                    setWalletConnected(false);
                     setSigner(undefined);
                     setRawProvider(undefined);
                 },
