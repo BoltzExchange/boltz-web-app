@@ -259,6 +259,7 @@ const dict = {
             "Invalid confirmation. Please type 'confirm' to proceed.",
         reset_rescue_key_error:
             "An error occurred while resetting the Rescue Key. Please reload this page and try again.\n\nError: {{ error }}",
+        reset_rescue_key_success: "New Rescue Key generated successfully!",
         no_swaps_found: "No swaps found",
         rif_extra_fee:
             "Wallet doesn't contain enough RBTC, fee adjusted to include RIF Relay fee!",
