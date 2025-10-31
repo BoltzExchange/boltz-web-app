@@ -68,7 +68,7 @@ test.describe("Rescue file", () => {
         await page
             .getByTestId("rescueFileUpload")
             .setInputFiles(existingFilePath);
-        await page.getByText("address").click();
+        await page.getByTestId("copy_address").click();
 
         // Verify that a new swap was created
         expect(await getRestorableSwaps(existingFilePath)).toHaveLength(
@@ -94,7 +94,7 @@ test.describe("Rescue file", () => {
                     .setInputFiles(existingFilePath);
             }
 
-            await page.getByText("address").click();
+            await page.getByTestId("copy_address").click();
         }
 
         // Clear localStorage to force verification and rescan
@@ -111,7 +111,7 @@ test.describe("Rescue file", () => {
         await page
             .getByTestId("rescueFileUpload")
             .setInputFiles(existingFilePath);
-        await page.getByText("address").click();
+        await page.getByTestId("copy_address").click();
 
         const swaps = await getRestorableSwaps(existingFilePath);
         const keyIndices = swaps.map((swap) => swap.refundDetails?.keyIndex);

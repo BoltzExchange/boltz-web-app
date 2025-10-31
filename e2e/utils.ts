@@ -276,7 +276,7 @@ export const createAndVerifySwap = async (page: Page, rescueFile: string) => {
     await (await downloadPromise).saveAs(rescueFile);
 
     await page.getByTestId("rescueFileUpload").setInputFiles(rescueFile);
-    await page.getByText("address").click();
+    await page.getByTestId("copy_address").click();
 };
 
 export const generateInvoiceWithRoutingHint = async (
