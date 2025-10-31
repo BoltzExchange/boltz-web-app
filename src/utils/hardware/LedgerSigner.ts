@@ -95,7 +95,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     this.provider.getFeeData(),
                 ]);
 
-                const tx = Transaction.from({
+                const transactionLike = {
                     ...txParams,
                     nonce,
                     type: 0,
@@ -103,7 +103,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     chainId: network.chainId,
                     gasPrice: feeData.gasPrice,
                     gasLimit: (txParams as unknown as { gas: number }).gas,
-                });
+                };
+
+                log.debug("Broadcasting Ledger transaction", transactionLike);
+
+                const tx = Transaction.from(transactionLike);
 
                 const modules = await this.loader.get();
                 const eth = new modules.eth(this.transport);
