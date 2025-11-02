@@ -439,6 +439,9 @@ const dict = {
         boltz_pro_option_telegram_title: "Telegram Bot",
         boltz_pro_option_telegram_description:
             "Get instant alerts about earn opportunities in Telegram",
+        // End of Products page
+
+        balance: "Balance",
     },
     de: {
         language: "Deutsch",

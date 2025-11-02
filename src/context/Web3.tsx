@@ -20,7 +20,6 @@ import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { Contracts } from "../utils/boltzClient";
 import { getContracts } from "../utils/boltzClient";
-import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { createProvider } from "../utils/provider";
@@ -66,10 +65,6 @@ const Web3SignerContext = createContext<{
     hasBrowserWallet: Accessor<boolean>;
 
     connectProvider: (rdns: string) => Promise<void>;
-    connectProviderForAddress: (
-        address: string,
-        derivationPath?: string,
-    ) => Promise<void>;
 
     signer: Accessor<Signer | undefined>;
     clearSigner: () => void;
@@ -81,13 +76,16 @@ const Web3SignerContext = createContext<{
 
     openWalletConnectModal: Accessor<boolean>;
     setOpenWalletConnectModal: Setter<boolean>;
+
+    walletConnected: Accessor<boolean>;
+    setWalletConnected: Setter<boolean>;
 }>();
 
 const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
-    const { setRdns, getRdnsForAddress, t } = useGlobalContext();
+    const { setRdns, t } = useGlobalContext();
 
     const hasRsk = config.assets[RBTC] !== undefined;
 
@@ -124,6 +122,7 @@ const Web3SignerProvider = (props: {
         createSignal<boolean>(false);
     const [openWalletConnectModal, setOpenWalletConnectModal] =
         createSignal<boolean>(false);
+    const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
@@ -196,25 +195,6 @@ const Web3SignerProvider = (props: {
             EtherSwapAbi,
             signer() || createProvider(config.assets["RBTC"]?.network?.rpcUrls),
         ) as unknown as EtherSwap;
-    };
-
-    const connectProviderForAddress = async (
-        address: string,
-        derivationPath?: string,
-    ) => {
-        const rdns = await getRdnsForAddress(address);
-
-        if (derivationPath !== undefined) {
-            log.debug(
-                `Setting derivation path (${derivationPath}) for signer:`,
-                rdns,
-            );
-            const prov = providers()[rdns]
-                .provider as unknown as HardwareSigner;
-            prov.setDerivationPath(derivationPath);
-        }
-
-        await connectProvider(rdns);
     };
 
     const connectProvider = async (rdns: string) => {
@@ -300,7 +280,8 @@ const Web3SignerProvider = (props: {
                 hasBrowserWallet,
                 openWalletConnectModal,
                 setOpenWalletConnectModal,
-                connectProviderForAddress,
+                walletConnected,
+                setWalletConnected,
                 getContracts: contracts,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
@@ -308,6 +289,7 @@ const Web3SignerProvider = (props: {
                         rawProvider().removeAllListeners("chainChanged");
                     }
 
+                    setWalletConnected(false);
                     setSigner(undefined);
                     setRawProvider(undefined);
                 },

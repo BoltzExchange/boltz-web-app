@@ -41,11 +41,13 @@ export const connect = async (
         }
 
         await connectProvider(provider.rdns);
+        return true;
     } catch (e) {
         log.error(
             `Provider connect to ${provider.rdns} failed: ${formatError(e)}`,
         );
         notify("error", `Wallet connection failed: ${formatError(e)}`);
+        return false;
     }
 };
 
@@ -60,7 +62,13 @@ const connectHardware = async (
     try {
         setLoading(true);
 
-        await connect(notify, connectProvider, providers, provider(), path);
+        return await connect(
+            notify,
+            connectProvider,
+            providers,
+            provider(),
+            path,
+        );
     } finally {
         setLoading(false);
     }
@@ -95,7 +103,7 @@ const HwAddressSelection = (props: {
     const limit = 5;
 
     const { separator, notify } = useGlobalContext();
-    const { providers, connectProvider } = useWeb3Signer();
+    const { providers, connectProvider, setWalletConnected } = useWeb3Signer();
 
     const [offset, setOffset] = createSignal(0);
     const isFirstPage = () => offset() === 0;
@@ -133,7 +141,7 @@ const HwAddressSelection = (props: {
                     <div
                         class="provider-modal-entry-wrapper"
                         onClick={async () => {
-                            await connectHardware(
+                            const connected = await connectHardware(
                                 notify,
                                 connectProvider,
                                 props.provider,
@@ -141,6 +149,7 @@ const HwAddressSelection = (props: {
                                 path,
                                 props.setLoading,
                             );
+                            setWalletConnected(connected);
                         }}>
                         <hr />
                         <div
@@ -193,7 +202,7 @@ const CustomPath = (props: {
 }) => {
     const { t, notify, hardwareDerivationPath, setHardwareDerivationPath } =
         useGlobalContext();
-    const { connectProvider, providers } = useWeb3Signer();
+    const { connectProvider, providers, setWalletConnected } = useWeb3Signer();
 
     const [path, setPath] = createSignal<string>(hardwareDerivationPath());
 
@@ -227,7 +236,7 @@ const CustomPath = (props: {
                     disabled={path() === undefined || path() === ""}
                     onClick={async () => {
                         setHardwareDerivationPath(path());
-                        await connectHardware(
+                        const connected = await connectHardware(
                             notify,
                             connectProvider,
                             props.provider,
@@ -235,6 +244,7 @@ const CustomPath = (props: {
                             path(),
                             props.setLoading,
                         );
+                        setWalletConnected(connected);
                     }}>
                     {t("submit_derivation_path")}
                 </button>
