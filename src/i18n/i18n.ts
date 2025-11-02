@@ -201,7 +201,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs of the web app, useful for debugging",
         hide_wallet_address: "Hide Wallet Address",
-        hide_wallet_address_tooltip: "Hide connected wallet address for privacy during demos and screen recordings",
+        hide_wallet_address_tooltip:
+            "Hide connected wallet address for privacy during demos and screen recordings",
         enable_audio_notifications: "Audio Notifications",
         enable_audio_notifications_tooltip:
             "Enable or disable audio notifications",
@@ -663,7 +664,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs der Web App, nützlich für Debugging",
         hide_wallet_address: "Wallet-Adresse ausblenden",
-        hide_wallet_address_tooltip: "Verbundene Wallet-Adresse für Privatsphäre während Demos und Bildschirmaufnahmen ausblenden",
+        hide_wallet_address_tooltip:
+            "Verbundene Wallet-Adresse für Privatsphäre während Demos und Bildschirmaufnahmen ausblenden",
         enable_audio_notifications: "Audio Benachrichtigungen",
         enable_audio_notifications_tooltip:
             "Aktiviere oder deaktiviere Audio-Benachrichtigungen",
@@ -1134,7 +1136,8 @@ const dict = {
         logs_tooltip:
             "Registros de la aplicación web como herramienta de depuración",
         hide_wallet_address: "Hide Wallet Address",
-        hide_wallet_address_tooltip: "Hide connected wallet address for privacy during demos and screen recordings",
+        hide_wallet_address_tooltip:
+            "Hide connected wallet address for privacy during demos and screen recordings",
         enable_audio_notifications: "Notificaciones de Audio",
         enable_audio_notifications_tooltip:
             "Activar o desactivar notificaciones de audio",
@@ -1599,7 +1602,8 @@ const dict = {
         logs: "Logs",
         logs_tooltip: "Logs do app, útil para debugging",
         hide_wallet_address: "Hide Wallet Address",
-        hide_wallet_address_tooltip: "Hide connected wallet address for privacy during demos and screen recordings",
+        hide_wallet_address_tooltip:
+            "Hide connected wallet address for privacy during demos and screen recordings",
         enable_audio_notifications: "Notificações sonoras",
         enable_audio_notifications_tooltip:
             "Ativar ou desativar notificações sonoras",
@@ -2040,7 +2044,8 @@ const dict = {
         logs: "日志",
         logs_tooltip: "网络应用程序的日志，用于调试",
         hide_wallet_address: "Hide Wallet Address",
-        hide_wallet_address_tooltip: "Hide connected wallet address for privacy during demos and screen recordings",
+        hide_wallet_address_tooltip:
+            "Hide connected wallet address for privacy during demos and screen recordings",
         enable_audio_notifications: "音频通知",
         enable_audio_notifications_tooltip: "启用或禁用音频通知",
         on: "开",
@@ -2480,7 +2485,8 @@ const dict = {
         logs: "ログ",
         logs_tooltip: "ウェブアプリのログ。デバグに便利です",
         hide_wallet_address: "ウォレットアドレスを隠す",
-        hide_wallet_address_tooltip: "デモや画面録画時のプライバシー保護のため、接続されたウォレットアドレスを非表示にします",
+        hide_wallet_address_tooltip:
+            "デモや画面録画時のプライバシー保護のため、接続されたウォレットアドレスを非表示にします",
         enable_audio_notifications: "音声通知",
         enable_audio_notifications_tooltip:
             "音声通知をオン、もしくはオフにする",
