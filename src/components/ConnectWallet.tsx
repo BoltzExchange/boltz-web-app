@@ -183,9 +183,12 @@ const ShowAddress = (props: {
 
     const [text, setText] = createSignal<string | undefined>(undefined);
 
-    const [rskBalance] = createResource(async () =>
-        signer().provider.getBalance(await signer().getAddress()),
-    );
+    const [rskBalance] = createResource(async () => {
+        if (signer() === undefined) {
+            return undefined;
+        }
+        return signer().provider.getBalance(await signer().getAddress());
+    });
 
     return (
         <button
