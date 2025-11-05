@@ -215,6 +215,37 @@ const ShowAddress = (props: {
     );
 };
 
+export const ConnectAddress = (props: {
+    address: { address: string; derivationPath?: string };
+}) => {
+    const { t, notify } = useGlobalContext();
+    const { connectProviderForAddress } = useWeb3Signer();
+
+    return (
+        <button
+            class="btn"
+            onClick={async () => {
+                try {
+                    await connectProviderForAddress(
+                        props.address.address,
+                        props.address.derivationPath,
+                    );
+                } catch (e) {
+                    log.error(
+                        `Provider connect for address ${props.address.address} failed: ${formatError(e)}`,
+                    );
+                    notify(
+                        "error",
+                        t("wallet_connect_failed", { error: formatError(e) }),
+                    );
+                }
+            }}>
+            <WalletConnect />
+            {t("connect_to_address")}
+        </button>
+    );
+};
+
 export const SwitchNetwork = () => {
     const { t, notify } = useGlobalContext();
     const { switchNetwork } = useWeb3Signer();

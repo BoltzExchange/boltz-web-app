@@ -20,6 +20,7 @@ import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { Contracts } from "../utils/boltzClient";
 import { getContracts } from "../utils/boltzClient";
+import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { createProvider } from "../utils/provider";
@@ -65,6 +66,10 @@ const Web3SignerContext = createContext<{
     hasBrowserWallet: Accessor<boolean>;
 
     connectProvider: (rdns: string) => Promise<void>;
+    connectProviderForAddress: (
+        address: string,
+        derivationPath?: string,
+    ) => Promise<void>;
 
     signer: Accessor<Signer | undefined>;
     clearSigner: () => void;
@@ -85,7 +90,7 @@ const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
-    const { setRdns, t } = useGlobalContext();
+    const { setRdns, getRdnsForAddress, t } = useGlobalContext();
 
     const hasRsk = config.assets[RBTC] !== undefined;
 
@@ -189,6 +194,25 @@ const Web3SignerProvider = (props: {
         return (await getContracts())["rsk"];
     });
 
+    const connectProviderForAddress = async (
+        address: string,
+        derivationPath?: string,
+    ) => {
+        const rdns = await getRdnsForAddress(address);
+
+        if (derivationPath !== undefined) {
+            log.debug(
+                `Setting derivation path (${derivationPath}) for signer:`,
+                rdns,
+            );
+            const prov = providers()[rdns]
+                .provider as unknown as HardwareSigner;
+            prov.setDerivationPath(derivationPath);
+        }
+
+        await connectProvider(rdns);
+    };
+
     const getEtherSwap = () => {
         return new Contract(
             contracts().swapContracts.EtherSwap,
@@ -282,6 +306,7 @@ const Web3SignerProvider = (props: {
                 setOpenWalletConnectModal,
                 walletConnected,
                 setWalletConnected,
+                connectProviderForAddress,
                 getContracts: contracts,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);

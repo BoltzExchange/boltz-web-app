@@ -5,7 +5,7 @@ import { Show, createEffect, createSignal } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
-import ConnectWallet, { SwitchNetwork } from "./ConnectWallet";
+import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = (props: {
@@ -44,7 +44,15 @@ const ContractTransaction = (props: {
                     props.address.address === signer().address)
             }
             fallback={
-                <ConnectWallet derivationPath={props.address.derivationPath} />
+                <Show
+                    when={!allowAnyAddress()}
+                    fallback={
+                        <ConnectWallet
+                            derivationPath={props.address.derivationPath}
+                        />
+                    }>
+                    <ConnectAddress address={props.address} />
+                </Show>
             }>
             <Show
                 when={getContracts().network.chainId === signerNetwork()}
