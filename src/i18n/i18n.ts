@@ -439,7 +439,6 @@ const dict = {
         boltz_pro_option_telegram_title: "Telegram Bot",
         boltz_pro_option_telegram_description:
             "Get instant alerts about earn opportunities in Telegram",
-        // End of Products page
 
         balance: "Balance",
     },
@@ -898,6 +897,8 @@ const dict = {
         boltz_pro_option_telegram_title: "Telegram Bot",
         boltz_pro_option_telegram_description:
             "Erhalte Benachrichtigungen über Boltz Pro Möglichkeiten",
+
+        balance: "Guthaben",
     },
     es: {
         language: "Español",
@@ -1352,6 +1353,8 @@ const dict = {
         boltz_pro_option_telegram_title: "Bot de Telegram",
         boltz_pro_option_telegram_description:
             "Recibe notificaciones sobre oportunidades de Boltz Pro",
+
+        balance: "Saldo",
     },
     pt: {
         language: "Português",
@@ -1801,6 +1804,8 @@ const dict = {
         boltz_pro_option_telegram_title: "Bot do Telegram",
         boltz_pro_option_telegram_description:
             "Receba notificações sobre oportunidades da Boltz Pro",
+
+        balance: "Saldo",
     },
     zh: {
         language: "中文",
@@ -2207,6 +2212,8 @@ const dict = {
             "使用我们的 Boltz Pro 网络应用观察和交换",
         boltz_pro_option_telegram_title: "Telegram 机器人",
         boltz_pro_option_telegram_description: "接收有关 Boltz Pro 机会的通知",
+
+        balance: "余额",
     },
     ja: {
         language: "日本語",
@@ -2653,6 +2660,8 @@ const dict = {
         boltz_pro_option_telegram_title: "Telegramボット",
         boltz_pro_option_telegram_description:
             "Boltz Proの機会についての通知を受信",
+
+        balance: "残高",
     },
 };
 
