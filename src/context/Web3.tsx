@@ -81,6 +81,9 @@ const Web3SignerContext = createContext<{
 
     openWalletConnectModal: Accessor<boolean>;
     setOpenWalletConnectModal: Setter<boolean>;
+
+    walletConnected: Accessor<boolean>;
+    setWalletConnected: Setter<boolean>;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -124,6 +127,7 @@ const Web3SignerProvider = (props: {
         createSignal<boolean>(false);
     const [openWalletConnectModal, setOpenWalletConnectModal] =
         createSignal<boolean>(false);
+    const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
@@ -190,14 +194,6 @@ const Web3SignerProvider = (props: {
         return (await getContracts())["rsk"];
     });
 
-    const getEtherSwap = () => {
-        return new Contract(
-            contracts().swapContracts.EtherSwap,
-            EtherSwapAbi,
-            signer() || createProvider(config.assets["RBTC"]?.network?.rpcUrls),
-        ) as unknown as EtherSwap;
-    };
-
     const connectProviderForAddress = async (
         address: string,
         derivationPath?: string,
@@ -215,6 +211,14 @@ const Web3SignerProvider = (props: {
         }
 
         await connectProvider(rdns);
+    };
+
+    const getEtherSwap = () => {
+        return new Contract(
+            contracts().swapContracts.EtherSwap,
+            EtherSwapAbi,
+            signer() || createProvider(config.assets["RBTC"]?.network?.rpcUrls),
+        ) as unknown as EtherSwap;
     };
 
     const connectProvider = async (rdns: string) => {
@@ -300,6 +304,8 @@ const Web3SignerProvider = (props: {
                 hasBrowserWallet,
                 openWalletConnectModal,
                 setOpenWalletConnectModal,
+                walletConnected,
+                setWalletConnected,
                 connectProviderForAddress,
                 getContracts: contracts,
                 clearSigner: () => {
@@ -308,6 +314,7 @@ const Web3SignerProvider = (props: {
                         rawProvider().removeAllListeners("chainChanged");
                     }
 
+                    setWalletConnected(false);
                     setSigner(undefined);
                     setRawProvider(undefined);
                 },

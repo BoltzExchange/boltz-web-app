@@ -488,10 +488,6 @@ const Create = () => {
                     </div>
                     <Fees />
                     <hr class="spacer" />
-                    <Show when={assetReceive() === RBTC}>
-                        <ConnectWallet disabled={() => !pairValid()} />
-                        <hr class="spacer" />
-                    </Show>
                     <Show
                         when={
                             swapType() !== SwapType.Submarine &&
@@ -508,6 +504,10 @@ const Create = () => {
                     </Show>
                     <Show when={isMobile() && assetReceive() !== RBTC}>
                         <QrScan />
+                    </Show>
+                    <Show when={[assetSend(), assetReceive()].includes(RBTC)}>
+                        <ConnectWallet disabled={() => !pairValid()} />
+                        <hr class="spacer" />
                     </Show>
                     <CreateButton />
                     <AssetSelect />
