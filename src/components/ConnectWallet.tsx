@@ -24,6 +24,7 @@ import { cropString, isMobile } from "../utils/helper";
 import { weiToSatoshi } from "../utils/rootstock";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { WalletConnect } from "./WalletConnect";
+import { hiddenInformation } from "./settings/PrivacyMode";
 
 const Modal = (props: {
     derivationPath: string;
@@ -170,12 +171,12 @@ const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
-    const { t, separator, denomination, hideWalletAddress } = useGlobalContext();
+    const { t, separator, denomination, privacyMode } = useGlobalContext();
     const { signer, clearSigner } = useWeb3Signer();
 
     const formatAddress = (addr: string) => {
-        if (hideWalletAddress()) {
-            return "0x • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • ";
+        if (privacyMode()) {
+            return hiddenInformation;
         }
 
         if (isMobile()) {

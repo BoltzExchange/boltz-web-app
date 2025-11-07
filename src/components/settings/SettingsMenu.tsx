@@ -8,8 +8,8 @@ import "../../style/settings.scss";
 import AudioNotificationSetting from "./AudioNotificationSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
-import HideWalletAddress from "./HideWalletAddress";
 import Logs from "./Logs";
+import PrivacyMode from "./PrivacyMode";
 import RescueFile from "./RescueKey";
 import ResetRescueKey from "./ResetRescueKey";
 import Separator from "./Separator";
@@ -72,7 +72,7 @@ const SettingsMenu = () => {
                 <Entry
                     label={"hide_wallet_address"}
                     tooltipLabel={"hide_wallet_address_tooltip"}
-                    settingElement={<HideWalletAddress />}
+                    settingElement={<PrivacyMode />}
                 />
                 <Entry
                     label={"rescue_key"}

@@ -17,6 +17,7 @@ import {
 } from "../components/Fees";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SwapIcons } from "../components/SwapIcons";
+import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { LN } from "../consts/Assets";
@@ -107,7 +108,7 @@ const mapClaimableSwap = ({
 const ClaimRescue = () => {
     const params = useParams<{ id: string }>();
 
-    const { t, pairs, notify, fetchPairs } = useGlobalContext();
+    const { t, pairs, notify, fetchPairs, privacyMode } = useGlobalContext();
     const { rescuableSwaps, rescueFile, deriveKey } = useRescueContext();
     const { onchainAddress, addressValid, setOnchainAddress, setAddressValid } =
         useCreateContext();
@@ -292,7 +293,11 @@ const ClaimRescue = () => {
                         }>
                         <span class="frame-header">
                             <h2>
-                                {t("claim_swap", { id: params.id })}
+                                {t("claim_swap", {
+                                    id: privacyMode()
+                                        ? hiddenInformation
+                                        : params.id,
+                                })}
                                 <SwapIcons swap={claimableSwap() as SomeSwap} />
                             </h2>
                             <SettingsCog />
