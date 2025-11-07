@@ -170,10 +170,14 @@ const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
-    const { t, separator, denomination } = useGlobalContext();
+    const { t, separator, denomination, hideWalletAddress } = useGlobalContext();
     const { signer, clearSigner } = useWeb3Signer();
 
     const formatAddress = (addr: string) => {
+        if (hideWalletAddress()) {
+            return "0x • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • ";
+        }
+
         if (isMobile()) {
             return cropString(addr);
         }

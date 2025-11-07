@@ -84,6 +84,8 @@ export type GlobalContextType = {
     setAudioNotification: Setter<boolean>;
     browserNotification: Accessor<boolean>;
     setBrowserNotification: Setter<boolean>;
+    hideWalletAddress: Accessor<boolean>;
+    setHideWalletAddress: Setter<boolean>;
     // functions
     t: tFn;
     notify: notifyFn;
@@ -460,6 +462,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [hideWalletAddress, setHideWalletAddress] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<boolean>(false),
+        {
+            name: "hideWalletAddress",
+        },
+    );
+
     const [hardwareDerivationPath, setHardwareDerivationPath] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<string>(""),
@@ -529,6 +539,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setAudioNotification,
                 browserNotification,
                 setBrowserNotification,
+                hideWalletAddress,
+                setHideWalletAddress,
                 // functions
                 t,
                 notify,

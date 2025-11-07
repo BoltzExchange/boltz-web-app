@@ -8,6 +8,7 @@ import "../../style/settings.scss";
 import AudioNotificationSetting from "./AudioNotificationSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
+import HideWalletAddress from "./HideWalletAddress";
 import Logs from "./Logs";
 import RescueFile from "./RescueKey";
 import ResetRescueKey from "./ResetRescueKey";
@@ -67,6 +68,11 @@ const SettingsMenu = () => {
                     label={"browsernotification"}
                     tooltipLabel={"browsernotification_tooltip"}
                     settingElement={<BrowserNotification />}
+                />
+                <Entry
+                    label={"hide_wallet_address"}
+                    tooltipLabel={"hide_wallet_address_tooltip"}
+                    settingElement={<HideWalletAddress />}
                 />
                 <Entry
                     label={"rescue_key"}
