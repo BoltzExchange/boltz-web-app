@@ -1269,7 +1269,7 @@ const dict = {
         reset_rescue_key_tooltip:
             "Gerar uma nova chave de resgate e limpar todos os dados de trocas",
         reset_rescue_key_prompt:
-            "⚠️ AVISO: Isso excluirá TODOS os seus dados de trocas e gerará uma nova chave de resgate.\n\nNão prossiga a não ser que você tenha um backup para a chave de resgate existente ou você tem certeza absoluta de que não precisará mais dela.\n\nDigite 'confirm' para continuar:",
+            "⚠️ AVISO: Isso excluirá TODOS os seus dados de trocas e gerará uma nova chave de resgate.\n\nNão prossiga a não ser que você tenha um backup para a chave de resgate existente ou tenha certeza absoluta de que não precisará mais dela.\n\nDigite 'confirm' para continuar:",
         reset_rescue_key_invalid_confirmation:
             "Confirmação inválida. Por favor, digite 'confirm' para continuar.",
         reset_rescue_key_error:
