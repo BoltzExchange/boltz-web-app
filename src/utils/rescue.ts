@@ -63,11 +63,22 @@ export const isSwapClaimable = ({
     status,
     type,
     includeSuccess = false,
+    swapDate = undefined,
+    backupImportTimestamp = undefined,
 }: {
     status: string;
     type: SwapType;
     includeSuccess?: boolean;
+    swapDate?: number;
+    backupImportTimestamp?: number;
 }) => {
+    // When a backup is imported, we only auto-claim successful swaps that were created
+    // after the import timestamp. This prevents attempting to claim swaps that may have
+    // already been completed before the backup was created
+    const swapCreatedAfterBackup: boolean =
+        backupImportTimestamp === undefined ||
+        (swapDate !== undefined && swapDate >= backupImportTimestamp);
+
     switch (type) {
         case SwapType.Reverse: {
             const statuses = [
@@ -75,7 +86,7 @@ export const isSwapClaimable = ({
                 swapStatusPending.TransactionMempool,
             ];
 
-            if (includeSuccess) {
+            if (includeSuccess && swapCreatedAfterBackup) {
                 statuses.push(swapStatusSuccess.InvoiceSettled);
             }
 
@@ -87,7 +98,7 @@ export const isSwapClaimable = ({
                 swapStatusPending.TransactionServerMempool,
             ];
 
-            if (includeSuccess) {
+            if (includeSuccess && swapCreatedAfterBackup) {
                 statuses.push(swapStatusSuccess.TransactionClaimed);
             }
 

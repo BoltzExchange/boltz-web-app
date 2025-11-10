@@ -171,6 +171,213 @@ describe("rescue", () => {
                 ).toEqual(false);
             },
         );
+
+        describe("backup import timestamp behavior", () => {
+            const backupImportTime = 1000000;
+            const beforeBackup = backupImportTime - 1000;
+            const afterBackup = backupImportTime + 1000;
+            const sameAsBackup = backupImportTime;
+
+            test.each([
+                {
+                    name: "Reverse: should not auto-claim successful swap created before backup",
+                    type: SwapType.Reverse,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    swapDate: beforeBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: false,
+                },
+                {
+                    name: "Reverse: should auto-claim successful swap created after backup",
+                    type: SwapType.Reverse,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    swapDate: afterBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: true,
+                },
+                {
+                    name: "Reverse: should auto-claim swap created at exact same time as backup",
+                    type: SwapType.Reverse,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    swapDate: sameAsBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: true,
+                },
+                {
+                    name: "Chain: should not auto-claim successful swap created before backup",
+                    type: SwapType.Chain,
+                    status: swapStatusSuccess.TransactionClaimed,
+                    swapDate: beforeBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: false,
+                },
+                {
+                    name: "Chain: should auto-claim successful swap created after backup",
+                    type: SwapType.Chain,
+                    status: swapStatusSuccess.TransactionClaimed,
+                    swapDate: afterBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: true,
+                },
+                {
+                    name: "Chain: should auto-claim swap created at exact same time as backup",
+                    type: SwapType.Chain,
+                    status: swapStatusSuccess.TransactionClaimed,
+                    swapDate: sameAsBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: true,
+                },
+            ])(
+                "$name",
+                ({
+                    type,
+                    status,
+                    swapDate,
+                    backupImportTimestamp,
+                    expected,
+                }) => {
+                    expect(
+                        isSwapClaimable({
+                            status,
+                            type,
+                            includeSuccess: true,
+                            swapDate,
+                            backupImportTimestamp,
+                        }),
+                    ).toBe(expected);
+                },
+            );
+
+            test.each([
+                {
+                    name: "Reverse: should still claim pending swaps even if created before backup",
+                    type: SwapType.Reverse,
+                    status: swapStatusPending.TransactionConfirmed,
+                    swapDate: beforeBackup,
+                    expected: true,
+                },
+                {
+                    name: "Chain: should still claim pending swaps even if created before backup",
+                    type: SwapType.Chain,
+                    status: swapStatusPending.TransactionServerMempool,
+                    swapDate: beforeBackup,
+                    expected: true,
+                },
+            ])("$name", ({ type, status, swapDate, expected }) => {
+                expect(
+                    isSwapClaimable({
+                        status,
+                        type,
+                        includeSuccess: false,
+                        swapDate,
+                        backupImportTimestamp: backupImportTime,
+                    }),
+                ).toBe(expected);
+            });
+
+            test.each([
+                {
+                    name: "Reverse: should NOT auto-claim with undefined swapDate",
+                    type: SwapType.Reverse,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    swapDate: undefined,
+                    backupImportTimestamp: backupImportTime,
+                    expected: false,
+                },
+                {
+                    name: "Reverse: should auto-claim with undefined backupImportTimestamp",
+                    type: SwapType.Reverse,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    swapDate: beforeBackup,
+                    backupImportTimestamp: undefined,
+                    expected: true,
+                },
+                {
+                    name: "Reverse: should auto-claim when both timestamps are undefined",
+                    type: SwapType.Reverse,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    swapDate: undefined,
+                    backupImportTimestamp: undefined,
+                    expected: true,
+                },
+                {
+                    name: "Chain: should NOT auto-claim with undefined swapDate",
+                    type: SwapType.Chain,
+                    status: swapStatusSuccess.TransactionClaimed,
+                    swapDate: undefined,
+                    backupImportTimestamp: backupImportTime,
+                    expected: false,
+                },
+                {
+                    name: "Chain: should auto-claim with undefined backupImportTimestamp",
+                    type: SwapType.Chain,
+                    status: swapStatusSuccess.TransactionClaimed,
+                    swapDate: beforeBackup,
+                    backupImportTimestamp: undefined,
+                    expected: true,
+                },
+            ])(
+                "$name",
+                ({
+                    type,
+                    status,
+                    swapDate,
+                    backupImportTimestamp,
+                    expected,
+                }) => {
+                    expect(
+                        isSwapClaimable({
+                            status,
+                            type,
+                            includeSuccess: true,
+                            swapDate,
+                            backupImportTimestamp,
+                        }),
+                    ).toBe(expected);
+                },
+            );
+
+            test.each([
+                {
+                    name: "should not affect includeSuccess=false behavior",
+                    type: SwapType.Reverse,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    includeSuccess: false,
+                    swapDate: afterBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: false,
+                },
+                {
+                    name: "Submarine swaps should not be affected by backup timestamp",
+                    type: SwapType.Submarine,
+                    status: swapStatusSuccess.InvoiceSettled,
+                    includeSuccess: true,
+                    swapDate: afterBackup,
+                    backupImportTimestamp: backupImportTime,
+                    expected: false,
+                },
+            ])(
+                "$name",
+                ({
+                    type,
+                    status,
+                    includeSuccess,
+                    swapDate,
+                    backupImportTimestamp,
+                    expected,
+                }) => {
+                    expect(
+                        isSwapClaimable({
+                            status,
+                            type,
+                            includeSuccess,
+                            swapDate,
+                            backupImportTimestamp,
+                        }),
+                    ).toBe(expected);
+                },
+            );
+        });
     });
 
     describe("createRescueList", () => {
