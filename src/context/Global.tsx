@@ -116,6 +116,11 @@ export type GlobalContextType = {
     setRescueFile: Setter<RescueFile | null>;
     rescueFileBackupDone: Accessor<boolean>;
     setRescueFileBackupDone: Setter<boolean>;
+
+    // UNIX timestamp when a backup file was last imported
+    // Used to prevent auto-claiming swaps that were created before the backup
+    backupImportTimestamp: Accessor<number | undefined>;
+    setBackupImportTimestamp: Setter<number | undefined>;
 };
 
 const regularReferral = () =>
@@ -407,7 +412,10 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         return false;
     };
 
-    const clearSwaps = () => swapsForage.clear();
+    const clearSwaps = async () => {
+        await swapsForage.clear();
+        setBackupImportTimestamp(undefined);
+    };
 
     const rdnsForage = localforage.createInstance({
         name: "rdns",
@@ -457,6 +465,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         createSignal<string>(""),
         {
             name: "hardwareDerivationPath",
+        },
+    );
+
+    const [backupImportTimestamp, setBackupImportTimestamp] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<number>(),
+        {
+            name: "backupImportTimestamp",
         },
     );
 
@@ -543,6 +559,9 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
                 rescueFileBackupDone,
                 setRescueFileBackupDone,
+
+                backupImportTimestamp,
+                setBackupImportTimestamp,
             }}>
             {props.children}
         </GlobalContext.Provider>

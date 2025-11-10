@@ -52,6 +52,7 @@ const History = () => {
         setSwapStorage,
         setNotification,
         setNotificationType,
+        setBackupImportTimestamp,
         t,
         setRdns,
     } = useGlobalContext();
@@ -96,6 +97,7 @@ const History = () => {
             setSwaps(swaps);
             setRescueFile({ mnemonic: parsedFile.mnemonic });
             setRescueFileBackupDone(true);
+            setBackupImportTimestamp(new Date().getTime());
 
             if (result.rdns !== undefined) {
                 log.debug(`Importing ${result.rdns.length} RDNS records`);
