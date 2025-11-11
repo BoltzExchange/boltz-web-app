@@ -200,9 +200,9 @@ const dict = {
         claim_fail: "Failed to claim swap: {{ id }}",
         logs: "Logs",
         logs_tooltip: "Logs of the web app, useful for debugging",
-        hide_wallet_address: "Hide EVM Wallet Address",
+        hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
-            "Hide connected EVM wallet address for privacy during demos and screen recordings",
+            "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
         enable_audio_notifications: "Audio Notifications",
         enable_audio_notifications_tooltip:
             "Enable or disable audio notifications",
@@ -663,9 +663,9 @@ const dict = {
         claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
         logs: "Logs",
         logs_tooltip: "Logs der Web App, nützlich für Debugging",
-        hide_wallet_address: "EVM Wallet-Adresse ausblenden",
+        hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
-            "Blende deine verbundene EVM Wallet-Adresse aus, z.b. Für Demos und Bildschirmaufnahmen.",
+            "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
         enable_audio_notifications: "Audio Benachrichtigungen",
         enable_audio_notifications_tooltip:
             "Aktiviere oder deaktiviere Audio-Benachrichtigungen",
@@ -1135,9 +1135,9 @@ const dict = {
         logs: "Logs",
         logs_tooltip:
             "Registros de la aplicación web como herramienta de depuración",
-        hide_wallet_address: "Ocultar Dirección de Monedero EVM",
+        hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
-            "Ocultar la dirección del monedero EVM conectado por privacidad durante demos y grabaciones de pantalla",
+            "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
         enable_audio_notifications: "Notificaciones de Audio",
         enable_audio_notifications_tooltip:
             "Activar o desactivar notificaciones de audio",
@@ -1601,9 +1601,9 @@ const dict = {
         claim_fail: "Falha ao reivindicar troca: {{ id }}",
         logs: "Logs",
         logs_tooltip: "Logs do app, útil para debugging",
-        hide_wallet_address: "Ocultar Endereço da Carteira EVM",
+        hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
-            "Ocultar o endereço da carteira EVM conectada para privacidade durante demos e gravações de tela",
+            "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
         enable_audio_notifications: "Notificações sonoras",
         enable_audio_notifications_tooltip:
             "Ativar ou desativar notificações sonoras",
@@ -2043,9 +2043,9 @@ const dict = {
         claim_fail: "交换{{ id }}索赔失败！",
         logs: "日志",
         logs_tooltip: "网络应用程序的日志，用于调试",
-        hide_wallet_address: "隐藏EVM钱包地址",
+        hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
-            "在演示和屏幕录制期间隐藏连接的EVM钱包地址以保护隐私",
+            "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
         enable_audio_notifications: "音频通知",
         enable_audio_notifications_tooltip: "启用或禁用音频通知",
         on: "开",
@@ -2484,9 +2484,9 @@ const dict = {
         claim_fail: "クレームのスワップに失敗しました: {{ id }}",
         logs: "ログ",
         logs_tooltip: "ウェブアプリのログ。デバグに便利です",
-        hide_wallet_address: "EVMウォレットアドレスを隠す",
+        hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
-            "デモや画面録画時のプライバシー保護のため、接続されたEVMウォレットアドレスを非表示にします",
+            "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
         enable_audio_notifications: "音声通知",
         enable_audio_notifications_tooltip:
             "音声通知をオン、もしくはオフにする",
