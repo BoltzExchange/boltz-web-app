@@ -77,7 +77,13 @@ const SwapList = (props: {
     const deleteSwapAction = async (e: Event, swapId: string) => {
         e.stopPropagation();
         e.preventDefault();
-        if (confirm(t("delete_storage_single_swap", { id: swapId }))) {
+        if (
+            confirm(
+                t("delete_storage_single_swap", {
+                    id: privacyMode() ? hiddenInformation : swapId,
+                }),
+            )
+        ) {
             await deleteSwap(swapId);
             await props.onDelete();
         }

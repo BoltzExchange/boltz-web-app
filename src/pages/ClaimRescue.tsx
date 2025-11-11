@@ -261,11 +261,23 @@ const ClaimRescue = () => {
                 claimableSwap().transaction as { hex: string },
                 true,
             );
-            notify("success", t("swap_completed", { id: res.id }), true, true);
+            notify(
+                "success",
+                t("swap_completed", {
+                    id: privacyMode() ? hiddenInformation : res.id,
+                }),
+                true,
+                true,
+            );
             setClaimTxId(res.claimTx);
         } catch (e) {
             log.error(`Swap ${params.id} claim failed:`, e);
-            notify("error", t("claim_fail", { id: params.id }));
+            notify(
+                "error",
+                t("claim_fail", {
+                    id: privacyMode() ? hiddenInformation : params.id,
+                }),
+            );
         } finally {
             setClaimRunning(false);
         }
@@ -365,7 +377,11 @@ const ClaimRescue = () => {
                         <hr />
                         <p>
                             <strong>
-                                {t("failed_get_swap", { id: params.id })}
+                                {t("failed_get_swap", {
+                                    id: privacyMode()
+                                        ? hiddenInformation
+                                        : params.id,
+                                })}
                             </strong>
                             <br />
                             {t("failed_get_swap_subline")}

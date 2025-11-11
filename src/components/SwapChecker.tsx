@@ -33,6 +33,7 @@ import type {
     SubmarineSwap,
 } from "../utils/swapCreator";
 import { getRelevantAssetForSwap } from "../utils/swapCreator";
+import { hiddenInformation } from "./settings/PrivacyMode";
 
 type SwapStatus = {
     id: string;
@@ -179,6 +180,7 @@ export const SwapChecker = () => {
         deriveKey,
         pairs,
         backupImportTimestamp,
+        privacyMode,
     } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
@@ -299,12 +301,16 @@ export const SwapChecker = () => {
                 }
                 notify(
                     "success",
-                    t("swap_completed", { id: res.id }),
+                    t("swap_completed", {
+                        id: privacyMode() ? hiddenInformation : res.id,
+                    }),
                     true,
                     true,
                 );
             } catch (e) {
-                const msg = t("claim_fail", { id: currentSwap.id });
+                const msg = t("claim_fail", {
+                    id: privacyMode() ? hiddenInformation : currentSwap.id,
+                });
                 log.warn(msg, e);
                 notify("error", msg);
             }
@@ -326,7 +332,9 @@ export const SwapChecker = () => {
                 );
                 notify(
                     "success",
-                    t("swap_completed", { id: currentSwap.id }),
+                    t("swap_completed", {
+                        id: privacyMode() ? hiddenInformation : currentSwap.id,
+                    }),
                     true,
                     true,
                 );
