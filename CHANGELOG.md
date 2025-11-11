@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.7](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.6..v1.8.7) - 2025-11-11
+
+### Bug Fixes
+
+- **(trezor)** prevent NaN when parsing `nonce` from hex (#1058) - ([8c8326b](https://github.com/BoltzExchange/boltz-web-app/commit/8c8326b0f0bd7295a755378cc429d4d4d5d40f5b))
+- finality of swap in imported history (#1062) - ([bbb678d](https://github.com/BoltzExchange/boltz-web-app/commit/bbb678d282c77687021218cc7a644d616844a4b4))
+
+### Features
+
+- show RBTC wallet balance (#1059) - ([720ba2b](https://github.com/BoltzExchange/boltz-web-app/commit/720ba2b648c574a486b0d9e09d36146967e1d446))
+- new rescue key button (#1054) - ([f0a775f](https://github.com/BoltzExchange/boltz-web-app/commit/f0a775fd7ead24c43aa20f5f33d828dcb29c1b12))
+
+---
 ## [1.8.6](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.5..v1.8.6) - 2025-10-29
 
 ### Bug Fixes
@@ -22,6 +35,7 @@ All notable changes to this project will be documented in this file. See [conven
 - improve i18n pt translations (#1040) - ([a45b1b4](https://github.com/BoltzExchange/boltz-web-app/commit/a45b1b437490b959ac21c5e37563b776d04822a9))
 - update RPC error message (#1048) - ([52b24a6](https://github.com/BoltzExchange/boltz-web-app/commit/52b24a6f0ecc6d3efaeec2c5e3b6c33e84649c9d))
 - change link from testnet to regtest in footer (#1056) - ([1d5a965](https://github.com/BoltzExchange/boltz-web-app/commit/1d5a9651980614d53878e8fa860b467c16645bfa))
+- bump version to v1.8.6 (#1057) - ([d8c98fe](https://github.com/BoltzExchange/boltz-web-app/commit/d8c98fee7997ab99ebd5863e4e9c17592823b6c8))
 
 ### Tests
 
