@@ -9,6 +9,7 @@ import AudioNotificationSetting from "./AudioNotificationSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
 import Logs from "./Logs";
+import PrivacyMode from "./PrivacyMode";
 import RescueFile from "./RescueKey";
 import ResetRescueKey from "./ResetRescueKey";
 import Separator from "./Separator";
@@ -67,6 +68,11 @@ const SettingsMenu = () => {
                     label={"browsernotification"}
                     tooltipLabel={"browsernotification_tooltip"}
                     settingElement={<BrowserNotification />}
+                />
+                <Entry
+                    label={"hide_wallet_address"}
+                    tooltipLabel={"hide_wallet_address_tooltip"}
+                    settingElement={<PrivacyMode />}
                 />
                 <Entry
                     label={"rescue_key"}

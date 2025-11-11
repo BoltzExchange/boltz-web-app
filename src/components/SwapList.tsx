@@ -9,6 +9,7 @@ import type { RestorableSwap } from "../utils/boltzClient";
 import { RescueAction, RescueNoAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
 import { SwapIcons } from "./SwapIcons";
+import { hiddenInformation } from "./settings/PrivacyMode";
 
 export type Swap = (SomeSwap | RestorableSwap) & {
     action?: RescueAction;
@@ -57,7 +58,7 @@ const SwapList = (props: {
     hideDateOnMobile?: boolean;
 }) => {
     const navigate = useNavigate();
-    const { deleteSwap, t } = useGlobalContext();
+    const { deleteSwap, t, privacyMode } = useGlobalContext();
     const [sortedSwaps, setSortedSwaps] = createSignal<Swap[]>([]);
     const [lastSwap, setLastSwap] = createSignal();
 
@@ -76,7 +77,13 @@ const SwapList = (props: {
     const deleteSwapAction = async (e: Event, swapId: string) => {
         e.stopPropagation();
         e.preventDefault();
-        if (confirm(t("delete_storage_single_swap", { id: swapId }))) {
+        if (
+            confirm(
+                t("delete_storage_single_swap", {
+                    id: privacyMode() ? hiddenInformation : swapId,
+                }),
+            )
+        ) {
             await deleteSwap(swapId);
             await props.onDelete();
         }
@@ -116,7 +123,11 @@ const SwapList = (props: {
                             <SwapIcons swap={swap} />
                             <span class="swaplist-asset-id">
                                 {t("id")}:&nbsp;
-                                <span class="monospace">{swap.id}</span>
+                                <Show
+                                    when={!privacyMode()}
+                                    fallback={hiddenInformation}>
+                                    <span class="monospace">{swap.id}</span>
+                                </Show>
                             </span>
                             <span
                                 class={`swaplist-asset-date ${props.hideDateOnMobile ? "hidden-mobile" : ""}`}>
