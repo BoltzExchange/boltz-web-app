@@ -27,14 +27,19 @@ const AddressInput = () => {
         sendAmount,
     } = useCreateContext();
 
-    const handleInputChange = (input: HTMLInputElement) => {
+    const handleInputChange = async (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
 
+        if (inputValue.length === 0) {
+            setAddressValid(false);
+            return;
+        }
+
         try {
             const assetName = assetReceive();
-            const actualAsset = probeUserInput(assetName, address);
+            const actualAsset = await probeUserInput(assetName, address);
 
             switch (actualAsset) {
                 case LN:
@@ -76,9 +81,9 @@ const AddressInput = () => {
     };
 
     createEffect(
-        on([amountValid, onchainAddress], () => {
+        on([amountValid, onchainAddress], async () => {
             if (swapType() !== SwapType.Submarine && inputRef) {
-                handleInputChange(inputRef);
+                await handleInputChange(inputRef);
             }
         }),
     );

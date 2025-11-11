@@ -57,7 +57,15 @@ const InvoiceInput = () => {
         const val = input.value.trim();
 
         const address = extractAddress(val);
-        const actualAsset = probeUserInput(LN, address);
+        const inputValue = extractInvoice(val);
+
+        if (inputValue.length === 0) {
+            clearInputError(input);
+            resetInvoiceState();
+            return;
+        }
+
+        const actualAsset = await probeUserInput(LN, address);
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
@@ -65,14 +73,6 @@ const InvoiceInput = () => {
             setAssetReceive(actualAsset);
             setOnchainAddress(address);
             notify("success", t("switch_paste"));
-            return;
-        }
-
-        const inputValue = extractInvoice(val);
-
-        if (inputValue.length === 0) {
-            clearInputError(input);
-            resetInvoiceState();
             return;
         }
 
