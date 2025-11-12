@@ -1,4 +1,4 @@
-import { wordlist } from "@scure/bip39/wordlists/english";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import log from "loglevel";
 import { For, Show, createSignal } from "solid-js";
 

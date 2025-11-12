@@ -1,5 +1,5 @@
 import { generateMnemonic } from "@scure/bip39";
-import { wordlist } from "@scure/bip39/wordlists/english";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { fireEvent, render, screen, within } from "@solidjs/testing-library";
 
 import { BackupDone } from "../../src/components/CreateButton";

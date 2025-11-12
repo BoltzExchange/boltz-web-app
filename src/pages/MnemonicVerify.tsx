@@ -1,4 +1,4 @@
-import { wordlist } from "@scure/bip39/wordlists/english";
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { useNavigate } from "@solidjs/router";
 import { For, createMemo, createSignal } from "solid-js";
 import { Match, Show, Switch } from "solid-js";
