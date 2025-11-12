@@ -4,7 +4,7 @@ import "@fontsource/noto-sans";
 import "@fontsource/noto-sans/200.css";
 import "@fontsource/noto-sans/800.css";
 import type { RouteSectionProps } from "@solidjs/router";
-import { Navigate, Route, Router } from "@solidjs/router";
+import { Navigate, Route, Router, useParams } from "@solidjs/router";
 import log from "loglevel";
 import { render } from "solid-js/web";
 
@@ -85,31 +85,41 @@ const App = (props: RouteSectionProps) => {
 };
 
 const redirectRefundToRescue = () => {
-    const params = window.location.search;
+    const search = window.location.search;
 
     return (
         <>
             <Route
                 path="/refund"
-                component={() => <Navigate href={`/rescue${params}`} />}
+                component={() => <Navigate href={`/rescue${search}`} />}
             />
             <Route
                 path="/refund/external"
                 component={() => (
-                    <Navigate href={`/rescue/external${params}`} />
+                    <Navigate href={`/rescue/external${search}`} />
                 )}
             />
             <Route
                 path="/refund/external/:type"
-                component={() => (
-                    <Navigate href={`/rescue/external/:type${params}`} />
-                )}
+                component={() => {
+                    const params = useParams<{ type: string }>();
+                    return (
+                        <Navigate
+                            href={`/rescue/external/${params.type}${search}`}
+                        />
+                    );
+                }}
             />
             <Route
                 path="/refund/rescue/:id"
-                component={() => (
-                    <Navigate href={`/rescue/refund/:id${params}`} />
-                )}
+                component={() => {
+                    const params = useParams<{ id: string }>();
+                    return (
+                        <Navigate
+                            href={`/rescue/refund/${params.id}${search}`}
+                        />
+                    );
+                }}
             />
         </>
     );
