@@ -31,7 +31,13 @@ import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
 import secp from "../lazy/secp";
-import { isBolt12Offer, isInvoice, isLnurl } from "./invoice";
+import {
+    extractAddress,
+    extractInvoice,
+    isBolt12Offer,
+    isInvoice,
+    isLnurl,
+} from "./invoice";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
     blindingPrivateKey?: Buffer;
@@ -98,16 +104,19 @@ const probeUserInputOption = async (
     input: string,
 ): Promise<boolean> => {
     switch (asset) {
-        case LN:
+        case LN: {
+            const invoice = extractInvoice(input);
             return (
-                isLnurl(input) ||
-                isInvoice(input) ||
-                (await isBolt12Offer(input))
+                isLnurl(invoice) ||
+                isInvoice(invoice) ||
+                (await isBolt12Offer(invoice))
             );
+        }
 
         default:
             try {
-                decodeAddress(asset, input);
+                const address = extractAddress(input);
+                decodeAddress(asset, address);
                 return true;
 
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars

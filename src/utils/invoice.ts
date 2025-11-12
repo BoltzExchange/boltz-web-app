@@ -212,7 +212,11 @@ export const extractInvoice = (data: string) => {
     }
     if (isBip21(data)) {
         const url = new URL(data);
-        return url.searchParams.get("lightning") || "";
+        return (
+            url.searchParams.get("lightning") ||
+            url.searchParams.get("lno") ||
+            ""
+        );
     }
     return data;
 };

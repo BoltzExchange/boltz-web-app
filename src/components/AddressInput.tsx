@@ -29,11 +29,14 @@ const AddressInput = () => {
 
     const handleInputChange = async (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
+        setOnchainAddress(inputValue);
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
 
         if (inputValue.length === 0) {
             setAddressValid(false);
+            input.classList.remove("invalid");
+            input.setCustomValidity("");
             return;
         }
 
