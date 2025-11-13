@@ -138,6 +138,12 @@ test.describe("URL params", () => {
 
         await page.goto("/backup/verify/existing?mode=rescue-key");
         await assertMnemonicVisible();
+
+        await page.goto("/rescue/external/btc?mode=rescue-key");
+        await assertMnemonicVisible();
+
+        await page.goto("/rescue/external/rsk?mode=rescue-key");
+        await expect(page.getByText(/connect wallet/i)).toBeVisible();
     });
 
     const addressField = "onchainAddress";
