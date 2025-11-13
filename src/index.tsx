@@ -110,17 +110,6 @@ const redirectRefundToRescue = () => {
                     );
                 }}
             />
-            <Route
-                path="/refund/rescue/:id"
-                component={() => {
-                    const params = useParams<{ id: string }>();
-                    return (
-                        <Navigate
-                            href={`/rescue/refund/${params.id}${search}`}
-                        />
-                    );
-                }}
-            />
         </>
     );
 };
