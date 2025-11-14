@@ -4,12 +4,13 @@ import { Show, createMemo, createResource } from "solid-js";
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
 import { BTC } from "../consts/Assets";
-import type { SwapType } from "../consts/Enums";
+import { type SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { getPairs } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";
 import CopyBox from "./CopyBox";
+import FiatAmount from "./FiatAmount";
 import LoadingSpinner from "./LoadingSpinner";
 import OptimizedRoute from "./OptimizedRoute";
 
@@ -78,6 +79,7 @@ const PayOnchain = (props: {
             fallback={<LoadingSpinner />}>
             <div>
                 <h2>{headerText()}</h2>
+                <FiatAmount amount={props.expectedAmount} variant="text" />
                 <OptimizedRoute />
                 <hr />
                 <a href={props.bip21}>

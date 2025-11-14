@@ -8,6 +8,7 @@ import "../../style/settings.scss";
 import AudioNotificationSetting from "./AudioNotificationSetting";
 import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
+import FiatAmountSetting from "./FiatAmountSetting";
 import Logs from "./Logs";
 import PrivacyMode from "./PrivacyMode";
 import RescueFile from "./RescueKey";
@@ -58,6 +59,11 @@ const SettingsMenu = () => {
                     label={"decimal_separator"}
                     tooltipLabel={"decimal_tooltip"}
                     settingElement={<Separator />}
+                />
+                <Entry
+                    label={"show_fiat_rate"}
+                    tooltipLabel={"show_fiat_rate_tooltip"}
+                    settingElement={<FiatAmountSetting />}
                 />
                 <Entry
                     label={"enable_audio_notifications"}

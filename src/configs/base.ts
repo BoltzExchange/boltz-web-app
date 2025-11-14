@@ -75,6 +75,11 @@ const defaults = {
     dnsOverHttps: "https://1.1.1.1/dns-query",
     chatwootUrl: "https://support.boltz.exchange",
     preimageValidation: "https://validate-payment.com",
+    rateProviders: {
+        Yadio: "https://api.yadio.io/exrates/btc",
+        Kraken: "https://api.kraken.com/0/public/Ticker",
+        Mempool: "https://mempool.space/api/v1/prices",
+    },
 };
 
 const isTor = () => window?.location.hostname.endsWith(".onion");

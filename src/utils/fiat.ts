@@ -1,0 +1,76 @@
+import BigNumber from "bignumber.js";
+
+import { baseConfig } from "../configs/base";
+import { BTC } from "../consts/Assets";
+import { Currency } from "../consts/Enums";
+import { satToBtc } from "./denomination";
+
+const getBtcPriceYadio = async (currency: Currency) => {
+    try {
+        const response = await fetch(baseConfig.rateProviders.Yadio);
+
+        const data = (await response.json()) as {
+            BTC: Record<string, number>;
+        };
+
+        return BigNumber(data[BTC][currency]);
+    } catch (e) {
+        throw new Error("failed to get BTC price from Yadio", e);
+    }
+};
+
+const getBtcPriceKraken = async (currency: Currency) => {
+    type KrakenResponse = {
+        result: {
+            XXBTZUSD: {
+                c: [string, string];
+            };
+        };
+    };
+
+    try {
+        const response = await fetch(
+            `${baseConfig.rateProviders.Kraken}?pair=XXBTZ${currency}`,
+        );
+        const data = (await response.json()) as KrakenResponse;
+        return BigNumber(data.result.XXBTZUSD.c[0]);
+    } catch (e) {
+        throw new Error("failed to get BTC price from Kraken: ", e);
+    }
+};
+
+const getBtcPriceMempool = async (currency: Currency) => {
+    try {
+        const response = await fetch(baseConfig.rateProviders.Mempool);
+        const data = (await response.json()) as { [currency: string]: number };
+        return BigNumber(data[currency]);
+    } catch (e) {
+        throw new Error("failed to get BTC price from Mempool: ", e);
+    }
+};
+
+export const getBtcPriceFailover = async (
+    currency: Currency = Currency.USD,
+) => {
+    for (const getBtcPrice of [
+        getBtcPriceYadio,
+        getBtcPriceMempool,
+        getBtcPriceKraken,
+    ]) {
+        try {
+            return await getBtcPrice(currency);
+        } catch {
+            continue;
+        }
+    }
+    throw new Error("all attempts of getting BTC price failed");
+};
+
+export const convertToFiat = (amount: BigNumber, rate: BigNumber) => {
+    if (amount.isNaN() || rate.isNaN()) {
+        return BigNumber(0);
+    }
+
+    const btcAmount = satToBtc(amount);
+    return btcAmount.multipliedBy(BigNumber(rate));
+};
