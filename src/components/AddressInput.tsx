@@ -84,14 +84,6 @@ const AddressInput = () => {
     };
 
     createEffect(
-        on([amountValid, onchainAddress], async () => {
-            if (swapType() !== SwapType.Submarine && inputRef) {
-                await handleInputChange(inputRef);
-            }
-        }),
-    );
-
-    createEffect(
         on([amountValid, onchainAddress, assetReceive], () => {
             if (
                 sendAmount().isGreaterThan(0) &&
@@ -109,8 +101,6 @@ const AddressInput = () => {
             ref={inputRef}
             required
             onInput={(e) => handleInputChange(e.currentTarget)}
-            onKeyUp={(e) => handleInputChange(e.currentTarget)}
-            onPaste={(e) => handleInputChange(e.currentTarget)}
             type="text"
             id="onchainAddress"
             data-testid="onchainAddress"
