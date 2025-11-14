@@ -55,9 +55,18 @@ const InvoiceInput = () => {
 
     const validate = async (input: HTMLTextAreaElement) => {
         const val = input.value.trim();
+        setInvoice(val);
 
         const address = extractAddress(val);
-        const actualAsset = probeUserInput(LN, address);
+        const inputValue = extractInvoice(val);
+
+        if (inputValue.length === 0) {
+            clearInputError(input);
+            resetInvoiceState();
+            return;
+        }
+
+        const actualAsset = await probeUserInput(LN, inputValue || address);
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
@@ -68,19 +77,13 @@ const InvoiceInput = () => {
             return;
         }
 
-        const inputValue = extractInvoice(val);
-
-        if (inputValue.length === 0) {
-            clearInputError(input);
-            resetInvoiceState();
-            return;
-        }
-
         try {
             if (isLnurl(inputValue)) {
                 setLnurl(inputValue);
+                setInvoice(inputValue);
             } else if (await isBolt12Offer(inputValue)) {
                 setBolt12Offer(inputValue);
+                setInvoice(inputValue);
             } else {
                 const sats = await validateInvoice(inputValue);
                 setReceiveAmount(BigNumber(sats));

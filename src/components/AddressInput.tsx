@@ -27,14 +27,22 @@ const AddressInput = () => {
         sendAmount,
     } = useCreateContext();
 
-    const handleInputChange = (input: HTMLInputElement) => {
+    const handleInputChange = async (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
+        setOnchainAddress(inputValue);
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
 
+        if (inputValue.length === 0) {
+            setAddressValid(false);
+            input.classList.remove("invalid");
+            input.setCustomValidity("");
+            return;
+        }
+
         try {
             const assetName = assetReceive();
-            const actualAsset = probeUserInput(assetName, address);
+            const actualAsset = await probeUserInput(assetName, address);
 
             switch (actualAsset) {
                 case LN:
@@ -76,14 +84,6 @@ const AddressInput = () => {
     };
 
     createEffect(
-        on([amountValid, onchainAddress], () => {
-            if (swapType() !== SwapType.Submarine && inputRef) {
-                handleInputChange(inputRef);
-            }
-        }),
-    );
-
-    createEffect(
         on([amountValid, onchainAddress, assetReceive], () => {
             if (
                 sendAmount().isGreaterThan(0) &&
@@ -101,8 +101,6 @@ const AddressInput = () => {
             ref={inputRef}
             required
             onInput={(e) => handleInputChange(e.currentTarget)}
-            onKeyUp={(e) => handleInputChange(e.currentTarget)}
-            onPaste={(e) => handleInputChange(e.currentTarget)}
             type="text"
             id="onchainAddress"
             data-testid="onchainAddress"
