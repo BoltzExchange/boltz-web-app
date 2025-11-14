@@ -35,9 +35,9 @@ describe("parse network correctly", () => {
         ${LN}   | ${"lnbcrt4294u1pjlmqy7pp5g9tj83k3k54ajzktdv8dq5nqsc8336j4f0v3wphq37x8hklntsxsdqqcqzzsxqyz5vqsp53qupg459fzdhajwjmzs8vd3elge0rmkzkmrmnpeuwy6kme47ns4q9qyyssqvncgzrmmghmtxu9m7wvw0yvtgckz4078xwam7exjpka2c89ga0y3jenhv6hhzuccj9hkl7a7f20nuslh3wqa4lfduq76ycxaf3w56zcq32d5fv"}
         ${LN}   | ${"LNURL1DP68GURN8GHJ7MRWW4EXCTNDD93KSCT9DSCNQVF39ESHGTMPWP5J7MRWW4EXCUQGY84ZH"}
         ${LN}   | ${"admin@bol.tz"}
-    `("should probe user input for $input", ({ input, asset }) => {
+    `("should probe user input for $input", async ({ input, asset }) => {
         for (const expectedAsset of ["", BTC, LBTC, LN]) {
-            expect(probeUserInput(expectedAsset, input)).toEqual(asset);
+            expect(await probeUserInput(expectedAsset, input)).toEqual(asset);
         }
     });
 
