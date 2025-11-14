@@ -196,6 +196,10 @@ const dict = {
         denomination_tooltip: "Choose your preferred denomination: BTC or sats",
         decimal_tooltip:
             "Choose your preferred decimal separator: dot or comma",
+        show_fiat_rate: "Show Fiat Rate",
+        show_fiat_rate_tooltip:
+            "Enable or disable the display of fiat rate (USD) for swap amounts",
+        fiat_rate_not_available: "Fiat rate unavailable",
         swap_completed: "Swap {{ id }} completed successfully!",
         claim_fail: "Failed to claim swap: {{ id }}",
         logs: "Logs",
@@ -452,6 +456,7 @@ const dict = {
         boltz_pro_option_telegram_title: "Telegram Bot",
         boltz_pro_option_telegram_description:
             "Get instant alerts about earn opportunities in Telegram",
+        // End of Products page
 
         balance: "Balance",
     },

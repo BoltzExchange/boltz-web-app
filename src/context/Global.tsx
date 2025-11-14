@@ -86,6 +86,8 @@ export type GlobalContextType = {
     setBrowserNotification: Setter<boolean>;
     privacyMode: Accessor<boolean>;
     setPrivacyMode: Setter<boolean>;
+    showFiatAmount: Accessor<boolean>;
+    setShowFiatAmount: Setter<boolean>;
     // functions
     t: tFn;
     notify: notifyFn;
@@ -470,6 +472,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [showFiatAmount, setShowFiatAmount] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<boolean>(true),
+        {
+            name: "showFiatAmount",
+        },
+    );
+
     const [hardwareDerivationPath, setHardwareDerivationPath] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<string>(""),
@@ -541,6 +551,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setBrowserNotification,
                 privacyMode,
                 setPrivacyMode,
+                showFiatAmount,
+                setShowFiatAmount,
                 // functions
                 t,
                 notify,
