@@ -9,9 +9,11 @@ const Reverse = () => {
         setAssetSend,
         setAssetReceive,
         setOnchainAddress,
+        setInvoice,
     } = useCreateContext();
     const setDirection = () => {
         setOnchainAddress("");
+        setInvoice("");
         const sendOld = assetSend();
         setAssetSend(assetReceive());
         setAssetReceive(sendOld);

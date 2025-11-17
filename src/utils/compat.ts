@@ -137,9 +137,7 @@ const probeUserInput = async (
         return expectedAsset;
     }
 
-    for (const asset of possibleUserInputTypes.filter(
-        (type) => type !== expectedAsset,
-    )) {
+    for (const asset of possibleUserInputTypes) {
         if (await probeUserInputOption(asset, input)) {
             return asset;
         }

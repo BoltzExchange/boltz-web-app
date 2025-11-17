@@ -29,6 +29,44 @@ vi.mock("../../src/utils/validation", async () => {
     };
 });
 
+vi.mock("../../src/utils/compat", async () => {
+    const actual = await vi.importActual("../../src/utils/compat");
+    return {
+        ...actual,
+        probeUserInput: vi.fn((expectedAsset: string, input: string) => {
+            // Mock BOLT12 offer detection
+            if (input.startsWith("lno1")) {
+                return Promise.resolve(LN);
+            }
+            // Mock invoice detection
+            if (input.startsWith("ln")) {
+                return Promise.resolve(LN);
+            }
+            // Mock address detection - check if it looks like a Bitcoin address
+            if (
+                input.startsWith("bc1") ||
+                input.startsWith("bcrt1") ||
+                input.startsWith("tb1")
+            ) {
+                return Promise.resolve(BTC);
+            }
+            // Mock Liquid address detection
+            if (
+                input.startsWith("el1") ||
+                input.startsWith("ert1") ||
+                input.startsWith("ex1")
+            ) {
+                return Promise.resolve(LBTC);
+            }
+            // If expected asset matches, return it
+            if (expectedAsset !== "" && expectedAsset === LN) {
+                return Promise.resolve(LN);
+            }
+            return Promise.resolve(null);
+        }),
+    };
+});
+
 describe("InvoiceInput", () => {
     test.each`
         expected | invoice
@@ -180,13 +218,11 @@ describe("InvoiceInput", () => {
             });
 
             if (parameter === "lightning") {
-                // Wait for invoice to be extracted and validated
                 await waitFor(() => {
                     expect(signals.invoice()).toEqual(expectedValue);
                     expect(signals.invoiceValid()).toEqual(true);
                 });
             } else {
-                // Wait for BOLT12 offer to be extracted and set
                 await waitFor(() => {
                     expect(signals.bolt12Offer()).toEqual(expectedValue);
                     expect(signals.invoice()).toEqual(expectedValue);
@@ -194,4 +230,68 @@ describe("InvoiceInput", () => {
             }
         },
     );
+
+    test("should extract lno from BIP21 URI without address", async () => {
+        const bip21Uri =
+            "bitcoin:?lno=lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
+        const expectedBolt12Offer =
+            "lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c";
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
+
+        const invoiceInput = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        fireEvent.input(invoiceInput, {
+            target: { value: bip21Uri },
+        });
+
+        await waitFor(() => {
+            expect(signals.bolt12Offer()).toEqual(expectedBolt12Offer);
+            expect(signals.invoice()).toEqual(expectedBolt12Offer);
+        });
+    });
+
+    test("should extract address from BIP21 URI and switch to on-chain", async () => {
+        const bip21Uri = "bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm";
+        const expectedAddress = "bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm";
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setAssetSend(BTC);
+        signals.setAssetReceive(LN);
+
+        const invoiceInput = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        fireEvent.input(invoiceInput, {
+            target: { value: bip21Uri },
+        });
+
+        await waitFor(() => {
+            expect(signals.onchainAddress()).toEqual(expectedAddress);
+            expect(signals.assetReceive()).toEqual(BTC);
+        });
+    });
 });

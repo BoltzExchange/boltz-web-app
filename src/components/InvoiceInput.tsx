@@ -54,11 +54,11 @@ const InvoiceInput = () => {
     };
 
     const validate = async (input: HTMLTextAreaElement) => {
-        const val = input.value.trim();
-        setInvoice(val);
+        const inputValue = input.value.trim();
+        setInvoice(inputValue);
 
-        const address = extractAddress(val);
-        const inputValue = extractInvoice(val);
+        const address = extractAddress(inputValue);
+        const invoice = extractInvoice(inputValue);
 
         if (inputValue.length === 0) {
             clearInputError(input);
@@ -66,7 +66,7 @@ const InvoiceInput = () => {
             return;
         }
 
-        const actualAsset = await probeUserInput(LN, inputValue || address);
+        const actualAsset = await probeUserInput(LN, invoice || address);
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
@@ -78,14 +78,14 @@ const InvoiceInput = () => {
         }
 
         try {
-            if (isLnurl(inputValue)) {
-                setLnurl(inputValue);
-                setInvoice(inputValue);
-            } else if (await isBolt12Offer(inputValue)) {
-                setBolt12Offer(inputValue);
-                setInvoice(inputValue);
+            if (isLnurl(invoice)) {
+                setLnurl(invoice);
+                setInvoice(invoice);
+            } else if (await isBolt12Offer(invoice)) {
+                setBolt12Offer(invoice);
+                setInvoice(invoice);
             } else {
-                const sats = await validateInvoice(inputValue);
+                const sats = await validateInvoice(invoice);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
                     calculateSendAmount(
@@ -95,7 +95,7 @@ const InvoiceInput = () => {
                         swapType(),
                     ),
                 );
-                setInvoice(inputValue);
+                setInvoice(invoice);
                 setBolt12Offer(undefined);
                 setLnurl("");
                 setInvoiceValid(true);

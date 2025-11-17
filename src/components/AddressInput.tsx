@@ -42,7 +42,10 @@ const AddressInput = () => {
 
         try {
             const assetName = assetReceive();
-            const actualAsset = await probeUserInput(assetName, address);
+
+            const actualAsset =
+                (await probeUserInput(assetName, invoice)) ??
+                (await probeUserInput(assetName, address));
 
             switch (actualAsset) {
                 case LN:
