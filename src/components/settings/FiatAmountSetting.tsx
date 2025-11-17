@@ -1,10 +1,12 @@
 import { useGlobalContext } from "../../context/Global";
 
 const FiatAmountSetting = () => {
-    const { showFiatAmount, setShowFiatAmount, t } = useGlobalContext();
+    const { showFiatAmount, setShowFiatAmount, t, fetchBtcPrice } =
+        useGlobalContext();
 
     const toggleFiatAmount = (evt: MouseEvent) => {
         setShowFiatAmount(!showFiatAmount());
+        void fetchBtcPrice();
         evt.stopPropagation();
     };
 

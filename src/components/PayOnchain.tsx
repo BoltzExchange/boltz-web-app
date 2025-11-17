@@ -22,7 +22,8 @@ const PayOnchain = (props: {
     address: string;
     bip21: string;
 }) => {
-    const { t, denomination, separator, setPairs, pairs } = useGlobalContext();
+    const { t, denomination, separator, setPairs, pairs, fetchBtcPrice } =
+        useGlobalContext();
 
     const [pairsFetch] = createResource(async () => {
         if (pairs() !== undefined) {
@@ -72,6 +73,8 @@ const PayOnchain = (props: {
             ),
         });
     });
+
+    void fetchBtcPrice();
 
     return (
         <Show

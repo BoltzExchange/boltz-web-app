@@ -57,6 +57,7 @@ const Create = () => {
         pairs,
         regularPairs,
         showFiatAmount,
+        fetchBtcPrice,
     } = useGlobalContext();
     const {
         swapType,
@@ -354,6 +355,8 @@ const Create = () => {
             validateAmount();
         }
     });
+
+    void fetchBtcPrice();
 
     const creatingSwap = () => location.state?.backupDone === BackupDone.True;
 

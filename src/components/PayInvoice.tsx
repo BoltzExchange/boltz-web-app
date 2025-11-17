@@ -14,7 +14,8 @@ import CopyBox from "./CopyBox";
 import FiatAmount from "./FiatAmount";
 
 const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
-    const { t, denomination, separator, webln } = useGlobalContext();
+    const { t, denomination, separator, webln, fetchBtcPrice } =
+        useGlobalContext();
 
     const payWeblnInvoice = async (pr: string) => {
         await enableWebln(async () => {
@@ -22,6 +23,8 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
             log.debug("webln payment result:", result);
         });
     };
+
+    void fetchBtcPrice();
 
     return (
         <div>

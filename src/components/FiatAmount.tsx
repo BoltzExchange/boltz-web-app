@@ -1,46 +1,36 @@
 import { BigNumber } from "bignumber.js";
-import {
-    Match,
-    Show,
-    Switch,
-    createEffect,
-    createResource,
-    createSignal,
-} from "solid-js";
+import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 
 import { Currency } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
-import { convertToFiat, getBtcPriceFailover } from "../utils/fiat";
+import { convertToFiat } from "../utils/fiat";
 
 const FiatAmount = (props: {
     amount: number;
     variant: "label" | "text";
     for?: string;
 }) => {
-    const { showFiatAmount, t } = useGlobalContext();
+    const { showFiatAmount, t, btcPrice } = useGlobalContext();
 
     const [fiatAmount, setFiatAmount] = createSignal<BigNumber>(BigNumber(0));
 
-    const [btcPrice] = createResource(async () => {
-        if (!showFiatAmount()) return null;
-        return await getBtcPriceFailover();
-    });
-
     createEffect(() => {
-        if (btcPrice.state === "ready") {
-            setFiatAmount(convertToFiat(BigNumber(props.amount), btcPrice()));
+        if (btcPrice() instanceof BigNumber) {
+            setFiatAmount(
+                convertToFiat(BigNumber(props.amount), btcPrice() as BigNumber),
+            );
         }
     });
 
     const renderFiatAmount = () => (
         <Switch>
-            <Match when={showFiatAmount() && btcPrice.state === "ready"}>
+            <Match when={btcPrice() instanceof BigNumber}>
                 ≈ {fiatAmount().toFixed(2)} {Currency.USD}
             </Match>
-            <Match when={showFiatAmount() && btcPrice.state === "pending"}>
+            <Match when={btcPrice() === null}>
                 <div class="skeleton" />
             </Match>
-            <Match when={showFiatAmount() && btcPrice.state === "errored"}>
+            <Match when={btcPrice() instanceof Error}>
                 {t("fiat_rate_not_available")}
             </Match>
         </Switch>
