@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import log from "loglevel";
-import { Show } from "solid-js";
+import { Show, createEffect } from "solid-js";
 
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
@@ -24,7 +24,9 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
         });
     };
 
-    void fetchBtcPrice();
+    createEffect(() => {
+        void fetchBtcPrice();
+    });
 
     return (
         <div>

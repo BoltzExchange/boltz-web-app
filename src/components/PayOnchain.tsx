@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { Show, createMemo, createResource } from "solid-js";
+import { Show, createEffect, createMemo, createResource } from "solid-js";
 
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
@@ -74,7 +74,9 @@ const PayOnchain = (props: {
         });
     });
 
-    void fetchBtcPrice();
+    createEffect(() => {
+        void fetchBtcPrice();
+    });
 
     return (
         <Show

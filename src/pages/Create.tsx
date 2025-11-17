@@ -356,7 +356,9 @@ const Create = () => {
         }
     });
 
-    void fetchBtcPrice();
+    createEffect(() => {
+        void fetchBtcPrice();
+    });
 
     const creatingSwap = () => location.state?.backupDone === BackupDone.True;
 
