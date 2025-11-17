@@ -10,7 +10,7 @@ import {
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { formatError } from "./errors";
-import { requestTimeoutDuration } from "./helper";
+import { constructRequestOptions } from "./helper";
 import type { ChainSwap, SubmarineSwap } from "./swapCreator";
 
 export type UTXO = {
@@ -55,21 +55,6 @@ const handleResponseError = async (response: Response) => {
     } catch {
         throw new Error(errorMessage);
     }
-};
-
-const constructRequestOptions = (options: RequestInit = {}) => {
-    const controller = new AbortController();
-    const requestTimeout = setTimeout(
-        () => controller.abort({ reason: "Request timed out" }),
-        requestTimeoutDuration,
-    );
-
-    const opts: RequestInit = {
-        signal: controller.signal, // Default abort signal, can be overridden by options.signal
-        ...options,
-    };
-
-    return { opts, requestTimeout };
 };
 
 /**
