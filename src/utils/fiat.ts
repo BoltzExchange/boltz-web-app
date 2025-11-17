@@ -6,8 +6,13 @@ import { Currency } from "../consts/Enums";
 import { satToBtc } from "./denomination";
 import { constructRequestOptions } from "./helper";
 
+const requestTimeoutDuration = 6_000;
+
 const getBtcPriceYadio = async (currency: Currency) => {
-    const { opts, requestTimeout } = constructRequestOptions();
+    const { opts, requestTimeout } = constructRequestOptions(
+        {},
+        requestTimeoutDuration,
+    );
     try {
         const response = await fetch(baseConfig.rateProviders.Yadio, opts);
 
@@ -32,7 +37,10 @@ const getBtcPriceKraken = async (currency: Currency) => {
         };
     };
 
-    const { opts, requestTimeout } = constructRequestOptions();
+    const { opts, requestTimeout } = constructRequestOptions(
+        {},
+        requestTimeoutDuration,
+    );
     try {
         const response = await fetch(
             `${baseConfig.rateProviders.Kraken}?pair=XXBTZ${currency}`,
@@ -48,7 +56,10 @@ const getBtcPriceKraken = async (currency: Currency) => {
 };
 
 const getBtcPriceMempool = async (currency: Currency) => {
-    const { opts, requestTimeout } = constructRequestOptions();
+    const { opts, requestTimeout } = constructRequestOptions(
+        {},
+        requestTimeoutDuration,
+    );
     try {
         const response = await fetch(baseConfig.rateProviders.Mempool, opts);
         const data = (await response.json()) as { [currency: string]: number };

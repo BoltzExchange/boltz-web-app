@@ -102,11 +102,14 @@ export const getPair = <
     return pairAssetReceive as T;
 };
 
-export const constructRequestOptions = (options: RequestInit = {}) => {
+export const constructRequestOptions = (
+    options: RequestInit = {},
+    timeout: number = requestTimeoutDuration,
+) => {
     const controller = new AbortController();
     const requestTimeout = setTimeout(
         () => controller.abort({ reason: "Request timed out" }),
-        requestTimeoutDuration,
+        timeout,
     );
 
     const opts: RequestInit = {
