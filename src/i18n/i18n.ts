@@ -198,7 +198,7 @@ const dict = {
             "Choose your preferred decimal separator: dot or comma",
         show_fiat_rate: "Show Fiat Rate",
         show_fiat_rate_tooltip:
-            "Enable or disable the display of fiat rate (USD) for swap amounts",
+            "Show USD amounts",
         fiat_rate_not_available: "Fiat rate unavailable",
         swap_completed: "Swap {{ id }} completed successfully!",
         claim_fail: "Failed to claim swap: {{ id }}",
