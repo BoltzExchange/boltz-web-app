@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import { vi } from "vitest";
 
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
@@ -8,6 +9,16 @@ import {
     globalSignals,
     signals,
 } from "../helper";
+
+vi.mock("../../src/utils/invoice", async () => {
+    const actual = await vi.importActual("../../src/utils/invoice");
+    return {
+        ...actual,
+        isBolt12Offer: vi.fn((offer: string) => {
+            return Promise.resolve(offer.startsWith("lno1"));
+        }),
+    };
+});
 
 describe("AddressInput", () => {
     test.each`
@@ -102,9 +113,9 @@ describe("AddressInput", () => {
     );
 
     test.each`
-        asset   | bip21Uri                                                                                                                                                                                                                                                                          | expectedAddress
-        ${BTC}  | ${"bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday&lno=lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}      | ${"bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm"}
-        ${LBTC} | ${"liquidnetwork:ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday&lno=lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"} | ${"ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw"}
+        asset   | bip21Uri                                                                                                                                               | expectedAddress
+        ${BTC}  | ${"bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday"}      | ${"bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm"}
+        ${LBTC} | ${"liquidnetwork:ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday"} | ${"ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw"}
     `(
         "should extract address from BIP21 URI for $asset",
         async ({ asset, bip21Uri, expectedAddress }) => {
@@ -133,6 +144,40 @@ describe("AddressInput", () => {
             });
             expect(signals.onchainAddress()).toEqual(expectedAddress);
             expect(signals.assetReceive()).toEqual(asset);
+        },
+    );
+
+    test.each`
+        asset   | bip21Uri                                                                                                                                                                                                                                                                          | expectedInvoice
+        ${BTC}  | ${"bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday&lno=lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}      | ${"lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}
+        ${LBTC} | ${"liquidnetwork:ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday&lno=lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"} | ${"lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}
+    `(
+        "should prioritize lightning over address when both are present",
+        async ({ asset, bip21Uri, expectedInvoice }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <AddressInput />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            signals.setAssetReceive(asset);
+
+            const addressInput = (await screen.findByTestId(
+                "onchainAddress",
+            )) as HTMLInputElement;
+
+            fireEvent.input(addressInput, {
+                target: { value: bip21Uri },
+            });
+
+            await waitFor(() => {
+                expect(signals.invoice()).toEqual(expectedInvoice);
+                expect(signals.assetReceive()).toEqual(LN);
+            });
         },
     );
 });
