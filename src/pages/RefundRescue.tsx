@@ -58,10 +58,10 @@ export const mapSwap = (
                 assetSend: swap.from,
                 assetReceive: swap.to,
                 version: OutputType.Taproot,
-                address: swap.claimDetails.lockupAddress,
+                address: swap.claimDetails?.lockupAddress, // RSK doesn't have claimDetails yet
                 refundPrivateKeyIndex: swap.refundDetails.keyIndex,
-                claimPublicKey: swap.claimDetails.serverPublicKey,
-                claimPrivateKeyIndex: swap.claimDetails.keyIndex,
+                claimPublicKey: swap.claimDetails?.serverPublicKey,
+                claimPrivateKeyIndex: swap.claimDetails?.keyIndex,
                 timeoutBlockHeight: swap.refundDetails.timeoutBlockHeight,
                 lockupDetails: {
                     ...swap.refundDetails,
