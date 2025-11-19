@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.8](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.7..v1.8.8) - 2025-11-19
+
+### Bug Fixes
+
+- parameters for external rescue (#1065) - ([0608727](https://github.com/BoltzExchange/boltz-web-app/commit/06087276a519fd442be227151d073048bda7d2e7))
+- support chain swaps to RSK in external rescue (#1068) - ([df18efd](https://github.com/BoltzExchange/boltz-web-app/commit/df18efdc3d7c7f6abf809989f38485a2388c5f24))
+
+### Miscellaneous Chores
+
+- bump dependencies (#1064) - ([528d0f4](https://github.com/BoltzExchange/boltz-web-app/commit/528d0f48a4769a4a06567c466767a41e6ddb19d4))
+
+---
 ## [1.8.7](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.6..v1.8.7) - 2025-11-11
 
 ### Bug Fixes
@@ -14,6 +26,10 @@ All notable changes to this project will be documented in this file. See [conven
 
 - show RBTC wallet balance (#1059) - ([720ba2b](https://github.com/BoltzExchange/boltz-web-app/commit/720ba2b648c574a486b0d9e09d36146967e1d446))
 - new rescue key button (#1054) - ([f0a775f](https://github.com/BoltzExchange/boltz-web-app/commit/f0a775fd7ead24c43aa20f5f33d828dcb29c1b12))
+
+### Miscellaneous Chores
+
+- bump version to v1.8.7 (#1063) - ([12f508d](https://github.com/BoltzExchange/boltz-web-app/commit/12f508d0c543ea0ec15997d51873b4bf1bfc9775))
 
 ---
 ## [1.8.6](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.5..v1.8.6) - 2025-10-29
