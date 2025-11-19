@@ -41,13 +41,13 @@ import {
 import { formatError } from "./errors";
 import { getFeeEstimationsFailover } from "./fees";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
-import type {
-    ChainSwap,
-    ReverseSwap,
-    SomeSwap,
-    SubmarineSwap,
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    type SomeSwap,
+    type SubmarineSwap,
+    isRsk,
 } from "./swapCreator";
-import { isRsk } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export enum RescueAction {
@@ -62,16 +62,22 @@ export const RescueNoAction = [RescueAction.None, RescueAction.Pending];
 export const isSwapClaimable = ({
     status,
     type,
+    swap = undefined,
     includeSuccess = false,
     swapDate = undefined,
     backupImportTimestamp = undefined,
 }: {
     status: string;
     type: SwapType;
+    swap?: SomeSwap;
     includeSuccess?: boolean;
     swapDate?: number;
     backupImportTimestamp?: number;
 }) => {
+    if (swap !== undefined && isRsk(swap)) {
+        return false;
+    }
+
     // When a backup is imported, we only auto-claim successful swaps that were created
     // after the import timestamp. This prevents attempting to claim swaps that may have
     // already been completed before the backup was created
@@ -357,7 +363,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
 };
 
 export const isRefundableSwapType = (swap: SomeSwap) =>
-    !isRsk(swap) && [SwapType.Chain, SwapType.Submarine].includes(swap.type);
+    [SwapType.Chain, SwapType.Submarine].includes(swap.type);
 
 export const getRefundableUTXOs = async (currentSwap: SomeSwap) => {
     const [lockupTxResult, utxosResult] = await Promise.allSettled([
@@ -459,6 +465,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
 
                 if (
                     isSwapClaimable({
+                        swap,
                         status: swap.status,
                         type: swap.type,
                     })
