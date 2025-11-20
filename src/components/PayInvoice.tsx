@@ -11,7 +11,6 @@ import { isMobile } from "../utils/helper";
 import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
 import CopyBox from "./CopyBox";
-import FiatAmount from "./FiatAmount";
 
 const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
     const { t, denomination, separator, webln, fetchBtcPrice } =
@@ -40,7 +39,6 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
                     denomination: formatDenomination(denomination(), BTC),
                 })}
             </h2>
-            <FiatAmount amount={props.sendAmount} variant="text" />
             <hr />
             <a href={invoicePrefix + props.invoice}>
                 <QrCode data={props.invoice} />

@@ -10,7 +10,6 @@ import { getPairs } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair, isMobile } from "../utils/helper";
 import CopyBox from "./CopyBox";
-import FiatAmount from "./FiatAmount";
 import LoadingSpinner from "./LoadingSpinner";
 import OptimizedRoute from "./OptimizedRoute";
 
@@ -84,7 +83,6 @@ const PayOnchain = (props: {
             fallback={<LoadingSpinner />}>
             <div>
                 <h2>{headerText()}</h2>
-                <FiatAmount amount={props.expectedAmount} variant="text" />
                 <OptimizedRoute />
                 <hr />
                 <a href={props.bip21}>
