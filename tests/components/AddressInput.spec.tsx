@@ -144,6 +144,7 @@ describe("AddressInput", () => {
             });
             expect(signals.onchainAddress()).toEqual(expectedAddress);
             expect(signals.assetReceive()).toEqual(asset);
+            expect(signals.receiveAmount().toNumber()).toEqual(1000);
         },
     );
 

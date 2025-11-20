@@ -229,6 +229,14 @@ export const extractAddress = (data: string) => {
     return data;
 };
 
+export const extractBip21Amount = (data: string) => {
+    if (isBip21(data)) {
+        const url = new URL(data);
+        return BigNumber(url.searchParams.get("amount") ?? 0);
+    }
+    return null;
+};
+
 export const getAssetByBip21Prefix = (prefix: string) => {
     switch (prefix) {
         case bitcoinPrefix:

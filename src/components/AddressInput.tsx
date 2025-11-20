@@ -1,5 +1,7 @@
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
+import { calculateSendAmount } from "src/utils/calculate";
+import { btcToSat } from "src/utils/denomination";
 
 import { LN, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -7,7 +9,11 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
-import { extractAddress, extractInvoice } from "../utils/invoice";
+import {
+    extractAddress,
+    extractBip21Amount,
+    extractInvoice,
+} from "../utils/invoice";
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
@@ -15,6 +21,8 @@ const AddressInput = () => {
     const { t, notify } = useGlobalContext();
     const {
         assetReceive,
+        boltzFee,
+        minerFee,
         swapType,
         amountValid,
         onchainAddress,
@@ -25,13 +33,13 @@ const AddressInput = () => {
         setOnchainAddress,
         setInvoice,
         sendAmount,
+        setReceiveAmount,
+        setSendAmount,
     } = useCreateContext();
 
     const handleInputChange = async (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
         setOnchainAddress(inputValue);
-        const address = extractAddress(inputValue);
-        const invoice = extractInvoice(inputValue);
 
         if (inputValue.length === 0) {
             setAddressValid(false);
@@ -40,31 +48,48 @@ const AddressInput = () => {
             return;
         }
 
+        const address = extractAddress(inputValue);
+        const invoice = extractInvoice(inputValue);
+
         try {
             const assetName = assetReceive();
-
             const actualAsset =
                 (await probeUserInput(assetName, invoice)) ??
                 (await probeUserInput(assetName, address));
 
             switch (actualAsset) {
-                case LN:
+                case LN: {
                     setAssetReceive(LN);
                     if (assetSend() === LN) {
                         setAssetSend(assetName);
                     }
+                    setOnchainAddress("");
                     setInvoice(invoice);
                     notify("success", t("switch_paste"));
                     break;
+                }
 
                 case null:
                     throw new Error();
 
-                default:
+                default: {
                     if (assetName !== actualAsset) {
                         setAssetSend(assetReceive());
                         setAssetReceive(actualAsset);
                         notify("success", t("switch_paste"));
+                    }
+
+                    const bip21Amount = extractBip21Amount(inputValue);
+                    if (bip21Amount) {
+                        setReceiveAmount(btcToSat(bip21Amount));
+                        setSendAmount(
+                            calculateSendAmount(
+                                btcToSat(bip21Amount),
+                                boltzFee(),
+                                minerFee(),
+                                swapType(),
+                            ),
+                        );
                     }
 
                     input.setCustomValidity("");
@@ -72,6 +97,7 @@ const AddressInput = () => {
                     setAddressValid(true);
                     setOnchainAddress(address);
                     break;
+                }
             }
         } catch (e) {
             setAddressValid(false);

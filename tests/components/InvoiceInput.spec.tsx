@@ -34,15 +34,9 @@ vi.mock("../../src/utils/compat", async () => {
     return {
         ...actual,
         probeUserInput: vi.fn((expectedAsset: string, input: string) => {
-            // Mock BOLT12 offer detection
-            if (input.startsWith("lno1")) {
-                return Promise.resolve(LN);
+            if (!input || input.length === 0) {
+                return Promise.resolve(null);
             }
-            // Mock invoice detection
-            if (input.startsWith("ln")) {
-                return Promise.resolve(LN);
-            }
-            // Mock address detection - check if it looks like a Bitcoin address
             if (
                 input.startsWith("bc1") ||
                 input.startsWith("bcrt1") ||
@@ -50,7 +44,6 @@ vi.mock("../../src/utils/compat", async () => {
             ) {
                 return Promise.resolve(BTC);
             }
-            // Mock Liquid address detection
             if (
                 input.startsWith("el1") ||
                 input.startsWith("ert1") ||
@@ -58,8 +51,11 @@ vi.mock("../../src/utils/compat", async () => {
             ) {
                 return Promise.resolve(LBTC);
             }
-            // If expected asset matches, return it
-            if (expectedAsset !== "" && expectedAsset === LN) {
+            if (
+                expectedAsset !== "" &&
+                expectedAsset === LN &&
+                input.length > 0
+            ) {
                 return Promise.resolve(LN);
             }
             return Promise.resolve(null);
