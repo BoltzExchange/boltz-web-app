@@ -465,7 +465,9 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
             setBtcPrice(btcPrice);
             setLastPriceFetch(Date.now());
         } catch {
-            setBtcPrice(new Error());
+            setBtcPrice(
+                new Error("Failed to fetch BTC price from all providers"),
+            );
         }
     };
 
