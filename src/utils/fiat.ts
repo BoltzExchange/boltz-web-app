@@ -8,7 +8,7 @@ import { constructRequestOptions } from "./helper";
 
 const requestTimeoutDuration = 6_000;
 
-const getBtcPriceYadio = async (currency: Currency) => {
+export const getBtcPriceYadio = async (currency: Currency) => {
     const { opts, requestTimeout } = constructRequestOptions(
         {},
         requestTimeoutDuration,
@@ -28,7 +28,7 @@ const getBtcPriceYadio = async (currency: Currency) => {
     }
 };
 
-const getBtcPriceKraken = async (currency: Currency) => {
+export const getBtcPriceKraken = async (currency: Currency) => {
     type KrakenResponse = {
         result: {
             XXBTZUSD: {
@@ -55,7 +55,7 @@ const getBtcPriceKraken = async (currency: Currency) => {
     }
 };
 
-const getBtcPriceMempool = async (currency: Currency) => {
+export const getBtcPriceMempool = async (currency: Currency) => {
     const { opts, requestTimeout } = constructRequestOptions(
         {},
         requestTimeoutDuration,

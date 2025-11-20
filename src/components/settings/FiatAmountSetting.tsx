@@ -6,8 +6,10 @@ const FiatAmountSetting = () => {
 
     const toggleFiatAmount = (evt: MouseEvent) => {
         setShowFiatAmount(!showFiatAmount());
-        void fetchBtcPrice();
         evt.stopPropagation();
+        if (showFiatAmount()) {
+            void fetchBtcPrice();
+        }
     };
 
     return (
