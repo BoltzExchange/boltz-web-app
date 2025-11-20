@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import log from "loglevel";
-import { Show, createEffect } from "solid-js";
+import { Show } from "solid-js";
 
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
@@ -13,8 +13,7 @@ import { enableWebln } from "../utils/webln";
 import CopyBox from "./CopyBox";
 
 const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
-    const { t, denomination, separator, webln, fetchBtcPrice } =
-        useGlobalContext();
+    const { t, denomination, separator, webln } = useGlobalContext();
 
     const payWeblnInvoice = async (pr: string) => {
         await enableWebln(async () => {
@@ -22,10 +21,6 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
             log.debug("webln payment result:", result);
         });
     };
-
-    createEffect(() => {
-        void fetchBtcPrice();
-    });
 
     return (
         <div>
