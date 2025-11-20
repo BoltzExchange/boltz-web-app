@@ -196,6 +196,9 @@ const dict = {
         denomination_tooltip: "Choose your preferred denomination: BTC or sats",
         decimal_tooltip:
             "Choose your preferred decimal separator: dot or comma",
+        show_fiat_rate: "Show USD Rate",
+        show_fiat_rate_tooltip: "Show USD equivalent of swap amount",
+        fiat_rate_not_available: "USD rate unavailable",
         swap_completed: "Swap {{ id }} completed successfully!",
         claim_fail: "Failed to claim swap: {{ id }}",
         logs: "Logs",
@@ -452,6 +455,7 @@ const dict = {
         boltz_pro_option_telegram_title: "Telegram Bot",
         boltz_pro_option_telegram_description:
             "Get instant alerts about earn opportunities in Telegram",
+        // End of Products page
 
         balance: "Balance",
     },
@@ -659,6 +663,9 @@ const dict = {
             "Wähle deine bevorzugte Denomination: BTC oder sats",
         decimal_tooltip:
             "Wähle dein bevorzugtes Dezimaltrennzeichen: Punkt oder Komma",
+        show_fiat_rate: "USD-Kurs anzeigen",
+        show_fiat_rate_tooltip: "Swap-Betrag in USD anzeigen",
+        fiat_rate_not_available: "USD-Kurs nicht verfügbar",
         swap_completed: "Swap {{ id }} erfolgreich abgeschlossen!",
         claim_fail: "Swap {{ id }} konnte nicht geclaimed werden!",
         logs: "Logs",
@@ -1130,6 +1137,10 @@ const dict = {
         decimal_separator: "Separador decimal",
         denomination_tooltip: "Elige tu denominación preferida: BTC o sats",
         decimal_tooltip: "Elige tu separador decimal preferido: punto o coma",
+        show_fiat_rate: "Mostrar tasa en USD",
+        show_fiat_rate_tooltip:
+            "Mostrar el equivalente en USD del monto del intercambio",
+        fiat_rate_not_available: "Tasa en USD no disponible",
         swap_completed: "¡Intercambio {{ id }} completado con éxito!",
         claim_fail: "¡Error en reclamar el intercambio {{ id }}!",
         logs: "Logs",
@@ -1597,6 +1608,10 @@ const dict = {
         decimal_separator: "Separador decimal",
         denomination_tooltip: "Escolha a denominação preferida: BTC ou sats",
         decimal_tooltip: "Escolha o separador decimal: ponto ou vírgula",
+        show_fiat_rate: "Mostrar taxa em USD",
+        show_fiat_rate_tooltip:
+            "Mostrar o equivalente em USD do valor da troca",
+        fiat_rate_not_available: "Taxa em USD indisponível",
         swap_completed: "Troca {{ id }} concluída com sucesso!",
         claim_fail: "Falha ao reivindicar troca: {{ id }}",
         logs: "Logs",
@@ -2039,6 +2054,9 @@ const dict = {
         decimal_separator: "小数分隔符",
         denomination_tooltip: "选择您的首选面额：BTC 或 sats",
         decimal_tooltip: "选择您的首选小数分隔符：点或逗号",
+        show_fiat_rate: "显示 USD 汇率",
+        show_fiat_rate_tooltip: "显示兑换金额对应的 USD 数值",
+        fiat_rate_not_available: "USD 汇率不可用",
         swap_completed: "交换{{ id }} 已成功完成！",
         claim_fail: "交换{{ id }}索赔失败！",
         logs: "日志",
@@ -2480,6 +2498,9 @@ const dict = {
         denomination_tooltip: "希望する単位を選択してください：BTCもしくはSats",
         decimal_tooltip:
             "希望する小数点を選択してください：ドットもしくはコンマ",
+        show_fiat_rate: "USDレートを表示",
+        show_fiat_rate_tooltip: "スワップ額のUSD換算値を表示",
+        fiat_rate_not_available: "USDレートを取得できません",
         swap_completed: " スワップ {{ id }} が無事に成功しました!",
         claim_fail: "クレームのスワップに失敗しました: {{ id }}",
         logs: "ログ",

@@ -102,6 +102,24 @@ export const getPair = <
     return pairAssetReceive as T;
 };
 
+export const constructRequestOptions = (
+    options: RequestInit = {},
+    timeout: number = requestTimeoutDuration,
+) => {
+    const controller = new AbortController();
+    const requestTimeout = setTimeout(
+        () => controller.abort({ reason: "Request timed out" }),
+        timeout,
+    );
+
+    const opts: RequestInit = {
+        signal: controller.signal, // Default abort signal, can be overridden by options.signal
+        ...options,
+    };
+
+    return { opts, requestTimeout };
+};
+
 export const fetcher = async <T = unknown>(
     url: string,
     params?: Record<string, unknown>,

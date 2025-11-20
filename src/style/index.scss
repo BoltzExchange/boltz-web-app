@@ -89,6 +89,7 @@ hr.spacer {
     top: 10px;
     left: 10px;
     cursor: pointer;
+    z-index: 1;
     &:hover {
         background: var(--color-secondary-600);
     }
@@ -355,6 +356,60 @@ textarea.invalid {
     #sendAmount {
         font-size: 30px;
     }
+}
+
+.input-with-label {
+    position: relative;
+    width: 100%;
+    z-index: 0;
+}
+
+.input-with-label input {
+    position: relative;
+    z-index: 0;
+    padding-top: 4px;
+    padding-bottom: 12px;
+    vertical-align: top;
+}
+
+.input-label {
+    position: absolute;
+    bottom: 4px;
+    right: 11px;
+    font-size: 11px;
+    color: var(--color-white-30);
+    pointer-events: none;
+    user-select: none;
+    z-index: 10;
+}
+
+.skeleton {
+    display: inline-block;
+    height: 11px;
+    width: 60px;
+    background: linear-gradient(
+        90deg,
+        var(--color-white-10) 25%,
+        var(--color-white-15) 50%,
+        var(--color-white-10) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 2s ease-in-out infinite;
+    border-radius: 2px;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+.text-muted {
+    color: var(--color-white-50);
+    font-size: 0.75rem;
+    margin-bottom: 6px;
 }
 .invoice-input {
     min-height: 198px;

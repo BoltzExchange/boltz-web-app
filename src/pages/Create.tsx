@@ -1,6 +1,7 @@
 import { useLocation, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { Show, createEffect, createSignal, on, onMount } from "solid-js";
+import FiatAmount from "src/components/FiatAmount";
 
 import Accordion from "../components/Accordion";
 import AddressInput from "../components/AddressInput";
@@ -55,6 +56,8 @@ const Create = () => {
         notify,
         pairs,
         regularPairs,
+        showFiatAmount,
+        fetchBtcPrice,
     } = useGlobalContext();
     const {
         swapType,
@@ -353,6 +356,10 @@ const Create = () => {
         }
     });
 
+    createEffect(() => {
+        void fetchBtcPrice();
+    });
+
     const creatingSwap = () => location.state?.backupDone === BackupDone.True;
 
     return (
@@ -435,55 +442,73 @@ const Create = () => {
                     <div class="icons">
                         <div>
                             <Asset side={Side.Send} signal={assetSend} />
-                            <input
-                                ref={sendAmountRef}
-                                autofocus
-                                required
-                                type="text"
-                                placeholder="0"
-                                maxlength={calculateDigits(
-                                    maximum(),
-                                    denomination(),
-                                )}
-                                inputmode={
-                                    denomination() == "btc"
-                                        ? "decimal"
-                                        : "numeric"
-                                }
-                                id="sendAmount"
-                                data-testid="sendAmount"
-                                autocomplete="off"
-                                value={sendAmountFormatted()}
-                                onPaste={(e) => validatePaste(e)}
-                                onKeyPress={(e) => validateInput(e)}
-                                onInput={(e) => changeSendAmount(e)}
-                            />
+                            <div
+                                class={`${showFiatAmount() ? "input-with-label" : ""}`}>
+                                <input
+                                    ref={sendAmountRef}
+                                    autofocus
+                                    required
+                                    type="text"
+                                    placeholder="0"
+                                    maxlength={calculateDigits(
+                                        maximum(),
+                                        denomination(),
+                                    )}
+                                    inputmode={
+                                        denomination() == "btc"
+                                            ? "decimal"
+                                            : "numeric"
+                                    }
+                                    id="sendAmount"
+                                    data-testid="sendAmount"
+                                    autocomplete="off"
+                                    value={sendAmountFormatted()}
+                                    onPaste={(e) => validatePaste(e)}
+                                    onKeyPress={(e) => validateInput(e)}
+                                    onInput={(e) => changeSendAmount(e)}
+                                />
+                                <FiatAmount
+                                    amount={BigNumber(sendAmount()).toNumber()}
+                                    variant="label"
+                                    for="sendAmount"
+                                />
+                            </div>
                         </div>
                         <Reverse />
                         <div>
                             <Asset side={Side.Receive} signal={assetReceive} />
-                            <input
-                                ref={receiveAmountRef}
-                                required
-                                type="text"
-                                placeholder="0"
-                                maxlength={calculateDigits(
-                                    maximum(),
-                                    denomination(),
-                                )}
-                                inputmode={
-                                    denomination() == "btc"
-                                        ? "decimal"
-                                        : "numeric"
-                                }
-                                id="receiveAmount"
-                                data-testid="receiveAmount"
-                                autocomplete="off"
-                                value={receiveAmountFormatted()}
-                                onPaste={(e) => validatePaste(e)}
-                                onKeyPress={(e) => validateInput(e)}
-                                onInput={(e) => changeReceiveAmount(e)}
-                            />
+                            <div
+                                class={`${showFiatAmount() ? "input-with-label" : ""}`}>
+                                <input
+                                    ref={receiveAmountRef}
+                                    required
+                                    type="text"
+                                    placeholder="0"
+                                    maxlength={calculateDigits(
+                                        maximum(),
+                                        denomination(),
+                                    )}
+                                    inputmode={
+                                        denomination() == "btc"
+                                            ? "decimal"
+                                            : "numeric"
+                                    }
+                                    id="receiveAmount"
+                                    data-testid="receiveAmount"
+                                    autocomplete="off"
+                                    value={receiveAmountFormatted()}
+                                    onPaste={(e) => validatePaste(e)}
+                                    onKeyPress={(e) => validateInput(e)}
+                                    onInput={(e) => changeReceiveAmount(e)}
+                                />
+                                <FiatAmount
+                                    amount={BigNumber(
+                                        receiveAmount(),
+                                    ).toNumber()}
+                                    variant="label"
+                                    for="receiveAmount"
+                                />
+                            </div>
                         </div>
                     </div>
                     <Fees />
