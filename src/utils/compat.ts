@@ -31,7 +31,13 @@ import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
 import secp from "../lazy/secp";
-import { isInvoice, isLnurl } from "./invoice";
+import {
+    extractAddress,
+    extractInvoice,
+    isBolt12Offer,
+    isInvoice,
+    isLnurl,
+} from "./invoice";
 
 type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
     blindingPrivateKey?: Buffer;
@@ -93,14 +99,24 @@ export const isConfidentialAddress = (addr: string): boolean => {
     }
 };
 
-const probeUserInputOption = (asset: string, input: string): boolean => {
+const probeUserInputOption = async (
+    asset: string,
+    input: string,
+): Promise<boolean> => {
     switch (asset) {
-        case LN:
-            return isLnurl(input) || isInvoice(input);
+        case LN: {
+            const invoice = extractInvoice(input);
+            return (
+                isLnurl(invoice) ||
+                isInvoice(invoice) ||
+                (await isBolt12Offer(invoice))
+            );
+        }
 
         default:
             try {
-                decodeAddress(asset, input);
+                const address = extractAddress(input);
+                decodeAddress(asset, address);
                 return true;
 
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -110,18 +126,19 @@ const probeUserInputOption = (asset: string, input: string): boolean => {
     }
 };
 
-const probeUserInput = (
+const probeUserInput = async (
     expectedAsset: string,
     input: string,
-): string | null => {
-    if (expectedAsset !== "" && probeUserInputOption(expectedAsset, input)) {
+): Promise<string | null> => {
+    if (
+        expectedAsset !== "" &&
+        (await probeUserInputOption(expectedAsset, input))
+    ) {
         return expectedAsset;
     }
 
-    for (const asset of possibleUserInputTypes.filter(
-        (type) => type !== expectedAsset,
-    )) {
-        if (probeUserInputOption(asset, input)) {
+    for (const asset of possibleUserInputTypes) {
+        if (await probeUserInputOption(asset, input)) {
             return asset;
         }
     }

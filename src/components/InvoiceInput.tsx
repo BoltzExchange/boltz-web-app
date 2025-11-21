@@ -7,9 +7,11 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { calculateSendAmount } from "../utils/calculate";
 import { probeUserInput } from "../utils/compat";
+import { btcToSat } from "../utils/denomination";
 import {
     decodeInvoice,
     extractAddress,
+    extractBip21Amount,
     extractInvoice,
     isBolt12Offer,
     isLnurl,
@@ -39,6 +41,7 @@ const InvoiceInput = () => {
         setAssetReceive,
         setOnchainAddress,
         setBolt12Offer,
+        setAddressValid,
     } = useCreateContext();
 
     const clearInputError = (input: HTMLTextAreaElement) => {
@@ -54,21 +57,8 @@ const InvoiceInput = () => {
     };
 
     const validate = async (input: HTMLTextAreaElement) => {
-        const val = input.value.trim();
-
-        const address = extractAddress(val);
-        const actualAsset = probeUserInput(LN, address);
-
-        // Auto switch direction based on address
-        if (actualAsset !== LN && actualAsset !== null) {
-            setAssetSend(assetSend() === actualAsset ? LN : assetSend());
-            setAssetReceive(actualAsset);
-            setOnchainAddress(address);
-            notify("success", t("switch_paste"));
-            return;
-        }
-
-        const inputValue = extractInvoice(val);
+        const inputValue = input.value.trim();
+        setInvoice(inputValue);
 
         if (inputValue.length === 0) {
             clearInputError(input);
@@ -76,13 +66,33 @@ const InvoiceInput = () => {
             return;
         }
 
+        const address = extractAddress(inputValue);
+        const invoice = extractInvoice(inputValue);
+
+        const actualAsset =
+            (await probeUserInput(LN, invoice)) ??
+            (await probeUserInput(LN, address));
+
+        // Auto switch direction based on address
+        if (actualAsset !== LN && actualAsset !== null) {
+            setAssetSend(assetSend() === actualAsset ? LN : assetSend());
+            setAssetReceive(actualAsset);
+            setInvoice("");
+            setOnchainAddress(address);
+            setAddressValid(true);
+            notify("success", t("switch_paste"));
+            return;
+        }
+
         try {
-            if (isLnurl(inputValue)) {
-                setLnurl(inputValue);
-            } else if (await isBolt12Offer(inputValue)) {
-                setBolt12Offer(inputValue);
+            if (isLnurl(invoice)) {
+                setLnurl(invoice);
+                setInvoice(invoice);
+            } else if (await isBolt12Offer(invoice)) {
+                setBolt12Offer(invoice);
+                setInvoice(invoice);
             } else {
-                const sats = await validateInvoice(inputValue);
+                const sats = await validateInvoice(invoice);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
                     calculateSendAmount(
@@ -92,11 +102,26 @@ const InvoiceInput = () => {
                         swapType(),
                     ),
                 );
-                setInvoice(inputValue);
+                setInvoice(invoice);
                 setBolt12Offer(undefined);
                 setLnurl("");
                 setInvoiceValid(true);
             }
+
+            const bip21Amount = extractBip21Amount(inputValue);
+            if (bip21Amount) {
+                setReceiveAmount(btcToSat(bip21Amount));
+                setSendAmount(
+                    calculateSendAmount(
+                        btcToSat(bip21Amount),
+                        boltzFee(),
+                        minerFee(),
+                        swapType(),
+                    ),
+                );
+                setInvoiceValid(true);
+            }
+
             clearInputError(input);
         } catch (e) {
             input.classList.add("invalid");
@@ -142,8 +167,6 @@ const InvoiceInput = () => {
             required
             ref={inputRef}
             onInput={(e) => validate(e.currentTarget)}
-            onKeyUp={(e) => validate(e.currentTarget)}
-            onPaste={(e) => validate(e.currentTarget)}
             id="invoice"
             class="invoice-input"
             data-testid="invoice"

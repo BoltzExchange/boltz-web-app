@@ -212,7 +212,11 @@ export const extractInvoice = (data: string) => {
     }
     if (isBip21(data)) {
         const url = new URL(data);
-        return url.searchParams.get("lightning") || "";
+        return (
+            url.searchParams.get("lightning") ||
+            url.searchParams.get("lno") ||
+            ""
+        );
     }
     return data;
 };
@@ -223,6 +227,14 @@ export const extractAddress = (data: string) => {
         return url.pathname;
     }
     return data;
+};
+
+export const extractBip21Amount = (data: string) => {
+    if (isBip21(data)) {
+        const url = new URL(data);
+        return BigNumber(url.searchParams.get("amount") ?? 0);
+    }
+    return null;
 };
 
 export const getAssetByBip21Prefix = (prefix: string) => {
