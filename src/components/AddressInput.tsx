@@ -51,6 +51,19 @@ const AddressInput = () => {
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
 
+        const bip21Amount = extractBip21Amount(inputValue);
+        if (bip21Amount) {
+            setReceiveAmount(btcToSat(bip21Amount));
+            setSendAmount(
+                calculateSendAmount(
+                    btcToSat(bip21Amount),
+                    boltzFee(),
+                    minerFee(),
+                    swapType(),
+                ),
+            );
+        }
+
         try {
             const assetName = assetReceive();
             const actualAsset =
@@ -77,19 +90,6 @@ const AddressInput = () => {
                         setAssetSend(assetReceive());
                         setAssetReceive(actualAsset);
                         notify("success", t("switch_paste"));
-                    }
-
-                    const bip21Amount = extractBip21Amount(inputValue);
-                    if (bip21Amount) {
-                        setReceiveAmount(btcToSat(bip21Amount));
-                        setSendAmount(
-                            calculateSendAmount(
-                                btcToSat(bip21Amount),
-                                boltzFee(),
-                                minerFee(),
-                                swapType(),
-                            ),
-                        );
                     }
 
                     input.setCustomValidity("");
