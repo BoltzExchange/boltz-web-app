@@ -26,7 +26,7 @@ test.describe("BIP21 URIs", () => {
         {
             description: "Bitcoin address input without amount",
             bip21Uri: (addr: string) =>
-                `bitcoin:${addr}&label=Test%20Payment&message=For%20testing`,
+                `bitcoin:${addr}?label=Test%20Payment&message=For%20testing`,
             expectedAsset: BTC,
         },
         {
