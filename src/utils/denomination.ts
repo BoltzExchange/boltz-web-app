@@ -34,6 +34,7 @@ export const formatAmountDenomination = (
             let amountString = amountBig.toString();
             if (fixed) {
                 amountString = amountBig.toFixed(8);
+                return amountString;
             }
             if (amountBig.isZero()) {
                 amountString = amountBig.toFixed(1);
