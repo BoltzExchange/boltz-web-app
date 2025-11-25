@@ -304,8 +304,6 @@ export const SwapChecker = () => {
                     t("swap_completed", {
                         id: privacyMode() ? hiddenInformation : res.id,
                     }),
-                    true,
-                    true,
                 );
             } catch (e) {
                 const msg = t("claim_fail", {
@@ -335,8 +333,6 @@ export const SwapChecker = () => {
                     t("swap_completed", {
                         id: privacyMode() ? hiddenInformation : currentSwap.id,
                     }),
-                    true,
-                    true,
                 );
             } catch (e) {
                 if (e === "swap not eligible for a cooperative claim") {

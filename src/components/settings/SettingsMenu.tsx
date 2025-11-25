@@ -5,8 +5,6 @@ import type { JSXElement } from "solid-js";
 import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
 import "../../style/settings.scss";
-import AudioNotificationSetting from "./AudioNotificationSetting";
-import BrowserNotification from "./BrowserNotification";
 import Denomination from "./Denomination";
 import FiatAmountSetting from "./FiatAmountSetting";
 import Logs from "./Logs";
@@ -64,16 +62,6 @@ const SettingsMenu = () => {
                     label={"show_fiat_rate"}
                     tooltipLabel={"show_fiat_rate_tooltip"}
                     settingElement={<FiatAmountSetting />}
-                />
-                <Entry
-                    label={"enable_audio_notifications"}
-                    tooltipLabel={"enable_audio_notifications_tooltip"}
-                    settingElement={<AudioNotificationSetting />}
-                />
-                <Entry
-                    label={"browsernotification"}
-                    tooltipLabel={"browsernotification_tooltip"}
-                    settingElement={<BrowserNotification />}
                 />
                 <Entry
                     label={"hide_wallet_address"}
