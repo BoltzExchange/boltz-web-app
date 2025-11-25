@@ -160,7 +160,7 @@ test.describe("BIP21 URIs", () => {
         await page.getByTestId("select-LN").click();
 
         const bolt12Offer = await getBolt12Offer();
-        const bip21Uri = `lno:${bolt12Offer}`;
+        const bip21Uri = `lightning:${bolt12Offer}`;
 
         const invoiceInput = page.getByTestId("invoice");
         await invoiceInput.fill(bip21Uri);
