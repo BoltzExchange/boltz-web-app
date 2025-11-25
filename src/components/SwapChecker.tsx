@@ -181,6 +181,7 @@ export const SwapChecker = () => {
         pairs,
         backupImportTimestamp,
         privacyMode,
+        zeroConf,
     } = useGlobalContext();
 
     let ws: BoltzWebSocket | undefined = undefined;
@@ -283,6 +284,7 @@ export const SwapChecker = () => {
                 includeSuccess: true,
                 swapDate: currentSwap.date,
                 backupImportTimestamp: backupImportTimestamp(),
+                zeroConf: zeroConf(),
             })
         ) {
             try {

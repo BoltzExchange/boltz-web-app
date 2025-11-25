@@ -112,7 +112,7 @@ const BtcLikeLegacy = (props: {
 
 export const RefundBtcLike = () => {
     const navigate = useNavigate();
-    const { t } = useGlobalContext();
+    const { t, zeroConf } = useGlobalContext();
     const rescueContext = useRescueContext();
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -148,7 +148,7 @@ export const RefundBtcLike = () => {
         currentSwaps,
         async (swaps: SomeSwap[]) => {
             setLoading(true);
-            return await createRescueList(swaps).finally(() =>
+            return await createRescueList(swaps, zeroConf()).finally(() =>
                 setLoading(false),
             );
         },

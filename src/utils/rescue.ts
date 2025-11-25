@@ -68,6 +68,7 @@ export const RescueNoAction = [
 export const isSwapClaimable = ({
     status,
     type,
+    zeroConf,
     swap = undefined,
     includeSuccess = false,
     swapDate = undefined,
@@ -76,6 +77,7 @@ export const isSwapClaimable = ({
     status: string;
     type: SwapType;
     swap?: SomeSwap;
+    zeroConf: boolean;
     includeSuccess?: boolean;
     swapDate?: number;
     backupImportTimestamp?: number;
@@ -95,7 +97,7 @@ export const isSwapClaimable = ({
         case SwapType.Reverse: {
             const statuses = [
                 swapStatusPending.TransactionConfirmed,
-                swapStatusPending.TransactionMempool,
+                ...(zeroConf ? [swapStatusPending.TransactionMempool] : []),
             ];
 
             if (includeSuccess && swapCreatedAfterBackup) {
@@ -107,7 +109,9 @@ export const isSwapClaimable = ({
         case SwapType.Chain: {
             const statuses = [
                 swapStatusPending.TransactionServerConfirmed,
-                swapStatusPending.TransactionServerMempool,
+                ...(zeroConf
+                    ? [swapStatusPending.TransactionServerMempool]
+                    : []),
             ];
 
             if (includeSuccess && swapCreatedAfterBackup) {
@@ -435,7 +439,10 @@ export const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
     }
 };
 
-export const createRescueList = async (swaps: SomeSwap[]) => {
+export const createRescueList = async (
+    swaps: SomeSwap[],
+    zeroConf: boolean,
+) => {
     if (swaps.length === 0) {
         return [];
     }
@@ -478,6 +485,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
                         swap,
                         status: swap.status,
                         type: swap.type,
+                        zeroConf,
                     })
                 ) {
                     return { ...swap, action: RescueAction.Claim };

@@ -79,6 +79,8 @@ export type GlobalContextType = {
     setSettingsMenu: Setter<boolean>;
     privacyMode: Accessor<boolean>;
     setPrivacyMode: Setter<boolean>;
+    zeroConf: Accessor<boolean>;
+    setZeroConf: Setter<boolean>;
     showFiatAmount: Accessor<boolean>;
     setShowFiatAmount: Setter<boolean>;
     btcPrice: Accessor<BigNumber | Error | null>;
@@ -455,6 +457,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [zeroConf, setZeroConf] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<boolean>(true),
+        {
+            name: "zeroConf",
+        },
+    );
+
     const [showFiatAmount, setShowFiatAmount] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(true),
@@ -530,6 +540,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setSettingsMenu,
                 privacyMode,
                 setPrivacyMode,
+                zeroConf,
+                setZeroConf,
                 showFiatAmount,
                 setShowFiatAmount,
                 btcPrice,

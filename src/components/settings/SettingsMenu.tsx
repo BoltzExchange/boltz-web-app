@@ -15,6 +15,7 @@ import RescueFile from "./RescueKey";
 import ResetRescueKey from "./ResetRescueKey";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
+import ZeroConf from "./ZeroConf";
 
 const Section = (props: {
     title: string;
@@ -91,6 +92,11 @@ const SettingsMenu = () => {
                         label={"hide_wallet_address"}
                         tooltipLabel={"hide_wallet_address_tooltip"}
                         settingElement={<PrivacyMode />}
+                    />
+                    <Entry
+                        label={"zero_conf"}
+                        tooltipLabel={"zero_conf_tooltip"}
+                        settingElement={<ZeroConf />}
                     />
                     <Entry
                         label={"rescue_key"}

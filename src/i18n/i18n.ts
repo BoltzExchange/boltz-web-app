@@ -206,6 +206,12 @@ const dict = {
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
+        zero_conf: "Zero-Conf",
+        zero_conf_tooltip:
+            "Accept transactions without waiting for confirmation",
+        enable_audio_notifications: "Audio Notifications",
+        enable_audio_notifications_tooltip:
+            "Enable or disable audio notifications",
         on: "on",
         off: "off",
         invalid_pair: "Invalid pair",
