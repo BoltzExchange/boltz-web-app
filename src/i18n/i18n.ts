@@ -1587,10 +1587,10 @@ const dict = {
         decimal_separator: "Separador decimal",
         denomination_tooltip: "Escolha a denominação preferida: BTC ou sats",
         decimal_tooltip: "Escolha o separador decimal: ponto ou vírgula",
-        show_fiat_rate: "Mostrar taxa em USD",
+        show_fiat_rate: "Mostrar valor em USD",
         show_fiat_rate_tooltip:
             "Mostrar o equivalente em USD do valor da troca",
-        fiat_rate_not_available: "Taxa em USD indisponível",
+        fiat_rate_not_available: "Valor em USD indisponível",
         swap_completed: "Troca {{ id }} concluída com sucesso!",
         claim_fail: "Falha ao reivindicar troca: {{ id }}",
         logs: "Logs",
