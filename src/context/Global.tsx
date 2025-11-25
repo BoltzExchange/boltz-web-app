@@ -38,10 +38,11 @@ import { detectWebLNProvider } from "../utils/webln";
 export const liquidUncooperativeExtra = 3;
 const proReferral = "pro";
 
+type NotificationType = "success" | "error";
 export type deriveKeyFn = (index: number) => ECPairInterface;
 export type newKeyFn = () => { index: number; key: ECPairInterface };
 export type tFn = (key: DictKey, values?: Record<string, unknown>) => string;
-export type notifyFn = (type: "success" | "error", message: string) => void;
+export type notifyFn = (type: NotificationType, message: string) => void;
 
 export type GlobalContextType = {
     online: Accessor<boolean>;
@@ -260,7 +261,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         return getXpub(rescueFile());
     };
 
-    const notify = (type: string, message: unknown) => {
+    const notify = (type: NotificationType, message: unknown) => {
         const messageStr = formatError(message);
 
         setNotificationType(type);
