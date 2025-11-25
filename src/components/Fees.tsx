@@ -230,7 +230,7 @@ const Fees = () => {
             <Denomination />
             <label>
                 {t("network_fee")}:{" "}
-                <span class="network-fee">
+                <span class="network-fee" data-testid="network-fee">
                     {formatAmount(
                         BigNumber(minerFee()),
                         denomination(),
@@ -260,7 +260,7 @@ const Fees = () => {
                     {boltzFee().toString().replaceAll(".", separator())}%
                 </span>
                 ):{" "}
-                <span class="boltz-fee">
+                <span class="boltz-fee" data-testid="boltz-fee">
                     {formatAmount(
                         calculateBoltzFeeOnSend(
                             sendAmount(),
