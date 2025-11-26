@@ -451,6 +451,8 @@ const dict = {
         // End of Products page
 
         balance: "Balance",
+        display: "Display",
+        security: "Security",
     },
     de: {
         language: "Deutsch",
@@ -1843,6 +1845,8 @@ const dict = {
             "Receba notificações sobre oportunidades da Boltz Pro",
 
         balance: "Saldo",
+        display: "Exibição",
+        security: "Segurança",
     },
     zh: {
         language: "中文",
