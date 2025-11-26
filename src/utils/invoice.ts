@@ -196,6 +196,10 @@ export const fetchLnurlInvoice = async (
 };
 
 export const isBip21 = (data: string) => {
+    if (typeof data !== "string") {
+        return false;
+    }
+
     data = data.toLowerCase();
     return (
         data.startsWith(bitcoinPrefix) ||
@@ -205,6 +209,10 @@ export const isBip21 = (data: string) => {
 };
 
 export const extractInvoice = (data: string) => {
+    if (typeof data !== "string") {
+        return null;
+    }
+
     data = data.toLowerCase();
     if (data.startsWith(invoicePrefix)) {
         const url = new URL(data);
@@ -215,7 +223,7 @@ export const extractInvoice = (data: string) => {
         return (
             url.searchParams.get("lightning") ||
             url.searchParams.get("lno") ||
-            ""
+            null
         );
     }
     return data;
@@ -252,6 +260,10 @@ export const getAssetByBip21Prefix = (prefix: string) => {
 };
 
 export const isInvoice = (data: string) => {
+    if (typeof data !== "string") {
+        return false;
+    }
+
     const prefix = bolt11Prefixes[config.network];
     const startsWithPrefix = data.toLowerCase().startsWith(prefix);
     if (prefix === bolt11Prefixes.mainnet && startsWithPrefix) {
@@ -261,6 +273,10 @@ export const isInvoice = (data: string) => {
 };
 
 const isValidBech32 = (data: string) => {
+    if (typeof data !== "string") {
+        return false;
+    }
+
     try {
         bech32.decodeToBytes(data);
         return true;
@@ -274,7 +290,9 @@ const emailRegex =
     /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 export const isLnurl = (data: string | null | undefined) => {
-    if (typeof data !== "string") return false;
+    if (typeof data !== "string") {
+        return false;
+    }
 
     data = data.toLowerCase().replace(invoicePrefix, "");
     return (

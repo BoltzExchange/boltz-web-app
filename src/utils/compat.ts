@@ -130,6 +130,10 @@ const probeUserInput = async (
     expectedAsset: string,
     input: string,
 ): Promise<string | null> => {
+    if (typeof input !== "string") {
+        return null;
+    }
+
     if (
         expectedAsset !== "" &&
         (await probeUserInputOption(expectedAsset, input))

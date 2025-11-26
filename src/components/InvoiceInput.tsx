@@ -73,6 +73,19 @@ const InvoiceInput = () => {
             (await probeUserInput(LN, invoice)) ??
             (await probeUserInput(LN, address));
 
+        const bip21Amount = extractBip21Amount(inputValue);
+        if (bip21Amount) {
+            setReceiveAmount(btcToSat(bip21Amount));
+            setSendAmount(
+                calculateSendAmount(
+                    btcToSat(bip21Amount),
+                    boltzFee(),
+                    minerFee(),
+                    swapType(),
+                ),
+            );
+        }
+
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
             setAssetSend(assetSend() === actualAsset ? LN : assetSend());
@@ -105,20 +118,6 @@ const InvoiceInput = () => {
                 setInvoice(invoice);
                 setBolt12Offer(undefined);
                 setLnurl("");
-                setInvoiceValid(true);
-            }
-
-            const bip21Amount = extractBip21Amount(inputValue);
-            if (bip21Amount) {
-                setReceiveAmount(btcToSat(bip21Amount));
-                setSendAmount(
-                    calculateSendAmount(
-                        btcToSat(bip21Amount),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
-                );
                 setInvoiceValid(true);
             }
 
