@@ -266,8 +266,6 @@ const ClaimRescue = () => {
                 t("swap_completed", {
                     id: privacyMode() ? hiddenInformation : res.id,
                 }),
-                true,
-                true,
             );
             setClaimTxId(res.claimTx);
         } catch (e) {

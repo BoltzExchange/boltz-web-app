@@ -206,15 +206,8 @@ const dict = {
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
-        enable_audio_notifications: "Audio Notifications",
-        enable_audio_notifications_tooltip:
-            "Enable or disable audio notifications",
         on: "on",
         off: "off",
-        notification_header: "Boltz",
-        browsernotification: "Browser Notifications",
-        browsernotification_tooltip: "Enable or disable browser notifications",
-        browsernotification_error: "Notification permissions denied",
         invalid_pair: "Invalid pair",
         error_starting_qr_scanner:
             "Couldn't access camera, please check permissions!",
@@ -673,16 +666,8 @@ const dict = {
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
-        enable_audio_notifications: "Audio Benachrichtigungen",
-        enable_audio_notifications_tooltip:
-            "Aktiviere oder deaktiviere Audio-Benachrichtigungen",
         on: "an",
         off: "aus",
-        notification_header: "Boltz",
-        browsernotification: "Browser Benachrichtigungen",
-        browsernotification_tooltip:
-            "Aktiviere oder deaktiviere Browser Benachrichtigungen",
-        browsernotification_error: "Benachrichtigungsrechte verweigert",
         invalid_pair: "Ungültiges Paar",
         error_starting_qr_scanner:
             "Konnte nicht auf Kamera zugreifen, bitte Berechtigungen überprüfen!",
@@ -1149,16 +1134,8 @@ const dict = {
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
-        enable_audio_notifications: "Notificaciones de Audio",
-        enable_audio_notifications_tooltip:
-            "Activar o desactivar notificaciones de audio",
         on: "on",
         off: "off",
-        notification_header: "Boltz",
-        browsernotification: "Notificaciones del navegador",
-        browsernotification_tooltip:
-            "Activar o desactivar notificaciones del navegador",
-        browsernotification_error: "Permisos de notificación denegados",
         invalid_pair: "Par no válido",
         error_starting_qr_scanner:
             "No se pudo acceder a la cámara, por favor comprueba los permisos!",
@@ -1619,16 +1596,8 @@ const dict = {
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
-        enable_audio_notifications: "Notificações sonoras",
-        enable_audio_notifications_tooltip:
-            "Ativar ou desativar notificações sonoras",
         on: "on",
         off: "off",
-        notification_header: "Boltz",
-        browsernotification: "Notificações do navegador",
-        browsernotification_tooltip:
-            "Ativar ou desativar notificações do navegador",
-        browsernotification_error: "Permissões de notificação negadas",
         invalid_pair: "Par inválido",
         error_starting_qr_scanner:
             "Não foi possível acessar a câmera, verifique as permissões!",
@@ -2064,14 +2033,8 @@ const dict = {
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
-        enable_audio_notifications: "音频通知",
-        enable_audio_notifications_tooltip: "启用或禁用音频通知",
         on: "开",
         off: "关",
-        notification_header: "Boltz",
-        browsernotification: "浏览器通知",
-        browsernotification_tooltip: "启用或禁用浏览器通知",
-        browsernotification_error: "通知权限被拒绝",
         invalid_pair: "无效交换对",
         error_starting_qr_scanner: "无法访问摄像头, 请检查权限！",
         insufficient_balance: "余额不足",
@@ -2508,15 +2471,8 @@ const dict = {
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
-        enable_audio_notifications: "音声通知",
-        enable_audio_notifications_tooltip:
-            "音声通知をオン、もしくはオフにする",
         on: "オン",
         off: "オフ",
-        notification_header: "Boltz",
-        browsernotification: "ブラウザ通知",
-        browsernotification_tooltip: "ブラウザ通知をオン、もしくはオフにする",
-        browsernotification_error: "通知権限が拒否されました",
         invalid_pair: "無効なペア",
         error_starting_qr_scanner:
             "カメラにアクセスできませんでした。権限を確認してください！",
