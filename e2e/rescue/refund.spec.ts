@@ -161,6 +161,7 @@ const performBitcoinExpiredSwapSetup = async (
         await waitForNodesToSync();
         await waitForBlockHeight(sendAsset, currentHeight + blocks);
     }
+    await waitForUTXOs(sendAsset as AssetType, address, 2);
 };
 
 const performLiquidExpiredSwapSetup = async (
@@ -184,6 +185,7 @@ const performLiquidExpiredSwapSetup = async (
         await waitForNodesToSync();
         await waitForBlockHeight(sendAsset, currentHeight + blocks);
     }
+    await waitForUTXOs(sendAsset as AssetType, address, 2);
 };
 
 const executeRefund = async (
@@ -366,6 +368,7 @@ test.describe("Refund", () => {
                 address,
                 sendAmount,
             );
+            await page.reload();
             await executeRefund(page, swap.sendAsset, swapId, swap.external);
             await validateRefundTransaction(page, swap.sendAsset, address);
         });
