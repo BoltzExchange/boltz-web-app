@@ -1,5 +1,7 @@
 import { BiSolidHelpCircle } from "solid-icons/bi";
-import { IoClose } from "solid-icons/io";
+import { BsCardText } from "solid-icons/bs";
+import { ImDisplay } from "solid-icons/im";
+import { IoClose, IoShield } from "solid-icons/io";
 import type { JSXElement } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
@@ -14,6 +16,22 @@ import ResetRescueKey from "./ResetRescueKey";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
 
+const Section = (props: {
+    title: string;
+    icon: JSXElement;
+    children: JSXElement;
+}) => {
+    return (
+        <div class="section-container">
+            <h3 class="section-title">
+                {props.icon}
+                <span>{props.title}</span>
+            </h3>
+            {props.children}
+        </div>
+    );
+};
+
 const Entry = (props: {
     label: DictKey;
     tooltipLabel: DictKey;
@@ -23,10 +41,12 @@ const Entry = (props: {
 
     return (
         <span class="setting">
-            <label>{t(props.label)}: </label>
-            <Tooltip label={{ key: props.tooltipLabel }}>
-                <BiSolidHelpCircle size={22} opacity={0.5} />
-            </Tooltip>
+            <label>
+                {t(props.label)}:
+                <Tooltip label={{ key: props.tooltipLabel }}>
+                    <BiSolidHelpCircle size={18} opacity={0.5} />
+                </Tooltip>
+            </label>
             <div class="spacer" />
             {props.settingElement}
         </span>
@@ -48,41 +68,49 @@ const SettingsMenu = () => {
                     <IoClose />
                 </span>
                 <hr class="spacer" />
-                <Entry
-                    label={"denomination"}
-                    tooltipLabel={"denomination_tooltip"}
-                    settingElement={<Denomination />}
-                />
-                <Entry
-                    label={"decimal_separator"}
-                    tooltipLabel={"decimal_tooltip"}
-                    settingElement={<Separator />}
-                />
-                <Entry
-                    label={"show_fiat_rate"}
-                    tooltipLabel={"show_fiat_rate_tooltip"}
-                    settingElement={<FiatAmountSetting />}
-                />
-                <Entry
-                    label={"hide_wallet_address"}
-                    tooltipLabel={"hide_wallet_address_tooltip"}
-                    settingElement={<PrivacyMode />}
-                />
-                <Entry
-                    label={"rescue_key"}
-                    tooltipLabel={"download_boltz_rescue_key"}
-                    settingElement={<RescueFile />}
-                />
-                <Entry
-                    label={"reset_rescue_key"}
-                    tooltipLabel={"reset_rescue_key_tooltip"}
-                    settingElement={<ResetRescueKey />}
-                />
-                <Entry
-                    label={"logs"}
-                    tooltipLabel={"logs_tooltip"}
-                    settingElement={<Logs />}
-                />
+                <Section title={t("display")} icon={<ImDisplay size={20} />}>
+                    <Entry
+                        label={"denomination"}
+                        tooltipLabel={"denomination_tooltip"}
+                        settingElement={<Denomination />}
+                    />
+                    <Entry
+                        label={"show_fiat_rate"}
+                        tooltipLabel={"show_fiat_rate_tooltip"}
+                        settingElement={<FiatAmountSetting />}
+                    />
+                    <Entry
+                        label={"decimal_separator"}
+                        tooltipLabel={"decimal_tooltip"}
+                        settingElement={<Separator />}
+                    />
+                </Section>
+
+                <Section title={t("security")} icon={<IoShield size={20} />}>
+                    <Entry
+                        label={"hide_wallet_address"}
+                        tooltipLabel={"hide_wallet_address_tooltip"}
+                        settingElement={<PrivacyMode />}
+                    />
+                    <Entry
+                        label={"rescue_key"}
+                        tooltipLabel={"download_boltz_rescue_key"}
+                        settingElement={<RescueFile />}
+                    />
+                    <Entry
+                        label={"reset_rescue_key"}
+                        tooltipLabel={"reset_rescue_key_tooltip"}
+                        settingElement={<ResetRescueKey />}
+                    />
+                </Section>
+
+                <Section title={t("support")} icon={<BsCardText size={20} />}>
+                    <Entry
+                        label={"logs"}
+                        tooltipLabel={"logs_tooltip"}
+                        settingElement={<Logs />}
+                    />
+                </Section>
             </div>
         </div>
     );
