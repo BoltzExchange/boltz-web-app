@@ -11,7 +11,7 @@ const config = {
     network: "regtest",
     loglevel: "debug",
     apiUrl: {
-        normal: "http://localhost:9006",
+        normal: "http://localhost:9001",
     },
     assets: {
         BTC: {
