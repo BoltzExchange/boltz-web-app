@@ -89,7 +89,7 @@ const InvoiceInput = () => {
                 ),
             );
             setInvoice("");
-            setOnchainAddress(address);
+            setOnchainAddress(inputValue); // `AddressInput` will handle this validation
             setAddressValid(true);
             notify("success", t("switch_paste"));
             return;

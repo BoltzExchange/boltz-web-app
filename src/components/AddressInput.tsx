@@ -45,17 +45,6 @@ const AddressInput = () => {
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
 
-        const bip21Amount = extractBip21Amount(inputValue);
-        if (bip21Amount) {
-            setReceiveAmount(btcToSat(bip21Amount));
-            setSendAmount(
-                await pair().calculateSendAmount(
-                    btcToSat(bip21Amount),
-                    pair().minerFees,
-                ),
-            );
-        }
-
         try {
             const assetName = pair().toAsset;
             const actualAsset =
@@ -69,7 +58,7 @@ const AddressInput = () => {
                         setPair(new Pair(pairs(), assetName, LN));
                     }
                     setOnchainAddress("");
-                    setInvoice(invoice);
+                    setInvoice(inputValue); // `InvoiceInput` will handle this validation
                     notify("success", t("switch_paste"));
                     break;
                 }
@@ -79,8 +68,19 @@ const AddressInput = () => {
 
                 default: {
                     if (assetName !== actualAsset) {
-                        setPair(new Pair(pairs(), pair().toAsset, actualAsset));
+                        setPair(new Pair(pairs(), assetName, actualAsset));
                         notify("success", t("switch_paste"));
+                    }
+
+                    const bip21Amount = extractBip21Amount(inputValue);
+                    if (bip21Amount) {
+                        setReceiveAmount(btcToSat(bip21Amount));
+                        setSendAmount(
+                            await pair().calculateSendAmount(
+                                btcToSat(bip21Amount),
+                                pair().minerFees,
+                            ),
+                        );
                     }
 
                     input.setCustomValidity("");
