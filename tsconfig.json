@@ -1,5 +1,4 @@
 {
-    "exclude": ["tests"],
     "compilerOptions": {
         "noEmit": true,
         "target": "ESNext",
