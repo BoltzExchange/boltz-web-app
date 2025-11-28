@@ -227,7 +227,7 @@ export default class Pair {
             .reduce((min, hop) => {
                 const fee = (hop.pair as SubmarinePairTypeTaproot).fees
                     .maximalRoutingFee;
-                return Math.min(min, fee || 0);
+                return Math.max(min, fee || 0);
             }, 0);
 
         if (maxFee === 0) {
