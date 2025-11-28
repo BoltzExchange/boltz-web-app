@@ -165,11 +165,19 @@ const handleUrlParams = (
     navigate: Navigator,
 ) => {
     const setAssetSend = (asset: string) => {
-        setPair(new Pair(pair().pairs, asset, pair().toAsset));
+        let toAsset = pair().toAsset;
+        if (toAsset === asset) {
+            toAsset = asset === LN ? BTC : LN;
+        }
+        setPair(new Pair(pair().pairs, asset, toAsset));
     };
 
     const setAssetReceive = (asset: string) => {
-        setPair(new Pair(pair().pairs, pair().fromAsset, asset));
+        let fromAsset = pair().fromAsset;
+        if (fromAsset === asset) {
+            fromAsset = asset === LN ? BTC : LN;
+        }
+        setPair(new Pair(pair().pairs, fromAsset, asset));
     };
 
     const sendAsset = getUrlParam(UrlParam.SendAsset);
