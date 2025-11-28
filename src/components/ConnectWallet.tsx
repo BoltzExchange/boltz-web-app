@@ -213,6 +213,7 @@ const ShowAddress = (props: {
                 <br />
                 {t("balance")}:{" "}
                 {formatAmount(
+                    RBTC,
                     BigNumber(weiToSatoshi(rskBalance()).toString()),
                     denomination(),
                     separator(),

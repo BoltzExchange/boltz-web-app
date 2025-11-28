@@ -1,7 +1,14 @@
 import { debounce } from "@solid-primitives/scheduled";
 import { useLocation, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createSignal, on, onMount } from "solid-js";
+import {
+    Show,
+    createEffect,
+    createMemo,
+    createSignal,
+    on,
+    onMount,
+} from "solid-js";
 import FiatAmount from "src/components/FiatAmount";
 
 import Accordion from "../components/Accordion";
@@ -20,7 +27,6 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -100,6 +106,10 @@ const Create = () => {
             void fn();
         }
     };
+
+    const sourceAmount = createMemo(() =>
+        amountChanged() === Side.Send ? sendAmount() : receiveAmount(),
+    );
 
     // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
@@ -316,7 +326,7 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, pair], () => {
+        on([boltzFee, minerFee, pair, sourceAmount], () => {
             loadingGuard(async () => {
                 if (amountChanged() === Side.Receive) {
                     setSendAmount(
@@ -580,13 +590,6 @@ const Create = () => {
                             pair().requiredInput !== RequiredInput.Web3
                         }>
                         <QrScan />
-                    </Show>
-                    <Show
-                        when={[pair().fromAsset, pair().toAsset].includes(
-                            RBTC,
-                        )}>
-                        <ConnectWallet disabled={() => !pair().isRoutable} />
-                        <hr class="spacer" />
                     </Show>
                     <CreateButton isLoading={isLoading} />
                     <AssetSelect />
