@@ -30,7 +30,7 @@ export const sortSwaps = <T extends Swap>(swaps: T[]) => {
         [RescueAction.Claim]: 0,
         [RescueAction.Refund]: 0,
         [RescueAction.Pending]: 1,
-        [RescueAction.None]: 1,
+        [RescueAction.Successful]: 1,
     };
 
     return swaps.sort((a, b) => {

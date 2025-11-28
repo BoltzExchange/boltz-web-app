@@ -452,6 +452,7 @@ const dict = {
         balance: "Balance",
         display: "Display",
         security: "Security",
+        failed: "Failed",
     },
     de: {
         language: "Deutsch",

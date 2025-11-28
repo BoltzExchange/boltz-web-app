@@ -14,6 +14,7 @@ import {
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
+    swapStatusFailed,
     swapStatusFinal,
     swapStatusPending,
     swapStatusSuccess,
@@ -51,13 +52,18 @@ import {
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
 export enum RescueAction {
-    None = "none",
+    Successful = "successful",
     Claim = "claim",
     Refund = "refund",
     Pending = "pending",
+    Failed = "failed",
 }
 
-export const RescueNoAction = [RescueAction.None, RescueAction.Pending];
+export const RescueNoAction = [
+    RescueAction.Successful,
+    RescueAction.Pending,
+    RescueAction.Failed,
+];
 
 export const isSwapClaimable = ({
     status,
@@ -443,11 +449,15 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
                     ? await getRefundableUTXOs(swap)
                     : [];
 
-                if (
-                    utxos.length === 0 &&
-                    Object.values(swapStatusFinal).includes(swap.status)
-                ) {
-                    return { ...swap, action: RescueAction.None };
+                if (utxos.length === 0) {
+                    if (
+                        Object.values(swapStatusSuccess).includes(swap.status)
+                    ) {
+                        return { ...swap, action: RescueAction.Successful };
+                    }
+                    if (Object.values(swapStatusFailed).includes(swap.status)) {
+                        return { ...swap, action: RescueAction.Failed };
+                    }
                 }
 
                 // Prioritize refunding for expired swaps with UTXOs
@@ -493,7 +503,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
                     `error creating rescue list for swap ${swap.id}:`,
                     formatError(e),
                 );
-                return { ...swap, action: RescueAction.None };
+                return { ...swap, action: RescueAction.Successful };
             }
         }),
     );
