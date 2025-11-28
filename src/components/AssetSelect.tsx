@@ -37,13 +37,15 @@ const SelectAsset = () => {
                 setPair(new Pair(pairs(), pair().toAsset, pair().fromAsset));
                 // only clear onchain address if assetReceive did change
                 setOnchainAddress("");
+            } else {
+                setPair(new Pair(pairs(), newAsset, pair().toAsset));
             }
-            setPair(new Pair(pairs(), newAsset, pair().toAsset));
         } else {
             if (pair().fromAsset === newAsset) {
                 setPair(new Pair(pairs(), pair().toAsset, pair().fromAsset));
+            } else {
+                setPair(new Pair(pairs(), pair().fromAsset, newAsset));
             }
-            setPair(new Pair(pairs(), pair().fromAsset, newAsset));
             // always clear onchain address if assetChange did change
             setOnchainAddress("");
         }
