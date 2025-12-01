@@ -922,6 +922,7 @@ const dict = {
         balance: "Guthaben",
         display: "Anzeige",
         security: "Sicherheit",
+        failed: "Fehlgeschlagen",
     },
     es: {
         language: "Español",
@@ -1389,6 +1390,7 @@ const dict = {
         balance: "Saldo",
         display: "Pantalla",
         security: "Seguridad",
+        failed: "Fallido",
     },
     pt: {
         language: "Português",
@@ -1851,6 +1853,7 @@ const dict = {
         balance: "Saldo",
         display: "Exibição",
         security: "Segurança",
+        failed: "Falhou",
     },
     zh: {
         language: "中文",
@@ -2270,6 +2273,7 @@ const dict = {
         balance: "余额",
         display: "显示",
         security: "安全",
+        failed: "失败",
     },
     ja: {
         language: "日本語",
@@ -2730,6 +2734,7 @@ const dict = {
         balance: "残高",
         display: "表示",
         security: "セキュリティ",
+        failed: "失敗",
     },
 };
 
