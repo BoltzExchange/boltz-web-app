@@ -23,7 +23,9 @@ export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
             return t("claim");
         case RescueAction.Refund:
             return t("refund");
-        case RescueAction.None:
+        case RescueAction.Failed:
+            return t("failed");
+        case RescueAction.Successful:
         default:
             return t("completed");
     }

@@ -421,7 +421,7 @@ describe("rescue", () => {
             expect(result).toEqual([]);
         });
 
-        test("should return None action for final status swaps without UTXOs", async () => {
+        test("should return Successful action for final status swaps without UTXOs", async () => {
             const swaps = [
                 createMockSubmarineSwap({
                     status: swapStatusSuccess.TransactionClaimed,
@@ -430,7 +430,21 @@ describe("rescue", () => {
 
             const result = await createRescueList(swaps);
             expect(result).toHaveLength(1);
-            expect(result[0].action).toBe(RescueAction.None);
+            expect(result[0].action).toBe(RescueAction.Successful);
+        });
+
+        test("should return Failed action for failed status swaps without UTXOs", async () => {
+            const swaps = [
+                createMockSubmarineSwap({
+                    status: swapStatusFailed.TransactionFailed,
+                }),
+            ];
+
+            mockGetSwapUTXOs.mockResolvedValue([]);
+
+            const result = await createRescueList(swaps);
+            expect(result).toHaveLength(1);
+            expect(result[0].action).toBe(RescueAction.Failed);
         });
 
         test("should handle multiple swaps with different actions", async () => {
@@ -456,6 +470,11 @@ describe("rescue", () => {
                     status: swapStatusPending.SwapCreated,
                     assetSend: LBTC,
                 }),
+                createMockSubmarineSwap({
+                    id: "swap-5",
+                    status: swapStatusSuccess.TransactionClaimed,
+                    assetSend: LBTC,
+                }),
             ];
 
             mockGetSwapUTXOs
@@ -465,13 +484,14 @@ describe("rescue", () => {
                 .mockResolvedValueOnce([]);
 
             const result = (await createRescueList(swaps)) as RescueListResult;
-            expect(result).toHaveLength(4);
+            expect(result).toHaveLength(swaps.length);
 
             expect(result[0].action).toBe(RescueAction.Refund);
             expect(result[0].timedOut).toBe(true);
             expect(result[1].action).toBe(RescueAction.Claim);
-            expect(result[2].action).toBe(RescueAction.None);
+            expect(result[2].action).toBe(RescueAction.Failed);
             expect(result[3].action).toBe(RescueAction.Pending);
+            expect(result[4].action).toBe(RescueAction.Successful);
         });
 
         test("should prioritize refund for expired swaps over other actions", async () => {
@@ -508,12 +528,12 @@ describe("rescue", () => {
         test.each([
             {
                 status: swapStatusSuccess.TransactionClaimed,
-                action: RescueAction.None,
+                action: RescueAction.Successful,
                 createSwap: createMockSubmarineSwap,
             },
             {
                 status: swapStatusSuccess.InvoiceSettled,
-                action: RescueAction.None,
+                action: RescueAction.Successful,
                 createSwap: createMockSubmarineSwap,
             },
             ...Object.values(swapStatusPending).map((status) => ({
