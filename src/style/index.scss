@@ -178,7 +178,7 @@ hr.spacer {
 [data-status="transaction.refunded"],
 [data-status="invoice.failedToPay"],
 [data-status="transaction.lockupFailed"] {
-    > p > .btn-small {
+    .btn-small {
         background-color: var(--color-error-500);
         color: var(--color-text);
     }
@@ -191,7 +191,7 @@ hr.spacer {
 [data-status="transaction.claimed"],
 [data-status="transaction.claim.pending"],
 [data-status="quote.available"] {
-    > p > .btn-small {
+    .btn-small {
         background-color: var(--color-success-500);
         color: var(--color-text);
     }
