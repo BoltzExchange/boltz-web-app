@@ -12,6 +12,7 @@ const ZeroConf = () => {
         <>
             <div
                 class="toggle"
+                data-testid="zero-conf-toggle"
                 title={t("zero_conf_tooltip")}
                 onClick={toggleZeroConf}>
                 <span class={zeroConf() ? "active" : ""}>{t("on")}</span>
@@ -22,4 +23,3 @@ const ZeroConf = () => {
 };
 
 export default ZeroConf;
-
