@@ -95,10 +95,11 @@ export const isSwapClaimable = ({
 
     switch (type) {
         case SwapType.Reverse: {
-            const statuses = [
-                swapStatusPending.TransactionConfirmed,
-                ...(zeroConf ? [swapStatusPending.TransactionMempool] : []),
-            ];
+            const statuses = [swapStatusPending.TransactionConfirmed];
+
+            if (zeroConf) {
+                statuses.push(swapStatusPending.TransactionMempool);
+            }
 
             if (includeSuccess && swapCreatedAfterBackup) {
                 statuses.push(swapStatusSuccess.InvoiceSettled);
@@ -107,12 +108,11 @@ export const isSwapClaimable = ({
             return statuses.includes(status);
         }
         case SwapType.Chain: {
-            const statuses = [
-                swapStatusPending.TransactionServerConfirmed,
-                ...(zeroConf
-                    ? [swapStatusPending.TransactionServerMempool]
-                    : []),
-            ];
+            const statuses = [swapStatusPending.TransactionServerConfirmed];
+
+            if (zeroConf) {
+                statuses.push(swapStatusPending.TransactionServerMempool);
+            }
 
             if (includeSuccess && swapCreatedAfterBackup) {
                 statuses.push(swapStatusSuccess.TransactionClaimed);

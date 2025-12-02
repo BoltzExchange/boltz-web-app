@@ -33,7 +33,7 @@ export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
 
 const Rescue = () => {
     const navigate = useNavigate();
-    const { getSwaps, wasmSupported, t, zeroConf } = useGlobalContext();
+    const { getSwaps, wasmSupported, t } = useGlobalContext();
 
     const [currentPage, setCurrentPage] = createSignal(1);
     const [currentSwaps, setCurrentSwaps] = createSignal<SomeSwap[]>([]);
@@ -48,7 +48,7 @@ const Rescue = () => {
         currentSwaps,
         async (swaps: SomeSwap[]) => {
             setLoading(true);
-            return await createRescueList(swaps, zeroConf()).finally(() =>
+            return await createRescueList(swaps, true).finally(() =>
                 setLoading(false),
             );
         },

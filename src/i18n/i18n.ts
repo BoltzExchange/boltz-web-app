@@ -209,9 +209,6 @@ const dict = {
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Accept transactions without waiting for confirmation",
-        enable_audio_notifications: "Audio Notifications",
-        enable_audio_notifications_tooltip:
-            "Enable or disable audio notifications",
         on: "on",
         off: "off",
         invalid_pair: "Invalid pair",
