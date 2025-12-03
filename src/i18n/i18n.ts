@@ -1385,8 +1385,7 @@ const dict = {
         send_to: "Envie {{ amount }} {{ denomination }} para",
         send_between:
             "Envie entre {{ min }} e {{ max }} {{ denomination }} para",
-        pay_invoice_to:
-            "Pague este invoice de aproximadamente {{ amount }} {{ denomination }}",
+        pay_invoice_to: "Pague este invoice de {{ amount }} {{ denomination }}",
         no_wallet: "Nenhuma carteira instalada",
         connect_wallet: "Conectar carteira",
         please_connect_wallet: "Por favor, conecte a carteira",
