@@ -16,7 +16,6 @@ const dict = {
         error_wasm: "WebAssembly not supported",
         history: "History",
         swap: "Swap",
-        channel: "Channel",
         refund: "Refund",
         blog: "Blog",
         support: "Support",
@@ -42,13 +41,9 @@ const dict = {
         maximum_amount: "Maximum amount is {{ amount }} {{ denomination }}",
         assets: "Multi-Layer",
         footer: "Made with 🧡 by Team Boltz",
-        create_channel: "Create Lightning Channel",
-        create_channel_subline: "Channel Inbound or Outbound Capacity",
         create_swap: "Create Atomic Swap",
         create_swap_subline: "Payment Includes Network and Boltz Fee",
-        cancel_swap: "Cancel Swap",
         new_swap: "New Swap",
-        success_swap: "Swap Success",
         feecheck:
             "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
         create_and_paste:
@@ -60,21 +55,17 @@ const dict = {
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap not found!",
         pay_timeout_blockheight: "Timeout Block Height ({{ network }})",
-        pay_expected_amount: "Expected amount",
         send_to: "Send {{ amount }} {{ denomination }} to",
         send_between:
             "Send between {{ min }} and {{ max }} {{ denomination }} to",
         pay_invoice_to:
             "Pay this invoice about {{ amount }} {{ denomination }}",
-        pay_address: "Address",
         no_wallet: "No wallet installed",
         connect_wallet: "Connect wallet",
         please_connect_wallet: "Please connect wallet",
         connect_to_address: "Connect to swap address",
         disconnect_address: "Disconnect wallet",
         lockup_failed: "Lockup Failed!",
-        lockup_failed_subline:
-            "Your lockup transaction failed, wait for the timeout to refund.",
         failure_reason: "Failure reason",
         invoice_payment_failure: "Could not pay your lightning invoice",
         onchain_address: "Enter {{ asset }} address to receive funds",
@@ -88,7 +79,6 @@ const dict = {
         copy_address: "address",
         copy_amount: "amount",
         copy_bip21: "BIP21",
-        copied: "Copied!",
         refund_swap: "Refund Swap",
         rescue_a_swap_subline:
             "If you sent BTC or L-BTC into a Boltz swap, upload or enter your rescue key to rescue a swap that is not available in this browser’s swap history.",
@@ -116,7 +106,6 @@ const dict = {
         refund_backup: "Backup",
         refund_import: "Import Backup",
         refund_clear: "Delete storage",
-        delete_swap: "Delete swap from storage",
         delete_storage:
             "Are you sure you want to clear your storage?\nYour swap information and you refund / claim private keys will be lost.",
         delete_storage_single_swap:
@@ -126,25 +115,20 @@ const dict = {
         tx_in_mempool_subline: "Waiting for confirmation to complete the swap.",
         tx_in_mempool_warning:
             "Keep this page open, otherwise your swap can't complete!",
-        expired: "Swap expired!",
         invoice_pending: "Transaction received, paying invoice.",
         invoice_expired: "Invoice expired, try again!",
-        swap_expired: "You did not complete your payment in time.",
         create_invoice_webln: "create invoice via WebLN",
         pay_invoice_webln: "pay invoice via WebLN",
         select_asset: "Select {{ direction }} Asset",
         tx_confirmed: "Transaction confirmed",
         tx_ready_to_claim: "Claiming transaction now...",
-        transaction_refunded: "Boltz has refunded the Transaction",
         refunded: "Swap has been refunded successfully!",
-        broadcasted: "Refund broadcasted",
         locktime_not_satisfied: "Locktime requirement not satisfied",
         already_refunded: "Swap already refunded",
         api_offline: "API is offline",
         api_offline_msg:
             "Could not connect to the Boltz API, please try again later",
         refund_explainer: "You will be able to refund after the swap timeout!",
-        swap_not_refundable_yet: "Your swap is not refundable yet",
         wasm_not_supported: "Please activate WebAssembly in your browser",
         created: "Created",
         view: "View",
@@ -185,8 +169,6 @@ const dict = {
         branding: "Branding",
         regtest: "Regtest",
         broadcasting_claim: "Broadcasting claim transaction...",
-        open_swap: "Open Swap",
-        swap_in_history: "Swap found in history.",
         paste_invalid:
             "Clipboard contains invalid characters or maximum amount is exceeded",
         email: "Email",
@@ -222,7 +204,6 @@ const dict = {
         block: "block",
         logs_scan_progress: "Scan progress {{ value }}%",
         accept: "Accept",
-        timeout: "Timeout",
         wallet_connect_failed: "Wallet connection failed: {{ error }}",
         ledger_open_app_prompt: "Open Ethereum or RSK app",
         validate_payment: "Show Proof of Payment",
@@ -283,8 +264,6 @@ const dict = {
         },
         incorrect_word: "Incorrect word. Please double-check your rescue key.",
         enter_mnemonic: "Enter rescue key",
-        scan_refundable_swaps: "Scan for refundable swaps",
-        upload_rescue_key: "Upload rescue key",
         verify_boltz_rescue_key_mnemonic:
             "Please enter your rescue key below to import it.",
         hint_paste_mnemonic: "Hint: you can paste all 12 words at once.",
@@ -305,7 +284,6 @@ const dict = {
             "Your recipient supports receiving {{ asset }} directly. This saves you fees and they still get the full amount.",
         optimized_route_amount:
             "Swap route optimized, saving you ~{{ amount }} {{ denomination }}",
-        claim_address_prompt: "Enter an address to claim the swap to:",
         claim: "Claim",
         claimed: "Swap has been claimed successfully!",
         rescue: "Rescue",
@@ -375,8 +353,6 @@ const dict = {
 
         boltz_plugin_questions_title: "Questions?",
         boltz_plugin_questions_subtitle: "We'd love to hear from you!",
-        boltz_plugin_chat_button: "Chat with us",
-
         // Client
         boltz_client_name: "Boltz Client",
         boltz_client_description:
@@ -472,7 +448,6 @@ const dict = {
         error_wasm: "WebAssembly nicht unterstützt",
         history: "Historie",
         swap: "Swap",
-        channel: "Kanal",
         refund: "Rückerstattung",
         blog: "Blog",
         support: "Hilfe",
@@ -498,13 +473,9 @@ const dict = {
         maximum_amount: "Höchstbetrag ist {{ amount }} {{ denomination }}",
         assets: "Multi-layer",
         footer: "Mit 🧡 gemacht von Team Boltz",
-        create_channel: "Erstelle Lightning-Kanal",
-        create_channel_subline: "Eingehende oder ausgehende Kapazität",
         create_swap: "Erstelle Atomic Swap",
         create_swap_subline: "Zahlung beinhaltet Netzwerk- und Boltzgebühr",
-        cancel_swap: "Swap abbrechen",
         new_swap: "Neuer Swap",
-        success_swap: "Swap erfolgreich!",
         feecheck:
             "Die Netzwerkgebühr wurde aufgrund der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
         create_and_paste:
@@ -516,21 +487,17 @@ const dict = {
         pay_invoice: "Swap: {{ id }}",
         pay_swap_404: "Swap nicht gefunden!",
         pay_timeout_blockheight: "Timeout Blockhöhe ({{ network }})",
-        pay_expected_amount: "Erwarteter Betrag",
         send_to: "Sende {{ amount }} {{ denomination }} an",
         send_between:
             "Sende zwischen {{ min }} und {{ max }} {{ denomination }} an",
         pay_invoice_to:
             "Zahle diese Rechnung über {{ amount }} {{ denomination }}",
-        pay_address: "Adresse",
         no_wallet: "Wallet ist nicht installiert",
         connect_wallet: "Wallet verbinden",
         please_connect_wallet: "Bitte Wallet verbinden",
         connect_to_address: "Mit Swap-Adresse verbinden",
         disconnect_address: "Wallet trennen",
         lockup_failed: "Lockup fehlgeschlagen!",
-        lockup_failed_subline:
-            "Deine Lockup-Transaktion ist fehlgeschlagen, warte auf den Timeout, um eine Rückerstattung zu starten.",
         failure_reason: "Grund für den Fehler",
         invoice_payment_failure:
             "Deine Lightning-Rechung konnte nicht bezahlt werden",
@@ -545,7 +512,6 @@ const dict = {
         copy_address: "Adresse",
         copy_amount: "Betrag",
         copy_bip21: "BIP21",
-        copied: "kopiert!",
         refund_swap: "Swap Rückerstatten",
         rescue_a_swap_subline:
             "Lade deinen Rettungsschlüssel hoch oder gib ihn ein, um einen Swap zu retten, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
@@ -573,7 +539,6 @@ const dict = {
         refund_backup: "Backup",
         refund_import: "Backup importieren",
         refund_clear: "Speicher löschen",
-        delete_swap: "Swap aus dem Speicher löschen",
         delete_storage:
             "Bist du sicher, dass du deinen Speicher löschen möchtest?\nDeine Swap-Informationen und Rückerstattungsschlüssel gehen dabei verloren.",
         delete_storage_single_swap:
@@ -584,18 +549,14 @@ const dict = {
             "Warte auf Bestätigung, um den Swap abzuschließen.",
         tx_in_mempool_warning:
             "Seite nicht schließen, sonst kann Swap nicht abgeschlossen werden!",
-        expired: "Swap ist abgelaufen!",
         invoice_pending: "Transaktion erhalten, Rechnung wird bezahlt.",
         invoice_expired: "Rechnung ist abgelaufen, bitte erneut versuchen!",
-        swap_expired: "Du hast deine Zahlung nicht rechtzeitig abgeschlossen.",
         create_invoice_webln: "Rechnung über WebLN erstellen",
         pay_invoice_webln: "Rechnung über WebLN bezahlen",
         select_asset: "{{ direction }} - Asset auswählen",
         tx_confirmed: "Transaktion bestätigt!",
         tx_ready_to_claim: "Claime die Transaktion jetzt...",
-        transaction_refunded: "Boltz hat die Transaktion erstattet.",
         refunded: "Swap wurde erfolgreich erstattet!",
-        broadcasted: "Rückerstattung gesendet.",
         locktime_not_satisfied: "Locktime-Anforderung nicht erfüllt.",
         already_refunded: "Swap wurde bereits erstattet!",
         api_offline: "API ist offline",
@@ -603,8 +564,6 @@ const dict = {
             "Konnte keine Verbindung zur Boltz API herstellen. Bitte versuche es später noch einmal.",
         refund_explainer:
             "Du kannst nach dem Timeout eine Rückerstattung beantragen!",
-        swap_not_refundable_yet:
-            "Dein Swap kann noch nicht erstattet werden. Warte auf den Timeout, um eine Rückerstattung zu starten.",
         wasm_not_supported: "Bitte aktiviere WebAssembly in deinem Browser!",
         created: "Erstellt",
         view: "Anzeigen",
@@ -645,8 +604,6 @@ const dict = {
         branding: "Branding",
         regtest: "Regtest",
         broadcasting_claim: "Sende claim transaction...",
-        open_swap: "Swap öffnen",
-        swap_in_history: "Swap in Historie gefunden.",
         paste_invalid:
             "Zwischenablage enthält ungültige Zeichen oder der maximale Betrag wurde überschritten",
         email: "Email",
@@ -684,7 +641,6 @@ const dict = {
         block: "Block",
         logs_scan_progress: "Scan-Fortschritt {{ value }}%",
         accept: "Akzeptieren",
-        timeout: "Timeout",
         wallet_connect_failed:
             "Verbindung zu Wallet fehlgeschlagen: {{ error }}",
         ledger_open_app_prompt: "Ethereum oder RSK app öffnen",
@@ -750,8 +706,6 @@ const dict = {
         incorrect_word:
             "Wort inkorrekt. Bitte überprüfe deinen Rettungsschlüssel.",
         enter_mnemonic: "Rettungsschlüssel eingeben",
-        scan_refundable_swaps: "Nach erstattbaren Swaps scannen",
-        upload_rescue_key: "Rettungsschlüssel hochladen",
         verify_boltz_rescue_key_mnemonic:
             "Bitte gib deinen Rettungsschlüssel unten ein, um ihn zu importieren.",
         hint_paste_mnemonic:
@@ -774,8 +728,6 @@ const dict = {
             "Dein Empfänger unterstützt den direkten Empfang von {{ asset }}. So sparst du Gebühren und der Empfänger bekommt weiterhin den vollen Betrag.",
         optimized_route_amount:
             "Swap-Route optimiert, du sparst ~{{ amount }} {{ denomination }}",
-        claim_address_prompt:
-            "Gib eine Adresse ein, an die der Swap geclaimt werden soll:",
         claim: "Claimen",
         claimed: "Swap wurde erfolgreich geclaimt!",
         rescue: "Retten",
@@ -844,8 +796,6 @@ const dict = {
             "Behalte jederzeit die volle Kontrolle über deine Bitcoin, powered by Boltz Atomic Swaps",
         boltz_plugin_questions_title: "Fragen?",
         boltz_plugin_questions_subtitle: "Wir würden gerne von dir hören!",
-        boltz_plugin_chat_button: "Chatte mit uns",
-
         // Client
         boltz_client_name: "Boltz Client",
         boltz_client_description:
@@ -941,7 +891,6 @@ const dict = {
         error_wasm: "WebAssembly no soportado",
         history: "Historia",
         swap: "Intercambio",
-        channel: "Canal",
         refund: "Reembolso",
         blog: "Blog",
         support: "Ayuda",
@@ -967,14 +916,10 @@ const dict = {
         maximum_amount: "La cantidad máxima es {{ amount }} {{ denomination }}",
         assets: "Multicapa",
         footer: "Hecho con 🧡 por el equipo de Boltz",
-        create_channel: "Crear canal Lightning",
-        create_channel_subline: "Capacidad del canal entrante o saliente",
         create_swap: "Crear intercambio atómico",
         create_swap_subline:
             "El pago incluye la comisión de red y servicio de Boltz",
-        cancel_swap: "Cancelar intercambio",
         new_swap: "Nuevo intercambio",
-        success_swap: "Intercambio realizado con éxito!",
         feecheck:
             "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
         create_and_paste:
@@ -987,19 +932,15 @@ const dict = {
         pay_swap_404: "¡Intercambio no encontrado!",
         pay_timeout_blockheight:
             "Altura del bloque de tiempo de espera ({{ network }})",
-        pay_expected_amount: "Importe esperado",
         send_to: "Enviar {{ amount }} {{ denomination }} a",
         send_between: "Enviar entre {{ min }} y {{ max }} {{ denomination }} a",
         pay_invoice_to: "Pague esta factura de {{ amount }} {{ denomination }}",
-        pay_address: "Dirección",
         no_wallet: "Monedero no está instalado",
         connect_wallet: "Conectar monedero",
         please_connect_wallet: "Por favor, conecte monedero",
         connect_to_address: "Conectar con dirección de intercambio",
         disconnect_address: "Desconectar monedero",
         lockup_failed: "Fallo en el lockup",
-        lockup_failed_subline:
-            "Tu transacción de lockup falló, espere el tiempo de espera para obtener un reembolso.",
         failure_reason: "Motivo del fallo",
         invoice_payment_failure: "No se pudo pagar tu factura Lightning",
         onchain_address:
@@ -1014,7 +955,6 @@ const dict = {
         copy_address: "dirección",
         copy_amount: "importe",
         copy_bip21: "BIP21",
-        copied: "Copiado",
         refund_swap: "Reembolsar Intercambio",
         rescue_a_swap_subline:
             "Si enviaste BTC o L-BTC a un intercambio Boltz, carga o introduce tu clave de rescate para rescatar un swap que no esté disponible en el historial de swaps de este navegador",
@@ -1043,7 +983,6 @@ const dict = {
         refund_backup: "Backup",
         refund_import: "Importar Backup",
         refund_clear: "Borrar almacenamiento",
-        delete_swap: "Eliminar intercambio del almacenamiento",
         delete_storage:
             "¿Estás seguro de que deseas borrar tu almacenamiento?\nSe perderán la información de tu intercambio y tus claves de reembolso.",
         delete_storage_single_swap:
@@ -1054,18 +993,14 @@ const dict = {
             "Esperando confirmación para completar el intercambio.",
         tx_in_mempool_warning:
             "Mantenga la página abierta, o el intercambio no se completará!",
-        expired: "¡El intercambio ha expirado!",
         invoice_pending: "Transacción recibida, pagando la factura...",
         invoice_expired: "La factura ha expirado, ¡intente nuevamente!",
-        swap_expired: "No completaste tu pago a tiempo.",
         create_invoice_webln: "Crear factura a través de WebLN",
         pay_invoice_webln: "Pagar factura a través de WebLN",
         select_asset: "Seleccionar activo de {{ direction }}",
         tx_confirmed: "Transacción confirmada!",
         tx_ready_to_claim: "Reclamando la transacción ahora...",
-        transaction_refunded: "Boltz ha reembolsado la transacción!",
         refunded: "El intercambio ha sido reembolsado!",
-        broadcasted: "Reembolso transmitido!",
         locktime_not_satisfied:
             "No se cumple el requisito de tiempo de bloqueo!",
         already_refunded: "El intercambio ya ha sido reembolsado!",
@@ -1074,8 +1009,6 @@ const dict = {
             "No se pudo conectar a la API de Boltz, por favor inténtelo de nuevo más tarde!",
         refund_explainer:
             "Podrás solicitar un reembolso después del tiempo de espera!",
-        swap_not_refundable_yet:
-            "Tu intercambio aún no es reembolsable, por favor inténtelo de nuevo más tarde!",
         wasm_not_supported: "Por favor, activa WebAssembly en tu navegador!",
         created: "Creado",
         view: "Ver",
@@ -1116,8 +1049,6 @@ const dict = {
         branding: "Branding",
         regtest: "Regtest",
         broadcasting_claim: "Enviando transacción de reclamación...",
-        open_swap: "Abrir intercambio",
-        swap_in_history: "Intercambio encontrado en la historia.",
         paste_invalid:
             "El portapapeles contiene caracteres no válidos o se ha excedido el importe máximo",
         email: "Email",
@@ -1155,7 +1086,6 @@ const dict = {
         block: "bloque",
         logs_scan_progress: "Progreso del escaneo {{ value }}%",
         accept: "Aceptar",
-        timeout: "timeout",
         wallet_connect_failed: "Fallo en la conexión del monedero: {{ error }}",
         ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
         validate_payment: "Mostrar justificante de pago",
@@ -1218,8 +1148,6 @@ const dict = {
         incorrect_word:
             "Palabra incorrecta. Por favor, verifica tu clave de rescate.",
         enter_mnemonic: "Ingrese clave de rescate",
-        scan_refundable_swaps: "Buscar intercambios reembolsables",
-        upload_rescue_key: "Subir clave de rescate",
         verify_boltz_rescue_key_mnemonic:
             "Por favor, ingresa tu clave de rescate a continuación para importarla.",
         hint_paste_mnemonic:
@@ -1241,8 +1169,6 @@ const dict = {
             "Tu destinatario admite recibir {{ asset }} directamente. Así te ahorras comisiones y ellos siguen recibiendo el importe íntegro.",
         optimized_route_amount:
             "Ruta de intercambio optimizada, ahorrándote ~{{ amount }} {{ denomination }}",
-        claim_address_prompt:
-            "Introduce una dirección para reclamar el intercambio:",
         claim: "Reclamar",
         claimed: "¡El intercambio ha sido reclamado exitosamente!",
         rescue: "Rescatar",
@@ -1312,8 +1238,6 @@ const dict = {
 
         boltz_plugin_questions_title: "¿Preguntas?",
         boltz_plugin_questions_subtitle: "¡Nos encantaría escucharte!",
-        boltz_plugin_chat_button: "Chatea con nosotros",
-
         // Client
         boltz_client_name: "Cliente Boltz",
         boltz_client_description:
@@ -1409,7 +1333,6 @@ const dict = {
         error_wasm: "WebAssembly não suportado",
         history: "Histórico",
         swap: "Trocar",
-        channel: "Canal",
         refund: "Reembolsar",
         blog: "Blog",
         support: "Suporte",
@@ -1435,14 +1358,10 @@ const dict = {
         maximum_amount: "O valor máximo é {{ amount }} {{ denomination }}",
         assets: "Multi-Camada",
         footer: "Feito com 🧡 pela equipe da Boltz",
-        create_channel: "Criar canal Lightning",
-        create_channel_subline: "Capacidade de entrada ou saída do canal",
         create_swap: "Criar troca atômica",
         create_swap_subline:
             "O pagamento inclui a taxa da rede e a taxa da Boltz",
-        cancel_swap: "Cancelar troca",
         new_swap: "Nova troca",
-        success_swap: "Troca realizada",
         feecheck:
             "A taxa da rede foi atualizada conforme a situação atual, por favor confirme os novos valores e continue a troca.",
         create_and_paste:
@@ -1454,21 +1373,17 @@ const dict = {
         pay_invoice: "Troca: {{ id }}",
         pay_swap_404: "Troca não encontrada!",
         pay_timeout_blockheight: "Altura do Bloco de Expiração ({{ network }})",
-        pay_expected_amount: "Valor esperado",
         send_to: "Envie {{ amount }} {{ denomination }} para",
         send_between:
             "Envie entre {{ min }} e {{ max }} {{ denomination }} para",
         pay_invoice_to:
             "Pague este invoice de aproximadamente {{ amount }} {{ denomination }}",
-        pay_address: "Endereço",
         no_wallet: "Nenhuma carteira instalada",
         connect_wallet: "Conectar carteira",
         please_connect_wallet: "Por favor, conecte a carteira",
         connect_to_address: "Conectar ao endereço da troca",
         disconnect_address: "Desconectar carteira",
         lockup_failed: "Falha no lockup!",
-        lockup_failed_subline:
-            "Sua transação de lockup falhou, aguarde o tempo limite para o reembolso.",
         failure_reason: "Motivo da falha",
         invoice_payment_failure: "Não foi possível pagar seu invoice Lightning",
         onchain_address:
@@ -1483,7 +1398,6 @@ const dict = {
         copy_address: "endereço",
         copy_amount: "quantia",
         copy_bip21: "BIP21",
-        copied: "Copiado!",
         refund_swap: "Reembolsar troca",
         rescue_a_swap_subline:
             "Se enviou BTC ou L-BTC para uma troca Boltz, faça upload ou insira sua chave de resgate para resgatar uma troca que não está no histórico deste navegador.",
@@ -1512,7 +1426,6 @@ const dict = {
         refund_backup: "Backup",
         refund_import: "Importar backup",
         refund_clear: "Apagar armazenamento",
-        delete_swap: "Apagar troca do armazenamento",
         delete_storage:
             "Tem certeza de que deseja limpar seu armazenamento?\nAs informações das suas trocas e as chaves privadas de reembolso/recebimento serão perdidas.",
         delete_storage_single_swap:
@@ -1522,18 +1435,14 @@ const dict = {
         tx_in_mempool_subline: "Aguardando confirmação para concluir a troca.",
         tx_in_mempool_warning:
             "Mantenha esta página aberta, senão a troca não termina!",
-        expired: "Troca expirada!",
         invoice_pending: "Transação recebida, a pagar o invoice.",
         invoice_expired: "Invoice expirado, tente novamente!",
-        swap_expired: "O pagamento não foi concluído a tempo.",
         create_invoice_webln: "criar invoice via WebLN",
         pay_invoice_webln: "pagar invoice via WebLN",
         select_asset: "Selecionar ativo de {{ direction }}",
         tx_confirmed: "Transação confirmada",
         tx_ready_to_claim: "Reivindicando transação agora...",
-        transaction_refunded: "A Boltz reembolsou a transação",
         refunded: "Troca reembolsada com sucesso!",
-        broadcasted: "Reembolso transmitido",
         locktime_not_satisfied: "O prazo de lockup não foi cumprido",
         already_refunded: "A troca já foi reembolsada",
         api_offline: "A API está offline",
@@ -1541,7 +1450,6 @@ const dict = {
             "Não foi possível conectar à API da Boltz, por favor tente novamente mais tarde",
         refund_explainer:
             "Será possível reembolsar a troca após o prazo de expiração!",
-        swap_not_refundable_yet: "Sua troca ainda não pode ser reembolsada",
         wasm_not_supported: "Ative o WebAssembly no seu navegador",
         created: "Criado",
         view: "Ver",
@@ -1582,8 +1490,6 @@ const dict = {
         branding: "Identidade Visual",
         regtest: "Regtest",
         broadcasting_claim: "Transmitindo transação de reivindicação...",
-        open_swap: "Abrir troca",
-        swap_in_history: "Troca encontrada no histórico.",
         paste_invalid:
             "Conteúdo da área de transferência inválido ou valor excedido",
         email: "Email",
@@ -1620,7 +1526,6 @@ const dict = {
         block: "bloco",
         logs_scan_progress: "Progresso da varredura {{ value }}%",
         accept: "Aceitar",
-        timeout: "Timeout",
         wallet_connect_failed: "Falha ao conectar carteira: {{ error }}",
         ledger_open_app_prompt: "Abra o app Ethereum ou RSK",
         validate_payment: "Mostrar Prova de Pagamento",
@@ -1683,8 +1588,6 @@ const dict = {
         incorrect_word:
             "Palavra incorreta. Por favor, verifique sua chave de resgate.",
         enter_mnemonic: "Digitar chave de resgate",
-        scan_refundable_swaps: "Pesquisar por trocas reembolsáveis",
-        upload_rescue_key: "Carregar chave de resgate",
         verify_boltz_rescue_key_mnemonic:
             "Por favor, digite sua chave de resgate abaixo para importá-la.",
         hint_paste_mnemonic: "Dica: você pode colar as 12 palavras de uma vez.",
@@ -1705,7 +1608,6 @@ const dict = {
             "O seu destinatário suporta o recebimento direto de {{ asset }}. Assim, você poupa em taxas e ele continua a receber o valor total.",
         optimized_route_amount:
             "Rota de troca otimizada, poupando-te ~{{ amount }} {{ denomination }}",
-        claim_address_prompt: "Digite um endereço para reivindicar a troca:",
         claim: "Reivindicar",
         claimed: "Troca reivindicada com sucesso!",
         rescue: "Resgatar",
@@ -1775,8 +1677,6 @@ const dict = {
 
         boltz_plugin_questions_title: "Dúvidas?",
         boltz_plugin_questions_subtitle: "Adoraríamos ouvir você!",
-        boltz_plugin_chat_button: "Converse conosco",
-
         // Client
         boltz_client_name: "Boltz Client",
         boltz_client_description:
@@ -1872,7 +1772,6 @@ const dict = {
         error_wasm: "不支持WebAssembly",
         history: "历史",
         swap: "交换",
-        channel: "通道",
         refund: "退款",
         blog: "博客",
         support: "支持",
@@ -1898,13 +1797,9 @@ const dict = {
         maximum_amount: "最大金额为{{ amount }}{{ denomination }}",
         assets: "多层",
         footer: "Boltz团队倾情🧡制作",
-        create_channel: "创建闪电网络通道",
-        create_channel_subline: "通道入站或出站容量",
         create_swap: "创建原子交换",
         create_swap_subline: "付款包括网络和Boltz服务费",
-        cancel_swap: "取消交换",
         new_swap: "新的交换",
-        success_swap: "交换成功",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
         create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
         congrats: "恭喜！",
@@ -1913,19 +1808,16 @@ const dict = {
         pay_invoice: "交换：{{ id }}",
         pay_swap_404: "找不到交换！",
         pay_timeout_blockheight: "超时区块高度 ({{ network }})",
-        pay_expected_amount: "预期金额",
         send_to:
             "请将准确的{{ amount }}{{ denomination }}发送到以下地址。您可以使用“BIP21”按钮，并将其粘贴到钱包。",
         send_between: "在 {{ min }} 和 {{ max }} {{ denomination }} 之间发送至",
         pay_invoice_to: "支付金额为{{ amount }}{{ denomination }}的发票",
-        pay_address: "地址",
         no_wallet: "未安装钱包",
         connect_wallet: "连接钱包",
         please_connect_wallet: "请连接钱包",
         connect_to_address: "连接交换地址",
         disconnect_address: "断开钱包",
         lockup_failed: "锁仓失败！",
-        lockup_failed_subline: "您的锁仓交易失败，请等待超时进行退款。",
         failure_reason: "失败原因",
         invoice_payment_failure: "无法支付您的闪电发票",
         onchain_address: "输入{{ asset }}地址以接收资金",
@@ -1938,7 +1830,6 @@ const dict = {
         copy_address: "地址",
         copy_amount: "金额",
         copy_bip21: "BIP21",
-        copied: "已复制",
         refund_swap: "退还交换",
         rescue_a_swap_subline:
             "如果您向 Boltz 交换发送了 BTC 或 L-BTC，请上传或输入您的救援密钥，以恢复在该浏览器的交换历史记录中不可用的交换。",
@@ -1962,7 +1853,6 @@ const dict = {
         refund_backup: "备份",
         refund_import: "导入备份",
         refund_clear: "删除本地存储",
-        delete_swap: "从本地存储中删除交换",
         delete_storage:
             "您确定要清除本地存储吗？\n您的交换信息和您的退款/索赔私钥将丢失。",
         delete_storage_single_swap: "您确定要从本地存储中清除交换{{ id }}吗",
@@ -1970,24 +1860,19 @@ const dict = {
         tx_in_mempool: "事务在内存池中",
         tx_in_mempool_subline: "等待确认以完成交换",
         tx_in_mempool_warning: "请保持此页打开，否则兑换无法完成！",
-        expired: "交换已过期！",
         invoice_pending: "收到交易，正在支付发票。",
         invoice_expired: "发票已过期，请重试！",
-        swap_expired: "您未能在规定时间内完成付款。",
         create_invoice_webln: "通过WebLN创建发票",
         pay_invoice_webln: "通过WebLN支付发票",
         select_asset: "选择{{ direction }}资产",
         tx_confirmed: "交易已确认",
         tx_ready_to_claim: "现在要求交换……",
-        transaction_refunded: "Boltz已退款交易!",
         refunded: "交换已退还",
-        broadcasted: "退款已广播",
         locktime_not_satisfied: "未满足锁定时间要求",
         already_refunded: "交换已经退还",
         api_offline: "API离线",
         api_offline_msg: "无法连接到Boltz API,请稍后重试",
         refund_explainer: "您将能够在超时后退款!",
-        swap_not_refundable_yet: "您的交换尚不可退还",
         wasm_not_supported: "请在您的浏览器中激活WebAssembly",
         created: "已创建",
         view: "查看",
@@ -2025,8 +1910,6 @@ const dict = {
         branding: "品牌",
         regtest: "Regtest",
         broadcasting_claim: "正在发送索赔交易...",
-        open_swap: "打开交换",
-        swap_in_history: "在历史记录中找到交换。",
         paste_invalid: "剪贴板包含无效字符或超出最大金额",
         email: "邮箱",
         switch_paste: "根据粘贴的内容切换交换方向/资产",
@@ -2058,7 +1941,6 @@ const dict = {
         block: "块",
         logs_scan_progress: "扫描进度{{ value }}%",
         accept: "接受",
-        timeout: "超时",
         wallet_connect_failed: "钱包连接失败：{{ error }}",
         ledger_open_app_prompt: "打开以太坊或 RSK 应用",
         validate_payment: "出示付款证明",
@@ -2117,8 +1999,6 @@ const dict = {
         },
         incorrect_word: "单词不正确。请再次检查你的救援密钥。",
         enter_mnemonic: "输入救援密钥",
-        scan_refundable_swaps: "扫描可退款交换",
-        upload_rescue_key: "上传救援密钥",
         verify_boltz_rescue_key_mnemonic: "请在下方输入你的救援密钥以导入。",
         hint_paste_mnemonic: "提示：你可以一次性粘贴全部 12 个单词。",
         swap_opportunities: "可用Pro机会",
@@ -2137,7 +2017,6 @@ const dict = {
             "你的收款人支持直接接收 {{ asset }}。这为你节省了手续费，且对方仍会收到全额款项。",
         optimized_route_amount:
             "交换路径已优化，为你节省了约 {{ amount }} {{ denomination }}",
-        claim_address_prompt: "输入用于索赔交换的地址：",
         claim: "索赔",
         claimed: "交换已成功索赔！",
         rescue: "救援",
@@ -2202,8 +2081,6 @@ const dict = {
 
         boltz_plugin_questions_title: "有问题？",
         boltz_plugin_questions_subtitle: "我们很乐意听取您的意见！",
-        boltz_plugin_chat_button: "与我们聊天",
-
         // Client
         boltz_client_name: "Boltz 客户端",
         boltz_client_description:
@@ -2292,7 +2169,6 @@ const dict = {
         error_wasm: "WebAssemblyはサポートされていません",
         history: "履歴",
         swap: "スワップ",
-        channel: "チャネル",
         refund: "返金",
         blog: "ブログ",
         support: "ヘルプ",
@@ -2318,15 +2194,10 @@ const dict = {
         maximum_amount: "最大金額は{{ amount }} {{ denomination }}です",
         assets: "アセット",
         footer: "Team Boltzによる🧡で作成されました",
-        create_channel: "Lightningチャネルの作成",
-        create_channel_subline:
-            "チャネルのインバウンドまたはアウトバウンド容量",
         create_swap: "Atomic Swapの作成",
         create_swap_subline:
             "支払いにはネットワーク手数料とBoltzサービス手数料が含まれます",
-        cancel_swap: "スワップのキャンセル",
         new_swap: "新しいスワップ",
-        success_swap: "スワップが成功しました",
         feecheck:
             "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",
         create_and_paste:
@@ -2337,22 +2208,18 @@ const dict = {
         pay_invoice: "スワップ：{{ id }}",
         pay_swap_404: "スワップが見つかりません！",
         pay_timeout_blockheight: "タイムアウトブロック高 ({{ network }})",
-        pay_expected_amount: "予想金額",
         send_to:
             "{{ amount }} {{ denomination }} を以下のアドレスへ送金して下さい",
         send_between:
             "{{ min }} から {{ max }} {{ denomination }} を送信してください",
         pay_invoice_to:
             "このインボイスを支払う {{ amount }} {{ denomination }}",
-        pay_address: "アドレス",
         no_wallet: "ウォレットがインストールされていません",
         connect_wallet: "ウォレットの接続",
         please_connect_wallet: "ウォレットを接続してください",
         connect_to_address: "スワップアドレスに接続",
         disconnect_address: "ウォレットの接続を",
         lockup_failed: "ロックアップに失敗しました！",
-        lockup_failed_subline:
-            "ロックアップトランザクションが失敗しました。タイムアウトまで待って返金してください",
         failure_reason: "失敗の理由",
         invoice_payment_failure: "インボイスを支払うことができませんでした",
         onchain_address:
@@ -2366,7 +2233,6 @@ const dict = {
         copy_address: "アドレスをコピー",
         copy_amount: "金額をコピー",
         copy_bip21: "BIP21をコピー",
-        copied: "クリップボードにコピーしました！",
         refund_swap: "スワップを返金する",
         rescue_a_swap_subline:
             "BTCまたはL-BTCをBoltzスワップに送金した場合、このブラウザのスワップ履歴に表示されないスワップを復旧するには、復旧キーをアップロードまたは入力してください。",
@@ -2393,7 +2259,6 @@ const dict = {
         refund_backup: "バックアップ",
         refund_import: "バックアップをインポート",
         refund_clear: "ローカルストレージを削除",
-        delete_swap: "ローカルストレージからスワップを削除",
         delete_storage:
             "ストレージを削除しても本当にいいですか？\n スワップ情報と、返金、クレーム用の秘密鍵は失われます",
         delete_storage_single_swap:
@@ -2403,27 +2268,22 @@ const dict = {
         tx_in_mempool_subline: "スワップを完了するために確認を待っています",
         tx_in_mempool_warning:
             "ページを開いたままにしないと、スワップは完了しません！",
-        expired: "スワップが期限切れです！",
         invoice_pending:
             "トランザクションを受け取りました。インボイスを支払っています",
         invoice_expired:
             "インボイスの有効期限が切れました。もう一度試してください",
-        swap_expired: "支払いがタイムリーに完了されませんでした",
         create_invoice_webln: "WebLNを使用してインボイスを作成",
         pay_invoice_webln: "WebLNを使用してインボイスを支払う",
         select_asset: "アセットを選択",
         tx_confirmed: "トランザクションが確認されました",
         tx_ready_to_claim: "トランザクションを実行中...",
-        transaction_refunded: "Boltzがトランザクションを返金しました",
         refunded: "このスワップを返金しました",
-        broadcasted: "返金トランザクションがブロードキャストされました",
         locktime_not_satisfied: "ロックタイムの条件を満たしていません",
         already_refunded: "スワップはすでに返金されています",
         api_offline: "APIがオフラインです",
         api_offline_msg:
             "Boltz APIに接続できませんでした。後でもう一度お試しください",
         refund_explainer: "タイムアウト後に返金できます!",
-        swap_not_refundable_yet: "まだスワップは返金できません",
         wasm_not_supported: "ブラウザでWebAssemblyを有効にしてください",
         created: "作成済み",
         view: "表示",
@@ -2464,8 +2324,6 @@ const dict = {
         branding: "ブランディング",
         regtest: "Regtest",
         broadcasting_claim: "クレームトランザクションのブロードキャスト中",
-        open_swap: "スワップ中",
-        swap_in_history: "スワップ履歴",
         paste_invalid:
             "クリップボードに無効な文字が含まれるか、最大文字数を超えています",
         email: "Eメール",
@@ -2501,7 +2359,6 @@ const dict = {
         block: "ブロック",
         logs_scan_progress: " 進捗度 {{ value }}%",
         accept: "受入れる",
-        timeout: "タイムアウト",
         wallet_connect_failed: "ウォレット接続の失敗: {{ error }}",
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
         validate_payment: "支払い証明書の提示",
@@ -2565,8 +2422,6 @@ const dict = {
         incorrect_word:
             "間違った単語です。レスキューキーを再確認してください。",
         enter_mnemonic: "レスキューキーを入力",
-        scan_refundable_swaps: "返金可能なスワップをスキャン",
-        upload_rescue_key: "レスキューキーをアップロード",
         verify_boltz_rescue_key_mnemonic:
             "下にレスキューキーを入力してインポートしてください。",
         hint_paste_mnemonic:
@@ -2588,8 +2443,6 @@ const dict = {
             "受取人は{{ asset }}の直接受け取りに対応しています。これにより手数料が節約でき、相手は引き続き全額を受け取ります。",
         optimized_route_amount:
             "スワップ経路が最適化され、約{{ amount }} {{ denomination }}を節約できました。",
-        claim_address_prompt:
-            "スワップをクレームするアドレスを入力してください：",
         claim: "クレーム",
         claimed: "スワップが正常にクレームされました！",
         rescue: "救済",
@@ -2658,8 +2511,6 @@ const dict = {
 
         boltz_plugin_questions_title: "質問がありますか？",
         boltz_plugin_questions_subtitle: "ぜひお聞かせください！",
-        boltz_plugin_chat_button: "チャットする",
-
         // Client
         boltz_client_name: "Boltzクライアント",
         boltz_client_description:
