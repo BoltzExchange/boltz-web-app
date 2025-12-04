@@ -2,11 +2,12 @@ import { BiSolidHelpCircle } from "solid-icons/bi";
 import { BsCardText } from "solid-icons/bs";
 import { ImDisplay } from "solid-icons/im";
 import { IoClose, IoShield } from "solid-icons/io";
-import type { JSXElement } from "solid-js";
+import { type JSXElement, Show } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
 import "../../style/settings.scss";
+import { isMobile } from "../../utils/helper";
 import Denomination from "./Denomination";
 import FiatAmountSetting from "./FiatAmountSetting";
 import Logs from "./Logs";
@@ -93,11 +94,13 @@ const SettingsMenu = () => {
                         tooltipLabel={"hide_wallet_address_tooltip"}
                         settingElement={<PrivacyMode />}
                     />
-                    <Entry
-                        label={"zero_conf"}
-                        tooltipLabel={"zero_conf_tooltip"}
-                        settingElement={<ZeroConf />}
-                    />
+                    <Show when={!isMobile()}>
+                        <Entry
+                            label={"zero_conf"}
+                            tooltipLabel={"zero_conf_tooltip"}
+                            settingElement={<ZeroConf />}
+                        />
+                    </Show>
                     <Entry
                         label={"rescue_key"}
                         tooltipLabel={"download_boltz_rescue_key"}
