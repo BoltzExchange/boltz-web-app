@@ -489,6 +489,12 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    createEffect(() => {
+        if (isMobile()) {
+            setZeroConf(true);
+        }
+    });
+
     // i18n
     createEffect(() => {
         setI18n(detectLanguage(i18nConfigured() || i18nUrl()));
