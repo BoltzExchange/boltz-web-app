@@ -50,7 +50,7 @@ export const decodeInvoice = async (
         const decoded = bolt11.decode(invoice);
         const sats = BigNumber(decoded.millisatoshis || 0)
             .dividedBy(1000)
-            .integerValue(BigNumber.ROUND_CEIL)
+            .integerValue(BigNumber.ROUND_HALF_UP)
             .toNumber();
         return {
             satoshis: sats,
