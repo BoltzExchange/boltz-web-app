@@ -41,6 +41,9 @@ export type SwapBase = {
     signer?: string;
     // Set for hardware wallet signers
     derivationPath?: string;
+
+    // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
+    originalDestination?: string;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -115,6 +118,7 @@ export const createSubmarine = async (
     referralId: string,
     useRif: boolean,
     newKey: newKeyFn,
+    originalDestination?: string,
 ): Promise<SubmarineSwap> => {
     const isRsk = assetReceive === RBTC;
     const key = !isRsk ? newKey() : undefined;
@@ -140,6 +144,7 @@ export const createSubmarine = async (
             useRif,
         ),
         invoice,
+        originalDestination,
         refundPrivateKeyIndex: key?.index,
     };
 };
@@ -155,6 +160,7 @@ export const createReverse = async (
     useRif: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
+    originalDestination?: string,
 ): Promise<ReverseSwap> => {
     const isRsk = assetReceive === RBTC;
 
@@ -189,6 +195,7 @@ export const createReverse = async (
             useRif,
         ),
         claimAddress,
+        originalDestination,
         preimage: preimage.toString("hex"),
         claimPrivateKeyIndex: key?.index,
     };
@@ -205,6 +212,7 @@ export const createChain = async (
     useRif: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
+    originalDestination?: string,
 ): Promise<ChainSwap> => {
     const claimKey = assetReceive !== RBTC ? newKey() : undefined;
     const refundKey = assetSend !== RBTC ? newKey() : undefined;
@@ -243,6 +251,7 @@ export const createChain = async (
             useRif,
         ),
         claimAddress,
+        originalDestination,
         preimage: preimage.toString("hex"),
         claimPrivateKeyIndex: claimKey?.index,
         refundPrivateKeyIndex: refundKey?.index,
