@@ -12,6 +12,9 @@
 }
 
 #settings-menu {
+    top: 0;
+    z-index: 2147483001; // 1 above Chatwoot widget
+
     label {
         display: flex;
         align-items: center;
