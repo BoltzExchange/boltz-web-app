@@ -3,6 +3,40 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.9](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.8..v1.8.9) - 2025-12-04
+
+### Bug Fixes
+
+- do not truncate 0s of fees in BTC denomination (#1074) - ([9ac1427](https://github.com/BoltzExchange/boltz-web-app/commit/9ac1427a7a236772bbf708166f1c0b19c702a284))
+- swap status color (#1085) - ([fcb525e](https://github.com/BoltzExchange/boltz-web-app/commit/fcb525e022ae3b8cec97dee29fb8d65f212b276e))
+- swap status css selector (#1087) - ([22f3cb9](https://github.com/BoltzExchange/boltz-web-app/commit/22f3cb9c35d4220cf179f8d42a954ffd9ad331cd))
+- invoice millisatoshi conversion (#1090) - ([245fbbf](https://github.com/BoltzExchange/boltz-web-app/commit/245fbbf15b65be9c3ea5b0a55008376a1b76da80))
+
+### Features
+
+- show USD fiat rate on swap creation (#1067) - ([d72206e](https://github.com/BoltzExchange/boltz-web-app/commit/d72206e474123f111a4f0e27f8305f64a96b43d2))
+- Parse BIP21 URI with LN Offer (#1066) - ([c6039ab](https://github.com/BoltzExchange/boltz-web-app/commit/c6039ab7b29f5d9dd5b2a21ef4cd1886e7f12c3c))
+- Remove audio and browser notifications (#1078) - ([b48b92a](https://github.com/BoltzExchange/boltz-web-app/commit/b48b92ab85fb142ae950d075fb27b04fc9aa5599))
+- Improve Settings menu UI (#1079) - ([6e63766](https://github.com/BoltzExchange/boltz-web-app/commit/6e637667c6a75de5963cf1ea29626017d68988c9))
+- Add onion link to footer (#1082) - ([547776b](https://github.com/BoltzExchange/boltz-web-app/commit/547776b08793432a01b46e557a63db6db02302d2))
+- Add "Failed" label for rescuable swaps (#1081) - ([673c272](https://github.com/BoltzExchange/boltz-web-app/commit/673c272876167558b3f800f706f10647912616d4))
+- show originally destination on funding screen (#1089) - ([75ac785](https://github.com/BoltzExchange/boltz-web-app/commit/75ac785465ef982008d256fd0d88d3618f8395b9))
+- add zero-conf toggle (#1084) - ([1d0bdef](https://github.com/BoltzExchange/boltz-web-app/commit/1d0bdef5f603f8e9a4a5ba2586cf4ce30359a837))
+
+### Miscellaneous Chores
+
+- remove unused strings (#1088) - ([a2c5dab](https://github.com/BoltzExchange/boltz-web-app/commit/a2c5dab4c70ac9c7be7ada4fc0fe3ffb2e72cf07))
+- update release script (#1092) - ([5707053](https://github.com/BoltzExchange/boltz-web-app/commit/5707053b6d03418332260730eedd0df2defda97a))
+
+### Refactoring
+
+- BIP21 parameter extraction (#1073) - ([62a56ab](https://github.com/BoltzExchange/boltz-web-app/commit/62a56ab9aa101262b12e6bea33a7a7a8ff5c5d2e))
+
+### Tests
+
+- **(e2e)** improve uncooperative refund flakiness (#1080) - ([fec92c4](https://github.com/BoltzExchange/boltz-web-app/commit/fec92c492d8c36b19681ec0eb64d27a95daaf17d))
+
+---
 ## [1.8.8](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.7..v1.8.8) - 2025-11-19
 
 ### Bug Fixes
@@ -13,6 +47,7 @@ All notable changes to this project will be documented in this file. See [conven
 ### Miscellaneous Chores
 
 - bump dependencies (#1064) - ([528d0f4](https://github.com/BoltzExchange/boltz-web-app/commit/528d0f48a4769a4a06567c466767a41e6ddb19d4))
+- bump version to v1.8.8 (#1070) - ([b56847e](https://github.com/BoltzExchange/boltz-web-app/commit/b56847eceff7cceae579f937d9d6fa8a5fc2d7bb))
 
 ---
 ## [1.8.7](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.6..v1.8.7) - 2025-11-11
