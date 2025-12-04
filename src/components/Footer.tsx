@@ -6,6 +6,7 @@ import {
     BsTwitter,
     BsYoutube,
 } from "solid-icons/bs";
+import { Show } from "solid-js";
 
 import nostr from "../assets/nostr.svg";
 import { config } from "../config";
@@ -84,16 +85,12 @@ const Footer = () => {
                 <a target="_blank" href={config.regtestUrl}>
                     {t("regtest")}
                 </a>
-                |{" "}
-                <a
-                    target="_blank"
-                    href={
-                        config.isPro
-                            ? "http://boltzprool37sw3uqwj3r2wes2tcbwtaljja36zeiurj2azcmmhh47yd.onion/"
-                            : "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/"
-                    }>
-                    {t("onion")}
-                </a>
+                <Show when={config.torUrl}>
+                    |{" "}
+                    <a target="_blank" href={config.torUrl}>
+                        {t("onion")}
+                    </a>
+                </Show>
             </p>
             <p class="legal-nav">
                 <a href="/terms">{t("terms")}</a>
