@@ -209,7 +209,13 @@ export const getDestinationAddress = (swap: SomeSwap) => {
     }
 
     if (swap.type === SwapType.Submarine) {
-        return (swap as SubmarineSwap).invoice;
+        const submarineSwap = swap as SubmarineSwap;
+        return submarineSwap.originalDestination || submarineSwap.invoice;
+    }
+
+    if (swap.type === SwapType.Reverse || swap.type === SwapType.Chain) {
+        const chainSwap = swap as ReverseSwap | ChainSwap;
+        return chainSwap.originalDestination || chainSwap.claimAddress;
     }
 
     return swap.claimAddress;

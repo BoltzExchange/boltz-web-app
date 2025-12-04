@@ -1,10 +1,13 @@
+import { SwapType } from "../../src/consts/Enums";
 import type { Pairs } from "../../src/utils/boltzClient";
 import { ECPair } from "../../src/utils/ecpair";
 import {
     formatAddress,
+    getDestinationAddress,
     getPair,
     parsePrivateKey,
 } from "../../src/utils/helper";
+import type { ChainSwap, SubmarineSwap } from "../../src/utils/swapCreator";
 
 vi.mock("../../src/utils/ecpair", () => {
     return {
@@ -117,6 +120,54 @@ describe("helper", () => {
         test("should handle null or undefined gracefully", () => {
             expect(formatAddress(null)).toEqual([]);
             expect(formatAddress(undefined)).toEqual([]);
+        });
+    });
+
+    describe("getDestinationAddress", () => {
+        test("should return originalDestination for submarine swap (Lightning address/LNURL)", () => {
+            const swap = {
+                type: SwapType.Submarine,
+                assetReceive: "BTC",
+                invoice: "lnbc1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+                originalDestination: "user@getalby.com",
+            } as SubmarineSwap;
+
+            expect(getDestinationAddress(swap)).toBe("user@getalby.com");
+        });
+
+        test("should fallback to invoice for submarine swap without originalDestination", () => {
+            const swap = {
+                type: SwapType.Submarine,
+                assetReceive: "BTC",
+                invoice: "lnbc1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+            } as SubmarineSwap;
+
+            expect(getDestinationAddress(swap)).toBe(
+                "lnbc1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+            );
+        });
+
+        test("should return originalDestination for chain swap (MRH case)", () => {
+            const swap = {
+                type: SwapType.Chain,
+                assetReceive: "L-BTC",
+                claimAddress: "liquid1qabcdefghijklmnopqrstuvwxyz",
+                originalDestination: "user@getalby.com",
+            } as ChainSwap;
+
+            expect(getDestinationAddress(swap)).toBe("user@getalby.com");
+        });
+
+        test("should fallback to claimAddress for chain swap without originalDestination", () => {
+            const swap = {
+                type: SwapType.Chain,
+                assetReceive: "L-BTC",
+                claimAddress: "liquid1qabcdefghijklmnopqrstuvwxyz",
+            } as ChainSwap;
+
+            expect(getDestinationAddress(swap)).toBe(
+                "liquid1qabcdefghijklmnopqrstuvwxyz",
+            );
         });
     });
 });
