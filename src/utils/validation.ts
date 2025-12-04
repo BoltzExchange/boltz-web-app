@@ -14,7 +14,7 @@ import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 import log from "loglevel";
 
-import { LBTC, RBTC } from "../consts/Assets";
+import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
@@ -48,12 +48,15 @@ const validateContract = async (getEtherSwap: ContractGetter) => {
     }
 
     const code = await getEtherSwap().getDeployedCode();
-    if (!codeHashes.includes(ethers.keccak256(code))) {
-        log.error("invalid contract code:", code);
-        return false;
+    const codeHash = ethers.keccak256(code);
+
+    const valid = codeHashes.includes(codeHash);
+
+    if (!valid) {
+        log.warn("Invalid contract hash", codeHash);
     }
 
-    return true;
+    return valid;
 };
 
 const validateAddress = async (
@@ -125,6 +128,7 @@ const validateBip21 = (
     if (
         params.get("amount") !==
         formatAmountDenomination(
+            BTC,
             BigNumber(expectedAmount),
             Denomination.Btc,
             ".",
@@ -144,6 +148,8 @@ const validateReverse = async (
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
+    log.debug("Validating reverse swap");
+
     const invoiceData = await decodeInvoice(swap.invoice);
 
     // Amounts
@@ -210,6 +216,8 @@ const validateSubmarine = async (
     getEtherSwap: ContractGetter,
     buffer: typeof BufferBrowser.Buffer,
 ) => {
+    log.debug("Validating submarine swap");
+
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
         log.error(invalidSendAmountMsg(swap.expectedAmount, swap.sendAmount));
@@ -265,6 +273,8 @@ const validateChainSwap = async (
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
 ) => {
+    log.debug("Validating chain swap");
+
     const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
 
     const validateSide = async (

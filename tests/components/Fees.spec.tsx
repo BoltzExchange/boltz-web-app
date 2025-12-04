@@ -1,5 +1,6 @@
 import { render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import Pair from "src/utils/pair";
 
 import Fees from "../../src/components/Fees";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
@@ -45,10 +46,8 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(pairs);
 
-        signals.setAssetReceive(BTC);
-        signals.setAssetSend(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
 
         expect(pairs.submarine[BTC][BTC].limits.minimal).toEqual(
             signals.minimum(),
@@ -57,8 +56,7 @@ describe("Fees component", () => {
             signals.maximum(),
         );
 
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), BTC, LN));
 
         expect(signals.minimum()).toEqual(
             calculateSendAmount(
@@ -88,9 +86,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(pairs);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(LBTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, LBTC));
         signals.setAddressValid(true);
         signals.setOnchainAddress(
             "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",
@@ -113,9 +109,7 @@ describe("Fees component", () => {
             { wrapper: contextWrapper },
         );
 
-        globalSignals.setPairs(pairs);
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LBTC);
+        signals.setPair(new Pair(globalSignals.pairs(), BTC, LBTC));
         signals.setAddressValid(true);
         signals.setOnchainAddress(
             "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",
@@ -137,9 +131,7 @@ describe("Fees component", () => {
             ),
             { wrapper: contextWrapper },
         );
-        globalSignals.setPairs(pairs);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, LN));
         signals.setSendAmount(BigNumber(41));
         expect(signals.minimum()).toEqual(41);
     });
@@ -182,8 +174,7 @@ describe("Fees component", () => {
             );
 
             globalSignals.setDenomination(Denomination.Btc);
-            signals.setAssetSend(BTC);
-            signals.setAssetReceive(LN);
+            signals.setPair(new Pair(globalSignals.pairs(), BTC, LN));
             signals.setSendAmount(BigNumber(sendAmount));
             signals.setReceiveAmount(
                 calculateReceiveAmount(
