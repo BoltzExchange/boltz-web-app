@@ -188,6 +188,9 @@ const dict = {
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
+        zero_conf: "Zero-Conf",
+        zero_conf_tooltip:
+            "Accept transactions that are not yet confirmed in a block",
         on: "on",
         off: "off",
         invalid_pair: "Invalid pair",
@@ -625,6 +628,9 @@ const dict = {
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
+        zero_conf: "Zero-Conf",
+        zero_conf_tooltip:
+            "Akzeptiere Transaktionen, die noch nicht in einem Block bestätigt sind",
         on: "an",
         off: "aus",
         invalid_pair: "Ungültiges Paar",
@@ -1070,6 +1076,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
+        zero_conf: "Zero-Conf",
+        zero_conf_tooltip:
+            "Aceptar transacciones que aún no están confirmadas en un bloque",
         on: "on",
         off: "off",
         invalid_pair: "Par no válido",
@@ -1376,8 +1385,7 @@ const dict = {
         send_to: "Envie {{ amount }} {{ denomination }} para",
         send_between:
             "Envie entre {{ min }} e {{ max }} {{ denomination }} para",
-        pay_invoice_to:
-            "Pague este invoice de aproximadamente {{ amount }} {{ denomination }}",
+        pay_invoice_to: "Pague este invoice de {{ amount }} {{ denomination }}",
         no_wallet: "Nenhuma carteira instalada",
         connect_wallet: "Conectar carteira",
         please_connect_wallet: "Por favor, conecte a carteira",
@@ -1510,6 +1518,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
+        zero_conf: "Zero-Conf",
+        zero_conf_tooltip:
+            "Aceitar transações que ainda não foram confirmadas num bloco",
         on: "on",
         off: "off",
         invalid_pair: "Par inválido",
@@ -1927,6 +1938,8 @@ const dict = {
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
+        zero_conf: "零确认",
+        zero_conf_tooltip: "接受尚未被区块确认的交易",
         on: "开",
         off: "关",
         invalid_pair: "无效交换对",
@@ -2343,6 +2356,8 @@ const dict = {
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
+        zero_conf: "ゼロ確認",
+        zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",
         on: "オン",
         off: "オフ",
         invalid_pair: "無効なペア",

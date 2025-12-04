@@ -68,6 +68,7 @@ export const RescueNoAction = [
 export const isSwapClaimable = ({
     status,
     type,
+    zeroConf,
     swap = undefined,
     includeSuccess = false,
     swapDate = undefined,
@@ -76,6 +77,7 @@ export const isSwapClaimable = ({
     status: string;
     type: SwapType;
     swap?: SomeSwap;
+    zeroConf: boolean;
     includeSuccess?: boolean;
     swapDate?: number;
     backupImportTimestamp?: number;
@@ -93,10 +95,11 @@ export const isSwapClaimable = ({
 
     switch (type) {
         case SwapType.Reverse: {
-            const statuses = [
-                swapStatusPending.TransactionConfirmed,
-                swapStatusPending.TransactionMempool,
-            ];
+            const statuses = [swapStatusPending.TransactionConfirmed];
+
+            if (zeroConf) {
+                statuses.push(swapStatusPending.TransactionMempool);
+            }
 
             if (includeSuccess && swapCreatedAfterBackup) {
                 statuses.push(swapStatusSuccess.InvoiceSettled);
@@ -105,10 +108,11 @@ export const isSwapClaimable = ({
             return statuses.includes(status);
         }
         case SwapType.Chain: {
-            const statuses = [
-                swapStatusPending.TransactionServerConfirmed,
-                swapStatusPending.TransactionServerMempool,
-            ];
+            const statuses = [swapStatusPending.TransactionServerConfirmed];
+
+            if (zeroConf) {
+                statuses.push(swapStatusPending.TransactionServerMempool);
+            }
 
             if (includeSuccess && swapCreatedAfterBackup) {
                 statuses.push(swapStatusSuccess.TransactionClaimed);
@@ -435,7 +439,10 @@ export const getCurrentBlockHeight = async (swaps: SomeSwap[]) => {
     }
 };
 
-export const createRescueList = async (swaps: SomeSwap[]) => {
+export const createRescueList = async (
+    swaps: SomeSwap[],
+    zeroConf: boolean,
+) => {
     if (swaps.length === 0) {
         return [];
     }
@@ -478,6 +485,7 @@ export const createRescueList = async (swaps: SomeSwap[]) => {
                         swap,
                         status: swap.status,
                         type: swap.type,
+                        zeroConf,
                     })
                 ) {
                     return { ...swap, action: RescueAction.Claim };

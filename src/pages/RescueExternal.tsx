@@ -148,7 +148,7 @@ export const RefundBtcLike = () => {
         currentSwaps,
         async (swaps: SomeSwap[]) => {
             setLoading(true);
-            return await createRescueList(swaps).finally(() =>
+            return await createRescueList(swaps, true).finally(() =>
                 setLoading(false),
             );
         },
