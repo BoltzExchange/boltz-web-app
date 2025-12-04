@@ -163,7 +163,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
 
         if (
             (zeroConf() &&
-                data.status === swapStatusPending.TransactionMempool) ||
+                data.status === swapStatusPending.TransactionMempool) || // necessary for the autoclaim when zeroConf is toggled with a pending swap
             data.status === swapStatusSuccess.InvoiceSettled
         ) {
             data.transaction = await getReverseTransaction(currentSwap.id);
@@ -171,7 +171,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
             currentSwap.type === SwapType.Chain &&
             (data.status === swapStatusSuccess.TransactionClaimed ||
                 (zeroConf() &&
-                    data.status === swapStatusPending.TransactionServerMempool))
+                    data.status === swapStatusPending.TransactionServerMempool)) // necessary for the autoclaim when zeroConf is toggled with a pending swap
         ) {
             data.transaction = (
                 await getChainSwapTransactions(currentSwap.id)
