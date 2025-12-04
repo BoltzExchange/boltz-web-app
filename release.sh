@@ -23,12 +23,21 @@ fi
 tag=$1
 if [ -z "$tag" ]; then
   echo "Usage: release.sh <tag>"
+  echo "Tag must be in format vx.y.z (e.g., v1.2.3)"
   exit 1
 fi
 
+if [[ ! $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+  echo "Error: Tag must be in format vx.y.z (e.g., v1.2.3)"
+  exit 1
+fi
+
+# Extract version without 'v' prefix
+version=${tag#v}
+
 git checkout -b $tag
 
-sed -i "s/\"version\": \".*\"/\"version\": \"$tag\"/" package.json
+sed -i "s/\"version\": \".*\"/\"version\": \"$version\"/" package.json
 npm i
 
 # Generate changelog after we updated the version
@@ -37,7 +46,7 @@ npx git-cliff -o CHANGELOG.md -t $tag
 git add package.json package-lock.json LICENSE CHANGELOG.md
 
 # Commit and create pull request
-commit_message="chore: update version to $tag and prepare release"
+commit_message="chore: bump version to $tag"
 
 git commit -m "$commit_message"
 
