@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         shardIndex: [1, 2, 3, 4]
         shardTotal: [4]
@@ -90,7 +90,7 @@ jobs:
     - uses: actions/checkout@v5
     - uses: actions/setup-node@v5
       with:
-        node-version: lts/*
+        node-version: "22"
 
     - run: npm ci
 
