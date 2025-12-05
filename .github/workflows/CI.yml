@@ -46,7 +46,7 @@ jobs:
 
       - name: Start regtest
         env:
-          COMPOSE_PROFILES: webapp-dev
+          COMPOSE_PROFILES: webapp-ci
         run: |
           git submodule init
           git submodule update
