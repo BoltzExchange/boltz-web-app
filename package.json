@@ -2,6 +2,9 @@
     "name": "boltz-frontend",
     "version": "1.8.9",
     "description": "Boltz Exchange, Atomic Swaps, Web App",
+    "engines": {
+        "node": ">=24.0.0"
+    },
     "scripts": {
         "start": "npm run regtest && vite",
         "test": "npm run regtest && vitest ./tests",
@@ -45,6 +48,7 @@
         "eslint-plugin-solid": "^0.14.5",
         "git-cliff": "^2.10.1",
         "globals": "^16.5.0",
+        "jsdom": "^27.2.0",
         "prettier": "^3.7.3",
         "sass-embedded": "^1.93.3",
         "svgo": "^4.0.0",
