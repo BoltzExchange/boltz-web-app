@@ -226,4 +226,45 @@ test.describe("Chain swap", () => {
             page.locator("div[data-status='transaction.claimed']"),
         ).toBeVisible({ timeout: 15_000 });
     });
+
+    test("L-BTC/BTC transaction.lockupFailed below minimum amount shows min amount error", async ({
+        page,
+    }) => {
+        await page.goto("/");
+
+        const assetSelector = page.locator("div[class='asset asset-LN'] div");
+        await assetSelector.click();
+
+        const lbtcAsset = page.locator("div[data-testid='select-L-BTC']");
+        await lbtcAsset.click();
+
+        const inputOnchainAddress = page.locator(
+            "input[data-testid='onchainAddress']",
+        );
+        await inputOnchainAddress.fill(await getBitcoinAddress());
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await buttonCreateSwap.click();
+
+        await verifyRescueFile(page);
+
+        const buttons = page.locator("div[data-testid='pay-onchain-buttons']");
+        const copyAddressButton = buttons.getByText("address");
+        await copyAddressButton.click();
+
+        // Wait a bit for clipboard to be populated, then read it
+        const sendAddress = await page.evaluate(async () => {
+            return await navigator.clipboard.readText();
+        });
+        expect(sendAddress).toBeDefined();
+
+        const sendAmount = "0.000001";
+        await elementsSendToAddress(sendAddress, sendAmount);
+
+        await expect(
+            page.getByText("100 is less than minimal of 25000"),
+        ).toBeVisible();
+    });
 });

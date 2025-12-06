@@ -58,7 +58,7 @@ const TransactionLockupFailed = (props: {
     setStatusOverride: Setter<string | undefined>;
 }) => {
     const { t, fetchPairs, setSwapStorage, pairs } = useGlobalContext();
-    const { failureReason, swap, setSwap } = usePayContext();
+    const { failureReason, swap, setSwap, setFailureReason } = usePayContext();
     const [loading, setLoading] = createSignal(false);
 
     const [newQuote, newQuoteActions] = createResource<
@@ -108,6 +108,7 @@ const TransactionLockupFailed = (props: {
             log.warn(
                 `Getting new quote for swap ${swap().id} failed: ${formatError(e)}`,
             );
+            setFailureReason(formatError(e));
         }
 
         return undefined;
