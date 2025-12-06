@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import { Currency } from "../../src/consts/Enums";
 import {
@@ -8,6 +8,42 @@ import {
     getBtcPriceMempool,
     getBtcPriceYadio,
 } from "../../src/utils/fiat";
+
+const btcPrice = 100000;
+// Mock fetch to avoid calling real endpoints
+global.fetch = vi.fn((url: string) => {
+    if (url.includes("yadio")) {
+        return Promise.resolve({
+            json: () =>
+                Promise.resolve({
+                    BTC: {
+                        USD: btcPrice,
+                    },
+                }),
+        } as Response);
+    }
+    if (url.includes("kraken")) {
+        return Promise.resolve({
+            json: () =>
+                Promise.resolve({
+                    result: {
+                        XXBTZUSD: {
+                            c: [btcPrice.toString(), "1.5"],
+                        },
+                    },
+                }),
+        } as Response);
+    }
+    if (url.includes("mempool")) {
+        return Promise.resolve({
+            json: () =>
+                Promise.resolve({
+                    USD: btcPrice,
+                }),
+        } as Response);
+    }
+    return Promise.reject(new Error("Unknown URL"));
+}) as typeof fetch;
 
 describe("fiat", () => {
     const checkResult = (result: BigNumber) => {
@@ -20,7 +56,7 @@ describe("fiat", () => {
         ["Mempool", getBtcPriceMempool],
         ["Kraken", getBtcPriceKraken],
         ["Yadio", getBtcPriceYadio],
-    ])("should fetch BTC price from $1", async (_, getBtcPrice) => {
+    ])("should fetch BTC price from %s", async (_, getBtcPrice) => {
         const result = await getBtcPrice(Currency.USD);
         checkResult(result);
     });
