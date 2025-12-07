@@ -1,7 +1,5 @@
 FROM node:24 AS builder
 
-RUN npm i -g npm
-
 WORKDIR /app
 
 COPY package.json package-lock.json ./
