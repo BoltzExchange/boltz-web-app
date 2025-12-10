@@ -130,17 +130,24 @@ export const RefundBtcLike = () => {
     const [rescuableSwaps] = createResource(
         () => ({ refundJson: refundJson(), type: refundType() }),
         async (source) => {
-            if (
-                source.type !== RefundType.Rescue ||
-                source.refundJson === null
-            ) {
-                return undefined;
+            try {
+                if (
+                    source.type !== RefundType.Rescue ||
+                    source.refundJson === null
+                ) {
+                    return undefined;
+                }
+
+                const res = await getRestorableSwaps(
+                    getXpub(source.refundJson),
+                );
+                rescueContext.setRescuableSwaps(res);
+
+                return res.map((swap) => mapSwap(swap));
+            } catch (e) {
+                log.error("failed to get restorable swaps", formatError(e));
+                throw e;
             }
-
-            const res = await getRestorableSwaps(getXpub(source.refundJson));
-            rescueContext.setRescuableSwaps(res);
-
-            return res.map((swap) => mapSwap(swap));
         },
     );
 
@@ -176,7 +183,7 @@ export const RefundBtcLike = () => {
                 setRefundInvalid(undefined);
             }
         } catch (e) {
-            log.warn("Refund json validation failed:", e);
+            log.warn("Refund json validation failed:", formatError(e));
             setRefundType(undefined);
             setRefundInvalid(RefundError.InvalidData);
         }
@@ -195,7 +202,7 @@ export const RefundBtcLike = () => {
                 });
                 checkRefundJsonKeys(JSON.parse(res.data));
             } catch (e) {
-                log.error("invalid QR code upload", e);
+                log.error("invalid QR code upload", formatError(e));
                 setRefundType(undefined);
                 setRefundInvalid(RefundError.InvalidData);
             }
@@ -204,7 +211,7 @@ export const RefundBtcLike = () => {
                 const data = await inputFile.text();
                 checkRefundJsonKeys(JSON.parse(data));
             } catch (e) {
-                log.error("invalid file upload", e);
+                log.error("invalid file upload", formatError(e));
                 setRefundType(undefined);
                 setRefundInvalid(RefundError.InvalidData);
             }

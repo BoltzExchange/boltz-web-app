@@ -22,7 +22,7 @@ import type {
     SubmarineSwap,
 } from "./swapCreator";
 
-export const requestTimeoutDuration = 15_000;
+export const defaultTimeoutDuration = 15_000;
 
 export const isIos = () =>
     !!navigator.userAgent.match(/iphone|ipad/gi) || false;
@@ -104,7 +104,7 @@ export const getPair = <
 
 export const constructRequestOptions = (
     options: RequestInit = {},
-    timeout: number = requestTimeoutDuration,
+    timeout: number = defaultTimeoutDuration,
 ) => {
     const controller = new AbortController();
     const requestTimeout = setTimeout(
@@ -124,6 +124,7 @@ export const fetcher = async <T = unknown>(
     url: string,
     params?: Record<string, unknown>,
     options?: RequestInit,
+    requestTimeoutDuration: number = defaultTimeoutDuration,
 ): Promise<T> => {
     const controller = new AbortController();
     const requestTimeout = setTimeout(
@@ -174,7 +175,7 @@ export const fetcher = async <T = unknown>(
         }
         return (await response.json()) as T;
     } catch (e) {
-        throw new Error(e);
+        throw new Error(formatError(e));
     } finally {
         clearTimeout(requestTimeout);
     }
