@@ -81,7 +81,9 @@ const LockupEvm = (props: {
                         /* eslint-disable-next-line solid/reactivity */
                         onClick={async () => {
                             const contract = getEtherSwap();
-                            const tx = await contract.lock(
+                            const tx = await contract[
+                                "lock(bytes32,address,uint256)"
+                            ](
                                 prefix0x(props.preimageHash),
                                 props.claimAddress,
                                 props.timeoutBlockHeight,
