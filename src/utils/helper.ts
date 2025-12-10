@@ -174,7 +174,7 @@ export const fetcher = async <T = unknown>(
         }
         return (await response.json()) as T;
     } catch (e) {
-        throw new Error(e);
+        throw new Error(formatError(e));
     } finally {
         clearTimeout(requestTimeout);
     }
