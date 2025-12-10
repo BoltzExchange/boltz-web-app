@@ -1,6 +1,6 @@
 {
     "name": "boltz-frontend",
-    "version": "1.8.9",
+    "version": "1.8.10",
     "description": "Boltz Exchange, Atomic Swaps, Web App",
     "engines": {
         "node": ">=24.0.0"
