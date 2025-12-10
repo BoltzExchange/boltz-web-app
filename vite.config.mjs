@@ -2,7 +2,6 @@ import * as child from "child_process";
 import fs from "fs";
 import path from "path";
 import { defineConfig } from "vite";
-import mkcert from "vite-plugin-mkcert";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import solidPlugin from "vite-plugin-solid";
 import topLevelAwait from "vite-plugin-top-level-await";
@@ -48,20 +47,13 @@ if (!fs.existsSync(indexHtml)) {
 }
 
 export default defineConfig({
-    plugins: [
-        solidPlugin(),
-        wasm(),
-        topLevelAwait(),
-        mkcert(),
-        nodePolyfills(),
-    ],
+    plugins: [solidPlugin(), wasm(), topLevelAwait(), nodePolyfills()],
     resolve: {
         alias: {
             src: path.resolve(__dirname, "src"),
         },
     },
     server: {
-        https: true,
         cors: { origin: "*" },
     },
     build: {
