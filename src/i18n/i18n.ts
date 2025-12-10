@@ -155,7 +155,7 @@ const dict = {
         warning_expiry:
             "Make sure your transaction confirms within ~24 hours after creation of this swap!",
         not_found: "404 - Page Not Found",
-        not_found_subline: "The page you are looking for does not exist.",
+        not_found_subline: "This page seems to have vanished.",
         back_to_home: "Back to Home",
         transaction_prompt:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
@@ -593,7 +593,7 @@ const dict = {
         warning_expiry:
             "Wichtig: Die Transaktion muss innerhalb ~24 Stunden nach Erstellung dieses Swaps bestätigt sein!",
         not_found: "404 - Seite nicht gefunden",
-        not_found_subline: "Die gesuchte Seite existiert nicht.",
+        not_found_subline: "Diese Seite scheint verschwunden zu sein.",
         back_to_home: "Zurück zur Startseite",
         transaction_prompt:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
@@ -1041,7 +1041,7 @@ const dict = {
         warning_expiry:
             "Importante: Asegúrate de que la transacción se confirme en ~24 horas",
         not_found: "404 - Página no encontrada",
-        not_found_subline: "La página buscada no existe.",
+        not_found_subline: "Esta página parece haber desaparecido.",
         back_to_home: "Volver al inicio",
         transaction_prompt:
             'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada.',
@@ -1484,7 +1484,7 @@ const dict = {
         warning_expiry:
             "Certifique-se de que sua transação seja confirmada em até 24h após a criação da troca!",
         not_found: "404 - Página não encontrada",
-        not_found_subline: "A página solicitada não existe.",
+        not_found_subline: "Esta página parece ter desaparecido.",
         back_to_home: "Voltar à página inicial",
         transaction_prompt:
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação exibida.',
@@ -1907,7 +1907,7 @@ const dict = {
             "重要：支付发票后返回此页面！在您返回此页面之前，付款可能显示为待定。",
         warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
         not_found: "404 - 页面未找到",
-        not_found_subline: "您要查找的页面不存在。",
+        not_found_subline: "此页面似乎已经消失。",
         back_to_home: "返回首页",
         transaction_prompt:
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易。",
@@ -2323,7 +2323,7 @@ const dict = {
         warning_expiry:
             "必ず24時間以内にトランザクションが承認されるようにしてください",
         not_found: "404 - Page Not Found",
-        not_found_subline: "お探しのページは存在しません",
+        not_found_subline: "このページは消えてしまったようです。",
         back_to_home: "ホームに戻る",
         transaction_prompt:
             " 接続したウォレットを開いて、表示されたトランザクションを確認するために　{{ button }} を押してください",

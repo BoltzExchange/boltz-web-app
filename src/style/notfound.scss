@@ -1,0 +1,95 @@
+@use "vars";
+
+#notfound {
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 20px;
+
+    h1 {
+        margin-bottom: 1.6rem;
+        margin-top: 0;
+
+        small {
+            max-width: 500px;
+            margin: 24px auto;
+        }
+    }
+
+    .satoshi-image-container {
+        max-width: 400px;
+        width: 100%;
+        margin: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow:
+            0 8px 24px rgba(0, 0, 0, 0.4),
+            0 2px 8px rgba(0, 0, 0, 0.2);
+        position: relative;
+    }
+
+    .satoshi-image {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: cover;
+        filter: brightness(0.95) contrast(1.05);
+    }
+
+    .btn-inline {
+        margin-top: 3rem;
+        padding: 10px 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    #notfound {
+        min-height: 65vh;
+        padding: 30px 20px;
+
+        h1 {
+            margin-bottom: 2.5rem;
+
+            small {
+                max-width: 420px;
+            }
+        }
+
+        .satoshi-image-container {
+            max-width: 550px;
+        }
+
+        .btn-inline {
+            margin-top: 2.5rem;
+        }
+    }
+}
+
+@media (max-width: 488px) {
+    #notfound {
+        min-height: 60vh;
+        padding: 20px 15px;
+
+        h1 {
+            margin-bottom: 1rem;
+
+            small {
+                max-width: 350px;
+            }
+        }
+
+        .satoshi-image-container {
+            max-width: 250px;
+            border-radius: 8px;
+            box-shadow:
+                0 4px 16px rgba(0, 0, 0, 0.4),
+                0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-inline {
+            margin-top: 2rem;
+        }
+    }
+}
