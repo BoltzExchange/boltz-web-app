@@ -514,7 +514,7 @@ export const getSubmarinePreimage = (id: string) =>
     fetcher<{ preimage: string }>(`/v2/swap/submarine/${id}/preimage`);
 
 export const getRestorableSwaps = (xpub: string) =>
-    fetcher<RestorableSwap[]>(`/v2/swap/restore`, { xpub });
+    fetcher<RestorableSwap[]>(`/v2/swap/restore`, { xpub }, null, 30_000);
 
 export {
     Pairs,
