@@ -67,7 +67,9 @@ export const RefundEvm = (props: {
                     );
                     const decSignature = Signature.from(signature);
 
-                    tx = await contract.refundCooperative(
+                    tx = await contract[
+                        "refundCooperative(bytes32,uint256,address,uint256,uint8,bytes32,bytes32)"
+                    ](
                         prefix0x(props.preimageHash),
                         satoshiToWei(props.amount),
                         props.claimAddress,
