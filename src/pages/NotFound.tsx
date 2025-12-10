@@ -1,6 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 
-import satoshiDisappeared from "../assets/satoshi-disappeared.jpg";
+import satoshiDisappeared from "../assets/satoshi-disappeared.webp";
 import { useGlobalContext } from "../context/Global";
 
 const NotFound = () => {
