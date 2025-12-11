@@ -232,13 +232,37 @@ h3 {
     width: 180px;
     height: 41px;
 }
-.blitz {
+.blockstreamApp:before {
+    content: " ";
     display: inline-block;
-    background: url(../assets/blitz.svg);
+    background: url(../assets/blockstream-app.webp);
     background-size: 100%;
     background-repeat: no-repeat;
-    width: 175px;
-    height: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    position: absolute;
+    top: 0px;
+    left: 0;
+}
+.blockstreamApp {
+    position: relative;
+    padding-left: 64px;
+    text-decoration: none;
+    font-size: 18px;
+    color: var(--color-text);
+    font-weight: normal;
+    line-height: 1.6;
+    display: inline-block;
+}
+.blockstreamApp br {
+    display: block;
+    margin-top: 6px;
+}
+.blockstreamApp span {
+    display: block;
+    text-align: left;
+    font-weight: bold;
 }
 .helm {
     display: inline-block;

@@ -133,7 +133,7 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://aquawallet.io/"
+                            href="https://aqua.net"
                             target="_blank"
                             class="aqua"
                         />
@@ -147,10 +147,13 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://blitz-wallet.com/"
+                            href="https://blockstream.com/app/"
                             target="_blank"
-                            class="blitz"
-                        />
+                            class="blockstreamApp">
+                            Blockstream
+                            <br />
+                            <span>App</span>
+                        </a>
                     </div>
                     <div>
                         <a
@@ -263,7 +266,7 @@ export const Hero = () => {
                     </div>
                     <div>
                         <a
-                            href="https://diamondhands.technology/"
+                            href="https://www.diamondhands.community/"
                             target="_blank"
                             class="diamondhands"
                         />
