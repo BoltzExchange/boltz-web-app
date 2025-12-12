@@ -11,6 +11,7 @@ import { For } from "solid-js";
 
 import btcPayIllustration from "../../assets/btcpay-illustration.webp";
 import btcPayScreenshot from "../../assets/btcpay-screenshot.svg";
+import ExternalLink from "../../components/ExternalLink";
 import { useGlobalContext } from "../../context/Global";
 import "../../style/btcpay.scss";
 
@@ -119,22 +120,18 @@ const Btcpay = () => {
                             )}
                         </For>
                         <div class="cta-buttons">
-                            <a
+                            <ExternalLink
                                 class="btn-primary"
-                                href="https://btcpay.docs.boltz.exchange/"
-                                target="_blank"
-                                rel="noopener noreferrer">
+                                href="https://btcpay.docs.boltz.exchange/">
                                 <span>{t("documentation")}</span>
                                 <OcLinkexternal2 />
-                            </a>
-                            <a
+                            </ExternalLink>
+                            <ExternalLink
                                 class="btn-secondary"
-                                href="https://github.com/BoltzExchange/boltz-btcpay-plugin"
-                                target="_blank"
-                                rel="noopener noreferrer">
+                                href="https://github.com/BoltzExchange/boltz-btcpay-plugin">
                                 <span>{t("view_on_github")}</span>
                                 <BsGithub />
-                            </a>
+                            </ExternalLink>
                         </div>
                     </div>
                     <img

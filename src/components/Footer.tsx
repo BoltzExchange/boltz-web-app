@@ -12,6 +12,7 @@ import nostr from "../assets/nostr.svg";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
+import ExternalLink from "./ExternalLink";
 
 const Footer = () => {
     const { t } = useGlobalContext();
@@ -19,77 +20,67 @@ const Footer = () => {
     return (
         <footer>
             <div class="socials">
-                <a
+                <ExternalLink
                     title="Github"
                     class="github"
-                    target="_blank"
                     href={config.githubUrl}>
                     <BsGithub size={22} color="#22374F" />
-                </a>
-                <a
+                </ExternalLink>
+                <ExternalLink
                     title="Discord"
                     class="discord"
-                    target="_blank"
                     href={config.discordUrl}>
                     <BsDiscord size={22} color="#22374F" />
-                </a>
-                <a
+                </ExternalLink>
+                <ExternalLink
                     title="Telegram"
                     class="telegram"
-                    target="_blank"
                     href={config.telegramUrl}>
                     <BsTelegram size={22} color="#22374F" />
-                </a>
-                <a
+                </ExternalLink>
+                <ExternalLink
                     title="Twitter"
                     class="twitter"
-                    target="_blank"
                     href={config.twitterUrl}>
                     <BsTwitter size={22} color="#22374F" />
-                </a>
-                <a
+                </ExternalLink>
+                <ExternalLink
                     title="Nostr"
                     class="nostr"
-                    target="_blank"
                     href={config.nostrUrl}>
                     <img src={nostr} alt="Nostr Logo" />
-                </a>
-                <a
+                </ExternalLink>
+                <ExternalLink
                     title="Youtube"
                     class="youtube"
-                    target="_blank"
                     href={config.youtubeUrl}>
                     <BsYoutube size={22} color="#22374F" />
-                </a>
-                <a
+                </ExternalLink>
+                <ExternalLink
                     title={t("email")}
                     class="email"
-                    target="_blank"
                     href={"mailto:" + config.email}>
                     <BsEnvelopeFill size={22} color="#22374F" />
-                </a>
+                </ExternalLink>
             </div>
             <p class="footer-nav">
-                <a target="_blank" href={config.blogUrl}>
-                    {t("blog")}
-                </a>{" "}
-                |{" "}
-                <a target="_blank" href={config.brandingUrl}>
+                <ExternalLink href={config.blogUrl}>{t("blog")}</ExternalLink> |{" "}
+                <ExternalLink href={config.brandingUrl}>
                     {t("branding")}
-                </a>{" "}
+                </ExternalLink>{" "}
                 |{" "}
-                <a target="_blank" href={config.statusUrl}>
+                <ExternalLink href={config.statusUrl}>
                     {t("status")}
-                </a>{" "}
+                </ExternalLink>{" "}
                 |{" "}
-                <a target="_blank" href={config.regtestUrl}>
+                <ExternalLink href={config.regtestUrl}>
                     {t("regtest")}
-                </a>
+                </ExternalLink>
                 <Show when={config.torUrl}>
                     |{" "}
-                    <a target="_blank" href={config.torUrl}>
+                    <ExternalLink href={config.torUrl}>
                         {t("onion")}
-                    </a>
+                    </ExternalLink>
                 </Show>
             </p>
             <p class="legal-nav">
@@ -98,17 +89,15 @@ const Footer = () => {
             </p>
             <p class="version">
                 {t("version")}:{" "}
-                <a
-                    target="_blank"
+                <ExternalLink
                     href={`${config.repoUrl}/releases/tag/v${__APP_VERSION__}`}>
                     {__APP_VERSION__}
-                </a>
+                </ExternalLink>
                 , {t("commithash")}:{" "}
-                <a
-                    target="_blank"
+                <ExternalLink
                     href={`${config.repoUrl}/commit/${__GIT_COMMIT__}`}>
                     {__GIT_COMMIT__}
-                </a>
+                </ExternalLink>
             </p>
             <p>{t("footer")}</p>
         </footer>

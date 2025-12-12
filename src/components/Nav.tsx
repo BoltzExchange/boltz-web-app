@@ -8,6 +8,7 @@ import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import locales from "../i18n/i18n";
 import "../style/nav.scss";
+import ExternalLink from "./ExternalLink";
 
 const Nav = (props: { network: string; isPro?: boolean }) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -79,22 +80,16 @@ const Nav = (props: { network: string; isPro?: boolean }) => {
                         {t("products")}
                     </A>
                     <Show when={config.supportUrl}>
-                        <a
-                            class="external"
-                            target="_blank"
-                            href={config.supportUrl}>
+                        <ExternalLink class="external" href={config.supportUrl}>
                             {t("help")}
                             <OcLinkexternal2 size={23} />
-                        </a>
+                        </ExternalLink>
                     </Show>
                     <Show when={config.docsUrl}>
-                        <a
-                            class="external"
-                            target="_blank"
-                            href={config.docsUrl}>
+                        <ExternalLink class="external" href={config.docsUrl}>
                             {t("docs")}
                             <OcLinkexternal2 size={23} />
-                        </a>
+                        </ExternalLink>
                     </Show>
                 </div>
                 <svg

@@ -6,6 +6,7 @@ import { VsArrowSmallRight, VsCheck } from "solid-icons/vs";
 import { For } from "solid-js";
 
 import Chart, { type Point } from "../../components/Chart";
+import ExternalLink from "../../components/ExternalLink";
 import { config } from "../../config";
 import { BTC, LN } from "../../consts/Assets";
 import { useGlobalContext } from "../../context/Global";
@@ -124,20 +125,27 @@ const Pro = () => {
                                 external: true,
                             },
                         ]}>
-                        {(item) => (
-                            <a
-                                href={item.href}
-                                class="card options-card sequentialFadeUp"
-                                {...(item.external && {
-                                    target: "_blank",
-                                    rel: "noopener noreferrer",
-                                })}>
-                                <h4>
-                                    {item.icon} {item.title}
-                                </h4>
-                                <p>{item.description}</p>
-                            </a>
-                        )}
+                        {(item) =>
+                            item.external ? (
+                                <ExternalLink
+                                    href={item.href}
+                                    class="card options-card sequentialFadeUp">
+                                    <h4>
+                                        {item.icon} {item.title}
+                                    </h4>
+                                    <p>{item.description}</p>
+                                </ExternalLink>
+                            ) : (
+                                <a
+                                    href={item.href}
+                                    class="card options-card sequentialFadeUp">
+                                    <h4>
+                                        {item.icon} {item.title}
+                                    </h4>
+                                    <p>{item.description}</p>
+                                </a>
+                            )
+                        }
                     </For>
                 </div>
                 <div class="target-audience-section slideUp">
@@ -191,26 +199,24 @@ const Pro = () => {
                         <p>{t("boltz_pro_cta_subtitle")}</p>
                     </div>
                     <div class="cta-buttons">
-                        <a
-                            class="btn-primary"
-                            href={
-                                config.isPro
-                                    ? "/"
-                                    : "https://pro.boltz.exchange/"
-                            }
-                            target={config.isPro ? "" : "_blank"}
-                            rel="noopener noreferrer">
-                            <span>{t("get_started")}</span>
-                            <OcLinkexternal2 />
-                        </a>
-                        <a
+                        {config.isPro ? (
+                            <a class="btn-primary" href="/">
+                                <span>{t("get_started")}</span>
+                            </a>
+                        ) : (
+                            <ExternalLink
+                                class="btn-primary"
+                                href="https://pro.boltz.exchange/">
+                                <span>{t("get_started")}</span>
+                                <OcLinkexternal2 />
+                            </ExternalLink>
+                        )}
+                        <ExternalLink
                             class="btn-secondary"
-                            href="https://api.docs.boltz.exchange/pro.html"
-                            target="_blank"
-                            rel="noopener noreferrer">
+                            href="https://api.docs.boltz.exchange/pro.html">
                             <span>{t("learn_more")}</span>
                             <OcLinkexternal2 />
-                        </a>
+                        </ExternalLink>
                     </div>
                 </div>
             </div>

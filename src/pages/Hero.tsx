@@ -7,6 +7,7 @@ import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import rbtc from "../assets/rootstock-icon.svg";
+import ExternalLink from "../components/ExternalLink";
 import { config } from "../config";
 import { BTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
@@ -125,125 +126,102 @@ export const Hero = () => {
                 <h2 class="headline">{t("integrations")}</h2>
                 <div id="integrations">
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://getalby.com/"
-                            target="_blank"
                             class="alby"
                         />
                     </div>
                     <div>
-                        <a
-                            href="https://aqua.net"
-                            target="_blank"
-                            class="aqua"
-                        />
+                        <ExternalLink href="https://aqua.net" class="aqua" />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://bancolibre.com/"
-                            target="_blank"
                             class="bancoLibre"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://blockstream.com/app/"
-                            target="_blank"
                             class="blockstreamApp">
                             Blockstream
                             <br />
                             <span>App</span>
-                        </a>
+                        </ExternalLink>
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://breez.technology/"
-                            target="_blank"
                             class="breez"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://www.bullbitcoin.com/"
-                            target="_blank"
                             class="bull-bitcoin"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://www.cakepay.com/"
-                            target="_blank"
                             class="cakepay"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://www.fedi.xyz/"
-                            target="_blank"
                             class="fedi"
                         />
                     </div>
                     <div>
-                        <a
-                            href="https://fuji.money/"
-                            target="_blank"
-                            class="fuji"
-                        />
+                        <ExternalLink href="https://fuji.money/" class="fuji" />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://geyser.fund/"
-                            target="_blank"
                             class="geyser"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://helm-wallet.com/"
-                            target="_blank"
                             class="helm"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://lnbits.com/"
-                            target="_blank"
                             class="lnbits"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://www.ridethelightning.info/"
-                            target="_blank"
                             class="rtl"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://www.tryspeed.com/"
-                            target="_blank"
                             class="speed"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://stashpay.me"
-                            target="_blank"
                             class="stashPay"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://thunderhub.io/"
-                            target="_blank"
                             class="thunderhub">
                             Thunderhub
-                        </a>
+                        </ExternalLink>
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://tropykus.com"
-                            target="_blank"
                             class="tropykus"
                         />
                     </div>
@@ -251,30 +229,26 @@ export const Hero = () => {
                 <h2 class="special headline">{t("partners")}</h2>
                 <div id="partners">
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://arklabs.xyz"
-                            target="_blank"
                             class="arklabs"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://blockstream.com/"
-                            target="_blank"
                             class="blockstream"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://www.diamondhands.community/"
-                            target="_blank"
                             class="diamondhands"
                         />
                     </div>
                     <div>
-                        <a
+                        <ExternalLink
                             href="https://rootstocklabs.com/"
-                            target="_blank"
                             class="rootstocklabs"
                         />
                     </div>
