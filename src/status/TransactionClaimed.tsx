@@ -3,6 +3,7 @@ import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import { Show, createEffect, createResource, createSignal } from "solid-js";
 
+import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
@@ -104,15 +105,14 @@ const TransactionClaimed = () => {
                     {t("new_swap")}
                 </span>
                 <Show when={!preimage.loading && preimage() !== undefined}>
-                    <a
+                    <ExternalLink
                         class="btn btn-explorer"
-                        target="_blank"
                         href={paymentValidationUrl(
                             (swap() as SubmarineSwap).invoice,
                             preimage(),
                         )}>
                         {t("validate_payment")}
-                    </a>
+                    </ExternalLink>
                 </Show>
             </Show>
         </div>

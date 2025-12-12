@@ -6,6 +6,7 @@ import { IoWater as LiquidIcon } from "solid-icons/io";
 import { OcLinkexternal2 } from "solid-icons/oc";
 import { For } from "solid-js";
 
+import ExternalLink from "../../components/ExternalLink";
 import { useGlobalContext } from "../../context/Global";
 import "../../style/client.scss";
 
@@ -123,22 +124,18 @@ const Client = () => {
                         <p>{t("boltz_client_cta_subtitle")}</p>
                     </div>
                     <div class="cta-buttons">
-                        <a
+                        <ExternalLink
                             class="btn-primary"
-                            href="https://client.docs.boltz.exchange/"
-                            target="_blank"
-                            rel="noopener noreferrer">
+                            href="https://client.docs.boltz.exchange/">
                             <span>{t("documentation")}</span>
                             <OcLinkexternal2 />
-                        </a>
-                        <a
+                        </ExternalLink>
+                        <ExternalLink
                             class="btn-secondary"
-                            href="https://github.com/BoltzExchange/boltz-client"
-                            target="_blank"
-                            rel="noopener noreferrer">
+                            href="https://github.com/BoltzExchange/boltz-client">
                             <span>{t("view_on_github")}</span>
                             <BsGithub />
-                        </a>
+                        </ExternalLink>
                     </div>
                 </div>
             </div>

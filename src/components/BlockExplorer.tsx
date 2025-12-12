@@ -1,5 +1,6 @@
 import { chooseUrl, config } from "../config";
 import { useGlobalContext } from "../context/Global";
+import ExternalLink from "./ExternalLink";
 
 const blockExplorerLink = (asset: string, isTxId: boolean, val: string) => {
     const basePath = chooseUrl(config.assets[asset].blockExplorerUrl);
@@ -23,11 +24,11 @@ const BlockExplorer = (props: {
         (props.txId !== undefined ? "claim_tx" : "lockup_address");
 
     return (
-        <a class="btn btn-explorer" target="_blank" href={href()}>
+        <ExternalLink class="btn btn-explorer" href={href()}>
             {t("blockexplorer", {
                 typeLabel: t(`blockexplorer_${typeLabel()}`),
             })}
-        </a>
+        </ExternalLink>
     );
 };
 

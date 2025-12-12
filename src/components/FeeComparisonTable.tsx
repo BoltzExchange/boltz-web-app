@@ -6,6 +6,7 @@ import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { type Pairs } from "../utils/boltzClient";
+import ExternalLink from "./ExternalLink";
 import { getFeeHighlightClass } from "./Fees";
 import LoadingSpinner from "./LoadingSpinner";
 
@@ -94,14 +95,12 @@ export const FeeComparisonTable = (props: {
                                         {t(
                                             "no_opportunities_found.telegram_bot_text",
                                         )}{" "}
-                                        <a
-                                            href="https://t.me/boltz_pro_bot"
-                                            target="_blank">
+                                        <ExternalLink href="https://t.me/boltz_pro_bot">
                                             {t(
                                                 "no_opportunities_found.telegram_bot",
                                             )}
                                             <OcLinkexternal2 size={14} />
-                                        </a>
+                                        </ExternalLink>
                                     </div>
                                 </td>
                             </tr>

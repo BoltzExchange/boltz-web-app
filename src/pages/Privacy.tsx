@@ -1,5 +1,7 @@
 import type { Component } from "solid-js";
 
+import ExternalLink from "../components/ExternalLink";
+import { config } from "../configs/mainnet";
 import "../style/legal.scss";
 
 const Privacy: Component = () => {
@@ -50,25 +52,29 @@ const Privacy: Component = () => {
                 <li>
                     Cloudflare Inc.: We utilize Cloudflare's services to deliver
                     the static assets of our{" "}
-                    <a href="https://boltz.exchange">web app</a>. Review
-                    Cloudflare's Privacy Policy{" "}
-                    <a href="https://www.cloudflare.com/privacypolicy/">here</a>
+                    <ExternalLink href="https://boltz.exchange">
+                        web app
+                    </ExternalLink>
+                    . Review Cloudflare's Privacy Policy{" "}
+                    <ExternalLink href="https://www.cloudflare.com/privacypolicy/">
+                        here
+                    </ExternalLink>
                     . To avoid using Cloudflare's services, you can{" "}
-                    <a href="https://docs.boltz.exchange/web-app">
+                    <ExternalLink href="https://docs.boltz.exchange/web-app">
                         run our web app locally
-                    </a>
+                    </ExternalLink>
                     .
                 </li>
                 <li>
                     Racknation S.A.: We utilize Racknation's services to provide
                     our public API. For their privacy practices{" "}
-                    <a href="https://www.racknation.cr/contact-us">
+                    <ExternalLink href="https://www.racknation.cr/contact-us">
                         contact Racknation directly
-                    </a>
+                    </ExternalLink>
                     . You can also access our API via{" "}
-                    <a href="http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/api/">
+                    <ExternalLink href={`${config.apiUrl?.tor}/v2`}>
                         Tor
-                    </a>
+                    </ExternalLink>
                     .
                 </li>
             </ul>
@@ -76,7 +82,10 @@ const Privacy: Component = () => {
             <h2>4. Data Protection Contact</h2>
             <p>
                 For questions or concerns regarding this Policy, contact us at:{" "}
-                <a href="mailto:legal@bol.tz">legal@bol.tz</a>.
+                <ExternalLink href="mailto:legal@bol.tz" target="_self">
+                    legal@bol.tz
+                </ExternalLink>
+                .
             </p>
 
             <p class="last-updated">
