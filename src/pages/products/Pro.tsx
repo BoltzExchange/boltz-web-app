@@ -202,7 +202,6 @@ const Pro = () => {
                         {config.isPro ? (
                             <a class="btn-primary" href="/">
                                 <span>{t("get_started")}</span>
-                                <OcLinkexternal2 />
                             </a>
                         ) : (
                             <ExternalLink
