@@ -154,7 +154,7 @@ const dict = {
             "Return to this page after paying the invoice! The payment might show pending until you return to this page.",
         warning_expiry:
             "Make sure your transaction confirms within ~24 hours after creation of this swap!",
-        not_found: "404 - Page Not Found",
+        not_found: "404 - Not Found",
         not_found_subline: "This page seems to have vanished.",
         back_to_home: "Back to Home",
         transaction_prompt:
@@ -592,7 +592,7 @@ const dict = {
             "Kehre nach dem Bezahlen der Rechnung zu dieser Seite zurück! Die Zahlung wird möglicherweise als ausstehend angezeigt, bis du zu dieser Seite zurückkehrst.",
         warning_expiry:
             "Wichtig: Die Transaktion muss innerhalb ~24 Stunden nach Erstellung dieses Swaps bestätigt sein!",
-        not_found: "404 - Seite nicht gefunden",
+        not_found: "404 - Not Found",
         not_found_subline: "Diese Seite scheint verschwunden zu sein.",
         back_to_home: "Zurück zur Startseite",
         transaction_prompt:
@@ -1040,7 +1040,7 @@ const dict = {
             "Regresa a esta página después de pagar la factura! El pago puede aparecer como pendiente hasta que vuelvas a esta página.",
         warning_expiry:
             "Importante: Asegúrate de que la transacción se confirme en ~24 horas",
-        not_found: "404 - Página no encontrada",
+        not_found: "404 - Not Found",
         not_found_subline: "Esta página parece haber desaparecido.",
         back_to_home: "Volver al inicio",
         transaction_prompt:
@@ -1483,7 +1483,7 @@ const dict = {
             "Volte a esta página após pagar o invoice! O pagamento pode aparecer como pendente até que volte a esta página.",
         warning_expiry:
             "Certifique-se de que sua transação seja confirmada em até 24h após a criação da troca!",
-        not_found: "404 - Página não encontrada",
+        not_found: "404 - Not Found",
         not_found_subline: "Esta página parece ter desaparecido.",
         back_to_home: "Voltar à página inicial",
         transaction_prompt:
@@ -1906,7 +1906,7 @@ const dict = {
         warning_return:
             "重要：支付发票后返回此页面！在您返回此页面之前，付款可能显示为待定。",
         warning_expiry: "确保您的交易在创建此交换后的约24小时内确认！",
-        not_found: "404 - 页面未找到",
+        not_found: "404 - Not Found",
         not_found_subline: "此页面似乎已经消失。",
         back_to_home: "返回首页",
         transaction_prompt:
@@ -2322,7 +2322,7 @@ const dict = {
             "重要：インボイスのお支払い後、このページへ戻ってください！このページに戻るまで、支払いは保留中と表示される場合があります。",
         warning_expiry:
             "必ず24時間以内にトランザクションが承認されるようにしてください",
-        not_found: "404 - Page Not Found",
+        not_found: "404 - Not Found",
         not_found_subline: "このページは消えてしまったようです。",
         back_to_home: "ホームに戻る",
         transaction_prompt:
