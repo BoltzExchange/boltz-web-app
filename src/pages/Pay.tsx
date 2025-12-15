@@ -56,6 +56,7 @@ import {
     getCurrentBlockHeight,
     getRefundableUTXOs,
     getTimeoutEta,
+    hasSwapTimedOut,
     isRefundableSwapType,
 } from "../utils/rescue";
 import { type ChainSwap, type SubmarineSwap } from "../utils/swapCreator";
@@ -173,26 +174,43 @@ const Pay = () => {
                 // if there are remaining UTXOs, we consider we don't have a refundTx yet
                 setSwap({ ...swap(), refundTx: "" });
 
-                if (waitForSwapTimeout()) {
-                    try {
-                        const timeoutBlockHeight =
-                            swap().type === SwapType.Submarine
-                                ? (swap() as SubmarineSwap).timeoutBlockHeight
-                                : (swap() as ChainSwap).lockupDetails
-                                      .timeoutBlockHeight;
+                if (isRefundableSwapType(swap()) && !timedOutRefundable()) {
+                    const timeoutBlockHeight =
+                        swap().type === SwapType.Submarine
+                            ? (swap() as SubmarineSwap).timeoutBlockHeight
+                            : (swap() as ChainSwap).lockupDetails
+                                  .timeoutBlockHeight;
 
+                    try {
                         const currentBlockHeight = (
                             await getCurrentBlockHeight([swap()])
                         )?.[swap().assetSend];
 
-                        const timeoutEta = getTimeoutEta(
-                            swap().assetSend as RefundableAssetType,
-                            timeoutBlockHeight,
-                            currentBlockHeight,
-                        );
+                        if (
+                            typeof currentBlockHeight === "number" &&
+                            hasSwapTimedOut(swap(), currentBlockHeight)
+                        ) {
+                            setTimedOutRefundable(true);
+                            setWaitForTimeout(false);
+                            setTimeoutBlockHeight(timeoutBlockHeight);
+                            setTimeoutEta(0);
+                            setSwapStatus(
+                                swapStatusFailed.SwapWaitingForRefund,
+                            );
+                            setShouldIgnoreBackendStatus(true);
+                            return;
+                        }
 
-                        setTimeoutEta(timeoutEta);
-                        setTimeoutBlockHeight(timeoutBlockHeight);
+                        if (waitForSwapTimeout()) {
+                            const timeoutEta = getTimeoutEta(
+                                swap().assetSend as RefundableAssetType,
+                                timeoutBlockHeight,
+                                currentBlockHeight,
+                            );
+
+                            setTimeoutEta(timeoutEta);
+                            setTimeoutBlockHeight(timeoutBlockHeight);
+                        }
                     } catch (e) {
                         log.error(
                             `failed to get uncooperative timeout ETA for swap ${swap().id}:`,
