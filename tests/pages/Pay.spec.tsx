@@ -296,11 +296,6 @@ describe("Pay", () => {
     });
 
     test("should show refund button automatically when swap has timed out with UTXOs", async () => {
-        mockUseLocation.mockReturnValue({
-            ...mockUseLocation(),
-            state: { waitForSwapTimeout: true },
-        } as ReturnType<typeof useLocation>);
-
         mockGetRefundableUTXOs.mockResolvedValue([{ hex: "mock-utxo-hex-1" }]);
 
         mockGetCurrentBlockHeight.mockResolvedValue({ "L-BTC": 800001 });
