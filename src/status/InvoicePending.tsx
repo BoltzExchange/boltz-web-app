@@ -1,11 +1,12 @@
 import LoadingSpinner from "../components/LoadingSpinner";
+import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 
 const InvoicePending = () => {
     const { t } = useGlobalContext();
     return (
         <div>
-            <p>{t("invoice_pending")}</p>
+            <p>{t(config.isPro ? "invoice_pending_pro" : "invoice_pending")}</p>
             <LoadingSpinner />
         </div>
     );
