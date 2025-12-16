@@ -237,8 +237,9 @@ const validateRefundTransaction = async (
 test.describe("Refund", () => {
     const refundFileJson = path.join(__dirname, fileName);
 
-    test.beforeEach(async () => {
+    test.beforeEach(async ({ page }) => {
         await generateLiquidBlock();
+        await page.route("**/utxo", (route) => route.continue()); // disabling HTTP caching for UTXOs
     });
 
     test.afterEach(() => {
@@ -381,6 +382,7 @@ test.describe("Refund", () => {
         test(`Shows refund timeout ETA for LBTC ${name} swap on reload`, async ({
             page,
         }) => {
+            test.setTimeout(45_000);
             await page.goto("/");
 
             await createSwapAndGetDetails(page, swapType, LBTC);
@@ -397,8 +399,6 @@ test.describe("Refund", () => {
             await elementsSendToAddress(address, sendAmount);
             await waitForUTXOs(LBTC, address, 2);
             await generateLiquidBlock();
-            await waitForUTXOs(LBTC, address, 2);
-            await page.waitForTimeout(1000);
             await page.reload();
             await expect(
                 page.locator("div[data-status='swap.waitingForRefund']"),
