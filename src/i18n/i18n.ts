@@ -116,6 +116,8 @@ const dict = {
         tx_in_mempool_warning:
             "Keep this page open, otherwise your swap can't complete!",
         invoice_pending: "Transaction received, paying invoice.",
+        invoice_pending_pro:
+            "Transaction received, invoice queued. In some occasions, swap might be cancelled.",
         invoice_expired: "Invoice expired, try again!",
         create_invoice_webln: "create invoice via WebLN",
         pay_invoice_webln: "pay invoice via WebLN",
@@ -553,6 +555,8 @@ const dict = {
         tx_in_mempool_warning:
             "Seite nicht schließen, sonst kann Swap nicht abgeschlossen werden!",
         invoice_pending: "Transaktion erhalten, Rechnung wird bezahlt.",
+        invoice_pending_pro:
+            "Transaktion erhalten, Rechnung in Warteschlange. In manchen Fällen kann der Swap abgebrochen werden.",
         invoice_expired: "Rechnung ist abgelaufen, bitte erneut versuchen!",
         create_invoice_webln: "Rechnung über WebLN erstellen",
         pay_invoice_webln: "Rechnung über WebLN bezahlen",
@@ -1000,6 +1004,8 @@ const dict = {
         tx_in_mempool_warning:
             "Mantenga la página abierta, o el intercambio no se completará!",
         invoice_pending: "Transacción recibida, pagando la factura...",
+        invoice_pending_pro:
+            "Transacción recibida, factura en cola. En algunas ocasiones, el intercambio podría ser cancelado.",
         invoice_expired: "La factura ha expirado, ¡intente nuevamente!",
         create_invoice_webln: "Crear factura a través de WebLN",
         pay_invoice_webln: "Pagar factura a través de WebLN",
@@ -1444,6 +1450,8 @@ const dict = {
         tx_in_mempool_warning:
             "Mantenha esta página aberta, senão a troca não termina!",
         invoice_pending: "Transação recebida, a pagar o invoice.",
+        invoice_pending_pro:
+            "Transação recebida, invoice em fila. Em algumas ocasiões, a troca pode ser cancelada.",
         invoice_expired: "Invoice expirado, tente novamente!",
         create_invoice_webln: "criar invoice via WebLN",
         pay_invoice_webln: "pagar invoice via WebLN",
@@ -1872,6 +1880,8 @@ const dict = {
         tx_in_mempool_subline: "等待确认以完成交换",
         tx_in_mempool_warning: "请保持此页打开，否则兑换无法完成！",
         invoice_pending: "收到交易，正在支付发票。",
+        invoice_pending_pro:
+            "收到交易，发票已排队。在某些情况下，兑换可能会被取消。",
         invoice_expired: "发票已过期，请重试！",
         create_invoice_webln: "通过WebLN创建发票",
         pay_invoice_webln: "通过WebLN支付发票",
@@ -2283,6 +2293,8 @@ const dict = {
             "ページを開いたままにしないと、スワップは完了しません！",
         invoice_pending:
             "トランザクションを受け取りました。インボイスを支払っています",
+        invoice_pending_pro:
+            "トランザクションを受け取りました。インボイスはキューに入りました。場合によっては、スワップがキャンセルされることがあります。",
         invoice_expired:
             "インボイスの有効期限が切れました。もう一度試してください",
         create_invoice_webln: "WebLNを使用してインボイスを作成",
