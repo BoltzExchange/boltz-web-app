@@ -87,7 +87,7 @@ const PayOnchain = (props: {
                 {/* Use 4 chars to display Liquid addresses, 5 for other assets */}
                 <CopyBox
                     value={props.address}
-                    groupSize={props.assetSend === LBTC ? 4 : undefined}
+                    groupSize={props.assetSend === LBTC ? 4 : 5}
                 />
                 <Show when={props.assetSend === BTC}>
                     <hr class="spacer" />
