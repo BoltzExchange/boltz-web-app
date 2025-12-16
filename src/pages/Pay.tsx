@@ -147,19 +147,37 @@ const Pay = () => {
             (swapStatus() === swapStatusPending.SwapCreated ||
                 swapStatus() === swapStatusPending.InvoiceSet);
 
-        // No need to fetch UTXO data for a reverse swap or a swap just created
-        if (isInitialSwapState || swap().type === SwapType.Reverse) {
+        const preClaimStatuses = [
+            swapStatusPending.TransactionServerMempool,
+            swapStatusPending.TransactionClaimPending,
+            swapStatusPending.InvoicePaid,
+        ];
+
+        const swapJustClaimed =
+            preClaimStatuses.includes(prevSwapStatus.value) &&
+            swapStatus() === swapStatusSuccess.TransactionClaimed;
+
+        // No need to fetch UTXO data for a reverse swap or a swaps in initial state
+        if (
+            isInitialSwapState ||
+            swapJustClaimed ||
+            swapStatus() === swapStatusPending.InvoicePaid ||
+            swapStatus() === swapStatusPending.TransactionClaimPending ||
+            swap().type === SwapType.Reverse
+        ) {
             return;
         }
 
         // We don't check the block explorer during the initial phase
         // of a swap because, more often than not, it doesn't have
         // information about the lockup transaction yet.
+        const initialStatuses = [
+            swapStatusPending.InvoiceSet,
+            swapStatusPending.SwapCreated,
+        ];
         const shouldCheckBlockExplorer =
-            swapStatus() !== swapStatusPending.InvoiceSet &&
-            prevSwapStatus.value !== swapStatusPending.InvoiceSet &&
-            swapStatus() !== swapStatusPending.SwapCreated &&
-            prevSwapStatus.value !== swapStatusPending.SwapCreated &&
+            !initialStatuses.includes(swapStatus()) &&
+            !initialStatuses.includes(prevSwapStatus.value) &&
             isRefundableSwapType(swap());
 
         try {
@@ -201,13 +219,19 @@ const Pay = () => {
                             return;
                         }
 
-                        if (waitForSwapTimeout()) {
+                        if (
+                            waitForSwapTimeout() ||
+                            Object.values(swapStatusSuccess).includes(
+                                swap().status,
+                            )
+                        ) {
                             const timeoutEta = getTimeoutEta(
                                 swap().assetSend as RefundableAssetType,
                                 timeoutBlockHeight,
                                 currentBlockHeight,
                             );
 
+                            setWaitForTimeout(true);
                             setTimeoutEta(timeoutEta);
                             setTimeoutBlockHeight(timeoutBlockHeight);
                         }

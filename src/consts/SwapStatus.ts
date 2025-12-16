@@ -1,5 +1,6 @@
 export const swapStatusPending = {
     InvoiceSet: "invoice.set",
+    InvoicePaid: "invoice.paid",
     InvoicePending: "invoice.pending",
     SwapCreated: "swap.created",
     TransactionConfirmed: "transaction.confirmed",
