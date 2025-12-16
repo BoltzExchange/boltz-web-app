@@ -11,7 +11,7 @@ import {
     isMobile,
 } from "../utils/helper";
 
-const CopyBox = (props: { value: string }) => {
+const CopyBox = (props: { value: string; groupSize?: number }) => {
     const [copyBoxActive, setCopyBoxActive] = createSignal(false);
     const baseStrLength = isMobile() ? 8 : 13;
     const maxStrLength = baseStrLength + 3; // 3 is the length of the ellipsis
@@ -25,7 +25,7 @@ const CopyBox = (props: { value: string }) => {
     };
 
     const renderAddress = () => {
-        const groups = formatAddress(props.value);
+        const groups = formatAddress(props.value, props.groupSize);
         return (
             <span>
                 <For each={groups}>

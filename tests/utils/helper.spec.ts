@@ -91,21 +91,18 @@ describe("helper", () => {
     });
 
     describe("formatAddress", () => {
-        test("should format Bitcoin address in groups of 5 characters", () => {
-            const address = "bcrt1qrhg8z3ccu8vmnz7xvwx8t92mykw6ru64k96e4v";
-            const expected = [
-                "bcrt1",
-                "qrhg8",
-                "z3ccu",
-                "8vmnz",
-                "7xvwx",
-                "8t92m",
-                "ykw6r",
-                "u64k9",
-                "6e4v",
-            ];
-            expect(formatAddress(address)).toEqual(expected);
-        });
+        test.each`
+            groupSize    | expected
+            ${undefined} | ${["bcrt1", "qrhg8", "z3ccu", "8vmnz", "7xvwx", "8t92m", "ykw6r", "u64k9", "6e4v"]}
+            ${5}         | ${["bcrt1", "qrhg8", "z3ccu", "8vmnz", "7xvwx", "8t92m", "ykw6r", "u64k9", "6e4v"]}
+            ${4}         | ${["bcrt", "1qrh", "g8z3", "ccu8", "vmnz", "7xvw", "x8t9", "2myk", "w6ru", "64k9", "6e4v"]}
+        `(
+            "should format address in groups of $groupSize characters",
+            ({ groupSize, expected }) => {
+                const address = "bcrt1qrhg8z3ccu8vmnz7xvwx8t92mykw6ru64k96e4v";
+                expect(formatAddress(address, groupSize)).toEqual(expected);
+            },
+        );
 
         test("should handle empty string", () => {
             expect(formatAddress("")).toEqual([]);
