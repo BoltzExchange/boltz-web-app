@@ -93,6 +93,7 @@ const Pay = () => {
     const [copyDestinationActive, setCopyDestinationActive] =
         createSignal(false);
     const [loading, setLoading] = createSignal<boolean>(false);
+    const [justRefunded, setJustRefunded] = createSignal<boolean>(false);
 
     const prevSwapStatus = { value: "" };
 
@@ -304,7 +305,7 @@ const Pay = () => {
             </span>
             <Show when={!loading()} fallback={<LoadingSpinner />}>
                 <Show when={swap()}>
-                    <Show when={swap().refundTx}>
+                    <Show when={swap().refundTx && justRefunded()}>
                         <p class="swap-status">
                             {t("status")}:{" "}
                             <span class="btn-small btn-success">
@@ -315,7 +316,7 @@ const Pay = () => {
                         <SwapRefunded />
                     </Show>
 
-                    <Show when={!swap().refundTx}>
+                    <Show when={!swap().refundTx || !justRefunded()}>
                         <Show when={swapStatus()} fallback={<LoadingSpinner />}>
                             <div class="swap-status">
                                 {t("status")}:
@@ -443,6 +444,7 @@ const Pay = () => {
                                                 ChainSwap | SubmarineSwap
                                             >
                                         }
+                                        onRefund={() => setJustRefunded(true)}
                                     />
                                 </Match>
                                 <Match

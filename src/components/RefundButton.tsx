@@ -33,6 +33,7 @@ export const RefundEvm = (props: {
     derivationPath?: string;
     timeoutBlockHeight: number;
     setRefundTxHash?: Setter<string>;
+    onRefund?: (refundTx: string) => void;
 }) => {
     const { setSwap } = usePayContext();
     const { getEtherSwap, signer } = useWeb3Signer();
@@ -83,6 +84,7 @@ export const RefundEvm = (props: {
                 if (props.setRefundTxHash !== undefined) {
                     props.setRefundTxHash(tx.hash);
                 }
+                props.onRefund?.(tx.hash);
 
                 if (props.swapId !== undefined) {
                     const currentSwap = await getSwap(props.swapId);
@@ -107,6 +109,7 @@ export const RefundBtc = (props: {
     setRefundTxId?: Setter<string>;
     buttonOverride?: string;
     deriveKeyFn?: deriveKeyFn;
+    onRefund?: (refundTx: string) => void;
 }) => {
     const {
         getSwap,
@@ -183,6 +186,7 @@ export const RefundBtc = (props: {
             if (props.setRefundTxId) {
                 props.setRefundTxId(refundedSwap.refundTx);
             }
+            props.onRefund?.(refundedSwap.refundTx);
 
             setRefundAddress("");
         } catch (error) {
@@ -290,6 +294,7 @@ const RefundButton = (props: {
     setRefundTxId?: Setter<string>;
     buttonOverride?: string;
     deriveKeyFn?: deriveKeyFn;
+    onRefund?: (refundTx: string) => void;
 }) => {
     const [preimageHash] = createResource(async () => {
         return (await decodeInvoice((props.swap() as SubmarineSwap).invoice))
