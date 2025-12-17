@@ -9,7 +9,7 @@ import SwapRefunded from "./SwapRefunded";
 
 const SwapExpired = () => {
     const navigate = useNavigate();
-    const { failureReason, swap } = usePayContext();
+    const { failureReason, swap, refundableUTXOs } = usePayContext();
     const { t } = useGlobalContext();
     const [refundTxId, setRefundTxId] = createSignal<string>("");
 
@@ -19,16 +19,16 @@ const SwapExpired = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <Show when={refundTxId() === ""}>
+            <Show when={refundableUTXOs().length > 0 && refundTxId() === ""}>
                 <RefundButton
                     swap={swap as Accessor<SubmarineSwap | ChainSwap>}
                     setRefundTxId={setRefundTxId}
                 />
+                <hr />
             </Show>
             <Show when={refundTxId() !== ""}>
                 <SwapRefunded />
             </Show>
-            <hr />
             <button class="btn" onClick={() => navigate("/swap")}>
                 {t("new_swap")}
             </button>
