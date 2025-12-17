@@ -24,11 +24,7 @@ import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
-import {
-    RBTC,
-    type RefundableAssetType,
-    refundableAssets,
-} from "../consts/Assets";
+import { type RefundableAssetType, refundableAssets } from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
