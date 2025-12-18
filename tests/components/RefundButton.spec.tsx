@@ -40,7 +40,6 @@ describe("RefundButton", () => {
                         swap={swap}
                         setRefundTxId={(() => "") as Setter<string>}
                     />
-                    ,
                 </>
             ),
             {
