@@ -27,7 +27,7 @@ const SwapExpired = () => {
                 <hr />
             </Show>
             <Show when={refundTxId() !== ""}>
-                <SwapRefunded />
+                <SwapRefunded refundTxId={refundTxId()} />
                 <hr />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>

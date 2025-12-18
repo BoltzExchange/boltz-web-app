@@ -25,7 +25,7 @@ const InvoiceFailedToPay = () => {
                 />
             </Show>
             <Show when={refundTxId() !== ""}>
-                <SwapRefunded />
+                <SwapRefunded refundTxId={refundTxId()} />
             </Show>
             <hr />
         </div>

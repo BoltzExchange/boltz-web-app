@@ -93,7 +93,7 @@ const Pay = () => {
     const [copyDestinationActive, setCopyDestinationActive] =
         createSignal(false);
     const [loading, setLoading] = createSignal<boolean>(false);
-    const [justRefunded, setJustRefunded] = createSignal<boolean>(false);
+    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     const prevSwapStatus = { value: "" };
 
@@ -290,6 +290,10 @@ const Pay = () => {
         () => statusOverride() || renameSwapStatus(swapStatus()),
     );
 
+    onCleanup(() => {
+        setRefundTxId("");
+    });
+
     return (
         <div data-status={status()} class="frame">
             <span class="frame-header">
@@ -305,7 +309,7 @@ const Pay = () => {
             </span>
             <Show when={!loading()} fallback={<LoadingSpinner />}>
                 <Show when={swap()}>
-                    <Show when={swap().refundTx && justRefunded()}>
+                    <Show when={refundTxId() !== ""}>
                         <p class="swap-status">
                             {t("status")}:{" "}
                             <span class="btn-small btn-success">
@@ -313,10 +317,10 @@ const Pay = () => {
                             </span>
                         </p>
                         <hr />
-                        <SwapRefunded />
+                        <SwapRefunded refundTxId={refundTxId()} />
                     </Show>
 
-                    <Show when={!swap().refundTx || !justRefunded()}>
+                    <Show when={refundTxId() === ""}>
                         <Show when={swapStatus()} fallback={<LoadingSpinner />}>
                             <div class="swap-status">
                                 {t("status")}:
@@ -425,9 +429,8 @@ const Pay = () => {
                                     when={
                                         swapStatus() ===
                                             swapStatusFailed.TransactionLockupFailed ||
-                                        (swap().type === SwapType.Chain &&
-                                            swapStatus() ===
-                                                swapStatusFailed.TransactionFailed)
+                                        swapStatus() ===
+                                            swapStatusFailed.TransactionFailed
                                     }>
                                     <TransactionLockupFailed
                                         setStatusOverride={setStatusOverride}
@@ -444,7 +447,7 @@ const Pay = () => {
                                                 ChainSwap | SubmarineSwap
                                             >
                                         }
-                                        onRefund={() => setJustRefunded(true)}
+                                        setRefundTxId={setRefundTxId}
                                     />
                                 </Match>
                                 <Match

@@ -268,7 +268,7 @@ const refundTaproot = async <T extends TransactionInterface>(
 const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
     txConstructionResponse: Awaited<ReturnType<typeof refundTaproot>>,
-): Promise<T> => {
+): Promise<string> => {
     try {
         log.debug("Broadcasting refund transaction");
         const res = await broadcastTransaction(
@@ -276,10 +276,7 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
             txConstructionResponse.transaction.toHex(),
         );
         log.debug("Refund broadcast result", res);
-        if (res.id) {
-            swap.refundTx = res.id;
-        }
-        return swap;
+        return res.id;
     } catch (e) {
         // When the uncooperative refund transaction is not ready to be broadcast yet
         // (= non-final) and the cooperative spend has been tried but failed,
@@ -297,7 +294,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
     refundAddress: string,
     transactionsToRefund: { hex: string; timeoutBlockHeight?: number }[],
     cooperative: boolean,
-): Promise<T> => {
+): Promise<string> => {
     log.info(`Refunding swap ${swap.id}: `, swap);
 
     const output = decodeAddress(swap.assetSend, refundAddress);

@@ -20,7 +20,7 @@ const RefundState = (props: {
     asset: string;
     lockupTxHash: string;
     refundData: RefundData;
-    setRefundTxHash: Setter<string | undefined>;
+    setRefundTxId: Setter<string>;
 }) => {
     const { t, denomination, separator } = useGlobalContext();
 
@@ -52,7 +52,7 @@ const RefundState = (props: {
 
             <RefundButton
                 disabled={!timelockExpired()}
-                setRefundTxHash={props.setRefundTxHash}
+                setRefundTxId={props.setRefundTxId}
                 amount={Number(props.refundData.amount)}
                 preimageHash={props.refundData.preimageHash}
                 claimAddress={props.refundData.claimAddress}
@@ -91,7 +91,7 @@ const RefundEvm = () => {
         };
     });
 
-    const [refundTxHash, setRefundTxHash] = createSignal<string | undefined>(
+    const [refundTxId, setRefundTxId] = createSignal<string | undefined>(
         undefined,
     );
 
@@ -106,7 +106,7 @@ const RefundEvm = () => {
                             {t("refund")} {cropString(params.txHash, 15, 5)}
                         </h2>
                         <Show
-                            when={refundTxHash() === undefined}
+                            when={refundTxId() === undefined}
                             fallback={
                                 <>
                                     <p>{t("refunded")}</p>
@@ -114,7 +114,7 @@ const RefundEvm = () => {
                                     <BlockExplorer
                                         typeLabel={"refund_tx"}
                                         asset={params.asset}
-                                        txId={refundTxHash()}
+                                        txId={refundTxId()}
                                     />
                                 </>
                             }>
@@ -122,7 +122,7 @@ const RefundEvm = () => {
                                 asset={params.asset}
                                 lockupTxHash={params.txHash}
                                 refundData={refundData()}
-                                setRefundTxHash={setRefundTxHash}
+                                setRefundTxId={setRefundTxId}
                             />
                         </Show>
                     </Match>

@@ -154,7 +154,7 @@ const TransactionLockupFailed = (props: {
                                 <hr />
                             </Show>
                             <Show when={refundTxId() !== ""}>
-                                <SwapRefunded />
+                                <SwapRefunded refundTxId={refundTxId()} />
                             </Show>
                         </>
                     }>
