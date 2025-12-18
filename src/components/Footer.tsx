@@ -87,18 +87,6 @@ const Footer = () => {
                 <a href="/terms">{t("terms")}</a>
                 <a href="/privacy">{t("privacy")}</a>
             </p>
-            <p class="version">
-                {t("version")}:{" "}
-                <ExternalLink
-                    href={`${config.repoUrl}/releases/tag/v${__APP_VERSION__}`}>
-                    {__APP_VERSION__}
-                </ExternalLink>
-                , {t("commithash")}:{" "}
-                <ExternalLink
-                    href={`${config.repoUrl}/commit/${__GIT_COMMIT__}`}>
-                    {__GIT_COMMIT__}
-                </ExternalLink>
-            </p>
             <p>{t("footer")}</p>
         </footer>
     );

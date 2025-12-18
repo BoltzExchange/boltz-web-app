@@ -69,10 +69,6 @@ export default defineConfig({
             },
         },
     },
-    define: {
-        __APP_VERSION__: `"${packageJson.version}"`,
-        __GIT_COMMIT__: `"${commitHash}"`,
-    },
     test: {
         globals: true,
         environment: "jsdom",
