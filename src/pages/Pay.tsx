@@ -290,10 +290,6 @@ const Pay = () => {
         () => statusOverride() || renameSwapStatus(swapStatus()),
     );
 
-    onCleanup(() => {
-        setRefundTxId("");
-    });
-
     return (
         <div data-status={status()} class="frame">
             <span class="frame-header">
