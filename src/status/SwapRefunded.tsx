@@ -4,7 +4,7 @@ import BlockExplorer from "../components/BlockExplorer";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 
-const SwapRefunded = () => {
+const SwapRefunded = (props: { refundTxId: string }) => {
     const navigate = useNavigate();
     const { swap } = usePayContext();
     const { t } = useGlobalContext();
@@ -15,7 +15,7 @@ const SwapRefunded = () => {
             <hr />
             <BlockExplorer
                 asset={swap().assetSend}
-                txId={swap().refundTx}
+                txId={props.refundTxId}
                 typeLabel="refund_tx"
             />
             <hr />

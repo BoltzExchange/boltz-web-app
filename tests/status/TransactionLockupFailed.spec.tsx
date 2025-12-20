@@ -1,6 +1,7 @@
 import { render, screen } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
 import { createSignal } from "solid-js";
+import { SwapType } from "src/consts/Enums";
 
 import { BTC, RBTC } from "../../src/consts/Assets";
 import { swapStatusFailed } from "../../src/consts/SwapStatus";
@@ -37,6 +38,7 @@ describe("TransactionLockupFailed", () => {
             payContext.setSwap({
                 assetReceive: BTC,
                 version: type,
+                type: SwapType.Chain,
             } as SomeSwap);
 
             await expect(
@@ -67,6 +69,7 @@ describe("TransactionLockupFailed", () => {
         payContext.setSwap({
             assetReceive: BTC,
             version: OutputType.Taproot,
+            type: SwapType.Chain,
         } as SomeSwap);
         payContext.setRefundableUTXOs([{ hex: "0x0" }]);
 
@@ -92,7 +95,10 @@ describe("TransactionLockupFailed", () => {
                 wrapper: contextWrapper,
             },
         );
-        payContext.setSwap({ assetReceive: RBTC } as SomeSwap);
+        payContext.setSwap({
+            assetReceive: RBTC,
+            type: SwapType.Chain,
+        } as SomeSwap);
         payContext.setRefundableUTXOs([{ hex: "0x0" }]);
 
         await expect(
@@ -130,6 +136,7 @@ describe("TransactionLockupFailed", () => {
                 assetReceive: BTC,
                 version: OutputType.Taproot,
                 status: status,
+                type: SwapType.Chain,
             } as SomeSwap);
 
             await expect(
@@ -159,10 +166,39 @@ describe("TransactionLockupFailed", () => {
             assetReceive: BTC,
             version: OutputType.Taproot,
             status: swapStatusFailed.SwapExpired,
+            type: SwapType.Chain,
         } as SomeSwap);
 
         await expect(
             screen.findByText(i18n.en.no_lockup_transaction),
         ).resolves.not.toBeUndefined();
+    });
+
+    test("should not show refund button for reverse swaps", () => {
+        // eslint-disable-next-line solid/reactivity
+        const [, setStatusOverride] = createSignal<string>();
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <TransactionLockupFailed
+                        setStatusOverride={setStatusOverride}
+                    />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        payContext.setSwap({
+            assetReceive: BTC,
+            version: OutputType.Taproot,
+            status: swapStatusFailed.SwapExpired,
+            type: SwapType.Reverse,
+        } as SomeSwap);
+
+        expect(screen.queryByText(i18n.en.no_lockup_transaction)).toBeNull();
+        expect(screen.queryByTestId("refundAddress")).toBeNull();
     });
 });

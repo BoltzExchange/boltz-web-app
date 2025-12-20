@@ -237,8 +237,9 @@ const validateRefundTransaction = async (
 test.describe("Refund", () => {
     const refundFileJson = path.join(__dirname, fileName);
 
-    test.beforeEach(async () => {
+    test.beforeEach(async ({ page }) => {
         await generateLiquidBlock();
+        await page.route("**/utxo", (route) => route.continue()); // disabling HTTP caching for UTXOs
     });
 
     test.afterEach(() => {
@@ -371,6 +372,37 @@ test.describe("Refund", () => {
             await page.reload();
             await executeRefund(page, swap.sendAsset, swapId, swap.external);
             await validateRefundTransaction(page, swap.sendAsset, address);
+        });
+    });
+
+    [
+        { swapType: SwapType.Submarine, name: "submarine" },
+        { swapType: SwapType.Chain, name: "chain" },
+    ].forEach(({ swapType, name }) => {
+        test(`Shows refund timeout ETA for LBTC ${name} swap on reload`, async ({
+            page,
+        }) => {
+            test.setTimeout(45_000);
+            await page.goto("/");
+
+            await createSwapAndGetDetails(page, swapType, LBTC);
+            await backupRescueFile(page, fileName);
+
+            const { address, sendAmount } = await getAddressAndAmount(page);
+            await performLiquidInitialPayment(address, sendAmount);
+
+            await expect(
+                page.locator("div[data-status='transaction.claimed']"),
+            ).toBeVisible({ timeout: 5_000 });
+            await waitForUTXOs(LBTC, address, 0);
+            await elementsSendToAddress(address, sendAmount);
+            await elementsSendToAddress(address, sendAmount);
+            await waitForUTXOs(LBTC, address, 2);
+            await generateLiquidBlock();
+            await page.reload();
+            await expect(
+                page.locator("div[data-status='swap.waitingForRefund']"),
+            ).toBeVisible({ timeout: 5_000 });
         });
     });
 });

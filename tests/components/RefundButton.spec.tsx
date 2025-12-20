@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 import { OutputType } from "boltz-core";
-import { createSignal } from "solid-js";
+import { type Setter, createSignal } from "solid-js";
 
 import RefundButton from "../../src/components/RefundButton";
 import { BTC, LN } from "../../src/consts/Assets";
@@ -11,9 +11,17 @@ import { TestComponent, contextWrapper, payContext } from "../helper";
 describe("RefundButton", () => {
     test("should render RefundButton", () => {
         const [swap] = createSignal(null);
-        render(() => <RefundButton swap={swap} />, {
-            wrapper: contextWrapper,
-        });
+        render(
+            () => (
+                <RefundButton
+                    swap={swap}
+                    setRefundTxId={(() => "") as Setter<string>}
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
     });
 
     test("button should be active after pasting valid address", async () => {
@@ -28,7 +36,10 @@ describe("RefundButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RefundButton swap={swap} />,
+                    <RefundButton
+                        swap={swap}
+                        setRefundTxId={(() => "") as Setter<string>}
+                    />
                 </>
             ),
             {
@@ -72,7 +83,11 @@ describe("RefundButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RefundButton swap={swap} />,
+                    <RefundButton
+                        swap={swap}
+                        setRefundTxId={(() => "") as Setter<string>}
+                    />
+                    ,
                 </>
             ),
             {
@@ -109,7 +124,11 @@ describe("RefundButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <RefundButton swap={swap} />,
+                    <RefundButton
+                        swap={swap}
+                        setRefundTxId={(() => "") as Setter<string>}
+                    />
+                    ,
                 </>
             ),
             {

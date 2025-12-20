@@ -10,6 +10,7 @@ import {
     createSignal,
     onCleanup,
 } from "solid-js";
+import { isRefundableSwapType } from "src/utils/rescue";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
@@ -33,6 +34,7 @@ import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { parseBlindingKey } from "../utils/helper";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
+import SwapRefunded from "./SwapRefunded";
 
 const Amount = (props: { label: DictKey; amount: number }) => {
     const { t, denomination, separator } = useGlobalContext();
@@ -60,6 +62,7 @@ const TransactionLockupFailed = (props: {
     const { t, fetchPairs, setSwapStorage, pairs } = useGlobalContext();
     const { failureReason, swap, setSwap, setFailureReason } = usePayContext();
     const [loading, setLoading] = createSignal(false);
+    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     const [newQuote, newQuoteActions] = createResource<
         { sentAmount: number; quote: number; receiveAmount: number } | undefined
@@ -134,19 +137,29 @@ const TransactionLockupFailed = (props: {
                 <Show
                     when={newQuote() !== undefined && !quoteRejected()}
                     fallback={
-                        <div>
-                            <h2>{t("lockup_failed")}</h2>
-                            <p>
-                                {t("failure_reason")}: {failureReason()}
-                            </p>
-                            <hr />
-                            <RefundButton
-                                swap={
-                                    swap as Accessor<SubmarineSwap | ChainSwap>
-                                }
-                            />
-                            <hr />
-                        </div>
+                        <>
+                            <Show when={refundTxId() === ""}>
+                                <h2>{t("lockup_failed")}</h2>
+                                <p>
+                                    {t("failure_reason")}: {failureReason()}
+                                </p>
+                                <hr />
+                                <Show when={isRefundableSwapType(swap())}>
+                                    <RefundButton
+                                        swap={
+                                            swap as Accessor<
+                                                SubmarineSwap | ChainSwap
+                                            >
+                                        }
+                                        setRefundTxId={setRefundTxId}
+                                    />
+                                    <hr />
+                                </Show>
+                            </Show>
+                            <Show when={refundTxId() !== ""}>
+                                <SwapRefunded refundTxId={refundTxId()} />
+                            </Show>
+                        </>
                     }>
                     <div class="quote">
                         <Amount label={"sent"} amount={newQuote().sentAmount} />

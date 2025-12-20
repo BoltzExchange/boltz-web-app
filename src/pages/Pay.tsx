@@ -24,7 +24,7 @@ import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
-import { type RefundableAssetType } from "../consts/Assets";
+import { type RefundableAssetType, refundableAssets } from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
@@ -56,6 +56,7 @@ import {
     getCurrentBlockHeight,
     getRefundableUTXOs,
     getTimeoutEta,
+    hasSwapTimedOut,
     isRefundableSwapType,
 } from "../utils/rescue";
 import { type ChainSwap, type SubmarineSwap } from "../utils/swapCreator";
@@ -92,6 +93,7 @@ const Pay = () => {
     const [copyDestinationActive, setCopyDestinationActive] =
         createSignal(false);
     const [loading, setLoading] = createSignal<boolean>(false);
+    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     const prevSwapStatus = { value: "" };
 
@@ -136,6 +138,11 @@ const Pay = () => {
 
     // eslint-disable-next-line solid/reactivity
     createResource(swapStatus, async () => {
+        // no need to check UTXOs for non-refundable assets
+        if (!refundableAssets.includes(swap().assetSend)) {
+            return;
+        }
+
         const emptyPrevSwapStatus =
             prevSwapStatus.value === undefined ||
             prevSwapStatus.value === null ||
@@ -146,19 +153,37 @@ const Pay = () => {
             (swapStatus() === swapStatusPending.SwapCreated ||
                 swapStatus() === swapStatusPending.InvoiceSet);
 
-        // No need to fetch UTXO data for a reverse swap or a swap just created
-        if (isInitialSwapState || swap().type === SwapType.Reverse) {
+        const preClaimStatuses = [
+            swapStatusPending.TransactionServerMempool,
+            swapStatusPending.TransactionClaimPending,
+            swapStatusPending.InvoicePaid,
+        ];
+
+        const swapJustClaimed =
+            preClaimStatuses.includes(prevSwapStatus.value) &&
+            swapStatus() === swapStatusSuccess.TransactionClaimed;
+
+        // No need to fetch UTXO data for a reverse swap or a swaps in initial state
+        if (
+            isInitialSwapState ||
+            swapJustClaimed ||
+            swapStatus() === swapStatusPending.InvoicePaid ||
+            swapStatus() === swapStatusPending.TransactionClaimPending ||
+            swap().type === SwapType.Reverse
+        ) {
             return;
         }
 
         // We don't check the block explorer during the initial phase
         // of a swap because, more often than not, it doesn't have
         // information about the lockup transaction yet.
+        const initialStatuses = [
+            swapStatusPending.InvoiceSet,
+            swapStatusPending.SwapCreated,
+        ];
         const shouldCheckBlockExplorer =
-            swapStatus() !== swapStatusPending.InvoiceSet &&
-            prevSwapStatus.value !== swapStatusPending.InvoiceSet &&
-            swapStatus() !== swapStatusPending.SwapCreated &&
-            prevSwapStatus.value !== swapStatusPending.SwapCreated &&
+            !initialStatuses.includes(swapStatus()) &&
+            !initialStatuses.includes(prevSwapStatus.value) &&
             isRefundableSwapType(swap());
 
         try {
@@ -170,29 +195,49 @@ const Pay = () => {
             setRefundableUTXOs(utxos);
 
             if (utxos.length > 0) {
-                // if there are remaining UTXOs, we consider we don't have a refundTx yet
-                setSwap({ ...swap(), refundTx: "" });
+                if (isRefundableSwapType(swap()) && !timedOutRefundable()) {
+                    const timeoutBlockHeight =
+                        swap().type === SwapType.Submarine
+                            ? (swap() as SubmarineSwap).timeoutBlockHeight
+                            : (swap() as ChainSwap).lockupDetails
+                                  .timeoutBlockHeight;
 
-                if (waitForSwapTimeout()) {
                     try {
-                        const timeoutBlockHeight =
-                            swap().type === SwapType.Submarine
-                                ? (swap() as SubmarineSwap).timeoutBlockHeight
-                                : (swap() as ChainSwap).lockupDetails
-                                      .timeoutBlockHeight;
-
                         const currentBlockHeight = (
                             await getCurrentBlockHeight([swap()])
                         )?.[swap().assetSend];
 
-                        const timeoutEta = getTimeoutEta(
-                            swap().assetSend as RefundableAssetType,
-                            timeoutBlockHeight,
-                            currentBlockHeight,
-                        );
+                        if (
+                            typeof currentBlockHeight === "number" &&
+                            hasSwapTimedOut(swap(), currentBlockHeight)
+                        ) {
+                            setTimedOutRefundable(true);
+                            setWaitForTimeout(false);
+                            setTimeoutBlockHeight(timeoutBlockHeight);
+                            setTimeoutEta(0);
+                            setSwapStatus(
+                                swapStatusFailed.SwapWaitingForRefund,
+                            );
+                            setShouldIgnoreBackendStatus(true);
+                            return;
+                        }
 
-                        setTimeoutEta(timeoutEta);
-                        setTimeoutBlockHeight(timeoutBlockHeight);
+                        if (
+                            waitForSwapTimeout() ||
+                            Object.values(swapStatusSuccess).includes(
+                                swap().status,
+                            )
+                        ) {
+                            const timeoutEta = getTimeoutEta(
+                                swap().assetSend as RefundableAssetType,
+                                timeoutBlockHeight,
+                                currentBlockHeight,
+                            );
+
+                            setWaitForTimeout(true);
+                            setTimeoutEta(timeoutEta);
+                            setTimeoutBlockHeight(timeoutBlockHeight);
+                        }
                     } catch (e) {
                         log.error(
                             `failed to get uncooperative timeout ETA for swap ${swap().id}:`,
@@ -257,7 +302,7 @@ const Pay = () => {
             </span>
             <Show when={!loading()} fallback={<LoadingSpinner />}>
                 <Show when={swap()}>
-                    <Show when={swap().refundTx}>
+                    <Show when={refundTxId() !== ""}>
                         <p class="swap-status">
                             {t("status")}:{" "}
                             <span class="btn-small btn-success">
@@ -265,10 +310,10 @@ const Pay = () => {
                             </span>
                         </p>
                         <hr />
-                        <SwapRefunded />
+                        <SwapRefunded refundTxId={refundTxId()} />
                     </Show>
 
-                    <Show when={!swap().refundTx}>
+                    <Show when={refundTxId() === ""}>
                         <Show when={swapStatus()} fallback={<LoadingSpinner />}>
                             <div class="swap-status">
                                 {t("status")}:
@@ -377,9 +422,8 @@ const Pay = () => {
                                     when={
                                         swapStatus() ===
                                             swapStatusFailed.TransactionLockupFailed ||
-                                        (swap().type === SwapType.Chain &&
-                                            swapStatus() ===
-                                                swapStatusFailed.TransactionFailed)
+                                        swapStatus() ===
+                                            swapStatusFailed.TransactionFailed
                                     }>
                                     <TransactionLockupFailed
                                         setStatusOverride={setStatusOverride}
@@ -396,6 +440,7 @@ const Pay = () => {
                                                 ChainSwap | SubmarineSwap
                                             >
                                         }
+                                        setRefundTxId={setRefundTxId}
                                     />
                                 </Match>
                                 <Match
