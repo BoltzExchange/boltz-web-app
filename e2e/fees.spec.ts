@@ -6,7 +6,8 @@ const referral = "pro";
 
 test.describe("Fees", () => {
     test("should show routing fees", async ({ page }) => {
-        if (!(referral in (await getReferrals()))) {
+        const referrals = await getReferrals();
+        if (!referrals.some((r) => r.id === referral)) {
             await addReferral(referral);
         }
 

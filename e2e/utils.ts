@@ -53,10 +53,10 @@ const execCommand = async (command: string): Promise<string> => {
     }
 };
 
-const boltzCli = async (command: string): Promise<string> => {
+const boltzrCli = async (command: string): Promise<string> => {
     try {
         const { stdout, stderr } = await execAsync(
-            `docker exec boltz-backend boltz-cli --rpc.certificates /boltz-data/certificates ${command}`,
+            `docker exec boltz-backend boltzr-cli --grpc-certificates /boltz-data/certificates ${command}`,
             { shell: "/bin/bash" },
         );
 
@@ -128,7 +128,8 @@ export const getLiquidBlockHeight = async (): Promise<number> => {
 
 export const setDisableCooperativeSignatures = (
     disable: boolean,
-): Promise<string> => boltzCli(`dev-disablecooperative ${disable}`);
+): Promise<string> =>
+    boltzrCli(`dev toggle-cooperative ${disable ? "--disabled" : ""}`);
 
 export const decodeLiquidRawTransaction = (tx: string): Promise<string> =>
     execCommand(`elements-cli-sim-client decoderawtransaction "${tx}"`);
@@ -187,20 +188,23 @@ export const waitForNodesToSync = async (): Promise<void> => {
 };
 
 export const addReferral = (name: string): Promise<string> =>
-    boltzCli(`addreferral ${name} 0`);
+    boltzrCli(`referral add ${name} 0`);
 
 export const setFailedToPay = async (swapId: string): Promise<void> => {
-    await boltzCli(`setswapstatus ${swapId} invoice.failedToPay`);
+    await boltzrCli(`swap set-status ${swapId} invoice.failedToPay`);
 };
 
-export const getReferrals = async (): Promise<Record<string, unknown>> =>
-    JSON.parse(await boltzCli(`getreferrals`)) as Record<string, unknown>;
+export const getReferrals = async () =>
+    JSON.parse(await boltzrCli(`referral get`)) as Array<{
+        id: string;
+        config: Record<string, unknown> | null;
+    }>;
 
 export const setReferral = (
     name: string,
     config: Record<string, unknown>,
 ): Promise<string> =>
-    boltzCli(`setreferral ${name} '${JSON.stringify(config)}'`);
+    boltzrCli(`referral set-config ${name} '${JSON.stringify(config)}'`);
 
 export const lookupInvoiceLnd = async (
     invoice: string,

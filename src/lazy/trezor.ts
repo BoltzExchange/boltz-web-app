@@ -1,7 +1,8 @@
-import type { Address, Unsuccessful } from "@trezor/connect-web";
 import type {
+    Address,
     Response,
     SuccessWithDevice,
+    Unsuccessful,
 } from "@trezor/connect/lib/types/params";
 
 import Loader from "./Loader";

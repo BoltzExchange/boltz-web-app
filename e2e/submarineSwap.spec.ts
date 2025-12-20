@@ -101,12 +101,15 @@ test.describe("Submarine swap", () => {
     test("BTC/LN with expensive MRH doesn't use MRH", async ({ page }) => {
         await page.goto("/?ref=expensive");
 
-        if (!(await getReferrals())["expensive"]) {
-            await addReferral("expensive");
+        const referral = "expensive";
+        const referrals = await getReferrals();
+
+        if (!referrals.some((r) => r.id === referral)) {
+            await addReferral(referral);
         }
 
         // Make L-BTC/BTC chain swaps more expensive than submarine swap
-        await setReferral("expensive", {
+        await setReferral(referral, {
             pairs: {
                 "L-BTC/BTC": { premiums: { "2": { "0": 100, "1": 100 } } },
             },
