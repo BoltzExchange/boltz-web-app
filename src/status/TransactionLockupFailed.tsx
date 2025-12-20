@@ -10,6 +10,7 @@ import {
     createSignal,
     onCleanup,
 } from "solid-js";
+import { isRefundableSwapType } from "src/utils/rescue";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
@@ -143,15 +144,17 @@ const TransactionLockupFailed = (props: {
                                     {t("failure_reason")}: {failureReason()}
                                 </p>
                                 <hr />
-                                <RefundButton
-                                    swap={
-                                        swap as Accessor<
-                                            SubmarineSwap | ChainSwap
-                                        >
-                                    }
-                                    setRefundTxId={setRefundTxId}
-                                />
-                                <hr />
+                                <Show when={isRefundableSwapType(swap())}>
+                                    <RefundButton
+                                        swap={
+                                            swap as Accessor<
+                                                SubmarineSwap | ChainSwap
+                                            >
+                                        }
+                                        setRefundTxId={setRefundTxId}
+                                    />
+                                    <hr />
+                                </Show>
                             </Show>
                             <Show when={refundTxId() !== ""}>
                                 <SwapRefunded refundTxId={refundTxId()} />
