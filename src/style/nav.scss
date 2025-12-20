@@ -97,29 +97,20 @@ nav a.active {
     padding-left: 8px;
 }
 #logo-mask {
-    display: inline-block;
+    // Temporary Christmas logo
+    background-image: url(/boltz-christmas.webp);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
     width: 165px;
     height: 38px;
-    margin-left: -6px;
-    margin-right: 7px;
-    background: linear-gradient(
-        180deg,
-        var(--color-primary-lighter) 10%,
-        var(--color-primary) 90%
-    );
-    mask: url("../assets/boltz.svg") no-repeat center;
-    mask-size: contain;
-
-    /* For Safari */
-    -webkit-mask: url("../assets/boltz.svg") no-repeat center;
-    -webkit-mask-size: contain;
 }
 #logo-mask[boltz-theme="pro"] {
-    background: linear-gradient(
-        180deg,
-        var(--color-secondary-200) 10%,
-        var(--color-secondary-300) 90%
-    );
+    // Temporary Christmas logo
+    background-image: url(/boltz-pro-christmas.webp);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 #logo {
     z-index: 1;
