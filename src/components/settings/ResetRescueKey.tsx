@@ -18,6 +18,7 @@ const ResetRescueKey = () => {
         setRescueFileBackupDone,
         setSettingsMenu,
         notify,
+        setLastUsedKey,
     } = useGlobalContext();
     const { setSendAmount, setReceiveAmount } = useCreateContext();
 
@@ -38,6 +39,7 @@ const ResetRescueKey = () => {
             await clearSwaps();
             const newRescueFile = generateRescueFile();
             setRescueFile(newRescueFile);
+            setLastUsedKey(0);
             setRescueFileBackupDone(false);
             setSettingsMenu(false);
             setSendAmount(BigNumber(0));
