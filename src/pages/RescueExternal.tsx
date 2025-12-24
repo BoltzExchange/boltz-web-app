@@ -38,7 +38,7 @@ import { validateRefundFile } from "../utils/refundFile";
 import {
     RescueAction,
     createRescueList,
-    getRefundableUTXOs,
+    getRescuableUTXOs,
 } from "../utils/rescue";
 import type { RescueFile } from "../utils/rescueFile";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
@@ -70,7 +70,7 @@ const BtcLikeLegacy = (props: {
     const swap = createMemo(() => props.refundJson());
 
     createResource(swap, async (swap) => {
-        const utxos = await getRefundableUTXOs(swap);
+        const utxos = await getRescuableUTXOs(swap);
         setRefundableUTXOs(utxos);
     });
 
