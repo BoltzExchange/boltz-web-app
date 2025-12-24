@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.12](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.11..v1.8.12) - 2025-12-24
+
+### Bug Fixes
+
+- reset last used key for new rescue files (#1117) - ([4f60c89](https://github.com/BoltzExchange/boltz-web-app/commit/4f60c8918157515fb0c386d0695e27cdb1218354))
+- incorrect "waitingForRefund" status (#1119) - ([309cc3b](https://github.com/BoltzExchange/boltz-web-app/commit/309cc3bef2d718afb5ee1a406ecb9dd82e7bc0b1))
+- consider reverse swap type when auto claiming (#1120) - ([fa808e9](https://github.com/BoltzExchange/boltz-web-app/commit/fa808e9457b6253da24d0de70f0bc0b66025f4e9))
+- null exception during swap claim (#1122) - ([7e2fec0](https://github.com/BoltzExchange/boltz-web-app/commit/7e2fec018cb29d4cce4589d9cb424b34ef66f541))
+
+---
 ## [1.8.11](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.10..v1.8.11) - 2025-12-20
 
 ### Features
@@ -18,6 +28,7 @@ All notable changes to this project will be documented in this file. See [conven
 - add Blockstream App to integrations (#1109) - ([04ce41c](https://github.com/BoltzExchange/boltz-web-app/commit/04ce41c1735a6d0ead529d4430831eb293f3758b))
 - use production builds in e2e tests - ([371c077](https://github.com/BoltzExchange/boltz-web-app/commit/371c077eb50225b767e5e2d2a5009605228ef85c))
 - bump dependencies - ([d578a15](https://github.com/BoltzExchange/boltz-web-app/commit/d578a15e472bd336a4f875d0d77b9861ace58a1e))
+- bump version to v1.8.11 (#1116) - ([a09f46a](https://github.com/BoltzExchange/boltz-web-app/commit/a09f46aa46538caa506e8baf2640a120099b5cba))
 
 ### Refactoring
 
