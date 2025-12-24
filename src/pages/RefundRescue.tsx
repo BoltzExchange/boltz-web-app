@@ -25,7 +25,7 @@ import { getSwapStatus } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import {
     getCurrentBlockHeight,
-    getRefundableUTXOs,
+    getRescuableUTXOs,
     getTimeoutEta,
 } from "../utils/rescue";
 import { deriveKey } from "../utils/rescueFile";
@@ -137,7 +137,7 @@ const RefundRescue = () => {
                 // For uncooperative swaps, we don't rely on backend for status updates
                 setShouldIgnoreBackendStatus(waitForSwapTimeout());
 
-                const utxos = await getRefundableUTXOs(
+                const utxos = await getRescuableUTXOs(
                     rescuableSwap() as SomeSwap,
                 );
 

@@ -18,6 +18,12 @@ export type UTXO = {
     vout: number;
 };
 
+type SwapUTXO = {
+    hex: string;
+    id: string;
+    timeoutBlockHeight?: number;
+};
+
 type MempoolFeeEstimation = Record<
     "fastestFee" | "halfHourFee" | "hourFee" | "economyFee" | "minimumFee",
     number
@@ -186,7 +192,9 @@ export const broadcastToExplorer = async (
     return { id: txId };
 };
 
-export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
+export const getSwapUTXOs = async (
+    swap: ChainSwap | SubmarineSwap,
+): Promise<SwapUTXO[]> => {
     const address =
         swap.type === SwapType.Chain
             ? (swap as ChainSwap).lockupDetails.lockupAddress
@@ -194,17 +202,18 @@ export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
 
     const utxos = await getAddressUTXOs(swap.assetSend, address);
 
-    const rawTxs: string[] = [];
+    const rawTxs: { hex: string; id: string }[] = [];
 
     for (const utxo of utxos) {
         const rawTx = await getRawTransaction(swap.assetSend, utxo.txid);
-        rawTxs.push(rawTx);
+        rawTxs.push({ hex: rawTx, id: utxo.txid });
     }
 
     return rawTxs.map((rawTx) => {
         if (refundableAssets.includes(swap.assetSend)) {
             return {
-                hex: rawTx,
+                id: rawTx.id,
+                hex: rawTx.hex,
                 // Important to know if the swap has timed out or not
                 timeoutBlockHeight:
                     swap.type === SwapType.Chain
@@ -213,7 +222,7 @@ export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
             };
         }
 
-        return { hex: rawTx };
+        return { hex: rawTx.hex, id: rawTx.id };
     });
 };
 
