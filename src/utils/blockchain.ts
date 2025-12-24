@@ -18,6 +18,12 @@ export type UTXO = {
     vout: number;
 };
 
+type SwapUTXO = {
+    hex: string;
+    id: string;
+    timeoutBlockHeight?: number;
+};
+
 type MempoolFeeEstimation = Record<
     "fastestFee" | "halfHourFee" | "hourFee" | "economyFee" | "minimumFee",
     number
@@ -186,7 +192,9 @@ export const broadcastToExplorer = async (
     return { id: txId };
 };
 
-export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
+export const getSwapUTXOs = async (
+    swap: ChainSwap | SubmarineSwap,
+): Promise<SwapUTXO[]> => {
     const address =
         swap.type === SwapType.Chain
             ? (swap as ChainSwap).lockupDetails.lockupAddress
@@ -214,7 +222,7 @@ export const getSwapUTXOs = async (swap: ChainSwap | SubmarineSwap) => {
             };
         }
 
-        return { hex: rawTx.hex };
+        return { hex: rawTx.hex, id: rawTx.id };
     });
 };
 
