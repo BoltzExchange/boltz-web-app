@@ -10,13 +10,13 @@ import {
     swapStatusSuccess,
 } from "../../src/consts/SwapStatus";
 import Pay from "../../src/pages/Pay";
+import { getSwapUTXOs } from "../../src/utils/blockchain";
 import {
     getLockupTransaction,
     getSwapStatus,
 } from "../../src/utils/boltzClient";
 import {
     getCurrentBlockHeight,
-    getRefundableUTXOs,
     getTimeoutEta,
     hasSwapTimedOut,
     isRefundableSwapType,
@@ -33,8 +33,14 @@ vi.mock("../../src/utils/boltzClient", () => ({
     getSwapStatus: vi.fn(),
     getLockupTransaction: vi.fn(),
 }));
+vi.mock("../../src/utils/blockchain", async () => {
+    const actual = await vi.importActual("../../src/utils/blockchain");
+    return {
+        ...actual,
+        getSwapUTXOs: vi.fn(),
+    };
+});
 vi.mock("../../src/utils/rescue", () => ({
-    getRefundableUTXOs: vi.fn(),
     getCurrentBlockHeight: vi.fn(),
     getTimeoutEta: vi.fn(),
     hasSwapTimedOut: vi.fn(),
@@ -44,7 +50,7 @@ const mockGetSwapStatus = vi.mocked(getSwapStatus);
 mockGetSwapStatus.mockResolvedValue({
     status: swapStatusFailed.TransactionRefunded,
 });
-const mockGetRefundableUTXOs = vi.mocked(getRefundableUTXOs);
+const mockGetSwapUTXOs = vi.mocked(getSwapUTXOs);
 const mockGetLockupTransaction = vi.mocked(getLockupTransaction);
 const mockGetCurrentBlockHeight = vi.mocked(getCurrentBlockHeight);
 const mockGetTimeoutEta = vi.mocked(getTimeoutEta);
@@ -248,7 +254,7 @@ describe("Pay", () => {
                 payContext.setSwapStatus(swapStatusPending.SwapCreated);
             }
 
-            expect(mockGetRefundableUTXOs).not.toHaveBeenCalled();
+            expect(mockGetSwapUTXOs).not.toHaveBeenCalled();
             expect(mockGetLockupTransaction).not.toHaveBeenCalled();
         },
     );
@@ -261,10 +267,23 @@ describe("Pay", () => {
             state: { waitForSwapTimeout: true },
         } as ReturnType<typeof useLocation>);
 
-        mockGetRefundableUTXOs.mockResolvedValue([
-            { hex: "mock-utxo-hex-1" },
-            { hex: "mock-utxo-hex-2" },
+        mockGetSwapUTXOs.mockResolvedValue([
+            {
+                id: "mock-tx-id-1",
+                hex: "mock-utxo-hex-1",
+                timeoutBlockHeight: 800000,
+            },
+            {
+                id: "mock-tx-id-2",
+                hex: "mock-utxo-hex-2",
+                timeoutBlockHeight: 800000,
+            },
         ]);
+        mockGetLockupTransaction.mockResolvedValue({
+            id: "lockup-tx-id",
+            hex: "lockup-tx-hex",
+            timeoutBlockHeight: 800000,
+        });
 
         mockGetCurrentBlockHeight.mockResolvedValue({ "L-BTC": 799500 });
         mockGetTimeoutEta.mockReturnValue(timeoutEta);
@@ -296,7 +315,18 @@ describe("Pay", () => {
     });
 
     test("should show refund button automatically when swap has timed out with UTXOs", async () => {
-        mockGetRefundableUTXOs.mockResolvedValue([{ hex: "mock-utxo-hex-1" }]);
+        mockGetSwapUTXOs.mockResolvedValue([
+            {
+                id: "mock-tx-id-1",
+                hex: "mock-utxo-hex-1",
+                timeoutBlockHeight: 800000,
+            },
+        ]);
+        mockGetLockupTransaction.mockResolvedValue({
+            id: "lockup-tx-id",
+            hex: "lockup-tx-hex",
+            timeoutBlockHeight: 800000,
+        });
 
         mockGetCurrentBlockHeight.mockResolvedValue({ "L-BTC": 800001 });
         mockGetTimeoutEta.mockReturnValue(0);
