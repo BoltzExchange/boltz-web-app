@@ -162,7 +162,8 @@ const PayProvider = (props: { children: JSX.Element }) => {
         }
 
         if (
-            (zeroConf() &&
+            (currentSwap.type === SwapType.Reverse &&
+                zeroConf() &&
                 data.status === swapStatusPending.TransactionMempool) || // necessary for the autoclaim when zeroConf is toggled with a pending swap
             data.status === swapStatusSuccess.InvoiceSettled
         ) {
