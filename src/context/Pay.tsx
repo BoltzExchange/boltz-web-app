@@ -204,7 +204,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
                 claimedSwap.claimTx = res.claimTx;
                 await setSwapStorage(claimedSwap);
 
-                if (claimedSwap.id === swap().id) {
+                if (claimedSwap.id === swap()?.id) {
                     setSwap(claimedSwap);
                 }
                 notify(
