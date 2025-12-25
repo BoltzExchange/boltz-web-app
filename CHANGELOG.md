@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.13](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.12..v1.8.13) - 2025-12-25
+
+### Bug Fixes
+
+- dont filter out lockup tx on failed swap - ([f1c7344](https://github.com/BoltzExchange/boltz-web-app/commit/f1c7344d56a3478383b80b655344c3e42e4ee2b6))
+
+### Tests
+
+- **(e2e)** refund all utxos of a failed submarine swap - ([a81fd2b](https://github.com/BoltzExchange/boltz-web-app/commit/a81fd2b9a9ee3e44dc2465875511f4fb7544182f))
+
+---
 ## [1.8.12](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.11..v1.8.12) - 2025-12-24
 
 ### Bug Fixes
@@ -11,6 +22,10 @@ All notable changes to this project will be documented in this file. See [conven
 - incorrect "waitingForRefund" status (#1119) - ([309cc3b](https://github.com/BoltzExchange/boltz-web-app/commit/309cc3bef2d718afb5ee1a406ecb9dd82e7bc0b1))
 - consider reverse swap type when auto claiming (#1120) - ([fa808e9](https://github.com/BoltzExchange/boltz-web-app/commit/fa808e9457b6253da24d0de70f0bc0b66025f4e9))
 - null exception during swap claim (#1122) - ([7e2fec0](https://github.com/BoltzExchange/boltz-web-app/commit/7e2fec018cb29d4cce4589d9cb424b34ef66f541))
+
+### Miscellaneous Chores
+
+- bump version to v1.8.12 (#1121) - ([bd652ad](https://github.com/BoltzExchange/boltz-web-app/commit/bd652ad9a3ec97665cb3c364b931ce5bdbbb1ca9))
 
 ---
 ## [1.8.11](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.10..v1.8.11) - 2025-12-20
