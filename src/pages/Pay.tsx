@@ -116,6 +116,14 @@ const Pay = () => {
         const utxos =
             utxosResult.status === "fulfilled" ? utxosResult.value : null;
 
+        if (Object.values(swapStatusFailed).includes(swapStatus())) {
+            if (!utxos && lockupTx) {
+                return [lockupTx]; // if block explorers are down, we attempt to refund the lockup tx
+            }
+
+            return utxos || []; // else we consider block explorers as source of truth
+        }
+
         // to avoid the racing condition where WebApp has broadcast the claim tx for the lockup address
         // but it hasn't reached block explorers yet
         if (utxos?.length === 1 && utxos[0].id === lockupTx?.id) {
