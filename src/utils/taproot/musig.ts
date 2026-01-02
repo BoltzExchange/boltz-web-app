@@ -7,7 +7,7 @@ import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
 import { randomBytes } from "crypto";
 import type { ECPairInterface } from "ecpair";
-import type { Transaction as LiquidTransaction } from "liquidjs-lib";
+import { type Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { LBTC } from "../../consts/Assets";

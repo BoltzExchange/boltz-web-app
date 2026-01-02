@@ -516,6 +516,41 @@ export const getSubmarinePreimage = (id: string) =>
 export const getRestorableSwaps = (xpub: string) =>
     fetcher<RestorableSwap[]>(`/v2/swap/restore`, { xpub }, null, 30_000);
 
+export const assetRescueSetup = (
+    asset: string,
+    swapId: string,
+    transactionId: string,
+    vout: number,
+    destination: string,
+) =>
+    fetcher<{
+        musig: {
+            serverPublicKey: string;
+            pubNonce: string;
+            message: string;
+        };
+        transaction: string;
+    }>(`/v2/asset/${asset}/rescue/setup`, {
+        swapId,
+        transactionId,
+        vout,
+        destination,
+    });
+
+export const assetRescueBroadcast = (
+    asset: string,
+    swapId: string,
+    pubNonce: Buffer,
+    partialSignature: Buffer,
+) =>
+    fetcher<{
+        transactionId: string;
+    }>(`/v2/asset/${asset}/rescue/broadcast`, {
+        swapId,
+        pubNonce: pubNonce.toString("hex"),
+        partialSignature: partialSignature.toString("hex"),
+    });
+
 export {
     Pairs,
     Contracts,

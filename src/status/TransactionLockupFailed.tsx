@@ -13,7 +13,7 @@ import {
 import { isRefundableSwapType } from "src/utils/rescue";
 
 import LoadingSpinner from "../components/LoadingSpinner";
-import RefundButton from "../components/RefundButton";
+import RefundButton, { incorrectAssetError } from "../components/RefundButton";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -111,7 +111,11 @@ const TransactionLockupFailed = (props: {
             log.warn(
                 `Getting new quote for swap ${swap().id} failed: ${formatError(e)}`,
             );
-            setFailureReason(formatError(e));
+
+            // We use that specific error to determine the refund type
+            if (failureReason() !== incorrectAssetError) {
+                setFailureReason(formatError(e));
+            }
         }
 
         return undefined;
