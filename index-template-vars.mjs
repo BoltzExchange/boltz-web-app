@@ -14,7 +14,6 @@ const config = {
         boltzColor100: "#FFE96D",
         boltzColor200: "#E1C218",
         backgroundColor: "#142840",
-        christmasLogoPath: "public/boltz-christmas.webp",
         assetsPath: "",
         ldJson: {
             "@context": "https://schema.org",
@@ -43,7 +42,6 @@ const config = {
         boltzColor200: "#9fa8b1",
         backgroundColor: "#14191e",
         assetsPath: "/pro",
-        christmasLogoPath: "public/boltz-pro-christmas.webp",
         ldJson: {
             "@context": "https://schema.org",
             "@type": "WebApplication",
