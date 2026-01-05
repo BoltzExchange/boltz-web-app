@@ -45,6 +45,7 @@ const Products = () => {
                             {(product) => (
                                 <a
                                     class="product-item-body card fadeUp"
+                                    data-testid={`product-card-${product.id}`}
                                     data-type={product.id}
                                     href={product.href}>
                                     <h4>{product.title}</h4>
