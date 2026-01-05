@@ -35,7 +35,7 @@ const execCommandBackground = (command: string): void => {
     child.unref();
 };
 
-const execCommand = async (command: string): Promise<string> => {
+export const execCommand = async (command: string): Promise<string> => {
     try {
         const { stdout, stderr } = await execAsync(
             `${executeInScriptsContainer}${command}"`,

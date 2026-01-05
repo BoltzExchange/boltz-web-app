@@ -28,6 +28,8 @@ import {
 } from "./blockchain";
 import type { TransactionInterface } from "./boltzClient";
 import {
+    assetRescueBroadcast,
+    assetRescueSetup,
     broadcastTransaction,
     getLockupTransaction,
     getPartialRefundSignature,
@@ -57,6 +59,12 @@ export enum RescueAction {
     Refund = "refund",
     Pending = "pending",
     Failed = "failed",
+}
+
+export const enum RefundType {
+    Cooperative = "cooperative",
+    Uncooperative = "uncooperative",
+    AssetRescue = "assetRescue",
 }
 
 export const RescueNoAction = [
@@ -288,32 +296,99 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
     }
 };
 
+const assetRescueRefund = async <T extends SubmarineSwap | ChainSwap>(
+    swap: T,
+    privateKey: ECPairInterface,
+    refundAddress: string,
+    transactionsToRefund: TransactionInterface[],
+) => {
+    if (swap.assetSend !== LBTC) {
+        throw new Error("Asset rescue refund is only supported for L-BTC");
+    }
+
+    if (transactionsToRefund.length !== 1) {
+        throw new Error("Asset rescue refund requires exactly one transaction");
+    }
+    const transaction = transactionsToRefund[0];
+
+    const theirPublicKey =
+        swap.type === SwapType.Submarine
+            ? (swap as SubmarineSwap).claimPublicKey
+            : (swap as ChainSwap).lockupDetails.serverPublicKey;
+    const lockupTree =
+        swap.type === SwapType.Submarine
+            ? (swap as SubmarineSwap).swapTree
+            : (swap as ChainSwap).lockupDetails.swapTree;
+
+    const swapTree = SwapTreeSerializer.deserializeSwapTree(lockupTree);
+    const boltzPublicKey = Buffer.from(theirPublicKey, "hex");
+    const musig = await createMusig(privateKey, boltzPublicKey);
+    const tweakedKey = tweakMusig(swap.assetSend, musig, swapTree.tree);
+
+    const output = detectSwap(tweakedKey, transaction);
+
+    const setup = await assetRescueSetup(
+        swap.assetSend,
+        swap.id,
+        transaction.getId(),
+        output.vout,
+        refundAddress,
+    );
+
+    musig.aggregateNonces([
+        [boltzPublicKey, Buffer.from(setup.musig.pubNonce, "hex")],
+    ]);
+    musig.initializeSession(Buffer.from(setup.musig.message, "hex"));
+
+    const partialSignature = musig.signPartial();
+    const res = await assetRescueBroadcast(
+        swap.assetSend,
+        swap.id,
+        Buffer.from(musig.getPublicNonce()),
+        Buffer.from(partialSignature),
+    );
+    log.info("Asset rescue broadcast result", res);
+
+    return res.transactionId;
+};
+
 export const refund = async <T extends SubmarineSwap | ChainSwap>(
     deriveKey: deriveKeyFn,
     swap: T,
     refundAddress: string,
     transactionsToRefund: { hex: string; timeoutBlockHeight?: number }[],
-    cooperative: boolean,
+    type: RefundType,
 ): Promise<string> => {
-    log.info(`Refunding swap ${swap.id}: `, swap);
-
-    const output = decodeAddress(swap.assetSend, refundAddress);
-
-    const feePerVbyte = await getFeeEstimationsFailover(swap.assetSend);
+    log.info(`${type} refunding swap ${swap.id}: `, swap);
 
     const transactions = transactionsToRefund.map((transactionToRefund) =>
         getTransaction(swap.assetSend).fromHex(transactionToRefund.hex),
     );
-
-    const timeoutBlockHeight = transactionsToRefund.find(
-        (tx) => typeof tx.timeoutBlockHeight === "number",
-    )?.timeoutBlockHeight;
 
     const privateKey = parsePrivateKey(
         deriveKey,
         swap.refundPrivateKeyIndex,
         swap.refundPrivateKey,
     );
+
+    if (type === RefundType.AssetRescue) {
+        return await assetRescueRefund(
+            swap,
+            privateKey,
+            refundAddress,
+            transactions,
+        );
+    }
+
+    const output = decodeAddress(swap.assetSend, refundAddress);
+
+    const feePerVbyte = await getFeeEstimationsFailover(swap.assetSend);
+
+    const validTimeouts = transactionsToRefund
+        .filter((tx) => typeof tx.timeoutBlockHeight === "number")
+        .map((tx) => tx.timeoutBlockHeight);
+    const timeoutBlockHeight =
+        validTimeouts.length > 0 ? Math.max(...validTimeouts) : undefined;
 
     let refundTransaction: Awaited<ReturnType<typeof refundTaproot>>;
 
@@ -324,7 +399,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             privateKey,
             output,
             feePerVbyte,
-            cooperative,
+            type === RefundType.Cooperative,
             timeoutBlockHeight,
         );
     } else {
