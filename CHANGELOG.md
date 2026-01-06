@@ -3,11 +3,30 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.14](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.13..v1.8.14) - 2026-01-06
+
+### Features
+
+- asset refund support (#1128) - ([63ab71e](https://github.com/BoltzExchange/boltz-web-app/commit/63ab71e5b5ac65bd46e9acdbd35ca49bc73ac3ae))
+
+### Miscellaneous Chores
+
+- revert "feat: add santa hat to Boltz logo (#1115)" (#1129) - ([70e2302](https://github.com/BoltzExchange/boltz-web-app/commit/70e2302a1d8cb9ea0fec4b42ec17d60278078309))
+
+### Tests
+
+- products page (#1130) - ([149032c](https://github.com/BoltzExchange/boltz-web-app/commit/149032cdd45426cd96d96d9bdc399a038c62b705))
+
+---
 ## [1.8.13](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.12..v1.8.13) - 2025-12-25
 
 ### Bug Fixes
 
 - dont filter out lockup tx on failed swap - ([f1c7344](https://github.com/BoltzExchange/boltz-web-app/commit/f1c7344d56a3478383b80b655344c3e42e4ee2b6))
+
+### Miscellaneous Chores
+
+- bump version to v1.8.13 (#1127) - ([e82bc4e](https://github.com/BoltzExchange/boltz-web-app/commit/e82bc4e28441944d7b434cdcecd40893cc3b9d95))
 
 ### Tests
 
