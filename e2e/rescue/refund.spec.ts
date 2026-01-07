@@ -360,6 +360,109 @@ test.describe("Refund", () => {
     });
 
     [
+        {
+            sendAsset: BTC,
+            type: SwapType.Submarine,
+            paymentAmount: "0.00001",
+            paymentType: "underpayment",
+            viaRescue: false,
+        },
+        {
+            sendAsset: BTC,
+            type: SwapType.Submarine,
+            paymentAmount: "1",
+            paymentType: "overpayment",
+            viaRescue: true,
+        },
+        {
+            sendAsset: BTC,
+            type: SwapType.Chain,
+            paymentAmount: "0.00001",
+            paymentType: "underpayment",
+            viaRescue: false,
+        },
+        {
+            sendAsset: BTC,
+            type: SwapType.Chain,
+            paymentAmount: "1",
+            paymentType: "overpayment",
+            viaRescue: true,
+        },
+        {
+            sendAsset: LBTC,
+            type: SwapType.Submarine,
+            paymentAmount: "0.00001",
+            paymentType: "underpayment",
+            viaRescue: false,
+        },
+        {
+            sendAsset: LBTC,
+            type: SwapType.Submarine,
+            paymentAmount: "1",
+            paymentType: "overpayment",
+            viaRescue: true,
+        },
+        {
+            sendAsset: LBTC,
+            type: SwapType.Chain,
+            paymentAmount: "0.00001",
+            paymentType: "underpayment",
+            viaRescue: false,
+        },
+        {
+            sendAsset: LBTC,
+            type: SwapType.Chain,
+            paymentAmount: "1",
+            paymentType: "overpayment",
+            viaRescue: true,
+        },
+    ].forEach(({ sendAsset, type, paymentAmount, paymentType, viaRescue }) => {
+        test(`Refund transaction.lockupFailed due to ${paymentType} for ${sendAsset} ${type} swap${viaRescue ? " via Rescue" : ""}`, async ({
+            page,
+        }) => {
+            await page.goto("/");
+
+            await createSwapAndGetDetails(page, type, sendAsset);
+            await backupRescueFile(page, fileName);
+
+            const { address } = await getAddressAndAmount(page);
+            const swapId = viaRescue ? getCurrentSwapId(page) : undefined;
+
+            const sendPayment =
+                sendAsset === BTC
+                    ? bitcoinSendToAddress
+                    : elementsSendToAddress;
+            await sendPayment(address, paymentAmount);
+
+            const generateBlock =
+                sendAsset === BTC ? generateBitcoinBlock : generateLiquidBlock;
+            await generateBlock();
+            await waitForNodesToSync();
+
+            await expect(
+                page.getByText("transaction.lockupFailed"),
+            ).toBeVisible({
+                timeout: 15_000,
+            });
+
+            await waitForUTXOs(sendAsset as AssetType, address, 1);
+
+            if (viaRescue) {
+                await navigateToSwapRescue(page, swapId);
+            }
+
+            const refundAddress =
+                sendAsset === BTC
+                    ? await getBitcoinAddress()
+                    : await getLiquidAddress();
+            await page.getByTestId("refundAddress").fill(refundAddress);
+            await page.getByTestId("refundButton").click();
+
+            await validateRefundTransaction(page, sendAsset, address);
+        });
+    });
+
+    [
         { sendAsset: BTC, type: SwapType.Chain, external: false },
         { sendAsset: BTC, type: SwapType.Submarine, external: false },
         { sendAsset: BTC, type: SwapType.Chain, external: true },
