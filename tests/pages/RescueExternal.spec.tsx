@@ -265,6 +265,8 @@ describe("RescueExternal", () => {
                         }),
                 );
 
+                mockGetRestorableSwaps.mockResolvedValueOnce([]);
+
                 render(
                     () => (
                         <>
