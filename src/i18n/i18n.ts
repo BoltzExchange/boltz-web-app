@@ -434,7 +434,7 @@ const dict = {
         display: "Display",
         security: "Security",
         failed: "Failed",
-        swaps_found: "Scanning for restorable swaps ({{ count }} found)",
+        swaps_found: "Scanning for rescuable swaps ({{ count }} found)",
     },
     de: {
         language: "Deutsch",
