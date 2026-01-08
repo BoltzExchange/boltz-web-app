@@ -434,6 +434,9 @@ const dict = {
         display: "Display",
         security: "Security",
         failed: "Failed",
+        swaps_found: "Scanning for restorable swaps ({{ count }} found)",
+        error_fetching_restorable_swaps:
+            "Could not fetch restorable swaps, please try again later",
     },
     de: {
         language: "Deutsch",

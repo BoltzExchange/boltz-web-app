@@ -513,8 +513,16 @@ export const acceptChainSwapNewQuote = (id: string, amount: number) =>
 export const getSubmarinePreimage = (id: string) =>
     fetcher<{ preimage: string }>(`/v2/swap/submarine/${id}/preimage`);
 
-export const getRestorableSwaps = (xpub: string) =>
-    fetcher<RestorableSwap[]>(`/v2/swap/restore`, { xpub }, null, 30_000);
+export const getRestorableSwaps = (
+    xpub: string,
+    pagination?: { startIndex: number; limit: number },
+) =>
+    fetcher<RestorableSwap[]>(
+        `/v2/swap/restore`,
+        { xpub, pagination },
+        null,
+        30_000,
+    );
 
 export const assetRescueSetup = (
     asset: string,

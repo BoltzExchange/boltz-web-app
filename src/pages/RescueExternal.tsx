@@ -29,7 +29,7 @@ import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
-import { getRestorableSwaps } from "../utils/boltzClient";
+import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData } from "../utils/contractLogs";
 import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
@@ -94,7 +94,7 @@ const BtcLikeLegacy = (props: {
             </Show>
             <Show when={refundTxId() !== ""}>
                 <hr />
-                <p>{t("refunded")}</p>
+                <p class="frame-text">{t("refunded")}</p>
                 <hr />
                 <BlockExplorer
                     typeLabel={"refund_tx"}
@@ -126,9 +126,44 @@ export const RefundBtcLike = () => {
         [],
     );
     const [loading, setLoading] = createSignal(false);
+    const [loadedSwaps, setLoadedSwaps] = createSignal(0);
+
+    const fetchPaginatedSwaps = async () => {
+        let startIndex = 0;
+        const limit = 500;
+        const restorableSwaps: RestorableSwap[] = [];
+
+        while (true) {
+            try {
+                const res = await getRestorableSwaps(getXpub(refundJson()), {
+                    startIndex,
+                    limit,
+                });
+
+                if (res.length === 0) {
+                    break;
+                }
+
+                restorableSwaps.push(...res);
+                setLoadedSwaps((prev) => prev + res.length);
+
+                if (res.length < limit) {
+                    break;
+                }
+
+                startIndex += limit;
+            } catch (e) {
+                log.error("failed to get restorable swaps", formatError(e));
+                throw new Error(t("error_fetching_restorable_swaps"));
+            }
+        }
+
+        return restorableSwaps;
+    };
 
     const [rescuableSwaps] = createResource(
         () => ({ refundJson: refundJson(), type: refundType() }),
+        // eslint-disable-next-line solid/reactivity
         async (source) => {
             try {
                 if (
@@ -138,9 +173,8 @@ export const RefundBtcLike = () => {
                     return undefined;
                 }
 
-                const res = await getRestorableSwaps(
-                    getXpub(source.refundJson),
-                );
+                setLoadedSwaps(0);
+                const res = await fetchPaginatedSwaps();
                 rescueContext.setRescuableSwaps(res);
 
                 return res.map((swap) => mapSwap(swap));
@@ -194,6 +228,10 @@ export const RefundBtcLike = () => {
         const inputFile = input.files[0];
         setRefundJson(null);
         setRefundInvalid(undefined);
+        setSearchParams({
+            page: null,
+            mode: null,
+        });
 
         if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
             try {
@@ -229,7 +267,7 @@ export const RefundBtcLike = () => {
     return (
         <>
             <Show when={searchParams.mode !== rescueKeyMode}>
-                <p>{t("rescue_a_swap_subline")}</p>
+                <p class="frame-text">{t("rescue_a_swap_subline")}</p>
                 <hr />
             </Show>
             <Show when={refundType() === RefundType.Legacy}>
@@ -248,7 +286,7 @@ export const RefundBtcLike = () => {
                 </h3>
             </Show>
             <Show when={searchParams.mode === rescueKeyMode}>
-                <p>{t("rescue_a_swap_mnemonic")}</p>
+                <p class="frame-text">{t("rescue_a_swap_mnemonic")}</p>
                 <MnemonicInput
                     onSubmit={(mnemonic) => {
                         setRefundType(RefundType.Rescue);
@@ -326,7 +364,10 @@ export const RefundBtcLike = () => {
                         </div>
                     </Match>
                     <Match when={rescuableSwaps.state === "refreshing"}>
-                        <LoadingSpinner />
+                        <p class="restore-loading-progress">
+                            {t("swaps_found", { count: loadedSwaps() })}
+                        </p>
+                        <LoadingSpinner class="restore-loading-spinner" />
                     </Match>
                     <Match when={rescuableSwaps.state === "errored"}>
                         <h3 style={{ margin: "2%" }}>
@@ -335,47 +376,49 @@ export const RefundBtcLike = () => {
                     </Match>
                 </Switch>
             </Show>
-            <Show when={searchParams.mode !== rescueKeyMode}>
-                <input
-                    required
-                    type="file"
-                    id="refundUpload"
-                    data-testid="refundUpload"
-                    accept={rescueFileTypes}
-                    onChange={(e) => uploadChange(e)}
-                />
+            <Show when={rescuableSwaps.state !== "refreshing"}>
+                <Show when={searchParams.mode !== rescueKeyMode}>
+                    <input
+                        required
+                        type="file"
+                        id="refundUpload"
+                        data-testid="refundUpload"
+                        accept={rescueFileTypes}
+                        onChange={(e) => uploadChange(e)}
+                    />
+                </Show>
+                <Switch>
+                    <Match when={searchParams.mode !== rescueKeyMode}>
+                        <button
+                            class="btn btn-light"
+                            data-testid="enterMnemonicBtn"
+                            onClick={() => {
+                                setRefundType(undefined);
+                                setRefundJson(null);
+                                setRefundInvalid(undefined);
+                                rescueContext.setRescuableSwaps([]);
+                                setSearchParams({
+                                    page: null,
+                                    mode: rescueKeyMode,
+                                });
+                            }}>
+                            {t("enter_mnemonic")}
+                        </button>
+                    </Match>
+                    <Match when={searchParams.mode === rescueKeyMode}>
+                        <button
+                            class="btn btn-light"
+                            data-testid="backBtn"
+                            onClick={() => {
+                                setSearchParams({
+                                    mode: null,
+                                });
+                            }}>
+                            {t("back")}
+                        </button>
+                    </Match>
+                </Switch>
             </Show>
-            <Switch>
-                <Match when={searchParams.mode !== rescueKeyMode}>
-                    <button
-                        class="btn btn-light"
-                        data-testid="enterMnemonicBtn"
-                        onClick={() => {
-                            setRefundType(undefined);
-                            setRefundJson(null);
-                            setRefundInvalid(undefined);
-                            rescueContext.setRescuableSwaps([]);
-                            setSearchParams({
-                                page: null,
-                                mode: rescueKeyMode,
-                            });
-                        }}>
-                        {t("enter_mnemonic")}
-                    </button>
-                </Match>
-                <Match when={searchParams.mode === rescueKeyMode}>
-                    <button
-                        class="btn btn-light"
-                        data-testid="backBtn"
-                        onClick={() => {
-                            setSearchParams({
-                                mode: null,
-                            });
-                        }}>
-                        {t("back")}
-                    </button>
-                </Match>
-            </Switch>
         </>
     );
 };
@@ -439,15 +482,22 @@ export const RefundRsk = () => {
 
     return (
         <>
-            <Switch fallback={<p>{t("refund_external_explainer_rsk")}</p>}>
+            <Switch
+                fallback={
+                    <p class="frame-text">
+                        {t("refund_external_explainer_rsk")}
+                    </p>
+                }>
                 <Match when={logRefundableSwaps().length > 0}>
                     <SwapListLogs swaps={logRefundableSwaps} />
                 </Match>
                 <Match when={refundScanProgress() !== undefined}>
-                    <p>{t("refund_external_scanning_rsk")}</p>
+                    <p class="frame-text">
+                        {t("refund_external_scanning_rsk")}
+                    </p>
                 </Match>
                 <Match when={signer() !== undefined}>
-                    <p>{t("connected_wallet_no_swaps")}</p>
+                    <p class="frame-text">{t("connected_wallet_no_swaps")}</p>
                 </Match>
             </Switch>
             <hr />
