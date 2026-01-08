@@ -15,7 +15,7 @@ const RefundEta = (props: {
     return (
         <div data-testid="refund-eta">
             <h3>{t("refund_explainer")}</h3>
-            <p>
+            <p class="frame-text">
                 {t("pay_timeout_blockheight", {
                     network: getNetworkName(props.refundableAsset),
                 })}
