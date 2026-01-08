@@ -15,6 +15,32 @@ import {
     payContext,
 } from "../helper";
 
+global.fetch = vi.fn(() =>
+    Promise.resolve({
+        ok: true,
+        headers: {
+            get: (name: string) => {
+                if (name === "content-type") {
+                    return "application/json";
+                }
+                return null;
+            },
+        },
+        json: () => Promise.resolve([]),
+        text: () => Promise.resolve("[]"),
+    } as Response),
+);
+
+Object.defineProperty(global.navigator, "locks", {
+    value: {
+        request: vi.fn((_name: string, callback: () => Promise<void>) =>
+            callback(),
+        ),
+    },
+    writable: true,
+    configurable: true,
+});
+
 /* eslint-disable  require-await,@typescript-eslint/require-await,@typescript-eslint/no-explicit-any */
 
 vi.mock("../../src/utils/boltzClient", () => {
