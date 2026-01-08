@@ -1,8 +1,9 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createSignal, onMount } from "solid-js";
+import Pagination from "src/components/Pagination";
 
-import SwapList from "../components/SwapList";
+import SwapList, { sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
@@ -58,6 +59,8 @@ const History = () => {
     } = useGlobalContext();
 
     const [swaps, setSwaps] = createSignal<SomeSwap[]>([]);
+    const [currentPage, setCurrentPage] = createSignal(1);
+    const [currentSwaps, setCurrentSwaps] = createSignal<SomeSwap[]>([]);
 
     const deleteLocalStorage = async () => {
         if (confirm(t("delete_storage"))) {
@@ -148,13 +151,21 @@ const History = () => {
                         </div>
                     }>
                     <SwapList
-                        swapsSignal={swaps}
+                        swapsSignal={currentSwaps}
                         /* eslint-disable-next-line solid/reactivity */
                         onDelete={async () => {
                             setSwaps(await getSwaps());
                         }}
                         action={() => t("view")}
                         hideStatusOnMobile
+                    />
+                    <Pagination
+                        items={swaps}
+                        setDisplayedItems={(swaps) => setCurrentSwaps(swaps)}
+                        sort={sortSwaps}
+                        totalItems={swaps().length}
+                        currentPage={currentPage}
+                        setCurrentPage={setCurrentPage}
                     />
                     <Show when={swaps().length > 0}>
                         <button
