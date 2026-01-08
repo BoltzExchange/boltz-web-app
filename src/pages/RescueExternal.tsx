@@ -132,6 +132,7 @@ export const RefundBtcLike = () => {
         let startIndex = 0;
         const limit = 250;
         const restorableSwaps: RestorableSwap[] = [];
+
         setLoadedSwaps(0);
 
         while (true) {
