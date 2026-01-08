@@ -5,6 +5,8 @@ import { For, createMemo, mergeProps, onMount } from "solid-js";
 import { useGlobalContext } from "../context/Global";
 import "../style/pagination.scss";
 
+export const defaultItemsPerPage = 10;
+
 const Pagination = <T,>(initialProps: {
     items: Accessor<T[]>;
     setDisplayedItems: (items: T[]) => void;
@@ -14,7 +16,10 @@ const Pagination = <T,>(initialProps: {
     itemsPerPage?: number;
     totalItems: number;
 }) => {
-    const props = mergeProps({ itemsPerPage: 15 }, initialProps);
+    const props = mergeProps(
+        { itemsPerPage: defaultItemsPerPage },
+        initialProps,
+    );
     const { t } = useGlobalContext();
 
     const [searchParams, setSearchParams] = useSearchParams();

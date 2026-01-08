@@ -2,12 +2,14 @@ import { useNavigate } from "@solidjs/router";
 import { BiRegularTrash } from "solid-icons/bi";
 import type { Accessor } from "solid-js";
 import { For, Show, createEffect, createSignal } from "solid-js";
+import { isMobile } from "src/utils/helper";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 import type { RestorableSwap } from "../utils/boltzClient";
 import { RescueAction, RescueNoAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
+import LoadingSpinner from "./LoadingSpinner";
 import { SwapIcons } from "./SwapIcons";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
@@ -57,6 +59,7 @@ const SwapList = (props: {
     surroundingSeparators?: boolean;
     hideStatusOnMobile?: boolean;
     hideDateOnMobile?: boolean;
+    loading?: boolean;
 }) => {
     const navigate = useNavigate();
     const { deleteSwap, t, privacyMode } = useGlobalContext();
@@ -90,73 +93,87 @@ const SwapList = (props: {
         }
     };
 
-    return (
-        <div id="swaplist">
-            <Show when={props.surroundingSeparators ?? true}>
-                <hr />
-            </Show>
-            <For each={sortedSwaps()}>
-                {(swap) => (
-                    <>
-                        <div
-                            data-testid={`swaplist-item-${swap.id}`}
-                            class={`swaplist-item ${
-                                RescueNoAction.includes(swap.action)
-                                    ? "disabled"
-                                    : ""
-                            }`}
-                            onClick={() => {
-                                if (RescueNoAction.includes(swap.action)) {
-                                    return;
-                                }
+    const getListHeight = () => {
+        return {
+            "min-height": !isMobile() ? "450px" : "auto",
+        };
+    };
 
-                                if (props.onClick) {
-                                    props.onClick(swap);
-                                } else {
-                                    navigate(`/swap/${swap.id}`);
-                                }
-                            }}>
-                            <a
-                                class={`btn-small ${props.hideStatusOnMobile ? "hidden-mobile" : ""}`}
-                                href="#">
-                                {props.action(swap)}
-                            </a>
-                            <SwapIcons swap={swap} />
-                            <span class="swaplist-asset-id">
-                                {t("id")}:&nbsp;
-                                <Show
-                                    when={!privacyMode()}
-                                    fallback={hiddenInformation}>
-                                    <span class="monospace">{swap.id}</span>
-                                </Show>
-                            </span>
-                            <span
-                                class={`swaplist-asset-date ${props.hideDateOnMobile ? "hidden-mobile" : ""}`}>
-                                {t("created")}:&nbsp;
-                                <span class="monospace">
-                                    {formatDate(getSwapDate(swap))}
+    return (
+        <Show
+            when={!props.loading}
+            fallback={
+                <div class="center" style={getListHeight()}>
+                    <LoadingSpinner />
+                </div>
+            }>
+            <div id="swaplist" style={getListHeight()}>
+                <Show when={props.surroundingSeparators ?? true}>
+                    <hr />
+                </Show>
+                <For each={sortedSwaps()}>
+                    {(swap) => (
+                        <>
+                            <div
+                                data-testid={`swaplist-item-${swap.id}`}
+                                class={`swaplist-item ${
+                                    RescueNoAction.includes(swap.action)
+                                        ? "disabled"
+                                        : ""
+                                }`}
+                                onClick={() => {
+                                    if (RescueNoAction.includes(swap.action)) {
+                                        return;
+                                    }
+
+                                    if (props.onClick) {
+                                        props.onClick(swap);
+                                    } else {
+                                        navigate(`/swap/${swap.id}`);
+                                    }
+                                }}>
+                                <a
+                                    class={`btn-small ${props.hideStatusOnMobile ? "hidden-mobile" : ""}`}
+                                    href="#">
+                                    {props.action(swap)}
+                                </a>
+                                <SwapIcons swap={swap} />
+                                <span class="swaplist-asset-id">
+                                    {t("id")}:&nbsp;
+                                    <Show
+                                        when={!privacyMode()}
+                                        fallback={hiddenInformation}>
+                                        <span class="monospace">{swap.id}</span>
+                                    </Show>
                                 </span>
-                            </span>
-                            <Show when={props.onDelete !== undefined}>
                                 <span
-                                    class="btn-small btn-danger hidden-mobile"
-                                    onClick={(e) =>
-                                        deleteSwapAction(e, swap.id)
-                                    }>
-                                    <BiRegularTrash size={14} />
+                                    class={`swaplist-asset-date ${props.hideDateOnMobile ? "hidden-mobile" : ""}`}>
+                                    {t("created")}:&nbsp;
+                                    <span class="monospace">
+                                        {formatDate(getSwapDate(swap))}
+                                    </span>
                                 </span>
+                                <Show when={props.onDelete !== undefined}>
+                                    <span
+                                        class="btn-small btn-danger hidden-mobile"
+                                        onClick={(e) =>
+                                            deleteSwapAction(e, swap.id)
+                                        }>
+                                        <BiRegularTrash size={14} />
+                                    </span>
+                                </Show>
+                            </div>
+                            <Show when={lastSwap() !== swap}>
+                                <hr />
                             </Show>
-                        </div>
-                        <Show when={lastSwap() !== swap}>
-                            <hr />
-                        </Show>
-                    </>
-                )}
-            </For>
-            <Show when={props.surroundingSeparators ?? true}>
-                <hr />
-            </Show>
-        </div>
+                        </>
+                    )}
+                </For>
+                <Show when={props.surroundingSeparators ?? true}>
+                    <hr />
+                </Show>
+            </div>
+        </Show>
     );
 };
 

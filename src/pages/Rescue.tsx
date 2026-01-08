@@ -1,19 +1,15 @@
 import { useNavigate } from "@solidjs/router";
 import { Show, createResource, createSignal } from "solid-js";
 
-import LoadingSpinner from "../components/LoadingSpinner";
 import Pagination from "../components/Pagination";
 import SwapList, { type Swap, sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { type tFn, useGlobalContext } from "../context/Global";
 import "../style/tabs.scss";
-import { isMobile } from "../utils/helper";
 import { RescueAction, createRescueList } from "../utils/rescue";
 import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
-
-const swapsPerPage = 10;
 
 export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
     switch (swap.action) {
@@ -54,12 +50,6 @@ const Rescue = () => {
         },
     );
 
-    const getListHeight = () => ({
-        // to avoid layout shift when swapping between pages with less than 5 swaps
-        "min-height":
-            allSwaps()?.length > swapsPerPage ? `${45 * swapsPerPage}px` : "0",
-    });
-
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
@@ -78,33 +68,23 @@ const Rescue = () => {
                                 <hr />
                             </>
                         }>
-                        <div style={!isMobile() ? getListHeight() : null}>
-                            <Show
-                                when={!loading()}
-                                fallback={
-                                    <div class="center" style={getListHeight()}>
-                                        <LoadingSpinner />
-                                    </div>
-                                }>
-                                <SwapList
-                                    swapsSignal={refundList}
-                                    action={(swap) => {
-                                        return rescueListAction({ t, swap });
-                                    }}
-                                    onClick={(swap) => {
-                                        navigate(`/swap/${swap.id}`, {
-                                            state: {
-                                                timedOutRefundable:
-                                                    swap.timedOut,
-                                                waitForSwapTimeout:
-                                                    swap.waitForSwapTimeout,
-                                            },
-                                        });
-                                    }}
-                                    hideDateOnMobile
-                                />
-                            </Show>
-                        </div>
+                        <SwapList
+                            loading={loading()}
+                            swapsSignal={refundList}
+                            action={(swap) => {
+                                return rescueListAction({ t, swap });
+                            }}
+                            onClick={(swap) => {
+                                navigate(`/swap/${swap.id}`, {
+                                    state: {
+                                        timedOutRefundable: swap.timedOut,
+                                        waitForSwapTimeout:
+                                            swap.waitForSwapTimeout,
+                                    },
+                                });
+                            }}
+                            hideDateOnMobile
+                        />
                         <Pagination
                             items={allSwaps}
                             setDisplayedItems={(swaps: SubmarineSwap[]) =>
@@ -112,7 +92,6 @@ const Rescue = () => {
                             }
                             sort={sortSwaps}
                             totalItems={allSwaps().length}
-                            itemsPerPage={swapsPerPage}
                             currentPage={currentPage}
                             setCurrentPage={setCurrentPage}
                         />
