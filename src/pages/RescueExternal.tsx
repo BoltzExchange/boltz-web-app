@@ -24,6 +24,7 @@ import SwapList, { sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useRescueContext } from "../context/Rescue";
@@ -130,7 +131,6 @@ export const RefundBtcLike = () => {
 
     const fetchPaginatedSwaps = async () => {
         let startIndex = 0;
-        const limit = 250;
         const restorableSwaps: RestorableSwap[] = [];
 
         setLoadedSwaps(0);
@@ -139,7 +139,7 @@ export const RefundBtcLike = () => {
             try {
                 const res = await getRestorableSwaps(getXpub(refundJson()), {
                     startIndex,
-                    limit,
+                    limit: paginationLimit,
                 });
 
                 if (res.length === 0) {
@@ -149,7 +149,7 @@ export const RefundBtcLike = () => {
                 restorableSwaps.push(...res);
                 setLoadedSwaps((prev) => prev + res.length);
 
-                startIndex += limit;
+                startIndex += paginationLimit;
             } catch (e) {
                 log.error("failed to get restorable swaps:", formatError(e));
                 setLoadedSwaps(0);

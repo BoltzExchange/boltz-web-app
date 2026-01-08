@@ -3,6 +3,7 @@ import { userEvent } from "@testing-library/user-event";
 import { vi } from "vitest";
 
 import { SwapType } from "../../src/consts/Enums";
+import { paginationLimit } from "../../src/consts/Pagination";
 import i18n from "../../src/i18n/i18n";
 import RescueExternal, { RefundBtcLike } from "../../src/pages/RescueExternal";
 import type { RestorableSwap } from "../../src/utils/boltzClient";
@@ -157,18 +158,22 @@ describe("RescueExternal", () => {
                 },
             });
 
-            test("should fetch multiple pages when response has 500 swaps per page", async () => {
+            test("should fetch multiple pages until it runs out of swaps", async () => {
                 const user = userEvent.setup();
 
                 mockGetRestorableSwaps.mockResolvedValueOnce(
-                    Array.from({ length: 500 }, (_, i) => createMockSwap(i)),
+                    Array.from({ length: paginationLimit }, (_, i) =>
+                        createMockSwap(i),
+                    ),
                 );
 
                 mockGetRestorableSwaps.mockResolvedValueOnce(
-                    Array.from({ length: 300 }, (_, i) =>
-                        createMockSwap(i + 500),
+                    Array.from({ length: paginationLimit - 1 }, (_, i) =>
+                        createMockSwap(i + paginationLimit),
                     ),
                 );
+
+                mockGetRestorableSwaps.mockResolvedValueOnce([]);
 
                 render(
                     () => (
@@ -190,37 +195,7 @@ describe("RescueExternal", () => {
                     JSON.stringify(validRescueFile);
                 await user.upload(uploadInput, rescueFile);
 
-                expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(2);
-            });
-
-            test("should stop after single page when response has less than 500 swaps", async () => {
-                const user = userEvent.setup();
-
-                mockGetRestorableSwaps.mockResolvedValueOnce(
-                    Array.from({ length: 499 }, (_, i) => createMockSwap(i)),
-                );
-
-                render(
-                    () => (
-                        <>
-                            <TestComponent />
-                            <RefundBtcLike />
-                        </>
-                    ),
-                    {
-                        wrapper: contextWrapper,
-                    },
-                );
-
-                const uploadInput = await screen.findByTestId("refundUpload");
-                const rescueFile = new File(["{}"], "rescue.json", {
-                    type: "application/json",
-                });
-                (rescueFile as any).text = async () =>
-                    JSON.stringify(validRescueFile);
-                await user.upload(uploadInput, rescueFile);
-
-                expect(mockGetRestorableSwaps).toHaveBeenCalledOnce();
+                expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(3);
             });
 
             test("should stop immediately when empty array is returned", async () => {
@@ -259,14 +234,16 @@ describe("RescueExternal", () => {
 
             test("should display loading progress with correct count during pagination", async () => {
                 const user = userEvent.setup();
+                const additionalSwaps = 100;
 
                 mockGetRestorableSwaps.mockImplementationOnce(
                     () =>
                         new Promise((resolve) => {
                             setTimeout(() => {
                                 resolve(
-                                    Array.from({ length: 500 }, (_, i) =>
-                                        createMockSwap(i),
+                                    Array.from(
+                                        { length: paginationLimit },
+                                        (_, i) => createMockSwap(i),
                                     ),
                                 );
                             }, 100);
@@ -278,8 +255,10 @@ describe("RescueExternal", () => {
                         new Promise((resolve) => {
                             setTimeout(() => {
                                 resolve(
-                                    Array.from({ length: 300 }, (_, i) =>
-                                        createMockSwap(i + 500),
+                                    Array.from(
+                                        { length: additionalSwaps },
+                                        (_, i) =>
+                                            createMockSwap(i + paginationLimit),
                                     ),
                                 );
                             }, 100);
@@ -309,14 +288,30 @@ describe("RescueExternal", () => {
                 await waitFor(
                     () => {
                         const progressText = screen.getByText(
-                            i18n.en.swaps_found.replace("{{ count }}", "500"),
+                            i18n.en.swaps_found.replace(
+                                "{{ count }}",
+                                paginationLimit.toString(),
+                            ),
                         );
                         expect(progressText).toBeInTheDocument();
                     },
                     { timeout: 500 },
                 );
 
-                expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(2);
+                await waitFor(
+                    () => {
+                        const progressText = screen.getByText(
+                            i18n.en.swaps_found.replace(
+                                "{{ count }}",
+                                (paginationLimit + additionalSwaps).toString(),
+                            ),
+                        );
+                        expect(progressText).toBeInTheDocument();
+                    },
+                    { timeout: 500 },
+                );
+
+                expect(mockGetRestorableSwaps).toHaveBeenCalledTimes(3);
             });
         });
     });
