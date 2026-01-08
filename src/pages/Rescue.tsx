@@ -72,7 +72,9 @@ const Rescue = () => {
                         when={allSwaps()?.length > 0}
                         fallback={
                             <>
-                                <p>{t("no_rescuable_swaps")}</p>
+                                <p class="frame-text">
+                                    {t("no_rescuable_swaps")}
+                                </p>
                                 <hr />
                             </>
                         }>
@@ -117,7 +119,7 @@ const Rescue = () => {
                         <hr />
                     </Show>
                     <h4>{t("cant_find_swap")}</h4>
-                    <p>{t("rescue_external_explainer")}</p>
+                    <p class="frame-text">{t("rescue_external_explainer")}</p>
                     <button
                         class="btn"
                         onClick={() => navigate(`/rescue/external`)}>

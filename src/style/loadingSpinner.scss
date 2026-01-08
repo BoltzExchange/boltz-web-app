@@ -34,6 +34,14 @@
     }
 }
 
+.restore-loading-spinner {
+    margin-top: 0;
+}
+.restore-loading-progress {
+    text-align: center;
+    margin: 32px auto;
+}
+
 @-webkit-keyframes sk-bouncedelay {
     0%,
     80%,

@@ -594,11 +594,11 @@ textarea.invalid {
 }
 .refund {
     max-width: fit-content;
+}
 
-    p {
-        max-width: 480px;
-        margin: 0 auto;
-    }
+.frame-text {
+    max-width: 480px;
+    margin: 0 auto;
 }
 
 @media (max-width: 488px) {
