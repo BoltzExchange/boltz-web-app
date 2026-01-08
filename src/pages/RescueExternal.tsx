@@ -130,8 +130,9 @@ export const RefundBtcLike = () => {
 
     const fetchPaginatedSwaps = async () => {
         let startIndex = 0;
-        const limit = 500;
+        const limit = 250;
         const restorableSwaps: RestorableSwap[] = [];
+        setLoadedSwaps(0);
 
         while (true) {
             try {
@@ -147,14 +148,11 @@ export const RefundBtcLike = () => {
                 restorableSwaps.push(...res);
                 setLoadedSwaps((prev) => prev + res.length);
 
-                if (res.length < limit) {
-                    break;
-                }
-
                 startIndex += limit;
             } catch (e) {
-                log.error("failed to get restorable swaps", formatError(e));
-                throw new Error(t("error_fetching_restorable_swaps"));
+                log.error("failed to get restorable swaps:", formatError(e));
+                setLoadedSwaps(0);
+                throw formatError(e);
             }
         }
 
@@ -173,7 +171,6 @@ export const RefundBtcLike = () => {
                     return undefined;
                 }
 
-                setLoadedSwaps(0);
                 const res = await fetchPaginatedSwaps();
                 rescueContext.setRescuableSwaps(res);
 
