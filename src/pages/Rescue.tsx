@@ -1,14 +1,14 @@
 import { useNavigate } from "@solidjs/router";
 import { Show, createResource, createSignal } from "solid-js";
-import LoadingSpinner from "src/components/LoadingSpinner";
-import { isMobile } from "src/utils/helper";
 
+import LoadingSpinner from "../components/LoadingSpinner";
 import Pagination, { defaultItemsPerPage } from "../components/Pagination";
 import SwapList, { type Swap, sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { type tFn, useGlobalContext } from "../context/Global";
 import "../style/tabs.scss";
+import { isMobile } from "../utils/helper";
 import { RescueAction, createRescueList } from "../utils/rescue";
 import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
