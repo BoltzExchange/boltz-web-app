@@ -8,6 +8,7 @@ import "../style/swaplist.scss";
 import type { RestorableSwap } from "../utils/boltzClient";
 import { RescueAction, RescueNoAction } from "../utils/rescue";
 import type { SomeSwap } from "../utils/swapCreator";
+import { desktopItemsPerPage, mobileItemsPerPage } from "./Pagination";
 import { SwapIcons } from "./SwapIcons";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
@@ -47,6 +48,25 @@ export const sortSwaps = <T extends Swap>(swaps: T[]) => {
         const bDate = getSwapDate(b);
         return aDate > bDate ? -1 : aDate === bDate ? 0 : 1;
     });
+};
+
+// to avoid layout shift when changing pages
+export const getSwapListHeight = (swaps: SomeSwap[], isMobile: boolean) => {
+    if (isMobile) {
+        return {
+            "min-height":
+                swaps.length > mobileItemsPerPage
+                    ? `${45 * mobileItemsPerPage}px`
+                    : "auto",
+        };
+    }
+
+    return {
+        "min-height":
+            swaps.length > desktopItemsPerPage
+                ? `${45 * desktopItemsPerPage}px`
+                : "auto",
+    };
 };
 
 const SwapList = (props: {

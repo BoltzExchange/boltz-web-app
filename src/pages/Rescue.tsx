@@ -2,8 +2,15 @@ import { useNavigate } from "@solidjs/router";
 import { Show, createResource, createSignal } from "solid-js";
 
 import LoadingSpinner from "../components/LoadingSpinner";
-import Pagination, { defaultItemsPerPage } from "../components/Pagination";
-import SwapList, { type Swap, sortSwaps } from "../components/SwapList";
+import Pagination, {
+    desktopItemsPerPage,
+    mobileItemsPerPage,
+} from "../components/Pagination";
+import SwapList, {
+    type Swap,
+    getSwapListHeight,
+    sortSwaps,
+} from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { type tFn, useGlobalContext } from "../context/Global";
@@ -52,16 +59,6 @@ const Rescue = () => {
         },
     );
 
-    // to avoid layout shift when changing pages
-    const getListHeight = () => {
-        return {
-            "min-height":
-                !isMobile() && allSwaps().length > defaultItemsPerPage
-                    ? `${45 * defaultItemsPerPage}px`
-                    : "auto",
-        };
-    };
-
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
@@ -83,11 +80,20 @@ const Rescue = () => {
                         <Show
                             when={!loading()}
                             fallback={
-                                <div class="center" style={getListHeight()}>
+                                <div
+                                    class="center"
+                                    style={getSwapListHeight(
+                                        allSwaps(),
+                                        isMobile(),
+                                    )}>
                                     <LoadingSpinner />
                                 </div>
                             }>
-                            <div style={getListHeight()}>
+                            <div
+                                style={getSwapListHeight(
+                                    allSwaps(),
+                                    isMobile(),
+                                )}>
                                 <SwapList
                                     swapsSignal={refundList}
                                     action={(swap) => {
@@ -116,6 +122,11 @@ const Rescue = () => {
                             totalItems={allSwaps().length}
                             currentPage={currentPage}
                             setCurrentPage={setCurrentPage}
+                            itemsPerPage={
+                                isMobile()
+                                    ? mobileItemsPerPage
+                                    : desktopItemsPerPage
+                            }
                         />
                         <hr />
                     </Show>

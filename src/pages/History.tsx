@@ -1,14 +1,17 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createSignal, onMount } from "solid-js";
-import Pagination, { defaultItemsPerPage } from "src/components/Pagination";
-import { isMobile } from "src/utils/helper";
 
-import SwapList, { sortSwaps } from "../components/SwapList";
+import Pagination, {
+    desktopItemsPerPage,
+    mobileItemsPerPage,
+} from "../components/Pagination";
+import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
 import { downloadJson, getBackupFileName } from "../utils/download";
+import { isMobile } from "../utils/helper";
 import { latestStorageVersion, migrateBackupFile } from "../utils/migration";
 import { Errors, validateRescueFile } from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
@@ -120,16 +123,6 @@ const History = () => {
         setSwaps(await getSwaps());
     });
 
-    // to avoid layout shift when changing pages
-    const getListHeight = () => {
-        return {
-            "min-height":
-                !isMobile() && swaps().length > defaultItemsPerPage
-                    ? `${45 * defaultItemsPerPage}px`
-                    : "auto",
-        };
-    };
-
     return (
         <div id="history">
             <div class="frame">
@@ -161,7 +154,7 @@ const History = () => {
                             </button>
                         </div>
                     }>
-                    <div style={getListHeight()}>
+                    <div style={getSwapListHeight(swaps(), isMobile())}>
                         <SwapList
                             swapsSignal={currentSwaps}
                             /* eslint-disable-next-line solid/reactivity */
@@ -179,6 +172,11 @@ const History = () => {
                         totalItems={swaps().length}
                         currentPage={currentPage}
                         setCurrentPage={setCurrentPage}
+                        itemsPerPage={
+                            isMobile()
+                                ? mobileItemsPerPage
+                                : desktopItemsPerPage
+                        }
                     />
                     <Show when={swaps().length > 0}>
                         <button

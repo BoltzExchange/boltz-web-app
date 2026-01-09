@@ -12,7 +12,8 @@ import {
 import { useGlobalContext } from "../context/Global";
 import "../style/pagination.scss";
 
-export const defaultItemsPerPage = 15;
+export const desktopItemsPerPage = 15;
+export const mobileItemsPerPage = 10;
 
 const Pagination = <T,>(initialProps: {
     items: Accessor<T[]>;
@@ -24,7 +25,7 @@ const Pagination = <T,>(initialProps: {
     totalItems: number;
 }) => {
     const props = mergeProps(
-        { itemsPerPage: defaultItemsPerPage },
+        { itemsPerPage: desktopItemsPerPage },
         initialProps,
     );
     const { t } = useGlobalContext();
