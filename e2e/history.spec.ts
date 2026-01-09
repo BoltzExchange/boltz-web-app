@@ -69,22 +69,22 @@ test.describe("History", () => {
         await expect(swap1Item).toBeVisible();
         await expect(swap2Item).toBeVisible();
 
-        return { swap1Item, swap2Item };
+        return { swap1Item, swap2Item, swapId1, swapId2 };
     };
 
     test("Create two swaps, verify in history, delete one", async ({
         page,
     }) => {
-        const { swap1Item, swap2Item } = await createTwoSwaps(page);
+        const { swap1Item, swap2Item, swapId1 } = await createTwoSwaps(page);
 
         page.on("dialog", async (dialog) => {
             expect(dialog.type()).toBe("confirm");
             await dialog.accept();
         });
 
-        const deleteButton1 = swap1Item.locator(
-            ".btn-small.btn-danger.hidden-mobile",
-        );
+        const deleteButton1 = page.getByTestId(`delete-swap-${swapId1}`);
+        await expect(deleteButton1).toBeVisible();
+        await expect(deleteButton1).toBeEnabled();
         await deleteButton1.click();
 
         await expect(swap1Item).not.toBeVisible();

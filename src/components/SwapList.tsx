@@ -156,6 +156,7 @@ const SwapList = (props: {
                                 <Show when={props.onDelete !== undefined}>
                                     <span
                                         class="btn-small btn-danger hidden-mobile"
+                                        data-testid={`delete-swap-${swap.id}`}
                                         onClick={(e) =>
                                             deleteSwapAction(e, swap.id)
                                         }>
