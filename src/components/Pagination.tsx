@@ -12,7 +12,7 @@ import {
 import { useGlobalContext } from "../context/Global";
 import "../style/pagination.scss";
 
-export const defaultItemsPerPage = 10;
+export const defaultItemsPerPage = 15;
 
 const Pagination = <T,>(initialProps: {
     items: Accessor<T[]>;

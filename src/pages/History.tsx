@@ -1,7 +1,8 @@
 import { useNavigate } from "@solidjs/router";
 import log from "loglevel";
 import { Show, createSignal, onMount } from "solid-js";
-import Pagination from "src/components/Pagination";
+import Pagination, { defaultItemsPerPage } from "src/components/Pagination";
+import { isMobile } from "src/utils/helper";
 
 import SwapList, { sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
@@ -119,6 +120,16 @@ const History = () => {
         setSwaps(await getSwaps());
     });
 
+    // to avoid layout shift when changing pages
+    const getListHeight = () => {
+        return {
+            "min-height":
+                !isMobile() && swaps().length > defaultItemsPerPage
+                    ? `${45 * defaultItemsPerPage}px`
+                    : "auto",
+        };
+    };
+
     return (
         <div id="history">
             <div class="frame">
@@ -150,15 +161,17 @@ const History = () => {
                             </button>
                         </div>
                     }>
-                    <SwapList
-                        swapsSignal={currentSwaps}
-                        /* eslint-disable-next-line solid/reactivity */
-                        onDelete={async () => {
-                            setSwaps(await getSwaps());
-                        }}
-                        action={() => t("view")}
-                        hideStatusOnMobile
-                    />
+                    <div style={getListHeight()}>
+                        <SwapList
+                            swapsSignal={currentSwaps}
+                            /* eslint-disable-next-line solid/reactivity */
+                            onDelete={async () => {
+                                setSwaps(await getSwaps());
+                            }}
+                            action={() => t("view")}
+                            hideStatusOnMobile
+                        />
+                    </div>
                     <Pagination
                         items={swaps}
                         setDisplayedItems={(swaps) => setCurrentSwaps(swaps)}

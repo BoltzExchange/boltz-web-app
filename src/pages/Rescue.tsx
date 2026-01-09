@@ -1,7 +1,9 @@
 import { useNavigate } from "@solidjs/router";
 import { Show, createResource, createSignal } from "solid-js";
+import LoadingSpinner from "src/components/LoadingSpinner";
+import { isMobile } from "src/utils/helper";
 
-import Pagination from "../components/Pagination";
+import Pagination, { defaultItemsPerPage } from "../components/Pagination";
 import SwapList, { type Swap, sortSwaps } from "../components/SwapList";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -50,6 +52,16 @@ const Rescue = () => {
         },
     );
 
+    // to avoid layout shift when changing pages
+    const getListHeight = () => {
+        return {
+            "min-height":
+                !isMobile() && allSwaps().length > defaultItemsPerPage
+                    ? `${45 * defaultItemsPerPage}px`
+                    : "auto",
+        };
+    };
+
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div id="refund">
@@ -68,23 +80,33 @@ const Rescue = () => {
                                 <hr />
                             </>
                         }>
-                        <SwapList
-                            loading={loading()}
-                            swapsSignal={refundList}
-                            action={(swap) => {
-                                return rescueListAction({ t, swap });
-                            }}
-                            onClick={(swap) => {
-                                navigate(`/swap/${swap.id}`, {
-                                    state: {
-                                        timedOutRefundable: swap.timedOut,
-                                        waitForSwapTimeout:
-                                            swap.waitForSwapTimeout,
-                                    },
-                                });
-                            }}
-                            hideDateOnMobile
-                        />
+                        <Show
+                            when={!loading()}
+                            fallback={
+                                <div class="center" style={getListHeight()}>
+                                    <LoadingSpinner />
+                                </div>
+                            }>
+                            <div style={getListHeight()}>
+                                <SwapList
+                                    swapsSignal={refundList}
+                                    action={(swap) => {
+                                        return rescueListAction({ t, swap });
+                                    }}
+                                    onClick={(swap) => {
+                                        navigate(`/swap/${swap.id}`, {
+                                            state: {
+                                                timedOutRefundable:
+                                                    swap.timedOut,
+                                                waitForSwapTimeout:
+                                                    swap.waitForSwapTimeout,
+                                            },
+                                        });
+                                    }}
+                                    hideDateOnMobile
+                                />
+                            </div>
+                        </Show>
                         <Pagination
                             items={allSwaps}
                             setDisplayedItems={(swaps: SubmarineSwap[]) =>
