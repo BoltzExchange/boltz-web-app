@@ -12,7 +12,6 @@ import { default as BufferBrowser } from "buffer";
 import type { ECPairInterface } from "ecpair";
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
-import log from "loglevel";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
@@ -41,19 +40,18 @@ const invalidReceiveAmountMsg = (expected: number, got: number) =>
 
 type ContractGetter = () => BaseContract;
 
-const validateContract = async (getEtherSwap: ContractGetter) => {
+const validateContract = async (
+    getEtherSwap: ContractGetter,
+): Promise<void> => {
     const codeHashes = etherSwapCodeHashes();
     if (codeHashes === undefined) {
-        return true;
+        return;
     }
 
     const code = await getEtherSwap().getDeployedCode();
     if (!codeHashes.includes(ethers.keccak256(code))) {
-        log.error("invalid contract code:", code);
-        return false;
+        throw new Error(`invalid contract code: ${code}`);
     }
-
-    return true;
 };
 
 const validateAddress = async (
@@ -64,7 +62,7 @@ const validateAddress = async (
     address: string,
     blindingKey: string | undefined,
     buffer: BufferConstructor,
-) => {
+): Promise<void> => {
     const tweakedKey = tweakMusig(
         chain,
         await createMusig(ourKeys, theirPublicKey),
@@ -75,14 +73,12 @@ const validateAddress = async (
     const decodedAddress = decodeAddress(chain, address);
 
     if (!decodedAddress.script.equals(compareScript)) {
-        log.error("decoded address script mismatch");
-        return false;
+        throw new Error("decoded address script mismatch");
     }
 
     if (chain === LBTC) {
         if (!blindingKey) {
-            log.error("missing blindingKey for LBTC address validation");
-            return false;
+            throw new Error("missing blindingKey for LBTC address validation");
         }
         const blindingPrivateKey = buffer.from(blindingKey, "hex");
         const blindingPublicKey = buffer.from(
@@ -90,23 +86,19 @@ const validateAddress = async (
         );
 
         if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
-            log.error("blinding public key mismatch");
-            return false;
+            throw new Error("blinding public key mismatch");
         }
     }
-
-    return true;
 };
 
 const validateBip21 = (
     bip21: string,
     address: string,
     expectedAmount: number,
-) => {
+): void => {
     const bip21Split = bip21.split("?");
     if (bip21Split[0].split(":")[1] !== address) {
-        log.error("invalid BIP21 format");
-        return false;
+        throw new Error("invalid BIP21 format");
     }
 
     const params = new URLSearchParams(bip21Split[1]);
@@ -114,12 +106,11 @@ const validateBip21 = (
     if (expectedAmount === 0) {
         const hasAmount = params.has("amount");
         if (hasAmount) {
-            log.error(
+            throw new Error(
                 `unexpected amount in BIP21. Expected 0, got ${params.get("amount")}`,
             );
-            return false;
         }
-        return true;
+        return;
     }
 
     if (
@@ -130,12 +121,10 @@ const validateBip21 = (
             ".",
         )
     ) {
-        log.error(
+        throw new Error(
             `invalid BIP21 amount. Expected ${expectedAmount}, got ${params.get("amount")}`,
         );
-        return false;
     }
-    return true;
 };
 
 const validateReverse = async (
@@ -143,35 +132,33 @@ const validateReverse = async (
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
-) => {
+): Promise<void> => {
     const invoiceData = await decodeInvoice(swap.invoice);
 
     // Amounts
-    const invalidSendAmount = invoiceData.satoshis !== swap.sendAmount;
-    if (invalidSendAmount) {
-        log.error(invalidSendAmountMsg(invoiceData.satoshis, swap.sendAmount));
-        return false;
+    if (invoiceData.satoshis !== swap.sendAmount) {
+        throw new Error(
+            invalidSendAmountMsg(invoiceData.satoshis, swap.sendAmount),
+        );
     }
 
-    const invalidReceiveAmount = swap.onchainAmount <= swap.receiveAmount;
-    if (invalidReceiveAmount) {
-        log.error(
+    if (swap.onchainAmount <= swap.receiveAmount) {
+        throw new Error(
             invalidReceiveAmountMsg(swap.onchainAmount, swap.receiveAmount),
         );
-        return false;
     }
 
     // Invoice
     const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
     if (invoiceData.preimageHash !== preimageHash.toString("hex")) {
-        log.error(
+        throw new Error(
             `invalid swap preimage hash. Expected ${preimageHash.toString("hex")}, got ${invoiceData.preimageHash}`,
         );
-        return false;
     }
 
     if (swap.assetReceive === RBTC) {
-        return validateContract(getEtherSwap);
+        await validateContract(getEtherSwap);
+        return;
     }
 
     // SwapTree
@@ -189,11 +176,10 @@ const validateReverse = async (
     );
 
     if (!compareTrees(tree, compareTree)) {
-        log.error("swap tree mismatch");
-        return false;
+        throw new Error("swap tree mismatch");
     }
 
-    return validateAddress(
+    await validateAddress(
         swap.assetReceive,
         tree,
         ourKeys,
@@ -209,15 +195,17 @@ const validateSubmarine = async (
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: typeof BufferBrowser.Buffer,
-) => {
+): Promise<void> => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
-        log.error(invalidSendAmountMsg(swap.expectedAmount, swap.sendAmount));
-        return false;
+        throw new Error(
+            invalidSendAmountMsg(swap.expectedAmount, swap.sendAmount),
+        );
     }
 
     if (swap.assetSend === RBTC) {
-        return validateContract(getEtherSwap);
+        await validateContract(getEtherSwap);
+        return;
     }
 
     // SwapTree
@@ -237,26 +225,21 @@ const validateSubmarine = async (
     );
 
     if (!compareTrees(tree, compareTree)) {
-        log.error("swap tree mismatch");
-        return false;
+        throw new Error("swap tree mismatch");
     }
 
     // Address
-    if (
-        !(await validateAddress(
-            swap.assetSend,
-            tree,
-            ourKeys,
-            theirPublicKey,
-            swap.address,
-            swap.blindingKey,
-            buffer,
-        ))
-    ) {
-        return false;
-    }
+    await validateAddress(
+        swap.assetSend,
+        tree,
+        ourKeys,
+        theirPublicKey,
+        swap.address,
+        swap.blindingKey,
+        buffer,
+    );
 
-    return validateBip21(swap.bip21, swap.address, swap.expectedAmount);
+    validateBip21(swap.bip21, swap.address, swap.expectedAmount);
 };
 
 const validateChainSwap = async (
@@ -264,35 +247,34 @@ const validateChainSwap = async (
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: BufferConstructor,
-) => {
+): Promise<void> => {
     const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
 
     const validateSide = async (
         side: Side,
         asset: string,
         details: ChainSwapDetails,
-    ) => {
+    ): Promise<void> => {
         if (side === Side.Send) {
             if (swap.sendAmount > 0 && details.amount !== swap.sendAmount) {
-                log.error(
+                throw new Error(
                     invalidSendAmountMsg(swap.sendAmount, details.amount),
                 );
-                return false;
             }
         } else {
             if (
                 swap.receiveAmount > 0 &&
                 details.amount <= swap.receiveAmount
             ) {
-                log.error(
+                throw new Error(
                     invalidReceiveAmountMsg(swap.receiveAmount, details.amount),
                 );
-                return false;
             }
         }
 
         if (asset === RBTC) {
-            return validateContract(getEtherSwap);
+            await validateContract(getEtherSwap);
+            return;
         }
 
         const ourKeys = deriveKey(
@@ -315,36 +297,28 @@ const validateChainSwap = async (
         );
 
         if (!compareTrees(tree, compareTree)) {
-            log.error("swap tree mismatch");
-            return false;
+            throw new Error("swap tree mismatch");
         }
 
-        if (
-            !(await validateAddress(
-                asset,
-                tree,
-                ourKeys,
-                theirPublicKey,
-                details.lockupAddress,
-                details.blindingKey,
-                buffer,
-            ))
-        ) {
-            return false;
-        }
-
-        return (
-            side === Side.Receive ||
-            validateBip21(details.bip21, details.lockupAddress, details.amount)
+        await validateAddress(
+            asset,
+            tree,
+            ourKeys,
+            theirPublicKey,
+            details.lockupAddress,
+            details.blindingKey,
+            buffer,
         );
+
+        if (side === Side.Send) {
+            validateBip21(details.bip21, details.lockupAddress, details.amount);
+        }
     };
 
-    return (
-        await Promise.all([
-            validateSide(Side.Send, swap.assetSend, swap.lockupDetails),
-            validateSide(Side.Receive, swap.assetReceive, swap.claimDetails),
-        ])
-    ).every((ok) => ok);
+    await Promise.all([
+        validateSide(Side.Send, swap.assetSend, swap.lockupDetails),
+        validateSide(Side.Receive, swap.assetReceive, swap.claimDetails),
+    ]);
 };
 
 // To be able to use the Buffer from Node.js
@@ -353,38 +327,37 @@ export const validateResponse = async (
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     buffer: typeof BufferBrowser.Buffer = BufferBrowser as never,
-): Promise<boolean> => {
-    try {
-        switch (swap.type) {
-            case SwapType.Submarine:
-                return await validateSubmarine(
-                    swap as SubmarineSwap,
-                    deriveKey,
-                    getEtherSwap,
-                    buffer,
-                );
+): Promise<void> => {
+    switch (swap.type) {
+        case SwapType.Submarine:
+            await validateSubmarine(
+                swap as SubmarineSwap,
+                deriveKey,
+                getEtherSwap,
+                buffer,
+            );
+            break;
 
-            case SwapType.Reverse:
-                return await validateReverse(
-                    swap as ReverseSwap,
-                    deriveKey,
-                    getEtherSwap,
-                    buffer,
-                );
+        case SwapType.Reverse:
+            await validateReverse(
+                swap as ReverseSwap,
+                deriveKey,
+                getEtherSwap,
+                buffer,
+            );
+            break;
 
-            case SwapType.Chain:
-                return await validateChainSwap(
-                    swap as ChainSwap,
-                    deriveKey,
-                    getEtherSwap,
-                    buffer,
-                );
-            default:
-                throw new Error("unknown_swap_type");
-        }
-    } catch (e) {
-        log.warn(`${swap.type} swap validation threw`, e);
-        return false;
+        case SwapType.Chain:
+            await validateChainSwap(
+                swap as ChainSwap,
+                deriveKey,
+                getEtherSwap,
+                buffer,
+            );
+            break;
+
+        default:
+            throw new Error("unknown_swap_type");
     }
 };
 

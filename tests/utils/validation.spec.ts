@@ -84,32 +84,8 @@ describe("validate responses", () => {
             desc                                   | valid    | contractCode | swap
             ${"BTC invalid send amount"}           | ${false} | ${""}        | ${{ ...swapBtc, sendAmount: 12313123 }}
             ${"BTC invalid refund key"}            | ${false} | ${""}        | ${{ ...swapBtc, refundPrivateKey: "6321bb238f0678fb4c971024193f650eebe69fb891788e1af70184b2dd5d1d5f" }}
-            ${"BTC invalid swap tree"} | ${false} | ${""} | ${{
-    ...swapBtc,
-    swapTree: {
-        claimLeaf: {
-            version: 192,
-            output: "a91437890f1e6054af6b288db22f5cc15a2e0af0b5ae8820cdcc8fdcd40f6f78ce600bdbec4b45b320d0d6a3331b61d1bbe986638738fb51ac",
-        },
-        refundLeaf: {
-            version: 192,
-            output: "207718c390c8b02d6974090ab773432f62eb3ff32f7d5f2980883d9f98cd5cf9e4ad028204b1",
-        },
-    },
-}}
-            ${"BTC invalid swap tree version"} | ${false} | ${""} | ${{
-    ...swapBtc,
-    swapTree: {
-        claimLeaf: {
-            version: 196,
-            output: "a91437890f1e6054af6b288db22f5cc15a2e0af0b5ae8820cdcc8fdcd40f6f78ce600bdbec4b45b320d0d6a3331b61d1bbe986638738fb51ac",
-        },
-        refundLeaf: {
-            version: 192,
-            output: "207718c390c8b02d6974090ab773432f62eb3ff32f7d5f2980883d9f98cd5cf9e4ad028204b1",
-        },
-    },
-}}
+            ${"BTC invalid swap tree"}             | ${false} | ${""}        | ${{ ...swapBtc, swapTree: { claimLeaf: { version: 192, output: "a91437890f1e6054af6b288db22f5cc15a2e0af0b5ae8820cdcc8fdcd40f6f78ce600bdbec4b45b320d0d6a3331b61d1bbe986638738fb51ac" }, refundLeaf: { version: 192, output: "207718c390c8b02d6974090ab773432f62eb3ff32f7d5f2980883d9f98cd5cf9e4ad028204b1" } } }}
+            ${"BTC invalid swap tree version"}     | ${false} | ${""}        | ${{ ...swapBtc, swapTree: { claimLeaf: { version: 196, output: "a91437890f1e6054af6b288db22f5cc15a2e0af0b5ae8820cdcc8fdcd40f6f78ce600bdbec4b45b320d0d6a3331b61d1bbe986638738fb51ac" }, refundLeaf: { version: 192, output: "207718c390c8b02d6974090ab773432f62eb3ff32f7d5f2980883d9f98cd5cf9e4ad028204b1" } } }}
             ${"BTC invalid claimPublicKey"}        | ${false} | ${""}        | ${{ ...swapBtc, claimPublicKey: "0256845c09bbf978cf8564e996036bfb96fc8deb49b9c83f362b5b20ca5a1c28cc" }}
             ${"BTC invalid invoice preimage hash"} | ${false} | ${""}        | ${{ ...swapBtc, invoice: "lnbcrt1m1pj87krqpp508n5tj4ur4em04k9r0lg2nwm6jy0tvta6h3zrhvtypz8srhzapgqdqqcqzzsxqyz5vqsp5admanudc6jgftclpxh0wt8tzcd3qumhjhlnnhgmw57nagygrvjas9qyyssqfpaxy85h53v4cv4merj3fequfpfy3pry5tpazupv8v2wmcnh2vu463m44pgw3zlhyj3z6mkgnuat8eyrsr0p9zgq2w6fc0gacytgsmgpr8wa3v" }}
             ${"BTC invalid invalid address"}       | ${false} | ${""}        | ${{ ...swapBtc, address: "2NGVzk8fgA8zHRkLBwkAgZKnBn3aYG6wwSx" }}
@@ -124,17 +100,20 @@ describe("validate responses", () => {
         `*/
             "$desc",
             async ({ valid, contractCode, swap }) => {
-                await expect(
-                    validateResponse(
-                        swap,
-                        () =>
-                            ECPair.fromPrivateKey(
-                                Buffer.from(swap.refundPrivateKey, "hex"),
-                            ),
-                        getEtherSwap(contractCode),
-                        Buffer,
-                    ),
-                ).resolves.toBe(valid);
+                const promise = validateResponse(
+                    swap,
+                    () =>
+                        ECPair.fromPrivateKey(
+                            Buffer.from(swap.refundPrivateKey, "hex"),
+                        ),
+                    getEtherSwap(contractCode),
+                    Buffer,
+                );
+                if (valid) {
+                    await expect(promise).resolves.toBeUndefined();
+                } else {
+                    await expect(promise).rejects.toThrow();
+                }
             },
         );
     });
@@ -207,41 +186,32 @@ describe("validate responses", () => {
             ${"BTC invalid receive amount"}        | ${false} | ${""}        | ${{ ...reverseSwapBtc, onchainAmount: reverseSwapBtc.onchainAmount - 1 }}
             ${"BTC invalid invoice amount"}        | ${false} | ${""}        | ${{ ...reverseSwapBtc, invoice: "lnbcrt1000010n1pj8hjy9pp5ylcun2dmcl0jukwprey0sxpnm6kfurwngvqrglak8www5rm9thqqdqqcqzzsxqyz5vqsp5xas59ytzy77vr7nz3q20ekfp36pahnf7pyp5yu2q6j69s0gf2mzq9qyyssq98vhx0hwngawut2n240ye2j693qh4afptj3fx93kdxdgelhg8w4ntqj6za2txudm2t8ge649h5jcleqrrhk2ef4hymjtmly4mma07lgpru8e9j" }}
             ${"BTC invalid invoice preimage hash"} | ${false} | ${""}        | ${{ ...reverseSwapBtc, invoice: "lnbcrt1m1pj8hjyjpp53ge8f7m79de2q3e4j8amvq9jq3g0eag9vymzyd32gjw3cz3uhjfqdqqcqzzsxqyz5vqsp52vdnu0n3yh8m0sykqk4gl6h9v7l4r736z4qswm8tmahvjet6w7uq9qyyssqytl6pnuel293xmkgnu9hc5f4taekhgl023zceztzy0eugya6908p5y0txdx0p0q448uru6ecqhd78aarr0lkj95h4s7nwrymjvnkdwcq2ds4qy" }}
-            ${"BTC invalid swap tree"} | ${false} | ${""} | ${{
-    ...reverseSwapBtc,
-    swapTree: {
-        claimLeaf: {
-            version: 192,
-            output: "82012088a91497f8b7e6d94bbc653dbf8f821fe86d9d6033ed7588208bc602b6ea0b51407bea00fc89a1fa5f115bec5ec488a8446b70fad753abafd3ac",
-        },
-        refundLeaf: {
-            version: 192,
-            output: "20c4360fec19c88d697622c0db14dc003e65787739e28278e39b937b9867eebdc3ad022201b1",
-        },
-    },
-}}
+            ${"BTC invalid swap tree"}             | ${false} | ${""}        | ${{ ...reverseSwapBtc, swapTree: { claimLeaf: { version: 192, output: "82012088a91497f8b7e6d94bbc653dbf8f821fe86d9d6033ed7588208bc602b6ea0b51407bea00fc89a1fa5f115bec5ec488a8446b70fad753abafd3ac" }, refundLeaf: { version: 192, output: "20c4360fec19c88d697622c0db14dc003e65787739e28278e39b937b9867eebdc3ad022201b1" } } }}
             ${"BTC invalid lockupAddress"}         | ${false} | ${""}        | ${{ ...reverseSwapBtc, lockupAddress: "bcrt1qcqyj0mdse8ewusdxgm30ynsnqw4j5700vsdgm8xg0eft5rqdnpgs9ndhwx" }}
             ${"BTC invalid refundPublicKey"}       | ${false} | ${""}        | ${{ ...reverseSwapBtc, refundPublicKey: "02abfe68c69da9e1f3f3c07db115901157dfe865f5263b5b4a9d84edddb756ba2d" }}
             ${"L-BTC invalid blinding key"}        | ${false} | ${""}        | ${{ ...reverseSwapLbtc, blindingKey: "6aa614e75363a597e2fc093503856a5371ee198751a632305a434e9de72d800d" }}
         `(
             /*
-            ${"RBTC valid"}                                 | ${true}  | ${EtherSwapBytecode.object} | ${{ ...reverseSwapBtc, asset: RBTC }}
-            ${"RBTC invalid contract code"}                 | ${false} | ${"not correct"}            | ${{ ...reverseSwapBtc, asset: RBTC }}
+            ${"RBTC valid"}                        | ${true}  | ${EtherSwapBytecode.object} | ${{ ...reverseSwapBtc, asset: RBTC }}
+            ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...reverseSwapBtc, asset: RBTC }}
         */
             "$desc",
             async ({ valid, contractCode, swap }) => {
                 const contract = getEtherSwap(contractCode);
-                await expect(
-                    validateResponse(
-                        swap,
-                        () =>
-                            ECPair.fromPrivateKey(
-                                Buffer.from(swap.claimPrivateKey, "hex"),
-                            ),
-                        contract,
-                        Buffer,
-                    ),
-                ).resolves.toBe(valid);
+                const promise = validateResponse(
+                    swap,
+                    () =>
+                        ECPair.fromPrivateKey(
+                            Buffer.from(swap.claimPrivateKey, "hex"),
+                        ),
+                    contract,
+                    Buffer,
+                );
+                if (valid) {
+                    await expect(promise).resolves.toBeUndefined();
+                } else {
+                    await expect(promise).rejects.toThrow();
+                }
             },
         );
     });
