@@ -4,6 +4,29 @@ import path from "path";
 import process from "process";
 import { fileURLToPath } from "url";
 
+const modes = Object.freeze({
+    regular: "--regular",
+    pro: "--pro",
+});
+
+const modeSources = Object.freeze({
+    implicit: "implicit",
+    explicit: "explicit",
+});
+
+const fileNames = Object.freeze({
+    template: "index.template.html",
+    output: "index.html",
+    cache: ".index-build-cache",
+});
+
+const helpFlags = Object.freeze(["--help", "-h"]);
+
+const modeLabels = Object.freeze({
+    [modes.regular]: "regular",
+    [modes.pro]: "pro",
+});
+
 // Configuration for both regular and pro versions
 const config = {
     regular: {
@@ -68,17 +91,18 @@ const config = {
 function usage() {
     const scriptName = path.basename(import.meta.url);
     console.log(`
-    Usage: ${scriptName} [--regular|--pro]
+    Usage: ${scriptName} [${modes.regular}|${modes.pro}]
 
     Generates an index.html from index.template.html using configuration variables.
 
     Arguments:
-        --regular   Generate site for regular Boltz Exchange
-        --pro       Generate site for Boltz Pro
+        ${modes.regular}   Generate site for regular Boltz Exchange (default)
+        ${modes.pro}       Generate site for Boltz Pro
 
-    Examples:
-    ${scriptName} --regular
-    ${scriptName} --pro
+    Notes:
+        - If no mode is provided, the script defaults to ${modes.regular}.
+        - Cached builds generated with an explicit mode will not be overwritten
+          by an implicit default of a different mode.
   `);
 }
 
@@ -141,7 +165,7 @@ function validateInputs(args) {
     }
 
     // Validate allowed modes
-    const allowedModes = ["--regular", "--pro"];
+    const allowedModes = Object.values(modes);
     if (!allowedModes.includes(mode)) {
         throw new Error(
             `Invalid mode: ${mode}. Allowed modes: ${allowedModes.join(", ")}`,
@@ -212,27 +236,127 @@ function validateFilePaths(templatePath, outputPath) {
     return true;
 }
 
+function needsRegeneration(
+    templatePath,
+    outputPath,
+    cachePath,
+    currentMode,
+    scriptPath,
+    modeSource,
+) {
+    // Check if output file exists
+    if (!fs.existsSync(outputPath)) {
+        console.log("Output file does not exist, regenerating...");
+        return { shouldRegenerate: true, effectiveMode: currentMode };
+    }
+
+    // Check if cache file exists
+    if (!fs.existsSync(cachePath)) {
+        console.log("Cache file does not exist, regenerating...");
+        return { shouldRegenerate: true, effectiveMode: currentMode };
+    }
+
+    // Read last used mode from cache
+    let lastMode;
+    try {
+        lastMode = fs.readFileSync(cachePath, "utf8").trim();
+    } catch {
+        console.log("Could not read cache file, regenerating...");
+        return { shouldRegenerate: true, effectiveMode: currentMode };
+    }
+
+    let effectiveMode = currentMode;
+
+    // If the caller didn't specify a mode, favor the previously used mode
+    // from cache to avoid changing variants unintentionally.
+    if (modeSource === modeSources.implicit && lastMode) {
+        if (lastMode !== currentMode) {
+            console.log(
+                `Cached mode is ${lastMode}, implicit default is ${currentMode}; will continue using cached mode.`,
+            );
+        }
+        effectiveMode = lastMode;
+    }
+
+    // Explicitly requested mode changed from cached mode
+    if (
+        modeSource === modeSources.explicit &&
+        lastMode &&
+        lastMode !== currentMode
+    ) {
+        console.log(
+            `Mode changed from ${lastMode} to ${currentMode}, regenerating...`,
+        );
+        return { shouldRegenerate: true, effectiveMode: currentMode };
+    }
+
+    // Compare modification times
+    const templateStat = fs.statSync(templatePath);
+    const outputStat = fs.statSync(outputPath);
+    const scriptStat = fs.statSync(scriptPath);
+
+    if (templateStat.mtimeMs > outputStat.mtimeMs) {
+        console.log("Template is newer than output, regenerating...");
+        return { shouldRegenerate: true, effectiveMode };
+    }
+
+    if (scriptStat.mtimeMs > outputStat.mtimeMs) {
+        console.log("Generator script is newer than output, regenerating...");
+        return { shouldRegenerate: true, effectiveMode };
+    }
+
+    console.log("Output is up to date, skipping regeneration.");
+    return { shouldRegenerate: false, effectiveMode };
+}
+
 function main() {
     try {
         const args = process.argv.slice(2);
+        const modeWasProvided = args.length > 0;
 
-        // Show usage if no arguments provided
-        if (args.length === 0) {
+        if (args.some((arg) => helpFlags.includes(arg))) {
             usage();
-            return 1;
+            return 0;
         }
 
-        // Validate inputs
-        const mode = validateInputs(args);
+        // Default to regular mode when no mode is supplied
+        const mode = validateInputs(modeWasProvided ? args : [modes.regular]);
+        const modeSource = modeWasProvided
+            ? modeSources.explicit
+            : modeSources.implicit;
 
-        // Get selected config
+        // Get script directory
+        const __filename = fileURLToPath(import.meta.url);
+        const scriptDir = path.dirname(__filename);
+        const templatePath = path.join(scriptDir, fileNames.template);
+        const outputPath = path.join(scriptDir, fileNames.output);
+        const cachePath = path.join(scriptDir, fileNames.cache);
+
+        // Validate file paths
+        validateFilePaths(templatePath, outputPath);
+
+        // Check if regeneration is needed
+        const { shouldRegenerate, effectiveMode } = needsRegeneration(
+            templatePath,
+            outputPath,
+            cachePath,
+            mode,
+            __filename,
+            modeSource,
+        );
+
+        if (!shouldRegenerate) {
+            return 0;
+        }
+
+        // Get selected config based on the effective mode we will render
         let selectedConfig;
-        if (mode === "--regular") {
+        if (effectiveMode === modes.regular) {
             selectedConfig = config.regular;
-        } else if (mode === "--pro") {
+        } else if (effectiveMode === modes.pro) {
             selectedConfig = config.pro;
         } else {
-            throw new Error(`Invalid mode: ${mode}`);
+            throw new Error(`Invalid mode: ${effectiveMode}`);
         }
 
         // Validate config
@@ -243,15 +367,6 @@ function main() {
             ...selectedConfig,
             ldJson: JSON.stringify(selectedConfig.ldJson, null, 4),
         };
-
-        // Get script directory
-        const __filename = fileURLToPath(import.meta.url);
-        const scriptDir = path.dirname(__filename);
-        const templatePath = path.join(scriptDir, "index.template.html");
-        const outputPath = path.join(scriptDir, "index.html");
-
-        // Validate file paths
-        validateFilePaths(templatePath, outputPath);
 
         // Read template file
         const template = fs.readFileSync(templatePath, "utf8");
@@ -266,8 +381,12 @@ function main() {
         // Write output file
         fs.writeFileSync(outputPath, output, "utf8");
 
+        // Write cache file with current mode
+        fs.writeFileSync(cachePath, effectiveMode, "utf8");
+
+        const modeLabel = modeLabels[effectiveMode] ?? effectiveMode;
         console.log(
-            `Successfully generated ${outputPath} for ${mode === "--regular" ? "regular" : "pro"} mode`,
+            `Successfully generated ${outputPath} for ${modeLabel} mode`,
         );
 
         return 0; // Success exit code

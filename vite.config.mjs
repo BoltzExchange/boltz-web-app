@@ -34,16 +34,13 @@ Then start the dev server again.
     process.exit(1);
 }
 
-const indexHtml = path.resolve(__dirname, "index.html");
-if (!fs.existsSync(indexHtml)) {
-    try {
-        child.execSync("node index-template-vars.mjs --regular", {
-            stdio: "inherit",
-        });
-    } catch (err) {
-        console.error("❌ Failed to generate index.html", err);
-        process.exit(1);
-    }
+try {
+    child.execSync("node index-template-vars.mjs", {
+        stdio: "inherit",
+    });
+} catch (err) {
+    console.error("❌ Failed to generate index.html", err);
+    process.exit(1);
 }
 
 export default defineConfig({
