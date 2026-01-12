@@ -18,9 +18,12 @@ import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
-import Pagination from "../components/Pagination";
+import Pagination, {
+    desktopItemsPerPage,
+    mobileItemsPerPage,
+} from "../components/Pagination";
 import RefundButton from "../components/RefundButton";
-import SwapList, { sortSwaps } from "../components/SwapList";
+import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -35,6 +38,7 @@ import type { LogRefundData } from "../utils/contractLogs";
 import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
+import { isMobile } from "../utils/helper";
 import { validateRefundFile } from "../utils/refundFile";
 import {
     RescueAction,
@@ -56,8 +60,6 @@ enum RefundType {
     Rescue,
     Legacy,
 }
-
-const swapsPerPage = 10;
 
 const BtcLikeLegacy = (props: {
     refundJson: Accessor<SubmarineSwap | ChainSwap>;
@@ -254,14 +256,6 @@ export const RefundBtcLike = () => {
         }
     };
 
-    const getListHeight = () => ({
-        // to avoid layout shift when swapping between pages with less than 5 swaps
-        "min-height":
-            rescuableSwaps()?.length > swapsPerPage
-                ? `${45 * swapsPerPage}px`
-                : "0",
-    });
-
     return (
         <>
             <Show when={searchParams.mode !== rescueKeyMode}>
@@ -307,13 +301,20 @@ export const RefundBtcLike = () => {
                             <Show
                                 when={rescuableSwaps()?.length > 0}
                                 fallback={<h4>{t("no_swaps_found")}</h4>}>
-                                <div style={getListHeight()}>
+                                <div
+                                    style={getSwapListHeight(
+                                        rescuableSwaps() as SomeSwap[],
+                                        isMobile(),
+                                    )}>
                                     <Show
                                         when={!loading()}
                                         fallback={
                                             <div
                                                 class="center"
-                                                style={getListHeight()}>
+                                                style={getSwapListHeight(
+                                                    rescuableSwaps() as SomeSwap[],
+                                                    isMobile(),
+                                                )}>
                                                 <LoadingSpinner />
                                             </div>
                                         }>
@@ -354,7 +355,11 @@ export const RefundBtcLike = () => {
                                     }
                                     sort={sortSwaps}
                                     totalItems={rescuableSwaps().length}
-                                    itemsPerPage={swapsPerPage}
+                                    itemsPerPage={
+                                        isMobile()
+                                            ? mobileItemsPerPage
+                                            : desktopItemsPerPage
+                                    }
                                     currentPage={currentPage}
                                     setCurrentPage={setCurrentPage}
                                 />

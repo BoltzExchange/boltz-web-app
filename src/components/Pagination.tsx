@@ -1,9 +1,19 @@
 import { useSearchParams } from "@solidjs/router";
 import type { Accessor, Setter } from "solid-js";
-import { For, createMemo, mergeProps, onMount } from "solid-js";
+import {
+    For,
+    createEffect,
+    createMemo,
+    mergeProps,
+    on,
+    onMount,
+} from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
 import "../style/pagination.scss";
+
+export const desktopItemsPerPage = 15;
+export const mobileItemsPerPage = 10;
 
 const Pagination = <T,>(initialProps: {
     items: Accessor<T[]>;
@@ -14,7 +24,10 @@ const Pagination = <T,>(initialProps: {
     itemsPerPage?: number;
     totalItems: number;
 }) => {
-    const props = mergeProps({ itemsPerPage: 15 }, initialProps);
+    const props = mergeProps(
+        { itemsPerPage: desktopItemsPerPage },
+        initialProps,
+    );
     const { t } = useGlobalContext();
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -33,6 +46,12 @@ const Pagination = <T,>(initialProps: {
             displayedItems.slice(indexOfFirstItem, indexOfLastItem),
         );
     };
+
+    createEffect(
+        on([() => props.items()], () => {
+            updateDisplayedItems();
+        }),
+    );
 
     onMount(() => updateDisplayedItems());
 
