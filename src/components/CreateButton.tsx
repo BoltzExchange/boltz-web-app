@@ -564,7 +564,7 @@ const CreateButton = () => {
                 await validateResponse(data, deriveKey, getEtherSwap);
             } catch (e) {
                 log.error(`failed to create ${swapType()} swap:`, e);
-                log.debug("server response for swap creation:", data);
+                log.error("server response for swap creation:", data);
                 navigate("/error");
                 return false;
             }
