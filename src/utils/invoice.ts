@@ -162,8 +162,8 @@ export const fetchBip353 = async (
 
 const checkLnurlResponse = (amount: BigNumber, data: LnurlResponse) => {
     log.debug(
-        "amount check: (x, min, max)",
-        amount,
+        "lnurl amount check: (x, min, max)",
+        amount.toString(),
         data.minSendable,
         data.maxSendable,
     );
