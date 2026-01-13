@@ -560,11 +560,14 @@ const CreateButton = () => {
                     break;
             }
 
-            if (!(await validateResponse(data, deriveKey, getEtherSwap))) {
+            try {
+                await validateResponse(data, deriveKey, getEtherSwap);
+            } catch (e) {
+                const error = e instanceof Error ? e : new Error(String(e));
                 log.error(
-                    `failed to create ${swapType()} swap, unexpected response:`,
-                    data,
+                    `failed to create ${swapType()} swap: ${error.stack}`,
                 );
+                log.error("server response for swap creation:", data);
                 navigate("/error");
                 return false;
             }
