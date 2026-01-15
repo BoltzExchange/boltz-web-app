@@ -43,6 +43,43 @@ export const getLogsFromReceipt = async (
     throw "could not find event";
 };
 
+export const getPreimageHashesForAddress = async (
+    etherSwap: EtherSwap,
+    address: string,
+): Promise<string[]> => {
+    const scanProviderUrl = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
+    if (scanProviderUrl === undefined) {
+        log.warn("VITE_RSK_LOG_SCAN_ENDPOINT not set, skipping preimage scan");
+        return [];
+    }
+
+    const etherSwapScan = new Contract(
+        await etherSwap.getAddress(),
+        EtherSwapAbi,
+        new JsonRpcProvider(scanProviderUrl),
+    ) as unknown as EtherSwap;
+
+    const deployHeight = config.assets[RBTC].contracts.deployHeight;
+
+    const events = await etherSwapScan.queryFilter(
+        etherSwapScan.filters.Lockup(null, null, null, address),
+        deployHeight,
+        "latest",
+    );
+
+    const hashes = events.map((event) => {
+        const decoded = etherSwap.interface.decodeEventLog(
+            etherSwap.interface.getEvent("Lockup"),
+            event.data,
+            event.topics,
+        );
+        return (decoded[0] as string).substring(2); // preimageHash without 0x
+    });
+
+    // Deduplicate in case same hash appears in both
+    return [...new Set(hashes)];
+};
+
 async function* scanLogsForPossibleRefunds(
     abortSignal: AbortSignal,
     signer: Signer,
