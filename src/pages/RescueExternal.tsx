@@ -1,6 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import log from "loglevel";
-import QrScanner from "qr-scanner";
 import type { Accessor } from "solid-js";
 import {
     For,
@@ -17,12 +16,17 @@ import {
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
-import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
+import { rescueKeyMode } from "../components/MnemonicInput";
 import Pagination, {
     desktopItemsPerPage,
     mobileItemsPerPage,
 } from "../components/Pagination";
 import RefundButton from "../components/RefundButton";
+import RescueFileUpload, {
+    RescueFileError,
+    type RescueFileResult,
+    RescueFileType,
+} from "../components/RescueFileUpload";
 import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
@@ -36,34 +40,22 @@ import "../style/tabs.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData } from "../utils/contractLogs";
 import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
-import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
-import { validateRefundFile } from "../utils/refundFile";
 import {
     RescueAction,
     createRescueList,
     getRescuableUTXOs,
 } from "../utils/rescue";
-import type { RescueFile } from "../utils/rescueFile";
-import { getXpub, validateRescueFile } from "../utils/rescueFile";
+import { getXpub } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
 
-export enum RefundError {
-    InvalidData,
-}
-
-enum RefundType {
-    Rescue,
-    Legacy,
-}
-
 const BtcLikeLegacy = (props: {
     refundJson: Accessor<SubmarineSwap | ChainSwap>;
-    refundInvalid: Accessor<RefundError | undefined>;
+    refundInvalid: Accessor<RescueFileError | undefined>;
 }) => {
     const { t } = useGlobalContext();
     const { setRefundableUTXOs } = usePayContext();
@@ -89,7 +81,7 @@ const BtcLikeLegacy = (props: {
                     swap={swap}
                     setRefundTxId={setRefundTxId}
                     buttonOverride={
-                        props.refundInvalid() == RefundError.InvalidData
+                        props.refundInvalid() == RescueFileError.InvalidData
                             ? t("invalid_refund_file")
                             : undefined
                     }
@@ -117,13 +109,13 @@ export const RefundBtcLike = () => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
     const rescueContext = useRescueContext();
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
 
     const [refundInvalid, setRefundInvalid] = createSignal<
-        RefundError | undefined
+        RescueFileError | undefined
     >(undefined);
     const [refundJson, setRefundJson] = createSignal(null);
-    const [refundType, setRefundType] = createSignal<RefundType>();
+    const [refundType, setRefundType] = createSignal<RescueFileType>();
     const [currentPage, setCurrentPage] = createSignal(1);
     const [currentSwaps, setCurrentSwaps] = createSignal<Partial<SomeSwap>[]>(
         [],
@@ -168,7 +160,7 @@ export const RefundBtcLike = () => {
         async (source) => {
             try {
                 if (
-                    source.type !== RefundType.Rescue ||
+                    source.type !== RescueFileType.Rescue ||
                     source.refundJson === null
                 ) {
                     return undefined;
@@ -195,65 +187,21 @@ export const RefundBtcLike = () => {
         },
     );
 
-    const checkRefundJsonKeys = (
-        json: Record<string, string | object | number>,
-    ) => {
-        log.debug("checking refund json");
-
-        try {
-            if ("mnemonic" in json) {
-                log.info("Found rescue file");
-                setRefundType(RefundType.Rescue);
-                setRefundJson(validateRescueFile(json));
-                rescueContext.setRescueFile(json as RescueFile);
-                setRefundInvalid(undefined);
-            } else {
-                log.info("Found legacy refund file");
-
-                const data = validateRefundFile(json);
-
-                setRefundType(RefundType.Legacy);
-                setRefundJson(data);
-                setRefundInvalid(undefined);
-            }
-        } catch (e) {
-            log.warn("Refund json validation failed:", formatError(e));
-            setRefundType(undefined);
-            setRefundInvalid(RefundError.InvalidData);
-        }
+    const handleFileValidated = (result: RescueFileResult) => {
+        setRefundType(result.type);
+        setRefundJson(result.data);
+        setRefundInvalid(undefined);
     };
 
-    const uploadChange = async (e: Event) => {
-        const input = e.currentTarget as HTMLInputElement;
-        const inputFile = input.files[0];
+    const handleFileError = (error: RescueFileError) => {
+        setRefundType(undefined);
+        setRefundInvalid(error);
+    };
+
+    const handleReset = () => {
         setRefundJson(null);
         setRefundInvalid(undefined);
-        setSearchParams({
-            page: null,
-            mode: null,
-        });
-
-        if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
-            try {
-                const res = await QrScanner.scanImage(inputFile, {
-                    returnDetailedScanResult: true,
-                });
-                checkRefundJsonKeys(JSON.parse(res.data));
-            } catch (e) {
-                log.error("invalid QR code upload", formatError(e));
-                setRefundType(undefined);
-                setRefundInvalid(RefundError.InvalidData);
-            }
-        } else {
-            try {
-                const data = await inputFile.text();
-                checkRefundJsonKeys(JSON.parse(data));
-            } catch (e) {
-                log.error("invalid file upload", formatError(e));
-                setRefundType(undefined);
-                setRefundInvalid(RefundError.InvalidData);
-            }
-        }
+        setRefundType(undefined);
     };
 
     return (
@@ -262,7 +210,7 @@ export const RefundBtcLike = () => {
                 <p class="frame-text">{t("rescue_a_swap_subline")}</p>
                 <hr />
             </Show>
-            <Show when={refundType() === RefundType.Legacy}>
+            <Show when={refundType() === RescueFileType.Legacy}>
                 <BtcLikeLegacy
                     refundJson={refundJson}
                     refundInvalid={refundInvalid}
@@ -277,24 +225,8 @@ export const RefundBtcLike = () => {
                     {t("invalid_refund_file")}
                 </h3>
             </Show>
-            <Show when={searchParams.mode === rescueKeyMode}>
-                <p class="frame-text">{t("rescue_a_swap_mnemonic")}</p>
-                <MnemonicInput
-                    onSubmit={(mnemonic) => {
-                        setRefundType(RefundType.Rescue);
-                        setRefundJson(
-                            validateRescueFile({ mnemonic: mnemonic }),
-                        );
-                        rescueContext.setRescueFile({ mnemonic: mnemonic });
-                        setRefundInvalid(undefined);
-                        setSearchParams({
-                            mode: null,
-                        });
-                    }}
-                />
-            </Show>
 
-            <Show when={refundType() === RefundType.Rescue}>
+            <Show when={refundType() === RescueFileType.Rescue}>
                 <Switch>
                     <Match when={rescuableSwaps.state === "ready"}>
                         <div style={{ "margin-top": "2%" }}>
@@ -380,47 +312,11 @@ export const RefundBtcLike = () => {
                 </Switch>
             </Show>
             <Show when={rescuableSwaps.state !== "refreshing"}>
-                <Show when={searchParams.mode !== rescueKeyMode}>
-                    <input
-                        required
-                        type="file"
-                        id="refundUpload"
-                        data-testid="refundUpload"
-                        accept={rescueFileTypes}
-                        onChange={(e) => uploadChange(e)}
-                    />
-                </Show>
-                <Switch>
-                    <Match when={searchParams.mode !== rescueKeyMode}>
-                        <button
-                            class="btn btn-light"
-                            data-testid="enterMnemonicBtn"
-                            onClick={() => {
-                                setRefundType(undefined);
-                                setRefundJson(null);
-                                setRefundInvalid(undefined);
-                                rescueContext.setRescuableSwaps([]);
-                                setSearchParams({
-                                    page: null,
-                                    mode: rescueKeyMode,
-                                });
-                            }}>
-                            {t("enter_mnemonic")}
-                        </button>
-                    </Match>
-                    <Match when={searchParams.mode === rescueKeyMode}>
-                        <button
-                            class="btn btn-light"
-                            data-testid="backBtn"
-                            onClick={() => {
-                                setSearchParams({
-                                    mode: null,
-                                });
-                            }}>
-                            {t("back")}
-                        </button>
-                    </Match>
-                </Switch>
+                <RescueFileUpload
+                    onFileValidated={handleFileValidated}
+                    onError={handleFileError}
+                    onReset={handleReset}
+                />
             </Show>
         </>
     );
