@@ -31,9 +31,9 @@ import MnemonicVerify from "./pages/MnemonicVerify";
 import NotFound from "./pages/NotFound";
 import Pay from "./pages/Pay";
 import Privacy from "./pages/Privacy";
-import RefundEvm from "./pages/RefundEvm";
 import RefundRescue from "./pages/RefundRescue";
 import Rescue from "./pages/Rescue";
+import RescueEvm from "./pages/RescueEvm";
 import RescueExternal from "./pages/RescueExternal";
 import Terms from "./pages/Terms";
 import Btcpay from "./pages/products/Btcpay";
@@ -134,8 +134,8 @@ const cleanup = render(
             <Route path="/backup/verify" component={BackupVerify} />
             <Route path="/backup/verify/:type" component={BackupVerify} />
             <Route
-                path="/swap/refund/evm/:asset/:txHash"
-                component={RefundEvm}
+                path="/swap/rescue/evm/:asset/:txHash"
+                component={RescueEvm}
             />
             <Route path="/error" component={() => <Error />} />
             <Route path="/rescue" component={Rescue} />

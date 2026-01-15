@@ -383,11 +383,7 @@ const CreateButton = () => {
         claimAddress: string,
         useRif: boolean,
     ): Promise<boolean> => {
-        if (
-            !rescueFileBackupDone() &&
-            assetSend() !== RBTC &&
-            swapType() !== SwapType.Reverse
-        ) {
+        if (!rescueFileBackupDone() && swapType() !== SwapType.Reverse) {
             navigate("/backup");
             return false;
         }

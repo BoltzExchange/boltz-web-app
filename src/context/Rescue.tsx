@@ -2,7 +2,9 @@ import type { ECPairInterface } from "ecpair";
 import type { Accessor, JSX, Setter } from "solid-js";
 import { createContext, createSignal, useContext } from "solid-js";
 
+import { type AssetType } from "../consts/Assets";
 import type { RestorableSwap } from "../utils/boltzClient";
+import type { LogRefundData } from "../utils/contractLogs";
 import { ECPair } from "../utils/ecpair";
 import { type RescueFile, deriveKey } from "../utils/rescueFile";
 
@@ -13,7 +15,10 @@ export type RescueContextType = {
     rescuableSwaps: Accessor<RestorableSwap[]>;
     setRescuableSwaps: Setter<RestorableSwap[]>;
 
-    deriveKey: (index: number) => ECPairInterface;
+    rskRescuableSwaps: Accessor<LogRefundData[]>;
+    setRskRescuableSwaps: Setter<LogRefundData[]>;
+
+    deriveKey: (index: number, asset: AssetType) => ECPairInterface;
 };
 
 const RescueContext = createContext<RescueContextType>();
@@ -23,10 +28,13 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
     const [rescuableSwaps, setRescuableSwaps] = createSignal<RestorableSwap[]>(
         [],
     );
+    const [rskRescuableSwaps, setRskRescuableSwaps] = createSignal<
+        LogRefundData[]
+    >([]);
 
-    const deriveKeyWrapper = (index: number) => {
+    const deriveKeyWrapper = (index: number, asset: AssetType) => {
         return ECPair.fromPrivateKey(
-            Buffer.from(deriveKey(rescueFile(), index).privateKey),
+            Buffer.from(deriveKey(rescueFile(), index, asset).privateKey),
         );
     };
 
@@ -37,6 +45,8 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
                 setRescueFile,
                 rescuableSwaps,
                 setRescuableSwaps,
+                rskRescuableSwaps,
+                setRskRescuableSwaps,
                 deriveKey: deriveKeyWrapper,
             }}>
             {props.children}
