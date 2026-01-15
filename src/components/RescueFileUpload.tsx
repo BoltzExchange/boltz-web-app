@@ -108,19 +108,24 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
     };
 
     const handleMnemonicSubmit = (mnemonic: string) => {
-        const rescueFile = { mnemonic };
-        const data = validateRescueFile(rescueFile);
+        try {
+            const rescueFile = { mnemonic };
+            const data = validateRescueFile(rescueFile);
 
-        rescueContext.setRescueFile(rescueFile);
+            rescueContext.setRescueFile(rescueFile);
 
-        props.onFileValidated({
-            type: RescueFileType.Rescue,
-            data,
-        });
+            props.onFileValidated({
+                type: RescueFileType.Rescue,
+                data,
+            });
 
-        setSearchParams({
-            mode: null,
-        });
+            setSearchParams({
+                mode: null,
+            });
+        } catch (e) {
+            log.error("invalid mnemonic", formatError(e));
+            props.onError(RescueFileError.InvalidData);
+        }
     };
 
     return (

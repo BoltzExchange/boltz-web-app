@@ -15,7 +15,7 @@ import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import { type RefundableAssetType } from "../consts/Assets";
+import { type AssetType, type RefundableAssetType } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -241,8 +241,12 @@ const RefundRescue = () => {
                                     deriveKeyFn={(index: number) =>
                                         ECPair.fromPrivateKey(
                                             Buffer.from(
-                                                deriveKey(rescueFile(), index)
-                                                    .privateKey,
+                                                deriveKey(
+                                                    rescueFile(),
+                                                    index,
+                                                    swap()
+                                                        .assetSend as AssetType,
+                                                ).privateKey,
                                             ),
                                         )
                                     }
