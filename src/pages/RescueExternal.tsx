@@ -1,3 +1,4 @@
+import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
@@ -16,7 +17,7 @@ import {
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { rescueKeyMode } from "../components/MnemonicInput";
+import { mnemonicLength, rescueKeyMode } from "../components/MnemonicInput";
 import Pagination, {
     desktopItemsPerPage,
     mobileItemsPerPage,
@@ -26,6 +27,7 @@ import RescueFileUpload, {
     RescueFileError,
     type RescueFileResult,
     RescueFileType,
+    processUploadedFile,
 } from "../components/RescueFileUpload";
 import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
@@ -39,7 +41,8 @@ import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData } from "../utils/contractLogs";
-import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
+import { scanLockupEvents } from "../utils/contractLogs";
+import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
 import {
@@ -47,7 +50,11 @@ import {
     createRescueList,
     getRescuableUTXOs,
 } from "../utils/rescue";
-import { getXpub } from "../utils/rescueFile";
+import {
+    type RescueFile,
+    getXpub,
+    validateRescueFile,
+} from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
@@ -322,36 +329,52 @@ export const RefundBtcLike = () => {
     );
 };
 
-export const RefundRsk = () => {
+export enum RskRescueMode {
+    Refund = "refund",
+    Claim = "claim",
+}
+
+export const RescueRsk = () => {
     const { t } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
+    const { setRskRescuableSwaps } = useRescueContext();
 
+    const [rskRescueMode, setRskRescueMode] = createSignal<
+        RskRescueMode | undefined
+    >(undefined);
     const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
-        LogRefundData[]
-    >([]);
+        LogRefundData[] | undefined
+    >(undefined);
     const [refundScanProgress, setRefundScanProgress] = createSignal<
         string | undefined
     >(undefined);
+    const [isScanning, setIsScanning] = createSignal(false);
+    const [uploadedRescueFile, setUploadedRescueFile] =
+        createSignal<RescueFile>();
+    const [rescueFileError, setRescueFileError] = createSignal<string | null>(
+        null,
+    );
 
     let refundScanAbort: AbortController | undefined = undefined;
 
-    onCleanup(() => {
+    const stopScan = () => {
         if (refundScanAbort) {
-            refundScanAbort.abort();
+            refundScanAbort.abort("scan stopped");
+            refundScanAbort = undefined;
         }
-    });
+        setIsScanning(false);
+        setRefundScanProgress(undefined);
+    };
 
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
-        setLogRefundableSwaps([]);
+    const startScan = async () => {
+        const currentSigner = signer();
 
-        if (refundScanAbort !== undefined) {
-            refundScanAbort.abort("signer changed");
-        }
-
-        if (signer() === undefined) {
+        if (currentSigner === undefined) {
             return;
         }
+
+        setIsScanning(true);
+        setLogRefundableSwaps([]);
 
         setRefundScanProgress(
             t("logs_scan_progress", {
@@ -361,47 +384,342 @@ export const RefundRsk = () => {
 
         refundScanAbort = new AbortController();
 
-        const generator = scanLogsForPossibleRefunds(
+        const signerAddress = await currentSigner.getAddress();
+        const rescueFile = uploadedRescueFile();
+
+        const generator = scanLockupEvents(
             refundScanAbort.signal,
-            signer(),
             getEtherSwap(),
+            {
+                filter: { address: signerAddress },
+                action: rskRescueMode(),
+                mnemonic: rescueFile?.mnemonic,
+            },
         );
 
-        for await (const value of generator) {
+        for await (const { progress, events } of generator) {
+            if (refundScanAbort?.signal.aborted) {
+                break;
+            }
             setRefundScanProgress(
                 t("logs_scan_progress", {
-                    value: (value.progress * 100).toFixed(2),
+                    value: (progress * 100).toFixed(2),
                 }),
             );
-            setLogRefundableSwaps(logRefundableSwaps().concat(value.events));
+
+            const updatedSwaps = logRefundableSwaps()?.concat(events);
+            setLogRefundableSwaps(updatedSwaps);
+            setRskRescuableSwaps(updatedSwaps);
         }
 
-        setRefundScanProgress(undefined);
+        if (!refundScanAbort?.signal.aborted) {
+            setIsScanning(false);
+            setRefundScanProgress(undefined);
+        }
+    };
+
+    // Mnemonic input state
+    const [showMnemonicInput, setShowMnemonicInput] = createSignal(false);
+    const [rescueKey, setRescueKey] = createSignal<string[]>(
+        Array.from({ length: mnemonicLength }, () => ""),
+    );
+    const [focusedIndex, setFocusedIndex] = createSignal<number>(0);
+
+    const inputRefs: HTMLInputElement[] = Array(mnemonicLength);
+
+    const validateWord = (inputElement: HTMLInputElement, word: string) => {
+        if (wordlist.includes(word) || word === "") {
+            inputElement.classList.remove("invalid");
+        } else {
+            inputElement.classList.add("invalid");
+        }
+    };
+
+    const tryValidateMnemonic = () => {
+        try {
+            const mnemonic = rescueKey().join(" ");
+            const data = validateRescueFile({ mnemonic });
+            log.info("Valid rescue key entered");
+            setRescueFileError(null);
+            setUploadedRescueFile(data);
+        } catch {
+            // Not valid yet, that's okay
+        }
+    };
+
+    const handleMnemonicKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            inputRefs[focusedIndex() + 1]?.focus();
+        }
+    };
+
+    const handleMnemonicInput = (
+        e: InputEvent & { currentTarget: HTMLInputElement },
+    ) => {
+        const value = e.currentTarget.value.toLowerCase().trim();
+        if (value === "Enter" || value === " ") return;
+
+        setRescueKey((prev) => {
+            const newRescueKey = [...prev];
+            newRescueKey[focusedIndex()] = value;
+            return newRescueKey;
+        });
+
+        validateWord(e.currentTarget, value);
+
+        if (rescueKey().every((word) => word !== "")) {
+            tryValidateMnemonic();
+        }
+    };
+
+    const handleMnemonicPaste = (e: ClipboardEvent) => {
+        e.preventDefault();
+        if (!e.clipboardData) {
+            return;
+        }
+        const pastedText = e.clipboardData.getData("text/plain").trim();
+        const words = pastedText.split(/[\s\n]+/);
+
+        if (words.length === mnemonicLength) {
+            words.forEach((word, index) => {
+                validateWord(inputRefs[index], word);
+            });
+            setRescueKey(words);
+            tryValidateMnemonic();
+            const lastIndex = words.length - 1;
+            setFocusedIndex(lastIndex);
+            inputRefs[lastIndex]?.focus();
+            return;
+        }
+
+        setRescueKey((prev) => {
+            const newRescueKey = [...prev];
+            newRescueKey[focusedIndex()] = pastedText;
+            return newRescueKey;
+        });
+        validateWord(inputRefs[focusedIndex()], pastedText.toLowerCase());
+    };
+
+    const handleFileUpload = async (e: Event) => {
+        const input = e.currentTarget as HTMLInputElement;
+        const inputFile = input.files[0];
+        if (!inputFile) return;
+
+        try {
+            const result = await processUploadedFile(inputFile);
+            setRescueFileError(null);
+            if (result.type === RescueFileType.Rescue) {
+                setUploadedRescueFile(result.data as RescueFile);
+            }
+        } catch (err) {
+            log.error("invalid file upload", formatError(err));
+            setRescueFileError(t("invalid_refund_file"));
+        }
+    };
+
+    const resetRescueKeyInput = () => {
+        setShowMnemonicInput(false);
+        setRescueKey(Array.from({ length: mnemonicLength }, () => ""));
+        setUploadedRescueFile(undefined);
+        setRescueFileError(null);
+    };
+
+    const resetMode = () => {
+        stopScan();
+        setRskRescueMode(undefined);
+        setLogRefundableSwaps(undefined);
+        resetRescueKeyInput();
+    };
+
+    createEffect(() => {
+        if (signer() === undefined) {
+            if (isScanning()) {
+                stopScan();
+            }
+            setLogRefundableSwaps(undefined);
+        }
     });
 
-    return (
+    onCleanup(() => {
+        stopScan();
+    });
+
+    // Mode selection screen
+    const ModeSelector = () => (
         <>
-            <Switch
-                fallback={
-                    <p class="frame-text">
-                        {t("refund_external_explainer_rsk")}
-                    </p>
-                }>
-                <Match when={logRefundableSwaps().length > 0}>
-                    <SwapListLogs swaps={logRefundableSwaps} />
-                </Match>
-                <Match when={refundScanProgress() !== undefined}>
-                    <p class="frame-text">
-                        {t("refund_external_scanning_rsk")}
-                    </p>
-                </Match>
-                <Match when={signer() !== undefined}>
-                    <p class="frame-text">{t("connected_wallet_no_swaps")}</p>
-                </Match>
-            </Switch>
-            <hr />
-            <ConnectWallet addressOverride={refundScanProgress} />
+            <p class="frame-text">{t("rsk_rescue_prompt")}</p>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                    data-testid="rsk-rescue-refund-button"
+                    class="btn btn-light"
+                    onClick={() => setRskRescueMode(RskRescueMode.Refund)}>
+                    {t("rsk_rescue_refund_title")}
+                    <br />
+                </button>
+
+                <button
+                    data-testid="rsk-rescue-resume-button"
+                    class="btn btn-light"
+                    onClick={() => setRskRescueMode(RskRescueMode.Claim)}>
+                    {t("rsk_rescue_resume_title")}
+                    <br />({t("rsk_rescue_resume_tagline")})
+                </button>
+            </div>
+
+            <p class="frame-text-spaced">
+                {t("rsk_rescue_no_key_note_title")}
+                <br />
+                {t("rsk_rescue_no_key_note_subtitle")}
+            </p>
         </>
+    );
+
+    // Scanning UI (shared between modes)
+    const ScanningStatus = () => (
+        <Switch>
+            <Match when={isScanning()}>
+                <p class="frame-text">{t("refund_external_scanning_rsk")}</p>
+                <p class="frame-text">{refundScanProgress()}</p>
+            </Match>
+            <Match
+                when={
+                    !isScanning() &&
+                    logRefundableSwaps() !== undefined &&
+                    logRefundableSwaps().length === 0
+                }>
+                <h3>{t("connected_wallet_no_swaps")}</h3>
+            </Match>
+        </Switch>
+    );
+
+    // Inline rescue key input UI
+    const RescueKeyInput = () => (
+        <>
+            <div class="tabs">
+                <div
+                    class={`tab ${!showMnemonicInput() ? "active" : ""}`}
+                    onClick={() => setShowMnemonicInput(false)}>
+                    {t("import_rescue_key")}
+                </div>
+                <div
+                    class={`tab ${showMnemonicInput() ? "active" : ""}`}
+                    onClick={() => {
+                        resetRescueKeyInput();
+                        setShowMnemonicInput(true);
+                    }}>
+                    {t("enter_mnemonic")}
+                </div>
+            </div>
+            <Show
+                when={showMnemonicInput()}
+                fallback={
+                    <input
+                        required
+                        type="file"
+                        id="refundUpload"
+                        data-testid="refundUpload"
+                        accept={rescueFileTypes}
+                        onChange={handleFileUpload}
+                    />
+                }>
+                <div class="mnemonic-input-container">
+                    <div class="mnemonic-inputs">
+                        <For each={Array.from({ length: mnemonicLength })}>
+                            {(_, i) => (
+                                <div class="input-box">
+                                    <span class="mnemonic-number">
+                                        #{i() + 1}
+                                    </span>
+                                    <input
+                                        id={`mnemonic-input-${i()}`}
+                                        class="mnemonic-input"
+                                        data-testid={`mnemonic-input-${i()}`}
+                                        type="text"
+                                        ref={inputRefs[i()]}
+                                        autofocus={i() === 0}
+                                        value={rescueKey()[i()]}
+                                        onFocus={() => setFocusedIndex(i())}
+                                        onInput={handleMnemonicInput}
+                                        onPaste={handleMnemonicPaste}
+                                        onKeyDown={handleMnemonicKeyDown}
+                                    />
+                                </div>
+                            )}
+                        </For>
+                    </div>
+                    <i>{t("hint_paste_mnemonic")}</i>
+                </div>
+            </Show>
+        </>
+    );
+
+    const ScanMode = (props: {
+        explainerKey: string;
+        requiresRescueFile?: boolean;
+    }) => {
+        const canScan = () =>
+            signer() !== undefined &&
+            (!props.requiresRescueFile || uploadedRescueFile());
+
+        createEffect(() => {
+            if (
+                canScan() &&
+                !isScanning() &&
+                logRefundableSwaps() === undefined
+            ) {
+                void startScan();
+            }
+        });
+
+        return (
+            <>
+                <Show
+                    when={!isScanning() && logRefundableSwaps() === undefined}>
+                    <p class="frame-text-spaced">
+                        {t(props.explainerKey as Parameters<typeof t>[0])}
+                    </p>
+                </Show>
+
+                <Show when={rescueFileError()}>
+                    <h3 class="frame-text-spaced">{rescueFileError()}</h3>
+                </Show>
+
+                <ScanningStatus />
+
+                <Show when={logRefundableSwaps()?.length > 0}>
+                    <SwapListLogs swaps={logRefundableSwaps} />
+                </Show>
+
+                <Show
+                    when={!isScanning() && logRefundableSwaps() === undefined}>
+                    <Show when={props.requiresRescueFile}>
+                        <RescueKeyInput />
+                    </Show>
+                    <ConnectWallet />
+                </Show>
+
+                <hr />
+                <button class="btn btn-light" onClick={resetMode}>
+                    {t("back")}
+                </button>
+            </>
+        );
+    };
+
+    return (
+        <Switch fallback={<ModeSelector />}>
+            <Match when={rskRescueMode() === RskRescueMode.Refund}>
+                <ScanMode explainerKey="rsk_rescue_refund_explainer" />
+            </Match>
+            <Match when={rskRescueMode() === RskRescueMode.Claim}>
+                <ScanMode
+                    explainerKey="rsk_rescue_resume_explainer"
+                    requiresRescueFile
+                />
+            </Match>
+        </Switch>
     );
 };
 
@@ -451,7 +769,7 @@ const RescueExternal = () => {
                         <RefundBtcLike />
                     </Show>
                     <Show when={selected() === tabRsk.value}>
-                        <RefundRsk />
+                        <RescueRsk />
                     </Show>
                     <SettingsMenu />
                 </div>

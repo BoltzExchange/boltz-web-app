@@ -435,6 +435,11 @@ const dict = {
         security: "Security",
         failed: "Failed",
         swaps_found: "Scanning swaps ({{ count }} found)",
+        upload_rescue_key_evm:
+            "Upload or enter the Rescue Key associated with this swap to claim your funds",
+        invalid_rescue_key_evm:
+            "This Rescue Key is not associated with this swap. Please try using a different Rescue Key.",
+        error_occurred: "An error occurred: {{ error }}",
     },
     de: {
         language: "Deutsch",

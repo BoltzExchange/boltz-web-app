@@ -1,3 +1,5 @@
+import { BTC, RBTC } from "../../src/consts/Assets";
+import { derivePreimageFromRescueKey } from "../../src/utils/claim";
 import {
     Errors,
     deriveKey,
@@ -48,15 +50,56 @@ describe("rescueFile", () => {
             ${0}  | ${"cb9774710e1d1eaa747a38fff23b20cbb5847e1586e97ebdca36489f3a0105d8"}
             ${1}  | ${"72a43f69c3a4cc4a2ebae6c8b12e7b56ebec3423c0acb40eba422792c8d27d6a"}
             ${2}  | ${"217c41a6670f1a104b5f0b17b0e1b60da97339c259a215825b85aed654537efc"}
-        `("should derive a key at specified index", ({ index, expected }) => {
-            const derivedKey = deriveKey(rescueFile, index);
+        `(
+            "should derive a BTC key at specified index",
+            ({ index, expected }) => {
+                const derivedKey = deriveKey(rescueFile, index, BTC);
 
-            expect(derivedKey).toBeDefined();
-            expect(derivedKey.privateKey).toBeDefined();
-            expect(Buffer.from(derivedKey.privateKey).toString("hex")).toEqual(
-                expected,
-            );
-        });
+                expect(derivedKey).toBeDefined();
+                expect(derivedKey.privateKey).toBeDefined();
+                expect(
+                    Buffer.from(derivedKey.privateKey).toString("hex"),
+                ).toEqual(expected);
+            },
+        );
+
+        test.each([0, 1, 2])(
+            "should derive different keys for RBTC vs BTC at index %i",
+            (index) => {
+                const btcKey = deriveKey(rescueFile, index, BTC);
+                const rbtcKey = deriveKey(rescueFile, index, RBTC);
+
+                expect(btcKey.privateKey).toBeDefined();
+                expect(rbtcKey.privateKey).toBeDefined();
+                expect(
+                    Buffer.from(btcKey.privateKey).toString("hex"),
+                ).not.toEqual(Buffer.from(rbtcKey.privateKey).toString("hex"));
+            },
+        );
+    });
+
+    describe("derivePreimageFromRescueKey", () => {
+        test.each([0, 1, 2])(
+            "should derive different preimages for RBTC vs BTC at index %i",
+            (index) => {
+                const btcPreimage = derivePreimageFromRescueKey(
+                    rescueFile,
+                    index,
+                    BTC,
+                );
+                const rbtcPreimage = derivePreimageFromRescueKey(
+                    rescueFile,
+                    index,
+                    RBTC,
+                );
+
+                expect(btcPreimage).toBeInstanceOf(Buffer);
+                expect(rbtcPreimage).toBeInstanceOf(Buffer);
+                expect(btcPreimage.toString("hex")).not.toEqual(
+                    rbtcPreimage.toString("hex"),
+                );
+            },
+        );
     });
 
     describe("validateRescueFile", () => {

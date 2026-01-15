@@ -13,7 +13,7 @@ import type { ECPairInterface } from "ecpair";
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 
-import { LBTC, RBTC } from "../consts/Assets";
+import { type AssetType, LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
@@ -164,7 +164,10 @@ const validateReverse = async (
     // SwapTree
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
-    const ourKeys = deriveKey(swap.claimPrivateKeyIndex);
+    const ourKeys = deriveKey(
+        swap.claimPrivateKeyIndex,
+        swap.assetReceive as AssetType,
+    );
     const theirPublicKey = buffer.from(swap.refundPublicKey, "hex");
 
     const compareTree = reverseSwapTree(
@@ -213,7 +216,10 @@ const validateSubmarine = async (
 
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
-    const ourKeys = deriveKey(swap.refundPrivateKeyIndex);
+    const ourKeys = deriveKey(
+        swap.refundPrivateKeyIndex,
+        swap.assetSend as AssetType,
+    );
     const theirPublicKey = buffer.from(swap.claimPublicKey, "hex");
 
     const compareTree = swapTree(
@@ -281,6 +287,7 @@ const validateChainSwap = async (
             side === Side.Send
                 ? swap.refundPrivateKeyIndex
                 : swap.claimPrivateKeyIndex,
+            asset as AssetType,
         );
         const theirPublicKey = buffer.from(details.serverPublicKey, "hex");
         const tree = SwapTreeSerializer.deserializeSwapTree(details.swapTree);

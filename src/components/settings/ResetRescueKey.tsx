@@ -1,27 +1,17 @@
 import { useNavigate } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import log from "loglevel";
-import {
-    BiRegularCopy,
-    BiRegularDownload,
-    BiRegularTrash,
-} from "solid-icons/bi";
-import { IoCheckmark } from "solid-icons/io";
-import { Show, createSignal } from "solid-js";
+import { BiRegularRefresh } from "solid-icons/bi";
 
-import { copyIconTimeout } from "../../consts/CopyContent";
 import { useCreateContext } from "../../context/Create";
 import { useGlobalContext } from "../../context/Global";
-import { downloadRescueFile } from "../../pages/Backup";
-import { clipboard } from "../../utils/helper";
 import { generateRescueFile } from "../../utils/rescueFile";
 
-const RescueFile = () => {
+const ResetRescueKey = () => {
     const iconSize = 16;
     const navigate = useNavigate();
 
     const {
-        rescueFile,
         t,
         setRescueFile,
         clearSwaps,
@@ -32,14 +22,6 @@ const RescueFile = () => {
         setLastUsedRskKey,
     } = useGlobalContext();
     const { setSendAmount, setReceiveAmount } = useCreateContext();
-
-    const [copied, setCopied] = createSignal(false);
-
-    const copy = () => {
-        clipboard(rescueFile().mnemonic);
-        setCopied(true);
-        setTimeout(() => setCopied(false), copyIconTimeout);
-    };
 
     const handleReset = async () => {
         const confirmText = window.prompt(t("reset_rescue_key_prompt"));
@@ -74,29 +56,12 @@ const RescueFile = () => {
     };
 
     return (
-        <div class="flex" data-testid="rescue-key-download">
-            <span class="btn-small" onClick={copy}>
-                <Show
-                    when={copied()}
-                    fallback={<BiRegularCopy size={iconSize} />}>
-                    <IoCheckmark size={iconSize} />
-                </Show>
-            </span>
-            &nbsp;
-            <span
-                class="btn-small"
-                onClick={() => downloadRescueFile(rescueFile)}>
-                <BiRegularDownload size={iconSize} />
-            </span>
-            &nbsp;
-            <span
-                class="btn-small btn-danger"
-                data-testid="reset-rescue-key"
-                onClick={handleReset}>
-                <BiRegularTrash size={iconSize} />
+        <div class="flex" data-testid="reset-rescue-key">
+            <span class="btn-small" onClick={handleReset}>
+                <BiRegularRefresh size={iconSize} />
             </span>
         </div>
     );
 };
 
-export default RescueFile;
+export default ResetRescueKey;

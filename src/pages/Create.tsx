@@ -44,6 +44,7 @@ const Create = () => {
     const location = useLocation<{ backupDone?: string }>();
     const [searchParams] = useSearchParams();
     const [isAccordionOpen, setIsAccordionOpen] = createSignal(false);
+    const [rskIndexScanning] = createSignal(false);
 
     const {
         separator,
@@ -534,7 +535,15 @@ const Create = () => {
                         <ConnectWallet disabled={() => !pairValid()} />
                         <hr class="spacer" />
                     </Show>
-                    <CreateButton />
+                    <Show
+                        when={!rskIndexScanning()}
+                        fallback={
+                            <button class="btn" disabled={true}>
+                                <LoadingSpinner class="inner-spinner" />
+                            </button>
+                        }>
+                        <CreateButton />
+                    </Show>
                     <AssetSelect />
                     <SettingsMenu />
                 </div>

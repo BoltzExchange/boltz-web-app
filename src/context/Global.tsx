@@ -15,7 +15,7 @@ import type { Accessor, JSX, Setter } from "solid-js";
 import { getBtcPriceFailover } from "src/utils/fiat";
 
 import { config } from "../config";
-import { LBTC } from "../consts/Assets";
+import { type AssetType, LBTC, RBTC } from "../consts/Assets";
 import { Denomination, UrlParam } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
 import { detectLanguage } from "../i18n/detect";
@@ -39,8 +39,11 @@ export const liquidUncooperativeExtra = 3;
 const proReferral = "pro";
 
 type NotificationType = "success" | "error";
-export type deriveKeyFn = (index: number) => ECPairInterface;
-export type newKeyFn = () => { index: number; key: ECPairInterface };
+export type deriveKeyFn = (index: number, asset: AssetType) => ECPairInterface;
+export type newKeyFn = (asset: AssetType) => {
+    index: number;
+    key: ECPairInterface;
+};
 export type tFn = (key: DictKey, values?: Record<string, unknown>) => string;
 export type notifyFn = (type: NotificationType, message: string) => void;
 
@@ -112,6 +115,8 @@ export type GlobalContextType = {
     deriveKey: deriveKeyFn;
     getXpub: () => string;
     setLastUsedKey: Setter<number>;
+    lastUsedRskKey: Accessor<number>;
+    setLastUsedRskKey: Setter<number>;
     rescueFile: Accessor<RescueFile | null>;
     setRescueFile: Setter<RescueFile | null>;
     rescueFileBackupDone: Accessor<boolean>;
@@ -232,6 +237,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [lastUsedRskKey, setLastUsedRskKey] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<number>(0),
+        {
+            name: "lastUsedRskKey",
+        },
+    );
+
     const [rescueFileBackupDone, setRescueFileBackupDone] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
@@ -247,16 +260,25 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         }
     });
 
-    const deriveKeyWrapper = (index: number) => {
+    const deriveKeyWrapper = (index: number, asset: AssetType) => {
         return ECPair.fromPrivateKey(
-            Buffer.from(deriveKey(rescueFile(), index).privateKey),
+            Buffer.from(deriveKey(rescueFile(), index, asset).privateKey),
         );
     };
 
-    const newKey = () => {
+    const newKey = (asset: AssetType) => {
+        if (asset === RBTC) {
+            const index = lastUsedRskKey();
+            setLastUsedRskKey(index + 1);
+            return {
+                index,
+                key: deriveKeyWrapper(index, asset),
+            };
+        }
+
         const index = lastUsedKey();
         setLastUsedKey(index + 1);
-        return { index, key: deriveKeyWrapper(index) };
+        return { index, key: deriveKeyWrapper(index, asset) };
     };
 
     const getXpubWrapper = () => {
@@ -576,6 +598,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 rescueFile,
                 setRescueFile,
                 setLastUsedKey,
+                lastUsedRskKey,
+                setLastUsedRskKey,
                 getXpub: getXpubWrapper,
                 deriveKey: deriveKeyWrapper,
 

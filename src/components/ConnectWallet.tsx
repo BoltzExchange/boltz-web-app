@@ -9,7 +9,6 @@ import {
     createMemo,
     createResource,
     createSignal,
-    onCleanup,
 } from "solid-js";
 
 import { RBTC } from "../consts/Assets";
@@ -306,11 +305,6 @@ const ConnectWallet = (props: {
             setAddressValid(addr !== undefined);
             setOnchainAddress(addr || "");
         }
-    });
-
-    onCleanup(() => {
-        setAddressValid(false);
-        setOnchainAddress("");
     });
 
     return (

@@ -34,7 +34,7 @@ const SwapListLogs = (props: { swaps: Accessor<LogRefundData[]> }) => {
                             class="swaplist-item"
                             onClick={() =>
                                 navigate(
-                                    `/swap/refund/evm/${swap.asset}/${swap.transactionHash}`,
+                                    `/swap/rescue/evm/${swap.asset}/${swap.transactionHash}`,
                                 )
                             }>
                             <a class="btn-small hidden-mobile" href="#">
