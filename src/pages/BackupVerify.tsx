@@ -7,8 +7,10 @@ import { BackupDone } from "../components/CreateButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import { getRestorableSwaps } from "../utils/boltzClient";
 import { rescueFileTypes } from "../utils/download";
+import { scanForHighestPreimageIndex } from "../utils/preimageIndex";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
 
@@ -26,7 +28,9 @@ const BackupVerify = () => {
         clearSwaps,
         setRescueFile,
         setLastUsedKey,
+        setLastUsedRskKey,
     } = useGlobalContext();
+    const { signer, getEtherSwap } = useWeb3Signer();
 
     const [verificationFailed, setVerificationFailed] = createSignal<
         boolean | undefined
@@ -52,6 +56,21 @@ const BackupVerify = () => {
             );
             log.debug(`Found highest index: ${highestIndex}`);
             setLastUsedKey(highestIndex + 1);
+
+            // Scan for highest RSK preimage index if wallet is connected
+            const address = signer()?.address;
+            if (address) {
+                const rskHighestIndex = await scanForHighestPreimageIndex(
+                    address,
+                    data.mnemonic,
+                    getEtherSwap(),
+                );
+                if (rskHighestIndex >= 0) {
+                    setLastUsedRskKey((current) =>
+                        Math.max(current, rskHighestIndex + 1),
+                    );
+                }
+            }
 
             setRescueFileBackupDone(true);
             await clearSwaps();
