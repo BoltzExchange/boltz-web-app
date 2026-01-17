@@ -436,9 +436,9 @@ const dict = {
         failed: "Failed",
         swaps_found: "Scanning swaps ({{ count }} found)",
         upload_rescue_key_evm:
-            "Upload or enter the Rescue Key associated with this swap to claim your funds",
+            "Upload or enter your rescue key to resume this swap",
         invalid_rescue_key_evm:
-            "This Rescue Key is not associated with this swap. Please try using a different Rescue Key.",
+            "This rescue key is not associated with this swap. Please try again using a different rescue key.",
         error_occurred: "An error occurred: {{ error }}",
     },
     de: {
@@ -890,6 +890,11 @@ const dict = {
         security: "Sicherheit",
         failed: "Fehlgeschlagen",
         swaps_found: "Scanne Swaps ({{ count }} gefunden)",
+        upload_rescue_key_evm:
+            "Lade deinen Rettungsschlüssel hoch oder gib ihn ein, um diesen Swap fortzusetzen",
+        invalid_rescue_key_evm:
+            "Dieser Rettungsschlüssel ist nicht mit diesem Swap verbunden. Bitte versuche es erneut mit einem anderen Rettungsschlüssel.",
+        error_occurred: "Ein Fehler ist aufgetreten: {{ error }}",
     },
     es: {
         language: "Español",
@@ -1338,6 +1343,11 @@ const dict = {
         security: "Seguridad",
         failed: "Fallido",
         swaps_found: "Escaneando intercambios ({{ count }} encontrados)",
+        upload_rescue_key_evm:
+            "Sube o ingresa tu clave de rescate para reanudar este intercambio",
+        invalid_rescue_key_evm:
+            "Esta clave de rescate no está asociada con este intercambio. Por favor, intenta de nuevo usando una clave de rescate diferente.",
+        error_occurred: "Ocurrió un error: {{ error }}",
     },
     pt: {
         language: "Português",
@@ -1782,6 +1792,11 @@ const dict = {
         security: "Segurança",
         failed: "Falhou",
         swaps_found: "Buscando trocas ({{ count }} encontradas)",
+        upload_rescue_key_evm:
+            "Faça upload ou insira sua chave de resgate para retomar esta troca",
+        invalid_rescue_key_evm:
+            "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
+        error_occurred: "Ocorreu um erro: {{ error }}",
     },
     zh: {
         language: "中文",
@@ -2184,6 +2199,10 @@ const dict = {
         security: "安全",
         failed: "失败",
         swaps_found: "正在扫描交换（已找到 {{ count }} 个）",
+        upload_rescue_key_evm: "上传或输入您的救援密钥以恢复此交换",
+        invalid_rescue_key_evm:
+            "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
+        error_occurred: "发生错误：{{ error }}",
     },
     ja: {
         language: "日本語",
@@ -2624,6 +2643,11 @@ const dict = {
         security: "セキュリティ",
         failed: "失敗",
         swaps_found: "スワップをスキャン中（{{ count }} 件見つかりました）",
+        upload_rescue_key_evm:
+            "レスキューキーをアップロードまたは入力して、このスワップを再開してください",
+        invalid_rescue_key_evm:
+            "このレスキューキーはこのスワップに関連付けられていません。別のレスキューキーを使用してもう一度お試しください。",
+        error_occurred: "エラーが発生しました：{{ error }}",
     },
 };
 
