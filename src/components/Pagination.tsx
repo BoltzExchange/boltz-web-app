@@ -66,7 +66,7 @@ const Pagination = <T,>(initialProps: {
 
         if (isNaN(page) || page < 1 || page > numberOfPages.length) {
             page = 1;
-            setSearchParams({ page });
+            setSearchParams({ page }, { replace: true });
         }
 
         props.setCurrentPage(page);
