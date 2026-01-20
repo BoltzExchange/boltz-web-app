@@ -23,6 +23,7 @@ import { RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
@@ -35,6 +36,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
+import { scanForHighestPreimageIndex } from "../utils/preimageIndex";
 import ErrorWasm from "./ErrorWasm";
 
 const Create = () => {
@@ -58,7 +60,10 @@ const Create = () => {
         regularPairs,
         showFiatAmount,
         fetchBtcPrice,
+        rescueFile,
+        setLastUsedRskKey,
     } = useGlobalContext();
+    const { signer, getEtherSwap } = useWeb3Signer();
     const {
         swapType,
         assetSend,
@@ -359,6 +364,26 @@ const Create = () => {
     createEffect(() => {
         void fetchBtcPrice();
     });
+
+    // Scan for highest used RSK preimage index when wallet connects
+    createEffect(
+        on(signer, (currentSigner) => {
+            const mnemonic = rescueFile()?.mnemonic;
+            if (currentSigner && mnemonic) {
+                void scanForHighestPreimageIndex(
+                    currentSigner.address,
+                    mnemonic,
+                    getEtherSwap(),
+                ).then((highestIndex) => {
+                    if (highestIndex >= 0) {
+                        setLastUsedRskKey((current) =>
+                            Math.max(current, highestIndex + 1),
+                        );
+                    }
+                });
+            }
+        }),
+    );
 
     const creatingSwap = () => location.state?.backupDone === BackupDone.True;
 

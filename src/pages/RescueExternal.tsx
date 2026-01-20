@@ -39,7 +39,7 @@ import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData } from "../utils/contractLogs";
-import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
+import { scanLogsForRescuableSwaps } from "../utils/contractLogs";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
 import {
@@ -47,8 +47,9 @@ import {
     createRescueList,
     getRescuableUTXOs,
 } from "../utils/rescue";
-import { getXpub } from "../utils/rescueFile";
+import { type RescueFile, getXpub } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import { PreimageHashesWorker } from "../workers/preimageHashes/PreimageHashesWorker";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
@@ -322,35 +323,61 @@ export const RefundBtcLike = () => {
     );
 };
 
-export const RefundRsk = () => {
+export const RescueRsk = () => {
     const { t } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
+    const { setRskRescuableSwaps } = useRescueContext();
 
     const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
-        LogRefundData[]
-    >([]);
+        LogRefundData[] | undefined
+    >(undefined);
     const [refundScanProgress, setRefundScanProgress] = createSignal<
         string | undefined
     >(undefined);
+    const [isScanning, setIsScanning] = createSignal(false);
+    const [derivingPreimages, setDerivingPreimages] = createSignal(false);
+    const [uploadedRescueFile, setUploadedRescueFile] =
+        createSignal<RescueFile>();
 
     let refundScanAbort: AbortController | undefined = undefined;
+    let preimageHashesWorker: PreimageHashesWorker | undefined = undefined;
 
-    onCleanup(() => {
+    const stopScan = () => {
         if (refundScanAbort) {
-            refundScanAbort.abort();
+            refundScanAbort.abort("scan stopped");
+            refundScanAbort = undefined;
         }
-    });
+        if (preimageHashesWorker) {
+            preimageHashesWorker.terminate();
+            preimageHashesWorker = undefined;
+        }
+        setIsScanning(false);
+        setDerivingPreimages(false);
+        setRefundScanProgress(undefined);
+    };
 
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
+    const startScan = async () => {
+        const currentSigner = signer();
+
+        if (currentSigner === undefined) {
+            return;
+        }
+
+        setIsScanning(true);
         setLogRefundableSwaps([]);
 
-        if (refundScanAbort !== undefined) {
-            refundScanAbort.abort("signer changed");
-        }
+        let preimageMap: Map<string, string> = new Map();
 
-        if (signer() === undefined) {
-            return;
+        if (uploadedRescueFile() !== undefined) {
+            setDerivingPreimages(true);
+            preimageHashesWorker = new PreimageHashesWorker();
+            preimageMap = await preimageHashesWorker.deriveHashes(
+                uploadedRescueFile().mnemonic,
+            );
+            log.debug(
+                `Derived ${preimageMap.size} preimage hashes for scanning`,
+            );
+            setDerivingPreimages(false);
         }
 
         setRefundScanProgress(
@@ -361,46 +388,117 @@ export const RefundRsk = () => {
 
         refundScanAbort = new AbortController();
 
-        const generator = scanLogsForPossibleRefunds(
+        const signerAddress = await currentSigner.getAddress();
+
+        const generator = scanLogsForRescuableSwaps(
             refundScanAbort.signal,
-            signer(),
+            signerAddress,
             getEtherSwap(),
+            preimageMap,
         );
 
         for await (const value of generator) {
+            if (refundScanAbort?.signal.aborted) {
+                break;
+            }
             setRefundScanProgress(
                 t("logs_scan_progress", {
                     value: (value.progress * 100).toFixed(2),
                 }),
             );
-            setLogRefundableSwaps(logRefundableSwaps().concat(value.events));
+
+            const updatedSwaps = logRefundableSwaps().concat(value.events);
+            setLogRefundableSwaps(updatedSwaps);
+            setRskRescuableSwaps(updatedSwaps);
         }
 
-        setRefundScanProgress(undefined);
+        if (!refundScanAbort?.signal.aborted) {
+            setIsScanning(false);
+            setRefundScanProgress(undefined);
+        }
+    };
+
+    const handleRescueFileUpload = (result: RescueFileResult) => {
+        if (result.type === RescueFileType.Rescue) {
+            setUploadedRescueFile(result.data as RescueFile);
+        }
+    };
+
+    createEffect(() => {
+        if (signer() === undefined) {
+            if (isScanning()) {
+                stopScan();
+            }
+            setLogRefundableSwaps([]);
+        }
+    });
+
+    onCleanup(() => {
+        stopScan();
     });
 
     return (
         <>
-            <Switch
-                fallback={
-                    <p class="frame-text">
-                        {t("refund_external_explainer_rsk")}
-                    </p>
-                }>
-                <Match when={logRefundableSwaps().length > 0}>
-                    <SwapListLogs swaps={logRefundableSwaps} />
+            <Switch>
+                <Match when={derivingPreimages()}>
+                    <p class="frame-text">{t("deriving_preimages")}</p>
+                    <LoadingSpinner />
                 </Match>
-                <Match when={refundScanProgress() !== undefined}>
+                <Match when={isScanning()}>
                     <p class="frame-text">
                         {t("refund_external_scanning_rsk")}
                     </p>
+                    <p class="frame-text">{refundScanProgress()}</p>
                 </Match>
-                <Match when={signer() !== undefined}>
+                <Match
+                    when={
+                        signer() === undefined ||
+                        logRefundableSwaps() === undefined
+                    }>
+                    <p class="frame-text">
+                        {t("refund_external_explainer_rsk")}
+                    </p>
+                </Match>
+                <Match
+                    when={
+                        logRefundableSwaps() !== undefined &&
+                        logRefundableSwaps().length === 0
+                    }>
                     <p class="frame-text">{t("connected_wallet_no_swaps")}</p>
                 </Match>
             </Switch>
+
+            <Show when={logRefundableSwaps()?.length > 0}>
+                <SwapListLogs swaps={logRefundableSwaps} />
+            </Show>
+
             <hr />
-            <ConnectWallet addressOverride={refundScanProgress} />
+
+            {/* Use style instead of Show to keep component mounted and preserve file input state */}
+            <div style={{ display: isScanning() ? "none" : "contents" }}>
+                <p class="frame-text">{t("rescue_file_optional_hint")}</p>
+                <RescueFileUpload
+                    onFileValidated={handleRescueFileUpload}
+                    onError={() => setUploadedRescueFile(null)}
+                    onReset={() => setUploadedRescueFile(null)}
+                    showMnemonicOption={false}
+                />
+            </div>
+
+            <ConnectWallet />
+
+            <button
+                class="btn"
+                disabled={signer() === undefined}
+                onClick={() => (isScanning() ? stopScan() : startScan())}>
+                {signer() === undefined
+                    ? t("connect_wallet_to_scan")
+                    : isScanning()
+                      ? t("stop_scan")
+                      : uploadedRescueFile() !== undefined
+                        ? t("start_scan_full")
+                        : t("start_scan_refundable")}
+            </button>
         </>
     );
 };
@@ -451,7 +549,7 @@ const RescueExternal = () => {
                         <RefundBtcLike />
                     </Show>
                     <Show when={selected() === tabRsk.value}>
-                        <RefundRsk />
+                        <RescueRsk />
                     </Show>
                     <SettingsMenu />
                 </div>

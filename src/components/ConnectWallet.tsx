@@ -21,7 +21,6 @@ import "../style/web3.scss";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
-import { scanForHighestPreimageIndex } from "../utils/preimageIndex";
 import { weiToSatoshi } from "../utils/rootstock";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { WalletConnect } from "./WalletConnect";
@@ -32,15 +31,9 @@ const Modal = (props: {
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
 }) => {
-    const { t, notify, rescueFile, setLastUsedRskKey } = useGlobalContext();
-    const {
-        providers,
-        connectProvider,
-        hasBrowserWallet,
-        setWalletConnected,
-        signer,
-        getEtherSwap,
-    } = useWeb3Signer();
+    const { t, notify } = useGlobalContext();
+    const { providers, connectProvider, hasBrowserWallet, setWalletConnected } =
+        useWeb3Signer();
 
     const [showDerivationPaths, setShowDerivationPaths] =
         createSignal<boolean>(false);
@@ -71,24 +64,6 @@ const Modal = (props: {
                         props.derivationPath,
                     );
                     setWalletConnected(connected);
-
-                    if (connected) {
-                        const address = signer()?.address;
-                        const mnemonic = rescueFile()?.mnemonic;
-                        if (address && mnemonic) {
-                            void scanForHighestPreimageIndex(
-                                address,
-                                mnemonic,
-                                getEtherSwap(),
-                            ).then((highestIndex) => {
-                                if (highestIndex >= 0) {
-                                    setLastUsedRskKey((current) =>
-                                        Math.max(current, highestIndex + 1),
-                                    );
-                                }
-                            });
-                        }
-                    }
                 }}>
                 <hr />
                 <div
@@ -154,14 +129,8 @@ const ConnectModal = (props: {
     derivationPath: string;
     disabled?: Accessor<boolean>;
 }) => {
-    const { t, notify, rescueFile, setLastUsedRskKey } = useGlobalContext();
-    const {
-        providers,
-        connectProvider,
-        setWalletConnected,
-        signer,
-        getEtherSwap,
-    } = useWeb3Signer();
+    const { t, notify } = useGlobalContext();
+    const { providers, connectProvider, setWalletConnected } = useWeb3Signer();
 
     const [show, setShow] = createSignal<boolean>(false);
 
@@ -185,24 +154,6 @@ const ConnectModal = (props: {
                             props.derivationPath,
                         );
                         setWalletConnected(connected);
-
-                        if (connected) {
-                            const address = signer()?.address;
-                            const mnemonic = rescueFile()?.mnemonic;
-                            if (address && mnemonic) {
-                                void scanForHighestPreimageIndex(
-                                    address,
-                                    mnemonic,
-                                    getEtherSwap(),
-                                ).then((highestIndex) => {
-                                    if (highestIndex >= 0) {
-                                        setLastUsedRskKey((current) =>
-                                            Math.max(current, highestIndex + 1),
-                                        );
-                                    }
-                                });
-                            }
-                        }
                     }
                 }}>
                 {t("connect_wallet")}

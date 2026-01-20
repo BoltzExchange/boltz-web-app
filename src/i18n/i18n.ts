@@ -92,7 +92,7 @@ const dict = {
         rescue_external_explainer:
             "Try rescuing an external swap via rescue key and other emergency methods.",
         refund_external_explainer_rsk:
-            "If you sent RBTC into a Boltz swap, connect your Rootstock Wallet to scan for rescuable swaps that are not saved in this browser’s swap history.",
+            "If you sent RBTC into a Boltz swap, connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
         refund_external_scanning_rsk:
             "Scanning for rescuable swaps in your Rootstock Wallet...",
         connected_wallet_no_swaps:
@@ -437,9 +437,20 @@ const dict = {
         swaps_found: "Scanning swaps ({{ count }} found)",
         upload_rescue_key_evm:
             "Upload or enter your rescue key to resume this swap",
+        claim_scan_required:
+            "To claim this swap, go back and scan with your rescue file uploaded.",
         invalid_rescue_key_evm:
             "This rescue key is not associated with this swap. Please try again using a different rescue key.",
         error_occurred: "An error occurred: {{ error }}",
+
+        start_scan: "Start Scanning",
+        start_scan_refundable: "Start Scanning (Refundable Only)",
+        start_scan_full: "Start Scanning (Full)",
+        stop_scan: "Stop Scanning",
+        connect_wallet_to_scan: "Connect your wallet to start scanning",
+        rescue_file_optional_hint:
+            "Upload a rescue file to also find claimable swaps (optional)",
+        deriving_preimages: "Deriving preimage hashes...",
     },
     de: {
         language: "Deutsch",

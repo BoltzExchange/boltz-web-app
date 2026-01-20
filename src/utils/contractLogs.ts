@@ -1,6 +1,11 @@
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import type { BytesLike, Result, Signer } from "ethers";
-import { AbiCoder, Contract, JsonRpcProvider, keccak256 } from "ethers";
+import {
+    AbiCoder,
+    Contract,
+    JsonRpcProvider,
+    keccak256,
+} from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
@@ -17,6 +22,7 @@ export type LogRefundData = {
     transactionHash: string;
 
     preimageHash: string;
+    preimage?: string;
     amount: bigint;
     claimAddress: string;
     refundAddress: string;
@@ -53,28 +59,40 @@ export const getPreimageHashesForAddress = async (
         return [];
     }
 
+    const scanProvider = new JsonRpcProvider(scanProviderUrl);
     const etherSwapScan = new Contract(
         await etherSwap.getAddress(),
         EtherSwapAbi,
-        new JsonRpcProvider(scanProviderUrl),
+        scanProvider,
     ) as unknown as EtherSwap;
 
     const deployHeight = config.assets[RBTC].contracts.deployHeight;
+    const latestBlock = await scanProvider.getBlockNumber();
+    const filter = etherSwapScan.filters.Lockup(null, null, null, address);
 
-    const events = await etherSwapScan.queryFilter(
-        etherSwapScan.filters.Lockup(null, null, null, address),
-        deployHeight,
-        "latest",
-    );
+    const hashes: string[] = [];
 
-    const hashes = events.map((event) => {
-        const decoded = etherSwap.interface.decodeEventLog(
-            etherSwap.interface.getEvent("Lockup"),
-            event.data,
-            event.topics,
+    for (
+        let toBlock = latestBlock;
+        toBlock >= deployHeight;
+        toBlock -= scanInterval
+    ) {
+        const fromBlock = Math.max(toBlock - scanInterval, deployHeight);
+        const events = await etherSwapScan.queryFilter(
+            filter,
+            fromBlock,
+            toBlock,
         );
-        return (decoded[0] as string).substring(2); // preimageHash without 0x
-    });
+
+        for (const event of events) {
+            const decoded = etherSwap.interface.decodeEventLog(
+                etherSwap.interface.getEvent("Lockup"),
+                event.data,
+                event.topics,
+            );
+            hashes.push((decoded[0] as string).substring(2)); // preimageHash without 0x
+        }
+    }
 
     // Deduplicate in case same hash appears in both
     return [...new Set(hashes)];
@@ -202,4 +220,107 @@ const parseLockupEvent = (
     };
 };
 
-export { scanLogsForPossibleRefunds };
+async function* scanLogsForRescuableSwaps(
+    abortSignal: AbortSignal,
+    signerAddress: string,
+    etherSwap: EtherSwap,
+    preimageMap?: Map<string, string>,
+) {
+    const scanProviderUrl = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
+    if (scanProviderUrl === undefined) {
+        return;
+    }
+
+    const etherSwapScan = new Contract(
+        await etherSwap.getAddress(),
+        EtherSwapAbi,
+        new JsonRpcProvider(scanProviderUrl),
+    ) as unknown as EtherSwap;
+
+    const latestBlock = await etherSwapScan.runner.provider.getBlockNumber();
+    const deployHeight = config.assets[RBTC].contracts.deployHeight;
+
+    const filter = etherSwapScan.filters.Lockup();
+
+    for (
+        let toBlock = latestBlock;
+        toBlock >= deployHeight;
+        toBlock -= scanInterval
+    ) {
+        if (abortSignal.aborted) {
+            log.info(`Cancelling rescuable swap scan`);
+            return;
+        }
+
+        const fromBlock = Math.max(toBlock - scanInterval, 0);
+        log.debug(
+            `Scanning rescuable swaps from ${fromBlock} to ${toBlock}, connected to ${signerAddress}`,
+        );
+        const events = await etherSwapScan.queryFilter(
+            filter,
+            fromBlock,
+            toBlock,
+        );
+
+        const results: { progress: number; events: LogRefundData[] } = {
+            progress: (latestBlock - toBlock) / (latestBlock - deployHeight),
+            events: [],
+        };
+
+        for (const event of events) {
+            const { data, decoded } = parseLockupEvent(etherSwap, event);
+
+            const isRefundable =
+                data.refundAddress.toLowerCase() ===
+                signerAddress.toLowerCase();
+            const preimage = preimageMap?.get(data.preimageHash);
+            const isClaimable = preimage !== undefined;
+
+            if (!isRefundable && !isClaimable) {
+                continue;
+            }
+
+            log.debug(
+                `Found relevant lockup event in: ${event.transactionHash}`,
+            );
+
+            const swapHash = keccak256(
+                AbiCoder.defaultAbiCoder().encode(
+                    ["bytes32", "uint256", "address", "address", "uint256"],
+                    [
+                        decoded[0],
+                        decoded[1],
+                        data.claimAddress,
+                        data.refundAddress,
+                        data.timelock,
+                    ],
+                ),
+            );
+
+            const stillLocked = await etherSwapScan.swaps(swapHash);
+
+            if (!stillLocked) {
+                log.info(
+                    `Lockup event in ${event.transactionHash} already spent`,
+                );
+                continue;
+            }
+
+            log.info(
+                `Found rescuable swap in: ${event.transactionHash} (refundable: ${isRefundable}, claimable: ${isClaimable})`,
+            );
+
+            if (preimage) {
+                data.preimage = preimage;
+            }
+
+            results.events.push(data);
+        }
+
+        yield results;
+    }
+
+    log.info(`Finished rescuable swap scanning`);
+}
+
+export { scanLogsForPossibleRefunds, scanLogsForRescuableSwaps };

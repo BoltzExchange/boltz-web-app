@@ -1,23 +1,13 @@
-import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
+import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import log from "loglevel";
 import type { Setter } from "solid-js";
-import {
-    Match,
-    Show,
-    Switch,
-    createResource,
-    createSignal,
-    onCleanup,
-    onMount,
-} from "solid-js";
-import { rescueKeyMode } from "src/components/MnemonicInput";
+import { Match, Show, Switch, createResource, createSignal } from "solid-js";
 
 import BlockExplorer from "../components/BlockExplorer";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
-import RescueFileUpload from "../components/RescueFileUpload";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { useGlobalContext } from "../context/Global";
@@ -29,9 +19,8 @@ import { getLogsFromReceipt } from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
-import { type RescueFile, rskDerivationPath } from "../utils/rescueFile";
+import { rskDerivationPath } from "../utils/rescueFile";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
-import { PreimageWorker } from "../workers/preimage/PreimageWorker";
 
 type RescueData = LogRefundData & { currentHeight: bigint };
 
@@ -95,43 +84,23 @@ const ClaimState = (props: {
     setClaimTxId: Setter<string>;
 }) => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
     const { t, notify } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
-    const { rescueFile, setRescueFile } = useRescueContext();
-    const [preimage, setPreimage] = createSignal<Buffer | undefined>(undefined);
-    const [loading, setLoading] = createSignal(false);
-    const [invalidRescueKey, setInvalidRescueKey] = createSignal(false);
+    const { rskRescuableSwaps } = useRescueContext();
 
-    let worker: PreimageWorker | undefined;
-
-    const findPreimage = async ({ mnemonic }: RescueFile) => {
-        setLoading(true);
-        worker = new PreimageWorker();
-        try {
-            const preimageHex = await worker.findPreimage(
-                mnemonic,
-                props.claimData.preimageHash,
-            );
-
-            if (!preimageHex) {
-                setInvalidRescueKey(true);
-                return;
-            }
-
-            setPreimage(Buffer.from(preimageHex, "hex"));
-        } catch (error) {
-            log.error("could not find matching preimage", formatError(error));
-            setRescueFile(undefined);
-            setPreimage(undefined);
-            setInvalidRescueKey(false);
-            notify("error", t("error_occurred", { error: formatError(error) }));
-        } finally {
-            setLoading(false);
-        }
+    const preimage = () => {
+        const swapFromContext = rskRescuableSwaps().find(
+            (s) => s.preimageHash === props.claimData.preimageHash,
+        );
+        return swapFromContext?.preimage
+            ? Buffer.from(swapFromContext.preimage, "hex")
+            : undefined;
     };
 
     const claimTransaction = async () => {
+        const currentPreimage = preimage();
+        if (!currentPreimage) return;
+
         try {
             let transactionHash: string;
 
@@ -146,7 +115,7 @@ const ClaimState = (props: {
                 transactionHash = await relayClaimTransaction(
                     signer(),
                     getEtherSwap(),
-                    preimage().toString("hex"),
+                    currentPreimage.toString("hex"),
                     Number(props.claimData.amount),
                     props.claimData.refundAddress,
                     Number(props.claimData.timelock),
@@ -156,7 +125,7 @@ const ClaimState = (props: {
                     await getEtherSwap()[
                         "claim(bytes32,uint256,address,uint256)"
                     ](
-                        prefix0x(preimage().toString("hex")),
+                        prefix0x(currentPreimage.toString("hex")),
                         satoshiToWei(Number(props.claimData.amount)),
                         props.claimData.refundAddress,
                         props.claimData.timelock,
@@ -171,82 +140,33 @@ const ClaimState = (props: {
         }
     };
 
-    onMount(() => {
-        setRescueFile(undefined);
-    });
-
-    onCleanup(() => worker?.terminate());
-
     return (
-        <>
-            <Show when={!loading()} fallback={<LoadingSpinner />}>
-                <Switch>
-                    <Match
-                        when={
-                            (rescueFile() === undefined ||
-                                preimage() === undefined) &&
-                            !invalidRescueKey()
-                        }>
-                        <Show when={searchParams.mode !== rescueKeyMode}>
-                            <p>{t("upload_rescue_key_evm")}</p>
-                        </Show>
-                        <RescueFileUpload
-                            onFileValidated={(result) =>
-                                findPreimage(result.data as RescueFile)
-                            }
-                            onError={() => {
-                                setRescueFile(undefined);
-                                setPreimage(undefined);
-                                notify("error", t("invalid_refund_file"));
-                            }}
-                        />
-                        <Show when={searchParams.mode !== rescueKeyMode}>
-                            <button
-                                class="btn btn-light"
-                                data-testid="backBtn"
-                                onClick={() => {
-                                    navigate("/rescue/external/rsk");
-                                }}>
-                                {t("back")}
-                            </button>
-                        </Show>
-                    </Match>
-                    <Match
-                        when={
-                            rescueFile() !== undefined &&
-                            preimage() !== undefined &&
-                            !invalidRescueKey()
-                        }>
-                        <ContractTransaction
-                            onClick={claimTransaction}
-                            address={{
-                                address: props.claimData.refundAddress,
-                                derivationPath: rskDerivationPath,
-                            }}
-                            buttonText={t("continue")}
-                            promptText={t("transaction_prompt_receive", {
-                                button: t("continue"),
-                                asset: props.asset,
-                            })}
-                            waitingText={t("tx_ready_to_claim")}
-                        />
-                    </Match>
-                    <Match when={invalidRescueKey()}>
-                        <p>{t("invalid_rescue_key_evm")}</p>
-                        <button
-                            class="btn btn-light"
-                            data-testid="backBtn"
-                            onClick={() => {
-                                setRescueFile(undefined);
-                                setPreimage(undefined);
-                                setInvalidRescueKey(false);
-                            }}>
-                            {t("back")}
-                        </button>
-                    </Match>
-                </Switch>
-            </Show>
-        </>
+        <Show
+            when={preimage() !== undefined}
+            fallback={
+                <>
+                    <p>{t("claim_scan_required")}</p>
+                    <button
+                        class="btn"
+                        onClick={() => navigate("/rescue/external/rsk")}>
+                        {t("back")}
+                    </button>
+                </>
+            }>
+            <ContractTransaction
+                onClick={claimTransaction}
+                address={{
+                    address: props.claimData.claimAddress,
+                    derivationPath: rskDerivationPath,
+                }}
+                buttonText={t("continue")}
+                promptText={t("transaction_prompt_receive", {
+                    button: t("continue"),
+                    asset: props.asset,
+                })}
+                waitingText={t("tx_ready_to_claim")}
+            />
+        </Show>
     );
 };
 
