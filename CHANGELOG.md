@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.15](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.14..v1.8.15) - 2026-01-21
+
+### Bug Fixes
+
+- lnurl amount check log (#1139) - ([95071b2](https://github.com/BoltzExchange/boltz-web-app/commit/95071b2874399eec33d1ef3093c75e42b5da516a))
+- browser's navigation buttons on paginated pages (#1142) - ([298060b](https://github.com/BoltzExchange/boltz-web-app/commit/298060b91c4d77f0aed5f8a8ffb73fa1ae03da0f))
+- swap hash function (#1143) - ([065ad85](https://github.com/BoltzExchange/boltz-web-app/commit/065ad8510e97d9456d5eb1b001ba63517b2ada0f))
+
+### Features
+
+- paginated fetching of swap restoration (#1134) - ([6aadd8f](https://github.com/BoltzExchange/boltz-web-app/commit/6aadd8fad1d4e986fac1d5b69e58865ea95fcec8))
+- paginate history page (#1135) - ([621ad33](https://github.com/BoltzExchange/boltz-web-app/commit/621ad3306cabb26a4a0a57c06d5fb0a67e92d89f))
+
+### Miscellaneous Chores
+
+- **(deps)** bump h3 from 1.15.3 to 1.15.5 (#1141) - ([2551e50](https://github.com/BoltzExchange/boltz-web-app/commit/2551e502c3a7b15f4d3ceee25f09e4faf9e86d40))
+- error when not running in secure context (#1138) - ([100ffec](https://github.com/BoltzExchange/boltz-web-app/commit/100ffece3d9e42fc4c764791ae30e60e00495974))
+
+### Refactoring
+
+- replace boolean validation with errors (#1137) - ([29877af](https://github.com/BoltzExchange/boltz-web-app/commit/29877afae2034c79256f454fafe1eac314fb81b5))
+
+### Tests
+
+- refund swaps after under/over payment (#1132) - ([a32ee8a](https://github.com/BoltzExchange/boltz-web-app/commit/a32ee8a0945c3bdaece7ef833c2d11d6c19fe4ec))
+- refund external unit test flakiness (#1136) - ([d7f9ee9](https://github.com/BoltzExchange/boltz-web-app/commit/d7f9ee934890bfd9057e407de0f41aa3511eac08))
+
+---
 ## [1.8.14](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.13..v1.8.14) - 2026-01-06
 
 ### Features
@@ -12,6 +40,7 @@ All notable changes to this project will be documented in this file. See [conven
 ### Miscellaneous Chores
 
 - revert "feat: add santa hat to Boltz logo (#1115)" (#1129) - ([70e2302](https://github.com/BoltzExchange/boltz-web-app/commit/70e2302a1d8cb9ea0fec4b42ec17d60278078309))
+- bump version to v1.8.14 (#1131) - ([831b916](https://github.com/BoltzExchange/boltz-web-app/commit/831b916ac39921f86e805941ec227a7f3440ef6e))
 
 ### Tests
 
