@@ -1,6 +1,6 @@
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import type { BytesLike, Result, Signer } from "ethers";
-import { Contract, JsonRpcProvider, solidityPackedKeccak256 } from "ethers";
+import { AbiCoder, Contract, JsonRpcProvider, keccak256 } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
@@ -99,15 +99,18 @@ async function* scanLogsForPossibleRefunds(
 
             const { data, decoded } = parseLockupEvent(etherSwap, event);
             const stillLocked = await etherSwap.swaps(
-                solidityPackedKeccak256(
-                    ["bytes32", "uint256", "address", "address", "uint256"],
-                    [
-                        decoded[0],
-                        decoded[1],
-                        data.claimAddress,
-                        data.refundAddress,
-                        data.timelock,
-                    ],
+                // Contracts v5 switched from encodePacked to an assembly implementation of encode
+                keccak256(
+                    AbiCoder.defaultAbiCoder().encode(
+                        ["bytes32", "uint256", "address", "address", "uint256"],
+                        [
+                            decoded[0],
+                            decoded[1],
+                            data.claimAddress,
+                            data.refundAddress,
+                            data.timelock,
+                        ],
+                    ),
                 ),
             );
 
