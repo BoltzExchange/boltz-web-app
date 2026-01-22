@@ -61,3 +61,12 @@
         content: "tbtc";
     }
 }
+
+.asset-USDT0 {
+    .icon {
+        background-image: vars.$usdt0_icon;
+    }
+    .asset-text:before {
+        content: "usdt0";
+    }
+}

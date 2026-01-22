@@ -6,6 +6,7 @@ import { randomBytes } from "crypto";
 import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
+import type { EncodedHop } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
     Pairs,
@@ -42,6 +43,9 @@ export type SwapBase = {
 
     // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
     originalDestination?: string;
+
+    // DEX hops for routed swaps
+    hops?: EncodedHop[];
 };
 
 export type SubmarineSwap = SwapBase &

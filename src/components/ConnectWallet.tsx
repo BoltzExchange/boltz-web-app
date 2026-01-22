@@ -217,6 +217,7 @@ const ShowAddress = (props: {
                     BigNumber(weiToSatoshi(rskBalance()).toString()),
                     denomination(),
                     separator(),
+                    RBTC,
                 )}{" "}
                 {formatDenomination(denomination(), RBTC)}
             </Show>

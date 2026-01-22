@@ -27,6 +27,7 @@ import { config } from "../config";
 import {
     hasEvmAssets,
     isEvmAsset,
+    requireRouterAddress,
     requireTokenConfig,
 } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
@@ -38,6 +39,10 @@ import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { createProvider } from "../utils/provider";
 import { useGlobalContext } from "./Global";
+// TODO: import from boltz-core after update
+import type { Router } from "./Router";
+// TODO: import from boltz-core after update
+import { abi as RouterAbi } from "./Router.json";
 
 declare global {
     interface WindowEventMap {
@@ -76,7 +81,16 @@ const customDerivationPathRdns: string[] = [
 
 export const createTokenContract = (asset: string, signer: Signer) => {
     const tokenConfig = requireTokenConfig(asset);
-    return new Contract(tokenConfig.address, ERC20Abi, signer) as unknown as ERC20;
+    return new Contract(
+        tokenConfig.address,
+        ERC20Abi,
+        signer,
+    ) as unknown as ERC20;
+};
+
+export const createRouterContract = (asset: string, signer: Signer) => {
+    const routerAddress = requireRouterAddress(asset);
+    return new Contract(routerAddress, RouterAbi, signer) as unknown as Router;
 };
 
 const Web3SignerContext = createContext<{

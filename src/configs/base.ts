@@ -1,6 +1,6 @@
 import type log from "loglevel";
 
-import { type AssetKind } from "../consts/Assets";
+import { type AssetKind } from "../consts/AssetKind";
 
 type Asset = {
     type: AssetKind;
@@ -11,11 +11,13 @@ type Asset = {
     rifRelay?: string;
     contracts?: {
         deployHeight: number;
+        router?: string;
         smartWalletFactory?: string;
         deployVerifier?: string;
     };
     network?: {
         chainName: string;
+        symbol: string;
         chainId: number;
         rpcUrls: string[];
         nativeCurrency: {
@@ -27,6 +29,7 @@ type Asset = {
     token?: {
         address: string;
         decimals: number;
+        routeVia?: string;
     };
 };
 

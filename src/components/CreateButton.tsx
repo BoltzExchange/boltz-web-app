@@ -13,6 +13,7 @@ import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
+import Pair, { type EncodedHop } from "../utils/Pair";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
     fetchBip21Invoice,
@@ -28,7 +29,7 @@ import {
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { coalesceLn, getDestinationAddress, getPair } from "../utils/helper";
+import { getDestinationAddress, getPair } from "../utils/helper";
 import {
     InvoiceType,
     decodeInvoice,
@@ -109,18 +110,17 @@ const CreateButton = () => {
         deriveKey,
         rescueFileBackupDone,
         rescueFile,
+        regularPairs,
     } = useGlobalContext();
     const {
+        pair,
+        setPair,
         invoice,
         lnurl,
-        assetSend,
-        assetReceive,
         onchainAddress,
         receiveAmount,
-        swapType,
         sendAmount,
         amountValid,
-        pairValid,
         setInvoice,
         setInvoiceValid,
         setLnurl,
@@ -134,8 +134,6 @@ const CreateButton = () => {
         invoiceError,
         bolt12Offer,
         setBolt12Offer,
-        setAssetReceive,
-        setSwapType,
         setSendAmount,
         setReceiveAmount,
     } = useCreateContext();
@@ -152,6 +150,10 @@ const CreateButton = () => {
         string | undefined
     >(undefined);
 
+    const swapType = () => pair().swapToCreate?.type;
+    const assetSend = () => pair().fromAsset;
+    const assetReceive = () => pair().toAsset;
+
     createEffect(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
     });
@@ -164,12 +166,10 @@ const CreateButton = () => {
                 addressValid,
                 invoiceValid,
                 invoiceError,
-                pairValid,
-                swapType,
+                pair,
                 lnurl,
                 online,
                 minimum,
-                assetReceive,
                 bolt12Offer,
                 denomination,
                 sendAmount,
@@ -182,7 +182,7 @@ const CreateButton = () => {
                     setButtonLabel({ key: "api_offline" });
                     return;
                 }
-                if (!pairValid()) {
+                if (!pair().isRoutable) {
                     setButtonLabel({ key: "invalid_pair" });
                     return;
                 }
@@ -212,6 +212,7 @@ const CreateButton = () => {
                                 BigNumber(lessThanMin ? minimum() : maximum()),
                                 denomination(),
                                 separator(),
+                                assetSend(),
                             ),
                             denomination: formatDenomination(
                                 denomination(),
@@ -307,6 +308,7 @@ const CreateButton = () => {
                                             BigNumber(satsAmount),
                                             denomination(),
                                             separator(),
+                                            BTC,
                                         ),
                                         denomination: formatDenomination(
                                             denomination(),
@@ -394,15 +396,22 @@ const CreateButton = () => {
 
         try {
             let data: SomeSwap;
+            let hops: EncodedHop[];
+
             switch (swapType()) {
                 case SwapType.Submarine: {
                     const createSubmarineSwap = async () => {
+                        const creationData = await pair().creationData(
+                            sendAmount(),
+                            pair().minerFees,
+                        );
+                        hops = creationData.hops;
                         data = await createSubmarine(
                             pairs(),
-                            coalesceLn(assetSend()),
-                            coalesceLn(assetReceive()),
-                            sendAmount(),
-                            receiveAmount(),
+                            creationData.from,
+                            creationData.to,
+                            creationData.sendAmount,
+                            creationData.receiveAmount,
                             invoice(),
                             ref(),
                             useRif,
@@ -496,9 +505,15 @@ const CreateButton = () => {
                             break;
                         }
 
-                        setAssetReceive(bip21Asset);
+                        setPair(
+                            new Pair(
+                                pairs(),
+                                assetSend(),
+                                bip21Asset,
+                                regularPairs(),
+                            ),
+                        );
                         setOnchainAddress(chainAddress);
-                        setSwapType(SwapType.Chain);
                         setReceiveAmount(btcToSat(bip21Amount));
                         setSendAmount(mrhSendAmount);
 
@@ -506,7 +521,7 @@ const CreateButton = () => {
                         const chainSwap = await createChain(
                             pairs(),
                             assetSend(),
-                            assetReceive(),
+                            bip21Asset,
                             sendAmount(),
                             receiveAmount(),
                             onchainAddress(),
@@ -529,13 +544,18 @@ const CreateButton = () => {
                     }
                 }
 
-                case SwapType.Reverse:
+                case SwapType.Reverse: {
+                    const creationData = await pair().creationData(
+                        sendAmount(),
+                        pair().minerFees,
+                    );
+                    hops = creationData.hops;
                     data = await createReverse(
                         pairs(),
-                        coalesceLn(assetSend()),
-                        coalesceLn(assetReceive()),
-                        sendAmount(),
-                        receiveAmount(),
+                        creationData.from,
+                        creationData.to,
+                        creationData.sendAmount,
+                        creationData.receiveAmount,
                         claimAddress,
                         ref(),
                         useRif,
@@ -543,14 +563,20 @@ const CreateButton = () => {
                         newKey,
                     );
                     break;
+                }
 
-                case SwapType.Chain:
+                case SwapType.Chain: {
+                    const creationData = await pair().creationData(
+                        sendAmount(),
+                        pair().minerFees,
+                    );
+                    hops = creationData.hops;
                     data = await createChain(
                         pairs(),
-                        assetSend(),
-                        assetReceive(),
-                        sendAmount(),
-                        receiveAmount(),
+                        creationData.from,
+                        creationData.to,
+                        creationData.sendAmount,
+                        creationData.receiveAmount,
                         claimAddress,
                         ref(),
                         useRif,
@@ -558,6 +584,7 @@ const CreateButton = () => {
                         newKey,
                     );
                     break;
+                }
             }
 
             try {
@@ -579,6 +606,7 @@ const CreateButton = () => {
 
             await setSwapStorage({
                 ...data,
+                hops,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine

@@ -1,6 +1,6 @@
 import type { Config } from "src/configs/base";
 import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
-import { AssetKind } from "src/consts/Assets";
+import { AssetKind } from "src/consts/AssetKind";
 
 const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
 

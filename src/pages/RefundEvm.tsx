@@ -35,6 +35,7 @@ const RefundState = (props: {
                     new BigNumber(props.refundData.amount.toString()),
                     denomination(),
                     separator(),
+                    props.asset,
                 )}{" "}
                 {formatDenomination(denomination(), props.asset)}
             </p>
