@@ -3,9 +3,10 @@ import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 
-import { RBTC } from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
+import type { EncodedHop } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
     Pairs,
@@ -42,6 +43,9 @@ export type SwapBase = {
 
     // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
     originalDestination?: string;
+
+    // DEX hops for routed swaps
+    hops?: EncodedHop[];
 };
 
 export type SubmarineSwap = SwapBase &
@@ -89,18 +93,19 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
     }
 };
 
-export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;
+export const isEvmSwap = (swap: SomeSwap) =>
+    isEvmAsset(getRelevantAssetForSwap(swap));
 
 const generatePreimage = ({
-    isRsk,
+    isEvm,
     keyIndex,
     rescueFile,
 }: {
-    isRsk: boolean;
+    isEvm: boolean;
     keyIndex: number;
     rescueFile: RescueFile;
 }) => {
-    if (isRsk) {
+    if (isEvm) {
         return randomBytes(32);
     }
     return derivePreimageFromRescueKey(rescueFile, keyIndex);
@@ -118,8 +123,8 @@ export const createSubmarine = async (
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<SubmarineSwap> => {
-    const isRsk = assetReceive === RBTC;
-    const key = !isRsk ? newKey() : undefined;
+    const isEvm = isEvmAsset(assetReceive);
+    const key = !isEvm ? newKey() : undefined;
     const res = await createSubmarineSwap(
         assetSend,
         assetReceive,
@@ -160,11 +165,11 @@ export const createReverse = async (
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<ReverseSwap> => {
-    const isRsk = assetReceive === RBTC;
+    const isEvm = isEvmAsset(assetReceive);
 
-    const key = !isRsk ? newKey() : undefined;
+    const key = !isEvm ? newKey() : undefined;
     const preimage = generatePreimage({
-        isRsk,
+        isEvm,
         keyIndex: key?.index,
         rescueFile,
     });
@@ -212,11 +217,11 @@ export const createChain = async (
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<ChainSwap> => {
-    const claimKey = assetReceive !== RBTC ? newKey() : undefined;
-    const refundKey = assetSend !== RBTC ? newKey() : undefined;
-    const isRsk = assetReceive === RBTC || assetSend === RBTC;
+    const claimKey = !isEvmAsset(assetReceive) ? newKey() : undefined;
+    const refundKey = !isEvmAsset(assetSend) ? newKey() : undefined;
+    const isEvm = isEvmAsset(assetReceive) || isEvmAsset(assetSend);
     const preimage = generatePreimage({
-        isRsk,
+        isEvm,
         keyIndex: claimKey?.index,
         rescueFile,
     });

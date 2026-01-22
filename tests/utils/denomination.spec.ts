@@ -49,7 +49,7 @@ describe("denomination utils", () => {
             "format $amount in $denomination with `$separator` separator",
             ({ denomination, amount, formatted, separator }) => {
                 expect(
-                    formatAmount(BigNumber(amount), denomination, separator),
+                    formatAmount(BigNumber(amount), denomination, separator, BTC),
                 ).toEqual(formatted);
             },
         );
