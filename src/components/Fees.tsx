@@ -11,22 +11,11 @@ import {
 
 import { config } from "../config";
 import { LBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import type {
-    ChainPairTypeTaproot,
-    ReversePairTypeTaproot,
-    SubmarinePairTypeTaproot,
-} from "../utils/boltzClient";
-import {
-    calculateBoltzFeeOnSend,
-    calculateSendAmount,
-} from "../utils/calculate";
 import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
-import { getPair } from "../utils/helper";
 import { weiToSatoshi } from "../utils/rootstock";
 import { getClaimAddress } from "./CreateButton";
 import Denomination from "./settings/Denomination";
@@ -72,13 +61,10 @@ const Fees = () => {
         denomination,
         separator,
         notify,
-        regularPairs,
         fetchRegularPairs,
     } = useGlobalContext();
     const {
-        assetSend,
-        assetReceive,
-        swapType,
+        pair,
         sendAmount,
         setMaximum,
         setMinimum,
@@ -98,7 +84,7 @@ const Fees = () => {
     const rifFetchTrigger = createMemo(() => {
         return {
             signer: signer(),
-            assetReceive: assetReceive(),
+            assetReceive: pair().toAsset,
         };
     });
     const [rifExtraCost] = createResource(
@@ -124,10 +110,6 @@ const Fees = () => {
     );
 
     createEffect(() => {
-        // Reset routing fee when changing the pair
-        // (which might not be submarine and not set the signal)
-        setRoutingFee(undefined);
-
         // Updating the miner fee with "setMinerFee(minerFee() + rifExtraCost())"
         // causes an endless loop of triggering the effect again
         const updateMinerFee = (fee: number) => {
@@ -135,85 +117,25 @@ const Fees = () => {
         };
 
         if (pairs()) {
-            const cfg = getPair(
-                pairs(),
-                swapType(),
-                assetSend(),
-                assetReceive(),
-            );
+            if (!pair().isRoutable) return;
 
-            if (!cfg) return;
+            setBoltzFee(pair().feePercentage);
+            setRoutingFee(pair().maxRoutingFee);
 
-            setBoltzFee(cfg.fees.percentage);
-
-            switch (swapType()) {
-                case SwapType.Submarine:
-                    setRoutingFee(
-                        (cfg as SubmarinePairTypeTaproot).fees
-                            .maximalRoutingFee,
-                    );
-                    updateMinerFee(
-                        (cfg as SubmarinePairTypeTaproot).fees.minerFees,
-                    );
-                    break;
-
-                case SwapType.Reverse: {
-                    const reverseCfg = cfg as ReversePairTypeTaproot;
-                    let fee =
-                        reverseCfg.fees.minerFees.claim +
-                        reverseCfg.fees.minerFees.lockup;
-                    if (
-                        isToUnconfidentialLiquid({
-                            assetReceive,
-                            addressValid,
-                            onchainAddress,
-                        })
-                    ) {
-                        fee += unconfidentialExtra;
-                    }
-
-                    updateMinerFee(fee);
-                    break;
-                }
-
-                case SwapType.Chain: {
-                    const chainCfg = cfg as ChainPairTypeTaproot;
-                    let fee =
-                        chainCfg.fees.minerFees.server +
-                        chainCfg.fees.minerFees.user.claim;
-                    if (
-                        isToUnconfidentialLiquid({
-                            assetReceive,
-                            addressValid,
-                            onchainAddress,
-                        })
-                    ) {
-                        fee += unconfidentialExtra;
-                    }
-
-                    updateMinerFee(fee);
-                    break;
-                }
+            let minerFees = pair().minerFees;
+            if (
+                isToUnconfidentialLiquid({
+                    assetReceive: () => pair().toAsset,
+                    addressValid,
+                    onchainAddress,
+                })
+            ) {
+                minerFees += unconfidentialExtra;
             }
+            updateMinerFee(minerFees);
 
-            const calculateLimit = (limit: number): number => {
-                return swapType() === SwapType.Submarine
-                    ? calculateSendAmount(
-                          BigNumber(limit),
-                          boltzFee(),
-                          minerFee(),
-                          swapType(),
-                      ).toNumber()
-                    : limit;
-            };
-
-            setMinimum(
-                calculateLimit(
-                    (cfg as SubmarinePairTypeTaproot).limits.minimalBatched ||
-                        cfg.limits.minimal,
-                ),
-            );
-            setMaximum(calculateLimit(cfg.limits.maximal));
+            setMinimum(pair().minimum);
+            setMaximum(pair().maximum);
         }
     });
 
@@ -232,6 +154,7 @@ const Fees = () => {
                 {t("network_fee")}:{" "}
                 <span class="network-fee" data-testid="network-fee">
                     {formatAmount(
+                        pair().fromAsset,
                         BigNumber(minerFee()),
                         denomination(),
                         separator(),
@@ -247,27 +170,15 @@ const Fees = () => {
                 <span
                     class={
                         config.isPro &&
-                        getFeeHighlightClass(
-                            boltzFee(),
-                            getPair(
-                                regularPairs(),
-                                swapType(),
-                                assetSend(),
-                                assetReceive(),
-                            )?.fees.percentage,
-                        )
+                        getFeeHighlightClass(boltzFee(), pair().feeWithoutPro)
                     }>
                     {boltzFee().toString().replaceAll(".", separator())}%
                 </span>
                 ):{" "}
                 <span class="boltz-fee" data-testid="boltz-fee">
                     {formatAmount(
-                        calculateBoltzFeeOnSend(
-                            sendAmount(),
-                            boltzFee(),
-                            minerFee(),
-                            swapType(),
-                        ),
+                        pair().fromAsset,
+                        pair().feeOnSend(sendAmount()),
                         denomination(),
                         separator(),
                         true,

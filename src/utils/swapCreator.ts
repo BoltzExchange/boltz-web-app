@@ -19,6 +19,7 @@ import {
 } from "./boltzClient";
 import { derivePreimageFromRescueKey } from "./claim";
 import { getPair } from "./helper";
+import type { EncodedHop } from "./pair";
 import type { RescueFile } from "./rescueFile";
 
 export type SwapBase = {
@@ -77,7 +78,9 @@ export type ChainSwap = SwapBase &
         refundPrivateKey?: string;
     };
 
-export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
+export type SomeSwap = (SubmarineSwap | ReverseSwap | ChainSwap) & {
+    hops?: EncodedHop[];
+};
 
 export const getRelevantAssetForSwap = (swap: SwapBase) => {
     switch (swap.type) {
