@@ -156,7 +156,7 @@ const OptimizedRoute = () => {
     const params = useParams<{ id: string }>();
 
     const { t, denomination, separator, getSwap } = useGlobalContext();
-    const { assetSend, assetReceive } = useCreateContext();
+    const { pair } = useCreateContext();
 
     const [swap] = createResource(async () => {
         if (typeof params.id !== "string") {
@@ -176,20 +176,21 @@ const OptimizedRoute = () => {
                 ✨{" "}
                 {t("optimized_route_amount", {
                     amount: formatAmount(
+                        pair().fromAsset,
                         BigNumber(swap().magicRoutingHintSavedFees),
                         denomination(),
                         separator(),
                     ),
                     denomination: formatDenomination(
                         denomination(),
-                        assetSend(),
+                        pair().fromAsset,
                     ),
                 })}
                 <Tooltip
                     label={{
                         key: "applied_routing_hint",
                         variables: {
-                            asset: assetReceive(),
+                            asset: pair().toAsset,
                         },
                     }}
                     direction={[isMobile() ? "left" : "right"]}>

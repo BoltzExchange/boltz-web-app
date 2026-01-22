@@ -2,7 +2,13 @@ import { fireEvent, render } from "@solidjs/testing-library";
 
 import Reverse from "../../src/components/Reverse";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import Pair from "../../src/utils/pair";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 
 describe("Reverse", () => {
     test("should reverse assets", () => {
@@ -20,13 +26,12 @@ describe("Reverse", () => {
             },
         );
 
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), BTC, LN));
 
         fireEvent.click(flip);
 
-        expect(signals.assetSend()).toEqual(LN);
-        expect(signals.assetReceive()).toEqual(BTC);
+        expect(signals.pair().fromAsset).toEqual(LN);
+        expect(signals.pair().toAsset).toEqual(BTC);
     });
 
     test("should clear onChainAddress on reverse", () => {
@@ -45,8 +50,7 @@ describe("Reverse", () => {
         );
 
         signals.setOnchainAddress("2N17VNGbi4yUHtkD7vhrc8cpi9JGVmC8scn");
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(BTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, BTC));
 
         fireEvent.click(flip);
 

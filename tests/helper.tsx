@@ -8,6 +8,7 @@ import type { PayContextType } from "../src/context/Pay";
 import { PayProvider, usePayContext } from "../src/context/Pay";
 import { RescueProvider } from "../src/context/Rescue";
 import { Web3SignerProvider } from "../src/context/Web3";
+import { pairs } from "./pairs";
 
 export let signals: CreateContextType;
 export let globalSignals: GlobalContextType;
@@ -17,6 +18,7 @@ export const TestComponent = () => {
     signals = useCreateContext();
     payContext = usePayContext();
     globalSignals = useGlobalContext();
+    globalSignals.setPairs(pairs);
     return "";
 };
 

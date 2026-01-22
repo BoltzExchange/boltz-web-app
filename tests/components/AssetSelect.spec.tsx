@@ -1,10 +1,16 @@
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import Pair from "src/utils/pair";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 import { pairs } from "../pairs";
 
 vi.mock("../../src/utils/boltzClient", () => ({
@@ -14,10 +20,9 @@ vi.mock("../../src/utils/boltzClient", () => ({
 describe("AssetSelect", () => {
     test.each`
         asset
-        ${LN}
         ${BTC}
         ${LBTC}
-    `("should highlight selected asset $asset", ({ asset }) => {
+    `("should highlight selected asset $asset", async ({ asset }) => {
         const res = render(
             () => (
                 <>
@@ -28,10 +33,11 @@ describe("AssetSelect", () => {
             { wrapper: contextWrapper },
         );
 
-        signals.setAssetSend(asset);
-        signals.setAssetSelect(true);
-        signals.setAssetSelected(Side.Send);
-
+        signals.setPair(new Pair(globalSignals.pairs(), asset, LN));
+        await waitFor(() => {
+            signals.setAssetSelect(true);
+            signals.setAssetSelected(Side.Send);
+        });
         for (const elem of res.container.children[0].children) {
             const classes = Array.from(elem.classList.values());
             if (!classes.includes("asset-select")) {
@@ -82,18 +88,18 @@ describe("AssetSelect", () => {
             { wrapper: contextWrapper },
         );
 
-        signals.setAssetSend(BTC);
+        signals.setPair(
+            new Pair(globalSignals.pairs(), signals.pair().fromAsset, BTC),
+        );
         signals.setAssetSelect(true);
         signals.setAssetSelected(Side.Send);
 
-        const setAssetSend = vi.spyOn(signals, "setAssetSend");
-        const setAssetReceive = vi.spyOn(signals, "setAssetReceive");
+        const setPair = vi.spyOn(signals, "setPair");
 
         const btcButton = container.children[0].children[3];
         fireEvent.click(btcButton);
 
-        expect(setAssetSend).toHaveBeenCalledTimes(0);
-        expect(setAssetReceive).toHaveBeenCalledTimes(0);
+        expect(setPair).toHaveBeenCalledTimes(0);
     });
 
     test.each`
@@ -116,19 +122,20 @@ describe("AssetSelect", () => {
                 { wrapper: contextWrapper },
             );
 
+            signals.setPair(
+                new Pair(globalSignals.pairs(), prevSend, prevReceive),
+            );
             signals.setAssetSelect(true);
             signals.setAssetSelected(side);
-            signals.setAssetSend(prevSend);
-            signals.setAssetReceive(prevReceive);
 
             fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
             const isSend = side === Side.Send;
             expect(
-                isSend ? signals.assetSend() : signals.assetReceive(),
+                isSend ? signals.pair().fromAsset : signals.pair().toAsset,
             ).toEqual(newAsset);
             expect(
-                !isSend ? signals.assetSend() : signals.assetReceive(),
+                !isSend ? signals.pair().fromAsset : signals.pair().toAsset,
             ).toEqual(expectedOther);
         },
     );
@@ -153,12 +160,12 @@ describe("AssetSelect", () => {
             signals.setOnchainAddress(address);
             signals.setAssetSelect(true);
             signals.setAssetSelected(Side.Send);
-            signals.setAssetSend(LN);
-            signals.setAssetReceive(asset);
+            signals.setPair(new Pair(globalSignals.pairs(), LN, asset));
 
             fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
-            expect(signals.assetSend()).toEqual(newAsset);
+            expect(signals.pair().fromAsset).toEqual(newAsset);
+            expect(signals.pair().toAsset).toEqual(asset);
             expect(signals.onchainAddress()).toEqual(address);
         },
     );
@@ -180,12 +187,12 @@ describe("AssetSelect", () => {
         signals.setOnchainAddress(initialAddress);
         signals.setAssetSelect(true);
         signals.setAssetSelected(Side.Receive);
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LBTC);
+        signals.setPair(new Pair(globalSignals.pairs(), BTC, LBTC));
 
         fireEvent.click(await screen.findByTestId(`select-${BTC}`));
 
-        expect(signals.assetReceive()).toEqual(BTC);
+        expect(signals.pair().toAsset).toEqual(BTC);
+        expect(signals.pair().fromAsset).toEqual(LBTC);
         expect(signals.onchainAddress()).toBe("");
     });
 });

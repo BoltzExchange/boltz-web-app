@@ -90,6 +90,7 @@ const TransactionClaimed = () => {
                 <p>
                     {t("successfully_swapped", {
                         amount: formatAmount(
+                            swap().assetReceive,
                             BigNumber(swap().receiveAmount),
                             denomination(),
                             separator(),

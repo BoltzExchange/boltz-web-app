@@ -1,8 +1,11 @@
 import { BigNumber } from "bignumber.js";
 
+import { config } from "../config";
+import { AssetType } from "../configs/base";
 import { Denomination } from "../consts/Enums";
 
 const miliFactor = 1_000;
+const satDecimals = 8;
 const satFactor = 100_000_000;
 
 export const getValidationRegex = (maximum: number): RegExp => {
@@ -14,76 +17,84 @@ export const getValidationRegex = (maximum: number): RegExp => {
 };
 
 export const formatAmount = (
+    asset: string,
     amount: BigNumber,
     denomination: Denomination,
     separator: string,
     fixed: boolean = false,
-): string => {
-    return formatAmountDenomination(amount, denomination, separator, fixed);
-};
+): string =>
+    formatAmountDenomination(asset, amount, denomination, separator, fixed);
 
 export const formatAmountDenomination = (
+    asset: string,
     amount: BigNumber,
     denomination: Denomination,
     separator: string,
     fixed: boolean = false,
 ): string => {
-    switch (denomination) {
-        case Denomination.Btc: {
-            const amountBig = amount.div(satFactor);
-            let amountString = amountBig.toString();
-            if (fixed) {
-                amountString = amountBig.toFixed(8);
-                return amountString;
-            }
-            if (amountBig.isZero()) {
-                amountString = amountBig.toFixed(1);
-            }
+    const { isErc20, decimals } = getDecimals(asset);
 
-            // 0.00000001.toString() returns "1e-8"
-            // 0.0000001.toString() returns "1e-7"
-            if (amountBig.toString().indexOf("-") !== -1) {
-                amountString = amountBig.toFixed(Number(8)).replace(/0+$/, "");
-            }
+    if (denomination === Denomination.Btc || isErc20) {
+        const amountBig = amount.div(
+            isErc20 ? BigNumber(10).pow(decimals) : satFactor,
+        );
 
-            if (separator === ",") {
-                amountString = amountString.replace(".", ",");
-            }
-
+        let amountString = amountBig.toString();
+        if (fixed) {
+            amountString = amountBig.toFixed(decimals);
             return amountString;
         }
-
-        default: {
-            const chars = amount.toString().split("").reverse();
-            const formatted = chars
-                .reduce(
-                    (acc, char, i) =>
-                        i % 3 === 0 ? acc + " " + char : acc + char,
-                    "",
-                )
-                .trim()
-                .split("")
-                .reverse()
-                .join("");
-
-            return (
-                formatted.includes(".") || formatted.includes(",")
-                    ? formatted.replaceAll(" .", ".").replaceAll(" ,", ",")
-                    : formatted
-            ).replaceAll(".", separator);
+        if (amountBig.isZero()) {
+            amountString = amountBig.toFixed(1);
         }
+
+        // 0.00000001.toString() returns "1e-8"
+        // 0.0000001.toString() returns "1e-7"
+        if (amountBig.toString().indexOf("-") !== -1) {
+            amountString = amountBig
+                .toFixed(Number(decimals))
+                .replace(/0+$/, "");
+        }
+
+        if (separator === ",") {
+            amountString = amountString.replace(".", ",");
+        }
+
+        return amountString;
+    } else {
+        const chars = amount.toString().split("").reverse();
+        const formatted = chars
+            .reduce(
+                (acc, char, i) => (i % 3 === 0 ? acc + " " + char : acc + char),
+                "",
+            )
+            .trim()
+            .split("")
+            .reverse()
+            .join("");
+
+        return (
+            formatted.includes(".") || formatted.includes(",")
+                ? formatted.replaceAll(" .", ".").replaceAll(" ,", ",")
+                : formatted
+        ).replaceAll(".", separator);
     }
 };
 
 export const formatDenomination = (denom: Denomination, asset: string) =>
     denom === Denomination.Sat ? "sats" : asset;
 
-export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
-    switch (denom) {
-        case Denomination.Btc:
-            return amount.multipliedBy(satFactor);
-        default:
-            return amount;
+export const convertAmount = (
+    asset: string,
+    amount: BigNumber,
+    denom: string,
+): BigNumber => {
+    const { isErc20, decimals } = getDecimals(asset);
+
+    if (isErc20 || denom === Denomination.Btc) {
+        return amount.multipliedBy(BigNumber(10).pow(decimals));
+    } else {
+        return amount;
     }
 };
 
@@ -119,4 +130,14 @@ export const satToMiliSat = (sat: BigNumber) => {
 
 export const miliSatToSat = (sat: BigNumber) => {
     return sat.dividedBy(miliFactor);
+};
+
+const getDecimals = (asset: string) => {
+    const isErc20 = config.assets?.[asset]?.type === AssetType.ERC20;
+    return {
+        isErc20,
+        decimals: isErc20
+            ? config.assets?.[asset]?.erc20?.decimals
+            : satDecimals,
+    };
 };

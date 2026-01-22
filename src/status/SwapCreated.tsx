@@ -20,6 +20,7 @@ const SwapCreated = () => {
             when={swap().type === SwapType.Chain}
             fallback={
                 <PayInvoice
+                    assetSend={reverse.assetSend}
                     sendAmount={reverse.sendAmount}
                     invoice={reverse.invoice}
                 />

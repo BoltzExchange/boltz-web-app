@@ -1,7 +1,7 @@
 import log from "loglevel";
 
 import { chooseUrl, config } from "../config";
-import { Explorer, type ExplorerUrl, type Url } from "../configs/base";
+import { ExplorerType, type ExplorerUrl, type Url } from "../configs/base";
 import {
     BTC,
     LBTC,
@@ -210,7 +210,7 @@ export const getSwapUTXOs = async (
     }
 
     return rawTxs.map((rawTx) => {
-        if (refundableAssets.includes(swap.assetSend)) {
+        if (refundableAssets.includes(swap.assetSend as RefundableAssetType)) {
             return {
                 id: rawTx.id,
                 hex: rawTx.hex,
@@ -264,9 +264,9 @@ const getMempoolFeeEstimations = async (mempoolApi: Url) => {
 
 export const getFeeEstimations = async (url: ExplorerUrl) => {
     switch (url.id) {
-        case Explorer.Mempool:
+        case ExplorerType.Mempool:
             return await getMempoolFeeEstimations(url);
-        case Explorer.Esplora:
+        case ExplorerType.Esplora:
             return await getEsploraFeeEstimations(url);
         default:
             throw new Error(`unknown explorer type: ${url.id}`);

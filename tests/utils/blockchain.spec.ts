@@ -1,6 +1,6 @@
-import { vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { Explorer } from "../../src/configs/base";
+import { ExplorerType } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
 import { BTC, LBTC } from "../../src/consts/Assets";
 import { getFeeEstimations } from "../../src/utils/blockchain";
@@ -19,10 +19,10 @@ describe("blockchain", () => {
     describe("getFeeEstimations", () => {
         test.each`
             asset   | type
-            ${BTC}  | ${Explorer.Mempool}
-            ${LBTC} | ${Explorer.Mempool}
-            ${BTC}  | ${Explorer.Esplora}
-            ${LBTC} | ${Explorer.Esplora}
+            ${BTC}  | ${ExplorerType.Mempool}
+            ${LBTC} | ${ExplorerType.Mempool}
+            ${BTC}  | ${ExplorerType.Esplora}
+            ${LBTC} | ${ExplorerType.Esplora}
         `(
             "should get fee estimations for $asset from $type",
             async ({ asset, type }) => {
@@ -42,15 +42,17 @@ describe("blockchain", () => {
 
         test("should throw on unknown explorer type", async () => {
             mockGetFeeEstimations.mockRejectedValue(
-                new Error(`unknown explorer type: ${Explorer.Blockscout}`),
+                new Error(`unknown explorer type: ${ExplorerType.Blockscout}`),
             );
 
             await expect(
                 getFeeEstimations({
-                    id: Explorer.Blockscout,
+                    id: ExplorerType.Blockscout,
                     normal: "https://example",
                 }),
-            ).rejects.toThrow(`unknown explorer type: ${Explorer.Blockscout}`);
+            ).rejects.toThrow(
+                `unknown explorer type: ${ExplorerType.Blockscout}`,
+            );
         });
     });
 });

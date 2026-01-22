@@ -4,7 +4,6 @@ import { Show } from "solid-js";
 
 import CopyButton from "../components/CopyButton";
 import QrCode from "../components/QrCode";
-import { BTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
@@ -12,7 +11,11 @@ import { invoicePrefix } from "../utils/invoice";
 import { enableWebln } from "../utils/webln";
 import CopyBox from "./CopyBox";
 
-const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
+const PayInvoice = (props: {
+    assetSend: string;
+    sendAmount: number;
+    invoice: string;
+}) => {
     const { t, denomination, separator, webln } = useGlobalContext();
 
     const payWeblnInvoice = async (pr: string) => {
@@ -27,11 +30,15 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
             <h2 data-testid="pay-invoice-title">
                 {t("pay_invoice_to", {
                     amount: formatAmount(
+                        props.assetSend,
                         BigNumber(props.sendAmount),
                         denomination(),
                         separator(),
                     ),
-                    denomination: formatDenomination(denomination(), BTC),
+                    denomination: formatDenomination(
+                        denomination(),
+                        props.assetSend,
+                    ),
                 })}
             </h2>
             <hr />

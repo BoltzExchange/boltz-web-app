@@ -13,7 +13,7 @@ import type { ECPairInterface } from "ecpair";
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 
-import { LBTC, RBTC } from "../consts/Assets";
+import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
@@ -49,8 +49,10 @@ const validateContract = async (
     }
 
     const code = await getEtherSwap().getDeployedCode();
-    if (!codeHashes.includes(ethers.keccak256(code))) {
-        throw new Error(`invalid contract code: ${code}`);
+    const hash = ethers.keccak256(code);
+
+    if (!codeHashes.includes(hash)) {
+        throw new Error(`invalid contract code hash: ${hash}`);
     }
 };
 
@@ -116,6 +118,7 @@ const validateBip21 = (
     if (
         params.get("amount") !==
         formatAmountDenomination(
+            BTC,
             BigNumber(expectedAmount),
             Denomination.Btc,
             ".",

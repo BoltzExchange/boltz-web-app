@@ -25,7 +25,11 @@ import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
-import { type RefundableAssetType, refundableAssets } from "../consts/Assets";
+import {
+    type AssetType,
+    type RefundableAssetType,
+    refundableAssets,
+} from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
@@ -168,7 +172,7 @@ const Pay = () => {
     // eslint-disable-next-line solid/reactivity
     createResource(swapStatus, async () => {
         // no need to check UTXOs for non-refundable assets
-        if (!refundableAssets.includes(swap().assetSend)) {
+        if (!refundableAssets.includes(swap().assetSend as AssetType)) {
             return;
         }
 

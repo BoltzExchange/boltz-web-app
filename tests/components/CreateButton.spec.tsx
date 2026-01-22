@@ -1,5 +1,6 @@
 import { render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import Pair from "src/utils/pair";
 
 import CreateButton from "../../src/components/CreateButton";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
@@ -20,7 +21,7 @@ describe("CreateButton", () => {
     });
 
     test("should render CreateButton", () => {
-        render(() => <CreateButton />, {
+        render(() => <CreateButton isLoading={() => false} />, {
             wrapper: contextWrapper,
         });
     });
@@ -30,13 +31,14 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             {
                 wrapper: contextWrapper,
             },
         );
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
         signals.setMinimum(50_000);
         const btn = (await screen.findByText(
             i18n.en.minimum_amount
@@ -52,11 +54,12 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
         );
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
         globalSignals.setOnline(true);
         signals.setValid(true);
         signals.setAmountValid(true);
@@ -76,7 +79,7 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -94,7 +97,7 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -103,8 +106,7 @@ describe("CreateButton", () => {
         signals.setSendAmount(BigNumber(100_000));
         signals.setAmountValid(true);
         signals.setAddressValid(true);
-        signals.setAssetReceive(BTC);
-        signals.setAssetSend(LBTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, BTC));
         signals.setOnchainAddress(
             "bcrt1qfan5dacdvedpzmweqcq0swxg7klhsh4d0qn74u",
         );
@@ -124,7 +126,7 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -133,8 +135,7 @@ describe("CreateButton", () => {
         signals.setSendAmount(BigNumber(100_000));
         signals.setAmountValid(true);
         signals.setInvoiceValid(true);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, LN));
         signals.setInvoice(invoice);
         const btn = (await screen.findByText(
             i18n.en.create_swap,
@@ -151,7 +152,7 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -160,8 +161,7 @@ describe("CreateButton", () => {
         signals.setSendAmount(BigNumber(100_000));
         signals.setAmountValid(true);
         signals.setInvoiceValid(true);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, LN));
         signals.setInvoice(invoice);
         const btn = (await screen.findByText(
             i18n.en.create_swap,
@@ -182,7 +182,7 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -191,8 +191,7 @@ describe("CreateButton", () => {
         signals.setSendAmount(BigNumber(100_000));
         signals.setAmountValid(true);
         signals.setInvoiceValid(true);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, LN));
         signals.setInvoice("");
         const btn = (await screen.findByText(
             i18n.en.create_swap,
@@ -206,7 +205,7 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -215,8 +214,7 @@ describe("CreateButton", () => {
         signals.setSendAmount(BigNumber(100_000));
         signals.setAmountValid(true);
         signals.setInvoiceValid(true);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(LBTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, LBTC));
         signals.setOnchainAddress("");
         const btn = (await screen.findByText(
             i18n.en.invalid_address.replace("{{ asset }}", "L-BTC"),
@@ -243,18 +241,18 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
         );
+
         globalSignals.setOnline(true);
         signals.setSendAmount(BigNumber(90));
         signals.setReceiveAmount(BigNumber(80));
         signals.setAmountValid(true);
         signals.setAddressValid(true);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, LN));
         signals.setLnurl("test@example.com");
 
         const btn = (await screen.findByText(
@@ -292,7 +290,7 @@ describe("CreateButton", () => {
             () => (
                 <>
                     <TestComponent />
-                    <CreateButton />
+                    <CreateButton isLoading={() => false} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -302,8 +300,7 @@ describe("CreateButton", () => {
         signals.setReceiveAmount(BigNumber(300));
         signals.setAmountValid(true);
         signals.setAddressValid(true);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        signals.setPair(new Pair(globalSignals.pairs(), LBTC, LN));
         signals.setLnurl("test@example.com");
 
         const btn = (await screen.findByText(

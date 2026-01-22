@@ -2,10 +2,8 @@ import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
 import { LN } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { calculateSendAmount } from "../utils/calculate";
 import { probeUserInput } from "../utils/compat";
 import { btcToSat } from "../utils/denomination";
 import {
@@ -16,18 +14,18 @@ import {
     isBolt12Offer,
     isLnurl,
 } from "../utils/invoice";
+import Pair, { RequiredInput } from "../utils/pair";
 import { validateInvoice } from "../utils/validation";
 
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t, notify } = useGlobalContext();
+    const { t, notify, pairs } = useGlobalContext();
     const {
-        boltzFee,
-        minerFee,
+        pair,
+        setPair,
         invoice,
         receiveAmount,
-        swapType,
         sendAmount,
         amountValid,
         setInvoice,
@@ -36,9 +34,6 @@ const InvoiceInput = () => {
         setLnurl,
         setReceiveAmount,
         setSendAmount,
-        setAssetSend,
-        assetSend,
-        setAssetReceive,
         setOnchainAddress,
         setBolt12Offer,
         setAddressValid,
@@ -77,21 +72,24 @@ const InvoiceInput = () => {
         if (bip21Amount) {
             setReceiveAmount(btcToSat(bip21Amount));
             setSendAmount(
-                calculateSendAmount(
+                await pair().calculateSendAmount(
                     btcToSat(bip21Amount),
-                    boltzFee(),
-                    minerFee(),
-                    swapType(),
+                    pair().minerFees,
                 ),
             );
         }
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
-            setAssetSend(assetSend() === actualAsset ? LN : assetSend());
-            setAssetReceive(actualAsset);
+            setPair(
+                new Pair(
+                    pairs(),
+                    pair().fromAsset === actualAsset ? LN : pair().fromAsset,
+                    actualAsset,
+                ),
+            );
             setInvoice("");
-            setOnchainAddress(address);
+            setOnchainAddress(inputValue); // `AddressInput` will handle this validation
             setAddressValid(true);
             notify("success", t("switch_paste"));
             return;
@@ -108,11 +106,9 @@ const InvoiceInput = () => {
                 const sats = await validateInvoice(invoice);
                 setReceiveAmount(BigNumber(sats));
                 setSendAmount(
-                    calculateSendAmount(
+                    await pair().calculateSendAmount(
                         BigNumber(sats),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
+                        pair().minerFees,
                     ),
                 );
                 setInvoice(invoice);
@@ -132,7 +128,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([amountValid, invoice], async () => {
-            if (swapType() === SwapType.Submarine) {
+            if (pair().requiredInput === RequiredInput.Invoice) {
                 await validate(inputRef);
             }
         }),

@@ -1,8 +1,14 @@
 import { render } from "@solidjs/testing-library";
+import Pair from "src/utils/pair";
 
 import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 
 describe("signals", () => {
     test.each`
@@ -14,9 +20,10 @@ describe("signals", () => {
         "should set swap_type to $expected based on $assetSend > $assetReceive",
         ({ assetSend, assetReceive, expected }) => {
             render(() => <TestComponent />, { wrapper: contextWrapper });
-            signals.setAssetSend(assetSend);
-            signals.setAssetReceive(assetReceive);
-            expect(signals.swapType()).toEqual(expected);
+            signals.setPair(
+                new Pair(globalSignals.pairs(), assetSend, assetReceive),
+            );
+            expect(signals.pair().swapToCreate?.type).toEqual(expected);
         },
     );
 
@@ -34,8 +41,9 @@ describe("signals", () => {
             signals.setAmountValid(true);
             signals.setAddressValid(addressValid);
             signals.setInvoiceValid(invoiceValid);
-            signals.setAssetSend(assetSend);
-            signals.setAssetReceive(assetReceive);
+            signals.setPair(
+                new Pair(globalSignals.pairs(), assetSend, assetReceive),
+            );
             expect(signals.valid()).toEqual(valid);
         },
     );
@@ -64,8 +72,8 @@ describe("signals", () => {
 
             render(() => <TestComponent />, { wrapper: contextWrapper });
 
-            expect(signals.assetSend()).toEqual(sendAsset);
-            expect(signals.assetReceive()).toEqual(receiveAsset);
+            expect(signals.pair().fromAsset).toEqual(sendAsset);
+            expect(signals.pair().toAsset).toEqual(receiveAsset);
             expect(Number(signals.sendAmount())).toEqual(amount);
         },
     );
@@ -88,7 +96,7 @@ describe("signals", () => {
 
             render(() => <TestComponent />, { wrapper: contextWrapper });
 
-            expect(signals.assetReceive()).toEqual(expectedReceiveAsset);
+            expect(signals.pair().toAsset).toEqual(expectedReceiveAsset);
             if (expectedReceiveAsset === LN) {
                 expect(signals.invoiceValid()).toEqual(true);
             } else {
