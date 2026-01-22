@@ -1,3 +1,5 @@
+@use "vars";
+
 #swaplist {
     width: 100%;
     text-align: left;
@@ -63,14 +65,20 @@
 }
 
 .swaplist-asset span[data-asset="LN"] {
-    background-image: url(../assets/lightning-icon.svg);
+    background-image: vars.$lightning_icon;
 }
 .swaplist-asset span[data-asset="BTC"] {
-    background-image: url(../assets/bitcoin-icon.svg);
+    background-image: vars.$bitcoin_icon;
 }
 .swaplist-asset span[data-asset="L-BTC"] {
-    background-image: url(../assets/liquid-icon.svg);
+    background-image: vars.$liquid_icon;
 }
 .swaplist-asset span[data-asset="RBTC"] {
-    background-image: url(../assets/rootstock-icon.svg);
+    background-image: vars.$rootstock_icon;
+}
+.swaplist-asset span[data-asset="TBTC"] {
+    background-image: vars.$tbtc_icon;
+}
+.swaplist-asset span[data-asset="USDT0"] {
+    background-image: vars.$usdt0_icon;
 }

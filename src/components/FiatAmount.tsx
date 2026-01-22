@@ -1,11 +1,20 @@
 import { BigNumber } from "bignumber.js";
-import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
+import {
+    type Accessor,
+    Match,
+    Show,
+    Switch,
+    createEffect,
+    createSignal,
+} from "solid-js";
 
+import { USDT0, requireTokenConfig } from "../consts/Assets";
 import { Currency } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { convertToFiat } from "../utils/fiat";
 
 const FiatAmount = (props: {
+    asset: Accessor<string>;
     amount: number;
     variant: "label" | "text";
     for?: string;
@@ -15,6 +24,17 @@ const FiatAmount = (props: {
     const [fiatAmount, setFiatAmount] = createSignal<BigNumber>(BigNumber(0));
 
     createEffect(() => {
+        if (props.asset() === USDT0) {
+            setFiatAmount(
+                BigNumber(props.amount).div(
+                    BigNumber(10).pow(
+                        requireTokenConfig(props.asset()).decimals,
+                    ),
+                ),
+            );
+            return;
+        }
+
         if (btcPrice() instanceof BigNumber) {
             setFiatAmount(
                 convertToFiat(BigNumber(props.amount), btcPrice() as BigNumber),

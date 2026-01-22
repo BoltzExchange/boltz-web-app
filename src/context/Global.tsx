@@ -28,7 +28,12 @@ import { getReferral, isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
-import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
+import {
+    deriveKey,
+    deriveKeyGasAbstraction,
+    generateRescueFile,
+    getXpub,
+} from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
@@ -76,6 +81,8 @@ export type GlobalContextType = {
     setSettingsMenu: Setter<boolean>;
     privacyMode: Accessor<boolean>;
     setPrivacyMode: Setter<boolean>;
+    slippage: Accessor<number>;
+    setSlippage: Setter<number>;
     zeroConf: Accessor<boolean>;
     setZeroConf: Setter<boolean>;
     showFiatAmount: Accessor<boolean>;
@@ -107,6 +114,7 @@ export type GlobalContextType = {
 
     newKey: newKeyFn;
     deriveKey: deriveKeyFn;
+    deriveKeyGasAbstraction: (chainId: number) => ECKeys;
     getXpub: () => string;
     setLastUsedKey: Setter<number>;
     getLastUsedEvmIndex: (currency: string) => Promise<number>;
@@ -230,6 +238,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const deriveKeyWrapper = (index: number, asset: AssetType) => {
         return ECPair.fromPrivateKey(
             new Uint8Array(deriveKey(rescueFile(), index, asset).privateKey),
+        );
+    };
+
+    const deriveKeyGasAbstractionWrapper = (chainId: number) => {
+        return ECPair.fromPrivateKey(
+            Buffer.from(
+                deriveKeyGasAbstraction(rescueFile(), chainId).privateKey,
+            ),
         );
     };
 
@@ -449,6 +465,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [slippage, setSlippage] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<number>(0.01),
+        {
+            name: "slippage",
+        },
+    );
+
     const [zeroConf, setZeroConf] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(true),
@@ -536,6 +560,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setSettingsMenu,
                 privacyMode,
                 setPrivacyMode,
+                slippage,
+                setSlippage,
                 zeroConf,
                 setZeroConf,
                 showFiatAmount,
@@ -571,6 +597,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 clearLastUsedEvmIndex,
                 getXpub: getXpubWrapper,
                 deriveKey: deriveKeyWrapper,
+                deriveKeyGasAbstraction: deriveKeyGasAbstractionWrapper,
 
                 rescueFileBackupDone,
                 setRescueFileBackupDone,

@@ -60,3 +60,38 @@
     font-weight: 500;
     margin: 0;
 }
+
+.slippage-input {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 15px;
+
+    input {
+        width: 60px;
+        padding: 4px 8px;
+        border: 1px solid var(--color-white-10);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--color-text);
+        font-size: 0.9rem;
+        text-align: right;
+        outline: none;
+
+        &:focus {
+            border-color: var(--color-primary);
+        }
+
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    }
+
+    span {
+        color: var(--color-text);
+        opacity: 0.7;
+        font-size: 0.9rem;
+    }
+}

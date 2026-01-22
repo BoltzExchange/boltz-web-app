@@ -43,6 +43,7 @@ const PayOnchain = (props: {
                     BigNumber(props.expectedAmount),
                     denomination(),
                     separator(),
+                    props.assetSend,
                 ),
             });
         }
@@ -63,11 +64,13 @@ const PayOnchain = (props: {
                 BigNumber(pair.limits.minimal),
                 denomination(),
                 separator(),
+                props.assetSend,
             ),
             max: formatAmount(
                 BigNumber(pair.limits.maximal),
                 denomination(),
                 separator(),
+                props.assetSend,
             ),
         });
     });
@@ -109,6 +112,7 @@ const PayOnchain = (props: {
                                     BigNumber(props.expectedAmount),
                                     denomination(),
                                     separator(),
+                                    props.assetSend,
                                 )
                             }
                         />

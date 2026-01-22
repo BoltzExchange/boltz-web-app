@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
@@ -7,21 +6,18 @@ import {
     Show,
     createEffect,
     createMemo,
-    createResource,
     createSignal,
     onCleanup,
 } from "solid-js";
 
-import { RBTC } from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
-import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
-import { weiToSatoshi } from "../utils/rootstock";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { WalletConnect } from "./WalletConnect";
 import { hiddenInformation } from "./settings/PrivacyMode";
@@ -172,8 +168,8 @@ const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
-    const { t, separator, denomination, privacyMode } = useGlobalContext();
-    const { signer, clearSigner } = useWeb3Signer();
+    const { t, privacyMode } = useGlobalContext();
+    const { clearSigner } = useWeb3Signer();
 
     const formatAddress = (addr: string) => {
         if (privacyMode()) {
@@ -189,13 +185,6 @@ const ShowAddress = (props: {
 
     const [text, setText] = createSignal<string | undefined>(undefined);
 
-    const [rskBalance] = createResource(async () => {
-        if (signer() === undefined) {
-            return undefined;
-        }
-        return signer().provider.getBalance(await signer().getAddress());
-    });
-
     return (
         <button
             onClick={() => clearSigner()}
@@ -206,20 +195,6 @@ const ShowAddress = (props: {
                 (props.addressOverride
                     ? props.addressOverride() || formatAddress(props.address())
                     : formatAddress(props.address()))}
-            <Show
-                when={
-                    rskBalance.state === "ready" &&
-                    typeof rskBalance() === "bigint"
-                }>
-                <br />
-                {t("balance")}:{" "}
-                {formatAmount(
-                    BigNumber(weiToSatoshi(rskBalance()).toString()),
-                    denomination(),
-                    separator(),
-                )}{" "}
-                {formatDenomination(denomination(), RBTC)}
-            </Show>
         </button>
     );
 };
@@ -255,7 +230,7 @@ export const ConnectAddress = (props: {
     );
 };
 
-export const SwitchNetwork = () => {
+export const SwitchNetwork = (props: { asset: string }) => {
     const { t, notify } = useGlobalContext();
     const { switchNetwork } = useWeb3Signer();
 
@@ -264,7 +239,7 @@ export const SwitchNetwork = () => {
             class="btn"
             onClick={async () => {
                 try {
-                    await switchNetwork();
+                    await switchNetwork(props.asset);
                 } catch (e) {
                     log.error(`Network switch failed: ${formatError(e)}`);
                     notify("error", `Network switch failed: ${formatError(e)}`);
@@ -276,24 +251,27 @@ export const SwitchNetwork = () => {
 };
 
 const ConnectWallet = (props: {
+    asset: string;
     derivationPath?: string;
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
     const { t } = useGlobalContext();
-    const { providers, signer, getContracts } = useWeb3Signer();
-    const { setAddressValid, setOnchainAddress, assetReceive } =
-        useCreateContext();
+    const { providers, signer, getContractsForAsset } = useWeb3Signer();
+    const { setAddressValid, setOnchainAddress } = useCreateContext();
 
     const address = createMemo(() => signer()?.address);
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
+        const contracts = getContractsForAsset(props.asset);
+
         if (
             address() !== undefined &&
+            contracts &&
             Number((await signer()?.provider.getNetwork())?.chainId || -1) !==
-                getContracts().network.chainId
+                contracts.network.chainId
         ) {
             setNetworkValid(false);
             return;
@@ -301,7 +279,7 @@ const ConnectWallet = (props: {
 
         setNetworkValid(true);
 
-        if (assetReceive() === RBTC) {
+        if (isEvmAsset(props.asset)) {
             const addr = address();
             setAddressValid(addr !== undefined);
             setOnchainAddress(addr || "");
@@ -330,7 +308,9 @@ const ConnectWallet = (props: {
                         derivationPath={props.derivationPath}
                     />
                 }>
-                <Show when={networkValid()} fallback={<SwitchNetwork />}>
+                <Show
+                    when={networkValid()}
+                    fallback={<SwitchNetwork asset={props.asset} />}>
                     <ShowAddress
                         address={address}
                         addressOverride={props.addressOverride}

@@ -17,8 +17,8 @@ describe("AssetSelect", () => {
         ${LN}
         ${BTC}
         ${LBTC}
-    `("should highlight selected asset $asset", ({ asset }) => {
-        const res = render(
+    `("should highlight selected asset $asset", async ({ asset }) => {
+        render(
             () => (
                 <>
                     <TestComponent />
@@ -32,14 +32,10 @@ describe("AssetSelect", () => {
         signals.setAssetSelect(true);
         signals.setAssetSelected(Side.Send);
 
-        for (const elem of res.container.children[0].children) {
-            const classes = Array.from(elem.classList.values());
-            if (!classes.includes("asset-select")) {
-                continue;
-            }
-
+        for (const a of [LN, BTC, LBTC]) {
+            const elem = await screen.findByTestId(`select-${a}`);
             expect(elem.getAttribute("data-selected")).toEqual(
-                String(classes[1].substring(6) === asset),
+                String(a === asset),
             );
         }
     });
@@ -71,8 +67,8 @@ describe("AssetSelect", () => {
         expect(header).not.toBeUndefined();
     });
 
-    test("should ignore same asset selection", () => {
-        const { container } = render(
+    test("should ignore same asset selection", async () => {
+        render(
             () => (
                 <>
                     <TestComponent />
@@ -89,8 +85,7 @@ describe("AssetSelect", () => {
         const setAssetSend = vi.spyOn(signals, "setAssetSend");
         const setAssetReceive = vi.spyOn(signals, "setAssetReceive");
 
-        const btcButton = container.children[0].children[3];
-        fireEvent.click(btcButton);
+        fireEvent.click(await screen.findByTestId(`select-${BTC}`));
 
         expect(setAssetSend).toHaveBeenCalledTimes(0);
         expect(setAssetReceive).toHaveBeenCalledTimes(0);
