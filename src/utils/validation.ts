@@ -13,7 +13,7 @@ import type { ECPairInterface } from "ecpair";
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 
-import { LBTC, RBTC } from "../consts/Assets";
+import { LBTC, isEvmAsset } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
@@ -38,17 +38,18 @@ const invalidSendAmountMsg = (expected: number, got: number) =>
 const invalidReceiveAmountMsg = (expected: number, got: number) =>
     `invalid receive amount. Expected ${expected} to be bigger than ${got}`;
 
-type ContractGetter = () => BaseContract;
+type ContractGetter = (asset: string) => BaseContract;
 
 const validateContract = async (
     getEtherSwap: ContractGetter,
+    asset: string,
 ): Promise<void> => {
     const codeHashes = etherSwapCodeHashes();
     if (codeHashes === undefined) {
         return;
     }
 
-    const code = await getEtherSwap().getDeployedCode();
+    const code = await getEtherSwap(asset).getDeployedCode();
     if (!codeHashes.includes(ethers.keccak256(code))) {
         throw new Error(`invalid contract code: ${code}`);
     }
@@ -156,8 +157,8 @@ const validateReverse = async (
         );
     }
 
-    if (swap.assetReceive === RBTC) {
-        await validateContract(getEtherSwap);
+    if (isEvmAsset(swap.assetReceive)) {
+        await validateContract(getEtherSwap, swap.assetReceive);
         return;
     }
 
@@ -203,8 +204,8 @@ const validateSubmarine = async (
         );
     }
 
-    if (swap.assetSend === RBTC) {
-        await validateContract(getEtherSwap);
+    if (isEvmAsset(swap.assetSend)) {
+        await validateContract(getEtherSwap, swap.assetSend);
         return;
     }
 
@@ -272,8 +273,8 @@ const validateChainSwap = async (
             }
         }
 
-        if (asset === RBTC) {
-            await validateContract(getEtherSwap);
+        if (isEvmAsset(asset)) {
+            await validateContract(getEtherSwap, asset);
             return;
         }
 

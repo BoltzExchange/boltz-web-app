@@ -49,7 +49,7 @@ import {
     type ReverseSwap,
     type SomeSwap,
     type SubmarineSwap,
-    isRsk,
+    isEvmSwap,
 } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
 
@@ -90,7 +90,7 @@ export const isSwapClaimable = ({
     swapDate?: number;
     backupImportTimestamp?: number;
 }) => {
-    if (swap !== undefined && isRsk(swap)) {
+    if (swap !== undefined && isEvmSwap(swap)) {
         return false;
     }
 

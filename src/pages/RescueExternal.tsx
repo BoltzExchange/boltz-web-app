@@ -27,6 +27,7 @@ import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { RBTC } from "../consts/Assets";
 import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -468,7 +469,8 @@ export const RefundRsk = () => {
         const generator = scanLogsForPossibleRefunds(
             refundScanAbort.signal,
             signer(),
-            getEtherSwap(),
+            // TODO: ERC20Swap compatibility and other assets
+            getEtherSwap(RBTC),
         );
 
         for await (const value of generator) {
@@ -504,7 +506,7 @@ export const RefundRsk = () => {
                 </Match>
             </Switch>
             <hr />
-            <ConnectWallet addressOverride={refundScanProgress} />
+            <ConnectWallet asset={RBTC} addressOverride={refundScanProgress} />
         </>
     );
 };

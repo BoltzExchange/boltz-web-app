@@ -1,5 +1,6 @@
 import type { Config } from "src/configs/base";
 import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
+import { AssetKind } from "src/consts/Assets";
 
 const config = {
     ...baseConfig,
@@ -7,10 +8,11 @@ const config = {
     loglevel: "debug",
     preventReloadOnPendingSwaps: false,
     apiUrl: {
-        normal: "http://localhost:9001",
+        normal: "http://localhost:9006",
     },
     assets: {
         BTC: {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Esplora,
                 normal: "http://localhost:4002",
@@ -23,6 +25,7 @@ const config = {
             ],
         },
         "L-BTC": {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Esplora,
                 normal: "http://localhost:4003",
@@ -35,6 +38,7 @@ const config = {
             ],
         },
         RBTC: {
+            type: AssetKind.EVMNative,
             blockExplorerUrl: {
                 id: Explorer.Blockscout,
                 normal: "http://localhost:5100",
@@ -55,6 +59,27 @@ const config = {
                 smartWalletFactory:
                     "0x59b670e9fA9D0A427751Af201D676719a970857b",
                 deployVerifier: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            },
+        },
+        TBTC: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: {
+                id: Explorer.Blockscout,
+                normal: "https://arbiscan.io",
+            },
+            network: {
+                chainName: "Arbitrum",
+                chainId: 42161,
+                rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+                nativeCurrency: {
+                    name: "Ethereum",
+                    symbol: "ETH",
+                    decimals: 18,
+                },
+            },
+            token: {
+                address: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+                decimals: 18,
             },
         },
     },

@@ -19,7 +19,7 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
+import { AssetKind, isEvmAsset } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -227,7 +227,7 @@ const Create = () => {
         const amount = Number(sendAmount());
         if (
             swapType() === SwapType.Chain &&
-            assetSend() !== RBTC &&
+            config.assets?.[assetSend()]?.type === AssetKind.UTXO &&
             amount === 0
         ) {
             setAmountValid(true);
@@ -516,7 +516,8 @@ const Create = () => {
                     <Show
                         when={
                             swapType() !== SwapType.Submarine &&
-                            assetReceive() !== RBTC
+                            config.assets?.[assetReceive()]?.type ===
+                                AssetKind.UTXO
                         }>
                         <AddressInput />
                     </Show>
@@ -527,11 +528,29 @@ const Create = () => {
                         </Show>
                         <InvoiceInput />
                     </Show>
-                    <Show when={isMobile() && assetReceive() !== RBTC}>
+                    <Show
+                        when={
+                            isMobile() &&
+                            config.assets?.[assetReceive()]?.type ===
+                                AssetKind.UTXO
+                        }>
                         <QrScan />
                     </Show>
-                    <Show when={[assetSend(), assetReceive()].includes(RBTC)}>
-                        <ConnectWallet disabled={() => !pairValid()} />
+                    <Show
+                        when={
+                            config.assets?.[assetSend()]?.type !==
+                                AssetKind.UTXO ||
+                            config.assets?.[assetReceive()]?.type !==
+                                AssetKind.UTXO
+                        }>
+                        <ConnectWallet
+                            asset={
+                                isEvmAsset(assetSend())
+                                    ? assetSend()
+                                    : assetReceive()
+                            }
+                            disabled={() => !pairValid()}
+                        />
                         <hr class="spacer" />
                     </Show>
                     <CreateButton />

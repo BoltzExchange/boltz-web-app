@@ -435,6 +435,9 @@ const dict = {
         security: "Security",
         failed: "Failed",
         swaps_found: "Scanning swaps ({{ count }} found)",
+
+        approve_erc20: "Approve",
+        approve_erc20_line: "Set ERC20 allowance for the swap contract",
     },
     de: {
         language: "Deutsch",

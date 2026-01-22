@@ -4,7 +4,7 @@ import { Show } from "solid-js";
 import LockupEvm from "../components/LockupEvm";
 import PayInvoice from "../components/PayInvoice";
 import PayOnchain from "../components/PayOnchain";
-import { RBTC } from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
 import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
@@ -25,7 +25,7 @@ const SwapCreated = () => {
                 />
             }>
             <Show
-                when={chain.assetSend === RBTC}
+                when={isEvmAsset(chain.assetSend)}
                 fallback={
                     <PayOnchain
                         type={chain.type}
@@ -45,6 +45,7 @@ const SwapCreated = () => {
                     preimageHash={crypto
                         .sha256(Buffer.from(chain.preimage, "hex"))
                         .toString("hex")}
+                    asset={chain.assetSend}
                 />
             </Show>
         </Show>
