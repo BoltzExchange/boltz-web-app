@@ -44,11 +44,13 @@ const RefundState = (props: {
                     new BigNumber(props.refundData.amount.toString()),
                     denomination(),
                     separator(),
+                    props.asset,
                 )}{" "}
                 {formatDenomination(denomination(), props.asset)}
             </p>
 
             <RefundButton
+                asset={props.asset}
                 setRefundTxId={props.setRefundTxId}
                 amount={Number(props.refundData.amount)}
                 preimageHash={props.refundData.preimageHash}
@@ -104,7 +106,7 @@ const ClaimState = (props: {
             if (useRif) {
                 transactionHash = await relayClaimTransaction(
                     signer(),
-                    getEtherSwap(),
+                    getEtherSwap(props.asset),
                     currentPreimage.toString("hex"),
                     Number(props.claimData.amount),
                     props.claimData.refundAddress,
@@ -112,7 +114,7 @@ const ClaimState = (props: {
                 );
             } else {
                 transactionHash = (
-                    await getEtherSwap()[
+                    await getEtherSwap(props.asset)[
                         "claim(bytes32,uint256,address,uint256)"
                     ](
                         prefix0x(currentPreimage.toString("hex")),
@@ -144,6 +146,7 @@ const ClaimState = (props: {
                 </>
             }>
             <ContractTransaction
+                asset={props.asset}
                 onClick={claimTransaction}
                 address={{
                     address: props.claimData.claimAddress,
@@ -183,7 +186,11 @@ const RescueEvm = () => {
         }
 
         const [logData, currentHeight] = await Promise.all([
-            getLogsFromReceipt(signer(), getEtherSwap(), params.txHash),
+            getLogsFromReceipt(
+                signer(),
+                getEtherSwap(params.asset),
+                params.txHash,
+            ),
             signer().provider.getBlockNumber(),
         ]);
 

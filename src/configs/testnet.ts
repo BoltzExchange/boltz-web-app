@@ -1,5 +1,6 @@
 import { type Config, Explorer } from "src/configs/base";
 import { baseConfig, chooseUrl } from "src/configs/base";
+import { AssetKind } from "src/consts/AssetKind";
 
 const config = {
     ...baseConfig,
@@ -10,6 +11,7 @@ const config = {
     },
     assets: {
         BTC: {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Esplora,
                 normal: "https://blockstream.info/testnet",
@@ -29,6 +31,7 @@ const config = {
             ],
         },
         "L-BTC": {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Esplora,
                 normal: "https://blockstream.info/liquidtestnet",
@@ -48,12 +51,14 @@ const config = {
             ],
         },
         RBTC: {
+            type: AssetKind.EVMNative,
             blockExplorerUrl: {
                 id: Explorer.Blockscout,
                 normal: "https://rootstock-testnet.blockscout.com",
             },
             network: {
                 chainName: "Rootstock Testnet",
+                symbol: "RBTC",
                 chainId: 31,
                 rpcUrls: ["https://public-node.testnet.rsk.co"],
                 nativeCurrency: {

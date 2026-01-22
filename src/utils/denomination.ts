@@ -1,8 +1,11 @@
 import { BigNumber } from "bignumber.js";
 
+import { config } from "../config";
+import { AssetKind } from "../consts/AssetKind";
 import { Denomination } from "../consts/Enums";
 
 const miliFactor = 1_000;
+const satDecimals = 8;
 const satFactor = 100_000_000;
 
 export const getValidationRegex = (maximum: number): RegExp => {
@@ -13,77 +16,109 @@ export const getValidationRegex = (maximum: number): RegExp => {
     return new RegExp(regex);
 };
 
+export const getDecimals = (asset: string) => {
+    const assetConfig = config.assets?.[asset];
+
+    const isRoutedErc20 =
+        assetConfig?.type === AssetKind.ERC20 &&
+        assetConfig?.token?.routeVia !== undefined;
+
+    return {
+        isErc20: isRoutedErc20,
+        decimals: isRoutedErc20 ? assetConfig?.token?.decimals : satDecimals,
+    };
+};
+
 export const formatAmount = (
     amount: BigNumber,
     denomination: Denomination,
     separator: string,
+    asset: string,
     fixed: boolean = false,
 ): string => {
-    return formatAmountDenomination(amount, denomination, separator, fixed);
+    return formatAmountDenomination(
+        amount,
+        denomination,
+        separator,
+        asset,
+        fixed,
+    );
 };
 
 export const formatAmountDenomination = (
     amount: BigNumber,
     denomination: Denomination,
     separator: string,
+    asset: string,
     fixed: boolean = false,
 ): string => {
-    switch (denomination) {
-        case Denomination.Btc: {
-            const amountBig = amount.div(satFactor);
-            let amountString = amountBig.toString();
-            if (fixed) {
-                amountString = amountBig.toFixed(8);
-                return amountString;
-            }
-            if (amountBig.isZero()) {
-                amountString = amountBig.toFixed(1);
-            }
+    const { isErc20, decimals } = getDecimals(asset);
 
-            // 0.00000001.toString() returns "1e-8"
-            // 0.0000001.toString() returns "1e-7"
-            if (amountBig.toString().indexOf("-") !== -1) {
-                amountString = amountBig.toFixed(Number(8)).replace(/0+$/, "");
-            }
+    if (denomination === Denomination.Btc || isErc20) {
+        const amountBig = amount.div(
+            isErc20 ? BigNumber(10).pow(decimals) : satFactor,
+        );
 
-            if (separator === ",") {
-                amountString = amountString.replace(".", ",");
-            }
-
+        let amountString = amountBig.toString();
+        if (fixed) {
+            amountString = amountBig.toFixed(decimals);
             return amountString;
         }
-
-        default: {
-            const chars = amount.toString().split("").reverse();
-            const formatted = chars
-                .reduce(
-                    (acc, char, i) =>
-                        i % 3 === 0 ? acc + " " + char : acc + char,
-                    "",
-                )
-                .trim()
-                .split("")
-                .reverse()
-                .join("");
-
-            return (
-                formatted.includes(".") || formatted.includes(",")
-                    ? formatted.replaceAll(" .", ".").replaceAll(" ,", ",")
-                    : formatted
-            ).replaceAll(".", separator);
+        if (amountBig.isZero()) {
+            amountString = amountBig.toFixed(1);
         }
+
+        // Handle scientific notation (e.g., 0.00000001.toString() returns "1e-8")
+        if (amountBig.toString().indexOf("-") !== -1) {
+            amountString = amountBig
+                .toFixed(Number(decimals))
+                .replace(/0+$/, "");
+        }
+
+        if (separator === ",") {
+            amountString = amountString.replace(".", ",");
+        }
+
+        return amountString;
+    } else {
+        const chars = amount.toString().split("").reverse();
+        const formatted = chars
+            .reduce(
+                (acc, char, i) => (i % 3 === 0 ? acc + " " + char : acc + char),
+                "",
+            )
+            .trim()
+            .split("")
+            .reverse()
+            .join("");
+
+        return (
+            formatted.includes(".") || formatted.includes(",")
+                ? formatted.replaceAll(" .", ".").replaceAll(" ,", ",")
+                : formatted
+        ).replaceAll(".", separator);
     }
 };
 
-export const formatDenomination = (denom: Denomination, asset: string) =>
-    denom === Denomination.Sat ? "sats" : asset;
+export const formatDenomination = (denom: Denomination, asset: string) => {
+    const { isErc20 } = getDecimals(asset);
+    if (isErc20) {
+        return asset;
+    }
+    return denom === Denomination.Sat ? "sats" : asset;
+};
 
-export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
-    switch (denom) {
-        case Denomination.Btc:
-            return amount.multipliedBy(satFactor);
-        default:
-            return amount;
+export const convertAmount = (
+    asset: string,
+    amount: BigNumber,
+    denom: string,
+): BigNumber => {
+    const { isErc20, decimals } = getDecimals(asset);
+
+    if (isErc20 || denom === Denomination.Btc) {
+        return amount.multipliedBy(BigNumber(10).pow(decimals));
+    } else {
+        return amount;
     }
 };
 

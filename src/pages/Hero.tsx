@@ -35,7 +35,8 @@ export const Hero = () => {
     const formatStatsAmount = (
         value: number,
         denom: Denomination = Denomination.Sat,
-    ) => formatAmountDenomination(new BigNumber(value), denom, separator());
+    ) =>
+        formatAmountDenomination(new BigNumber(value), denom, separator(), BTC);
 
     onMount(async () => {
         try {

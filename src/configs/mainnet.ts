@@ -1,5 +1,6 @@
 import type { Config } from "src/configs/base";
 import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
+import { AssetKind } from "src/consts/AssetKind";
 
 const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
 
@@ -19,6 +20,7 @@ const config = {
     },
     assets: {
         BTC: {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Mempool,
                 normal: "https://mempool.space",
@@ -38,6 +40,7 @@ const config = {
             ],
         },
         "L-BTC": {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Esplora,
                 normal: "https://blockstream.info/liquid",
@@ -57,12 +60,14 @@ const config = {
             ],
         },
         RBTC: {
+            type: AssetKind.EVMNative,
             blockExplorerUrl: {
                 id: Explorer.Blockscout,
                 normal: "https://rootstock.blockscout.com",
             },
             network: {
                 chainName: "Rootstock",
+                symbol: "RBTC",
                 chainId: 30,
                 rpcUrls: rskRpcUrls,
                 nativeCurrency: {
