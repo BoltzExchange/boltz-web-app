@@ -1,6 +1,10 @@
 import type log from "loglevel";
 
+import { type AssetKind } from "../consts/Assets";
+
 type Asset = {
+    type: AssetKind;
+
     blockExplorerUrl?: ExplorerUrl;
     blockExplorerApis?: ExplorerUrl[];
 
@@ -19,6 +23,10 @@ type Asset = {
             symbol: string;
             decimals: number;
         };
+    };
+    token?: {
+        address: string;
+        decimals: number;
     };
 };
 

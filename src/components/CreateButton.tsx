@@ -4,7 +4,7 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { BTC, RBTC } from "../consts/Assets";
+import { BTC, isEvmAsset } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -61,7 +61,7 @@ export const getClaimAddress = async (
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
 ): Promise<{ useRif: boolean; gasPrice: bigint; claimAddress: string }> => {
-    if (assetReceive() === RBTC) {
+    if (isEvmAsset(assetReceive())) {
         const [balance, gasPrice] = await Promise.all([
             signer().provider.getBalance(await signer().getAddress()),
             signer()
@@ -189,7 +189,7 @@ const CreateButton = () => {
 
                 const isChainSwapWithZeroAmount = () =>
                     swapType() === SwapType.Chain &&
-                    assetSend() !== RBTC &&
+                    !isEvmAsset(assetSend()) &&
                     sendAmount().isZero();
 
                 const isSubmarineSwapInvoiceValid = () =>
@@ -223,7 +223,7 @@ const CreateButton = () => {
                 }
 
                 if (
-                    [assetSend(), assetReceive()].includes(RBTC) &&
+                    [assetSend(), assetReceive()].some(isEvmAsset) &&
                     !walletConnected()
                 ) {
                     setButtonLabel({ key: "please_connect_wallet" });
@@ -385,7 +385,7 @@ const CreateButton = () => {
     ): Promise<boolean> => {
         if (
             !rescueFileBackupDone() &&
-            assetSend() !== RBTC &&
+            !isEvmAsset(assetSend()) &&
             swapType() !== SwapType.Reverse
         ) {
             navigate("/backup");

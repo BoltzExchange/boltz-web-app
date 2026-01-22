@@ -9,6 +9,7 @@ import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = (props: {
+    asset: string;
     disabled?: boolean;
     onClick: () => Promise<unknown>;
     children?: JSX.Element;
@@ -19,7 +20,7 @@ const ContractTransaction = (props: {
     address: { address: string; derivationPath?: string };
 }) => {
     const { notify } = useGlobalContext();
-    const { signer, getContracts } = useWeb3Signer();
+    const { signer, getContractsForAsset } = useWeb3Signer();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
 
@@ -48,6 +49,7 @@ const ContractTransaction = (props: {
                     when={!allowAnyAddress()}
                     fallback={
                         <ConnectWallet
+                            asset={props.asset}
                             derivationPath={props.address.derivationPath}
                         />
                     }>
@@ -55,8 +57,11 @@ const ContractTransaction = (props: {
                 </Show>
             }>
             <Show
-                when={getContracts().network.chainId === signerNetwork()}
-                fallback={<SwitchNetwork />}>
+                when={
+                    getContractsForAsset(props.asset)?.network.chainId ===
+                    signerNetwork()
+                }
+                fallback={<SwitchNetwork asset={props.asset} />}>
                 <Show
                     when={!txSent()}
                     fallback={
