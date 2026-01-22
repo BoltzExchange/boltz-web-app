@@ -1,31 +1,28 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import { For, createEffect } from "solid-js";
+import { For } from "solid-js";
 
 import { config } from "../config";
 import { LN } from "../consts/Assets";
 import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { isPairValid } from "../utils/pairs";
+import Pair from "../utils/Pair";
 
 const SelectAsset = () => {
     const assets = Object.keys(config.assets);
     assets.push(LN);
 
-    const { t, fetchPairs, pairs } = useGlobalContext();
+    const { t, fetchPairs, pairs, regularPairs } = useGlobalContext();
 
     const {
-        assetReceive,
+        pair,
+        setPair,
         assetSelect,
         assetSelected,
-        assetSend,
-        setAssetReceive,
         setAssetSelect,
-        setAssetSend,
         setInvoice,
         setOnchainAddress,
-        setPairValid,
     } = useCreateContext();
 
     const changeAsset = (newAsset: string) => {
@@ -36,17 +33,19 @@ const SelectAsset = () => {
 
         // set new asset and swap assets if the other asset is the same
         if (assetSelected() === Side.Send) {
-            if (assetReceive() === newAsset) {
-                setAssetReceive(assetSend());
+            let toAsset = pair().toAsset;
+            if (toAsset === newAsset) {
+                toAsset = pair().fromAsset;
                 // only clear onchain address if assetReceive did change
                 setOnchainAddress("");
             }
-            setAssetSend(newAsset);
+            setPair(new Pair(pairs(), newAsset, toAsset, regularPairs()));
         } else {
-            if (assetSend() === newAsset) {
-                setAssetSend(assetReceive());
+            let fromAsset = pair().fromAsset;
+            if (fromAsset === newAsset) {
+                fromAsset = pair().toAsset;
             }
-            setAssetReceive(newAsset);
+            setPair(new Pair(pairs(), fromAsset, newAsset, regularPairs()));
             // always clear onchain address if assetChange did change
             setOnchainAddress("");
         }
@@ -59,13 +58,9 @@ const SelectAsset = () => {
     const isSelected = (asset: string) => {
         return (
             asset ===
-            (assetSelected() === Side.Send ? assetSend() : assetReceive())
+            (assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset)
         );
     };
-
-    createEffect(() => {
-        setPairValid(isPairValid(pairs(), assetSend(), assetReceive()));
-    });
 
     return (
         <div

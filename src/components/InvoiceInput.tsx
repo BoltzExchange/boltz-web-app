@@ -5,7 +5,7 @@ import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { calculateSendAmount } from "../utils/calculate";
+import Pair from "../utils/Pair";
 import { probeUserInput } from "../utils/compat";
 import { btcToSat } from "../utils/denomination";
 import {
@@ -21,13 +21,13 @@ import { validateInvoice } from "../utils/validation";
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t, notify } = useGlobalContext();
+    const { t, notify, pairs, regularPairs } = useGlobalContext();
     const {
-        boltzFee,
+        pair,
+        setPair,
         minerFee,
         invoice,
         receiveAmount,
-        swapType,
         sendAmount,
         amountValid,
         setInvoice,
@@ -36,9 +36,6 @@ const InvoiceInput = () => {
         setLnurl,
         setReceiveAmount,
         setSendAmount,
-        setAssetSend,
-        assetSend,
-        setAssetReceive,
         setOnchainAddress,
         setBolt12Offer,
         setAddressValid,
@@ -67,29 +64,28 @@ const InvoiceInput = () => {
         }
 
         const address = extractAddress(inputValue);
-        const invoice = extractInvoice(inputValue);
+        const invoiceValue = extractInvoice(inputValue);
 
         const actualAsset =
-            (await probeUserInput(LN, invoice)) ??
+            (await probeUserInput(LN, invoiceValue)) ??
             (await probeUserInput(LN, address));
 
         const bip21Amount = extractBip21Amount(inputValue);
         if (bip21Amount) {
-            setReceiveAmount(btcToSat(bip21Amount));
-            setSendAmount(
-                calculateSendAmount(
-                    btcToSat(bip21Amount),
-                    boltzFee(),
-                    minerFee(),
-                    swapType(),
-                ),
+            const satAmount = btcToSat(bip21Amount);
+            setReceiveAmount(satAmount);
+            const sendAmt = await pair().calculateSendAmount(
+                satAmount,
+                minerFee(),
             );
+            setSendAmount(sendAmt);
         }
 
         // Auto switch direction based on address
         if (actualAsset !== LN && actualAsset !== null) {
-            setAssetSend(assetSend() === actualAsset ? LN : assetSend());
-            setAssetReceive(actualAsset);
+            const fromAsset =
+                pair().fromAsset === actualAsset ? LN : pair().fromAsset;
+            setPair(new Pair(pairs(), fromAsset, actualAsset, regularPairs()));
             setInvoice("");
             setOnchainAddress(address);
             setAddressValid(true);
@@ -98,24 +94,21 @@ const InvoiceInput = () => {
         }
 
         try {
-            if (isLnurl(invoice)) {
-                setLnurl(invoice);
-                setInvoice(invoice);
-            } else if (await isBolt12Offer(invoice)) {
-                setBolt12Offer(invoice);
-                setInvoice(invoice);
+            if (isLnurl(invoiceValue)) {
+                setLnurl(invoiceValue);
+                setInvoice(invoiceValue);
+            } else if (await isBolt12Offer(invoiceValue)) {
+                setBolt12Offer(invoiceValue);
+                setInvoice(invoiceValue);
             } else {
-                const sats = await validateInvoice(invoice);
+                const sats = await validateInvoice(invoiceValue);
                 setReceiveAmount(BigNumber(sats));
-                setSendAmount(
-                    calculateSendAmount(
-                        BigNumber(sats),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
+                const sendAmt = await pair().calculateSendAmount(
+                    BigNumber(sats),
+                    minerFee(),
                 );
-                setInvoice(invoice);
+                setSendAmount(sendAmt);
+                setInvoice(invoiceValue);
                 setBolt12Offer(undefined);
                 setLnurl("");
                 setInvoiceValid(true);
@@ -132,7 +125,7 @@ const InvoiceInput = () => {
 
     createEffect(
         on([amountValid, invoice], async () => {
-            if (swapType() === SwapType.Submarine) {
+            if (pair().swapToCreate?.type === SwapType.Submarine) {
                 await validate(inputRef);
             }
         }),

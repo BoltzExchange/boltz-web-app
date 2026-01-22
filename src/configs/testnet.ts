@@ -1,6 +1,6 @@
 import { type Config, Explorer } from "src/configs/base";
 import { baseConfig, chooseUrl } from "src/configs/base";
-import { AssetKind } from "src/consts/Assets";
+import { AssetKind } from "src/consts/AssetKind";
 
 const config = {
     ...baseConfig,

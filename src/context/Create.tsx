@@ -7,26 +7,20 @@ import {
     createContext,
     createEffect,
     createSignal,
+    on,
     useContext,
 } from "solid-js";
 import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
-import {
-    type AssetType,
-    BTC,
-    LBTC,
-    LN,
-    type RBTC,
-    type TBTC,
-    assets,
-    isEvmAsset,
-} from "../consts/Assets";
-import { Side, SwapType, UrlParam } from "../consts/Enums";
+import { type AssetType, BTC, LBTC, LN, assets } from "../consts/Assets";
+import { Side, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
+import Pair, { RequiredInput } from "../utils/Pair";
 import { getAddress, getNetwork } from "../utils/compat";
 import { isInvoice, isLnurl } from "../utils/invoice";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
+import { useGlobalContext } from "./Global";
 
 const isValidForAsset = (asset: typeof BTC | typeof LBTC, address: string) => {
     try {
@@ -42,21 +36,23 @@ const isValidForAsset = (asset: typeof BTC | typeof LBTC, address: string) => {
     }
 };
 
-const handleDestination: Record<
-    Exclude<AssetType, typeof RBTC | typeof TBTC>,
-    {
-        isValid: (destination: string) => boolean;
-        action: (
-            destination: string,
-            setters: {
-                setOnchainAddress: Setter<string>;
-                setInvoice: Setter<string>;
-                setAssetReceive: Setter<string>;
-                setAddressValid: Setter<boolean>;
-                setInvoiceValid: Setter<boolean>;
-            },
-        ) => ReturnType<typeof setDestination>;
-    }
+const handleDestination: Partial<
+    Record<
+        AssetType,
+        {
+            isValid: (destination: string) => boolean;
+            action: (
+                destination: string,
+                setters: {
+                    setOnchainAddress: Setter<string>;
+                    setInvoice: Setter<string>;
+                    setAssetReceive: (asset: string) => void;
+                    setAddressValid: Setter<boolean>;
+                    setInvoiceValid: Setter<boolean>;
+                },
+            ) => ReturnType<typeof setDestination>;
+        }
+    >
 > = {
     [BTC]: {
         isValid: (destination) => isValidForAsset(BTC, destination),
@@ -98,7 +94,7 @@ const handleDestination: Record<
 };
 
 const setDestination = (
-    setAssetReceive: Setter<string>,
+    setAssetReceive: (asset: string) => void,
     setInvoice: Setter<string>,
     setOnchainAddress: Setter<string>,
     setAddressValid: Setter<boolean>,
@@ -152,8 +148,8 @@ const parseAmount = (amount: string): BigNumber | undefined => {
 };
 
 const handleUrlParams = (
-    setAssetSend: Setter<string>,
-    setAssetReceive: Setter<string>,
+    pair: Accessor<Pair>,
+    setPair: Setter<Pair>,
     setInvoice: Setter<string>,
     setOnchainAddress: Setter<string>,
     setAmountChanged: Setter<Side>,
@@ -163,6 +159,22 @@ const handleUrlParams = (
     setInvoiceValid: Setter<boolean>,
     navigate: Navigator,
 ) => {
+    const setAssetSend = (asset: string) => {
+        let toAsset = pair().toAsset;
+        if (toAsset === asset) {
+            toAsset = asset === LN ? BTC : LN;
+        }
+        setPair(new Pair(pair().pairs, asset, toAsset));
+    };
+
+    const setAssetReceive = (asset: string) => {
+        let fromAsset = pair().fromAsset;
+        if (fromAsset === asset) {
+            fromAsset = asset === LN ? BTC : LN;
+        }
+        setPair(new Pair(pair().pairs, fromAsset, asset));
+    };
+
     const sendAsset = getUrlParam(UrlParam.SendAsset);
     const receiveAsset = getUrlParam(UrlParam.ReceiveAsset);
     const { destinationAsset, destination } = setDestination(
@@ -228,8 +240,8 @@ const handleUrlParams = (
 };
 
 export type CreateContextType = {
-    swapType: Accessor<SwapType>;
-    setSwapType: Setter<SwapType>;
+    pair: Accessor<Pair>;
+    setPair: Setter<Pair>;
     invoice: Accessor<string>;
     setInvoice: Setter<string>;
     lnurl: Accessor<string>;
@@ -238,10 +250,6 @@ export type CreateContextType = {
     setBolt12Offer: Setter<string | undefined>;
     onchainAddress: Accessor<string>;
     setOnchainAddress: Setter<string>;
-    assetSend: Accessor<string>;
-    setAssetSend: Setter<string>;
-    assetReceive: Accessor<string>;
-    setAssetReceive: Setter<string>;
     assetSelect: Accessor<boolean>;
     setAssetSelect: Setter<boolean>;
     assetSelected: Accessor<string>;
@@ -254,8 +262,6 @@ export type CreateContextType = {
     setAddressValid: Setter<boolean>;
     amountValid: Accessor<boolean>;
     setAmountValid: Setter<boolean>;
-    pairValid: Accessor<boolean>;
-    setPairValid: Setter<boolean>;
     sendAmount: Accessor<BigNumber>;
     setSendAmount: Setter<BigNumber>;
     receiveAmount: Accessor<BigNumber>;
@@ -281,10 +287,9 @@ export type CreateContextType = {
 const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: JSX.Element }) => {
-    const defaultSelection = Object.keys(config.assets)[0];
     const navigate = useNavigate();
+    const { pairs, regularPairs } = useGlobalContext();
 
-    const [swapType, setSwapType] = createSignal<SwapType>(SwapType.Submarine);
     const [invoice, setInvoice] = createSignal<string>("");
     const [lnurl, setLnurl] = createSignal("");
     const [bolt12Offer, setBolt12Offer] = createSignal<string | undefined>(
@@ -292,26 +297,19 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     );
     const [onchainAddress, setOnchainAddress] = createSignal("");
 
-    const [assetReceive, setAssetReceive] = makePersisted(
+    // eslint-disable-next-line solid/reactivity
+    const [assetFrom, setAssetFrom] = makePersisted(createSignal(LN), {
+        name: "assetSend",
+    });
+    const [assetTo, setAssetTo] = makePersisted(
         // eslint-disable-next-line solid/reactivity
-        createSignal(defaultSelection),
+        createSignal(BTC),
         { name: "assetReceive" },
     );
 
-    // eslint-disable-next-line solid/reactivity
-    const [assetSend, setAssetSend] = makePersisted(createSignal(LN), {
-        name: "assetSend",
-    });
-
-    createEffect(() => {
-        if (assetReceive() === LN) {
-            setSwapType(SwapType.Submarine);
-        } else if (assetSend() === LN) {
-            setSwapType(SwapType.Reverse);
-        } else {
-            setSwapType(SwapType.Chain);
-        }
-    });
+    const [pair, setPair] = createSignal<Pair>(
+        new Pair(undefined, assetFrom(), assetTo()),
+    );
 
     // asset selection
     const [assetSelect, setAssetSelect] = createSignal(false);
@@ -322,24 +320,43 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     const [invoiceValid, setInvoiceValid] = createSignal(false);
     const [addressValid, setAddressValid] = createSignal(false);
     const [amountValid, setAmountValid] = createSignal(false);
-    const [pairValid, setPairValid] = createSignal(true);
     const [invoiceError, setInvoiceError] = createSignal<DictKey | undefined>(
         undefined,
     );
 
     createEffect(() => {
-        if (amountValid() && pairValid()) {
+        if (amountValid() && pair().isRoutable) {
+            const requiredInput = pair().requiredInput;
             if (
-                (swapType() !== SwapType.Submarine && addressValid()) ||
-                (swapType() === SwapType.Submarine &&
-                    invoiceValid() &&
-                    (!isEvmAsset(assetReceive()) || addressValid()))
+                ((requiredInput === RequiredInput.Address ||
+                    requiredInput === RequiredInput.Web3) &&
+                    addressValid()) ||
+                (requiredInput === RequiredInput.Invoice && invoiceValid())
             ) {
                 setValid(true);
                 return;
             }
         }
         setValid(false);
+    });
+
+    createEffect(
+        on([pairs, regularPairs], () => {
+            setPair(
+                new Pair(
+                    pairs(),
+                    pair().fromAsset,
+                    pair().toAsset,
+                    regularPairs(),
+                ),
+            );
+        }),
+    );
+
+    createEffect(() => {
+        const latest = pair();
+        setAssetFrom(latest.fromAsset);
+        setAssetTo(latest.toAsset);
     });
 
     // amounts
@@ -357,9 +374,10 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     const [boltzFee, setBoltzFee] = createSignal(0);
     const [minerFee, setMinerFee] = createSignal(0);
 
+    // eslint-disable-next-line solid/reactivity
     handleUrlParams(
-        setAssetSend,
-        setAssetReceive,
+        pair,
+        setPair,
         setInvoice,
         setOnchainAddress,
         setAmountChanged,
@@ -373,8 +391,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     return (
         <CreateContext.Provider
             value={{
-                swapType,
-                setSwapType,
+                pair,
+                setPair,
                 invoice,
                 setInvoice,
                 lnurl,
@@ -383,10 +401,6 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setBolt12Offer,
                 onchainAddress,
                 setOnchainAddress,
-                assetSend,
-                setAssetSend,
-                assetReceive,
-                setAssetReceive,
                 assetSelect,
                 setAssetSelect,
                 assetSelected,
@@ -399,8 +413,6 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setAddressValid,
                 amountValid,
                 setAmountValid,
-                pairValid,
-                setPairValid,
                 sendAmount,
                 setSendAmount,
                 receiveAmount,

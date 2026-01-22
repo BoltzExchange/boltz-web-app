@@ -1,30 +1,29 @@
 import { config } from "../config";
+import { AssetKind } from "./AssetKind";
+
+export { AssetKind };
 
 export const LN = "LN";
 export const BTC = "BTC";
 export const LBTC = "L-BTC";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
+export const USDT0 = "USDT0";
 
 export type AssetType =
     | typeof LN
     | typeof BTC
     | typeof LBTC
     | typeof RBTC
-    | typeof TBTC;
+    | typeof TBTC
+    | typeof USDT0;
 
 export type RefundableAssetType = typeof BTC | typeof LBTC;
 
-export const assets = [LN, BTC, LBTC, RBTC, TBTC];
+export const assets = [LN, BTC, LBTC, RBTC, TBTC, USDT0];
 
 // RBTC is not refundable because its keys come from the user's wallet
 export const refundableAssets = [BTC, LBTC];
-
-export const enum AssetKind {
-    UTXO = "UTXO",
-    EVMNative = "EVM_NATIVE",
-    ERC20 = "ERC20",
-}
 
 export const getKindForAsset = (asset: string): AssetKind => {
     const assetConfig = config.assets?.[asset];
@@ -93,4 +92,27 @@ export const requireTokenConfig = (
         );
     }
     return tokenConfig;
+};
+
+export const getRouterAddress = (asset: string): string | undefined => {
+    const assetConfig = config.assets?.[asset];
+    if (!assetConfig) {
+        return undefined;
+    }
+
+    // If this asset routes via another asset, get that asset's router
+    if (assetConfig.token?.routeVia) {
+        const routeViaConfig = config.assets?.[assetConfig.token.routeVia];
+        return routeViaConfig?.contracts?.router;
+    }
+
+    return assetConfig.contracts?.router;
+};
+
+export const requireRouterAddress = (asset: string): string => {
+    const routerAddress = getRouterAddress(asset);
+    if (!routerAddress) {
+        throw new Error(`Asset ${asset} has no router configured`);
+    }
+    return routerAddress;
 };

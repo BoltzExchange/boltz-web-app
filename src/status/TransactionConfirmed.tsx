@@ -1,4 +1,8 @@
-import { Show } from "solid-js";
+import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
+import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import { Signature } from "ethers";
+import log from "loglevel";
+import { type Accessor, Show } from "solid-js";
 
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -11,10 +15,168 @@ import {
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { useWeb3Signer } from "../context/Web3";
+import {
+    type Signer,
+    createRouterContract,
+    useWeb3Signer,
+} from "../context/Web3";
 import { relayClaimTransaction } from "../rif/Signer";
+import { type EncodedHop } from "../utils/Pair";
+import { encodeDexQuote, quoteDexAmountIn } from "../utils/boltzClient";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
+
+const claimAssset = async (
+    useRif: boolean,
+    asset: string,
+    preimage: string,
+    amount: number,
+    refundAddress: string,
+    timeoutBlockHeight: number,
+    signer: Accessor<Signer>,
+    etherSwap: EtherSwap,
+    erc20Swap: ERC20Swap,
+) => {
+    let transactionHash: string;
+
+    if (useRif) {
+        transactionHash = await relayClaimTransaction(
+            signer(),
+            etherSwap,
+            preimage,
+            amount,
+            refundAddress,
+            timeoutBlockHeight,
+        );
+    } else {
+        const assetAmount = satsToAssetAmount(amount, asset);
+
+        if (getKindForAsset(asset) === AssetKind.EVMNative) {
+            transactionHash = (
+                await etherSwap["claim(bytes32,uint256,address,uint256)"](
+                    prefix0x(preimage),
+                    assetAmount,
+                    refundAddress,
+                    timeoutBlockHeight,
+                )
+            ).hash;
+        } else {
+            transactionHash = (
+                await erc20Swap[
+                    "claim(bytes32,uint256,address,address,uint256)"
+                ](
+                    prefix0x(preimage),
+                    assetAmount,
+                    getTokenAddress(asset),
+                    refundAddress,
+                    timeoutBlockHeight,
+                )
+            ).hash;
+        }
+    }
+
+    return transactionHash;
+};
+
+const claimHops = async (
+    hops: EncodedHop[],
+    asset: string,
+    preimage: string,
+    amount: number,
+    refundAddress: string,
+    timeoutBlockHeight: number,
+    signer: Accessor<Signer>,
+    erc20Swap: ERC20Swap,
+) => {
+    if (hops.length !== 1) {
+        throw new Error("only one hop is supported for now");
+    }
+
+    const hop = hops[0];
+    const amountIn = BigInt(satsToAssetAmount(amount, asset));
+
+    // TODO: handle slippage and don't just get a new quote
+    const quote = (
+        await quoteDexAmountIn(
+            hop.dexDetails.chain,
+            hop.dexDetails.tokenIn,
+            hop.dexDetails.tokenOut,
+            amountIn,
+        )
+    )[0];
+    log.info(`Got quote: ${quote.quote}`, quote.data);
+
+    // TODO: custom slippage
+    const amountOutMin = BigInt(Math.floor(Number(quote.quote) * 0.99));
+
+    const router = createRouterContract(asset, signer());
+
+    const calldata = await encodeDexQuote(
+        hop.dexDetails.chain,
+        await router.getAddress(),
+        amountIn,
+        amountOutMin,
+        quote.data,
+    );
+
+    const isEtherSwap = getKindForAsset(asset) === AssetKind.EVMNative;
+    if (isEtherSwap) {
+        throw new Error("EtherSwap is not supported for now");
+    }
+
+    const claimSignature = Signature.from(
+        await signer().signTypedData(
+            {
+                name: "ERC20Swap",
+                version: "5",
+                verifyingContract: await erc20Swap.getAddress(),
+                chainId: (await signer().provider.getNetwork()).chainId,
+            },
+            {
+                Claim: [
+                    { name: "preimage", type: "bytes32" },
+                    { name: "amount", type: "uint256" },
+                    { name: "tokenAddress", type: "address" },
+                    { name: "refundAddress", type: "address" },
+                    { name: "timelock", type: "uint256" },
+                    { name: "destination", type: "address" },
+                ],
+            },
+            {
+                preimage: prefix0x(preimage),
+                amount: amountIn,
+                tokenAddress: getTokenAddress(asset),
+                refundAddress: refundAddress,
+                timelock: timeoutBlockHeight,
+                destination: await router.getAddress(),
+            },
+        ),
+    );
+
+    const claim = await router[
+        "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256)"
+    ](
+        {
+            preimage: prefix0x(preimage),
+            amount: amountIn,
+            tokenAddress: getTokenAddress(asset),
+            refundAddress: refundAddress,
+            timelock: timeoutBlockHeight,
+            v: claimSignature.v,
+            r: claimSignature.r,
+            s: claimSignature.s,
+        },
+        calldata.calls.map((call) => ({
+            target: call.to,
+            value: call.value,
+            callData: prefix0x(call.data),
+        })),
+        hop.dexDetails.tokenOut,
+        amountOutMin,
+    );
+
+    return claim.hash;
+};
 
 // TODO: use bignumber for amounts
 const ClaimEvm = (props: {
@@ -27,6 +189,7 @@ const ClaimEvm = (props: {
     refundAddress: string;
     derivationPath: string;
     timeoutBlockHeight: number;
+    hops?: EncodedHop[];
 }) => {
     const { getEtherSwap, getErc20Swap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
@@ -37,53 +200,34 @@ const ClaimEvm = (props: {
             asset={props.assetReceive}
             /* eslint-disable-next-line solid/reactivity */
             onClick={async () => {
-                let transactionHash: string;
+                const currentSwap = await getSwap(props.swapId);
 
-                if (props.useRif) {
-                    transactionHash = await relayClaimTransaction(
-                        signer(),
-                        getEtherSwap(props.assetReceive),
+                let transactionHash: string;
+                if (props.hops !== undefined && props.hops.length > 0) {
+                    transactionHash = await claimHops(
+                        props.hops,
+                        props.assetReceive,
                         props.preimage,
                         props.amount,
                         props.refundAddress,
                         props.timeoutBlockHeight,
+                        signer,
+                        getErc20Swap(props.assetReceive),
                     );
                 } else {
-                    const amount = satsToAssetAmount(
-                        props.amount,
+                    transactionHash = await claimAssset(
+                        props.useRif,
                         props.assetReceive,
+                        props.preimage,
+                        props.amount,
+                        props.refundAddress,
+                        props.timeoutBlockHeight,
+                        signer,
+                        getEtherSwap(props.assetReceive),
+                        getErc20Swap(props.assetReceive),
                     );
-
-                    if (
-                        getKindForAsset(props.assetReceive) ===
-                        AssetKind.EVMNative
-                    ) {
-                        transactionHash = (
-                            await getEtherSwap(props.assetReceive)[
-                                "claim(bytes32,uint256,address,uint256)"
-                            ](
-                                prefix0x(props.preimage),
-                                amount,
-                                props.refundAddress,
-                                props.timeoutBlockHeight,
-                            )
-                        ).hash;
-                    } else {
-                        transactionHash = (
-                            await getErc20Swap(props.assetReceive)[
-                                "claim(bytes32,uint256,address,address,uint256)"
-                            ](
-                                prefix0x(props.preimage),
-                                amount,
-                                getTokenAddress(props.assetReceive),
-                                props.refundAddress,
-                                props.timeoutBlockHeight,
-                            )
-                        ).hash;
-                    }
                 }
 
-                const currentSwap = await getSwap(props.swapId);
                 currentSwap.claimTx = transactionHash;
                 setSwap(currentSwap);
                 await setSwapStorage(currentSwap);
@@ -134,6 +278,7 @@ const TransactionConfirmed = () => {
                             chain.claimDetails.timeoutBlockHeight
                         }
                         assetReceive={chain.assetReceive}
+                        hops={chain.hops}
                     />
                 }>
                 <ClaimEvm
@@ -146,6 +291,7 @@ const TransactionConfirmed = () => {
                     derivationPath={reverse.derivationPath}
                     timeoutBlockHeight={reverse.timeoutBlockHeight}
                     assetReceive={reverse.assetReceive}
+                    hops={reverse.hops}
                 />
             </Show>
         </Show>

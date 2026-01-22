@@ -13,7 +13,7 @@ import type { ECPairInterface } from "ecpair";
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 
-import { LBTC, isEvmAsset } from "../consts/Assets";
+import { BTC, LBTC, isEvmAsset } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
@@ -120,6 +120,7 @@ const validateBip21 = (
             BigNumber(expectedAmount),
             Denomination.Btc,
             ".",
+            BTC,
         )
     ) {
         throw new Error(

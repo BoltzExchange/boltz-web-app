@@ -1,6 +1,23 @@
 import type { Config } from "src/configs/base";
 import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
-import { AssetKind } from "src/consts/Assets";
+import { AssetKind } from "src/consts/AssetKind";
+
+const arbitrumExplorer = {
+    id: Explorer.Blockscout,
+    normal: "https://arbiscan.io",
+};
+
+const arbitrumNetwork = {
+    symbol: "ARB",
+    chainName: "Arbitrum",
+    chainId: 42161,
+    rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+    nativeCurrency: {
+        name: "Ethereum",
+        symbol: "ETH",
+        decimals: 18,
+    },
+};
 
 const config = {
     ...baseConfig,
@@ -45,6 +62,7 @@ const config = {
             },
             network: {
                 chainName: "Anvil",
+                symbol: "RBTC",
                 chainId: 31,
                 rpcUrls: ["http://localhost:8545"],
                 nativeCurrency: {
@@ -63,23 +81,25 @@ const config = {
         },
         TBTC: {
             type: AssetKind.ERC20,
-            blockExplorerUrl: {
-                id: Explorer.Blockscout,
-                normal: "https://arbiscan.io",
-            },
-            network: {
-                chainName: "Arbitrum",
-                chainId: 42161,
-                rpcUrls: ["https://arb1.arbitrum.io/rpc"],
-                nativeCurrency: {
-                    name: "Ethereum",
-                    symbol: "ETH",
-                    decimals: 18,
-                },
-            },
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
             token: {
                 address: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
                 decimals: 18,
+            },
+            contracts: {
+                deployHeight: 421213458,
+                router: "0x7029CB2671f8a585600D133fa3A2dCe9b157066e",
+            },
+        },
+        USDT0: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
+            token: {
+                address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+                decimals: 6,
+                routeVia: "TBTC",
             },
         },
     },
