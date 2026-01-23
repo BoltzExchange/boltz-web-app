@@ -1,6 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import log from "loglevel";
-import QrScanner from "qr-scanner";
 import type { Accessor } from "solid-js";
 import {
     For,
@@ -17,12 +16,17 @@ import {
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
 import LoadingSpinner from "../components/LoadingSpinner";
-import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
+import { rescueKeyMode } from "../components/MnemonicInput";
 import Pagination, {
     desktopItemsPerPage,
     mobileItemsPerPage,
 } from "../components/Pagination";
 import RefundButton from "../components/RefundButton";
+import RescueFileUpload, {
+    RescueFileError,
+    type RescueFileResult,
+    RescueFileType,
+} from "../components/RescueFileUpload";
 import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
@@ -35,35 +39,23 @@ import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
 import type { LogRefundData } from "../utils/contractLogs";
-import { scanLogsForPossibleRefunds } from "../utils/contractLogs";
-import { rescueFileTypes } from "../utils/download";
+import { scanLockupEvents } from "../utils/contractLogs";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
-import { validateRefundFile } from "../utils/refundFile";
 import {
     RescueAction,
     createRescueList,
     getRescuableUTXOs,
 } from "../utils/rescue";
-import type { RescueFile } from "../utils/rescueFile";
-import { getXpub, validateRescueFile } from "../utils/rescueFile";
+import { type RescueFile, getXpub } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
 
-export enum RefundError {
-    InvalidData,
-}
-
-enum RefundType {
-    Rescue,
-    Legacy,
-}
-
 const BtcLikeLegacy = (props: {
     refundJson: Accessor<SubmarineSwap | ChainSwap>;
-    refundInvalid: Accessor<RefundError | undefined>;
+    refundInvalid: Accessor<RescueFileError | undefined>;
 }) => {
     const { t } = useGlobalContext();
     const { setRefundableUTXOs } = usePayContext();
@@ -89,7 +81,7 @@ const BtcLikeLegacy = (props: {
                     swap={swap}
                     setRefundTxId={setRefundTxId}
                     buttonOverride={
-                        props.refundInvalid() == RefundError.InvalidData
+                        props.refundInvalid() == RescueFileError.InvalidData
                             ? t("invalid_refund_file")
                             : undefined
                     }
@@ -117,13 +109,13 @@ export const RefundBtcLike = () => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
     const rescueContext = useRescueContext();
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
 
     const [refundInvalid, setRefundInvalid] = createSignal<
-        RefundError | undefined
+        RescueFileError | undefined
     >(undefined);
     const [refundJson, setRefundJson] = createSignal(null);
-    const [refundType, setRefundType] = createSignal<RefundType>();
+    const [refundType, setRefundType] = createSignal<RescueFileType>();
     const [currentPage, setCurrentPage] = createSignal(1);
     const [currentSwaps, setCurrentSwaps] = createSignal<Partial<SomeSwap>[]>(
         [],
@@ -168,7 +160,7 @@ export const RefundBtcLike = () => {
         async (source) => {
             try {
                 if (
-                    source.type !== RefundType.Rescue ||
+                    source.type !== RescueFileType.Rescue ||
                     source.refundJson === null
                 ) {
                     return undefined;
@@ -195,65 +187,21 @@ export const RefundBtcLike = () => {
         },
     );
 
-    const checkRefundJsonKeys = (
-        json: Record<string, string | object | number>,
-    ) => {
-        log.debug("checking refund json");
-
-        try {
-            if ("mnemonic" in json) {
-                log.info("Found rescue file");
-                setRefundType(RefundType.Rescue);
-                setRefundJson(validateRescueFile(json));
-                rescueContext.setRescueFile(json as RescueFile);
-                setRefundInvalid(undefined);
-            } else {
-                log.info("Found legacy refund file");
-
-                const data = validateRefundFile(json);
-
-                setRefundType(RefundType.Legacy);
-                setRefundJson(data);
-                setRefundInvalid(undefined);
-            }
-        } catch (e) {
-            log.warn("Refund json validation failed:", formatError(e));
-            setRefundType(undefined);
-            setRefundInvalid(RefundError.InvalidData);
-        }
+    const handleFileValidated = (result: RescueFileResult) => {
+        setRefundType(result.type);
+        setRefundJson(result.data);
+        setRefundInvalid(undefined);
     };
 
-    const uploadChange = async (e: Event) => {
-        const input = e.currentTarget as HTMLInputElement;
-        const inputFile = input.files[0];
+    const handleFileError = (error: RescueFileError) => {
+        setRefundType(undefined);
+        setRefundInvalid(error);
+    };
+
+    const handleReset = () => {
         setRefundJson(null);
         setRefundInvalid(undefined);
-        setSearchParams({
-            page: null,
-            mode: null,
-        });
-
-        if (["image/png", "image/jpg", "image/jpeg"].includes(inputFile.type)) {
-            try {
-                const res = await QrScanner.scanImage(inputFile, {
-                    returnDetailedScanResult: true,
-                });
-                checkRefundJsonKeys(JSON.parse(res.data));
-            } catch (e) {
-                log.error("invalid QR code upload", formatError(e));
-                setRefundType(undefined);
-                setRefundInvalid(RefundError.InvalidData);
-            }
-        } else {
-            try {
-                const data = await inputFile.text();
-                checkRefundJsonKeys(JSON.parse(data));
-            } catch (e) {
-                log.error("invalid file upload", formatError(e));
-                setRefundType(undefined);
-                setRefundInvalid(RefundError.InvalidData);
-            }
-        }
+        setRefundType(undefined);
     };
 
     return (
@@ -262,7 +210,7 @@ export const RefundBtcLike = () => {
                 <p class="frame-text">{t("rescue_a_swap_subline")}</p>
                 <hr />
             </Show>
-            <Show when={refundType() === RefundType.Legacy}>
+            <Show when={refundType() === RescueFileType.Legacy}>
                 <BtcLikeLegacy
                     refundJson={refundJson}
                     refundInvalid={refundInvalid}
@@ -277,24 +225,8 @@ export const RefundBtcLike = () => {
                     {t("invalid_refund_file")}
                 </h3>
             </Show>
-            <Show when={searchParams.mode === rescueKeyMode}>
-                <p class="frame-text">{t("rescue_a_swap_mnemonic")}</p>
-                <MnemonicInput
-                    onSubmit={(mnemonic) => {
-                        setRefundType(RefundType.Rescue);
-                        setRefundJson(
-                            validateRescueFile({ mnemonic: mnemonic }),
-                        );
-                        rescueContext.setRescueFile({ mnemonic: mnemonic });
-                        setRefundInvalid(undefined);
-                        setSearchParams({
-                            mode: null,
-                        });
-                    }}
-                />
-            </Show>
 
-            <Show when={refundType() === RefundType.Rescue}>
+            <Show when={refundType() === RescueFileType.Rescue}>
                 <Switch>
                     <Match when={rescuableSwaps.state === "ready"}>
                         <div style={{ "margin-top": "2%" }}>
@@ -380,82 +312,54 @@ export const RefundBtcLike = () => {
                 </Switch>
             </Show>
             <Show when={rescuableSwaps.state !== "refreshing"}>
-                <Show when={searchParams.mode !== rescueKeyMode}>
-                    <input
-                        required
-                        type="file"
-                        id="refundUpload"
-                        data-testid="refundUpload"
-                        accept={rescueFileTypes}
-                        onChange={(e) => uploadChange(e)}
-                    />
-                </Show>
-                <Switch>
-                    <Match when={searchParams.mode !== rescueKeyMode}>
-                        <button
-                            class="btn btn-light"
-                            data-testid="enterMnemonicBtn"
-                            onClick={() => {
-                                setRefundType(undefined);
-                                setRefundJson(null);
-                                setRefundInvalid(undefined);
-                                rescueContext.setRescuableSwaps([]);
-                                setSearchParams({
-                                    page: null,
-                                    mode: rescueKeyMode,
-                                });
-                            }}>
-                            {t("enter_mnemonic")}
-                        </button>
-                    </Match>
-                    <Match when={searchParams.mode === rescueKeyMode}>
-                        <button
-                            class="btn btn-light"
-                            data-testid="backBtn"
-                            onClick={() => {
-                                setSearchParams({
-                                    mode: null,
-                                });
-                            }}>
-                            {t("back")}
-                        </button>
-                    </Match>
-                </Switch>
+                <RescueFileUpload
+                    onFileValidated={handleFileValidated}
+                    onError={handleFileError}
+                    onReset={handleReset}
+                />
             </Show>
         </>
     );
 };
 
-export const RefundRsk = () => {
+type RskRescueMode = "refund" | "resume";
+
+export const RescueRsk = () => {
     const { t } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
+    const { setRskRescuableSwaps } = useRescueContext();
 
+    const [mode, setMode] = createSignal<RskRescueMode | undefined>(undefined);
     const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
-        LogRefundData[]
-    >([]);
+        LogRefundData[] | undefined
+    >(undefined);
     const [refundScanProgress, setRefundScanProgress] = createSignal<
         string | undefined
     >(undefined);
+    const [isScanning, setIsScanning] = createSignal(false);
+    const [uploadedRescueFile, setUploadedRescueFile] =
+        createSignal<RescueFile>();
 
     let refundScanAbort: AbortController | undefined = undefined;
 
-    onCleanup(() => {
+    const stopScan = () => {
         if (refundScanAbort) {
-            refundScanAbort.abort();
+            refundScanAbort.abort("scan stopped");
+            refundScanAbort = undefined;
         }
-    });
+        setIsScanning(false);
+        setRefundScanProgress(undefined);
+    };
 
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
-        setLogRefundableSwaps([]);
+    const startScan = async () => {
+        const currentSigner = signer();
 
-        if (refundScanAbort !== undefined) {
-            refundScanAbort.abort("signer changed");
-        }
-
-        if (signer() === undefined) {
+        if (currentSigner === undefined) {
             return;
         }
+
+        setIsScanning(true);
+        setLogRefundableSwaps([]);
 
         setRefundScanProgress(
             t("logs_scan_progress", {
@@ -465,47 +369,164 @@ export const RefundRsk = () => {
 
         refundScanAbort = new AbortController();
 
-        const generator = scanLogsForPossibleRefunds(
-            refundScanAbort.signal,
-            signer(),
-            getEtherSwap(),
-        );
+        const signerAddress = await currentSigner.getAddress();
+        const rescueFile = uploadedRescueFile();
 
-        for await (const value of generator) {
+        const generator = scanLockupEvents(refundScanAbort.signal, getEtherSwap(), {
+            filter: { address: signerAddress },
+            checkLocked: true,
+            derivePreimages: rescueFile ? { mnemonic: rescueFile.mnemonic } : undefined,
+        });
+
+        for await (const { progress, events } of generator) {
+            if (refundScanAbort?.signal.aborted) {
+                break;
+            }
             setRefundScanProgress(
                 t("logs_scan_progress", {
-                    value: (value.progress * 100).toFixed(2),
+                    value: (progress * 100).toFixed(2),
                 }),
             );
-            setLogRefundableSwaps(logRefundableSwaps().concat(value.events));
+
+            const updatedSwaps = logRefundableSwaps().concat(events);
+            setLogRefundableSwaps(updatedSwaps);
+            setRskRescuableSwaps(updatedSwaps);
         }
 
-        setRefundScanProgress(undefined);
+        if (!refundScanAbort?.signal.aborted) {
+            setIsScanning(false);
+            setRefundScanProgress(undefined);
+        }
+    };
+
+    const handleRescueFileUpload = (result: RescueFileResult) => {
+        if (result.type === RescueFileType.Rescue) {
+            setUploadedRescueFile(result.data as RescueFile);
+        }
+    };
+
+    const resetMode = () => {
+        stopScan();
+        setMode(undefined);
+        setLogRefundableSwaps(undefined);
+        setUploadedRescueFile(undefined);
+    };
+
+    createEffect(() => {
+        if (signer() === undefined) {
+            if (isScanning()) {
+                stopScan();
+            }
+            setLogRefundableSwaps([]);
+        }
     });
 
-    return (
+    onCleanup(() => {
+        stopScan();
+    });
+
+    // Mode selection screen
+    const ModeSelector = () => (
         <>
-            <Switch
-                fallback={
-                    <p class="frame-text">
-                        {t("refund_external_explainer_rsk")}
-                    </p>
-                }>
-                <Match when={logRefundableSwaps().length > 0}>
-                    <SwapListLogs swaps={logRefundableSwaps} />
-                </Match>
-                <Match when={refundScanProgress() !== undefined}>
-                    <p class="frame-text">
-                        {t("refund_external_scanning_rsk")}
-                    </p>
-                </Match>
-                <Match when={signer() !== undefined}>
-                    <p class="frame-text">{t("connected_wallet_no_swaps")}</p>
-                </Match>
-            </Switch>
-            <hr />
-            <ConnectWallet addressOverride={refundScanProgress} />
+            <p class="frame-text">{t("rsk_rescue_prompt")}</p>
+
+            <div style={{ display: "flex", gap: "12px" }}>
+                <button class="btn btn-light" onClick={() => setMode("refund")}>
+                    {t("rsk_rescue_refund_title")}<br />
+                </button>
+
+                <button class="btn btn-light" onClick={() => setMode("resume")}>
+                    {t("rsk_rescue_resume_title")}<br />
+                    ({t("rsk_rescue_resume_tagline")})
+                </button>
+            </div>
+
+            <p class="frame-text" style={{ "margin": "10px 0 10px 0" }}>
+                {t("rsk_rescue_no_key_note_title")}<br />
+                {t("rsk_rescue_no_key_note_subtitle")}
+            </p>
         </>
+    );
+
+    // Scanning UI (shared between modes)
+    const ScanningStatus = () => (
+        <Switch>
+            <Match when={isScanning()}>
+                <p class="frame-text">
+                    {t("refund_external_scanning_rsk")}
+                </p>
+                <p class="frame-text">{refundScanProgress()}</p>
+            </Match>
+            <Match
+                when={
+                    logRefundableSwaps() !== undefined &&
+                    logRefundableSwaps().length === 0
+                }>
+                <p class="frame-text">{t("connected_wallet_no_swaps")}</p>
+            </Match>
+        </Switch>
+    );
+
+    // Shared scan UI for both modes
+    const ScanMode = (props: { explainerKey: string; requiresRescueFile?: boolean }) => {
+        const canScan = () => signer() !== undefined && (!props.requiresRescueFile || uploadedRescueFile());
+
+        return (
+            <>
+                <Show when={!isScanning() && logRefundableSwaps() === undefined}>
+                    <p class="frame-text">{t(props.explainerKey as Parameters<typeof t>[0])}</p>
+                </Show>
+
+                <ScanningStatus />
+
+                <Show when={logRefundableSwaps()?.length > 0}>
+                    <SwapListLogs swaps={logRefundableSwaps} />
+                </Show>
+
+                <Show when={!isScanning()}>
+                    <Show when={props.requiresRescueFile}>
+                        <RescueFileUpload
+                            onFileValidated={handleRescueFileUpload}
+                            onError={() => setUploadedRescueFile(null)}
+                            onReset={() => setUploadedRescueFile(null)}
+                            showMnemonicOption={false}
+                        />
+                    </Show>
+
+                    <ConnectWallet />
+                </Show>
+
+                <button
+                    class="btn"
+                    disabled={!canScan()}
+                    onClick={() => (isScanning() ? stopScan() : startScan())}>
+                    {isScanning()
+                        ? t("stop_scan")
+                        : canScan()
+                            ? t("start_scan")
+                            : props.requiresRescueFile
+                                ? t("upload_key_and_connect_to_scan")
+                                : t("connect_wallet_to_scan")}
+                </button>
+
+                <Show when={!isScanning()}>
+                    <button class="btn btn-light" onClick={resetMode}>
+                        {t("back")}
+                    </button>
+                </Show>
+            </>
+        );
+    };
+
+    return (
+        <Switch fallback={<ModeSelector />}>
+            <Match when={mode() === "refund"}>
+                <ScanMode explainerKey="rsk_rescue_refund_explainer" />
+            </Match>
+            <Match when={mode() === "resume"}>
+                <ScanMode explainerKey="rsk_rescue_resume_explainer" requiresRescueFile />
+            </Match>
+        </Switch>
     );
 };
 
@@ -555,7 +576,7 @@ const RescueExternal = () => {
                         <RefundBtcLike />
                     </Show>
                     <Show when={selected() === tabRsk.value}>
-                        <RefundRsk />
+                        <RescueRsk />
                     </Show>
                     <SettingsMenu />
                 </div>

@@ -53,6 +53,9 @@ export default defineConfig({
     server: {
         cors: { origin: "*" },
     },
+    worker: {
+        plugins: () => [wasm()],
+    },
     build: {
         cssCodeSplit: true,
         commonjsOptions: {

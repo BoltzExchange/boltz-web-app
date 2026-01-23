@@ -1,9 +1,8 @@
 import type BigNumber from "bignumber.js";
 import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
-import { randomBytes } from "crypto";
 
-import { RBTC } from "../consts/Assets";
+import { type AssetType, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
 import type {
@@ -92,18 +91,15 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
 export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;
 
 const generatePreimage = ({
-    isRsk,
+    asset,
     keyIndex,
     rescueFile,
 }: {
-    isRsk: boolean;
+    asset: AssetType;
     keyIndex: number;
     rescueFile: RescueFile;
 }) => {
-    if (isRsk) {
-        return randomBytes(32);
-    }
-    return derivePreimageFromRescueKey(rescueFile, keyIndex);
+    return derivePreimageFromRescueKey(rescueFile, keyIndex, asset);
 };
 
 export const createSubmarine = async (
@@ -118,8 +114,7 @@ export const createSubmarine = async (
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<SubmarineSwap> => {
-    const isRsk = assetReceive === RBTC;
-    const key = !isRsk ? newKey() : undefined;
+    const key = newKey(assetSend as AssetType);
     const res = await createSubmarineSwap(
         assetSend,
         assetReceive,
@@ -160,11 +155,9 @@ export const createReverse = async (
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<ReverseSwap> => {
-    const isRsk = assetReceive === RBTC;
-
-    const key = !isRsk ? newKey() : undefined;
+    const key = newKey(assetReceive as AssetType);
     const preimage = generatePreimage({
-        isRsk,
+        asset: assetReceive as AssetType,
         keyIndex: key?.index,
         rescueFile,
     });
@@ -212,14 +205,20 @@ export const createChain = async (
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<ChainSwap> => {
-    const claimKey = assetReceive !== RBTC ? newKey() : undefined;
-    const refundKey = assetSend !== RBTC ? newKey() : undefined;
-    const isRsk = assetReceive === RBTC || assetSend === RBTC;
+    const claimKey = newKey(assetReceive as AssetType);
+    const refundKey = newKey(assetSend as AssetType);
     const preimage = generatePreimage({
-        isRsk,
+        asset: assetReceive as AssetType,
         keyIndex: claimKey?.index,
         rescueFile,
     });
+    console.log({
+        assetReceive,
+        keyIndex: claimKey?.index,
+        preimage: preimage.toString("hex"),
+        preimageHash: crypto.sha256(preimage).toString("hex"),
+        rescueFile: rescueFile.mnemonic,
+    })
     const res = await createChainSwap(
         assetSend,
         assetReceive,

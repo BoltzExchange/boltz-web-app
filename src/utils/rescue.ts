@@ -367,6 +367,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
 
     const privateKey = parsePrivateKey(
         deriveKey,
+        swap.assetSend as AssetType,
         swap.refundPrivateKeyIndex,
         swap.refundPrivateKey,
     );

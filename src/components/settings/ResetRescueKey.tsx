@@ -19,6 +19,7 @@ const ResetRescueKey = () => {
         setSettingsMenu,
         notify,
         setLastUsedKey,
+        setLastUsedRskKey,
     } = useGlobalContext();
     const { setSendAmount, setReceiveAmount } = useCreateContext();
 
@@ -40,6 +41,7 @@ const ResetRescueKey = () => {
             const newRescueFile = generateRescueFile();
             setRescueFile(newRescueFile);
             setLastUsedKey(0);
+            setLastUsedRskKey(0);
             setRescueFileBackupDone(false);
             setSettingsMenu(false);
             setSendAmount(BigNumber(0));

@@ -23,6 +23,7 @@ import { RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
@@ -34,6 +35,7 @@ import {
     formatDenomination,
     getValidationRegex,
 } from "../utils/denomination";
+import { findHighestPreimageIndex } from "../utils/contractLogs";
 import { isMobile } from "../utils/helper";
 import ErrorWasm from "./ErrorWasm";
 
@@ -44,6 +46,7 @@ const Create = () => {
     const location = useLocation<{ backupDone?: string }>();
     const [searchParams] = useSearchParams();
     const [isAccordionOpen, setIsAccordionOpen] = createSignal(false);
+    const [rskIndexScanning, setRskIndexScanning] = createSignal(false);
 
     const {
         separator,
@@ -58,7 +61,11 @@ const Create = () => {
         regularPairs,
         showFiatAmount,
         fetchBtcPrice,
+        rescueFile,
+        setLastUsedRskKey,
+        lastUsedRskKey,
     } = useGlobalContext();
+    const { signer, getEtherSwap } = useWeb3Signer();
     const {
         swapType,
         assetSend,
@@ -360,6 +367,32 @@ const Create = () => {
         void fetchBtcPrice();
     });
 
+    // Scan for highest used RSK preimage index when wallet connects
+    createEffect(
+        on(signer, async (currentSigner) => {
+            if (currentSigner && !lastUsedRskKey()) {
+                setRskIndexScanning(true);
+
+                const generator = findHighestPreimageIndex(
+                    new AbortController().signal,
+                    currentSigner.address,
+                    rescueFile()?.mnemonic,
+                    getEtherSwap(),
+                );
+
+                let result = await generator.next();
+                while (!result.done) {
+                    result = await generator.next();
+                }
+
+                setLastUsedRskKey((current) =>
+                    Math.max(current, result.value + 1),
+                );
+                setRskIndexScanning(false);
+            }
+        }),
+    );
+
     const creatingSwap = () => location.state?.backupDone === BackupDone.True;
 
     return (
@@ -427,7 +460,7 @@ const Create = () => {
                                     if (
                                         assetSend() !== opportunity.assetSend ||
                                         assetReceive() !==
-                                            opportunity.assetReceive
+                                        opportunity.assetReceive
                                     ) {
                                         setAssetSend(opportunity.assetSend);
                                         setAssetReceive(
@@ -534,7 +567,15 @@ const Create = () => {
                         <ConnectWallet disabled={() => !pairValid()} />
                         <hr class="spacer" />
                     </Show>
-                    <CreateButton />
+                    <Show
+                        when={!rskIndexScanning()}
+                        fallback={
+                            <button class="btn" disabled={true}>
+                                <LoadingSpinner class="inner-spinner" />
+                            </button>
+                        }>
+                        <CreateButton />
+                    </Show>
                     <AssetSelect />
                     <SettingsMenu />
                 </div>
