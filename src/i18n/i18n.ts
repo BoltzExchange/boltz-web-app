@@ -444,13 +444,25 @@ const dict = {
         error_occurred: "An error occurred: {{ error }}",
 
         start_scan: "Start Scanning",
-        start_scan_refundable: "Start Scanning (Refundable Only)",
-        start_scan_full: "Start Scanning (Full)",
         stop_scan: "Stop Scanning",
         connect_wallet_to_scan: "Connect your wallet to start scanning",
-        rescue_file_optional_hint:
-            "Upload a rescue file to also find claimable swaps (optional)",
-        deriving_preimages: "Deriving preimage hashes...",
+        upload_key_and_connect_to_scan:
+            "Upload rescue key and connect wallet to scan",
+
+        rsk_rescue_prompt: "What would you like to do?",
+        rsk_rescue_refund_title: "Get a Refund",
+        rsk_rescue_refund_explainer:
+            "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
+        rsk_rescue_resume_title: "Continue a Swap",
+        rsk_rescue_resume_tagline: "needs rescue key",
+        rsk_rescue_resume_explainer:
+            "Upload your rescue key to find swaps that can be completed.",
+        rsk_rescue_resume_ready:
+            "Rescue key loaded. Connect your wallet and scan for claimable swaps.",
+        rsk_rescue_no_key_note_title:
+            "No rescue key? No problem!",
+        rsk_rescue_no_key_note_subtitle:
+            "You will be able to refund the swap once it expires.",
     },
     de: {
         language: "Deutsch",
@@ -2664,8 +2676,8 @@ const dict = {
 
 type NestedKeyOf<T> = {
     [K in keyof T & string]: T[K] extends object
-        ? `${K}.${NestedKeyOf<T[K]>}`
-        : K;
+    ? `${K}.${NestedKeyOf<T[K]>}`
+    : K;
 }[keyof T & string];
 
 export type DictKey = NestedKeyOf<typeof dict.en>;

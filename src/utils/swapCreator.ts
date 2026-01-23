@@ -212,6 +212,13 @@ export const createChain = async (
         keyIndex: claimKey?.index,
         rescueFile,
     });
+    console.log({
+        assetReceive,
+        keyIndex: claimKey?.index,
+        preimage: preimage.toString("hex"),
+        preimageHash: crypto.sha256(preimage).toString("hex"),
+        rescueFile: rescueFile.mnemonic,
+    })
     const res = await createChainSwap(
         assetSend,
         assetReceive,

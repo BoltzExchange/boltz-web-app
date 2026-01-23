@@ -9,8 +9,8 @@ import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { getRestorableSwaps } from "../utils/boltzClient";
+import { findHighestPreimageIndex } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
-import { scanForHighestPreimageIndex } from "../utils/preimageIndex";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
 
@@ -49,8 +49,8 @@ const BackupVerify = () => {
                     Math.max(
                         max,
                         swap.refundDetails?.keyIndex ??
-                            swap.claimDetails?.keyIndex ??
-                            negativeIndex,
+                        swap.claimDetails?.keyIndex ??
+                        negativeIndex,
                     ),
                 negativeIndex,
             );
@@ -60,16 +60,21 @@ const BackupVerify = () => {
             // Scan for highest RSK preimage index if wallet is connected
             const address = signer()?.address;
             if (address) {
-                const rskHighestIndex = await scanForHighestPreimageIndex(
+                const generator = findHighestPreimageIndex(
+                    new AbortController().signal,
                     address,
                     data.mnemonic,
                     getEtherSwap(),
                 );
-                if (rskHighestIndex >= 0) {
-                    setLastUsedRskKey((current) =>
-                        Math.max(current, rskHighestIndex + 1),
-                    );
+
+                let result = await generator.next();
+                while (!result.done) {
+                    result = await generator.next();
                 }
+
+                setLastUsedRskKey((current) =>
+                    Math.max(current, result.value + 1),
+                );
             }
 
             setRescueFileBackupDone(true);

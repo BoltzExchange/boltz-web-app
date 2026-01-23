@@ -35,8 +35,8 @@ import {
     formatDenomination,
     getValidationRegex,
 } from "../utils/denomination";
+import { findHighestPreimageIndex } from "../utils/contractLogs";
 import { isMobile } from "../utils/helper";
-import { scanForHighestPreimageIndex } from "../utils/preimageIndex";
 import ErrorWasm from "./ErrorWasm";
 
 const Create = () => {
@@ -46,6 +46,7 @@ const Create = () => {
     const location = useLocation<{ backupDone?: string }>();
     const [searchParams] = useSearchParams();
     const [isAccordionOpen, setIsAccordionOpen] = createSignal(false);
+    const [rskIndexScanning, setRskIndexScanning] = createSignal(false);
 
     const {
         separator,
@@ -62,6 +63,7 @@ const Create = () => {
         fetchBtcPrice,
         rescueFile,
         setLastUsedRskKey,
+        lastUsedRskKey,
     } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
     const {
@@ -367,20 +369,26 @@ const Create = () => {
 
     // Scan for highest used RSK preimage index when wallet connects
     createEffect(
-        on(signer, (currentSigner) => {
-            const mnemonic = rescueFile()?.mnemonic;
-            if (currentSigner && mnemonic) {
-                void scanForHighestPreimageIndex(
+        on(signer, async (currentSigner) => {
+            if (currentSigner && !lastUsedRskKey()) {
+                setRskIndexScanning(true);
+
+                const generator = findHighestPreimageIndex(
+                    new AbortController().signal,
                     currentSigner.address,
-                    mnemonic,
+                    rescueFile()?.mnemonic,
                     getEtherSwap(),
-                ).then((highestIndex) => {
-                    if (highestIndex >= 0) {
-                        setLastUsedRskKey((current) =>
-                            Math.max(current, highestIndex + 1),
-                        );
-                    }
-                });
+                );
+
+                let result = await generator.next();
+                while (!result.done) {
+                    result = await generator.next();
+                }
+
+                setLastUsedRskKey((current) =>
+                    Math.max(current, result.value + 1),
+                );
+                setRskIndexScanning(false);
             }
         }),
     );
@@ -452,7 +460,7 @@ const Create = () => {
                                     if (
                                         assetSend() !== opportunity.assetSend ||
                                         assetReceive() !==
-                                            opportunity.assetReceive
+                                        opportunity.assetReceive
                                     ) {
                                         setAssetSend(opportunity.assetSend);
                                         setAssetReceive(
@@ -559,7 +567,15 @@ const Create = () => {
                         <ConnectWallet disabled={() => !pairValid()} />
                         <hr class="spacer" />
                     </Show>
-                    <CreateButton />
+                    <Show
+                        when={!rskIndexScanning()}
+                        fallback={
+                            <button class="btn" disabled={true}>
+                                <LoadingSpinner class="inner-spinner" />
+                            </button>
+                        }>
+                        <CreateButton />
+                    </Show>
                     <AssetSelect />
                     <SettingsMenu />
                 </div>

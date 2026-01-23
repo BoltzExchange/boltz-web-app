@@ -17,7 +17,7 @@ export class PreimageHashesWorker {
         );
     }
 
-    deriveHashes(mnemonic: string): Promise<PreimageMap> {
+    deriveHashes(mnemonic: string, target: string): Promise<PreimageMap> {
         return new Promise((resolve) => {
             this.worker.onmessage = ({
                 data,
@@ -30,7 +30,7 @@ export class PreimageHashesWorker {
                 resolve(new Map());
                 this.terminate();
             };
-            this.worker.postMessage({ mnemonic });
+            this.worker.postMessage({ mnemonic, target });
         });
     }
 

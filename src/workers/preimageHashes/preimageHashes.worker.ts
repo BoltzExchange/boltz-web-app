@@ -9,7 +9,7 @@ const maxIterations = 5_000;
 // Returns array of [preimageHash, preimage] pairs (Maps can't be serialized via postMessage)
 export type PreimageHashPair = [string, string];
 
-self.onmessage = ({ data }: MessageEvent<{ mnemonic: string }>) => {
+self.onmessage = ({ data }: MessageEvent<{ mnemonic: string, target: string }>) => {
     const hdKey = mnemonicToHDKey(data.mnemonic);
     const pairs: PreimageHashPair[] = [];
 
@@ -23,6 +23,10 @@ self.onmessage = ({ data }: MessageEvent<{ mnemonic: string }>) => {
         const preimageHex = preimage.toString("hex");
         const preimageHash = crypto.sha256(preimage).toString("hex");
         pairs.push([preimageHash, preimageHex]);
+
+        if (preimageHash === data.target) {
+            break;
+        }
     }
 
     self.postMessage(pairs);

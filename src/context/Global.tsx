@@ -115,6 +115,7 @@ export type GlobalContextType = {
     deriveKey: deriveKeyFn;
     getXpub: () => string;
     setLastUsedKey: Setter<number>;
+    lastUsedRskKey: Accessor<number>;
     setLastUsedRskKey: Setter<number>;
     rescueFile: Accessor<RescueFile | null>;
     setRescueFile: Setter<RescueFile | null>;
@@ -597,6 +598,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 rescueFile,
                 setRescueFile,
                 setLastUsedKey,
+                lastUsedRskKey,
                 setLastUsedRskKey,
                 getXpub: getXpubWrapper,
                 deriveKey: deriveKeyWrapper,
