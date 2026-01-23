@@ -54,6 +54,8 @@ const defaults = {
     // **Should only be enabled for testing purposes**
     cooperativeDisabled: false,
 
+    preventReloadOnPendingSwaps: true,
+
     loglevel: "info" as log.LogLevelDesc,
     defaultLanguage: "en",
     supportUrl: "https://support.boltz.exchange/hc/center",

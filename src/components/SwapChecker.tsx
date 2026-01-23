@@ -2,6 +2,7 @@ import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 
+import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import {
     swapStatusFinal,
@@ -236,7 +237,7 @@ export const SwapChecker = () => {
     });
 
     window.onbeforeunload = (event: BeforeUnloadEvent) => {
-        if (pendingSwaps?.length > 0) {
+        if (config.preventReloadOnPendingSwaps && pendingSwaps?.length > 0) {
             event.preventDefault();
             return "";
         }

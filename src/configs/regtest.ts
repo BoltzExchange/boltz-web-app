@@ -5,6 +5,7 @@ const config = {
     ...baseConfig,
     network: "regtest",
     loglevel: "debug",
+    preventReloadOnPendingSwaps: false,
     apiUrl: {
         normal: "http://localhost:9001",
     },
