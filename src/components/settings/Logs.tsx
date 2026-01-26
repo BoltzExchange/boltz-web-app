@@ -3,7 +3,10 @@ import {
     BiRegularDownload,
     BiRegularTrash,
 } from "solid-icons/bi";
+import { IoCheckmark } from "solid-icons/io";
+import { Show, createSignal } from "solid-js";
 
+import { copyIconTimeout } from "../../consts/CopyContent";
 import { useGlobalContext } from "../../context/Global";
 import { downloadJson } from "../../utils/download";
 import { clipboard } from "../../utils/helper";
@@ -11,6 +14,8 @@ import { clipboard } from "../../utils/helper";
 const Logs = () => {
     const iconSize = 16;
     const { getLogs, clearLogs, t } = useGlobalContext();
+
+    const [copied, setCopied] = createSignal(false);
 
     const clear = async (evt: MouseEvent) => {
         if (confirm(t("delete_logs"))) {
@@ -23,6 +28,8 @@ const Logs = () => {
         evt.stopPropagation();
         const logs = await getLogs();
         clipboard(JSON.stringify(logs, null, 2));
+        setCopied(true);
+        setTimeout(() => setCopied(false), copyIconTimeout);
     };
 
     const download = async (evt: MouseEvent) => {
@@ -33,7 +40,11 @@ const Logs = () => {
     return (
         <div class="flex">
             <span onClick={copy} class="btn-small">
-                <BiRegularCopy size={iconSize} />
+                <Show
+                    when={copied()}
+                    fallback={<BiRegularCopy size={iconSize} />}>
+                    <IoCheckmark size={iconSize} />
+                </Show>
             </span>
             &nbsp;
             <span
