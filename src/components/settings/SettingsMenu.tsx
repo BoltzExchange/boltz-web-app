@@ -13,7 +13,6 @@ import FiatAmountSetting from "./FiatAmountSetting";
 import Logs from "./Logs";
 import PrivacyMode from "./PrivacyMode";
 import RescueFile from "./RescueKey";
-import ResetRescueKey from "./ResetRescueKey";
 import Separator from "./Separator";
 import Tooltip from "./Tooltip";
 import ZeroConf from "./ZeroConf";
@@ -105,11 +104,6 @@ const SettingsMenu = () => {
                         label={"rescue_key"}
                         tooltipLabel={"download_boltz_rescue_key"}
                         settingElement={<RescueFile />}
-                    />
-                    <Entry
-                        label={"reset_rescue_key"}
-                        tooltipLabel={"reset_rescue_key_tooltip"}
-                        settingElement={<ResetRescueKey />}
                     />
                 </Section>
 
