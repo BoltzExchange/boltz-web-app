@@ -2,7 +2,7 @@ import { BiSolidHelpCircle } from "solid-icons/bi";
 import { BsCardText } from "solid-icons/bs";
 import { ImDisplay } from "solid-icons/im";
 import { IoClose, IoShield } from "solid-icons/io";
-import { type JSXElement, Show } from "solid-js";
+import { type JSXElement, Show, onCleanup, onMount } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
 import type { DictKey } from "../../i18n/i18n";
@@ -54,15 +54,28 @@ const Entry = (props: {
     );
 };
 
-const SettingsMenu = () => {
+const SettingsMenuContent = () => {
     const { t, settingsMenu, setSettingsMenu } = useGlobalContext();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape" && settingsMenu()) {
+            setSettingsMenu(false);
+        }
+    };
+
+    onMount(() => {
+        document.addEventListener("keydown", handleKeyDown);
+    });
+
+    onCleanup(() => {
+        document.removeEventListener("keydown", handleKeyDown);
+    });
 
     return (
         <div
             id="settings-menu"
             class="frame assets-select"
-            onClick={() => setSettingsMenu(false)}
-            style={settingsMenu() ? "display: block;" : "display: none;"}>
+            onClick={() => setSettingsMenu(false)}>
             <div onClick={(e) => e.stopPropagation()}>
                 <h2>{t("settings")}</h2>
                 <span class="close" onClick={() => setSettingsMenu(false)}>
@@ -116,6 +129,16 @@ const SettingsMenu = () => {
                 </Section>
             </div>
         </div>
+    );
+};
+
+const SettingsMenu = () => {
+    const { settingsMenu } = useGlobalContext();
+
+    return (
+        <Show when={settingsMenu()}>
+            <SettingsMenuContent />
+        </Show>
     );
 };
 
