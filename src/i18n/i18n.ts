@@ -92,7 +92,7 @@ const dict = {
         rescue_external_explainer:
             "Try rescuing an external swap via rescue key and other emergency methods.",
         refund_external_explainer_rsk:
-            "If you sent RBTC into a Boltz swap, connect your Rootstock Wallet to scan for rescuable swaps that are not saved in this browser’s swap history.",
+            "If you sent RBTC into a Boltz swap, connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
         refund_external_scanning_rsk:
             "Scanning for rescuable swaps in your Rootstock Wallet...",
         connected_wallet_no_swaps:
@@ -105,6 +105,7 @@ const dict = {
             "Enter an address to receive your refund on:",
         refund_backup: "Backup",
         refund_import: "Import Backup",
+        import_rescue_key: "Upload rescue key",
         refund_clear: "Delete storage",
         delete_storage:
             "Are you sure you want to clear your storage?\nYour swap information and you refund / claim private keys will be lost.",
@@ -437,9 +438,31 @@ const dict = {
         swaps_found: "Scanning swaps ({{ count }} found)",
         upload_rescue_key_evm:
             "Upload or enter your rescue key to resume this swap",
+        claim_scan_required:
+            "To claim this swap, go back and scan with your rescue file uploaded.",
         invalid_rescue_key_evm:
             "This rescue key is not associated with this swap. Please try again using a different rescue key.",
         error_occurred: "An error occurred: {{ error }}",
+
+        start_scan: "Start Scanning",
+        stop_scan: "Stop Scanning",
+        connect_wallet_to_scan: "Connect your wallet to start scanning",
+        upload_key_and_connect_to_scan:
+            "Upload rescue key and connect wallet to scan",
+
+        rsk_rescue_prompt: "What would you like to do?",
+        rsk_rescue_refund_title: "Get a Refund",
+        rsk_rescue_refund_explainer:
+            "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
+        rsk_rescue_resume_title: "Continue a Swap",
+        rsk_rescue_resume_tagline: "needs rescue key",
+        rsk_rescue_resume_explainer:
+            "Use your rescue key to find swaps that can be completed.",
+        rsk_rescue_resume_ready:
+            "Rescue key loaded. Connect your wallet and scan for claimable swaps.",
+        rsk_rescue_no_key_note_title: "No rescue key? No problem!",
+        rsk_rescue_no_key_note_subtitle:
+            "You will be able to refund the swap once it expires.",
     },
     de: {
         language: "Deutsch",
