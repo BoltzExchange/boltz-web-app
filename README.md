@@ -13,7 +13,7 @@ from source following
 ## Resources
 
 - Get Help: [Support Center](https://support.boltz.exchange/hc/center/) |
-  [Discord](https://discord.gg/QBvZGcW) | [Telegram](https://t.me/boltzhq)
+  [Telegram](https://t.me/boltzhq)
 - Read the Docs: [Docs Home](https://docs.boltz.exchange/)
 - Read our Blog: [Substack](https://blog.boltz.exchange/)
 - Follow us: [X/Twitter](https://twitter.com/Boltzhq) |

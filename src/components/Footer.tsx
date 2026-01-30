@@ -1,5 +1,4 @@
 import {
-    BsDiscord,
     BsEnvelopeFill,
     BsGithub,
     BsTelegram,
@@ -25,12 +24,6 @@ const Footer = () => {
                     class="github"
                     href={config.githubUrl}>
                     <BsGithub size={22} color="#22374F" />
-                </ExternalLink>
-                <ExternalLink
-                    title="Discord"
-                    class="discord"
-                    href={config.discordUrl}>
-                    <BsDiscord size={22} color="#22374F" />
                 </ExternalLink>
                 <ExternalLink
                     title="Telegram"
