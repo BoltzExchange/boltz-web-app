@@ -152,13 +152,14 @@ const Pay = () => {
 
         if (timedOutRefundable()) {
             log.info(
-                `refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
+                `Refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
             );
             setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
             return;
         }
 
         const res = await getSwapStatus(currentSwap.id);
+        log.info(`Swap ${currentSwap.id} status fetched: ${res.status}`);
         setSwapStatus(res.status);
         setSwapStatusTransaction(res.transaction);
         setFailureReason(res.failureReason);
@@ -248,6 +249,10 @@ const Pay = () => {
                                 swapStatusFailed.SwapWaitingForRefund,
                             );
                             setShouldIgnoreBackendStatus(true);
+                            log.info(
+                                "Swap timed out, uncooperative refund is possible. Status:",
+                                swapStatus(),
+                            );
                             return;
                         }
 
@@ -306,7 +311,9 @@ const Pay = () => {
 
     const renameSwapStatus = (status: string) => {
         if (backendRefunded() || waitForSwapTimeout() || timedOutRefundable()) {
-            return swapStatusFailed.SwapWaitingForRefund;
+            const newStatus = swapStatusFailed.SwapWaitingForRefund;
+            log.info("Swap status renamed:", newStatus);
+            return newStatus;
         }
 
         return status;
