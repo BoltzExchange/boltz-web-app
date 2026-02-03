@@ -117,14 +117,14 @@ test.describe("EVM", () => {
                 const buttonCreateSwap = page.locator(
                     "button[data-testid='create-swap-button']",
                 );
-                await expect(buttonCreateSwap).toBeEnabled({ timeout: 5000 });
+                await expect(buttonCreateSwap).toBeEnabled();
                 await buttonCreateSwap.click();
 
                 await verifyRescueFile(page);
 
                 await expect(
                     page.locator("div[data-status='swap.created']"),
-                ).toBeVisible({ timeout: 15_000 });
+                ).toBeVisible();
 
                 const copyAddressButton = page
                     .locator("div[data-testid='pay-onchain-buttons']")
@@ -138,16 +138,19 @@ test.describe("EVM", () => {
 
                 await sendToAddress(lockupAddress, sendAmount);
                 await mineSendBlock();
-                await page.waitForTimeout(300);
+                await page.waitForTimeout(500);
                 await generateAnvilBlock();
 
                 await page.getByRole("button", { name: "Continue" }).click();
                 await generateAnvilBlock();
 
-                const claimLocator = page.locator(
+                const claimPending = page.locator(
+                    "div[data-status='transaction.claim.pending']",
+                );
+                const claimConfirmed = page.locator(
                     "div[data-status='transaction.claimed']",
                 );
-                await expect(claimLocator).toBeVisible({ timeout: 15_000 });
+                await expect(claimPending.or(claimConfirmed)).toBeVisible();
             });
         },
     );
@@ -158,93 +161,103 @@ test.describe("EVM", () => {
             receive: "BTC",
             receiveTestId: "select-BTC",
             getAddress: getBitcoinAddress,
+            mineReceiveBlock: generateBitcoinBlock,
         },
         {
             receive: "L-BTC",
             receiveTestId: "select-L-BTC",
             getAddress: getLiquidAddress,
+            mineReceiveBlock: generateLiquidBlock,
         },
     ];
 
-    fromRbtcCases.forEach(({ receive, receiveTestId, getAddress }) => {
-        test(`RBTC -> ${receive} chain swap with claim`, async ({
-            page,
-            walletClient,
-        }) => {
-            await page.goto("/");
+    fromRbtcCases.forEach(
+        ({ receive, receiveTestId, getAddress, mineReceiveBlock }) => {
+            test(`RBTC -> ${receive} chain swap with claim`, async ({
+                page,
+                walletClient,
+            }) => {
+                await page.goto("/");
 
-            const assetSelectors = page.locator("div[class^='asset asset-']");
+                const assetSelectors = page.locator(
+                    "div[class^='asset asset-']",
+                );
 
-            // Select RBTC as send asset
-            await assetSelectors.first().click();
-            await page.locator("div[data-testid='select-RBTC']").click();
+                // Select RBTC as send asset
+                await assetSelectors.first().click();
+                await page.locator("div[data-testid='select-RBTC']").click();
 
-            // Select receive asset (BTC is default after RBTC, so only click if L-BTC)
-            if (receiveTestId !== "select-BTC") {
-                await assetSelectors.last().click();
+                // Select receive asset (BTC is default after RBTC, so only click if L-BTC)
+                if (receiveTestId !== "select-BTC") {
+                    await assetSelectors.last().click();
+                    await page
+                        .locator(`div[data-testid='${receiveTestId}']`)
+                        .click();
+                }
+
                 await page
-                    .locator(`div[data-testid='${receiveTestId}']`)
+                    .getByRole("button", {
+                        name: dict.en.connect_wallet,
+                        exact: true,
+                    })
                     .click();
-            }
 
-            await page
-                .getByRole("button", {
-                    name: dict.en.connect_wallet,
-                    exact: true,
-                })
-                .click();
+                const modal = page.locator(
+                    "[data-testid='wallet-connect-modal']",
+                );
+                if (
+                    await modal.isVisible({ timeout: 2000 }).catch(() => false)
+                ) {
+                    await page.getByText(/metamask/i).click();
+                }
 
-            const modal = page.locator("[data-testid='wallet-connect-modal']");
-            if (await modal.isVisible({ timeout: 2000 }).catch(() => false)) {
-                await page.getByText(/metamask/i).click();
-            }
+                const shortAddress = walletClient.account.address.slice(0, 8);
+                await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
+                    timeout: 10_000,
+                });
 
-            const shortAddress = walletClient.account.address.slice(0, 8);
-            await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
-                timeout: 10_000,
+                const receiveAddress = await getAddress();
+                const inputOnchainAddress = page.locator(
+                    "input[data-testid='onchainAddress']",
+                );
+                await inputOnchainAddress.fill(receiveAddress);
+
+                const receiveAmount = "0.001";
+                const inputReceiveAmount = page.locator(
+                    "input[data-testid='receiveAmount']",
+                );
+                await inputReceiveAmount.fill(receiveAmount);
+
+                const inputSendAmount = page.locator(
+                    "input[data-testid='sendAmount']",
+                );
+                await expect(inputSendAmount).not.toHaveValue("");
+
+                const buttonCreateSwap = page.locator(
+                    "button[data-testid='create-swap-button']",
+                );
+                await expect(buttonCreateSwap).toBeEnabled({ timeout: 5000 });
+                await buttonCreateSwap.click();
+
+                await expect(
+                    page.locator("div[data-status='swap.created']"),
+                ).toBeVisible();
+
+                await page.getByRole("button", { name: "Send" }).click();
+                await page.waitForTimeout(500);
+                await mineReceiveBlock();
+                await generateAnvilBlock();
+
+                const claimPending = page.locator(
+                    "div[data-status='transaction.claim.pending']",
+                );
+                const claimConfirmed = page.locator(
+                    "div[data-status='transaction.claimed']",
+                );
+                await expect(claimPending.or(claimConfirmed)).toBeVisible();
             });
-
-            const receiveAddress = await getAddress();
-            const inputOnchainAddress = page.locator(
-                "input[data-testid='onchainAddress']",
-            );
-            await inputOnchainAddress.fill(receiveAddress);
-
-            const receiveAmount = "0.001";
-            const inputReceiveAmount = page.locator(
-                "input[data-testid='receiveAmount']",
-            );
-            await inputReceiveAmount.fill(receiveAmount);
-
-            const inputSendAmount = page.locator(
-                "input[data-testid='sendAmount']",
-            );
-            await expect(inputSendAmount).not.toHaveValue("");
-
-            const buttonCreateSwap = page.locator(
-                "button[data-testid='create-swap-button']",
-            );
-            await expect(buttonCreateSwap).toBeEnabled({ timeout: 5000 });
-            await buttonCreateSwap.click();
-
-            await expect(
-                page.locator("div[data-status='swap.created']"),
-            ).toBeVisible({ timeout: 15_000 });
-
-            await page.getByRole("button", { name: "Send" }).click();
-            await generateAnvilBlock();
-
-            const claimPending = page.locator(
-                "div[data-status='transaction.claim.pending']",
-            );
-            const claimConfirmed = page.locator(
-                "div[data-status='transaction.claimed']",
-            );
-            await expect(claimPending.or(claimConfirmed)).toBeVisible({
-                timeout: 15_000,
-            });
-        });
-    });
+        },
+    );
 
     test("LN -> RBTC reverse swap", async ({ page, walletClient }) => {
         await page.goto("/");
@@ -278,7 +291,7 @@ test.describe("EVM", () => {
         const buttonCreateSwap = page.locator(
             "button[data-testid='create-swap-button']",
         );
-        await expect(buttonCreateSwap).toBeEnabled({ timeout: 5000 });
+        await expect(buttonCreateSwap).toBeEnabled();
         await buttonCreateSwap.click();
 
         const spanLightningInvoice = page.locator("span[class='btn']");
@@ -297,13 +310,13 @@ test.describe("EVM", () => {
         const confirmed = page.locator(
             "div[data-status='transaction.confirmed']",
         );
-        await expect(confirmed).toBeVisible({ timeout: 5_000 });
+        await expect(confirmed).toBeVisible();
 
         await page.getByRole("button", { name: "Continue" }).click();
         await generateAnvilBlock();
 
         const settled = page.locator("div[data-status='invoice.settled']");
-        await expect(settled).toBeVisible({ timeout: 15_000 });
+        await expect(settled).toBeVisible();
     });
 
     test("RBTC -> LN submarine swap", async ({ page, walletClient }) => {
@@ -340,12 +353,12 @@ test.describe("EVM", () => {
         const buttonCreateSwap = page.locator(
             "button[data-testid='create-swap-button']",
         );
-        await expect(buttonCreateSwap).toBeEnabled({ timeout: 5000 });
+        await expect(buttonCreateSwap).toBeEnabled();
         await buttonCreateSwap.click();
 
         await expect(
             page.locator("div[data-status='invoice.set']"),
-        ).toBeVisible({ timeout: 15_000 });
+        ).toBeVisible();
 
         await page.getByRole("button", { name: "Send" }).click();
         await generateAnvilBlock();
@@ -354,6 +367,6 @@ test.describe("EVM", () => {
         const claimPending = page.locator(
             "div[data-status='transaction.claim.pending']",
         );
-        await expect(settled.or(claimPending)).toBeVisible({ timeout: 15_000 });
+        await expect(settled.or(claimPending)).toBeVisible();
     });
 });
