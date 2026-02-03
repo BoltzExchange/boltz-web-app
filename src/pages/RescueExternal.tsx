@@ -689,7 +689,10 @@ export const RescueRsk = () => {
                 <ScanningStatus />
 
                 <Show when={logRefundableSwaps()?.length > 0}>
-                    <SwapListLogs swaps={logRefundableSwaps} />
+                    <SwapListLogs
+                        swaps={logRefundableSwaps}
+                        action={rskRescueMode()}
+                    />
                 </Show>
 
                 <Show

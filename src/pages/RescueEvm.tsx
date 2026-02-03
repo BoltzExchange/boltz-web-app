@@ -8,17 +8,21 @@ import BlockExplorer from "../components/BlockExplorer";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
+import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { RBTC, type RefundableAssetType } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
+import { RskRescueMode } from "../pages/RescueExternal";
 import { GasNeededToClaim, relayClaimTransaction } from "../rif/Signer";
 import type { LogRefundData } from "../utils/contractLogs";
 import { getLogsFromReceipt } from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
+import { getTimeoutEta } from "../utils/rescue";
 import { rskDerivationPath } from "../utils/rescueFile";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
@@ -32,9 +36,6 @@ const RefundState = (props: {
 }) => {
     const { t, denomination, separator } = useGlobalContext();
 
-    const timelockExpired = () =>
-        props.refundData.timelock <= props.refundData.currentHeight;
-
     return (
         <>
             <p>
@@ -47,19 +48,7 @@ const RefundState = (props: {
                 {formatDenomination(denomination(), props.asset)}
             </p>
 
-            <Show when={!timelockExpired()}>
-                <h3>
-                    {t("refund_available_in", {
-                        blocks: (
-                            props.refundData.timelock -
-                            props.refundData.currentHeight
-                        ).toString(),
-                    })}
-                </h3>
-            </Show>
-
             <RefundButton
-                disabled={!timelockExpired()}
                 setRefundTxId={props.setRefundTxId}
                 amount={Number(props.refundData.amount)}
                 preimageHash={props.refundData.preimageHash}
@@ -171,7 +160,11 @@ const ClaimState = (props: {
 };
 
 const RescueEvm = () => {
-    const params = useParams<{ asset: string; txHash: string }>();
+    const params = useParams<{
+        asset: string;
+        txHash: string;
+        action: RskRescueMode;
+    }>();
 
     const { t } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
@@ -199,18 +192,17 @@ const RescueEvm = () => {
         };
     });
 
+    const isRefundAction = () => params.action === RskRescueMode.Refund;
+
     const timelockExpired = () =>
         rescueData() && rescueData().timelock <= rescueData().currentHeight;
 
-    const pageTitle = () => {
-        if (typeof timelockExpired() !== "boolean") {
-            return "";
-        }
+    const canRefund = () => isRefundAction() && timelockExpired();
 
-        if (timelockExpired()) {
+    const pageTitle = () => {
+        if (isRefundAction()) {
             return t("refund");
         }
-
         return t("claim");
     };
 
@@ -228,7 +220,7 @@ const RescueEvm = () => {
                         </h2>
                         <hr />
                         <Switch>
-                            <Match when={timelockExpired()}>
+                            <Match when={canRefund()}>
                                 <Show
                                     when={refundTxId() === undefined}
                                     fallback={
@@ -250,7 +242,7 @@ const RescueEvm = () => {
                                     />
                                 </Show>
                             </Match>
-                            <Match when={!timelockExpired()}>
+                            <Match when={!isRefundAction()}>
                                 <Show
                                     when={claimTxId() === undefined}
                                     fallback={
@@ -271,6 +263,24 @@ const RescueEvm = () => {
                                         setClaimTxId={setClaimTxId}
                                     />
                                 </Show>
+                            </Match>
+                            <Match
+                                when={isRefundAction() && !timelockExpired()}>
+                                <RefundEta
+                                    timeoutEta={() =>
+                                        getTimeoutEta(
+                                            params.asset as RefundableAssetType,
+                                            Number(rescueData().timelock),
+                                            Number(rescueData().currentHeight),
+                                        )
+                                    }
+                                    timeoutBlockHeight={() =>
+                                        Number(rescueData().timelock)
+                                    }
+                                    refundableAsset={
+                                        RBTC as RefundableAssetType
+                                    }
+                                />
                             </Match>
                         </Switch>
                     </Match>

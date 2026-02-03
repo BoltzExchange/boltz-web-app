@@ -224,7 +224,7 @@ const Pay = () => {
 
             setRefundableUTXOs(utxos);
 
-            if (utxos.length > 0) {
+            if (utxos?.length > 0) {
                 if (isRefundableSwapType(swap()) && !timedOutRefundable()) {
                     const timeoutBlockHeight =
                         swap().type === SwapType.Submarine

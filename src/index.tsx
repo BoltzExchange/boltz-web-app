@@ -134,7 +134,7 @@ const cleanup = render(
             <Route path="/backup/verify" component={BackupVerify} />
             <Route path="/backup/verify/:type" component={BackupVerify} />
             <Route
-                path="/swap/rescue/evm/:asset/:txHash"
+                path="/swap/rescue/evm/:asset/:txHash/:action"
                 component={RescueEvm}
             />
             <Route path="/error" component={() => <Error />} />
