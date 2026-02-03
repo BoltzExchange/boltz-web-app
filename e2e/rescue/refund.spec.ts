@@ -140,7 +140,7 @@ const performLiquidInitialPayment = async (
     await waitForNodesToSync();
 };
 
-const performBitcoinExpiredSwapSetup = async (
+export const performBitcoinExpiredSwapSetup = async (
     swapType: SwapType,
     sendAsset: string,
     address: string,
