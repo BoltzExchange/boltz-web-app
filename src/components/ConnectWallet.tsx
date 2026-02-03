@@ -90,6 +90,7 @@ const Modal = (props: {
 
     return (
         <div
+            data-testid="wallet-connect-modal"
             class="frame assets-select"
             onClick={() => props.setShow(false)}
             style={props.show() ? "display: block;" : "display: none;"}>
