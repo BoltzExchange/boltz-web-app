@@ -97,8 +97,13 @@ export const formatAmountDenomination = (
     }
 };
 
-export const formatDenomination = (denom: Denomination, asset: string) =>
-    denom === Denomination.Sat ? "sats" : asset;
+export const formatDenomination = (denom: Denomination, asset: string) => {
+    const { isErc20 } = getDecimals(asset);
+    if (isErc20) {
+        return asset;
+    }
+    return denom === Denomination.Sat ? "sats" : asset;
+};
 
 export const convertAmount = (
     asset: string,

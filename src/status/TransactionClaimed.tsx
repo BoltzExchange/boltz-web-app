@@ -14,7 +14,7 @@ import { getSubmarinePreimage } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";
-import type { SubmarineSwap } from "../utils/swapCreator";
+import { type SubmarineSwap, getFinalAssetReceive } from "../utils/swapCreator";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -90,14 +90,16 @@ const TransactionClaimed = () => {
                 <p>
                     {t("successfully_swapped", {
                         amount: formatAmount(
-                            BigNumber(swap().receiveAmount),
+                            BigNumber(
+                                swap().dexQuoteAmount ?? swap().receiveAmount,
+                            ),
                             denomination(),
                             separator(),
-                            swap().assetReceive,
+                            getFinalAssetReceive(swap()),
                         ),
                         denomination: formatDenomination(
                             denomination(),
-                            swap().assetReceive,
+                            getFinalAssetReceive(swap()),
                         ),
                     })}
                 </p>

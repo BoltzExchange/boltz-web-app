@@ -7,6 +7,15 @@ import type { RestorableSwap } from "../utils/boltzClient";
 import type { SomeSwap } from "../utils/swapCreator";
 
 export const SwapIcons = (props: { swap: SomeSwap | RestorableSwap }) => {
+    const assetTo = (): string => {
+        const swap = props.swap as SomeSwap;
+        if (swap.hops !== undefined && swap.hops.length > 0) {
+            return swap.hops[swap.hops.length - 1].to;
+        }
+
+        return swap.type === SwapType.Reverse ? LN : swap.assetReceive;
+    };
+
     return (
         <Show
             when={"assetSend" in props.swap}
@@ -24,13 +33,7 @@ export const SwapIcons = (props: { swap: SomeSwap | RestorableSwap }) => {
                     }
                 />
                 <VsArrowSmallRight />
-                <span
-                    data-asset={
-                        props.swap.type === SwapType.Submarine
-                            ? LN
-                            : (props.swap as SomeSwap).assetReceive
-                    }
-                />
+                <span data-asset={assetTo()} />
             </span>
         </Show>
     );

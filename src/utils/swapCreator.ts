@@ -46,6 +46,9 @@ export type SwapBase = {
 
     // DEX hops for routed swaps
     hops?: EncodedHop[];
+
+    // Actual amount received from DEX quote (for routed swaps)
+    dexQuoteAmount?: number;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -91,6 +94,13 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
         default:
             return swap.assetReceive;
     }
+};
+
+export const getFinalAssetReceive = (swap: SwapBase): string => {
+    if (swap.hops !== undefined && swap.hops.length > 0) {
+        return swap.hops[swap.hops.length - 1].to;
+    }
+    return swap.assetReceive;
 };
 
 export const isEvmSwap = (swap: SomeSwap) =>

@@ -175,7 +175,10 @@ const claimHops = async (
         amountOutMin,
     );
 
-    return claim.hash;
+    return {
+        hash: claim.hash,
+        quoteAmount: Number(quote.quote),
+    };
 };
 
 // TODO: use bignumber for amounts
@@ -204,7 +207,7 @@ const ClaimEvm = (props: {
 
                 let transactionHash: string;
                 if (props.hops !== undefined && props.hops.length > 0) {
-                    transactionHash = await claimHops(
+                    const result = await claimHops(
                         props.hops,
                         props.assetReceive,
                         props.preimage,
@@ -214,6 +217,8 @@ const ClaimEvm = (props: {
                         signer,
                         getErc20Swap(props.assetReceive),
                     );
+                    transactionHash = result.hash;
+                    currentSwap.dexQuoteAmount = result.quoteAmount;
                 } else {
                     transactionHash = await claimAssset(
                         props.useRif,
