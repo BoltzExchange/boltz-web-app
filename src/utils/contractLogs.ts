@@ -349,13 +349,13 @@ export async function* scanLockupEvents(
                 log.info(`Found rescuable swap in: ${event.transactionHash}`);
 
                 if (preimageMap.size === 0) {
-                    const { map } = await derivePreimageMap(
+                    const result = await derivePreimageMap(
                         scanConfig.mnemonic,
                         data.preimageHash,
                         abortSignal,
                     );
 
-                    preimageMap = map;
+                    preimageMap = result?.map;
                 }
 
                 data.preimage = preimageMap.get(data.preimageHash)?.preimage;
@@ -425,15 +425,15 @@ export const getHighestKeyIndex = async (
             log.debug(`Found event for address in: ${event.transactionHash}`);
 
             if (preimageMap.size === 0) {
-                const { map, match } = await derivePreimageMap(
+                const result = await derivePreimageMap(
                     mnemonic,
                     data.preimageHash,
                     abortSignal,
                 );
 
-                preimageMap = map;
+                preimageMap = result?.map;
 
-                if (match === true) {
+                if (result?.match === true) {
                     return preimageMap.get(data.preimageHash)?.index ?? -1;
                 }
             }

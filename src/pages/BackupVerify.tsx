@@ -6,12 +6,9 @@ import { Match, Show, Switch, createSignal } from "solid-js";
 import { BackupDone } from "../components/CreateButton";
 import LoadingSpinner from "../components/LoadingSpinner";
 import MnemonicInput from "../components/MnemonicInput";
-import { RBTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { rescueKeyMode, useRescueContext } from "../context/Rescue";
-import { useWeb3Signer } from "../context/Web3";
 import { getRestorableSwaps } from "../utils/boltzClient";
-import { getHighestKeyIndex } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
@@ -30,15 +27,12 @@ const BackupVerify = () => {
         clearSwaps,
         setRescueFile,
         setLastUsedKey,
-        getLastUsedEvmKey,
-        setLastUsedEvmKey,
     } = useGlobalContext();
     const {
         rescueFile: rescueFileFromContext,
         validRescueKey,
         resetRescueKey,
     } = useRescueContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
 
     const [verificationFailed, setVerificationFailed] = createSignal<
         boolean | undefined
@@ -64,7 +58,6 @@ const BackupVerify = () => {
             );
             log.debug(`Found highest index: ${highestIndex}`);
             setLastUsedKey(highestIndex + 1);
-
             setRescueFileBackupDone(true);
             await clearSwaps();
             setRescueFile(data);

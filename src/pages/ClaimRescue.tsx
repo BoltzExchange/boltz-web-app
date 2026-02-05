@@ -20,7 +20,7 @@ import { SwapIcons } from "../components/SwapIcons";
 import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { LN } from "../consts/Assets";
+import { type AssetType, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -33,12 +33,12 @@ import type {
     SwapStatus,
 } from "../utils/boltzClient";
 import { getRestorableSwaps, getSwapStatus } from "../utils/boltzClient";
-import { claim, derivePreimageFromRescueKey } from "../utils/claim";
+import { claim } from "../utils/claim";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { getPair } from "../utils/helper";
 import { extractAddress } from "../utils/invoice";
-import { getXpub } from "../utils/rescueFile";
+import { derivePreimageFromRescueKey, getXpub } from "../utils/rescueFile";
 import type { ChainSwap, ReverseSwap, SomeSwap } from "../utils/swapCreator";
 
 const mapClaimableSwap = ({
@@ -164,6 +164,7 @@ const ClaimRescue = () => {
                         preimage: derivePreimageFromRescueKey(
                             rescueFile(),
                             restorableSwap.claimDetails.keyIndex,
+                            restorableSwap.to as AssetType,
                         ).toString("hex"),
                         transaction: {
                             id: swapStatus.transaction?.id,
@@ -189,6 +190,7 @@ const ClaimRescue = () => {
                 const derivedKey = derivePreimageFromRescueKey(
                     rescueFile(),
                     restorableSwap.claimDetails.keyIndex,
+                    restorableSwap.to as AssetType,
                 ).toString("hex");
 
                 return mapClaimableSwap({

@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
+import { getHighestKeyIndex } from "src/utils/contractLogs";
 
 import { BTC, RBTC } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
@@ -109,6 +110,7 @@ const CreateButton = () => {
         deriveKey,
         rescueFileBackupDone,
         rescueFile,
+        setLastUsedEvmKey,
     } = useGlobalContext();
     const {
         invoice,
@@ -379,6 +381,17 @@ const CreateButton = () => {
         }
     };
 
+    const setEvmKeyIndex = async () => {
+        const highestIndex = await getHighestKeyIndex(
+            signer()?.address,
+            rescueFile()?.mnemonic,
+            getEtherSwap(),
+        );
+        if (highestIndex > 0) {
+            await setLastUsedEvmKey(RBTC, highestIndex + 1);
+        }
+    };
+
     const createSwap = async (
         claimAddress: string,
         useRif: boolean,
@@ -610,6 +623,16 @@ const CreateButton = () => {
             if (err === "invalid pair hash") {
                 setPairs(await getPairs());
                 notify("error", t("feecheck"));
+            } else if (
+                typeof err === "string" &&
+                err.includes("preimage hash exists already")
+            ) {
+                if (signer()?.address !== undefined) {
+                    await setEvmKeyIndex();
+                    return await createSwap(claimAddress, useRif);
+                }
+
+                notify("error", err);
             } else {
                 notify("error", err);
             }
