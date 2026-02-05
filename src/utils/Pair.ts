@@ -18,7 +18,32 @@ import {
     calculateSendAmount,
 } from "./calculate";
 import { coalesceLn } from "./helper";
-import { satoshiToWei, weiToSatoshi } from "./rootstock";
+import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
+
+/**
+ * Whether an asset is a routed ERC20 (like USDT0) whose internal
+ * representation is already in native token base units.
+ * Non-routed assets (like TBTC) use sats internally and need conversion.
+ */
+const isRoutedAsset = (asset: string) =>
+    config.assets[asset]?.token?.routeVia !== undefined;
+
+/** Convert an internal amount to EVM base units for the DEX API. */
+const toDexAmount = (amount: number, asset: string): bigint =>
+    isRoutedAsset(asset)
+        ? BigInt(Math.round(amount))
+        : satsToAssetAmount(amount, asset);
+
+/** Convert an EVM base unit amount from the DEX API back to internal representation. */
+const fromDexAmount = (amount: bigint, asset: string): BigNumber =>
+    isRoutedAsset(asset)
+        ? BigNumber(amount.toString())
+        : BigNumber(assetAmountToSats(amount, asset).toString());
+
+export const enum HopsPosition {
+    Before = "before",
+    After = "after",
+}
 
 export const enum RequiredInput {
     Address,
@@ -44,7 +69,7 @@ type Hop = {
 
 export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
 
-const toEncodedHop = (hop: Hop) => {
+const toEncodedHop = (hop: Hop): EncodedHop => {
     return {
         type: hop.type,
         from: hop.from,
@@ -102,6 +127,38 @@ export default class Pair {
                             tokenIn: hopAsset.token?.address,
                             tokenOut: toAsset.token?.address,
                         },
+                    },
+                ];
+                return;
+            }
+        }
+
+        const fromAsset = config.assets[from];
+        if (fromAsset !== undefined && fromAsset.type === AssetKind.ERC20) {
+            const hopAssetSymbol = fromAsset.token?.routeVia;
+            const hopAsset = config.assets[hopAssetSymbol];
+            const hopPair = Pair.findPair(pairs, hopAssetSymbol, to);
+
+            if (hopPair !== undefined && hopAsset !== undefined) {
+                log.debug(
+                    `Found route for ${from} -> ${hopAssetSymbol} -> ${to}`,
+                );
+                this.route = [
+                    {
+                        type: SwapType.Dex,
+                        from,
+                        to: hopAssetSymbol,
+                        dexDetails: {
+                            chain: fromAsset.network?.symbol,
+                            tokenIn: fromAsset.token?.address,
+                            tokenOut: hopAsset.token?.address,
+                        },
+                    },
+                    {
+                        type: hopPair.type,
+                        pair: hopPair.pair,
+                        from: hopAssetSymbol,
+                        to,
                     },
                 ];
                 return;
@@ -267,36 +324,46 @@ export default class Pair {
             }, 0);
     }
 
-    public get minimum() {
-        const firstHop = this.route[0];
+    private get boltzHop() {
+        return this.route.find((hop) => hop.pair !== undefined);
+    }
 
-        if (firstHop.type !== SwapType.Submarine) {
-            return firstHop.pair.limits.minimal;
+    public get minimum() {
+        const boltzHop = this.boltzHop;
+        if (boltzHop === undefined) {
+            return 0;
+        }
+
+        if (boltzHop.type !== SwapType.Submarine) {
+            return boltzHop.pair.limits.minimal;
         }
 
         return calculateSendAmount(
             BigNumber(
-                (firstHop.pair as unknown as SubmarinePairTypeTaproot).limits
-                    .minimalBatched || firstHop.pair.limits.minimal,
+                (boltzHop.pair as unknown as SubmarinePairTypeTaproot).limits
+                    .minimalBatched || boltzHop.pair.limits.minimal,
             ),
             this.feePercentage,
             this.minerFees,
-            firstHop.type,
+            boltzHop.type,
         ).toNumber();
     }
 
     public get maximum() {
-        const firstHop = this.route[0];
+        const boltzHop = this.boltzHop;
+        if (boltzHop === undefined) {
+            return 0;
+        }
 
-        if (firstHop.type !== SwapType.Submarine) {
-            return firstHop.pair.limits.maximal;
+        if (boltzHop.type !== SwapType.Submarine) {
+            return boltzHop.pair.limits.maximal;
         }
 
         return calculateSendAmount(
-            BigNumber(firstHop.pair.limits.maximal),
+            BigNumber(boltzHop.pair.limits.maximal),
             this.feePercentage,
             this.minerFees,
-            firstHop.type,
+            boltzHop.type,
         ).toNumber();
     }
 
@@ -327,11 +394,16 @@ export default class Pair {
             return BigNumber(0);
         }
 
+        const boltzHop = this.boltzHop;
+        if (boltzHop === undefined) {
+            return BigNumber(0);
+        }
+
         return calculateBoltzFeeOnSend(
             sendAmount,
             this.feePercentage,
             this.minerFees,
-            this.route[0].type,
+            boltzHop.type,
         );
     };
 
@@ -359,14 +431,15 @@ export default class Pair {
                         hop.dexDetails.chain,
                         hop.dexDetails.tokenIn,
                         hop.dexDetails.tokenOut,
-                        BigInt(satoshiToWei(amount.toNumber())),
+                        toDexAmount(amount.toNumber(), hop.from),
                     );
-                    amount = BigNumber(
-                        quote.reduce((max, q) => {
-                            const amountOut = BigNumber(q.quote);
-                            return amountOut.gt(max) ? amountOut : max;
-                        }, BigNumber(0)),
-                    );
+
+                    const maxQuote = quote.reduce((max, q) => {
+                        const amountOut = BigInt(q.quote);
+                        return amountOut > max ? amountOut : max;
+                    }, BigInt(0));
+
+                    amount = fromDexAmount(maxQuote, hop.to);
                     break;
                 }
 
@@ -400,19 +473,17 @@ export default class Pair {
                         hop.dexDetails.chain,
                         hop.dexDetails.tokenIn,
                         hop.dexDetails.tokenOut,
-                        BigInt(amount.toNumber()),
+                        toDexAmount(amount.toNumber(), hop.to),
                     );
 
-                    amount = BigNumber(
-                        weiToSatoshi(
-                            quote.reduce((min, q) => {
-                                const amountIn = BigInt(q.quote);
-                                return min === BigInt(0) || amountIn < min
-                                    ? amountIn
-                                    : min;
-                            }, BigInt(0)),
-                        ),
-                    );
+                    const minQuote = quote.reduce((min, q) => {
+                        const amountIn = BigInt(q.quote);
+                        return min === BigInt(0) || amountIn < min
+                            ? amountIn
+                            : min;
+                    }, BigInt(0));
+
+                    amount = fromDexAmount(minQuote, hop.from);
                     break;
                 }
 
@@ -430,21 +501,45 @@ export default class Pair {
     };
 
     public creationData = async (sendAmount: BigNumber, minerFees: number) => {
+        const boltzHop = this.boltzHop;
+        if (boltzHop === undefined) {
+            return undefined;
+        }
+
+        // If the first hop is a DEX, calculate the intermediate amount
+        const firstHop = this.route[0];
+        let boltzSendAmount = sendAmount;
+        if (firstHop.type === SwapType.Dex) {
+            boltzSendAmount = await this.calculateReceiveAmount(
+                sendAmount,
+                minerFees,
+                [firstHop],
+            );
+        }
+
         const receiveAmount = await this.calculateReceiveAmount(
-            sendAmount,
+            boltzSendAmount,
             minerFees,
-            [this.route[0]],
+            [boltzHop],
         );
 
+        const dexHops = this.route.filter(
+            (hop) => hop.type === SwapType.Dex,
+        );
+        const boltzIndex = this.route.indexOf(boltzHop);
         return {
-            type: this.route[0].type,
-            sendAmount,
+            type: boltzHop.type,
+            sendAmount: boltzSendAmount,
             receiveAmount,
-            from: coalesceLn(this.route[0].from),
-            to: coalesceLn(this.route[0].to),
-            hops: this.route
-                .filter((hop) => hop.type === SwapType.Dex)
-                .map(toEncodedHop),
+            from: coalesceLn(boltzHop.from),
+            to: coalesceLn(boltzHop.to),
+            hops: dexHops.map(toEncodedHop),
+            hopsPosition:
+                dexHops.length > 0
+                    ? this.route.indexOf(dexHops[0]) < boltzIndex
+                        ? HopsPosition.Before
+                        : HopsPosition.After
+                    : undefined,
         };
     };
 }

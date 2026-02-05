@@ -24,7 +24,11 @@ import { relayClaimTransaction } from "../rif/Signer";
 import { type EncodedHop } from "../utils/Pair";
 import { encodeDexQuote, quoteDexAmountIn } from "../utils/boltzClient";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
-import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    getFinalAssetReceive,
+} from "../utils/swapCreator";
 
 const claimAssset = async (
     useRif: boolean,
@@ -192,6 +196,7 @@ const ClaimEvm = (props: {
     refundAddress: string;
     derivationPath: string;
     timeoutBlockHeight: number;
+    finalReceive: string;
     hops?: EncodedHop[];
 }) => {
     const { getEtherSwap, getErc20Swap, signer } = useWeb3Signer();
@@ -244,7 +249,7 @@ const ClaimEvm = (props: {
             buttonText={t("continue")}
             promptText={t("transaction_prompt_receive", {
                 button: t("continue"),
-                asset: props.assetReceive,
+                asset: props.finalReceive,
             })}
             waitingText={t("tx_ready_to_claim")}
         />
@@ -284,6 +289,7 @@ const TransactionConfirmed = () => {
                         }
                         assetReceive={chain.assetReceive}
                         hops={chain.hops}
+                        finalReceive={getFinalAssetReceive(chain, true)}
                     />
                 }>
                 <ClaimEvm
@@ -297,6 +303,7 @@ const TransactionConfirmed = () => {
                     timeoutBlockHeight={reverse.timeoutBlockHeight}
                     assetReceive={reverse.assetReceive}
                     hops={reverse.hops}
+                    finalReceive={getFinalAssetReceive(reverse, true)}
                 />
             </Show>
         </Show>

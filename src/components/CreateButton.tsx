@@ -13,7 +13,7 @@ import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop } from "../utils/Pair";
+import Pair, { type EncodedHop, type HopsPosition } from "../utils/Pair";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
     fetchBip21Invoice,
@@ -397,6 +397,7 @@ const CreateButton = () => {
         try {
             let data: SomeSwap;
             let hops: EncodedHop[];
+            let hopsPosition: HopsPosition | undefined;
 
             switch (swapType()) {
                 case SwapType.Submarine: {
@@ -406,6 +407,7 @@ const CreateButton = () => {
                             pair().minerFees,
                         );
                         hops = creationData.hops;
+                        hopsPosition = creationData.hopsPosition;
                         data = await createSubmarine(
                             pairs(),
                             creationData.from,
@@ -550,6 +552,7 @@ const CreateButton = () => {
                         pair().minerFees,
                     );
                     hops = creationData.hops;
+                    hopsPosition = creationData.hopsPosition;
                     data = await createReverse(
                         pairs(),
                         creationData.from,
@@ -571,6 +574,7 @@ const CreateButton = () => {
                         pair().minerFees,
                     );
                     hops = creationData.hops;
+                    hopsPosition = creationData.hopsPosition;
                     data = await createChain(
                         pairs(),
                         creationData.from,
@@ -607,6 +611,7 @@ const CreateButton = () => {
             await setSwapStorage({
                 ...data,
                 hops,
+                hopsPosition,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine

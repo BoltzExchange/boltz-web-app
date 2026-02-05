@@ -3,10 +3,10 @@ import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 
-import { isEvmAsset } from "../consts/Assets";
+import { LN, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
-import type { EncodedHop } from "./Pair";
+import { type EncodedHop, HopsPosition } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
     Pairs,
@@ -46,6 +46,8 @@ export type SwapBase = {
 
     // DEX hops for routed swaps
     hops?: EncodedHop[];
+    // Whether hops run before or after the Boltz swap
+    hopsPosition?: HopsPosition;
 
     // Actual amount received from DEX quote (for routed swaps)
     dexQuoteAmount?: number;
@@ -96,11 +98,36 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
     }
 };
 
-export const getFinalAssetReceive = (swap: SwapBase): string => {
-    if (swap.hops !== undefined && swap.hops.length > 0) {
+export const getFinalAssetSend = (
+    swap: SwapBase,
+    coalesceLn: boolean = false,
+): string => {
+    if (
+        swap.hops !== undefined &&
+        swap.hops.length > 0 &&
+        swap.hopsPosition === HopsPosition.Before
+    ) {
+        return swap.hops[0].from;
+    }
+
+    return coalesceLn && swap.type === SwapType.Reverse ? LN : swap.assetSend;
+};
+
+export const getFinalAssetReceive = (
+    swap: SwapBase,
+    coalesceLn: boolean = false,
+): string => {
+    if (
+        swap.hops !== undefined &&
+        swap.hops.length > 0 &&
+        swap.hopsPosition === HopsPosition.After
+    ) {
         return swap.hops[swap.hops.length - 1].to;
     }
-    return swap.assetReceive;
+
+    return coalesceLn && swap.type === SwapType.Submarine
+        ? LN
+        : swap.assetReceive;
 };
 
 export const isEvmSwap = (swap: SomeSwap) =>
