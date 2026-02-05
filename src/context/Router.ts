@@ -50,7 +50,7 @@ export declare namespace Router {
         s: string;
     };
 
-    export type ERC20ClaimStruct = {
+    export type Erc20ClaimStruct = {
         preimage: BytesLike;
         amount: BigNumberish;
         tokenAddress: AddressLike;
@@ -61,7 +61,7 @@ export declare namespace Router {
         s: BytesLike;
     };
 
-    export type ERC20ClaimStructOutput = [
+    export type Erc20ClaimStructOutput = [
         preimage: string,
         amount: bigint,
         tokenAddress: string,
@@ -94,14 +94,48 @@ export declare namespace Router {
     ] & { target: string; value: bigint; callData: string };
 }
 
+export declare namespace ISignatureTransfer {
+    export type TokenPermissionsStruct = {
+        token: AddressLike;
+        amount: BigNumberish;
+    };
+
+    export type TokenPermissionsStructOutput = [
+        token: string,
+        amount: bigint,
+    ] & {
+        token: string;
+        amount: bigint;
+    };
+
+    export type PermitTransferFromStruct = {
+        permitted: ISignatureTransfer.TokenPermissionsStruct;
+        nonce: BigNumberish;
+        deadline: BigNumberish;
+    };
+
+    export type PermitTransferFromStructOutput = [
+        permitted: ISignatureTransfer.TokenPermissionsStructOutput,
+        nonce: bigint,
+        deadline: bigint,
+    ] & {
+        permitted: ISignatureTransfer.TokenPermissionsStructOutput;
+        nonce: bigint;
+        deadline: bigint;
+    };
+}
+
 export interface RouterInterface extends Interface {
     getFunction(
         nameOrSignature:
             | "DOMAIN_SEPARATOR"
             | "ERC20_SWAP_CONTRACT"
+            | "PERMIT2"
             | "SWAP_CONTRACT"
             | "TYPEHASH_CLAIM"
             | "TYPEHASH_CLAIM_CALL"
+            | "TYPEHASH_EXECUTE_LOCK_ERC20"
+            | "TYPESTRING_EXECUTE_LOCK_ERC20"
             | "VERSION"
             | "claimCall((bytes32,uint256,address,uint256,uint8,bytes32,bytes32),address,bytes)"
             | "claimCall((bytes32,uint256,address,uint256,uint8,bytes32,bytes32),address,bytes,uint8,bytes32,bytes32)"
@@ -110,7 +144,10 @@ export interface RouterInterface extends Interface {
             | "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)"
             | "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256)"
             | "claimExecute((bytes32,uint256,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256)"
-            | "claimExecute((bytes32,uint256,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)",
+            | "claimExecute((bytes32,uint256,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)"
+            | "executeAndLock"
+            | "executeAndLockERC20"
+            | "executeAndLockERC20WithPermit2",
     ): FunctionFragment;
 
     encodeFunctionData(
@@ -121,6 +158,7 @@ export interface RouterInterface extends Interface {
         functionFragment: "ERC20_SWAP_CONTRACT",
         values?: undefined,
     ): string;
+    encodeFunctionData(functionFragment: "PERMIT2", values?: undefined): string;
     encodeFunctionData(
         functionFragment: "SWAP_CONTRACT",
         values?: undefined,
@@ -131,6 +169,14 @@ export interface RouterInterface extends Interface {
     ): string;
     encodeFunctionData(
         functionFragment: "TYPEHASH_CLAIM_CALL",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "TYPEHASH_EXECUTE_LOCK_ERC20",
+        values?: undefined,
+    ): string;
+    encodeFunctionData(
+        functionFragment: "TYPESTRING_EXECUTE_LOCK_ERC20",
         values?: undefined,
     ): string;
     encodeFunctionData(functionFragment: "VERSION", values?: undefined): string;
@@ -152,7 +198,7 @@ export interface RouterInterface extends Interface {
     encodeFunctionData(
         functionFragment: "claimERC20Call((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),address,bytes,uint8,bytes32,bytes32)",
         values: [
-            Router.ERC20ClaimStruct,
+            Router.Erc20ClaimStruct,
             AddressLike,
             BytesLike,
             BigNumberish,
@@ -162,12 +208,12 @@ export interface RouterInterface extends Interface {
     ): string;
     encodeFunctionData(
         functionFragment: "claimERC20Call((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),address,bytes)",
-        values: [Router.ERC20ClaimStruct, AddressLike, BytesLike],
+        values: [Router.Erc20ClaimStruct, AddressLike, BytesLike],
     ): string;
     encodeFunctionData(
         functionFragment: "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)",
         values: [
-            Router.ERC20ClaimStruct,
+            Router.Erc20ClaimStruct,
             Router.CallStruct[],
             AddressLike,
             BigNumberish,
@@ -180,7 +226,7 @@ export interface RouterInterface extends Interface {
     encodeFunctionData(
         functionFragment: "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256)",
         values: [
-            Router.ERC20ClaimStruct,
+            Router.Erc20ClaimStruct,
             Router.CallStruct[],
             AddressLike,
             BigNumberish,
@@ -208,6 +254,40 @@ export interface RouterInterface extends Interface {
             BytesLike,
         ],
     ): string;
+    encodeFunctionData(
+        functionFragment: "executeAndLock",
+        values: [
+            BytesLike,
+            AddressLike,
+            AddressLike,
+            BigNumberish,
+            Router.CallStruct[],
+        ],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "executeAndLockERC20",
+        values: [
+            BytesLike,
+            AddressLike,
+            AddressLike,
+            AddressLike,
+            BigNumberish,
+            Router.CallStruct[],
+        ],
+    ): string;
+    encodeFunctionData(
+        functionFragment: "executeAndLockERC20WithPermit2",
+        values: [
+            BytesLike,
+            AddressLike,
+            AddressLike,
+            AddressLike,
+            BigNumberish,
+            Router.CallStruct[],
+            ISignatureTransfer.PermitTransferFromStruct,
+            BytesLike,
+        ],
+    ): string;
 
     decodeFunctionResult(
         functionFragment: "DOMAIN_SEPARATOR",
@@ -217,6 +297,7 @@ export interface RouterInterface extends Interface {
         functionFragment: "ERC20_SWAP_CONTRACT",
         data: BytesLike,
     ): Result;
+    decodeFunctionResult(functionFragment: "PERMIT2", data: BytesLike): Result;
     decodeFunctionResult(
         functionFragment: "SWAP_CONTRACT",
         data: BytesLike,
@@ -227,6 +308,14 @@ export interface RouterInterface extends Interface {
     ): Result;
     decodeFunctionResult(
         functionFragment: "TYPEHASH_CLAIM_CALL",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "TYPEHASH_EXECUTE_LOCK_ERC20",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "TYPESTRING_EXECUTE_LOCK_ERC20",
         data: BytesLike,
     ): Result;
     decodeFunctionResult(functionFragment: "VERSION", data: BytesLike): Result;
@@ -260,6 +349,18 @@ export interface RouterInterface extends Interface {
     ): Result;
     decodeFunctionResult(
         functionFragment: "claimExecute((bytes32,uint256,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "executeAndLock",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "executeAndLockERC20",
+        data: BytesLike,
+    ): Result;
+    decodeFunctionResult(
+        functionFragment: "executeAndLockERC20WithPermit2",
         data: BytesLike,
     ): Result;
 }
@@ -311,11 +412,17 @@ export interface Router extends BaseContract {
 
     ERC20_SWAP_CONTRACT: TypedContractMethod<[], [string], "view">;
 
+    PERMIT2: TypedContractMethod<[], [string], "view">;
+
     SWAP_CONTRACT: TypedContractMethod<[], [string], "view">;
 
     TYPEHASH_CLAIM: TypedContractMethod<[], [string], "view">;
 
     TYPEHASH_CLAIM_CALL: TypedContractMethod<[], [string], "view">;
+
+    TYPEHASH_EXECUTE_LOCK_ERC20: TypedContractMethod<[], [string], "view">;
+
+    TYPESTRING_EXECUTE_LOCK_ERC20: TypedContractMethod<[], [string], "view">;
 
     VERSION: TypedContractMethod<[], [bigint], "view">;
 
@@ -340,7 +447,7 @@ export interface Router extends BaseContract {
 
     "claimERC20Call((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),address,bytes,uint8,bytes32,bytes32)": TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             callee: AddressLike,
             callData: BytesLike,
             v: BigNumberish,
@@ -353,7 +460,7 @@ export interface Router extends BaseContract {
 
     "claimERC20Call((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),address,bytes)": TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             callee: AddressLike,
             callData: BytesLike,
         ],
@@ -363,7 +470,7 @@ export interface Router extends BaseContract {
 
     "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)": TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             calls: Router.CallStruct[],
             token: AddressLike,
             minAmountOut: BigNumberish,
@@ -378,7 +485,7 @@ export interface Router extends BaseContract {
 
     "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256)": TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             calls: Router.CallStruct[],
             token: AddressLike,
             minAmountOut: BigNumberish,
@@ -413,6 +520,46 @@ export interface Router extends BaseContract {
         "nonpayable"
     >;
 
+    executeAndLock: TypedContractMethod<
+        [
+            preimageHash: BytesLike,
+            claimAddress: AddressLike,
+            refundAddress: AddressLike,
+            timelock: BigNumberish,
+            calls: Router.CallStruct[],
+        ],
+        [void],
+        "payable"
+    >;
+
+    executeAndLockERC20: TypedContractMethod<
+        [
+            preimageHash: BytesLike,
+            tokenAddress: AddressLike,
+            claimAddress: AddressLike,
+            refundAddress: AddressLike,
+            timelock: BigNumberish,
+            calls: Router.CallStruct[],
+        ],
+        [void],
+        "payable"
+    >;
+
+    executeAndLockERC20WithPermit2: TypedContractMethod<
+        [
+            preimageHash: BytesLike,
+            tokenAddress: AddressLike,
+            claimAddress: AddressLike,
+            refundAddress: AddressLike,
+            timelock: BigNumberish,
+            calls: Router.CallStruct[],
+            permit: ISignatureTransfer.PermitTransferFromStruct,
+            signature: BytesLike,
+        ],
+        [void],
+        "payable"
+    >;
+
     getFunction<T extends ContractMethod = ContractMethod>(
         key: string | FunctionFragment,
     ): T;
@@ -424,6 +571,9 @@ export interface Router extends BaseContract {
         nameOrSignature: "ERC20_SWAP_CONTRACT",
     ): TypedContractMethod<[], [string], "view">;
     getFunction(
+        nameOrSignature: "PERMIT2",
+    ): TypedContractMethod<[], [string], "view">;
+    getFunction(
         nameOrSignature: "SWAP_CONTRACT",
     ): TypedContractMethod<[], [string], "view">;
     getFunction(
@@ -431,6 +581,12 @@ export interface Router extends BaseContract {
     ): TypedContractMethod<[], [string], "view">;
     getFunction(
         nameOrSignature: "TYPEHASH_CLAIM_CALL",
+    ): TypedContractMethod<[], [string], "view">;
+    getFunction(
+        nameOrSignature: "TYPEHASH_EXECUTE_LOCK_ERC20",
+    ): TypedContractMethod<[], [string], "view">;
+    getFunction(
+        nameOrSignature: "TYPESTRING_EXECUTE_LOCK_ERC20",
     ): TypedContractMethod<[], [string], "view">;
     getFunction(
         nameOrSignature: "VERSION",
@@ -460,7 +616,7 @@ export interface Router extends BaseContract {
         nameOrSignature: "claimERC20Call((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),address,bytes,uint8,bytes32,bytes32)",
     ): TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             callee: AddressLike,
             callData: BytesLike,
             v: BigNumberish,
@@ -474,7 +630,7 @@ export interface Router extends BaseContract {
         nameOrSignature: "claimERC20Call((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),address,bytes)",
     ): TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             callee: AddressLike,
             callData: BytesLike,
         ],
@@ -485,7 +641,7 @@ export interface Router extends BaseContract {
         nameOrSignature: "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)",
     ): TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             calls: Router.CallStruct[],
             token: AddressLike,
             minAmountOut: BigNumberish,
@@ -501,7 +657,7 @@ export interface Router extends BaseContract {
         nameOrSignature: "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256)",
     ): TypedContractMethod<
         [
-            claim: Router.ERC20ClaimStruct,
+            claim: Router.Erc20ClaimStruct,
             calls: Router.CallStruct[],
             token: AddressLike,
             minAmountOut: BigNumberish,
@@ -536,6 +692,49 @@ export interface Router extends BaseContract {
         ],
         [void],
         "nonpayable"
+    >;
+    getFunction(
+        nameOrSignature: "executeAndLock",
+    ): TypedContractMethod<
+        [
+            preimageHash: BytesLike,
+            claimAddress: AddressLike,
+            refundAddress: AddressLike,
+            timelock: BigNumberish,
+            calls: Router.CallStruct[],
+        ],
+        [void],
+        "payable"
+    >;
+    getFunction(
+        nameOrSignature: "executeAndLockERC20",
+    ): TypedContractMethod<
+        [
+            preimageHash: BytesLike,
+            tokenAddress: AddressLike,
+            claimAddress: AddressLike,
+            refundAddress: AddressLike,
+            timelock: BigNumberish,
+            calls: Router.CallStruct[],
+        ],
+        [void],
+        "payable"
+    >;
+    getFunction(
+        nameOrSignature: "executeAndLockERC20WithPermit2",
+    ): TypedContractMethod<
+        [
+            preimageHash: BytesLike,
+            tokenAddress: AddressLike,
+            claimAddress: AddressLike,
+            refundAddress: AddressLike,
+            timelock: BigNumberish,
+            calls: Router.CallStruct[],
+            permit: ISignatureTransfer.PermitTransferFromStruct,
+            signature: BytesLike,
+        ],
+        [void],
+        "payable"
     >;
 
     filters: {};

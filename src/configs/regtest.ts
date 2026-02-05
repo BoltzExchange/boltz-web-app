@@ -89,7 +89,7 @@ const config = {
             },
             contracts: {
                 deployHeight: 421213458,
-                router: "0x7029CB2671f8a585600D133fa3A2dCe9b157066e",
+                router: "0x26e61312fA23a940Bed5A576a819cC5fa095B09C",
             },
         },
         USDT0: {

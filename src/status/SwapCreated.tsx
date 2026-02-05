@@ -7,6 +7,7 @@ import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
+import { HopsPosition } from "../utils/Pair";
 import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
 
 const SwapCreated = () => {
@@ -46,6 +47,11 @@ const SwapCreated = () => {
                         .sha256(Buffer.from(chain.preimage, "hex"))
                         .toString("hex")}
                     asset={chain.assetSend}
+                    hops={
+                        chain.hopsPosition === HopsPosition.Before
+                            ? chain.hops
+                            : undefined
+                    }
                 />
             </Show>
         </Show>

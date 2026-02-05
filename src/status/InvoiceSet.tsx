@@ -6,6 +6,7 @@ import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
 import { usePayContext } from "../context/Pay";
 import { decodeInvoice } from "../utils/invoice";
+import { HopsPosition } from "../utils/Pair";
 import type { SubmarineSwap } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
@@ -38,6 +39,11 @@ const InvoiceSet = () => {
                     preimageHash={preimageHash()}
                     timeoutBlockHeight={submarine.timeoutBlockHeight}
                     asset={submarine.assetSend}
+                    hops={
+                        submarine.hopsPosition === HopsPosition.Before
+                            ? submarine.hops
+                            : undefined
+                    }
                 />
             </Show>
         </Show>
