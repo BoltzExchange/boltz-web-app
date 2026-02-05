@@ -64,6 +64,7 @@ jobs:
             - name: Run Playwright tests
               env:
                   CI: true
+                  VITE_RSK_LOG_SCAN_ENDPOINT: "http://localhost:8545"
               run:
                   npm run test:e2e -- --shard=${{ matrix.shardIndex }}/${{
                   matrix.shardTotal }}
