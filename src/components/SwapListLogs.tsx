@@ -3,6 +3,7 @@ import type { Accessor } from "solid-js";
 import { For, Show, createMemo } from "solid-js";
 
 import type { AssetType } from "../consts/Assets";
+import type { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
 import type { LogRefundData } from "../utils/contractLogs";
