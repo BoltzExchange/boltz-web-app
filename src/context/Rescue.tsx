@@ -2,9 +2,14 @@ import type { ECPairInterface } from "ecpair";
 import type { Accessor, JSX, Setter } from "solid-js";
 import { createContext, createSignal, useContext } from "solid-js";
 
+import { type AssetType } from "../consts/Assets";
 import type { RestorableSwap } from "../utils/boltzClient";
+import type { LogRefundData } from "../utils/contractLogs";
 import { ECPair } from "../utils/ecpair";
 import { type RescueFile, deriveKey } from "../utils/rescueFile";
+
+export const mnemonicLength = 12;
+export const rescueKeyMode = "rescue-key";
 
 export type RescueContextType = {
     rescueFile: Accessor<RescueFile>;
@@ -13,7 +18,15 @@ export type RescueContextType = {
     rescuableSwaps: Accessor<RestorableSwap[]>;
     setRescuableSwaps: Setter<RestorableSwap[]>;
 
-    deriveKey: (index: number) => ECPairInterface;
+    rskRescuableSwaps: Accessor<LogRefundData[]>;
+    setRskRescuableSwaps: Setter<LogRefundData[]>;
+
+    validRescueKey: Accessor<boolean>;
+    setValidRescueKey: Setter<boolean>;
+
+    resetRescueKey: () => void;
+
+    deriveKey: (index: number, asset: AssetType) => ECPairInterface;
 };
 
 const RescueContext = createContext<RescueContextType>();
@@ -23,10 +36,19 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
     const [rescuableSwaps, setRescuableSwaps] = createSignal<RestorableSwap[]>(
         [],
     );
+    const [rskRescuableSwaps, setRskRescuableSwaps] = createSignal<
+        LogRefundData[]
+    >([]);
+    const [validRescueKey, setValidRescueKey] = createSignal<boolean>(false);
 
-    const deriveKeyWrapper = (index: number) => {
+    const resetRescueKey = () => {
+        setValidRescueKey(false);
+        setRescueFile(undefined);
+    };
+
+    const deriveKeyWrapper = (index: number, asset: AssetType) => {
         return ECPair.fromPrivateKey(
-            Buffer.from(deriveKey(rescueFile(), index).privateKey),
+            Buffer.from(deriveKey(rescueFile(), index, asset).privateKey),
         );
     };
 
@@ -37,6 +59,11 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
                 setRescueFile,
                 rescuableSwaps,
                 setRescuableSwaps,
+                rskRescuableSwaps,
+                setRskRescuableSwaps,
+                validRescueKey,
+                setValidRescueKey,
+                resetRescueKey,
                 deriveKey: deriveKeyWrapper,
             }}>
             {props.children}
