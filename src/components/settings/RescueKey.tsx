@@ -29,6 +29,7 @@ const RescueFile = () => {
         setSettingsMenu,
         notify,
         setLastUsedKey,
+        clearLastUsedEvmIndex,
     } = useGlobalContext();
     const { setSendAmount, setReceiveAmount } = useCreateContext();
 
@@ -58,6 +59,7 @@ const RescueFile = () => {
             const newRescueFile = generateRescueFile();
             setRescueFile(newRescueFile);
             setLastUsedKey(0);
+            void clearLastUsedEvmIndex();
             setRescueFileBackupDone(false);
             setSettingsMenu(false);
             setSendAmount(BigNumber(0));
