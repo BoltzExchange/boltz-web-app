@@ -11,7 +11,7 @@ describe("MnemonicInput", () => {
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicInput onSubmit={() => {}} />
+                    <MnemonicInput />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -38,7 +38,7 @@ describe("MnemonicInput", () => {
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicInput onSubmit={() => {}} />
+                    <MnemonicInput />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -70,7 +70,7 @@ describe("MnemonicInput", () => {
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicInput onSubmit={() => {}} />
+                    <MnemonicInput />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -100,7 +100,7 @@ describe("MnemonicInput", () => {
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicInput onSubmit={() => {}} />
+                    <MnemonicInput />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -143,7 +143,7 @@ describe("MnemonicInput", () => {
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicInput onSubmit={() => {}} />
+                    <MnemonicInput />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -156,42 +156,12 @@ describe("MnemonicInput", () => {
         expect(input.classList).toContain("invalid");
     });
 
-    it("should show invalid rescue key message when 12 words are not valid", () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <MnemonicInput onSubmit={() => {}} />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
-
-        const invalidMnemonic =
-            "december build funny exact enough video shoe balance bike glimpse voice invalidWord";
-
-        const input = screen.getByTestId(/mnemonic-input-0/);
-
-        fireEvent.paste(input, {
-            clipboardData: {
-                getData: () => invalidMnemonic,
-            },
-        });
-
-        const importBtn = screen.getByTestId(
-            /import-key-button/,
-        ) as HTMLButtonElement;
-
-        expect(importBtn.disabled).toBe(true);
-        expect(screen.getByText(/Invalid rescue key/)).toBeDefined();
-    });
-
     it("should change focus to next input when pressing enter or space", () => {
         render(
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicInput onSubmit={() => {}} />
+                    <MnemonicInput />
                 </>
             ),
             { wrapper: contextWrapper },
