@@ -1,12 +1,12 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
-import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
 import { type AssetType, BTC, LBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import {
+    applyBoltzConfPatch,
     backupRescueFile,
     bitcoinSendToAddress,
     createAndVerifySwap,
@@ -475,19 +475,7 @@ test.describe("Refund", () => {
         test(`Uncooperative refund expired ${swap.sendAsset} ${swap.type} swap via ${swap.external ? "External Rescue" : "Rescue"}`, async ({
             page,
         }) => {
-            try {
-                execSync("git apply --check --reverse boltz.conf.patch", {
-                    stdio: "pipe",
-                });
-            } catch {
-                console.error(`
-                    (!) This test requires boltz.conf.patch to be applied.
-                    It will fail without it due to the swap timeout being different from what's expected.
-        
-                    Please, run "git apply boltz.conf.patch" to apply the patch (or manually update your boltz.conf with the patch's values),
-                    then restart your regtest containers.
-                `);
-            }
+            applyBoltzConfPatch();
 
             test.setTimeout(60_000); // leave enough time for block generation
             await page.goto("/");
