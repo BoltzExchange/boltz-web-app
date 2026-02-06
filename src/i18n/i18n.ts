@@ -236,7 +236,6 @@ const dict = {
         verify_key_failed:
             "Verification of the Boltz Rescue Key failed. We recommend downloading a new Boltz Rescue Key to continue.",
         rescue_key: "Rescue Key",
-        reset_rescue_key: "Get New Rescue Key",
         reset_rescue_key_tooltip:
             "Generate a new Rescue Key and wipe all swap data",
         reset_rescue_key_prompt:
@@ -697,7 +696,6 @@ const dict = {
         verify_key_failed:
             "Die Verifizierung des Boltz Rettungsschlüssels ist fehlgeschlagen. Wir empfehlen, einen neuen Rettungsschlüssel herunterzuladen.",
         rescue_key: "Rettungsschlüssel",
-        reset_rescue_key: "Neuer Rettungsschlüssel",
         reset_rescue_key_tooltip:
             "Generiere einen neuen Rettungsschlüssel und lösche alle Swap-Daten",
         reset_rescue_key_prompt:
@@ -1162,7 +1160,6 @@ const dict = {
         verify_key_failed:
             "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
         rescue_key: "Clave de Rescate Boltz",
-        reset_rescue_key: "Obtener Nueva Clave de Rescate",
         reset_rescue_key_tooltip:
             "Generar una nueva clave de rescate y borrar todos los datos de intercambios históricos",
         reset_rescue_key_prompt:
@@ -1624,7 +1621,6 @@ const dict = {
         verify_key_failed:
             "Falha ao verificar a chave de resgate. Recomendamos baixar uma nova chave.",
         rescue_key: "Chave de resgate",
-        reset_rescue_key: "Obter Nova Chave de Resgate",
         reset_rescue_key_tooltip:
             "Gerar uma nova chave de resgate e limpar todos os dados de trocas",
         reset_rescue_key_prompt:
@@ -2059,7 +2055,6 @@ const dict = {
         verify_key_failed:
             "Boltz 救援密钥验证失败。我们建议下载新的 Boltz 救援密钥以继续。",
         rescue_key: "救援密钥",
-        reset_rescue_key: "获取新的救援密钥",
         reset_rescue_key_tooltip: "生成新的救援密钥并清除所有交换数据",
         reset_rescue_key_prompt:
             "⚠️ 警告：这将删除所有交换数据并生成新的救援密钥。\n\n除非您有现有救援密钥的备份或绝对确定不再需要它，否则请勿继续。\n\n输入 'confirm' 以继续：",
@@ -2498,7 +2493,6 @@ const dict = {
         verify_key_failed:
             "Boltzレスキューキーの検証に失敗しました。続行するには、新しいBoltzレスキューキーをダウンロードすることをお勧めします。",
         rescue_key: "レスキューキー",
-        reset_rescue_key: "新しいレスキューキーを生成",
         reset_rescue_key_tooltip:
             "新しいレスキューキーを生成し、すべてのスワップデータを削除",
         reset_rescue_key_prompt:
