@@ -4,6 +4,7 @@ import { For, Show, createMemo } from "solid-js";
 
 import type { AssetType } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
+import type { RskRescueMode } from "../pages/RescueExternal";
 import "../style/swaplist.scss";
 import type { LogRefundData } from "../utils/contractLogs";
 import { cropString } from "../utils/helper";
@@ -14,7 +15,10 @@ const AssetIcon = (props: { asset: AssetType }) => (
     </span>
 );
 
-const SwapListLogs = (props: { swaps: Accessor<LogRefundData[]> }) => {
+const SwapListLogs = (props: {
+    swaps: Accessor<LogRefundData[]>;
+    action: RskRescueMode;
+}) => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
 
@@ -34,7 +38,7 @@ const SwapListLogs = (props: { swaps: Accessor<LogRefundData[]> }) => {
                             class="swaplist-item"
                             onClick={() =>
                                 navigate(
-                                    `/swap/refund/evm/${swap.asset}/${swap.transactionHash}`,
+                                    `/swap/rescue/evm/${swap.asset}/${swap.transactionHash}/${props.action}`,
                                 )
                             }>
                             <a class="btn-small hidden-mobile" href="#">

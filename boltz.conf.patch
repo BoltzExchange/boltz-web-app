@@ -1,8 +1,8 @@
 diff --git a/regtest/data/backend/boltz.conf b/regtest/data/backend/boltz.conf
-index 632e6fd..44458b0 100755
+index a07ff9d..4d83f3a 100755
 --- a/regtest/data/backend/boltz.conf
 +++ b/regtest/data/backend/boltz.conf
-@@ -36,11 +36,11 @@ maxSwapAmount = 40_294_967
+@@ -39,11 +39,11 @@ maxSwapAmount = 40_294_967
  minSwapAmount = 50_000
  
    [pairs.timeoutDelta]
@@ -19,7 +19,7 @@ index 632e6fd..44458b0 100755
  
  [[pairs]]
  base = "L-BTC"
-@@ -59,11 +59,11 @@ minSwapAmount = 100
+@@ -62,11 +62,11 @@ minSwapAmount = 100
    minSwapAmount = 25_000
  
    [pairs.timeoutDelta]
@@ -36,3 +36,37 @@ index 632e6fd..44458b0 100755
  
  [[pairs]]
  base = "RBTC"
+@@ -79,11 +79,11 @@ maxSwapAmount = 4_294_967
+ minSwapAmount = 50_000
+ 
+   [pairs.timeoutDelta]
+-  chain= 1440
+-  reverse = 1440
+-  swapMinimal = 1440
+-  swapMaximal = 2880
+-  swapTaproot = 10080
++  chain = 100
++  reverse = 100
++  swapMinimal = 100
++  swapMaximal = 200
++  swapTaproot = 500
+ 
+ [[pairs]]
+ base = "RBTC"
+@@ -104,11 +104,11 @@ swapTypes = ["chain"]
+   minSwapAmount = 25_000
+ 
+   [pairs.timeoutDelta]
+-  chain= 1440
+-  reverse = 1440
+-  swapMinimal = 1440
+-  swapMaximal = 2880
+-  swapTaproot = 10080
++  chain = 100
++  reverse = 100
++  swapMinimal = 100
++  swapMaximal = 200
++  swapTaproot = 500
+ 
+ [[currencies]]
+ symbol = "BTC"

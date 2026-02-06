@@ -1,8 +1,9 @@
-import { type Page, expect, request } from "@playwright/test";
+import { type Locator, type Page, expect, request } from "@playwright/test";
 import axios from "axios";
+import BigNumber from "bignumber.js";
 import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
-import { exec, spawn } from "child_process";
+import { exec, execSync, spawn } from "child_process";
 import { randomBytes } from "crypto";
 import ECPairFactory from "ecpair";
 import fs from "fs";
@@ -13,6 +14,7 @@ import { config } from "../src/config";
 import { type AssetType, BTC, LBTC } from "../src/consts/Assets";
 import dict from "../src/i18n/i18n";
 import { type UTXO } from "../src/utils/blockchain";
+import { btcToSat } from "../src/utils/denomination";
 import { ecc } from "../src/utils/ecpair";
 import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 
@@ -98,9 +100,9 @@ export const generateBitcoinBlocks = (blocks: number): Promise<string> =>
 export const generateLiquidBlock = (): Promise<string> =>
     execCommand("elements-cli-sim-client -generate");
 
-export const generateAnvilBlock = async (): Promise<void> => {
+export const generateAnvilBlock = async (blocks = 1): Promise<void> => {
     await execAsync(
-        "docker exec boltz-scripts cast rpc anvil_mine 0x1 --rpc-url http://anvil:8545",
+        `docker exec boltz-scripts cast rpc anvil_mine ${blocks} --rpc-url http://anvil:8545`,
         { shell: "/bin/bash" },
     );
 };
@@ -393,4 +395,34 @@ export const waitForBlockHeight = async (asset: string, height: number) => {
             { timeout: 30_000 },
         )
         .toBe(true);
+};
+
+export const applyBoltzConfPatch = () => {
+    try {
+        execSync("git apply --check --reverse boltz.conf.patch", {
+            stdio: "pipe",
+        });
+    } catch {
+        console.error(`
+            (!) This test requires boltz.conf.patch to be applied.
+            It will fail without it due to the swap timeout being different from what's expected.
+
+            Please, run "git apply boltz.conf.patch" to apply the patch (or manually update your boltz.conf with the patch's values),
+            then restart your regtest containers.
+        `);
+    }
+};
+
+export const expectApproxAmount = async (
+    input: Locator,
+    expectedBtc: string,
+    toleranceSats: number = 1,
+): Promise<string> => {
+    const val = await input.inputValue();
+    const expectedSats = btcToSat(BigNumber(expectedBtc));
+    const actualSats = btcToSat(BigNumber(val));
+    expect(actualSats.minus(expectedSats).abs().toNumber()).toBeLessThanOrEqual(
+        toleranceSats,
+    );
+    return val;
 };

@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
+import { getHighestKeyIndex } from "src/utils/contractLogs";
 
 import { BTC, RBTC } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
@@ -109,6 +110,8 @@ const CreateButton = () => {
         deriveKey,
         rescueFileBackupDone,
         rescueFile,
+        getLastUsedEvmKey,
+        setLastUsedEvmKey,
     } = useGlobalContext();
     const {
         invoice,
@@ -393,6 +396,20 @@ const CreateButton = () => {
         }
 
         try {
+            if (signer()?.address !== undefined) {
+                const currentEvmKey = await getLastUsedEvmKey(RBTC);
+                if (currentEvmKey === 0) {
+                    const highestIndex = await getHighestKeyIndex(
+                        signer()?.address,
+                        rescueFile()?.mnemonic,
+                        getEtherSwap(),
+                    );
+                    if (highestIndex > 0) {
+                        await setLastUsedEvmKey(RBTC, highestIndex + 1);
+                    }
+                }
+            }
+
             let data: SomeSwap;
             switch (swapType()) {
                 case SwapType.Submarine: {
