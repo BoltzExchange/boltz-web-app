@@ -200,6 +200,22 @@ const getCallsStatus = async (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+export const sendTransaction = async (
+    signer: Wallet,
+    chainId: bigint,
+    calls: { to: string; data?: string; value?: string }[],
+): Promise<string> => {
+    const signerAddress = await signer.getAddress();
+    const prepared = await prepareCalls(
+        signerAddress,
+        `0x${chainId.toString(16)}`,
+        calls,
+    );
+    const signed = await signPreparedCalls(signer, prepared);
+    const callId = await sendPreparedCalls(signed);
+    return await waitForTransactionHash(callId);
+};
+
 export const waitForTransactionHash = async (
     callId: string,
     intervalMs = 1_000,

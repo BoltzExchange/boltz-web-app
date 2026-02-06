@@ -4,12 +4,7 @@ import { Signature, type Wallet } from "ethers";
 import log from "loglevel";
 import { type Accessor, Show, createSignal, onMount } from "solid-js";
 
-import {
-    prepareCalls,
-    sendPreparedCalls,
-    signPreparedCalls,
-    waitForTransactionHash,
-} from "../alchemy/Alchemy";
+import { sendTransaction } from "../alchemy/Alchemy";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import {
@@ -221,18 +216,11 @@ const claimHops = async (
         routerSignature.s,
     );
 
-    const signerAddress = await signer().getAddress();
-    const preparedCalls = await prepareCalls(
-        signerAddress,
-        `0x${chainId.toString(16)}`,
+    const transactionHash = await sendTransaction(
+        signer() as Wallet,
+        chainId,
         [{ to: tx.to, data: tx.data }],
     );
-    const signedCalls = await signPreparedCalls(
-        signer() as Wallet,
-        preparedCalls,
-    );
-    const callId = await sendPreparedCalls(signedCalls);
-    const transactionHash = await waitForTransactionHash(callId);
 
     return {
         hash: transactionHash,

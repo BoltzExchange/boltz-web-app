@@ -1,8 +1,9 @@
 import { randomBytes } from "crypto";
 import {
     AbiCoder,
-    type ContractTransactionResponse,
     MaxUint256,
+    type Signer,
+    type Wallet,
     keccak256 as ethersKeccak256,
 } from "ethers";
 import log from "loglevel";
@@ -14,11 +15,11 @@ import {
     createSignal,
 } from "solid-js";
 
+import { sendTransaction } from "../alchemy/Alchemy";
 import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
-    type Signer,
     createRouterContract,
     createTokenContract,
     customDerivationPathRdns,
@@ -43,7 +44,8 @@ const lockupWithHops = async (
     claimAddress: string,
     timeoutBlockHeight: number,
     signer: Accessor<Signer>,
-) => {
+    gasAbstractionSigner: Accessor<Wallet>,
+): Promise<string> => {
     if (hops.length !== 1) {
         throw new Error("only one hop is supported for now");
     }
@@ -66,7 +68,7 @@ const lockupWithHops = async (
         Math.ceil(Number(quote.quote) * (1 + slippageLimit)),
     );
 
-    const router = createRouterContract(hop.from, signer());
+    const router = createRouterContract(hop.from, gasAbstractionSigner());
     const routerAddress = await router.getAddress();
 
     const calldata = await encodeDexQuote(
@@ -79,7 +81,7 @@ const lockupWithHops = async (
 
     const [permit2Address, chainId, signerAddress] = await Promise.all([
         router.PERMIT2(),
-        signer()
+        gasAbstractionSigner()
             .provider.getNetwork()
             .then((n) => n.chainId),
         signer().getAddress(),
@@ -150,7 +152,8 @@ const lockupWithHops = async (
         },
     );
 
-    const tx = await router.executeAndLockERC20WithPermit2(
+    // Encode the transaction calldata without executing
+    const tx = await router.executeAndLockERC20WithPermit2.populateTransaction(
         prefix0x(preimageHash),
         tokenAddress,
         claimAddress,
@@ -168,7 +171,10 @@ const lockupWithHops = async (
         permit2Signature,
     );
 
-    return tx;
+    // Send via Alchemy account abstraction
+    return await sendTransaction(gasAbstractionSigner(), chainId, [
+        { to: tx.to, data: tx.data },
+    ]);
 };
 
 const InsufficientBalance = (props: { asset?: string }) => {
@@ -243,7 +249,13 @@ const LockupTransaction = (props: {
 }) => {
     const { setSwap } = usePayContext();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
-    const { getErc20Swap, getEtherSwap, signer, providers } = useWeb3Signer();
+    const {
+        getErc20Swap,
+        getEtherSwap,
+        signer,
+        providers,
+        gasAbstractionSigner,
+    } = useWeb3Signer();
 
     return (
         <Show
@@ -262,10 +274,10 @@ const LockupTransaction = (props: {
                 asset={props.asset}
                 /* eslint-disable-next-line solid/reactivity */
                 onClick={async () => {
-                    let tx: ContractTransactionResponse;
+                    let transactionHash: string;
 
                     if (props.hops !== undefined && props.hops.length > 0) {
-                        tx = await lockupWithHops(
+                        transactionHash = await lockupWithHops(
                             props.hops,
                             props.asset,
                             props.value(),
@@ -273,34 +285,39 @@ const LockupTransaction = (props: {
                             props.claimAddress,
                             props.timeoutBlockHeight,
                             signer,
+                            gasAbstractionSigner,
                         );
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative
                     ) {
                         const contract = getEtherSwap(props.asset);
-                        tx = await contract["lock(bytes32,address,uint256)"](
-                            prefix0x(props.preimageHash),
-                            props.claimAddress,
-                            props.timeoutBlockHeight,
-                            {
-                                value: props.value(),
-                            },
-                        );
+                        transactionHash = (
+                            await contract["lock(bytes32,address,uint256)"](
+                                prefix0x(props.preimageHash),
+                                props.claimAddress,
+                                props.timeoutBlockHeight,
+                                {
+                                    value: props.value(),
+                                },
+                            )
+                        ).hash;
                     } else {
                         const contract = getErc20Swap(props.asset);
-                        tx = await contract[
-                            "lock(bytes32,uint256,address,address,uint256)"
-                        ](
-                            prefix0x(props.preimageHash),
-                            props.value(),
-                            getTokenAddress(props.asset),
-                            props.claimAddress,
-                            props.timeoutBlockHeight,
-                        );
+                        transactionHash = (
+                            await contract[
+                                "lock(bytes32,uint256,address,address,uint256)"
+                            ](
+                                prefix0x(props.preimageHash),
+                                props.value(),
+                                getTokenAddress(props.asset),
+                                props.claimAddress,
+                                props.timeoutBlockHeight,
+                            )
+                        ).hash;
                     }
 
                     const currentSwap = await getSwap(props.swapId);
-                    currentSwap.lockupTx = tx.hash;
+                    currentSwap.lockupTx = transactionHash;
                     currentSwap.signer = signer().address;
 
                     if (customDerivationPathRdns.includes(signer().rdns)) {
