@@ -28,7 +28,7 @@ import {
 import type { EncodedHop } from "../utils/Pair";
 import { encodeDexQuote, quoteDexAmountOut } from "../utils/boltzClient";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { prefix0x, satsToAssetAmount, slippageLimit } from "../utils/rootstock";
+import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
@@ -45,6 +45,7 @@ const lockupWithHops = async (
     timeoutBlockHeight: number,
     signer: Accessor<Signer>,
     gasAbstractionSigner: Accessor<Wallet>,
+    slippage: number,
 ): Promise<string> => {
     if (hops.length !== 1) {
         throw new Error("only one hop is supported for now");
@@ -52,7 +53,6 @@ const lockupWithHops = async (
 
     const hop = hops[0];
 
-    // TODO: handle slippage and don't just get a new quote
     const quote = (
         await quoteDexAmountOut(
             hop.dexDetails.chain,
@@ -63,9 +63,8 @@ const lockupWithHops = async (
     )[0];
     log.info(`Got DEX quote for lockup hop: ${quote.quote}`, quote.data);
 
-    // TODO: custom slippage
     const amountIn = BigInt(
-        Math.ceil(Number(quote.quote) * (1 + slippageLimit)),
+        Math.ceil(Number(quote.quote) * (1 + slippage)),
     );
 
     const router = createRouterContract(hop.from, gasAbstractionSigner());
@@ -248,7 +247,7 @@ const LockupTransaction = (props: {
     hops?: EncodedHop[];
 }) => {
     const { setSwap } = usePayContext();
-    const { t, getSwap, setSwapStorage } = useGlobalContext();
+    const { t, slippage, getSwap, setSwapStorage } = useGlobalContext();
     const {
         getErc20Swap,
         getEtherSwap,
@@ -286,6 +285,7 @@ const LockupTransaction = (props: {
                             props.timeoutBlockHeight,
                             signer,
                             gasAbstractionSigner,
+                            slippage(),
                         );
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative

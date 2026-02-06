@@ -84,6 +84,8 @@ export type GlobalContextType = {
     setSettingsMenu: Setter<boolean>;
     privacyMode: Accessor<boolean>;
     setPrivacyMode: Setter<boolean>;
+    slippage: Accessor<number>;
+    setSlippage: Setter<number>;
     zeroConf: Accessor<boolean>;
     setZeroConf: Setter<boolean>;
     showFiatAmount: Accessor<boolean>;
@@ -471,6 +473,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [slippage, setSlippage] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<number>(0.01),
+        {
+            name: "slippage",
+        },
+    );
+
     const [zeroConf, setZeroConf] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(true),
@@ -560,6 +570,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setSettingsMenu,
                 privacyMode,
                 setPrivacyMode,
+                slippage,
+                setSlippage,
                 zeroConf,
                 setZeroConf,
                 showFiatAmount,

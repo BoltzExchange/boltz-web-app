@@ -25,7 +25,7 @@ import { relayClaimTransaction } from "../rif/Signer";
 import { type EncodedHop } from "../utils/Pair";
 import { encodeDexQuote, quoteDexAmountIn } from "../utils/boltzClient";
 import { formatError } from "../utils/errors";
-import { prefix0x, satsToAssetAmount, slippageLimit } from "../utils/rootstock";
+import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     type ChainSwap,
     type ReverseSwap,
@@ -94,6 +94,7 @@ const claimHops = async (
     destination: string,
     signer: Accessor<Signer | Wallet>,
     erc20Swap: ERC20Swap,
+    slippage: number,
 ) => {
     if (hops.length !== 1) {
         throw new Error("only one hop is supported for now");
@@ -102,7 +103,6 @@ const claimHops = async (
     const hop = hops[0];
     const amountIn = BigInt(satsToAssetAmount(amount, asset));
 
-    // TODO: handle slippage and don't just get a new quote
     const quote = (
         await quoteDexAmountIn(
             hop.dexDetails.chain,
@@ -113,9 +113,8 @@ const claimHops = async (
     )[0];
     log.info(`Got quote: ${quote.quote}`, quote.data);
 
-    // TODO: custom slippage
     const amountOutMin = BigInt(
-        Math.floor(Number(quote.quote) * (1 - slippageLimit)),
+        Math.floor(Number(quote.quote) * (1 - slippage)),
     );
 
     const router = createRouterContract(asset, signer());
@@ -240,7 +239,7 @@ const AutoClaimHops = (props: {
     hops: EncodedHop[];
 }) => {
     const { getErc20Swap, signer, gasAbstractionSigner } = useWeb3Signer();
-    const { t, notify, getSwap, setSwapStorage } = useGlobalContext();
+    const { t, slippage, notify, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
 
     const [error, setError] = createSignal<string | undefined>(undefined);
@@ -258,6 +257,7 @@ const AutoClaimHops = (props: {
                 props.signerAddress,
                 props.useGasAbstraction ? gasAbstractionSigner : signer,
                 getErc20Swap(props.assetReceive),
+                slippage(),
             );
 
             currentSwap.claimTx = result.hash;
