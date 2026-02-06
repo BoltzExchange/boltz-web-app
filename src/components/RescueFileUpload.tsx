@@ -4,13 +4,13 @@ import QrScanner from "qr-scanner";
 import { Match, Show, Switch } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { useRescueContext } from "../context/Rescue";
+import { rescueKeyMode, useRescueContext } from "../context/Rescue";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
 import { validateRefundFile } from "../utils/refundFile";
 import type { RescueFile } from "../utils/rescueFile";
 import { validateRescueFile } from "../utils/rescueFile";
-import MnemonicInput, { rescueKeyMode } from "./MnemonicInput";
+import MnemonicInput from "./MnemonicInput";
 
 export enum RescueFileType {
     Rescue,
@@ -74,13 +74,20 @@ export const processUploadedFile = async (
 
 const RescueFileUpload = (props: RescueFileUploadProps) => {
     const { t } = useGlobalContext();
-    const rescueContext = useRescueContext();
+    const {
+        rescueFile,
+        setRescueFile,
+        setRescuableSwaps,
+        validRescueKey,
+        resetRescueKey,
+    } = useRescueContext();
     const [searchParams, setSearchParams] = useSearchParams();
 
     const showMnemonicOption = () => props.showMnemonicOption ?? true;
 
     const handleReset = () => {
         props.onReset?.();
+        resetRescueKey();
         setSearchParams({
             page: null,
             mode: null,
@@ -97,7 +104,7 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
             const result = await processUploadedFile(inputFile);
 
             if (result.type === RescueFileType.Rescue) {
-                rescueContext.setRescueFile(result.data as RescueFile);
+                setRescueFile(result.data as RescueFile);
             }
 
             props.onFileValidated(result);
@@ -107,11 +114,9 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
         }
     };
 
-    const handleMnemonicSubmit = (mnemonic: string) => {
-        const rescueFile = { mnemonic };
-        const data = validateRescueFile(rescueFile);
-
-        rescueContext.setRescueFile(rescueFile);
+    const handleMnemonicSubmit = () => {
+        const data = rescueFile();
+        if (!data) return;
 
         props.onFileValidated({
             type: RescueFileType.Rescue,
@@ -127,7 +132,15 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
         <>
             <Show when={searchParams.mode === rescueKeyMode}>
                 <p class="frame-text">{t("rescue_a_swap_mnemonic")}</p>
-                <MnemonicInput onSubmit={handleMnemonicSubmit} />
+                <MnemonicInput />
+                <button
+                    class="btn btn-yellow"
+                    data-testid="import-key-button"
+                    aria-invalid={!validRescueKey()}
+                    disabled={!validRescueKey()}
+                    onClick={handleMnemonicSubmit}>
+                    <span>{t("verify_key")}</span>
+                </button>
             </Show>
             <Switch>
                 <Match when={searchParams.mode !== rescueKeyMode}>
@@ -139,13 +152,14 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
                         accept={rescueFileTypes}
                         onChange={(e) => uploadChange(e)}
                     />
+                    <p style={{ margin: "5px 0" }}>{t("or")}</p>
                     <Show when={showMnemonicOption()}>
                         <button
                             class="btn btn-light"
                             data-testid="enterMnemonicBtn"
                             onClick={() => {
                                 handleReset();
-                                rescueContext.setRescuableSwaps([]);
+                                setRescuableSwaps([]);
                                 setSearchParams({
                                     page: null,
                                     mode: rescueKeyMode,
@@ -160,6 +174,7 @@ const RescueFileUpload = (props: RescueFileUploadProps) => {
                         class="btn btn-light"
                         data-testid="backBtn"
                         onClick={() => {
+                            resetRescueKey();
                             setSearchParams({
                                 mode: null,
                             });
