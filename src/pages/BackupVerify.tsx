@@ -5,9 +5,13 @@ import { Match, Show, Switch, createSignal } from "solid-js";
 
 import { BackupDone } from "../components/CreateButton";
 import LoadingSpinner from "../components/LoadingSpinner";
-import MnemonicInput, { rescueKeyMode } from "../components/MnemonicInput";
+import MnemonicInput from "../components/MnemonicInput";
+import { RBTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
+import { rescueKeyMode, useRescueContext } from "../context/Rescue";
+import { useWeb3Signer } from "../context/Web3";
 import { getRestorableSwaps } from "../utils/boltzClient";
+import { getHighestKeyIndex } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { RescueFile } from "../utils/rescueFile";
@@ -26,7 +30,15 @@ const BackupVerify = () => {
         clearSwaps,
         setRescueFile,
         setLastUsedKey,
+        getLastUsedEvmKey,
+        setLastUsedEvmKey,
     } = useGlobalContext();
+    const {
+        rescueFile: rescueFileFromContext,
+        validRescueKey,
+        resetRescueKey,
+    } = useRescueContext();
+    const { signer, getEtherSwap } = useWeb3Signer();
 
     const [verificationFailed, setVerificationFailed] = createSignal<
         boolean | undefined
@@ -101,12 +113,16 @@ const BackupVerify = () => {
         }
     };
 
-    const submitMnemonic = async (mnemonic: string) => {
+    const submitMnemonic = async () => {
         try {
-            await validateBackup({ mnemonic });
+            const data = rescueFileFromContext();
+            if (!data) return;
+            await validateBackup(data);
+            resetRescueKey();
             navigate("/swap", { state: { backupDone: BackupDone.True } });
         } catch (e) {
             log.error("invalid mnemonic submission", e);
+            resetRescueKey();
             setVerificationFailed(true);
         }
     };
@@ -172,11 +188,16 @@ const BackupVerify = () => {
                         <p style={{ "margin-top": "1.2rem" }}>
                             {t("verify_boltz_rescue_key_mnemonic")}
                         </p>
-                        <MnemonicInput
-                            onSubmit={(mnemonic) => {
-                                void submitMnemonic(mnemonic);
-                            }}
-                        />
+                        <MnemonicInput />
+
+                        <button
+                            class="btn btn-yellow"
+                            data-testid="import-key-button"
+                            aria-invalid={!validRescueKey()}
+                            disabled={!validRescueKey()}
+                            onClick={() => void submitMnemonic()}>
+                            <span>{t("verify_key")}</span>
+                        </button>
                     </Show>
 
                     <Switch>
@@ -196,11 +217,12 @@ const BackupVerify = () => {
                             <button
                                 class="btn btn-light"
                                 data-testid="backBtn"
-                                onClick={() =>
+                                onClick={() => {
+                                    resetRescueKey();
                                     setSearchParams({
                                         mode: null,
-                                    })
-                                }>
+                                    });
+                                }}>
                                 {t("back")}
                             </button>
                         </Match>
