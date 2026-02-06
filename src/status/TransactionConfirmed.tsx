@@ -2,8 +2,14 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import { Signature, type Wallet } from "ethers";
 import log from "loglevel";
-import { type Accessor, Show } from "solid-js";
+import { type Accessor, Show, createSignal, onMount } from "solid-js";
 
+import {
+    prepareCalls,
+    sendPreparedCalls,
+    signPreparedCalls,
+    waitForTransactionHash,
+} from "../alchemy/Alchemy";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import {
@@ -23,6 +29,7 @@ import {
 import { relayClaimTransaction } from "../rif/Signer";
 import { type EncodedHop } from "../utils/Pair";
 import { encodeDexQuote, quoteDexAmountIn } from "../utils/boltzClient";
+import { formatError } from "../utils/errors";
 import { prefix0x, satsToAssetAmount, slippageLimit } from "../utils/rootstock";
 import {
     type ChainSwap,
@@ -91,7 +98,6 @@ const claimHops = async (
     timeoutBlockHeight: number,
     destination: string,
     signer: Accessor<Signer | Wallet>,
-    txSender: Accessor<Signer>,
     erc20Swap: ERC20Swap,
 ) => {
     if (hops.length !== 1) {
@@ -117,7 +123,7 @@ const claimHops = async (
         Math.floor(Number(quote.quote) * (1 - slippageLimit)),
     );
 
-    const router = createRouterContract(asset, txSender());
+    const router = createRouterContract(asset, signer());
 
     const calldata = await encodeDexQuote(
         hop.dexDetails.chain,
@@ -188,9 +194,10 @@ const claimHops = async (
         ),
     );
 
-    const claim = await router[
+    // Encode the calldata without executing
+    const tx = await router[
         "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)"
-    ](
+    ].populateTransaction(
         {
             preimage: prefix0x(preimage),
             amount: amountIn,
@@ -214,10 +221,75 @@ const claimHops = async (
         routerSignature.s,
     );
 
+    const signerAddress = await signer().getAddress();
+    const preparedCalls = await prepareCalls(
+        signerAddress,
+        `0x${chainId.toString(16)}`,
+        [{ to: tx.to, data: tx.data }],
+    );
+    const signedCalls = await signPreparedCalls(
+        signer() as Wallet,
+        preparedCalls,
+    );
+    const callId = await sendPreparedCalls(signedCalls);
+    const transactionHash = await waitForTransactionHash(callId);
+
     return {
-        hash: claim.hash,
+        hash: transactionHash,
         quoteAmount: Number(quote.quote),
     };
+};
+
+const AutoClaimHops = (props: {
+    amount: number;
+    swapId: string;
+    useGasAbstraction: boolean;
+    preimage: string;
+    assetReceive: string;
+    signerAddress: string;
+    refundAddress: string;
+    timeoutBlockHeight: number;
+    hops: EncodedHop[];
+}) => {
+    const { getErc20Swap, signer, gasAbstractionSigner } = useWeb3Signer();
+    const { t, notify, getSwap, setSwapStorage } = useGlobalContext();
+    const { setSwap } = usePayContext();
+
+    const [error, setError] = createSignal<string | undefined>(undefined);
+
+    onMount(async () => {
+        try {
+            const currentSwap = await getSwap(props.swapId);
+            const result = await claimHops(
+                props.hops,
+                props.assetReceive,
+                props.preimage,
+                props.amount,
+                props.refundAddress,
+                props.timeoutBlockHeight,
+                props.signerAddress,
+                props.useGasAbstraction ? gasAbstractionSigner : signer,
+                getErc20Swap(props.assetReceive),
+            );
+
+            currentSwap.claimTx = result.hash;
+            currentSwap.dexQuoteAmount = result.quoteAmount;
+            setSwap(currentSwap);
+            await setSwapStorage(currentSwap);
+        } catch (e) {
+            log.error("Auto claim hops failed", e);
+            const msg = `Transaction failed: ${formatError(e)}`;
+            notify("error", msg);
+            setError(msg);
+        }
+    });
+
+    return (
+        <Show when={!error()} fallback={<p>{error()}</p>}>
+            <p>{t("tx_ready_to_claim")}</p>
+            <LoadingSpinner />
+        </Show>
+    );
 };
 
 // TODO: use bignumber for amounts
@@ -234,36 +306,32 @@ const ClaimEvm = (props: {
     finalReceive: string;
     hops?: EncodedHop[];
 }) => {
-    const { getEtherSwap, getErc20Swap, signer, gasAbstractionSigner } =
-        useWeb3Signer();
+    const { getEtherSwap, getErc20Swap, signer } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
 
     return (
-        <ContractTransaction
-            asset={props.assetReceive}
-            /* eslint-disable-next-line solid/reactivity */
-            onClick={async () => {
-                const currentSwap = await getSwap(props.swapId);
-
-                let transactionHash: string;
-                if (props.hops !== undefined && props.hops.length > 0) {
-                    const result = await claimHops(
-                        props.hops,
-                        props.assetReceive,
-                        props.preimage,
-                        props.amount,
-                        props.refundAddress,
-                        props.timeoutBlockHeight,
-                        props.signerAddress,
-                        props.useGasAbstraction ? gasAbstractionSigner : signer,
-                        signer,
-                        getErc20Swap(props.assetReceive),
-                    );
-                    transactionHash = result.hash;
-                    currentSwap.dexQuoteAmount = result.quoteAmount;
-                } else {
-                    transactionHash = await claimAssset(
+        <Show
+            when={props.hops === undefined || props.hops.length === 0}
+            fallback={
+                <AutoClaimHops
+                    swapId={props.swapId}
+                    useGasAbstraction={props.useGasAbstraction}
+                    preimage={props.preimage}
+                    signerAddress={props.signerAddress}
+                    amount={props.amount}
+                    refundAddress={props.refundAddress}
+                    timeoutBlockHeight={props.timeoutBlockHeight}
+                    assetReceive={props.assetReceive}
+                    hops={props.hops}
+                />
+            }>
+            <ContractTransaction
+                asset={props.assetReceive}
+                /* eslint-disable-next-line solid/reactivity */
+                onClick={async () => {
+                    const currentSwap = await getSwap(props.swapId);
+                    const transactionHash = await claimAssset(
                         props.useGasAbstraction,
                         props.assetReceive,
                         props.preimage,
@@ -274,23 +342,23 @@ const ClaimEvm = (props: {
                         getEtherSwap(props.assetReceive),
                         getErc20Swap(props.assetReceive),
                     );
-                }
 
-                currentSwap.claimTx = transactionHash;
-                setSwap(currentSwap);
-                await setSwapStorage(currentSwap);
-            }}
-            address={{
-                address: props.signerAddress,
-                derivationPath: props.derivationPath,
-            }}
-            buttonText={t("continue")}
-            promptText={t("transaction_prompt_receive", {
-                button: t("continue"),
-                asset: props.finalReceive,
-            })}
-            waitingText={t("tx_ready_to_claim")}
-        />
+                    currentSwap.claimTx = transactionHash;
+                    setSwap(currentSwap);
+                    await setSwapStorage(currentSwap);
+                }}
+                address={{
+                    address: props.signerAddress,
+                    derivationPath: props.derivationPath,
+                }}
+                buttonText={t("continue")}
+                promptText={t("transaction_prompt_receive", {
+                    button: t("continue"),
+                    asset: props.finalReceive,
+                })}
+                waitingText={t("tx_ready_to_claim")}
+            />
+        </Show>
     );
 };
 
