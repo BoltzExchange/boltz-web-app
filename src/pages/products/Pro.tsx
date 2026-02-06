@@ -1,9 +1,9 @@
-import { BsGlobe, BsTelegram } from "solid-icons/bs";
+import { BsChatDots, BsGlobe } from "solid-icons/bs";
 import { FaSolidCode } from "solid-icons/fa";
 import { HiSolidXMark } from "solid-icons/hi";
 import { OcLinkexternal2 } from "solid-icons/oc";
 import { VsArrowSmallRight, VsCheck } from "solid-icons/vs";
-import { For } from "solid-js";
+import { For, type JSX, Match, Switch } from "solid-js";
 
 import Chart, { type Point } from "../../components/Chart";
 import ExternalLink from "../../components/ExternalLink";
@@ -30,6 +30,20 @@ const formatDate = (timestamp: number): string => {
 const proFeeSample: Point[] = feeSample.fees.map(
     (fee): Point => ({ x: formatDate(fee[0]), y: fee[1] }),
 );
+
+enum OptionCardType {
+    ExternalLink = "external-link",
+    InternalLink = "internal-link",
+    Static = "static",
+}
+
+type OptionCard = {
+    type: OptionCardType;
+    icon: JSX.Element;
+    title: string;
+    href?: string;
+    description: JSX.Element | string;
+};
 
 const Pro = () => {
     const { t } = useGlobalContext();
@@ -94,58 +108,97 @@ const Pro = () => {
                         <p>{t("boltz_pro_options_subtitle")}</p>
                     </div>
                     <For
-                        each={[
-                            {
-                                icon: <BsGlobe size={18} />,
-                                title: t("boltz_pro_option_web_title"),
-                                href: config.isPro
-                                    ? "/"
-                                    : "https://pro.boltz.exchange",
-                                description: t(
-                                    "boltz_pro_option_web_description",
-                                ),
-                                external: config.isPro ? false : true,
-                            },
-                            {
-                                icon: <FaSolidCode size={18} />,
-                                title: t("boltz_pro_option_client_title"),
-                                href: "/products/client",
-                                description: t(
-                                    "boltz_pro_option_client_description",
-                                ),
-                                external: false,
-                            },
-                            {
-                                icon: <BsTelegram size={18} />,
-                                title: t("boltz_pro_option_telegram_title"),
-                                href: "https://t.me/boltz_pro_bot",
-                                description: t(
-                                    "boltz_pro_option_telegram_description",
-                                ),
-                                external: true,
-                            },
-                        ]}>
-                        {(item) =>
-                            item.external ? (
-                                <ExternalLink
-                                    href={item.href}
-                                    class="card options-card sequentialFadeUp">
-                                    <h4>
-                                        {item.icon} {item.title}
-                                    </h4>
-                                    <p>{item.description}</p>
-                                </ExternalLink>
-                            ) : (
-                                <a
-                                    href={item.href}
-                                    class="card options-card sequentialFadeUp">
-                                    <h4>
-                                        {item.icon} {item.title}
-                                    </h4>
-                                    <p>{item.description}</p>
-                                </a>
-                            )
-                        }
+                        each={
+                            [
+                                {
+                                    type: config.isPro
+                                        ? OptionCardType.InternalLink
+                                        : OptionCardType.ExternalLink,
+                                    icon: <BsGlobe size={18} />,
+                                    title: t("boltz_pro_option_web_title"),
+                                    href: config.isPro
+                                        ? "/"
+                                        : "https://pro.boltz.exchange",
+                                    description: t(
+                                        "boltz_pro_option_web_description",
+                                    ),
+                                },
+                                {
+                                    type: OptionCardType.InternalLink,
+                                    icon: <FaSolidCode size={18} />,
+                                    title: t("boltz_pro_option_client_title"),
+                                    href: "/products/client",
+                                    description: t(
+                                        "boltz_pro_option_client_description",
+                                    ),
+                                },
+                                {
+                                    type: OptionCardType.Static,
+                                    icon: <BsChatDots size={18} />,
+                                    title: t("boltz_pro_option_chat_title"),
+                                    description: (
+                                        <span>
+                                            {t(
+                                                "boltz_pro_option_chat_description_prefix",
+                                            )}{" "}
+                                            <ExternalLink href="https://t.me/boltz_pro_bot">
+                                                Telegram
+                                            </ExternalLink>{" "}
+                                            {t(
+                                                "boltz_pro_option_chat_description_middle",
+                                            )}{" "}
+                                            <ExternalLink href="https://smp19.simplex.im/a#6v12YQ1txW3h6YqbCmklTC75qsbFd0WxCEGGrSR2GNw">
+                                                SimpleX
+                                            </ExternalLink>
+                                            {t(
+                                                "boltz_pro_option_chat_description_suffix",
+                                            )}
+                                        </span>
+                                    ),
+                                },
+                            ] as OptionCard[]
+                        }>
+                        {(item) => (
+                            <Switch>
+                                <Match
+                                    when={
+                                        item.type ===
+                                        OptionCardType.ExternalLink
+                                    }>
+                                    <ExternalLink
+                                        href={item.href}
+                                        class="card options-card sequentialFadeUp">
+                                        <h4>
+                                            {item.icon} {item.title}
+                                        </h4>
+                                        <p>{item.description}</p>
+                                    </ExternalLink>
+                                </Match>
+                                <Match
+                                    when={
+                                        item.type ===
+                                        OptionCardType.InternalLink
+                                    }>
+                                    <a
+                                        href={item.href}
+                                        class="card options-card sequentialFadeUp">
+                                        <h4>
+                                            {item.icon} {item.title}
+                                        </h4>
+                                        <p>{item.description}</p>
+                                    </a>
+                                </Match>
+                                <Match
+                                    when={item.type === OptionCardType.Static}>
+                                    <div class="card options-card is-static sequentialFadeUp">
+                                        <h4>
+                                            {item.icon} {item.title}
+                                        </h4>
+                                        <p>{item.description}</p>
+                                    </div>
+                                </Match>
+                            </Switch>
+                        )}
                     </For>
                 </div>
                 <div class="target-audience-section slideUp">
