@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js";
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
@@ -7,21 +6,18 @@ import {
     Show,
     createEffect,
     createMemo,
-    createResource,
     createSignal,
     onCleanup,
 } from "solid-js";
 
-import { RBTC, isEvmAsset } from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
-import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
-import { weiToSatoshi } from "../utils/rootstock";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { WalletConnect } from "./WalletConnect";
 import { hiddenInformation } from "./settings/PrivacyMode";
@@ -172,8 +168,8 @@ const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
-    const { t, separator, denomination, privacyMode } = useGlobalContext();
-    const { signer, clearSigner } = useWeb3Signer();
+    const { t, privacyMode } = useGlobalContext();
+    const { clearSigner } = useWeb3Signer();
 
     const formatAddress = (addr: string) => {
         if (privacyMode()) {
@@ -189,13 +185,6 @@ const ShowAddress = (props: {
 
     const [text, setText] = createSignal<string | undefined>(undefined);
 
-    const [rskBalance] = createResource(async () => {
-        if (signer() === undefined) {
-            return undefined;
-        }
-        return signer().provider.getBalance(await signer().getAddress());
-    });
-
     return (
         <button
             onClick={() => clearSigner()}
@@ -206,22 +195,6 @@ const ShowAddress = (props: {
                 (props.addressOverride
                     ? props.addressOverride() || formatAddress(props.address())
                     : formatAddress(props.address()))}
-            <Show
-                when={
-                    rskBalance.state === "ready" &&
-                    typeof rskBalance() === "bigint"
-                }>
-                <br />
-                {/* TODO: show ETH (and always full ETH) for Arbitrum */}
-                {t("balance")}:{" "}
-                {formatAmount(
-                    BigNumber(weiToSatoshi(rskBalance()).toString()),
-                    denomination(),
-                    separator(),
-                    RBTC,
-                )}{" "}
-                {formatDenomination(denomination(), RBTC)}
-            </Show>
         </button>
     );
 };
