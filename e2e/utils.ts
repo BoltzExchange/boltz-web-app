@@ -1,5 +1,6 @@
-import { type Page, expect, request } from "@playwright/test";
+import { type Locator, type Page, expect, request } from "@playwright/test";
 import axios from "axios";
+import BigNumber from "bignumber.js";
 import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
 import { exec, execSync, spawn } from "child_process";
@@ -13,6 +14,7 @@ import { config } from "../src/config";
 import { type AssetType, BTC, LBTC } from "../src/consts/Assets";
 import dict from "../src/i18n/i18n";
 import { type UTXO } from "../src/utils/blockchain";
+import { btcToSat } from "../src/utils/denomination";
 import { ecc } from "../src/utils/ecpair";
 import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 
@@ -409,4 +411,18 @@ export const applyBoltzConfPatch = () => {
             then restart your regtest containers.
         `);
     }
+};
+
+export const expectApproxAmount = async (
+    input: Locator,
+    expectedBtc: string,
+    toleranceSats: number = 1,
+): Promise<string> => {
+    const val = await input.inputValue();
+    const expectedSats = btcToSat(BigNumber(expectedBtc));
+    const actualSats = btcToSat(BigNumber(val));
+    expect(actualSats.minus(expectedSats).abs().toNumber()).toBeLessThanOrEqual(
+        toleranceSats,
+    );
+    return val;
 };
