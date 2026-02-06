@@ -106,7 +106,6 @@ const dict = {
             "Enter an address to receive your refund on:",
         refund_backup: "Backup",
         refund_import: "Import Backup",
-        import_rescue_key: "Upload rescue key",
         refund_clear: "Delete storage",
         delete_storage:
             "Are you sure you want to clear your storage?\nYour swap information and you refund / claim private keys will be lost.",
@@ -438,36 +437,24 @@ const dict = {
         security: "Security",
         failed: "Failed",
         swaps_found: "Scanning swaps ({{ count }} found)",
-        upload_rescue_key_evm:
-            "Upload or enter your rescue key to resume this swap",
         claim_scan_required:
             "To claim this swap, go back and scan with your rescue file uploaded.",
         invalid_rescue_key_evm:
             "This rescue key is not associated with this swap. Please try again using a different rescue key.",
         error_occurred: "An error occurred: {{ error }}",
 
-        start_scan: "Start Scanning",
-        stop_scan: "Stop Scanning",
-        connect_wallet_to_scan: "Connect your wallet to start scanning",
-        upload_key_and_connect_to_scan:
-            "Upload rescue key and connect wallet to scan",
-
-        rsk_rescue_prompt: "What would you like to do?",
-        rsk_rescue_refund_title: "Get a Refund",
+        rsk_rescue_prompt:
+            "If you sent RBTC into a Boltz swap, you can refund or resume a swap that is not available in this browser’s swap history.",
+        rsk_rescue_refund_title: "Refund Swap",
         rsk_rescue_refund_explainer:
             "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
-        rsk_rescue_resume_title: "Continue a Swap",
-        rsk_rescue_resume_tagline: "needs rescue key",
+        rsk_rescue_resume_title: "Resume Swap",
         rsk_rescue_resume_explainer:
-            "Use your rescue key to find swaps that can be completed.",
-        rsk_rescue_resume_ready:
-            "Rescue key loaded. Connect your wallet and scan for claimable swaps.",
-        rsk_rescue_no_key_note_title: "No rescue key? No problem!",
-        rsk_rescue_no_key_note_subtitle:
-            "You will be able to refund the swap once it expires.",
+            "Use your rescue key to find pending swaps that can be resumed.",
     },
     de: {
         language: "Deutsch",
+        or: "oder",
         status: "Status",
         fast: "Schnell",
         l2: "Auf Layer-2 gebaut",
@@ -917,14 +904,23 @@ const dict = {
         security: "Sicherheit",
         failed: "Fehlgeschlagen",
         swaps_found: "Scanne Swaps ({{ count }} gefunden)",
-        upload_rescue_key_evm:
-            "Lade deinen Rettungsschlüssel hoch oder gib ihn ein, um diesen Swap fortzusetzen",
+        claim_scan_required:
+            "Um diesen Swap zu claimen, gehe zurück und scanne mit hochgeladener Rescue-Datei.",
         invalid_rescue_key_evm:
             "Dieser Rettungsschlüssel ist nicht mit diesem Swap verbunden. Bitte versuche es erneut mit einem anderen Rettungsschlüssel.",
         error_occurred: "Ein Fehler ist aufgetreten: {{ error }}",
+        rsk_rescue_prompt:
+            "Wenn du RBTC in einen Boltz-Swap geschickt hast, kannst du nach erstattbaren oder fortsetzbaren Swaps suchen, die nicht im Swapverlauf dieses Browsers gespeichert sind.",
+        rsk_rescue_refund_title: "Swap erstatten",
+        rsk_rescue_refund_explainer:
+            "Verbinde dein Rootstock-Wallet, um nach Swaps zu suchen, die abgelaufen sind und erstattet werden können.",
+        rsk_rescue_resume_title: "Swap fortsetzen",
+        rsk_rescue_resume_explainer:
+            "Nutze deinen Rettungsschlüssel, um ausstehende Swaps zu finden, die fortgesetzt werden können.",
     },
     es: {
         language: "Español",
+        or: "o",
         status: "Estado",
         fast: "Rápido",
         l2: "Construido en la Capa 2",
@@ -1372,14 +1368,23 @@ const dict = {
         security: "Seguridad",
         failed: "Fallido",
         swaps_found: "Escaneando intercambios ({{ count }} encontrados)",
-        upload_rescue_key_evm:
-            "Sube o ingresa tu clave de rescate para reanudar este intercambio",
+        claim_scan_required:
+            "Para reclamar este intercambio, vuelve y escanea con tu archivo de rescate cargado.",
         invalid_rescue_key_evm:
             "Esta clave de rescate no está asociada con este intercambio. Por favor, intenta de nuevo usando una clave de rescate diferente.",
         error_occurred: "Ocurrió un error: {{ error }}",
+        rsk_rescue_prompt:
+            "Si enviaste RBTC a un intercambio de Boltz, puedes reembolsar o reanudar un intercambio que no esté disponible en el historial de este navegador.",
+        rsk_rescue_refund_title: "Reembolsar intercambio",
+        rsk_rescue_refund_explainer:
+            "Conecta tu monedero Rootstock para buscar intercambios que han expirado y pueden ser reembolsados.",
+        rsk_rescue_resume_title: "Reanudar intercambio",
+        rsk_rescue_resume_explainer:
+            "Usa tu clave de rescate para encontrar intercambios pendientes que se puedan reanudar.",
     },
     pt: {
         language: "Português",
+        or: "ou",
         status: "Estado",
         fast: "Rápido",
         l2: "Construído na Segunda Camada",
@@ -1823,14 +1828,23 @@ const dict = {
         security: "Segurança",
         failed: "Falhou",
         swaps_found: "Buscando trocas ({{ count }} encontradas)",
-        upload_rescue_key_evm:
-            "Faça upload ou insira sua chave de resgate para retomar esta troca",
+        claim_scan_required:
+            "Para reivindicar esta troca, volte e escaneie com o arquivo de resgate carregado.",
         invalid_rescue_key_evm:
             "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
         error_occurred: "Ocorreu um erro: {{ error }}",
+        rsk_rescue_prompt:
+            "Se você enviou RBTC para uma troca da Boltz, pode reembolsar ou retomar uma troca que não esteja disponível no histórico deste navegador.",
+        rsk_rescue_refund_title: "Reembolsar troca",
+        rsk_rescue_refund_explainer:
+            "Conecte sua carteira Rootstock para procurar trocas que expiraram e podem ser reembolsadas.",
+        rsk_rescue_resume_title: "Retomar troca",
+        rsk_rescue_resume_explainer:
+            "Use sua chave de resgate para encontrar trocas pendentes que podem ser retomadas.",
     },
     zh: {
         language: "中文",
+        or: "或",
         status: "状态",
         fast: "快速",
         l2: "建立在二层网络之上",
@@ -2233,13 +2247,22 @@ const dict = {
         security: "安全",
         failed: "失败",
         swaps_found: "正在扫描交换（已找到 {{ count }} 个）",
-        upload_rescue_key_evm: "上传或输入您的救援密钥以恢复此交换",
+        claim_scan_required: "要领取此交换，请返回并在上传救援文件后进行扫描。",
         invalid_rescue_key_evm:
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
+        rsk_rescue_prompt:
+            "如果你将 RBTC 发送到 Boltz 交换，可以退款或继续一个未在本浏览器交换历史中显示的交换。",
+        rsk_rescue_refund_title: "退还交换",
+        rsk_rescue_refund_explainer:
+            "连接你的 Rootstock 钱包以扫描已过期且可退款的交换。",
+        rsk_rescue_resume_title: "继续交换",
+        rsk_rescue_resume_explainer:
+            "使用你的救援密钥查找可以继续的待处理交换。",
     },
     ja: {
         language: "日本語",
+        or: "または",
         status: "ステータス",
         fast: "高速",
         l2: "L2技術を活用",
@@ -2679,11 +2702,19 @@ const dict = {
         security: "セキュリティ",
         failed: "失敗",
         swaps_found: "スワップをスキャン中（{{ count }} 件見つかりました）",
-        upload_rescue_key_evm:
-            "レスキューキーをアップロードまたは入力して、このスワップを再開してください",
+        claim_scan_required:
+            "このスワップを請求するには、レスキューファイルをアップロードして戻り、スキャンしてください。",
         invalid_rescue_key_evm:
             "このレスキューキーはこのスワップに関連付けられていません。別のレスキューキーを使用してもう一度お試しください。",
         error_occurred: "エラーが発生しました：{{ error }}",
+        rsk_rescue_prompt:
+            "RBTC を Boltz のスワップに送金した場合、このブラウザのスワップ履歴にないスワップを返金または再開できます。",
+        rsk_rescue_refund_title: "スワップを返金",
+        rsk_rescue_refund_explainer:
+            "Rootstock ウォレットを接続して、期限切れで返金可能なスワップをスキャンします。",
+        rsk_rescue_resume_title: "スワップを再開",
+        rsk_rescue_resume_explainer:
+            "レスキューキーを使用して、再開できる保留中のスワップを見つけます。",
     },
 };
 
