@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 import type { ECPairInterface } from "ecpair";
 
 import { chooseUrl, config } from "../config";
-import { BTC, LN, RBTC } from "../consts/Assets";
+import { BTC, LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { referralIdKey } from "../consts/LocalStorage";
 import type { deriveKeyFn } from "../context/Global";
@@ -15,11 +15,12 @@ import type {
 } from "./boltzClient";
 import { ECPair } from "./ecpair";
 import { formatError } from "./errors";
-import type {
-    ChainSwap,
-    ReverseSwap,
-    SomeSwap,
-    SubmarineSwap,
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    type SomeSwap,
+    type SubmarineSwap,
+    isEvmSwap,
 } from "./swapCreator";
 
 export const defaultTimeoutDuration = 15_000;
@@ -207,7 +208,7 @@ export const getDestinationAddress = (swap: SomeSwap) => {
         return "";
     }
 
-    if (swap.assetReceive === RBTC) {
+    if (isEvmSwap(swap)) {
         return swap.signer;
     }
 

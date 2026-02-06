@@ -29,7 +29,12 @@ import { isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
-import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
+import {
+    deriveKey,
+    deriveKeyGasAbstraction,
+    generateRescueFile,
+    getXpub,
+} from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
 import { getUrlParam, resetUrlParam } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
@@ -110,6 +115,7 @@ export type GlobalContextType = {
 
     newKey: newKeyFn;
     deriveKey: deriveKeyFn;
+    deriveKeyGasAbstraction: (chainId: number) => ECPairInterface;
     getXpub: () => string;
     setLastUsedKey: Setter<number>;
     rescueFile: Accessor<RescueFile | null>;
@@ -250,6 +256,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const deriveKeyWrapper = (index: number) => {
         return ECPair.fromPrivateKey(
             Buffer.from(deriveKey(rescueFile(), index).privateKey),
+        );
+    };
+
+    const deriveKeyGasAbstractionWrapper = (chainId: number) => {
+        return ECPair.fromPrivateKey(
+            Buffer.from(
+                deriveKeyGasAbstraction(rescueFile(), chainId).privateKey,
+            ),
         );
     };
 
@@ -578,6 +592,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setLastUsedKey,
                 getXpub: getXpubWrapper,
                 deriveKey: deriveKeyWrapper,
+                deriveKeyGasAbstraction: deriveKeyGasAbstractionWrapper,
 
                 rescueFileBackupDone,
                 setRescueFileBackupDone,

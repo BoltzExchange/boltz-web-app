@@ -1,6 +1,6 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { Signature } from "ethers";
+import { Signature, type Wallet } from "ethers";
 import log from "loglevel";
 import { type Accessor, Show } from "solid-js";
 
@@ -31,7 +31,7 @@ import {
 } from "../utils/swapCreator";
 
 const claimAssset = async (
-    useRif: boolean,
+    useGasAbstraction: boolean,
     asset: string,
     preimage: string,
     amount: number,
@@ -43,7 +43,7 @@ const claimAssset = async (
 ) => {
     let transactionHash: string;
 
-    if (useRif) {
+    if (useGasAbstraction) {
         transactionHash = await relayClaimTransaction(
             signer(),
             etherSwap,
@@ -89,7 +89,9 @@ const claimHops = async (
     amount: number,
     refundAddress: string,
     timeoutBlockHeight: number,
-    signer: Accessor<Signer>,
+    destination: string,
+    signer: Accessor<Signer | Wallet>,
+    txSender: Accessor<Signer>,
     erc20Swap: ERC20Swap,
 ) => {
     if (hops.length !== 1) {
@@ -115,7 +117,7 @@ const claimHops = async (
         Math.floor(Number(quote.quote) * (1 - slippageLimit)),
     );
 
-    const router = createRouterContract(asset, signer());
+    const router = createRouterContract(asset, txSender());
 
     const calldata = await encodeDexQuote(
         hop.dexDetails.chain,
@@ -159,8 +161,35 @@ const claimHops = async (
         ),
     );
 
+    const routerAddress = await router.getAddress();
+    const chainId = (await signer().provider.getNetwork()).chainId;
+    const routerSignature = Signature.from(
+        await signer().signTypedData(
+            {
+                name: "Router",
+                version: "2",
+                verifyingContract: routerAddress,
+                chainId: chainId,
+            },
+            {
+                Claim: [
+                    { name: "preimage", type: "bytes32" },
+                    { name: "token", type: "address" },
+                    { name: "minAmountOut", type: "uint256" },
+                    { name: "destination", type: "address" },
+                ],
+            },
+            {
+                preimage: prefix0x(preimage),
+                token: hop.dexDetails.tokenOut,
+                minAmountOut: amountOutMin,
+                destination: destination,
+            },
+        ),
+    );
+
     const claim = await router[
-        "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256)"
+        "claimERC20Execute((bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32),(address,uint256,bytes)[],address,uint256,address,uint8,bytes32,bytes32)"
     ](
         {
             preimage: prefix0x(preimage),
@@ -179,6 +208,10 @@ const claimHops = async (
         })),
         hop.dexDetails.tokenOut,
         amountOutMin,
+        destination,
+        routerSignature.v,
+        routerSignature.r,
+        routerSignature.s,
     );
 
     return {
@@ -191,7 +224,7 @@ const claimHops = async (
 const ClaimEvm = (props: {
     amount: number;
     swapId: string;
-    useRif: boolean;
+    useGasAbstraction: boolean;
     preimage: string;
     assetReceive: string;
     signerAddress: string;
@@ -201,7 +234,8 @@ const ClaimEvm = (props: {
     finalReceive: string;
     hops?: EncodedHop[];
 }) => {
-    const { getEtherSwap, getErc20Swap, signer } = useWeb3Signer();
+    const { getEtherSwap, getErc20Swap, signer, gasAbstractionSigner } =
+        useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
 
@@ -221,6 +255,8 @@ const ClaimEvm = (props: {
                         props.amount,
                         props.refundAddress,
                         props.timeoutBlockHeight,
+                        props.signerAddress,
+                        props.useGasAbstraction ? gasAbstractionSigner : signer,
                         signer,
                         getErc20Swap(props.assetReceive),
                     );
@@ -228,7 +264,7 @@ const ClaimEvm = (props: {
                     currentSwap.dexQuoteAmount = result.quoteAmount;
                 } else {
                     transactionHash = await claimAssset(
-                        props.useRif,
+                        props.useGasAbstraction,
                         props.assetReceive,
                         props.preimage,
                         props.amount,
@@ -280,7 +316,7 @@ const TransactionConfirmed = () => {
                 fallback={
                     <ClaimEvm
                         swapId={chain.id}
-                        useRif={chain.useRif}
+                        useGasAbstraction={chain.useGasAbstraction}
                         preimage={chain.preimage}
                         signerAddress={chain.signer}
                         amount={chain.claimDetails.amount}
@@ -296,7 +332,7 @@ const TransactionConfirmed = () => {
                 }>
                 <ClaimEvm
                     swapId={reverse.id}
-                    useRif={reverse.useRif}
+                    useGasAbstraction={reverse.useGasAbstraction}
                     preimage={reverse.preimage}
                     amount={reverse.onchainAmount}
                     signerAddress={reverse.signer}

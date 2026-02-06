@@ -9,9 +9,10 @@ import {
     Contract,
     type InterfaceAbi,
     JsonRpcSigner,
+    Wallet,
 } from "ethers";
 import log from "loglevel";
-import type { Accessor, JSXElement, Setter } from "solid-js";
+import type { Accessor, JSXElement, Resource, Setter } from "solid-js";
 import {
     createContext,
     createResource,
@@ -88,7 +89,10 @@ export const createTokenContract = (asset: string, signer: Signer) => {
     ) as unknown as ERC20;
 };
 
-export const createRouterContract = (asset: string, signer: Signer) => {
+export const createRouterContract = (
+    asset: string,
+    signer: Signer | Wallet,
+) => {
     const routerAddress = requireRouterAddress(asset);
     return new Contract(routerAddress, RouterAbi, signer) as unknown as Router;
 };
@@ -117,13 +121,16 @@ const Web3SignerContext = createContext<{
 
     walletConnected: Accessor<boolean>;
     setWalletConnected: Setter<boolean>;
+
+    gasAbstractionSigner: Resource<Wallet | undefined>;
 }>();
 
 const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
-    const { setRdns, getRdnsForAddress, t } = useGlobalContext();
+    const { setRdns, getRdnsForAddress, t, deriveKeyGasAbstraction } =
+        useGlobalContext();
 
     const hasEvm = hasEvmAssets();
 
@@ -161,6 +168,17 @@ const Web3SignerProvider = (props: {
     const [openWalletConnectModal, setOpenWalletConnectModal] =
         createSignal<boolean>(false);
     const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
+
+    const [gasAbstractionSigner] = createResource(signer, async (s) => {
+        const chainId = Number((await s.provider.getNetwork()).chainId);
+
+        return new Wallet(
+            Buffer.from(deriveKeyGasAbstraction(chainId).privateKey).toString(
+                "hex",
+            ),
+            s.provider,
+        );
+    });
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
@@ -378,6 +396,7 @@ const Web3SignerProvider = (props: {
                 setWalletConnected,
                 connectProviderForAddress,
                 getContractsForAsset,
+                gasAbstractionSigner,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
                     if (rawProvider()) {

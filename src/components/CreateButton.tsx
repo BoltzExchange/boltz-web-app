@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import type { Wallet } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { BTC, isEvmAsset } from "../consts/Assets";
+import { BTC, RBTC, isEvmAsset } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -61,34 +62,52 @@ export const getClaimAddress = async (
     assetReceive: Accessor<string>,
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
-): Promise<{ useRif: boolean; gasPrice: bigint; claimAddress: string }> => {
+    gasAbstractionSigner: Accessor<Wallet>,
+): Promise<{
+    useGasAbstraction: boolean;
+    gasPrice: bigint;
+    claimAddress: string;
+}> => {
     if (isEvmAsset(assetReceive())) {
-        const [balance, gasPrice] = await Promise.all([
-            signer().provider.getBalance(await signer().getAddress()),
-            signer()
-                .provider.getFeeData()
-                .then((data) => data.gasPrice),
-        ]);
-        log.debug("RSK balance", balance);
+        if (assetReceive() === RBTC) {
+            const [balance, gasPrice] = await Promise.all([
+                signer().provider.getBalance(await signer().getAddress()),
+                signer()
+                    .provider.getFeeData()
+                    .then((data) => data.gasPrice),
+            ]);
+            log.debug("RSK balance", balance);
 
-        const balanceNeeded = gasPrice * GasNeededToClaim;
-        log.debug("RSK balance needed", balanceNeeded);
+            const balanceNeeded = gasPrice * GasNeededToClaim;
+            log.debug("RSK balance needed", balanceNeeded);
 
-        if (balance <= balanceNeeded) {
-            log.info("Using RIF smart wallet as claim address");
-            return {
-                gasPrice,
-                useRif: true,
-                claimAddress: (await getSmartWalletAddress(signer())).address,
-            };
+            if (balance <= balanceNeeded) {
+                log.info("Using RIF smart wallet as claim address");
+                return {
+                    gasPrice,
+                    useGasAbstraction: true,
+                    claimAddress: (await getSmartWalletAddress(signer()))
+                        .address,
+                };
+            } else {
+                log.info("RIF smart wallet not needed");
+            }
         } else {
-            log.info("RIF smart wallet not needed");
+            log.debug(
+                "Using gas abstraction signer",
+                gasAbstractionSigner().address,
+            );
+            return {
+                gasPrice: 0n,
+                useGasAbstraction: true,
+                claimAddress: gasAbstractionSigner().address,
+            };
         }
     }
 
     return {
         gasPrice: 0n,
-        useRif: false,
+        useGasAbstraction: false,
         claimAddress: onchainAddress(),
     };
 };
@@ -137,8 +156,13 @@ const CreateButton = () => {
         setSendAmount,
         setReceiveAmount,
     } = useCreateContext();
-    const { getEtherSwap, signer, providers, walletConnected } =
-        useWeb3Signer();
+    const {
+        getEtherSwap,
+        signer,
+        providers,
+        walletConnected,
+        gasAbstractionSigner,
+    } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [loading, setLoading] = createSignal(false);
@@ -383,7 +407,7 @@ const CreateButton = () => {
 
     const createSwap = async (
         claimAddress: string,
-        useRif: boolean,
+        useGasAbstraction: boolean,
     ): Promise<boolean> => {
         if (
             !rescueFileBackupDone() &&
@@ -416,7 +440,7 @@ const CreateButton = () => {
                             creationData.receiveAmount,
                             invoice(),
                             ref(),
-                            useRif,
+                            useGasAbstraction,
                             newKey,
                             originalDestination(),
                         );
@@ -528,7 +552,7 @@ const CreateButton = () => {
                             receiveAmount(),
                             onchainAddress(),
                             ref(),
-                            useRif,
+                            useGasAbstraction,
                             rescueFile(),
                             newKey,
                             originalDestination(),
@@ -561,7 +585,7 @@ const CreateButton = () => {
                         creationData.receiveAmount,
                         claimAddress,
                         ref(),
-                        useRif,
+                        useGasAbstraction,
                         rescueFile(),
                         newKey,
                     );
@@ -583,7 +607,7 @@ const CreateButton = () => {
                         creationData.receiveAmount,
                         claimAddress,
                         ref(),
-                        useRif,
+                        useGasAbstraction,
                         rescueFile(),
                         newKey,
                     );
@@ -660,15 +684,16 @@ const CreateButton = () => {
                 await fetchInvoice();
             }
 
-            const { useRif, claimAddress } = await getClaimAddress(
+            const { useGasAbstraction, claimAddress } = await getClaimAddress(
                 assetReceive,
                 signer,
                 onchainAddress,
+                gasAbstractionSigner,
             );
 
             if (!valid()) return;
 
-            await createSwap(claimAddress, useRif);
+            await createSwap(claimAddress, useGasAbstraction);
         } catch (e) {
             log.error("Error creating swap", e);
             notify("error", e);

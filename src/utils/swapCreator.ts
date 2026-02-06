@@ -36,7 +36,7 @@ export type SwapBase = {
     claimTx?: string;
     lockupTx?: string;
 
-    useRif: boolean;
+    useGasAbstraction: boolean;
     signer?: string;
     // Set for hardware wallet signers
     derivationPath?: string;
@@ -156,7 +156,7 @@ export const createSubmarine = async (
     receiveAmount: BigNumber,
     invoice: string,
     referralId: string,
-    useRif: boolean,
+    useGasAbstraction: boolean,
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<SubmarineSwap> => {
@@ -181,7 +181,7 @@ export const createSubmarine = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            useGasAbstraction,
         ),
         invoice,
         originalDestination,
@@ -197,7 +197,7 @@ export const createReverse = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     referralId: string,
-    useRif: boolean,
+    useGasAbstraction: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -232,7 +232,7 @@ export const createReverse = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            useGasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -249,7 +249,7 @@ export const createChain = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     referralId: string,
-    useRif: boolean,
+    useGasAbstraction: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -288,7 +288,7 @@ export const createChain = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            useGasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -305,11 +305,11 @@ const annotateSwapBaseData = <T>(
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
-    useRif: boolean,
+    useGasAbstraction: boolean,
 ): T & SwapBase => ({
     ...createdResponse,
     type,
-    useRif,
+    useGasAbstraction,
     assetSend,
     assetReceive,
     date: new Date().getTime(),

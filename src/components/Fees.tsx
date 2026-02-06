@@ -77,7 +77,7 @@ const Fees = () => {
         onchainAddress,
         addressValid,
     } = useCreateContext();
-    const { signer } = useWeb3Signer();
+    const { signer, gasAbstractionSigner } = useWeb3Signer();
 
     const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
@@ -96,12 +96,13 @@ const Fees = () => {
                 return 0;
             }
 
-            const { useRif, gasPrice } = await getClaimAddress(
+            const { useGasAbstraction, gasPrice } = await getClaimAddress(
                 () => assetReceive,
                 () => signer,
                 onchainAddress,
+                gasAbstractionSigner,
             );
-            if (!useRif) {
+            if (!useGasAbstraction) {
                 return 0;
             }
 
@@ -162,13 +163,12 @@ const Fees = () => {
                 }
             }
 
-            void Promise.all([
-                pair().getMinimum(),
-                pair().getMaximum(),
-            ]).then(([min, max]) => {
-                setMinimum(min);
-                setMaximum(max);
-            });
+            void Promise.all([pair().getMinimum(), pair().getMaximum()]).then(
+                ([min, max]) => {
+                    setMinimum(min);
+                    setMaximum(max);
+                },
+            );
         }
     });
 
