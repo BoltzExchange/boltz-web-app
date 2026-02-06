@@ -1,9 +1,11 @@
 import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
 import { abi as ERC20SwapAbi } from "boltz-core/out/ERC20Swap.sol/ERC20Swap.json";
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
+import { abi as RouterAbi } from "boltz-core/out/Router.sol/Router.json";
 import type { ERC20 } from "boltz-core/typechain/ERC20";
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { Router } from "boltz-core/typechain/Router";
 import {
     BrowserProvider,
     Contract,
@@ -40,10 +42,6 @@ import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import { createProvider } from "../utils/provider";
 import { useGlobalContext } from "./Global";
-// TODO: import from boltz-core after update
-import type { Router } from "./Router";
-// TODO: import from boltz-core after update
-import { abi as RouterAbi } from "./Router.json";
 
 declare global {
     interface WindowEventMap {
