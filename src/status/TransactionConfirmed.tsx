@@ -23,7 +23,7 @@ import {
 import { relayClaimTransaction } from "../rif/Signer";
 import { type EncodedHop } from "../utils/Pair";
 import { encodeDexQuote, quoteDexAmountIn } from "../utils/boltzClient";
-import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
+import { prefix0x, satsToAssetAmount, slippageLimit } from "../utils/rootstock";
 import {
     type ChainSwap,
     type ReverseSwap,
@@ -111,7 +111,9 @@ const claimHops = async (
     log.info(`Got quote: ${quote.quote}`, quote.data);
 
     // TODO: custom slippage
-    const amountOutMin = BigInt(Math.floor(Number(quote.quote) * 0.99));
+    const amountOutMin = BigInt(
+        Math.floor(Number(quote.quote) * (1 - slippageLimit)),
+    );
 
     const router = createRouterContract(asset, signer());
 

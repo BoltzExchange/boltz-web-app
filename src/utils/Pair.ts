@@ -328,44 +328,90 @@ export default class Pair {
         return this.route.find((hop) => hop.pair !== undefined);
     }
 
-    public get minimum() {
+    private get dexHopBeforeBoltz(): Hop | undefined {
+        const boltzHop = this.boltzHop;
+        if (boltzHop === undefined) return undefined;
+
+        const boltzIndex = this.route.indexOf(boltzHop);
+        if (boltzIndex > 0) {
+            const prevHop = this.route[boltzIndex - 1];
+            if (prevHop.type === SwapType.Dex) {
+                return prevHop;
+            }
+        }
+
+        return undefined;
+    }
+
+    private convertThroughPrecedingDex = async (
+        boltzSendAmount: number,
+    ): Promise<number> => {
+        const dexHop = this.dexHopBeforeBoltz;
+        if (dexHop === undefined) {
+            return boltzSendAmount;
+        }
+
+        const quote = await quoteDexAmountOut(
+            dexHop.dexDetails.chain,
+            dexHop.dexDetails.tokenIn,
+            dexHop.dexDetails.tokenOut,
+            toDexAmount(boltzSendAmount, dexHop.to),
+        );
+
+        const minQuote = quote.reduce((min, q) => {
+            const amountIn = BigInt(q.quote);
+            return min === BigInt(0) || amountIn < min ? amountIn : min;
+        }, BigInt(0));
+
+        return fromDexAmount(minQuote, dexHop.from).toNumber();
+    };
+
+    public getMinimum = async (): Promise<number> => {
         const boltzHop = this.boltzHop;
         if (boltzHop === undefined) {
             return 0;
         }
 
+        let boltzSendLimit: number;
+
         if (boltzHop.type !== SwapType.Submarine) {
-            return boltzHop.pair.limits.minimal;
+            boltzSendLimit = boltzHop.pair.limits.minimal;
+        } else {
+            boltzSendLimit = calculateSendAmount(
+                BigNumber(
+                    (boltzHop.pair as unknown as SubmarinePairTypeTaproot)
+                        .limits.minimalBatched || boltzHop.pair.limits.minimal,
+                ),
+                this.feePercentage,
+                this.minerFees,
+                boltzHop.type,
+            ).toNumber();
         }
 
-        return calculateSendAmount(
-            BigNumber(
-                (boltzHop.pair as unknown as SubmarinePairTypeTaproot).limits
-                    .minimalBatched || boltzHop.pair.limits.minimal,
-            ),
-            this.feePercentage,
-            this.minerFees,
-            boltzHop.type,
-        ).toNumber();
-    }
+        return await this.convertThroughPrecedingDex(boltzSendLimit);
+    };
 
-    public get maximum() {
+    public getMaximum = async (): Promise<number> => {
         const boltzHop = this.boltzHop;
         if (boltzHop === undefined) {
             return 0;
         }
 
+        let boltzSendLimit: number;
+
         if (boltzHop.type !== SwapType.Submarine) {
-            return boltzHop.pair.limits.maximal;
+            boltzSendLimit = boltzHop.pair.limits.maximal;
+        } else {
+            boltzSendLimit = calculateSendAmount(
+                BigNumber(boltzHop.pair.limits.maximal),
+                this.feePercentage,
+                this.minerFees,
+                boltzHop.type,
+            ).toNumber();
         }
 
-        return calculateSendAmount(
-            BigNumber(boltzHop.pair.limits.maximal),
-            this.feePercentage,
-            this.minerFees,
-            boltzHop.type,
-        ).toNumber();
-    }
+        return await this.convertThroughPrecedingDex(boltzSendLimit);
+    };
 
     public get feeWithoutPro() {
         if (this.regularPairs === undefined) {
@@ -523,9 +569,7 @@ export default class Pair {
             [boltzHop],
         );
 
-        const dexHops = this.route.filter(
-            (hop) => hop.type === SwapType.Dex,
-        );
+        const dexHops = this.route.filter((hop) => hop.type === SwapType.Dex);
         const boltzIndex = this.route.indexOf(boltzHop);
         return {
             type: boltzHop.type,

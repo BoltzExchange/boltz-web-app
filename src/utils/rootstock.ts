@@ -3,6 +3,8 @@ import { AssetKind, getKindForAsset, getTokenDecimals } from "../consts/Assets";
 // Satoshis are 10 ** 8 and Wei 10 ** 18 -> sats to wei 10 ** 10
 const weiFactor = BigInt(10 ** 10);
 
+export const slippageLimit = 0.01;
+
 export const satoshiToWei = (satoshis: number) => BigInt(satoshis) * weiFactor;
 
 export const weiToSatoshi = (wei: bigint) => BigInt(wei) / weiFactor;

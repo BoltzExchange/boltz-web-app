@@ -162,8 +162,13 @@ const Fees = () => {
                 }
             }
 
-            setMinimum(pair().minimum);
-            setMaximum(pair().maximum);
+            void Promise.all([
+                pair().getMinimum(),
+                pair().getMaximum(),
+            ]).then(([min, max]) => {
+                setMinimum(min);
+                setMaximum(max);
+            });
         }
     });
 

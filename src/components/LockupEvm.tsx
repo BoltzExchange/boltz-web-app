@@ -27,7 +27,7 @@ import {
 import type { EncodedHop } from "../utils/Pair";
 import { encodeDexQuote, quoteDexAmountOut } from "../utils/boltzClient";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
+import { prefix0x, satsToAssetAmount, slippageLimit } from "../utils/rootstock";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
@@ -62,7 +62,9 @@ const lockupWithHops = async (
     log.info(`Got DEX quote for lockup hop: ${quote.quote}`, quote.data);
 
     // TODO: custom slippage
-    const amountIn = BigInt(quote.quote);
+    const amountIn = BigInt(
+        Math.ceil(Number(quote.quote) * (1 + slippageLimit)),
+    );
 
     const router = createRouterContract(hop.from, signer());
     const routerAddress = await router.getAddress();
