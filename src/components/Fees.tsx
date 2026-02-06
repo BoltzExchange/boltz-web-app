@@ -9,7 +9,7 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC, LBTC } from "../consts/Assets";
+import { AssetKind, BTC, LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -68,6 +68,7 @@ const Fees = () => {
     const {
         pair,
         sendAmount,
+        receiveAmount,
         setMaximum,
         setMinimum,
         minerFee,
@@ -82,6 +83,37 @@ const Fees = () => {
     const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
     const assetReceive = () => pair().toAsset;
+
+    const needsBoltzSwapSendAmount = createMemo(() => {
+        if (!pair().isRoutable) return false;
+
+        const from = assetSend();
+        const fromAsset = config.assets[from];
+        return (
+            fromAsset?.type === AssetKind.ERC20 &&
+            fromAsset.token?.routeVia !== undefined
+        );
+    });
+
+    const boltzFeeAmount = createMemo(() => {
+        if (!pair().isRoutable) {
+            return BigNumber(0);
+        }
+
+        receiveAmount();
+
+        if (!needsBoltzSwapSendAmount()) {
+            return pair().feeOnSend(sendAmount());
+        }
+
+        const boltzSwapSendAmount =
+            pair().boltzSwapSendAmountFromLatestQuote(sendAmount());
+        if (boltzSwapSendAmount === undefined) {
+            return BigNumber(0);
+        }
+
+        return pair().feeOnSend(boltzSwapSendAmount);
+    });
 
     const rifFetchTrigger = createMemo(() => {
         return {
@@ -218,7 +250,7 @@ const Fees = () => {
                 ):{" "}
                 <span class="boltz-fee" data-testid="boltz-fee">
                     {formatAmount(
-                        pair().feeOnSend(sendAmount()),
+                        boltzFeeAmount(),
                         denomination(),
                         separator(),
                         BTC,

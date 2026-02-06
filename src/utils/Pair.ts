@@ -80,6 +80,12 @@ const toEncodedHop = (hop: Hop): EncodedHop => {
 
 export default class Pair {
     private readonly route: Hop[] = [];
+    private latestBoltzSwapSendAmount:
+        | {
+              sendAmount: string;
+              value: BigNumber;
+          }
+        | undefined;
 
     constructor(
         public readonly pairs: Pairs | undefined,
@@ -343,6 +349,16 @@ export default class Pair {
         return undefined;
     }
 
+    public boltzSwapSendAmountFromLatestQuote = (sendAmount: BigNumber) => {
+        const key = sendAmount.toFixed();
+
+        if (this.latestBoltzSwapSendAmount?.sendAmount !== key) {
+            return undefined;
+        }
+
+        return this.latestBoltzSwapSendAmount.value;
+    };
+
     private convertThroughPrecedingDex = async (
         boltzSendAmount: number,
     ): Promise<number> => {
@@ -352,9 +368,9 @@ export default class Pair {
         }
 
         const quote = await quoteDexAmountOut(
-            dexHop.dexDetails.chain,
-            dexHop.dexDetails.tokenIn,
-            dexHop.dexDetails.tokenOut,
+            dexHop.dexDetails!.chain,
+            dexHop.dexDetails!.tokenIn,
+            dexHop.dexDetails!.tokenOut,
             toDexAmount(boltzSendAmount, dexHop.to),
         );
 
@@ -463,9 +479,24 @@ export default class Pair {
             return BigNumber(0);
         }
 
+        const boltzHop = this.boltzHop;
+        const shouldCacheBoltzSwapSendAmount = route === this.route;
+        const sendAmountKey = sendAmount.toFixed();
         let amount = sendAmount;
 
         for (const hop of route) {
+            // Cache the amount that will be sent into the Boltz hop for this quote.
+            if (
+                shouldCacheBoltzSwapSendAmount &&
+                boltzHop !== undefined &&
+                hop === boltzHop
+            ) {
+                this.latestBoltzSwapSendAmount = {
+                    sendAmount: sendAmountKey,
+                    value: amount,
+                };
+            }
+
             switch (hop.type) {
                 case SwapType.Dex: {
                     if (Number.isNaN(amount.toNumber())) {
@@ -474,9 +505,9 @@ export default class Pair {
                     }
 
                     const quote = await quoteDexAmountIn(
-                        hop.dexDetails.chain,
-                        hop.dexDetails.tokenIn,
-                        hop.dexDetails.tokenOut,
+                        hop.dexDetails!.chain,
+                        hop.dexDetails!.tokenIn,
+                        hop.dexDetails!.tokenOut,
                         toDexAmount(amount.toNumber(), hop.from),
                     );
 
@@ -510,15 +541,18 @@ export default class Pair {
             return BigNumber(0);
         }
 
+        const boltzHop = this.boltzHop;
+        let boltzSwapSendAmountForCache: BigNumber | undefined;
+
         let amount = receiveAmount;
 
         for (const hop of [...this.route].reverse()) {
             switch (hop.type) {
                 case SwapType.Dex: {
                     const quote = await quoteDexAmountOut(
-                        hop.dexDetails.chain,
-                        hop.dexDetails.tokenIn,
-                        hop.dexDetails.tokenOut,
+                        hop.dexDetails!.chain,
+                        hop.dexDetails!.tokenIn,
+                        hop.dexDetails!.tokenOut,
                         toDexAmount(amount.toNumber(), hop.to),
                     );
 
@@ -540,8 +574,19 @@ export default class Pair {
                         minerFees,
                         hop.type,
                     );
+
+                    if (boltzHop !== undefined && hop === boltzHop) {
+                        boltzSwapSendAmountForCache = amount;
+                    }
             }
         }
+
+        // Cache using the final user send amount as key.
+        const sendAmountKey = amount.toFixed();
+        this.latestBoltzSwapSendAmount = {
+            sendAmount: sendAmountKey,
+            value: boltzSwapSendAmountForCache ?? amount,
+        };
 
         return amount;
     };
