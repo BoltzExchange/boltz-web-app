@@ -567,12 +567,6 @@ export const RescueRsk = () => {
                     <br />({t("rsk_rescue_resume_tagline")})
                 </button>
             </div>
-
-            <p class="frame-text-spaced">
-                {t("rsk_rescue_no_key_note_title")}
-                <br />
-                {t("rsk_rescue_no_key_note_subtitle")}
-            </p>
         </>
     );
 
@@ -594,64 +588,59 @@ export const RescueRsk = () => {
         </Switch>
     );
 
-    // Inline rescue key input UI
+    // Rescue key input UI (file picker + button to mnemonic subpage)
     const RescueKeyInput = () => (
         <>
-            <div class="tabs">
-                <div
-                    class={`tab ${!showMnemonicInput() ? "active" : ""}`}
-                    onClick={() => setShowMnemonicInput(false)}>
-                    {t("import_rescue_key")}
+            <input
+                required
+                type="file"
+                id="refundUpload"
+                data-testid="refundUpload"
+                accept={rescueFileTypes}
+                onChange={handleFileUpload}
+            />
+            <button
+                class="btn btn-light"
+                data-testid="enterMnemonicBtn"
+                onClick={() => {
+                    resetRescueKeyInput();
+                    setShowMnemonicInput(true);
+                }}>
+                {t("enter_mnemonic")}
+            </button>
+        </>
+    );
+
+    // Mnemonic input subpage
+    const MnemonicInputPage = () => (
+        <>
+            <p class="frame-text">{t("rescue_a_swap_mnemonic")}</p>
+            <div class="mnemonic-input-container">
+                <div class="mnemonic-inputs">
+                    <For each={Array.from({ length: mnemonicLength })}>
+                        {(_, i) => (
+                            <div class="input-box">
+                                <span class="mnemonic-number">#{i() + 1}</span>
+                                <input
+                                    id={`mnemonic-input-${i()}`}
+                                    class="mnemonic-input"
+                                    data-testid={`mnemonic-input-${i()}`}
+                                    type="text"
+                                    ref={inputRefs[i()]}
+                                    autofocus={i() === 0}
+                                    value={rescueKey()[i()]}
+                                    onFocus={() => setFocusedIndex(i())}
+                                    onInput={handleMnemonicInput}
+                                    onPaste={handleMnemonicPaste}
+                                    onKeyDown={handleMnemonicKeyDown}
+                                />
+                            </div>
+                        )}
+                    </For>
                 </div>
-                <div
-                    class={`tab ${showMnemonicInput() ? "active" : ""}`}
-                    onClick={() => {
-                        resetRescueKeyInput();
-                        setShowMnemonicInput(true);
-                    }}>
-                    {t("enter_mnemonic")}
-                </div>
+                <i>{t("hint_paste_mnemonic")}</i>
             </div>
-            <Show
-                when={showMnemonicInput()}
-                fallback={
-                    <input
-                        required
-                        type="file"
-                        id="refundUpload"
-                        data-testid="refundUpload"
-                        accept={rescueFileTypes}
-                        onChange={handleFileUpload}
-                    />
-                }>
-                <div class="mnemonic-input-container">
-                    <div class="mnemonic-inputs">
-                        <For each={Array.from({ length: mnemonicLength })}>
-                            {(_, i) => (
-                                <div class="input-box">
-                                    <span class="mnemonic-number">
-                                        #{i() + 1}
-                                    </span>
-                                    <input
-                                        id={`mnemonic-input-${i()}`}
-                                        class="mnemonic-input"
-                                        data-testid={`mnemonic-input-${i()}`}
-                                        type="text"
-                                        ref={inputRefs[i()]}
-                                        autofocus={i() === 0}
-                                        value={rescueKey()[i()]}
-                                        onFocus={() => setFocusedIndex(i())}
-                                        onInput={handleMnemonicInput}
-                                        onPaste={handleMnemonicPaste}
-                                        onKeyDown={handleMnemonicKeyDown}
-                                    />
-                                </div>
-                            )}
-                        </For>
-                    </div>
-                    <i>{t("hint_paste_mnemonic")}</i>
-                </div>
-            </Show>
+            <ConnectWallet />
         </>
     );
 
@@ -674,7 +663,7 @@ export const RescueRsk = () => {
         });
 
         return (
-            <>
+            <Show when={!showMnemonicInput()} fallback={<MnemonicInputPage />}>
                 <Show
                     when={!isScanning() && logRefundableSwaps() === undefined}>
                     <p class="frame-text-spaced">
@@ -699,15 +688,15 @@ export const RescueRsk = () => {
                     when={!isScanning() && logRefundableSwaps() === undefined}>
                     <Show when={props.requiresRescueFile}>
                         <RescueKeyInput />
+                        <p class="frame-text-spaced">
+                            {t("rsk_rescue_no_key_note_title")}
+                            <br />
+                            {t("rsk_rescue_no_key_note_subtitle")}
+                        </p>
                     </Show>
                     <ConnectWallet />
                 </Show>
-
-                <hr />
-                <button class="btn btn-light" onClick={resetMode}>
-                    {t("back")}
-                </button>
-            </>
+            </Show>
         );
     };
 

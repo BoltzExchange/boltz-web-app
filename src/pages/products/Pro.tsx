@@ -117,16 +117,30 @@ const Pro = () => {
                             },
                             {
                                 icon: <BsTelegram size={18} />,
-                                title: t("boltz_pro_option_telegram_title"),
-                                href: "https://t.me/boltz_pro_bot",
-                                description: t(
-                                    "boltz_pro_option_telegram_description",
+                                title: t("boltz_pro_option_chat_title"),
+                                description: (
+                                    <span>
+                                        {t(
+                                            "boltz_pro_option_chat_description_prefix",
+                                        )}{" "}
+                                        <ExternalLink href="https://t.me/boltz_pro_bot">
+                                            Telegram
+                                        </ExternalLink>{" "}
+                                        {t(
+                                            "boltz_pro_option_chat_description_middle",
+                                        )}{" "}
+                                        <ExternalLink href="https://smp19.simplex.im/a#6v12YQ1txW3h6YqbCmklTC75qsbFd0WxCEGGrSR2GNw">
+                                            SimpleX
+                                        </ExternalLink>
+                                        {t(
+                                            "boltz_pro_option_chat_description_suffix",
+                                        )}
+                                    </span>
                                 ),
-                                external: true,
                             },
                         ]}>
                         {(item) =>
-                            item.external ? (
+                            item.href && item.external ? (
                                 <ExternalLink
                                     href={item.href}
                                     class="card options-card sequentialFadeUp">
@@ -135,7 +149,7 @@ const Pro = () => {
                                     </h4>
                                     <p>{item.description}</p>
                                 </ExternalLink>
-                            ) : (
+                            ) : item.href ? (
                                 <a
                                     href={item.href}
                                     class="card options-card sequentialFadeUp">
@@ -144,6 +158,13 @@ const Pro = () => {
                                     </h4>
                                     <p>{item.description}</p>
                                 </a>
+                            ) : (
+                                <div class="card options-card is-static sequentialFadeUp">
+                                    <h4>
+                                        {item.icon} {item.title}
+                                    </h4>
+                                    <p>{item.description}</p>
+                                </div>
                             )
                         }
                     </For>

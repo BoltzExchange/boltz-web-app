@@ -178,6 +178,16 @@
 
         p {
             margin-top: 0.3rem;
+
+            a {
+                color: var(--color-link);
+                text-decoration: none;
+                transition: color 0.2s ease-in-out;
+
+                &:hover {
+                    color: var(--color-link-hover);
+                }
+            }
         }
 
         h4 {
@@ -198,6 +208,10 @@
             @media (max-width: 768px) {
                 transform: scale(1.02);
             }
+        }
+
+        &.is-static {
+            cursor: default;
         }
     }
 
