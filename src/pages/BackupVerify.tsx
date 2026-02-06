@@ -65,6 +65,21 @@ const BackupVerify = () => {
             log.debug(`Found highest index: ${highestIndex}`);
             setLastUsedKey(highestIndex + 1);
 
+            // Scan for highest RSK preimage index if wallet is connected
+            const address = signer()?.address;
+            if (address) {
+                const highestIndex = await getHighestKeyIndex(
+                    address,
+                    data.mnemonic,
+                    getEtherSwap(),
+                );
+                const currentEvmKey = await getLastUsedEvmKey(RBTC);
+                await setLastUsedEvmKey(
+                    RBTC,
+                    Math.max(currentEvmKey, highestIndex + 1),
+                );
+            }
+
             setRescueFileBackupDone(true);
             await clearSwaps();
             setRescueFile(data);
