@@ -17,12 +17,15 @@ export const getValidationRegex = (maximum: number): RegExp => {
 };
 
 const getDecimals = (asset: string) => {
-    const isErc20 = config.assets?.[asset]?.type === AssetKind.ERC20;
+    const assetConfig = config.assets?.[asset];
+
+    const isRoutedErc20 =
+        assetConfig?.type === AssetKind.ERC20 &&
+        assetConfig?.token?.routeVia !== undefined;
+
     return {
-        isErc20,
-        decimals: isErc20
-            ? config.assets?.[asset]?.token?.decimals
-            : satDecimals,
+        isErc20: isRoutedErc20,
+        decimals: isRoutedErc20 ? assetConfig?.token?.decimals : satDecimals,
     };
 };
 
