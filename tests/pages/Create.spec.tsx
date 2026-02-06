@@ -195,6 +195,7 @@ describe("Create", () => {
             BigNumber(amount),
             Denomination.Sat,
             globalSignals.separator(),
+            BTC,
         );
         fireEvent.click(await screen.findByText(formattedAmount));
 

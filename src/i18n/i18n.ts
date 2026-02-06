@@ -190,6 +190,8 @@ const dict = {
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
+        slippage: "Slippage",
+        slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Accept transactions that are not yet confirmed in a block",
@@ -436,6 +438,9 @@ const dict = {
         security: "Security",
         failed: "Failed",
         swaps_found: "Scanning swaps ({{ count }} found)",
+
+        approve_erc20: "Approve",
+        approve_erc20_line: "Set ERC20 allowance for the swap contract",
     },
     de: {
         language: "Deutsch",
