@@ -23,7 +23,11 @@ describe("denomination utils", () => {
             "convert $amount in $denomination",
             ({ denomination, amount, converted }) => {
                 expect(
-                    convertAmount(BigNumber(amount), denomination).toNumber(),
+                    convertAmount(
+                        BTC,
+                        BigNumber(amount),
+                        denomination,
+                    ).toNumber(),
                 ).toEqual(converted);
             },
         );
@@ -49,7 +53,12 @@ describe("denomination utils", () => {
             "format $amount in $denomination with `$separator` separator",
             ({ denomination, amount, formatted, separator }) => {
                 expect(
-                    formatAmount(BigNumber(amount), denomination, separator),
+                    formatAmount(
+                        BTC,
+                        BigNumber(amount),
+                        denomination,
+                        separator,
+                    ),
                 ).toEqual(formatted);
             },
         );

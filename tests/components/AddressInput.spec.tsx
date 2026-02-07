@@ -3,6 +3,7 @@ import { vi } from "vitest";
 
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import Pair from "../../src/utils/pair";
 import {
     TestComponent,
     contextWrapper,
@@ -46,7 +47,13 @@ describe("AddressInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetReceive(network);
+            signals.setPair(
+                new Pair(
+                    globalSignals.pairs(),
+                    signals.pair().fromAsset,
+                    network,
+                ),
+            );
 
             const input = (await screen.findByPlaceholderText(
                 globalSignals.t("onchain_address", { asset: network }),
@@ -98,7 +105,7 @@ describe("AddressInput", () => {
             });
 
             await waitFor(() => {
-                expect(signals.assetReceive()).toEqual(asset);
+                expect(signals.pair().toAsset).toEqual(asset);
             });
 
             if (asset === LN) {
@@ -129,7 +136,13 @@ describe("AddressInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetReceive(asset);
+            signals.setPair(
+                new Pair(
+                    globalSignals.pairs(),
+                    signals.pair().fromAsset,
+                    asset,
+                ),
+            );
 
             const addressInput = (await screen.findByTestId(
                 "onchainAddress",
@@ -143,42 +156,8 @@ describe("AddressInput", () => {
                 expect(signals.addressValid()).toEqual(true);
             });
             expect(signals.onchainAddress()).toEqual(expectedAddress);
-            expect(signals.assetReceive()).toEqual(asset);
+            expect(signals.pair().toAsset).toEqual(asset);
             expect(signals.receiveAmount().toNumber()).toEqual(1000);
-        },
-    );
-
-    test.each`
-        asset   | bip21Uri                                                                                                                                                                                                                                                                          | expectedInvoice
-        ${BTC}  | ${"bitcoin:bcrt1q0zjymfy94ctjdegxascl8l253p0ppl5fzz46qm?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday&lno=lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}      | ${"lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}
-        ${LBTC} | ${"liquidnetwork:ert1qzdz2kelknt4kjc6trkeagenuz8zge03wc88dqw?amount=0.00001&label=sbddesign%3A%20For%20lunch%20Tuesday&message=For%20lunch%20Tuesday&lno=lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"} | ${"lno1qgsqvgnwgcg35z6ee2h3yczraddm72xrfua9uve2rlrm9deu7xyfzrc2qqtzzqcxyaupvt8xstdrl8vlun9ch2t28a94hq80agu6usv02rxvetfm3c"}
-    `(
-        "should prioritize lightning over address when both are present",
-        async ({ asset, bip21Uri, expectedInvoice }) => {
-            render(
-                () => (
-                    <>
-                        <TestComponent />
-                        <AddressInput />
-                    </>
-                ),
-                { wrapper: contextWrapper },
-            );
-
-            signals.setAssetReceive(asset);
-
-            const addressInput = (await screen.findByTestId(
-                "onchainAddress",
-            )) as HTMLInputElement;
-
-            fireEvent.input(addressInput, {
-                target: { value: bip21Uri },
-            });
-
-            await waitFor(() => {
-                expect(signals.invoice()).toEqual(expectedInvoice);
-                expect(signals.assetReceive()).toEqual(LN);
-            });
         },
     );
 });

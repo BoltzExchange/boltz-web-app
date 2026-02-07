@@ -1,12 +1,20 @@
 import type log from "loglevel";
 
+export enum AssetType {
+    Native,
+    ERC20,
+}
+
 type Asset = {
+    type: AssetType;
+
     blockExplorerUrl?: ExplorerUrl;
     blockExplorerApis?: ExplorerUrl[];
 
     rifRelay?: string;
     contracts?: {
         deployHeight: number;
+        router?: string;
         smartWalletFactory?: string;
         deployVerifier?: string;
     };
@@ -20,9 +28,15 @@ type Asset = {
             decimals: number;
         };
     };
+
+    erc20?: {
+        chain: string;
+        address: string;
+        decimals: number;
+    };
 };
 
-export enum Explorer {
+export enum ExplorerType {
     Mempool = "mempool",
     Esplora = "esplora",
     Blockscout = "blockscout",
@@ -34,7 +48,7 @@ export type Url = {
 };
 
 export type ExplorerUrl = Url & {
-    id: Explorer;
+    id: ExplorerType;
 };
 
 export type Config = {
@@ -85,9 +99,7 @@ const defaults = {
 
 const isTor = () => window?.location.hostname.endsWith(".onion");
 
-const chooseUrl = (url?: Url) =>
+export const chooseUrl = (url?: Url) =>
     url ? (isTor() && url.tor ? url.tor : url.normal) : undefined;
 
-const baseConfig: Config = defaults;
-
-export { baseConfig, chooseUrl };
+export const baseConfig: Config = defaults;
