@@ -22,6 +22,18 @@ import { derivePreimageFromRescueKey } from "./claim";
 import { getPair } from "./helper";
 import type { RescueFile } from "./rescueFile";
 
+export type DexDetail = {
+    hops: EncodedHop[];
+
+    // Whether hops run before or after the Boltz swap
+    position: HopsPosition;
+
+    // Expected DEX amount at creation; updated with actual amount after execution.
+    // For hops after Boltz: expected output amount from the DEX.
+    // For hops before Boltz: expected input amount to the DEX.
+    quoteAmount: number;
+};
+
 export type SwapBase = {
     type: SwapType;
     status?: string;
@@ -44,13 +56,8 @@ export type SwapBase = {
     // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
     originalDestination?: string;
 
-    // DEX hops for routed swaps
-    hops?: EncodedHop[];
-    // Whether hops run before or after the Boltz swap
-    hopsPosition?: HopsPosition;
-
-    // Actual amount received from DEX quote (for routed swaps)
-    dexQuoteAmount?: number;
+    // DEX route for routed swaps (e.g. USDT0 via TBTC).
+    dex?: DexDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -102,12 +109,8 @@ export const getFinalAssetSend = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (
-        swap.hops !== undefined &&
-        swap.hops.length > 0 &&
-        swap.hopsPosition === HopsPosition.Before
-    ) {
-        return swap.hops[0].from;
+    if (swap.dex !== undefined && swap.dex.position === HopsPosition.Before) {
+        return swap.dex.hops[0].from;
     }
 
     return coalesceLn && swap.type === SwapType.Reverse ? LN : swap.assetSend;
@@ -117,12 +120,8 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (
-        swap.hops !== undefined &&
-        swap.hops.length > 0 &&
-        swap.hopsPosition === HopsPosition.After
-    ) {
-        return swap.hops[swap.hops.length - 1].to;
+    if (swap.dex !== undefined && swap.dex.position === HopsPosition.After) {
+        return swap.dex.hops[swap.dex.hops.length - 1].to;
     }
 
     return coalesceLn && swap.type === SwapType.Submarine

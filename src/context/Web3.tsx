@@ -14,7 +14,7 @@ import {
     Wallet,
 } from "ethers";
 import log from "loglevel";
-import type { Accessor, JSXElement, Resource, Setter } from "solid-js";
+import type { Accessor, JSXElement, Setter } from "solid-js";
 import {
     createContext,
     createResource,
@@ -120,7 +120,7 @@ const Web3SignerContext = createContext<{
     walletConnected: Accessor<boolean>;
     setWalletConnected: Setter<boolean>;
 
-    gasAbstractionSigner: Resource<Wallet | undefined>;
+    getGasAbstractionSigner: (asset: string) => Wallet;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -167,16 +167,18 @@ const Web3SignerProvider = (props: {
         createSignal<boolean>(false);
     const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
 
-    const [gasAbstractionSigner] = createResource(signer, async (s) => {
-        const chainId = Number((await s.provider.getNetwork()).chainId);
+    const getGasAbstractionSigner = (asset: string): Wallet => {
+        const assetConfig = config.assets?.[asset];
+        const chainId = assetConfig?.network?.chainId;
+        const provider = createProvider(assetConfig?.network?.rpcUrls);
 
         return new Wallet(
             Buffer.from(deriveKeyGasAbstraction(chainId).privateKey).toString(
                 "hex",
             ),
-            s.provider,
+            provider,
         );
-    });
+    };
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
@@ -394,7 +396,7 @@ const Web3SignerProvider = (props: {
                 setWalletConnected,
                 connectProviderForAddress,
                 getContractsForAsset,
-                gasAbstractionSigner,
+                getGasAbstractionSigner,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
                     if (rawProvider()) {

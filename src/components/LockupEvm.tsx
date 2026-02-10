@@ -44,7 +44,7 @@ const lockupWithHops = async (
     claimAddress: string,
     timeoutBlockHeight: number,
     signer: Accessor<Signer>,
-    gasAbstractionSigner: Accessor<Wallet>,
+    getGasAbstractionSigner: (asset: string) => Wallet,
     slippage: number,
 ): Promise<string> => {
     if (hops.length !== 1) {
@@ -67,7 +67,8 @@ const lockupWithHops = async (
         Math.ceil(Number(quote.quote) * (1 + slippage)),
     );
 
-    const router = createRouterContract(hop.from, gasAbstractionSigner());
+    const gasSigner = getGasAbstractionSigner(asset);
+    const router = createRouterContract(hop.from, gasSigner);
     const routerAddress = await router.getAddress();
 
     const calldata = await encodeDexQuote(
@@ -80,9 +81,7 @@ const lockupWithHops = async (
 
     const [permit2Address, chainId, signerAddress] = await Promise.all([
         router.PERMIT2(),
-        gasAbstractionSigner()
-            .provider.getNetwork()
-            .then((n) => n.chainId),
+        gasSigner.provider.getNetwork().then((n) => n.chainId),
         signer().getAddress(),
     ]);
 
@@ -171,7 +170,7 @@ const lockupWithHops = async (
     );
 
     // Send via Alchemy account abstraction
-    return await sendTransaction(gasAbstractionSigner(), chainId, [
+    return await sendTransaction(gasSigner, chainId, [
         { to: tx.to, data: tx.data },
     ]);
 };
@@ -253,7 +252,7 @@ const LockupTransaction = (props: {
         getEtherSwap,
         signer,
         providers,
-        gasAbstractionSigner,
+        getGasAbstractionSigner,
     } = useWeb3Signer();
 
     return (
@@ -284,7 +283,7 @@ const LockupTransaction = (props: {
                             props.claimAddress,
                             props.timeoutBlockHeight,
                             signer,
-                            gasAbstractionSigner,
+                            getGasAbstractionSigner,
                             slippage(),
                         );
                     } else if (

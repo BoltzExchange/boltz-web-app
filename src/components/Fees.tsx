@@ -78,7 +78,7 @@ const Fees = () => {
         onchainAddress,
         addressValid,
     } = useCreateContext();
-    const { signer, gasAbstractionSigner } = useWeb3Signer();
+    const { signer, getGasAbstractionSigner } = useWeb3Signer();
 
     const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
@@ -132,7 +132,7 @@ const Fees = () => {
                 () => assetReceive,
                 () => signer,
                 onchainAddress,
-                gasAbstractionSigner,
+                getGasAbstractionSigner,
             );
             if (!useGasAbstraction) {
                 return 0;

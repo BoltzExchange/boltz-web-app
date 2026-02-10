@@ -48,8 +48,8 @@ const SwapCreated = () => {
                         .toString("hex")}
                     asset={chain.assetSend}
                     hops={
-                        chain.hopsPosition === HopsPosition.Before
-                            ? chain.hops
+                        chain.dex?.position === HopsPosition.Before
+                            ? chain.dex.hops
                             : undefined
                     }
                 />

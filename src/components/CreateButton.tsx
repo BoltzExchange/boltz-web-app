@@ -14,7 +14,7 @@ import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import Pair, { type EncodedHop, type HopsPosition } from "../utils/Pair";
+import Pair, { type EncodedHop, HopsPosition } from "../utils/Pair";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
     fetchBip21Invoice,
@@ -62,7 +62,7 @@ export const getClaimAddress = async (
     assetReceive: Accessor<string>,
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
-    gasAbstractionSigner: Accessor<Wallet>,
+    getGasAbstractionSigner: (asset: string) => Wallet,
 ): Promise<{
     useGasAbstraction: boolean;
     gasPrice: bigint;
@@ -93,14 +93,15 @@ export const getClaimAddress = async (
                 log.info("RIF smart wallet not needed");
             }
         } else {
+            const gasSigner = getGasAbstractionSigner(assetReceive());
             log.debug(
                 "Using gas abstraction signer",
-                gasAbstractionSigner().address,
+                gasSigner.address,
             );
             return {
                 gasPrice: 0n,
                 useGasAbstraction: true,
-                claimAddress: gasAbstractionSigner().address,
+                claimAddress: gasSigner.address,
             };
         }
     }
@@ -161,7 +162,7 @@ const CreateButton = () => {
         signer,
         providers,
         walletConnected,
-        gasAbstractionSigner,
+        getGasAbstractionSigner,
     } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
@@ -634,8 +635,17 @@ const CreateButton = () => {
 
             await setSwapStorage({
                 ...data,
-                hops,
-                hopsPosition,
+                dex:
+                    hopsPosition !== undefined
+                        ? {
+                              hops,
+                              position: hopsPosition,
+                              quoteAmount:
+                                  hopsPosition === HopsPosition.After
+                                      ? Number(receiveAmount())
+                                      : Number(sendAmount()),
+                          }
+                        : undefined,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
@@ -688,7 +698,7 @@ const CreateButton = () => {
                 assetReceive,
                 signer,
                 onchainAddress,
-                gasAbstractionSigner,
+                getGasAbstractionSigner,
             );
 
             if (!valid()) return;

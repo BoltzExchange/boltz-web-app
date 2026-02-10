@@ -192,6 +192,7 @@ const dict = {
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
         slippage: "Slippage",
         slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
+        dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Accept transactions that are not yet confirmed in a block",

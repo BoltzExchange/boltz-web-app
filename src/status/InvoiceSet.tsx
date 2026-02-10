@@ -5,8 +5,8 @@ import LockupEvm from "../components/LockupEvm";
 import PayOnchain from "../components/PayOnchain";
 import { isEvmAsset } from "../consts/Assets";
 import { usePayContext } from "../context/Pay";
-import { decodeInvoice } from "../utils/invoice";
 import { HopsPosition } from "../utils/Pair";
+import { decodeInvoice } from "../utils/invoice";
 import type { SubmarineSwap } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
@@ -40,8 +40,8 @@ const InvoiceSet = () => {
                     timeoutBlockHeight={submarine.timeoutBlockHeight}
                     asset={submarine.assetSend}
                     hops={
-                        submarine.hopsPosition === HopsPosition.Before
-                            ? submarine.hops
+                        submarine.dex?.position === HopsPosition.Before
+                            ? submarine.dex.hops
                             : undefined
                     }
                 />

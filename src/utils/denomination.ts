@@ -16,7 +16,7 @@ export const getValidationRegex = (maximum: number): RegExp => {
     return new RegExp(regex);
 };
 
-const getDecimals = (asset: string) => {
+export const getDecimals = (asset: string) => {
     const assetConfig = config.assets?.[asset];
 
     const isRoutedErc20 =
