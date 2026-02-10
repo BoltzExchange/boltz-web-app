@@ -1,10 +1,4 @@
-import {
-    BsEnvelopeFill,
-    BsGithub,
-    BsTelegram,
-    BsTwitter,
-    BsYoutube,
-} from "solid-icons/bs";
+import { BsEnvelopeFill, BsGithub, BsTwitter, BsYoutube } from "solid-icons/bs";
 import { Show } from "solid-js";
 
 import nostr from "../assets/nostr.svg";
@@ -24,12 +18,6 @@ const Footer = () => {
                     class="github"
                     href={config.githubUrl}>
                     <BsGithub size={22} color="#22374F" />
-                </ExternalLink>
-                <ExternalLink
-                    title="Telegram"
-                    class="telegram"
-                    href={config.telegramUrl}>
-                    <BsTelegram size={22} color="#22374F" />
                 </ExternalLink>
                 <ExternalLink
                     title="Twitter"
