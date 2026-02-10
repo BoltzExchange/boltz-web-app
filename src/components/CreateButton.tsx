@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
-import { PublicClient, WalletClient } from "viem";
+import type { PublicClient, WalletClient } from "viem";
 
 import { BTC, RBTC } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";

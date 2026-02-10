@@ -2,7 +2,7 @@ import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import type { Setter } from "solid-js";
 import { Match, Show, Switch, createResource, createSignal } from "solid-js";
-import { Address } from "viem";
+import type { Address } from "viem";
 
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";

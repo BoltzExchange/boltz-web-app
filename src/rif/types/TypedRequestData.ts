@@ -1,4 +1,4 @@
-import { Address, TypedDataDomain } from "viem";
+import type { Address, TypedDataDomain } from "viem";
 
 interface TypedDataField {
     name: string;

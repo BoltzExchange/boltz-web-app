@@ -1,14 +1,14 @@
 import { createConfig, http } from "@wagmi/core";
 import { EtherSwapAbi } from "src/context/Web3";
-import { Contracts } from "src/utils/boltzClient";
-import { Address, Chain, custom } from "viem";
+import { type Contracts } from "src/utils/boltzClient";
+import { type Address, type Chain, custom } from "viem";
 
 import { config } from "../config";
 
 export function createViemChains() {
     const chains: Chain[] = [];
 
-    for (const [_, value] of Object.entries(config.assets)) {
+    for (const [, value] of Object.entries(config.assets)) {
         if (value.network) {
             chains.push({
                 id: value.network.chainId,
@@ -48,7 +48,7 @@ export const transports = Object.fromEntries(
 export const walletTransport = custom(window.ethereum);
 
 export const wagmiConfig = createConfig({
-    chains: networks as any,
+    chains: networks as [Chain, ...Chain[]],
     transports,
     ssr: false,
 });

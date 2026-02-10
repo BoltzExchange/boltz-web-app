@@ -1,6 +1,6 @@
 import log from "loglevel";
 import { Show, createEffect, createSignal } from "solid-js";
-import { Address } from "viem";
+import type { Address } from "viem";
 
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -118,7 +118,6 @@ const LockupEvm = (props: {
                     }
                     fallback={<InsufficientBalance />}>
                     <ContractTransaction
-                        /* eslint-disable-next-line solid/reactivity */
                         onClick={sendTransaction}
                         children={<ConnectWallet />}
                         address={{

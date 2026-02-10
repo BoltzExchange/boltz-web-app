@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { getWagmiEtherSwapContractConfig } from "src/config/wagmi";
 import { EtherSwapAbi } from "src/context/Web3";
-import { Contracts } from "src/utils/boltzClient";
+import type { Contracts } from "src/utils/boltzClient";
 import {
     type Address,
     type PublicClient,
@@ -91,8 +91,8 @@ export const relayClaimTransaction = async (
         getChainInfo(),
         getSmartWalletAddress(publicClient, walletClient, getContracts),
         publicClient().getGasPrice(),
-        walletClient().account.address,
-        getContracts().swapContracts.EtherSwap,
+        Promise.resolve(walletClient().account.address),
+        Promise.resolve(getContracts().swapContracts.EtherSwap),
     ]);
 
     const smartWalletExists =

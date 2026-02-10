@@ -1,5 +1,5 @@
 import log from "loglevel";
-import { PublicClient, createPublicClient, defineChain, http } from "viem";
+import { type PublicClient, createPublicClient, defineChain, http } from "viem";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
@@ -21,7 +21,7 @@ describe("validate responses", () => {
             chain: rskRegtest,
             transport: http(),
         });
-        return client as any;
+        return client as PublicClient;
     };
 
     const getContracts = () => {
@@ -123,7 +123,7 @@ describe("validate responses", () => {
             ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...swapBtc, asset: RBTC }}
         `*/
             "$desc",
-            async ({ valid, contractCode, swap }) => {
+            async ({ valid, swap }) => {
                 const promise = validateResponse(
                     swap,
                     () =>
@@ -221,7 +221,7 @@ describe("validate responses", () => {
             ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...reverseSwapBtc, asset: RBTC }}
         */
             "$desc",
-            async ({ valid, contractCode, swap }) => {
+            async ({ valid, swap }) => {
                 const promise = validateResponse(
                     swap,
                     () =>

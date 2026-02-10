@@ -10,7 +10,7 @@ import {
 } from "boltz-core";
 import { default as BufferBrowser } from "buffer";
 import type { ECPairInterface } from "ecpair";
-import { Address, PublicClient, keccak256, toHex } from "viem";
+import { type Address, type PublicClient, keccak256, toHex } from "viem";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";

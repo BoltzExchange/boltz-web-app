@@ -1,7 +1,7 @@
 import log from "loglevel";
 import { createEffect, createResource } from "solid-js";
 import { networks, wagmiConfig } from "src/config/wagmi";
-import { Address, createWalletClient, custom } from "viem";
+import { type Address, createWalletClient, custom } from "viem";
 
 import { useWeb3Signer } from "../context/Web3";
 import loader from "../lazy/walletConnect";

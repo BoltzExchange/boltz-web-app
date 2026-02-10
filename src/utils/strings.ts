@@ -1,4 +1,4 @@
-import { Hex } from "viem";
+import type { Hex } from "viem";
 
 export const trimPrefix = (str: string, prefix: string) => {
     if (str.startsWith(prefix)) {

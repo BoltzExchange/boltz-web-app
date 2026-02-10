@@ -70,7 +70,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         this.publicClient = createPublicClient({
             chain: wagmiConfig.chains[0],
             transport: transports[0],
-        }) as any;
+        }) as PublicClient;
         this.walletClient = createWalletClient({
             account: addresses[0].address as Address,
             chain: wagmiConfig.chains[0],

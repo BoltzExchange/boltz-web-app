@@ -19,7 +19,7 @@ import { config } from "../config";
 import type { AssetType } from "../consts/Assets";
 import { RBTC } from "../consts/Assets";
 import { EtherSwapAbi } from "../context/Web3";
-import { Contracts } from "./boltzClient";
+import { type Contracts } from "./boltzClient";
 import { weiToSatoshi } from "./rootstock";
 
 type GetPublicClient = () => PublicClient;

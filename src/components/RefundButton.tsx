@@ -4,7 +4,7 @@ import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
 import { Show, createMemo, createResource, createSignal } from "solid-js";
 import { getWagmiEtherSwapContractConfig } from "src/config/wagmi";
-import { Hash, Hex, parseSignature } from "viem";
+import { type Hash, type Hex, parseSignature } from "viem";
 
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";

@@ -1,4 +1,4 @@
-import { PublicClient, WalletClient } from "viem";
+import type { PublicClient, WalletClient } from "viem";
 
 export const derivationPaths = {
     Ethereum: "44'/60'/0'/0",

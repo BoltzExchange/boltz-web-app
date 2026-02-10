@@ -4,7 +4,7 @@ import { ImArrowLeft2, ImArrowRight2 } from "solid-icons/im";
 import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
-import { Address } from "viem";
+import type { Address } from "viem";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";

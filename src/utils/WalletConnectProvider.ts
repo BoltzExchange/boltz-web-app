@@ -1,5 +1,5 @@
 import type { Setter } from "solid-js";
-import { WalletClient } from "viem";
+import type { WalletClient } from "viem";
 
 import type { EIP1193Provider } from "../consts/Types";
 import type { DictKey } from "../i18n/i18n";
