@@ -1,5 +1,14 @@
 import { type Wallet, getBytes } from "ethers";
 
+import { formatError } from "../utils/errors";
+
+const alchemyHeaders = {
+    accept: "application/json",
+    "content-type": "application/json",
+} as const;
+const jsonRpcVersion = "2.0";
+const jsonRpcId = 1;
+
 const getAlchemyApiKey = (): string => {
     const key = import.meta.env.VITE_ALCHEMY_API_KEY as string | undefined;
     if (key === undefined) {
@@ -18,37 +27,109 @@ const getAlchemyGasPolicyId = (): string => {
     return id;
 };
 
+type JsonRpcError = {
+    code: number;
+    message: string;
+    data?: unknown;
+};
+
+type JsonRpcResponse<T> = {
+    id: number | string | null;
+    jsonrpc: string;
+    result?: T;
+    error?: JsonRpcError;
+};
+
+type JsonRpcSuccessResponse<T> = {
+    id: number | string | null;
+    jsonrpc: string;
+    result: T;
+};
+
+const parseAlchemyResponse = <T>(
+    rawBody: string,
+    method: string,
+    response: Response,
+): JsonRpcResponse<T> => {
+    try {
+        return JSON.parse(rawBody) as JsonRpcResponse<T>;
+    } catch {
+        throw new Error(
+            `Alchemy returned invalid JSON for ${method} (HTTP ${response.status} ${response.statusText})`,
+        );
+    }
+};
+
+const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
+    method: string,
+    params: unknown[],
+): Promise<T> => {
+    let response: Response;
+
+    try {
+        response = await fetch(alchemyUrl, {
+            method: "POST",
+            headers: alchemyHeaders,
+            body: JSON.stringify({
+                id: jsonRpcId,
+                jsonrpc: jsonRpcVersion,
+                method,
+                params,
+            }),
+        });
+    } catch (error) {
+        throw new Error(
+            `Alchemy request failed for ${method}: ${formatError(error)}`,
+        );
+    }
+
+    const rawBody = await response.text();
+    const payload = parseAlchemyResponse<T>(rawBody, method, response);
+
+    if (!response.ok) {
+        const errorDetails =
+            payload.error !== undefined
+                ? `${payload.error.code} ${payload.error.message}`
+                : rawBody;
+        throw new Error(
+            `Alchemy HTTP error for ${method}: ${response.status} ${response.statusText} (${errorDetails})`,
+        );
+    }
+
+    if (payload.error !== undefined) {
+        throw new Error(
+            `Alchemy RPC error for ${method}: ${payload.error.code} ${payload.error.message}`,
+        );
+    }
+
+    if (payload.result === undefined) {
+        throw new Error(`Alchemy response for ${method} is missing result`);
+    }
+
+    return {
+        id: payload.id,
+        jsonrpc: payload.jsonrpc,
+        result: payload.result,
+    } as T;
+};
+
 export const prepareCalls = async (
     signerAddress: string,
     chainId: string,
     calls: { to: string; data?: string; value?: string }[],
 ) => {
-    const response = await fetch(alchemyUrl, {
-        method: "POST",
-        headers: {
-            accept: "application/json",
-            "content-type": "application/json",
-        },
-        body: JSON.stringify({
-            id: 1,
-            jsonrpc: "2.0",
-            method: "wallet_prepareCalls",
-            params: [
-                {
-                    capabilities: {
-                        paymasterService: {
-                            policyId: getAlchemyGasPolicyId(),
-                        },
-                    },
-                    calls,
-                    from: signerAddress,
-                    chainId,
+    return await requestAlchemy<PrepareCallsResponse>("wallet_prepareCalls", [
+        {
+            capabilities: {
+                paymasterService: {
+                    policyId: getAlchemyGasPolicyId(),
                 },
-            ],
-        }),
-    });
-
-    return (await response.json()) as PrepareCallsResponse;
+            },
+            calls,
+            from: signerAddress,
+            chainId,
+        },
+    ]);
 };
 
 type SignatureRequest = {
@@ -70,11 +151,7 @@ type PrepareCallsResult = {
     signatureRequest?: SignatureRequest;
 };
 
-type PrepareCallsResponse = {
-    id: number;
-    jsonrpc: string;
-    result: PrepareCallsResult;
-};
+type PrepareCallsResponse = JsonRpcSuccessResponse<PrepareCallsResult>;
 
 type SignedEntry = {
     type: string;
@@ -83,13 +160,9 @@ type SignedEntry = {
     signature: { type: string; data: string };
 };
 
-type SendPreparedCallsResponse = {
-    id: number;
-    jsonrpc: string;
-    result: {
-        preparedCallIds: string[];
-    };
-};
+type SendPreparedCallsResponse = JsonRpcSuccessResponse<{
+    preparedCallIds: string[];
+}>;
 
 type CallsStatusReceipt = {
     transactionHash: string;
@@ -99,14 +172,10 @@ type CallsStatusReceipt = {
     gasUsed: string;
 };
 
-type GetCallsStatusResponse = {
-    id: number;
-    jsonrpc: string;
-    result: {
-        status: number;
-        receipts?: CallsStatusReceipt[];
-    };
-};
+type GetCallsStatusResponse = JsonRpcSuccessResponse<{
+    status: number;
+    receipts?: CallsStatusReceipt[];
+}>;
 
 export const signPreparedCalls = async (
     signer: Wallet,
@@ -116,13 +185,28 @@ export const signPreparedCalls = async (
 
     if (result.type === "array") {
         const entries = result.data as PrepareCallsEntry[];
+        if (entries.length < 2) {
+            throw new Error(
+                "Alchemy prepareCalls response is missing required array entries",
+            );
+        }
 
         // Sign the 7702 authorization as a raw digest (no EIP-191 prefix)
         const authPayload = entries[0].signatureRequest.rawPayload;
+        if (authPayload === undefined) {
+            throw new Error(
+                "Alchemy prepareCalls response is missing authorization payload",
+            );
+        }
         const authSignature = signer.signingKey.sign(authPayload).serialized;
 
         // Sign the user operation
-        const uoPayload = entries[1].signatureRequest.data.raw;
+        const uoPayload = entries[1].signatureRequest.data?.raw;
+        if (uoPayload === undefined) {
+            throw new Error(
+                "Alchemy prepareCalls response is missing user operation payload",
+            );
+        }
         const uoSignature = await signer.signMessage(getBytes(uoPayload));
 
         return [
@@ -142,7 +226,12 @@ export const signPreparedCalls = async (
     }
 
     // Subsequent transactions: sign only the user operation
-    const payload = result.signatureRequest.data.raw;
+    const payload = result.signatureRequest?.data?.raw;
+    if (payload === undefined) {
+        throw new Error(
+            "Alchemy prepareCalls response is missing user operation payload",
+        );
+    }
     const signature = await signer.signMessage(getBytes(payload));
 
     return {
@@ -160,42 +249,27 @@ export const sendPreparedCalls = async (
         ? [{ type: "array", data: signedData }]
         : [signedData];
 
-    const response = await fetch(alchemyUrl, {
-        method: "POST",
-        headers: {
-            accept: "application/json",
-            "content-type": "application/json",
-        },
-        body: JSON.stringify({
-            id: 1,
-            jsonrpc: "2.0",
-            method: "wallet_sendPreparedCalls",
-            params,
-        }),
-    });
+    const response = await requestAlchemy<SendPreparedCallsResponse>(
+        "wallet_sendPreparedCalls",
+        params,
+    );
+    const callId = response.result.preparedCallIds[0];
+    if (callId === undefined) {
+        throw new Error(
+            "Alchemy sendPreparedCalls response does not include a prepared call ID",
+        );
+    }
 
-    const result = (await response.json()) as SendPreparedCallsResponse;
-    return result.result.preparedCallIds[0];
+    return callId;
 };
 
 const getCallsStatus = async (
     callId: string,
 ): Promise<GetCallsStatusResponse> => {
-    const response = await fetch(alchemyUrl, {
-        method: "POST",
-        headers: {
-            accept: "application/json",
-            "content-type": "application/json",
-        },
-        body: JSON.stringify({
-            id: 1,
-            jsonrpc: "2.0",
-            method: "wallet_getCallsStatus",
-            params: [callId],
-        }),
-    });
-
-    return (await response.json()) as GetCallsStatusResponse;
+    return await requestAlchemy<GetCallsStatusResponse>(
+        "wallet_getCallsStatus",
+        [callId],
+    );
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
