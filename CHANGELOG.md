@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.16](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.15..v1.8.16) - 2026-02-11
+
+### Features
+
+- add inline Rescue Key actions (#1152) - ([5ada270](https://github.com/BoltzExchange/boltz-web-app/commit/5ada2702a474b91c9547c8527833da8840a88104))
+- close settings with escape key (#1154) - ([b0cbaa7](https://github.com/BoltzExchange/boltz-web-app/commit/b0cbaa74e00d796303b5b0ba2cee403da56ecaaf))
+- add simplex to pro product page (#1162) - ([9378ab7](https://github.com/BoltzExchange/boltz-web-app/commit/9378ab7bdae2c10b15de4058090f9a15441eb888))
+
+### Miscellaneous Chores
+
+- **(deps)** bump seroval and solid-js (#1156) - ([162ecc3](https://github.com/BoltzExchange/boltz-web-app/commit/162ecc350f61460d6f8b888cd873bd5d90e02e29))
+- **(deps-dev)** bump qs from 6.14.0 to 6.14.1 (#1145) - ([68249f8](https://github.com/BoltzExchange/boltz-web-app/commit/68249f8bb6fe829af63cad1eec3e9dfd4b9743e4))
+- do not prevent reload on regtest (#1151) - ([f3f1466](https://github.com/BoltzExchange/boltz-web-app/commit/f3f14669822dc0e4a7fb950964087a2d5b5cd06d))
+- remove discord (#1155) - ([c4fe0ed](https://github.com/BoltzExchange/boltz-web-app/commit/c4fe0edb655e453f552e63026fc5945f45d59a92))
+- add swap status logging (#1157) - ([d12065a](https://github.com/BoltzExchange/boltz-web-app/commit/d12065a9afb914aa15a37a8deedb6dbf6c69acf6))
+- add alby logo (#1159) - ([059386a](https://github.com/BoltzExchange/boltz-web-app/commit/059386a47e70ce9135c22c010b5ede4f2720f561))
+- remove telegram (#1164) - ([e96e37c](https://github.com/BoltzExchange/boltz-web-app/commit/e96e37cab182ba3fe122c826a219ceb20b3598bc))
+
+### Tests
+
+- **(e2e)** add RSK e2e tests (#1158) - ([544e00e](https://github.com/BoltzExchange/boltz-web-app/commit/544e00e687466b4a52d0bdfff5654af589a617e9))
+- update e2e with sub-sat fees (#1146) - ([83506a0](https://github.com/BoltzExchange/boltz-web-app/commit/83506a03f30b2bd16428f90dbcef248235c37da8))
+
+---
 ## [1.8.15](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.14..v1.8.15) - 2026-01-21
 
 ### Bug Fixes
@@ -20,6 +44,7 @@ All notable changes to this project will be documented in this file. See [conven
 
 - **(deps)** bump h3 from 1.15.3 to 1.15.5 (#1141) - ([2551e50](https://github.com/BoltzExchange/boltz-web-app/commit/2551e502c3a7b15f4d3ceee25f09e4faf9e86d40))
 - error when not running in secure context (#1138) - ([100ffec](https://github.com/BoltzExchange/boltz-web-app/commit/100ffece3d9e42fc4c764791ae30e60e00495974))
+- bump version to v1.8.15 (#1144) - ([b0a12fa](https://github.com/BoltzExchange/boltz-web-app/commit/b0a12fae28ae4085bc7adc257fbbc83b4063c842))
 
 ### Refactoring
 
