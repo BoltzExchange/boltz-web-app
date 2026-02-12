@@ -51,3 +51,14 @@
         content: "rootstock";
     }
 }
+
+.asset-USDT0-RBTC {
+    .icon {
+        border: inset 5px transparent;
+        background-image: vars.$usdt0_icon;
+    }
+
+    .asset-text:before {
+        content: "usdt0 RSK";
+    }
+}

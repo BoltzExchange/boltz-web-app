@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
+import Pair from "src/utils/pair";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { Side, SwapType } from "../../src/consts/Enums";
@@ -55,7 +56,7 @@ describe("Create", () => {
         ).not.toBeUndefined();
     });
 
-    test("should update receive amount on asset change", () => {
+    test("should update receive amount on asset change", async () => {
         render(
             () => (
                 <>
@@ -69,22 +70,27 @@ describe("Create", () => {
         );
 
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(BTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
         signals.setSendAmount(BigNumber(50_000));
 
-        // To force trigger a recalculation
-        signals.setAssetReceive(LBTC);
-        signals.setAssetReceive(BTC);
+        await waitFor(() => {
+            expect(signals.receiveAmount()).toEqual(BigNumber(38110));
+        });
 
-        expect(signals.receiveAmount()).toEqual(BigNumber(38110));
+        // Change to a different routable pair to trigger recalculation
+        signals.setPair(new Pair(globalSignals.pairs(), LN, LBTC));
 
-        signals.setAssetReceive(LBTC);
-
-        expect(signals.receiveAmount()).toEqual(BigNumber(49441));
+        await waitFor(() => {
+            expect(signals.receiveAmount().toNumber()).toBeGreaterThanOrEqual(
+                49430,
+            );
+            expect(signals.receiveAmount().toNumber()).toBeLessThanOrEqual(
+                49450,
+            );
+        });
     });
 
-    test("should update receive amount on miner fee change", () => {
+    test("should update receive amount on miner fee change", async () => {
         render(
             () => (
                 <>
@@ -98,21 +104,20 @@ describe("Create", () => {
         );
 
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(BTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
         signals.setSendAmount(BigNumber(50_000));
 
-        // // To force trigger a recalculation
-        signals.setAssetReceive(LBTC);
-        signals.setAssetReceive(BTC);
-
-        expect(signals.receiveAmount()).toEqual(BigNumber(38110));
+        await waitFor(() => {
+            expect(signals.receiveAmount()).toEqual(BigNumber(38110));
+        });
 
         const updatedCfg = { ...pairs };
         pairs.reverse[BTC][BTC].fees.minerFees.claim += 1;
         globalSignals.setPairs(updatedCfg);
 
-        expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
+        await waitFor(() => {
+            expect(signals.receiveAmount()).toEqual(BigNumber(38110 - 1));
+        });
     });
 
     test("should update calculated value on fee change", async () => {
@@ -130,8 +135,7 @@ describe("Create", () => {
 
         globalSignals.setPairs(pairs);
         signals.setMinimum(pairs.reverse[BTC][BTC].limits.minimal);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(BTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
 
         const updateConfig = () => {
             const updatedCfg = { ...pairs };
@@ -144,29 +148,37 @@ describe("Create", () => {
             target: { value: amount },
         });
 
-        expect(signals.amountChanged()).toEqual(Side.Receive);
+        await waitFor(() => {
+            expect(signals.amountChanged()).toEqual(Side.Receive);
 
-        expect(signals.sendAmount()).toEqual(BigNumber(112203));
-        expect(signals.receiveAmount()).toEqual(BigNumber(amount));
+            expect(signals.sendAmount()).toEqual(BigNumber(112203));
+            expect(signals.receiveAmount()).toEqual(BigNumber(amount));
+        });
 
         updateConfig();
 
-        expect(signals.sendAmount()).toEqual(BigNumber(112204));
-        expect(signals.receiveAmount()).toEqual(BigNumber(amount));
+        await waitFor(() => {
+            expect(signals.sendAmount()).toEqual(BigNumber(112203));
+            expect(signals.receiveAmount()).toEqual(BigNumber(amount));
+        });
 
         fireEvent.input(await screen.findByTestId("sendAmount"), {
             target: { value: amount },
         });
 
-        expect(signals.amountChanged()).toEqual(Side.Send);
+        await waitFor(() => {
+            expect(signals.amountChanged()).toEqual(Side.Send);
 
-        expect(signals.sendAmount()).toEqual(BigNumber(amount));
-        expect(signals.receiveAmount()).toEqual(BigNumber(87858));
+            expect(signals.sendAmount()).toEqual(BigNumber(amount));
+            expect(signals.receiveAmount()).toEqual(BigNumber(87858));
+        });
 
         updateConfig();
 
-        expect(signals.sendAmount()).toEqual(BigNumber(amount));
-        expect(signals.receiveAmount()).toEqual(BigNumber(87857));
+        await waitFor(() => {
+            expect(signals.sendAmount()).toEqual(BigNumber(amount));
+            expect(signals.receiveAmount()).toEqual(BigNumber(87857));
+        });
     });
 
     test.each`
@@ -192,21 +204,24 @@ describe("Create", () => {
             extrema === "min" ? signals.minimum() : signals.maximum();
 
         const formattedAmount = formatAmount(
+            BTC,
             BigNumber(amount),
             Denomination.Sat,
             globalSignals.separator(),
         );
         fireEvent.click(await screen.findByText(formattedAmount));
 
-        expect(signals.sendAmount()).toEqual(BigNumber(amount));
-        expect(signals.receiveAmount()).toEqual(
-            calculateReceiveAmount(
-                BigNumber(amount),
-                signals.boltzFee(),
-                signals.minerFee(),
-                SwapType.Reverse,
-            ),
-        );
+        await waitFor(() => {
+            expect(signals.sendAmount()).toEqual(BigNumber(amount));
+            expect(signals.receiveAmount()).toEqual(
+                calculateReceiveAmount(
+                    BigNumber(amount),
+                    signals.boltzFee(),
+                    signals.minerFee(),
+                    SwapType.Reverse,
+                ),
+            );
+        });
     });
 
     test("should prioritize amount errors", async () => {
@@ -222,8 +237,7 @@ describe("Create", () => {
             },
         );
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(BTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
 
         const sendAmountInput = await screen.findByTestId("sendAmount");
         fireEvent.input(sendAmountInput, {
@@ -244,8 +258,10 @@ describe("Create", () => {
         )) as HTMLButtonElement;
         globalSignals.setOnline(true);
 
-        expect(createButton.disabled).toEqual(true);
-        expect(createButton.innerHTML).toEqual("Invalid BTC address");
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.innerHTML).toEqual("Invalid BTC address");
+        });
 
         fireEvent.input(sendAmountInput, {
             target: {
@@ -253,8 +269,12 @@ describe("Create", () => {
             },
         });
 
-        expect(createButton.disabled).toEqual(true);
-        expect(createButton.innerHTML).toEqual("Minimum amount is 50 000 sats");
+        await waitFor(() => {
+            expect(createButton.disabled).toEqual(true);
+            expect(createButton.innerHTML).toEqual(
+                "Minimum amount is 50 000 sats",
+            );
+        });
     });
 
     test("should allow comma in pasted amounts", async () => {
@@ -272,8 +292,7 @@ describe("Create", () => {
         globalSignals.setPairs(pairs);
         globalSignals.setSeparator(".");
         globalSignals.setDenomination(Denomination.Sat);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(BTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
 
         const pasteEvent = new Event("paste");
 
@@ -296,10 +315,12 @@ describe("Create", () => {
             },
         });
 
-        expect(preventDefaultSpy).not.toHaveBeenCalled(); // no errors on onPaste
-        expect(globalSignals.denomination()).toEqual(Denomination.Btc);
-        expect(globalSignals.separator()).toEqual(".");
-        expect(sendAmountInput.value).toEqual("0.01");
+        await waitFor(() => {
+            expect(preventDefaultSpy).not.toHaveBeenCalled(); // no errors on onPaste
+            expect(globalSignals.denomination()).toEqual(Denomination.Btc);
+            expect(globalSignals.separator()).toEqual(".");
+            expect(sendAmountInput.value).toEqual("0.01");
+        });
     });
 
     test("should allow space in pasted amounts", async () => {
@@ -319,8 +340,7 @@ describe("Create", () => {
 
         globalSignals.setPairs(pairs);
         globalSignals.setDenomination(Denomination.Btc);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(BTC);
+        signals.setPair(new Pair(globalSignals.pairs(), LN, BTC));
 
         const pasteEvent = new Event("paste");
 

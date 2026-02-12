@@ -214,6 +214,7 @@ const ShowAddress = (props: {
                 <br />
                 {t("balance")}:{" "}
                 {formatAmount(
+                    RBTC,
                     BigNumber(weiToSatoshi(rskBalance()).toString()),
                     denomination(),
                     separator(),
@@ -282,8 +283,7 @@ const ConnectWallet = (props: {
 }) => {
     const { t } = useGlobalContext();
     const { providers, signer, getContracts } = useWeb3Signer();
-    const { setAddressValid, setOnchainAddress, assetReceive } =
-        useCreateContext();
+    const { setAddressValid, setOnchainAddress, pair } = useCreateContext();
 
     const address = createMemo(() => signer()?.address);
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
@@ -301,7 +301,7 @@ const ConnectWallet = (props: {
 
         setNetworkValid(true);
 
-        if (assetReceive() === RBTC) {
+        if (pair().toAsset === RBTC) {
             const addr = address();
             setAddressValid(addr !== undefined);
             setOnchainAddress(addr || "");
