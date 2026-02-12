@@ -536,6 +536,11 @@ textarea.invalid {
     cursor: pointer;
     width: 28px;
 }
+
+.asset-fallback {
+    margin-left: 0.25em;
+}
+
 .denominator {
     filter: brightness(10);
     width: 15px;

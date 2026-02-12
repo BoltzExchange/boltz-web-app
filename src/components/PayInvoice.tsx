@@ -30,6 +30,7 @@ const PayInvoice = (props: { sendAmount: number; invoice: string }) => {
                         BigNumber(props.sendAmount),
                         denomination(),
                         separator(),
+                        BTC,
                     ),
                     denomination: formatDenomination(denomination(), BTC),
                 })}

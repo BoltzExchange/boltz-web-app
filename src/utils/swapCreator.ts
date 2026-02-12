@@ -3,9 +3,10 @@ import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 
-import { RBTC } from "../consts/Assets";
+import { LN, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
+import { type EncodedHop, HopsPosition } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
     Pairs,
@@ -21,6 +22,18 @@ import { derivePreimageFromRescueKey } from "./claim";
 import { getPair } from "./helper";
 import type { RescueFile } from "./rescueFile";
 
+export type DexDetail = {
+    hops: EncodedHop[];
+
+    // Whether hops run before or after the Boltz swap
+    position: HopsPosition;
+
+    // Expected DEX amount at creation; updated with actual amount after execution.
+    // For hops after Boltz: expected output amount from the DEX.
+    // For hops before Boltz: expected input amount to the DEX.
+    quoteAmount: number;
+};
+
 export type SwapBase = {
     type: SwapType;
     status?: string;
@@ -35,13 +48,16 @@ export type SwapBase = {
     claimTx?: string;
     lockupTx?: string;
 
-    useRif: boolean;
+    useGasAbstraction: boolean;
     signer?: string;
     // Set for hardware wallet signers
     derivationPath?: string;
 
     // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
     originalDestination?: string;
+
+    // DEX route for routed swaps (e.g. USDT0 via TBTC).
+    dex?: DexDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -89,18 +105,43 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
     }
 };
 
-export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;
+export const getFinalAssetSend = (
+    swap: SwapBase,
+    coalesceLn: boolean = false,
+): string => {
+    if (swap.dex !== undefined && swap.dex.position === HopsPosition.Before) {
+        return swap.dex.hops[0].from;
+    }
+
+    return coalesceLn && swap.type === SwapType.Reverse ? LN : swap.assetSend;
+};
+
+export const getFinalAssetReceive = (
+    swap: SwapBase,
+    coalesceLn: boolean = false,
+): string => {
+    if (swap.dex !== undefined && swap.dex.position === HopsPosition.After) {
+        return swap.dex.hops[swap.dex.hops.length - 1].to;
+    }
+
+    return coalesceLn && swap.type === SwapType.Submarine
+        ? LN
+        : swap.assetReceive;
+};
+
+export const isEvmSwap = (swap: SomeSwap) =>
+    isEvmAsset(getRelevantAssetForSwap(swap));
 
 const generatePreimage = ({
-    isRsk,
+    isEvm,
     keyIndex,
     rescueFile,
 }: {
-    isRsk: boolean;
+    isEvm: boolean;
     keyIndex: number;
     rescueFile: RescueFile;
 }) => {
-    if (isRsk) {
+    if (isEvm) {
         return randomBytes(32);
     }
     return derivePreimageFromRescueKey(rescueFile, keyIndex);
@@ -114,12 +155,12 @@ export const createSubmarine = async (
     receiveAmount: BigNumber,
     invoice: string,
     referralId: string,
-    useRif: boolean,
+    useGasAbstraction: boolean,
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<SubmarineSwap> => {
-    const isRsk = assetReceive === RBTC;
-    const key = !isRsk ? newKey() : undefined;
+    const isEvm = isEvmAsset(assetReceive);
+    const key = !isEvm ? newKey() : undefined;
     const res = await createSubmarineSwap(
         assetSend,
         assetReceive,
@@ -139,7 +180,7 @@ export const createSubmarine = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            useGasAbstraction,
         ),
         invoice,
         originalDestination,
@@ -155,16 +196,16 @@ export const createReverse = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     referralId: string,
-    useRif: boolean,
+    useGasAbstraction: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<ReverseSwap> => {
-    const isRsk = assetReceive === RBTC;
+    const isEvm = isEvmAsset(assetReceive);
 
-    const key = !isRsk ? newKey() : undefined;
+    const key = !isEvm ? newKey() : undefined;
     const preimage = generatePreimage({
-        isRsk,
+        isEvm,
         keyIndex: key?.index,
         rescueFile,
     });
@@ -190,7 +231,7 @@ export const createReverse = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            useGasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -207,16 +248,16 @@ export const createChain = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     referralId: string,
-    useRif: boolean,
+    useGasAbstraction: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<ChainSwap> => {
-    const claimKey = assetReceive !== RBTC ? newKey() : undefined;
-    const refundKey = assetSend !== RBTC ? newKey() : undefined;
-    const isRsk = assetReceive === RBTC || assetSend === RBTC;
+    const claimKey = !isEvmAsset(assetReceive) ? newKey() : undefined;
+    const refundKey = !isEvmAsset(assetSend) ? newKey() : undefined;
+    const isEvm = isEvmAsset(assetReceive) || isEvmAsset(assetSend);
     const preimage = generatePreimage({
-        isRsk,
+        isEvm,
         keyIndex: claimKey?.index,
         rescueFile,
     });
@@ -246,7 +287,7 @@ export const createChain = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            useGasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -263,11 +304,11 @@ const annotateSwapBaseData = <T>(
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
-    useRif: boolean,
+    useGasAbstraction: boolean,
 ): T & SwapBase => ({
     ...createdResponse,
     type,
-    useRif,
+    useGasAbstraction,
     assetSend,
     assetReceive,
     date: new Date().getTime(),

@@ -20,6 +20,8 @@ export const derivationPath = "m/44/0/0/0";
 
 const getPath = (index: number) => `${derivationPath}/${index}`;
 
+const getPathGasAbstraction = (chainId: number) => `m/44/${chainId}/0/0`;
+
 const mnemonicToHDKey = (mnemonic: string) => {
     const seed = mnemonicToSeedSync(mnemonic);
     return HDKey.fromMasterSeed(seed);
@@ -35,6 +37,15 @@ export const generateRescueFile = (): RescueFile => ({
 
 export const deriveKey = (rescueFile: RescueFile, index: number) => {
     return mnemonicToHDKey(rescueFile.mnemonic).derive(getPath(index));
+};
+
+export const deriveKeyGasAbstraction = (
+    rescueFile: RescueFile,
+    chainId: number,
+) => {
+    return mnemonicToHDKey(rescueFile.mnemonic).derive(
+        getPathGasAbstraction(chainId),
+    );
 };
 
 export const validateRescueFile = (

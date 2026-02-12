@@ -6,7 +6,7 @@ import { Show, createEffect, createResource, createSignal } from "solid-js";
 import ExternalLink from "../components/ExternalLink";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -14,7 +14,7 @@ import { getSubmarinePreimage } from "../utils/boltzClient";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { checkInvoicePreimage } from "../utils/invoice";
-import type { SubmarineSwap } from "../utils/swapCreator";
+import { type SubmarineSwap, getFinalAssetReceive } from "../utils/swapCreator";
 
 const Broadcasting = () => {
     const { t } = useGlobalContext();
@@ -78,7 +78,7 @@ const TransactionClaimed = () => {
         // Else make sure the transaction was actually broadcast
         setClaimBroadcast(
             s.type !== SwapType.Reverse ||
-                s.assetReceive === RBTC ||
+                isEvmAsset(s.assetReceive) ||
                 s.claimTx !== undefined,
         );
     });
@@ -90,13 +90,16 @@ const TransactionClaimed = () => {
                 <p>
                     {t("successfully_swapped", {
                         amount: formatAmount(
-                            BigNumber(swap().receiveAmount),
+                            BigNumber(
+                                swap().dex?.quoteAmount ?? swap().receiveAmount,
+                            ),
                             denomination(),
                             separator(),
+                            getFinalAssetReceive(swap()),
                         ),
                         denomination: formatDenomination(
                             denomination(),
-                            swap().assetReceive,
+                            getFinalAssetReceive(swap()),
                         ),
                     })}
                 </p>
