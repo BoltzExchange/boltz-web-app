@@ -70,7 +70,7 @@
         "@ledgerhq/hw-app-eth": "^7.0.1",
         "@ledgerhq/hw-transport-webhid": "^6.30.10",
         "@reown/appkit": "1.6.9",
-        "@reown/appkit-adapter-wagmi": "^1.6.9",
+        "@reown/appkit-adapter-wagmi": "1.6.9",
         "@scure/base": "^2.0.0",
         "@scure/bip32": "^2.0.1",
         "@scure/bip39": "^2.0.1",

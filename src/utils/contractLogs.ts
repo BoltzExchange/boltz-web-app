@@ -51,10 +51,10 @@ export type LogRefundData = {
 };
 
 export const getLogsFromReceipt = async (
-    publicClient: GetPublicClient,
+    client: PublicClient,
     txHash: Hex,
 ): Promise<LogRefundData> => {
-    const receipt = await publicClient().getTransactionReceipt({
+    const receipt = await client.getTransactionReceipt({
         hash: txHash,
     });
     const logs = parseEventLogs({
@@ -72,7 +72,7 @@ export const getLogsFromReceipt = async (
         return parseLockupEvent(eventLog).data;
     }
 
-    throw "could not find event";
+    throw new Error("could not find event");
 };
 
 async function* scanLogsForPossibleRefunds(
@@ -114,15 +114,17 @@ async function* scanLogsForPossibleRefunds(
             event: parseAbiItem(
                 "event Lockup(bytes32, uint256, address, address, uint256)",
             ),
-            fromBlock: BigInt(fromBlock),
-            toBlock: BigInt(toBlock),
+            fromBlock,
+            toBlock,
             args: [null, null, null, signerAddress],
         });
 
         const results: { progress: number; events: LogRefundData[] } = {
             progress:
-                Number(latestBlock - toBlock) /
-                Number(latestBlock - deployHeight),
+                latestBlock === deployHeight
+                    ? 1
+                    : Number(latestBlock - toBlock) /
+                      Number(latestBlock - deployHeight),
             events: [],
         };
 
@@ -137,23 +139,21 @@ async function* scanLogsForPossibleRefunds(
                 functionName: "swaps",
                 args: [
                     keccak256(
-                        toHex(
-                            encodeAbiParameters(
-                                [
-                                    { type: "bytes32" },
-                                    { type: "uint256" },
-                                    { type: "address" },
-                                    { type: "address" },
-                                    { type: "uint256" },
-                                ],
-                                [
-                                    decoded[0],
-                                    decoded[1],
-                                    data.claimAddress,
-                                    data.refundAddress,
-                                    data.timelock,
-                                ],
-                            ),
+                        encodeAbiParameters(
+                            [
+                                { type: "bytes32" },
+                                { type: "uint256" },
+                                { type: "address" },
+                                { type: "address" },
+                                { type: "uint256" },
+                            ],
+                            [
+                                decoded.args[0] as Hex,
+                                decoded.args[1] as bigint,
+                                data.claimAddress,
+                                data.refundAddress,
+                                data.timelock,
+                            ],
                         ),
                     ),
                 ],

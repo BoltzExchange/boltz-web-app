@@ -189,14 +189,25 @@ const ShowAddress = (props: {
 
     const [text, setText] = createSignal<string | undefined>(undefined);
 
-    const [rskBalance] = createResource(async () => {
-        if (publicClient() === undefined || walletClient() === undefined) {
-            return undefined;
-        }
-        return publicClient().getBalance({
-            address: (await walletClient().getAddresses())[0],
-        });
-    });
+    const [rskBalance] = createResource(
+        () => {
+            const client = publicClient();
+            const wallet = walletClient();
+            if (!client || !wallet) {
+                return null;
+            }
+            return { client, wallet };
+        },
+        async (clients) => {
+            if (!clients) {
+                return undefined;
+            }
+            const { client, wallet } = clients;
+            return client.getBalance({
+                address: wallet.account.address,
+            });
+        },
+    );
 
     return (
         <button

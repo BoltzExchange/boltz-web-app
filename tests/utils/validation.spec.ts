@@ -10,7 +10,7 @@ import { validateResponse } from "../../src/utils/validation";
 
 const rskRegtest = defineChain({
     id: 33,
-    name: "Anvil",
+    name: "RSK Regtest",
     nativeCurrency: { name: "RBTC", symbol: "RBTC", decimals: 18 },
     rpcUrls: { default: { http: ["http://localhost:8545"] } },
 });

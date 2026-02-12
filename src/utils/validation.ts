@@ -50,8 +50,8 @@ const validateContract = async (
     }
 
     const address = getContracts().swapContracts.EtherSwap as Address;
-    const code = await publicClient()?.getCode({ address });
-    if (!codeHashes.includes(keccak256(toHex(code)))) {
+    const code = await publicClient().getCode({ address });
+    if (code === undefined || !codeHashes.includes(keccak256(code))) {
         throw new Error(`invalid contract code: ${code}`);
     }
 };

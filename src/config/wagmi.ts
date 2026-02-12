@@ -25,7 +25,6 @@ export function createViemChains() {
                           },
                       }
                     : undefined,
-                // contracts: value.contracts,
             });
         }
     }
@@ -36,13 +35,7 @@ export function createViemChains() {
 export const networks = createViemChains();
 
 export const transports = Object.fromEntries(
-    networks.map((item) => [
-        item.id,
-        http(
-            item.rpcUrls.default.http?.[0] ||
-                "https://public-node.testnet.rsk.co",
-        ),
-    ]),
+    networks.map((item) => [item.id, http(item.rpcUrls.default.http?.[0])]),
 );
 
 export const walletTransport = custom(window.ethereum);

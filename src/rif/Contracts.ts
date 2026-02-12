@@ -3,7 +3,7 @@ import type { Address, PublicClient } from "viem";
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 
-type PublicClientGetter = () => PublicClient;
+export type PublicClientGetter = () => PublicClient;
 
 const BoltzSmartWalletFactoryAbi = [
     {
@@ -553,9 +553,9 @@ export const wagmiSmartWalletFactoryContractConfig = {
     abi: BoltzSmartWalletFactoryAbi,
 } as const;
 
-export const getWagmiForwarderContractConfig = (forwarder: string) => {
+export const getWagmiForwarderContractConfig = (forwarder: Address) => {
     return {
-        address: forwarder as Address,
+        address: forwarder,
         abi: ForwarderAbi,
     } as const;
 };

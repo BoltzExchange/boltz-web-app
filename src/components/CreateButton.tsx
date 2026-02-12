@@ -64,10 +64,18 @@ export const getClaimAddress = async (
     onchainAddress: Accessor<string>,
 ): Promise<{ useRif: boolean; gasPrice: bigint; claimAddress: string }> => {
     if (assetReceive() === RBTC) {
-        const [address] = await walletClient().getAddresses();
+        const wallet = walletClient();
+        if (!wallet) {
+            throw new Error("Wallet not connected");
+        }
+        const client = publicClient();
+        if (!client) {
+            throw new Error("Client is not connected");
+        }
+        const [address] = await wallet.getAddresses();
         const [balance, gasPrice] = await Promise.all([
-            publicClient().getBalance({ address }),
-            publicClient().getGasPrice(),
+            client.getBalance({ address }),
+            client.getGasPrice(),
         ]);
         log.debug("RSK balance", balance);
 
@@ -605,7 +613,8 @@ const CreateButton = () => {
                 derivationPath:
                     swapType() !== SwapType.Submarine &&
                     currentRdns() !== undefined &&
-                    customDerivationPathRdns.includes(currentRdns())
+                    customDerivationPathRdns.includes(currentRdns()) &&
+                    providers()[currentRdns()] !== undefined
                         ? (
                               providers()[currentRdns()]
                                   .provider as unknown as HardwareSigner

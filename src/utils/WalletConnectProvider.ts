@@ -16,7 +16,7 @@ class WalletConnectProvider implements EIP1193Provider {
         reject: (reason?: unknown) => void;
     };
 
-    private static walletClient: WalletClient;
+    private static walletClient: WalletClient | undefined;
 
     constructor() {}
 
@@ -61,6 +61,10 @@ class WalletConnectProvider implements EIP1193Provider {
                     };
                 });
             }
+        }
+
+        if (!WalletConnectProvider.walletClient) {
+            throw new Error("Wallet not connected");
         }
 
         return (await WalletConnectProvider.walletClient.request({

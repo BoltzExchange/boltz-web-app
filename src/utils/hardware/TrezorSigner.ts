@@ -39,8 +39,22 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         this.loader = trezorLoader;
     }
 
-    public getPublicClient = (): PublicClient => this.publicClient;
-    public getWalletClient = (): WalletClient => this.walletClient;
+    public getPublicClient = (): PublicClient => {
+        if (!this.publicClient) {
+            throw new Error(
+                "PublicClient not initialized. Call deriveAddresses first.",
+            );
+        }
+        return this.publicClient;
+    };
+    public getWalletClient = (): WalletClient => {
+        if (!this.walletClient) {
+            throw new Error(
+                "WalletClient not initialized. Call deriveAddresses first.",
+            );
+        }
+        return this.walletClient;
+    };
 
     public deriveAddresses = async (
         basePath: string,
@@ -72,7 +86,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
             transport: transports[0],
         }) as PublicClient;
         this.walletClient = createWalletClient({
-            account: addresses[0].address as Address,
+            account: addresses.payload[0].address as Address,
             chain: wagmiConfig.chains[0],
             transport: walletTransport,
         });
@@ -117,6 +131,9 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
                 await this.initialize();
 
+                if (!request.params?.[0]) {
+                    throw new Error("Transaction parameters required");
+                }
                 const txParams = request.params[0] as TransactionRequestBase;
 
                 const [connect, nonce, chainId, gasPrice] = await Promise.all([
@@ -158,6 +175,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     chainId,
                     gasPrice,
                     value,
+                    gas: txParams.gas,
                 };
 
                 log.debug(
@@ -208,7 +226,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
             }
         }
 
-        return (await this.walletClient.request({
+        return (await this.getWalletClient().request({
             method: request.method,
             params: request.params,
         })) as never;

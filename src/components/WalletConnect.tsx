@@ -24,12 +24,7 @@ export const WalletConnect = () => {
         }
 
         const { appKit, WagmiAdapter } = await loader.get();
-        const adapter = new WagmiAdapter({
-            networks,
-            projectId:
-                import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ||
-                "boltz-web-app",
-        });
+        const adapter = new WagmiAdapter({ networks, projectId });
         const created = appKit.createAppKit({
             projectId,
             themeMode: "dark",
@@ -60,6 +55,11 @@ export const WalletConnect = () => {
             }
 
             const address = created.getAddress();
+            if (address === undefined) {
+                WalletConnectProvider.resolveClosePromise(undefined, undefined);
+                return;
+            }
+
             const transport = custom(await created.getUniversalProvider());
             const walletClient = createWalletClient({
                 account: address as Address,

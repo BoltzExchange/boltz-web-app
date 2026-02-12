@@ -42,8 +42,22 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         this.loader = ledgerLoader;
     }
 
-    public getPublicClient = (): PublicClient => this.publicClient;
-    public getWalletClient = (): WalletClient => this.walletClient;
+    public getPublicClient = (): PublicClient => {
+        if (!this.publicClient) {
+            throw new Error(
+                "PublicClient not initialized. Call deriveAddresses first.",
+            );
+        }
+        return this.publicClient;
+    };
+    public getWalletClient = (): WalletClient => {
+        if (!this.walletClient) {
+            throw new Error(
+                "WalletClient not initialized. Call deriveAddresses first.",
+            );
+        }
+        return this.walletClient;
+    };
 
     public deriveAddresses = async (
         basePath: string,
@@ -64,6 +78,10 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             const path = `${basePath}/${offset + i}`;
             const { address } = await eth.getAddress(path);
             addresses.push({ path, address: address.toLowerCase() });
+        }
+
+        if (addresses.length === 0) {
+            throw new Error("No addresses derived");
         }
 
         this.publicClient = createPublicClient({
@@ -124,10 +142,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     chainId,
                     gasPrice,
                     value: txParams.value,
+                    gas: txParams.gas,
                 };
 
                 log.debug(
-                    "Broadcasting Trezor transaction",
+                    "Broadcasting Ledger transaction",
                     transactionSerializable,
                 );
 
@@ -193,7 +212,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             }
         }
 
-        return (await this.walletClient.request({
+        return (await this.getWalletClient().request({
             method: request.method,
             params: request.params,
         })) as never;

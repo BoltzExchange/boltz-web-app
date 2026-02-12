@@ -8,7 +8,14 @@ import {
     onMount,
     useContext,
 } from "solid-js";
-import type { PublicClient, WalletClient } from "viem";
+import { transports, wagmiConfig } from "src/config/wagmi";
+import {
+    type Address,
+    type PublicClient,
+    type WalletClient,
+    createPublicClient,
+    createWalletClient,
+} from "viem";
 
 import LedgerIcon from "../assets/ledger.svg";
 import TrezorIcon from "../assets/trezor.svg";
@@ -117,7 +124,9 @@ const Web3SignerProvider = (props: {
     const [walletClient, setWalletClient] = createSignal<
         WalletClient | undefined
     >(undefined);
-    const [publicClient, setPublicClient] = createSignal(undefined);
+    const [publicClient, setPublicClient] = createSignal<
+        PublicClient | undefined
+    >(undefined);
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined
     >(undefined);
@@ -237,8 +246,25 @@ const Web3SignerProvider = (props: {
 
         await setRdns(addresses[0], wallet.info.rdns);
 
-        setWalletClient(undefined);
-        setPublicClient(undefined);
+        const chain = wagmiConfig.chains[0];
+        const transport = transports[0];
+        if (!chain || !transport) {
+            throw new Error("No chain or transport configured");
+        }
+
+        setWalletClient(
+            createWalletClient({
+                account: addresses[0] as Address,
+                chain,
+                transport,
+            }),
+        );
+        setPublicClient(
+            createPublicClient({
+                chain,
+                transport,
+            }) as PublicClient,
+        );
         setCurrentRdns(wallet.info.rdns);
     };
 

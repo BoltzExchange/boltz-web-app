@@ -43,7 +43,11 @@ const sign = async (
     walletClient: WalletClientGetter,
     request: EnvelopingRequest,
 ) => {
-    const chainId = await walletClient().getChainId();
+    const wallet = walletClient();
+    if (!wallet.account) {
+        throw new Error("Wallet client has no account connected");
+    }
+    const chainId = await wallet.getChainId();
 
     const data = getEnvelopingRequestDataV4Field({
         chainId: Number(chainId),
@@ -54,11 +58,12 @@ const sign = async (
             : relayRequestType,
     });
 
-    return walletClient().signTypedData({
+    return wallet.signTypedData({
         types: data.types,
         primaryType: data.primaryType,
         message: data.value,
-        account: walletClient().account,
+        account: wallet.account,
+        domain: data.domain,
     });
 };
 
@@ -91,7 +96,12 @@ export const relayClaimTransaction = async (
         getChainInfo(),
         getSmartWalletAddress(publicClient, walletClient, getContracts),
         publicClient().getGasPrice(),
-        Promise.resolve(walletClient().account.address),
+        Promise.resolve(walletClient().account?.address).then((address) => {
+            if (!address) {
+                throw new Error("Wallet client has no account connected");
+            }
+            return address;
+        }),
         Promise.resolve(getContracts().swapContracts.EtherSwap),
     ]);
 
@@ -141,7 +151,7 @@ export const relayClaimTransaction = async (
             )
         ).toString();
 
-        envelopingRequest.relayData.callForwarder = smartWalletAddress;
+        envelopingRequest.relayData.callForwarder = smartWalletAddress.address;
     }
 
     const metadata: Metadata = {
@@ -178,7 +188,11 @@ export const getSmartWalletAddress = async (
             blockTag: "pending",
         }),
     );
-    const [ownerAddress] = await walletClient().getAddresses();
+    const wallet = walletClient();
+    const ownerAddress = wallet.account?.address;
+    if (!ownerAddress) {
+        throw new Error("Wallet client has no account connected");
+    }
     const smartWalletAddress = await getSmartWalletAddressFunc(
         publicClient,
         ownerAddress,

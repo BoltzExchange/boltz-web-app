@@ -58,7 +58,7 @@ const LockupEvm = (props: {
 
         const [balance, gasPrice] = await Promise.all([
             publicClient().getBalance({
-                address: (await walletClient().getAddresses())[0],
+                address: walletClient().account.address,
             }),
             publicClient().getGasPrice(),
         ]);
@@ -69,34 +69,42 @@ const LockupEvm = (props: {
     });
 
     const sendTransaction = async () => {
-        const [account] = await walletClient().getAddresses();
-        const txHash = await walletClient().writeContract({
-            address: getContracts().swapContracts.EtherSwap as Address,
-            abi: EtherSwapAbi,
-            functionName: "lock",
-            args: [
-                prefix0x(props.preimageHash),
-                props.claimAddress,
-                props.timeoutBlockHeight,
-                {
-                    value: value(),
-                },
-            ],
-            chain: walletClient().chain,
-            account,
-        });
-        const currentSwap = await getSwap(props.swapId);
-        currentSwap.lockupTx = txHash;
-        currentSwap.signer = account;
+        try {
+            const [account] = await walletClient().getAddresses();
+            const txHash = await walletClient().writeContract({
+                address: getContracts().swapContracts.EtherSwap as Address,
+                abi: EtherSwapAbi,
+                functionName: "lock",
+                args: [
+                    prefix0x(props.preimageHash),
+                    props.claimAddress,
+                    props.timeoutBlockHeight,
+                ],
+                chain: walletClient().chain,
+                account,
+                value: value(),
+            });
+            const currentSwap = await getSwap(props.swapId);
+            currentSwap.lockupTx = txHash;
+            currentSwap.signer = account;
 
-        if (customDerivationPathRdns.includes(currentRdns())) {
-            currentSwap.derivationPath = (
-                providers()[currentRdns()].provider as unknown as HardwareSigner
-            ).getDerivationPath();
+            const rdns = currentRdns();
+            if (
+                rdns &&
+                customDerivationPathRdns.includes(rdns) &&
+                providers()[rdns]
+            ) {
+                currentSwap.derivationPath = (
+                    providers()[rdns].provider as unknown as HardwareSigner
+                ).getDerivationPath();
+            }
+
+            setSwap(currentSwap);
+            await setSwapStorage(currentSwap);
+        } catch (error) {
+            log.error("Failed to send lockup transaction", error);
+            throw error;
         }
-
-        setSwap(currentSwap);
-        await setSwapStorage(currentSwap);
     };
 
     return (

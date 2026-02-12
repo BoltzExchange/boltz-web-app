@@ -48,7 +48,7 @@ export const RefundEvm = (props: {
 
                 if (
                     props.timeoutBlockHeight <
-                    (await publicClient().getBlockNumber())
+                    Number(await publicClient().getBlockNumber())
                 ) {
                     hash = await walletClient().writeContract({
                         ...getWagmiEtherSwapContractConfig(getContracts),

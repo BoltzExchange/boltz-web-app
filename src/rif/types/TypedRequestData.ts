@@ -50,8 +50,8 @@ export function getDomainSeparator(
     return {
         name: "RSK Enveloping Transaction",
         version: "2",
-        chainId: chainId,
-        verifyingContract: verifyingContract,
+        chainId,
+        verifyingContract,
     };
 }
 

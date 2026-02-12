@@ -29,8 +29,8 @@ const ContractTransaction = (props: {
 
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
-        const chainId = await publicClient().getChainId();
-        setSignerNetwork(Number(chainId));
+        const chainId = await publicClient()?.getChainId();
+        setSignerNetwork(chainId ?? -1);
     });
 
     const allowAnyAddress = () =>
@@ -39,7 +39,7 @@ const ContractTransaction = (props: {
     return (
         <Show
             when={
-                walletClient() !== undefined &&
+                walletClient()?.account?.address !== undefined &&
                 (allowAnyAddress() ||
                     props.address.address === walletClient().account.address)
             }

@@ -45,10 +45,11 @@ const ClaimEvm = (props: {
                         props.timeoutBlockHeight,
                     );
                 } else {
-                    transactionHash = await walletClient().writeContract({
+                    const wallet = walletClient();
+                    transactionHash = await wallet.writeContract({
                         ...getWagmiEtherSwapContractConfig(getContracts),
-                        chain: walletClient().chain,
-                        account: (await walletClient().getAddresses())[0],
+                        chain: wallet.chain,
+                        account: wallet.account,
                         functionName: "claim",
                         args: [
                             prefix0x(props.preimage),

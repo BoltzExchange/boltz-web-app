@@ -12,7 +12,5 @@ export const ensureHex = (str?: null | string) => {
     if (str === null || str === undefined) {
         return null;
     }
-    const result =
-        typeof str === "string" && !str.startsWith("0x") ? `0x${str}` : str;
-    return result as Hex;
+    return (str.startsWith("0x") ? str : `0x${str}`) as Hex;
 };
