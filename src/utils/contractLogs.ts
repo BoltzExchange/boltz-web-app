@@ -12,7 +12,6 @@ import {
     keccak256,
     parseAbiItem,
     parseEventLogs,
-    toHex,
 } from "viem";
 
 import { config } from "../config";
