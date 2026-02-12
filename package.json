@@ -87,7 +87,7 @@
         "boltz-core": "^3.1.0",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
-        "ecpair": "^3.0.0",
+        "ecpair": "^3.0.1",
         "ethers": "^6.16.0",
         "liquidjs-lib": "^6.0.2-liquid.37",
         "localforage": "^1.10.0",
