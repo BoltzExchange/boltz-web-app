@@ -1,9 +1,8 @@
-import { BrowserProvider } from "ethers";
 import log from "loglevel";
 import { createEffect, createResource } from "solid-js";
+import { networks, wagmiConfig } from "src/config/wagmi";
+import { type Address, createWalletClient, custom } from "viem";
 
-import { config } from "../config";
-import { RBTC } from "../consts/Assets";
 import { useWeb3Signer } from "../context/Web3";
 import loader from "../lazy/walletConnect";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
@@ -24,37 +23,16 @@ export const WalletConnect = () => {
             return undefined;
         }
 
-        const configRsk = config.assets[RBTC];
-
-        const { appKit, EthersAdapter } = await loader.get();
+        const { appKit, WagmiAdapter } = await loader.get();
+        const adapter = new WagmiAdapter({ networks, projectId });
         const created = appKit.createAppKit({
             projectId,
             themeMode: "dark",
             enableEIP6963: false,
             enableInjected: false,
-            adapters: [new EthersAdapter()],
-            networks: [
-                {
-                    id: configRsk.network.chainId,
-                    name: configRsk.network.chainName,
-                    nativeCurrency: {
-                        name: RBTC,
-                        symbol: RBTC,
-                        decimals: 18,
-                    },
-                    rpcUrls: {
-                        default: {
-                            http: configRsk.network.rpcUrls,
-                        },
-                    },
-                    blockExplorers: {
-                        default: {
-                            name: "Explorer",
-                            url: configRsk.blockExplorerUrl.normal,
-                        },
-                    },
-                },
-            ],
+            adapters: [adapter],
+            networks: [...adapter.wagmiChains],
+            defaultNetwork: adapter.wagmiChains[0],
             metadata: {
                 name: "Boltz",
                 description: "Boltz Web App",
@@ -77,11 +55,19 @@ export const WalletConnect = () => {
             }
 
             const address = created.getAddress();
-            const provider = new BrowserProvider(
-                await created.getUniversalProvider(),
-            );
+            if (address === undefined) {
+                WalletConnectProvider.resolveClosePromise(undefined, undefined);
+                return;
+            }
 
-            WalletConnectProvider.resolveClosePromise(provider, address);
+            const transport = custom(await created.getUniversalProvider());
+            const walletClient = createWalletClient({
+                account: address as Address,
+                chain: wagmiConfig.chains[0],
+                transport,
+            });
+
+            WalletConnectProvider.resolveClosePromise(walletClient, address);
         });
 
         return created;

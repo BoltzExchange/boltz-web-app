@@ -1,6 +1,4 @@
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
 import log from "loglevel";
 import type { Accessor, JSXElement, Resource, Setter } from "solid-js";
 import {
@@ -10,6 +8,14 @@ import {
     onMount,
     useContext,
 } from "solid-js";
+import { transports, wagmiConfig } from "src/config/wagmi";
+import {
+    type Address,
+    type PublicClient,
+    type WalletClient,
+    createPublicClient,
+    createWalletClient,
+} from "viem";
 
 import LedgerIcon from "../assets/ledger.svg";
 import TrezorIcon from "../assets/trezor.svg";
@@ -23,7 +29,6 @@ import { getContracts } from "../utils/boltzClient";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
-import { createProvider } from "../utils/provider";
 import { useGlobalContext } from "./Global";
 
 declare global {
@@ -42,10 +47,6 @@ declare global {
 
 type EIP6963AnnounceProviderEvent = {
     detail: EIP6963ProviderDetail;
-};
-
-export type Signer = JsonRpcSigner & {
-    rdns: string;
 };
 
 enum HardwareRdns {
@@ -71,13 +72,14 @@ const Web3SignerContext = createContext<{
         derivationPath?: string,
     ) => Promise<void>;
 
-    signer: Accessor<Signer | undefined>;
+    currentRdns: Accessor<string | undefined>;
+    walletClient: Accessor<WalletClient | undefined>;
+    publicClient: Accessor<PublicClient | undefined>;
     clearSigner: () => void;
 
     switchNetwork: () => Promise<void>;
 
     getContracts: Resource<Contracts>;
-    getEtherSwap: () => EtherSwap;
 
     openWalletConnectModal: Accessor<boolean>;
     setOpenWalletConnectModal: Setter<boolean>;
@@ -119,7 +121,12 @@ const Web3SignerProvider = (props: {
             },
         },
     });
-    const [signer, setSigner] = createSignal<Signer | undefined>(undefined);
+    const [walletClient, setWalletClient] = createSignal<
+        WalletClient | undefined
+    >(undefined);
+    const [publicClient, setPublicClient] = createSignal<
+        PublicClient | undefined
+    >(undefined);
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined
     >(undefined);
@@ -128,6 +135,9 @@ const Web3SignerProvider = (props: {
     const [openWalletConnectModal, setOpenWalletConnectModal] =
         createSignal<boolean>(false);
     const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
+    const [currentRdns, setCurrentRdns] = createSignal<string | undefined>(
+        undefined,
+    );
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
@@ -213,14 +223,6 @@ const Web3SignerProvider = (props: {
         await connectProvider(rdns);
     };
 
-    const getEtherSwap = () => {
-        return new Contract(
-            contracts().swapContracts.EtherSwap,
-            EtherSwapAbi,
-            signer() || createProvider(config.assets["RBTC"]?.network?.rpcUrls),
-        ) as unknown as EtherSwap;
-    };
-
     const connectProvider = async (rdns: string) => {
         const wallet = providers()[rdns];
         if (wallet == undefined) {
@@ -242,15 +244,28 @@ const Web3SignerProvider = (props: {
         });
         setRawProvider(wallet.provider);
 
-        const signer = new JsonRpcSigner(
-            new BrowserProvider(wallet.provider),
-            addresses[0],
-        ) as unknown as Signer;
-        signer.rdns = wallet.info.rdns;
-
         await setRdns(addresses[0], wallet.info.rdns);
 
-        setSigner(signer);
+        const chain = wagmiConfig.chains[0];
+        const transport = transports[0];
+        if (!chain || !transport) {
+            throw new Error("No chain or transport configured");
+        }
+
+        setWalletClient(
+            createWalletClient({
+                account: addresses[0] as Address,
+                chain,
+                transport,
+            }),
+        );
+        setPublicClient(
+            createPublicClient({
+                chain,
+                transport,
+            }) as PublicClient,
+        );
+        setCurrentRdns(wallet.info.rdns);
     };
 
     const switchNetwork = async () => {
@@ -296,9 +311,10 @@ const Web3SignerProvider = (props: {
     return (
         <Web3SignerContext.Provider
             value={{
-                signer,
+                walletClient,
+                publicClient,
+                currentRdns,
                 providers,
-                getEtherSwap,
                 switchNetwork,
                 connectProvider,
                 hasBrowserWallet,
@@ -315,7 +331,8 @@ const Web3SignerProvider = (props: {
                     }
 
                     setWalletConnected(false);
-                    setSigner(undefined);
+                    setWalletClient(undefined);
+                    setPublicClient(undefined);
                     setRawProvider(undefined);
                 },
             }}>

@@ -1,5 +1,5 @@
-import type { BrowserProvider } from "ethers";
 import type { Setter } from "solid-js";
+import type { WalletClient } from "viem";
 
 import type { EIP1193Provider } from "../consts/Types";
 import type { DictKey } from "../i18n/i18n";
@@ -16,7 +16,7 @@ class WalletConnectProvider implements EIP1193Provider {
         reject: (reason?: unknown) => void;
     };
 
-    private static provider: BrowserProvider;
+    private static walletClient: WalletClient | undefined;
 
     constructor() {}
 
@@ -29,7 +29,7 @@ class WalletConnectProvider implements EIP1193Provider {
     };
 
     public static resolveClosePromise = (
-        provider: BrowserProvider,
+        walletClient: WalletClient,
         address: string,
     ) => {
         if (WalletConnectProvider.closePromiseResolver === undefined) {
@@ -40,7 +40,7 @@ class WalletConnectProvider implements EIP1193Provider {
                 this.t("no_wallet_connected"),
             );
         } else {
-            WalletConnectProvider.provider = provider;
+            WalletConnectProvider.walletClient = walletClient;
             WalletConnectProvider.closePromiseResolver.resolve([address]);
         }
 
@@ -63,10 +63,14 @@ class WalletConnectProvider implements EIP1193Provider {
             }
         }
 
-        return (await WalletConnectProvider.provider.send(
-            request.method,
-            request.params,
-        )) as never;
+        if (!WalletConnectProvider.walletClient) {
+            throw new Error("Wallet not connected");
+        }
+
+        return (await WalletConnectProvider.walletClient.request({
+            method: request.method,
+            params: request.params,
+        })) as never;
     };
 
     public on = () => {};

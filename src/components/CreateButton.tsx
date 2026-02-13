@@ -3,17 +3,17 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
+import type { PublicClient, WalletClient } from "viem";
 
 import { BTC, RBTC } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
-import type { ChainPairTypeTaproot } from "../utils/boltzClient";
+import type { ChainPairTypeTaproot, Contracts } from "../utils/boltzClient";
 import {
     fetchBip21Invoice,
     fetchBolt12Invoice,
@@ -58,15 +58,24 @@ export const enum BackupDone {
 
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
-    signer: Accessor<Signer>,
+    walletClient: Accessor<WalletClient>,
+    publicClient: Accessor<PublicClient>,
+    getContracts: Accessor<Contracts>,
     onchainAddress: Accessor<string>,
 ): Promise<{ useRif: boolean; gasPrice: bigint; claimAddress: string }> => {
     if (assetReceive() === RBTC) {
+        const wallet = walletClient();
+        if (!wallet) {
+            throw new Error("Wallet not connected");
+        }
+        const client = publicClient();
+        if (!client) {
+            throw new Error("Client is not connected");
+        }
+        const [address] = await wallet.getAddresses();
         const [balance, gasPrice] = await Promise.all([
-            signer().provider.getBalance(await signer().getAddress()),
-            signer()
-                .provider.getFeeData()
-                .then((data) => data.gasPrice),
+            client.getBalance({ address }),
+            client.getGasPrice(),
         ]);
         log.debug("RSK balance", balance);
 
@@ -78,7 +87,13 @@ export const getClaimAddress = async (
             return {
                 gasPrice,
                 useRif: true,
-                claimAddress: (await getSmartWalletAddress(signer())).address,
+                claimAddress: (
+                    await getSmartWalletAddress(
+                        publicClient,
+                        walletClient,
+                        getContracts,
+                    )
+                ).address,
             };
         } else {
             log.info("RIF smart wallet not needed");
@@ -139,8 +154,14 @@ const CreateButton = () => {
         setSendAmount,
         setReceiveAmount,
     } = useCreateContext();
-    const { getEtherSwap, signer, providers, walletConnected } =
-        useWeb3Signer();
+    const {
+        publicClient,
+        walletClient,
+        getContracts,
+        currentRdns,
+        providers,
+        walletConnected,
+    } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [loading, setLoading] = createSignal(false);
@@ -561,7 +582,12 @@ const CreateButton = () => {
             }
 
             try {
-                await validateResponse(data, deriveKey, getEtherSwap);
+                await validateResponse(
+                    data,
+                    deriveKey,
+                    publicClient,
+                    getContracts,
+                );
             } catch (e) {
                 const error = e instanceof Error ? e : new Error(String(e));
                 log.error(
@@ -582,14 +608,15 @@ const CreateButton = () => {
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
-                        ? signer()?.address
+                        ? walletClient()?.account.address
                         : undefined,
                 derivationPath:
                     swapType() !== SwapType.Submarine &&
-                    signer() !== undefined &&
-                    customDerivationPathRdns.includes(signer().rdns)
+                    currentRdns() !== undefined &&
+                    customDerivationPathRdns.includes(currentRdns()) &&
+                    providers()[currentRdns()] !== undefined
                         ? (
-                              providers()[signer().rdns]
+                              providers()[currentRdns()]
                                   .provider as unknown as HardwareSigner
                           ).getDerivationPath()
                         : undefined,
@@ -629,7 +656,9 @@ const CreateButton = () => {
 
             const { useRif, claimAddress } = await getClaimAddress(
                 assetReceive,
-                signer,
+                walletClient,
+                publicClient,
+                getContracts,
                 onchainAddress,
             );
 

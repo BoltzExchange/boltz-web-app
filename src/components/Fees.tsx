@@ -89,7 +89,7 @@ const Fees = () => {
         onchainAddress,
         addressValid,
     } = useCreateContext();
-    const { signer } = useWeb3Signer();
+    const { walletClient, publicClient, getContracts } = useWeb3Signer();
 
     const [routingFee, setRoutingFee] = createSignal<number | undefined>(
         undefined,
@@ -97,20 +97,28 @@ const Fees = () => {
 
     const rifFetchTrigger = createMemo(() => {
         return {
-            signer: signer(),
+            walletClient: walletClient(),
+            publicClient: publicClient(),
+            contracts: getContracts(),
             assetReceive: assetReceive(),
         };
     });
     const [rifExtraCost] = createResource(
         rifFetchTrigger,
-        async ({ signer, assetReceive }) => {
-            if (signer === undefined) {
+        async ({ walletClient, publicClient, contracts, assetReceive }) => {
+            if (
+                walletClient === undefined ||
+                publicClient === undefined ||
+                contracts === undefined
+            ) {
                 return 0;
             }
 
             const { useRif, gasPrice } = await getClaimAddress(
                 () => assetReceive,
-                () => signer,
+                () => walletClient,
+                () => publicClient,
+                () => contracts,
                 onchainAddress,
             );
             if (!useRif) {

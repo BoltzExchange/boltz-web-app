@@ -10,14 +10,13 @@ import {
 } from "boltz-core";
 import { default as BufferBrowser } from "buffer";
 import type { ECPairInterface } from "ecpair";
-import type { BaseContract } from "ethers";
-import { ethers } from "ethers";
+import { type Address, type PublicClient, keccak256 } from "viem";
 
 import { LBTC, RBTC } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { etherSwapCodeHashes } from "../context/Web3";
-import type { ChainSwapDetails } from "./boltzClient";
+import type { ChainSwapDetails, Contracts } from "./boltzClient";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import { ecc } from "./ecpair";
@@ -38,18 +37,21 @@ const invalidSendAmountMsg = (expected: number, got: number) =>
 const invalidReceiveAmountMsg = (expected: number, got: number) =>
     `invalid receive amount. Expected ${expected} to be bigger than ${got}`;
 
-type ContractGetter = () => BaseContract;
+type PublicClientGetter = () => PublicClient;
+type ContractsGetter = () => Contracts;
 
 const validateContract = async (
-    getEtherSwap: ContractGetter,
+    publicClient: PublicClientGetter,
+    getContracts: ContractsGetter,
 ): Promise<void> => {
     const codeHashes = etherSwapCodeHashes();
     if (codeHashes === undefined) {
         return;
     }
 
-    const code = await getEtherSwap().getDeployedCode();
-    if (!codeHashes.includes(ethers.keccak256(code))) {
+    const address = getContracts().swapContracts.EtherSwap as Address;
+    const code = await publicClient().getCode({ address });
+    if (code === undefined || !codeHashes.includes(keccak256(code))) {
         throw new Error(`invalid contract code: ${code}`);
     }
 };
@@ -130,7 +132,8 @@ const validateBip21 = (
 const validateReverse = async (
     swap: ReverseSwap,
     deriveKey: deriveKeyFn,
-    getEtherSwap: ContractGetter,
+    publicClient: PublicClientGetter,
+    getContracts: ContractsGetter,
     buffer: BufferConstructor,
 ): Promise<void> => {
     const invoiceData = await decodeInvoice(swap.invoice);
@@ -157,7 +160,7 @@ const validateReverse = async (
     }
 
     if (swap.assetReceive === RBTC) {
-        await validateContract(getEtherSwap);
+        await validateContract(publicClient, getContracts);
         return;
     }
 
@@ -193,7 +196,8 @@ const validateReverse = async (
 const validateSubmarine = async (
     swap: SubmarineSwap,
     deriveKey: deriveKeyFn,
-    getEtherSwap: ContractGetter,
+    publicClient: PublicClientGetter,
+    getContracts: ContractsGetter,
     buffer: typeof BufferBrowser.Buffer,
 ): Promise<void> => {
     // Amounts
@@ -204,7 +208,7 @@ const validateSubmarine = async (
     }
 
     if (swap.assetSend === RBTC) {
-        await validateContract(getEtherSwap);
+        await validateContract(publicClient, getContracts);
         return;
     }
 
@@ -245,7 +249,8 @@ const validateSubmarine = async (
 const validateChainSwap = async (
     swap: ChainSwap,
     deriveKey: deriveKeyFn,
-    getEtherSwap: ContractGetter,
+    publicClient: PublicClientGetter,
+    getContracts: ContractsGetter,
     buffer: BufferConstructor,
 ): Promise<void> => {
     const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
@@ -273,7 +278,7 @@ const validateChainSwap = async (
         }
 
         if (asset === RBTC) {
-            await validateContract(getEtherSwap);
+            await validateContract(publicClient, getContracts);
             return;
         }
 
@@ -325,7 +330,8 @@ const validateChainSwap = async (
 export const validateResponse = async (
     swap: SomeSwap,
     deriveKey: deriveKeyFn,
-    getEtherSwap: ContractGetter,
+    publicClient: PublicClientGetter,
+    getContracts: ContractsGetter,
     buffer: typeof BufferBrowser.Buffer = BufferBrowser as never,
 ): Promise<void> => {
     switch (swap.type) {
@@ -333,7 +339,8 @@ export const validateResponse = async (
             await validateSubmarine(
                 swap as SubmarineSwap,
                 deriveKey,
-                getEtherSwap,
+                publicClient,
+                getContracts,
                 buffer,
             );
             break;
@@ -342,7 +349,8 @@ export const validateResponse = async (
             await validateReverse(
                 swap as ReverseSwap,
                 deriveKey,
-                getEtherSwap,
+                publicClient,
+                getContracts,
                 buffer,
             );
             break;
@@ -351,7 +359,8 @@ export const validateResponse = async (
             await validateChainSwap(
                 swap as ChainSwap,
                 deriveKey,
-                getEtherSwap,
+                publicClient,
+                getContracts,
                 buffer,
             );
             break;

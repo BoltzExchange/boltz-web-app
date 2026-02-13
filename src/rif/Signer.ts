@@ -1,12 +1,23 @@
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import type { Signer } from "ethers";
-import { ZeroAddress } from "ethers";
 import log from "loglevel";
+import { getWagmiEtherSwapContractConfig } from "src/config/wagmi";
+import { EtherSwapAbi } from "src/context/Web3";
+import type { Contracts } from "src/utils/boltzClient";
+import {
+    type Address,
+    type PublicClient,
+    type WalletClient,
+    encodeFunctionData,
+} from "viem";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
-import { getForwarder, getSmartWalletFactory } from "./Contracts";
+import {
+    getSmartWalletAddress as getSmartWalletAddressFunc,
+    getSmartWalletFactoryAddress,
+    getSmartWalletNonce,
+    getWalletNonce,
+} from "./Contracts";
 import type { Metadata } from "./Relay";
 import { estimate, getChainInfo, relay } from "./Relay";
 import { calculateGasPrice, getValidUntilTime, isDeployRequest } from "./Utils";
@@ -17,62 +28,88 @@ import {
     relayRequestType,
 } from "./types/TypedRequestData";
 
+type PublicClientGetter = () => PublicClient;
+type WalletClientGetter = () => WalletClient;
+type ContractsGetter = () => Contracts;
+
+const ZeroAddress: Address = "0x0000000000000000000000000000000000000000";
+
 // With some extra buffer; just in case
 export const GasNeededToClaim = BigInt(35355) * 2n;
 
 export const MaxRelayNonceGap = 10;
 
-const sign = async (signer: Signer, request: EnvelopingRequest) => {
-    const { chainId } = await signer.provider.getNetwork();
+const sign = async (
+    walletClient: WalletClientGetter,
+    request: EnvelopingRequest,
+) => {
+    const wallet = walletClient();
+    if (!wallet.account) {
+        throw new Error("Wallet client has no account connected");
+    }
+    const chainId = await wallet.getChainId();
 
     const data = getEnvelopingRequestDataV4Field({
         chainId: Number(chainId),
         envelopingRequest: request,
-        verifier: request.relayData.callForwarder as string,
+        verifier: request.relayData.callForwarder as Address,
         requestTypes: isDeployRequest(request)
             ? deployRequestType
             : relayRequestType,
     });
 
-    return signer.signTypedData(data.domain, data.types, data.value);
+    return wallet.signTypedData({
+        types: data.types,
+        primaryType: data.primaryType,
+        message: data.value,
+        account: wallet.account,
+        domain: data.domain,
+    });
 };
 
 export const relayClaimTransaction = async (
-    signer: Signer,
-    etherSwap: EtherSwap,
+    publicClient: PublicClientGetter,
+    walletClient: WalletClientGetter,
+    getContracts: ContractsGetter,
     preimage: string,
     amount: number,
     refundAddress: string,
     timeoutBlockHeight: number,
 ) => {
-    const callData = etherSwap.interface.encodeFunctionData(
-        "claim(bytes32,uint256,address,uint256)",
-        [
+    const callData = encodeFunctionData({
+        abi: EtherSwapAbi,
+        functionName: "claim",
+        args: [
             prefix0x(preimage),
             satoshiToWei(amount),
             refundAddress,
             timeoutBlockHeight,
         ],
-    );
+    });
     const [
         chainInfo,
         smartWalletAddress,
-        feeData,
+        gasPrice,
         signerAddress,
         etherSwapAddress,
     ] = await Promise.all([
         getChainInfo(),
-        getSmartWalletAddress(signer),
-        signer.provider.getFeeData(),
-        signer.getAddress(),
-        etherSwap.getAddress(),
+        getSmartWalletAddress(publicClient, walletClient, getContracts),
+        publicClient().getGasPrice(),
+        Promise.resolve(walletClient().account?.address).then((address) => {
+            if (!address) {
+                throw new Error("Wallet client has no account connected");
+            }
+            return address;
+        }),
+        Promise.resolve(getContracts().swapContracts.EtherSwap),
     ]);
 
     const smartWalletExists =
-        (await signer.provider.getCode(smartWalletAddress.address)) !== "0x";
+        (await publicClient().getCode({
+            address: smartWalletAddress.address as Address,
+        })) !== "0x";
     log.info("RIF smart wallet exists:", smartWalletExists);
-
-    const smartWalletFactory = getSmartWalletFactory(signer);
 
     const envelopingRequest: EnvelopingRequest = {
         request: {
@@ -90,7 +127,7 @@ export const relayClaimTransaction = async (
             feesReceiver: chainInfo.feesReceiver,
             callVerifier: config.assets[RBTC].contracts.deployVerifier,
             gasPrice: calculateGasPrice(
-                feeData.gasPrice,
+                gasPrice,
                 chainInfo.minGasPrice,
             ).toString(),
         },
@@ -100,27 +137,30 @@ export const relayClaimTransaction = async (
         envelopingRequest.request.recoverer = ZeroAddress;
         envelopingRequest.request.index = Number(smartWalletAddress.nonce);
         envelopingRequest.request.nonce = (
-            await smartWalletFactory.nonce(signerAddress)
+            await getSmartWalletNonce(publicClient, signerAddress)
         ).toString();
 
         envelopingRequest.relayData.callForwarder =
-            await smartWalletFactory.getAddress();
+            getSmartWalletFactoryAddress();
     } else {
         envelopingRequest.request.gas = GasNeededToClaim.toString();
         envelopingRequest.request.nonce = (
-            await getForwarder(signer, smartWalletAddress.address).nonce()
+            await getWalletNonce(
+                publicClient,
+                smartWalletAddress.address as Address,
+            )
         ).toString();
 
-        envelopingRequest.relayData.callForwarder = smartWalletAddress;
+        envelopingRequest.relayData.callForwarder = smartWalletAddress.address;
     }
 
     const metadata: Metadata = {
         signature: "SERVER_SIGNATURE_REQUIRED",
         relayHubAddress: chainInfo.relayHubAddress,
         relayMaxNonce:
-            (await signer.provider.getTransactionCount(
-                chainInfo.relayWorkerAddress,
-            )) + MaxRelayNonceGap,
+            (await publicClient().getTransactionCount({
+                address: chainInfo.relayWorkerAddress as Address,
+            })) + MaxRelayNonceGap,
     };
 
     const estimateRes = await estimate(envelopingRequest, metadata);
@@ -128,23 +168,34 @@ export const relayClaimTransaction = async (
 
     envelopingRequest.request.tokenGas = estimateRes.estimation;
     envelopingRequest.request.tokenAmount = estimateRes.requiredTokenAmount;
-    metadata.signature = await sign(signer, envelopingRequest);
+    metadata.signature = await sign(walletClient, envelopingRequest);
 
     const relayRes = await relay(envelopingRequest, metadata);
     return relayRes.txHash;
 };
 
 export const getSmartWalletAddress = async (
-    signer: Signer,
+    publicClient: PublicClientGetter,
+    walletClient: WalletClientGetter,
+    getContracts: ContractsGetter,
 ): Promise<{
     nonce: bigint;
     address: string;
 }> => {
-    const factory = getSmartWalletFactory(signer);
-
-    const nonce = await factory.nonce(await signer.getAddress());
-    const smartWalletAddress: string = await factory.getSmartWalletAddress(
-        await signer.getAddress(),
+    const nonce = BigInt(
+        await publicClient().getTransactionCount({
+            address: getWagmiEtherSwapContractConfig(getContracts).address,
+            blockTag: "pending",
+        }),
+    );
+    const wallet = walletClient();
+    const ownerAddress = wallet.account?.address;
+    if (!ownerAddress) {
+        throw new Error("Wallet client has no account connected");
+    }
+    const smartWalletAddress = await getSmartWalletAddressFunc(
+        publicClient,
+        ownerAddress,
         ZeroAddress,
         nonce,
     );

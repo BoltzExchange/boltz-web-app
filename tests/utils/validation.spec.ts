@@ -1,18 +1,42 @@
-import type { Contract } from "ethers";
 import log from "loglevel";
+import { type PublicClient, createPublicClient, defineChain, http } from "viem";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
+import type { Contracts } from "../../src/utils/boltzClient";
 import { decodeAddress } from "../../src/utils/compat";
 import { ECPair } from "../../src/utils/ecpair";
 import { validateResponse } from "../../src/utils/validation";
 
+const rskRegtest = defineChain({
+    id: 33,
+    name: "RSK Regtest",
+    nativeCurrency: { name: "RBTC", symbol: "RBTC", decimals: 18 },
+    rpcUrls: { default: { http: ["http://localhost:8545"] } },
+});
+
 describe("validate responses", () => {
-    const getEtherSwap = (code: string): (() => Contract) => {
-        const getDeployedCode = vi.fn().mockResolvedValue(code);
-        return vi.fn(() => ({
-            getDeployedCode,
-        })) as unknown as () => Contract;
+    const getPublicClient = (): PublicClient => {
+        const client = createPublicClient({
+            chain: rskRegtest,
+            transport: http(),
+        });
+        return client as PublicClient;
+    };
+
+    const getContracts = () => {
+        const result: Contracts = {
+            network: {
+                name: "",
+                chainId: 0,
+            },
+            tokens: {},
+            swapContracts: {
+                EtherSwap: "",
+                ERC20Swap: "",
+            },
+        };
+        return result;
     };
 
     beforeAll(() => {
@@ -99,14 +123,15 @@ describe("validate responses", () => {
             ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...swapBtc, asset: RBTC }}
         `*/
             "$desc",
-            async ({ valid, contractCode, swap }) => {
+            async ({ valid, swap }) => {
                 const promise = validateResponse(
                     swap,
                     () =>
                         ECPair.fromPrivateKey(
                             Buffer.from(swap.refundPrivateKey, "hex"),
                         ),
-                    getEtherSwap(contractCode),
+                    getPublicClient,
+                    getContracts,
                     Buffer,
                 );
                 if (valid) {
@@ -196,15 +221,15 @@ describe("validate responses", () => {
             ${"RBTC invalid contract code"}        | ${false} | ${"not correct"}            | ${{ ...reverseSwapBtc, asset: RBTC }}
         */
             "$desc",
-            async ({ valid, contractCode, swap }) => {
-                const contract = getEtherSwap(contractCode);
+            async ({ valid, swap }) => {
                 const promise = validateResponse(
                     swap,
                     () =>
                         ECPair.fromPrivateKey(
                             Buffer.from(swap.claimPrivateKey, "hex"),
                         ),
-                    contract,
+                    getPublicClient,
+                    getContracts,
                     Buffer,
                 );
                 if (valid) {

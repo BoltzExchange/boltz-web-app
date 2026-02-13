@@ -428,7 +428,10 @@ export const RefundBtcLike = () => {
 
 export const RefundRsk = () => {
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
+    const { publicClient, walletClient, getContracts } = useWeb3Signer();
+    const clientsDefined = createMemo(() => {
+        return publicClient() !== undefined && walletClient() !== undefined;
+    });
 
     const [logRefundableSwaps, setLogRefundableSwaps] = createSignal<
         LogRefundData[]
@@ -453,7 +456,7 @@ export const RefundRsk = () => {
             refundScanAbort.abort("signer changed");
         }
 
-        if (signer() === undefined) {
+        if (!clientsDefined()) {
             return;
         }
 
@@ -467,8 +470,9 @@ export const RefundRsk = () => {
 
         const generator = scanLogsForPossibleRefunds(
             refundScanAbort.signal,
-            signer(),
-            getEtherSwap(),
+            publicClient,
+            walletClient,
+            getContracts,
         );
 
         for await (const value of generator) {
@@ -499,7 +503,7 @@ export const RefundRsk = () => {
                         {t("refund_external_scanning_rsk")}
                     </p>
                 </Match>
-                <Match when={signer() !== undefined}>
+                <Match when={clientsDefined()}>
                     <p class="frame-text">{t("connected_wallet_no_swaps")}</p>
                 </Match>
             </Switch>
