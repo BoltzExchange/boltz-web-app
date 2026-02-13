@@ -592,13 +592,16 @@ textarea.invalid {
     align-self: stretch;
     height: auto;
 }
-.refund {
-    max-width: fit-content;
-}
 
 .frame-text {
     max-width: 480px;
     margin: 0 auto;
+}
+
+.frame-text-spaced {
+    @extend .frame-text;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 @media (max-width: 488px) {

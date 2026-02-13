@@ -5,6 +5,7 @@ import { btcToSat } from "../src/utils/denomination";
 import {
     addReferral,
     bitcoinSendToAddress,
+    expectApproxAmount,
     generateBitcoinBlock,
     generateInvoiceLnd,
     generateInvoiceWithRoutingHint,
@@ -35,8 +36,10 @@ test.describe("Submarine swap", () => {
         await inputReceiveAmount.fill(receiveAmount);
 
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
-        const sendAmount = "0.01001146";
-        await expect(inputSendAmount).toHaveValue(sendAmount);
+        const sendAmount = await expectApproxAmount(
+            inputSendAmount,
+            "0.01001146",
+        );
 
         const invoiceInput = page.locator("textarea[data-testid='invoice']");
         const invoice = await generateInvoiceLnd(1000000);

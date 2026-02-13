@@ -5,11 +5,9 @@ import type { LiquidClaimDetails } from "boltz-core/dist/lib/liquid";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
-import { LBTC, RBTC } from "../consts/Assets";
+import { type AssetType, LBTC, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
-import type { RescueFile } from "../utils/rescueFile";
-import { deriveKey } from "../utils/rescueFile";
 import type { TransactionInterface } from "./boltzClient";
 import {
     broadcastTransaction,
@@ -79,6 +77,7 @@ const claimReverseSwap = async (
 
     const privateKey = parsePrivateKey(
         deriveKey,
+        swap.assetReceive as AssetType,
         swap.claimPrivateKeyIndex,
         swap.claimPrivateKey,
     );
@@ -165,6 +164,7 @@ export const createTheirPartialChainSwapSignature = async (
         const theirClaimMusig = await createMusig(
             parsePrivateKey(
                 deriveKey,
+                swap.assetSend as AssetType,
                 swap.refundPrivateKeyIndex,
                 swap.refundPrivateKey,
             ),
@@ -219,6 +219,7 @@ const claimChainSwap = async (
     );
     const claimPrivateKey = parsePrivateKey(
         deriveKey,
+        swap.assetReceive as AssetType,
         swap.claimPrivateKeyIndex,
         swap.claimPrivateKey,
     );
@@ -373,6 +374,7 @@ export const createSubmarineSignature = async (
     const musig = await createMusig(
         parsePrivateKey(
             deriveKey,
+            swap.assetSend as AssetType,
             swap.refundPrivateKeyIndex,
             swap.refundPrivateKey,
         ),
@@ -389,13 +391,4 @@ export const createSubmarineSignature = async (
         musig.getPublicNonce(),
         musig.signPartial(),
     );
-};
-
-export const derivePreimageFromRescueKey = (
-    rescueKey: RescueFile,
-    keyIndex: number,
-): Buffer => {
-    const privateKey = deriveKey(rescueKey, keyIndex).privateKey;
-
-    return crypto.sha256(Buffer.from(privateKey));
 };

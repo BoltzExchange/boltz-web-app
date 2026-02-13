@@ -5,6 +5,9 @@ import {
     validateMnemonic,
 } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
+import { crypto } from "bitcoinjs-lib";
+
+import { type AssetType, RBTC } from "../consts/Assets";
 
 export enum Errors {
     InvalidFile = "invalid file",
@@ -17,10 +20,13 @@ export type RescueFile = {
 };
 
 export const derivationPath = "m/44/0/0/0";
+export const rskDerivationPath = "m/44/137/0/0";
 
 const getPath = (index: number) => `${derivationPath}/${index}`;
 
-const mnemonicToHDKey = (mnemonic: string) => {
+const getRskPath = (index: number) => `${rskDerivationPath}/${index}`;
+
+export const mnemonicToHDKey = (mnemonic: string) => {
     const seed = mnemonicToSeedSync(mnemonic);
     return HDKey.fromMasterSeed(seed);
 };
@@ -33,8 +39,17 @@ export const generateRescueFile = (): RescueFile => ({
     mnemonic: generateMnemonic(wordlist),
 });
 
-export const deriveKey = (rescueFile: RescueFile, index: number) => {
-    return mnemonicToHDKey(rescueFile.mnemonic).derive(getPath(index));
+export const deriveKey = (
+    rescueFile: RescueFile,
+    index: number,
+    asset: AssetType,
+    hdKey?: HDKey,
+) => {
+    const derivationPath = asset === RBTC ? getRskPath(index) : getPath(index);
+    if (!hdKey) {
+        return mnemonicToHDKey(rescueFile.mnemonic).derive(derivationPath);
+    }
+    return hdKey.derive(derivationPath);
 };
 
 export const validateRescueFile = (
@@ -51,4 +66,15 @@ export const validateRescueFile = (
     getXpub(data as RescueFile);
 
     return data as RescueFile;
+};
+
+export const derivePreimageFromRescueKey = (
+    rescueKey: RescueFile,
+    keyIndex: number,
+    asset: AssetType,
+    hdKey?: HDKey,
+): Buffer => {
+    const privateKey = deriveKey(rescueKey, keyIndex, asset, hdKey).privateKey;
+
+    return crypto.sha256(Buffer.from(privateKey));
 };
