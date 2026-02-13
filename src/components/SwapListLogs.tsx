@@ -20,7 +20,7 @@ const SwapListLogs = (props: { swaps: Accessor<LogRefundData[]> }) => {
 
     const sortedSwaps = createMemo(() => {
         return props.swaps().sort((a, b) => {
-            return a.blockNumber - b.blockNumber;
+            return Number(a.blockNumber - b.blockNumber);
         });
     });
 

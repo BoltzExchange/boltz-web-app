@@ -1,4 +1,4 @@
-import { type Provider } from "../provider";
+import { PublicClient, WalletClient } from "viem";
 
 export const derivationPaths = {
     Ethereum: "44'/60'/0'/0",
@@ -18,7 +18,8 @@ export type DerivedAddress = {
 };
 
 export interface HardwareSigner {
-    getProvider(): Provider;
+    getPublicClient(): PublicClient;
+    getWalletClient(): WalletClient;
 
     deriveAddresses(
         basePath: string,

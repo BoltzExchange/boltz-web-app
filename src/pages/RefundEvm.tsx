@@ -2,6 +2,7 @@ import { useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import type { Setter } from "solid-js";
 import { Match, Show, Switch, createResource, createSignal } from "solid-js";
+import { Address } from "viem";
 
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -73,16 +74,16 @@ const RefundEvm = () => {
     const params = useParams<{ asset: string; txHash: string }>();
 
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
+    const { publicClient } = useWeb3Signer();
 
     const [refundData] = createResource<RefundData>(async () => {
-        if (signer() === undefined) {
+        if (publicClient() === undefined) {
             return undefined;
         }
 
         const [logData, currentHeight] = await Promise.all([
-            getLogsFromReceipt(signer(), getEtherSwap(), params.txHash),
-            signer().provider.getBlockNumber(),
+            getLogsFromReceipt(publicClient, params.txHash as Address),
+            publicClient().getBlockNumber(),
         ]);
 
         return {
@@ -98,7 +99,7 @@ const RefundEvm = () => {
     return (
         <div class="frame">
             <Show
-                when={signer() !== undefined}
+                when={publicClient() !== undefined}
                 fallback={<h2>{t("no_wallet")}</h2>}>
                 <Switch>
                     <Match when={refundData.state === "ready"}>

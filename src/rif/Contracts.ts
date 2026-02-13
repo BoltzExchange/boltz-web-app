@@ -1,8 +1,9 @@
-import type { Signer } from "ethers";
-import { Contract } from "ethers";
+import { Address, PublicClient } from "viem";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
+
+type PublicClientGetter = () => PublicClient;
 
 const BoltzSmartWalletFactoryAbi = [
     {
@@ -502,12 +503,59 @@ const ForwarderAbi = [
     },
 ];
 
-export const getSmartWalletFactory = (signer: Signer) =>
-    new Contract(
-        config.assets[RBTC].contracts.smartWalletFactory,
-        BoltzSmartWalletFactoryAbi,
-        signer,
-    );
+export const getSmartWalletAddress = async (
+    publicClient: PublicClientGetter,
+    owner: Address,
+    recoverer: Address,
+    index: bigint,
+) => {
+    const address = await publicClient().readContract({
+        address: config.assets[RBTC].contracts.smartWalletFactory as Address,
+        abi: BoltzSmartWalletFactoryAbi,
+        functionName: "getSmartWalletAddress",
+        args: [owner, recoverer, index],
+        authorizationList: undefined,
+    });
+    return address as Address;
+};
 
-export const getForwarder = (signer: Signer, forwarder: string) =>
-    new Contract(forwarder, ForwarderAbi, signer);
+export const getSmartWalletFactoryAddress = () => {
+    return config.assets[RBTC].contracts.smartWalletFactory as Address;
+};
+
+export const getSmartWalletNonce = async (
+    publicClient: PublicClientGetter,
+    address: Address,
+) => {
+    const nonce = BigInt(
+        await publicClient().getTransactionCount({
+            address: address,
+            blockTag: "pending",
+        }),
+    );
+    return nonce;
+};
+
+export const getWalletNonce = async (
+    publicClient: PublicClientGetter,
+    address: Address,
+) => {
+    const nonce = BigInt(
+        await publicClient().getTransactionCount({
+            address: address,
+        }),
+    );
+    return nonce;
+};
+
+export const wagmiSmartWalletFactoryContractConfig = {
+    address: config.assets[RBTC].contracts.smartWalletFactory as Address,
+    abi: BoltzSmartWalletFactoryAbi,
+} as const;
+
+export const getWagmiForwarderContractConfig = (forwarder: string) => {
+    return {
+        address: forwarder as Address,
+        abi: ForwarderAbi,
+    } as const;
+};

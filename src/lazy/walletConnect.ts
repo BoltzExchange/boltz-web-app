@@ -1,16 +1,16 @@
 import Loader from "./Loader";
 
 export default new Loader("WalletConnect", async () => {
-    const [appKit, EthersAdapter] = await Promise.all([
+    const [appKit, WagmiAdapter] = await Promise.all([
         import("@reown/appkit"),
         (async () => {
-            const ethersAdapter = await import("@reown/appkit-adapter-ethers");
-            return ethersAdapter.EthersAdapter;
+            const wagmiAdapter = await import("@reown/appkit-adapter-wagmi");
+            return wagmiAdapter.WagmiAdapter;
         })(),
     ]);
 
     return {
         appKit,
-        EthersAdapter,
+        WagmiAdapter,
     };
 });

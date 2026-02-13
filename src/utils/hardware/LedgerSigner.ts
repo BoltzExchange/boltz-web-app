@@ -1,20 +1,33 @@
-import type { TransactionLike } from "ethers";
-import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
+import { transports, wagmiConfig, walletTransport } from "src/config/wagmi";
+import {
+    type Address,
+    type PublicClient,
+    type Signature,
+    type TransactionRequestBase,
+    type TransactionSerializable,
+    type WalletClient,
+    createPublicClient,
+    createWalletClient,
+    hashDomain,
+    hashStruct,
+    serializeSignature as serializeSignatureViem,
+    serializeTransaction,
+} from "viem";
 
-import { config } from "../../config";
 import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import type { Transport } from "../../lazy/ledger";
 import ledgerLoader from "../../lazy/ledger";
-import { type Provider, createProvider } from "../provider";
+import { ensureHex } from "../strings";
 import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
 import { derivationPaths } from "./HardwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];
 
-    private readonly provider: Provider;
+    private publicClient: PublicClient;
+    private walletClient: WalletClient;
     private readonly loader: typeof ledgerLoader;
 
     private transport?: Transport;
@@ -26,14 +39,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             values?: Record<string, unknown>,
         ) => string,
     ) {
-        this.provider = createProvider(
-            config.assets["RBTC"]?.network?.rpcUrls || [],
-        );
-
         this.loader = ledgerLoader;
     }
 
-    public getProvider = (): Provider => this.provider;
+    public getPublicClient = (): PublicClient => this.publicClient;
+    public getWalletClient = (): WalletClient => this.walletClient;
 
     public deriveAddresses = async (
         basePath: string,
@@ -55,6 +65,16 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             const { address } = await eth.getAddress(path);
             addresses.push({ path, address: address.toLowerCase() });
         }
+
+        this.publicClient = createPublicClient({
+            chain: wagmiConfig.chains[0],
+            transport: transports[0],
+        }) as any;
+        this.walletClient = createWalletClient({
+            account: addresses[0].address as Address,
+            chain: wagmiConfig.chains[0],
+            transport: walletTransport,
+        });
 
         return addresses;
     };
@@ -87,42 +107,56 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             case "eth_sendTransaction": {
                 log.debug("Signing transaction with Ledger");
 
-                const txParams = request.params[0] as TransactionLike;
+                const txParams = request.params[0] as TransactionRequestBase;
 
-                const [nonce, network, feeData] = await Promise.all([
-                    this.provider.getTransactionCount(txParams.from),
-                    this.provider.getNetwork(),
-                    this.provider.getFeeData(),
+                const [nonce, chainId, gasPrice] = await Promise.all([
+                    this.publicClient.getTransactionCount({
+                        address: txParams.from as Address,
+                    }),
+                    this.publicClient.getChainId(),
+                    this.publicClient.getGasPrice(),
                 ]);
 
-                const transactionLike = {
-                    ...txParams,
+                const transactionSerializable: TransactionSerializable = {
+                    to: txParams.to,
+                    data: txParams.data,
                     nonce,
-                    type: 0,
-                    from: undefined,
-                    chainId: network.chainId,
-                    gasPrice: feeData.gasPrice,
-                    gasLimit: (txParams as unknown as { gas: number }).gas,
+                    chainId,
+                    gasPrice,
+                    value: txParams.value,
                 };
 
-                log.debug("Broadcasting Ledger transaction", transactionLike);
+                log.debug(
+                    "Broadcasting Trezor transaction",
+                    transactionSerializable,
+                );
 
-                const tx = Transaction.from(transactionLike);
+                const unsignedSerialized = serializeTransaction(
+                    transactionSerializable,
+                );
 
                 const modules = await this.loader.get();
                 const eth = new modules.eth(this.transport);
                 const signature = await eth.clearSignTransaction(
                     this.derivationPath,
-                    tx.unsignedSerialized.substring(2),
+                    unsignedSerialized.substring(2),
                     {},
                 );
 
-                tx.signature = this.serializeSignature(signature);
-                await this.provider.send("eth_sendRawTransaction", [
-                    tx.serialized,
-                ]);
+                const txSignature: Signature = {
+                    v: BigInt(signature.v),
+                    r: ensureHex(signature.r),
+                    s: ensureHex(signature.s),
+                };
+                const serializedTransaction = serializeTransaction(
+                    transactionSerializable,
+                    txSignature,
+                );
+                const hash = await this.walletClient.sendRawTransaction({
+                    serializedTransaction,
+                });
 
-                return tx.hash;
+                return hash;
             }
 
             case "eth_signTypedData_v4": {
@@ -147,22 +181,22 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
 
                     const signature = await eth.signEIP712HashedMessage(
                         this.derivationPath,
-                        TypedDataEncoder.hashDomain(message.domain),
-                        TypedDataEncoder.hashStruct(
-                            message.primaryType,
+                        hashDomain({ domain: message.domain }),
+                        hashStruct({
+                            primaryType: message.primaryType,
                             types,
-                            message.message,
-                        ),
+                            data: message.message,
+                        }),
                     );
                     return this.serializeSignature(signature);
                 }
             }
         }
 
-        return (await this.provider.send(
-            request.method,
-            request.params,
-        )) as never;
+        return (await this.walletClient.request({
+            method: request.method,
+            params: request.params,
+        })) as never;
     };
 
     public on = () => {};
@@ -224,11 +258,11 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                 ? BigInt(`0x${signature.v}`)
                 : signature.v;
 
-        return Signature.from({
-            v,
-            r: BigInt(`0x${signature.r}`).toString(),
-            s: BigInt(`0x${signature.s}`).toString(),
-        }).serialized;
+        return serializeSignatureViem({
+            v: BigInt(v),
+            r: ensureHex(signature.r),
+            s: ensureHex(signature.s),
+        });
     };
 }
 

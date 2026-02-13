@@ -1,4 +1,5 @@
 import { Show } from "solid-js";
+import { getWagmiEtherSwapContractConfig } from "src/config/wagmi";
 
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -23,7 +24,7 @@ const ClaimEvm = (props: {
     derivationPath: string;
     timeoutBlockHeight: number;
 }) => {
-    const { getEtherSwap, signer } = useWeb3Signer();
+    const { publicClient, walletClient, getContracts } = useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
 
@@ -35,24 +36,27 @@ const ClaimEvm = (props: {
 
                 if (props.useRif) {
                     transactionHash = await relayClaimTransaction(
-                        signer(),
-                        getEtherSwap(),
+                        publicClient,
+                        walletClient,
+                        getContracts,
                         props.preimage,
                         props.amount,
                         props.refundAddress,
                         props.timeoutBlockHeight,
                     );
                 } else {
-                    transactionHash = (
-                        await getEtherSwap()[
-                            "claim(bytes32,uint256,address,uint256)"
-                        ](
+                    transactionHash = await walletClient().writeContract({
+                        ...getWagmiEtherSwapContractConfig(getContracts),
+                        chain: walletClient().chain,
+                        account: (await walletClient().getAddresses())[0],
+                        functionName: "claim",
+                        args: [
                             prefix0x(props.preimage),
                             satoshiToWei(props.amount),
                             props.refundAddress,
                             props.timeoutBlockHeight,
-                        )
-                    ).hash;
+                        ],
+                    });
                 }
 
                 const currentSwap = await getSwap(props.swapId);

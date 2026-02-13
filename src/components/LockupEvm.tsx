@@ -1,9 +1,14 @@
 import log from "loglevel";
 import { Show, createEffect, createSignal } from "solid-js";
+import { Address } from "viem";
 
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
+import {
+    EtherSwapAbi,
+    customDerivationPathRdns,
+    useWeb3Signer,
+} from "../context/Web3";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 import ConnectWallet from "./ConnectWallet";
@@ -37,7 +42,8 @@ const LockupEvm = (props: {
     timeoutBlockHeight: number;
 }) => {
     const { setSwap } = usePayContext();
-    const { getEtherSwap, signer, providers } = useWeb3Signer();
+    const { providers, publicClient, walletClient, getContracts, currentRdns } =
+        useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
 
     const value = () => satoshiToWei(props.amount);
@@ -46,21 +52,52 @@ const LockupEvm = (props: {
 
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
-        if (signer() === undefined) {
+        if (walletClient() === undefined) {
             return;
         }
 
         const [balance, gasPrice] = await Promise.all([
-            signer().provider.getBalance(await signer().getAddress()),
-            signer()
-                .provider.getFeeData()
-                .then((data) => data.gasPrice),
+            publicClient().getBalance({
+                address: (await walletClient().getAddresses())[0],
+            }),
+            publicClient().getGasPrice(),
         ]);
 
         const spendable = balance - gasPrice * lockupGasUsage;
         log.info("EVM signer spendable balance", spendable);
         setSignerBalance(spendable);
     });
+
+    const sendTransaction = async () => {
+        const [account] = await walletClient().getAddresses();
+        const txHash = await walletClient().writeContract({
+            address: getContracts().swapContracts.EtherSwap as Address,
+            abi: EtherSwapAbi,
+            functionName: "lock",
+            args: [
+                prefix0x(props.preimageHash),
+                props.claimAddress,
+                props.timeoutBlockHeight,
+                {
+                    value: value(),
+                },
+            ],
+            chain: walletClient().chain,
+            account,
+        });
+        const currentSwap = await getSwap(props.swapId);
+        currentSwap.lockupTx = txHash;
+        currentSwap.signer = account;
+
+        if (customDerivationPathRdns.includes(currentRdns())) {
+            currentSwap.derivationPath = (
+                providers()[currentRdns()].provider as unknown as HardwareSigner
+            ).getDerivationPath();
+        }
+
+        setSwap(currentSwap);
+        await setSwapStorage(currentSwap);
+    };
 
     return (
         <>
@@ -69,44 +106,20 @@ const LockupEvm = (props: {
                 when={signerBalance() !== undefined}
                 fallback={
                     <Show
-                        when={signer() !== undefined}
+                        when={walletClient() !== undefined}
                         fallback={<ConnectWallet />}>
                         <LoadingSpinner />
                     </Show>
                 }>
                 <Show
-                    when={signer() === undefined || signerBalance() > value()}
+                    when={
+                        walletClient() === undefined ||
+                        signerBalance() > value()
+                    }
                     fallback={<InsufficientBalance />}>
                     <ContractTransaction
                         /* eslint-disable-next-line solid/reactivity */
-                        onClick={async () => {
-                            const contract = getEtherSwap();
-                            const tx = await contract[
-                                "lock(bytes32,address,uint256)"
-                            ](
-                                prefix0x(props.preimageHash),
-                                props.claimAddress,
-                                props.timeoutBlockHeight,
-                                {
-                                    value: value(),
-                                },
-                            );
-                            const currentSwap = await getSwap(props.swapId);
-                            currentSwap.lockupTx = tx.hash;
-                            currentSwap.signer = signer().address;
-
-                            if (
-                                customDerivationPathRdns.includes(signer().rdns)
-                            ) {
-                                currentSwap.derivationPath = (
-                                    providers()[signer().rdns]
-                                        .provider as unknown as HardwareSigner
-                                ).getDerivationPath();
-                            }
-
-                            setSwap(currentSwap);
-                            await setSwapStorage(currentSwap);
-                        }}
+                        onClick={sendTransaction}
                         children={<ConnectWallet />}
                         address={{
                             address: props.signerAddress,

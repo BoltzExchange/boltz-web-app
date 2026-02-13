@@ -55,7 +55,6 @@
         "svgo": "^4.0.0",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.50.0",
-        "viem": "^2.45.1",
         "vite": "^7.3.0",
         "vite-plugin-node-polyfills": "^0.24.0",
         "vite-plugin-solid": "^2.11.10",
@@ -71,7 +70,7 @@
         "@ledgerhq/hw-app-eth": "^7.0.1",
         "@ledgerhq/hw-transport-webhid": "^6.30.10",
         "@reown/appkit": "1.6.9",
-        "@reown/appkit-adapter-ethers": "1.6.9",
+        "@reown/appkit-adapter-wagmi": "^1.6.9",
         "@scure/base": "^2.0.0",
         "@scure/bip32": "^2.0.1",
         "@scure/bip39": "^2.0.1",
@@ -80,6 +79,7 @@
         "@solidjs/router": "^0.15.4",
         "@trezor/connect-web": "^9.7.0",
         "@vulpemventures/secp256k1-zkp": "^3.2.1",
+        "@wagmi/core": "^3.3.2",
         "bignumber.js": "^9.3.1",
         "bitcoinjs-lib": "^6.1.7",
         "bolt11": "^1.4.1",
@@ -88,13 +88,14 @@
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
         "ecpair": "^3.0.1",
-        "ethers": "^6.16.0",
         "liquidjs-lib": "^6.0.2-liquid.37",
         "localforage": "^1.10.0",
         "loglevel": "^1.9.2",
         "qr-scanner": "^1.4.2",
         "qrcode": "^1.5.4",
         "solid-icons": "^1.1.0",
-        "solid-js": "1.9.11"
+        "solid-js": "1.9.11",
+        "viem": "^2.45.1",
+        "wagmi": "^3.4.2"
     }
 }

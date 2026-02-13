@@ -4,6 +4,7 @@ import { ImArrowLeft2, ImArrowRight2 } from "solid-icons/im";
 import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
+import { Address } from "viem";
 
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
@@ -123,7 +124,9 @@ const HwAddressSelection = (props: {
                 addresses.map(async ({ address, path }) => ({
                     path,
                     address,
-                    balance: await prov.getProvider().getBalance(address),
+                    balance: await prov
+                        .getPublicClient()
+                        .getBalance({ address: address as Address }),
                 })),
             );
         } catch (e) {
