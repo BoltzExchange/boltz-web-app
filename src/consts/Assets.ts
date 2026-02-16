@@ -94,6 +94,16 @@ export const requireTokenConfig = (
     return tokenConfig;
 };
 
+export const getNetworkBadge = (asset: string): string | null => {
+    const chainName = config.assets?.[asset]?.network?.chainName;
+
+    if (!chainName) {
+        return null;
+    }
+
+    return chainName.toLowerCase();
+};
+
 export const getRouterAddress = (asset: string): string | undefined => {
     const assetConfig = config.assets?.[asset];
     if (!assetConfig) {

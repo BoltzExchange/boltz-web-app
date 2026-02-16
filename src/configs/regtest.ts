@@ -1,6 +1,7 @@
 import type { Config } from "src/configs/base";
 import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
 import { AssetKind } from "src/consts/AssetKind";
+import { Network } from "src/consts/Network";
 
 const arbitrumExplorer = {
     id: Explorer.Blockscout,
@@ -9,7 +10,7 @@ const arbitrumExplorer = {
 
 const arbitrumNetwork = {
     symbol: "ARB",
-    chainName: "Arbitrum",
+    chainName: Network.Arbitrum,
     chainId: 42161,
     rpcUrls: ["https://arb1.arbitrum.io/rpc"],
     nativeCurrency: {

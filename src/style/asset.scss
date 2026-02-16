@@ -2,10 +2,28 @@
 
 .icon {
     display: inline-block;
+    position: relative;
     width: 36px;
     height: 36px;
     background-repeat: no-repeat;
     background-size: 100%;
+}
+
+@mixin network-badge($icon, $bg-color) {
+    .icon::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background-image: $icon;
+        background-size: 24px 24px;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-color: $bg-color;
+    }
 }
 
 @media (max-width: 488px) {
@@ -65,8 +83,14 @@
 .asset-USDT0 {
     .icon {
         background-image: vars.$usdt0_icon;
+        background-size: 80%;
+        background-position: center;
     }
     .asset-text:before {
         content: "usdt0";
     }
+}
+
+[data-network="arbitrum"] {
+    @include network-badge(vars.$arbitrum_icon, var(--color-secondary-700));
 }

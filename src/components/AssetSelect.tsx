@@ -1,17 +1,36 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 
 import { config } from "../config";
-import { LN } from "../consts/Assets";
+import { BTC, LBTC, LN, RBTC, getNetworkBadge } from "../consts/Assets";
 import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
 
+const getAssetNetwork = (asset: string): string | null => {
+    switch (asset) {
+        case BTC:
+            return "Bitcoin";
+        case LN:
+            return "Lightning";
+        case LBTC:
+            return "Liquid";
+        case RBTC:
+            return "Rootstock";
+        default: {
+            const assetConfig = config.assets?.[asset];
+            if (assetConfig?.network?.chainName) {
+                return assetConfig.network.chainName;
+            }
+            return null;
+        }
+    }
+};
+
 const SelectAsset = () => {
-    const assets = Object.keys(config.assets);
-    assets.push(LN);
+    const assets = [...Object.keys(config.assets), LN].sort();
 
     const { t, fetchPairs, pairs, regularPairs } = useGlobalContext();
 
@@ -26,7 +45,10 @@ const SelectAsset = () => {
     } = useCreateContext();
 
     const changeAsset = (newAsset: string) => {
-        if (isSelected(newAsset)) return;
+        if (isSelected(newAsset)) {
+            setAssetSelect(false);
+            return;
+        }
 
         // clear invoice every time asset changes
         setInvoice("");
@@ -46,9 +68,11 @@ const SelectAsset = () => {
                 fromAsset = pair().toAsset;
             }
             setPair(new Pair(pairs(), fromAsset, newAsset, regularPairs()));
-            // always clear onchain address if assetChange did change
+            // always clear onchain address if assetReceive changes
             setOnchainAddress("");
         }
+
+        setAssetSelect(false);
 
         void fetchPairs().catch((err) =>
             log.error("Could not fetch pairs", err),
@@ -63,35 +87,58 @@ const SelectAsset = () => {
     };
 
     return (
-        <div
-            class="frame assets-select"
-            onClick={() => setAssetSelect(false)}
-            style={assetSelect() ? "display: block;" : "display: none;"}>
-            <h2>
-                {t("select_asset", {
-                    direction:
-                        assetSelected() === Side.Send
-                            ? t("send")
-                            : t("receive"),
-                })}
-            </h2>
-            <span class="close" onClick={() => setAssetSelect(!assetSelect())}>
-                <IoClose />
-            </span>
-            <hr />
-            <For each={assets}>
-                {(asset) => (
-                    <div
-                        class={`asset-select asset-${asset}`}
-                        data-selected={isSelected(asset)}
-                        data-testid={`select-${asset}`}
-                        onClick={() => changeAsset(asset)}>
-                        <span class="icon" />
-                        <span class="asset-text" />
+        <Show when={assetSelect()}>
+            <div
+                class="asset-select-overlay"
+                onClick={() => setAssetSelect(false)}>
+                <div
+                    class="asset-select-modal"
+                    onClick={(e) => e.stopPropagation()}>
+                    <div class="asset-select-header">
+                        <h3>
+                            {t("select_asset", {
+                                direction:
+                                    assetSelected() === Side.Send
+                                        ? t("send")
+                                        : t("receive"),
+                            })}
+                        </h3>
+                        <span
+                            class="asset-select-close"
+                            onClick={() => setAssetSelect(false)}>
+                            <IoClose />
+                        </span>
                     </div>
-                )}
-            </For>
-        </div>
+                    <div class="asset-select-list">
+                        <For each={assets}>
+                            {(asset) => {
+                                const network = getAssetNetwork(asset);
+                                return (
+                                    <div
+                                        class={`asset-select-item asset-${asset}`}
+                                        data-network={getNetworkBadge(asset)}
+                                        data-selected={isSelected(asset)}
+                                        data-testid={`select-${asset}`}
+                                        onClick={() => changeAsset(asset)}>
+                                        <span class="icon" />
+                                        <div class="asset-select-info">
+                                            <span class="asset-select-name">
+                                                {asset}
+                                            </span>
+                                            <Show when={network}>
+                                                <span class="asset-select-network">
+                                                    {network}
+                                                </span>
+                                            </Show>
+                                        </div>
+                                    </div>
+                                );
+                            }}
+                        </For>
+                    </div>
+                </div>
+            </div>
+        </Show>
     );
 };
 
