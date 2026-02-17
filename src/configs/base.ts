@@ -64,6 +64,7 @@ const defaults = {
     repoUrl: "https://github.com/BoltzExchange/boltz-web-app",
     docsUrl: "https://docs.boltz.exchange",
     blogUrl: "https://blog.boltz.exchange",
+    partnerUrl: "https://partner.boltz.exchange",
     nostrUrl:
         "https://primal.net/p/nprofile1qqsqcdcltmv4qanpx3p7svcufdsg9rkk00x7l2sknra4e6whkv59l7clgcdzj",
     statusUrl: "https://status.boltz.exchange",
