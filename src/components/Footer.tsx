@@ -2,6 +2,7 @@ import { BsEnvelopeFill, BsGithub, BsTwitter, BsYoutube } from "solid-icons/bs";
 import { Show } from "solid-js";
 
 import nostr from "../assets/nostr.svg";
+import substack from "../assets/substack.svg";
 import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import "../style/footer.scss";
@@ -32,6 +33,12 @@ const Footer = () => {
                     <img src={nostr} alt="Nostr Logo" />
                 </ExternalLink>
                 <ExternalLink
+                    title="Substack"
+                    class="substack"
+                    href={config.blogUrl}>
+                    <img src={substack} alt="Substack Logo" />
+                </ExternalLink>
+                <ExternalLink
                     title="Youtube"
                     class="youtube"
                     href={config.youtubeUrl}>
@@ -45,7 +52,10 @@ const Footer = () => {
                 </ExternalLink>
             </div>
             <p class="footer-nav">
-                <ExternalLink href={config.blogUrl}>{t("blog")}</ExternalLink> |{" "}
+                <ExternalLink href={config.partnerUrl}>
+                    {t("partner")}
+                </ExternalLink>{" "}
+                |{" "}
                 <ExternalLink href={config.brandingUrl}>
                     {t("branding")}
                 </ExternalLink>{" "}
