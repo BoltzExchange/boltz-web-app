@@ -19,7 +19,7 @@ const ContractTransaction = (props: {
     address: { address: string; derivationPath?: string };
 }) => {
     const { notify } = useGlobalContext();
-    const { signer, getContracts } = useWeb3Signer();
+    const { publicClient, walletClient, getContracts } = useWeb3Signer();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
 
@@ -29,8 +29,8 @@ const ContractTransaction = (props: {
 
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
-        const network = await signer()?.provider?.getNetwork();
-        setSignerNetwork(Number(network?.chainId));
+        const chainId = await publicClient()?.getChainId();
+        setSignerNetwork(chainId ?? -1);
     });
 
     const allowAnyAddress = () =>
@@ -39,9 +39,9 @@ const ContractTransaction = (props: {
     return (
         <Show
             when={
-                signer() !== undefined &&
+                walletClient()?.account?.address !== undefined &&
                 (allowAnyAddress() ||
-                    props.address.address === signer().address)
+                    props.address.address === walletClient().account.address)
             }
             fallback={
                 <Show

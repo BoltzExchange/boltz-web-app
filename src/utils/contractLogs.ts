@@ -1,60 +1,91 @@
-import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import type { BytesLike, Result, Signer } from "ethers";
-import { AbiCoder, Contract, JsonRpcProvider, keccak256 } from "ethers";
 import log from "loglevel";
+import {
+    type Address,
+    type DecodeEventLogReturnType,
+    type Hex,
+    type Log,
+    type PublicClient,
+    type WalletClient,
+    decodeEventLog,
+    encodeAbiParameters,
+    getEventSelector,
+    keccak256,
+    parseAbiItem,
+    parseEventLogs,
+} from "viem";
 
 import { config } from "../config";
 import type { AssetType } from "../consts/Assets";
 import { RBTC } from "../consts/Assets";
 import { EtherSwapAbi } from "../context/Web3";
+import { type Contracts } from "./boltzClient";
 import { weiToSatoshi } from "./rootstock";
 
-const scanInterval = 2_000;
+type GetPublicClient = () => PublicClient;
+type GetWalletClient = () => WalletClient;
+type GetContracts = () => Contracts;
+type EventLog = Log<
+    bigint,
+    number,
+    false,
+    undefined,
+    true,
+    typeof EtherSwapAbi
+>;
+
+const bigIntMax = (...args: bigint[]) => args.reduce((m, e) => (e > m ? e : m));
+
+const scanInterval = 2_000n;
 
 export type LogRefundData = {
     asset: AssetType;
-    blockNumber: number;
-    transactionHash: string;
+    blockNumber: bigint;
+    transactionHash: Hex;
 
     preimageHash: string;
     amount: bigint;
-    claimAddress: string;
-    refundAddress: string;
+    claimAddress: Address;
+    refundAddress: Address;
     timelock: bigint;
 };
 
 export const getLogsFromReceipt = async (
-    signer: Signer,
-    etherSwap: EtherSwap,
-    txHash: string,
+    client: PublicClient,
+    txHash: Hex,
 ): Promise<LogRefundData> => {
-    const receipt = await signer.provider.getTransactionReceipt(txHash);
+    const receipt = await client.getTransactionReceipt({
+        hash: txHash,
+    });
+    const logs = parseEventLogs({
+        abi: EtherSwapAbi,
+        logs: receipt.logs,
+    });
 
-    for (const event of receipt.logs) {
-        if (
-            event.topics[0] !== etherSwap.interface.getEvent("Lockup").topicHash
-        ) {
+    const eventSignature = "Lockup(bytes32,uint256,address,address,uint256)";
+    const topicHash = getEventSelector(eventSignature);
+    for (const eventLog of logs) {
+        if (eventLog.topics[0] !== topicHash) {
             continue;
         }
 
-        return parseLockupEvent(etherSwap, event).data;
+        return parseLockupEvent(eventLog).data;
     }
 
-    throw "could not find event";
+    throw new Error("could not find event");
 };
 
 async function* scanLogsForPossibleRefunds(
     abortSignal: AbortSignal,
-    signer: Signer,
-    etherSwap: EtherSwap,
+    publicClient: GetPublicClient,
+    walletClient: GetWalletClient,
+    contracts: GetContracts,
 ) {
-    const [signerAddress, latestBlock] = await Promise.all([
-        signer.getAddress(),
-        signer.provider.getBlockNumber(),
+    const [[signerAddress], latestBlock] = await Promise.all([
+        walletClient().getAddresses(),
+        publicClient().getBlockNumber(),
     ]);
 
-    const deployHeight = config.assets[RBTC].contracts.deployHeight;
-    const filter = etherSwap.filters.Lockup(null, null, null, signerAddress);
+    const deployHeight = BigInt(config.assets[RBTC].contracts.deployHeight);
 
     log.info(
         `Scanning for possible refunds of ${signerAddress} from ${deployHeight} to ${latestBlock}`,
@@ -64,12 +95,6 @@ async function* scanLogsForPossibleRefunds(
     if (scanProviderUrl === undefined) {
         return;
     }
-
-    const etherSwapScan = new Contract(
-        await etherSwap.getAddress(),
-        EtherSwapAbi,
-        new JsonRpcProvider(scanProviderUrl),
-    ) as unknown as EtherSwap;
 
     for (
         let toBlock = latestBlock;
@@ -81,48 +106,68 @@ async function* scanLogsForPossibleRefunds(
             return;
         }
 
-        const fromBlock = Math.max(toBlock - scanInterval, 0);
+        const fromBlock = bigIntMax(toBlock - scanInterval, 0n);
         log.debug(`Scanning possible refunds from ${fromBlock} to ${toBlock}`);
-        const events = await etherSwapScan.queryFilter(
-            filter,
+        const logs = await publicClient().getLogs({
+            address: contracts().swapContracts.EtherSwap as Address,
+            event: parseAbiItem(
+                "event Lockup(bytes32, uint256, address, address, uint256)",
+            ),
             fromBlock,
             toBlock,
-        );
+            args: [null, null, null, signerAddress],
+        });
 
         const results: { progress: number; events: LogRefundData[] } = {
-            progress: (latestBlock - toBlock) / (latestBlock - deployHeight),
+            progress:
+                latestBlock === deployHeight
+                    ? 1
+                    : Number(latestBlock - toBlock) /
+                      Number(latestBlock - deployHeight),
             events: [],
         };
 
-        for (const event of events) {
-            log.debug(`Found lockup event in: ${event.transactionHash}`);
+        for (const eventLog of logs) {
+            log.debug(`Found lockup event in: ${eventLog.transactionHash}`);
 
-            const { data, decoded } = parseLockupEvent(etherSwap, event);
-            const stillLocked = await etherSwap.swaps(
-                // Contracts v5 switched from encodePacked to an assembly implementation of encode
-                keccak256(
-                    AbiCoder.defaultAbiCoder().encode(
-                        ["bytes32", "uint256", "address", "address", "uint256"],
-                        [
-                            decoded[0],
-                            decoded[1],
-                            data.claimAddress,
-                            data.refundAddress,
-                            data.timelock,
-                        ],
+            const { data, decoded } = parseLockupEvent(eventLog);
+            // Contracts v5 switched from encodePacked to an assembly implementation of encode
+            const stillLocked = (await publicClient().readContract({
+                address: contracts().swapContracts.EtherSwap as Address,
+                abi: EtherSwapAbi,
+                functionName: "swaps",
+                args: [
+                    keccak256(
+                        encodeAbiParameters(
+                            [
+                                { type: "bytes32" },
+                                { type: "uint256" },
+                                { type: "address" },
+                                { type: "address" },
+                                { type: "uint256" },
+                            ],
+                            [
+                                decoded.args[0] as Hex,
+                                decoded.args[1] as bigint,
+                                data.claimAddress,
+                                data.refundAddress,
+                                data.timelock,
+                            ],
+                        ),
                     ),
-                ),
-            );
+                ],
+                authorizationList: undefined,
+            })) as boolean;
 
             if (!stillLocked) {
                 log.info(
-                    `Lockup event in ${event.transactionHash} already spent`,
+                    `Lockup event in ${eventLog.transactionHash} already spent`,
                 );
                 continue;
             }
 
             log.info(
-                `Found lockup event that is still locked in: ${event.transactionHash}`,
+                `Found lockup event that is still locked in: ${eventLog.transactionHash}`,
             );
             results.events.push(data);
         }
@@ -134,28 +179,23 @@ async function* scanLogsForPossibleRefunds(
 }
 
 const parseLockupEvent = (
-    etherSwap: EtherSwap,
-    event: {
-        data: BytesLike;
-        blockNumber: number;
-        transactionHash: string;
-        topics: readonly string[];
-    },
+    log: EventLog,
 ): {
     data: LogRefundData;
-    decoded: Result;
+    decoded: DecodeEventLogReturnType;
 } => {
-    const decoded = etherSwap.interface.decodeEventLog(
-        etherSwap.interface.getEvent("Lockup"),
-        event.data,
-        event.topics,
-    );
+    const decoded = decodeEventLog({
+        abi: EtherSwapAbi,
+        data: log.data,
+        topics: log.topics,
+        eventName: "Lockup",
+    });
     return {
         decoded,
         data: {
             asset: RBTC,
-            blockNumber: event.blockNumber,
-            transactionHash: event.transactionHash,
+            blockNumber: log.blockNumber,
+            transactionHash: log.transactionHash,
             preimageHash: decoded[0].substring(2),
             amount: weiToSatoshi(decoded[1]),
             claimAddress: decoded[2],

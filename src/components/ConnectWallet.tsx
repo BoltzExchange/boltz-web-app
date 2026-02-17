@@ -173,7 +173,7 @@ const ShowAddress = (props: {
     addressOverride?: Accessor<string | undefined>;
 }) => {
     const { t, separator, denomination, privacyMode } = useGlobalContext();
-    const { signer, clearSigner } = useWeb3Signer();
+    const { clearSigner, publicClient, walletClient } = useWeb3Signer();
 
     const formatAddress = (addr: string) => {
         if (privacyMode()) {
@@ -189,12 +189,25 @@ const ShowAddress = (props: {
 
     const [text, setText] = createSignal<string | undefined>(undefined);
 
-    const [rskBalance] = createResource(async () => {
-        if (signer() === undefined) {
-            return undefined;
-        }
-        return signer().provider.getBalance(await signer().getAddress());
-    });
+    const [rskBalance] = createResource(
+        () => {
+            const client = publicClient();
+            const wallet = walletClient();
+            if (!client || !wallet) {
+                return null;
+            }
+            return { client, wallet };
+        },
+        async (clients) => {
+            if (!clients) {
+                return undefined;
+            }
+            const { client, wallet } = clients;
+            return client.getBalance({
+                address: wallet.account.address,
+            });
+        },
+    );
 
     return (
         <button
@@ -281,18 +294,18 @@ const ConnectWallet = (props: {
     addressOverride?: Accessor<string | undefined>;
 }) => {
     const { t } = useGlobalContext();
-    const { providers, signer, getContracts } = useWeb3Signer();
+    const { providers, walletClient, getContracts } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress, assetReceive } =
         useCreateContext();
 
-    const address = createMemo(() => signer()?.address);
+    const address = createMemo(() => walletClient()?.account.address);
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
         if (
             address() !== undefined &&
-            Number((await signer()?.provider.getNetwork())?.chainId || -1) !==
+            Number((await walletClient()?.getChainId()) || -1) !==
                 getContracts().network.chainId
         ) {
             setNetworkValid(false);

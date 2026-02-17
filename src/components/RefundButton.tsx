@@ -1,10 +1,10 @@
 import { crypto } from "bitcoinjs-lib";
-import type { TransactionResponse } from "ethers";
-import { Signature } from "ethers";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
 import { Show, createMemo, createResource, createSignal } from "solid-js";
+import { getWagmiEtherSwapContractConfig } from "src/config/wagmi";
+import { type Hash, type Hex, parseSignature } from "viem";
 
 import RefundEta from "../components/RefundEta";
 import { RBTC } from "../consts/Assets";
@@ -36,7 +36,7 @@ export const RefundEvm = (props: {
     timeoutBlockHeight: number;
     setRefundTxId: Setter<string>;
 }) => {
-    const { getEtherSwap, signer } = useWeb3Signer();
+    const { publicClient, walletClient, getContracts } = useWeb3Signer();
     const { t } = useGlobalContext();
 
     return (
@@ -44,46 +44,52 @@ export const RefundEvm = (props: {
             disabled={props.disabled}
             /* eslint-disable-next-line solid/reactivity */
             onClick={async () => {
-                const contract = getEtherSwap();
-
-                let tx: TransactionResponse;
+                let hash: Hash;
 
                 if (
                     props.timeoutBlockHeight <
-                    (await signer().provider.getBlockNumber())
+                    Number(await publicClient().getBlockNumber())
                 ) {
-                    tx = await contract[
-                        "refund(bytes32,uint256,address,uint256)"
-                    ](
-                        prefix0x(props.preimageHash),
-                        satoshiToWei(props.amount),
-                        props.claimAddress,
-                        props.timeoutBlockHeight,
-                    );
+                    hash = await walletClient().writeContract({
+                        ...getWagmiEtherSwapContractConfig(getContracts),
+                        chain: walletClient().chain,
+                        account: walletClient().account,
+                        functionName: "refund",
+                        args: [
+                            prefix0x(props.preimageHash),
+                            satoshiToWei(props.amount),
+                            props.claimAddress,
+                            props.timeoutBlockHeight,
+                        ],
+                    });
                 } else {
                     const { signature } = await getEipRefundSignature(
                         props.preimageHash,
                         // The endpoints for submarine and chain swap call the same endpoint
                         SwapType.Submarine,
                     );
-                    const decSignature = Signature.from(signature);
+                    const decSignature = parseSignature(signature as Hex);
 
-                    tx = await contract[
-                        "refundCooperative(bytes32,uint256,address,uint256,uint8,bytes32,bytes32)"
-                    ](
-                        prefix0x(props.preimageHash),
-                        satoshiToWei(props.amount),
-                        props.claimAddress,
-                        props.timeoutBlockHeight,
-                        decSignature.v,
-                        decSignature.r,
-                        decSignature.s,
-                    );
+                    hash = await walletClient().writeContract({
+                        ...getWagmiEtherSwapContractConfig(getContracts),
+                        chain: walletClient().chain,
+                        account: walletClient().account,
+                        functionName: "refundCooperative",
+                        args: [
+                            prefix0x(props.preimageHash),
+                            satoshiToWei(props.amount),
+                            props.claimAddress,
+                            props.timeoutBlockHeight,
+                            decSignature.v,
+                            decSignature.r,
+                            decSignature.s,
+                        ],
+                    });
                 }
 
-                props.setRefundTxId(tx.hash);
+                props.setRefundTxId(hash);
 
-                await tx.wait(1);
+                await publicClient().waitForTransactionReceipt({ hash });
             }}
             address={{
                 address: props.signerAddress,

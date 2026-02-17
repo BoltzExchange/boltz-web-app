@@ -19,8 +19,8 @@ const SwapListLogs = (props: { swaps: Accessor<LogRefundData[]> }) => {
     const { t } = useGlobalContext();
 
     const sortedSwaps = createMemo(() => {
-        return props.swaps().sort((a, b) => {
-            return a.blockNumber - b.blockNumber;
+        return [...props.swaps()].sort((a, b) => {
+            return Number(a.blockNumber - b.blockNumber);
         });
     });
 

@@ -1,37 +1,60 @@
-import type { TransactionLike } from "ethers";
-import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
+import { transports, wagmiConfig, walletTransport } from "src/config/wagmi";
+import {
+    type Address,
+    type PublicClient,
+    type Signature,
+    type TransactionRequestBase,
+    type TransactionSerializable,
+    type WalletClient,
+    createPublicClient,
+    createWalletClient,
+    hashDomain,
+    hashStruct,
+    serializeTransaction,
+} from "viem";
 
-import { config } from "../../config";
 import type { EIP1193Provider } from "../../consts/Types";
 import type {
-    Address,
     Response,
     SuccessWithDevice,
+    Address as TrezorAddress,
     Unsuccessful,
 } from "../../lazy/trezor";
 import trezorLoader from "../../lazy/trezor";
-import { type Provider, createProvider } from "../provider";
-import { trimPrefix } from "../strings";
+import { ensureHex, trimPrefix } from "../strings";
 import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
 import { derivationPaths } from "./HardwareSigner";
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
-    private readonly provider: Provider;
+    private publicClient: PublicClient;
+    private walletClient: WalletClient;
     private readonly loader: typeof trezorLoader;
 
     private initialized = false;
     private derivationPath!: string;
 
     constructor() {
-        this.provider = createProvider(
-            config.assets["RBTC"]?.network?.rpcUrls || [],
-        );
         this.setDerivationPath(derivationPaths.Ethereum);
         this.loader = trezorLoader;
     }
 
-    public getProvider = () => this.provider;
+    public getPublicClient = (): PublicClient => {
+        if (!this.publicClient) {
+            throw new Error(
+                "PublicClient not initialized. Call deriveAddresses first.",
+            );
+        }
+        return this.publicClient;
+    };
+    public getWalletClient = (): WalletClient => {
+        if (!this.walletClient) {
+            throw new Error(
+                "WalletClient not initialized. Call deriveAddresses first.",
+            );
+        }
+        return this.walletClient;
+    };
 
     public deriveAddresses = async (
         basePath: string,
@@ -49,7 +72,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
         await this.initialize();
         const connect = await this.loader.get();
-        const addresses = this.handleError<Address[]>(
+        const addresses = this.handleError<TrezorAddress[]>(
             await connect.ethereumGetAddress({
                 bundle: paths.map((path) => ({
                     path: `m/${path}`,
@@ -57,6 +80,16 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                 })),
             }),
         );
+
+        this.publicClient = createPublicClient({
+            chain: wagmiConfig.chains[0],
+            transport: transports[0],
+        }) as PublicClient;
+        this.walletClient = createWalletClient({
+            account: addresses.payload[0].address as Address,
+            chain: wagmiConfig.chains[0],
+            transport: walletTransport,
+        });
 
         return addresses.payload.map((res) => ({
             address: res.address.toLowerCase(),
@@ -83,7 +116,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                 await this.initialize();
 
                 const connect = await this.loader.get();
-                const addresses = this.handleError<Address>(
+                const addresses = this.handleError<TrezorAddress>(
                     await connect.ethereumGetAddress({
                         showOnTrezor: false,
                         path: this.derivationPath,
@@ -98,13 +131,18 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
                 await this.initialize();
 
-                const txParams = request.params[0] as TransactionLike;
+                if (!request.params?.[0]) {
+                    throw new Error("Transaction parameters required");
+                }
+                const txParams = request.params[0] as TransactionRequestBase;
 
-                const [connect, nonce, network, feeData] = await Promise.all([
+                const [connect, nonce, chainId, gasPrice] = await Promise.all([
                     this.loader.get(),
-                    this.provider.getTransactionCount(txParams.from),
-                    this.provider.getNetwork(),
-                    this.provider.getFeeData(),
+                    this.publicClient.getTransactionCount({
+                        address: txParams.from as Address,
+                    }),
+                    this.publicClient.getChainId(),
+                    this.publicClient.getGasPrice(),
                 ]);
 
                 const value = BigInt(txParams.value || 0);
@@ -112,10 +150,10 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     to: txParams.to,
                     data: txParams.data,
                     nonce: nonce.toString(16),
-                    chainId: Number(network.chainId),
-                    gasPrice: feeData.gasPrice.toString(16),
+                    chainId,
+                    gasPrice,
                     value: "0x" + value.toString(16),
-                    gasLimit: (txParams as unknown as { gas: number }).gas,
+                    gasLimit: txParams.gas,
                 };
 
                 const signature = this.handleError(
@@ -125,23 +163,36 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     } as unknown as never),
                 );
 
-                const transactionLike = {
-                    ...trezorTx,
-                    type: 0,
-                    gasPrice: feeData.gasPrice,
-                    nonce: parseInt(trezorTx.nonce, 16),
-                    signature: Signature.from(signature.payload),
+                const txSignature: Signature = {
+                    v: BigInt(signature.payload.v),
+                    r: ensureHex(signature.payload.r),
+                    s: ensureHex(signature.payload.s),
+                };
+                const transactionSerializable: TransactionSerializable = {
+                    to: txParams.to,
+                    data: txParams.data,
+                    nonce,
+                    chainId,
+                    gasPrice,
+                    value,
+                    gas: txParams.gas,
                 };
 
-                log.debug("Broadcasting Trezor transaction", transactionLike);
+                log.debug(
+                    "Broadcasting Trezor transaction",
+                    transactionSerializable,
+                );
 
-                const tx = Transaction.from(transactionLike);
+                const serializedTransaction = serializeTransaction(
+                    transactionSerializable,
+                    txSignature,
+                );
 
-                await this.provider.send("eth_sendRawTransaction", [
-                    tx.serialized,
-                ]);
+                const hash = await this.walletClient.sendRawTransaction({
+                    serializedTransaction,
+                });
 
-                return tx.hash;
+                return hash;
             }
 
             case "eth_signTypedData_v4": {
@@ -161,24 +212,24 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                         data: message,
                         metamask_v4_compat: true,
                         path: this.derivationPath,
-                        domain_separator_hash: TypedDataEncoder.hashDomain(
-                            message.domain,
-                        ),
-                        message_hash: TypedDataEncoder.hashStruct(
-                            message.primaryType,
+                        domain_separator_hash: hashDomain({
+                            domain: message.domain,
+                        }),
+                        message_hash: hashStruct({
+                            primaryType: message.primaryType,
                             types,
-                            message.message,
-                        ),
+                            data: message.message,
+                        }),
                     }),
                 );
                 return signature.payload.signature;
             }
         }
 
-        return (await this.provider.send(
-            request.method,
-            request.params,
-        )) as never;
+        return (await this.getWalletClient().request({
+            method: request.method,
+            params: request.params,
+        })) as never;
     };
 
     public on = () => {};
