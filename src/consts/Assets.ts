@@ -10,4 +10,6 @@ export const assets = [LN, BTC, LBTC, RBTC];
 
 export const refundableAssets = [BTC, LBTC, RBTC];
 
-export const evmAssets = [RBTC];
+export const btcChains = [BTC, LBTC];
+
+export const evmChains = [RBTC];

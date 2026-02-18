@@ -1,7 +1,8 @@
-import { useLocation, useSearchParams } from "@solidjs/router";
+import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import { Show, createEffect, createSignal, on, onMount } from "solid-js";
 import FiatAmount from "src/components/FiatAmount";
+import { useWeb3Signer } from "src/context/Web3";
 
 import Accordion from "../components/Accordion";
 import AddressInput from "../components/AddressInput";
@@ -19,7 +20,7 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
+import { LN, RBTC, btcChains, evmChains } from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -85,7 +86,12 @@ const Create = () => {
         pairValid,
         setAssetSend,
         setAssetReceive,
+        onchainAddress,
+        lnurl,
+        bolt12Offer,
     } = useCreateContext();
+    const { signer } = useWeb3Signer();
+    const navigate = useNavigate();
 
     // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
@@ -269,6 +275,21 @@ const Create = () => {
     };
 
     onMount(() => {
+        // if user reloads during backup phase, we don't have enough information
+        // to automatically create the swap after the backup, so we redirect to /swap
+        if (
+            creatingSwap() &&
+            ((onchainAddress() === "" && btcChains.includes(assetReceive())) ||
+                (signer() === undefined &&
+                    evmChains.includes(assetReceive())) ||
+                (lnurl() === "" &&
+                    bolt12Offer() === undefined &&
+                    assetReceive() === LN))
+        ) {
+            navigate("/");
+            return;
+        }
+
         sendAmountRef?.focus();
     });
 
