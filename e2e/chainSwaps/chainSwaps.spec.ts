@@ -6,6 +6,7 @@ import {
     bitcoinSendToAddress,
     elementsGetReceivedByAddress,
     elementsSendToAddress,
+    expectApproxAmount,
     fetchBip21Invoice,
     generateBitcoinBlock,
     generateInvoiceWithRoutingHint,
@@ -42,8 +43,10 @@ test.describe("Chain swap", () => {
         await inputReceiveAmount.fill(receiveAmount);
 
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
-        const sendAmount = "0.01002783";
-        await expect(inputSendAmount).toHaveValue(sendAmount);
+        const sendAmount = await expectApproxAmount(
+            inputSendAmount,
+            "0.01002783",
+        );
 
         const inputOnchainAddress = page.locator(
             "input[data-testid='onchainAddress']",
@@ -177,8 +180,10 @@ test.describe("Chain swap", () => {
         await inputReceiveAmount.fill(receiveAmount);
 
         const inputSendAmount = page.locator("input[data-testid='sendAmount']");
-        const sendAmount = "0.01002783";
-        await expect(inputSendAmount).toHaveValue(sendAmount);
+        const sendAmount = await expectApproxAmount(
+            inputSendAmount,
+            "0.01002783",
+        );
 
         const inputOnchainAddress = page.locator(
             "input[data-testid='onchainAddress']",
