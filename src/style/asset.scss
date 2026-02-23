@@ -40,7 +40,7 @@
         background-position: center;
     }
     .asset-text:before {
-        content: "lightning";
+        content: "LN";
     }
 }
 
@@ -49,7 +49,7 @@
         background-image: vars.$bitcoin_icon;
     }
     .asset-text:before {
-        content: "bitcoin";
+        content: "BTC";
     }
 }
 
@@ -58,7 +58,7 @@
         background-image: vars.$liquid_icon;
     }
     .asset-text:before {
-        content: "liquid";
+        content: "L-BTC";
     }
 }
 
@@ -67,7 +67,7 @@
         background-image: vars.$rootstock_icon;
     }
     .asset-text:before {
-        content: "rootstock";
+        content: "RBTC";
     }
 }
 
