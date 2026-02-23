@@ -6,7 +6,7 @@ jobs:
     ci:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
 
             - name: Use Node.js
               uses: actions/setup-node@v5
@@ -37,7 +37,7 @@ jobs:
                 shardIndex: [1, 2, 3, 4]
                 shardTotal: [4]
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
 
             - uses: actions/setup-node@v5
               with:
@@ -81,10 +81,11 @@ jobs:
         needs: [e2e]
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@v6
             - uses: actions/setup-node@v5
               with:
                   node-version: "24"
+                  cache: "npm"
 
             - run: npm ci
 
