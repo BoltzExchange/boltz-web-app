@@ -225,13 +225,12 @@ const dict = {
         download_boltz_rescue_key_subline_second:
             "This new key works on any device and works for all swaps created with it. Save the key in a secure and permanent location.",
         download_boltz_rescue_key_subline_third:
-            "To continue, please select if you want to download a new Boltz Rescue Key or verify an existing one.",
+            "To continue, please download a new Boltz Rescue Key.",
         download_new_key: "Download New Key",
         verify_boltz_rescue_key: "Verify Boltz Rescue Key",
         verify_boltz_rescue_key_subline:
             "Please select your previously saved Boltz Rescue Key to verify it.",
         verify_key: "Verify key",
-        verify_existing_key: "Verify existing key",
         verify_key_failed:
             "Verification of the Boltz Rescue Key failed. We recommend downloading a new Boltz Rescue Key to continue.",
         rescue_key: "Rescue Key",
@@ -251,8 +250,6 @@ const dict = {
         back: "Back",
         next: "Next",
         pagination_info: "Page {{ start }} of {{ end }}",
-        get_boltz_rescue_key_subline:
-            "To continue, please select if you want to generate a new Boltz Rescue Key or verify an existing one.",
         generate_key: "Generate new key",
         backup_boltz_rescue_key: "Backup Boltz Rescue Key",
         backup_boltz_rescue_key_subline_second:
@@ -677,7 +674,6 @@ const dict = {
         verify_boltz_rescue_key_subline:
             "Bitte wähle den zuvor heruntergeladenen Boltz Rettungsschlüssel aus, um ihn zu verifizieren.",
         verify_key: "Schlüssel verifizieren",
-        verify_existing_key: "Existierenden Schlüssel verifizieren",
         verify_key_failed:
             "Die Verifizierung des Boltz Rettungsschlüssels ist fehlgeschlagen. Wir empfehlen, einen neuen Rettungsschlüssel herunterzuladen.",
         rescue_key: "Rettungsschlüssel",
@@ -698,8 +694,6 @@ const dict = {
         back: "Zurück",
         next: "Weiter",
         pagination_info: "Seite {{ start }} von {{ end }}",
-        get_boltz_rescue_key_subline:
-            "Um fortzufahren, wähle aus, ob du einen neuen Boltz Rettungsschlüssel generieren oder einen vorhandenen Schlüssel verifizieren möchtest.",
         generate_key: "Neuen Schlüssel generieren",
         backup_boltz_rescue_key: "Boltz Rettungsschlüssel sichern",
         backup_boltz_rescue_key_subline_second:
@@ -1122,13 +1116,12 @@ const dict = {
         download_boltz_rescue_key_subline_second:
             "Esta nueva clave funciona en cualquier dispositivo y sirve para todos los intercambios creados con ella. Guarda la clave en un lugar seguro y permanente.",
         download_boltz_rescue_key_subline_third:
-            "Para continuar, selecciona si deseas descargar una nueva clave de rescate o verificar una existente.",
+            "Para continuar, descarga una nueva clave de rescate.",
         download_new_key: "Descargar nueva clave",
         verify_boltz_rescue_key: "Verificar clave de rescate existente",
         verify_boltz_rescue_key_subline:
             "Por favor, selecciona tu clave de rescate Boltz previamente guardada para verificar su validez.",
         verify_key: "Verificar clave",
-        verify_existing_key: "Verificar clave existente",
         verify_key_failed:
             "La verificación de la clave de rescate Boltz ha fallado. Recomendamos descargar una nueva clave para continuar.",
         rescue_key: "Clave de Rescate Boltz",
@@ -1148,8 +1141,6 @@ const dict = {
         back: "Atrás",
         next: "Siguiente",
         pagination_info: "Página {{ start }} de {{ end }}",
-        get_boltz_rescue_key_subline:
-            "Para continuar, selecciona si deseas generar una nueva clave de rescate de Boltz o verificar una existente.",
         generate_key: "Generar nueva clave",
         backup_boltz_rescue_key: "Backup clave de rescate Boltz",
         backup_boltz_rescue_key_subline_second:
@@ -1570,13 +1561,12 @@ const dict = {
         download_boltz_rescue_key_subline_second:
             "Essa nova chave funciona em qualquer dispositivo e para todas as trocas criadas com ela. Armazene com segurança e de forma permanente.",
         download_boltz_rescue_key_subline_third:
-            "Para continuar, selecione se deseja baixar uma nova chave ou verificar uma existente.",
+            "Para continuar, baixe uma nova chave de resgate.",
         download_new_key: "Baixar nova chave",
         verify_boltz_rescue_key: "Verificar chave de resgate",
         verify_boltz_rescue_key_subline:
             "Selecione sua chave de resgate previamente baixada para verificá-la.",
         verify_key: "Verificar chave",
-        verify_existing_key: "Verificar chave existente",
         verify_key_failed:
             "Falha ao verificar a chave de resgate. Recomendamos baixar uma nova chave.",
         rescue_key: "Chave de resgate",
@@ -1596,8 +1586,6 @@ const dict = {
         back: "Voltar",
         next: "Próximo",
         pagination_info: "Página {{ start }} de {{ end }}",
-        get_boltz_rescue_key_subline:
-            "Para continuar, selecione se deseja gerar uma nova chave de resgate Boltz ou verificar uma existente.",
         generate_key: "Gerar nova chave",
         backup_boltz_rescue_key: "Backup chave de resgate da Boltz",
         backup_boltz_rescue_key_subline_second:
@@ -1997,7 +1985,6 @@ const dict = {
         verify_boltz_rescue_key_subline:
             "请选择您之前保存的 Boltz 救援密钥进行验证。",
         verify_key: "验证密钥",
-        verify_existing_key: "导入现有密钥",
         verify_key_failed:
             "Boltz 救援密钥验证失败。我们建议下载新的 Boltz 救援密钥以继续。",
         rescue_key: "救援密钥",
@@ -2015,8 +2002,6 @@ const dict = {
         back: "回一页",
         next: "下一页",
         pagination_info: "{{ start }} 的 {{ end }} 页",
-        get_boltz_rescue_key_subline:
-            "要继续，请选择是要生成新的 Boltz 救援密钥，还是要验证现有密钥。",
         generate_key: "生成新密钥",
         backup_boltz_rescue_key: "备份 Boltz 救援密钥",
         backup_boltz_rescue_key_subline_second:
@@ -2423,7 +2408,6 @@ const dict = {
         verify_boltz_rescue_key_subline:
             "以前にダウンロードしたBoltzレスキューキーを選択して確認してください。",
         verify_key: "ベリファイキー",
-        verify_existing_key: "既存のキーをインポートする",
         verify_key_failed:
             "Boltzレスキューキーの検証に失敗しました。続行するには、新しいBoltzレスキューキーをダウンロードすることをお勧めします。",
         rescue_key: "レスキューキー",
@@ -2444,8 +2428,6 @@ const dict = {
         back: "戻る",
         next: "次へ",
         pagination_info: "{{ end }} ページ中 {{ start }} ページ目",
-        get_boltz_rescue_key_subline:
-            "続行するには、新しいBoltzレスキューキーを生成するか、既存のものを検証するかを選択してください。",
         generate_key: "新しいキーを生成",
         backup_boltz_rescue_key: "Boltzレスキューキーのバックアップ",
         backup_boltz_rescue_key_subline_second:

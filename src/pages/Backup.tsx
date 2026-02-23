@@ -7,7 +7,6 @@ import { useWeb3Signer } from "../context/Web3";
 import { downloadJson } from "../utils/download";
 import { isMobile } from "../utils/helper";
 import type { RescueFile } from "../utils/rescueFile";
-import { verifyExisting } from "./BackupVerify";
 
 const rescueFileName = "boltz-rescue-key-DO-NOT-DELETE";
 
@@ -22,30 +21,14 @@ const Backup = () => {
 
     const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
 
-    const navigateToVerification = (existingFile: boolean) => {
-        const basePath = "/backup/verify";
-        navigate(existingFile ? `${basePath}/${verifyExisting}` : basePath);
-    };
-
     return (
         <div class="frame">
             <h2>{t("download_boltz_rescue_key")}</h2>
             <h4>{t("download_boltz_rescue_key_subline")}</h4>
             <p>{t("download_boltz_rescue_key_subline_second")}</p>
             <Warning />
-            <p>
-                {isMobileEvmBrowser()
-                    ? t("get_boltz_rescue_key_subline")
-                    : t("download_boltz_rescue_key_subline_third")}
-            </p>
+            <p>{t("download_boltz_rescue_key_subline_third")}</p>
             <div class="btns">
-                <button
-                    class="btn btn-light"
-                    onClick={() => {
-                        navigateToVerification(true);
-                    }}>
-                    {t("verify_existing_key")}
-                </button>
                 <button
                     class="btn"
                     onClick={() => {
@@ -55,7 +38,7 @@ const Backup = () => {
                         }
 
                         downloadRescueFile(rescueFile);
-                        navigateToVerification(false);
+                        navigate("/backup/verify");
                     }}>
                     {isMobileEvmBrowser()
                         ? t("generate_key")
