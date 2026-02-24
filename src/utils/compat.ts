@@ -5,10 +5,10 @@ import {
     OutScript,
 } from "@scure/btc-signer";
 import type { TransactionOutput } from "@scure/btc-signer/psbt.js";
-import { NETWORK, TEST_NETWORK } from "@scure/btc-signer/utils.js";
-import type { BTC_NETWORK } from "@scure/btc-signer/utils.js";
+import { type BTC_NETWORK, equalBytes } from "@scure/btc-signer/utils.js";
 import type { ClaimDetails, RefundDetails } from "boltz-core";
 import {
+    Networks,
     constructClaimTransaction,
     constructRefundTransaction,
     targetFee,
@@ -50,17 +50,17 @@ type DecodedAddress = { script: Uint8Array; blindingKey?: Buffer };
 
 const possibleUserInputTypes = [LN, LBTC, BTC];
 
-const btcNetworks: Record<string, BTC_NETWORK> = {
-    bitcoin: NETWORK,
-    mainnet: NETWORK,
-    testnet: TEST_NETWORK,
-    regtest: { bech32: "bcrt", pubKeyHash: 0x6f, scriptHash: 0xc4, wif: 0xef },
-};
-
 const getBtcNetwork = (network?: string): BTC_NETWORK => {
-    network = network ?? config.network;
-    const bitcoinNet = network === "mainnet" ? "bitcoin" : network;
-    return btcNetworks[bitcoinNet];
+    switch (network ?? config.network) {
+        case "mainnet":
+            return Networks.bitcoin;
+        case "testnet":
+            return Networks.testnet;
+        case "regtest":
+            return Networks.regtest;
+        default:
+            throw new Error(`unknown network: ${network}`);
+    }
 };
 
 const decodeAddress = (asset: string, addr: string): DecodedAddress => {
@@ -87,7 +87,6 @@ const decodeAddress = (asset: string, addr: string): DecodedAddress => {
         return { script };
     }
 
-    // BTC: use @scure/btc-signer Address
     const btcAddr = Address(getBtcNetwork());
     const decoded = btcAddr.decode(addr);
     const script = OutScript.encode(decoded);
@@ -253,17 +252,17 @@ const getConstructRefundTransaction = (
                     ),
                 true,
             );
-        } else {
-            return targetFee(feePerVbyte, (fee) =>
-                constructRefundTransaction(
-                    refundDetails as RefundDetails[],
-                    outputScript,
-                    timeoutBlockHeight,
-                    addOneSatBuffer ? fee + BigInt(1) : fee,
-                    isRbf,
-                ),
-            );
         }
+
+        return targetFee(feePerVbyte, (fee) =>
+            constructRefundTransaction(
+                refundDetails as RefundDetails[],
+                outputScript,
+                timeoutBlockHeight,
+                addOneSatBuffer ? fee + BigInt(1) : fee,
+                isRbf,
+            ),
+        );
     };
 };
 
@@ -296,9 +295,8 @@ const findOutputByScript = (
 ) => {
     if (asset === LBTC) {
         const liquidTx = tx as LiquidTransaction;
-        return liquidTx.outs.find(
-            (o) => o.script && Buffer.from(targetScript).equals(o.script),
-        );
+        const target = Buffer.from(targetScript);
+        return liquidTx.outs.find((o) => o.script && target.equals(o.script));
     } else {
         const btcTx = tx as BtcTransaction;
         for (let i = 0; i < btcTx.outputsLength; i++) {
@@ -306,12 +304,38 @@ const findOutputByScript = (
             if (
                 out.script &&
                 out.script.length === targetScript.length &&
-                out.script.every((b, j) => b === targetScript[j])
+                equalBytes(out.script, targetScript)
             ) {
                 return out;
             }
         }
         return undefined;
+    }
+};
+
+type TransactionInterface = BtcTransaction | LiquidTransaction;
+
+const txToHex = (transaction: TransactionInterface): string =>
+    transaction instanceof LiquidTransaction
+        ? transaction.toHex()
+        : (transaction as BtcTransaction).hex;
+
+const txToId = (transaction: TransactionInterface): string =>
+    transaction instanceof LiquidTransaction
+        ? transaction.getId()
+        : (transaction as BtcTransaction).id;
+
+const setCooperativeWitness = (
+    tx: TransactionInterface,
+    index: number,
+    witness: Uint8Array,
+) => {
+    if (tx instanceof LiquidTransaction) {
+        tx.ins[index].witness = [Buffer.from(witness)];
+    } else {
+        (tx as BtcTransaction).updateInput(index, {
+            finalScriptWitness: [witness],
+        });
     }
 };
 
@@ -326,5 +350,9 @@ export {
     getConstructClaimTransaction,
     getConstructRefundTransaction,
     LiquidTransactionOutputWithKey,
+    TransactionInterface,
+    txToHex,
+    txToId,
+    setCooperativeWitness,
     probeUserInput,
 };

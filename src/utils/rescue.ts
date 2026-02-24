@@ -28,22 +28,22 @@ import {
     getBlockTipHeight,
     getSwapUTXOs,
 } from "./blockchain";
-import type { TransactionInterface } from "./boltzClient";
 import {
     assetRescueBroadcast,
     assetRescueSetup,
     broadcastTransaction,
     getLockupTransaction,
     getPartialRefundSignature,
-    txToHex,
-    txToId,
 } from "./boltzClient";
-import type { DecodedAddress } from "./compat";
+import type { DecodedAddress, TransactionInterface } from "./compat";
 import {
     decodeAddress,
     getConstructRefundTransaction,
     getNetwork,
     getTransaction,
+    setCooperativeWitness,
+    txToHex,
+    txToId,
 } from "./compat";
 import type { ECKeys } from "./ecpair";
 import { formatError } from "./errors";
@@ -99,6 +99,9 @@ export const isSwapClaimable = ({
         return false;
     }
 
+    // When a backup is imported, we only auto-claim successful swaps that were created
+    // after the import timestamp. This prevents attempting to claim swaps that may have
+    // already been completed before the backup was created
     const swapCreatedAfterBackup: boolean =
         backupImportTimestamp === undefined ||
         (swapDate !== undefined && swapDate >= backupImportTimestamp);
@@ -148,20 +151,6 @@ export const hasSwapTimedOut = (swap: SomeSwap, currentBlockHeight: number) => {
     };
 
     return currentBlockHeight >= swapTimeoutBlockHeight[swap.type]();
-};
-
-const setCooperativeWitness = (
-    tx: TransactionInterface,
-    index: number,
-    witness: Uint8Array,
-) => {
-    if (tx instanceof LiquidTransaction) {
-        tx.ins[index].witness = [Buffer.from(witness)];
-    } else {
-        (tx as BtcTransaction).updateInput(index, {
-            finalScriptWitness: [witness],
-        });
-    }
 };
 
 const refundTaproot = async <T extends TransactionInterface>(
@@ -245,7 +234,6 @@ const refundTaproot = async <T extends TransactionInterface>(
             // Create new musig instance to initialize a new session
             keyAgg = createMusig(privateKey, boltzPublicKey);
 
-            // Compute sighash first (v4 requires message before nonce)
             const sigHash = hashForWitnessV1(
                 swap.assetSend,
                 getNetwork(swap.assetSend),
@@ -330,6 +318,9 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
         log.debug("Refund broadcast result", res);
         return res.id;
     } catch (e) {
+        // When the uncooperative refund transaction is not ready to be broadcast yet
+        // (= non-final) and the cooperative spend has been tried but failed,
+        // throw the error of the cooperative spend
         throw e === "non-final" &&
             txConstructionResponse.cooperativeError !== undefined
             ? txConstructionResponse.cooperativeError

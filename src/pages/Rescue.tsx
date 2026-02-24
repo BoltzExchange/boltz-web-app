@@ -18,6 +18,7 @@ import "../style/tabs.scss";
 import { isMobile } from "../utils/helper";
 import { RescueAction, createRescueList } from "../utils/rescue";
 import type { SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import ErrorWasm from "./ErrorWasm";
 
 export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
     switch (swap.action) {
@@ -37,7 +38,7 @@ export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
 
 const Rescue = () => {
     const navigate = useNavigate();
-    const { getSwaps, t } = useGlobalContext();
+    const { getSwaps, wasmSupported, t } = useGlobalContext();
 
     const [currentPage, setCurrentPage] = createSignal(1);
     const [currentSwaps, setCurrentSwaps] = createSignal<SomeSwap[]>([]);
@@ -59,78 +60,87 @@ const Rescue = () => {
     );
 
     return (
-        <div id="refund">
-            <div class="frame refund" data-testid="refundFrame">
-                <header>
-                    <SettingsCog />
-                    <h2>{t("rescue_swap")}</h2>
-                </header>
-                <Show
-                    when={allSwaps()?.length > 0}
-                    fallback={
-                        <>
-                            <p class="frame-text">{t("no_rescuable_swaps")}</p>
-                            <hr />
-                        </>
-                    }>
+        <Show when={wasmSupported()} fallback={<ErrorWasm />}>
+            <div id="refund">
+                <div class="frame refund" data-testid="refundFrame">
+                    <header>
+                        <SettingsCog />
+                        <h2>{t("rescue_swap")}</h2>
+                    </header>
                     <Show
-                        when={!loading()}
+                        when={allSwaps()?.length > 0}
                         fallback={
+                            <>
+                                <p class="frame-text">
+                                    {t("no_rescuable_swaps")}
+                                </p>
+                                <hr />
+                            </>
+                        }>
+                        <Show
+                            when={!loading()}
+                            fallback={
+                                <div
+                                    class="center"
+                                    style={getSwapListHeight(
+                                        allSwaps(),
+                                        isMobile(),
+                                    )}>
+                                    <LoadingSpinner />
+                                </div>
+                            }>
                             <div
-                                class="center"
                                 style={getSwapListHeight(
                                     allSwaps(),
                                     isMobile(),
                                 )}>
-                                <LoadingSpinner />
+                                <SwapList
+                                    swapsSignal={refundList}
+                                    action={(swap) => {
+                                        return rescueListAction({ t, swap });
+                                    }}
+                                    onClick={(swap) => {
+                                        navigate(`/swap/${swap.id}`, {
+                                            state: {
+                                                timedOutRefundable:
+                                                    swap.timedOut,
+                                                waitForSwapTimeout:
+                                                    swap.waitForSwapTimeout,
+                                            },
+                                        });
+                                    }}
+                                    hideDateOnMobile
+                                />
                             </div>
-                        }>
-                        <div style={getSwapListHeight(allSwaps(), isMobile())}>
-                            <SwapList
-                                swapsSignal={refundList}
-                                action={(swap) => {
-                                    return rescueListAction({ t, swap });
-                                }}
-                                onClick={(swap) => {
-                                    navigate(`/swap/${swap.id}`, {
-                                        state: {
-                                            timedOutRefundable: swap.timedOut,
-                                            waitForSwapTimeout:
-                                                swap.waitForSwapTimeout,
-                                        },
-                                    });
-                                }}
-                                hideDateOnMobile
-                            />
-                        </div>
+                        </Show>
+                        <Pagination
+                            items={allSwaps}
+                            setDisplayedItems={(swaps: SubmarineSwap[]) =>
+                                setCurrentSwaps(swaps)
+                            }
+                            sort={sortSwaps}
+                            totalItems={allSwaps().length}
+                            currentPage={currentPage}
+                            setCurrentPage={setCurrentPage}
+                            itemsPerPage={
+                                isMobile()
+                                    ? mobileItemsPerPage
+                                    : desktopItemsPerPage
+                            }
+                        />
+                        <hr />
                     </Show>
-                    <Pagination
-                        items={allSwaps}
-                        setDisplayedItems={(swaps: SubmarineSwap[]) =>
-                            setCurrentSwaps(swaps)
-                        }
-                        sort={sortSwaps}
-                        totalItems={allSwaps().length}
-                        currentPage={currentPage}
-                        setCurrentPage={setCurrentPage}
-                        itemsPerPage={
-                            isMobile()
-                                ? mobileItemsPerPage
-                                : desktopItemsPerPage
-                        }
-                    />
-                    <hr />
-                </Show>
-                <h4>{t("cant_find_swap")}</h4>
-                <p class="frame-text">{t("rescue_external_explainer")}</p>
-                <button
-                    class="btn"
-                    onClick={() => navigate(`/rescue/external`)}>
-                    {t("rescue_external_swap")}
-                </button>
-                <SettingsMenu />
+                    <h4>{t("cant_find_swap")}</h4>
+                    <p class="frame-text">{t("rescue_external_explainer")}</p>
+                    <button
+                        class="btn"
+                        onClick={() => navigate(`/rescue/external`)}>
+                        {t("rescue_external_swap")}
+                    </button>
+                    <SettingsMenu />
+                </div>
             </div>
-        </div>
+        </Show>
     );
 };
 

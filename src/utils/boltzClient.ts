@@ -1,23 +1,13 @@
 import { hex } from "@scure/base";
-import type { Transaction as BtcTransaction } from "@scure/btc-signer";
-import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import log from "loglevel";
 
 import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import { broadcastToExplorer } from "./blockchain";
+import type { TransactionInterface } from "./compat";
+import { txToHex } from "./compat";
 import { fetcher } from "./helper";
 import { validateInvoiceForOffer } from "./invoice";
-
-export const txToHex = (transaction: TransactionInterface): string =>
-    transaction instanceof LiquidTransaction
-        ? transaction.toHex()
-        : (transaction as BtcTransaction).hex;
-
-export const txToId = (transaction: TransactionInterface): string =>
-    transaction instanceof LiquidTransaction
-        ? transaction.getId()
-        : (transaction as BtcTransaction).id;
 
 const cooperativeErrorMessage = "cooperative signatures for swaps are disabled";
 const checkCooperative = () => {
@@ -175,8 +165,6 @@ type ChainSwapTransaction = {
         eta?: number;
     };
 };
-
-type TransactionInterface = BtcTransaction | LiquidTransaction;
 
 type RestorableSwapDetails = {
     tree: SwapTree;
@@ -573,7 +561,6 @@ export {
     Contracts,
     PartialSignature,
     ChainPairTypeTaproot,
-    TransactionInterface,
     ReversePairTypeTaproot,
     SubmarineCreatedResponse,
     SubmarinePairTypeTaproot,

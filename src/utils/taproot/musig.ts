@@ -1,4 +1,5 @@
 import type { Transaction as BtcTransaction } from "@scure/btc-signer";
+import { SigHash } from "@scure/btc-signer";
 import type { BTC_NETWORK } from "@scure/btc-signer/utils.js";
 import { Musig, TaprootUtils, type Types } from "boltz-core";
 import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/dist/lib/liquid";
@@ -60,7 +61,7 @@ export const hashForWitnessV1 = (
             (inputs as { script: Uint8Array; amount: bigint }[]).map(
                 (i) => i.script,
             ),
-            0, // SigHash.DEFAULT
+            SigHash.DEFAULT,
             (inputs as { script: Uint8Array; amount: bigint }[]).map(
                 (i) => i.amount,
             ),

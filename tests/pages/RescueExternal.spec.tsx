@@ -5,10 +5,15 @@ import { vi } from "vitest";
 import { SwapType } from "../../src/consts/Enums";
 import { paginationLimit } from "../../src/consts/Pagination";
 import i18n from "../../src/i18n/i18n";
-import { RefundBtcLike } from "../../src/pages/RescueExternal";
+import RescueExternal, { RefundBtcLike } from "../../src/pages/RescueExternal";
 import type { RestorableSwap } from "../../src/utils/boltzClient";
 import { getRestorableSwaps } from "../../src/utils/boltzClient";
-import { TestComponent, contextWrapper, payContext } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    payContext,
+} from "../helper";
 
 global.fetch = vi.fn(() =>
     Promise.resolve({
@@ -63,6 +68,24 @@ vi.mock("../../src/utils/rescue", async () => {
 const mockGetRestorableSwaps = vi.mocked(getRestorableSwaps);
 
 describe("RescueExternal", () => {
+    test("should render WASM error", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <RescueExternal />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+        globalSignals.setWasmSupported(false);
+        expect(
+            await screen.findAllByText(i18n.en.error_wasm),
+        ).not.toBeUndefined();
+    });
+
     describe("BtcLike", () => {
         beforeEach(() => {
             vi.clearAllMocks();

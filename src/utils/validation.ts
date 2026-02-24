@@ -1,6 +1,7 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
+import { equalBytes } from "@scure/btc-signer/utils.js";
 import { BigNumber } from "bignumber.js";
 import type { Types } from "boltz-core";
 import {
@@ -88,14 +89,6 @@ const validateAddress = (
             throw new Error("blinding public key mismatch");
         }
     }
-};
-
-const equalBytes = (a: Uint8Array, b: Uint8Array): boolean => {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) return false;
-    }
-    return true;
 };
 
 const validateBip21 = (

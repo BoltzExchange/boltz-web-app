@@ -1,11 +1,9 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
-import type { Transaction as BtcTransaction } from "@scure/btc-signer";
 import type { ClaimDetails } from "boltz-core";
 import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
 import type { LiquidClaimDetails } from "boltz-core/dist/lib/liquid";
-import { Buffer } from "buffer";
-import { Transaction as LiquidTransaction } from "liquidjs-lib";
+import { type Buffer } from "buffer";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
@@ -15,7 +13,6 @@ import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import type { RescueFile } from "../utils/rescueFile";
 import { deriveKey } from "../utils/rescueFile";
-import type { TransactionInterface } from "./boltzClient";
 import {
     broadcastTransaction,
     getChainSwapClaimDetails,
@@ -23,35 +20,23 @@ import {
     getSubmarineClaimDetails,
     postChainSwapDetails,
     postSubmarineClaimDetails,
-    txToHex,
-    txToId,
 } from "./boltzClient";
+import type { TransactionInterface } from "./compat";
 import {
     decodeAddress,
     getConstructClaimTransaction,
     getNetwork,
     getOutputAmount,
     getTransaction,
+    setCooperativeWitness,
+    txToHex,
+    txToId,
 } from "./compat";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
 import { decodeInvoice } from "./invoice";
 import type { ChainSwap, ReverseSwap, SubmarineSwap } from "./swapCreator";
 import { getRelevantAssetForSwap } from "./swapCreator";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./taproot/musig";
-
-const setCooperativeWitness = (
-    tx: TransactionInterface,
-    index: number,
-    witness: Uint8Array,
-) => {
-    if (tx instanceof LiquidTransaction) {
-        tx.ins[index].witness = [Buffer.from(witness)];
-    } else {
-        (tx as BtcTransaction).updateInput(index, {
-            finalScriptWitness: [witness],
-        });
-    }
-};
 
 const createAdjustedClaim = async <
     T extends
@@ -147,7 +132,6 @@ const claimReverseSwap = async (
     }
 
     try {
-        // Compute sighash, then generate nonce (v4 requires message before nonce)
         const sigHash = hashForWitnessV1(
             asset,
             getNetwork(asset),
@@ -293,7 +277,6 @@ const claimChainSwap = async (
     }
 
     try {
-        // Compute sighash, then generate nonce
         const sigHash = hashForWitnessV1(
             swap.assetReceive,
             getNetwork(swap.assetReceive),
