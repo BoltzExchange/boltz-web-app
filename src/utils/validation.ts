@@ -80,12 +80,7 @@ const validateAddress = (
         const blindingPrivateKey = hex.decode(blindingKey);
         const blindingPublicKey = secp256k1.getPublicKey(blindingPrivateKey);
 
-        if (
-            !equalBytes(
-                new Uint8Array(decodedAddress.blindingKey),
-                blindingPublicKey,
-            )
-        ) {
+        if (!equalBytes(decodedAddress.blindingKey, blindingPublicKey)) {
             throw new Error("blinding public key mismatch");
         }
     }
@@ -217,7 +212,7 @@ const validateSubmarine = async (
         swap.assetSend === LBTC,
         hex.decode(invoiceData.preimageHash),
         theirPublicKey,
-        new Uint8Array(ourKeys.publicKey),
+        ourKeys.publicKey,
         swap.timeoutBlockHeight,
     );
 
@@ -282,12 +277,8 @@ const validateChainSwap = async (
         const compareTree = reverseSwapTree(
             asset === LBTC,
             preimageHash,
-            side === Side.Send
-                ? theirPublicKey
-                : new Uint8Array(ourKeys.publicKey),
-            side === Side.Send
-                ? new Uint8Array(ourKeys.publicKey)
-                : theirPublicKey,
+            side === Side.Send ? theirPublicKey : ourKeys.publicKey,
+            side === Side.Send ? ourKeys.publicKey : theirPublicKey,
             details.timeoutBlockHeight,
         );
 

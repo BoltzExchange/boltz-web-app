@@ -296,7 +296,7 @@ export const generateInvoiceWithRoutingHint = async (
     invoiceAmount: number,
 ) => {
     const preimage = randomBytes(32);
-    const privateKey = secp256k1.utils.randomPrivateKey();
+    const privateKey = secp256k1.utils.randomSecretKey();
     const publicKey = secp256k1.getPublicKey(privateKey, true);
 
     const addressHash = sha256(utf8.decode(claimAddress));

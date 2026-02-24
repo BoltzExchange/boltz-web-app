@@ -1,4 +1,4 @@
-import { secp256k1 } from "@noble/curves/secp256k1";
+import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hex } from "@scure/base";
 
 import { SwapType } from "../../src/consts/Enums";
@@ -77,9 +77,7 @@ describe("helper", () => {
         });
 
         test("should parse hex private key", () => {
-            const privateKeyHex = hex.encode(
-                secp256k1.utils.randomPrivateKey(),
-            );
+            const privateKeyHex = hex.encode(secp256k1.utils.randomSecretKey());
             const mockResult = { key: "data" };
             vi.mocked(ECPair.fromPrivateKey).mockReturnValueOnce(
                 mockResult as never,
