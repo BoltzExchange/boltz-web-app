@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.17](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.16..v1.8.17) - 2026-02-24
+
+### Features
+
+- add partner dashboard link in footer, move blog to socials (#1170) - ([8d8b40f](https://github.com/BoltzExchange/boltz-web-app/commit/8d8b40fb9127e29ee6791cbed74afbd0ef989e14))
+- remove existing Rescue Key import (#1176) - ([0d5b140](https://github.com/BoltzExchange/boltz-web-app/commit/0d5b140c3888ff0d92244fad53cf88682873d7e2))
+
+### Miscellaneous Chores
+
+- bump axios from 1.13.2 to 1.13.5 (#1167) - ([6a21628](https://github.com/BoltzExchange/boltz-web-app/commit/6a21628d50bfc612d17eeaae287de78a1d1702e4))
+- bump valibot and ecpair (#1168) - ([9f2f357](https://github.com/BoltzExchange/boltz-web-app/commit/9f2f3578979839ff8065f51dbb64a3a6071ff7ad))
+- use prod build for playwright on CI (#1172) - ([ea7cc83](https://github.com/BoltzExchange/boltz-web-app/commit/ea7cc83d40f61d744a3db023813e3f9ff5f1603e))
+- bump qs from 6.14.1 to 6.15.0 (#1173) - ([7d3e481](https://github.com/BoltzExchange/boltz-web-app/commit/7d3e481fd73f4718f72f1fdfde9905798d4fe725))
+- bump lodash-es from 4.17.21 to 4.17.23 (#1174) - ([356dcd3](https://github.com/BoltzExchange/boltz-web-app/commit/356dcd35ce3a7e54a4bfd256581bcd7181f4f01a))
+- speedup ARM64 Docker build - ([ff09c8b](https://github.com/BoltzExchange/boltz-web-app/commit/ff09c8b85d7fa2b836cd374818afa70ee4742c44))
+- update dependencies - ([61cb62a](https://github.com/BoltzExchange/boltz-web-app/commit/61cb62a77aa60eb36d88c0bf93c0b07d5e2c0bec))
+- cleanup GitHub actions - ([a700ba0](https://github.com/BoltzExchange/boltz-web-app/commit/a700ba07b202fd96bb1409a5a9d9da3fee6ae55f))
+
+### Tests
+
+- add 1 sat slippage tolerance to amount assertions (#1171) - ([835b19d](https://github.com/BoltzExchange/boltz-web-app/commit/835b19d666306f75c7495de1bb9a583aec71c051))
+
+---
 ## [1.8.16](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.15..v1.8.16) - 2026-02-11
 
 ### Features
@@ -20,6 +43,7 @@ All notable changes to this project will be documented in this file. See [conven
 - add swap status logging (#1157) - ([d12065a](https://github.com/BoltzExchange/boltz-web-app/commit/d12065a9afb914aa15a37a8deedb6dbf6c69acf6))
 - add alby logo (#1159) - ([059386a](https://github.com/BoltzExchange/boltz-web-app/commit/059386a47e70ce9135c22c010b5ede4f2720f561))
 - remove telegram (#1164) - ([e96e37c](https://github.com/BoltzExchange/boltz-web-app/commit/e96e37cab182ba3fe122c826a219ceb20b3598bc))
+- bump version to v1.8.16 (#1165) - ([ddd8eef](https://github.com/BoltzExchange/boltz-web-app/commit/ddd8eeffd2ecd7503f72a4f1d8298da37fa6fe51))
 
 ### Tests
 
