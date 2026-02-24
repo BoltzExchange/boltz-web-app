@@ -221,11 +221,11 @@ const dict = {
         routing_fee_limit: "Routing fee limit",
         download_boltz_rescue_key: "Boltz Rescue Key",
         download_boltz_rescue_key_subline:
-            "We replaced per-swap refund files with a single Rescue Key 🙌",
+            "Back up all your swaps with a single Rescue Key 🙌",
         download_boltz_rescue_key_subline_second:
-            "This new key works on any device and works for all swaps created with it. Save the key in a secure and permanent location.",
+            "This key works on any device and works for all swaps created with it. Save the key in a secure and permanent location.",
         download_boltz_rescue_key_subline_third:
-            "To continue, please download a new Boltz Rescue Key.",
+            "To continue, please download a new Rescue Key.",
         download_new_key: "Download New Key",
         verify_boltz_rescue_key: "Verify Boltz Rescue Key",
         verify_boltz_rescue_key_subline:
@@ -663,11 +663,11 @@ const dict = {
         routing_fee_limit: "Routing Gebühr Limit",
         download_boltz_rescue_key: "Boltz Rettungsschlüssel",
         download_boltz_rescue_key_subline:
-            "Wir haben pro-Swap Rückerstattungsdateien mit einem einzigen Boltz Rettungsschlüssel ersetzt 🙌",
+            "Sichere deine Swaps mit einem einzigen Rettungsschlüssel 🙌",
         download_boltz_rescue_key_subline_second:
-            "Dieser neue Schlüssel funktioniert auf jedem Gerät und ist für alle Swaps gültig. Speichere die Schlüsseldatei an einem sicheren Ort.",
+            "Dieser Schlüssel funktioniert auf jedem Gerät und ist für alle Swaps gültig, die mit ihm erstellt wurden. Speichere den Schlüssel an einem sicheren und dauerhaften Ort.",
         download_boltz_rescue_key_subline_third:
-            "Wähle bitte aus, ob du einen neuen Boltz Rettungsschlüssel herunterladen oder einen existierenden Schlüssel verifizieren möchtest.",
+            "Um fortzufahren, lade einen neuen Rettungsschlüssel herunter.",
         download_new_key: "Neuen Schlüssel herunterladen",
         verify_boltz_rescue_key:
             "Existierenden Boltz Rettungsschlüssel verifizieren",
@@ -1112,9 +1112,9 @@ const dict = {
         routing_fee_limit: "Límite comisión enrutamiento",
         download_boltz_rescue_key: "Clave de rescate Boltz",
         download_boltz_rescue_key_subline:
-            "Hemos sustituido los archivos de reembolso por una única clave de rescate 🙌",
+            "Haz una copia de seguridad de todos tus intercambios con una única clave de rescate 🙌",
         download_boltz_rescue_key_subline_second:
-            "Esta nueva clave funciona en cualquier dispositivo y sirve para todos los intercambios creados con ella. Guarda la clave en un lugar seguro y permanente.",
+            "Esta clave funciona en cualquier dispositivo y sirve para todos los intercambios creados con ella. Guarda la clave en un lugar seguro y permanente.",
         download_boltz_rescue_key_subline_third:
             "Para continuar, descarga una nueva clave de rescate.",
         download_new_key: "Descargar nueva clave",
@@ -1557,9 +1557,9 @@ const dict = {
         routing_fee_limit: "Limite da taxa de roteamento",
         download_boltz_rescue_key: "Chave de resgate da Boltz",
         download_boltz_rescue_key_subline:
-            "Substituímos os arquivos de reembolso por uma única chave de resgate 🙌",
+            "Faça backup de todas as suas trocas com uma única chave de resgate 🙌",
         download_boltz_rescue_key_subline_second:
-            "Essa nova chave funciona em qualquer dispositivo e para todas as trocas criadas com ela. Armazene com segurança e de forma permanente.",
+            "Esta chave funciona em qualquer dispositivo e para todas as trocas criadas com ela. Armazene a chave em um local seguro e permanente.",
         download_boltz_rescue_key_subline_third:
             "Para continuar, baixe uma nova chave de resgate.",
         download_new_key: "Baixar nova chave",
@@ -1974,12 +1974,10 @@ const dict = {
         no_lockup_transaction: "未找到锁仓交易",
         routing_fee_limit: "最大路由费用",
         download_boltz_rescue_key: "Boltz 救援密钥",
-        download_boltz_rescue_key_subline:
-            "我们用单个救援密钥取代了每个交换的退款文件 🙌",
+        download_boltz_rescue_key_subline: "用单个救援密钥备份所有交换 🙌",
         download_boltz_rescue_key_subline_second:
-            "新密钥可在任何设备上使用，并适用于用它创建的所有交换。将密钥文件存储在安全的永久位置。",
-        download_boltz_rescue_key_subline_third:
-            "要继续，请选择是下载新的 Boltz 救援密钥还是验证现有密钥。",
+            "此密钥可在任何设备上使用，适用于用它创建的所有交换。请将密钥存储在安全且永久的位置。",
+        download_boltz_rescue_key_subline_third: "要继续，请下载新的救援密钥。",
         download_new_key: "下载新密钥",
         verify_boltz_rescue_key: "验证博尔茨救援密钥",
         verify_boltz_rescue_key_subline:
@@ -2398,11 +2396,11 @@ const dict = {
         routing_fee_limit: "ルーティング料金の上限",
         download_boltz_rescue_key: "Boltzレスキューキー",
         download_boltz_rescue_key_subline:
-            "スワップごとの払い戻しファイルを、単一のレスキュー・キー🙌に置き換えた。",
+            "単一のレスキューキーですべてのスワップをバックアップ 🙌",
         download_boltz_rescue_key_subline_second:
-            "この新しいキーは、どのデバイスでも動作し、このキーで作成されたすべてのスワップに対応します。キーファイルは安全で永続的な場所に保管してください。",
+            "このキーはどのデバイスでも動作し、このキーで作成されたすべてのスワップに対応します。キーは安全で永続的な場所に保管してください。",
         download_boltz_rescue_key_subline_third:
-            "続行するには、新しいBoltzレスキューキーをダウンロードするか、既存のBoltzレスキューキーを確認するかを選択してください。",
+            "続行するには、新しいレスキューキーをダウンロードしてください。",
         download_new_key: "新しいキーをダウンロード",
         verify_boltz_rescue_key: "Boltzレスキューキー検証",
         verify_boltz_rescue_key_subline:
