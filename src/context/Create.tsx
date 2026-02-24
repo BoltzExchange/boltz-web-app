@@ -2,7 +2,6 @@ import { makePersisted } from "@solid-primitives/storage";
 import type { Navigator } from "@solidjs/router";
 import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import {
     createContext,
     createEffect,
@@ -15,17 +14,13 @@ import { config } from "../config";
 import { type AssetType, BTC, LBTC, LN, RBTC, assets } from "../consts/Assets";
 import { Side, SwapType, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
-import { getAddress, getNetwork } from "../utils/compat";
+import { validateAddress } from "../utils/compat";
 import { isInvoice, isLnurl } from "../utils/invoice";
 import { getUrlParam, resetUrlParam, urlParamIsSet } from "../utils/urlParams";
 
 const isValidForAsset = (asset: typeof BTC | typeof LBTC, address: string) => {
     try {
-        getAddress(asset).toOutputScript(
-            address,
-            getNetwork(asset) as LiquidNetwork,
-        );
-        return true;
+        return validateAddress(asset, address);
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {

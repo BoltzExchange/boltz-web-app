@@ -1,8 +1,8 @@
-import type { ECPairInterface } from "ecpair";
 import type { Accessor, JSX, Setter } from "solid-js";
 import { createContext, createSignal, useContext } from "solid-js";
 
 import type { RestorableSwap } from "../utils/boltzClient";
+import type { ECKeys } from "../utils/ecpair";
 import { ECPair } from "../utils/ecpair";
 import { type RescueFile, deriveKey } from "../utils/rescueFile";
 
@@ -13,7 +13,7 @@ export type RescueContextType = {
     rescuableSwaps: Accessor<RestorableSwap[]>;
     setRescuableSwaps: Setter<RestorableSwap[]>;
 
-    deriveKey: (index: number) => ECPairInterface;
+    deriveKey: (index: number) => ECKeys;
 };
 
 const RescueContext = createContext<RescueContextType>();
@@ -26,7 +26,7 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
 
     const deriveKeyWrapper = (index: number) => {
         return ECPair.fromPrivateKey(
-            Buffer.from(deriveKey(rescueFile(), index).privateKey),
+            new Uint8Array(deriveKey(rescueFile(), index).privateKey),
         );
     };
 

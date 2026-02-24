@@ -1,4 +1,4 @@
-import { networks } from "bitcoinjs-lib";
+import { NETWORK, TEST_NETWORK } from "@scure/btc-signer/utils.js";
 import { networks as LiquidNetworks } from "liquidjs-lib";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
@@ -8,12 +8,19 @@ import {
     probeUserInput,
 } from "../../src/utils/compat";
 
+const REGTEST_NETWORK = {
+    bech32: "bcrt",
+    pubKeyHash: 0x6f,
+    scriptHash: 0xc4,
+    wif: 0xef,
+};
+
 describe("parse network correctly", () => {
     test.each`
         asset   | network      | expected
-        ${BTC}  | ${"mainnet"} | ${networks.bitcoin}
-        ${BTC}  | ${"testnet"} | ${networks.testnet}
-        ${BTC}  | ${"regtest"} | ${networks.regtest}
+        ${BTC}  | ${"mainnet"} | ${NETWORK}
+        ${BTC}  | ${"testnet"} | ${TEST_NETWORK}
+        ${BTC}  | ${"regtest"} | ${REGTEST_NETWORK}
         ${LBTC} | ${"mainnet"} | ${LiquidNetworks.liquid}
         ${LBTC} | ${"testnet"} | ${LiquidNetworks.testnet}
         ${LBTC} | ${"regtest"} | ${LiquidNetworks.regtest}

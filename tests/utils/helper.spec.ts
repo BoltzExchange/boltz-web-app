@@ -74,18 +74,22 @@ describe("helper", () => {
         });
 
         test("should parse hex private key", () => {
-            const originalKey = { key: "data" };
-            const privateKeyHex = originalKey.key;
+            const privateKeyHex = Buffer.from(
+                crypto.getRandomValues(new Uint8Array(32)),
+            ).toString("hex");
+            const mockResult = { key: "data" };
+            vi.mocked(ECPair.fromPrivateKey).mockReturnValueOnce(
+                mockResult as never,
+            );
 
             const mockDerive = vi.fn();
 
             expect(
                 parsePrivateKey(mockDerive, undefined, privateKeyHex),
-            ).toEqual(originalKey);
+            ).toEqual(mockResult);
 
             // Verify derive function wasn't called
             expect(mockDerive).not.toHaveBeenCalled();
-            // eslint-disable-next-line @typescript-eslint/unbound-method
             expect(ECPair.fromPrivateKey).toHaveBeenCalledTimes(1);
         });
     });

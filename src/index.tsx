@@ -41,7 +41,6 @@ import Client from "./pages/products/Client";
 import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
-import { initEcc } from "./utils/ecpair";
 import "./utils/patches";
 
 if ("serviceWorker" in navigator) {
@@ -60,7 +59,6 @@ document.documentElement.setAttribute(
 document.body.classList.remove("loading");
 
 const App = (props: RouteSectionProps) => {
-    initEcc();
     return (
         <GlobalProvider>
             <Web3SignerProvider>

@@ -1,32 +1,30 @@
-import type { Network, Transaction } from "bitcoinjs-lib";
-import type { Taptree } from "bitcoinjs-lib/src/types";
-import type { RefundDetails } from "boltz-core";
-import { Musig, TaprootUtils } from "boltz-core";
-import type { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
+import type { Transaction as BtcTransaction } from "@scure/btc-signer";
+import type { BTC_NETWORK } from "@scure/btc-signer/utils.js";
+import { Musig, TaprootUtils, type Types } from "boltz-core";
 import { TaprootUtils as LiquidTaprootUtils } from "boltz-core/dist/lib/liquid";
-import { Buffer } from "buffer";
-import { randomBytes } from "crypto";
-import type { ECPairInterface } from "ecpair";
-import { type Transaction as LiquidTransaction } from "liquidjs-lib";
+import type { MusigKeyAgg } from "boltz-core/dist/lib/musig/Musig";
+import type { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { LBTC } from "../../consts/Assets";
-import secp from "../../lazy/secp";
-import type { TransactionInterface } from "../boltzClient";
+import type { ECKeys } from "../ecpair";
 
-export const createMusig = async (
-    ourKeys: ECPairInterface,
-    theirPublicKey: Buffer,
-) => {
-    const { secpZkp } = await secp.get();
-    return new Musig(secpZkp, ourKeys, randomBytes(32), [
+export const createMusig = (
+    ourKeys: ECKeys,
+    theirPublicKey: Uint8Array,
+): MusigKeyAgg => {
+    return Musig.create(new Uint8Array(ourKeys.privateKey), [
         // The key of Boltz always comes first
         theirPublicKey,
-        Buffer.from(ourKeys.publicKey),
+        new Uint8Array(ourKeys.publicKey),
     ]);
 };
 
-export const tweakMusig = (asset: string, musig: Musig, tree: Taptree) =>
+export const tweakMusig = (
+    asset: string,
+    musig: MusigKeyAgg,
+    tree: Types.TapTree,
+): MusigKeyAgg =>
     (asset === LBTC ? LiquidTaprootUtils : TaprootUtils).tweakMusig(
         musig,
         tree,
@@ -34,26 +32,38 @@ export const tweakMusig = (asset: string, musig: Musig, tree: Taptree) =>
 
 export const hashForWitnessV1 = (
     asset: string,
-    network: Network | LiquidNetwork,
-    inputs: RefundDetails[] | LiquidRefundDetails[],
-    tx: TransactionInterface,
+    network: BTC_NETWORK | LiquidNetwork,
+    inputs:
+        | { script: Uint8Array; amount: bigint }[]
+        | { script: Buffer; value: Buffer; asset: Buffer; nonce: Buffer }[],
+    tx: BtcTransaction | LiquidTransaction,
     index: number,
     leafHash?: Buffer,
 ) => {
     if (asset === LBTC) {
         return LiquidTaprootUtils.hashForWitnessV1(
             network as LiquidNetwork,
-            inputs as LiquidRefundDetails[],
+            inputs as {
+                script: Buffer;
+                value: Buffer;
+                asset: Buffer;
+                nonce: Buffer;
+            }[],
             tx as LiquidTransaction,
             index,
             leafHash,
         );
     } else {
-        return TaprootUtils.hashForWitnessV1(
-            inputs as RefundDetails[],
-            tx as Transaction,
+        const btcTx = tx as BtcTransaction;
+        return btcTx.preimageWitnessV1(
             index,
-            leafHash,
+            (inputs as { script: Uint8Array; amount: bigint }[]).map(
+                (i) => i.script,
+            ),
+            0, // SigHash.DEFAULT
+            (inputs as { script: Uint8Array; amount: bigint }[]).map(
+                (i) => i.amount,
+            ),
         );
     }
 };

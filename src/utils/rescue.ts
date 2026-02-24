@@ -1,8 +1,10 @@
+import { hex } from "@scure/base";
+import type { Transaction as BtcTransaction } from "@scure/btc-signer";
 import type { RefundDetails } from "boltz-core";
 import { OutputType, SwapTreeSerializer, detectSwap } from "boltz-core";
 import type { LiquidRefundDetails } from "boltz-core/dist/lib/liquid";
 import { Buffer } from "buffer";
-import type { ECPairInterface } from "ecpair";
+import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
@@ -33,6 +35,8 @@ import {
     broadcastTransaction,
     getLockupTransaction,
     getPartialRefundSignature,
+    txToHex,
+    txToId,
 } from "./boltzClient";
 import type { DecodedAddress } from "./compat";
 import {
@@ -41,6 +45,7 @@ import {
     getNetwork,
     getTransaction,
 } from "./compat";
+import type { ECKeys } from "./ecpair";
 import { formatError } from "./errors";
 import { getFeeEstimationsFailover } from "./fees";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
@@ -94,9 +99,6 @@ export const isSwapClaimable = ({
         return false;
     }
 
-    // When a backup is imported, we only auto-claim successful swaps that were created
-    // after the import timestamp. This prevents attempting to claim swaps that may have
-    // already been completed before the backup was created
     const swapCreatedAfterBackup: boolean =
         backupImportTimestamp === undefined ||
         (swapDate !== undefined && swapDate >= backupImportTimestamp);
@@ -148,16 +150,28 @@ export const hasSwapTimedOut = (swap: SomeSwap, currentBlockHeight: number) => {
     return currentBlockHeight >= swapTimeoutBlockHeight[swap.type]();
 };
 
+const setCooperativeWitness = (
+    tx: TransactionInterface,
+    index: number,
+    witness: Uint8Array,
+) => {
+    if (tx instanceof LiquidTransaction) {
+        tx.ins[index].witness = [Buffer.from(witness)];
+    } else {
+        (tx as BtcTransaction).updateInput(index, {
+            finalScriptWitness: [witness],
+        });
+    }
+};
+
 const refundTaproot = async <T extends TransactionInterface>(
     swap: SubmarineSwap | ChainSwap,
     lockupTxs: TransactionInterface[],
-    privateKey: ECPairInterface,
+    privateKey: ECKeys,
     decodedAddress: DecodedAddress,
     feePerVbyte: number,
     cooperative: boolean = true,
     timeoutBlockHeight?: number,
-    // Keep the error of the cooperative refund to show a nice error reason in case the
-    // uncooperative transaction is not ready to be broadcast yet
     cooperativeError?: string,
 ): Promise<{
     transaction: T;
@@ -166,6 +180,12 @@ const refundTaproot = async <T extends TransactionInterface>(
     log.info(
         `starting to refund swap ${swap.id} cooperatively: ${cooperative}`,
     );
+
+    // Ensure secp256k1-zkp is initialized for Liquid transaction construction
+    if (swap.assetSend === LBTC) {
+        await secp.get();
+    }
+
     const theirPublicKey =
         swap.type === SwapType.Submarine
             ? (swap as SubmarineSwap).claimPublicKey
@@ -176,22 +196,22 @@ const refundTaproot = async <T extends TransactionInterface>(
             : (swap as ChainSwap).lockupDetails.swapTree;
 
     const swapTree = SwapTreeSerializer.deserializeSwapTree(lockupTree);
-    const boltzPublicKey = Buffer.from(theirPublicKey, "hex");
-    let musig = await createMusig(privateKey, boltzPublicKey);
-    const tweakedKey = tweakMusig(swap.assetSend, musig, swapTree.tree);
+    const boltzPublicKey = hex.decode(theirPublicKey);
+    let keyAgg = createMusig(privateKey, boltzPublicKey);
+    const tweaked = tweakMusig(swap.assetSend, keyAgg, swapTree.tree);
 
     const details = lockupTxs.map((lockupTx) => {
-        const swapOutput = detectSwap(tweakedKey, lockupTx);
+        const swapOutput = detectSwap(tweaked.aggPubkey, lockupTx);
         return {
             ...swapOutput,
             cooperative,
             swapTree,
-            keys: privateKey,
+            privateKey: new Uint8Array(privateKey.privateKey),
             type: OutputType.Taproot,
-            txHash: lockupTx.getHash(),
+            transactionId: txToId(lockupTx),
             blindingPrivateKey: parseBlindingKey(swap, true),
-            internalKey: musig.getAggregatedPublicKey(),
-        } as RefundDetails & { blindingPrivateKey: Buffer };
+            internalKey: keyAgg.aggPubkey,
+        } as unknown as RefundDetails & { blindingPrivateKey: Uint8Array };
     });
 
     const constructRefundTransaction = getConstructRefundTransaction(
@@ -216,31 +236,55 @@ const refundTaproot = async <T extends TransactionInterface>(
     }
 
     try {
-        for (const [index, input] of refundTx.ins.entries()) {
+        const inputCount =
+            refundTx instanceof LiquidTransaction
+                ? refundTx.ins.length
+                : (refundTx as BtcTransaction).inputsLength;
+
+        for (let index = 0; index < inputCount; index++) {
             // Create new musig instance to initialize a new session
-            musig = await createMusig(privateKey, boltzPublicKey);
-            const boltzSig = await getPartialRefundSignature(
-                swap.id,
-                swap.type,
-                Buffer.from(musig.getPublicNonce()),
+            keyAgg = createMusig(privateKey, boltzPublicKey);
+
+            // Compute sighash first (v4 requires message before nonce)
+            const sigHash = hashForWitnessV1(
+                swap.assetSend,
+                getNetwork(swap.assetSend),
+                details,
                 refundTx,
                 index,
             );
-            musig.aggregateNonces([[boltzPublicKey, boltzSig.pubNonce]]);
-            tweakMusig(swap.assetSend, musig, swapTree.tree);
-            musig.initializeSession(
-                hashForWitnessV1(
-                    swap.assetSend,
-                    getNetwork(swap.assetSend),
-                    details,
-                    refundTx,
-                    index,
-                ),
-            );
-            musig.signPartial();
-            musig.addPartial(boltzPublicKey, boltzSig.signature);
 
-            input.witness = [musig.aggregatePartials()];
+            const tweakedForSign = tweakMusig(
+                swap.assetSend,
+                keyAgg,
+                swapTree.tree,
+            );
+            const withMsg = tweakedForSign.message(sigHash);
+            const withNonce = withMsg.generateNonce();
+
+            const boltzSig = await getPartialRefundSignature(
+                swap.id,
+                swap.type,
+                withNonce.publicNonce,
+                refundTx,
+                index,
+            );
+
+            const aggNonces = withNonce.aggregateNonces([
+                [boltzPublicKey, boltzSig.pubNonce],
+            ]);
+            const session = aggNonces.initializeSession();
+            const signed = session.signPartial();
+            const withBoltz = signed.addPartial(
+                boltzPublicKey,
+                boltzSig.signature,
+            );
+
+            setCooperativeWitness(
+                refundTx,
+                index,
+                withBoltz.aggregatePartials(),
+            );
         }
         return {
             transaction: refundTx as T,
@@ -281,14 +325,11 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
         log.debug("Broadcasting refund transaction");
         const res = await broadcastTransaction(
             swap.assetSend,
-            txConstructionResponse.transaction.toHex(),
+            txToHex(txConstructionResponse.transaction),
         );
         log.debug("Refund broadcast result", res);
         return res.id;
     } catch (e) {
-        // When the uncooperative refund transaction is not ready to be broadcast yet
-        // (= non-final) and the cooperative spend has been tried but failed,
-        // throw the error of the cooperative spend
         throw e === "non-final" &&
             txConstructionResponse.cooperativeError !== undefined
             ? txConstructionResponse.cooperativeError
@@ -298,7 +339,7 @@ const broadcastRefund = async <T extends SubmarineSwap | ChainSwap>(
 
 const assetRescueRefund = async <T extends SubmarineSwap | ChainSwap>(
     swap: T,
-    privateKey: ECPairInterface,
+    privateKey: ECKeys,
     refundAddress: string,
     transactionsToRefund: TransactionInterface[],
 ) => {
@@ -321,31 +362,34 @@ const assetRescueRefund = async <T extends SubmarineSwap | ChainSwap>(
             : (swap as ChainSwap).lockupDetails.swapTree;
 
     const swapTree = SwapTreeSerializer.deserializeSwapTree(lockupTree);
-    const boltzPublicKey = Buffer.from(theirPublicKey, "hex");
-    const musig = await createMusig(privateKey, boltzPublicKey);
-    const tweakedKey = tweakMusig(swap.assetSend, musig, swapTree.tree);
+    const boltzPublicKey = hex.decode(theirPublicKey);
+    const keyAgg = createMusig(privateKey, boltzPublicKey);
+    const tweaked = tweakMusig(swap.assetSend, keyAgg, swapTree.tree);
 
-    const output = detectSwap(tweakedKey, transaction);
+    const output = detectSwap(tweaked.aggPubkey, transaction);
 
     const setup = await assetRescueSetup(
         swap.assetSend,
         swap.id,
-        transaction.getId(),
+        txToId(transaction),
         output.vout,
         refundAddress,
     );
 
-    musig.aggregateNonces([
-        [boltzPublicKey, Buffer.from(setup.musig.pubNonce, "hex")],
-    ]);
-    musig.initializeSession(Buffer.from(setup.musig.message, "hex"));
+    const withMsg = tweaked.message(hex.decode(setup.musig.message));
+    const withNonce = withMsg.generateNonce();
 
-    const partialSignature = musig.signPartial();
+    const aggNonces = withNonce.aggregateNonces([
+        [boltzPublicKey, hex.decode(setup.musig.pubNonce)],
+    ]);
+    const session = aggNonces.initializeSession();
+    const signed = session.signPartial();
+
     const res = await assetRescueBroadcast(
         swap.assetSend,
         swap.id,
-        Buffer.from(musig.getPublicNonce()),
-        Buffer.from(partialSignature),
+        withNonce.publicNonce,
+        signed.ourPartialSignature,
     );
     log.info("Asset rescue broadcast result", res);
 
@@ -403,7 +447,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             timeoutBlockHeight,
         );
     } else {
-        // Initialize the secp256k1-zkp library for blinding
+        // Initialize the secp256k1-zkp library for blinding (legacy Liquid swaps)
         await secp.get();
         const redeemScript = Buffer.from(
             (swap as unknown as { redeemScript: string }).redeemScript,
@@ -415,11 +459,11 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             log.debug("swapOutput", swapOutput);
             return {
                 ...swapOutput,
-                txHash: lockupTx.getHash(),
+                transactionId: txToId(lockupTx),
                 redeemScript: redeemScript,
-                keys: privateKey,
+                privateKey: new Uint8Array(privateKey.privateKey),
                 blindingPrivateKey: parseBlindingKey(swap, true),
-            } as RefundDetails & LiquidRefundDetails;
+            } as unknown as RefundDetails & LiquidRefundDetails;
         });
 
         const constructRefundTransaction = getConstructRefundTransaction(
@@ -464,7 +508,6 @@ export const getRescuableUTXOs = async (currentSwap: SomeSwap) => {
         return utxos;
     }
 
-    // Fallback to lockup tx if 3rd party utxo data is not available and swap status is not final
     if (
         lockupTx &&
         !Object.values(swapStatusFinal).includes(currentSwap.status)
@@ -472,7 +515,6 @@ export const getRescuableUTXOs = async (currentSwap: SomeSwap) => {
         return [lockupTx];
     }
 
-    // if both requests were "rejected"
     log.error("failed to fetch utxo data for swap:", currentSwap.id);
     return [];
 };
@@ -539,7 +581,6 @@ export const createRescueList = async (
                     }
                 }
 
-                // Prioritize refunding for expired swaps with UTXOs
                 if (
                     isRefundableSwapType(swap) &&
                     hasSwapTimedOut(swap, currentBlockHeight[swap.assetSend]) &&

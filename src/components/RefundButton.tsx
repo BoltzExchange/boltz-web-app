@@ -1,7 +1,7 @@
-import { crypto } from "bitcoinjs-lib";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
 import type { TransactionResponse } from "ethers";
 import { Signature } from "ethers";
-import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
 import { Show, createMemo, createResource, createSignal } from "solid-js";
@@ -14,7 +14,7 @@ import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { useWeb3Signer } from "../context/Web3";
 import { getEipRefundSignature } from "../utils/boltzClient";
-import { getAddress, getNetwork } from "../utils/compat";
+import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import { decodeInvoice } from "../utils/invoice";
 import { RefundType, refund } from "../utils/rescue";
@@ -132,16 +132,7 @@ export const RefundBtc = (props: {
         const asset = props.swap()?.assetSend;
         if (!asset) return;
 
-        try {
-            getAddress(asset).toOutputScript(
-                refundAddress(),
-                getNetwork(asset) as LiquidNetwork,
-            );
-            setValid(true);
-        } catch (e) {
-            log.debug("parsing refund address failed", e);
-            setValid(false);
-        }
+        setValid(validateAddress(asset, refundAddress()));
     };
 
     const refundAction = async () => {
@@ -298,14 +289,13 @@ const RefundButton = (props: {
                                 (props.swap() as ChainSwap).lockupDetails
                                     .timeoutBlockHeight
                             }
-                            preimageHash={crypto
-                                .sha256(
-                                    Buffer.from(
+                            preimageHash={hex.encode(
+                                sha256(
+                                    hex.decode(
                                         (props.swap() as ChainSwap).preimage,
-                                        "hex",
                                     ),
-                                )
-                                .toString("hex")}
+                                ),
+                            )}
                             setRefundTxId={props.setRefundTxId}
                         />
                     }>

@@ -1,7 +1,6 @@
 /* @refresh skip */
 import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
-import type { ECPairInterface } from "ecpair";
 import localforage from "localforage";
 import log from "loglevel";
 import {
@@ -23,6 +22,7 @@ import type { DictKey } from "../i18n/i18n";
 import dict from "../i18n/i18n";
 import type { Pairs } from "../utils/boltzClient";
 import { getPairs } from "../utils/boltzClient";
+import type { ECKeys } from "../utils/ecpair";
 import { ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
@@ -39,8 +39,8 @@ export const liquidUncooperativeExtra = 3;
 const proReferral = "pro";
 
 type NotificationType = "success" | "error";
-export type deriveKeyFn = (index: number) => ECPairInterface;
-export type newKeyFn = () => { index: number; key: ECPairInterface };
+export type deriveKeyFn = (index: number) => ECKeys;
+export type newKeyFn = () => { index: number; key: ECKeys };
 export type tFn = (key: DictKey, values?: Record<string, unknown>) => string;
 export type notifyFn = (type: NotificationType, message: string) => void;
 
@@ -249,7 +249,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const deriveKeyWrapper = (index: number) => {
         return ECPair.fromPrivateKey(
-            Buffer.from(deriveKey(rescueFile(), index).privateKey),
+            new Uint8Array(deriveKey(rescueFile(), index).privateKey),
         );
     };
 

@@ -45,6 +45,8 @@ test.describe("Asset Rescue", () => {
         await page.getByTestId("refundAddress").fill(await getLiquidAddress());
         await page.getByTestId("refundButton").click();
 
+        await expect(page.getByText(dict.en.refunded)).toBeVisible();
+
         await generateLiquidBlock();
 
         balances = JSON.parse(

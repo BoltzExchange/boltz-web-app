@@ -48,7 +48,6 @@ import {
 import type { RescueFile } from "../utils/rescueFile";
 import { getXpub, validateRescueFile } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
 
@@ -510,7 +509,7 @@ export const RefundRsk = () => {
 };
 
 const RescueExternal = () => {
-    const { wasmSupported, t } = useGlobalContext();
+    const { t } = useGlobalContext();
 
     const params = useParams();
     const navigate = useNavigate();
@@ -527,40 +526,38 @@ const RescueExternal = () => {
     }
 
     return (
-        <Show when={wasmSupported()} fallback={<ErrorWasm />}>
-            <div id="refund">
-                <div class="frame refund" data-testid="refundFrame">
-                    <header>
-                        <SettingsCog />
-                        <h2>{t("rescue_external_swap")}</h2>
-                    </header>
-                    <Show when={rskAvailable}>
-                        <div class="tabs">
-                            <For each={[tabBtc, tabRsk]}>
-                                {(tab) => (
-                                    <div
-                                        class={`tab ${selected() === tab.value ? "active" : ""}`}
-                                        onClick={() =>
-                                            navigate(
-                                                `/rescue/external/${tab.value}`,
-                                            )
-                                        }>
-                                        {tab.name}
-                                    </div>
-                                )}
-                            </For>
-                        </div>
-                    </Show>
-                    <Show when={selected() === tabBtc.value}>
-                        <RefundBtcLike />
-                    </Show>
-                    <Show when={selected() === tabRsk.value}>
-                        <RefundRsk />
-                    </Show>
-                    <SettingsMenu />
-                </div>
+        <div id="refund">
+            <div class="frame refund" data-testid="refundFrame">
+                <header>
+                    <SettingsCog />
+                    <h2>{t("rescue_external_swap")}</h2>
+                </header>
+                <Show when={rskAvailable}>
+                    <div class="tabs">
+                        <For each={[tabBtc, tabRsk]}>
+                            {(tab) => (
+                                <div
+                                    class={`tab ${selected() === tab.value ? "active" : ""}`}
+                                    onClick={() =>
+                                        navigate(
+                                            `/rescue/external/${tab.value}`,
+                                        )
+                                    }>
+                                    {tab.name}
+                                </div>
+                            )}
+                        </For>
+                    </div>
+                </Show>
+                <Show when={selected() === tabBtc.value}>
+                    <RefundBtcLike />
+                </Show>
+                <Show when={selected() === tabRsk.value}>
+                    <RefundRsk />
+                </Show>
+                <SettingsMenu />
             </div>
-        </Show>
+        </div>
     );
 };
 

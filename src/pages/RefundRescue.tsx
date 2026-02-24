@@ -240,7 +240,7 @@ const RefundRescue = () => {
                                     setRefundTxId={setRefundTxId}
                                     deriveKeyFn={(index: number) =>
                                         ECPair.fromPrivateKey(
-                                            Buffer.from(
+                                            new Uint8Array(
                                                 deriveKey(rescueFile(), index)
                                                     .privateKey,
                                             ),
