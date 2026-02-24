@@ -195,7 +195,7 @@ const refundTaproot = async <T extends TransactionInterface>(
             ...swapOutput,
             cooperative,
             swapTree,
-            privateKey: new Uint8Array(privateKey.privateKey),
+            privateKey: privateKey.privateKey,
             type: OutputType.Taproot,
             transactionId: txToId(lockupTx),
             blindingPrivateKey: parseBlindingKey(swap, true),
@@ -438,7 +438,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
             timeoutBlockHeight,
         );
     } else {
-        // Initialize the secp256k1-zkp library for blinding (legacy Liquid swaps)
+        // Initialize the secp256k1-zkp library for blinding
         await secp.get();
         const redeemScript = Buffer.from(
             (swap as unknown as { redeemScript: string }).redeemScript,
@@ -452,7 +452,7 @@ export const refund = async <T extends SubmarineSwap | ChainSwap>(
                 ...swapOutput,
                 transactionId: txToId(lockupTx),
                 redeemScript: redeemScript,
-                privateKey: new Uint8Array(privateKey.privateKey),
+                privateKey: privateKey.privateKey,
                 blindingPrivateKey: parseBlindingKey(swap, true),
             } as unknown as RefundDetails & LiquidRefundDetails;
         });
@@ -499,6 +499,7 @@ export const getRescuableUTXOs = async (currentSwap: SomeSwap) => {
         return utxos;
     }
 
+    // Fallback to lockup tx if 3rd party utxo data is not available and swap status is not final
     if (
         lockupTx &&
         !Object.values(swapStatusFinal).includes(currentSwap.status)
@@ -572,6 +573,7 @@ export const createRescueList = async (
                     }
                 }
 
+                // Prioritize refunding for expired swaps with UTXOs
                 if (
                     isRefundableSwapType(swap) &&
                     hasSwapTimedOut(swap, currentBlockHeight[swap.assetSend]) &&

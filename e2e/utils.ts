@@ -1,7 +1,7 @@
 import { schnorr, secp256k1 } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { type Locator, type Page, expect, request } from "@playwright/test";
-import { hex } from "@scure/base";
+import { hex, utf8 } from "@scure/base";
 import axios from "axios";
 import BigNumber from "bignumber.js";
 import bolt11 from "bolt11";
@@ -296,10 +296,10 @@ export const generateInvoiceWithRoutingHint = async (
     invoiceAmount: number,
 ) => {
     const preimage = randomBytes(32);
-    const privateKey = randomBytes(32);
+    const privateKey = secp256k1.utils.randomPrivateKey();
     const publicKey = secp256k1.getPublicKey(privateKey, true);
 
-    const addressHash = sha256(Buffer.from(claimAddress, "utf-8"));
+    const addressHash = sha256(utf8.decode(claimAddress));
     const addressSignature = schnorr.sign(addressHash, privateKey);
 
     const swapRes = await (

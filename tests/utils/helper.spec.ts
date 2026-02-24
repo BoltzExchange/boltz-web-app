@@ -1,3 +1,6 @@
+import { secp256k1 } from "@noble/curves/secp256k1";
+import { hex } from "@scure/base";
+
 import { SwapType } from "../../src/consts/Enums";
 import type { Pairs } from "../../src/utils/boltzClient";
 import { ECPair } from "../../src/utils/ecpair";
@@ -74,9 +77,9 @@ describe("helper", () => {
         });
 
         test("should parse hex private key", () => {
-            const privateKeyHex = Buffer.from(
-                crypto.getRandomValues(new Uint8Array(32)),
-            ).toString("hex");
+            const privateKeyHex = hex.encode(
+                secp256k1.utils.randomPrivateKey(),
+            );
             const mockResult = { key: "data" };
             vi.mocked(ECPair.fromPrivateKey).mockReturnValueOnce(
                 mockResult as never,

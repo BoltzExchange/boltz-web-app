@@ -301,11 +301,7 @@ const findOutputByScript = (
         const btcTx = tx as BtcTransaction;
         for (let i = 0; i < btcTx.outputsLength; i++) {
             const out = btcTx.getOutput(i);
-            if (
-                out.script &&
-                out.script.length === targetScript.length &&
-                equalBytes(out.script, targetScript)
-            ) {
+            if (out.script && equalBytes(out.script, targetScript)) {
                 return out;
             }
         }

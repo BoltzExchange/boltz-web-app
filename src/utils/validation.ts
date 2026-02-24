@@ -169,7 +169,7 @@ const validateReverse = async (
     const compareTree = reverseSwapTree(
         swap.assetReceive === LBTC,
         preimageHash,
-        new Uint8Array(ourKeys.publicKey),
+        ourKeys.publicKey,
         theirPublicKey,
         swap.timeoutBlockHeight,
     );
