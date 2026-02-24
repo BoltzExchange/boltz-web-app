@@ -132,7 +132,6 @@ const cleanup = render(
             <Route path="/backup/mnemonic" component={BackupMnemonic} />
             <Route path="/backup/mnemonic/verify" component={MnemonicVerify} />
             <Route path="/backup/verify" component={BackupVerify} />
-            <Route path="/backup/verify/:type" component={BackupVerify} />
             <Route
                 path="/swap/refund/evm/:asset/:txHash"
                 component={RefundEvm}

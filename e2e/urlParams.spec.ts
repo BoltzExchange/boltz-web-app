@@ -129,14 +129,7 @@ test.describe("URL params", () => {
 
         await toggleRescueModeOnClick(page);
 
-        await page.goto("/backup/verify/existing");
-
-        await toggleRescueModeOnClick(page);
-
         await page.goto("/refund/external?mode=rescue-key");
-        await assertMnemonicVisible();
-
-        await page.goto("/backup/verify/existing?mode=rescue-key");
         await assertMnemonicVisible();
 
         await page.goto("/rescue/external/btc?mode=rescue-key");
