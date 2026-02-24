@@ -1,5 +1,5 @@
+import { hex } from "@scure/base";
 import { Buffer } from "buffer";
-import type { ECPairInterface } from "ecpair";
 
 import { chooseUrl, config } from "../config";
 import { BTC, LN, RBTC } from "../consts/Assets";
@@ -13,6 +13,7 @@ import type {
     ReversePairTypeTaproot,
     SubmarinePairTypeTaproot,
 } from "./boltzClient";
+import type { ECKeys } from "./ecpair";
 import { ECPair } from "./ecpair";
 import { formatError } from "./errors";
 import type {
@@ -187,13 +188,13 @@ export const parsePrivateKey = (
     deriveKey: deriveKeyFn,
     keyIndex?: number,
     privateKeyHex?: string,
-): ECPairInterface => {
+): ECKeys => {
     if (keyIndex !== undefined) {
         return deriveKey(keyIndex);
     }
 
     try {
-        return ECPair.fromPrivateKey(Buffer.from(privateKeyHex, "hex"));
+        return ECPair.fromPrivateKey(hex.decode(privateKeyHex));
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {

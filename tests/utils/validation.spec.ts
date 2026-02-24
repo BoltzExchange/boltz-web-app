@@ -1,3 +1,4 @@
+import { hex } from "@scure/base";
 import type { Contract } from "ethers";
 import log from "loglevel";
 
@@ -104,10 +105,9 @@ describe("validate responses", () => {
                     swap,
                     () =>
                         ECPair.fromPrivateKey(
-                            Buffer.from(swap.refundPrivateKey, "hex"),
+                            hex.decode(swap.refundPrivateKey),
                         ),
                     getEtherSwap(contractCode),
-                    Buffer,
                 );
                 if (valid) {
                     await expect(promise).resolves.toBeUndefined();
@@ -201,11 +201,8 @@ describe("validate responses", () => {
                 const promise = validateResponse(
                     swap,
                     () =>
-                        ECPair.fromPrivateKey(
-                            Buffer.from(swap.claimPrivateKey, "hex"),
-                        ),
+                        ECPair.fromPrivateKey(hex.decode(swap.claimPrivateKey)),
                     contract,
-                    Buffer,
                 );
                 if (valid) {
                     await expect(promise).resolves.toBeUndefined();

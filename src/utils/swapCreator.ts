@@ -1,5 +1,6 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
 import type BigNumber from "bignumber.js";
-import { crypto } from "bitcoinjs-lib";
 import { OutputType } from "boltz-core";
 import { randomBytes } from "crypto";
 
@@ -173,7 +174,7 @@ export const createReverse = async (
         assetSend,
         assetReceive,
         Number(sendAmount),
-        crypto.sha256(preimage).toString("hex"),
+        hex.encode(sha256(preimage)),
         getPair(pairs, SwapType.Reverse, assetSend, assetReceive).hash,
         referralId,
         key !== undefined
@@ -194,7 +195,7 @@ export const createReverse = async (
         ),
         claimAddress,
         originalDestination,
-        preimage: preimage.toString("hex"),
+        preimage: hex.encode(preimage),
         claimPrivateKeyIndex: key?.index,
     };
 };
@@ -226,7 +227,7 @@ export const createChain = async (
         sendAmount.isZero() || sendAmount.isNaN()
             ? undefined
             : Number(sendAmount),
-        crypto.sha256(preimage).toString("hex"),
+        hex.encode(sha256(preimage)),
         claimKey !== undefined
             ? Buffer.from(claimKey.key.publicKey).toString("hex")
             : undefined,
@@ -250,7 +251,7 @@ export const createChain = async (
         ),
         claimAddress,
         originalDestination,
-        preimage: preimage.toString("hex"),
+        preimage: hex.encode(preimage),
         claimPrivateKeyIndex: claimKey?.index,
         refundPrivateKeyIndex: refundKey?.index,
     };

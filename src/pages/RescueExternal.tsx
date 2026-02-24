@@ -510,7 +510,7 @@ export const RefundRsk = () => {
 };
 
 const RescueExternal = () => {
-    const { wasmSupported, t } = useGlobalContext();
+    const { t, wasmSupported } = useGlobalContext();
 
     const params = useParams();
     const navigate = useNavigate();

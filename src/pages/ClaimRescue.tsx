@@ -1,3 +1,4 @@
+import { hex } from "@scure/base";
 import { useParams } from "@solidjs/router";
 import { OutputType } from "boltz-core";
 import log from "loglevel";
@@ -161,10 +162,12 @@ const ClaimRescue = () => {
                 return mapClaimableSwap({
                     swap: {
                         ...restorableSwap,
-                        preimage: derivePreimageFromRescueKey(
-                            rescueFile(),
-                            restorableSwap.claimDetails.keyIndex,
-                        ).toString("hex"),
+                        preimage: hex.encode(
+                            derivePreimageFromRescueKey(
+                                rescueFile(),
+                                restorableSwap.claimDetails.keyIndex,
+                            ),
+                        ),
                         transaction: {
                             id: swapStatus.transaction?.id,
                             hex: swapStatus.transaction?.hex,
@@ -186,10 +189,12 @@ const ClaimRescue = () => {
                     throw Error(`failed to find a chain pair for ${params.id}`);
                 }
 
-                const derivedKey = derivePreimageFromRescueKey(
-                    rescueFile(),
-                    restorableSwap.claimDetails.keyIndex,
-                ).toString("hex");
+                const derivedKey = hex.encode(
+                    derivePreimageFromRescueKey(
+                        rescueFile(),
+                        restorableSwap.claimDetails.keyIndex,
+                    ),
+                );
 
                 return mapClaimableSwap({
                     swap: {

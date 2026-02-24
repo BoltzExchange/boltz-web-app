@@ -1,6 +1,6 @@
-import { bech32, utf8 } from "@scure/base";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bech32, hex, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
-import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
 import log from "loglevel";
 
@@ -363,7 +363,7 @@ export const checkInvoicePreimage = async (
     preimage: string,
 ) => {
     const dec = await decodeInvoice(invoice);
-    const hash = crypto.sha256(Buffer.from(preimage, "hex")).toString("hex");
+    const hash = hex.encode(sha256(hex.decode(preimage)));
 
     if (hash !== dec.preimageHash) {
         throw "invalid preimage";

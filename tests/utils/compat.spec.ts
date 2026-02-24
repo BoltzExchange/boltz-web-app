@@ -1,4 +1,4 @@
-import { networks } from "bitcoinjs-lib";
+import { Networks } from "boltz-core";
 import { networks as LiquidNetworks } from "liquidjs-lib";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
@@ -11,9 +11,9 @@ import {
 describe("parse network correctly", () => {
     test.each`
         asset   | network      | expected
-        ${BTC}  | ${"mainnet"} | ${networks.bitcoin}
-        ${BTC}  | ${"testnet"} | ${networks.testnet}
-        ${BTC}  | ${"regtest"} | ${networks.regtest}
+        ${BTC}  | ${"mainnet"} | ${Networks.bitcoin}
+        ${BTC}  | ${"testnet"} | ${Networks.testnet}
+        ${BTC}  | ${"regtest"} | ${Networks.regtest}
         ${LBTC} | ${"mainnet"} | ${LiquidNetworks.liquid}
         ${LBTC} | ${"testnet"} | ${LiquidNetworks.testnet}
         ${LBTC} | ${"regtest"} | ${LiquidNetworks.regtest}

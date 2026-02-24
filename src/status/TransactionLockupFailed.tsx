@@ -1,5 +1,4 @@
 import BigNumber from "bignumber.js";
-import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import type { Accessor, Setter } from "solid-js";
@@ -25,8 +24,8 @@ import {
     getChainSwapTransactions,
 } from "../utils/boltzClient";
 import {
-    getAddress,
-    getNetwork,
+    decodeAddress,
+    findOutputByScript,
     getOutputAmount,
     getTransaction,
 } from "../utils/compat";
@@ -88,13 +87,15 @@ const TransactionLockupFailed = (props: {
             const lockTransaction = getTransaction(chainSwap.assetSend).fromHex(
                 transactions.userLock.transaction.hex,
             );
-            const lockupScript = getAddress(chainSwap.assetSend).toOutputScript(
+            const { script: lockupScript } = decodeAddress(
+                chainSwap.assetSend,
                 chainSwap.lockupDetails.lockupAddress,
-                getNetwork(chainSwap.assetSend) as LiquidNetwork,
             );
 
-            const output = lockTransaction.outs.find((o) =>
-                o.script.equals(lockupScript),
+            const output = findOutputByScript(
+                chainSwap.assetSend,
+                lockTransaction,
+                lockupScript,
             );
             const outputAmount = await getOutputAmount(chainSwap.assetSend, {
                 ...output,

@@ -1,4 +1,5 @@
-import { crypto } from "bitcoinjs-lib";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
 import { Show } from "solid-js";
 
 import LockupEvm from "../components/LockupEvm";
@@ -42,9 +43,9 @@ const SwapCreated = () => {
                     amount={chain.lockupDetails.amount}
                     claimAddress={chain.lockupDetails.claimAddress}
                     timeoutBlockHeight={chain.lockupDetails.timeoutBlockHeight}
-                    preimageHash={crypto
-                        .sha256(Buffer.from(chain.preimage, "hex"))
-                        .toString("hex")}
+                    preimageHash={hex.encode(
+                        sha256(hex.decode(chain.preimage)),
+                    )}
                 />
             </Show>
         </Show>

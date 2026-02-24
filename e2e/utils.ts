@@ -1,13 +1,13 @@
+import { schnorr, secp256k1 } from "@noble/curves/secp256k1.js";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { type Locator, type Page, expect, request } from "@playwright/test";
+import { hex, utf8 } from "@scure/base";
 import axios from "axios";
 import BigNumber from "bignumber.js";
-import { crypto } from "bitcoinjs-lib";
 import bolt11 from "bolt11";
 import { exec, execSync, spawn } from "child_process";
 import { randomBytes } from "crypto";
-import ECPairFactory from "ecpair";
 import fs from "fs";
-import { networks } from "liquidjs-lib";
 import { promisify } from "util";
 
 import { config } from "../src/config";
@@ -15,7 +15,6 @@ import { type AssetType, BTC, LBTC } from "../src/consts/Assets";
 import dict from "../src/i18n/i18n";
 import { type UTXO } from "../src/utils/blockchain";
 import { btcToSat } from "../src/utils/denomination";
-import { ecc } from "../src/utils/ecpair";
 import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 
 const execAsync = promisify(exec);
@@ -296,20 +295,12 @@ export const generateInvoiceWithRoutingHint = async (
     claimAddress: string,
     invoiceAmount: number,
 ) => {
-    const ECPair = ECPairFactory(ecc);
-
     const preimage = randomBytes(32);
-    const claimKeys = ECPair.fromWIF(
-        ECPair.makeRandom({ network: networks.regtest }).toWIF(),
-        networks.regtest,
-    );
+    const privateKey = secp256k1.utils.randomSecretKey();
+    const publicKey = secp256k1.getPublicKey(privateKey, true);
 
-    const addressHash = crypto
-        .sha256(Buffer.from(claimAddress, "utf-8"))
-        .toString("hex");
-    const addressSignature = claimKeys.signSchnorr(
-        Buffer.from(addressHash, "hex"),
-    );
+    const addressHash = sha256(utf8.decode(claimAddress));
+    const addressSignature = schnorr.sign(addressHash, privateKey);
 
     const swapRes = await (
         await axios.post(`${config.apiUrl.normal}/v2/swap/reverse`, {
@@ -317,13 +308,9 @@ export const generateInvoiceWithRoutingHint = async (
             from: BTC,
             to: LBTC,
             invoiceAmount,
-            addressSignature: Buffer.from(
-                Object.values(addressSignature),
-            ).toString("hex"),
-            claimPublicKey: Buffer.from(
-                Object.values(claimKeys.publicKey),
-            ).toString("hex"),
-            preimageHash: crypto.sha256(preimage).toString("hex"),
+            addressSignature: hex.encode(addressSignature),
+            claimPublicKey: hex.encode(publicKey),
+            preimageHash: hex.encode(sha256(preimage)),
         })
     ).data;
 
@@ -333,10 +320,7 @@ export const generateInvoiceWithRoutingHint = async (
         throw new Error("no magic routing hint");
     }
 
-    if (
-        magicRoutingHint.pubkey !==
-        Buffer.from(Object.values(claimKeys.publicKey)).toString("hex")
-    ) {
+    if (magicRoutingHint.pubkey !== hex.encode(publicKey)) {
         throw new Error("invalid public key in magic routing hint");
     }
 

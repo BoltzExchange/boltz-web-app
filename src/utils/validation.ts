@@ -1,5 +1,8 @@
+import { secp256k1 } from "@noble/curves/secp256k1.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hex } from "@scure/base";
+import { equalBytes } from "@scure/btc-signer/utils.js";
 import { BigNumber } from "bignumber.js";
-import { crypto } from "bitcoinjs-lib";
 import type { Types } from "boltz-core";
 import {
     Scripts,
@@ -8,8 +11,6 @@ import {
     reverseSwapTree,
     swapTree,
 } from "boltz-core";
-import { default as BufferBrowser } from "buffer";
-import type { ECPairInterface } from "ecpair";
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 
@@ -20,7 +21,7 @@ import { etherSwapCodeHashes } from "../context/Web3";
 import type { ChainSwapDetails } from "./boltzClient";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
-import { ecc } from "./ecpair";
+import type { ECKeys } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
 import type {
     ChainSwap,
@@ -54,25 +55,21 @@ const validateContract = async (
     }
 };
 
-const validateAddress = async (
+const validateAddress = (
     chain: string,
     tree: Types.SwapTree,
-    ourKeys: ECPairInterface,
-    theirPublicKey: Buffer,
+    ourKeys: ECKeys,
+    theirPublicKey: Uint8Array,
     address: string,
     blindingKey: string | undefined,
-    buffer: BufferConstructor,
-): Promise<void> => {
-    const tweakedKey = tweakMusig(
-        chain,
-        await createMusig(ourKeys, theirPublicKey),
-        tree.tree,
-    );
+): void => {
+    const keyAgg = createMusig(ourKeys, theirPublicKey);
+    const tweaked = tweakMusig(chain, keyAgg, tree.tree);
 
-    const compareScript = Scripts.p2trOutput(tweakedKey);
+    const compareScript = Scripts.p2trOutput(tweaked.aggPubkey);
     const decodedAddress = decodeAddress(chain, address);
 
-    if (!decodedAddress.script.equals(compareScript)) {
+    if (!equalBytes(decodedAddress.script, compareScript)) {
         throw new Error("decoded address script mismatch");
     }
 
@@ -80,12 +77,10 @@ const validateAddress = async (
         if (!blindingKey) {
             throw new Error("missing blindingKey for LBTC address validation");
         }
-        const blindingPrivateKey = buffer.from(blindingKey, "hex");
-        const blindingPublicKey = buffer.from(
-            ecc.pointFromScalar(blindingPrivateKey),
-        );
+        const blindingPrivateKey = hex.decode(blindingKey);
+        const blindingPublicKey = secp256k1.getPublicKey(blindingPrivateKey);
 
-        if (!blindingPublicKey.equals(decodedAddress.blindingKey)) {
+        if (!equalBytes(decodedAddress.blindingKey, blindingPublicKey)) {
             throw new Error("blinding public key mismatch");
         }
     }
@@ -131,7 +126,6 @@ const validateReverse = async (
     swap: ReverseSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
-    buffer: BufferConstructor,
 ): Promise<void> => {
     const invoiceData = await decodeInvoice(swap.invoice);
 
@@ -149,10 +143,10 @@ const validateReverse = async (
     }
 
     // Invoice
-    const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
-    if (invoiceData.preimageHash !== preimageHash.toString("hex")) {
+    const preimageHash = sha256(hex.decode(swap.preimage));
+    if (invoiceData.preimageHash !== hex.encode(preimageHash)) {
         throw new Error(
-            `invalid swap preimage hash. Expected ${preimageHash.toString("hex")}, got ${invoiceData.preimageHash}`,
+            `invalid swap preimage hash. Expected ${hex.encode(preimageHash)}, got ${invoiceData.preimageHash}`,
         );
     }
 
@@ -165,12 +159,12 @@ const validateReverse = async (
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
     const ourKeys = deriveKey(swap.claimPrivateKeyIndex);
-    const theirPublicKey = buffer.from(swap.refundPublicKey, "hex");
+    const theirPublicKey = hex.decode(swap.refundPublicKey);
 
     const compareTree = reverseSwapTree(
         swap.assetReceive === LBTC,
         preimageHash,
-        Buffer.from(ourKeys.publicKey),
+        ourKeys.publicKey,
         theirPublicKey,
         swap.timeoutBlockHeight,
     );
@@ -179,14 +173,13 @@ const validateReverse = async (
         throw new Error("swap tree mismatch");
     }
 
-    await validateAddress(
+    validateAddress(
         swap.assetReceive,
         tree,
         ourKeys,
         theirPublicKey,
         swap.lockupAddress,
         swap.blindingKey,
-        buffer,
     );
 };
 
@@ -194,7 +187,6 @@ const validateSubmarine = async (
     swap: SubmarineSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
-    buffer: typeof BufferBrowser.Buffer,
 ): Promise<void> => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
@@ -214,13 +206,13 @@ const validateSubmarine = async (
     const tree = SwapTreeSerializer.deserializeSwapTree(swap.swapTree);
 
     const ourKeys = deriveKey(swap.refundPrivateKeyIndex);
-    const theirPublicKey = buffer.from(swap.claimPublicKey, "hex");
+    const theirPublicKey = hex.decode(swap.claimPublicKey);
 
     const compareTree = swapTree(
         swap.assetSend === LBTC,
-        buffer.from(invoiceData.preimageHash, "hex"),
+        hex.decode(invoiceData.preimageHash),
         theirPublicKey,
-        Buffer.from(ourKeys.publicKey),
+        ourKeys.publicKey,
         swap.timeoutBlockHeight,
     );
 
@@ -229,14 +221,13 @@ const validateSubmarine = async (
     }
 
     // Address
-    await validateAddress(
+    validateAddress(
         swap.assetSend,
         tree,
         ourKeys,
         theirPublicKey,
         swap.address,
         swap.blindingKey,
-        buffer,
     );
 
     validateBip21(swap.bip21, swap.address, swap.expectedAmount);
@@ -246,9 +237,8 @@ const validateChainSwap = async (
     swap: ChainSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
-    buffer: BufferConstructor,
 ): Promise<void> => {
-    const preimageHash = crypto.sha256(buffer.from(swap.preimage, "hex"));
+    const preimageHash = sha256(hex.decode(swap.preimage));
 
     const validateSide = async (
         side: Side,
@@ -282,17 +272,13 @@ const validateChainSwap = async (
                 ? swap.refundPrivateKeyIndex
                 : swap.claimPrivateKeyIndex,
         );
-        const theirPublicKey = buffer.from(details.serverPublicKey, "hex");
+        const theirPublicKey = hex.decode(details.serverPublicKey);
         const tree = SwapTreeSerializer.deserializeSwapTree(details.swapTree);
         const compareTree = reverseSwapTree(
             asset === LBTC,
             preimageHash,
-            side === Side.Send
-                ? theirPublicKey
-                : Buffer.from(ourKeys.publicKey),
-            side === Side.Send
-                ? Buffer.from(ourKeys.publicKey)
-                : theirPublicKey,
+            side === Side.Send ? theirPublicKey : ourKeys.publicKey,
+            side === Side.Send ? ourKeys.publicKey : theirPublicKey,
             details.timeoutBlockHeight,
         );
 
@@ -300,14 +286,13 @@ const validateChainSwap = async (
             throw new Error("swap tree mismatch");
         }
 
-        await validateAddress(
+        validateAddress(
             asset,
             tree,
             ourKeys,
             theirPublicKey,
             details.lockupAddress,
             details.blindingKey,
-            buffer,
         );
 
         if (side === Side.Send) {
@@ -321,12 +306,10 @@ const validateChainSwap = async (
     ]);
 };
 
-// To be able to use the Buffer from Node.js
 export const validateResponse = async (
     swap: SomeSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
-    buffer: typeof BufferBrowser.Buffer = BufferBrowser as never,
 ): Promise<void> => {
     switch (swap.type) {
         case SwapType.Submarine:
@@ -334,26 +317,15 @@ export const validateResponse = async (
                 swap as SubmarineSwap,
                 deriveKey,
                 getEtherSwap,
-                buffer,
             );
             break;
 
         case SwapType.Reverse:
-            await validateReverse(
-                swap as ReverseSwap,
-                deriveKey,
-                getEtherSwap,
-                buffer,
-            );
+            await validateReverse(swap as ReverseSwap, deriveKey, getEtherSwap);
             break;
 
         case SwapType.Chain:
-            await validateChainSwap(
-                swap as ChainSwap,
-                deriveKey,
-                getEtherSwap,
-                buffer,
-            );
+            await validateChainSwap(swap as ChainSwap, deriveKey, getEtherSwap);
             break;
 
         default:
@@ -364,7 +336,6 @@ export const validateResponse = async (
 export const validateInvoice = async (inputValue: string) => {
     const isInputInvoice = isInvoice(inputValue);
     if (isLnurl(inputValue) || isInputInvoice) {
-        // set receive/send when the invoice differs from the amounts
         if (isInputInvoice) {
             const decoded = await decodeInvoice(inputValue);
             if (decoded.satoshis === 0) {
