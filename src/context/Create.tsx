@@ -171,8 +171,8 @@ const handleUrlParams = (
         }
     }
 
-    // Lightning invoice amounts take precedence unless this is a LN addr
-    if (destinationAsset !== LN || isLnurl(destination)) {
+    // Lightning invoice amounts take precedence unless this is a LN addr or bolt12 offer
+    if (destinationAsset !== LN || !isInvoice(destination)) {
         const sendAmount = parseAmount(getUrlParam(UrlParam.SendAmount));
         if (sendAmount) {
             setAmountChanged(Side.Send);
