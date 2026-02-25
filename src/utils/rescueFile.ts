@@ -5,7 +5,9 @@ import {
     validateMnemonic,
 } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
-import { type AssetType, RBTC } from "src/consts/Assets";
+import { crypto } from "bitcoinjs-lib";
+
+import { type AssetType, RBTC } from "../consts/Assets";
 
 export enum Errors {
     InvalidFile = "invalid file",
@@ -24,7 +26,7 @@ const getPath = (index: number) => `${derivationPath}/${index}`;
 
 const getRskPath = (index: number) => `${rskDerivationPath}/${index}`;
 
-const mnemonicToHDKey = (mnemonic: string) => {
+export const mnemonicToHDKey = (mnemonic: string) => {
     const seed = mnemonicToSeedSync(mnemonic);
     return HDKey.fromMasterSeed(seed);
 };
@@ -64,4 +66,15 @@ export const validateRescueFile = (
     getXpub(data as RescueFile);
 
     return data as RescueFile;
+};
+
+export const derivePreimageFromRescueKey = (
+    rescueKey: RescueFile,
+    keyIndex: number,
+    asset: AssetType,
+    hdKey?: HDKey,
+): Buffer => {
+    const privateKey = deriveKey(rescueKey, keyIndex, asset, hdKey).privateKey;
+
+    return crypto.sha256(Buffer.from(privateKey));
 };
