@@ -271,7 +271,7 @@ test.describe("page reload during backup: redirect to /swap after completion", (
             ).toBeVisible();
 
             await completeBackup(page);
-            await expect(page).toHaveURL(/\/swap/);
+            await expect(page).toHaveURL(/\/swap$/);
         });
     });
 });
