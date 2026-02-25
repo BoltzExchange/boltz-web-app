@@ -61,7 +61,7 @@ export const getClaimAddress = async (
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
 ): Promise<{ useRif: boolean; gasPrice: bigint; claimAddress: string }> => {
-    if (assetReceive() === RBTC) {
+    if (assetReceive() === RBTC && signer() !== undefined) {
         const [balance, gasPrice] = await Promise.all([
             signer().provider.getBalance(await signer().getAddress()),
             signer()
