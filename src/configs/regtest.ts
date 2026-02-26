@@ -89,8 +89,8 @@ const config = {
                 decimals: 18,
             },
             contracts: {
-                deployHeight: 421213458,
-                router: "0x26e61312fA23a940Bed5A576a819cC5fa095B09C",
+                deployHeight: 435848678,
+                router: "0x812A4ede94cA28390e05c807A26A9118B5C952A6",
             },
         },
         USDT0: {

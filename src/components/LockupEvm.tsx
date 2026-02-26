@@ -1,3 +1,4 @@
+import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import { randomBytes } from "crypto";
 import {
     AbiCoder,
@@ -29,6 +30,7 @@ import {
 } from "../context/Web3";
 import type { EncodedHop } from "../utils/Pair";
 import {
+    type QuoteData,
     encodeDexQuote,
     getCommitmentLockupDetails,
     postCommitmentSignature,
@@ -49,6 +51,7 @@ const lockupWithHops = async (
     swapId: string,
     lockupAmount: bigint,
     preimageHash: string,
+    getErc20Swap: (asset: string) => ERC20Swap,
     signer: Accessor<Signer>,
     getGasAbstractionSigner: (asset: string) => Wallet,
     slippage: number,
@@ -88,11 +91,14 @@ const lockupWithHops = async (
         quote.data,
     );
 
-    const [permit2Address, chainId, signerAddress] = await Promise.all([
-        router.PERMIT2(),
-        gasSigner.provider.getNetwork().then((n) => n.chainId),
-        signer().getAddress(),
-    ]);
+    const [permit2Address, chainId, signerAddress, version] = await Promise.all(
+        [
+            router.PERMIT2(),
+            gasSigner.provider.getNetwork().then((n) => n.chainId),
+            signer().getAddress(),
+            getErc20Swap(asset).version(),
+        ],
+    );
 
     const calls = calldata.calls.map((call) => ({
         target: call.to,
@@ -177,6 +183,7 @@ const lockupWithHops = async (
             nonce,
             deadline,
         },
+        signerAddress,
         permit2Signature,
     );
 
@@ -240,7 +247,7 @@ const lockupWithHops = async (
     const commitmentSignature = await signer().signTypedData(
         {
             name: "ERC20Swap",
-            version: "5",
+            version: String(version),
             verifyingContract: commitmentLockupDetails.contract,
             chainId,
         },
@@ -382,6 +389,7 @@ const LockupTransaction = (props: {
                             props.swapId,
                             props.value(),
                             props.preimageHash,
+                            getErc20Swap,
                             signer,
                             getGasAbstractionSigner,
                             slippage(),
@@ -487,18 +495,19 @@ const LockupEvm = (props: {
                 signer().getAddress(),
             ]);
 
-            const [balance, allowance, quotes] = await Promise.all([
-                hopInputContract.balanceOf(signerAddress),
-                hopInputContract.allowance(signerAddress, permit2Address),
-                quoteDexAmountOut(
-                    hop.dexDetails.chain,
-                    hop.dexDetails.tokenIn,
-                    hop.dexDetails.tokenOut,
-                    value(),
-                ),
-            ]);
+            const [balance, allowance, quotes]: [bigint, bigint, QuoteData[]] =
+                await Promise.all([
+                    hopInputContract.balanceOf(signerAddress),
+                    hopInputContract.allowance(signerAddress, permit2Address),
+                    quoteDexAmountOut(
+                        hop.dexDetails.chain,
+                        hop.dexDetails.tokenIn,
+                        hop.dexDetails.tokenOut,
+                        value(),
+                    ),
+                ]);
 
-            const minQuoteIn = quotes.reduce((min, q) => {
+            const minQuoteIn = quotes.reduce<bigint>((min, q) => {
                 const amountIn = BigInt(q.quote);
                 return amountIn < min ? amountIn : min;
             }, BigInt(quotes[0].quote));

@@ -154,7 +154,7 @@ const claimHops = async (
         await signer().signTypedData(
             {
                 name: "ERC20Swap",
-                version: "5",
+                version: String(await erc20Swap.version()),
                 verifyingContract: await erc20Swap.getAddress(),
                 chainId: (await signer().provider.getNetwork()).chainId,
             },
