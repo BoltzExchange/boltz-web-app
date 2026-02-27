@@ -15,8 +15,7 @@ import { getBtcPriceFailover } from "src/utils/fiat";
 
 import { config } from "../config";
 import { LBTC } from "../consts/Assets";
-import { Denomination, UrlParam } from "../consts/Enums";
-import { referralIdKey } from "../consts/LocalStorage";
+import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
 import type { DictKey } from "../i18n/i18n";
 import dict from "../i18n/i18n";
@@ -25,18 +24,16 @@ import { getPairs } from "../utils/boltzClient";
 import type { ECKeys } from "../utils/ecpair";
 import { ECPair } from "../utils/ecpair";
 import { formatError } from "../utils/errors";
-import { isMobile } from "../utils/helper";
+import { getReferral, isMobile } from "../utils/helper";
 import { deleteOldLogs, injectLogWriter } from "../utils/logs";
 import { migrateStorage } from "../utils/migration";
 import type { RescueFile } from "../utils/rescueFile";
 import { deriveKey, generateRescueFile, getXpub } from "../utils/rescueFile";
 import type { SomeSwap } from "../utils/swapCreator";
-import { getUrlParam, resetUrlParam } from "../utils/urlParams";
 import { checkWasmSupported } from "../utils/wasmSupport";
 import { detectWebLNProvider } from "../utils/webln";
 
 export const liquidUncooperativeExtra = 3;
-const proReferral = "pro";
 
 type NotificationType = "success" | "error";
 export type deriveKeyFn = (index: number) => ECKeys;
@@ -65,8 +62,6 @@ export type GlobalContextType = {
     setNotificationType: Setter<string>;
     webln: Accessor<boolean>;
     setWebln: Setter<boolean>;
-    ref: Accessor<string>;
-    setRef: Setter<string>;
     i18nConfigured: Accessor<string | null>;
     setI18nConfigured: Setter<string | null>;
     denomination: Accessor<Denomination>;
@@ -123,17 +118,6 @@ export type GlobalContextType = {
     setBackupImportTimestamp: Setter<number | undefined>;
 };
 
-const regularReferral = () =>
-    isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
-
-const defaultReferral = () => {
-    if (config.isPro) {
-        return proReferral;
-    }
-
-    return regularReferral();
-};
-
 // Local storage serializer to support the values created by the deprecated "createStorageSignal"
 const stringSerializer = {
     serialize: (value: never) => value,
@@ -169,15 +153,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         null,
     );
     const [lastPriceFetch, setLastPriceFetch] = createSignal<number>(0);
-
-    const [ref, setRef] = makePersisted(
-        // eslint-disable-next-line solid/reactivity
-        createSignal(defaultReferral()),
-        {
-            name: referralIdKey,
-            ...stringSerializer,
-        },
-    );
 
     const [i18nConfigured, setI18nConfigured] = makePersisted(
         // eslint-disable-next-line solid/reactivity
@@ -306,7 +281,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         try {
             const data = await getPairs({
                 headers: {
-                    referral: regularReferral(),
+                    referral: getReferral(),
                 },
             });
 
@@ -438,17 +413,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         }
     };
 
-    if (!config.isPro) {
-        // Get the referral from the URL parameters if this is not pro
-        const refParam = getUrlParam(UrlParam.Ref);
-        if (refParam && refParam !== "") {
-            setRef(refParam);
-            resetUrlParam(UrlParam.Ref);
-        }
-    } else {
-        setRef(proReferral);
-    }
-
     const [privacyMode, setPrivacyMode] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(false),
@@ -532,8 +496,6 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setNotificationType,
                 webln,
                 setWebln,
-                ref,
-                setRef,
                 i18nConfigured,
                 setI18nConfigured,
                 denomination,
@@ -598,4 +560,4 @@ const useGlobalContext = () => {
     return context;
 };
 
-export { useGlobalContext, GlobalProvider, defaultReferral };
+export { useGlobalContext, GlobalProvider };

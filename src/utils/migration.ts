@@ -6,7 +6,7 @@ import { LN } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { SomeSwap } from "./swapCreator";
 
-export const latestStorageVersion = 1;
+export const latestStorageVersion = 2;
 
 const storageVersionKey = "version";
 
@@ -87,6 +87,16 @@ const migrateLocalForage = async (
 
             await paramsForage.setItem(storageVersionKey, 1);
             await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
+
+        case 1: {
+            log.info(`Cleaning up legacy referral storage`);
+            localStorage.removeItem("ref");
+
+            await paramsForage.setItem(storageVersionKey, 2);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
         }
     }
 };
@@ -111,6 +121,9 @@ export const migrateBackupFile = (
                 swaps.map((swap) => migrateSwapToChainSwapFormat(swap)),
             );
         }
+
+        case 1:
+            return migrateBackupFile(version + 1, swaps);
 
         default:
             throw `invalid backup file version: ${version}`;

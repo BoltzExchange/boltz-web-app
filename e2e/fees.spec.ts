@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { addReferral, getReferrals, setReferral } from "./utils";
 
-const referral = "pro";
+const referral = "boltz_webapp_desktop";
 
 test.describe("Fees", () => {
     test("should show routing fees", async ({ page }) => {
@@ -11,10 +11,10 @@ test.describe("Fees", () => {
             await addReferral(referral);
         }
 
-        const config = { maxRoutingFee: 0.001 };
-        await setReferral(referral, config);
+        const feeConfig = { maxRoutingFee: 0.001 };
+        await setReferral(referral, feeConfig);
 
-        await page.goto(`/?ref=${referral}`);
+        await page.goto("/");
 
         await page.locator(".arrow-down").first().click();
         await page.getByTestId("select-BTC").click();
@@ -27,7 +27,7 @@ test.describe("Fees", () => {
 
         const routingFees = page.getByTestId("routing-fee-limit");
         await expect(routingFees).toHaveText(
-            `${config.maxRoutingFee * 100 * 10_000} ppm`,
+            `${feeConfig.maxRoutingFee * 100 * 10_000} ppm`,
         );
     });
 });
