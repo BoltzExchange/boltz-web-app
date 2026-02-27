@@ -392,19 +392,19 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     const setRdns = (address: string, rdns: string) =>
         rdnsForage.setItem(address.toLowerCase(), rdns);
 
-    const lastUsedEvmKeysForage = localforage.createInstance({
-        name: "lastUsedEvmKeys",
+    const lastUsedEvmIndexForage = localforage.createInstance({
+        name: "lastUsedEvmIndex",
     });
 
     const getLastUsedEvmIndex = async (currency: string): Promise<number> => {
-        const value = await lastUsedEvmKeysForage.getItem<number>(currency);
+        const value = await lastUsedEvmIndexForage.getItem<number>(currency);
         return value ?? 0;
     };
 
     const setLastUsedEvmIndex = (currency: string, value: number) =>
-        lastUsedEvmKeysForage.setItem(currency, value);
+        lastUsedEvmIndexForage.setItem(currency, value);
 
-    const clearLastUsedEvmIndex = () => lastUsedEvmKeysForage.clear();
+    const clearLastUsedEvmIndex = () => lastUsedEvmIndexForage.clear();
 
     const getRdnsAll = async () => {
         const result: { address: string; rdns: string }[] = [];

@@ -111,7 +111,7 @@ const clearBrowserStorage = async (page: Page) => {
     await page.evaluate(() => {
         window.localStorage.clear();
         indexedDB.deleteDatabase("swaps");
-        indexedDB.deleteDatabase("lastUsedEvmKeys");
+        indexedDB.deleteDatabase("lastUsedEvmIndex");
     });
     await page.reload();
 };
