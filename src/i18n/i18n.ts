@@ -1818,13 +1818,13 @@ const dict = {
             "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
         error_occurred: "Ocorreu um erro: {{ error }}",
         rsk_rescue_prompt:
-            "Reembolso se você estava enviando RBTC, retomada se você estava recebendo RBTC de uma troca que não está disponível no histórico deste navegador.",
+            "Use o reembolso caso estivesse enviando RBTC, ou continue caso estivesse recebendo RBTC de uma troca ausente no histórico deste navegador.",
         rsk_rescue_refund_title: "Reembolsar troca",
         rsk_rescue_refund_explainer:
             "Conecte sua carteira Rootstock para procurar trocas que expiraram e podem ser reembolsadas.",
-        rsk_rescue_resume_title: "Retomar troca",
+        rsk_rescue_resume_title: "Continuar troca",
         rsk_rescue_resume_explainer:
-            "Use sua chave de resgate para encontrar trocas pendentes que podem ser retomadas.",
+            "Use sua chave de resgate para encontrar trocas pendentes que podem ser continuadas.",
     },
     zh: {
         language: "中文",
