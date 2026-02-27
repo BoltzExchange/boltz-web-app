@@ -262,6 +262,8 @@ export type CreateContextType = {
     setMinerFee: Setter<number>;
     setInvoiceError: Setter<DictKey>;
     invoiceError: Accessor<DictKey>;
+    bolt12Loading: Accessor<boolean>;
+    setBolt12Loading: Setter<boolean>;
 };
 
 const CreateContext = createContext<CreateContextType>();
@@ -312,6 +314,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     const [invoiceError, setInvoiceError] = createSignal<DictKey | undefined>(
         undefined,
     );
+    const [bolt12Loading, setBolt12Loading] = createSignal(false);
 
     createEffect(() => {
         if (amountValid() && pairValid()) {
@@ -407,6 +410,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setMinerFee,
                 invoiceError,
                 setInvoiceError,
+                bolt12Loading,
+                setBolt12Loading,
             }}>
             {props.children}
         </CreateContext.Provider>

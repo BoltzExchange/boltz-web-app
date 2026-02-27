@@ -42,6 +42,7 @@ const InvoiceInput = () => {
         setOnchainAddress,
         setBolt12Offer,
         setAddressValid,
+        setBolt12Loading,
     } = useCreateContext();
 
     const clearInputError = (input: HTMLTextAreaElement) => {
@@ -101,24 +102,34 @@ const InvoiceInput = () => {
             if (isLnurl(invoice)) {
                 setLnurl(invoice);
                 setInvoice(invoice);
-            } else if (await isBolt12Offer(invoice)) {
-                setBolt12Offer(invoice);
-                setInvoice(invoice);
             } else {
-                const sats = await validateInvoice(invoice);
-                setReceiveAmount(BigNumber(sats));
-                setSendAmount(
-                    calculateSendAmount(
-                        BigNumber(sats),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
-                );
-                setInvoice(invoice);
-                setBolt12Offer(undefined);
-                setLnurl("");
-                setInvoiceValid(true);
+                setBolt12Loading(true);
+                let isBolt12: boolean;
+                try {
+                    isBolt12 = await isBolt12Offer(invoice);
+                } finally {
+                    setBolt12Loading(false);
+                }
+
+                if (isBolt12) {
+                    setBolt12Offer(invoice);
+                    setInvoice(invoice);
+                } else {
+                    const sats = await validateInvoice(invoice);
+                    setReceiveAmount(BigNumber(sats));
+                    setSendAmount(
+                        calculateSendAmount(
+                            BigNumber(sats),
+                            boltzFee(),
+                            minerFee(),
+                            swapType(),
+                        ),
+                    );
+                    setInvoice(invoice);
+                    setBolt12Offer(undefined);
+                    setLnurl("");
+                    setInvoiceValid(true);
+                }
             }
 
             clearInputError(input);

@@ -137,6 +137,7 @@ const CreateButton = () => {
         setSwapType,
         setSendAmount,
         setReceiveAmount,
+        bolt12Loading,
     } = useCreateContext();
     const { getEtherSwap, signer, providers, walletConnected } =
         useWeb3Signer();
@@ -667,7 +668,7 @@ const CreateButton = () => {
                     lnurl() === "")
             }
             onClick={buttonClick}>
-            {loading() ? (
+            {loading() || bolt12Loading() ? (
                 <LoadingSpinner class="inner-spinner" />
             ) : (
                 getButtonLabel(buttonLabel())
