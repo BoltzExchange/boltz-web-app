@@ -1,6 +1,7 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hex } from "@scure/base";
 
+import { BTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import type { Pairs } from "../../src/utils/boltzClient";
 import { ECPair } from "../../src/utils/ecpair";
@@ -71,9 +72,9 @@ describe("helper", () => {
             const key = { key: "data" };
             const mockDerive = vi.fn().mockReturnValue(key);
 
-            expect(parsePrivateKey(mockDerive, keyIndex)).toBe(key);
+            expect(parsePrivateKey(mockDerive, BTC, keyIndex)).toBe(key);
             expect(mockDerive).toHaveBeenCalledTimes(1);
-            expect(mockDerive).toHaveBeenCalledWith(keyIndex);
+            expect(mockDerive).toHaveBeenCalledWith(keyIndex, BTC);
         });
 
         test("should parse hex private key", () => {
@@ -86,7 +87,7 @@ describe("helper", () => {
             const mockDerive = vi.fn();
 
             expect(
-                parsePrivateKey(mockDerive, undefined, privateKeyHex),
+                parsePrivateKey(mockDerive, BTC, undefined, privateKeyHex),
             ).toEqual(mockResult);
 
             // Verify derive function wasn't called

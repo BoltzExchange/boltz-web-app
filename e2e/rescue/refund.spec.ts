@@ -6,9 +6,9 @@ import path from "path";
 import { type AssetType, BTC, LBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import {
-    applyBoltzConfPatch,
     backupRescueFile,
     bitcoinSendToAddress,
+    checkBoltzConfPatch,
     createAndVerifySwap,
     decodeLiquidRawTransaction,
     elementsSendToAddress,
@@ -140,7 +140,7 @@ const performLiquidInitialPayment = async (
     await waitForNodesToSync();
 };
 
-const performBitcoinExpiredSwapSetup = async (
+export const performBitcoinExpiredSwapSetup = async (
     swapType: SwapType,
     sendAsset: string,
     address: string,
@@ -475,7 +475,7 @@ test.describe("Refund", () => {
         test(`Uncooperative refund expired ${swap.sendAsset} ${swap.type} swap via ${swap.external ? "External Rescue" : "Rescue"}`, async ({
             page,
         }) => {
-            applyBoltzConfPatch();
+            checkBoltzConfPatch();
 
             test.setTimeout(60_000); // leave enough time for block generation
             await page.goto("/");

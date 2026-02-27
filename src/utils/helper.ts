@@ -2,7 +2,7 @@ import { hex } from "@scure/base";
 import { Buffer } from "buffer";
 
 import { chooseUrl, config } from "../config";
-import { BTC, LN, RBTC } from "../consts/Assets";
+import { type AssetType, BTC, LN, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import type {
@@ -189,11 +189,12 @@ export const fetcher = async <T = unknown>(
 
 export const parsePrivateKey = (
     deriveKey: deriveKeyFn,
+    asset: AssetType,
     keyIndex?: number,
     privateKeyHex?: string,
 ): ECKeys => {
     if (keyIndex !== undefined) {
-        return deriveKey(keyIndex);
+        return deriveKey(keyIndex, asset);
     }
 
     try {

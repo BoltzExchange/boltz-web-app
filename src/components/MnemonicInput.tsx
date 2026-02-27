@@ -1,22 +1,19 @@
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 import log from "loglevel";
-import { For, Show, createSignal } from "solid-js";
+import { For, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
+import { mnemonicLength, useRescueContext } from "../context/Rescue";
 import { validateRescueFile } from "../utils/rescueFile";
 
-export const mnemonicLength = 12;
-export const rescueKeyMode = "rescue-key";
-
-const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
+const MnemonicInput = () => {
     const { t } = useGlobalContext();
+    const { setRescueFile, setValidRescueKey } = useRescueContext();
 
-    const [rescueKey, setRescueKey] = createSignal<string[]>(
+    const [words, setWords] = createSignal<string[]>(
         Array.from({ length: mnemonicLength }, () => ""),
     );
-
     const [focusedIndex, setFocusedIndex] = createSignal<number>(0);
-    const [validRescueKey, setValidRescueKey] = createSignal<boolean>(false);
 
     const inputRefs: HTMLInputElement[] = Array(mnemonicLength);
 
@@ -30,14 +27,15 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
 
     const validateMnemonic = () => {
         try {
-            validateRescueFile({
-                mnemonic: rescueKey().join(" "),
-            });
+            const mnemonic = words().join(" ");
+            const data = validateRescueFile({ mnemonic });
             log.info("Valid rescue key inserted");
+            setRescueFile(data);
             setValidRescueKey(true);
         } catch {
             log.info("Invalid rescue key inserted");
             setValidRescueKey(false);
+            setRescueFile(undefined);
         }
     };
 
@@ -59,15 +57,16 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
             return;
         }
 
-        setRescueKey((prev) => {
-            const newRescueKey = [...prev];
-            newRescueKey[focusedIndex()] = value;
-            return newRescueKey;
+        const index = focusedIndex();
+        setWords((prev) => {
+            const newWords: string[] = [...prev];
+            newWords[index] = value.toLowerCase();
+            return newWords;
         });
 
         validateWord(e.currentTarget, value.toLowerCase());
 
-        if (rescueKey().every((word) => word !== "")) {
+        if (words().every((word) => word !== "")) {
             validateMnemonic();
         }
     };
@@ -75,28 +74,31 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
     const handlePaste = (e: ClipboardEvent) => {
         e.preventDefault();
         const pastedText = e.clipboardData.getData("text/plain").trim();
-        const words = pastedText.split(/[\s\n]+/);
-        const is12WordMnemonic = words.length === mnemonicLength;
+        const pastedWords = pastedText
+            .split(/[\s\n]+/)
+            .map((w) => w.toLowerCase());
+        const is12WordMnemonic = pastedWords.length === mnemonicLength;
 
         if (is12WordMnemonic) {
-            words.forEach((word, index) => {
+            pastedWords.forEach((word, index) => {
                 validateWord(inputRefs[index], word);
             });
-            setRescueKey(words);
+            setWords(pastedWords);
             validateMnemonic();
 
-            const lastIndex = words.length - 1;
+            const lastIndex = pastedWords.length - 1;
             setFocusedIndex(lastIndex);
             inputRefs[lastIndex]?.focus();
             return;
         }
 
-        setRescueKey((prev) => {
-            const newRescueKey = [...prev];
-            newRescueKey[focusedIndex()] = pastedText;
-            return newRescueKey;
+        const index = focusedIndex();
+        setWords((prev) => {
+            const newWords: string[] = [...prev];
+            newWords[index] = pastedText.toLowerCase();
+            return newWords;
         });
-        validateWord(inputRefs[focusedIndex()], pastedText.toLowerCase());
+        validateWord(inputRefs[index], pastedText.toLowerCase());
     };
 
     return (
@@ -113,7 +115,7 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
                                 type="text"
                                 ref={inputRefs[i()]}
                                 autofocus={i() === 0}
-                                value={rescueKey()[i()]}
+                                value={words()[i()]}
                                 onFocus={() => setFocusedIndex(i())}
                                 onInput={handleInput}
                                 onPaste={handlePaste}
@@ -124,32 +126,6 @@ const MnemonicInput = (props: { onSubmit: (mnemonic: string) => void }) => {
                 </For>
             </div>
             <i>{t("hint_paste_mnemonic")}</i>
-            <button
-                class="btn btn-yellow"
-                data-testid="import-key-button"
-                aria-invalid={!validRescueKey()}
-                disabled={
-                    rescueKey().every((word) => word === "") ||
-                    !validRescueKey()
-                }
-                onClick={() => {
-                    try {
-                        validateRescueFile({ mnemonic: rescueKey().join(" ") });
-                        props.onSubmit(rescueKey().join(" "));
-                    } catch (e) {
-                        log.error(e);
-                        setValidRescueKey(false);
-                    }
-                }}>
-                <Show
-                    when={
-                        validRescueKey() ||
-                        rescueKey().some((word) => word === "")
-                    }
-                    fallback={<span>{t("invalid_refund_file")}</span>}>
-                    <span>{t("verify_key")}</span>
-                </Show>
-            </button>
         </div>
     );
 };

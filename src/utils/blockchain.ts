@@ -5,6 +5,7 @@ import { Explorer, type ExplorerUrl, type Url } from "../configs/base";
 import {
     BTC,
     LBTC,
+    RBTC,
     type RefundableAssetType,
     refundableAssets,
 } from "../consts/Assets";
@@ -32,6 +33,7 @@ type MempoolFeeEstimation = Record<
 export const blockTimeMinutes: Record<RefundableAssetType, number> = {
     [BTC]: 10,
     [LBTC]: 1,
+    [RBTC]: 25 / 60,
 };
 
 export const getNetworkName = (asset: string) => {
@@ -40,6 +42,8 @@ export const getNetworkName = (asset: string) => {
             return "Bitcoin";
         case LBTC:
             return "Liquid";
+        case RBTC:
+            return "Rootstock";
         default:
             return "";
     }

@@ -14,7 +14,7 @@ import type { Accessor, JSX, Setter } from "solid-js";
 import { getBtcPriceFailover } from "src/utils/fiat";
 
 import { config } from "../config";
-import { LBTC } from "../consts/Assets";
+import { type AssetType, LBTC, evmChains } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
 import type { DictKey } from "../i18n/i18n";
@@ -36,8 +36,10 @@ import { detectWebLNProvider } from "../utils/webln";
 export const liquidUncooperativeExtra = 3;
 
 type NotificationType = "success" | "error";
-export type deriveKeyFn = (index: number) => ECKeys;
-export type newKeyFn = () => { index: number; key: ECKeys };
+export type deriveKeyFn = (index: number, asset: AssetType) => ECKeys;
+export type newKeyFn = (
+    asset: AssetType,
+) => Promise<{ index: number; key: ECKeys }>;
 export type tFn = (key: DictKey, values?: Record<string, unknown>) => string;
 export type notifyFn = (type: NotificationType, message: string) => void;
 
@@ -107,6 +109,9 @@ export type GlobalContextType = {
     deriveKey: deriveKeyFn;
     getXpub: () => string;
     setLastUsedKey: Setter<number>;
+    getLastUsedEvmIndex: (currency: string) => Promise<number>;
+    setLastUsedEvmIndex: (currency: string, value: number) => Promise<number>;
+    clearLastUsedEvmIndex: () => Promise<void>;
     rescueFile: Accessor<RescueFile | null>;
     setRescueFile: Setter<RescueFile | null>;
     rescueFileBackupDone: Accessor<boolean>;
@@ -222,16 +227,25 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         }
     });
 
-    const deriveKeyWrapper = (index: number) => {
+    const deriveKeyWrapper = (index: number, asset: AssetType) => {
         return ECPair.fromPrivateKey(
-            new Uint8Array(deriveKey(rescueFile(), index).privateKey),
+            new Uint8Array(deriveKey(rescueFile(), index, asset).privateKey),
         );
     };
 
-    const newKey = () => {
+    const newKey = async (asset: AssetType) => {
+        if (evmChains.includes(asset)) {
+            const index = await getLastUsedEvmIndex(asset);
+            await setLastUsedEvmIndex(asset, index + 1);
+            return {
+                index,
+                key: deriveKeyWrapper(index, asset),
+            };
+        }
+
         const index = lastUsedKey();
         setLastUsedKey(index + 1);
-        return { index, key: deriveKeyWrapper(index) };
+        return { index, key: deriveKeyWrapper(index, asset) };
     };
 
     const getXpubWrapper = () => {
@@ -377,6 +391,20 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const setRdns = (address: string, rdns: string) =>
         rdnsForage.setItem(address.toLowerCase(), rdns);
+
+    const lastUsedEvmIndexForage = localforage.createInstance({
+        name: "lastUsedEvmIndex",
+    });
+
+    const getLastUsedEvmIndex = async (currency: string): Promise<number> => {
+        const value = await lastUsedEvmIndexForage.getItem<number>(currency);
+        return value ?? 0;
+    };
+
+    const setLastUsedEvmIndex = (currency: string, value: number) =>
+        lastUsedEvmIndexForage.setItem(currency, value);
+
+    const clearLastUsedEvmIndex = () => lastUsedEvmIndexForage.clear();
 
     const getRdnsAll = async () => {
         const result: { address: string; rdns: string }[] = [];
@@ -538,6 +566,9 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 rescueFile,
                 setRescueFile,
                 setLastUsedKey,
+                getLastUsedEvmIndex,
+                setLastUsedEvmIndex,
+                clearLastUsedEvmIndex,
                 getXpub: getXpubWrapper,
                 deriveKey: deriveKeyWrapper,
 

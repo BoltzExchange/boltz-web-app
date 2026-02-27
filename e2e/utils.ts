@@ -99,9 +99,9 @@ export const generateBitcoinBlocks = (blocks: number): Promise<string> =>
 export const generateLiquidBlock = (): Promise<string> =>
     execCommand("elements-cli-sim-client -generate");
 
-export const generateAnvilBlock = async (): Promise<void> => {
+export const generateAnvilBlock = async (blocks = 1): Promise<void> => {
     await execAsync(
-        "docker exec boltz-scripts cast rpc anvil_mine 0x1 --rpc-url http://anvil:8545",
+        `docker exec boltz-scripts cast rpc anvil_mine ${blocks} --rpc-url http://anvil:8545`,
         { shell: "/bin/bash" },
     );
 };
@@ -381,7 +381,7 @@ export const waitForBlockHeight = async (asset: string, height: number) => {
         .toBe(true);
 };
 
-export const applyBoltzConfPatch = () => {
+export const checkBoltzConfPatch = () => {
     try {
         execSync("git apply --check --reverse boltz.conf.patch", {
             stdio: "pipe",
