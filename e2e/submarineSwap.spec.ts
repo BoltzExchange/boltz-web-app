@@ -102,9 +102,7 @@ test.describe("Submarine swap", () => {
     });
 
     test("BTC/LN with expensive MRH doesn't use MRH", async ({ page }) => {
-        await page.goto("/?ref=expensive");
-
-        const referral = "expensive";
+        const referral = "boltz_webapp_desktop";
         const referrals = await getReferrals();
 
         if (!referrals.some((r) => r.id === referral)) {
@@ -117,6 +115,8 @@ test.describe("Submarine swap", () => {
                 "L-BTC/BTC": { premiums: { "2": { "0": 100, "1": 100 } } },
             },
         });
+
+        await page.goto("/");
 
         const btcAsset = page.locator("div[class='asset asset-BTC'] div");
         await btcAsset.click();

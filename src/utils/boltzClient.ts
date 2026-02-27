@@ -6,7 +6,7 @@ import { SwapType } from "../consts/Enums";
 import { broadcastToExplorer } from "./blockchain";
 import type { TransactionInterface } from "./compat";
 import { txToHex } from "./compat";
-import { fetcher } from "./helper";
+import { fetcher, getReferral } from "./helper";
 import { validateInvoiceForOffer } from "./invoice";
 
 const cooperativeErrorMessage = "cooperative signatures for swaps are disabled";
@@ -255,7 +255,6 @@ export const createSubmarineSwap = (
     to: string,
     invoice: string,
     pairHash: string,
-    referralId: string,
     refundPublicKey?: string,
 ): Promise<SubmarineCreatedResponse> =>
     fetcher("/v2/swap/submarine", {
@@ -264,7 +263,7 @@ export const createSubmarineSwap = (
         invoice,
         refundPublicKey,
         pairHash,
-        referralId,
+        referralId: getReferral(),
     });
 
 export const createReverseSwap = (
@@ -273,7 +272,6 @@ export const createReverseSwap = (
     invoiceAmount: number,
     preimageHash: string,
     pairHash: string,
-    referralId: string,
     claimPublicKey?: string,
     claimAddress?: string,
 ): Promise<ReverseCreatedResponse> =>
@@ -284,7 +282,7 @@ export const createReverseSwap = (
         preimageHash,
         claimPublicKey,
         claimAddress,
-        referralId,
+        referralId: getReferral(),
         pairHash,
     });
 
@@ -297,7 +295,6 @@ export const createChainSwap = (
     refundPublicKey: string | undefined,
     claimAddress: string | undefined,
     pairHash: string,
-    referralId: string,
 ): Promise<ChainSwapCreatedResponse> =>
     fetcher("/v2/swap/chain", {
         from,
@@ -307,7 +304,7 @@ export const createChainSwap = (
         refundPublicKey,
         claimAddress,
         pairHash,
-        referralId,
+        referralId: getReferral(),
         userLockAmount,
     });
 

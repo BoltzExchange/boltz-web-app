@@ -114,7 +114,6 @@ export const createSubmarine = async (
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     invoice: string,
-    referralId: string,
     useRif: boolean,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -126,7 +125,6 @@ export const createSubmarine = async (
         assetReceive,
         invoice,
         getPair(pairs, SwapType.Submarine, assetSend, assetReceive).hash,
-        referralId,
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
@@ -155,7 +153,6 @@ export const createReverse = async (
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     claimAddress: string,
-    referralId: string,
     useRif: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
@@ -176,7 +173,6 @@ export const createReverse = async (
         Number(sendAmount),
         hex.encode(sha256(preimage)),
         getPair(pairs, SwapType.Reverse, assetSend, assetReceive).hash,
-        referralId,
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
@@ -207,7 +203,6 @@ export const createChain = async (
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     claimAddress: string,
-    referralId: string,
     useRif: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
@@ -236,7 +231,6 @@ export const createChain = async (
             : undefined,
         claimAddress,
         getPair(pairs, SwapType.Chain, assetSend, assetReceive).hash,
-        referralId,
     );
 
     return {

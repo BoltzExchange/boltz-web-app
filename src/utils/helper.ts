@@ -4,9 +4,7 @@ import { Buffer } from "buffer";
 import { chooseUrl, config } from "../config";
 import { BTC, LN, RBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { referralIdKey } from "../consts/LocalStorage";
 import type { deriveKeyFn } from "../context/Global";
-import { defaultReferral } from "../context/Global";
 import type {
     ChainPairTypeTaproot,
     Pairs,
@@ -30,6 +28,13 @@ export const isIos = () =>
 
 export const isMobile = () =>
     isIos() || !!navigator.userAgent.match(/android|blackberry/gi) || false;
+
+export const getReferral = (): string => {
+    if (config.isPro) {
+        return "pro";
+    }
+    return isMobile() ? "boltz_webapp_mobile" : "boltz_webapp_desktop";
+};
 
 export const parseBlindingKey = (swap: SomeSwap, isRefund: boolean) => {
     let blindingKey: string | undefined;
@@ -136,9 +141,7 @@ export const fetcher = async <T = unknown>(
     );
 
     try {
-        // We cannot use the context here, so we get the data directly from local storage
-        const referral =
-            localStorage.getItem(referralIdKey) || defaultReferral();
+        const referral = getReferral();
 
         let opts: RequestInit = {
             headers: {
