@@ -42,6 +42,8 @@ export const getNetworkName = (asset: string) => {
             return "Bitcoin";
         case LBTC:
             return "Liquid";
+        case RBTC:
+            return "Rootstock";
         default:
             return "";
     }

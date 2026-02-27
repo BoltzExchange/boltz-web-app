@@ -2,19 +2,15 @@ import type { Page } from "@playwright/test";
 import fs from "fs";
 import type { WalletClient } from "viem";
 
-import { BTC } from "../../src/consts/Assets";
 import dict from "../../src/i18n/i18n";
 import { expect, test } from "../fixtures/ethereum";
 import {
     bitcoinSendToAddress,
     checkBoltzConfPatch,
+    generateAnvilBlock,
     generateBitcoinBlock,
-    generateBitcoinBlocks,
     generateLiquidBlock,
     getBitcoinAddress,
-    getBitcoinBlockHeight,
-    waitForBlockHeight,
-    waitForNodesToSync,
 } from "../utils";
 
 const rescueFileName = "rescue-file.json";
@@ -255,11 +251,7 @@ test.describe("RSK Rescue", () => {
         await page.waitForTimeout(1000);
         await clearBrowserStorage(page);
 
-        const currentHeight = await getBitcoinBlockHeight();
-        const blocks = 26;
-        await generateBitcoinBlocks(blocks);
-        await waitForNodesToSync();
-        await waitForBlockHeight(BTC, currentHeight + blocks);
+        await generateAnvilBlock(360);
 
         await navigateToRskRescue(page, "refund");
         await connectWallet(page, walletClient, { waitForAddress: false });
