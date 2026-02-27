@@ -149,7 +149,7 @@ const InvoiceInput = () => {
             ) {
                 try {
                     const inv = await decodeInvoice(invoice());
-                    if (inv.satoshis !== amount) {
+                    if (inv.satoshis !== 0 && inv.satoshis !== amount) {
                         setInvoice("");
                     }
 

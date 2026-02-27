@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import { BigNumber } from "bignumber.js";
 import { vi } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
@@ -10,6 +11,12 @@ vi.mock("../../src/utils/invoice", async () => {
     const actual = await vi.importActual("../../src/utils/invoice");
     return {
         ...actual,
+        decodeInvoice: vi.fn((input: string) => {
+            if (input.startsWith("lnzeroamt")) {
+                return Promise.resolve({ satoshis: 0 });
+            }
+            return Promise.resolve({ satoshis: 1000 });
+        }),
         isBolt12Offer: vi.fn((offer: string) => {
             return Promise.resolve(offer.startsWith("lno1"));
         }),
@@ -21,6 +28,9 @@ vi.mock("../../src/utils/validation", async () => {
     return {
         ...actual,
         validateInvoice: vi.fn((inputValue: string) => {
+            if (inputValue.startsWith("lnzeroamt")) {
+                return Promise.reject(new Error("invalid_0_amount"));
+            }
             if (inputValue.startsWith("ln")) {
                 return Promise.resolve(1000);
             }
@@ -290,4 +300,41 @@ describe("InvoiceInput", () => {
             expect(signals.assetReceive()).toEqual(BTC);
         });
     });
+
+    test.each`
+        amount
+        ${BigNumber(0)}
+        ${BigNumber(50_000)}
+    `(
+        "should show invalid_0_amount for amountless invoice with receiveAmount=$amount",
+        async ({ amount }) => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <InvoiceInput />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            signals.setAssetSend(BTC);
+            signals.setAssetReceive(LN);
+            signals.setReceiveAmount(amount);
+
+            const input = (await screen.findByTestId(
+                "invoice",
+            )) as HTMLTextAreaElement;
+
+            fireEvent.input(input, {
+                target: { value: "lnzeroamt1pjtest" },
+            });
+
+            await waitFor(() => {
+                expect(signals.invoiceValid()).toEqual(false);
+                expect(signals.invoiceError()).toEqual("invalid_0_amount");
+                expect(input.value).not.toEqual("");
+            });
+        },
+    );
 });
