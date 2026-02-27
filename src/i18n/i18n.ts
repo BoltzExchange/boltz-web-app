@@ -440,7 +440,7 @@ const dict = {
         error_occurred: "An error occurred: {{ error }}",
 
         rsk_rescue_prompt:
-            "Refund where you were sending RBTC, resume where you were receiving RBTC of a swap that is not available in this browser’s swap history.",
+            "Use refund if you were sending RBTC, resume if you were receiving RBTC of a swap that is not available in this browser’s swap history.",
         rsk_rescue_refund_title: "Refund Swap",
         rsk_rescue_refund_explainer:
             "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
@@ -902,7 +902,7 @@ const dict = {
             "Dieser Rettungsschlüssel ist nicht mit diesem Swap verbunden. Bitte versuche es erneut mit einem anderen Rettungsschlüssel.",
         error_occurred: "Ein Fehler ist aufgetreten: {{ error }}",
         rsk_rescue_prompt:
-            "Erstatte Swaps für die du RBTC gesendet hast, setze Swaps fort in denen du RBTC empfangen hast -für einen Swap, der nicht im Swapverlauf dieses Browsers verfügbar ist.",
+            "Nutze Erstattung, wenn du RBTC gesendet hast, oder Fortsetzen, wenn du RBTC empfangen hast – für einen Swap, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
         rsk_rescue_refund_title: "Swap erstatten",
         rsk_rescue_refund_explainer:
             "Verbinde dein Rootstock-Wallet, um nach Swaps zu suchen, die abgelaufen sind und erstattet werden können.",
@@ -1362,7 +1362,7 @@ const dict = {
             "Esta clave de rescate no está asociada con este intercambio. Por favor, intenta de nuevo usando una clave de rescate diferente.",
         error_occurred: "Ocurrió un error: {{ error }}",
         rsk_rescue_prompt:
-            "Reembolso si estabas enviando RBTC, reanudación si estabas recibiendo RBTC de un intercambio que no está disponible en el historial de este navegador.",
+            "Usa reembolso si estabas enviando RBTC, o reanudar si estabas recibiendo RBTC de un intercambio que no está disponible en el historial de intercambios de este navegador.",
         rsk_rescue_refund_title: "Reembolsar intercambio",
         rsk_rescue_refund_explainer:
             "Conecta tu monedero Rootstock para buscar intercambios que han expirado y pueden ser reembolsados.",
@@ -2230,7 +2230,7 @@ const dict = {
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
         rsk_rescue_prompt:
-            "发送 RBTC 时可退款，接收 RBTC 时可恢复——适用于未在本浏览器交换历史中显示的交换。",
+            "如果你正在发送 RBTC，请使用退款；如果你正在接收 RBTC，请使用恢复——适用于未在此浏览器交换历史中显示的交换。",
         rsk_rescue_refund_title: "退还交换",
         rsk_rescue_refund_explainer:
             "连接你的 Rootstock 钱包以扫描已过期且可退款的交换。",
@@ -2682,7 +2682,7 @@ const dict = {
             "このレスキューキーはこのスワップに関連付けられていません。別のレスキューキーを使用してもう一度お試しください。",
         error_occurred: "エラーが発生しました：{{ error }}",
         rsk_rescue_prompt:
-            "RBTC を送金していた場合は返金、RBTC を受け取っていた場合は再開——このブラウザのスワップ履歴にないスワップが対象です。",
+            "RBTC を送金していた場合は返金を、RBTC を受け取っていた場合は再開を使用してください——このブラウザのスワップ履歴にないスワップが対象です。",
         rsk_rescue_refund_title: "スワップを返金",
         rsk_rescue_refund_explainer:
             "Rootstock ウォレットを接続して、期限切れで返金可能なスワップをスキャンします。",
