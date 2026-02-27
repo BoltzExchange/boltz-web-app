@@ -6,9 +6,8 @@ import { BTC } from "../../src/consts/Assets";
 import dict from "../../src/i18n/i18n";
 import { expect, test } from "../fixtures/ethereum";
 import {
-    applyBoltzConfPatch,
     bitcoinSendToAddress,
-    generateAnvilBlock,
+    checkBoltzConfPatch,
     generateBitcoinBlock,
     generateBitcoinBlocks,
     generateLiquidBlock,
@@ -145,11 +144,10 @@ const selectAndClickSwapItem = async (page: Page) => {
 
 test.describe("RSK Rescue", () => {
     test.beforeEach(async ({ injectProvider }) => {
-        applyBoltzConfPatch();
+        checkBoltzConfPatch();
         await injectProvider();
         await generateBitcoinBlock();
         await generateLiquidBlock();
-        await generateAnvilBlock();
     });
 
     test.afterEach(() => {
@@ -177,7 +175,6 @@ test.describe("RSK Rescue", () => {
         await bitcoinSendToAddress(lockupAddress, sendAmount);
         await generateBitcoinBlock();
         await page.waitForTimeout(500);
-        await generateAnvilBlock();
 
         await clearBrowserStorage(page);
 
@@ -191,8 +188,6 @@ test.describe("RSK Rescue", () => {
         });
         await expect(continueButton).toBeVisible();
         await continueButton.click();
-
-        await generateAnvilBlock();
 
         await expect(page.getByText(dict.en.claimed)).toBeVisible();
     });
@@ -216,7 +211,6 @@ test.describe("RSK Rescue", () => {
         await bitcoinSendToAddress(lockupAddress, sendAmount);
         await generateBitcoinBlock();
         await page.waitForTimeout(500);
-        await generateAnvilBlock();
 
         const rescueFileContent = JSON.parse(
             fs.readFileSync(rescueFileName, "utf8"),
@@ -234,8 +228,6 @@ test.describe("RSK Rescue", () => {
         });
         await expect(continueButton).toBeVisible();
         await continueButton.click();
-
-        await generateAnvilBlock();
 
         await expect(page.getByText(dict.en.claimed)).toBeVisible();
     });
@@ -263,8 +255,6 @@ test.describe("RSK Rescue", () => {
         await page.waitForTimeout(1000);
         await clearBrowserStorage(page);
 
-        await generateAnvilBlock(500);
-
         const currentHeight = await getBitcoinBlockHeight();
         const blocks = 26;
         await generateBitcoinBlocks(blocks);
@@ -280,8 +270,6 @@ test.describe("RSK Rescue", () => {
         });
         await expect(refundButton).toBeVisible();
         await refundButton.click();
-
-        await generateAnvilBlock();
 
         await expect(page.getByText(dict.en.refunded)).toBeVisible();
     });

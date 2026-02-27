@@ -381,7 +381,7 @@ export const waitForBlockHeight = async (asset: string, height: number) => {
         .toBe(true);
 };
 
-export const applyBoltzConfPatch = () => {
+export const checkBoltzConfPatch = () => {
     try {
         execSync("git apply --check --reverse boltz.conf.patch", {
             stdio: "pipe",

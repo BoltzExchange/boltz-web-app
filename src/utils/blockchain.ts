@@ -33,7 +33,7 @@ type MempoolFeeEstimation = Record<
 export const blockTimeMinutes: Record<RefundableAssetType, number> = {
     [BTC]: 10,
     [LBTC]: 1,
-    [RBTC]: 0.4,
+    [RBTC]: 25 / 60,
 };
 
 export const getNetworkName = (asset: string) => {

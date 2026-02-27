@@ -40,9 +40,7 @@ export type LogRefundData = {
 };
 
 type ScanFilter = {
-    address?: string;
-    refundAddress?: string;
-    claimAddress?: string;
+    address: string;
 };
 
 type ScanConfig = {
@@ -64,19 +62,6 @@ type ScanContext = {
     contract: EtherSwap;
     filter: ReturnType<EtherSwap["filters"]["Lockup"]>;
     totalBlocks: number;
-};
-
-const findMatchingIndex = (
-    hashes: string[],
-    preimageMap: PreimageMap,
-): number => {
-    for (const hash of hashes) {
-        const entry = preimageMap.get(hash);
-        if (entry) {
-            return entry.index;
-        }
-    }
-    return -1;
 };
 
 /**
@@ -129,17 +114,6 @@ const createScanContext = async (
         filter: contract.filters.Lockup(),
         totalBlocks: latestBlock - minBlock,
     };
-};
-
-const eventMatchesAddress = (
-    event: LogRefundData,
-    address: string,
-): boolean => {
-    const normalized = address.toLowerCase();
-    return (
-        event.refundAddress.toLowerCase() === normalized ||
-        event.claimAddress.toLowerCase() === normalized
-    );
 };
 
 /**
@@ -232,36 +206,28 @@ const parseLockupEvent = (
     };
 };
 
-const matchesFilter = (data: LogRefundData, filter?: ScanFilter) => {
+const matchesFilter = (
+    data: LogRefundData,
+    filter?: ScanFilter,
+): RskRescueMode | null => {
     if (!filter) {
-        return { isRefundable: false, isClaimable: false, matches: false };
+        return null;
     }
 
     const refundAddr = data.refundAddress.toLowerCase();
     const claimAddr = data.claimAddress.toLowerCase();
 
-    if (filter.refundAddress) {
-        const isRefundable = refundAddr === filter.refundAddress.toLowerCase();
-        return { isRefundable, isClaimable: false, matches: isRefundable };
-    }
-
-    if (filter.claimAddress) {
-        const isClaimable = claimAddr === filter.claimAddress.toLowerCase();
-        return { isRefundable: false, isClaimable, matches: isClaimable };
-    }
-
     if (filter.address) {
-        const normalizedAddress = filter.address.toLowerCase();
-        const isRefundable = refundAddr === normalizedAddress;
-        const isClaimable = claimAddr === normalizedAddress;
-        return {
-            isRefundable,
-            isClaimable,
-            matches: isRefundable || isClaimable,
-        };
+        const walletAddress = filter.address.toLowerCase();
+        if (claimAddr === walletAddress) {
+            return RskRescueMode.Claim;
+        }
+        if (refundAddr === walletAddress) {
+            return RskRescueMode.Refund;
+        }
     }
 
-    return { isRefundable: false, isClaimable: false, matches: false };
+    return null;
 };
 
 export const getLogsFromReceipt = async (
@@ -341,12 +307,9 @@ export async function* scanLockupEvents(
 
         for (const event of events) {
             const { data, decoded } = parseLockupEvent(etherSwap, event);
-            const { isRefundable, isClaimable, matches } = matchesFilter(
-                data,
-                scanConfig.filter,
-            );
+            const match = matchesFilter(data, scanConfig.filter);
 
-            if (!matches) {
+            if (match === null || match !== scanConfig.action) {
                 continue;
             }
 
@@ -354,30 +317,34 @@ export async function* scanLockupEvents(
                 `Found relevant lockup event in: ${event.transactionHash}`,
             );
 
-            if (isRefundable && scanConfig.action === RskRescueMode.Refund) {
-                results.events.push(data);
+            const swapHash = await ctx.contract.hashValues(
+                decoded[0],
+                decoded[1],
+                data.claimAddress,
+                data.refundAddress,
+                data.timelock,
+            );
+            const stillLocked = await ctx.contract.swaps(swapHash);
+
+            if (!stillLocked) {
+                log.info(
+                    `Lockup event in ${event.transactionHash} already spent`,
+                );
                 continue;
             }
 
-            if (isClaimable && scanConfig.action === RskRescueMode.Claim) {
-                const swapHash = await ctx.contract.hashValues(
-                    decoded[0],
-                    decoded[1],
-                    data.claimAddress,
-                    data.refundAddress,
-                    data.timelock,
-                );
-                const stillLocked = await ctx.contract.swaps(swapHash);
+            log.info(`Found rescuable swap in: ${event.transactionHash}`);
 
-                if (!stillLocked) {
-                    log.info(
-                        `Lockup event in ${event.transactionHash} already spent`,
-                    );
-                    continue;
+            switch (match) {
+                case RskRescueMode.Refund: {
+                    results.events.push(data);
+                    break;
                 }
 
-                log.info(`Found rescuable swap in: ${event.transactionHash}`);
-                pendingClaims.push(data);
+                case RskRescueMode.Claim: {
+                    pendingClaims.push(data);
+                    break;
+                }
             }
         }
 
@@ -394,14 +361,12 @@ export async function* scanLockupEvents(
         log.info(
             `Resolving preimages for ${pendingClaims.length} pending claims`,
         );
-        const matched: LogRefundData[] = [];
+
+        // Wait for the worker to finish deriving the preimages
         for (const claim of pendingClaims) {
-            const entry = await worker.getPreimage(claim.preimageHash);
-            if (entry) {
-                claim.preimage = entry.preimage;
-                matched.push(claim);
-            }
+            await worker.getPreimage(claim.preimageHash);
         }
+        const matched = reconcilePendingClaims(pendingClaims, worker.map);
         if (matched.length > 0) {
             yield { progress: 1, events: matched };
         }
@@ -410,83 +375,3 @@ export async function* scanLockupEvents(
     worker?.terminate();
     log.info(`Finished lockup event scanning`);
 }
-
-/**
- * Finds the highest preimage key index used by an address.
- * Scans blockchain events and derives preimages to find the highest index.
- * Returns -1 if no events found or configuration is missing.
- */
-export const getHighestKeyIndex = async (
-    signerAddress: string,
-    mnemonic: string,
-    etherSwap: EtherSwap,
-    abortSignal: AbortSignal = new AbortController().signal,
-): Promise<number> => {
-    if (!mnemonic) {
-        log.warn("No mnemonic provided, skipping key index scan");
-        return -1;
-    }
-
-    const ctx = await createScanContext(etherSwap);
-    if (ctx === null) {
-        log.warn("VITE_RSK_LOG_SCAN_ENDPOINT not set, skipping key index scan");
-        return -1;
-    }
-
-    const worker = new PreimageHashesWorker();
-    worker.start(mnemonic, abortSignal);
-
-    const pendingHashes: string[] = [];
-
-    for (const ranges of generateBlockRangeBatches(
-        ctx.latestBlock,
-        ctx.minBlock,
-    )) {
-        if (abortSignal.aborted) {
-            log.info(`Cancelling key index scan`);
-            worker.terminate();
-            return -1;
-        }
-
-        log.debug(
-            `Scanning blocks ${ranges[ranges.length - 1].fromBlock} to ${ranges[0].toBlock}`,
-        );
-        const events = await fetchEventsForRanges(
-            ranges,
-            ctx.contractAddress,
-            ctx.providerUrl,
-            ctx.filter,
-        );
-
-        for (const event of events) {
-            const { data } = parseLockupEvent(etherSwap, event);
-
-            if (!eventMatchesAddress(data, signerAddress)) {
-                continue;
-            }
-
-            log.debug(`Found event for address in: ${event.transactionHash}`);
-            pendingHashes.push(data.preimageHash);
-        }
-
-        const earlyMatch = findMatchingIndex(pendingHashes, worker.map);
-        if (earlyMatch !== -1) {
-            worker.terminate();
-            return earlyMatch;
-        }
-    }
-
-    // All blocks scanned — resolve pending hashes as the worker catches up
-    // Events are sorted newest-first, so the first match is the highest index
-    for (const hash of pendingHashes) {
-        const entry: { preimage: string; index: number } | undefined =
-            await worker.getPreimage(hash);
-        if (entry) {
-            worker.terminate();
-            return entry.index;
-        }
-    }
-
-    worker.terminate();
-    return -1;
-};

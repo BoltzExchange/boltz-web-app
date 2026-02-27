@@ -3,7 +3,6 @@ import { expect, test } from "../fixtures/ethereum";
 import {
     bitcoinSendToAddress,
     elementsSendToAddress,
-    generateAnvilBlock,
     generateBitcoinBlock,
     generateInvoiceLnd,
     generateLiquidBlock,
@@ -18,7 +17,6 @@ test.describe("EVM", () => {
         await injectProvider();
         await generateBitcoinBlock();
         await generateLiquidBlock();
-        await generateAnvilBlock();
     });
 
     test("should connect wallet and display address", async ({
@@ -139,10 +137,8 @@ test.describe("EVM", () => {
                 await sendToAddress(lockupAddress, sendAmount);
                 await mineSendBlock();
                 await page.waitForTimeout(500);
-                await generateAnvilBlock();
 
                 await page.getByRole("button", { name: "Continue" }).click();
-                await generateAnvilBlock();
 
                 const claimPending = page.locator(
                     "div[data-status='transaction.claim.pending']",
@@ -246,7 +242,6 @@ test.describe("EVM", () => {
                 await page.getByRole("button", { name: "Send" }).click();
                 await page.waitForTimeout(500);
                 await mineReceiveBlock();
-                await generateAnvilBlock();
 
                 const claimPending = page.locator(
                     "div[data-status='transaction.claim.pending']",
@@ -305,7 +300,6 @@ test.describe("EVM", () => {
         payInvoiceLndBackground(lightningInvoice);
 
         await page.waitForTimeout(500);
-        await generateAnvilBlock();
 
         const confirmed = page.locator(
             "div[data-status='transaction.confirmed']",
@@ -313,7 +307,6 @@ test.describe("EVM", () => {
         await expect(confirmed).toBeVisible();
 
         await page.getByRole("button", { name: "Continue" }).click();
-        await generateAnvilBlock();
 
         const settled = page.locator("div[data-status='invoice.settled']");
         await expect(settled).toBeVisible();
@@ -361,7 +354,6 @@ test.describe("EVM", () => {
         ).toBeVisible();
 
         await page.getByRole("button", { name: "Send" }).click();
-        await generateAnvilBlock();
 
         const settled = page.locator("div[data-status='invoice.settled']");
         const claimPending = page.locator(
