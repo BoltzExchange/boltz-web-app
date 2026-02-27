@@ -96,7 +96,11 @@ const ContractTransaction = (props: {
                                 setClicked(false);
                             }
                         }}>
-                        {props.buttonText}
+                        {clicked() ? (
+                            <LoadingSpinner class="inner-spinner" />
+                        ) : (
+                            props.buttonText
+                        )}
                     </button>
                     <Show when={props.showHr}>
                         <hr />
