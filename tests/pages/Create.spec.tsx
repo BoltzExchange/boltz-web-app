@@ -6,9 +6,9 @@ import { Side, SwapType } from "../../src/consts/Enums";
 import { Denomination } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import Create from "../../src/pages/Create";
+import Pair from "../../src/utils/Pair";
 import { calculateReceiveAmount } from "../../src/utils/calculate";
 import { formatAmount } from "../../src/utils/denomination";
-import Pair from "../../src/utils/Pair";
 import {
     TestComponent,
     contextWrapper,
@@ -62,7 +62,9 @@ describe("Create", () => {
         setPairAssets(BTC, LN);
 
         await waitFor(() => {
-            expect(screen.queryByTestId("connect-wallet")).not.toBeInTheDocument();
+            expect(
+                screen.queryByTestId("connect-wallet"),
+            ).not.toBeInTheDocument();
         });
     });
 

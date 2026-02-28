@@ -196,7 +196,12 @@ test.describe("BIP21 URIs", () => {
 
         const receiveAmount = page.getByTestId("receiveAmount");
         await expect(receiveAmount).toHaveValue(
-            formatAmount(BigNumber(expectedSatAmount), Denomination.Sat, ".", BTC),
+            formatAmount(
+                BigNumber(expectedSatAmount),
+                Denomination.Sat,
+                ".",
+                BTC,
+            ),
         );
 
         const receiveAsset = page.getByTestId("asset-receive");

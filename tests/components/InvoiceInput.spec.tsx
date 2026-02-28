@@ -4,8 +4,8 @@ import { vi } from "vitest";
 
 import InvoiceInput from "../../src/components/InvoiceInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
-import { extractInvoice, invoicePrefix } from "../../src/utils/invoice";
 import Pair from "../../src/utils/Pair";
+import { extractInvoice, invoicePrefix } from "../../src/utils/invoice";
 import { TestComponent, contextWrapper, signals } from "../helper";
 
 vi.mock("../../src/utils/invoice", async () => {

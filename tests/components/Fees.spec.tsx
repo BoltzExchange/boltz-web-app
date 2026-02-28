@@ -4,12 +4,12 @@ import { BigNumber } from "bignumber.js";
 import Fees from "../../src/components/Fees";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { Denomination, SwapType } from "../../src/consts/Enums";
+import Pair from "../../src/utils/Pair";
 import { getPairs } from "../../src/utils/boltzClient";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "../../src/utils/calculate";
-import Pair from "../../src/utils/Pair";
 import {
     TestComponent,
     contextWrapper,

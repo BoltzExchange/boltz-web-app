@@ -606,11 +606,9 @@ const Create = () => {
                         <QrScan />
                     </Show>
                     <Show
-                        when={
-                            [pair().fromAsset, pair().toAsset].some(
-                                isEvmAsset,
-                            )
-                        }>
+                        when={[pair().fromAsset, pair().toAsset].some(
+                            isEvmAsset,
+                        )}>
                         <ConnectWallet
                             asset={
                                 isEvmAsset(pair().fromAsset)

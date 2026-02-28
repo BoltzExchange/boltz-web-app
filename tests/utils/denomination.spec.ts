@@ -23,7 +23,11 @@ describe("denomination utils", () => {
             "convert $amount in $denomination",
             ({ denomination, amount, converted }) => {
                 expect(
-                    convertAmount(BTC, BigNumber(amount), denomination).toNumber(),
+                    convertAmount(
+                        BTC,
+                        BigNumber(amount),
+                        denomination,
+                    ).toNumber(),
                 ).toEqual(converted);
             },
         );
