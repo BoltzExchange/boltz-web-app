@@ -5,6 +5,7 @@ import { vi } from "vitest";
 import InvoiceInput from "../../src/components/InvoiceInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { extractInvoice, invoicePrefix } from "../../src/utils/invoice";
+import Pair from "../../src/utils/Pair";
 import { TestComponent, contextWrapper, signals } from "../helper";
 
 vi.mock("../../src/utils/invoice", async () => {
@@ -73,6 +74,10 @@ vi.mock("../../src/utils/compat", async () => {
     };
 });
 
+const setPairAssets = (fromAsset: string, toAsset: string) => {
+    signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
+};
+
 describe("InvoiceInput", () => {
     test.each`
         expected | invoice
@@ -90,8 +95,7 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(BTC, LN);
         fireEvent.input(await screen.findByTestId("invoice"), {
             target: { value: invoice },
         });
@@ -115,8 +119,7 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(BTC, LN);
 
         const input = (await screen.findByTestId(
             "invoice",
@@ -149,8 +152,7 @@ describe("InvoiceInput", () => {
             ),
             { wrapper: contextWrapper },
         );
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(BTC, LN);
 
         const input = (await screen.findByTestId(
             "invoice",
@@ -189,8 +191,8 @@ describe("InvoiceInput", () => {
         });
 
         await waitFor(() => {
-            expect(signals.assetSend()).toEqual(LN);
-            expect(signals.assetReceive()).toEqual(asset);
+            expect(signals.pair().fromAsset).toEqual(LN);
+            expect(signals.pair().toAsset).toEqual(asset);
         });
         expect(signals.onchainAddress()).toEqual(input);
     });
@@ -212,8 +214,7 @@ describe("InvoiceInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetSend(BTC);
-            signals.setAssetReceive(LN);
+            setPairAssets(BTC, LN);
 
             const invoiceInput = (await screen.findByTestId(
                 "invoice",
@@ -253,8 +254,7 @@ describe("InvoiceInput", () => {
             { wrapper: contextWrapper },
         );
 
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(BTC, LN);
 
         const invoiceInput = (await screen.findByTestId(
             "invoice",
@@ -284,8 +284,7 @@ describe("InvoiceInput", () => {
             { wrapper: contextWrapper },
         );
 
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(BTC, LN);
 
         const invoiceInput = (await screen.findByTestId(
             "invoice",
@@ -297,7 +296,7 @@ describe("InvoiceInput", () => {
 
         await waitFor(() => {
             expect(signals.onchainAddress()).toEqual(expectedAddress);
-            expect(signals.assetReceive()).toEqual(BTC);
+            expect(signals.pair().toAsset).toEqual(BTC);
         });
     });
 
@@ -318,8 +317,7 @@ describe("InvoiceInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetSend(BTC);
-            signals.setAssetReceive(LN);
+            setPairAssets(BTC, LN);
             signals.setReceiveAmount(amount);
 
             const input = (await screen.findByTestId(

@@ -4,12 +4,17 @@ import SelectAsset from "../../src/components/AssetSelect";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
+import Pair from "../../src/utils/Pair";
 import { TestComponent, contextWrapper, signals } from "../helper";
 import { pairs } from "../pairs";
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
+
+const setPairAssets = (fromAsset: string, toAsset: string) => {
+    signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
+};
 
 describe("AssetSelect", () => {
     test.each`
@@ -28,7 +33,7 @@ describe("AssetSelect", () => {
             { wrapper: contextWrapper },
         );
 
-        signals.setAssetSend(asset);
+        setPairAssets(asset, asset === BTC ? LN : BTC);
         signals.setAssetSelect(true);
         signals.setAssetSelected(Side.Send);
 
@@ -78,17 +83,15 @@ describe("AssetSelect", () => {
             { wrapper: contextWrapper },
         );
 
-        signals.setAssetSend(BTC);
+        setPairAssets(BTC, LN);
         signals.setAssetSelect(true);
         signals.setAssetSelected(Side.Send);
 
-        const setAssetSend = vi.spyOn(signals, "setAssetSend");
-        const setAssetReceive = vi.spyOn(signals, "setAssetReceive");
+        const setPair = vi.spyOn(signals, "setPair");
 
         fireEvent.click(await screen.findByTestId(`select-${BTC}`));
 
-        expect(setAssetSend).toHaveBeenCalledTimes(0);
-        expect(setAssetReceive).toHaveBeenCalledTimes(0);
+        expect(setPair).toHaveBeenCalledTimes(0);
     });
 
     test.each`
@@ -113,17 +116,16 @@ describe("AssetSelect", () => {
 
             signals.setAssetSelect(true);
             signals.setAssetSelected(side);
-            signals.setAssetSend(prevSend);
-            signals.setAssetReceive(prevReceive);
+            setPairAssets(prevSend, prevReceive);
 
             fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
             const isSend = side === Side.Send;
             expect(
-                isSend ? signals.assetSend() : signals.assetReceive(),
+                isSend ? signals.pair().fromAsset : signals.pair().toAsset,
             ).toEqual(newAsset);
             expect(
-                !isSend ? signals.assetSend() : signals.assetReceive(),
+                !isSend ? signals.pair().fromAsset : signals.pair().toAsset,
             ).toEqual(expectedOther);
         },
     );
@@ -148,12 +150,11 @@ describe("AssetSelect", () => {
             signals.setOnchainAddress(address);
             signals.setAssetSelect(true);
             signals.setAssetSelected(Side.Send);
-            signals.setAssetSend(LN);
-            signals.setAssetReceive(asset);
+            setPairAssets(LN, asset);
 
             fireEvent.click(await screen.findByTestId(`select-${newAsset}`));
 
-            expect(signals.assetSend()).toEqual(newAsset);
+            expect(signals.pair().fromAsset).toEqual(newAsset);
             expect(signals.onchainAddress()).toEqual(address);
         },
     );
@@ -175,12 +176,11 @@ describe("AssetSelect", () => {
         signals.setOnchainAddress(initialAddress);
         signals.setAssetSelect(true);
         signals.setAssetSelected(Side.Receive);
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LBTC);
+        setPairAssets(BTC, LBTC);
 
         fireEvent.click(await screen.findByTestId(`select-${BTC}`));
 
-        expect(signals.assetReceive()).toEqual(BTC);
+        expect(signals.pair().toAsset).toEqual(BTC);
         expect(signals.onchainAddress()).toBe("");
     });
 });

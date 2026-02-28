@@ -1,4 +1,4 @@
-import { render, screen } from "@solidjs/testing-library";
+import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import Fees from "../../src/components/Fees";
@@ -9,6 +9,7 @@ import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "../../src/utils/calculate";
+import Pair from "../../src/utils/Pair";
 import {
     TestComponent,
     contextWrapper,
@@ -20,6 +21,10 @@ import { pairs } from "../pairs";
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
+
+const setPairAssets = (fromAsset: string, toAsset: string) => {
+    signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
+};
 
 describe("Fees component", () => {
     test("should render", () => {
@@ -35,7 +40,7 @@ describe("Fees component", () => {
         globalSignals.setPairs(pairs);
     });
 
-    test("should recalculate limits on direction switch", () => {
+    test("should recalculate limits on direction switch", async () => {
         render(
             () => (
                 <>
@@ -47,35 +52,37 @@ describe("Fees component", () => {
         );
         globalSignals.setPairs(pairs);
 
-        signals.setAssetReceive(BTC);
-        signals.setAssetSend(LN);
+        setPairAssets(LN, BTC);
 
-        expect(pairs.submarine[BTC][BTC].limits.minimal).toEqual(
-            signals.minimum(),
-        );
-        expect(pairs.submarine[BTC][BTC].limits.maximal).toEqual(
-            signals.maximum(),
-        );
+        await waitFor(() => {
+            expect(signals.minimum()).toEqual(
+                pairs.submarine[BTC][BTC].limits.minimal,
+            );
+            expect(signals.maximum()).toEqual(
+                pairs.submarine[BTC][BTC].limits.maximal,
+            );
+        });
 
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(BTC, LN);
 
-        expect(signals.minimum()).toEqual(
-            calculateSendAmount(
-                BigNumber(pairs.submarine[BTC][BTC].limits.minimal),
-                signals.boltzFee(),
-                signals.minerFee(),
-                SwapType.Submarine,
-            ).toNumber(),
-        );
-        expect(signals.maximum()).toEqual(
-            calculateSendAmount(
-                BigNumber(pairs.submarine[BTC][BTC].limits.maximal),
-                signals.boltzFee(),
-                signals.minerFee(),
-                SwapType.Submarine,
-            ).toNumber(),
-        );
+        await waitFor(() => {
+            expect(signals.minimum()).toEqual(
+                calculateSendAmount(
+                    BigNumber(pairs.submarine[BTC][BTC].limits.minimal),
+                    signals.boltzFee(),
+                    signals.minerFee(),
+                    SwapType.Submarine,
+                ).toNumber(),
+            );
+            expect(signals.maximum()).toEqual(
+                calculateSendAmount(
+                    BigNumber(pairs.submarine[BTC][BTC].limits.maximal),
+                    signals.boltzFee(),
+                    signals.minerFee(),
+                    SwapType.Submarine,
+                ).toNumber(),
+            );
+        });
     });
 
     test("should increase the miner fee for reverse swaps by 1 when sending to an unconfidential Liquid address", () => {
@@ -89,8 +96,7 @@ describe("Fees component", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(LBTC);
+        setPairAssets(LN, LBTC);
         signals.setAddressValid(true);
         signals.setOnchainAddress(
             "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",
@@ -114,8 +120,7 @@ describe("Fees component", () => {
         );
 
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LBTC);
+        setPairAssets(BTC, LBTC);
         signals.setAddressValid(true);
         signals.setOnchainAddress(
             "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",
@@ -127,7 +132,7 @@ describe("Fees component", () => {
         );
     });
 
-    test("should apply minimalBatched limit for liquid submarine swaps", () => {
+    test("should apply minimalBatched limit for liquid submarine swaps", async () => {
         render(
             () => (
                 <>
@@ -138,10 +143,11 @@ describe("Fees component", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(LBTC, LN);
         signals.setSendAmount(BigNumber(41));
-        expect(signals.minimum()).toEqual(41);
+        await waitFor(() => {
+            expect(signals.minimum()).toEqual(41);
+        });
     });
 
     test.each`
@@ -182,8 +188,7 @@ describe("Fees component", () => {
             );
 
             globalSignals.setDenomination(Denomination.Btc);
-            signals.setAssetSend(BTC);
-            signals.setAssetReceive(LN);
+            setPairAssets(BTC, LN);
             signals.setSendAmount(BigNumber(sendAmount));
             signals.setReceiveAmount(
                 calculateReceiveAmount(

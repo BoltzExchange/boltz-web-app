@@ -3,6 +3,7 @@ import { vi } from "vitest";
 
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import Pair from "../../src/utils/Pair";
 import {
     TestComponent,
     contextWrapper,
@@ -19,6 +20,10 @@ vi.mock("../../src/utils/invoice", async () => {
         }),
     };
 });
+
+const setPairAssets = (fromAsset: string, toAsset: string) => {
+    signals.setPair(new Pair(globalSignals.pairs(), fromAsset, toAsset));
+};
 
 describe("AddressInput", () => {
     test.each`
@@ -46,7 +51,7 @@ describe("AddressInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetReceive(network);
+            setPairAssets(signals.pair().fromAsset, network);
 
             const input = (await screen.findByPlaceholderText(
                 globalSignals.t("onchain_address", { asset: network }),
@@ -98,7 +103,7 @@ describe("AddressInput", () => {
             });
 
             await waitFor(() => {
-                expect(signals.assetReceive()).toEqual(asset);
+                expect(signals.pair().toAsset).toEqual(asset);
             });
 
             if (asset === LN) {
@@ -129,7 +134,7 @@ describe("AddressInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetReceive(asset);
+            setPairAssets(signals.pair().fromAsset, asset);
 
             const addressInput = (await screen.findByTestId(
                 "onchainAddress",
@@ -143,7 +148,7 @@ describe("AddressInput", () => {
                 expect(signals.addressValid()).toEqual(true);
             });
             expect(signals.onchainAddress()).toEqual(expectedAddress);
-            expect(signals.assetReceive()).toEqual(asset);
+            expect(signals.pair().toAsset).toEqual(asset);
             expect(signals.receiveAmount().toNumber()).toEqual(1000);
         },
     );
@@ -165,7 +170,7 @@ describe("AddressInput", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetReceive(asset);
+            setPairAssets(signals.pair().fromAsset, asset);
 
             const addressInput = (await screen.findByTestId(
                 "onchainAddress",
@@ -177,7 +182,7 @@ describe("AddressInput", () => {
 
             await waitFor(() => {
                 expect(signals.invoice()).toEqual(expectedInvoice);
-                expect(signals.assetReceive()).toEqual(LN);
+                expect(signals.pair().toAsset).toEqual(LN);
             });
         },
     );
