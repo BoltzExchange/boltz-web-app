@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import { Side, SwapType } from "../../src/consts/Enums";
 import { Denomination } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
@@ -19,6 +19,9 @@ import { pairs } from "../pairs";
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
+}));
+vi.mock("../../src/components/ConnectWallet", () => ({
+    default: () => <div data-testid="connect-wallet" />,
 }));
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
@@ -40,6 +43,46 @@ describe("Create", () => {
         );
         const button = await screen.findAllByText(i18n.en.create_swap);
         expect(button).not.toBeUndefined();
+    });
+
+    test("should hide wallet section for non-EVM pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, LN);
+
+        await waitFor(() => {
+            expect(screen.queryByTestId("connect-wallet")).not.toBeInTheDocument();
+        });
+    });
+
+    test("should show wallet section for EVM pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, RBTC);
+
+        expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
     });
 
     test("should show WASM error", async () => {

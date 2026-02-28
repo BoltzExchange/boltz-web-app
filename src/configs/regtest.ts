@@ -26,7 +26,7 @@ const config = {
     loglevel: "debug",
     preventReloadOnPendingSwaps: false,
     apiUrl: {
-        normal: "http://localhost:9006",
+        normal: "http://localhost:9001",
     },
     assets: {
         BTC: {
@@ -64,7 +64,7 @@ const config = {
             network: {
                 chainName: "Anvil",
                 symbol: "RBTC",
-                chainId: 31,
+                chainId: 33,
                 rpcUrls: ["http://localhost:8545"],
                 nativeCurrency: {
                     name: "RBTC",

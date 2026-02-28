@@ -607,10 +607,9 @@ const Create = () => {
                     </Show>
                     <Show
                         when={
-                            config.assets?.[pair().fromAsset]?.type !==
-                                AssetKind.UTXO ||
-                            config.assets?.[pair().toAsset]?.type !==
-                                AssetKind.UTXO
+                            [pair().fromAsset, pair().toAsset].some(
+                                isEvmAsset,
+                            )
                         }>
                         <ConnectWallet
                             asset={

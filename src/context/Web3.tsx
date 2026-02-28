@@ -65,6 +65,18 @@ export type Signer = JsonRpcSigner & {
     rdns: string;
 };
 
+type AddEthereumChainParams = {
+    chainId: string;
+    chainName: string;
+    rpcUrls: string[];
+    nativeCurrency: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
+    blockExplorerUrls?: string[];
+};
+
 enum HardwareRdns {
     Ledger = "ledger",
     Trezor = "trezor",
@@ -362,18 +374,25 @@ const Web3SignerProvider = (props: {
                 // Rabby does not set the correct error code
                 switchError.message.includes("Try adding the chain")
             ) {
+                const addChainParams: AddEthereumChainParams = {
+                    chainId: sanitizedChainId,
+                    chainName: assetConfig.network.chainName,
+                    rpcUrls: assetConfig.network.rpcUrls,
+                    nativeCurrency: assetConfig.network.nativeCurrency,
+                };
+
+                if (assetConfig.blockExplorerUrl) {
+                    addChainParams.blockExplorerUrls = [
+                        assetConfig.blockExplorerUrl.normal,
+                    ];
+                }
+
                 await rawProvider().request({
                     method: "wallet_addEthereumChain",
-                    params: [
-                        {
-                            ...assetConfig.network,
-                            blockExplorerUrls: assetConfig.blockExplorerUrl
-                                ? [assetConfig.blockExplorerUrl.normal]
-                                : [],
-                            chainId: sanitizedChainId,
-                        },
-                    ],
+                    params: [addChainParams],
                 });
+
+                return;
             }
 
             throw switchError;
