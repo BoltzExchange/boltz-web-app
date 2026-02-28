@@ -3,7 +3,7 @@ import { createEffect, on } from "solid-js";
 import { btcToSat } from "src/utils/denomination";
 
 import { LN, isEvmAsset } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
@@ -29,6 +29,7 @@ const AddressInput = () => {
         setOnchainAddress,
         setInvoice,
         sendAmount,
+        setAmountChanged,
         setReceiveAmount,
         setSendAmount,
     } = useCreateContext();
@@ -50,6 +51,7 @@ const AddressInput = () => {
         const bip21Amount = extractBip21Amount(inputValue);
         if (bip21Amount) {
             const satAmount = btcToSat(bip21Amount);
+            setAmountChanged(Side.Receive);
             setReceiveAmount(satAmount);
             const sendAmt = await pair().calculateSendAmount(
                 satAmount,

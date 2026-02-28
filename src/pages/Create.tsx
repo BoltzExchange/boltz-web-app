@@ -377,26 +377,36 @@ const Create = () => {
         }
     });
 
-    createEffect(() => {
-        if (searchParams.sendAsset) {
-            setPair(
-                new Pair(
-                    pair().pairs,
-                    searchParams.sendAsset as string,
-                    pair().toAsset,
-                ),
-            );
-        }
-        if (searchParams.receiveAsset) {
-            setPair(
-                new Pair(
-                    pair().pairs,
-                    pair().fromAsset,
-                    searchParams.receiveAsset as string,
-                ),
-            );
-        }
-    });
+    createEffect(
+        on(
+            [() => searchParams.sendAsset, () => searchParams.receiveAsset],
+            ([sendAsset, receiveAsset]) => {
+                const nextSendAsset = Array.isArray(sendAsset)
+                    ? sendAsset[0]
+                    : sendAsset;
+                const nextReceiveAsset = Array.isArray(receiveAsset)
+                    ? receiveAsset[0]
+                    : receiveAsset;
+
+                if (!nextSendAsset && !nextReceiveAsset) return;
+
+                setPair((current) => {
+                    const fromAsset = nextSendAsset ?? current.fromAsset;
+                    const toAsset = nextReceiveAsset ?? current.toAsset;
+
+                    if (
+                        fromAsset === current.fromAsset &&
+                        toAsset === current.toAsset
+                    ) {
+                        return current;
+                    }
+
+                    return new Pair(current.pairs, fromAsset, toAsset);
+                });
+            },
+            { defer: true },
+        ),
+    );
 
     // validate amounts when invoice is valid, because we
     // set the amount based on invoice amount if amount is 0
@@ -410,6 +420,15 @@ const Create = () => {
             validateAmount();
         }
     });
+
+    // Re-validate when min/max change (they are set asynchronously)
+    createEffect(
+        on([minimum, maximum], () => {
+            if (sendAmount().isGreaterThan(0)) {
+                validateAmount();
+            }
+        }),
+    );
 
     createEffect(() => {
         void fetchBtcPrice();

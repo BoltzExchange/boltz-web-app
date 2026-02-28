@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
 import { LN } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
@@ -30,6 +30,7 @@ const InvoiceInput = () => {
         receiveAmount,
         sendAmount,
         amountValid,
+        setAmountChanged,
         setInvoice,
         setInvoiceValid,
         setInvoiceError,
@@ -74,6 +75,7 @@ const InvoiceInput = () => {
         const bip21Amount = extractBip21Amount(inputValue);
         if (bip21Amount) {
             const satAmount = btcToSat(bip21Amount);
+            setAmountChanged(Side.Receive);
             setReceiveAmount(satAmount);
             const sendAmt = await pair().calculateSendAmount(
                 satAmount,
@@ -136,7 +138,7 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([amountValid, invoice], async () => {
+        on([amountValid, invoice, pair], async () => {
             if (pair().swapToCreate?.type === SwapType.Submarine) {
                 await validate(inputRef);
             }
