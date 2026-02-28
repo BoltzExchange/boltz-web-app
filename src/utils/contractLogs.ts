@@ -52,6 +52,7 @@ type ScanResult = {
     progress: number;
     events: LogRefundData[];
     derivedKeys?: number;
+    unmatchedSwaps: number;
 };
 
 type ScanContext = {
@@ -315,6 +316,7 @@ export async function* scanLockupEvents(
             progress: Math.min(blocksScanned / ctx.totalBlocks, 1),
             events: [],
             derivedKeys: worker?.map.size,
+            unmatchedSwaps: 0,
         };
 
         for (const event of events) {
@@ -367,6 +369,8 @@ export async function* scanLockupEvents(
             results.derivedKeys = worker.map.size;
         }
 
+        results.unmatchedSwaps = pendingClaims.length;
+
         yield results;
     }
 
@@ -381,6 +385,7 @@ export async function* scanLockupEvents(
                 progress: 1,
                 events: matched,
                 derivedKeys: worker.map.size,
+                unmatchedSwaps: pendingClaims.length,
             };
         }
     }

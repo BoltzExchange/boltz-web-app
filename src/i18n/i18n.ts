@@ -449,6 +449,8 @@ const dict = {
             "Use your rescue key to find pending swaps that can be resumed.",
         searching_resumable_swaps:
             "Searching for resumable swaps... {{ progress }}%",
+        unmatched_swaps:
+            "This wallet has {{ count }} additional claimable swaps. To access them, please switch to the Rescue Key used to initiate those swaps.",
     },
     de: {
         language: "Deutsch",
