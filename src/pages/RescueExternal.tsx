@@ -55,6 +55,7 @@ import {
 } from "../utils/rescue";
 import { type RescueFile, getXpub } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import { maxIterations } from "../workers/preimageHashes/preimageHashes.worker";
 import ErrorWasm from "./ErrorWasm";
 import { mapSwap } from "./RefundRescue";
 import { rescueListAction } from "./Rescue";
@@ -354,6 +355,7 @@ export const RescueRsk = (props: { mode?: string }) => {
     const [rescueFileError, setRescueFileError] = createSignal<string | null>(
         null,
     );
+    const [unmatchedSwaps, setUnmatchedSwaps] = createSignal(0);
 
     let refundScanAbort: AbortController | undefined = undefined;
 
@@ -397,19 +399,31 @@ export const RescueRsk = (props: { mode?: string }) => {
             },
         );
 
-        for await (const { progress, events } of generator) {
+        for await (const {
+            progress,
+            events,
+            derivedKeys,
+            unmatchedSwaps,
+        } of generator) {
             if (refundScanAbort?.signal.aborted) {
                 break;
             }
             setRefundScanProgress(
-                t("logs_scan_progress", {
-                    value: (progress * 100).toFixed(2),
-                }),
+                progress === 1
+                    ? t("searching_resumable_swaps", {
+                          progress: Math.floor(
+                              ((derivedKeys ?? 0) / maxIterations) * 100,
+                          ).toFixed(2),
+                      })
+                    : t("logs_scan_progress", {
+                          value: (progress * 100).toFixed(2),
+                      }),
             );
 
             const updatedSwaps = logRefundableSwaps()?.concat(events);
             setLogRefundableSwaps(updatedSwaps);
             setRskRescuableSwaps(updatedSwaps);
+            setUnmatchedSwaps(unmatchedSwaps);
         }
 
         if (!refundScanAbort?.signal.aborted) {
@@ -513,6 +527,11 @@ export const RescueRsk = (props: { mode?: string }) => {
                     onClick={() => navigate("/rescue/external/rsk")}>
                     {t("back")}
                 </button>
+            </Match>
+            <Match when={unmatchedSwaps() > 0}>
+                <p class="frame-text">
+                    {t("unmatched_swaps", { count: unmatchedSwaps() })}
+                </p>
             </Match>
         </Switch>
     );
