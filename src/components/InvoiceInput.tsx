@@ -114,6 +114,7 @@ const InvoiceInput = () => {
                     setInvoice(invoiceValue);
                 } else {
                     const sats = await validateInvoice(invoiceValue);
+                    setAmountChanged(Side.Receive);
                     setReceiveAmount(BigNumber(sats));
                     setSendAmount(
                         await pair().calculateSendAmount(
@@ -138,8 +139,11 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([amountValid, invoice, pair], async () => {
-            if (pair().swapToCreate?.type === SwapType.Submarine) {
+        on([amountValid, invoice], async () => {
+            if (
+                pair().swapToCreate?.type === SwapType.Submarine ||
+                pair().toAsset === LN
+            ) {
                 await validate(inputRef);
             }
         }),

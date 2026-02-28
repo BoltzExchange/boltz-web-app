@@ -603,13 +603,21 @@ const Create = () => {
                     <hr class="spacer" />
                     <Show
                         when={
-                            pair().requiredInput === RequiredInput.Address &&
+                            (pair().requiredInput === RequiredInput.Address ||
+                                (pair().requiredInput ===
+                                    RequiredInput.Unknown &&
+                                    pair().toAsset !== LN)) &&
                             config.assets?.[pair().toAsset]?.type ===
                                 AssetKind.UTXO
                         }>
                         <AddressInput />
                     </Show>
-                    <Show when={pair().requiredInput === RequiredInput.Invoice}>
+                    <Show
+                        when={
+                            pair().requiredInput === RequiredInput.Invoice ||
+                            (pair().requiredInput === RequiredInput.Unknown &&
+                                pair().toAsset === LN)
+                        }>
                         <Show when={webln()}>
                             <WeblnButton />
                             <hr class="spacer" />

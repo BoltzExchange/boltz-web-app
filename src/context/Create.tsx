@@ -154,20 +154,8 @@ const handleUrlParams = (
     setInvoiceValid: Setter<boolean>,
     navigate: Navigator,
 ) => {
-    const setAssetSend = (asset: string) => {
-        let toAsset = pair().toAsset;
-        if (toAsset === asset) {
-            toAsset = asset === LN ? BTC : LN;
-        }
-        setPair(new Pair(pair().pairs, asset, toAsset));
-    };
-
     const setAssetReceive = (asset: string) => {
-        let fromAsset = pair().fromAsset;
-        if (fromAsset === asset) {
-            fromAsset = asset === LN ? BTC : LN;
-        }
-        setPair(new Pair(pair().pairs, fromAsset, asset));
+        setPair(new Pair(pair().pairs, pair().fromAsset, asset));
     };
 
     const sendAsset = getUrlParam(UrlParam.SendAsset);
@@ -181,15 +169,24 @@ const handleUrlParams = (
         receiveAsset,
     );
 
+    // Build the final from/to directly so we don't auto-resolve conflicts;
+    // the URL may intentionally specify an invalid same-asset pair
+    let fromAsset = pair().fromAsset;
+    let toAsset = pair().toAsset;
+
     if (isValidAsset(sendAsset)) {
-        setAssetSend(sendAsset);
+        fromAsset = sendAsset;
     }
 
     // The type of the destination takes precedence
-    if (destinationAsset === undefined) {
-        if (isValidAsset(receiveAsset)) {
-            setAssetReceive(receiveAsset);
-        }
+    if (destinationAsset !== undefined) {
+        toAsset = destinationAsset;
+    } else if (isValidAsset(receiveAsset)) {
+        toAsset = receiveAsset;
+    }
+
+    if (fromAsset !== pair().fromAsset || toAsset !== pair().toAsset) {
+        setPair(new Pair(pair().pairs, fromAsset, toAsset));
     }
 
     // Lightning invoice amounts take precedence unless this is a LN addr or bolt12 offer
