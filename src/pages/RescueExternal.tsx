@@ -355,6 +355,7 @@ export const RescueRsk = (props: { mode?: string }) => {
     const [rescueFileError, setRescueFileError] = createSignal<string | null>(
         null,
     );
+    const [unmatchedSwaps, setUnmatchedSwaps] = createSignal(0);
 
     let refundScanAbort: AbortController | undefined = undefined;
 
@@ -398,7 +399,12 @@ export const RescueRsk = (props: { mode?: string }) => {
             },
         );
 
-        for await (const { progress, events, derivedKeys } of generator) {
+        for await (const {
+            progress,
+            events,
+            derivedKeys,
+            unmatchedSwaps,
+        } of generator) {
             if (refundScanAbort?.signal.aborted) {
                 break;
             }
@@ -417,6 +423,7 @@ export const RescueRsk = (props: { mode?: string }) => {
             const updatedSwaps = logRefundableSwaps()?.concat(events);
             setLogRefundableSwaps(updatedSwaps);
             setRskRescuableSwaps(updatedSwaps);
+            setUnmatchedSwaps(unmatchedSwaps);
         }
 
         if (!refundScanAbort?.signal.aborted) {
@@ -520,6 +527,11 @@ export const RescueRsk = (props: { mode?: string }) => {
                     onClick={() => navigate("/rescue/external/rsk")}>
                     {t("back")}
                 </button>
+            </Match>
+            <Match when={unmatchedSwaps() > 0}>
+                <p class="frame-text">
+                    {t("unmatched_swaps", { count: unmatchedSwaps() })}
+                </p>
             </Match>
         </Switch>
     );
