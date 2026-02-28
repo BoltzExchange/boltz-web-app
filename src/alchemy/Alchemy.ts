@@ -17,7 +17,7 @@ const getAlchemyApiKey = (): string => {
     return key;
 };
 
-const alchemyUrl = `https://api.g.alchemy.com/v2/${getAlchemyApiKey()}`;
+const alchemyUrl = () => `https://api.g.alchemy.com/v2/${getAlchemyApiKey()}`;
 
 const getAlchemyGasPolicyId = (): string => {
     const id = import.meta.env.VITE_ALCHEMY_GAS_POLICY_ID as string | undefined;
@@ -67,7 +67,7 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     let response: Response;
 
     try {
-        response = await fetch(alchemyUrl, {
+        response = await fetch(alchemyUrl(), {
             method: "POST",
             headers: alchemyHeaders,
             body: JSON.stringify({
