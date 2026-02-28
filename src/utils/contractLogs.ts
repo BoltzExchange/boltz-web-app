@@ -51,6 +51,7 @@ type ScanConfig = {
 type ScanResult = {
     progress: number;
     events: LogRefundData[];
+    derivedKeys?: number;
 };
 
 type ScanContext = {
@@ -313,6 +314,7 @@ export async function* scanLockupEvents(
         const results: ScanResult = {
             progress: Math.min(blocksScanned / ctx.totalBlocks, 1),
             events: [],
+            derivedKeys: worker?.map.size,
         };
 
         for (const event of events) {
@@ -362,6 +364,7 @@ export async function* scanLockupEvents(
             results.events.push(
                 ...reconcilePendingClaims(pendingClaims, worker.map),
             );
+            results.derivedKeys = worker.map.size;
         }
 
         yield results;
@@ -374,9 +377,11 @@ export async function* scanLockupEvents(
         while (pendingClaims.length > 0 && !worker.isDone) {
             await worker.waitForNextBatch();
             const matched = reconcilePendingClaims(pendingClaims, worker.map);
-            if (matched.length > 0) {
-                yield { progress: 1, events: matched };
-            }
+            yield {
+                progress: 1,
+                events: matched,
+                derivedKeys: worker.map.size,
+            };
         }
     }
 

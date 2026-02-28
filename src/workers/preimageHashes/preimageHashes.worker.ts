@@ -2,7 +2,7 @@ import { crypto } from "bitcoinjs-lib";
 
 import { mnemonicToHDKey, rskDerivationPath } from "../../utils/rescueFile";
 
-const maxIterations = 100_000;
+export const maxIterations = 100_000;
 const batchSize = 1_000;
 
 export type PreimageHashEntry = [string, { preimage: string; index: number }];
