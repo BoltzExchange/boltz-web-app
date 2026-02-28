@@ -357,18 +357,16 @@ export async function* scanLockupEvents(
         yield results;
     }
 
-    if (worker && pendingClaims.length > 0) {
+    if (worker) {
         log.info(
-            `Resolving preimages for ${pendingClaims.length} pending claims`,
+            `Deriving preimages for ${pendingClaims.length} pending claims`,
         );
-
-        // Wait for the worker to finish deriving the preimages
-        for (const claim of pendingClaims) {
-            await worker.getPreimage(claim.preimageHash);
-        }
-        const matched = reconcilePendingClaims(pendingClaims, worker.map);
-        if (matched.length > 0) {
-            yield { progress: 1, events: matched };
+        while (pendingClaims.length > 0 && !worker.isDone) {
+            await worker.waitForNextBatch();
+            const matched = reconcilePendingClaims(pendingClaims, worker.map);
+            if (matched.length > 0) {
+                yield { progress: 1, events: matched };
+            }
         }
     }
 
