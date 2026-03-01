@@ -651,6 +651,9 @@ const dict = {
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
+        slippage: "Slippage",
+        slippage_tooltip: "Maximale Slippage-Toleranz bei DEX-Swaps",
+        dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Akzeptiere Transaktionen, die noch nicht in einem Block bestätigt sind",
@@ -914,6 +917,8 @@ const dict = {
         rsk_rescue_resume_title: "Swap fortsetzen",
         rsk_rescue_resume_explainer:
             "Nutze deinen Rettungsschlüssel, um ausstehende Swaps zu finden, die fortgesetzt werden können.",
+        approve_erc20: "Freigeben",
+        approve_erc20_line: "ERC20-Freigabe für den Swap-Contract festlegen",
     },
     es: {
         language: "Español",
@@ -1114,6 +1119,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
+        slippage: "Slippage",
+        slippage_tooltip: "Tolerancia máxima de slippage para swaps en DEX",
+        dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Aceptar transacciones que aún no están confirmadas en un bloque",
@@ -1374,6 +1382,9 @@ const dict = {
         rsk_rescue_resume_title: "Reanudar intercambio",
         rsk_rescue_resume_explainer:
             "Usa tu clave de rescate para encontrar intercambios pendientes que se puedan reanudar.",
+        approve_erc20: "Aprobar",
+        approve_erc20_line:
+            "Configura la asignación de ERC20 para el contrato de intercambio",
     },
     pt: {
         language: "Português",
@@ -1571,6 +1582,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
+        slippage: "Slippage",
+        slippage_tooltip: "Tolerância máxima de slippage para trocas em DEX",
+        dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Aceitar transações que ainda não foram confirmadas num bloco",
@@ -1830,6 +1844,9 @@ const dict = {
         rsk_rescue_resume_title: "Continuar troca",
         rsk_rescue_resume_explainer:
             "Use sua chave de resgate para encontrar trocas pendentes que podem ser continuadas.",
+        approve_erc20: "Aprovar",
+        approve_erc20_line:
+            "Definir a permissão de ERC20 para o contrato de troca",
     },
     zh: {
         language: "中文",
@@ -2006,6 +2023,9 @@ const dict = {
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
+        slippage: "滑点",
+        slippage_tooltip: "DEX 交换的最大价格滑点容差",
+        dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
         on: "开",
@@ -2242,6 +2262,8 @@ const dict = {
         rsk_rescue_resume_title: "继续交换",
         rsk_rescue_resume_explainer:
             "使用你的救援密钥查找可以继续的待处理交换。",
+        approve_erc20: "授权",
+        approve_erc20_line: "为交换合约设置 ERC20 授权额度",
     },
     ja: {
         language: "日本語",
@@ -2437,6 +2459,9 @@ const dict = {
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
+        slippage: "スリッページ",
+        slippage_tooltip: "DEXスワップで許容する最大価格スリッページ",
+        dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",
         on: "オン",
@@ -2694,6 +2719,8 @@ const dict = {
         rsk_rescue_resume_title: "スワップを再開",
         rsk_rescue_resume_explainer:
             "レスキューキーを使用して、再開できる保留中のスワップを見つけます。",
+        approve_erc20: "承認",
+        approve_erc20_line: "スワップコントラクトのERC20許可額を設定",
     },
 };
 
