@@ -1,17 +1,23 @@
 import type log from "loglevel";
 
+import { type AssetKind } from "../consts/AssetKind";
+
 type Asset = {
+    type: AssetKind;
+
     blockExplorerUrl?: ExplorerUrl;
     blockExplorerApis?: ExplorerUrl[];
 
     rifRelay?: string;
     contracts?: {
         deployHeight: number;
+        router?: string;
         smartWalletFactory?: string;
         deployVerifier?: string;
     };
     network?: {
         chainName: string;
+        symbol: string;
         chainId: number;
         rpcUrls: string[];
         nativeCurrency: {
@@ -19,6 +25,11 @@ type Asset = {
             symbol: string;
             decimals: number;
         };
+    };
+    token?: {
+        address: string;
+        decimals: number;
+        routeVia?: string;
     };
 };
 

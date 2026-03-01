@@ -1,8 +1,20 @@
+import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
+import { abi as ERC20SwapAbi } from "boltz-core/out/ERC20Swap.sol/ERC20Swap.json";
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
+import { abi as RouterAbi } from "boltz-core/out/Router.sol/Router.json";
+import type { ERC20 } from "boltz-core/typechain/ERC20";
+import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { BrowserProvider, Contract, JsonRpcSigner } from "ethers";
+import type { Router } from "boltz-core/typechain/Router";
+import {
+    BrowserProvider,
+    Contract,
+    type InterfaceAbi,
+    JsonRpcSigner,
+    Wallet,
+} from "ethers";
 import log from "loglevel";
-import type { Accessor, JSXElement, Resource, Setter } from "solid-js";
+import type { Accessor, JSXElement, Setter } from "solid-js";
 import {
     createContext,
     createResource,
@@ -15,7 +27,12 @@ import LedgerIcon from "../assets/ledger.svg";
 import TrezorIcon from "../assets/trezor.svg";
 import WalletConnectIcon from "../assets/wallet-connect.svg";
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
+import {
+    hasEvmAssets,
+    isEvmAsset,
+    requireRouterAddress,
+    requireTokenConfig,
+} from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { Contracts } from "../utils/boltzClient";
@@ -48,6 +65,18 @@ export type Signer = JsonRpcSigner & {
     rdns: string;
 };
 
+type AddEthereumChainParams = {
+    chainId: string;
+    chainName: string;
+    rpcUrls: string[];
+    nativeCurrency: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
+    blockExplorerUrls?: string[];
+};
+
 enum HardwareRdns {
     Ledger = "ledger",
     Trezor = "trezor",
@@ -60,6 +89,23 @@ const customDerivationPathRdns: string[] = [
     HardwareRdns.Ledger,
     HardwareRdns.Trezor,
 ];
+
+export const createTokenContract = (asset: string, signer: Signer) => {
+    const tokenConfig = requireTokenConfig(asset);
+    return new Contract(
+        tokenConfig.address,
+        ERC20Abi,
+        signer,
+    ) as unknown as ERC20;
+};
+
+export const createRouterContract = (
+    asset: string,
+    signer: Signer | Wallet,
+) => {
+    const routerAddress = requireRouterAddress(asset);
+    return new Contract(routerAddress, RouterAbi, signer) as unknown as Router;
+};
 
 const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
@@ -74,25 +120,29 @@ const Web3SignerContext = createContext<{
     signer: Accessor<Signer | undefined>;
     clearSigner: () => void;
 
-    switchNetwork: () => Promise<void>;
+    switchNetwork: (asset: string) => Promise<void>;
 
-    getContracts: Resource<Contracts>;
-    getEtherSwap: () => EtherSwap;
+    getContractsForAsset: (asset: string) => Contracts | undefined;
+    getEtherSwap: (asset: string) => EtherSwap;
+    getErc20Swap: (asset: string) => ERC20Swap;
 
     openWalletConnectModal: Accessor<boolean>;
     setOpenWalletConnectModal: Setter<boolean>;
 
     walletConnected: Accessor<boolean>;
     setWalletConnected: Setter<boolean>;
+
+    getGasAbstractionSigner: (asset: string) => Wallet;
 }>();
 
 const Web3SignerProvider = (props: {
     children: JSXElement;
     noFetch?: boolean;
 }) => {
-    const { setRdns, getRdnsForAddress, t } = useGlobalContext();
+    const { setRdns, getRdnsForAddress, t, deriveKeyGasAbstraction } =
+        useGlobalContext();
 
-    const hasRsk = config.assets[RBTC] !== undefined;
+    const hasEvm = hasEvmAssets();
 
     const [providers, setProviders] = createSignal<
         Record<string, EIP6963ProviderDetail>
@@ -128,6 +178,19 @@ const Web3SignerProvider = (props: {
     const [openWalletConnectModal, setOpenWalletConnectModal] =
         createSignal<boolean>(false);
     const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
+
+    const getGasAbstractionSigner = (asset: string): Wallet => {
+        const assetConfig = config.assets?.[asset];
+        const chainId = assetConfig?.network?.chainId;
+        const provider = createProvider(assetConfig?.network?.rpcUrls);
+
+        return new Wallet(
+            Buffer.from(deriveKeyGasAbstraction(chainId).privateKey).toString(
+                "hex",
+            ),
+            provider,
+        );
+    };
 
     WalletConnectProvider.initialize(t, setOpenWalletConnectModal);
 
@@ -186,13 +249,30 @@ const Web3SignerProvider = (props: {
         window.dispatchEvent(new Event("eip6963:requestProvider"));
     });
 
-    const [contracts] = createResource(async () => {
-        if (props.noFetch || !hasRsk) {
+    const [allContracts] = createResource(async () => {
+        if (props.noFetch || !hasEvm) {
             return undefined;
         }
 
-        return (await getContracts())["rsk"];
+        return await getContracts();
     });
+
+    const getContractsForAsset = (asset: string): Contracts | undefined => {
+        const contracts = allContracts();
+        if (!contracts || !isEvmAsset(asset)) {
+            return undefined;
+        }
+
+        const assetConfig = config.assets?.[asset];
+        if (!assetConfig?.network?.chainId) {
+            return undefined;
+        }
+
+        return Object.values(contracts).find(
+            (chainContracts) =>
+                chainContracts.network.chainId === assetConfig.network.chainId,
+        );
+    };
 
     const connectProviderForAddress = async (
         address: string,
@@ -213,13 +293,26 @@ const Web3SignerProvider = (props: {
         await connectProvider(rdns);
     };
 
-    const getEtherSwap = () => {
+    const getSwapContract = <T,>(
+        asset: string,
+        contractType: "EtherSwap" | "ERC20Swap",
+        abi: InterfaceAbi,
+    ) => {
+        const assetContracts = getContractsForAsset(asset);
+        const assetConfig = config.assets?.[asset];
+
         return new Contract(
-            contracts().swapContracts.EtherSwap,
-            EtherSwapAbi,
-            signer() || createProvider(config.assets["RBTC"]?.network?.rpcUrls),
-        ) as unknown as EtherSwap;
+            assetContracts?.swapContracts[contractType],
+            abi,
+            signer() || createProvider(assetConfig?.network?.rpcUrls),
+        ) as unknown as T;
     };
+
+    const getEtherSwap = (asset: string) =>
+        getSwapContract<EtherSwap>(asset, "EtherSwap", EtherSwapAbi);
+
+    const getErc20Swap = (asset: string) =>
+        getSwapContract<ERC20Swap>(asset, "ERC20Swap", ERC20SwapAbi);
 
     const connectProvider = async (rdns: string) => {
         const wallet = providers()[rdns];
@@ -253,12 +346,18 @@ const Web3SignerProvider = (props: {
         setSigner(signer);
     };
 
-    const switchNetwork = async () => {
+    const switchNetwork = async (asset: string) => {
         if (rawProvider() === undefined) {
             return;
         }
 
-        const sanitizedChainId = `0x${contracts().network.chainId.toString(16)}`;
+        const assetConfig = config.assets?.[asset];
+        if (!assetConfig?.network) {
+            log.warn(`No network config found for asset: ${asset}`);
+            return;
+        }
+
+        const sanitizedChainId = `0x${assetConfig.network.chainId.toString(16)}`;
 
         try {
             await rawProvider().request({
@@ -275,18 +374,25 @@ const Web3SignerProvider = (props: {
                 // Rabby does not set the correct error code
                 switchError.message.includes("Try adding the chain")
             ) {
+                const addChainParams: AddEthereumChainParams = {
+                    chainId: sanitizedChainId,
+                    chainName: assetConfig.network.chainName,
+                    rpcUrls: assetConfig.network.rpcUrls,
+                    nativeCurrency: assetConfig.network.nativeCurrency,
+                };
+
+                if (assetConfig.blockExplorerUrl) {
+                    addChainParams.blockExplorerUrls = [
+                        assetConfig.blockExplorerUrl.normal,
+                    ];
+                }
+
                 await rawProvider().request({
                     method: "wallet_addEthereumChain",
-                    params: [
-                        {
-                            ...config.assets[RBTC].network,
-                            blockExplorerUrls: [
-                                config.assets[RBTC].blockExplorerUrl.normal,
-                            ],
-                            chainId: sanitizedChainId,
-                        },
-                    ],
+                    params: [addChainParams],
                 });
+
+                return;
             }
 
             throw switchError;
@@ -299,6 +405,7 @@ const Web3SignerProvider = (props: {
                 signer,
                 providers,
                 getEtherSwap,
+                getErc20Swap,
                 switchNetwork,
                 connectProvider,
                 hasBrowserWallet,
@@ -307,7 +414,8 @@ const Web3SignerProvider = (props: {
                 walletConnected,
                 setWalletConnected,
                 connectProviderForAddress,
-                getContracts: contracts,
+                getContractsForAsset,
+                getGasAbstractionSigner,
                 clearSigner: () => {
                     log.info(`Clearing connected signer`);
                     if (rawProvider()) {
@@ -347,6 +455,7 @@ const etherSwapCodeHashes = () => {
 };
 
 export {
+    ERC20SwapAbi,
     EtherSwapAbi,
     useWeb3Signer,
     Web3SignerProvider,

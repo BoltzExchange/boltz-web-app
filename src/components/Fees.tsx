@@ -5,25 +5,15 @@ import {
     createEffect,
     createMemo,
     createResource,
-    createSignal,
     onMount,
 } from "solid-js";
 
 import { config } from "../config";
-import { LBTC } from "../consts/Assets";
+import { AssetKind, BTC, LBTC } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import type {
-    ChainPairTypeTaproot,
-    ReversePairTypeTaproot,
-    SubmarinePairTypeTaproot,
-} from "../utils/boltzClient";
-import {
-    calculateBoltzFeeOnSend,
-    calculateSendAmount,
-} from "../utils/calculate";
 import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
@@ -76,10 +66,9 @@ const Fees = () => {
         fetchRegularPairs,
     } = useGlobalContext();
     const {
-        assetSend,
-        assetReceive,
-        swapType,
+        pair,
         sendAmount,
+        receiveAmount,
         setMaximum,
         setMinimum,
         minerFee,
@@ -89,11 +78,42 @@ const Fees = () => {
         onchainAddress,
         addressValid,
     } = useCreateContext();
-    const { signer } = useWeb3Signer();
+    const { signer, getGasAbstractionSigner } = useWeb3Signer();
 
-    const [routingFee, setRoutingFee] = createSignal<number | undefined>(
-        undefined,
-    );
+    const swapType = () => pair().swapToCreate?.type;
+    const assetSend = () => pair().fromAsset;
+    const assetReceive = () => pair().toAsset;
+
+    const needsBoltzSwapSendAmount = createMemo(() => {
+        if (!pair().isRoutable) return false;
+
+        const from = assetSend();
+        const fromAsset = config.assets[from];
+        return (
+            fromAsset?.type === AssetKind.ERC20 &&
+            fromAsset.token?.routeVia !== undefined
+        );
+    });
+
+    const boltzFeeAmount = createMemo(() => {
+        if (!pair().isRoutable) {
+            return BigNumber(0);
+        }
+
+        receiveAmount();
+
+        if (!needsBoltzSwapSendAmount()) {
+            return pair().feeOnSend(sendAmount());
+        }
+
+        const boltzSwapSendAmount =
+            pair().boltzSwapSendAmountFromLatestQuote(sendAmount());
+        if (boltzSwapSendAmount === undefined) {
+            return BigNumber(0);
+        }
+
+        return pair().feeOnSend(boltzSwapSendAmount);
+    });
 
     const rifFetchTrigger = createMemo(() => {
         return {
@@ -108,12 +128,13 @@ const Fees = () => {
                 return 0;
             }
 
-            const { useRif, gasPrice } = await getClaimAddress(
+            const { useGasAbstraction, gasPrice } = await getClaimAddress(
                 () => assetReceive,
                 () => signer,
                 onchainAddress,
+                getGasAbstractionSigner,
             );
-            if (!useRif) {
+            if (!useGasAbstraction) {
                 return 0;
             }
 
@@ -124,44 +145,25 @@ const Fees = () => {
     );
 
     createEffect(() => {
-        // Reset routing fee when changing the pair
-        // (which might not be submarine and not set the signal)
-        setRoutingFee(undefined);
-
         // Updating the miner fee with "setMinerFee(minerFee() + rifExtraCost())"
         // causes an endless loop of triggering the effect again
         const updateMinerFee = (fee: number) => {
             setMinerFee(fee + rifExtraCost());
         };
 
-        if (pairs()) {
-            const cfg = getPair(
-                pairs(),
-                swapType(),
-                assetSend(),
-                assetReceive(),
-            );
+        if (pairs() && pair().isRoutable) {
+            setBoltzFee(pair().feePercentage);
 
-            if (!cfg) return;
+            const swapToCreate = pair().swapToCreate;
+            if (!swapToCreate) return;
 
-            setBoltzFee(cfg.fees.percentage);
-
-            switch (swapType()) {
+            switch (swapToCreate.type) {
                 case SwapType.Submarine:
-                    setRoutingFee(
-                        (cfg as SubmarinePairTypeTaproot).fees
-                            .maximalRoutingFee,
-                    );
-                    updateMinerFee(
-                        (cfg as SubmarinePairTypeTaproot).fees.minerFees,
-                    );
+                    updateMinerFee(pair().minerFees);
                     break;
 
                 case SwapType.Reverse: {
-                    const reverseCfg = cfg as ReversePairTypeTaproot;
-                    let fee =
-                        reverseCfg.fees.minerFees.claim +
-                        reverseCfg.fees.minerFees.lockup;
+                    let fee = pair().minerFees;
                     if (
                         isToUnconfidentialLiquid({
                             assetReceive,
@@ -177,10 +179,7 @@ const Fees = () => {
                 }
 
                 case SwapType.Chain: {
-                    const chainCfg = cfg as ChainPairTypeTaproot;
-                    let fee =
-                        chainCfg.fees.minerFees.server +
-                        chainCfg.fees.minerFees.user.claim;
+                    let fee = pair().minerFees;
                     if (
                         isToUnconfidentialLiquid({
                             assetReceive,
@@ -196,24 +195,12 @@ const Fees = () => {
                 }
             }
 
-            const calculateLimit = (limit: number): number => {
-                return swapType() === SwapType.Submarine
-                    ? calculateSendAmount(
-                          BigNumber(limit),
-                          boltzFee(),
-                          minerFee(),
-                          swapType(),
-                      ).toNumber()
-                    : limit;
-            };
-
-            setMinimum(
-                calculateLimit(
-                    (cfg as SubmarinePairTypeTaproot).limits.minimalBatched ||
-                        cfg.limits.minimal,
-                ),
+            void Promise.all([pair().getMinimum(), pair().getMaximum()]).then(
+                ([min, max]) => {
+                    setMinimum(min);
+                    setMaximum(max);
+                },
             );
-            setMaximum(calculateLimit(cfg.limits.maximal));
         }
     });
 
@@ -235,6 +222,7 @@ const Fees = () => {
                         BigNumber(minerFee()),
                         denomination(),
                         separator(),
+                        BTC,
                         true,
                     )}
                     <span
@@ -262,14 +250,10 @@ const Fees = () => {
                 ):{" "}
                 <span class="boltz-fee" data-testid="boltz-fee">
                     {formatAmount(
-                        calculateBoltzFeeOnSend(
-                            sendAmount(),
-                            boltzFee(),
-                            minerFee(),
-                            swapType(),
-                        ),
+                        boltzFeeAmount(),
                         denomination(),
                         separator(),
+                        BTC,
                         true,
                     )}
                     <span
@@ -277,11 +261,11 @@ const Fees = () => {
                         data-denominator={denomination()}
                     />
                 </span>
-                <Show when={routingFee() !== undefined}>
+                <Show when={pair().maxRoutingFee !== undefined}>
                     <br />
                     {t("routing_fee_limit")}:{" "}
                     <span data-testid="routing-fee-limit">
-                        {routingFee() * ppmFactor} ppm
+                        {pair().maxRoutingFee * ppmFactor} ppm
                     </span>
                 </Show>
             </label>

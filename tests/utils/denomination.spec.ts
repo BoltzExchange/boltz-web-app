@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 
-import { BTC, LBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, USDT0 } from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import {
     calculateDigits,
@@ -23,7 +23,11 @@ describe("denomination utils", () => {
             "convert $amount in $denomination",
             ({ denomination, amount, converted }) => {
                 expect(
-                    convertAmount(BigNumber(amount), denomination).toNumber(),
+                    convertAmount(
+                        BTC,
+                        BigNumber(amount),
+                        denomination,
+                    ).toNumber(),
                 ).toEqual(converted);
             },
         );
@@ -49,7 +53,12 @@ describe("denomination utils", () => {
             "format $amount in $denomination with `$separator` separator",
             ({ denomination, amount, formatted, separator }) => {
                 expect(
-                    formatAmount(BigNumber(amount), denomination, separator),
+                    formatAmount(
+                        BigNumber(amount),
+                        denomination,
+                        separator,
+                        BTC,
+                    ),
                 ).toEqual(formatted);
             },
         );
@@ -100,11 +109,13 @@ describe("denomination utils", () => {
     });
 
     test.each`
-        denomination        | input   | expected
-        ${Denomination.Sat} | ${BTC}  | ${"sats"}
-        ${Denomination.Sat} | ${LBTC} | ${"sats"}
-        ${Denomination.Btc} | ${BTC}  | ${BTC}
-        ${Denomination.Btc} | ${LBTC} | ${LBTC}
+        denomination        | input    | expected
+        ${Denomination.Sat} | ${BTC}   | ${"sats"}
+        ${Denomination.Sat} | ${LBTC}  | ${"sats"}
+        ${Denomination.Btc} | ${BTC}   | ${BTC}
+        ${Denomination.Btc} | ${LBTC}  | ${LBTC}
+        ${Denomination.Sat} | ${USDT0} | ${USDT0}
+        ${Denomination.Btc} | ${USDT0} | ${USDT0}
     `("should format denomination", ({ denomination, input, expected }) => {
         expect(formatDenomination(denomination, input)).toEqual(expected);
     });

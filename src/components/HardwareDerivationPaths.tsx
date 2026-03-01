@@ -165,6 +165,7 @@ const HwAddressSelection = (props: {
                                     ),
                                     Denomination.Btc,
                                     separator(),
+                                    RBTC,
                                 )}{" "}
                                 {RBTC}
                             </span>

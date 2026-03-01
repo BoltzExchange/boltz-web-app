@@ -112,6 +112,12 @@ type SwapTree = {
     refundLeaf: SwapTreeLeaf;
 };
 
+type CommitmentLockupDetails = {
+    contract: string;
+    claimAddress: string;
+    timelock: number;
+};
+
 type SubmarineCreatedResponse = {
     id: string;
     address: string;
@@ -205,6 +211,17 @@ export type SwapStatus = {
         id: string;
         hex: string;
     };
+};
+
+export type QuoteData = {
+    quote: string;
+    data: unknown;
+};
+
+export type QuoteCalldata = {
+    to: string;
+    value: string;
+    data: string;
 };
 
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
@@ -403,6 +420,25 @@ export const getNodeStats = () =>
 export const getContracts = () =>
     fetcher<Record<string, Contracts>>("/v2/chain/contracts");
 
+export const getCommitmentLockupDetails = (currency: string) =>
+    fetcher<CommitmentLockupDetails>(`/v2/commitment/${currency}/details`);
+
+export const postCommitmentSignature = (
+    currency: string,
+    swapId: string,
+    signature: string,
+    transactionHash: string,
+    logIndex?: number,
+    maxOverpaymentPercentage?: number,
+) =>
+    fetcher<object>(`/v2/commitment/${currency}`, {
+        swapId,
+        signature,
+        transactionHash,
+        logIndex,
+        maxOverpaymentPercentage,
+    });
+
 export const broadcastTransaction = async (
     asset: string,
     txHex: string,
@@ -553,9 +589,50 @@ export const assetRescueBroadcast = (
         partialSignature: hex.encode(partialSignature),
     });
 
+export const quoteDexAmountIn = async (
+    chain: string,
+    tokenIn: string,
+    tokenOut: string,
+    amountIn: bigint,
+): Promise<QuoteData[]> => {
+    const params = new URLSearchParams();
+    params.set("tokenIn", tokenIn);
+    params.set("tokenOut", tokenOut);
+    params.set("amountIn", amountIn.toString());
+    return await fetcher(`/v2/quote/${chain}/in?${params.toString()}`);
+};
+
+export const quoteDexAmountOut = async (
+    chain: string,
+    tokenIn: string,
+    tokenOut: string,
+    amountOut: bigint,
+): Promise<QuoteData[]> => {
+    const params = new URLSearchParams();
+    params.set("tokenIn", tokenIn);
+    params.set("tokenOut", tokenOut);
+    params.set("amountOut", amountOut.toString());
+    return await fetcher(`/v2/quote/${chain}/out?${params.toString()}`);
+};
+
+export const encodeDexQuote = (
+    chain: string,
+    recipient: string,
+    amountIn: bigint,
+    amountOutMin: bigint,
+    data: QuoteData["data"],
+) =>
+    fetcher<{ calls: QuoteCalldata[] }>(`/v2/quote/${chain}/encode`, {
+        recipient,
+        amountIn: amountIn.toString(),
+        amountOutMin: amountOutMin.toString(),
+        data,
+    });
+
 export {
     Pairs,
     Contracts,
+    CommitmentLockupDetails,
     PartialSignature,
     ChainPairTypeTaproot,
     ReversePairTypeTaproot,

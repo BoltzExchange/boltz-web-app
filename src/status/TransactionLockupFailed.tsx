@@ -35,7 +35,7 @@ import { parseBlindingKey } from "../utils/helper";
 import type { ChainSwap, SubmarineSwap } from "../utils/swapCreator";
 import SwapRefunded from "./SwapRefunded";
 
-const Amount = (props: { label: DictKey; amount: number }) => {
+const Amount = (props: { label: DictKey; amount: number; asset: string }) => {
     const { t, denomination, separator } = useGlobalContext();
 
     return (
@@ -47,6 +47,7 @@ const Amount = (props: { label: DictKey; amount: number }) => {
                         new BigNumber(props.amount),
                         denomination(),
                         separator(),
+                        props.asset,
                     ) || 0
                 }`}
                 <span class="denominator" data-denominator={denomination()} />
@@ -167,11 +168,16 @@ const TransactionLockupFailed = (props: {
                         </>
                     }>
                     <div class="quote">
-                        <Amount label={"sent"} amount={newQuote().sentAmount} />
+                        <Amount
+                            label={"sent"}
+                            amount={newQuote().sentAmount}
+                            asset={swap().assetSend}
+                        />
                         <ImArrowDown size={15} style={{ opacity: 0.5 }} />
                         <Amount
                             label={"will_receive"}
                             amount={newQuote().receiveAmount}
+                            asset={swap().assetReceive}
                         />
                     </div>
 

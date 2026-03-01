@@ -1,7 +1,7 @@
 import { BiSolidHelpCircle } from "solid-icons/bi";
 import { BsCardText } from "solid-icons/bs";
 import { ImDisplay } from "solid-icons/im";
-import { IoClose, IoShield } from "solid-icons/io";
+import { IoClose, IoShield, IoSwapHorizontal } from "solid-icons/io";
 import { type JSXElement, Show, onCleanup, onMount } from "solid-js";
 
 import { useGlobalContext } from "../../context/Global";
@@ -14,6 +14,7 @@ import Logs from "./Logs";
 import PrivacyMode from "./PrivacyMode";
 import RescueFile from "./RescueKey";
 import Separator from "./Separator";
+import Slippage from "./Slippage";
 import Tooltip from "./Tooltip";
 import ZeroConf from "./ZeroConf";
 
@@ -82,6 +83,16 @@ const SettingsMenuContent = () => {
                     <IoClose />
                 </span>
                 <hr class="spacer" />
+                <Section
+                    title={t("swap")}
+                    icon={<IoSwapHorizontal size={20} />}>
+                    <Entry
+                        label={"slippage"}
+                        tooltipLabel={"slippage_tooltip"}
+                        settingElement={<Slippage />}
+                    />
+                </Section>
+
                 <Section title={t("display")} icon={<ImDisplay size={20} />}>
                     <Entry
                         label={"denomination"}
