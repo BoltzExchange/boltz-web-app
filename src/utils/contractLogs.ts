@@ -87,6 +87,7 @@ const reconcilePendingClaims = (
 
 const createScanContext = async (
     etherSwap: EtherSwap,
+    scanConfig: ScanConfig,
 ): Promise<ScanContext | null> => {
     const providerUrl = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
     if (providerUrl === undefined) {
@@ -97,18 +98,39 @@ const createScanContext = async (
     const provider = new JsonRpcProvider(providerUrl);
     const minBlock = config.assets[RBTC].contracts.deployHeight;
 
-    const contract = etherSwap.connect(provider);
+    const [latestBlock, version] = await Promise.all([
+        provider.getBlockNumber(),
+        etherSwap.version(),
+    ]);
 
-    const latestBlock = await provider.getBlockNumber();
+    let filter = etherSwap.filters.Lockup();
+
+    if (scanConfig.filter?.address !== undefined) {
+        if (scanConfig.action === RskRescueMode.Refund) {
+            filter = etherSwap.filters.Lockup(
+                null,
+                null,
+                null,
+                scanConfig.filter.address,
+            );
+        } else if (scanConfig.action === RskRescueMode.Claim && version >= 6) {
+            // For contracts v6 and above, the claim address is indexed
+            filter = etherSwap.filters.Lockup(
+                null,
+                null,
+                scanConfig.filter.address,
+            );
+        }
+    }
 
     return {
+        filter,
         providerUrl,
         contractAddress,
         latestBlock,
         minBlock,
-        contract,
-        filter: contract.filters.Lockup(),
         totalBlocks: latestBlock - minBlock,
+        contract: etherSwap.connect(provider),
     };
 };
 
@@ -252,7 +274,7 @@ export async function* scanLockupEvents(
     etherSwap: EtherSwap,
     scanConfig: ScanConfig = {},
 ): AsyncGenerator<ScanResult> {
-    const ctx = await createScanContext(etherSwap);
+    const ctx = await createScanContext(etherSwap, scanConfig);
     if (ctx === null) {
         return;
     }
