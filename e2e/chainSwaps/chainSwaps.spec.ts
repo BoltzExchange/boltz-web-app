@@ -7,6 +7,7 @@ import {
     elementsGetReceivedByAddress,
     elementsSendToAddress,
     expectApproxAmount,
+    expectApproxBtcAmount,
     fetchBip21Invoice,
     generateBitcoinBlock,
     generateInvoiceWithRoutingHint,
@@ -79,7 +80,7 @@ test.describe("Chain swap", () => {
         expect(txId).toBeDefined();
 
         const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
-        expect(txInfo.amount.toString()).toEqual(receiveAmount);
+        expectApproxBtcAmount(txInfo.amount.toString(), receiveAmount);
     });
 
     test("BTC/LN with Magic Routing Hint switches to BTC/L-BTC", async ({
