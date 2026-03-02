@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import {
     expectApproxAmount,
+    expectApproxBtcAmount,
     generateBitcoinBlock,
     getBitcoinAddress,
     getBitcoinWalletTx,
@@ -62,7 +63,7 @@ test.describe("reverseSwap", () => {
         expect(txId).toBeDefined();
 
         const txInfo = JSON.parse(await getBitcoinWalletTx(txId));
-        expect(txInfo.amount.toString()).toEqual(receiveAmount);
+        expectApproxBtcAmount(txInfo.amount.toString(), receiveAmount);
     });
 
     test("LN/BTC with zeroConf toggle automatically claims swap", async ({

@@ -18,6 +18,7 @@ import { btcToSat } from "../src/utils/denomination";
 import { findMagicRoutingHint } from "../src/utils/magicRoutingHint";
 
 const execAsync = promisify(exec);
+export const amountBufferSats = 1;
 
 const executeInScriptsContainer =
     'docker exec boltz-scripts bash -c "source /etc/profile.d/utils.sh && ';
@@ -400,13 +401,21 @@ export const checkBoltzConfPatch = () => {
 export const expectApproxAmount = async (
     input: Locator,
     expectedBtc: string,
-    toleranceSats: number = 1,
+    toleranceSats: number = amountBufferSats,
 ): Promise<string> => {
     const val = await input.inputValue();
+    expectApproxBtcAmount(val, expectedBtc, toleranceSats);
+    return val;
+};
+
+export const expectApproxBtcAmount = (
+    actualBtc: string,
+    expectedBtc: string,
+    toleranceSats: number = amountBufferSats,
+): void => {
     const expectedSats = btcToSat(BigNumber(expectedBtc));
-    const actualSats = btcToSat(BigNumber(val));
+    const actualSats = btcToSat(BigNumber(actualBtc));
     expect(actualSats.minus(expectedSats).abs().toNumber()).toBeLessThanOrEqual(
         toleranceSats,
     );
-    return val;
 };
