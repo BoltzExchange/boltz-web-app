@@ -17,6 +17,7 @@ import WalletConnectIcon from "../assets/wallet-connect.svg";
 import { config } from "../config";
 import { RBTC } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
+import EtherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
 import type { Contracts } from "../utils/boltzClient";
 import { getContracts } from "../utils/boltzClient";
@@ -214,9 +215,17 @@ const Web3SignerProvider = (props: {
     };
 
     const getEtherSwap = () => {
+        const address = contracts().swapContracts.EtherSwap;
+        const version = Number(
+            Object.keys(contracts().supportedContracts).find(
+                (key) =>
+                    contracts().supportedContracts[key].EtherSwap === address,
+            ) ?? 5,
+        );
+
         return new Contract(
             contracts().swapContracts.EtherSwap,
-            EtherSwapAbi,
+            version <= 5 ? EtherSwapAbiV5 : EtherSwapAbi,
             signer() || createProvider(config.assets["RBTC"]?.network?.rpcUrls),
         ) as unknown as EtherSwap;
     };

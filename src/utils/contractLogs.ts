@@ -1,13 +1,12 @@
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import type { BytesLike, Result, Signer } from "ethers";
-import { Contract, JsonRpcProvider } from "ethers";
+import { JsonRpcProvider } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
 import type { AssetType } from "../consts/Assets";
 import { RBTC } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
-import { EtherSwapAbi } from "../context/Web3";
 import {
     PreimageHashesWorker,
     type PreimageMap,
@@ -96,14 +95,11 @@ const createScanContext = async (
 
     const contractAddress = await etherSwap.getAddress();
     const provider = new JsonRpcProvider(providerUrl);
-    const latestBlock = await provider.getBlockNumber();
     const minBlock = config.assets[RBTC].contracts.deployHeight;
 
-    const contract = new Contract(
-        contractAddress,
-        EtherSwapAbi,
-        provider,
-    ) as unknown as EtherSwap;
+    const contract = etherSwap.connect(provider);
+
+    const latestBlock = await provider.getBlockNumber();
 
     return {
         providerUrl,
@@ -155,19 +151,12 @@ function* generateBlockRangeBatches(
  */
 const fetchEventsForRanges = async (
     ranges: BlockRange[],
-    contractAddress: string,
-    providerUrl: string,
+    contract: EtherSwap,
     filter: ReturnType<EtherSwap["filters"]["Lockup"]>,
 ): Promise<LockupEvent[]> => {
     const results = await Promise.all(
         ranges.map(({ fromBlock, toBlock }) =>
-            (
-                new Contract(
-                    contractAddress,
-                    EtherSwapAbi,
-                    new JsonRpcProvider(providerUrl),
-                ) as unknown as EtherSwap
-            ).queryFilter(filter, fromBlock, toBlock),
+            contract.queryFilter(filter, fromBlock, toBlock),
         ),
     );
 
@@ -294,8 +283,7 @@ export async function* scanLockupEvents(
         );
         const events = await fetchEventsForRanges(
             ranges,
-            ctx.contractAddress,
-            ctx.providerUrl,
+            ctx.contract,
             ctx.filter,
         );
 
@@ -306,7 +294,7 @@ export async function* scanLockupEvents(
         };
 
         for (const event of events) {
-            const { data, decoded } = parseLockupEvent(etherSwap, event);
+            const { data, decoded } = parseLockupEvent(ctx.contract, event);
             const match = matchesFilter(data, scanConfig.filter);
 
             if (match === null || match !== scanConfig.action) {
