@@ -6,13 +6,13 @@
         "node": ">=24.0.0"
     },
     "scripts": {
-        "start": "npm run regtest && vite",
+        "start": "npm run regtest && rsbuild dev",
         "test": "npm run regtest && vitest ./tests",
         "test:e2e": "npm run regtest && playwright test",
         "playwright:install": "playwright install --with-deps chromium",
-        "dev": "vite",
-        "preview": "vite preview",
-        "build": "./build.py && vite build; cp dist/index.html dist/404.html",
+        "dev": "rsbuild dev",
+        "preview": "rsbuild preview --port 4173",
+        "build": "./build.py && rsbuild build",
         "build:regular": "node index-template-vars.mjs --regular && npm run build",
         "build:pro": "node index-template-vars.mjs --pro && npm run build",
         "check:html-template": "node index-template-vars.mjs --regular && node index-template-vars.mjs --pro",
@@ -36,6 +36,11 @@
         "check:assets": "node check-assets.mjs"
     },
     "devDependencies": {
+        "@rsbuild/core": "^1.7.3",
+        "@rsbuild/plugin-babel": "^1.1.1",
+        "@rsbuild/plugin-node-polyfill": "^1.4.4",
+        "@rsbuild/plugin-sass": "^1.5.0",
+        "@rsbuild/plugin-solid": "^1.1.0",
         "@eslint/js": "^9.39.2",
         "@playwright/test": "^1.58.2",
         "@solidjs/testing-library": "^0.8.10",
@@ -56,7 +61,6 @@
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.1",
         "viem": "^2.46.3",
-        "vite": "^7.3.1",
         "vite-plugin-node-polyfills": "^0.25.0",
         "vite-plugin-solid": "^2.11.10",
         "vite-plugin-top-level-await": "^1.6.0",

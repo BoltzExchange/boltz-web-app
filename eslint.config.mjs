@@ -16,7 +16,7 @@ export default [
             "build/dist",
             "node_modules",
             "dnssec-prover",
-            "vite.config.mjs",
+            "rsbuild.config.mjs",
             "src/utils/dnssec/dnssec_prover*",
         ],
     },

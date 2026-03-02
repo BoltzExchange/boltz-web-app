@@ -154,7 +154,7 @@ const cleanup = render(
     document.getElementById("root"),
 );
 
-if (import.meta.hot) {
+if (import.meta.webpackHot) {
     log.info("Hot reload");
-    import.meta.hot.dispose(cleanup);
+    import.meta.webpackHot.dispose(cleanup);
 }

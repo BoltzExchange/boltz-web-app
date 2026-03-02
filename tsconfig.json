@@ -9,7 +9,7 @@
         "moduleResolution": "bundler",
         "jsx": "preserve",
         "jsxImportSource": "solid-js",
-        "types": ["vite/client", "bignumber.js", "vitest/globals", "node"],
+        "types": ["bignumber.js", "vitest/globals", "node"],
         "baseUrl": ".",
         "outDir": "ts-out",
         "noImplicitReturns": true,
