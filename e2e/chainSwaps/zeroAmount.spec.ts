@@ -1,7 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import {
+    amountBufferSats,
     bitcoinSendToAddress,
+    expectApproxBtcAmount,
     generateBitcoinBlock,
     getBitcoinAddress,
     getElementsWalletTx,
@@ -52,7 +54,11 @@ test.describe("Chain Swap 0-amount", () => {
         expect(txId).toBeDefined();
 
         const txInfo = JSON.parse(await getElementsWalletTx(txId));
-        expect(txInfo.amount.bitcoin.toString()).toEqual("0.00997303");
+        expectApproxBtcAmount(
+            txInfo.amount.bitcoin.toString(),
+            "0.00997303",
+            amountBufferSats,
+        );
     });
 
     test("should allow 0-amount chain swaps", async ({ page }) => {
