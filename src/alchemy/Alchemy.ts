@@ -1,6 +1,7 @@
 import { type Wallet, getBytes } from "ethers";
 
 import { formatError } from "../utils/errors";
+import { constructRequestOptions } from "../utils/helper";
 
 const alchemyHeaders = {
     accept: "application/json",
@@ -65,22 +66,32 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     params: unknown[],
 ): Promise<T> => {
     let response: Response;
+    const { opts, requestTimeout } = constructRequestOptions({
+        method: "POST",
+        headers: alchemyHeaders,
+        body: JSON.stringify({
+            id: jsonRpcId,
+            jsonrpc: jsonRpcVersion,
+            method,
+            params,
+        }),
+    });
 
     try {
-        response = await fetch(alchemyUrl(), {
-            method: "POST",
-            headers: alchemyHeaders,
-            body: JSON.stringify({
-                id: jsonRpcId,
-                jsonrpc: jsonRpcVersion,
-                method,
-                params,
-            }),
-        });
+        response = await fetch(alchemyUrl(), opts);
     } catch (error) {
+        const isAbortError =
+            (error instanceof DOMException && error.name === "AbortError") ||
+            opts.signal?.aborted === true;
+        if (isAbortError) {
+            throw new Error(`Alchemy request timed out for ${method}`);
+        }
+
         throw new Error(
             `Alchemy request failed for ${method}: ${formatError(error)}`,
         );
+    } finally {
+        clearTimeout(requestTimeout);
     }
 
     const rawBody = await response.text();

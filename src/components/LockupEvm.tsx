@@ -583,7 +583,7 @@ const LockupEvm = (props: {
                 <Show
                     when={
                         signer() === undefined ||
-                        signerBalance() > requiredValue()
+                        signerBalance() >= requiredValue()
                     }
                     fallback={<InsufficientBalance asset={userAsset()} />}>
                     <LockupTransaction
