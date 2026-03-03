@@ -73,7 +73,7 @@ const ClaimState = (props: {
     setClaimTxId: Setter<string>;
 }) => {
     const navigate = useNavigate();
-    const { t, notify } = useGlobalContext();
+    const { t } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
     const { rskRescuableSwaps } = useRescueContext();
     const params = useParams();
@@ -126,7 +126,7 @@ const ClaimState = (props: {
             props.setClaimTxId(transactionHash);
         } catch (error) {
             log.error(error);
-            notify("error", t("error_occurred", { error: formatError(error) }));
+            throw error; // will be catched by ContractTransaction and notified
         }
     };
 
