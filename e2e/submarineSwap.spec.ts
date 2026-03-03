@@ -121,7 +121,7 @@ test.describe("Submarine swap", () => {
         const btcAsset = page.locator("div[class='asset asset-BTC'] div");
         await btcAsset.click();
 
-        const lnAsset = page.locator("div[data-testid='select-LN']");
+        const lnAsset = page.getByTestId("select-LN");
         await lnAsset.click();
 
         const receiveAmount = "0.0009";

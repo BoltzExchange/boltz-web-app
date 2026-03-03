@@ -184,13 +184,17 @@ const Web3SignerProvider = (props: {
     const getGasAbstractionSigner = (asset: string): Wallet => {
         const assetConfig = config.assets?.[asset];
         const chainId = assetConfig?.network?.chainId;
-        const provider = createProvider(assetConfig?.network?.rpcUrls);
+        const rpcUrls = assetConfig?.network?.rpcUrls;
+
+        if (chainId === undefined || rpcUrls === undefined) {
+            throw new Error(`missing network config for asset: ${asset}`);
+        }
 
         return new Wallet(
             Buffer.from(deriveKeyGasAbstraction(chainId).privateKey).toString(
                 "hex",
             ),
-            provider,
+            createProvider(rpcUrls),
         );
     };
 

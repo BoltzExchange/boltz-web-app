@@ -61,7 +61,7 @@ export const hasEvmAssets = (): boolean => {
     return getEvmAssets().length > 0;
 };
 
-export const getTokenAddress = (asset: string): string | undefined => {
+export const getTokenAddress = (asset: string): string => {
     return requireTokenConfig(asset).address;
 };
 

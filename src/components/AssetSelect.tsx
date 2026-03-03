@@ -103,18 +103,20 @@ const SelectAsset = () => {
                                         : t("receive"),
                             })}
                         </h3>
-                        <span
+                        <button
+                            type="button"
                             class="asset-select-close"
                             onClick={() => setAssetSelect(false)}>
                             <IoClose />
-                        </span>
+                        </button>
                     </div>
                     <div class="asset-select-list">
                         <For each={assets}>
                             {(asset) => {
                                 const network = getAssetNetwork(asset);
                                 return (
-                                    <div
+                                    <button
+                                        type="button"
                                         class={`asset-select-item asset-${asset}`}
                                         data-network={getNetworkBadge(asset)}
                                         data-selected={isSelected(asset)}
@@ -131,7 +133,7 @@ const SelectAsset = () => {
                                                 </span>
                                             </Show>
                                         </div>
-                                    </div>
+                                    </button>
                                 );
                             }}
                         </For>

@@ -7,6 +7,7 @@ import {
     createEffect,
     createMemo,
     createSignal,
+    on,
     onCleanup,
 } from "solid-js";
 
@@ -263,28 +264,30 @@ const ConnectWallet = (props: {
     const address = createMemo(() => signer()?.address);
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
-        const contracts = getContractsForAsset(props.asset);
+    createEffect(
+        on([() => props.asset, () => signer(), address], async () => {
+            const contracts = getContractsForAsset(props.asset);
 
-        if (
-            address() !== undefined &&
-            contracts &&
-            Number((await signer()?.provider.getNetwork())?.chainId || -1) !==
-                contracts.network.chainId
-        ) {
-            setNetworkValid(false);
-            return;
-        }
+            if (
+                address() !== undefined &&
+                contracts &&
+                Number(
+                    (await signer()?.provider.getNetwork())?.chainId || -1,
+                ) !== contracts.network.chainId
+            ) {
+                setNetworkValid(false);
+                return;
+            }
 
-        setNetworkValid(true);
+            setNetworkValid(true);
 
-        if (isEvmAsset(props.asset)) {
-            const addr = address();
-            setAddressValid(addr !== undefined);
-            setOnchainAddress(addr || "");
-        }
-    });
+            if (isEvmAsset(props.asset)) {
+                const addr = address();
+                setAddressValid(addr !== undefined);
+                setOnchainAddress(addr || "");
+            }
+        }),
+    );
 
     onCleanup(() => {
         setAddressValid(false);

@@ -303,7 +303,8 @@ const Create = () => {
             creatingSwap() &&
             ((onchainAddress() === "" && btcChains.includes(pair().toAsset)) ||
                 (signer() === undefined &&
-                    evmChains.includes(pair().toAsset)) ||
+                    (evmChains.includes(pair().toAsset) ||
+                        evmChains.includes(pair().fromAsset))) ||
                 (lnurl() === "" &&
                     bolt12Offer() === undefined &&
                     pair().toAsset === LN))
@@ -333,7 +334,8 @@ const Create = () => {
                         ),
                     );
                 }
-                if (receiveAmount().isGreaterThan(0)) validateAmount();
+
+                validateAmount();
             });
         }),
     );

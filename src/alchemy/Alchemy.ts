@@ -195,15 +195,34 @@ export const signPreparedCalls = async (
     const { result } = prepareCallsResponse;
 
     if (result.type === "array") {
+        if (!Array.isArray(result.data)) {
+            throw new Error(
+                'signPreparedCalls: expected result.data to be an array when result.type="array"',
+            );
+        }
+
         const entries = result.data as PrepareCallsEntry[];
         if (entries.length < 2) {
             throw new Error(
-                "Alchemy prepareCalls response is missing required array entries",
+                `signPreparedCalls: expected entries.length >= 2 for array result, got entries.length=${entries.length}`,
+            );
+        }
+
+        const authEntry = entries[0];
+        const uoEntry = entries[1];
+        if (authEntry.type !== "eip-7702-authorization") {
+            throw new Error(
+                `signPreparedCalls: entries[0].type expected "eip-7702-authorization", got "${authEntry.type}"`,
+            );
+        }
+        if (uoEntry.type !== "user-operation-v070") {
+            throw new Error(
+                `signPreparedCalls: entries[1].type expected "user-operation-v070", got "${uoEntry.type}"`,
             );
         }
 
         // Sign the 7702 authorization as a raw digest (no EIP-191 prefix)
-        const authPayload = entries[0].signatureRequest.rawPayload;
+        const authPayload = authEntry.signatureRequest.rawPayload;
         if (authPayload === undefined) {
             throw new Error(
                 "Alchemy prepareCalls response is missing authorization payload",
@@ -212,7 +231,7 @@ export const signPreparedCalls = async (
         const authSignature = signer.signingKey.sign(authPayload).serialized;
 
         // Sign the user operation
-        const uoPayload = entries[1].signatureRequest.data?.raw;
+        const uoPayload = uoEntry.signatureRequest.data?.raw;
         if (uoPayload === undefined) {
             throw new Error(
                 "Alchemy prepareCalls response is missing user operation payload",
@@ -222,15 +241,15 @@ export const signPreparedCalls = async (
 
         return [
             {
-                type: entries[0].type,
-                data: entries[0].data,
-                chainId: entries[0].chainId,
+                type: authEntry.type,
+                data: authEntry.data,
+                chainId: authEntry.chainId,
                 signature: { type: "secp256k1", data: authSignature },
             },
             {
-                type: entries[1].type,
-                data: entries[1].data,
-                chainId: entries[1].chainId,
+                type: uoEntry.type,
+                data: uoEntry.data,
+                chainId: uoEntry.chainId,
                 signature: { type: "secp256k1", data: uoSignature },
             },
         ];
@@ -301,7 +320,7 @@ export const sendTransaction = async (
     return await waitForTransactionHash(callId);
 };
 
-export const waitForTransactionHash = async (
+const waitForTransactionHash = async (
     callId: string,
     intervalMs = 1_000,
     maxAttempts = 60,

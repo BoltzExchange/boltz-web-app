@@ -115,7 +115,11 @@ const lockupWithHops = async (
     const callsHash = ethersKeccak256(encodedCalls);
 
     const nonce = BigInt("0x" + randomBytes(32).toString("hex"));
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 1800);
+
+    const permit2DeadlineSeconds = 1_800;
+    const deadline = BigInt(
+        Math.floor(Date.now() / 1000) + permit2DeadlineSeconds,
+    );
 
     const tokenAddress = getTokenAddress(asset);
     const commitmentLockupDetails = await getCommitmentLockupDetails(asset);

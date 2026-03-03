@@ -1,21 +1,19 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 
-import Slippage, {
-    roundPercent,
-} from "../../src/components/settings/Slippage";
+import Slippage, { roundPercent } from "../../src/components/settings/Slippage";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
 describe("roundPercent", () => {
     test.each`
-        input                    | expected
-        ${0.30000000000000004}   | ${0.3}
-        ${0.1}                   | ${0.1}
-        ${0.9999999999999999}    | ${1}
-        ${1.0000000000000002}    | ${1}
-        ${2.4000000000000004}    | ${2.4}
-        ${5}                     | ${5}
-        ${0}                     | ${0}
-        ${3.55}                  | ${3.6}
+        input                  | expected
+        ${0.30000000000000004} | ${0.3}
+        ${0.1}                 | ${0.1}
+        ${0.9999999999999999}  | ${1}
+        ${1.0000000000000002}  | ${1}
+        ${2.4000000000000004}  | ${2.4}
+        ${5}                   | ${5}
+        ${0}                   | ${0}
+        ${3.55}                | ${3.6}
     `("roundPercent($input) === $expected", ({ input, expected }) => {
         expect(roundPercent(input)).toBe(expected);
     });

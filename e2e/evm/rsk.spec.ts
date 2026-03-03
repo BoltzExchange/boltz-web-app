@@ -26,7 +26,7 @@ test.describe("EVM", () => {
         await page.goto("/");
 
         await page.locator("div[class='asset asset-LN'] div").click();
-        await page.locator("div[data-testid='select-RBTC']").click();
+        await page.getByTestId("select-RBTC").click();
 
         await page
             .getByRole("button", { name: dict.en.connect_wallet })
@@ -72,11 +72,11 @@ test.describe("EVM", () => {
                     "div[class^='asset asset-']",
                 );
                 await assetSelectors.first().click();
-                await page.locator(`div[data-testid='${sendTestId}']`).click();
+                await page.getByTestId(sendTestId).click();
 
                 // Select RBTC as receive asset
                 await assetSelectors.last().click();
-                await page.locator("div[data-testid='select-RBTC']").click();
+                await page.getByTestId("select-RBTC").click();
 
                 await page
                     .getByRole("button", {
@@ -181,14 +181,12 @@ test.describe("EVM", () => {
 
                 // Select RBTC as send asset
                 await assetSelectors.first().click();
-                await page.locator("div[data-testid='select-RBTC']").click();
+                await page.getByTestId("select-RBTC").click();
 
                 // Select receive asset (BTC is default after RBTC, so only click if L-BTC)
                 if (receiveTestId !== "select-BTC") {
                     await assetSelectors.last().click();
-                    await page
-                        .locator(`div[data-testid='${receiveTestId}']`)
-                        .click();
+                    await page.getByTestId(receiveTestId).click();
                 }
 
                 await page
@@ -259,7 +257,7 @@ test.describe("EVM", () => {
 
         const assetSelectors = page.locator("div[class^='asset asset-']");
         await assetSelectors.last().click();
-        await page.locator("div[data-testid='select-RBTC']").click();
+        await page.getByTestId("select-RBTC").click();
 
         await page
             .getByRole("button", { name: dict.en.connect_wallet, exact: true })
@@ -317,10 +315,10 @@ test.describe("EVM", () => {
 
         const assetSelectors = page.locator("div[class^='asset asset-']");
         await assetSelectors.first().click();
-        await page.locator("div[data-testid='select-RBTC']").click();
+        await page.getByTestId("select-RBTC").click();
 
         await assetSelectors.last().click();
-        await page.locator("div[data-testid='select-LN']").click();
+        await page.getByTestId("select-LN").click();
 
         await page
             .getByRole("button", { name: dict.en.connect_wallet, exact: true })

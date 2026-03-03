@@ -31,6 +31,24 @@ describe("denomination utils", () => {
                 ).toEqual(converted);
             },
         );
+
+        test.each`
+            amount          | converted
+            ${"0.000001"}   | ${1}
+            ${"1.234567"}   | ${1234567}
+            ${"123.123456"} | ${123123456}
+        `(
+            "convert ERC20 $amount in sats denomination",
+            ({ amount, converted }) => {
+                expect(
+                    convertAmount(
+                        USDT0,
+                        BigNumber(amount),
+                        Denomination.Sat,
+                    ).toNumber(),
+                ).toEqual(converted);
+            },
+        );
     });
 
     describe("format amount", () => {

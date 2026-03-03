@@ -741,6 +741,9 @@ textarea.invalid {
     font-size: 24px;
     color: var(--color-white-50);
     display: flex;
+    appearance: none;
+    border: none;
+    background: none;
     align-items: center;
     justify-content: center;
     width: 32px;
@@ -763,6 +766,12 @@ textarea.invalid {
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
+    margin-bottom: 4px;
+    width: 100%;
+    appearance: none;
+    border: none;
+    background: none;
+    text-align: left;
     border-radius: var(--border-radius-md);
     cursor: pointer;
 

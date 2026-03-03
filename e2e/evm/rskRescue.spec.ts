@@ -42,10 +42,10 @@ const selectAssets = async (
 ) => {
     const assetSelectors = page.locator("div[class^='asset asset-']");
     await assetSelectors.first().click();
-    await page.locator(`div[data-testid='select-${sendAsset}']`).click();
+    await page.getByTestId(`select-${sendAsset}`).click();
 
     await assetSelectors.last().click();
-    await page.locator(`div[data-testid='select-${receiveAsset}']`).click();
+    await page.getByTestId(`select-${receiveAsset}`).click();
 };
 
 const fillReceiveAmount = async (page: Page, amount: string) => {

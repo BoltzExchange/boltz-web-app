@@ -37,7 +37,7 @@ import {
     getFinalAssetReceive,
 } from "../utils/swapCreator";
 
-const claimAssset = async (
+const claimAsset = async (
     useGasAbstraction: boolean,
     asset: string,
     preimage: string,
@@ -466,7 +466,7 @@ const ClaimEvm = (props: {
                 /* eslint-disable-next-line solid/reactivity */
                 onClick={async () => {
                     const currentSwap = await getSwap(props.swapId);
-                    const transactionHash = await claimAssset(
+                    const transactionHash = await claimAsset(
                         props.useGasAbstraction,
                         props.assetReceive,
                         props.preimage,

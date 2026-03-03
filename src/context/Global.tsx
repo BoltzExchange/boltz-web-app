@@ -243,7 +243,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
 
     const deriveKeyGasAbstractionWrapper = (chainId: number) => {
         return ECPair.fromPrivateKey(
-            Buffer.from(
+            new Uint8Array(
                 deriveKeyGasAbstraction(rescueFile(), chainId).privateKey,
             ),
         );

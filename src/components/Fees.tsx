@@ -162,22 +162,7 @@ const Fees = () => {
                     updateMinerFee(pair().minerFees);
                     break;
 
-                case SwapType.Reverse: {
-                    let fee = pair().minerFees;
-                    if (
-                        isToUnconfidentialLiquid({
-                            assetReceive,
-                            addressValid,
-                            onchainAddress,
-                        })
-                    ) {
-                        fee += unconfidentialExtra;
-                    }
-
-                    updateMinerFee(fee);
-                    break;
-                }
-
+                case SwapType.Reverse:
                 case SwapType.Chain: {
                     let fee = pair().minerFees;
                     if (
@@ -195,12 +180,18 @@ const Fees = () => {
                 }
             }
 
-            void Promise.all([pair().getMinimum(), pair().getMaximum()]).then(
-                ([min, max]) => {
-                    setMinimum(min);
-                    setMaximum(max);
-                },
-            );
+            const initiatingPair = pair();
+            void Promise.all([
+                initiatingPair.getMinimum(),
+                initiatingPair.getMaximum(),
+            ]).then(([min, max]) => {
+                if (pair() !== initiatingPair) {
+                    return;
+                }
+
+                setMinimum(min);
+                setMaximum(max);
+            });
         }
     });
 

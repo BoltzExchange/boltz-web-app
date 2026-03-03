@@ -109,7 +109,11 @@ export const getFinalAssetSend = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (swap.dex !== undefined && swap.dex.position === HopsPosition.Before) {
+    if (
+        swap.dex !== undefined &&
+        swap.dex.position === HopsPosition.Before &&
+        swap.dex.hops.length > 0
+    ) {
         return swap.dex.hops[0].from;
     }
 
@@ -120,7 +124,11 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (swap.dex !== undefined && swap.dex.position === HopsPosition.After) {
+    if (
+        swap.dex !== undefined &&
+        swap.dex.position === HopsPosition.After &&
+        swap.dex.hops.length > 0
+    ) {
         return swap.dex.hops[swap.dex.hops.length - 1].to;
     }
 
@@ -155,7 +163,7 @@ export const createSubmarine = async (
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<SubmarineSwap> => {
-    const key = await newKey(assetReceive as AssetType);
+    const key = await newKey(assetSend as AssetType);
     const res = await createSubmarineSwap(
         assetSend,
         assetReceive,

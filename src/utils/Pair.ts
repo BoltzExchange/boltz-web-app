@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 
 import { config } from "../config";
-import { AssetKind, BTC, LN, RBTC } from "../consts/Assets";
+import { AssetKind, BTC, LN, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     type ChainPairTypeTaproot,
@@ -242,7 +242,7 @@ export default class Pair {
             return RequiredInput.Invoice;
         }
 
-        if (lastHop.to === RBTC || lastHop.type === SwapType.Dex) {
+        if (isEvmAsset(lastHop.to) || lastHop.type === SwapType.Dex) {
             return RequiredInput.Web3;
         }
 
@@ -252,7 +252,7 @@ export default class Pair {
     public get needsBackup() {
         return this.route.some(
             (hop) =>
-                hop.from !== RBTC &&
+                !isEvmAsset(hop.from) &&
                 (hop.type === SwapType.Submarine ||
                     hop.type === SwapType.Chain),
         );
@@ -270,7 +270,7 @@ export default class Pair {
         return (
             this.route.length === 1 &&
             this.route[0].type === SwapType.Chain &&
-            this.route[0].from !== RBTC
+            !isEvmAsset(this.route[0].from)
         );
     }
 
