@@ -3,7 +3,8 @@ import { useGlobalContext } from "../../context/Global";
 const slippageRange = { min: 0.1, max: 5 };
 const slippageStep = 0.1;
 
-// TODO: weird rounding issues
+export const roundPercent = (v: number) => Math.round(v * 10) / 10;
+
 const Slippage = () => {
     const { slippage, setSlippage } = useGlobalContext();
 
@@ -13,10 +14,12 @@ const Slippage = () => {
     const handleChange = (e: Event) => {
         const target = e.target as HTMLInputElement;
         const value = parseFloat(target.value);
-        if (isNaN(value)) return;
+        if (isNaN(value)) {
+            return;
+        }
         const clamped = clamp(value);
         target.value = String(clamped);
-        setSlippage(clamped / 100);
+        setSlippage(roundPercent(clamped) / 100);
     };
 
     return (
@@ -26,7 +29,7 @@ const Slippage = () => {
                 min={slippageRange.min}
                 max={slippageRange.max}
                 step={slippageStep}
-                value={slippage() * 100}
+                value={roundPercent(slippage() * 100)}
                 onChange={handleChange}
             />
             <span>%</span>
