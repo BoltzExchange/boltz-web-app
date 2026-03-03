@@ -913,6 +913,10 @@ const dict = {
         rsk_rescue_resume_title: "Swap fortsetzen",
         rsk_rescue_resume_explainer:
             "Nutze deinen Rettungsschlüssel, um ausstehende Swaps zu finden, die fortgesetzt werden können.",
+        searching_resumable_swaps:
+            "Suche nach fortsetzbaren Swaps... {{ progress }}%",
+        unmatched_swaps:
+            "Dieses Wallet hat {{ count }} zusätzliche claimbare Swaps. Um darauf zuzugreifen, wechsle bitte zu dem Rettungsschlüssel, mit dem diese Swaps gestartet wurden.",
     },
     es: {
         language: "Español",
@@ -1373,6 +1377,10 @@ const dict = {
         rsk_rescue_resume_title: "Reanudar intercambio",
         rsk_rescue_resume_explainer:
             "Usa tu clave de rescate para encontrar intercambios pendientes que se puedan reanudar.",
+        searching_resumable_swaps:
+            "Buscando intercambios reanudables... {{ progress }}%",
+        unmatched_swaps:
+            "Este monedero tiene {{ count }} intercambios adicionales reclamables. Para acceder a ellos, cambia a la clave de rescate usada para iniciar esos intercambios.",
     },
     pt: {
         language: "Português",
@@ -1829,6 +1837,10 @@ const dict = {
         rsk_rescue_resume_title: "Continuar troca",
         rsk_rescue_resume_explainer:
             "Use sua chave de resgate para encontrar trocas pendentes que podem ser continuadas.",
+        searching_resumable_swaps:
+            "Buscando trocas retomáveis... {{ progress }}%",
+        unmatched_swaps:
+            "Esta carteira tem {{ count }} trocas adicionais reivindicáveis. Para acessá-las, mude para a chave de resgate usada para iniciar essas trocas.",
     },
     zh: {
         language: "中文",
@@ -2241,6 +2253,9 @@ const dict = {
         rsk_rescue_resume_title: "继续交换",
         rsk_rescue_resume_explainer:
             "使用你的救援密钥查找可以继续的待处理交换。",
+        searching_resumable_swaps: "正在搜索可继续的交换... {{ progress }}%",
+        unmatched_swaps:
+            "该钱包有 {{ count }} 个额外可领取的交换。要访问它们，请切换到用于发起这些交换的救援密钥。",
     },
     ja: {
         language: "日本語",
@@ -2693,6 +2708,10 @@ const dict = {
         rsk_rescue_resume_title: "スワップを再開",
         rsk_rescue_resume_explainer:
             "レスキューキーを使用して、再開できる保留中のスワップを見つけます。",
+        searching_resumable_swaps:
+            "再開可能なスワップを検索中... {{ progress }}%",
+        unmatched_swaps:
+            "このウォレットには追加で {{ count }} 件の請求可能なスワップがあります。アクセスするには、これらのスワップの開始に使用したレスキューキーに切り替えてください。",
     },
 };
 
