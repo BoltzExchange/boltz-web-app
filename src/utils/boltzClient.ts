@@ -92,14 +92,22 @@ type PartialSignature = {
 
 type Contracts = {
     network: {
-        name: string;
         chainId: number;
+        name: string;
     };
-    tokens: Record<string, string>;
     swapContracts: {
         EtherSwap: string;
         ERC20Swap: string;
     };
+    supportedContracts: Record<
+        string,
+        {
+            EtherSwap: string;
+            ERC20Swap: string;
+            features: string[];
+        }
+    >;
+    tokens: Record<string, string>;
 };
 
 type SwapTreeLeaf = {
