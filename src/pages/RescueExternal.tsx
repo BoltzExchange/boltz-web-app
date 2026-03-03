@@ -1,4 +1,9 @@
-import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
+import {
+    useLocation,
+    useNavigate,
+    useParams,
+    useSearchParams,
+} from "@solidjs/router";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import {
@@ -12,6 +17,7 @@ import {
     createSignal,
     onCleanup,
 } from "solid-js";
+import { BTC, LBTC, RBTC } from "src/consts/Assets";
 
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
@@ -332,6 +338,7 @@ export const RefundBtcLike = () => {
 export const RescueRsk = (props: { mode?: string }) => {
     const { t } = useGlobalContext();
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
     const { signer, getEtherSwap } = useWeb3Signer();
     const { setRskRescuableSwaps, resetRescueKey } = useRescueContext();
@@ -478,7 +485,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                     data-testid="rsk-rescue-refund-button"
                     class="btn btn-light"
                     onClick={() =>
-                        navigate(`/rescue/external/rsk/${RskRescueMode.Refund}`)
+                        navigate(`${location.pathname}/${RskRescueMode.Refund}`)
                     }>
                     {t("rsk_rescue_refund_title")}
                     <br />
@@ -488,7 +495,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                     data-testid="rsk-rescue-resume-button"
                     class="btn btn-light"
                     onClick={() =>
-                        navigate(`/rescue/external/rsk/${RskRescueMode.Claim}`)
+                        navigate(`${location.pathname}/${RskRescueMode.Claim}`)
                     }>
                     {t("rsk_rescue_resume_title")}
                 </button>
@@ -624,16 +631,14 @@ const RescueExternal = () => {
     const params = useParams();
     const navigate = useNavigate();
 
-    const tabBtc = { name: "Bitcoin / Liquid", value: "btc" };
-    const tabRsk = { name: "Rootstock", value: "rsk" };
-
-    const validTypes = [tabBtc.value, tabRsk.value, "l-btc", "rbtc"];
-    const selected = () => {
-        const type = params.type ?? tabBtc.value;
-        if (type === "l-btc") return tabBtc.value;
-        if (type === "rbtc") return tabRsk.value;
-        return type;
+    const tabBtc = {
+        name: "Bitcoin / Liquid",
+        values: [BTC, LBTC],
     };
+    const tabRbtc = { name: "Rootstock", values: [RBTC, "RSK"] }; // keeping the network for retrocompatibility
+    const validTypes = [...tabBtc.values, ...tabRbtc.values];
+
+    const selected = () => params.type ?? tabBtc.values[0];
 
     const rskAvailable =
         import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined;
@@ -642,7 +647,8 @@ const RescueExternal = () => {
     }
 
     const validType = () =>
-        params.type === undefined || validTypes.includes(params.type);
+        params.type === undefined ||
+        validTypes.includes(params.type.toUpperCase());
 
     return (
         <Show when={validType()} fallback={<NotFound />}>
@@ -655,13 +661,13 @@ const RescueExternal = () => {
                         </header>
                         <Show when={rskAvailable}>
                             <div class="tabs">
-                                <For each={[tabBtc, tabRsk]}>
+                                <For each={[tabBtc, tabRbtc]}>
                                     {(tab) => (
                                         <div
-                                            class={`tab ${selected() === tab.value ? "active" : ""}`}
+                                            class={`tab ${tab.values.includes(selected().toUpperCase()) ? "active" : ""}`}
                                             onClick={() =>
                                                 navigate(
-                                                    `/rescue/external/${tab.value}`,
+                                                    `/rescue/external/${tab.values[0].toLowerCase()}`,
                                                 )
                                             }>
                                             {tab.name}
@@ -670,10 +676,16 @@ const RescueExternal = () => {
                                 </For>
                             </div>
                         </Show>
-                        <Show when={selected() === tabBtc.value}>
+                        <Show
+                            when={tabBtc.values.includes(
+                                selected().toUpperCase(),
+                            )}>
                             <RefundBtcLike />
                         </Show>
-                        <Show when={selected() === tabRsk.value}>
+                        <Show
+                            when={tabRbtc.values.includes(
+                                selected().toUpperCase(),
+                            )}>
                             <RescueRsk mode={params.mode} />
                         </Show>
                         <SettingsMenu />
