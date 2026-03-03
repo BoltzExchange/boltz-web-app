@@ -1,9 +1,4 @@
-import {
-    useLocation,
-    useNavigate,
-    useParams,
-    useSearchParams,
-} from "@solidjs/router";
+import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import {
@@ -338,7 +333,7 @@ export const RefundBtcLike = () => {
 export const RescueRsk = (props: { mode?: string }) => {
     const { t } = useGlobalContext();
     const navigate = useNavigate();
-    const location = useLocation();
+    const params = useParams();
     const [searchParams] = useSearchParams();
     const { signer, getEtherSwap } = useWeb3Signer();
     const { setRskRescuableSwaps, resetRescueKey } = useRescueContext();
@@ -474,6 +469,8 @@ export const RescueRsk = (props: { mode?: string }) => {
         resetRescueKey();
     });
 
+    const basePath = `/rescue/external/${params.type}`;
+
     // Mode selection screen
     const ModeSelector = () => (
         <>
@@ -485,7 +482,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                     data-testid="rsk-rescue-refund-button"
                     class="btn btn-light"
                     onClick={() =>
-                        navigate(`${location.pathname}/${RskRescueMode.Refund}`)
+                        navigate(`${basePath}/${RskRescueMode.Refund}`)
                     }>
                     {t("rsk_rescue_refund_title")}
                     <br />
@@ -495,7 +492,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                     data-testid="rsk-rescue-resume-button"
                     class="btn btn-light"
                     onClick={() =>
-                        navigate(`${location.pathname}/${RskRescueMode.Claim}`)
+                        navigate(`${basePath}/${RskRescueMode.Claim}`)
                     }>
                     {t("rsk_rescue_resume_title")}
                 </button>
