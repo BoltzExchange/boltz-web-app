@@ -76,6 +76,7 @@ const ClaimState = (props: {
     const { t, notify } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
     const { rskRescuableSwaps } = useRescueContext();
+    const params = useParams();
 
     const preimage = () => {
         const swapFromContext = rskRescuableSwaps().find(
@@ -129,15 +130,15 @@ const ClaimState = (props: {
         }
     };
 
+    const basePath = `/rescue/external/${params.type?.toLowerCase() ?? ""}`;
+
     return (
         <Show
             when={preimage() !== undefined}
             fallback={
                 <>
                     <p>{t("claim_scan_required")}</p>
-                    <button
-                        class="btn"
-                        onClick={() => navigate("/rescue/external/rsk")}>
+                    <button class="btn" onClick={() => navigate(basePath)}>
                         {t("back")}
                     </button>
                 </>
