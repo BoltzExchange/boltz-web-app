@@ -469,7 +469,7 @@ export const RescueRsk = (props: { mode?: string }) => {
         resetRescueKey();
     });
 
-    const basePath = `/rescue/external/${params.type}`;
+    const basePath = `/rescue/external/${params.type?.toLowerCase() ?? ""}`;
 
     // Mode selection screen
     const ModeSelector = () => (
@@ -515,7 +515,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                 <h3>{t("connected_wallet_no_swaps")}</h3>
                 <button
                     class="btn btn-light"
-                    onClick={() => navigate("/rescue/external/rsk")}>
+                    onClick={() => navigate(basePath)}>
                     {t("back")}
                 </button>
             </Match>
@@ -542,7 +542,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                         class="btn btn-light"
                         onClick={() =>
                             navigate(
-                                `/rescue/external/rsk/${RskRescueMode.Claim}?mode=${rescueKeyModeConst}`,
+                                `${basePath}/${RskRescueMode.Claim}?mode=${rescueKeyModeConst}`,
                             )
                         }>
                         {t("enter_mnemonic")}
@@ -635,7 +635,8 @@ const RescueExternal = () => {
     const tabRbtc = { name: "Rootstock", values: [RBTC, "RSK"] }; // keeping the network for retrocompatibility
     const validTypes = [...tabBtc.values, ...tabRbtc.values];
 
-    const selected = () => params.type ?? tabBtc.values[0];
+    const selected = () =>
+        params.type?.toLowerCase() ?? tabBtc.values[0].toLowerCase();
 
     const rskAvailable =
         import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined;
