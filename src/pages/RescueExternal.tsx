@@ -628,18 +628,21 @@ const RescueExternal = () => {
     const params = useParams();
     const navigate = useNavigate();
 
+    const rskAvailable =
+        import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined;
+
     const tabBtc = {
         name: "Bitcoin / Liquid",
         values: [BTC, LBTC],
     };
     const tabRbtc = { name: "Rootstock", values: [RBTC, "RSK"] }; // keeping the network for retrocompatibility
-    const validTypes = [...tabBtc.values, ...tabRbtc.values];
+    const validTypes = rskAvailable
+        ? [...tabBtc.values, ...tabRbtc.values]
+        : [...tabBtc.values];
 
     const selected = () =>
         params.type?.toLowerCase() ?? tabBtc.values[0].toLowerCase();
 
-    const rskAvailable =
-        import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined;
     if (!rskAvailable) {
         log.warn("RSK log scan endpoint not available");
     }
@@ -681,9 +684,12 @@ const RescueExternal = () => {
                             <RefundBtcLike />
                         </Show>
                         <Show
-                            when={tabRbtc.values.includes(
-                                selected().toUpperCase(),
-                            )}>
+                            when={
+                                rskAvailable &&
+                                tabRbtc.values.includes(
+                                    selected().toUpperCase(),
+                                )
+                            }>
                             <RescueRsk mode={params.mode} />
                         </Show>
                         <SettingsMenu />
