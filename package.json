@@ -2,6 +2,9 @@
     "name": "boltz-frontend",
     "version": "1.8.18",
     "description": "Boltz Exchange, Atomic Swaps, Web App",
+    "workspaces": [
+        "packages/*"
+    ],
     "engines": {
         "node": ">=24.0.0"
     },
@@ -86,6 +89,7 @@
         "bolt11": "^1.4.1",
         "boltz-bolt12": "^0.2.0",
         "boltz-core": "^4.0.0",
+        "boltz-sdk": "0.1.0",
         "buffer": "^6.0.3",
         "create-hmac": "^1.1.7",
         "ethers": "^6.16.0",
