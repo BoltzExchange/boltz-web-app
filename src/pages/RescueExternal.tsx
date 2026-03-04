@@ -56,6 +56,7 @@ import {
 } from "../utils/rescue";
 import { type RescueFile, getXpub } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import { maxIterations } from "../workers/preimageHashes/constants";
 import ErrorWasm from "./ErrorWasm";
 import NotFound from "./NotFound";
 import { mapSwap } from "./RefundRescue";
@@ -357,6 +358,7 @@ export const RescueRsk = (props: { mode?: string }) => {
     const [rescueFileError, setRescueFileError] = createSignal<string | null>(
         null,
     );
+    const [unmatchedSwaps, setUnmatchedSwaps] = createSignal(0);
 
     let refundScanAbort: AbortController | undefined = undefined;
 
@@ -367,6 +369,7 @@ export const RescueRsk = (props: { mode?: string }) => {
         }
         setIsScanning(false);
         setRefundScanProgress(undefined);
+        setUnmatchedSwaps(0);
     };
 
     const startScan = async () => {
@@ -378,7 +381,7 @@ export const RescueRsk = (props: { mode?: string }) => {
 
         setIsScanning(true);
         setLogRefundableSwaps([]);
-
+        setUnmatchedSwaps(0);
         setRefundScanProgress(
             t("logs_scan_progress", {
                 value: Number(0).toFixed(2),
@@ -400,19 +403,31 @@ export const RescueRsk = (props: { mode?: string }) => {
             },
         );
 
-        for await (const { progress, events } of generator) {
+        for await (const {
+            progress,
+            events,
+            derivedKeys,
+            unmatchedSwaps,
+        } of generator) {
             if (refundScanAbort?.signal.aborted) {
                 break;
             }
             setRefundScanProgress(
-                t("logs_scan_progress", {
-                    value: (progress * 100).toFixed(2),
-                }),
+                progress === 1
+                    ? t("searching_resumable_swaps", {
+                          progress: Math.floor(
+                              ((derivedKeys ?? 0) / maxIterations) * 100,
+                          ).toFixed(2),
+                      })
+                    : t("logs_scan_progress", {
+                          value: (progress * 100).toFixed(2),
+                      }),
             );
 
             const updatedSwaps = logRefundableSwaps()?.concat(events);
             setLogRefundableSwaps(updatedSwaps);
             setRskRescuableSwaps(updatedSwaps);
+            setUnmatchedSwaps(unmatchedSwaps);
         }
 
         if (!refundScanAbort?.signal.aborted) {
@@ -461,6 +476,7 @@ export const RescueRsk = (props: { mode?: string }) => {
             }
             setLogRefundableSwaps(undefined);
             setUploadedRescueFile(undefined);
+            setUnmatchedSwaps(0);
         }
     });
 
@@ -510,7 +526,8 @@ export const RescueRsk = (props: { mode?: string }) => {
                 when={
                     !isScanning() &&
                     logRefundableSwaps() !== undefined &&
-                    logRefundableSwaps().length === 0
+                    logRefundableSwaps().length === 0 &&
+                    unmatchedSwaps() === 0
                 }>
                 <h3>{t("connected_wallet_no_swaps")}</h3>
                 <button
@@ -518,6 +535,11 @@ export const RescueRsk = (props: { mode?: string }) => {
                     onClick={() => navigate(basePath)}>
                     {t("back")}
                 </button>
+            </Match>
+            <Match when={unmatchedSwaps() > 0}>
+                <p class="frame-text">
+                    {t("unmatched_swaps", { count: unmatchedSwaps() })}
+                </p>
             </Match>
         </Switch>
     );

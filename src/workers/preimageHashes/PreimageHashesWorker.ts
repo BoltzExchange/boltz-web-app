@@ -7,11 +7,8 @@ export type PreimageMap = Map<string, PreimageEntry>;
 
 export class PreimageHashesWorker {
     private worker: Worker;
-    private isDone = false;
-    private pendingLookups = new Map<
-        string,
-        (entry: PreimageEntry | undefined) => void
-    >();
+    isDone = false;
+    private batchResolver: () => void;
 
     readonly map: PreimageMap = new Map();
 
@@ -34,15 +31,11 @@ export class PreimageHashesWorker {
         }: MessageEvent<PreimageHashMessage>) => {
             for (const [hash, entry] of data.entries) {
                 this.map.set(hash, entry);
-
-                const resolve = this.pendingLookups.get(hash);
-                if (resolve) {
-                    resolve(entry);
-                    this.pendingLookups.delete(hash);
-                }
             }
 
             log.debug(`Derived ${this.map.size} preimage hashes`);
+
+            this.batchResolver?.();
 
             if (data.done) {
                 this.terminate();
@@ -57,24 +50,21 @@ export class PreimageHashesWorker {
         this.worker.postMessage({ mnemonic });
     };
 
-    /**
-     * Returns the entry if already derived, otherwise waits until
-     * the worker derives it or finishes without finding it.
-     */
-    getPreimage = (hash: string): Promise<PreimageEntry | undefined> => {
-        const entry = this.map.get(hash);
-        if (entry) return Promise.resolve(entry);
-        if (this.isDone) return Promise.resolve(undefined);
-        return new Promise((r) => this.pendingLookups.set(hash, r));
+    waitForNextBatch = (): Promise<void> => {
+        if (this.isDone) {
+            return Promise.resolve();
+        }
+        return new Promise((resolve) => {
+            this.batchResolver = resolve;
+        });
     };
 
     terminate = () => {
-        if (this.isDone) return;
-        this.isDone = true;
-        for (const resolve of this.pendingLookups.values()) {
-            resolve(undefined);
+        if (this.isDone) {
+            return;
         }
-        this.pendingLookups.clear();
+        this.isDone = true;
+        this.batchResolver?.();
         this.worker.onmessage = null;
         this.worker.onerror = null;
         this.worker.terminate();

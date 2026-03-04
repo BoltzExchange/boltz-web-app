@@ -51,6 +51,8 @@ type ScanConfig = {
 type ScanResult = {
     progress: number;
     events: LogRefundData[];
+    derivedKeys?: number;
+    unmatchedSwaps: number;
 };
 
 type ScanContext = {
@@ -313,6 +315,8 @@ export async function* scanLockupEvents(
         const results: ScanResult = {
             progress: Math.min(blocksScanned / ctx.totalBlocks, 1),
             events: [],
+            derivedKeys: worker?.map.size,
+            unmatchedSwaps: 0,
         };
 
         for (const event of events) {
@@ -362,23 +366,27 @@ export async function* scanLockupEvents(
             results.events.push(
                 ...reconcilePendingClaims(pendingClaims, worker.map),
             );
+            results.derivedKeys = worker.map.size;
         }
+
+        results.unmatchedSwaps = pendingClaims.length;
 
         yield results;
     }
 
-    if (worker && pendingClaims.length > 0) {
+    if (worker) {
         log.info(
-            `Resolving preimages for ${pendingClaims.length} pending claims`,
+            `Deriving preimages for ${pendingClaims.length} pending claims`,
         );
-
-        // Wait for the worker to finish deriving the preimages
-        for (const claim of pendingClaims) {
-            await worker.getPreimage(claim.preimageHash);
-        }
-        const matched = reconcilePendingClaims(pendingClaims, worker.map);
-        if (matched.length > 0) {
-            yield { progress: 1, events: matched };
+        while (pendingClaims.length > 0 && !worker.isDone) {
+            await worker.waitForNextBatch();
+            const matched = reconcilePendingClaims(pendingClaims, worker.map);
+            yield {
+                progress: 1,
+                events: matched,
+                derivedKeys: worker.map.size,
+                unmatchedSwaps: pendingClaims.length,
+            };
         }
     }
 
