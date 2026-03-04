@@ -20,7 +20,7 @@ export type RescueFile = {
 };
 
 export const derivationPath = "m/44/0/0/0";
-export const rskDerivationPath = "m/44/137/0/0";
+export const rskDerivationPath = "m/44/30/0/0";
 
 const getPath = (index: number) => `${derivationPath}/${index}`;
 
