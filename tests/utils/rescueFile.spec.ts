@@ -1,10 +1,13 @@
-import { BTC, RBTC } from "../../src/consts/Assets";
-import { derivePreimageFromRescueKey } from "../../src/utils/rescueFile";
+import { BTC, RBTC, TBTC } from "../../src/consts/Assets";
 import {
     Errors,
+    derivationPath,
     deriveKey,
+    deriveKeyGasAbstraction,
+    derivePreimageFromRescueKey,
     generateRescueFile,
     getXpub,
+    mnemonicToHDKey,
     validateRescueFile,
 } from "../../src/utils/rescueFile";
 import type { RescueFile } from "../../src/utils/rescueFile";
@@ -29,6 +32,34 @@ describe("rescueFile", () => {
                     mnemonic: "invalid",
                 }),
             ).toThrow();
+        });
+    });
+
+    describe("derivationPath", () => {
+        test("should be the expected BIP44 path", () => {
+            expect(derivationPath).toBe("m/44/0/0/0");
+        });
+    });
+
+    describe("mnemonicToHDKey", () => {
+        test("should derive an HDKey from a mnemonic", () => {
+            const hdKey = mnemonicToHDKey(rescueFile.mnemonic);
+            expect(hdKey).toBeDefined();
+            expect(hdKey.publicExtendedKey).toBeDefined();
+            expect(hdKey.privateExtendedKey).toBeDefined();
+        });
+
+        test("should produce the same key for the same mnemonic", () => {
+            const key1 = mnemonicToHDKey(rescueFile.mnemonic);
+            const key2 = mnemonicToHDKey(rescueFile.mnemonic);
+            expect(key1.publicExtendedKey).toEqual(key2.publicExtendedKey);
+        });
+
+        test("should produce different keys for different mnemonics", () => {
+            const other = generateRescueFile();
+            const key1 = mnemonicToHDKey(rescueFile.mnemonic);
+            const key2 = mnemonicToHDKey(other.mnemonic);
+            expect(key1.publicExtendedKey).not.toEqual(key2.publicExtendedKey);
         });
     });
 
@@ -76,6 +107,81 @@ describe("rescueFile", () => {
                 ).not.toEqual(Buffer.from(rbtcKey.privateKey).toString("hex"));
             },
         );
+
+        test("should use EVM derivation path for RBTC", () => {
+            const key1 = deriveKey(rescueFile, 0, RBTC);
+            const key2 = deriveKey(rescueFile, 1, RBTC);
+            expect(key1.privateKey).toBeDefined();
+            expect(key2.privateKey).toBeDefined();
+            expect(Buffer.from(key1.privateKey).toString("hex")).not.toEqual(
+                Buffer.from(key2.privateKey).toString("hex"),
+            );
+        });
+
+        test("should use EVM derivation path for ERC20 assets", () => {
+            const key = deriveKey(rescueFile, 0, TBTC);
+            expect(key.privateKey).toBeDefined();
+
+            const btcKey = deriveKey(rescueFile, 0, BTC);
+            expect(Buffer.from(key.privateKey).toString("hex")).not.toEqual(
+                Buffer.from(btcKey.privateKey).toString("hex"),
+            );
+        });
+
+        test("should derive the same key when hdKey is provided", () => {
+            const hdKey = mnemonicToHDKey(rescueFile.mnemonic);
+            const withoutHdKey = deriveKey(rescueFile, 0, BTC);
+            const withHdKey = deriveKey(rescueFile, 0, BTC, hdKey);
+
+            expect(
+                Buffer.from(withoutHdKey.privateKey).toString("hex"),
+            ).toEqual(Buffer.from(withHdKey.privateKey).toString("hex"));
+        });
+
+        test("should use provided hdKey for EVM asset", () => {
+            const hdKey = mnemonicToHDKey(rescueFile.mnemonic);
+            const withoutHdKey = deriveKey(rescueFile, 0, RBTC);
+            const withHdKey = deriveKey(rescueFile, 0, RBTC, hdKey);
+
+            expect(
+                Buffer.from(withoutHdKey.privateKey).toString("hex"),
+            ).toEqual(Buffer.from(withHdKey.privateKey).toString("hex"));
+        });
+    });
+
+    describe("deriveKeyGasAbstraction", () => {
+        test("should derive a key for gas abstraction", () => {
+            const key = deriveKeyGasAbstraction(rescueFile, 33);
+            expect(key).toBeDefined();
+            expect(key.privateKey).toBeDefined();
+        });
+
+        test("should derive different keys for different chain IDs", () => {
+            const key1 = deriveKeyGasAbstraction(rescueFile, 33);
+            const key2 = deriveKeyGasAbstraction(rescueFile, 42161);
+
+            expect(Buffer.from(key1.privateKey).toString("hex")).not.toEqual(
+                Buffer.from(key2.privateKey).toString("hex"),
+            );
+        });
+
+        test("should be deterministic for the same inputs", () => {
+            const key1 = deriveKeyGasAbstraction(rescueFile, 33);
+            const key2 = deriveKeyGasAbstraction(rescueFile, 33);
+
+            expect(Buffer.from(key1.privateKey).toString("hex")).toEqual(
+                Buffer.from(key2.privateKey).toString("hex"),
+            );
+        });
+
+        test("should derive a different key than deriveKey for RBTC", () => {
+            const gasKey = deriveKeyGasAbstraction(rescueFile, 33);
+            const regularKey = deriveKey(rescueFile, 0, RBTC);
+
+            expect(Buffer.from(gasKey.privateKey).toString("hex")).not.toEqual(
+                Buffer.from(regularKey.privateKey).toString("hex"),
+            );
+        });
     });
 
     describe("derivePreimageFromRescueKey", () => {
@@ -100,6 +206,36 @@ describe("rescueFile", () => {
                 );
             },
         );
+
+        test("should return a 32-byte sha256 hash", () => {
+            const preimage = derivePreimageFromRescueKey(rescueFile, 0, BTC);
+            expect(preimage).toBeInstanceOf(Buffer);
+            expect(preimage.length).toBe(32);
+        });
+
+        test("should be deterministic", () => {
+            const p1 = derivePreimageFromRescueKey(rescueFile, 0, BTC);
+            const p2 = derivePreimageFromRescueKey(rescueFile, 0, BTC);
+            expect(p1.toString("hex")).toEqual(p2.toString("hex"));
+        });
+
+        test("should derive different preimages for different indices", () => {
+            const p0 = derivePreimageFromRescueKey(rescueFile, 0, BTC);
+            const p1 = derivePreimageFromRescueKey(rescueFile, 1, BTC);
+            expect(p0.toString("hex")).not.toEqual(p1.toString("hex"));
+        });
+
+        test("should produce same result with and without hdKey", () => {
+            const hdKey = mnemonicToHDKey(rescueFile.mnemonic);
+            const without = derivePreimageFromRescueKey(rescueFile, 0, BTC);
+            const with_ = derivePreimageFromRescueKey(
+                rescueFile,
+                0,
+                BTC,
+                hdKey,
+            );
+            expect(without.toString("hex")).toEqual(with_.toString("hex"));
+        });
     });
 
     describe("validateRescueFile", () => {

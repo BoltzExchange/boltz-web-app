@@ -11,6 +11,7 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { config } from "../config";
 import { type RefundableAssetType } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -23,7 +24,7 @@ import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
 import { getTimeoutEta } from "../utils/rescue";
-import { rskDerivationPath } from "../utils/rescueFile";
+import { evmPath } from "../utils/rescueFile";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 type RescueData = LogRefundData & { currentHeight: bigint };
@@ -150,7 +151,9 @@ const ClaimState = (props: {
                 onClick={claimTransaction}
                 address={{
                     address: props.claimData.claimAddress,
-                    derivationPath: rskDerivationPath,
+                    derivationPath: evmPath(
+                        config.assets[props.asset].network.chainId,
+                    ),
                 }}
                 buttonText={t("continue")}
                 promptText={t("transaction_prompt_receive", {

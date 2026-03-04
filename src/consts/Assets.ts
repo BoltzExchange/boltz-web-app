@@ -26,7 +26,7 @@ export const refundableAssets = [BTC, LBTC, RBTC];
 
 export const btcChains = [BTC, LBTC];
 
-export const evmChains = [RBTC];
+export const evmChains = [RBTC, TBTC, USDT0];
 
 export const getKindForAsset = (asset: string): AssetKind => {
     const assetConfig = config.assets?.[asset];
