@@ -92,8 +92,6 @@ const dict = {
         cant_find_swap: "Can't find your swap?",
         rescue_external_explainer:
             "Try rescuing an external swap via rescue key and other emergency methods.",
-        refund_external_explainer_rsk:
-            "If you sent RBTC into a Boltz swap, connect your Rootstock Wallet to scan for refundable swaps that are not saved in this browser’s swap history.",
         refund_external_scanning_rsk:
             "Scanning for rescuable swaps in your Rootstock Wallet...",
         connected_wallet_no_swaps:
@@ -440,7 +438,7 @@ const dict = {
         error_occurred: "An error occurred: {{ error }}",
 
         rsk_rescue_prompt:
-            "Use refund if you were sending RBTC, resume if you were receiving RBTC of a swap that is not available in this browser’s swap history.",
+            'If you sent RBTC into a Boltz swap, use "Refund Swap"; if you were receiving RBTC, use "Resume Swap" to rescue a swap that is not available in this browser’s swap history.',
         rsk_rescue_refund_title: "Refund Swap",
         rsk_rescue_refund_explainer:
             "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
@@ -548,8 +546,6 @@ const dict = {
         cant_find_swap: "Swap nicht gefunden?",
         rescue_external_explainer:
             "Versuche einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden wiederherszustellen.",
-        refund_external_explainer_rsk:
-            "Wenn du RBTC in einen Boltz-Swap geschickt hast, verbinde dein Rootstock Wallet um nach wiederherstellbaren Swaps zu suchen, die nicht im Swapverlauf dieses Browsers gespeichert sind.",
         refund_external_scanning_rsk:
             "Scanne nach wiederherstellbaren Swaps in Rootstock-Wallet...",
         connected_wallet_no_swaps:
@@ -906,7 +902,7 @@ const dict = {
             "Dieser Rettungsschlüssel ist nicht mit diesem Swap verbunden. Bitte versuche es erneut mit einem anderen Rettungsschlüssel.",
         error_occurred: "Ein Fehler ist aufgetreten: {{ error }}",
         rsk_rescue_prompt:
-            "Nutze Erstattung, wenn du RBTC gesendet hast, oder Fortsetzen, wenn du RBTC empfangen hast – für einen Swap, der nicht im Swap-Verlauf dieses Browsers verfügbar ist.",
+            'Wenn du RBTC in einen Boltz-Swap gesendet hast, nutze "Swap erstatten"; wenn du RBTC empfangen hast, nutze "Swap fortsetzen", um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.',
         rsk_rescue_refund_title: "Swap erstatten",
         rsk_rescue_refund_explainer:
             "Verbinde dein Rootstock-Wallet, um nach Swaps zu suchen, die abgelaufen sind und erstattet werden können.",
@@ -1013,8 +1009,6 @@ const dict = {
         cant_find_swap: "¿No encuentras tu intercambio?",
         rescue_external_explainer:
             "Intenta rescatar un intercambio externo mediante una clave de rescate y otros métodos de emergencia.",
-        refund_external_explainer_rsk:
-            "Si enviaste RBTC a un intercambio de Boltz, conecta tu monedero Rootstock para buscar intercambios rescatables que no estén guardados en el historial de este navegador.",
         refund_external_scanning_rsk:
             "Escaneando en busca de intercambios rescatables en tu monedero Rootstock...",
         connected_wallet_no_swaps:
@@ -1370,7 +1364,7 @@ const dict = {
             "Esta clave de rescate no está asociada con este intercambio. Por favor, intenta de nuevo usando una clave de rescate diferente.",
         error_occurred: "Ocurrió un error: {{ error }}",
         rsk_rescue_prompt:
-            "Usa reembolso si estabas enviando RBTC, o reanudar si estabas recibiendo RBTC de un intercambio que no está disponible en el historial de intercambios de este navegador.",
+            'Si enviaste RBTC a un intercambio de Boltz, usa "Reembolsar intercambio"; si estabas recibiendo RBTC, usa "Reanudar intercambio" para rescatar un intercambio que no está disponible en el historial de este navegador.',
         rsk_rescue_refund_title: "Reembolsar intercambio",
         rsk_rescue_refund_explainer:
             "Conecta tu monedero Rootstock para buscar intercambios que han expirado y pueden ser reembolsados.",
@@ -1477,8 +1471,6 @@ const dict = {
         cant_find_swap: "Não consegue encontrar sua troca?",
         rescue_external_explainer:
             "Tente resgatar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
-        refund_external_explainer_rsk:
-            "Se enviou RBTC para uma troca Boltz, conecte sua carteira Rootstock para procurar por trocas resgatáveis que não estão no histórico do navegador.",
         refund_external_scanning_rsk:
             "Procurando trocas resgatáveis na sua carteira Rootstock...",
         connected_wallet_no_swaps:
@@ -1830,7 +1822,7 @@ const dict = {
             "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
         error_occurred: "Ocorreu um erro: {{ error }}",
         rsk_rescue_prompt:
-            "Use o reembolso caso estivesse enviando RBTC, ou continue caso estivesse recebendo RBTC de uma troca ausente no histórico deste navegador.",
+            'Se você enviou RBTC para uma troca da Boltz, use "Reembolsar troca"; se estava recebendo RBTC, use "Continuar troca" para resgatar uma troca que não está disponível no histórico de trocas deste navegador.',
         rsk_rescue_refund_title: "Reembolsar troca",
         rsk_rescue_refund_explainer:
             "Conecte sua carteira Rootstock para procurar trocas que expiraram e podem ser reembolsadas.",
@@ -1929,8 +1921,6 @@ const dict = {
         cant_find_swap: "找不到您的交换？",
         rescue_external_explainer:
             "尝试通过救援密钥和其他紧急方法恢复外部交换分区。",
-        refund_external_explainer_rsk:
-            "如果您将RBTC发送到Boltz交换中，请连接您的Rootstock钱包以扫描未保存在此浏览器交换历史记录中的可恢复交换。",
         refund_external_scanning_rsk: "正在扫描Rootstock钱包中的可恢复交换...",
         connected_wallet_no_swaps:
             "已连接的Rootstock钱包中不包含任何可恢复的交换。",
@@ -2246,7 +2236,7 @@ const dict = {
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
         rsk_rescue_prompt:
-            "如果你正在发送 RBTC，请使用退款；如果你正在接收 RBTC，请使用恢复——适用于未在此浏览器交换历史中显示的交换。",
+            "如果你向 Boltz 交换发送了 RBTC，请使用“退还交换”；如果你正在接收 RBTC，请使用“继续交换”，以救援一个未在此浏览器交换历史中显示的交换。",
         rsk_rescue_refund_title: "退还交换",
         rsk_rescue_refund_explainer:
             "连接你的 Rootstock 钱包以扫描已过期且可退款的交换。",
@@ -2351,8 +2341,6 @@ const dict = {
         cant_find_swap: "スワップが見つからない？",
         rescue_external_explainer:
             "外部スワップをレスキューキーやその他の緊急手段を使用して復旧を試みてください。",
-        refund_external_explainer_rsk:
-            "RBTCをBoltzスワップに送金した場合、Rootstockウォレットを接続して、このブラウザのスワップ履歴に保存されていない救済可能なスワップを検索してください。",
         refund_external_scanning_rsk:
             "Rootstockウォレット内の救済可能なスワップを検索中です...",
         connected_wallet_no_swaps:
@@ -2701,7 +2689,7 @@ const dict = {
             "このレスキューキーはこのスワップに関連付けられていません。別のレスキューキーを使用してもう一度お試しください。",
         error_occurred: "エラーが発生しました：{{ error }}",
         rsk_rescue_prompt:
-            "RBTC を送金していた場合は返金を、RBTC を受け取っていた場合は再開を使用してください——このブラウザのスワップ履歴にないスワップが対象です。",
+            "Boltz スワップに RBTC を送金した場合は「スワップを返金」を使用し、RBTC を受け取っていた場合は「スワップを再開」を使用して、このブラウザのスワップ履歴にないスワップを救済してください。",
         rsk_rescue_refund_title: "スワップを返金",
         rsk_rescue_refund_explainer:
             "Rootstock ウォレットを接続して、期限切れで返金可能なスワップをスキャンします。",
