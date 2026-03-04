@@ -7,14 +7,10 @@ export type PreimageMap = Map<string, PreimageEntry>;
 
 export class PreimageHashesWorker {
     private worker: Worker;
-    private _isDone = false;
+    isDone = false;
     private batchResolver: () => void;
 
     readonly map: PreimageMap = new Map();
-
-    get isDone() {
-        return this._isDone;
-    }
 
     constructor() {
         this.worker = new Worker(
@@ -55,7 +51,7 @@ export class PreimageHashesWorker {
     };
 
     waitForNextBatch = (): Promise<void> => {
-        if (this._isDone) {
+        if (this.isDone) {
             return Promise.resolve();
         }
         return new Promise((resolve) => {
@@ -64,10 +60,10 @@ export class PreimageHashesWorker {
     };
 
     terminate = () => {
-        if (this._isDone) {
+        if (this.isDone) {
             return;
         }
-        this._isDone = true;
+        this.isDone = true;
         this.batchResolver?.();
         this.worker.onmessage = null;
         this.worker.onerror = null;

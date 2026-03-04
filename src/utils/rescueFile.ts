@@ -7,6 +7,7 @@ import {
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { crypto } from "bitcoinjs-lib";
 
+import { config } from "../config";
 import { type AssetType, RBTC } from "../consts/Assets";
 
 export enum Errors {
@@ -19,8 +20,11 @@ export type RescueFile = {
     mnemonic: string;
 };
 
+const getEvmChainId = (asset: AssetType) =>
+    config.assets[asset].network.chainId;
+
 export const derivationPath = "m/44/0/0/0";
-export const rskDerivationPath = "m/44/30/0/0";
+export const rskDerivationPath = `m/44/${getEvmChainId(RBTC)}/0/0`;
 
 const getPath = (index: number) => `${derivationPath}/${index}`;
 

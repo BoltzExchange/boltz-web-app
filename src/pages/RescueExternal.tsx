@@ -56,7 +56,7 @@ import {
 } from "../utils/rescue";
 import { type RescueFile, getXpub } from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import { maxIterations } from "../workers/preimageHashes/preimageHashes.worker";
+import { maxIterations } from "../workers/preimageHashes/constants";
 import ErrorWasm from "./ErrorWasm";
 import NotFound from "./NotFound";
 import { mapSwap } from "./RefundRescue";
