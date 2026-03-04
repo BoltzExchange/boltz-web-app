@@ -155,9 +155,10 @@ const CreateButton = () => {
         bolt12Loading,
     } = useCreateContext();
     const {
-        getEtherSwap,
         signer,
         providers,
+        getEtherSwap,
+        getErc20Swap,
         walletConnected,
         getGasAbstractionSigner,
     } = useWeb3Signer();
@@ -610,7 +611,12 @@ const CreateButton = () => {
             }
 
             try {
-                await validateResponse(data, deriveKey, getEtherSwap);
+                await validateResponse(
+                    data,
+                    deriveKey,
+                    getEtherSwap,
+                    getErc20Swap,
+                );
             } catch (e) {
                 const error = e instanceof Error ? e : new Error(String(e));
                 log.error(

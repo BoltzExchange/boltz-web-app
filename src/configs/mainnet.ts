@@ -1,5 +1,11 @@
 import type { Config } from "src/configs/base";
-import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
+import {
+    Explorer,
+    arbitrumExplorer,
+    arbitrumNetwork,
+    baseConfig,
+    chooseUrl,
+} from "src/configs/base";
 import { AssetKind } from "src/consts/AssetKind";
 
 const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
@@ -82,6 +88,29 @@ const config = {
                 smartWalletFactory:
                     "0x44944a80861120B58cc48B066d57cDAf5eC213dd",
                 deployVerifier: "0xc0F5bEF6b20Be41174F826684c663a8635c6A081",
+            },
+        },
+        TBTC: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
+            token: {
+                address: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+                decimals: 18,
+            },
+            contracts: {
+                deployHeight: 435848678,
+                router: "0x812A4ede94cA28390e05c807A26A9118B5C952A6",
+            },
+        },
+        USDT0: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
+            token: {
+                address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+                decimals: 6,
+                routeVia: "TBTC",
             },
         },
     },

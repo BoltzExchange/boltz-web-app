@@ -14,10 +14,17 @@ import {
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 
-import { type AssetType, BTC, LBTC, isEvmAsset } from "../consts/Assets";
+import {
+    AssetKind,
+    type AssetType,
+    BTC,
+    LBTC,
+    getKindForAsset,
+    isEvmAsset,
+} from "../consts/Assets";
 import { Denomination, Side, SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
-import { etherSwapCodeHashes } from "../context/Web3";
+import { erc20SwapCodeHashes, etherSwapCodeHashes } from "../context/Web3";
 import type { ChainSwapDetails } from "./boltzClient";
 import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
@@ -43,16 +50,25 @@ type ContractGetter = (asset: string) => BaseContract;
 
 const validateContract = async (
     getEtherSwap: ContractGetter,
+    getErc20Swap: ContractGetter,
     asset: string,
 ): Promise<void> => {
-    const codeHashes = etherSwapCodeHashes();
+    const isEtherSwap = getKindForAsset(asset) === AssetKind.EVMNative;
+
+    const codeHashes = isEtherSwap
+        ? etherSwapCodeHashes()
+        : erc20SwapCodeHashes();
     if (codeHashes === undefined) {
         return;
     }
 
-    const code = await getEtherSwap(asset).getDeployedCode();
-    if (!codeHashes.includes(ethers.keccak256(code))) {
-        throw new Error(`invalid contract code: ${code}`);
+    const code = await (
+        isEtherSwap ? getEtherSwap(asset) : getErc20Swap(asset)
+    ).getDeployedCode();
+    const hash = ethers.keccak256(code);
+
+    if (!codeHashes.includes(hash)) {
+        throw new Error(`invalid contract code hash: ${hash}`);
     }
 };
 
@@ -128,6 +144,7 @@ const validateReverse = async (
     swap: ReverseSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
+    getErc20Swap: ContractGetter,
 ): Promise<void> => {
     const invoiceData = await decodeInvoice(swap.invoice);
 
@@ -153,7 +170,7 @@ const validateReverse = async (
     }
 
     if (isEvmAsset(swap.assetReceive)) {
-        await validateContract(getEtherSwap, swap.assetReceive);
+        await validateContract(getEtherSwap, getErc20Swap, swap.assetReceive);
         return;
     }
 
@@ -192,6 +209,7 @@ const validateSubmarine = async (
     swap: SubmarineSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
+    getErc20Swap: ContractGetter,
 ): Promise<void> => {
     // Amounts
     if (swap.expectedAmount !== swap.sendAmount) {
@@ -201,7 +219,7 @@ const validateSubmarine = async (
     }
 
     if (isEvmAsset(swap.assetSend)) {
-        await validateContract(getEtherSwap, swap.assetSend);
+        await validateContract(getEtherSwap, getErc20Swap, swap.assetSend);
         return;
     }
 
@@ -245,6 +263,7 @@ const validateChainSwap = async (
     swap: ChainSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
+    getErc20Swap: ContractGetter,
 ): Promise<void> => {
     const preimageHash = sha256(hex.decode(swap.preimage));
 
@@ -271,7 +290,7 @@ const validateChainSwap = async (
         }
 
         if (isEvmAsset(asset)) {
-            await validateContract(getEtherSwap, asset);
+            await validateContract(getEtherSwap, getErc20Swap, asset);
             return;
         }
 
@@ -319,6 +338,7 @@ export const validateResponse = async (
     swap: SomeSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
+    getErc20Swap: ContractGetter,
 ): Promise<void> => {
     switch (swap.type) {
         case SwapType.Submarine:
@@ -326,15 +346,26 @@ export const validateResponse = async (
                 swap as SubmarineSwap,
                 deriveKey,
                 getEtherSwap,
+                getErc20Swap,
             );
             break;
 
         case SwapType.Reverse:
-            await validateReverse(swap as ReverseSwap, deriveKey, getEtherSwap);
+            await validateReverse(
+                swap as ReverseSwap,
+                deriveKey,
+                getEtherSwap,
+                getErc20Swap,
+            );
             break;
 
         case SwapType.Chain:
-            await validateChainSwap(swap as ChainSwap, deriveKey, getEtherSwap);
+            await validateChainSwap(
+                swap as ChainSwap,
+                deriveKey,
+                getEtherSwap,
+                getErc20Swap,
+            );
             break;
 
         default:

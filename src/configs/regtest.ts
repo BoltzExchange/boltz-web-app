@@ -1,24 +1,12 @@
 import type { Config } from "src/configs/base";
-import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
+import {
+    Explorer,
+    arbitrumExplorer,
+    arbitrumNetwork,
+    baseConfig,
+    chooseUrl,
+} from "src/configs/base";
 import { AssetKind } from "src/consts/AssetKind";
-import { Network } from "src/consts/Network";
-
-const arbitrumExplorer = {
-    id: Explorer.Blockscout,
-    normal: "https://arbiscan.io",
-};
-
-const arbitrumNetwork = {
-    symbol: "ARB",
-    chainName: Network.Arbitrum,
-    chainId: 42161,
-    rpcUrls: ["https://arb1.arbitrum.io/rpc"],
-    nativeCurrency: {
-        name: "Ethereum",
-        symbol: "ETH",
-        decimals: 18,
-    },
-};
 
 const config = {
     ...baseConfig,

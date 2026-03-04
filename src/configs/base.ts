@@ -1,6 +1,7 @@
 import type log from "loglevel";
 
 import { type AssetKind } from "../consts/AssetKind";
+import { Network } from "../consts/Network";
 
 type Asset = {
     type: AssetKind;
@@ -58,6 +59,23 @@ export type Config = {
     assets?: Record<string, Asset>;
     torUrl?: string;
 } & typeof defaults;
+
+export const arbitrumExplorer = {
+    id: Explorer.Blockscout,
+    normal: "https://arbiscan.io",
+};
+
+export const arbitrumNetwork = {
+    symbol: "ARB",
+    chainName: Network.Arbitrum,
+    chainId: 42161,
+    rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+    nativeCurrency: {
+        name: "Ethereum",
+        symbol: "ETH",
+        decimals: 18,
+    },
+};
 
 const defaults = {
     // Disables API endpoints that create cooperative signatures for claim

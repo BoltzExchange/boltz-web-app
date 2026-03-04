@@ -473,6 +473,18 @@ const etherSwapCodeHashes = () => {
     }
 };
 
+export const erc20SwapCodeHashes = () => {
+    switch (config.network) {
+        case "mainnet":
+            return [
+                "0xad0e83b3da99b6313c179f8b9cc9b629c567e89997c01ecd0d60f66c7dd841a0",
+            ];
+
+        default:
+            return undefined;
+    }
+};
+
 export {
     ERC20SwapAbi,
     EtherSwapAbi,

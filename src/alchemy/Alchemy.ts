@@ -210,11 +210,6 @@ export const signPreparedCalls = async (
 
         const authEntry = entries[0];
         const uoEntry = entries[1];
-        if (authEntry.type !== "eip-7702-authorization") {
-            throw new Error(
-                `signPreparedCalls: entries[0].type expected "eip-7702-authorization", got "${authEntry.type}"`,
-            );
-        }
         if (uoEntry.type !== "user-operation-v070") {
             throw new Error(
                 `signPreparedCalls: entries[1].type expected "user-operation-v070", got "${uoEntry.type}"`,
