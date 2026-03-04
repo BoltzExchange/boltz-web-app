@@ -36,6 +36,7 @@ import {
     postCommitmentSignature,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
+import { calculateAmountWithSlippage } from "../utils/calculate";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import ConnectWallet from "./ConnectWallet";
@@ -44,6 +45,44 @@ import LoadingSpinner from "./LoadingSpinner";
 import OptimizedRoute from "./OptimizedRoute";
 
 const lockupGasUsage = 46_000n;
+
+const getHopExecutionQuote = async (
+    hop: EncodedHop,
+    lockupAmount: bigint,
+    slippage: number,
+): Promise<{
+    targetLockupAmount: bigint;
+    quote: QuoteData;
+    amountIn: bigint;
+}> => {
+    const targetLockupAmount = calculateAmountWithSlippage(
+        lockupAmount,
+        slippage / 2,
+    );
+
+    const quotes = await quoteDexAmountOut(
+        hop.dexDetails.chain,
+        hop.dexDetails.tokenIn,
+        hop.dexDetails.tokenOut,
+        targetLockupAmount,
+    );
+
+    if (!Array.isArray(quotes) || quotes.length === 0) {
+        log.error("No DEX quotes returned for lockup hop", {
+            dexDetails: hop.dexDetails,
+            targetLockupAmount: targetLockupAmount.toString(),
+        });
+        throw new Error("could not get DEX quote for lockup hop");
+    }
+
+    const quote = quotes[0];
+
+    return {
+        quote,
+        targetLockupAmount,
+        amountIn: BigInt(quote.quote),
+    };
+};
 
 const lockupWithHops = async (
     hops: EncodedHop[],
@@ -62,22 +101,12 @@ const lockupWithHops = async (
 
     const hop = hops[0];
 
-    const targetLockupAmount = BigInt(
-        // TOOD: is this reasonnable?
-        Math.ceil(Number(lockupAmount) * (1 + slippage / 2)),
+    const { targetLockupAmount, quote, amountIn } = await getHopExecutionQuote(
+        hop,
+        lockupAmount,
+        slippage,
     );
-
-    const quote = (
-        await quoteDexAmountOut(
-            hop.dexDetails.chain,
-            hop.dexDetails.tokenIn,
-            hop.dexDetails.tokenOut,
-            targetLockupAmount,
-        )
-    )[0];
     log.info(`Got DEX quote for lockup hop: ${quote.quote}`, quote.data);
-
-    const amountIn = BigInt(Math.ceil(Number(quote.quote) * (1 + slippage)));
 
     const gasSigner = getGasAbstractionSigner(asset);
     const router = createRouterContract(hop.from, gasSigner);
@@ -468,6 +497,7 @@ const LockupEvm = (props: {
     timeoutBlockHeight: number;
     hops?: EncodedHop[];
 }) => {
+    const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();
 
     const value = () => satsToAssetAmount(props.amount, props.asset);
@@ -499,31 +529,25 @@ const LockupEvm = (props: {
                 signer().getAddress(),
             ]);
 
-            const [balance, allowance, quotes]: [bigint, bigint, QuoteData[]] =
-                await Promise.all([
-                    hopInputContract.balanceOf(signerAddress),
-                    hopInputContract.allowance(signerAddress, permit2Address),
-                    quoteDexAmountOut(
-                        hop.dexDetails.chain,
-                        hop.dexDetails.tokenIn,
-                        hop.dexDetails.tokenOut,
-                        value(),
-                    ),
-                ]);
-
-            const minQuoteIn = quotes.reduce<bigint>((min, q) => {
-                const amountIn = BigInt(q.quote);
-                return amountIn < min ? amountIn : min;
-            }, BigInt(quotes[0].quote));
+            const [balance, allowance, requiredValue] = await Promise.all([
+                hopInputContract.balanceOf(signerAddress),
+                hopInputContract.allowance(signerAddress, permit2Address),
+                getHopExecutionQuote(hop, value(), slippage()).then(
+                    ({ amountIn }) => amountIn,
+                ),
+            ]);
 
             log.info("Hop input token balance", balance);
-            log.info("Hop required amount (DEX quote)", minQuoteIn);
+            log.info(
+                "Hop required amount (DEX quote + slippage)",
+                requiredValue,
+            );
 
             setSignerBalance(balance);
-            setRequiredValue(minQuoteIn);
+            setRequiredValue(requiredValue);
             // Permit2 requires a one-time unlimited approval of the
             // input token to the Permit2 contract
-            setNeedsApproval(allowance < minQuoteIn);
+            setNeedsApproval(allowance < requiredValue);
             setApprovalTarget(permit2Address);
 
             return;

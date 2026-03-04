@@ -31,7 +31,7 @@ export type DexDetail = {
     // Expected DEX amount at creation; updated with actual amount after execution.
     // For hops after Boltz: expected output amount from the DEX.
     // For hops before Boltz: expected input amount to the DEX.
-    quoteAmount: number;
+    quoteAmount: number | string;
 };
 
 export type SwapBase = {

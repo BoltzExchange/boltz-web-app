@@ -1,3 +1,4 @@
+import { hex } from "@scure/base";
 import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
 import { abi as ERC20SwapAbi } from "boltz-core/out/ERC20Swap.sol/ERC20Swap.json";
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
@@ -191,9 +192,7 @@ const Web3SignerProvider = (props: {
         }
 
         return new Wallet(
-            Buffer.from(deriveKeyGasAbstraction(chainId).privateKey).toString(
-                "hex",
-            ),
+            hex.encode(deriveKeyGasAbstraction(chainId).privateKey),
             createProvider(rpcUrls),
         );
     };

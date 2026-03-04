@@ -285,6 +285,7 @@ const Create = () => {
     };
 
     const setAmount = async (amount: number) => {
+        setAmountChanged(Side.Send);
         setSendAmount(BigNumber(amount));
         const receiveAmount = await pair().calculateReceiveAmount(
             BigNumber(amount),

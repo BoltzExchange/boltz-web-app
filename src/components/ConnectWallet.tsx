@@ -285,6 +285,9 @@ const ConnectWallet = (props: {
                 const addr = address();
                 setAddressValid(addr !== undefined);
                 setOnchainAddress(addr || "");
+            } else {
+                setAddressValid(false);
+                setOnchainAddress("");
             }
         }),
     );

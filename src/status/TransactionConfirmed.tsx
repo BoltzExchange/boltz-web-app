@@ -27,6 +27,7 @@ import type { DictKey } from "../i18n/i18n";
 import { relayClaimTransaction } from "../rif/Signer";
 import { type EncodedHop } from "../utils/Pair";
 import { encodeDexQuote, quoteDexAmountIn } from "../utils/boltzClient";
+import { calculateAmountWithSlippage } from "../utils/calculate";
 import { formatAmount, getDecimals } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
@@ -90,8 +91,28 @@ const claimAsset = async (
 };
 
 type DexQuote = {
-    quoteAmount: number;
+    quoteAmount: bigint;
     data: unknown;
+};
+
+const calculateAmountOutMin = (
+    quoteAmount: bigint,
+    slippage: number,
+): bigint => {
+    const amountWithSlippage = calculateAmountWithSlippage(
+        quoteAmount,
+        slippage,
+    );
+    const slippageAmount = amountWithSlippage - quoteAmount;
+    return quoteAmount - slippageAmount;
+};
+
+const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {
+    if (typeof quoteAmount === "string") {
+        return BigInt(quoteAmount);
+    }
+
+    return BigInt(Math.round(quoteAmount));
 };
 
 const fetchDexQuote = async (
@@ -106,9 +127,10 @@ const fetchDexQuote = async (
             amountIn,
         )
     )[0];
-    log.info(`Got quote: ${quote.quote}`, quote.data);
+    const quoteAmount = BigInt(quote.quote);
+    log.info(`Got quote: ${quoteAmount.toString()}`, quote.data);
     return {
-        quoteAmount: Number(quote.quote),
+        quoteAmount,
         data: quote.data,
     };
 };
@@ -133,7 +155,7 @@ const claimHops = async (
     const hop = hops[0];
     const amountIn = BigInt(satsToAssetAmount(amount, asset));
 
-    const amountOutMin = BigInt(Math.floor(quote.quoteAmount * (1 - slippage)));
+    const amountOutMin = calculateAmountOutMin(quote.quoteAmount, slippage);
 
     const router = createRouterContract(asset, signer());
 
@@ -240,7 +262,11 @@ const claimHops = async (
     return transactionHash;
 };
 
-const Amount = (props: { label: DictKey; amount: number; asset: string }) => {
+const Amount = (props: {
+    label: DictKey;
+    amount: number | string | bigint;
+    asset: string;
+}) => {
     const isErc20 = () => getDecimals(props.asset).isErc20;
     const { t, denomination, separator } = useGlobalContext();
 
@@ -249,7 +275,7 @@ const Amount = (props: { label: DictKey; amount: number; asset: string }) => {
             <div>{t(props.label)}</div>
             <span>
                 {formatAmount(
-                    new BigNumber(props.amount),
+                    new BigNumber(props.amount.toString()),
                     denomination(),
                     separator(),
                     props.asset,
@@ -292,7 +318,11 @@ const AutoClaimHops = (props: {
     );
     const [quoteAccepted, setQuoteAccepted] = createSignal(false);
 
-    const quoteThreshold = () => props.dex.quoteAmount * (1 - slippage());
+    const quoteThreshold = () =>
+        calculateAmountOutMin(
+            parsePersistedQuoteAmount(props.dex.quoteAmount),
+            slippage(),
+        );
     const isOutsideSlippage = (quote: DexQuote) =>
         quote.quoteAmount < quoteThreshold();
 
@@ -328,7 +358,7 @@ const AutoClaimHops = (props: {
             );
 
             currentSwap.claimTx = transactionHash;
-            currentSwap.dex.quoteAmount = quote.quoteAmount;
+            currentSwap.dex.quoteAmount = quote.quoteAmount.toString();
             setSwap(currentSwap);
             await setSwapStorage(currentSwap);
         } catch (e) {
@@ -355,7 +385,7 @@ const AutoClaimHops = (props: {
                 await executeClaim(quote);
             } else {
                 log.info(
-                    `DEX quote ${quote.quoteAmount} is below threshold ${quoteThreshold()} (expected ${props.dex.quoteAmount}, slippage ${slippage()})`,
+                    `DEX quote ${quote.quoteAmount.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
                 );
             }
         } catch (e) {
