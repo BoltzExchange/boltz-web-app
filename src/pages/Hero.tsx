@@ -132,7 +132,10 @@ export const Hero = () => {
                         />
                     </div>
                     <div>
-                        <ExternalLink href="https://aqua.net" class="aqua" />
+                        <ExternalLink
+                            href="https://aquawallet.io/"
+                            class="aqua"
+                        />
                     </div>
                     <div>
                         <ExternalLink
@@ -238,12 +241,6 @@ export const Hero = () => {
                         <ExternalLink
                             href="https://blockstream.com/"
                             class="blockstream"
-                        />
-                    </div>
-                    <div>
-                        <ExternalLink
-                            href="https://www.diamondhands.community/"
-                            class="diamondhands"
                         />
                     </div>
                     <div>
