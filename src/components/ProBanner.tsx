@@ -8,7 +8,7 @@ const ProBanner = () => {
 
     return (
         <div class="banner banner-yellow">
-            <ExternalLink href="https://api.docs.boltz.exchange/pro.html">
+            <ExternalLink href="https://client.docs.boltz.exchange/boltz-pro">
                 {t("pro_banner").toUpperCase()}
                 <OcLinkexternal2 size={18} />
             </ExternalLink>
