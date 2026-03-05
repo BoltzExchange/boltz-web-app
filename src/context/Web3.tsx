@@ -56,6 +56,7 @@ declare global {
     }
 
     interface Window {
+        // @ts-expect-error - we can safely ignore this
         ethereum?: EIP1193Provider;
     }
 }

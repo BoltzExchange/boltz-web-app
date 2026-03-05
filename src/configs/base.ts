@@ -3,7 +3,7 @@ import type log from "loglevel";
 import { type AssetKind } from "../consts/AssetKind";
 import { Network } from "../consts/Network";
 
-type Asset = {
+export type Asset = {
     type: AssetKind;
 
     blockExplorerUrl?: ExplorerUrl;
