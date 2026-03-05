@@ -1,7 +1,13 @@
 import axios from "axios";
+import { init } from "boltz-sdk";
 import log from "loglevel";
 
 log.setLevel("error");
+
+init({
+    apiUrl: "http://localhost:9001",
+    network: "regtest",
+});
 
 // Replace jsdom's fetch with axios-based fetch to fix AbortController compatibility
 const axiosFetch = async (
