@@ -6,7 +6,7 @@ import type {
 import { RBTC } from "./assets";
 import { SwapType } from "./enums";
 
-/** Properties shared by all swap types */
+/** Properties shared by all swap types. */
 export type SwapBase = {
     /** Swap direction. */
     type: SwapType;
@@ -28,6 +28,13 @@ export type SwapBase = {
     claimTx?: string;
     /** Lockup transaction ID, set after detection. */
     lockupTx?: string;
+    useRif: boolean;
+    signer?: string;
+    // Set for hardware wallet signers
+    derivationPath?: string;
+
+    // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
+    originalDestination?: string;
 };
 
 /**
@@ -102,7 +109,7 @@ export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
  * @param swap - The swap to inspect.
  * @returns The relevant asset identifier.
  */
-export const getRelevantAssetForSwap = (swap: SwapBase): string => {
+export const getRelevantAssetForSwap = (swap: SwapBase) => {
     switch (swap.type) {
         case SwapType.Submarine:
             return swap.assetSend;
@@ -118,5 +125,4 @@ export const getRelevantAssetForSwap = (swap: SwapBase): string => {
  * @param swap - The swap to check.
  * @returns `true` if the relevant asset is RBTC.
  */
-export const isRsk = (swap: SomeSwap): boolean =>
-    getRelevantAssetForSwap(swap) === RBTC;
+export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;

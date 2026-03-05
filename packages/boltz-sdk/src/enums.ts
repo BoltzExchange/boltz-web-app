@@ -18,13 +18,3 @@ export enum InvoiceValidation {
     MinAmount = "minAmount",
     MaxAmount = "maxAmount",
 }
-
-export enum Currency {
-    USD = "USD",
-}
-
-export enum RskRescueMode {
-    Refund = "refund",
-    Claim = "resume",
-}
-

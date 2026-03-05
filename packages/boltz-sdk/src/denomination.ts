@@ -1,65 +1,15 @@
 import { Denomination } from "./enums";
 
-const miliFactor = 1_000;
+/** Satoshi multiplier (1 BTC = 100 000 000 sat). */
 const satFactor = 100_000_000;
 
 /**
- * Format an amount for display in a specific denomination.
- * Internal to the SDK -- used by validation.ts for error messages.
+ * Convert an amount from a given denomination to satoshis.
+ *
+ * @param amount - The amount in the source denomination.
+ * @param denom - The source denomination (e.g. `"btc"` or `"sat"`).
+ * @returns The equivalent amount in satoshis.
  */
-export const formatAmountDenomination = (
-    amount: BigNumber,
-    denomination: Denomination,
-    separator: string,
-    fixed: boolean = false,
-): string => {
-    switch (denomination) {
-        case Denomination.Btc: {
-            const amountBig = amount.div(satFactor);
-            let amountString = amountBig.toString();
-            if (fixed) {
-                amountString = amountBig.toFixed(8);
-                return amountString;
-            }
-            if (amountBig.isZero()) {
-                amountString = amountBig.toFixed(1);
-            }
-
-            // 0.00000001.toString() returns "1e-8"
-            // 0.0000001.toString() returns "1e-7"
-            if (amountBig.toString().indexOf("-") !== -1) {
-                amountString = amountBig.toFixed(Number(8)).replace(/0+$/, "");
-            }
-
-            if (separator === ",") {
-                amountString = amountString.replace(".", ",");
-            }
-
-            return amountString;
-        }
-
-        default: {
-            const chars = amount.toString().split("").reverse();
-            const formatted = chars
-                .reduce(
-                    (acc, char, i) =>
-                        i % 3 === 0 ? acc + " " + char : acc + char,
-                    "",
-                )
-                .trim()
-                .split("")
-                .reverse()
-                .join("");
-
-            return (
-                formatted.includes(".") || formatted.includes(",")
-                    ? formatted.replaceAll(" .", ".").replaceAll(" ,", ",")
-                    : formatted
-            ).replaceAll(".", separator);
-        }
-    }
-};
-
 export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
     switch (denom) {
         case Denomination.Btc:
@@ -69,18 +19,22 @@ export const convertAmount = (amount: BigNumber, denom: string): BigNumber => {
     }
 };
 
+/**
+ * Convert a BTC amount to satoshis.
+ *
+ * @param btc - Amount in BTC.
+ * @returns Equivalent amount in satoshis.
+ */
 export const btcToSat = (btc: BigNumber) => {
     return btc.multipliedBy(satFactor);
 };
 
+/**
+ * Convert a satoshi amount to BTC.
+ *
+ * @param sat - Amount in satoshis.
+ * @returns Equivalent amount in BTC.
+ */
 export const satToBtc = (sat: BigNumber) => {
     return sat.dividedBy(satFactor);
-};
-
-export const satToMiliSat = (sat: BigNumber) => {
-    return sat.multipliedBy(miliFactor);
-};
-
-export const miliSatToSat = (sat: BigNumber) => {
-    return sat.dividedBy(miliFactor);
 };

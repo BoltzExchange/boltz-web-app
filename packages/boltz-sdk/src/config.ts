@@ -1,5 +1,11 @@
 export type NetworkType = "mainnet" | "testnet" | "regtest";
 
+/**
+ * Configuration object for the Boltz SDK.
+ *
+ * Pass to {@link init} before calling any other SDK function.
+ * Values may be static or getter functions so they can react to runtime changes.
+ */
 export type BoltzConfiguration = {
     apiUrl: string | (() => string);
     network?: NetworkType | (() => NetworkType);

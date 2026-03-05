@@ -2,14 +2,40 @@ import { BigNumber } from "bignumber.js";
 
 import { SwapType } from "./enums";
 
+/**
+ * Round a BigNumber up to the nearest integer (ceiling).
+ *
+ * @param big - The value to round.
+ * @returns The rounded-up integer value.
+ */
 const bigCeil = (big: BigNumber): BigNumber => {
     return big.integerValue(BigNumber.ROUND_CEIL);
 };
 
+/**
+ * Round a BigNumber down to the nearest integer (floor).
+ *
+ * @param big - The value to round.
+ * @returns The rounded-down integer value.
+ */
 const bigFloor = (big: BigNumber): BigNumber => {
     return big.integerValue(BigNumber.ROUND_FLOOR);
 };
 
+/**
+ * Calculate the amount the user will receive for a given send amount.
+ *
+ * For **Reverse** and **Chain** swaps the Boltz fee is deducted from the send
+ * amount before subtracting the miner fee.  For **Submarine** swaps the fee
+ * is factored out differently because the fee is included in the on-chain
+ * payment.
+ *
+ * @param sendAmount - Amount the user sends (satoshis).
+ * @param boltzFee - Boltz service fee as a percentage (e.g. `0.1` for 0.1 %).
+ * @param minerFee - Miner / network fee in satoshis.
+ * @param swapType - The swap direction.
+ * @returns The expected receive amount (≥ 0).
+ */
 export const calculateReceiveAmount = (
     sendAmount: BigNumber,
     boltzFee: number,
@@ -27,6 +53,15 @@ export const calculateReceiveAmount = (
     return BigNumber.maximum(bigFloor(receiveAmount), 0);
 };
 
+/**
+ * Calculate the Boltz service fee portion of a send amount.
+ *
+ * @param sendAmount - Amount the user sends (satoshis).
+ * @param boltzFee - Boltz service fee as a percentage.
+ * @param minerFee - Miner / network fee in satoshis.
+ * @param swapType - The swap direction.
+ * @returns The Boltz fee in satoshis (rounded up).
+ */
 export const calculateBoltzFeeOnSend = (
     sendAmount: BigNumber,
     boltzFee: number,
@@ -61,6 +96,17 @@ export const calculateBoltzFeeOnSend = (
     return bigCeil(fee);
 };
 
+/**
+ * Calculate the send amount required for the user to receive a desired amount.
+ *
+ * This is the inverse of {@link calculateReceiveAmount}.
+ *
+ * @param receiveAmount - Desired receive amount (satoshis).
+ * @param boltzFee - Boltz service fee as a percentage.
+ * @param minerFee - Miner / network fee in satoshis.
+ * @param swapType - The swap direction.
+ * @returns The required send amount in satoshis.
+ */
 export const calculateSendAmount = (
     receiveAmount: BigNumber,
     boltzFee: number,
@@ -83,4 +129,3 @@ export const calculateSendAmount = (
                   .plus(minerFee),
           );
 };
-
