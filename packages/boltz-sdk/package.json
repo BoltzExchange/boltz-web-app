@@ -12,6 +12,7 @@
         "test": "vitest run"
     },
     "dependencies": {
+        "@scure/base": "^2.0.0",
         "bignumber.js": "^9.3.1"
     },
     "devDependencies": {
