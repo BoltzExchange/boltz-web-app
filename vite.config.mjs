@@ -4,7 +4,6 @@ import path from "path";
 import { defineConfig } from "vite";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import solidPlugin from "vite-plugin-solid";
-import topLevelAwait from "vite-plugin-top-level-await";
 import wasm from "vite-plugin-wasm";
 
 const commitHash = child
@@ -44,7 +43,7 @@ try {
 }
 
 export default defineConfig({
-    plugins: [solidPlugin(), wasm(), topLevelAwait(), nodePolyfills()],
+    plugins: [solidPlugin(), wasm(), nodePolyfills()],
     resolve: {
         alias: {
             src: path.resolve(__dirname, "src"),
