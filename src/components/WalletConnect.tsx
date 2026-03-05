@@ -1,12 +1,13 @@
 import { BrowserProvider } from "ethers";
 import log from "loglevel";
-import { createEffect, createResource } from "solid-js";
+import { createEffect, createMemo, createResource } from "solid-js";
 
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
+import { evmChains } from "../consts/Assets";
 import { useWeb3Signer } from "../context/Web3";
 import loader from "../lazy/walletConnect";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
+import { buildWalletConnectNetworks } from "../utils/walletConnectNetworks";
 
 const getLocation = () => {
     const { protocol, host } = window.location;
@@ -17,6 +18,15 @@ export const WalletConnect = () => {
     const { openWalletConnectModal, setOpenWalletConnectModal } =
         useWeb3Signer();
 
+    const networks = createMemo(() => {
+        try {
+            return buildWalletConnectNetworks(config.assets, evmChains);
+        } catch (error) {
+            log.error(`WalletConnect network config invalid: ${String(error)}`);
+            return undefined;
+        }
+    });
+
     const [createdKit] = createResource(async () => {
         const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
         if (projectId === undefined) {
@@ -24,7 +34,10 @@ export const WalletConnect = () => {
             return undefined;
         }
 
-        const configRsk = config.assets[RBTC];
+        const nets = networks();
+        if (nets === undefined) {
+            return undefined;
+        }
 
         const { appKit, EthersAdapter } = await loader.get();
         const created = appKit.createAppKit({
@@ -33,28 +46,7 @@ export const WalletConnect = () => {
             enableEIP6963: false,
             enableInjected: false,
             adapters: [new EthersAdapter()],
-            networks: [
-                {
-                    id: configRsk.network.chainId,
-                    name: configRsk.network.chainName,
-                    nativeCurrency: {
-                        name: RBTC,
-                        symbol: RBTC,
-                        decimals: 18,
-                    },
-                    rpcUrls: {
-                        default: {
-                            http: configRsk.network.rpcUrls,
-                        },
-                    },
-                    blockExplorers: {
-                        default: {
-                            name: "Explorer",
-                            url: configRsk.blockExplorerUrl.normal,
-                        },
-                    },
-                },
-            ],
+            networks: nets,
             metadata: {
                 name: "Boltz",
                 description: "Boltz Web App",
