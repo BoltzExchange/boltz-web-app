@@ -9,11 +9,10 @@ export default [
     { languageOptions: { globals: globals.browser } },
     {
         ignores: [
-            "dist",
+            "**/dist/**",
             "docs",
             "regtest",
             "coverage",
-            "build/dist",
             "node_modules",
             "dnssec-prover",
             "vite.config.mjs",
