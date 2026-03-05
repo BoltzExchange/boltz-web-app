@@ -38,7 +38,8 @@ export default [
         rules: {
             "no-async-promise-executor": "off",
             "no-console": 1,
-            "no-restricted-imports": [
+            "no-restricted-imports": "off",
+            "@typescript-eslint/no-restricted-imports": [
                 "error",
                 {
                     patterns: [
@@ -55,6 +56,7 @@ export default [
                                 "@ledgerhq/hw-transport-webhid",
                                 "@vulpemventures/secp256k1-zkp",
                             ],
+                            allowTypeImports: true,
                         },
                     ],
                 },
@@ -65,6 +67,7 @@ export default [
         files: ["*/lazy/**"],
         rules: {
             "no-restricted-imports": "off",
+            "@typescript-eslint/no-restricted-imports": "off",
         },
     },
     {

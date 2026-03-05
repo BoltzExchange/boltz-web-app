@@ -1,4 +1,3 @@
-// eslint-disable-next-line no-restricted-imports
 import type { AppKitNetwork } from "@reown/appkit/networks";
 import log from "loglevel";
 
