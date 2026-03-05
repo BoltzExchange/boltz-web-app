@@ -3,6 +3,38 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 ---
+## [1.8.18](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.17..v1.8.18) - 2026-03-05
+
+### Bug Fixes
+
+- exception when reloading during backup phase (#1183) - ([fac9eb8](https://github.com/BoltzExchange/boltz-web-app/commit/fac9eb8db450864dc2e6e7e4135aabb7bc0e25a1))
+- allow pasting amountless invoices (#1187) - ([33cb957](https://github.com/BoltzExchange/boltz-web-app/commit/33cb957f7012ef84be363dec146f349eeaabc216))
+- rescue url currency param (#1196) - ([43a34ed](https://github.com/BoltzExchange/boltz-web-app/commit/43a34ed4310d8f8d4ea830235a87d4d9daeb359f))
+
+### Features
+
+- resume pending external EVM swaps v2 (#1182) - ([3343aa2](https://github.com/BoltzExchange/boltz-web-app/commit/3343aa2651e8854bd2a962f5b5568f7aa458c160))
+- add loading spinner while Bolt12 module loads (#1190) - ([23ae7a1](https://github.com/BoltzExchange/boltz-web-app/commit/23ae7a1f0bab10dea876c1e2d94643cdfbcf3d47))
+
+### Miscellaneous Chores
+
+- fix package-lock.json (#1179) - ([5b3db61](https://github.com/BoltzExchange/boltz-web-app/commit/5b3db614ee60b2d5664944157130bd4941594f17))
+- update to boltz-core v4 (#1177) - ([42913fe](https://github.com/BoltzExchange/boltz-web-app/commit/42913fef6c9159739b2457d1f485b88132bcad38))
+- bump bn.js (#1184) - ([5071758](https://github.com/BoltzExchange/boltz-web-app/commit/5071758441a65af59a7447a58575c36fd93ee938))
+- update regtest (#1194) - ([7addaf9](https://github.com/BoltzExchange/boltz-web-app/commit/7addaf9884c22f1ff9500cd8575dd5388517d1fa))
+- bump minimatch from 3.1.2 to 3.1.5 (#1195) - ([1c6dc77](https://github.com/BoltzExchange/boltz-web-app/commit/1c6dc7712b2f18d002af8982d48fe21767e8b864))
+- update aqua link, rm dh from partner section (#1199) - ([457c0e6](https://github.com/BoltzExchange/boltz-web-app/commit/457c0e6ce3a29952621336daaee5c1961d6d0540))
+- update pro banner link (#1201) - ([65e11ed](https://github.com/BoltzExchange/boltz-web-app/commit/65e11ed9cdc1764faea0e84f256367ea9c1638bf))
+- bump svgo from 4.0.0 to 4.0.1 (#1207) - ([b2ef2e8](https://github.com/BoltzExchange/boltz-web-app/commit/b2ef2e8fb6f88d66fea90221525ca670cfd56bcb))
+- bump immutable from 5.0.3 to 5.1.5 (#1206) - ([1cbb83c](https://github.com/BoltzExchange/boltz-web-app/commit/1cbb83c861e5669789dd954562478da60167e9f3))
+
+### Refactoring
+
+- simplify ref handling (#1188) - ([8f22a1e](https://github.com/BoltzExchange/boltz-web-app/commit/8f22a1e69aaf50faf4b7e2019392303c8ae59249))
+- contract ABI v5 compatibilty in scans (#1197) - ([5f62041](https://github.com/BoltzExchange/boltz-web-app/commit/5f62041a87b516f51ef3e501143c5dcc3999811c))
+- resuming external RBTC swaps (#1191) - ([6712291](https://github.com/BoltzExchange/boltz-web-app/commit/671229182ef58b42937376da26ee61987bac198e))
+
+---
 ## [1.8.17](https://github.com/BoltzExchange/boltz-web-app/compare/v1.8.16..v1.8.17) - 2026-02-24
 
 ### Features
@@ -20,6 +52,7 @@ All notable changes to this project will be documented in this file. See [conven
 - speedup ARM64 Docker build - ([ff09c8b](https://github.com/BoltzExchange/boltz-web-app/commit/ff09c8b85d7fa2b836cd374818afa70ee4742c44))
 - update dependencies - ([61cb62a](https://github.com/BoltzExchange/boltz-web-app/commit/61cb62a77aa60eb36d88c0bf93c0b07d5e2c0bec))
 - cleanup GitHub actions - ([a700ba0](https://github.com/BoltzExchange/boltz-web-app/commit/a700ba07b202fd96bb1409a5a9d9da3fee6ae55f))
+- bump version to v1.8.17 (#1178) - ([cd34aaa](https://github.com/BoltzExchange/boltz-web-app/commit/cd34aaa815e2efdee8da996d0886718ad83c8fd4))
 
 ### Tests
 
