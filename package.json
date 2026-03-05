@@ -52,7 +52,7 @@
         "jsdom": "^27.3.0",
         "prettier": "^3.8.1",
         "sass-embedded": "^1.97.3",
-        "svgo": "^4.0.0",
+        "svgo": "^4.0.1",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.1",
         "viem": "^2.46.3",
