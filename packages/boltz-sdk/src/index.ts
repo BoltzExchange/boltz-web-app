@@ -14,4 +14,5 @@ export * from "./invoice";
 export * from "./swapCreator";
 export * from "./magicRoutingHint";
 export * from "./musig";
+export * from "./swapCreator";
 export * from "./swapStatus";
