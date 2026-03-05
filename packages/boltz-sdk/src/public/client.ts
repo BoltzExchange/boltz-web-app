@@ -1,5 +1,6 @@
 import { hex } from "@scure/base";
 
+import { defaultTimeoutDuration, resolveValue } from "../internal/utils";
 import {
     type ChainPairsTaproot,
     type ChainSwapCreatedResponse,
@@ -18,9 +19,9 @@ import {
     type SubmarinePairsTaproot,
     type SwapStatus,
 } from "./apiTypes";
+import { getConfig } from "./config";
 import { SwapType } from "./enums";
 import { formatError } from "./errors";
-import { defaultTimeoutDuration, getConfig, resolveValue } from "./internal";
 
 /** Resolve the current Boltz API base URL from configuration. */
 const getApiUrl = (): string => resolveValue(getConfig().apiUrl);

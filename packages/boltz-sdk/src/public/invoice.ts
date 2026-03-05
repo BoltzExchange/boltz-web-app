@@ -2,16 +2,16 @@ import { bech32, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
 
-import { invoicePrefix, isBip21 } from "./bip21";
-import type { NetworkType } from "./config";
-import { getConfig } from "./config";
-import { InvoiceValidation } from "./enums";
 import {
     bolt11Prefixes,
     checkResponse,
     resolveValue,
     satToMiliSat,
-} from "./internal";
+} from "../internal/utils";
+import { invoicePrefix, isBip21 } from "./bip21";
+import type { NetworkType } from "./config";
+import { getConfig } from "./config";
+import { InvoiceValidation } from "./enums";
 
 /** Lightning invoice encoding formats. */
 export enum InvoiceType {

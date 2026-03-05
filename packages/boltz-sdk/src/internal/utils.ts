@@ -1,4 +1,4 @@
-import { Denomination } from "./enums";
+import { Denomination } from "../public/enums";
 
 /** Default HTTP request timeout in milliseconds (15 s). */
 export const defaultTimeoutDuration = 15_000;
