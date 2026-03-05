@@ -1,5 +1,8 @@
+export type NetworkType = "mainnet" | "testnet" | "regtest";
+
 export type BoltzConfiguration = {
     apiUrl: string | (() => string);
+    network?: NetworkType | (() => NetworkType);
     referralId?: string | (() => string);
     cooperativeDisabled?: boolean | (() => boolean);
     defaultTimeout?: number;

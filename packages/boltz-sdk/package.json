@@ -13,7 +13,11 @@
     },
     "dependencies": {
         "@scure/base": "^2.0.0",
-        "bignumber.js": "^9.3.1"
+        "@scure/btc-signer": "^2.0.1",
+        "bignumber.js": "^9.3.1",
+        "boltz-core": "^4.0.0",
+        "buffer": "^6.0.3",
+        "liquidjs-lib": "^6.0.2-liquid.37"
     },
     "devDependencies": {
         "@types/node": "^25.3.0",
