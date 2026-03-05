@@ -7,7 +7,7 @@ import {
     isBip21,
     liquidPrefix,
     liquidTestnetPrefix,
-} from "../src/bip21";
+} from "../src/public/bip21";
 
 describe("bip21", () => {
     describe("isBip21", () => {

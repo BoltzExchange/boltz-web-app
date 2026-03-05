@@ -29,9 +29,9 @@ import {
 } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
+import { resolveValue } from "../internal/utils";
 import { LBTC } from "./assets";
 import { type NetworkType, getConfig } from "./config";
-import { resolveValue } from "./internal";
 
 /** A Liquid transaction output extended with an optional blinding private key. */
 export type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {

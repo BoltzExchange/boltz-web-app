@@ -5,11 +5,11 @@ import { BigNumber } from "bignumber.js";
 import type { Types } from "boltz-core";
 import { Scripts } from "boltz-core";
 
+import { formatAmountDenomination } from "../internal/utils";
 import { LBTC } from "./assets";
 import { decodeAddress } from "./compat";
 import type { ECKeys } from "./ecpair";
 import { Denomination } from "./enums";
-import { formatAmountDenomination } from "./internal";
 import { createMusig, tweakMusig } from "./musig";
 
 /**
