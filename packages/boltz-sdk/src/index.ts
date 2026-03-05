@@ -3,6 +3,7 @@ export * from "./assets";
 export * from "./bip21";
 export * from "./calculate";
 export * from "./client";
+export * from "./compat";
 export * from "./config";
 export * from "./denomination";
 export * from "./enums";

@@ -44,12 +44,12 @@ import Client from "./pages/products/Client";
 import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
-import "./utils/patches";
-
 import { getApiUrl, getReferral } from "./utils/helper";
+import "./utils/patches";
 
 init({
     apiUrl: getApiUrl,
+    network: config.network,
     referralId: getReferral,
     cooperativeDisabled: () => config.cooperativeDisabled === true,
 });
