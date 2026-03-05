@@ -1,5 +1,3 @@
-export const defaultTimeoutDuration = 15_000;
-
 export type BoltzConfiguration = {
     apiUrl: string | (() => string);
     referralId?: string | (() => string);
@@ -7,21 +5,30 @@ export type BoltzConfiguration = {
     defaultTimeout?: number;
 };
 
-let _config: BoltzConfiguration | null = null;
+/** Internal singleton holding the current configuration. */
+let boltzConfig: BoltzConfiguration | null = null;
 
+/**
+ * Initialise the SDK with the given configuration.
+ *
+ * Must be called once before any other SDK function is used.
+ *
+ * @param config - SDK configuration options.
+ */
 export const init = (config: BoltzConfiguration) => {
-    _config = config;
+    boltzConfig = config;
 };
 
+/**
+ * Return the current SDK configuration.
+ *
+ * @throws If {@link init} has not been called yet.
+ */
 export const getConfig = (): BoltzConfiguration => {
-    if (!_config) {
+    if (!boltzConfig) {
         throw new Error(
             "boltz-sdk not initialized. Call init() before using SDK functions.",
         );
     }
-    return _config;
+    return boltzConfig;
 };
-
-export const resolveValue = <T>(value: T | (() => T)): T =>
-    typeof value === "function" ? (value as () => T)() : value;
-
