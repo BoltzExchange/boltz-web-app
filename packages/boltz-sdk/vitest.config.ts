@@ -4,7 +4,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: "node",
-        roots: ["tests"],
+        include: ["tests/**/*.test.ts"],
     },
 });
 
