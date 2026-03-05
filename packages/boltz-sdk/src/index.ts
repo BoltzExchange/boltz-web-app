@@ -15,6 +15,7 @@ export * from "./swapCreator";
 export * from "./magicRoutingHint";
 export * from "./musig";
 export * from "./rescue";
+export * from "./rescueFile";
 export * from "./swapCreator";
 export * from "./swapStatus";
 export * from "./validation";
