@@ -34,4 +34,3 @@ export const swapStatusFinal = [
     swapStatusFailed.InvoiceFailedToPay,
     swapStatusFailed.TransactionRefunded,
 ].concat(Object.values(swapStatusSuccess));
-

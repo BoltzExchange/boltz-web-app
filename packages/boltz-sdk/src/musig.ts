@@ -12,6 +12,16 @@ import type { ECKeys } from "./ecpair";
 
 export type { MusigKeyAgg };
 
+/**
+ * Create a MuSig2 key aggregation from a local key pair and Boltz's public key.
+ *
+ * The Boltz public key is always placed first in the key list so that the
+ * aggregated key is deterministic regardless of who initiates the session.
+ *
+ * @param ourKeys - The local secp256k1 key pair.
+ * @param theirPublicKey - Boltz's compressed public key.
+ * @returns A MuSig2 key aggregation object.
+ */
 export const createMusig = (
     ourKeys: ECKeys,
     theirPublicKey: Uint8Array,
@@ -23,6 +33,17 @@ export const createMusig = (
     ]);
 };
 
+/**
+ * Tweak a MuSig2 aggregated key with a Taproot script tree.
+ *
+ * Delegates to the appropriate `TaprootUtils` implementation based on the
+ * asset (Liquid vs Bitcoin).
+ *
+ * @param asset - The asset identifier (e.g. `"BTC"` or `"L-BTC"`).
+ * @param musig - The MuSig2 key aggregation to tweak.
+ * @param tree - The Taproot script tree used for tweaking.
+ * @returns The tweaked MuSig2 key aggregation.
+ */
 export const tweakMusig = (
     asset: string,
     musig: MusigKeyAgg,
@@ -33,6 +54,19 @@ export const tweakMusig = (
         tree,
     );
 
+/**
+ * Compute the BIP-341 sighash for a Taproot (witness v1) input.
+ *
+ * Handles both Bitcoin and Liquid transactions transparently.
+ *
+ * @param asset - Asset identifier determining which sighash algorithm to use.
+ * @param network - The network parameters.
+ * @param inputs - Previous outputs being spent (scripts + amounts / confidential data).
+ * @param tx - The unsigned transaction.
+ * @param index - Input index being signed.
+ * @param leafHash - Optional leaf hash when signing via a script-path spend.
+ * @returns The sighash bytes to sign.
+ */
 export const hashForWitnessV1 = (
     asset: string,
     network: BTC_NETWORK | LiquidNetwork,

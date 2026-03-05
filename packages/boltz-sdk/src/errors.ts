@@ -1,3 +1,12 @@
+/**
+ * Extract a human-readable error message from an unknown value.
+ *
+ * Handles plain strings, objects with `error.message`, `message`, `error`,
+ * or `data` properties, and falls back to `JSON.stringify`.
+ *
+ * @param message - The unknown error value to format.
+ * @returns A string representation of the error.
+ */
 export const formatError = (message: unknown): string => {
     if (typeof message === "string") {
         return message;
@@ -38,4 +47,3 @@ export const formatError = (message: unknown): string => {
 
     return JSON.stringify(message);
 };
-

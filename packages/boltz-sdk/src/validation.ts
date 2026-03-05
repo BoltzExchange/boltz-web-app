@@ -7,17 +7,27 @@ import { Scripts } from "boltz-core";
 
 import { LBTC } from "./assets";
 import { decodeAddress } from "./compat";
-import { formatAmountDenomination } from "./denomination";
 import type { ECKeys } from "./ecpair";
 import { Denomination } from "./enums";
+import { formatAmountDenomination } from "./internal";
 import { createMusig, tweakMusig } from "./musig";
 
-export const invalidSendAmountMsg = (expected: number, got: number) =>
-    `invalid send amount. Expected ${expected}, got ${got}`;
-
-export const invalidReceiveAmountMsg = (expected: number, got: number) =>
-    `invalid receive amount. Expected ${expected} to be bigger than ${got}`;
-
+/**
+ * Validate that a swap address was derived correctly from the given keys
+ * and script tree.
+ *
+ * Reconstructs the expected Taproot output from the MuSig2-aggregated key
+ * tweaked with the swap tree, then compares it against the decoded address.
+ * For Liquid swaps, also verifies the blinding public key.
+ *
+ * @param chain - Asset identifier (e.g. `"BTC"` or `"L-BTC"`).
+ * @param tree - The swap's Taproot script tree.
+ * @param ourKeys - The user's secp256k1 key pair.
+ * @param theirPublicKey - Boltz's public key.
+ * @param address - The swap address to validate.
+ * @param blindingKey - Hex-encoded blinding private key (required for L-BTC).
+ * @throws When the address script or blinding key does not match.
+ */
 export const validateSwapAddress = (
     chain: string,
     tree: Types.SwapTree,
@@ -52,6 +62,14 @@ export const validateSwapAddress = (
     }
 };
 
+/**
+ * Validate that a BIP-21 URI matches the expected address and amount.
+ *
+ * @param bip21 - The full BIP-21 URI string.
+ * @param address - The expected on-chain address.
+ * @param expectedAmount - The expected amount in satoshis (0 means no amount param expected).
+ * @throws When the address or amount does not match.
+ */
 export const validateBip21 = (
     bip21: string,
     address: string,

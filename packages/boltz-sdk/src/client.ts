@@ -18,17 +18,24 @@ import {
     type SubmarinePairsTaproot,
     type SwapStatus,
 } from "./apiTypes";
-import { defaultTimeoutDuration, getConfig, resolveValue } from "./config";
 import { SwapType } from "./enums";
 import { formatError } from "./errors";
+import { defaultTimeoutDuration, getConfig, resolveValue } from "./internal";
 
+/** Resolve the current Boltz API base URL from configuration. */
 const getApiUrl = (): string => resolveValue(getConfig().apiUrl);
 
+/** Resolve the optional referral ID from configuration. */
 const getReferralId = (): string | undefined => {
     const { referralId } = getConfig();
     return referralId ? resolveValue(referralId) : undefined;
 };
 
+/**
+ * Assert that cooperative (MuSig) signing is enabled.
+ *
+ * @throws If cooperative signatures are disabled in the SDK configuration.
+ */
 const checkCooperative = () => {
     const { cooperativeDisabled } = getConfig();
     const disabled = cooperativeDisabled
@@ -39,6 +46,21 @@ const checkCooperative = () => {
     }
 };
 
+/**
+ * Generic HTTP fetcher for the Boltz API.
+ *
+ * - When `params` is provided the request is sent as `POST` with a JSON body.
+ * - Adds the `referral` header when a referral ID is configured.
+ * - Applies a configurable request timeout via `AbortController`.
+ *
+ * @typeParam T - Expected shape of the JSON response.
+ * @param url - API path (appended to the base URL, e.g. `"/v2/swap/submarine"`).
+ * @param params - Optional POST body (triggers `POST` method when present).
+ * @param options - Optional custom `RequestInit` overrides.
+ * @param requestTimeoutDuration - Override the default request timeout in ms.
+ * @returns The parsed JSON response body.
+ * @throws On non-OK HTTP responses or network / timeout errors.
+ */
 export const fetcher = async <T = unknown>(
     url: string,
     params?: Record<string, unknown> | null,
@@ -101,6 +123,12 @@ export const fetcher = async <T = unknown>(
     }
 };
 
+/**
+ * Fetch all swap pair configurations (submarine, reverse, chain) from the API.
+ *
+ * @param options - Optional `RequestInit` overrides forwarded to each sub-request.
+ * @returns A {@link Pairs} object keyed by {@link SwapType}.
+ */
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", null, options),
@@ -115,9 +143,19 @@ export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     };
 };
 
+/**
+ * Fetch on-chain fee estimations (sat/vByte) per asset.
+ *
+ * @returns A record mapping asset identifiers to their current fee rate.
+ */
 export const getFeeEstimations = () =>
     fetcher<Record<string, number>>("/v2/chain/fees");
 
+/**
+ * Fetch Lightning node statistics from the Boltz backend.
+ *
+ * @returns Node stats including capacity, channels, peers, and oldest channel age.
+ */
 export const getNodeStats = () =>
     fetcher<{
         BTC: {
@@ -130,6 +168,11 @@ export const getNodeStats = () =>
         };
     }>("/v2/nodes/stats");
 
+/**
+ * Fetch EVM swap contract addresses for all supported chains.
+ *
+ * @returns A record mapping chain identifiers to their {@link Contracts}.
+ */
 export const getContracts = () =>
     fetcher<Record<string, Contracts>>("/v2/chain/contracts");
 
@@ -188,6 +231,12 @@ export const fetchBolt12Invoice = async (
     );
 };
 
+/**
+ * Fetch a BIP-21 URI for a reverse swap invoice (used for unified QR codes).
+ *
+ * @param invoice - The reverse swap invoice identifier.
+ * @returns An object with the BIP-21 URI and server signature, or `null` on failure.
+ */
 export const fetchBip21Invoice = async (invoice: string) => {
     try {
         const res = await fetcher<{ bip21: string; signature: string }>(
@@ -199,6 +248,16 @@ export const fetchBip21Invoice = async (invoice: string) => {
     }
 };
 
+/**
+ * Create a submarine swap (on-chain → Lightning).
+ *
+ * @param from - Source asset (e.g. `"BTC"`, `"L-BTC"`).
+ * @param to - Destination asset (e.g. `"BTC"` for LN).
+ * @param invoice - BOLT-11 invoice to pay.
+ * @param pairHash - Pair configuration hash from {@link getPairs}.
+ * @param refundPublicKey - Optional refund public key (hex) for Taproot refund path.
+ * @returns The API response with swap details.
+ */
 export const createSubmarineSwap = (
     from: string,
     to: string,
@@ -215,6 +274,18 @@ export const createSubmarineSwap = (
         referralId: getReferralId(),
     });
 
+/**
+ * Create a reverse swap (Lightning → on-chain).
+ *
+ * @param from - Source asset (e.g. `"BTC"` for LN).
+ * @param to - Destination asset (e.g. `"BTC"`, `"L-BTC"`).
+ * @param invoiceAmount - Amount in satoshis for the generated invoice.
+ * @param preimageHash - Hex-encoded SHA-256 hash of the preimage.
+ * @param pairHash - Pair configuration hash from {@link getPairs}.
+ * @param claimPublicKey - Optional claim public key (hex) for Taproot claim path.
+ * @param claimAddress - Optional on-chain address where funds should be claimed to.
+ * @returns The API response with swap details.
+ */
 export const createReverseSwap = (
     from: string,
     to: string,
@@ -235,6 +306,19 @@ export const createReverseSwap = (
         pairHash,
     });
 
+/**
+ * Create a chain swap (on-chain → on-chain).
+ *
+ * @param from - Source chain asset.
+ * @param to - Destination chain asset.
+ * @param userLockAmount - Amount in satoshis the user will lock (may be undefined for server-determined amounts).
+ * @param preimageHash - Hex-encoded SHA-256 hash of the preimage.
+ * @param claimPublicKey - Claim public key (hex) for the destination chain.
+ * @param refundPublicKey - Refund public key (hex) for the source chain.
+ * @param claimAddress - On-chain address to claim funds to.
+ * @param pairHash - Pair configuration hash from {@link getPairs}.
+ * @returns The API response with swap details.
+ */
 export const createChainSwap = (
     from: string,
     to: string,
@@ -257,6 +341,19 @@ export const createChainSwap = (
         userLockAmount,
     });
 
+/**
+ * Request a cooperative partial refund signature from Boltz.
+ *
+ * Used for submarine and chain swaps when the user wants to reclaim
+ * their locked funds cooperatively (without waiting for timeout).
+ *
+ * @param id - Swap identifier.
+ * @param type - Swap type (Submarine or Chain).
+ * @param pubNonce - User's MuSig2 public nonce.
+ * @param transactionHex - Hex-encoded unsigned refund transaction.
+ * @param index - Input index to sign.
+ * @returns Boltz's partial signature and public nonce.
+ */
 export const getPartialRefundSignature = async (
     id: string,
     type: SwapType,
@@ -284,6 +381,16 @@ export const getPartialRefundSignature = async (
     };
 };
 
+/**
+ * Request a cooperative partial claim signature from Boltz for a reverse swap.
+ *
+ * @param id - Swap identifier.
+ * @param preimage - The swap preimage (proves payment).
+ * @param pubNonce - User's MuSig2 public nonce.
+ * @param transactionHex - Hex-encoded unsigned claim transaction.
+ * @param index - Input index to sign.
+ * @returns Boltz's partial signature and public nonce.
+ */
 export const getPartialReverseClaimSignature = async (
     id: string,
     preimage: Uint8Array,
@@ -307,6 +414,15 @@ export const getPartialReverseClaimSignature = async (
     };
 };
 
+/**
+ * Fetch the claim details for a submarine swap (preimage + server nonce).
+ *
+ * Called after the server has claimed the Lightning payment to obtain the
+ * preimage and cooperative signing data.
+ *
+ * @param id - Swap identifier.
+ * @returns Decoded public nonce, preimage, and transaction hash.
+ */
 export const getSubmarineClaimDetails = async (id: string) => {
     const res = await fetcher<{
         pubNonce: string;
@@ -320,6 +436,16 @@ export const getSubmarineClaimDetails = async (id: string) => {
     };
 };
 
+/**
+ * Post the user's cooperative claim signature for a submarine swap.
+ *
+ * After the server reveals the preimage, the user co-signs the claim
+ * transaction so Boltz can broadcast it.
+ *
+ * @param id - Swap identifier.
+ * @param pubNonce - User's MuSig2 public nonce.
+ * @param partialSignature - User's partial Schnorr signature.
+ */
 export const postSubmarineClaimDetails = (
     id: string,
     pubNonce: Uint8Array,
@@ -332,11 +458,31 @@ export const postSubmarineClaimDetails = (
     });
 };
 
+/**
+ * Request a cooperative EIP-712 refund signature for an EVM swap.
+ *
+ * @param id - Swap identifier.
+ * @param type - Swap type.
+ * @returns An object containing the EIP-712 signature.
+ */
 export const getEipRefundSignature = (id: string, type: SwapType) => {
     checkCooperative();
     return fetcher<{ signature: string }>(`/v2/swap/${type}/${id}/refund`);
 };
 
+/**
+ * Post claim details for a chain swap, including the preimage and
+ * cooperative signature.
+ *
+ * Optionally includes a `toSign` object when the server needs to
+ * co-sign a user-side transaction as well.
+ *
+ * @param id - Swap identifier.
+ * @param preimage - Hex-encoded preimage (may be `undefined` if not yet known).
+ * @param signature - User's MuSig2 partial signature with public nonce.
+ * @param toSign - Optional transaction for the server to co-sign.
+ * @returns Boltz's partial signature and public nonce.
+ */
 export const postChainSwapDetails = (
     id: string,
     preimage: string | undefined,
@@ -354,9 +500,22 @@ export const postChainSwapDetails = (
     });
 };
 
+/**
+ * Fetch the current status of a swap.
+ *
+ * @param id - Swap identifier.
+ * @returns The current {@link SwapStatus}.
+ */
 export const getSwapStatus = (id: string) =>
     fetcher<SwapStatus>(`/v2/swap/${id}`);
 
+/**
+ * Broadcast a signed transaction to the network via Boltz.
+ *
+ * @param asset - The chain asset (e.g. `"BTC"`, `"L-BTC"`).
+ * @param txHex - Hex-encoded signed transaction.
+ * @returns An object containing the broadcast transaction ID.
+ */
 export const broadcastTransaction = (
     asset: string,
     txHex: string,
@@ -365,12 +524,26 @@ export const broadcastTransaction = (
         hex: txHex,
     });
 
+/**
+ * Fetch both user-lock and server-lock transactions for a chain swap.
+ *
+ * @param id - Swap identifier.
+ * @returns An object with `userLock` and `serverLock` transaction details.
+ */
 export const getChainSwapTransactions = (id: string) =>
     fetcher<{
         userLock: ChainSwapTransaction;
         serverLock: ChainSwapTransaction;
     }>(`/v2/swap/chain/${id}/transactions`);
 
+/**
+ * Fetch the lockup transaction for a submarine or chain swap.
+ *
+ * @param id - Swap identifier.
+ * @param type - Swap type (Submarine or Chain).
+ * @returns The {@link LockupTransaction} details.
+ * @throws For unsupported swap types (e.g. Reverse).
+ */
 export const getLockupTransaction = async (
     id: string,
     type: SwapType,
@@ -399,6 +572,12 @@ export const getLockupTransaction = async (
     }
 };
 
+/**
+ * Fetch the reverse swap lockup transaction from the server.
+ *
+ * @param id - Swap identifier.
+ * @returns Transaction ID, hex, and timeout block height.
+ */
 export const getReverseTransaction = (id: string) =>
     fetcher<{
         id: string;
@@ -406,6 +585,12 @@ export const getReverseTransaction = (id: string) =>
         timeoutBlockHeight: number;
     }>(`/v2/swap/reverse/${id}/transaction`);
 
+/**
+ * Fetch server-side claim details for a chain swap.
+ *
+ * @param id - Swap identifier.
+ * @returns Server's public nonce, public key, and transaction hash.
+ */
 export const getChainSwapClaimDetails = (id: string) =>
     fetcher<{
         pubNonce: string;
@@ -413,15 +598,40 @@ export const getChainSwapClaimDetails = (id: string) =>
         transactionHash: string;
     }>(`/v2/swap/chain/${id}/claim`);
 
+/**
+ * Request a new quote for a chain swap (e.g. when amounts have changed).
+ *
+ * @param id - Swap identifier.
+ * @returns An object containing the new quoted amount in satoshis.
+ */
 export const getChainSwapNewQuote = (id: string) =>
     fetcher<{ amount: number }>(`/v2/swap/chain/${id}/quote`);
 
+/**
+ * Accept a new quote for a chain swap.
+ *
+ * @param id - Swap identifier.
+ * @param amount - The accepted amount in satoshis.
+ */
 export const acceptChainSwapNewQuote = (id: string, amount: number) =>
     fetcher<object>(`/v2/swap/chain/${id}/quote`, { amount });
 
+/**
+ * Fetch the preimage for a submarine swap after the invoice has been paid.
+ *
+ * @param id - Swap identifier.
+ * @returns An object containing the hex-encoded preimage.
+ */
 export const getSubmarinePreimage = (id: string) =>
     fetcher<{ preimage: string }>(`/v2/swap/submarine/${id}/preimage`);
 
+/**
+ * Restore swaps associated with an extended public key.
+ *
+ * @param xpub - Extended public key used to derive swap keys.
+ * @param pagination - Optional pagination parameters.
+ * @returns An array of {@link RestorableSwap} records.
+ */
 export const getRestorableSwaps = (
     xpub: string,
     pagination?: { startIndex: number; limit: number },
@@ -433,6 +643,18 @@ export const getRestorableSwaps = (
         30_000,
     );
 
+/**
+ * Initiate an asset rescue by requesting a MuSig2 signing session from Boltz.
+ *
+ * Used to recover funds stuck in swap outputs that were not properly claimed.
+ *
+ * @param asset - The chain asset.
+ * @param swapId - Swap identifier.
+ * @param transactionId - TXID of the transaction containing the stuck output.
+ * @param vout - Output index of the stuck UTXO.
+ * @param destination - Address to send the rescued funds to.
+ * @returns MuSig2 session data and the unsigned rescue transaction.
+ */
 export const assetRescueSetup = (
     asset: string,
     swapId: string,
@@ -454,6 +676,15 @@ export const assetRescueSetup = (
         destination,
     });
 
+/**
+ * Broadcast a cooperatively signed asset rescue transaction.
+ *
+ * @param asset - The chain asset.
+ * @param swapId - Swap identifier.
+ * @param pubNonce - User's MuSig2 public nonce.
+ * @param partialSignature - User's partial Schnorr signature.
+ * @returns An object containing the broadcast transaction ID.
+ */
 export const assetRescueBroadcast = (
     asset: string,
     swapId: string,
