@@ -17,3 +17,4 @@ export * from "./musig";
 export * from "./rescue";
 export * from "./swapCreator";
 export * from "./swapStatus";
+export * from "./validation";
