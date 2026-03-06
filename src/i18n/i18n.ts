@@ -275,8 +275,11 @@ const dict = {
         swap_opportunities_accordion: "Pro Opportunities",
         no_opportunities_found: {
             text: "No Pro opportunities found at the moment. Please check again later.",
-            telegram_bot_text: "For fee alerts, check out our",
-            telegram_bot: "Telegram Bot",
+            telegram_bot_text_prefix: "For fee alerts, check out our ",
+            telegram_bot_text_middle: " or ",
+            telegram_bot_text_suffix: " bot.",
+            telegram_bot: "Telegram",
+            simplex: "SimpleX",
         },
         refresh_for_refund:
             "If you sent Bitcoin into this swap, refresh the page to check for a refund.",
@@ -738,9 +741,12 @@ const dict = {
         swap_opportunities_accordion: "Pro-Optionen",
         no_opportunities_found: {
             text: "Aktuell keine Pro-Optionen verfügbar. Versuche es später noch einmal.",
-            telegram_bot_text:
-                "Für Benachrichtigungen über Progebührenupdates, nutze unseren",
-            telegram_bot: "Telegram-Bot",
+            telegram_bot_text_prefix:
+                "Für Benachrichtigungen über Progebührenupdates, nutze unseren ",
+            telegram_bot_text_middle: " oder ",
+            telegram_bot_text_suffix: " bot.",
+            telegram_bot: "Telegram",
+            simplex: "SimpleX",
         },
         refresh_for_refund:
             "Falls du Bitcoin in diesen Swap gesendet hast, aktualisiere die Seite um eine Rückerstattung zu prüfen.",
@@ -1200,8 +1206,12 @@ const dict = {
         swap_opportunities_accordion: "Oportunidades Pro",
         no_opportunities_found: {
             text: "No hay oportunidades Pro disponibles. Por favor, revisa más tarde.",
-            telegram_bot_text: "Para alertas de comisiones, consulta nuestro",
-            telegram_bot: "Bot de Telegram",
+            telegram_bot_text_prefix:
+                "Para alertas de comisiones, consulta nuestro bot en ",
+            telegram_bot_text_middle: " o ",
+            telegram_bot_text_suffix: ".",
+            telegram_bot: "Telegram",
+            simplex: "SimpleX",
         },
         refresh_for_refund:
             "Si has enviado Bitcoin a este intercambio, actualiza la página para comprobar si hay un reembolso disponible.",
@@ -1658,8 +1668,12 @@ const dict = {
         swap_opportunities_accordion: "Oportunidades Pro",
         no_opportunities_found: {
             text: "Nenhuma oportunidade Pro encontrada. Verifique novamente mais tarde.",
-            telegram_bot_text: "Para alertas de taxas, acesse nosso",
-            telegram_bot: "Bot do Telegram",
+            telegram_bot_text_prefix:
+                "Para alertas de taxas, acesse nosso bot no ",
+            telegram_bot_text_middle: " ou ",
+            telegram_bot_text_suffix: ".",
+            telegram_bot: "Telegram",
+            simplex: "SimpleX",
         },
         refresh_for_refund:
             "Se enviou Bitcoin para esta troca, atualize a página para verificar se existe um reembolso.",
@@ -2084,8 +2098,11 @@ const dict = {
         swap_opportunities_accordion: "Pro机会",
         no_opportunities_found: {
             text: "当前无专业交易机会，请稍后再试",
-            telegram_bot_text: "获取费率提醒请查看",
-            telegram_bot: "Telegram机器人",
+            telegram_bot_text_prefix: "获取费率提醒，请查看我们的",
+            telegram_bot_text_middle: "或",
+            telegram_bot_text_suffix: "机器人。",
+            telegram_bot: "Telegram",
+            simplex: "SimpleX",
         },
         refresh_for_refund:
             "如果您向本次交换发送了比特币，请刷新页面检查是否有退款。",
@@ -2528,8 +2545,11 @@ const dict = {
         swap_opportunities_accordion: "Pro機会",
         no_opportunities_found: {
             text: "現在利用可能なPro機会はありません。後ほど再度確認してください。。",
-            telegram_bot_text: "手数料アラートについては、当社の",
-            telegram_bot: "Telegramボット",
+            telegram_bot_text_prefix: "手数料アラートは、",
+            telegram_bot_text_middle: "または",
+            telegram_bot_text_suffix: "のボットをご確認ください。",
+            telegram_bot: "Telegram",
+            simplex: "SimpleX",
         },
         refresh_for_refund:
             "このスワップにビットコインを送金した場合は、ページを更新して払い戻しを確認してください。",

@@ -1,4 +1,3 @@
-import { OcLinkexternal2 } from "solid-icons/oc";
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Show } from "solid-js";
 
@@ -92,15 +91,27 @@ export const FeeComparisonTable = (props: {
                                         {t("no_opportunities_found.text")}
                                     </span>
                                     <div class="fee-comparison-alerts">
-                                        {t(
-                                            "no_opportunities_found.telegram_bot_text",
-                                        )}{" "}
-                                        <ExternalLink href="https://t.me/boltz_pro_bot">
+                                        <span>
                                             {t(
-                                                "no_opportunities_found.telegram_bot",
+                                                "no_opportunities_found.telegram_bot_text_prefix",
                                             )}
-                                            <OcLinkexternal2 size={14} />
-                                        </ExternalLink>
+                                            <ExternalLink href="https://t.me/boltz_pro_bot">
+                                                {t(
+                                                    "no_opportunities_found.telegram_bot",
+                                                )}
+                                            </ExternalLink>
+                                            {t(
+                                                "no_opportunities_found.telegram_bot_text_middle",
+                                            )}
+                                            <ExternalLink href="https://smp19.simplex.im/a#6v12YQ1txW3h6YqbCmklTC75qsbFd0WxCEGGrSR2GNw">
+                                                {t(
+                                                    "no_opportunities_found.simplex",
+                                                )}
+                                            </ExternalLink>
+                                            {t(
+                                                "no_opportunities_found.telegram_bot_text_suffix",
+                                            )}
+                                        </span>
                                     </div>
                                 </td>
                             </tr>
