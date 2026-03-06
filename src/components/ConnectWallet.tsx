@@ -20,7 +20,6 @@ import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
-import { WalletConnect } from "./WalletConnect";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
 const Modal = (props: {
@@ -225,7 +224,6 @@ export const ConnectAddress = (props: {
                     );
                 }
             }}>
-            <WalletConnect />
             {t("connect_to_address")}
         </button>
     );
@@ -305,7 +303,6 @@ const ConnectWallet = (props: {
                     {t("no_wallet")}
                 </button>
             }>
-            <WalletConnect />
             <Show
                 when={address() !== undefined}
                 fallback={
