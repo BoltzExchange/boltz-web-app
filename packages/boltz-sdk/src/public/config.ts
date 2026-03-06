@@ -1,4 +1,41 @@
+import { type AssetKind } from "./enums";
+
 export type NetworkType = "mainnet" | "testnet" | "regtest";
+
+export type AssetToken = {
+    address: string;
+    decimals: number;
+    routeVia?: string;
+};
+
+export type AssetContracts = {
+    deployHeight: number;
+    router?: string;
+    smartWalletFactory?: string;
+    deployVerifier?: string;
+};
+
+export type AssetNetwork = {
+    chainName: string;
+    symbol?: string;
+    chainId: number;
+    rpcUrls: string[];
+    nativeCurrency: {
+        name: string;
+        symbol: string;
+        decimals: number;
+    };
+};
+
+export type Asset = {
+    type: AssetKind;
+    blockExplorerUrl?: { id: string; normal: string; tor?: string };
+    blockExplorerApis?: { id: string; normal: string; tor?: string }[];
+    rifRelay?: string;
+    contracts?: AssetContracts;
+    network?: AssetNetwork;
+    token?: AssetToken;
+};
 
 /**
  * Configuration object for the Boltz SDK.
@@ -12,6 +49,7 @@ export type BoltzConfiguration = {
     referralId?: string | (() => string);
     cooperativeDisabled?: boolean | (() => boolean);
     defaultTimeout?: number;
+    assets?: Record<string, Asset>;
 };
 
 /** Internal singleton holding the current configuration. */
