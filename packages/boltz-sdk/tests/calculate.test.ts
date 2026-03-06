@@ -13,7 +13,12 @@ describe("calculateReceiveAmount", () => {
         const type = SwapType.Submarine;
 
         test("typical amount", () => {
-            const recv = calculateReceiveAmount(100_000, boltzFee, minerFee, type);
+            const recv = calculateReceiveAmount(
+                100_000,
+                boltzFee,
+                minerFee,
+                type,
+            );
             expect(recv).toBeGreaterThan(0);
             expect(Number.isInteger(recv)).toBe(true);
         });
@@ -31,7 +36,12 @@ describe("calculateReceiveAmount", () => {
         const type = SwapType.Reverse;
 
         test("typical amount", () => {
-            const recv = calculateReceiveAmount(100_000, boltzFee, minerFee, type);
+            const recv = calculateReceiveAmount(
+                100_000,
+                boltzFee,
+                minerFee,
+                type,
+            );
             expect(recv).toBeGreaterThan(0);
             expect(Number.isInteger(recv)).toBe(true);
         });
@@ -49,20 +59,31 @@ describe("calculateReceiveAmount", () => {
         const type = SwapType.Chain;
 
         test("uses same formula as Reverse", () => {
-            const a = calculateReceiveAmount(100_000, boltzFee, minerFee, SwapType.Reverse);
+            const a = calculateReceiveAmount(
+                100_000,
+                boltzFee,
+                minerFee,
+                SwapType.Reverse,
+            );
             const b = calculateReceiveAmount(100_000, boltzFee, minerFee, type);
             expect(a).toBe(b);
         });
     });
 
     test("never returns negative", () => {
-        for (const type of [SwapType.Submarine, SwapType.Reverse, SwapType.Chain]) {
+        for (const type of [
+            SwapType.Submarine,
+            SwapType.Reverse,
+            SwapType.Chain,
+        ]) {
             expect(calculateReceiveAmount(1, 99, 9999, type)).toBe(0);
         }
     });
 
     test("NaN send propagates NaN", () => {
-        expect(calculateReceiveAmount(NaN, boltzFee, minerFee, SwapType.Submarine)).toBeNaN();
+        expect(
+            calculateReceiveAmount(NaN, boltzFee, minerFee, SwapType.Submarine),
+        ).toBeNaN();
     });
 });
 
@@ -74,12 +95,19 @@ describe("calculateBoltzFeeOnSend", () => {
         const type = SwapType.Reverse;
 
         test("fee is ceil of percentage", () => {
-            const fee = calculateBoltzFeeOnSend(100_000, boltzFee, minerFee, type);
-            expect(fee).toBe(Math.ceil(100_000 * boltzFee / 100));
+            const fee = calculateBoltzFeeOnSend(
+                100_000,
+                boltzFee,
+                minerFee,
+                type,
+            );
+            expect(fee).toBe(Math.ceil((100_000 * boltzFee) / 100));
         });
 
         test("fee for 1 sat is 1 (ceiling)", () => {
-            expect(calculateBoltzFeeOnSend(1, boltzFee, minerFee, type)).toBe(1);
+            expect(calculateBoltzFeeOnSend(1, boltzFee, minerFee, type)).toBe(
+                1,
+            );
         });
     });
 
@@ -99,11 +127,15 @@ describe("calculateBoltzFeeOnSend", () => {
     });
 
     test("NaN send returns 0", () => {
-        expect(calculateBoltzFeeOnSend(NaN, boltzFee, minerFee, SwapType.Reverse)).toBe(0);
+        expect(
+            calculateBoltzFeeOnSend(NaN, boltzFee, minerFee, SwapType.Reverse),
+        ).toBe(0);
     });
 
     test("zero send returns 0", () => {
-        expect(calculateBoltzFeeOnSend(0, boltzFee, minerFee, SwapType.Submarine)).toBe(0);
+        expect(
+            calculateBoltzFeeOnSend(0, boltzFee, minerFee, SwapType.Submarine),
+        ).toBe(0);
     });
 });
 
@@ -141,4 +173,3 @@ describe("calculateSendAmount", () => {
         expect(send).toBeGreaterThan(recv);
     });
 });
-
