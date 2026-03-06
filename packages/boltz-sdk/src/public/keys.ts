@@ -4,7 +4,13 @@ import { Buffer } from "buffer";
 import type { ECKeys } from "./ecpair";
 import { ECPair } from "./ecpair";
 import { SwapType } from "./enums";
-import type { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCreator";
+import type {
+    CreatedChainSwap,
+    CreatedReverseSwap,
+    CreatedSubmarineSwap,
+    CreatedSwap,
+    SomeSwap,
+} from "./swapCreator";
 
 /**
  * Extract the Liquid blinding key from a swap.
@@ -12,12 +18,14 @@ import type { ChainSwap, ReverseSwap, SomeSwap, SubmarineSwap } from "./swapCrea
  * For chain swaps, selects the correct blinding key based on whether
  * this is a refund (lockup side) or claim (claim side).
  *
+ * Accepts both lean {@link CreatedSwap} and full {@link SomeSwap} types.
+ *
  * @param swap - The swap to extract the blinding key from.
  * @param isRefund - Whether this is for the refund side (`true`) or claim side (`false`).
  * @returns The blinding private key as a Buffer, or `undefined` if not applicable.
  */
 export const parseBlindingKey = (
-    swap: SomeSwap,
+    swap: SomeSwap | CreatedSwap,
     isRefund: boolean,
 ): Buffer | undefined => {
     let blindingKey: string | undefined;
@@ -25,13 +33,17 @@ export const parseBlindingKey = (
     switch (swap.type) {
         case SwapType.Chain:
             if (isRefund) {
-                blindingKey = (swap as ChainSwap).lockupDetails.blindingKey;
+                blindingKey = (swap as CreatedChainSwap).lockupDetails
+                    .blindingKey;
             } else {
-                blindingKey = (swap as ChainSwap).claimDetails.blindingKey;
+                blindingKey = (swap as CreatedChainSwap).claimDetails
+                    .blindingKey;
             }
             break;
         default:
-            blindingKey = (swap as SubmarineSwap | ReverseSwap).blindingKey;
+            blindingKey = (
+                swap as CreatedSubmarineSwap | CreatedReverseSwap
+            ).blindingKey;
     }
 
     return blindingKey ? Buffer.from(blindingKey, "hex") : undefined;

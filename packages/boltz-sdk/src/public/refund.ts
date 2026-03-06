@@ -21,12 +21,12 @@ import type { ECKeys } from "./ecpair";
 import { SwapType } from "./enums";
 import { parseBlindingKey } from "./keys";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./musig";
-import type { ChainSwap, SubmarineSwap } from "./swapCreator";
+import type { CreatedChainSwap, CreatedSubmarineSwap } from "./swapCreator";
 
 /** Internal refund context structure used across refund operations. */
 export type RefundContext = {
     /** The swap being refunded. */
-    swap: SubmarineSwap | ChainSwap;
+    swap: CreatedSubmarineSwap | CreatedChainSwap;
     /** The send-side asset (chain being refunded from). */
     asset: string;
     /** The user's secp256k1 refund key pair. */
@@ -55,7 +55,7 @@ export type RefundContext = {
  * @returns A {@link RefundContext} ready for {@link buildRefundTransaction} and {@link prepareCooperativeRefund}.
  */
 export const buildRefundContext = (
-    swap: SubmarineSwap | ChainSwap,
+    swap: CreatedSubmarineSwap | CreatedChainSwap,
     privateKey: ECKeys,
     refundAddress: string,
     lockupTxHexes: string[],
@@ -64,12 +64,12 @@ export const buildRefundContext = (
 
     const theirPublicKey =
         swap.type === SwapType.Submarine
-            ? (swap as SubmarineSwap).claimPublicKey
-            : (swap as ChainSwap).lockupDetails.serverPublicKey;
+            ? (swap as CreatedSubmarineSwap).claimPublicKey
+            : (swap as CreatedChainSwap).lockupDetails.serverPublicKey;
     const lockupTree =
         swap.type === SwapType.Submarine
-            ? (swap as SubmarineSwap).swapTree
-            : (swap as ChainSwap).lockupDetails.swapTree;
+            ? (swap as CreatedSubmarineSwap).swapTree
+            : (swap as CreatedChainSwap).lockupDetails.swapTree;
 
     const swapTree = SwapTreeSerializer.deserializeSwapTree(lockupTree);
     const boltzPublicKey = hex.decode(theirPublicKey);

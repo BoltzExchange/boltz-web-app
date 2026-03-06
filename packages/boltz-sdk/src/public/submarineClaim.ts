@@ -3,7 +3,10 @@ import { SwapTreeSerializer } from "boltz-core";
 
 import type { ECKeys } from "./ecpair";
 import { createMusig, tweakMusig } from "./musig";
-import type { ChainSwap, SubmarineSwap } from "./swapCreator";
+import type {
+    CreatedChainSwap,
+    CreatedSubmarineSwap,
+} from "./swapCreator";
 
 /**
  * Result of preparing a submarine cooperative claim signature.
@@ -45,7 +48,7 @@ export type SubmarineClaimSignResult = {
  * ```
  */
 export const createSubmarineClaimSignature = (
-    swap: SubmarineSwap,
+    swap: CreatedSubmarineSwap,
     privateKey: ECKeys,
     serverClaimDetails: {
         pubNonce: Uint8Array;
@@ -95,7 +98,7 @@ export const createSubmarineClaimSignature = (
  * ```
  */
 export const createChainSwapServerClaimSignature = (
-    swap: ChainSwap,
+    swap: CreatedChainSwap,
     refundPrivateKey: ECKeys,
     serverClaimDetails: {
         pubNonce: string;
