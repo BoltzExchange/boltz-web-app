@@ -108,6 +108,14 @@ export type PartialSignature = {
     signature: Uint8Array;
 };
 
+/** Reusable EVM swap contract address pair. */
+export type ContractAddresses = {
+    /** Address of the native Ether swap contract. */
+    EtherSwap: string;
+    /** Address of the ERC-20 swap contract. */
+    ERC20Swap: string;
+};
+
 /** EVM smart-contract addresses and metadata for a specific chain. */
 export type Contracts = {
     /** Chain identification. */
@@ -118,18 +126,11 @@ export type Contracts = {
         name: string;
     };
     /** Primary swap contract addresses. */
-    swapContracts: {
-        /** Address of the native Ether swap contract. */
-        EtherSwap: string;
-        /** Address of the ERC-20 swap contract. */
-        ERC20Swap: string;
-    };
+    swapContracts: ContractAddresses;
     /** Additional supported contract sets with feature flags. */
     supportedContracts: Record<
         string,
-        {
-            EtherSwap: string;
-            ERC20Swap: string;
+        ContractAddresses & {
             /** Feature identifiers supported by this contract set. */
             features: string[];
         }
@@ -152,6 +153,16 @@ export type SwapTree = {
     claimLeaf: SwapTreeLeaf;
     /** Leaf used by the refunder after timeout. */
     refundLeaf: SwapTreeLeaf;
+};
+
+/** Commitment-chain lockup details used for signature-based swaps. */
+export type CommitmentLockupDetails = {
+    /** Commitment contract address. */
+    contract: string;
+    /** Claim destination address set by the server. */
+    claimAddress: string;
+    /** Relative timelock used by the commitment contract. */
+    timelock: number;
 };
 
 /** Response returned by the API after creating a submarine swap. */
@@ -334,4 +345,22 @@ export type SwapStatus = {
 export type SwapStatusUpdate = SwapStatus & {
     /** Swap identifier this update belongs to. */
     id: string;
+};
+
+/** Raw DEX quote item returned by the quote endpoints. */
+export type QuoteData = {
+    /** Quoted amount as a base-unit string. */
+    quote: string;
+    /** Opaque routing payload to be echoed back to the encoder endpoint. */
+    data: unknown;
+};
+
+/** Encoded calldata item for submitting a DEX route on-chain. */
+export type QuoteCalldata = {
+    /** Contract address to call. */
+    to: string;
+    /** Native value to send with the call. */
+    value: string;
+    /** ABI-encoded calldata. */
+    data: string;
 };
