@@ -310,13 +310,28 @@ export type SwapStatus = {
     status: string;
     /** Human-readable failure reason, if the swap failed. */
     failureReason?: string;
+    /** Details when the failure is due to an incorrect lockup amount. */
+    failureDetails?: {
+        /** Amount that was expected in satoshis. */
+        expected: number;
+        /** Amount that was actually received in satoshis. */
+        actual: number;
+    };
     /** Whether a zero-conf transaction was rejected. */
     zeroConfRejected?: boolean;
     /** Associated on-chain transaction, if any. */
     transaction?: {
         /** Transaction ID. */
         id: string;
-        /** Raw transaction hex. */
-        hex: string;
+        /** Raw transaction hex. May be absent for EVM transactions. */
+        hex?: string;
+        /** Estimated time in seconds until confirmation (for mempool transactions). */
+        eta?: number;
     };
+};
+
+/** Swap status update received via WebSocket, includes the swap ID. */
+export type SwapStatusUpdate = SwapStatus & {
+    /** Swap identifier this update belongs to. */
+    id: string;
 };

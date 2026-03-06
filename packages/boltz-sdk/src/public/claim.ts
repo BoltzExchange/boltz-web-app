@@ -19,13 +19,13 @@ import {
 import type { ECKeys } from "./ecpair";
 import { parseBlindingKey } from "./keys";
 import { createMusig, hashForWitnessV1, tweakMusig } from "./musig";
-import type { ChainSwap, ReverseSwap } from "./swapCreator";
+import type { CreatedChainSwap, CreatedReverseSwap } from "./swapCreator";
 import { getRelevantAssetForSwap } from "./swapCreator";
 
 /** Internal claim details structure used across claim operations. */
 export type ClaimContext = {
     /** The swap being claimed. */
-    swap: ReverseSwap | ChainSwap;
+    swap: CreatedReverseSwap | CreatedChainSwap;
     /** The relevant on-chain asset. */
     asset: string;
     /** The user's secp256k1 key pair. */
@@ -53,7 +53,7 @@ export type ClaimContext = {
  * @returns A {@link ClaimContext} ready for {@link buildClaimTransaction} and {@link cooperativeClaimSign}.
  */
 export const buildReverseClaimContext = (
-    swap: ReverseSwap,
+    swap: CreatedReverseSwap,
     privateKey: ECKeys,
     lockupTxHex: string,
 ): ClaimContext => {
@@ -112,7 +112,7 @@ export const buildReverseClaimContext = (
  * @returns A {@link ClaimContext} ready for {@link buildClaimTransaction} and {@link cooperativeClaimSign}.
  */
 export const buildChainClaimContext = (
-    swap: ChainSwap,
+    swap: CreatedChainSwap,
     privateKey: ECKeys,
     serverLockupTxHex: string,
 ): ClaimContext => {

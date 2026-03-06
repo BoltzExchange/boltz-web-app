@@ -6,6 +6,56 @@ import type {
 import { RBTC } from "./assets";
 import { SwapType } from "./enums";
 
+// ---------------------------------------------------------------------------
+// Lean "created" types — only what SDK helpers need for claim / refund
+// ---------------------------------------------------------------------------
+
+/**
+ * Minimal submarine swap data returned by {@link setupSubmarineSwap}.
+ *
+ * Contains the API response plus the few user-supplied fields that the
+ * claim and refund helpers actually consume.  No display-only or
+ * web-app-specific bookkeeping fields.
+ */
+export type CreatedSubmarineSwap = SubmarineCreatedResponse & {
+    type: SwapType;
+    assetSend: string;
+    assetReceive: string;
+    invoice: string;
+};
+
+/**
+ * Minimal reverse swap data returned by {@link setupReverseSwap}.
+ */
+export type CreatedReverseSwap = ReverseCreatedResponse & {
+    type: SwapType;
+    assetSend: string;
+    assetReceive: string;
+    preimage: string;
+    claimAddress: string;
+};
+
+/**
+ * Minimal chain swap data returned by {@link setupChainSwap}.
+ */
+export type CreatedChainSwap = ChainSwapCreatedResponse & {
+    type: SwapType;
+    assetSend: string;
+    assetReceive: string;
+    preimage: string;
+    claimAddress: string;
+};
+
+/** Union of all lean created-swap types. */
+export type CreatedSwap =
+    | CreatedSubmarineSwap
+    | CreatedReverseSwap
+    | CreatedChainSwap;
+
+// ---------------------------------------------------------------------------
+// Full swap types — used by the web app for storage and display
+// ---------------------------------------------------------------------------
+
 /** Properties shared by all swap types. */
 export type SwapBase = {
     /** Swap direction. */
@@ -106,10 +156,14 @@ export type SomeSwap = SubmarineSwap | ReverseSwap | ChainSwap;
  * - For submarine swaps this is the send asset (user locks on-chain).
  * - For reverse and chain swaps this is the receive asset (user claims on-chain).
  *
+ * Accepts both lean {@link CreatedSwap} and full {@link SomeSwap} types.
+ *
  * @param swap - The swap to inspect.
  * @returns The relevant asset identifier.
  */
-export const getRelevantAssetForSwap = (swap: SwapBase) => {
+export const getRelevantAssetForSwap = (
+    swap: Pick<SwapBase, "type" | "assetSend" | "assetReceive">,
+) => {
     switch (swap.type) {
         case SwapType.Submarine:
             return swap.assetSend;
@@ -122,7 +176,11 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
 /**
  * Check whether a swap operates on the Rootstock (RSK) chain.
  *
+ * Accepts both lean {@link CreatedSwap} and full {@link SomeSwap} types.
+ *
  * @param swap - The swap to check.
  * @returns `true` if the relevant asset is RBTC.
  */
-export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;
+export const isRsk = (
+    swap: Pick<SwapBase, "type" | "assetSend" | "assetReceive">,
+) => getRelevantAssetForSwap(swap) === RBTC;
