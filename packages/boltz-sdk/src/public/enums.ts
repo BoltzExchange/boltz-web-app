@@ -2,6 +2,7 @@ export enum SwapType {
     Submarine = "submarine",
     Reverse = "reverse",
     Chain = "chain",
+    Dex = "dex",
 }
 
 export enum Denomination {
@@ -17,4 +18,10 @@ export enum Side {
 export enum InvoiceValidation {
     MinAmount = "minAmount",
     MaxAmount = "maxAmount",
+}
+
+export const enum AssetKind {
+    UTXO = "UTXO",
+    EVMNative = "EVM_NATIVE",
+    ERC20 = "ERC20",
 }

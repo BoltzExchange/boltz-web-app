@@ -3,12 +3,8 @@ import type {
     ReverseCreatedResponse,
     SubmarineCreatedResponse,
 } from "./apiTypes";
-import { RBTC } from "./assets";
+import { LN, isEvmAsset } from "./assets";
 import { SwapType } from "./enums";
-
-// ---------------------------------------------------------------------------
-// Lean "created" types — only what SDK helpers need for claim / refund
-// ---------------------------------------------------------------------------
 
 /**
  * Minimal submarine swap data returned by {@link setupSubmarineSwap}.
@@ -52,9 +48,35 @@ export type CreatedSwap =
     | CreatedReverseSwap
     | CreatedChainSwap;
 
-// ---------------------------------------------------------------------------
-// Full swap types — used by the web app for storage and display
-// ---------------------------------------------------------------------------
+export const enum HopsPosition {
+    Before = "before",
+    After = "after",
+}
+
+/** A single hop in a DEX route attached to a swap. */
+export type EncodedHop = {
+    type: SwapType;
+    from: string;
+    to: string;
+    dexDetails?: {
+        chain: string;
+        tokenIn: string;
+        tokenOut: string;
+    };
+};
+
+/** DEX route metadata for routed swaps (e.g. USDT0 via TBTC). */
+export type DexDetail = {
+    hops: EncodedHop[];
+    /** Whether hops run before or after the Boltz swap. */
+    position: HopsPosition;
+    /**
+     * Expected DEX amount at creation; updated with actual amount after
+     * execution. For hops after Boltz: expected output amount from the DEX.
+     * For hops before Boltz: expected input amount to the DEX.
+     */
+    quoteAmount: number | string;
+};
 
 /** Properties shared by all swap types. */
 export type SwapBase = {
@@ -78,13 +100,12 @@ export type SwapBase = {
     claimTx?: string;
     /** Lockup transaction ID, set after detection. */
     lockupTx?: string;
-    useRif: boolean;
+    useGasAbstraction: boolean;
     signer?: string;
-    // Set for hardware wallet signers
     derivationPath?: string;
-
-    // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
     originalDestination?: string;
+    /** DEX route for routed swaps (e.g. USDT0 via TBTC). */
+    dex?: DexDetail;
 };
 
 /**
@@ -141,6 +162,7 @@ export type ChainSwap = SwapBase &
         claimPrivateKeyIndex?: number;
         /** HD key index for deriving the refund private key. */
         refundPrivateKeyIndex?: number;
+        magicRoutingHintSavedFees?: string;
 
         // Deprecated; used for backwards compatibility with old storage format
         claimPrivateKey?: string;
@@ -174,13 +196,67 @@ export const getRelevantAssetForSwap = (
 };
 
 /**
- * Check whether a swap operates on the Rootstock (RSK) chain.
+ * Check whether a swap operates on an EVM chain.
  *
  * Accepts both lean {@link CreatedSwap} and full {@link SomeSwap} types.
  *
  * @param swap - The swap to check.
- * @returns `true` if the relevant asset is RBTC.
+ * @returns `true` if the relevant asset is an EVM asset.
  */
-export const isRsk = (
+export const isEvmSwap = (
     swap: Pick<SwapBase, "type" | "assetSend" | "assetReceive">,
-) => getRelevantAssetForSwap(swap) === RBTC;
+) => isEvmAsset(getRelevantAssetForSwap(swap));
+
+/**
+ * Resolve the actual send asset, accounting for DEX hops.
+ *
+ * When a DEX hop runs *before* the Boltz swap, the user's real send asset
+ * is the first hop's `from` (e.g. USDT0), not the Boltz swap's `assetSend`
+ * (e.g. TBTC).
+ *
+ * @param swap - The swap to inspect.
+ * @param coalesceLn - When `true`, returns `"LN"` for reverse swaps instead
+ *   of the on-chain `assetSend`.
+ */
+export const getFinalAssetSend = (
+    swap: Pick<SwapBase, "type" | "assetSend" | "dex">,
+    coalesceLn: boolean = false,
+): string => {
+    if (
+        swap.dex !== undefined &&
+        swap.dex.position === HopsPosition.Before &&
+        swap.dex.hops.length > 0
+    ) {
+        return swap.dex.hops[0].from;
+    }
+
+    return coalesceLn && swap.type === SwapType.Reverse ? LN : swap.assetSend;
+};
+
+/**
+ * Resolve the actual receive asset, accounting for DEX hops.
+ *
+ * When a DEX hop runs *after* the Boltz swap, the user's real receive
+ * asset is the last hop's `to` (e.g. USDT0), not the Boltz swap's
+ * `assetReceive` (e.g. TBTC).
+ *
+ * @param swap - The swap to inspect.
+ * @param coalesceLn - When `true`, returns `"LN"` for submarine swaps
+ *   instead of the on-chain `assetReceive`.
+ */
+export const getFinalAssetReceive = (
+    swap: Pick<SwapBase, "type" | "assetReceive" | "dex">,
+    coalesceLn: boolean = false,
+): string => {
+    if (
+        swap.dex !== undefined &&
+        swap.dex.position === HopsPosition.After &&
+        swap.dex.hops.length > 0
+    ) {
+        return swap.dex.hops[swap.dex.hops.length - 1].to;
+    }
+
+    return coalesceLn && swap.type === SwapType.Submarine
+        ? LN
+        : swap.assetReceive;
+};
