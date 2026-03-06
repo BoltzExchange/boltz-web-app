@@ -92,4 +92,10 @@ export default [
             "no-console": "off",
         },
     },
+    {
+        files: ["packages/boltz-sdk/**/*.ts"],
+        rules: {
+            "no-console": "off",
+        },
+    },
 ];
