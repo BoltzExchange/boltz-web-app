@@ -1,3 +1,4 @@
+/** Swap status strings indicating the swap is still in progress. */
 export const swapStatusPending = {
     InvoiceSet: "invoice.set",
     InvoicePaid: "invoice.paid",
@@ -11,6 +12,7 @@ export const swapStatusPending = {
     TransactionServerConfirmed: "transaction.server.confirmed",
 };
 
+/** Swap status strings indicating a terminal failure state. */
 export const swapStatusFailed = {
     SwapExpired: "swap.expired",
     SwapRefunded: "swap.refunded",
@@ -22,11 +24,13 @@ export const swapStatusFailed = {
     TransactionRefunded: "transaction.refunded",
 };
 
+/** Swap status strings indicating successful completion. */
 export const swapStatusSuccess = {
     InvoiceSettled: "invoice.settled",
     TransactionClaimed: "transaction.claimed",
 };
 
+/** All terminal status strings (both failed and successful). */
 export const swapStatusFinal = [
     swapStatusFailed.InvoiceExpired,
     swapStatusFailed.SwapExpired,

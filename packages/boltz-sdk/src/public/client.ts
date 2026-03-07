@@ -21,7 +21,7 @@ import {
 } from "./apiTypes";
 import { getConfig } from "./config";
 import { SwapType } from "./enums";
-import { formatError } from "./errors";
+import { ApiError, SwapError, formatError } from "./errors";
 
 /** Resolve the current Boltz API base URL from configuration. */
 const getApiUrl = (): string => resolveValue(getConfig().apiUrl);
@@ -107,18 +107,28 @@ export const fetcher = async <T = unknown>(
                 const contentType = response.headers.get("content-type");
                 if (contentType?.includes("application/json")) {
                     const body = await response.json();
-                    return Promise.reject(formatError(body));
+                    throw new ApiError(
+                        formatError(body),
+                        response.status,
+                    );
                 }
-                return Promise.reject(await response.text());
-
+                throw new ApiError(
+                    await response.text(),
+                    response.status,
+                );
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (e) {
-                return Promise.reject(response);
+                if (e instanceof ApiError) throw e;
+                throw new ApiError(
+                    `HTTP ${response.status} ${response.statusText}`,
+                    response.status,
+                );
             }
         }
         return (await response.json()) as T;
     } catch (e) {
-        throw new Error(formatError(e));
+        if (e instanceof ApiError) throw e;
+        throw new ApiError(formatError(e));
     } finally {
         clearTimeout(requestTimeout);
     }
@@ -569,7 +579,9 @@ export const getLockupTransaction = async (
         }
 
         default:
-            throw `cannot get lockup transaction for swap type ${type}`;
+            throw new SwapError(
+                `cannot get lockup transaction for swap type ${type}`,
+            );
     }
 };
 

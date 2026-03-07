@@ -7,6 +7,14 @@ import { AssetKind, Denomination } from "./enums";
 const satFactor = 100_000_000;
 const satDecimals = 8;
 
+/**
+ * Get the decimal precision for an asset.
+ *
+ * For routed ERC-20 tokens, returns the token's decimal count;
+ * for all other assets, returns 8 (satoshi precision).
+ *
+ * @param asset - Asset identifier.
+ */
 export const getDecimals = (asset: string) => {
     const assetConfig = getConfig().assets?.[asset];
 
@@ -23,11 +31,12 @@ export const getDecimals = (asset: string) => {
 };
 
 /**
- * Convert an amount from a given denomination to satoshis.
+ * Convert an amount from a given denomination to its base unit.
  *
+ * @param asset - Asset identifier (used to look up ERC-20 decimals).
  * @param amount - The amount in the source denomination.
  * @param denom - The source denomination (e.g. `"btc"` or `"sat"`).
- * @returns The equivalent amount in satoshis.
+ * @returns The equivalent amount in the asset's base unit.
  */
 export const convertAmount = (
     asset: string,

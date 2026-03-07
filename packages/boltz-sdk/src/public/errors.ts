@@ -1,3 +1,49 @@
+/** Base error class for all SDK errors. */
+export class BoltzError extends Error {
+    constructor(message: string, options?: ErrorOptions) {
+        super(message, options);
+        this.name = "BoltzError";
+    }
+}
+
+/** The SDK has not been initialised via {@link init}. */
+export class NotInitializedError extends BoltzError {
+    constructor() {
+        super(
+            "boltz-sdk not initialized. Call init() before using SDK functions.",
+        );
+        this.name = "NotInitializedError";
+    }
+}
+
+/** The SDK configuration is invalid. */
+export class ConfigError extends BoltzError {
+    constructor(message: string) {
+        super(message);
+        this.name = "ConfigError";
+    }
+}
+
+/** An HTTP request to the Boltz API failed. */
+export class ApiError extends BoltzError {
+    /** HTTP status code, if available. */
+    readonly status?: number;
+
+    constructor(message: string, status?: number) {
+        super(message);
+        this.name = "ApiError";
+        this.status = status;
+    }
+}
+
+/** A swap-related validation or state error. */
+export class SwapError extends BoltzError {
+    constructor(message: string, options?: ErrorOptions) {
+        super(message, options);
+        this.name = "SwapError";
+    }
+}
+
 /**
  * Extract a human-readable error message from an unknown value.
  *

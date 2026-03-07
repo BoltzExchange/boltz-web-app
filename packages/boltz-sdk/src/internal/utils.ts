@@ -5,6 +5,7 @@ import { Denomination } from "../public/enums";
 /** Default HTTP request timeout in milliseconds (15 s). */
 export const defaultTimeoutDuration = 15_000;
 
+
 /**
  * Unwrap a value that may be either a plain value or a zero-argument getter.
  *
