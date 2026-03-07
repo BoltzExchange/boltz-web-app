@@ -1,6 +1,7 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { WIF } from "@scure/btc-signer";
 
+/** A secp256k1 key pair (private + compressed public key). */
 export interface ECKeys {
     privateKey: Uint8Array;
     publicKey: Uint8Array;

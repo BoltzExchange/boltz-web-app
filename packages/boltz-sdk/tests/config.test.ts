@@ -1,15 +1,17 @@
-import { getConfig, init } from "../src/public/config";
+import {
+    _resetForTesting,
+    getConfig,
+    init,
+} from "../src/public/config";
+import { ConfigError, NotInitializedError } from "../src/public/errors";
 
 describe("config lifecycle", () => {
-    // Reset the singleton between tests by re-initialising with null
-    // (we cheat via the module internals — init sets the global)
     beforeEach(() => {
-        // Force uninitialised state by calling init with null cast
-        // This is intentional: we want to test the guard
-        (init as (c: null) => void)(null);
+        _resetForTesting();
     });
 
-    test("getConfig throws before init is called", () => {
+    test("getConfig throws NotInitializedError before init", () => {
+        expect(() => getConfig()).toThrow(NotInitializedError);
         expect(() => getConfig()).toThrow(
             "boltz-sdk not initialized. Call init() before using SDK functions.",
         );
@@ -64,3 +66,57 @@ describe("config lifecycle", () => {
     });
 });
 
+describe("config validation", () => {
+    beforeEach(() => {
+        _resetForTesting();
+    });
+
+    test("rejects null config", () => {
+        expect(() => (init as (c: null) => void)(null)).toThrow(ConfigError);
+    });
+
+    test("rejects empty apiUrl", () => {
+        expect(() => init({ apiUrl: "" })).toThrow(ConfigError);
+        expect(() => init({ apiUrl: "   " })).toThrow(ConfigError);
+    });
+
+    test("rejects invalid network", () => {
+        expect(() =>
+            init({ apiUrl: "http://localhost", network: "invalid" as never }),
+        ).toThrow(ConfigError);
+    });
+
+    test("accepts valid networks", () => {
+        for (const network of ["mainnet", "testnet", "regtest"] as const) {
+            _resetForTesting();
+            expect(() =>
+                init({ apiUrl: "http://localhost", network }),
+            ).not.toThrow();
+        }
+    });
+
+    test("rejects non-positive defaultTimeout", () => {
+        expect(() =>
+            init({ apiUrl: "http://localhost", defaultTimeout: 0 }),
+        ).toThrow(ConfigError);
+        expect(() =>
+            init({ apiUrl: "http://localhost", defaultTimeout: -100 }),
+        ).toThrow(ConfigError);
+    });
+
+    test("accepts valid defaultTimeout", () => {
+        expect(() =>
+            init({ apiUrl: "http://localhost", defaultTimeout: 5000 }),
+        ).not.toThrow();
+    });
+
+    test("accepts apiUrl as getter function", () => {
+        expect(() => init({ apiUrl: () => "http://localhost" })).not.toThrow();
+    });
+
+    test("validates getter function return value", () => {
+        expect(() =>
+            init({ apiUrl: (() => "") as () => string }),
+        ).toThrow(ConfigError);
+    });
+});

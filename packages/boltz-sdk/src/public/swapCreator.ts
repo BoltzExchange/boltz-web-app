@@ -48,6 +48,7 @@ export type CreatedSwap =
     | CreatedReverseSwap
     | CreatedChainSwap;
 
+/** Whether DEX hops run before or after the Boltz swap. */
 export const enum HopsPosition {
     Before = "before",
     After = "after",
