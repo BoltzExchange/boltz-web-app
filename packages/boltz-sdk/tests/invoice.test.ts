@@ -1,3 +1,4 @@
+import { BigNumber } from "bignumber.js";
 import { vi } from "vitest";
 
 const { mockDecode } = vi.hoisted(() => ({
@@ -207,32 +208,32 @@ describe("checkLnurlResponse", () => {
     };
 
     test("returns data when amount is within bounds", () => {
-        expect(checkLnurlResponse(50_000, data)).toBe(data);
+        expect(checkLnurlResponse(BigNumber(50_000), data)).toBe(data);
     });
 
     test("returns data at exact min boundary", () => {
-        expect(checkLnurlResponse(1_000, data)).toBe(data);
+        expect(checkLnurlResponse(BigNumber(1_000), data)).toBe(data);
     });
 
     test("returns data at exact max boundary", () => {
-        expect(checkLnurlResponse(1_000_000, data)).toBe(data);
+        expect(checkLnurlResponse(BigNumber(1_000_000), data)).toBe(data);
     });
 
     test("throws MinAmount when below min", () => {
-        expect(() => checkLnurlResponse(999, data)).toThrow(
+        expect(() => checkLnurlResponse(BigNumber(999), data)).toThrow(
             InvoiceValidation.MinAmount,
         );
     });
 
     test("throws MaxAmount when above max", () => {
-        expect(() => checkLnurlResponse(1_000_001, data)).toThrow(
+        expect(() => checkLnurlResponse(BigNumber(1_000_001), data)).toThrow(
             InvoiceValidation.MaxAmount,
         );
     });
 
     test("MinAmount error carries cause", () => {
         try {
-            checkLnurlResponse(0, data);
+            checkLnurlResponse(BigNumber(0), data);
             expect.unreachable("should have thrown");
         } catch (e) {
             expect((e as Error).cause).toBe(data.minSendable);
@@ -241,7 +242,7 @@ describe("checkLnurlResponse", () => {
 
     test("MaxAmount error carries cause", () => {
         try {
-            checkLnurlResponse(2_000_000, data);
+            checkLnurlResponse(BigNumber(2_000_000), data);
             expect.unreachable("should have thrown");
         } catch (e) {
             expect((e as Error).cause).toBe(data.maxSendable);

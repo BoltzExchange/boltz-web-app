@@ -1,3 +1,5 @@
+import { BigNumber } from "bignumber.js";
+
 import { getConfig } from "./config";
 import { AssetKind, Denomination } from "./enums";
 

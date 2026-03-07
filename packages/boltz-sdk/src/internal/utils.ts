@@ -1,3 +1,5 @@
+import { BigNumber } from "bignumber.js";
+
 import { Denomination } from "../public/enums";
 
 /** Default HTTP request timeout in milliseconds (15 s). */
