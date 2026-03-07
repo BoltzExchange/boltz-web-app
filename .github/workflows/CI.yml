@@ -16,6 +16,11 @@ jobs:
 
             - run: npm ci
 
+            - name: Build and test boltz-sdk
+              run: |
+                  npm run --workspace=boltz-sdk build
+                  npm run --workspace=boltz-sdk test
+
             - run: npm run check:assets
 
             - run: npm run check:html-template
@@ -57,6 +62,9 @@ jobs:
 
             - name: Install dependencies
               run: npm ci
+
+            - name: Build boltz-sdk
+              run: npm run --workspace=boltz-sdk build
 
             - name: Install Playwright Browsers
               run: npm run playwright:install

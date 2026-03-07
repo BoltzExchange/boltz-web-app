@@ -5,6 +5,7 @@ import "@fontsource/noto-sans/200.css";
 import "@fontsource/noto-sans/800.css";
 import type { RouteSectionProps } from "@solidjs/router";
 import { Navigate, Route, Router, useParams } from "@solidjs/router";
+import { init } from "boltz-sdk";
 import log from "loglevel";
 import { render } from "solid-js/web";
 
@@ -41,7 +42,15 @@ import Client from "./pages/products/Client";
 import Pro from "./pages/products/Pro";
 import Products from "./pages/products/Products";
 import "./style/index.scss";
+import { getApiUrl, getReferral } from "./utils/helper";
 import "./utils/patches";
+
+init({
+    apiUrl: getApiUrl,
+    network: config.network,
+    referralId: getReferral,
+    cooperativeDisabled: () => config.cooperativeDisabled === true,
+});
 
 if ("serviceWorker" in navigator) {
     void navigator.serviceWorker

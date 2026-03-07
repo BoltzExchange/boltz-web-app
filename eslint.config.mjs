@@ -9,11 +9,10 @@ export default [
     { languageOptions: { globals: globals.browser } },
     {
         ignores: [
-            "dist",
+            "**/dist/**",
             "docs",
             "regtest",
             "coverage",
-            "build/dist",
             "node_modules",
             "dnssec-prover",
             "vite.config.mjs",
@@ -89,6 +88,12 @@ export default [
     },
     {
         files: ["tests/**/*.ts", "e2e/**/*.ts"],
+        rules: {
+            "no-console": "off",
+        },
+    },
+    {
+        files: ["packages/boltz-sdk/**/*.ts"],
         rules: {
             "no-console": "off",
         },
