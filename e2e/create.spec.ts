@@ -65,6 +65,7 @@ test.describe("BIP21 URIs", () => {
                         BigNumber(condition.expectedSatAmount),
                         Denomination.Sat,
                         ".",
+                        BTC,
                     ),
                 );
             }
@@ -100,7 +101,7 @@ test.describe("BIP21 URIs", () => {
 
         const receiveAmount = page.getByTestId("receiveAmount");
         await expect(receiveAmount).toHaveValue(
-            formatAmount(BigNumber(invoiceAmount), Denomination.Sat, "."),
+            formatAmount(BigNumber(invoiceAmount), Denomination.Sat, ".", BTC),
         );
 
         const receiveAsset = page.getByTestId("asset-receive");
@@ -146,7 +147,7 @@ test.describe("BIP21 URIs", () => {
 
         const receiveAmount = page.getByTestId("receiveAmount");
         await expect(receiveAmount).toHaveValue(
-            formatAmount(BigNumber(invoiceAmount), Denomination.Sat, "."),
+            formatAmount(BigNumber(invoiceAmount), Denomination.Sat, ".", BTC),
         );
 
         const receiveAsset = page.getByTestId("asset-receive");
@@ -195,7 +196,12 @@ test.describe("BIP21 URIs", () => {
 
         const receiveAmount = page.getByTestId("receiveAmount");
         await expect(receiveAmount).toHaveValue(
-            formatAmount(BigNumber(expectedSatAmount), Denomination.Sat, "."),
+            formatAmount(
+                BigNumber(expectedSatAmount),
+                Denomination.Sat,
+                ".",
+                BTC,
+            ),
         );
 
         const receiveAsset = page.getByTestId("asset-receive");

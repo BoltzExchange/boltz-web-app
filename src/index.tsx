@@ -13,6 +13,7 @@ import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
+import { WalletConnect } from "./components/WalletConnect";
 import { config } from "./config";
 import { CreateProvider } from "./context/Create";
 import { GlobalProvider } from "./context/Global";
@@ -62,6 +63,7 @@ const App = (props: RouteSectionProps) => {
     return (
         <GlobalProvider>
             <Web3SignerProvider>
+                <WalletConnect />
                 <CreateProvider>
                     <PayProvider>
                         <RescueProvider>

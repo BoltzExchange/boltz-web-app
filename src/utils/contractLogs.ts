@@ -286,7 +286,11 @@ export async function* scanLockupEvents(
     const worker = needsPreimages ? new PreimageHashesWorker() : null;
     if (worker) {
         log.info("Starting preimage derivation in background");
-        worker.start(scanConfig.mnemonic, abortSignal);
+        worker.start(
+            scanConfig.mnemonic,
+            config.assets[RBTC].network.chainId,
+            abortSignal,
+        );
     }
 
     let blocksScanned = 0;

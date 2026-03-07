@@ -64,7 +64,7 @@ const createChainSwap = async (page: Page, assetSend: string) => {
     const assetSelector = page.locator("div[class='asset asset-LN'] div");
     await assetSelector.click();
 
-    const lbtcAsset = page.locator("div[data-testid='select-L-BTC']");
+    const lbtcAsset = page.getByTestId("select-L-BTC");
     await lbtcAsset.click();
 
     if (assetSend === BTC) {
@@ -178,9 +178,7 @@ test.describe("Claim", () => {
                 );
                 await assetSelector.click();
 
-                const lbtcAsset = page.locator(
-                    "div[data-testid='select-L-BTC']",
-                );
+                const lbtcAsset = page.getByTestId("select-L-BTC");
                 await lbtcAsset.click();
 
                 await inputOnchainAddress.fill(await getLiquidAddress());

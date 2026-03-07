@@ -21,7 +21,7 @@ export class PreimageHashesWorker {
         );
     }
 
-    start = (mnemonic: string, abortSignal?: AbortSignal) => {
+    start = (mnemonic: string, chainId: number, abortSignal?: AbortSignal) => {
         abortSignal?.addEventListener("abort", () => this.terminate(), {
             once: true,
         });
@@ -47,7 +47,7 @@ export class PreimageHashesWorker {
             this.terminate();
         };
 
-        this.worker.postMessage({ mnemonic });
+        this.worker.postMessage({ mnemonic, chainId });
     };
 
     waitForNextBatch = (): Promise<void> => {

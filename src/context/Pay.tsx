@@ -9,7 +9,7 @@ import {
 } from "solid-js";
 import type { Accessor, JSX, Setter } from "solid-js";
 import { hiddenInformation } from "src/components/settings/PrivacyMode";
-import { BTC, LBTC, RBTC } from "src/consts/Assets";
+import { BTC, LBTC } from "src/consts/Assets";
 import { SwapType } from "src/consts/Enums";
 import { swapStatusPending, swapStatusSuccess } from "src/consts/SwapStatus";
 import {
@@ -32,7 +32,7 @@ import {
     type ReverseSwap,
     type SomeSwap,
     type SubmarineSwap,
-    getRelevantAssetForSwap,
+    isEvmSwap,
 } from "../utils/swapCreator";
 import { useGlobalContext } from "./Global";
 
@@ -145,7 +145,7 @@ const PayProvider = (props: { children: JSX.Element }) => {
             return;
         }
 
-        if (getRelevantAssetForSwap(currentSwap) === RBTC) {
+        if (isEvmSwap(currentSwap)) {
             if (
                 data.status === swapStatusPending.TransactionMempool &&
                 data.transaction !== undefined
