@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
+import {
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+    within,
+} from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
@@ -105,6 +111,71 @@ describe("Create", () => {
         ).not.toBeUndefined();
     });
 
+    test("should show the create button spinner while recalculating network quotes", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            const currentPair = signals.pair();
+            let resolveQuote: ((amount: BigNumber) => void) | undefined;
+            const quotePromise = new Promise<BigNumber>((resolve) => {
+                resolveQuote = resolve;
+            });
+
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn(() => quotePromise)
+                .mockName("calculateReceiveAmount");
+            const button = await screen.findByTestId("create-swap-button");
+
+            expect(
+                within(button).queryByTestId("loading-spinner"),
+            ).not.toBeInTheDocument();
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "100000" },
+            });
+
+            expect(
+                within(button).getByTestId("loading-spinner"),
+            ).toBeInTheDocument();
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            await waitFor(() => {
+                expect(currentPair.calculateReceiveAmount).toHaveBeenCalled();
+            });
+
+            expect(
+                within(button).getByTestId("loading-spinner"),
+            ).toBeInTheDocument();
+
+            resolveQuote?.(BigNumber(90000));
+
+            await waitFor(() => {
+                expect(
+                    within(button).queryByTestId("loading-spinner"),
+                ).not.toBeInTheDocument();
+            });
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("should update receive amount on asset change", async () => {
         render(
             () => (
@@ -133,7 +204,7 @@ describe("Create", () => {
         setPairAssets(LN, LBTC);
 
         await waitFor(() => {
-            expect(signals.receiveAmount()).toEqual(BigNumber(49432));
+            expect(signals.receiveAmount()).toEqual(BigNumber(49429));
         });
     });
 

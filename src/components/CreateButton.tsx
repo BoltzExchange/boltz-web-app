@@ -153,6 +153,7 @@ const CreateButton = () => {
         setSendAmount,
         setReceiveAmount,
         bolt12Loading,
+        quoteLoading,
     } = useCreateContext();
     const {
         signer,
@@ -733,13 +734,14 @@ const CreateButton = () => {
                 !(valid() || validWayToFetchInvoice()) ||
                 buttonDisable() ||
                 loading() ||
+                quoteLoading() ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&
                     lnurl() === "")
             }
             onClick={buttonClick}>
-            {loading() || bolt12Loading() ? (
+            {loading() || bolt12Loading() || quoteLoading() ? (
                 <LoadingSpinner class="inner-spinner" />
             ) : (
                 getButtonLabel(buttonLabel())
