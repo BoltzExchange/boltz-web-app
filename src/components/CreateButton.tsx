@@ -61,6 +61,7 @@ export const enum BackupDone {
 
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
+    assetSend: Accessor<string>,
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
     getGasAbstractionSigner: (asset: string) => Wallet,
@@ -69,7 +70,7 @@ export const getClaimAddress = async (
     gasPrice: bigint;
     claimAddress: string;
 }> => {
-    if (isEvmAsset(assetReceive())) {
+    if (isEvmAsset(assetReceive()) || isEvmAsset(assetSend())) {
         if (assetReceive() === RBTC && signer() !== undefined) {
             const [balance, gasPrice] = await Promise.all([
                 signer().provider.getBalance(await signer().getAddress()),
@@ -93,8 +94,11 @@ export const getClaimAddress = async (
             } else {
                 log.info("RIF smart wallet not needed");
             }
-        } else {
-            const gasSigner = getGasAbstractionSigner(assetReceive());
+        } else if (assetSend() !== RBTC) {
+            const evmSide = isEvmAsset(assetSend())
+                ? assetSend()
+                : assetReceive();
+            const gasSigner = getGasAbstractionSigner(evmSide);
             log.debug("Using gas abstraction signer", gasSigner.address);
             return {
                 gasPrice: 0n,
@@ -104,6 +108,7 @@ export const getClaimAddress = async (
         }
     }
 
+    log.debug("Using no gas abstraction");
     return {
         gasPrice: 0n,
         gasAbstraction: GasAbstractionType.None,
@@ -697,6 +702,7 @@ const CreateButton = () => {
 
             const { gasAbstraction, claimAddress } = await getClaimAddress(
                 assetReceive,
+                assetSend,
                 signer,
                 onchainAddress,
                 getGasAbstractionSigner,

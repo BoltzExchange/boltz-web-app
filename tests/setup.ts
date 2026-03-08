@@ -43,7 +43,14 @@ const axiosFetch = async (
 
 globalThis.fetch = axiosFetch as typeof fetch;
 
-vi.mock("ethers", () => ({
-    JsonRpcProvider: vi.fn(),
-    FallbackProvider: vi.fn(),
-}));
+vi.mock("ethers", () => {
+    const Signature = {
+        from: vi.fn((value: unknown) => value),
+    };
+
+    return {
+        JsonRpcProvider: vi.fn(),
+        FallbackProvider: vi.fn(),
+        Signature,
+    };
+});

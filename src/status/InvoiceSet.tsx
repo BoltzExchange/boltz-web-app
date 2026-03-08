@@ -33,6 +33,7 @@ const InvoiceSet = () => {
             <Show when={!preimageHash.loading} fallback={<LoadingSpinner />}>
                 <LockupEvm
                     swapId={submarine.id}
+                    gasAbstraction={submarine.gasAbstraction}
                     signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}

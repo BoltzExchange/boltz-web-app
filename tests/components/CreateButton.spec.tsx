@@ -51,6 +51,7 @@ describe("CreateButton", () => {
         await expect(
             getClaimAddress(
                 () => RBTC,
+                () => BTC,
                 () => signer,
                 () => "0xuser",
                 vi.fn(),
@@ -66,6 +67,7 @@ describe("CreateButton", () => {
         await expect(
             getClaimAddress(
                 () => BTC,
+                () => LBTC,
                 () => undefined,
                 () => "bc1qaddr",
                 vi.fn(),
@@ -85,6 +87,7 @@ describe("CreateButton", () => {
         await expect(
             getClaimAddress(
                 () => USDT0,
+                () => BTC,
                 () => undefined,
                 () => "0xuser",
                 getGasAbstractionSigner,
@@ -95,6 +98,46 @@ describe("CreateButton", () => {
             claimAddress: "0xgas",
         });
         expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
+    });
+
+    test("should use signer gas abstraction when sending a non-RBTC EVM asset", async () => {
+        const getGasAbstractionSigner = vi
+            .fn()
+            .mockReturnValue({ address: "0xgas" });
+
+        await expect(
+            getClaimAddress(
+                () => BTC,
+                () => USDT0,
+                () => undefined,
+                () => "bc1qaddr",
+                getGasAbstractionSigner,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.Signer,
+            gasPrice: 0n,
+            claimAddress: "0xgas",
+        });
+        expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
+    });
+
+    test("should not use signer gas abstraction when sending RBTC", async () => {
+        const getGasAbstractionSigner = vi.fn();
+
+        await expect(
+            getClaimAddress(
+                () => BTC,
+                () => RBTC,
+                () => undefined,
+                () => "bc1qaddr",
+                getGasAbstractionSigner,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.None,
+            gasPrice: 0n,
+            claimAddress: "bc1qaddr",
+        });
+        expect(getGasAbstractionSigner).not.toHaveBeenCalled();
     });
 
     test("should initially be disabled with minimum label", async () => {

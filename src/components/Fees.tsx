@@ -120,17 +120,19 @@ const Fees = () => {
         return {
             signer: signer(),
             assetReceive: assetReceive(),
+            assetSend: assetSend(),
         };
     });
     const [gasAbstractionExtraCost] = createResource(
         gasAbstractionTrigger,
-        async ({ signer, assetReceive }) => {
+        async ({ signer, assetReceive, assetSend }) => {
             if (signer === undefined) {
                 return 0;
             }
 
             const { gasAbstraction, gasPrice } = await getClaimAddress(
                 () => assetReceive,
+                () => assetSend,
                 () => signer,
                 onchainAddress,
                 getGasAbstractionSigner,
