@@ -21,6 +21,7 @@ import { getEipRefundSignature } from "../utils/boltzClient";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
+    getCommitmentLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
@@ -96,6 +97,7 @@ export const RefundEvm = (props: {
     derivationPath?: string;
     timeoutBlockHeight: number;
     swapType?: SwapType;
+    commitmentLockupTxHash?: string;
     setRefundTxId: Setter<string>;
 }) => {
     const { getErc20Swap, getEtherSwap, signer, getGasAbstractionSigner } =
@@ -108,7 +110,6 @@ export const RefundEvm = (props: {
             asset={props.asset}
             /* eslint-disable-next-line solid/reactivity */
             onClick={async () => {
-                const amount = satsToAssetAmount(props.amount, props.asset);
                 const gasAbstraction =
                     props.gasAbstraction ?? GasAbstractionType.None;
                 const transactionSigner = getSignerForGasAbstraction(
@@ -130,6 +131,66 @@ export const RefundEvm = (props: {
                     );
                 }
 
+                const isCommitmentLockup =
+                    props.commitmentLockupTxHash !== undefined;
+
+                let refundData: {
+                    amount: bigint;
+                    preimageHash: string;
+                    tokenAddress?: string;
+                    claimAddress: string;
+                    refundAddress: string;
+                    timelock: bigint;
+                };
+
+                if (isCommitmentLockup) {
+                    log.debug("Refunding commitment lockup");
+                    const receipt =
+                        await transactionSigner.provider.getTransactionReceipt(
+                            props.commitmentLockupTxHash,
+                        );
+                    if (receipt === null) {
+                        throw new Error(
+                            "could not fetch commitment lockup transaction receipt",
+                        );
+                    }
+
+                    const contract =
+                        contractKind === AssetKind.ERC20
+                            ? getErc20Swap(props.asset)
+                            : getEtherSwap(props.asset);
+                    const {
+                        amount: lockupEventAmount,
+                        tokenAddress: lockupTokenAddress,
+                        claimAddress: lockupClaimAddress,
+                        refundAddress: lockupRefundAddress,
+                        timelock: lockupTimelock,
+                        preimageHash: lockupPreimageHash,
+                    } = getCommitmentLockupEvent(
+                        contract,
+                        receipt,
+                        await contract.getAddress(),
+                    );
+
+                    refundData = {
+                        amount: lockupEventAmount,
+                        tokenAddress: lockupTokenAddress,
+                        claimAddress: lockupClaimAddress,
+                        refundAddress: lockupRefundAddress,
+                        timelock: lockupTimelock,
+                        preimageHash: lockupPreimageHash,
+                    };
+                } else {
+                    refundData = {
+                        preimageHash: prefix0x(props.preimageHash),
+                        amount: satsToAssetAmount(props.amount, props.asset),
+                        tokenAddress: tokenAddress,
+                        claimAddress: props.claimAddress,
+                        refundAddress: await signer().getAddress(),
+                        timelock: BigInt(props.timeoutBlockHeight),
+                    };
+                }
+
                 const refundCooperative = async () => {
                     if (props.swapId === undefined) {
                         throw new Error(
@@ -148,13 +209,14 @@ export const RefundEvm = (props: {
                             transactionSigner,
                         );
                         return await contract[
-                            "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)"
+                            "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)"
                         ].populateTransaction(
-                            prefix0x(props.preimageHash),
-                            amount,
-                            tokenAddress,
-                            props.claimAddress,
-                            props.timeoutBlockHeight,
+                            refundData.preimageHash,
+                            refundData.amount,
+                            refundData.tokenAddress,
+                            refundData.claimAddress,
+                            refundData.refundAddress,
+                            refundData.timelock,
                             decSignature.v,
                             decSignature.r,
                             decSignature.s,
@@ -165,12 +227,13 @@ export const RefundEvm = (props: {
                         transactionSigner,
                     );
                     return await contract[
-                        "refundCooperative(bytes32,uint256,address,uint256,uint8,bytes32,bytes32)"
+                        "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)"
                     ].populateTransaction(
-                        prefix0x(props.preimageHash),
-                        amount,
-                        props.claimAddress,
-                        props.timeoutBlockHeight,
+                        refundData.preimageHash,
+                        refundData.amount,
+                        refundData.claimAddress,
+                        refundData.refundAddress,
+                        refundData.timelock,
                         decSignature.v,
                         decSignature.r,
                         decSignature.s,
@@ -183,13 +246,14 @@ export const RefundEvm = (props: {
                             transactionSigner,
                         );
                         return await contract[
-                            "refund(bytes32,uint256,address,address,uint256)"
+                            "refund(bytes32,uint256,address,address,address,uint256)"
                         ].populateTransaction(
-                            prefix0x(props.preimageHash),
-                            amount,
-                            tokenAddress,
-                            props.claimAddress,
-                            props.timeoutBlockHeight,
+                            refundData.preimageHash,
+                            refundData.amount,
+                            refundData.tokenAddress,
+                            refundData.claimAddress,
+                            refundData.refundAddress,
+                            refundData.timelock,
                         );
                     }
 
@@ -197,12 +261,13 @@ export const RefundEvm = (props: {
                         transactionSigner,
                     );
                     return await contract[
-                        "refund(bytes32,uint256,address,uint256)"
+                        "refund(bytes32,uint256,address,address,uint256)"
                     ].populateTransaction(
-                        prefix0x(props.preimageHash),
-                        amount,
-                        props.claimAddress,
-                        props.timeoutBlockHeight,
+                        refundData.preimageHash,
+                        refundData.amount,
+                        refundData.claimAddress,
+                        refundData.refundAddress,
+                        refundData.timelock,
                     );
                 };
 
@@ -430,6 +495,9 @@ const RefundButton = (props: {
                             )}
                             setRefundTxId={props.setRefundTxId}
                             asset={props.swap().assetSend}
+                            commitmentLockupTxHash={
+                                props.swap().commitmentLockupTxHash
+                            }
                         />
                     }>
                     <Show
@@ -452,6 +520,9 @@ const RefundButton = (props: {
                             preimageHash={preimageHash()}
                             setRefundTxId={props.setRefundTxId}
                             asset={props.swap().assetSend}
+                            commitmentLockupTxHash={
+                                props.swap().commitmentLockupTxHash
+                            }
                         />
                     </Show>
                 </Show>

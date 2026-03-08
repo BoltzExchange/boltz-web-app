@@ -2,7 +2,6 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import { randomBytes } from "crypto";
 import {
     AbiCoder,
-    Interface,
     MaxUint256,
     type Wallet,
     keccak256 as ethersKeccak256,
@@ -20,7 +19,6 @@ import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
-    ERC20SwapAbi,
     type Signer,
     createRouterContract,
     createTokenContract,
@@ -37,12 +35,13 @@ import {
 } from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
 import {
+    getCommitmentLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
-import { GasAbstractionType } from "../utils/swapCreator";
+import { GasAbstractionType, type SomeSwap } from "../utils/swapCreator";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
@@ -216,6 +215,9 @@ const lockupWithHops = async (
     signer: Accessor<Signer>,
     getGasAbstractionSigner: (asset: string) => Wallet,
     slippage: number,
+    getSwap: (id: string) => Promise<SomeSwap>,
+    setSwap: Setter<SomeSwap | null>,
+    setSwapStorage: (swap: SomeSwap) => Promise<void>,
 ): Promise<string> => {
     if (hops.length !== 1) {
         throw new Error("only one hop is supported for now");
@@ -246,12 +248,13 @@ const lockupWithHops = async (
         quote.data,
     );
 
+    const erc20Swap = getErc20Swap(asset);
     const [permit2Address, chainId, signerAddress, version] = await Promise.all(
         [
             router.PERMIT2(),
             transactionSigner.provider.getNetwork().then((n) => n.chainId),
             signer().getAddress(),
-            getErc20Swap(asset).version(),
+            erc20Swap.version(),
         ],
     );
 
@@ -346,6 +349,10 @@ const lockupWithHops = async (
         transactionSigner,
         tx,
     );
+    const currentSwap = await getSwap(swapId);
+    currentSwap.commitmentLockupTxHash = transactionHash;
+    setSwap(currentSwap);
+    await setSwapStorage(currentSwap);
 
     // The commitment signature must include the actually locked amount from the Lockup event.
     const receipt = await transactionSigner.provider.waitForTransaction(
@@ -359,45 +366,18 @@ const lockupWithHops = async (
         );
     }
 
-    const erc20SwapInterface = new Interface(ERC20SwapAbi);
-    const lockupLog = receipt.logs.find((eventLog) => {
-        if (
-            eventLog.address.toLowerCase() !==
-            commitmentLockupDetails.contract.toLowerCase()
-        ) {
-            return false;
-        }
-
-        try {
-            const parsedLog = erc20SwapInterface.parseLog({
-                data: eventLog.data,
-                topics: eventLog.topics,
-            });
-            return parsedLog?.name === "Lockup";
-        } catch {
-            return false;
-        }
-    });
-
-    if (lockupLog === undefined) {
-        throw new Error("could not find commitment lockup event");
-    }
-
-    const parsedLockup = erc20SwapInterface.parseLog({
-        data: lockupLog.data,
-        topics: lockupLog.topics,
-    });
-    if (parsedLockup?.name !== "Lockup") {
-        throw new Error("could not parse commitment lockup event");
-    }
-
     const {
         amount: lockupEventAmount,
         tokenAddress: lockupTokenAddress,
         claimAddress: lockupClaimAddress,
         refundAddress: lockupRefundAddress,
         timelock: lockupTimelock,
-    } = parsedLockup.args;
+        logIndex: lockupLogIndex,
+    } = getCommitmentLockupEvent(
+        erc20Swap,
+        receipt,
+        commitmentLockupDetails.contract,
+    );
 
     const commitmentSignature = await signer().signTypedData(
         {
@@ -431,7 +411,7 @@ const lockupWithHops = async (
         swapId,
         commitmentSignature,
         transactionHash,
-        lockupLog.index,
+        lockupLogIndex,
         slippage * 100,
     );
 
@@ -559,6 +539,9 @@ const LockupTransaction = (props: {
                             signer,
                             getGasAbstractionSigner,
                             slippage(),
+                            getSwap,
+                            setSwap,
+                            setSwapStorage,
                         );
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative

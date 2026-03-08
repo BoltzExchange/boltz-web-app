@@ -5,7 +5,7 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { BTC, RBTC, isEvmAsset } from "../consts/Assets";
+import { BTC, RBTC, USDT0, isEvmAsset } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -103,7 +103,10 @@ export const getClaimAddress = async (
             return {
                 gasPrice: 0n,
                 gasAbstraction: GasAbstractionType.Signer,
-                claimAddress: gasSigner.address,
+                claimAddress:
+                    assetReceive() !== USDT0
+                        ? onchainAddress()
+                        : gasSigner.address,
             };
         }
     }
@@ -709,6 +712,8 @@ const CreateButton = () => {
             );
 
             if (!valid()) return;
+
+            log.debug("Creating with EVM address", claimAddress);
 
             await createSwap(claimAddress, gasAbstraction);
         } catch (e) {

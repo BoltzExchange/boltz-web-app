@@ -100,27 +100,6 @@ describe("CreateButton", () => {
         expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
     });
 
-    test("should use signer gas abstraction when sending a non-RBTC EVM asset", async () => {
-        const getGasAbstractionSigner = vi
-            .fn()
-            .mockReturnValue({ address: "0xgas" });
-
-        await expect(
-            getClaimAddress(
-                () => BTC,
-                () => USDT0,
-                () => undefined,
-                () => "bc1qaddr",
-                getGasAbstractionSigner,
-            ),
-        ).resolves.toEqual({
-            gasAbstraction: GasAbstractionType.Signer,
-            gasPrice: 0n,
-            claimAddress: "0xgas",
-        });
-        expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
-    });
-
     test("should not use signer gas abstraction when sending RBTC", async () => {
         const getGasAbstractionSigner = vi.fn();
 

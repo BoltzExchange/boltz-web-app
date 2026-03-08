@@ -48,6 +48,7 @@ export const claimAsset = async (
     asset: string,
     preimage: string,
     amount: number,
+    claimAddress: string,
     refundAddress: string,
     timeoutBlockHeight: number,
     signer: Accessor<Signer>,
@@ -81,20 +82,22 @@ export const claimAsset = async (
 
             if (getKindForAsset(asset) === AssetKind.EVMNative) {
                 tx = await (etherSwap.connect(claimSigner) as EtherSwap)[
-                    "claim(bytes32,uint256,address,uint256)"
+                    "claim(bytes32,uint256,address,address,uint256)"
                 ].populateTransaction(
                     prefix0x(preimage),
                     assetAmount,
+                    claimAddress,
                     refundAddress,
                     timeoutBlockHeight,
                 );
             } else {
                 tx = await (erc20Swap.connect(claimSigner) as ERC20Swap)[
-                    "claim(bytes32,uint256,address,address,uint256)"
+                    "claim(bytes32,uint256,address,address,address,uint256)"
                 ].populateTransaction(
                     prefix0x(preimage),
                     assetAmount,
                     getTokenAddress(asset),
+                    claimAddress,
                     refundAddress,
                     timeoutBlockHeight,
                 );
@@ -482,6 +485,7 @@ const ClaimEvm = (props: {
     assetSend: string;
     assetReceive: string;
     signerAddress: string;
+    claimAddress: string;
     refundAddress: string;
     derivationPath: string;
     timeoutBlockHeight: number;
@@ -497,12 +501,18 @@ const ClaimEvm = (props: {
         props.gasAbstraction === GasAbstractionType.Signer;
 
     const claimWithoutHops = async () => {
+        // Ignore swaps with dex hops here
+        if (props.dex !== undefined || props.dex?.hops?.length > 0) {
+            return;
+        }
+
         const currentSwap = await getSwap(props.swapId);
         const transactionHash = await claimAsset(
             props.gasAbstraction,
             props.assetReceive,
             props.preimage,
             props.amount,
+            props.claimAddress,
             props.refundAddress,
             props.timeoutBlockHeight,
             signer,
@@ -592,6 +602,7 @@ const TransactionConfirmed = () => {
                         signerAddress={chain.signer}
                         amount={chain.claimDetails.amount}
                         derivationPath={chain.derivationPath}
+                        claimAddress={chain.claimAddress}
                         refundAddress={chain.claimDetails.refundAddress}
                         timeoutBlockHeight={
                             chain.claimDetails.timeoutBlockHeight
@@ -608,6 +619,7 @@ const TransactionConfirmed = () => {
                     preimage={reverse.preimage}
                     amount={reverse.onchainAmount}
                     signerAddress={reverse.signer}
+                    claimAddress={reverse.claimAddress}
                     refundAddress={reverse.refundAddress}
                     derivationPath={reverse.derivationPath}
                     timeoutBlockHeight={reverse.timeoutBlockHeight}

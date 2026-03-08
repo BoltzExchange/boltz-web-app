@@ -40,6 +40,7 @@ describe("TransactionConfirmed claimAsset", () => {
                 "RBTC",
                 "preimage",
                 21,
+                "0xclaim",
                 "0xrefund",
                 123,
                 signerAccessor as never,
