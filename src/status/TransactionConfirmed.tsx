@@ -34,56 +34,88 @@ import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     type ChainSwap,
     type DexDetail,
+    GasAbstractionType,
     type ReverseSwap,
     getFinalAssetReceive,
 } from "../utils/swapCreator";
 
+const getClaimSigner = (
+    gasAbstraction: GasAbstractionType,
+    asset: string,
+    signer: Accessor<Signer>,
+    getGasAbstractionSigner: (asset: string) => Wallet,
+) => {
+    switch (gasAbstraction) {
+        case GasAbstractionType.None:
+        case GasAbstractionType.RifRelay:
+            return signer();
+
+        case GasAbstractionType.Signer:
+            return getGasAbstractionSigner(asset);
+    }
+};
+
 const claimAsset = async (
-    useGasAbstraction: boolean,
+    gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
     amount: number,
     refundAddress: string,
     timeoutBlockHeight: number,
     signer: Accessor<Signer>,
+    getGasAbstractionSigner: (asset: string) => Wallet,
     etherSwap: EtherSwap,
     erc20Swap: ERC20Swap,
 ) => {
     let transactionHash: string;
 
-    if (useGasAbstraction) {
-        transactionHash = await relayClaimTransaction(
-            signer(),
-            etherSwap,
-            preimage,
-            amount,
-            refundAddress,
-            timeoutBlockHeight,
-        );
-    } else {
-        const assetAmount = satsToAssetAmount(amount, asset);
+    switch (gasAbstraction) {
+        case GasAbstractionType.RifRelay:
+            transactionHash = await relayClaimTransaction(
+                signer(),
+                etherSwap,
+                preimage,
+                amount,
+                refundAddress,
+                timeoutBlockHeight,
+            );
+            break;
 
-        if (getKindForAsset(asset) === AssetKind.EVMNative) {
-            transactionHash = (
-                await etherSwap["claim(bytes32,uint256,address,uint256)"](
-                    prefix0x(preimage),
-                    assetAmount,
-                    refundAddress,
-                    timeoutBlockHeight,
-                )
-            ).hash;
-        } else {
-            transactionHash = (
-                await erc20Swap[
-                    "claim(bytes32,uint256,address,address,uint256)"
-                ](
-                    prefix0x(preimage),
-                    assetAmount,
-                    getTokenAddress(asset),
-                    refundAddress,
-                    timeoutBlockHeight,
-                )
-            ).hash;
+        case GasAbstractionType.None:
+        case GasAbstractionType.Signer: {
+            const assetAmount = satsToAssetAmount(amount, asset);
+            const claimSigner = getClaimSigner(
+                gasAbstraction,
+                asset,
+                signer,
+                getGasAbstractionSigner,
+            );
+
+            if (getKindForAsset(asset) === AssetKind.EVMNative) {
+                transactionHash = (
+                    await (etherSwap.connect(claimSigner) as EtherSwap)[
+                        "claim(bytes32,uint256,address,uint256)"
+                    ](
+                        prefix0x(preimage),
+                        assetAmount,
+                        refundAddress,
+                        timeoutBlockHeight,
+                    )
+                ).hash;
+            } else {
+                transactionHash = (
+                    await (erc20Swap.connect(claimSigner) as ERC20Swap)[
+                        "claim(bytes32,uint256,address,address,uint256)"
+                    ](
+                        prefix0x(preimage),
+                        assetAmount,
+                        getTokenAddress(asset),
+                        refundAddress,
+                        timeoutBlockHeight,
+                    )
+                ).hash;
+            }
+            break;
         }
     }
 
@@ -298,7 +330,7 @@ const Amount = (props: {
 const AutoClaimHops = (props: {
     amount: number;
     swapId: string;
-    useGasAbstraction: boolean;
+    gasAbstraction: GasAbstractionType;
     preimage: string;
     assetSend: string;
     assetReceive: string;
@@ -339,9 +371,12 @@ const AutoClaimHops = (props: {
         setLoading(true);
         try {
             const currentSwap = await getSwap(props.swapId);
-            const claimSigner = props.useGasAbstraction
-                ? getGasAbstractionSigner(props.assetReceive)
-                : signer();
+            const claimSigner = getClaimSigner(
+                props.gasAbstraction,
+                props.assetReceive,
+                signer,
+                getGasAbstractionSigner,
+            );
 
             const transactionHash = await claimHops(
                 props.dex.hops,
@@ -455,7 +490,7 @@ const AutoClaimHops = (props: {
 const ClaimEvm = (props: {
     amount: number;
     swapId: string;
-    useGasAbstraction: boolean;
+    gasAbstraction: GasAbstractionType;
     preimage: string;
     assetSend: string;
     assetReceive: string;
@@ -466,7 +501,8 @@ const ClaimEvm = (props: {
     finalReceive: string;
     dex?: DexDetail;
 }) => {
-    const { getEtherSwap, getErc20Swap, signer } = useWeb3Signer();
+    const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
+        useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
 
@@ -480,7 +516,7 @@ const ClaimEvm = (props: {
             fallback={
                 <AutoClaimHops
                     swapId={props.swapId}
-                    useGasAbstraction={props.useGasAbstraction}
+                    gasAbstraction={props.gasAbstraction}
                     preimage={props.preimage}
                     signerAddress={props.signerAddress}
                     amount={props.amount}
@@ -497,13 +533,14 @@ const ClaimEvm = (props: {
                 onClick={async () => {
                     const currentSwap = await getSwap(props.swapId);
                     const transactionHash = await claimAsset(
-                        props.useGasAbstraction,
+                        props.gasAbstraction,
                         props.assetReceive,
                         props.preimage,
                         props.amount,
                         props.refundAddress,
                         props.timeoutBlockHeight,
                         signer,
+                        getGasAbstractionSigner,
                         getEtherSwap(props.assetReceive),
                         getErc20Swap(props.assetReceive),
                     );
@@ -549,7 +586,7 @@ const TransactionConfirmed = () => {
                 fallback={
                     <ClaimEvm
                         swapId={chain.id}
-                        useGasAbstraction={chain.useGasAbstraction}
+                        gasAbstraction={chain.gasAbstraction}
                         preimage={chain.preimage}
                         signerAddress={chain.signer}
                         amount={chain.claimDetails.amount}
@@ -566,7 +603,7 @@ const TransactionConfirmed = () => {
                 }>
                 <ClaimEvm
                     swapId={reverse.id}
-                    useGasAbstraction={reverse.useGasAbstraction}
+                    gasAbstraction={reverse.gasAbstraction}
                     preimage={reverse.preimage}
                     amount={reverse.onchainAmount}
                     signerAddress={reverse.signer}

@@ -2,14 +2,18 @@ import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import Fees from "../../src/components/Fees";
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import { Denomination, SwapType } from "../../src/consts/Enums";
+import * as web3Context from "../../src/context/Web3";
+import i18n from "../../src/i18n/i18n";
+import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
 import { getPairs } from "../../src/utils/boltzClient";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "../../src/utils/calculate";
+import { weiToSatoshi } from "../../src/utils/rootstock";
 import {
     TestComponent,
     contextWrapper,
@@ -17,6 +21,8 @@ import {
     signals,
 } from "../helper";
 import { pairs } from "../pairs";
+
+const mockUseWeb3Signer = vi.fn();
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
@@ -27,6 +33,34 @@ const setPairAssets = (fromAsset: string, toAsset: string) => {
 };
 
 describe("Fees component", () => {
+    beforeEach(() => {
+        vi.spyOn(web3Context, "useWeb3Signer").mockImplementation(
+            () =>
+                mockUseWeb3Signer() as ReturnType<
+                    typeof web3Context.useWeb3Signer
+                >,
+        );
+        mockUseWeb3Signer.mockReturnValue({
+            signer: () => ({
+                address: "0xsigner",
+                getAddress: vi.fn().mockResolvedValue("0xsigner"),
+                provider: {
+                    getBalance: vi.fn().mockResolvedValue(1_000_000_000_000n),
+                    getFeeData: vi.fn().mockResolvedValue({
+                        gasPrice: 100_000_000n,
+                    }),
+                },
+            }),
+            getGasAbstractionSigner: vi
+                .fn()
+                .mockReturnValue({ address: "0xgas" }),
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     test("should render", () => {
         render(
             () => (
@@ -148,6 +182,94 @@ describe("Fees component", () => {
         await waitFor(() => {
             expect(signals.minimum()).toEqual(41);
         });
+    });
+
+    test("should show the rif relay message only for rif relay gas abstraction", async () => {
+        vi.spyOn(rifSigner, "getSmartWalletAddress").mockResolvedValue({
+            address: "0xsmartwallet",
+            nonce: 0n,
+        });
+
+        mockUseWeb3Signer.mockReturnValueOnce({
+            signer: () => ({
+                address: "0xsigner",
+                getAddress: vi.fn().mockResolvedValue("0xsigner"),
+                provider: {
+                    getBalance: vi.fn().mockResolvedValue(0n),
+                    getFeeData: vi.fn().mockResolvedValue({
+                        gasPrice: 100_000_000n,
+                    }),
+                },
+            }),
+            getGasAbstractionSigner: vi
+                .fn()
+                .mockReturnValue({ address: "0xgas" }),
+        });
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setNotification("");
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, RBTC);
+
+        const baseMinerFee =
+            pairs.chain[BTC][RBTC].fees.minerFees.server +
+            pairs.chain[BTC][RBTC].fees.minerFees.user.claim;
+        const gasAbstractionExtraCost = Number(
+            weiToSatoshi(100_000_000n * 157_000n),
+        );
+
+        await waitFor(() => {
+            expect(globalSignals.notification()).toEqual(i18n.en.rif_extra_fee);
+            expect(signals.minerFee()).toEqual(
+                baseMinerFee + gasAbstractionExtraCost,
+            );
+        });
+    });
+
+    test("should not show the rif relay message for signer gas abstraction", async () => {
+        const pairsWithUsdt0 = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                BTC: {
+                    ...pairs.chain.BTC,
+                    USDT0: {
+                        ...pairs.chain.BTC.RBTC,
+                        hash: "usdt0-pair-hash",
+                    },
+                },
+            },
+        };
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setNotification("");
+        globalSignals.setPairs(pairsWithUsdt0);
+        setPairAssets(BTC, USDT0);
+
+        const baseMinerFee =
+            pairsWithUsdt0.chain[BTC][USDT0].fees.minerFees.server +
+            pairsWithUsdt0.chain[BTC][USDT0].fees.minerFees.user.claim;
+
+        await waitFor(() => {
+            expect(signals.minerFee()).toEqual(baseMinerFee);
+        });
+        expect(globalSignals.notification()).toEqual("");
     });
 
     test.each`

@@ -32,6 +32,12 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
+export const enum GasAbstractionType {
+    None = "none",
+    RifRelay = "rifRelay",
+    Signer = "signer",
+}
+
 export type SwapBase = {
     type: SwapType;
     status?: string;
@@ -46,7 +52,7 @@ export type SwapBase = {
     claimTx?: string;
     lockupTx?: string;
 
-    useGasAbstraction: boolean;
+    gasAbstraction: GasAbstractionType;
     signer?: string;
     // Set for hardware wallet signers
     derivationPath?: string;
@@ -157,7 +163,7 @@ export const createSubmarine = async (
     receiveAmount: BigNumber,
     invoice: string,
     pairHash: string,
-    useGasAbstraction: boolean,
+    gasAbstraction: GasAbstractionType,
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<SubmarineSwap> => {
@@ -180,7 +186,7 @@ export const createSubmarine = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useGasAbstraction,
+            gasAbstraction,
         ),
         invoice,
         originalDestination,
@@ -195,7 +201,7 @@ export const createReverse = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     pairHash: string,
-    useGasAbstraction: boolean,
+    gasAbstraction: GasAbstractionType,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -227,7 +233,7 @@ export const createReverse = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useGasAbstraction,
+            gasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -243,7 +249,7 @@ export const createChain = async (
     receiveAmount: BigNumber,
     claimAddress: string,
     pairHash: string,
-    useGasAbstraction: boolean,
+    gasAbstraction: GasAbstractionType,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -280,7 +286,7 @@ export const createChain = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useGasAbstraction,
+            gasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -297,11 +303,11 @@ const annotateSwapBaseData = <T>(
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
-    useGasAbstraction: boolean,
+    gasAbstraction: GasAbstractionType,
 ): T & SwapBase => ({
     ...createdResponse,
     type,
-    useGasAbstraction,
+    gasAbstraction,
     assetSend,
     assetReceive,
     date: new Date().getTime(),

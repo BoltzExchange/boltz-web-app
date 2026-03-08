@@ -40,8 +40,9 @@ import {
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
-import type { SomeSwap } from "../utils/swapCreator";
 import {
+    GasAbstractionType,
+    type SomeSwap,
     createChain,
     createReverse,
     createSubmarine,
@@ -64,7 +65,7 @@ export const getClaimAddress = async (
     onchainAddress: Accessor<string>,
     getGasAbstractionSigner: (asset: string) => Wallet,
 ): Promise<{
-    useGasAbstraction: boolean;
+    gasAbstraction: GasAbstractionType;
     gasPrice: bigint;
     claimAddress: string;
 }> => {
@@ -85,7 +86,7 @@ export const getClaimAddress = async (
                 log.info("Using RIF smart wallet as claim address");
                 return {
                     gasPrice,
-                    useGasAbstraction: true,
+                    gasAbstraction: GasAbstractionType.RifRelay,
                     claimAddress: (await getSmartWalletAddress(signer()))
                         .address,
                 };
@@ -97,7 +98,7 @@ export const getClaimAddress = async (
             log.debug("Using gas abstraction signer", gasSigner.address);
             return {
                 gasPrice: 0n,
-                useGasAbstraction: true,
+                gasAbstraction: GasAbstractionType.Signer,
                 claimAddress: gasSigner.address,
             };
         }
@@ -105,7 +106,7 @@ export const getClaimAddress = async (
 
     return {
         gasPrice: 0n,
-        useGasAbstraction: false,
+        gasAbstraction: GasAbstractionType.None,
         claimAddress: onchainAddress(),
     };
 };
@@ -407,7 +408,7 @@ const CreateButton = () => {
 
     const createSwap = async (
         claimAddress: string,
-        useGasAbstraction: boolean,
+        gasAbstraction: GasAbstractionType,
     ): Promise<boolean> => {
         if (
             !rescueFileBackupDone() &&
@@ -439,7 +440,7 @@ const CreateButton = () => {
                             creationData.receiveAmount,
                             invoice(),
                             creationData.pairHash,
-                            useGasAbstraction,
+                            gasAbstraction,
                             newKey,
                             originalDestination(),
                         );
@@ -550,7 +551,7 @@ const CreateButton = () => {
                             receiveAmount(),
                             onchainAddress(),
                             chainPair.hash,
-                            useGasAbstraction,
+                            gasAbstraction,
                             rescueFile(),
                             newKey,
                             originalDestination(),
@@ -582,7 +583,7 @@ const CreateButton = () => {
                         creationData.receiveAmount,
                         claimAddress,
                         creationData.pairHash,
-                        useGasAbstraction,
+                        gasAbstraction,
                         rescueFile(),
                         newKey,
                     );
@@ -603,7 +604,7 @@ const CreateButton = () => {
                         creationData.receiveAmount,
                         claimAddress,
                         creationData.pairHash,
-                        useGasAbstraction,
+                        gasAbstraction,
                         rescueFile(),
                         newKey,
                     );
@@ -694,7 +695,7 @@ const CreateButton = () => {
                 await fetchInvoice();
             }
 
-            const { useGasAbstraction, claimAddress } = await getClaimAddress(
+            const { gasAbstraction, claimAddress } = await getClaimAddress(
                 assetReceive,
                 signer,
                 onchainAddress,
@@ -703,7 +704,7 @@ const CreateButton = () => {
 
             if (!valid()) return;
 
-            await createSwap(claimAddress, useGasAbstraction);
+            await createSwap(claimAddress, gasAbstraction);
         } catch (e) {
             log.error("Error creating swap", e);
             notify("error", e);
