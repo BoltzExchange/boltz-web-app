@@ -5,7 +5,7 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { BTC, RBTC, isEvmAsset } from "../consts/Assets";
+import { BTC, RBTC, USDT0, isEvmAsset } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -40,8 +40,9 @@ import {
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
-import type { SomeSwap } from "../utils/swapCreator";
 import {
+    GasAbstractionType,
+    type SomeSwap,
     createChain,
     createReverse,
     createSubmarine,
@@ -60,15 +61,16 @@ export const enum BackupDone {
 
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
+    assetSend: Accessor<string>,
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
     getGasAbstractionSigner: (asset: string) => Wallet,
 ): Promise<{
-    useGasAbstraction: boolean;
+    gasAbstraction: GasAbstractionType;
     gasPrice: bigint;
     claimAddress: string;
 }> => {
-    if (isEvmAsset(assetReceive())) {
+    if (isEvmAsset(assetReceive()) || isEvmAsset(assetSend())) {
         if (assetReceive() === RBTC && signer() !== undefined) {
             const [balance, gasPrice] = await Promise.all([
                 signer().provider.getBalance(await signer().getAddress()),
@@ -85,27 +87,34 @@ export const getClaimAddress = async (
                 log.info("Using RIF smart wallet as claim address");
                 return {
                     gasPrice,
-                    useGasAbstraction: true,
+                    gasAbstraction: GasAbstractionType.RifRelay,
                     claimAddress: (await getSmartWalletAddress(signer()))
                         .address,
                 };
             } else {
                 log.info("RIF smart wallet not needed");
             }
-        } else {
-            const gasSigner = getGasAbstractionSigner(assetReceive());
+        } else if (assetSend() !== RBTC) {
+            const evmSide = isEvmAsset(assetSend())
+                ? assetSend()
+                : assetReceive();
+            const gasSigner = getGasAbstractionSigner(evmSide);
             log.debug("Using gas abstraction signer", gasSigner.address);
             return {
                 gasPrice: 0n,
-                useGasAbstraction: true,
-                claimAddress: gasSigner.address,
+                gasAbstraction: GasAbstractionType.Signer,
+                claimAddress:
+                    assetReceive() !== USDT0
+                        ? onchainAddress()
+                        : gasSigner.address,
             };
         }
     }
 
+    log.debug("Using no gas abstraction");
     return {
         gasPrice: 0n,
-        useGasAbstraction: false,
+        gasAbstraction: GasAbstractionType.None,
         claimAddress: onchainAddress(),
     };
 };
@@ -407,7 +416,7 @@ const CreateButton = () => {
 
     const createSwap = async (
         claimAddress: string,
-        useGasAbstraction: boolean,
+        gasAbstraction: GasAbstractionType,
     ): Promise<boolean> => {
         if (
             !rescueFileBackupDone() &&
@@ -439,7 +448,7 @@ const CreateButton = () => {
                             creationData.receiveAmount,
                             invoice(),
                             creationData.pairHash,
-                            useGasAbstraction,
+                            gasAbstraction,
                             newKey,
                             originalDestination(),
                         );
@@ -550,7 +559,7 @@ const CreateButton = () => {
                             receiveAmount(),
                             onchainAddress(),
                             chainPair.hash,
-                            useGasAbstraction,
+                            gasAbstraction,
                             rescueFile(),
                             newKey,
                             originalDestination(),
@@ -582,7 +591,7 @@ const CreateButton = () => {
                         creationData.receiveAmount,
                         claimAddress,
                         creationData.pairHash,
-                        useGasAbstraction,
+                        gasAbstraction,
                         rescueFile(),
                         newKey,
                     );
@@ -603,7 +612,7 @@ const CreateButton = () => {
                         creationData.receiveAmount,
                         claimAddress,
                         creationData.pairHash,
-                        useGasAbstraction,
+                        gasAbstraction,
                         rescueFile(),
                         newKey,
                     );
@@ -694,8 +703,9 @@ const CreateButton = () => {
                 await fetchInvoice();
             }
 
-            const { useGasAbstraction, claimAddress } = await getClaimAddress(
+            const { gasAbstraction, claimAddress } = await getClaimAddress(
                 assetReceive,
+                assetSend,
                 signer,
                 onchainAddress,
                 getGasAbstractionSigner,
@@ -703,7 +713,9 @@ const CreateButton = () => {
 
             if (!valid()) return;
 
-            await createSwap(claimAddress, useGasAbstraction);
+            log.debug("Creating with EVM address", claimAddress);
+
+            await createSwap(claimAddress, gasAbstraction);
         } catch (e) {
             log.error("Error creating swap", e);
             notify("error", e);

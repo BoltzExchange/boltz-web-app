@@ -2,9 +2,7 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import { randomBytes } from "crypto";
 import {
     AbiCoder,
-    Interface,
     MaxUint256,
-    type Signer,
     type Wallet,
     keccak256 as ethersKeccak256,
 } from "ethers";
@@ -17,12 +15,11 @@ import {
     createSignal,
 } from "solid-js";
 
-import { sendTransaction } from "../alchemy/Alchemy";
 import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
-    ERC20SwapAbi,
+    type Signer,
     createRouterContract,
     createTokenContract,
     customDerivationPathRdns,
@@ -37,8 +34,14 @@ import {
     quoteDexAmountOut,
 } from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
+import {
+    getCommitmentLockupEvent,
+    getSignerForGasAbstraction,
+    sendPopulatedTransaction,
+} from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
+import { GasAbstractionType, type SomeSwap } from "../utils/swapCreator";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
@@ -84,8 +87,126 @@ const getHopExecutionQuote = async (
     };
 };
 
+const hashRouterCalls = (
+    calls: { target: string; value: string | bigint; callData: string }[],
+) => {
+    const encodedCalls = AbiCoder.defaultAbiCoder().encode(
+        ["tuple(address target, uint256 value, bytes callData)[]"],
+        [calls],
+    );
+
+    return ethersKeccak256(encodedCalls);
+};
+
+const lockupErc20WithPermit2 = async (
+    gasAbstraction: GasAbstractionType,
+    asset: string,
+    amount: bigint,
+    preimageHash: string,
+    claimAddress: string,
+    timeoutBlockHeight: number,
+    signer: Signer,
+    transactionSigner: Signer | Wallet,
+): Promise<string> => {
+    const router = createRouterContract(asset, transactionSigner);
+    const routerAddress = await router.getAddress();
+    const tokenAddress = getTokenAddress(asset);
+    const calls: {
+        target: string;
+        value: string | bigint;
+        callData: string;
+    }[] = [];
+    const callsHash = hashRouterCalls(calls);
+
+    const [permit2Address, chainId, refundAddress] = await Promise.all([
+        router.PERMIT2(),
+        transactionSigner.provider
+            .getNetwork()
+            .then((network) => network.chainId),
+        signer.getAddress(),
+    ]);
+
+    const nonce = BigInt("0x" + randomBytes(32).toString("hex"));
+    const permit2DeadlineSeconds = 1_800;
+    const deadline = BigInt(
+        Math.floor(Date.now() / 1000) + permit2DeadlineSeconds,
+    );
+
+    const permit2Signature = await signer.signTypedData(
+        {
+            name: "Permit2",
+            verifyingContract: permit2Address,
+            chainId,
+        },
+        {
+            PermitWitnessTransferFrom: [
+                { name: "permitted", type: "TokenPermissions" },
+                { name: "spender", type: "address" },
+                { name: "nonce", type: "uint256" },
+                { name: "deadline", type: "uint256" },
+                { name: "witness", type: "ExecuteAndLockERC20" },
+            ],
+            TokenPermissions: [
+                { name: "token", type: "address" },
+                { name: "amount", type: "uint256" },
+            ],
+            ExecuteAndLockERC20: [
+                { name: "preimageHash", type: "bytes32" },
+                { name: "token", type: "address" },
+                { name: "claimAddress", type: "address" },
+                { name: "refundAddress", type: "address" },
+                { name: "timelock", type: "uint256" },
+                { name: "callsHash", type: "bytes32" },
+            ],
+        },
+        {
+            permitted: {
+                token: tokenAddress,
+                amount,
+            },
+            spender: routerAddress,
+            nonce,
+            deadline,
+            witness: {
+                preimageHash: prefix0x(preimageHash),
+                token: tokenAddress,
+                claimAddress,
+                refundAddress,
+                timelock: timeoutBlockHeight,
+                callsHash,
+            },
+        },
+    );
+
+    const tx = await router.executeAndLockERC20WithPermit2.populateTransaction(
+        prefix0x(preimageHash),
+        tokenAddress,
+        claimAddress,
+        refundAddress,
+        timeoutBlockHeight,
+        calls,
+        {
+            permitted: {
+                token: tokenAddress,
+                amount,
+            },
+            nonce,
+            deadline,
+        },
+        refundAddress,
+        permit2Signature,
+    );
+
+    return await sendPopulatedTransaction(
+        gasAbstraction,
+        transactionSigner,
+        tx,
+    );
+};
+
 const lockupWithHops = async (
     hops: EncodedHop[],
+    gasAbstraction: GasAbstractionType,
     asset: string,
     swapId: string,
     lockupAmount: bigint,
@@ -94,6 +215,9 @@ const lockupWithHops = async (
     signer: Accessor<Signer>,
     getGasAbstractionSigner: (asset: string) => Wallet,
     slippage: number,
+    getSwap: (id: string) => Promise<SomeSwap>,
+    setSwap: Setter<SomeSwap | null>,
+    setSwapStorage: (swap: SomeSwap) => Promise<void>,
 ): Promise<string> => {
     if (hops.length !== 1) {
         throw new Error("only one hop is supported for now");
@@ -108,8 +232,12 @@ const lockupWithHops = async (
     );
     log.info(`Got DEX quote for lockup hop: ${quote.quote}`, quote.data);
 
-    const gasSigner = getGasAbstractionSigner(asset);
-    const router = createRouterContract(hop.from, gasSigner);
+    const transactionSigner = getSignerForGasAbstraction(
+        gasAbstraction,
+        signer(),
+        getGasAbstractionSigner(asset),
+    );
+    const router = createRouterContract(hop.from, transactionSigner);
     const routerAddress = await router.getAddress();
 
     const calldata = await encodeDexQuote(
@@ -120,12 +248,13 @@ const lockupWithHops = async (
         quote.data,
     );
 
+    const erc20Swap = getErc20Swap(asset);
     const [permit2Address, chainId, signerAddress, version] = await Promise.all(
         [
             router.PERMIT2(),
-            gasSigner.provider.getNetwork().then((n) => n.chainId),
+            transactionSigner.provider.getNetwork().then((n) => n.chainId),
             signer().getAddress(),
-            getErc20Swap(asset).version(),
+            erc20Swap.version(),
         ],
     );
 
@@ -135,13 +264,8 @@ const lockupWithHops = async (
         callData: prefix0x(call.data),
     }));
 
-    // Compute callsHash: keccak256(abi.encode(calls))
-    // Must match the Solidity contract's abi.encode of Call[] struct
-    const encodedCalls = AbiCoder.defaultAbiCoder().encode(
-        ["tuple(address target, uint256 value, bytes callData)[]"],
-        [calls],
-    );
-    const callsHash = ethersKeccak256(encodedCalls);
+    // Must match the Solidity contract's abi.encode of Call[] struct.
+    const callsHash = hashRouterCalls(calls);
 
     const nonce = BigInt("0x" + randomBytes(32).toString("hex"));
 
@@ -220,13 +344,18 @@ const lockupWithHops = async (
         permit2Signature,
     );
 
-    // Send via Alchemy account abstraction
-    const transactionHash = await sendTransaction(gasSigner, chainId, [
-        { to: tx.to, data: tx.data },
-    ]);
+    const transactionHash = await sendPopulatedTransaction(
+        gasAbstraction,
+        transactionSigner,
+        tx,
+    );
+    const currentSwap = await getSwap(swapId);
+    currentSwap.commitmentLockupTxHash = transactionHash;
+    setSwap(currentSwap);
+    await setSwapStorage(currentSwap);
 
     // The commitment signature must include the actually locked amount from the Lockup event.
-    const receipt = await gasSigner.provider.waitForTransaction(
+    const receipt = await transactionSigner.provider.waitForTransaction(
         transactionHash,
         1,
         120_000,
@@ -237,45 +366,18 @@ const lockupWithHops = async (
         );
     }
 
-    const erc20SwapInterface = new Interface(ERC20SwapAbi);
-    const lockupLog = receipt.logs.find((eventLog) => {
-        if (
-            eventLog.address.toLowerCase() !==
-            commitmentLockupDetails.contract.toLowerCase()
-        ) {
-            return false;
-        }
-
-        try {
-            const parsedLog = erc20SwapInterface.parseLog({
-                data: eventLog.data,
-                topics: eventLog.topics,
-            });
-            return parsedLog?.name === "Lockup";
-        } catch {
-            return false;
-        }
-    });
-
-    if (lockupLog === undefined) {
-        throw new Error("could not find commitment lockup event");
-    }
-
-    const parsedLockup = erc20SwapInterface.parseLog({
-        data: lockupLog.data,
-        topics: lockupLog.topics,
-    });
-    if (parsedLockup?.name !== "Lockup") {
-        throw new Error("could not parse commitment lockup event");
-    }
-
     const {
         amount: lockupEventAmount,
         tokenAddress: lockupTokenAddress,
         claimAddress: lockupClaimAddress,
         refundAddress: lockupRefundAddress,
         timelock: lockupTimelock,
-    } = parsedLockup.args;
+        logIndex: lockupLogIndex,
+    } = getCommitmentLockupEvent(
+        erc20Swap,
+        receipt,
+        commitmentLockupDetails.contract,
+    );
 
     const commitmentSignature = await signer().signTypedData(
         {
@@ -309,7 +411,7 @@ const lockupWithHops = async (
         swapId,
         commitmentSignature,
         transactionHash,
-        lockupLog.index,
+        lockupLogIndex,
         slippage * 100,
     );
 
@@ -372,6 +474,7 @@ const ApproveErc20 = (props: {
 
 const LockupTransaction = (props: {
     asset: string;
+    gasAbstraction: GasAbstractionType;
     value: () => bigint;
     preimageHash: string;
     claimAddress: string;
@@ -402,7 +505,11 @@ const LockupTransaction = (props: {
             fallback={
                 <ApproveErc20
                     asset={props.approvalAsset ?? props.asset}
-                    value={props.approvalValue ?? props.value}
+                    value={
+                        props.gasAbstraction === GasAbstractionType.Signer
+                            ? () => MaxUint256
+                            : (props.approvalValue ?? props.value)
+                    }
                     signerAddress={props.signerAddress}
                     derivationPath={props.derivationPath}
                     setNeedsApproval={props.setNeedsApproval}
@@ -414,10 +521,16 @@ const LockupTransaction = (props: {
                 /* eslint-disable-next-line solid/reactivity */
                 onClick={async () => {
                     let transactionHash: string;
+                    const transactionSigner = getSignerForGasAbstraction(
+                        props.gasAbstraction,
+                        signer(),
+                        getGasAbstractionSigner(props.asset),
+                    );
 
                     if (props.hops !== undefined && props.hops.length > 0) {
                         transactionHash = await lockupWithHops(
                             props.hops,
+                            props.gasAbstraction,
                             props.asset,
                             props.swapId,
                             props.value(),
@@ -426,34 +539,62 @@ const LockupTransaction = (props: {
                             signer,
                             getGasAbstractionSigner,
                             slippage(),
+                            getSwap,
+                            setSwap,
+                            setSwapStorage,
                         );
                     } else if (
                         getKindForAsset(props.asset) === AssetKind.EVMNative
                     ) {
                         const contract = getEtherSwap(props.asset);
-                        transactionHash = (
-                            await contract["lock(bytes32,address,uint256)"](
-                                prefix0x(props.preimageHash),
-                                props.claimAddress,
-                                props.timeoutBlockHeight,
-                                {
-                                    value: props.value(),
-                                },
-                            )
-                        ).hash;
+                        const connectedContract =
+                            contract.connect(transactionSigner);
+                        const tx = await connectedContract[
+                            "lock(bytes32,address,uint256)"
+                        ].populateTransaction(
+                            prefix0x(props.preimageHash),
+                            props.claimAddress,
+                            props.timeoutBlockHeight,
+                            {
+                                value: props.value(),
+                            },
+                        );
+                        transactionHash = await sendPopulatedTransaction(
+                            props.gasAbstraction,
+                            transactionSigner,
+                            tx,
+                        );
                     } else {
-                        const contract = getErc20Swap(props.asset);
-                        transactionHash = (
-                            await contract[
+                        if (props.gasAbstraction === GasAbstractionType.None) {
+                            const contract = getErc20Swap(props.asset);
+                            const connectedContract =
+                                contract.connect(transactionSigner);
+                            const tx = await connectedContract[
                                 "lock(bytes32,uint256,address,address,uint256)"
-                            ](
+                            ].populateTransaction(
                                 prefix0x(props.preimageHash),
                                 props.value(),
                                 getTokenAddress(props.asset),
                                 props.claimAddress,
                                 props.timeoutBlockHeight,
-                            )
-                        ).hash;
+                            );
+                            transactionHash = await sendPopulatedTransaction(
+                                props.gasAbstraction,
+                                transactionSigner,
+                                tx,
+                            );
+                        } else {
+                            transactionHash = await lockupErc20WithPermit2(
+                                props.gasAbstraction,
+                                props.asset,
+                                props.value(),
+                                props.preimageHash,
+                                props.claimAddress,
+                                props.timeoutBlockHeight,
+                                signer(),
+                                transactionSigner,
+                            );
+                        }
                     }
 
                     const currentSwap = await getSwap(props.swapId);
@@ -488,6 +629,7 @@ const LockupTransaction = (props: {
 
 const LockupEvm = (props: {
     asset: string;
+    gasAbstraction: GasAbstractionType;
     swapId: string;
     amount: number;
     preimageHash: string;
@@ -566,17 +708,25 @@ const LockupEvm = (props: {
                 log.info("EVM signer spendable balance", spendable);
                 setSignerBalance(spendable);
                 setRequiredValue(value());
+                setNeedsApproval(false);
+                setApprovalTarget(undefined);
 
                 break;
             }
             case AssetKind.ERC20: {
                 const contract = createTokenContract(props.asset, signer());
+                const router = createRouterContract(props.asset, signer());
+
+                const approvalTarget =
+                    props.gasAbstraction !== GasAbstractionType.None
+                        ? await router.PERMIT2()
+                        : await getErc20Swap(props.asset).getAddress();
 
                 const [balance, allowance] = await Promise.all([
                     contract.balanceOf(await signer().getAddress()),
                     contract.allowance(
                         await signer().getAddress(),
-                        getErc20Swap(props.asset).getAddress(),
+                        approvalTarget,
                     ),
                 ]);
 
@@ -588,6 +738,7 @@ const LockupEvm = (props: {
                 setSignerBalance(balance);
                 setRequiredValue(value());
                 setNeedsApproval(needsApproval);
+                setApprovalTarget(approvalTarget);
 
                 break;
             }
@@ -616,6 +767,7 @@ const LockupEvm = (props: {
                     fallback={<InsufficientBalance asset={userAsset()} />}>
                     <LockupTransaction
                         asset={props.asset}
+                        gasAbstraction={props.gasAbstraction}
                         value={value}
                         preimageHash={props.preimageHash}
                         claimAddress={props.claimAddress}

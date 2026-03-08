@@ -1,12 +1,12 @@
 import BigNumber from "bignumber.js";
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { TransactionRequest } from "ethers";
 import { Signature, type Wallet } from "ethers";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import { type Accessor, Show, createSignal, onMount } from "solid-js";
 
-import { sendTransaction } from "../alchemy/Alchemy";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import {
@@ -30,60 +30,85 @@ import { encodeDexQuote, quoteDexAmountIn } from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
 import { formatAmount, getDecimals } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import {
+    getSignerForGasAbstraction,
+    sendPopulatedTransaction,
+} from "../utils/evmTransaction";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     type ChainSwap,
     type DexDetail,
+    GasAbstractionType,
     type ReverseSwap,
     getFinalAssetReceive,
 } from "../utils/swapCreator";
 
-const claimAsset = async (
-    useGasAbstraction: boolean,
+export const claimAsset = async (
+    gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
     amount: number,
+    claimAddress: string,
     refundAddress: string,
     timeoutBlockHeight: number,
     signer: Accessor<Signer>,
+    getGasAbstractionSigner: (asset: string) => Wallet,
     etherSwap: EtherSwap,
     erc20Swap: ERC20Swap,
 ) => {
     let transactionHash: string;
 
-    if (useGasAbstraction) {
-        transactionHash = await relayClaimTransaction(
-            signer(),
-            etherSwap,
-            preimage,
-            amount,
-            refundAddress,
-            timeoutBlockHeight,
-        );
-    } else {
-        const assetAmount = satsToAssetAmount(amount, asset);
+    switch (gasAbstraction) {
+        case GasAbstractionType.RifRelay:
+            transactionHash = await relayClaimTransaction(
+                signer(),
+                etherSwap,
+                preimage,
+                amount,
+                refundAddress,
+                timeoutBlockHeight,
+            );
+            break;
 
-        if (getKindForAsset(asset) === AssetKind.EVMNative) {
-            transactionHash = (
-                await etherSwap["claim(bytes32,uint256,address,uint256)"](
+        case GasAbstractionType.None:
+        case GasAbstractionType.Signer: {
+            const assetAmount = satsToAssetAmount(amount, asset);
+            const claimSigner = getSignerForGasAbstraction(
+                gasAbstraction,
+                signer(),
+                getGasAbstractionSigner(asset),
+            );
+            let tx: TransactionRequest;
+
+            if (getKindForAsset(asset) === AssetKind.EVMNative) {
+                tx = await (etherSwap.connect(claimSigner) as EtherSwap)[
+                    "claim(bytes32,uint256,address,address,uint256)"
+                ].populateTransaction(
                     prefix0x(preimage),
                     assetAmount,
+                    claimAddress,
                     refundAddress,
                     timeoutBlockHeight,
-                )
-            ).hash;
-        } else {
-            transactionHash = (
-                await erc20Swap[
-                    "claim(bytes32,uint256,address,address,uint256)"
-                ](
+                );
+            } else {
+                tx = await (erc20Swap.connect(claimSigner) as ERC20Swap)[
+                    "claim(bytes32,uint256,address,address,address,uint256)"
+                ].populateTransaction(
                     prefix0x(preimage),
                     assetAmount,
                     getTokenAddress(asset),
+                    claimAddress,
                     refundAddress,
                     timeoutBlockHeight,
-                )
-            ).hash;
+                );
+            }
+
+            transactionHash = await sendPopulatedTransaction(
+                gasAbstraction,
+                claimSigner,
+                tx,
+            );
+            break;
         }
     }
 
@@ -137,6 +162,7 @@ const fetchDexQuote = async (
 
 const claimHops = async (
     hops: EncodedHop[],
+    gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
     amount: number,
@@ -255,11 +281,7 @@ const claimHops = async (
         routerSignature.s,
     );
 
-    const transactionHash = await sendTransaction(signer() as Wallet, chainId, [
-        { to: tx.to, data: tx.data },
-    ]);
-
-    return transactionHash;
+    return await sendPopulatedTransaction(gasAbstraction, signer(), tx);
 };
 
 const Amount = (props: {
@@ -298,7 +320,7 @@ const Amount = (props: {
 const AutoClaimHops = (props: {
     amount: number;
     swapId: string;
-    useGasAbstraction: boolean;
+    gasAbstraction: GasAbstractionType;
     preimage: string;
     assetSend: string;
     assetReceive: string;
@@ -339,12 +361,15 @@ const AutoClaimHops = (props: {
         setLoading(true);
         try {
             const currentSwap = await getSwap(props.swapId);
-            const claimSigner = props.useGasAbstraction
-                ? getGasAbstractionSigner(props.assetReceive)
-                : signer();
+            const claimSigner = getSignerForGasAbstraction(
+                props.gasAbstraction,
+                signer(),
+                getGasAbstractionSigner(props.assetReceive),
+            );
 
             const transactionHash = await claimHops(
                 props.dex.hops,
+                props.gasAbstraction,
                 props.assetReceive,
                 props.preimage,
                 props.amount,
@@ -455,20 +480,57 @@ const AutoClaimHops = (props: {
 const ClaimEvm = (props: {
     amount: number;
     swapId: string;
-    useGasAbstraction: boolean;
+    gasAbstraction: GasAbstractionType;
     preimage: string;
     assetSend: string;
     assetReceive: string;
     signerAddress: string;
+    claimAddress: string;
     refundAddress: string;
     derivationPath: string;
     timeoutBlockHeight: number;
     finalReceive: string;
     dex?: DexDetail;
 }) => {
-    const { getEtherSwap, getErc20Swap, signer } = useWeb3Signer();
+    const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
+        useWeb3Signer();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
     const { setSwap } = usePayContext();
+
+    const claimableWithoutInteraction = () =>
+        props.gasAbstraction === GasAbstractionType.Signer;
+
+    const claimWithoutHops = async () => {
+        // Ignore swaps with dex hops here
+        if (props.dex !== undefined || props.dex?.hops?.length > 0) {
+            return;
+        }
+
+        const currentSwap = await getSwap(props.swapId);
+        const transactionHash = await claimAsset(
+            props.gasAbstraction,
+            props.assetReceive,
+            props.preimage,
+            props.amount,
+            props.claimAddress,
+            props.refundAddress,
+            props.timeoutBlockHeight,
+            signer,
+            getGasAbstractionSigner,
+            getEtherSwap(props.assetReceive),
+            getErc20Swap(props.assetReceive),
+        );
+
+        currentSwap.claimTx = transactionHash;
+        setSwap(currentSwap);
+        await setSwapStorage(currentSwap);
+    };
+
+    onMount(async () => {
+        if (claimableWithoutInteraction()) {
+            await claimWithoutHops();
+        }
+    });
 
     return (
         <Show
@@ -480,7 +542,7 @@ const ClaimEvm = (props: {
             fallback={
                 <AutoClaimHops
                     swapId={props.swapId}
-                    useGasAbstraction={props.useGasAbstraction}
+                    gasAbstraction={props.gasAbstraction}
                     preimage={props.preimage}
                     signerAddress={props.signerAddress}
                     amount={props.amount}
@@ -491,38 +553,24 @@ const ClaimEvm = (props: {
                     dex={props.dex}
                 />
             }>
-            <ContractTransaction
-                asset={props.assetReceive}
-                /* eslint-disable-next-line solid/reactivity */
-                onClick={async () => {
-                    const currentSwap = await getSwap(props.swapId);
-                    const transactionHash = await claimAsset(
-                        props.useGasAbstraction,
-                        props.assetReceive,
-                        props.preimage,
-                        props.amount,
-                        props.refundAddress,
-                        props.timeoutBlockHeight,
-                        signer,
-                        getEtherSwap(props.assetReceive),
-                        getErc20Swap(props.assetReceive),
-                    );
-
-                    currentSwap.claimTx = transactionHash;
-                    setSwap(currentSwap);
-                    await setSwapStorage(currentSwap);
-                }}
-                address={{
-                    address: props.signerAddress,
-                    derivationPath: props.derivationPath,
-                }}
-                buttonText={t("continue")}
-                promptText={t("transaction_prompt_receive", {
-                    button: t("continue"),
-                    asset: props.finalReceive,
-                })}
-                waitingText={t("tx_ready_to_claim")}
-            />
+            <Show
+                when={!claimableWithoutInteraction()}
+                fallback={<LoadingSpinner />}>
+                <ContractTransaction
+                    asset={props.assetReceive}
+                    onClick={claimWithoutHops}
+                    address={{
+                        address: props.signerAddress,
+                        derivationPath: props.derivationPath,
+                    }}
+                    buttonText={t("continue")}
+                    promptText={t("transaction_prompt_receive", {
+                        button: t("continue"),
+                        asset: props.finalReceive,
+                    })}
+                    waitingText={t("tx_ready_to_claim")}
+                />
+            </Show>
         </Show>
     );
 };
@@ -549,11 +597,12 @@ const TransactionConfirmed = () => {
                 fallback={
                     <ClaimEvm
                         swapId={chain.id}
-                        useGasAbstraction={chain.useGasAbstraction}
+                        gasAbstraction={chain.gasAbstraction}
                         preimage={chain.preimage}
                         signerAddress={chain.signer}
                         amount={chain.claimDetails.amount}
                         derivationPath={chain.derivationPath}
+                        claimAddress={chain.claimAddress}
                         refundAddress={chain.claimDetails.refundAddress}
                         timeoutBlockHeight={
                             chain.claimDetails.timeoutBlockHeight
@@ -566,10 +615,11 @@ const TransactionConfirmed = () => {
                 }>
                 <ClaimEvm
                     swapId={reverse.id}
-                    useGasAbstraction={reverse.useGasAbstraction}
+                    gasAbstraction={reverse.gasAbstraction}
                     preimage={reverse.preimage}
                     amount={reverse.onchainAmount}
                     signerAddress={reverse.signer}
+                    claimAddress={reverse.claimAddress}
                     refundAddress={reverse.refundAddress}
                     derivationPath={reverse.derivationPath}
                     timeoutBlockHeight={reverse.timeoutBlockHeight}

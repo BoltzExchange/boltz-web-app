@@ -1,10 +1,14 @@
 import { render, screen } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
-import CreateButton from "../../src/components/CreateButton";
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import CreateButton, {
+    getClaimAddress,
+} from "../../src/components/CreateButton";
+import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
+import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
+import { GasAbstractionType } from "../../src/utils/swapCreator";
 import {
     TestComponent,
     contextWrapper,
@@ -28,6 +32,91 @@ describe("CreateButton", () => {
         render(() => <CreateButton />, {
             wrapper: contextWrapper,
         });
+    });
+
+    test("should use rif relay gas abstraction for low-balance RBTC claims", async () => {
+        vi.spyOn(rifSigner, "getSmartWalletAddress").mockResolvedValue({
+            address: "0xsmartwallet",
+            nonce: 0n,
+        });
+
+        const signer = {
+            getAddress: vi.fn().mockResolvedValue("0xsigner"),
+            provider: {
+                getBalance: vi.fn().mockResolvedValue(0n),
+                getFeeData: vi.fn().mockResolvedValue({ gasPrice: 1n }),
+            },
+        } as never;
+
+        await expect(
+            getClaimAddress(
+                () => RBTC,
+                () => BTC,
+                () => signer,
+                () => "0xuser",
+                vi.fn(),
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.RifRelay,
+            gasPrice: 1n,
+            claimAddress: "0xsmartwallet",
+        });
+    });
+
+    test("should use no gas abstraction for non-EVM claims", async () => {
+        await expect(
+            getClaimAddress(
+                () => BTC,
+                () => LBTC,
+                () => undefined,
+                () => "bc1qaddr",
+                vi.fn(),
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.None,
+            gasPrice: 0n,
+            claimAddress: "bc1qaddr",
+        });
+    });
+
+    test("should use signer gas abstraction for non-RBTC EVM claims", async () => {
+        const getGasAbstractionSigner = vi
+            .fn()
+            .mockReturnValue({ address: "0xgas" });
+
+        await expect(
+            getClaimAddress(
+                () => USDT0,
+                () => BTC,
+                () => undefined,
+                () => "0xuser",
+                getGasAbstractionSigner,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.Signer,
+            gasPrice: 0n,
+            claimAddress: "0xgas",
+        });
+        expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
+    });
+
+    test("should not use signer gas abstraction when sending RBTC", async () => {
+        const getGasAbstractionSigner = vi.fn();
+
+        await expect(
+            getClaimAddress(
+                () => BTC,
+                () => RBTC,
+                () => undefined,
+                () => "bc1qaddr",
+                getGasAbstractionSigner,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.None,
+            gasPrice: 0n,
+            claimAddress: "bc1qaddr",
+        });
+        expect(getGasAbstractionSigner).not.toHaveBeenCalled();
     });
 
     test("should initially be disabled with minimum label", async () => {

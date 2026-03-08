@@ -18,6 +18,7 @@ import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 import { weiToSatoshi } from "../utils/rootstock";
+import { GasAbstractionType } from "../utils/swapCreator";
 import { getClaimAddress } from "./CreateButton";
 import Denomination from "./settings/Denomination";
 
@@ -27,7 +28,7 @@ const ppmFactor = 10_000;
 // confidential OP_RETURN output with 1 sat inside
 export const unconfidentialExtra = 5;
 
-const rifExtraGasCost = 157_000n;
+const gasAbstractionExtraGasCost = 157_000n;
 
 export const getFeeHighlightClass = (fee: number, regularFee: number) => {
     if (fee < 0) {
@@ -115,40 +116,47 @@ const Fees = () => {
         return pair().feeOnSend(boltzSwapSendAmount);
     });
 
-    const rifFetchTrigger = createMemo(() => {
+    const gasAbstractionTrigger = createMemo(() => {
         return {
             signer: signer(),
             assetReceive: assetReceive(),
+            assetSend: assetSend(),
         };
     });
-    const [rifExtraCost] = createResource(
-        rifFetchTrigger,
-        async ({ signer, assetReceive }) => {
+    const [gasAbstractionExtraCost] = createResource(
+        gasAbstractionTrigger,
+        async ({ signer, assetReceive, assetSend }) => {
             if (signer === undefined) {
                 return 0;
             }
 
-            const { useGasAbstraction, gasPrice } = await getClaimAddress(
+            const { gasAbstraction, gasPrice } = await getClaimAddress(
                 () => assetReceive,
+                () => assetSend,
                 () => signer,
                 onchainAddress,
                 getGasAbstractionSigner,
             );
-            if (!useGasAbstraction) {
-                return 0;
-            }
+            switch (gasAbstraction) {
+                case GasAbstractionType.RifRelay:
+                    notify("success", t("rif_extra_fee"));
+                    return Number(
+                        weiToSatoshi(gasPrice * gasAbstractionExtraGasCost),
+                    );
 
-            notify("success", t("rif_extra_fee"));
-            return Number(weiToSatoshi(gasPrice * rifExtraGasCost));
+                case GasAbstractionType.None:
+                case GasAbstractionType.Signer:
+                    return 0;
+            }
         },
         { initialValue: 0 },
     );
 
     createEffect(() => {
-        // Updating the miner fee with "setMinerFee(minerFee() + rifExtraCost())"
+        // Updating the miner fee with "setMinerFee(minerFee() + gasAbstractionExtraCost())"
         // causes an endless loop of triggering the effect again
         const updateMinerFee = (fee: number) => {
-            setMinerFee(fee + rifExtraCost());
+            setMinerFee(fee + gasAbstractionExtraCost());
         };
 
         if (pairs() && pair().isRoutable) {

@@ -40,6 +40,7 @@ const SwapCreated = () => {
                 }>
                 <LockupEvm
                     swapId={chain.id}
+                    gasAbstraction={chain.gasAbstraction}
                     signerAddress={chain.signer}
                     amount={chain.lockupDetails.amount}
                     claimAddress={chain.lockupDetails.claimAddress}
