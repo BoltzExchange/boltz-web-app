@@ -269,7 +269,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     };
 
     const notify = (type: NotificationType, message: unknown) => {
-        const messageStr = formatError(message);
+        const messageStr = formatError(message, i18n());
 
         setNotificationType(type);
         setNotification(messageStr);

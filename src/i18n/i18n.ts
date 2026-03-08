@@ -162,6 +162,8 @@ const dict = {
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
         transaction_prompt_receive:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction to receive {{ asset }}.',
+        transaction_failed: "Transaction failed: {{ error }}",
+        wallet_request_rejected: "Request was rejected in your wallet.",
         invalid_address: "Invalid {{ asset }} address",
         scan_qr_code: "Scan QR Code",
         version: "Version",
@@ -622,6 +624,9 @@ const dict = {
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
         transaction_prompt_receive:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion um {{ asset }} zu empfangen.',
+        transaction_failed: "Transaktion fehlgeschlagen: {{ error }}",
+        wallet_request_rejected:
+            "Die Anfrage wurde in deinem Wallet abgelehnt.",
         invalid_address: "Ungültige {{ asset }} Adresse",
         scan_qr_code: "QR Code scannen",
         version: "Version",
@@ -1092,6 +1097,8 @@ const dict = {
             'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada.',
         transaction_prompt_receive:
             'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
+        transaction_failed: "Transacción fallida: {{ error }}",
+        wallet_request_rejected: "La solicitud fue rechazada en tu monedero.",
         invalid_address: "Dirección {{ asset }} inválida",
         scan_qr_code: "Escanear código QR",
         version: "Versión",
@@ -1558,6 +1565,8 @@ const dict = {
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação exibida.',
         transaction_prompt_receive:
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação para receber {{ asset }}.',
+        transaction_failed: "Falha na transação: {{ error }}",
+        wallet_request_rejected: "A solicitação foi rejeitada na sua carteira.",
         invalid_address: "Endereço {{ asset }} inválido",
         scan_qr_code: "Ler QR Code",
         version: "Versão",
@@ -2004,6 +2013,8 @@ const dict = {
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易。",
         transaction_prompt_receive:
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易以便收{{ asset }}。",
+        transaction_failed: "交易失败：{{ error }}",
+        wallet_request_rejected: "该请求已在您的钱包中被拒绝。",
         invalid_address: "无效的{{ asset }}地址",
         scan_qr_code: "扫描 QR 码",
         version: "版本",
@@ -2439,6 +2450,8 @@ const dict = {
             " 接続したウォレットを開いて、表示されたトランザクションを確認するために　{{ button }} を押してください",
         transaction_prompt_receive:
             " 接続したウォレットを開いて、{{ asset }} を受け取るために表示されたトランザクションを確認するために {{ button }} を押してください",
+        transaction_failed: "トランザクションに失敗しました: {{ error }}",
+        wallet_request_rejected: "ウォレットでリクエストが拒否されました。",
         invalid_address: "無効な {{ asset }} アドレス",
         scan_qr_code: "QRコードをスキャンする",
         version: "バージョン",

@@ -19,7 +19,7 @@ const ContractTransaction = (props: {
     waitingText?: string;
     address: { address: string; derivationPath?: string };
 }) => {
-    const { notify } = useGlobalContext();
+    const { notify, i18n, t } = useGlobalContext();
     const { signer, getContractsForAsset } = useWeb3Signer();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
@@ -90,7 +90,9 @@ const ContractTransaction = (props: {
                                 log.error(`EVM transaction failed`, e);
                                 notify(
                                     "error",
-                                    `Transaction failed: ${formatError(e)}`,
+                                    t("transaction_failed", {
+                                        error: formatError(e, i18n()),
+                                    }),
                                 );
                             } finally {
                                 setClicked(false);
