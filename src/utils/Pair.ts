@@ -69,6 +69,17 @@ type Hop = {
 
 export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
 
+export type CreationData = {
+    type: SwapType;
+    sendAmount: BigNumber;
+    receiveAmount: BigNumber;
+    from: string;
+    to: string;
+    pairHash: string;
+    hops: EncodedHop[];
+    hopsPosition: HopsPosition | undefined;
+};
+
 const toEncodedHop = (hop: Hop): EncodedHop => {
     return {
         type: hop.type,
@@ -591,7 +602,10 @@ export default class Pair {
         return amount;
     };
 
-    public creationData = async (sendAmount: BigNumber, minerFees: number) => {
+    public creationData = async (
+        sendAmount: BigNumber,
+        minerFees: number,
+    ): Promise<CreationData | undefined> => {
         const boltzHop = this.boltzHop;
         if (boltzHop === undefined) {
             return undefined;
@@ -622,6 +636,7 @@ export default class Pair {
             receiveAmount,
             from: coalesceLn(boltzHop.from),
             to: coalesceLn(boltzHop.to),
+            pairHash: boltzHop.pair!.hash,
             hops: dexHops.map(toEncodedHop),
             hopsPosition:
                 dexHops.length > 0

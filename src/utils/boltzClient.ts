@@ -601,6 +601,10 @@ export const quoteDexAmountIn = async (
     tokenOut: string,
     amountIn: bigint,
 ): Promise<QuoteData[]> => {
+    if (amountIn === 0n) {
+        return [];
+    }
+
     const params = new URLSearchParams();
     params.set("tokenIn", tokenIn);
     params.set("tokenOut", tokenOut);
@@ -614,6 +618,10 @@ export const quoteDexAmountOut = async (
     tokenOut: string,
     amountOut: bigint,
 ): Promise<QuoteData[]> => {
+    if (amountOut === 0n) {
+        return [];
+    }
+
     const params = new URLSearchParams();
     params.set("tokenIn", tokenIn);
     params.set("tokenOut", tokenOut);

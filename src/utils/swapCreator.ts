@@ -10,7 +10,6 @@ import type { newKeyFn } from "../context/Global";
 import { type EncodedHop, HopsPosition } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
-    Pairs,
     ReverseCreatedResponse,
     SubmarineCreatedResponse,
 } from "./boltzClient";
@@ -19,7 +18,6 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
-import { getPair } from "./helper";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
 
 export type DexDetail = {
@@ -153,12 +151,12 @@ const generatePreimage = ({
 };
 
 export const createSubmarine = async (
-    pairs: Pairs,
     assetSend: string,
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     invoice: string,
+    pairHash: string,
     useGasAbstraction: boolean,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -168,7 +166,7 @@ export const createSubmarine = async (
         assetSend,
         assetReceive,
         invoice,
-        getPair(pairs, SwapType.Submarine, assetSend, assetReceive).hash,
+        pairHash,
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
@@ -191,12 +189,12 @@ export const createSubmarine = async (
 };
 
 export const createReverse = async (
-    pairs: Pairs,
     assetSend: string,
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     claimAddress: string,
+    pairHash: string,
     useGasAbstraction: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
@@ -214,7 +212,7 @@ export const createReverse = async (
         assetReceive,
         Number(sendAmount),
         hex.encode(sha256(preimage)),
-        getPair(pairs, SwapType.Reverse, assetSend, assetReceive).hash,
+        pairHash,
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
@@ -239,12 +237,12 @@ export const createReverse = async (
 };
 
 export const createChain = async (
-    pairs: Pairs,
     assetSend: string,
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     claimAddress: string,
+    pairHash: string,
     useGasAbstraction: boolean,
     rescueFile: RescueFile,
     newKey: newKeyFn,
@@ -271,7 +269,7 @@ export const createChain = async (
             ? Buffer.from(refundKey.key.publicKey).toString("hex")
             : undefined,
         claimAddress,
-        getPair(pairs, SwapType.Chain, assetSend, assetReceive).hash,
+        pairHash,
     );
 
     return {

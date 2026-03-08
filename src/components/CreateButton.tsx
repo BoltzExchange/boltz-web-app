@@ -432,12 +432,12 @@ const CreateButton = () => {
                         hops = creationData.hops;
                         hopsPosition = creationData.hopsPosition;
                         data = await createSubmarine(
-                            pairs(),
                             creationData.from,
                             creationData.to,
                             creationData.sendAmount,
                             creationData.receiveAmount,
                             invoice(),
+                            creationData.pairHash,
                             useGasAbstraction,
                             newKey,
                             originalDestination(),
@@ -543,12 +543,12 @@ const CreateButton = () => {
 
                         log.debug("Creating MRH swap");
                         const chainSwap = await createChain(
-                            pairs(),
                             assetSend(),
                             bip21Asset,
                             sendAmount(),
                             receiveAmount(),
                             onchainAddress(),
+                            chainPair.hash,
                             useGasAbstraction,
                             rescueFile(),
                             newKey,
@@ -575,12 +575,12 @@ const CreateButton = () => {
                     hops = creationData.hops;
                     hopsPosition = creationData.hopsPosition;
                     data = await createReverse(
-                        pairs(),
                         creationData.from,
                         creationData.to,
                         creationData.sendAmount,
                         creationData.receiveAmount,
                         claimAddress,
+                        creationData.pairHash,
                         useGasAbstraction,
                         rescueFile(),
                         newKey,
@@ -596,12 +596,12 @@ const CreateButton = () => {
                     hops = creationData.hops;
                     hopsPosition = creationData.hopsPosition;
                     data = await createChain(
-                        pairs(),
                         creationData.from,
                         creationData.to,
                         creationData.sendAmount,
                         creationData.receiveAmount,
                         claimAddress,
+                        creationData.pairHash,
                         useGasAbstraction,
                         rescueFile(),
                         newKey,
