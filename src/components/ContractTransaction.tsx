@@ -1,9 +1,10 @@
+import type { Wallet } from "ethers";
 import log from "loglevel";
-import type { JSX } from "solid-js";
+import type { Accessor, JSX } from "solid-js";
 import { Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { type Signer, useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
 import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
@@ -11,6 +12,7 @@ import LoadingSpinner from "./LoadingSpinner";
 const ContractTransaction = (props: {
     asset: string;
     disabled?: boolean;
+    signerOverride?: Accessor<Signer | Wallet>;
     onClick: () => Promise<unknown>;
     children?: JSX.Element;
     showHr?: boolean;
@@ -20,9 +22,14 @@ const ContractTransaction = (props: {
     address: { address: string; derivationPath?: string };
 }) => {
     const { notify, i18n, t } = useGlobalContext();
-    const { signer, getContractsForAsset } = useWeb3Signer();
+    const { signer: contextSigner, getContractsForAsset } = useWeb3Signer();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
+
+    const signer = () =>
+        props.signerOverride !== undefined
+            ? props.signerOverride()
+            : contextSigner();
 
     const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
         undefined,

@@ -53,11 +53,8 @@ const RefundState = (props: {
             <RefundButton
                 asset={props.asset}
                 setRefundTxId={props.setRefundTxId}
-                amount={Number(props.refundData.amount)}
-                preimageHash={props.refundData.preimageHash}
-                claimAddress={props.refundData.claimAddress}
                 signerAddress={props.refundData.refundAddress}
-                timeoutBlockHeight={Number(props.refundData.timelock)}
+                lockupTxHash={props.lockupTxHash}
             />
             <hr />
             <BlockExplorer

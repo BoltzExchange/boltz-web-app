@@ -5,6 +5,7 @@ import {
     type TransactionRequest,
     type Wallet,
 } from "ethers";
+import log from "loglevel";
 
 import { sendTransaction as sendAlchemyTransaction } from "../alchemy/Alchemy";
 import type { Signer } from "../context/Web3";
@@ -43,6 +44,11 @@ export const sendPopulatedTransaction = async (
     switch (gasAbstraction) {
         case GasAbstractionType.None:
         case GasAbstractionType.RifRelay: {
+            log.debug(
+                "Sending transaction via signer",
+                transaction.to,
+                transaction.data,
+            );
             const response = await signer.sendTransaction(transaction);
             return response.hash;
         }
@@ -53,6 +59,12 @@ export const sendPopulatedTransaction = async (
                     "gas abstraction signer requires a provider to send via Alchemy",
                 );
             }
+
+            log.debug(
+                "Sending transaction via Alchemy",
+                transaction.to,
+                transaction.data,
+            );
 
             const { chainId } = await signer.provider.getNetwork();
             return await sendAlchemyTransaction(signer as Wallet, chainId, [
@@ -73,8 +85,8 @@ export const sendPopulatedTransaction = async (
     }
 };
 
-export const getCommitmentLockupEvent = (
-    erc20Swap: EtherSwap | ERC20Swap,
+export const getLockupEvent = (
+    contract: EtherSwap | ERC20Swap,
     receipt: TransactionReceipt,
     contractAddress: string,
 ): CommitmentLockupEvent => {
@@ -84,7 +96,7 @@ export const getCommitmentLockupEvent = (
         }
 
         try {
-            const parsedLog = erc20Swap.interface.parseLog({
+            const parsedLog = contract.interface.parseLog({
                 data: eventLog.data,
                 topics: eventLog.topics,
             });
@@ -98,7 +110,7 @@ export const getCommitmentLockupEvent = (
         throw new Error("could not find commitment lockup event");
     }
 
-    const parsedLockup = erc20Swap.interface.parseLog({
+    const parsedLockup = contract.interface.parseLog({
         data: lockupLog.data,
         topics: lockupLog.topics,
     });

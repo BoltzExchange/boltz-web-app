@@ -35,7 +35,7 @@ import {
 } from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
 import {
-    getCommitmentLockupEvent,
+    getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
@@ -373,11 +373,7 @@ const lockupWithHops = async (
         refundAddress: lockupRefundAddress,
         timelock: lockupTimelock,
         logIndex: lockupLogIndex,
-    } = getCommitmentLockupEvent(
-        erc20Swap,
-        receipt,
-        commitmentLockupDetails.contract,
-    );
+    } = getLockupEvent(erc20Swap, receipt, commitmentLockupDetails.contract);
 
     const commitmentSignature = await signer().signTypedData(
         {

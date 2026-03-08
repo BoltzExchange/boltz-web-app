@@ -1,17 +1,19 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { hex } from "@scure/base";
+import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
+import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import { Signature, type TransactionRequest, type Wallet } from "ethers";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
-import { Show, createMemo, createResource, createSignal } from "solid-js";
+import {
+    Match,
+    Show,
+    Switch,
+    createMemo,
+    createResource,
+    createSignal,
+} from "solid-js";
 
 import RefundEta from "../components/RefundEta";
-import {
-    AssetKind,
-    getKindForAsset,
-    getTokenAddress,
-    isEvmAsset,
-} from "../consts/Assets";
+import { AssetKind, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
@@ -21,18 +23,18 @@ import { getEipRefundSignature } from "../utils/boltzClient";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
-    getCommitmentLockupEvent,
+    getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
 import { RefundType, refund } from "../utils/rescue";
-import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     type ChainSwap,
     GasAbstractionType,
     type SubmarineSwap,
 } from "../utils/swapCreator";
+import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 
@@ -90,13 +92,10 @@ export const RefundEvm = (props: {
     gasAbstraction?: GasAbstractionType;
     disabled?: boolean;
     swapId?: string;
-    amount: number;
-    preimageHash: string;
-    claimAddress: string;
     signerAddress: string;
     derivationPath?: string;
-    timeoutBlockHeight: number;
     swapType?: SwapType;
+    lockupTxHash?: string;
     commitmentLockupTxHash?: string;
     setRefundTxId: Setter<string>;
 }) => {
@@ -104,188 +103,239 @@ export const RefundEvm = (props: {
         useWeb3Signer();
     const { t } = useGlobalContext();
 
+    const gasAbstraction = createMemo(
+        () => props.gasAbstraction ?? GasAbstractionType.None,
+    );
+    const transactionSigner = createMemo<Signer | Wallet | undefined>(() => {
+        return getSignerForGasAbstraction(
+            gasAbstraction(),
+            signer(),
+            getGasAbstractionSigner(props.asset),
+        );
+    });
+    const contractKind = createMemo(() => getKindForAsset(props.asset));
+    const refundDataTrigger = createMemo<
+        | {
+              asset: string;
+              lockupTx?: string;
+              commitmentLockupTxHash?: string;
+              contractKind: AssetKind;
+              transactionSigner: Signer | Wallet;
+          }
+        | undefined
+    >(() => {
+        const txSigner = transactionSigner();
+        if (txSigner === undefined) {
+            return undefined;
+        }
+
+        return {
+            asset: props.asset,
+            transactionSigner: txSigner,
+            lockupTx: props.lockupTxHash,
+            contractKind: contractKind(),
+            commitmentLockupTxHash: props.commitmentLockupTxHash,
+        };
+    });
+
+    const [refundData] = createResource(
+        refundDataTrigger,
+        async ({
+            asset,
+            lockupTx,
+            commitmentLockupTxHash,
+            contractKind,
+            transactionSigner,
+        }) => {
+            const contract =
+                contractKind === AssetKind.ERC20
+                    ? getErc20Swap(asset)
+                    : getEtherSwap(asset);
+
+            log.debug("Fetching lockup data");
+            const receipt = await assertTransactionSignerProvider(
+                transactionSigner,
+            ).getTransactionReceipt(lockupTx ?? commitmentLockupTxHash);
+            if (receipt === null) {
+                throw new Error("could not fetch lockup transaction receipt");
+            }
+
+            const data = getLockupEvent(
+                contract,
+                receipt,
+                await contract.getAddress(),
+            );
+
+            let swapHash: string;
+            if (contractKind === AssetKind.ERC20) {
+                swapHash = await (contract as ERC20Swap).hashValues(
+                    data.preimageHash,
+                    data.amount,
+                    data.tokenAddress,
+                    data.claimAddress,
+                    data.refundAddress,
+                    data.timelock,
+                );
+            } else {
+                swapHash = await (contract as EtherSwap).hashValues(
+                    data.preimageHash,
+                    data.amount,
+                    data.claimAddress,
+                    data.refundAddress,
+                    data.timelock,
+                );
+            }
+
+            const stillLocked = await contract.swaps(swapHash);
+            log.debug("Funds still locked", stillLocked);
+
+            return {
+                stillLocked,
+                ...data,
+            };
+        },
+    );
+
     return (
-        <ContractTransaction
-            disabled={props.disabled}
-            asset={props.asset}
-            /* eslint-disable-next-line solid/reactivity */
-            onClick={async () => {
-                const gasAbstraction =
-                    props.gasAbstraction ?? GasAbstractionType.None;
-                const transactionSigner = getSignerForGasAbstraction(
-                    gasAbstraction,
-                    signer(),
-                    getGasAbstractionSigner(props.asset),
-                );
-                const contractKind = getKindForAsset(props.asset);
-                const tokenAddress =
-                    contractKind === AssetKind.ERC20
-                        ? getTokenAddress(props.asset)
-                        : undefined;
-                if (
-                    contractKind === AssetKind.ERC20 &&
-                    tokenAddress === undefined
-                ) {
-                    throw new Error(
-                        `missing token address for asset ${props.asset}`,
-                    );
-                }
+        <Switch>
+            <Match when={refundDataTrigger() === undefined}>
+                <ConnectWallet
+                    asset={props.asset}
+                    derivationPath={props.derivationPath}
+                    addressOverride={() => props.signerAddress}
+                />
+            </Match>
+            <Match when={refundData.loading}>
+                <LoadingSpinner />
+            </Match>
+            <Match when={refundData.state === "errored"}>
+                <h2>{t("error")}</h2>
+                <h3>{formatError(refundData.error)}</h3>
+            </Match>
+            <Match
+                when={
+                    refundData.state === "ready" && !refundData().stillLocked
+                }>
+                <h3>{t("already_refunded")}</h3>
+            </Match>
+            <Match
+                when={refundData.state === "ready" && refundData().stillLocked}>
+                <ContractTransaction
+                    address={{
+                        address:
+                            transactionSigner()?.address ?? props.signerAddress,
+                        derivationPath: props.derivationPath,
+                    }}
+                    disabled={props.disabled}
+                    asset={props.asset}
+                    signerOverride={transactionSigner}
+                    /* eslint-disable-next-line solid/reactivity */
+                    onClick={async () => {
+                        const currentTransactionSigner = transactionSigner();
+                        const currentRefundData = refundData();
+                        if (
+                            currentTransactionSigner === undefined ||
+                            currentRefundData === undefined
+                        ) {
+                            throw new Error(
+                                "could not prepare refund transaction",
+                            );
+                        }
+                        const currentContractKind = contractKind();
 
-                const isCommitmentLockup =
-                    props.commitmentLockupTxHash !== undefined;
+                        const refundCooperative = async () => {
+                            if (props.swapId === undefined) {
+                                throw new Error(
+                                    "swap id is required for cooperative refunds",
+                                );
+                            }
 
-                let refundData: {
-                    amount: bigint;
-                    preimageHash: string;
-                    tokenAddress?: string;
-                    claimAddress: string;
-                    refundAddress: string;
-                    timelock: bigint;
-                };
+                            const { signature } = await getEipRefundSignature(
+                                props.swapId,
+                                props.swapType ?? SwapType.Submarine,
+                            );
+                            const decSignature = Signature.from(signature);
 
-                if (isCommitmentLockup) {
-                    log.debug("Refunding commitment lockup");
-                    const receipt =
-                        await transactionSigner.provider.getTransactionReceipt(
-                            props.commitmentLockupTxHash,
+                            if (currentContractKind === AssetKind.ERC20) {
+                                const contract = getErc20Swap(
+                                    props.asset,
+                                ).connect(currentTransactionSigner);
+                                return await contract[
+                                    "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)"
+                                ].populateTransaction(
+                                    currentRefundData.preimageHash,
+                                    currentRefundData.amount,
+                                    currentRefundData.tokenAddress,
+                                    currentRefundData.claimAddress,
+                                    currentRefundData.refundAddress,
+                                    currentRefundData.timelock,
+                                    decSignature.v,
+                                    decSignature.r,
+                                    decSignature.s,
+                                );
+                            }
+
+                            const contract = getEtherSwap(props.asset).connect(
+                                currentTransactionSigner,
+                            );
+                            return await contract[
+                                "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)"
+                            ].populateTransaction(
+                                currentRefundData.preimageHash,
+                                currentRefundData.amount,
+                                currentRefundData.claimAddress,
+                                currentRefundData.refundAddress,
+                                currentRefundData.timelock,
+                                decSignature.v,
+                                decSignature.r,
+                                decSignature.s,
+                            );
+                        };
+
+                        const refundTimeout = async () => {
+                            if (currentContractKind === AssetKind.ERC20) {
+                                const contract = getErc20Swap(
+                                    props.asset,
+                                ).connect(currentTransactionSigner);
+                                return await contract[
+                                    "refund(bytes32,uint256,address,address,address,uint256)"
+                                ].populateTransaction(
+                                    currentRefundData.preimageHash,
+                                    currentRefundData.amount,
+                                    currentRefundData.tokenAddress,
+                                    currentRefundData.claimAddress,
+                                    currentRefundData.refundAddress,
+                                    currentRefundData.timelock,
+                                );
+                            }
+
+                            const contract = getEtherSwap(props.asset).connect(
+                                currentTransactionSigner,
+                            );
+                            return await contract[
+                                "refund(bytes32,uint256,address,address,uint256)"
+                            ].populateTransaction(
+                                currentRefundData.preimageHash,
+                                currentRefundData.amount,
+                                currentRefundData.claimAddress,
+                                currentRefundData.refundAddress,
+                                currentRefundData.timelock,
+                            );
+                        };
+
+                        const transactionHash = await sendRefundTransaction(
+                            gasAbstraction(),
+                            currentTransactionSigner,
+                            Number(currentRefundData.timelock),
+                            refundCooperative,
+                            refundTimeout,
                         );
-                    if (receipt === null) {
-                        throw new Error(
-                            "could not fetch commitment lockup transaction receipt",
-                        );
-                    }
-
-                    const contract =
-                        contractKind === AssetKind.ERC20
-                            ? getErc20Swap(props.asset)
-                            : getEtherSwap(props.asset);
-                    const {
-                        amount: lockupEventAmount,
-                        tokenAddress: lockupTokenAddress,
-                        claimAddress: lockupClaimAddress,
-                        refundAddress: lockupRefundAddress,
-                        timelock: lockupTimelock,
-                        preimageHash: lockupPreimageHash,
-                    } = getCommitmentLockupEvent(
-                        contract,
-                        receipt,
-                        await contract.getAddress(),
-                    );
-
-                    refundData = {
-                        amount: lockupEventAmount,
-                        tokenAddress: lockupTokenAddress,
-                        claimAddress: lockupClaimAddress,
-                        refundAddress: lockupRefundAddress,
-                        timelock: lockupTimelock,
-                        preimageHash: lockupPreimageHash,
-                    };
-                } else {
-                    refundData = {
-                        preimageHash: prefix0x(props.preimageHash),
-                        amount: satsToAssetAmount(props.amount, props.asset),
-                        tokenAddress: tokenAddress,
-                        claimAddress: props.claimAddress,
-                        refundAddress: await signer().getAddress(),
-                        timelock: BigInt(props.timeoutBlockHeight),
-                    };
-                }
-
-                const refundCooperative = async () => {
-                    if (props.swapId === undefined) {
-                        throw new Error(
-                            "swap id is required for cooperative refunds",
-                        );
-                    }
-
-                    const { signature } = await getEipRefundSignature(
-                        props.swapId,
-                        props.swapType ?? SwapType.Submarine,
-                    );
-                    const decSignature = Signature.from(signature);
-
-                    if (contractKind === AssetKind.ERC20) {
-                        const contract = getErc20Swap(props.asset).connect(
-                            transactionSigner,
-                        );
-                        return await contract[
-                            "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)"
-                        ].populateTransaction(
-                            refundData.preimageHash,
-                            refundData.amount,
-                            refundData.tokenAddress,
-                            refundData.claimAddress,
-                            refundData.refundAddress,
-                            refundData.timelock,
-                            decSignature.v,
-                            decSignature.r,
-                            decSignature.s,
-                        );
-                    }
-
-                    const contract = getEtherSwap(props.asset).connect(
-                        transactionSigner,
-                    );
-                    return await contract[
-                        "refundCooperative(bytes32,uint256,address,address,uint256,uint8,bytes32,bytes32)"
-                    ].populateTransaction(
-                        refundData.preimageHash,
-                        refundData.amount,
-                        refundData.claimAddress,
-                        refundData.refundAddress,
-                        refundData.timelock,
-                        decSignature.v,
-                        decSignature.r,
-                        decSignature.s,
-                    );
-                };
-
-                const refundTimeout = async () => {
-                    if (contractKind === AssetKind.ERC20) {
-                        const contract = getErc20Swap(props.asset).connect(
-                            transactionSigner,
-                        );
-                        return await contract[
-                            "refund(bytes32,uint256,address,address,address,uint256)"
-                        ].populateTransaction(
-                            refundData.preimageHash,
-                            refundData.amount,
-                            refundData.tokenAddress,
-                            refundData.claimAddress,
-                            refundData.refundAddress,
-                            refundData.timelock,
-                        );
-                    }
-
-                    const contract = getEtherSwap(props.asset).connect(
-                        transactionSigner,
-                    );
-                    return await contract[
-                        "refund(bytes32,uint256,address,address,uint256)"
-                    ].populateTransaction(
-                        refundData.preimageHash,
-                        refundData.amount,
-                        refundData.claimAddress,
-                        refundData.refundAddress,
-                        refundData.timelock,
-                    );
-                };
-
-                const transactionHash = await sendRefundTransaction(
-                    gasAbstraction,
-                    transactionSigner,
-                    props.timeoutBlockHeight,
-                    refundCooperative,
-                    refundTimeout,
-                );
-                props.setRefundTxId(transactionHash);
-            }}
-            address={{
-                address: props.signerAddress,
-                derivationPath: props.derivationPath,
-            }}
-            buttonText={t("refund")}
-        />
+                        props.setRefundTxId(transactionHash);
+                    }}
+                    buttonText={t("refund")}
+                />
+            </Match>
+        </Switch>
     );
 };
 
@@ -474,30 +524,13 @@ const RefundButton = (props: {
                             gasAbstraction={props.swap().gasAbstraction}
                             signerAddress={props.swap().signer}
                             derivationPath={props.swap().derivationPath}
-                            amount={
-                                (props.swap() as ChainSwap).lockupDetails.amount
-                            }
-                            claimAddress={
-                                (props.swap() as ChainSwap).lockupDetails
-                                    .claimAddress
-                            }
-                            timeoutBlockHeight={
-                                (props.swap() as ChainSwap).lockupDetails
-                                    .timeoutBlockHeight
-                            }
                             swapType={SwapType.Chain}
-                            preimageHash={hex.encode(
-                                sha256(
-                                    hex.decode(
-                                        (props.swap() as ChainSwap).preimage,
-                                    ),
-                                ),
-                            )}
                             setRefundTxId={props.setRefundTxId}
                             asset={props.swap().assetSend}
                             commitmentLockupTxHash={
                                 props.swap().commitmentLockupTxHash
                             }
+                            lockupTxHash={props.swap().lockupTx}
                         />
                     }>
                     <Show
@@ -507,22 +540,14 @@ const RefundButton = (props: {
                             swapId={props.swap().id}
                             gasAbstraction={props.swap().gasAbstraction}
                             signerAddress={props.swap().signer}
-                            claimAddress={props.swap().claimAddress}
                             derivationPath={props.swap().derivationPath}
-                            amount={
-                                (props.swap() as SubmarineSwap).expectedAmount
-                            }
-                            timeoutBlockHeight={
-                                (props.swap() as SubmarineSwap)
-                                    .timeoutBlockHeight
-                            }
                             swapType={SwapType.Submarine}
-                            preimageHash={preimageHash()}
                             setRefundTxId={props.setRefundTxId}
                             asset={props.swap().assetSend}
                             commitmentLockupTxHash={
                                 props.swap().commitmentLockupTxHash
                             }
+                            lockupTxHash={props.swap().lockupTx}
                         />
                     </Show>
                 </Show>
