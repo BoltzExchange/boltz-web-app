@@ -1,21 +1,13 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
-import {
-    For,
-    Show,
-    createEffect,
-    createMemo,
-    createSignal,
-    on,
-    onCleanup,
-} from "solid-js";
+import { For, Show, createEffect, createSignal, on, onCleanup } from "solid-js";
 
 import { isEvmAsset } from "../consts/Assets";
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { type Signer, useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
@@ -259,38 +251,61 @@ const ConnectWallet = (props: {
     const { providers, signer, getContractsForAsset } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
 
-    const address = createMemo(() => signer()?.address);
+    const address = () => signer()?.address;
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
-    createEffect(
-        on([() => props.asset, () => signer(), address], async () => {
-            const contracts = getContractsForAsset(props.asset);
+    let syncRequestId = 0;
 
-            if (
-                address() !== undefined &&
-                contracts &&
-                Number(
-                    (await signer()?.provider.getNetwork())?.chainId || -1,
-                ) !== contracts.network.chainId
-            ) {
-                setNetworkValid(false);
+    const syncWalletState = async (
+        asset: string,
+        activeSigner: Signer | undefined,
+        currentAddress: string | undefined,
+    ) => {
+        const requestId = ++syncRequestId;
+        const contracts = getContractsForAsset(asset);
+
+        if (
+            currentAddress !== undefined &&
+            contracts &&
+            Number(
+                (await activeSigner?.provider.getNetwork())?.chainId || -1,
+            ) !== contracts.network.chainId
+        ) {
+            if (requestId !== syncRequestId) {
                 return;
             }
 
-            setNetworkValid(true);
+            setNetworkValid(false);
+            return;
+        }
 
-            if (isEvmAsset(props.asset)) {
-                const addr = address();
-                setAddressValid(addr !== undefined);
-                setOnchainAddress(addr || "");
-            } else {
-                setAddressValid(false);
-                setOnchainAddress("");
-            }
-        }),
+        if (requestId !== syncRequestId) {
+            return;
+        }
+
+        setNetworkValid(true);
+
+        if (isEvmAsset(asset)) {
+            setAddressValid(currentAddress !== undefined);
+            setOnchainAddress(currentAddress || "");
+            return;
+        }
+
+        setAddressValid(false);
+        setOnchainAddress("");
+    };
+
+    createEffect(
+        on(
+            [() => props.asset, signer, address],
+            ([asset, activeSigner, addr]) => {
+                void syncWalletState(asset, activeSigner, addr);
+            },
+        ),
     );
 
     onCleanup(() => {
+        syncRequestId += 1;
         setAddressValid(false);
         setOnchainAddress("");
     });

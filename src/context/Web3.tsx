@@ -21,6 +21,7 @@ import {
     createResource,
     createSignal,
     onMount,
+    untrack,
     useContext,
 } from "solid-js";
 
@@ -334,6 +335,59 @@ const Web3SignerProvider = (props: {
     const getErc20Swap = (asset: string) =>
         getSwapContract<ERC20Swap>(asset, "ERC20Swap");
 
+    const createConnectedSigner = (
+        provider: EIP1193Provider,
+        address: string,
+        rdns: string,
+    ) => {
+        const nextSigner = new JsonRpcSigner(
+            new BrowserProvider(provider),
+            address,
+        ) as unknown as Signer;
+        nextSigner.rdns = rdns;
+
+        return nextSigner;
+    };
+
+    const refreshConnectedSigner = async (
+        provider: EIP1193Provider,
+        rdns: string,
+        chainId?: string,
+    ) => {
+        const currentAddress = untrack(() => signer()?.address);
+        let nextAddress = currentAddress;
+
+        try {
+            const addresses = (await provider.request({
+                method: "eth_accounts",
+            })) as string[];
+            if (addresses.length > 0) {
+                nextAddress = addresses[0];
+            }
+        } catch (error) {
+            log.warn(
+                `Failed to fetch accounts after network switch to ${chainId ?? "unknown chain"}`,
+                error,
+            );
+        }
+
+        if (nextAddress === undefined) {
+            log.warn(
+                `Clearing signer after network switch to ${chainId ?? "unknown chain"} because no connected address is available`,
+            );
+            setWalletConnected(false);
+            setSigner(undefined);
+            return;
+        }
+
+        log.info(
+            `Refreshing signer for ${rdns} after network switch to ${chainId ?? "unknown chain"} using ${nextAddress}`,
+        );
+        await setRdns(nextAddress, rdns);
+        setSigner(createConnectedSigner(provider, nextAddress, rdns));
+        setWalletConnected(true);
+    };
+
     const connectProvider = async (rdns: string) => {
         const wallet = providers()[rdns];
         if (wallet == undefined) {
@@ -350,20 +404,30 @@ const Web3SignerProvider = (props: {
 
         log.info(`Connected address from ${wallet.info.rdns}: ${addresses[0]}`);
 
-        wallet.provider.on("chainChanged", () => {
-            window.location.reload();
+        wallet.provider.removeAllListeners("chainChanged");
+        wallet.provider.on("chainChanged", (chainId) => {
+            void refreshConnectedSigner(
+                wallet.provider,
+                wallet.info.rdns,
+                chainId,
+            ).catch((error) => {
+                log.error(
+                    `Failed to refresh signer for ${wallet.info.rdns} after network switch`,
+                    error,
+                );
+            });
         });
         setRawProvider(wallet.provider);
 
-        const signer = new JsonRpcSigner(
-            new BrowserProvider(wallet.provider),
-            addresses[0],
-        ) as unknown as Signer;
-        signer.rdns = wallet.info.rdns;
-
         await setRdns(addresses[0], wallet.info.rdns);
 
-        setSigner(signer);
+        setSigner(
+            createConnectedSigner(
+                wallet.provider,
+                addresses[0],
+                wallet.info.rdns,
+            ),
+        );
     };
 
     const switchNetwork = async (asset: string) => {

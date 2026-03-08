@@ -30,7 +30,7 @@ export type EIP1193Provider = {
         method: string;
         params?: Array<unknown>;
     }) => Promise<unknown>;
-    on: (event: "chainChanged", cb: () => void) => void;
+    on: (event: "chainChanged", cb: (chainId: string) => void) => void;
     removeAllListeners: (event: "chainChanged") => void;
 };
 

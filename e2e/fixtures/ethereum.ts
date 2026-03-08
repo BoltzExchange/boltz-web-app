@@ -158,6 +158,15 @@ export const test = base.extend<EthereumFixtures>({
                                 );
                             }
                         },
+                        removeAllListeners: (event?: string) => {
+                            if (event) {
+                                delete listeners[event];
+                            } else {
+                                Object.keys(listeners).forEach(
+                                    (key) => delete listeners[key],
+                                );
+                            }
+                        },
                     };
 
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
