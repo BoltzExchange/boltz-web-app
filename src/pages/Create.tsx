@@ -23,6 +23,7 @@ import InvoiceInput from "../components/InvoiceInput";
 import LoadingSpinner from "../components/LoadingSpinner";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
+import SwapLimits from "../components/SwapLimits";
 import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
@@ -493,42 +494,17 @@ const Create = () => {
                     <SettingsCog />
                     <h2 data-testid="create-swap-title">{t("create_swap")}</h2>
                     {t("create_swap_subline")} <br />
-                    <span class="swap-limits">
-                        <span>
-                            {t("send")} {t("min")}:
-                            <span
-                                onClick={() => setAmount(minimum())}
-                                class="btn-small btn-light">
-                                {formatAmount(
-                                    BigNumber(minimum()),
-                                    denomination(),
-                                    separator(),
-                                    pair().fromAsset,
-                                )}
-                            </span>
-                            <span
-                                class="denominator"
-                                data-denominator={denomination()}
-                            />
-                        </span>
-                        <span>
-                            {t("max")}:
-                            <span
-                                onClick={() => setAmount(maximum())}
-                                class="btn-small btn-light">
-                                {formatAmount(
-                                    BigNumber(maximum()),
-                                    denomination(),
-                                    separator(),
-                                    pair().fromAsset,
-                                )}
-                            </span>
-                            <span
-                                class="denominator"
-                                data-denominator={denomination()}
-                            />
-                        </span>
-                    </span>
+                    <SwapLimits
+                        asset={pair().fromAsset}
+                        denomination={denomination()}
+                        maximum={maximum()}
+                        maximumLabel={t("max")}
+                        minimum={minimum()}
+                        minimumLabel={t("min")}
+                        onSelectAmount={setAmount}
+                        sendLabel={t("send")}
+                        separator={separator()}
+                    />
                     <Show when={config.isPro}>
                         <Accordion
                             title={t("swap_opportunities_accordion")}

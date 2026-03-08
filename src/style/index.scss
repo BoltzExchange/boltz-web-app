@@ -563,6 +563,25 @@ textarea.invalid {
 [data-denominator="sat"] {
     background-image: url(../assets/sat.svg);
 }
+[data-denominator="USDT0"] {
+    margin: 2px;
+    background-image: none;
+    background-color: var(--color-text);
+    width: 10px;
+    height: 10px;
+    background-position: center;
+    transform: scale(1.35) translateY(1px);
+    filter: none;
+    -webkit-mask-image: url(../assets/tugrik.svg);
+    mask-image: url(../assets/tugrik.svg);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+
 .denomination .active {
     filter: none;
     border-radius: 50%;
