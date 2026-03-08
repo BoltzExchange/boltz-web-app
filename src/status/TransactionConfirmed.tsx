@@ -599,7 +599,9 @@ const TransactionConfirmed = () => {
                         swapId={chain.id}
                         gasAbstraction={chain.gasAbstraction}
                         preimage={chain.preimage}
-                        signerAddress={chain.signer}
+                        signerAddress={
+                            chain.originalDestination || chain.signer
+                        }
                         amount={chain.claimDetails.amount}
                         derivationPath={chain.derivationPath}
                         claimAddress={chain.claimAddress}
@@ -618,7 +620,9 @@ const TransactionConfirmed = () => {
                     gasAbstraction={reverse.gasAbstraction}
                     preimage={reverse.preimage}
                     amount={reverse.onchainAmount}
-                    signerAddress={reverse.signer}
+                    signerAddress={
+                        reverse.originalDestination || reverse.signer
+                    }
                     claimAddress={reverse.claimAddress}
                     refundAddress={reverse.refundAddress}
                     derivationPath={reverse.derivationPath}

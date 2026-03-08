@@ -31,6 +31,7 @@ import { config } from "../config";
 import {
     AssetKind,
     LN,
+    RBTC,
     btcChains,
     evmChains,
     isEvmAsset,
@@ -658,8 +659,18 @@ const Create = () => {
                                     ? pair().fromAsset
                                     : pair().toAsset
                             }
+                            syncAddress={isEvmAsset(pair().toAsset)}
                             disabled={() => !pair().isRoutable}
                         />
+                        {/* We have no gas abstraction for RBTC */}
+                        <Show
+                            when={
+                                isEvmAsset(pair().toAsset) &&
+                                pair().toAsset !== RBTC
+                            }>
+                            <hr class="spacer" />
+                            <AddressInput />
+                        </Show>
                         <hr class="spacer" />
                     </Show>
                     <CreateButton />

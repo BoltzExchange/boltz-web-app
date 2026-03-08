@@ -169,7 +169,6 @@ const CreateButton = () => {
         providers,
         getEtherSwap,
         getErc20Swap,
-        walletConnected,
         getGasAbstractionSigner,
     } = useWeb3Signer();
 
@@ -207,7 +206,6 @@ const CreateButton = () => {
                 denomination,
                 sendAmount,
                 receiveAmount,
-                walletConnected,
             ],
             () => {
                 setButtonDisable(false);
@@ -256,14 +254,6 @@ const CreateButton = () => {
                     return;
                 }
 
-                if (
-                    [assetSend(), assetReceive()].some(isEvmAsset) &&
-                    !walletConnected()
-                ) {
-                    setButtonLabel({ key: "please_connect_wallet" });
-                    setButtonDisable(true);
-                    return;
-                }
                 if (swapType() !== SwapType.Submarine) {
                     if (!addressValid()) {
                         setButtonLabel({
@@ -309,6 +299,10 @@ const CreateButton = () => {
             assetReceive() !== assetSend()
         );
     };
+
+    const getOriginalDestination = () =>
+        originalDestination() ||
+        (isEvmAsset(assetReceive()) ? onchainAddress() : undefined);
 
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
@@ -594,6 +588,7 @@ const CreateButton = () => {
                         gasAbstraction,
                         rescueFile(),
                         newKey,
+                        getOriginalDestination(),
                     );
                     break;
                 }
@@ -615,6 +610,7 @@ const CreateButton = () => {
                         gasAbstraction,
                         rescueFile(),
                         newKey,
+                        getOriginalDestination(),
                     );
                     break;
                 }

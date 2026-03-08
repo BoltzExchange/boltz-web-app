@@ -246,6 +246,7 @@ const ConnectWallet = (props: {
     derivationPath?: string;
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
+    syncAddress?: boolean;
 }) => {
     const { t } = useGlobalContext();
     const { providers, signer, getContractsForAsset } = useWeb3Signer();
@@ -285,14 +286,11 @@ const ConnectWallet = (props: {
 
         setNetworkValid(true);
 
-        if (isEvmAsset(asset)) {
+        if (isEvmAsset(asset) && props.syncAddress) {
             setAddressValid(currentAddress !== undefined);
             setOnchainAddress(currentAddress || "");
             return;
         }
-
-        setAddressValid(false);
-        setOnchainAddress("");
     };
 
     createEffect(
@@ -306,8 +304,10 @@ const ConnectWallet = (props: {
 
     onCleanup(() => {
         syncRequestId += 1;
-        setAddressValid(false);
-        setOnchainAddress("");
+        if (props.syncAddress) {
+            setAddressValid(false);
+            setOnchainAddress("");
+        }
     });
 
     return (

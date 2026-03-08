@@ -1,3 +1,4 @@
+import { getAddress, isAddress } from "ethers";
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
 import { btcToSat } from "src/utils/denomination";
@@ -6,6 +7,7 @@ import { LN, isEvmAsset } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import Pair from "../utils/Pair";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
@@ -19,6 +21,7 @@ const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
     const { t, notify, pairs, regularPairs } = useGlobalContext();
+    const { signer } = useWeb3Signer();
     const {
         pair,
         setPair,
@@ -33,6 +36,8 @@ const AddressInput = () => {
         setReceiveAmount,
         setSendAmount,
     } = useCreateContext();
+    const walletControlsAddress = () =>
+        isEvmAsset(pair().toAsset) && signer()?.address !== undefined;
 
     const handleInputChange = async (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
@@ -62,6 +67,18 @@ const AddressInput = () => {
 
         try {
             const assetName = pair().toAsset;
+            if (isEvmAsset(assetName)) {
+                if (!isAddress(address)) {
+                    throw new Error();
+                }
+
+                input.setCustomValidity("");
+                input.classList.remove("invalid");
+                setAddressValid(true);
+                setOnchainAddress(getAddress(address));
+                return;
+            }
+
             const actualAsset =
                 (await probeUserInput(assetName, invoice)) ??
                 (await probeUserInput(assetName, address));
@@ -137,6 +154,7 @@ const AddressInput = () => {
         <input
             ref={inputRef}
             required
+            disabled={walletControlsAddress()}
             onInput={(e) => handleInputChange(e.currentTarget)}
             type="text"
             id="onchainAddress"
