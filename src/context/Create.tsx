@@ -276,6 +276,8 @@ export type CreateContextType = {
     invoiceError: Accessor<DictKey>;
     bolt12Loading: Accessor<boolean>;
     setBolt12Loading: Setter<boolean>;
+    quoteLoading: Accessor<boolean>;
+    setQuoteLoading: Setter<boolean>;
 };
 
 const CreateContext = createContext<CreateContextType>();
@@ -318,6 +320,7 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         undefined,
     );
     const [bolt12Loading, setBolt12Loading] = createSignal(false);
+    const [quoteLoading, setQuoteLoading] = createSignal(false);
 
     createEffect(() => {
         if (amountValid() && pair().isRoutable) {
@@ -430,6 +433,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setInvoiceError,
                 bolt12Loading,
                 setBolt12Loading,
+                quoteLoading,
+                setQuoteLoading,
             }}>
             {props.children}
         </CreateContext.Provider>

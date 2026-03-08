@@ -1,7 +1,13 @@
-import { debounce } from "@solid-primitives/scheduled";
 import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createSignal, on, onMount } from "solid-js";
+import {
+    Show,
+    createEffect,
+    createSignal,
+    on,
+    onCleanup,
+    onMount,
+} from "solid-js";
 import FiatAmount from "src/components/FiatAmount";
 import { useWeb3Signer } from "src/context/Web3";
 
@@ -91,21 +97,52 @@ const Create = () => {
         onchainAddress,
         lnurl,
         bolt12Offer,
+        setQuoteLoading,
     } = useCreateContext();
     const { signer } = useWeb3Signer();
     const navigate = useNavigate();
 
-    const debouncer = debounce(async (fn: () => Promise<void>) => {
-        await fn();
-    }, 500);
+    let quoteDebounceTimeout: number | undefined;
+    let quoteRequestId = 0;
 
-    const loadingGuard = (fn: () => Promise<void>) => {
-        if (pair().needsNetworkForQuote) {
-            debouncer(fn);
-        } else {
-            void fn();
+    const clearQuoteDebounce = () => {
+        if (quoteDebounceTimeout !== undefined) {
+            window.clearTimeout(quoteDebounceTimeout);
+            quoteDebounceTimeout = undefined;
         }
     };
+
+    const loadingGuard = (fn: () => Promise<void>) => {
+        if (!pair().needsNetworkForQuote) {
+            ++quoteRequestId;
+            clearQuoteDebounce();
+            setQuoteLoading(false);
+            void fn();
+            return;
+        }
+
+        const requestId = ++quoteRequestId;
+        setQuoteLoading(true);
+        clearQuoteDebounce();
+
+        quoteDebounceTimeout = window.setTimeout(() => {
+            quoteDebounceTimeout = undefined;
+            void (async () => {
+                try {
+                    await fn();
+                } finally {
+                    if (requestId === quoteRequestId) {
+                        setQuoteLoading(false);
+                    }
+                }
+            })();
+        }, 500);
+    };
+
+    onCleanup(() => {
+        clearQuoteDebounce();
+        setQuoteLoading(false);
+    });
 
     // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
