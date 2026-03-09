@@ -378,19 +378,15 @@ export default class Pair {
             return boltzSendAmount;
         }
 
-        const quote = await quoteDexAmountOut(
+        const [quote] = await quoteDexAmountOut(
             dexHop.dexDetails!.chain,
             dexHop.dexDetails!.tokenIn,
             dexHop.dexDetails!.tokenOut,
             toDexAmount(boltzSendAmount, dexHop.to),
         );
+        const quoteAmount = BigInt(quote?.quote ?? 0);
 
-        const minQuote = quote.reduce((min, q) => {
-            const amountIn = BigInt(q.quote);
-            return min === BigInt(0) || amountIn < min ? amountIn : min;
-        }, BigInt(0));
-
-        return fromDexAmount(minQuote, dexHop.from).toNumber();
+        return fromDexAmount(quoteAmount, dexHop.from).toNumber();
     };
 
     public getMinimum = async (): Promise<number> => {
@@ -515,19 +511,15 @@ export default class Pair {
                         continue;
                     }
 
-                    const quote = await quoteDexAmountIn(
+                    const [quote] = await quoteDexAmountIn(
                         hop.dexDetails!.chain,
                         hop.dexDetails!.tokenIn,
                         hop.dexDetails!.tokenOut,
                         toDexAmount(amount.toNumber(), hop.from),
                     );
+                    const quoteAmount = BigInt(quote?.quote ?? 0);
 
-                    const maxQuote = quote.reduce((max, q) => {
-                        const amountOut = BigInt(q.quote);
-                        return amountOut > max ? amountOut : max;
-                    }, BigInt(0));
-
-                    amount = fromDexAmount(maxQuote, hop.to);
+                    amount = fromDexAmount(quoteAmount, hop.to);
                     break;
                 }
 
@@ -560,21 +552,15 @@ export default class Pair {
         for (const hop of [...this.route].reverse()) {
             switch (hop.type) {
                 case SwapType.Dex: {
-                    const quote = await quoteDexAmountOut(
+                    const [quote] = await quoteDexAmountOut(
                         hop.dexDetails!.chain,
                         hop.dexDetails!.tokenIn,
                         hop.dexDetails!.tokenOut,
                         toDexAmount(amount.toNumber(), hop.to),
                     );
+                    const quoteAmount = BigInt(quote?.quote ?? 0);
 
-                    const minQuote = quote.reduce((min, q) => {
-                        const amountIn = BigInt(q.quote);
-                        return min === BigInt(0) || amountIn < min
-                            ? amountIn
-                            : min;
-                    }, BigInt(0));
-
-                    amount = fromDexAmount(minQuote, hop.from);
+                    amount = fromDexAmount(quoteAmount, hop.from);
                     break;
                 }
 

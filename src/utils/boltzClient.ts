@@ -230,6 +230,25 @@ export type QuoteCalldata = {
     data: string;
 };
 
+const sortDexQuotes = (
+    quotes: QuoteData[],
+    direction: "in" | "out",
+): QuoteData[] =>
+    [...quotes].sort((first, second) => {
+        const firstAmount = BigInt(first.quote);
+        const secondAmount = BigInt(second.quote);
+
+        if (firstAmount === secondAmount) {
+            return 0;
+        }
+
+        if (direction === "in") {
+            return firstAmount > secondAmount ? -1 : 1;
+        }
+
+        return firstAmount < secondAmount ? -1 : 1;
+    });
+
 export const getPairs = async (options?: RequestInit): Promise<Pairs> => {
     const [submarine, reverse, chain] = await Promise.all([
         fetcher<SubmarinePairsTaproot>("/v2/swap/submarine", null, options),
@@ -609,7 +628,10 @@ export const quoteDexAmountIn = async (
     params.set("tokenIn", tokenIn);
     params.set("tokenOut", tokenOut);
     params.set("amountIn", amountIn.toString());
-    return await fetcher(`/v2/quote/${chain}/in?${params.toString()}`);
+    return sortDexQuotes(
+        await fetcher(`/v2/quote/${chain}/in?${params.toString()}`),
+        "in",
+    );
 };
 
 export const quoteDexAmountOut = async (
@@ -626,7 +648,10 @@ export const quoteDexAmountOut = async (
     params.set("tokenIn", tokenIn);
     params.set("tokenOut", tokenOut);
     params.set("amountOut", amountOut.toString());
-    return await fetcher(`/v2/quote/${chain}/out?${params.toString()}`);
+    return sortDexQuotes(
+        await fetcher(`/v2/quote/${chain}/out?${params.toString()}`),
+        "out",
+    );
 };
 
 export const encodeDexQuote = (
