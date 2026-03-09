@@ -136,6 +136,7 @@ const CreateButton = () => {
         rescueFileBackupDone,
         rescueFile,
         regularPairs,
+        slippage,
     } = useGlobalContext();
     const {
         pair,
@@ -622,6 +623,8 @@ const CreateButton = () => {
                     deriveKey,
                     getEtherSwap,
                     getErc20Swap,
+                    slippage(),
+                    hopsPosition,
                 );
             } catch (e) {
                 const error = e instanceof Error ? e : new Error(String(e));

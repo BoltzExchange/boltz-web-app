@@ -37,6 +37,9 @@ export const getKindForAsset = (asset: string): AssetKind => {
     return assetConfig.type;
 };
 
+export const isRoutedAsset = (asset: string): boolean =>
+    config.assets?.[asset]?.token?.routeVia !== undefined;
+
 export const isEvmAsset = (asset: string): boolean => {
     const assetConfig = config.assets?.[asset];
     if (!assetConfig) {

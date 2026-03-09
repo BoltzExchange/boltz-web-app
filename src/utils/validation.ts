@@ -30,6 +30,7 @@ import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import type { ECKeys } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { HopsPosition } from "./Pair";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -140,19 +141,51 @@ const validateBip21 = (
     }
 };
 
+const validateErc20Amount = (
+    expectedAmount: number,
+    gotAmount: number,
+    slippage: number,
+    side: Side,
+) => {
+    const tolerance = Math.ceil(expectedAmount * slippage);
+    const isInvalid =
+        side === Side.Send
+            ? Math.abs(expectedAmount - gotAmount) > tolerance
+            : gotAmount < expectedAmount - tolerance;
+
+    if (isInvalid) {
+        throw new Error(
+            side === Side.Send
+                ? invalidSendAmountMsg(expectedAmount, gotAmount)
+                : invalidReceiveAmountMsg(expectedAmount, gotAmount),
+        );
+    }
+};
+
 const validateReverse = async (
     swap: ReverseSwap,
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     getErc20Swap: ContractGetter,
+    slippage: number,
+    hopsPosition?: HopsPosition,
 ): Promise<void> => {
     const invoiceData = await decodeInvoice(swap.invoice);
 
     // Amounts
-    if (invoiceData.satoshis !== swap.sendAmount) {
-        throw new Error(
-            invalidSendAmountMsg(invoiceData.satoshis, swap.sendAmount),
+    if (hopsPosition === HopsPosition.After) {
+        validateErc20Amount(
+            invoiceData.satoshis,
+            swap.sendAmount,
+            slippage,
+            Side.Send,
         );
+    } else {
+        if (invoiceData.satoshis !== swap.sendAmount) {
+            throw new Error(
+                invalidSendAmountMsg(invoiceData.satoshis, swap.sendAmount),
+            );
+        }
     }
 
     if (swap.onchainAmount <= swap.receiveAmount) {
@@ -210,12 +243,23 @@ const validateSubmarine = async (
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     getErc20Swap: ContractGetter,
+    slippage: number,
+    hopsPosition?: HopsPosition,
 ): Promise<void> => {
     // Amounts
-    if (swap.expectedAmount !== swap.sendAmount) {
-        throw new Error(
-            invalidSendAmountMsg(swap.expectedAmount, swap.sendAmount),
+    if (hopsPosition === HopsPosition.Before) {
+        validateErc20Amount(
+            swap.expectedAmount,
+            swap.sendAmount,
+            slippage,
+            Side.Send,
         );
+    } else {
+        if (swap.expectedAmount !== swap.sendAmount) {
+            throw new Error(
+                invalidSendAmountMsg(swap.expectedAmount, swap.sendAmount),
+            );
+        }
     }
 
     if (isEvmAsset(swap.assetSend)) {
@@ -264,6 +308,8 @@ const validateChainSwap = async (
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     getErc20Swap: ContractGetter,
+    slippage: number,
+    hopsPosition?: HopsPosition,
 ): Promise<void> => {
     const preimageHash = sha256(hex.decode(swap.preimage));
 
@@ -273,19 +319,44 @@ const validateChainSwap = async (
         details: ChainSwapDetails,
     ): Promise<void> => {
         if (side === Side.Send) {
-            if (swap.sendAmount > 0 && details.amount !== swap.sendAmount) {
-                throw new Error(
-                    invalidSendAmountMsg(swap.sendAmount, details.amount),
-                );
+            if (hopsPosition === HopsPosition.Before) {
+                if (swap.sendAmount > 0) {
+                    validateErc20Amount(
+                        swap.sendAmount,
+                        details.amount,
+                        slippage,
+                        side,
+                    );
+                }
+            } else {
+                if (swap.sendAmount > 0 && details.amount !== swap.sendAmount) {
+                    throw new Error(
+                        invalidSendAmountMsg(swap.sendAmount, details.amount),
+                    );
+                }
             }
         } else {
-            if (
-                swap.receiveAmount > 0 &&
-                details.amount <= swap.receiveAmount
-            ) {
-                throw new Error(
-                    invalidReceiveAmountMsg(swap.receiveAmount, details.amount),
-                );
+            if (hopsPosition === HopsPosition.After) {
+                if (swap.receiveAmount > 0) {
+                    validateErc20Amount(
+                        swap.receiveAmount,
+                        details.amount,
+                        slippage,
+                        side,
+                    );
+                }
+            } else {
+                if (
+                    swap.receiveAmount > 0 &&
+                    details.amount <= swap.receiveAmount
+                ) {
+                    throw new Error(
+                        invalidReceiveAmountMsg(
+                            swap.receiveAmount,
+                            details.amount,
+                        ),
+                    );
+                }
             }
         }
 
@@ -339,6 +410,8 @@ export const validateResponse = async (
     deriveKey: deriveKeyFn,
     getEtherSwap: ContractGetter,
     getErc20Swap: ContractGetter,
+    slippage: number,
+    hopsPosition?: HopsPosition,
 ): Promise<void> => {
     switch (swap.type) {
         case SwapType.Submarine:
@@ -347,6 +420,8 @@ export const validateResponse = async (
                 deriveKey,
                 getEtherSwap,
                 getErc20Swap,
+                slippage,
+                hopsPosition,
             );
             break;
 
@@ -356,6 +431,8 @@ export const validateResponse = async (
                 deriveKey,
                 getEtherSwap,
                 getErc20Swap,
+                slippage,
+                hopsPosition,
             );
             break;
 
@@ -365,6 +442,8 @@ export const validateResponse = async (
                 deriveKey,
                 getEtherSwap,
                 getErc20Swap,
+                slippage,
+                hopsPosition,
             );
             break;
 

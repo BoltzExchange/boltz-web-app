@@ -110,6 +110,7 @@ describe("validate responses", () => {
                         ),
                     contract,
                     contract,
+                    1,
                 );
                 if (valid) {
                     await expect(promise).resolves.toBeUndefined();
@@ -206,6 +207,7 @@ describe("validate responses", () => {
                         ECPair.fromPrivateKey(hex.decode(swap.claimPrivateKey)),
                     contract,
                     contract,
+                    1,
                 );
                 if (valid) {
                     await expect(promise).resolves.toBeUndefined();
