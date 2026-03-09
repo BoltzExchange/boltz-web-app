@@ -3,8 +3,9 @@ import { Show, createResource } from "solid-js";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LockupEvm from "../components/LockupEvm";
 import PayOnchain from "../components/PayOnchain";
-import { RBTC } from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import { usePayContext } from "../context/Pay";
+import { HopsPosition } from "../utils/Pair";
 import { decodeInvoice } from "../utils/invoice";
 import type { SubmarineSwap } from "../utils/swapCreator";
 
@@ -18,7 +19,7 @@ const InvoiceSet = () => {
 
     return (
         <Show
-            when={submarine.assetSend === RBTC}
+            when={isEvmAsset(submarine.assetSend)}
             fallback={
                 <PayOnchain
                     type={submarine.type}
@@ -32,11 +33,18 @@ const InvoiceSet = () => {
             <Show when={!preimageHash.loading} fallback={<LoadingSpinner />}>
                 <LockupEvm
                     swapId={submarine.id}
+                    gasAbstraction={submarine.gasAbstraction}
                     signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}
                     preimageHash={preimageHash()}
                     timeoutBlockHeight={submarine.timeoutBlockHeight}
+                    asset={submarine.assetSend}
+                    hops={
+                        submarine.dex?.position === HopsPosition.Before
+                            ? submarine.dex.hops
+                            : undefined
+                    }
                 />
             </Show>
         </Show>

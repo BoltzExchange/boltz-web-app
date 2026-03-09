@@ -3,12 +3,13 @@ import { hex } from "@scure/base";
 import type BigNumber from "bignumber.js";
 import { OutputType } from "boltz-core";
 
-import { type AssetType, RBTC } from "../consts/Assets";
+import { type AssetType } from "../consts/Assets";
+import { LN, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { newKeyFn } from "../context/Global";
+import { type EncodedHop, HopsPosition } from "./Pair";
 import type {
     ChainSwapCreatedResponse,
-    Pairs,
     ReverseCreatedResponse,
     SubmarineCreatedResponse,
 } from "./boltzClient";
@@ -17,8 +18,25 @@ import {
     createReverseSwap,
     createSubmarineSwap,
 } from "./boltzClient";
-import { getPair } from "./helper";
 import { type RescueFile, derivePreimageFromRescueKey } from "./rescueFile";
+
+export type DexDetail = {
+    hops: EncodedHop[];
+
+    // Whether hops run before or after the Boltz swap
+    position: HopsPosition;
+
+    // Expected DEX amount at creation; updated with actual amount after execution.
+    // For hops after Boltz: expected output amount from the DEX.
+    // For hops before Boltz: expected input amount to the DEX.
+    quoteAmount: number | string;
+};
+
+export const enum GasAbstractionType {
+    None = "none",
+    RifRelay = "rifRelay",
+    Signer = "signer",
+}
 
 export type SwapBase = {
     type: SwapType;
@@ -33,14 +51,18 @@ export type SwapBase = {
     // Not set for submarine swaps; but set for interface compatibility
     claimTx?: string;
     lockupTx?: string;
+    commitmentLockupTxHash?: string;
 
-    useRif: boolean;
+    gasAbstraction: GasAbstractionType;
     signer?: string;
     // Set for hardware wallet signers
     derivationPath?: string;
 
     // Original user input (Lightning address/LNURL/BIP353/BOLT12) before resolution
     originalDestination?: string;
+
+    // DEX route for routed swaps (e.g. USDT0 via TBTC).
+    dex?: DexDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -88,7 +110,40 @@ export const getRelevantAssetForSwap = (swap: SwapBase) => {
     }
 };
 
-export const isRsk = (swap: SomeSwap) => getRelevantAssetForSwap(swap) === RBTC;
+export const getFinalAssetSend = (
+    swap: SwapBase,
+    coalesceLn: boolean = false,
+): string => {
+    if (
+        swap.dex !== undefined &&
+        swap.dex.position === HopsPosition.Before &&
+        swap.dex.hops.length > 0
+    ) {
+        return swap.dex.hops[0].from;
+    }
+
+    return coalesceLn && swap.type === SwapType.Reverse ? LN : swap.assetSend;
+};
+
+export const getFinalAssetReceive = (
+    swap: SwapBase,
+    coalesceLn: boolean = false,
+): string => {
+    if (
+        swap.dex !== undefined &&
+        swap.dex.position === HopsPosition.After &&
+        swap.dex.hops.length > 0
+    ) {
+        return swap.dex.hops[swap.dex.hops.length - 1].to;
+    }
+
+    return coalesceLn && swap.type === SwapType.Submarine
+        ? LN
+        : swap.assetReceive;
+};
+
+export const isEvmSwap = (swap: SomeSwap) =>
+    isEvmAsset(getRelevantAssetForSwap(swap));
 
 const generatePreimage = ({
     asset,
@@ -103,13 +158,13 @@ const generatePreimage = ({
 };
 
 export const createSubmarine = async (
-    pairs: Pairs,
     assetSend: string,
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     invoice: string,
-    useRif: boolean,
+    pairHash: string,
+    gasAbstraction: GasAbstractionType,
     newKey: newKeyFn,
     originalDestination?: string,
 ): Promise<SubmarineSwap> => {
@@ -118,7 +173,7 @@ export const createSubmarine = async (
         assetSend,
         assetReceive,
         invoice,
-        getPair(pairs, SwapType.Submarine, assetSend, assetReceive).hash,
+        pairHash,
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
@@ -132,7 +187,7 @@ export const createSubmarine = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            gasAbstraction,
         ),
         invoice,
         originalDestination,
@@ -141,13 +196,13 @@ export const createSubmarine = async (
 };
 
 export const createReverse = async (
-    pairs: Pairs,
     assetSend: string,
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     claimAddress: string,
-    useRif: boolean,
+    pairHash: string,
+    gasAbstraction: GasAbstractionType,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -164,7 +219,7 @@ export const createReverse = async (
         assetReceive,
         Number(sendAmount),
         hex.encode(sha256(preimage)),
-        getPair(pairs, SwapType.Reverse, assetSend, assetReceive).hash,
+        pairHash,
         key !== undefined
             ? Buffer.from(key.key.publicKey).toString("hex")
             : undefined,
@@ -179,7 +234,7 @@ export const createReverse = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            gasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -189,13 +244,13 @@ export const createReverse = async (
 };
 
 export const createChain = async (
-    pairs: Pairs,
     assetSend: string,
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
     claimAddress: string,
-    useRif: boolean,
+    pairHash: string,
+    gasAbstraction: GasAbstractionType,
     rescueFile: RescueFile,
     newKey: newKeyFn,
     originalDestination?: string,
@@ -221,7 +276,7 @@ export const createChain = async (
             ? Buffer.from(refundKey.key.publicKey).toString("hex")
             : undefined,
         claimAddress,
-        getPair(pairs, SwapType.Chain, assetSend, assetReceive).hash,
+        pairHash,
     );
 
     return {
@@ -232,7 +287,7 @@ export const createChain = async (
             assetReceive,
             sendAmount,
             receiveAmount,
-            useRif,
+            gasAbstraction,
         ),
         claimAddress,
         originalDestination,
@@ -249,11 +304,11 @@ const annotateSwapBaseData = <T>(
     assetReceive: string,
     sendAmount: BigNumber,
     receiveAmount: BigNumber,
-    useRif: boolean,
+    gasAbstraction: GasAbstractionType,
 ): T & SwapBase => ({
     ...createdResponse,
     type,
-    useRif,
+    gasAbstraction,
     assetSend,
     assetReceive,
     date: new Date().getTime(),

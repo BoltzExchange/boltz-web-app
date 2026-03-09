@@ -1,5 +1,12 @@
 import type { Config } from "src/configs/base";
-import { Explorer, baseConfig, chooseUrl } from "src/configs/base";
+import {
+    Explorer,
+    arbitrumExplorer,
+    arbitrumNetwork,
+    baseConfig,
+    chooseUrl,
+} from "src/configs/base";
+import { AssetKind } from "src/consts/AssetKind";
 
 const config = {
     ...baseConfig,
@@ -11,6 +18,7 @@ const config = {
     },
     assets: {
         BTC: {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Esplora,
                 normal: "http://localhost:4002",
@@ -23,6 +31,7 @@ const config = {
             ],
         },
         "L-BTC": {
+            type: AssetKind.UTXO,
             blockExplorerUrl: {
                 id: Explorer.Esplora,
                 normal: "http://localhost:4003",
@@ -35,13 +44,15 @@ const config = {
             ],
         },
         RBTC: {
+            type: AssetKind.EVMNative,
             blockExplorerUrl: {
                 id: Explorer.Blockscout,
                 normal: "http://localhost:5100",
             },
             network: {
                 chainName: "Anvil",
-                chainId: 31,
+                symbol: "RBTC",
+                chainId: 33,
                 rpcUrls: ["http://localhost:8545"],
                 nativeCurrency: {
                     name: "RBTC",
@@ -55,6 +66,29 @@ const config = {
                 smartWalletFactory:
                     "0x59b670e9fA9D0A427751Af201D676719a970857b",
                 deployVerifier: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            },
+        },
+        TBTC: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
+            token: {
+                address: "0x6c84a8f1c29108F47a79964b5Fe888D4f4D0dE40",
+                decimals: 18,
+            },
+            contracts: {
+                deployHeight: 435848678,
+                router: "0x812A4ede94cA28390e05c807A26A9118B5C952A6",
+            },
+        },
+        USDT0: {
+            type: AssetKind.ERC20,
+            blockExplorerUrl: arbitrumExplorer,
+            network: arbitrumNetwork,
+            token: {
+                address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+                decimals: 6,
+                routeVia: "TBTC",
             },
         },
     },

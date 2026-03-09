@@ -59,7 +59,6 @@
         "vite": "^7.3.1",
         "vite-plugin-node-polyfills": "^0.25.0",
         "vite-plugin-solid": "^2.11.10",
-        "vite-plugin-top-level-await": "^1.6.0",
         "vite-plugin-wasm": "^3.5.0",
         "vitepress": "^1.6.4",
         "vitest": "^4.0.18"
@@ -71,8 +70,8 @@
         "@ledgerhq/hw-transport-webhid": "^6.31.0",
         "@noble/curves": "^2.0.1",
         "@noble/hashes": "^2.0.1",
-        "@reown/appkit": "1.6.9",
-        "@reown/appkit-adapter-ethers": "1.6.9",
+        "@reown/appkit": "1.8.19",
+        "@reown/appkit-adapter-ethers": "1.8.19",
         "@scure/base": "^2.0.0",
         "@scure/bip32": "^2.0.1",
         "@scure/bip39": "^2.0.1",

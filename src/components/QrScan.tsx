@@ -11,7 +11,7 @@ const QrScan = () => {
     let qrRef: HTMLVideoElement;
     let qrScanner: QrScanner;
 
-    const { swapType, setInvoice, setOnchainAddress } = useCreateContext();
+    const { pair, setInvoice, setOnchainAddress } = useCreateContext();
     const { t, notify } = useGlobalContext();
 
     const [camera, setCamera] = createSignal<boolean>(false);
@@ -29,7 +29,7 @@ const QrScan = () => {
                 qrRef,
                 (result) => {
                     log.debug("scanned qr code:", result.data);
-                    if (swapType() === SwapType.Submarine) {
+                    if (pair().swapToCreate?.type === SwapType.Submarine) {
                         setInvoice("");
                         setInvoice(result.data);
                     } else {

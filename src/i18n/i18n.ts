@@ -162,6 +162,8 @@ const dict = {
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction.',
         transaction_prompt_receive:
             'Press "{{ button }}" in order to open your connected wallet and confirm the displayed transaction to receive {{ asset }}.',
+        transaction_failed: "Transaction failed: {{ error }}",
+        wallet_request_rejected: "Request was rejected in your wallet.",
         invalid_address: "Invalid {{ asset }} address",
         scan_qr_code: "Scan QR Code",
         version: "Version",
@@ -189,6 +191,9 @@ const dict = {
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
+        slippage: "Slippage",
+        slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
+        dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Accept transactions that are not yet confirmed in a block",
@@ -452,6 +457,8 @@ const dict = {
             "Searching for resumable swaps... {{ progress }}%",
         unmatched_swaps:
             "This wallet has {{ count }} additional claimable swaps. To access them, please switch to the Rescue Key used to initiate those swaps.",
+        approve_erc20: "Approve",
+        approve_erc20_line: "Set ERC20 allowance for the swap contract",
     },
     de: {
         language: "Deutsch",
@@ -620,6 +627,9 @@ const dict = {
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion.',
         transaction_prompt_receive:
             '"{{ button }}" klicken um das verbundene Wallet zu öffnen und bestätige die angezeigte Transaktion um {{ asset }} zu empfangen.',
+        transaction_failed: "Transaktion fehlgeschlagen: {{ error }}",
+        wallet_request_rejected:
+            "Die Anfrage wurde in deinem Wallet abgelehnt.",
         invalid_address: "Ungültige {{ asset }} Adresse",
         scan_qr_code: "QR Code scannen",
         version: "Version",
@@ -649,6 +659,9 @@ const dict = {
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
+        slippage: "Slippage",
+        slippage_tooltip: "Maximale Slippage-Toleranz bei DEX-Swaps",
+        dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Akzeptiere Transaktionen, die noch nicht in einem Block bestätigt sind",
@@ -919,6 +932,8 @@ const dict = {
             "Suche nach fortsetzbaren Swaps... {{ progress }}%",
         unmatched_swaps:
             "Dieses Wallet hat {{ count }} zusätzliche claimbare Swaps. Um darauf zuzugreifen, wechsle bitte zu dem Rettungsschlüssel, mit dem diese Swaps gestartet wurden.",
+        approve_erc20: "Freigeben",
+        approve_erc20_line: "ERC20-Freigabe für den Swap-Contract festlegen",
     },
     es: {
         language: "Español",
@@ -1088,6 +1103,8 @@ const dict = {
             'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada.',
         transaction_prompt_receive:
             'Pulse "{{ button }}" para abrir tu monedero conectado y confirmar la transacción mostrada para recibir {{ asset }}.',
+        transaction_failed: "Transacción fallida: {{ error }}",
+        wallet_request_rejected: "La solicitud fue rechazada en tu monedero.",
         invalid_address: "Dirección {{ asset }} inválida",
         scan_qr_code: "Escanear código QR",
         version: "Versión",
@@ -1117,6 +1134,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
+        slippage: "Slippage",
+        slippage_tooltip: "Tolerancia máxima de slippage para swaps en DEX",
+        dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Aceptar transacciones que aún no están confirmadas en un bloque",
@@ -1385,6 +1405,9 @@ const dict = {
             "Buscando intercambios reanudables... {{ progress }}%",
         unmatched_swaps:
             "Este monedero tiene {{ count }} intercambios adicionales reclamables. Para acceder a ellos, cambia a la clave de rescate usada para iniciar esos intercambios.",
+        approve_erc20: "Aprobar",
+        approve_erc20_line:
+            "Configura la asignación de ERC20 para el contrato de intercambio",
     },
     pt: {
         language: "Português",
@@ -1552,6 +1575,8 @@ const dict = {
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação exibida.',
         transaction_prompt_receive:
             'Pressione "{{ button }}" para abrir sua carteira conectada e confirmar a transação para receber {{ asset }}.',
+        transaction_failed: "Falha na transação: {{ error }}",
+        wallet_request_rejected: "A solicitação foi rejeitada na sua carteira.",
         invalid_address: "Endereço {{ asset }} inválido",
         scan_qr_code: "Ler QR Code",
         version: "Versão",
@@ -1580,6 +1605,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
+        slippage: "Slippage",
+        slippage_tooltip: "Tolerância máxima de slippage para trocas em DEX",
+        dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
             "Aceitar transações que ainda não foram confirmadas num bloco",
@@ -1847,6 +1875,9 @@ const dict = {
             "Buscando trocas retomáveis... {{ progress }}%",
         unmatched_swaps:
             "Esta carteira tem {{ count }} trocas adicionais reivindicáveis. Para acessá-las, mude para a chave de resgate usada para iniciar essas trocas.",
+        approve_erc20: "Aprovar",
+        approve_erc20_line:
+            "Definir a permissão de ERC20 para o contrato de troca",
     },
     zh: {
         language: "中文",
@@ -1996,6 +2027,8 @@ const dict = {
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易。",
         transaction_prompt_receive:
             "按“{{ button }}”以打开已连接的钱包并确认显示的交易以便收{{ asset }}。",
+        transaction_failed: "交易失败：{{ error }}",
+        wallet_request_rejected: "该请求已在您的钱包中被拒绝。",
         invalid_address: "无效的{{ asset }}地址",
         scan_qr_code: "扫描 QR 码",
         version: "版本",
@@ -2021,6 +2054,9 @@ const dict = {
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
+        slippage: "滑点",
+        slippage_tooltip: "DEX 交换的最大价格滑点容差",
+        dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
         on: "开",
@@ -2263,6 +2299,8 @@ const dict = {
         searching_resumable_swaps: "正在搜索可继续的交换... {{ progress }}%",
         unmatched_swaps:
             "该钱包有 {{ count }} 个额外可领取的交换。要访问它们，请切换到用于发起这些交换的救援密钥。",
+        approve_erc20: "授权",
+        approve_erc20_line: "为交换合约设置 ERC20 授权额度",
     },
     ja: {
         language: "日本語",
@@ -2429,6 +2467,8 @@ const dict = {
             " 接続したウォレットを開いて、表示されたトランザクションを確認するために　{{ button }} を押してください",
         transaction_prompt_receive:
             " 接続したウォレットを開いて、{{ asset }} を受け取るために表示されたトランザクションを確認するために {{ button }} を押してください",
+        transaction_failed: "トランザクションに失敗しました: {{ error }}",
+        wallet_request_rejected: "ウォレットでリクエストが拒否されました。",
         invalid_address: "無効な {{ asset }} アドレス",
         scan_qr_code: "QRコードをスキャンする",
         version: "バージョン",
@@ -2456,6 +2496,9 @@ const dict = {
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
+        slippage: "スリッページ",
+        slippage_tooltip: "DEXスワップで許容する最大価格スリッページ",
+        dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",
         on: "オン",
@@ -2720,6 +2763,8 @@ const dict = {
             "再開可能なスワップを検索中... {{ progress }}%",
         unmatched_swaps:
             "このウォレットには追加で {{ count }} 件の請求可能なスワップがあります。アクセスするには、これらのスワップの開始に使用したレスキューキーに切り替えてください。",
+        approve_erc20: "承認",
+        approve_erc20_line: "スワップコントラクトのERC20許可額を設定",
     },
 };
 

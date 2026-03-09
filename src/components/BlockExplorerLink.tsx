@@ -8,7 +8,7 @@ import type {
     SomeSwap,
     SubmarineSwap,
 } from "../utils/swapCreator";
-import { getRelevantAssetForSwap, isRsk } from "../utils/swapCreator";
+import { getRelevantAssetForSwap, isEvmSwap } from "../utils/swapCreator";
 import BlockExplorer from "./BlockExplorer";
 
 const ChainSwapLink = (props: {
@@ -53,7 +53,7 @@ const BlockExplorerLink = (props: {
                 />
             }>
             <Switch>
-                <Match when={!isRsk(props.swap())}>
+                <Match when={!isEvmSwap(props.swap())}>
                     {/* Refund transactions are handled in SwapRefunded */}
                     <Show
                         when={
@@ -76,7 +76,7 @@ const BlockExplorerLink = (props: {
                 </Match>
 
                 {/* Showing addresses makes no sense for EVM based chains */}
-                <Match when={isRsk(props.swap())}>
+                <Match when={isEvmSwap(props.swap())}>
                     <Show
                         when={props.swap().claimTx !== undefined}
                         fallback={

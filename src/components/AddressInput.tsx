@@ -1,12 +1,14 @@
+import { getAddress, isAddress } from "ethers";
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
-import { calculateSendAmount } from "src/utils/calculate";
 import { btcToSat } from "src/utils/denomination";
 
-import { LN, RBTC } from "../consts/Assets";
-import { SwapType } from "../consts/Enums";
+import { LN, isEvmAsset } from "../consts/Assets";
+import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
+import Pair from "../utils/Pair";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
@@ -18,24 +20,24 @@ import {
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
-    const { t, notify } = useGlobalContext();
+    const { t, notify, pairs, regularPairs } = useGlobalContext();
+    const { signer } = useWeb3Signer();
     const {
-        assetReceive,
-        boltzFee,
+        pair,
+        setPair,
         minerFee,
-        swapType,
         amountValid,
         onchainAddress,
         setAddressValid,
-        setAssetReceive,
-        setAssetSend,
-        assetSend,
         setOnchainAddress,
         setInvoice,
         sendAmount,
+        setAmountChanged,
         setReceiveAmount,
         setSendAmount,
     } = useCreateContext();
+    const walletControlsAddress = () =>
+        isEvmAsset(pair().toAsset) && signer()?.address !== undefined;
 
     const handleInputChange = async (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
@@ -53,29 +55,46 @@ const AddressInput = () => {
 
         const bip21Amount = extractBip21Amount(inputValue);
         if (bip21Amount) {
-            setReceiveAmount(btcToSat(bip21Amount));
-            setSendAmount(
-                calculateSendAmount(
-                    btcToSat(bip21Amount),
-                    boltzFee(),
-                    minerFee(),
-                    swapType(),
-                ),
+            const satAmount = btcToSat(bip21Amount);
+            setAmountChanged(Side.Receive);
+            setReceiveAmount(satAmount);
+            const sendAmt = await pair().calculateSendAmount(
+                satAmount,
+                minerFee(),
             );
+            setSendAmount(sendAmt);
         }
 
         try {
-            const assetName = assetReceive();
+            const assetName = pair().toAsset;
+            if (isEvmAsset(assetName)) {
+                if (!isAddress(address)) {
+                    throw new Error();
+                }
+
+                input.setCustomValidity("");
+                input.classList.remove("invalid");
+                setAddressValid(true);
+                setOnchainAddress(getAddress(address));
+                return;
+            }
+
             const actualAsset =
                 (await probeUserInput(assetName, invoice)) ??
                 (await probeUserInput(assetName, address));
 
             switch (actualAsset) {
                 case LN: {
-                    setAssetReceive(LN);
-                    if (assetSend() === LN) {
-                        setAssetSend(assetName);
-                    }
+                    setPair(
+                        new Pair(
+                            pairs(),
+                            pair().fromAsset === LN
+                                ? assetName
+                                : pair().fromAsset,
+                            LN,
+                            regularPairs(),
+                        ),
+                    );
                     setOnchainAddress("");
                     setInvoice(invoice);
                     notify("success", t("switch_paste"));
@@ -87,8 +106,14 @@ const AddressInput = () => {
 
                 default: {
                     if (assetName !== actualAsset) {
-                        setAssetSend(assetReceive());
-                        setAssetReceive(actualAsset);
+                        setPair(
+                            new Pair(
+                                pairs(),
+                                pair().toAsset,
+                                actualAsset,
+                                regularPairs(),
+                            ),
+                        );
                         notify("success", t("switch_paste"));
                     }
 
@@ -105,7 +130,7 @@ const AddressInput = () => {
             if (inputValue.length !== 0) {
                 log.debug(`Invalid address input: ${formatError(e)}`);
 
-                const msg = t("invalid_address", { asset: assetReceive() });
+                const msg = t("invalid_address", { asset: pair().toAsset });
                 input.classList.add("invalid");
                 input.setCustomValidity(msg);
             }
@@ -113,11 +138,11 @@ const AddressInput = () => {
     };
 
     createEffect(
-        on([amountValid, onchainAddress, assetReceive], () => {
+        on([amountValid, onchainAddress, pair], () => {
             if (
                 sendAmount().isGreaterThan(0) &&
-                swapType() !== SwapType.Submarine &&
-                assetReceive() !== RBTC &&
+                pair().swapToCreate?.type !== SwapType.Submarine &&
+                !isEvmAsset(pair().toAsset) &&
                 onchainAddress() === ""
             ) {
                 setAddressValid(false);
@@ -129,13 +154,14 @@ const AddressInput = () => {
         <input
             ref={inputRef}
             required
+            disabled={walletControlsAddress()}
             onInput={(e) => handleInputChange(e.currentTarget)}
             type="text"
             id="onchainAddress"
             data-testid="onchainAddress"
             name="onchainAddress"
             autocomplete="off"
-            placeholder={t("onchain_address", { asset: assetReceive() })}
+            placeholder={t("onchain_address", { asset: pair().toAsset })}
             value={onchainAddress()}
         />
     );

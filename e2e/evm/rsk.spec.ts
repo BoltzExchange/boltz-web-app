@@ -2,6 +2,7 @@ import dict from "../../src/i18n/i18n";
 import { expect, test } from "../fixtures/ethereum";
 import {
     bitcoinSendToAddress,
+    cancelInvoiceLnd,
     elementsSendToAddress,
     generateBitcoinBlock,
     generateInvoiceLnd,
@@ -26,7 +27,7 @@ test.describe("EVM", () => {
         await page.goto("/");
 
         await page.locator("div[class='asset asset-LN'] div").click();
-        await page.locator("div[data-testid='select-RBTC']").click();
+        await page.getByTestId("select-RBTC").click();
 
         await page
             .getByRole("button", { name: dict.en.connect_wallet })
@@ -72,11 +73,11 @@ test.describe("EVM", () => {
                     "div[class^='asset asset-']",
                 );
                 await assetSelectors.first().click();
-                await page.locator(`div[data-testid='${sendTestId}']`).click();
+                await page.getByTestId(sendTestId).click();
 
                 // Select RBTC as receive asset
                 await assetSelectors.last().click();
-                await page.locator("div[data-testid='select-RBTC']").click();
+                await page.getByTestId("select-RBTC").click();
 
                 await page
                     .getByRole("button", {
@@ -181,14 +182,12 @@ test.describe("EVM", () => {
 
                 // Select RBTC as send asset
                 await assetSelectors.first().click();
-                await page.locator("div[data-testid='select-RBTC']").click();
+                await page.getByTestId("select-RBTC").click();
 
                 // Select receive asset (BTC is default after RBTC, so only click if L-BTC)
                 if (receiveTestId !== "select-BTC") {
                     await assetSelectors.last().click();
-                    await page
-                        .locator(`div[data-testid='${receiveTestId}']`)
-                        .click();
+                    await page.getByTestId(receiveTestId).click();
                 }
 
                 await page
@@ -259,7 +258,7 @@ test.describe("EVM", () => {
 
         const assetSelectors = page.locator("div[class^='asset asset-']");
         await assetSelectors.last().click();
-        await page.locator("div[data-testid='select-RBTC']").click();
+        await page.getByTestId("select-RBTC").click();
 
         await page
             .getByRole("button", { name: dict.en.connect_wallet, exact: true })
@@ -317,10 +316,10 @@ test.describe("EVM", () => {
 
         const assetSelectors = page.locator("div[class^='asset asset-']");
         await assetSelectors.first().click();
-        await page.locator("div[data-testid='select-RBTC']").click();
+        await page.getByTestId("select-RBTC").click();
 
         await assetSelectors.last().click();
-        await page.locator("div[data-testid='select-LN']").click();
+        await page.getByTestId("select-LN").click();
 
         await page
             .getByRole("button", { name: dict.en.connect_wallet, exact: true })
@@ -360,5 +359,90 @@ test.describe("EVM", () => {
             "div[data-status='transaction.claim.pending']",
         );
         await expect(settled.or(claimPending)).toBeVisible();
+    });
+
+    test("RBTC -> LN submarine swap shows already refunded after refresh", async ({
+        page,
+        walletClient,
+    }) => {
+        await page.goto("/");
+
+        const assetSelectors = page.locator("div[class^='asset asset-']");
+        await assetSelectors.first().click();
+        await page.getByTestId("select-RBTC").click();
+
+        await assetSelectors.last().click();
+        await page.getByTestId("select-LN").click();
+
+        await page
+            .getByRole("button", { name: dict.en.connect_wallet, exact: true })
+            .click();
+
+        const modal = page.locator("[data-testid='wallet-connect-modal']");
+        if (await modal.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await page.getByText(/metamask/i).click();
+        }
+
+        const shortAddress = walletClient.account.address.slice(0, 8);
+        await expect(page.locator(`text=${shortAddress}`)).toBeVisible({
+            timeout: 10_000,
+        });
+
+        const invoice = await generateInvoiceLnd(100000);
+        await cancelInvoiceLnd(invoice);
+
+        const invoiceInput = page.locator("textarea[data-testid='invoice']");
+        await invoiceInput.fill(invoice);
+
+        const inputSendAmount = page.locator("input[data-testid='sendAmount']");
+        await expect(inputSendAmount).not.toHaveValue("");
+
+        const buttonCreateSwap = page.locator(
+            "button[data-testid='create-swap-button']",
+        );
+        await expect(buttonCreateSwap).toBeEnabled();
+        await buttonCreateSwap.click();
+
+        await expect(
+            page.locator("div[data-status='invoice.set']"),
+        ).toBeVisible();
+
+        await page.getByRole("button", { name: "Send" }).click();
+
+        await expect(
+            page.getByText(dict.en.invoice_payment_failure),
+        ).toBeVisible({
+            timeout: 30_000,
+        });
+
+        const refundButton = page.getByRole("button", {
+            name: dict.en.refund,
+            exact: true,
+        });
+        await expect(refundButton).toBeVisible();
+        await refundButton.click();
+
+        await expect(page.getByText(dict.en.refunded)).toBeVisible({
+            timeout: 15_000,
+        });
+
+        await page.reload();
+
+        await page
+            .getByRole("button", { name: dict.en.connect_wallet, exact: true })
+            .click();
+
+        const reconnectModal = page.locator(
+            "[data-testid='wallet-connect-modal']",
+        );
+        if (
+            await reconnectModal.isVisible({ timeout: 2000 }).catch(() => false)
+        ) {
+            await page.getByText(/metamask/i).click();
+        }
+
+        await expect(page.getByText(dict.en.already_refunded)).toBeVisible({
+            timeout: 30_000,
+        });
     });
 });

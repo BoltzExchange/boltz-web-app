@@ -1,14 +1,19 @@
-import { render, screen } from "@solidjs/testing-library";
+import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import Fees from "../../src/components/Fees";
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import { Denomination, SwapType } from "../../src/consts/Enums";
+import * as web3Context from "../../src/context/Web3";
+import i18n from "../../src/i18n/i18n";
+import * as rifSigner from "../../src/rif/Signer";
+import Pair from "../../src/utils/Pair";
 import { getPairs } from "../../src/utils/boltzClient";
 import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "../../src/utils/calculate";
+import { weiToSatoshi } from "../../src/utils/rootstock";
 import {
     TestComponent,
     contextWrapper,
@@ -17,11 +22,45 @@ import {
 } from "../helper";
 import { pairs } from "../pairs";
 
+const mockUseWeb3Signer = vi.fn();
+
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 
+const setPairAssets = (fromAsset: string, toAsset: string) => {
+    signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
+};
+
 describe("Fees component", () => {
+    beforeEach(() => {
+        vi.spyOn(web3Context, "useWeb3Signer").mockImplementation(
+            () =>
+                mockUseWeb3Signer() as ReturnType<
+                    typeof web3Context.useWeb3Signer
+                >,
+        );
+        mockUseWeb3Signer.mockReturnValue({
+            signer: () => ({
+                address: "0xsigner",
+                getAddress: vi.fn().mockResolvedValue("0xsigner"),
+                provider: {
+                    getBalance: vi.fn().mockResolvedValue(1_000_000_000_000n),
+                    getFeeData: vi.fn().mockResolvedValue({
+                        gasPrice: 100_000_000n,
+                    }),
+                },
+            }),
+            getGasAbstractionSigner: vi
+                .fn()
+                .mockReturnValue({ address: "0xgas" }),
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     test("should render", () => {
         render(
             () => (
@@ -35,7 +74,7 @@ describe("Fees component", () => {
         globalSignals.setPairs(pairs);
     });
 
-    test("should recalculate limits on direction switch", () => {
+    test("should recalculate limits on direction switch", async () => {
         render(
             () => (
                 <>
@@ -47,35 +86,37 @@ describe("Fees component", () => {
         );
         globalSignals.setPairs(pairs);
 
-        signals.setAssetReceive(BTC);
-        signals.setAssetSend(LN);
+        setPairAssets(LN, BTC);
 
-        expect(pairs.submarine[BTC][BTC].limits.minimal).toEqual(
-            signals.minimum(),
-        );
-        expect(pairs.submarine[BTC][BTC].limits.maximal).toEqual(
-            signals.maximum(),
-        );
+        await waitFor(() => {
+            expect(signals.minimum()).toEqual(
+                pairs.submarine[BTC][BTC].limits.minimal,
+            );
+            expect(signals.maximum()).toEqual(
+                pairs.submarine[BTC][BTC].limits.maximal,
+            );
+        });
 
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(BTC, LN);
 
-        expect(signals.minimum()).toEqual(
-            calculateSendAmount(
-                BigNumber(pairs.submarine[BTC][BTC].limits.minimal),
-                signals.boltzFee(),
-                signals.minerFee(),
-                SwapType.Submarine,
-            ).toNumber(),
-        );
-        expect(signals.maximum()).toEqual(
-            calculateSendAmount(
-                BigNumber(pairs.submarine[BTC][BTC].limits.maximal),
-                signals.boltzFee(),
-                signals.minerFee(),
-                SwapType.Submarine,
-            ).toNumber(),
-        );
+        await waitFor(() => {
+            expect(signals.minimum()).toEqual(
+                calculateSendAmount(
+                    BigNumber(pairs.submarine[BTC][BTC].limits.minimal),
+                    signals.boltzFee(),
+                    signals.minerFee(),
+                    SwapType.Submarine,
+                ).toNumber(),
+            );
+            expect(signals.maximum()).toEqual(
+                calculateSendAmount(
+                    BigNumber(pairs.submarine[BTC][BTC].limits.maximal),
+                    signals.boltzFee(),
+                    signals.minerFee(),
+                    SwapType.Submarine,
+                ).toNumber(),
+            );
+        });
     });
 
     test("should increase the miner fee for reverse swaps by 1 when sending to an unconfidential Liquid address", () => {
@@ -89,8 +130,7 @@ describe("Fees component", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(LN);
-        signals.setAssetReceive(LBTC);
+        setPairAssets(LN, LBTC);
         signals.setAddressValid(true);
         signals.setOnchainAddress(
             "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",
@@ -114,8 +154,7 @@ describe("Fees component", () => {
         );
 
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(BTC);
-        signals.setAssetReceive(LBTC);
+        setPairAssets(BTC, LBTC);
         signals.setAddressValid(true);
         signals.setOnchainAddress(
             "ert1q2vf850cshpedhvn9x0lv33j8az4ela04afuzp0",
@@ -127,7 +166,7 @@ describe("Fees component", () => {
         );
     });
 
-    test("should apply minimalBatched limit for liquid submarine swaps", () => {
+    test("should apply minimalBatched limit for liquid submarine swaps", async () => {
         render(
             () => (
                 <>
@@ -138,10 +177,99 @@ describe("Fees component", () => {
             { wrapper: contextWrapper },
         );
         globalSignals.setPairs(pairs);
-        signals.setAssetSend(LBTC);
-        signals.setAssetReceive(LN);
+        setPairAssets(LBTC, LN);
         signals.setSendAmount(BigNumber(41));
-        expect(signals.minimum()).toEqual(41);
+        await waitFor(() => {
+            expect(signals.minimum()).toEqual(41);
+        });
+    });
+
+    test("should show the rif relay message only for rif relay gas abstraction", async () => {
+        vi.spyOn(rifSigner, "getSmartWalletAddress").mockResolvedValue({
+            address: "0xsmartwallet",
+            nonce: 0n,
+        });
+
+        mockUseWeb3Signer.mockReturnValueOnce({
+            signer: () => ({
+                address: "0xsigner",
+                getAddress: vi.fn().mockResolvedValue("0xsigner"),
+                provider: {
+                    getBalance: vi.fn().mockResolvedValue(0n),
+                    getFeeData: vi.fn().mockResolvedValue({
+                        gasPrice: 100_000_000n,
+                    }),
+                },
+            }),
+            getGasAbstractionSigner: vi
+                .fn()
+                .mockReturnValue({ address: "0xgas" }),
+        });
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setNotification("");
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, RBTC);
+
+        const baseMinerFee =
+            pairs.chain[BTC][RBTC].fees.minerFees.server +
+            pairs.chain[BTC][RBTC].fees.minerFees.user.claim;
+        const gasAbstractionExtraCost = Number(
+            weiToSatoshi(100_000_000n * 157_000n),
+        );
+
+        await waitFor(() => {
+            expect(globalSignals.notification()).toEqual(i18n.en.rif_extra_fee);
+            expect(signals.minerFee()).toEqual(
+                baseMinerFee + gasAbstractionExtraCost,
+            );
+        });
+    });
+
+    test("should not show the rif relay message for signer gas abstraction", async () => {
+        const pairsWithUsdt0 = {
+            ...pairs,
+            chain: {
+                ...pairs.chain,
+                BTC: {
+                    ...pairs.chain.BTC,
+                    USDT0: {
+                        ...pairs.chain.BTC.RBTC,
+                        hash: "usdt0-pair-hash",
+                    },
+                },
+            },
+        };
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+        globalSignals.setNotification("");
+        globalSignals.setPairs(pairsWithUsdt0);
+        setPairAssets(BTC, USDT0);
+
+        const baseMinerFee =
+            pairsWithUsdt0.chain[BTC][USDT0].fees.minerFees.server +
+            pairsWithUsdt0.chain[BTC][USDT0].fees.minerFees.user.claim;
+
+        await waitFor(() => {
+            expect(signals.minerFee()).toEqual(baseMinerFee);
+        });
+        expect(globalSignals.notification()).toEqual("");
     });
 
     test.each`
@@ -182,8 +310,7 @@ describe("Fees component", () => {
             );
 
             globalSignals.setDenomination(Denomination.Btc);
-            signals.setAssetSend(BTC);
-            signals.setAssetReceive(LN);
+            setPairAssets(BTC, LN);
             signals.setSendAmount(BigNumber(sendAmount));
             signals.setReceiveAmount(
                 calculateReceiveAmount(

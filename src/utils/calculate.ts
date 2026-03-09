@@ -10,6 +10,19 @@ const bigFloor = (big: BigNumber): BigNumber => {
     return big.integerValue(BigNumber.ROUND_FLOOR);
 };
 
+const slippageBpsScale = 10_000;
+const slippageBpsScaleBigInt = 10_000n;
+
+export const calculateAmountWithSlippage = (
+    amount: bigint,
+    slippage: number,
+): bigint => {
+    const slippageBps = BigInt(Math.round(slippage * slippageBpsScale));
+    const numerator = amount * (slippageBpsScaleBigInt + slippageBps);
+
+    return (numerator + slippageBpsScaleBigInt - 1n) / slippageBpsScaleBigInt;
+};
+
 export const calculateReceiveAmount = (
     sendAmount: BigNumber,
     boltzFee: number,

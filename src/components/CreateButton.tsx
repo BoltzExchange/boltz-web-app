@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import type { Wallet } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { BTC, RBTC } from "../consts/Assets";
+import { BTC, RBTC, USDT0, isEvmAsset } from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -13,6 +14,7 @@ import type { Signer } from "../context/Web3";
 import { customDerivationPathRdns, useWeb3Signer } from "../context/Web3";
 import { type DictKey } from "../i18n/i18n";
 import { GasNeededToClaim, getSmartWalletAddress } from "../rif/Signer";
+import Pair, { type EncodedHop, HopsPosition } from "../utils/Pair";
 import type { ChainPairTypeTaproot } from "../utils/boltzClient";
 import {
     fetchBip21Invoice,
@@ -28,7 +30,7 @@ import {
 } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import { coalesceLn, getDestinationAddress, getPair } from "../utils/helper";
+import { getDestinationAddress, getPair } from "../utils/helper";
 import {
     InvoiceType,
     decodeInvoice,
@@ -38,8 +40,9 @@ import {
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
-import type { SomeSwap } from "../utils/swapCreator";
 import {
+    GasAbstractionType,
+    type SomeSwap,
     createChain,
     createReverse,
     createSubmarine,
@@ -58,36 +61,60 @@ export const enum BackupDone {
 
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
+    assetSend: Accessor<string>,
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
-): Promise<{ useRif: boolean; gasPrice: bigint; claimAddress: string }> => {
-    if (assetReceive() === RBTC && signer() !== undefined) {
-        const [balance, gasPrice] = await Promise.all([
-            signer().provider.getBalance(await signer().getAddress()),
-            signer()
-                .provider.getFeeData()
-                .then((data) => data.gasPrice),
-        ]);
-        log.debug("RSK balance", balance);
+    getGasAbstractionSigner: (asset: string) => Wallet,
+): Promise<{
+    gasAbstraction: GasAbstractionType;
+    gasPrice: bigint;
+    claimAddress: string;
+}> => {
+    if (isEvmAsset(assetReceive()) || isEvmAsset(assetSend())) {
+        if (assetReceive() === RBTC && signer() !== undefined) {
+            const [balance, gasPrice] = await Promise.all([
+                signer().provider.getBalance(await signer().getAddress()),
+                signer()
+                    .provider.getFeeData()
+                    .then((data) => data.gasPrice),
+            ]);
+            log.debug("RSK balance", balance);
 
-        const balanceNeeded = gasPrice * GasNeededToClaim;
-        log.debug("RSK balance needed", balanceNeeded);
+            const balanceNeeded = gasPrice * GasNeededToClaim;
+            log.debug("RSK balance needed", balanceNeeded);
 
-        if (balance <= balanceNeeded) {
-            log.info("Using RIF smart wallet as claim address");
+            if (balance <= balanceNeeded) {
+                log.info("Using RIF smart wallet as claim address");
+                return {
+                    gasPrice,
+                    gasAbstraction: GasAbstractionType.RifRelay,
+                    claimAddress: (await getSmartWalletAddress(signer()))
+                        .address,
+                };
+            } else {
+                log.info("RIF smart wallet not needed");
+            }
+        } else if (assetSend() !== RBTC) {
+            const evmSide = isEvmAsset(assetSend())
+                ? assetSend()
+                : assetReceive();
+            const gasSigner = getGasAbstractionSigner(evmSide);
+            log.debug("Using gas abstraction signer", gasSigner.address);
             return {
-                gasPrice,
-                useRif: true,
-                claimAddress: (await getSmartWalletAddress(signer())).address,
+                gasPrice: 0n,
+                gasAbstraction: GasAbstractionType.Signer,
+                claimAddress:
+                    assetReceive() !== USDT0
+                        ? onchainAddress()
+                        : gasSigner.address,
             };
-        } else {
-            log.info("RIF smart wallet not needed");
         }
     }
 
+    log.debug("Using no gas abstraction");
     return {
         gasPrice: 0n,
-        useRif: false,
+        gasAbstraction: GasAbstractionType.None,
         claimAddress: onchainAddress(),
     };
 };
@@ -108,18 +135,17 @@ const CreateButton = () => {
         deriveKey,
         rescueFileBackupDone,
         rescueFile,
+        regularPairs,
     } = useGlobalContext();
     const {
+        pair,
+        setPair,
         invoice,
         lnurl,
-        assetSend,
-        assetReceive,
         onchainAddress,
         receiveAmount,
-        swapType,
         sendAmount,
         amountValid,
-        pairValid,
         setInvoice,
         setInvoiceValid,
         setLnurl,
@@ -133,14 +159,18 @@ const CreateButton = () => {
         invoiceError,
         bolt12Offer,
         setBolt12Offer,
-        setAssetReceive,
-        setSwapType,
         setSendAmount,
         setReceiveAmount,
         bolt12Loading,
+        quoteLoading,
     } = useCreateContext();
-    const { getEtherSwap, signer, providers, walletConnected } =
-        useWeb3Signer();
+    const {
+        signer,
+        providers,
+        getEtherSwap,
+        getErc20Swap,
+        getGasAbstractionSigner,
+    } = useWeb3Signer();
 
     const [buttonDisable, setButtonDisable] = createSignal(false);
     const [loading, setLoading] = createSignal(false);
@@ -151,6 +181,10 @@ const CreateButton = () => {
     const [originalDestination, setOriginalDestination] = createSignal<
         string | undefined
     >(undefined);
+
+    const swapType = () => pair().swapToCreate?.type;
+    const assetSend = () => pair().fromAsset;
+    const assetReceive = () => pair().toAsset;
 
     createEffect(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
@@ -164,17 +198,14 @@ const CreateButton = () => {
                 addressValid,
                 invoiceValid,
                 invoiceError,
-                pairValid,
-                swapType,
+                pair,
                 lnurl,
                 online,
                 minimum,
-                assetReceive,
                 bolt12Offer,
                 denomination,
                 sendAmount,
                 receiveAmount,
-                walletConnected,
             ],
             () => {
                 setButtonDisable(false);
@@ -182,14 +213,14 @@ const CreateButton = () => {
                     setButtonLabel({ key: "api_offline" });
                     return;
                 }
-                if (!pairValid()) {
+                if (!pair().isRoutable) {
                     setButtonLabel({ key: "invalid_pair" });
                     return;
                 }
 
                 const isChainSwapWithZeroAmount = () =>
                     swapType() === SwapType.Chain &&
-                    assetSend() !== RBTC &&
+                    !isEvmAsset(assetSend()) &&
                     sendAmount().isZero();
 
                 const isSubmarineSwapInvoiceValid = () =>
@@ -212,6 +243,7 @@ const CreateButton = () => {
                                 BigNumber(lessThanMin ? minimum() : maximum()),
                                 denomination(),
                                 separator(),
+                                assetSend(),
                             ),
                             denomination: formatDenomination(
                                 denomination(),
@@ -222,14 +254,6 @@ const CreateButton = () => {
                     return;
                 }
 
-                if (
-                    [assetSend(), assetReceive()].includes(RBTC) &&
-                    !walletConnected()
-                ) {
-                    setButtonLabel({ key: "please_connect_wallet" });
-                    setButtonDisable(true);
-                    return;
-                }
                 if (swapType() !== SwapType.Submarine) {
                     if (!addressValid()) {
                         setButtonLabel({
@@ -276,6 +300,10 @@ const CreateButton = () => {
         );
     };
 
+    const getOriginalDestination = () =>
+        originalDestination() ||
+        (isEvmAsset(assetReceive()) ? onchainAddress() : undefined);
+
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
             try {
@@ -307,6 +335,7 @@ const CreateButton = () => {
                                             BigNumber(satsAmount),
                                             denomination(),
                                             separator(),
+                                            BTC,
                                         ),
                                         denomination: formatDenomination(
                                             denomination(),
@@ -381,11 +410,11 @@ const CreateButton = () => {
 
     const createSwap = async (
         claimAddress: string,
-        useRif: boolean,
+        gasAbstraction: GasAbstractionType,
     ): Promise<boolean> => {
         if (
             !rescueFileBackupDone() &&
-            assetSend() !== RBTC &&
+            !isEvmAsset(assetSend()) &&
             swapType() !== SwapType.Reverse
         ) {
             navigate("/backup");
@@ -394,17 +423,26 @@ const CreateButton = () => {
 
         try {
             let data: SomeSwap;
+            let hops: EncodedHop[];
+            let hopsPosition: HopsPosition | undefined;
+
             switch (swapType()) {
                 case SwapType.Submarine: {
                     const createSubmarineSwap = async () => {
-                        data = await createSubmarine(
-                            pairs(),
-                            coalesceLn(assetSend()),
-                            coalesceLn(assetReceive()),
+                        const creationData = await pair().creationData(
                             sendAmount(),
-                            receiveAmount(),
+                            pair().minerFees,
+                        );
+                        hops = creationData.hops;
+                        hopsPosition = creationData.hopsPosition;
+                        data = await createSubmarine(
+                            creationData.from,
+                            creationData.to,
+                            creationData.sendAmount,
+                            creationData.receiveAmount,
                             invoice(),
-                            useRif,
+                            creationData.pairHash,
+                            gasAbstraction,
                             newKey,
                             originalDestination(),
                         );
@@ -456,7 +494,7 @@ const CreateButton = () => {
                             )
                         ) {
                             log.debug(
-                                `BIP21 amount ${bip21Amount.toString()} is less than minimal ${chainPair.limits.minimal} for chain swap. Creating submarine swap.`,
+                                `BIP21 amount ${bip21Amount.toString()} is less than minimal ${chainPair?.limits?.minimal ?? 0} for chain swap. Creating submarine swap.`,
                             );
                             await createSubmarineSwap();
                             break;
@@ -495,21 +533,27 @@ const CreateButton = () => {
                             break;
                         }
 
-                        setAssetReceive(bip21Asset);
+                        setPair(
+                            new Pair(
+                                pairs(),
+                                assetSend(),
+                                bip21Asset,
+                                regularPairs(),
+                            ),
+                        );
                         setOnchainAddress(chainAddress);
-                        setSwapType(SwapType.Chain);
                         setReceiveAmount(btcToSat(bip21Amount));
                         setSendAmount(mrhSendAmount);
 
                         log.debug("Creating MRH swap");
                         const chainSwap = await createChain(
-                            pairs(),
                             assetSend(),
-                            assetReceive(),
+                            bip21Asset,
                             sendAmount(),
                             receiveAmount(),
                             onchainAddress(),
-                            useRif,
+                            chainPair.hash,
+                            gasAbstraction,
                             rescueFile(),
                             newKey,
                             originalDestination(),
@@ -527,37 +571,58 @@ const CreateButton = () => {
                     }
                 }
 
-                case SwapType.Reverse:
+                case SwapType.Reverse: {
+                    const creationData = await pair().creationData(
+                        sendAmount(),
+                        pair().minerFees,
+                    );
+                    hops = creationData.hops;
+                    hopsPosition = creationData.hopsPosition;
                     data = await createReverse(
-                        pairs(),
-                        coalesceLn(assetSend()),
-                        coalesceLn(assetReceive()),
-                        sendAmount(),
-                        receiveAmount(),
+                        creationData.from,
+                        creationData.to,
+                        creationData.sendAmount,
+                        creationData.receiveAmount,
                         claimAddress,
-                        useRif,
+                        creationData.pairHash,
+                        gasAbstraction,
                         rescueFile(),
                         newKey,
+                        getOriginalDestination(),
                     );
                     break;
+                }
 
-                case SwapType.Chain:
-                    data = await createChain(
-                        pairs(),
-                        assetSend(),
-                        assetReceive(),
+                case SwapType.Chain: {
+                    const creationData = await pair().creationData(
                         sendAmount(),
-                        receiveAmount(),
+                        pair().minerFees,
+                    );
+                    hops = creationData.hops;
+                    hopsPosition = creationData.hopsPosition;
+                    data = await createChain(
+                        creationData.from,
+                        creationData.to,
+                        creationData.sendAmount,
+                        creationData.receiveAmount,
                         claimAddress,
-                        useRif,
+                        creationData.pairHash,
+                        gasAbstraction,
                         rescueFile(),
                         newKey,
+                        getOriginalDestination(),
                     );
                     break;
+                }
             }
 
             try {
-                await validateResponse(data, deriveKey, getEtherSwap);
+                await validateResponse(
+                    data,
+                    deriveKey,
+                    getEtherSwap,
+                    getErc20Swap,
+                );
             } catch (e) {
                 const error = e instanceof Error ? e : new Error(String(e));
                 log.error(
@@ -575,6 +640,17 @@ const CreateButton = () => {
 
             await setSwapStorage({
                 ...data,
+                dex:
+                    hopsPosition !== undefined
+                        ? {
+                              hops,
+                              position: hopsPosition,
+                              quoteAmount:
+                                  hopsPosition === HopsPosition.After
+                                      ? Number(receiveAmount())
+                                      : Number(sendAmount()),
+                          }
+                        : undefined,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
@@ -623,15 +699,19 @@ const CreateButton = () => {
                 await fetchInvoice();
             }
 
-            const { useRif, claimAddress } = await getClaimAddress(
+            const { gasAbstraction, claimAddress } = await getClaimAddress(
                 assetReceive,
+                assetSend,
                 signer,
                 onchainAddress,
+                getGasAbstractionSigner,
             );
 
             if (!valid()) return;
 
-            await createSwap(claimAddress, useRif);
+            log.debug("Creating with EVM address", claimAddress);
+
+            await createSwap(claimAddress, gasAbstraction);
         } catch (e) {
             log.error("Error creating swap", e);
             notify("error", e);
@@ -662,13 +742,14 @@ const CreateButton = () => {
                 !(valid() || validWayToFetchInvoice()) ||
                 buttonDisable() ||
                 loading() ||
+                quoteLoading() ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&
                     lnurl() === "")
             }
             onClick={buttonClick}>
-            {loading() || bolt12Loading() ? (
+            {loading() || bolt12Loading() || quoteLoading() ? (
                 <LoadingSpinner class="inner-spinner" />
             ) : (
                 getButtonLabel(buttonLabel())

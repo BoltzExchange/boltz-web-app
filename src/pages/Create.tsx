@@ -1,6 +1,13 @@
 import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
-import { Show, createEffect, createSignal, on, onMount } from "solid-js";
+import {
+    Show,
+    createEffect,
+    createSignal,
+    on,
+    onCleanup,
+    onMount,
+} from "solid-js";
 import FiatAmount from "src/components/FiatAmount";
 import { useWeb3Signer } from "src/context/Web3";
 
@@ -16,18 +23,23 @@ import InvoiceInput from "../components/InvoiceInput";
 import LoadingSpinner from "../components/LoadingSpinner";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
+import SwapLimits from "../components/SwapLimits";
 import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { LN, RBTC, btcChains, evmChains } from "../consts/Assets";
-import { Denomination, Side, SwapType } from "../consts/Enums";
+import {
+    AssetKind,
+    LN,
+    RBTC,
+    btcChains,
+    evmChains,
+    isEvmAsset,
+} from "../consts/Assets";
+import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import {
-    calculateReceiveAmount,
-    calculateSendAmount,
-} from "../utils/calculate";
+import Pair, { RequiredInput } from "../utils/Pair";
 import {
     calculateDigits,
     convertAmount,
@@ -37,6 +49,8 @@ import {
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
 import ErrorWasm from "./ErrorWasm";
+
+// TODO: formatted amounts should be *instant* and not depend on quote being calculated
 
 const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined;
@@ -61,9 +75,8 @@ const Create = () => {
         fetchBtcPrice,
     } = useGlobalContext();
     const {
-        swapType,
-        assetSend,
-        assetReceive,
+        pair,
+        setPair,
         assetSelect,
         assetSelected,
         invoiceValid,
@@ -83,15 +96,55 @@ const Create = () => {
         setAmountValid,
         boltzFee,
         minerFee,
-        pairValid,
-        setAssetSend,
-        setAssetReceive,
         onchainAddress,
         lnurl,
         bolt12Offer,
+        setQuoteLoading,
     } = useCreateContext();
     const { signer } = useWeb3Signer();
     const navigate = useNavigate();
+
+    let quoteDebounceTimeout: number | undefined;
+    let quoteRequestId = 0;
+
+    const clearQuoteDebounce = () => {
+        if (quoteDebounceTimeout !== undefined) {
+            window.clearTimeout(quoteDebounceTimeout);
+            quoteDebounceTimeout = undefined;
+        }
+    };
+
+    const loadingGuard = (fn: () => Promise<void>) => {
+        if (!pair().needsNetworkForQuote) {
+            ++quoteRequestId;
+            clearQuoteDebounce();
+            setQuoteLoading(false);
+            void fn();
+            return;
+        }
+
+        const requestId = ++quoteRequestId;
+        setQuoteLoading(true);
+        clearQuoteDebounce();
+
+        quoteDebounceTimeout = window.setTimeout(() => {
+            quoteDebounceTimeout = undefined;
+            void (async () => {
+                try {
+                    await fn();
+                } finally {
+                    if (requestId === quoteRequestId) {
+                        setQuoteLoading(false);
+                    }
+                }
+            })();
+        }, 500);
+    };
+
+    onCleanup(() => {
+        clearQuoteDebounce();
+        setQuoteLoading(false);
+    });
 
     // if btc and amount > 10, switch to sat
     // user failed to notice the non satoshi denomination
@@ -119,23 +172,28 @@ const Create = () => {
             .trim()
             .replaceAll(" ", "")
             .replaceAll(",", ".");
-        if (isEmptyAmount(amount)) {
-            resetAmounts();
+
+        loadingGuard(async () => {
+            if (isEmptyAmount(amount)) {
+                resetAmounts();
+                validateAmount();
+                return;
+            }
+            changeDenomination(amount);
+            const satAmount = convertAmount(
+                pair().toAsset,
+                BigNumber(amount),
+                denomination(),
+            );
+            const sendAmount = await pair().calculateSendAmount(
+                satAmount,
+                minerFee(),
+            );
+            setAmountChanged(Side.Receive);
+            setReceiveAmount(satAmount);
+            setSendAmount(sendAmount);
             validateAmount();
-            return;
-        }
-        changeDenomination(amount);
-        const satAmount = convertAmount(BigNumber(amount), denomination());
-        const sendAmount = calculateSendAmount(
-            satAmount,
-            boltzFee(),
-            minerFee(),
-            swapType(),
-        );
-        setAmountChanged(Side.Receive);
-        setReceiveAmount(satAmount);
-        setSendAmount(sendAmount);
-        validateAmount();
+        });
     };
 
     const changeSendAmount = (evt: InputEvent) => {
@@ -144,23 +202,28 @@ const Create = () => {
             .trim()
             .replaceAll(" ", "")
             .replaceAll(",", ".");
-        if (isEmptyAmount(amount)) {
-            resetAmounts();
+
+        loadingGuard(async () => {
+            if (isEmptyAmount(amount)) {
+                resetAmounts();
+                validateAmount();
+                return;
+            }
+            changeDenomination(amount);
+            const satAmount = convertAmount(
+                pair().fromAsset,
+                BigNumber(amount),
+                denomination(),
+            );
+            const receiveAmount = await pair().calculateReceiveAmount(
+                satAmount,
+                minerFee(),
+            );
+            setAmountChanged(Side.Send);
+            setSendAmount(satAmount);
+            setReceiveAmount(receiveAmount);
             validateAmount();
-            return;
-        }
-        changeDenomination(amount);
-        const satAmount = convertAmount(BigNumber(amount), denomination());
-        const receiveAmount = calculateReceiveAmount(
-            satAmount,
-            boltzFee(),
-            minerFee(),
-            swapType(),
-        );
-        setAmountChanged(Side.Send);
-        setSendAmount(satAmount);
-        setReceiveAmount(receiveAmount);
-        validateAmount();
+        });
     };
 
     const validateInput = (evt: KeyboardEvent) => {
@@ -231,11 +294,7 @@ const Create = () => {
         setCustomValidity("", false);
 
         const amount = Number(sendAmount());
-        if (
-            swapType() === SwapType.Chain &&
-            assetSend() !== RBTC &&
-            amount === 0
-        ) {
+        if (pair().canZeroAmount && amount === 0) {
             setAmountValid(true);
             return;
         }
@@ -248,8 +307,12 @@ const Create = () => {
                     BigNumber(lessThanMin ? minimum() : maximum()),
                     denomination(),
                     separator(),
+                    pair().fromAsset,
                 ),
-                denomination: formatDenomination(denomination(), assetSend()),
+                denomination: formatDenomination(
+                    denomination(),
+                    pair().fromAsset,
+                ),
             };
             const label = lessThanMin ? "minimum_amount" : "maximum_amount";
             const errorMsg = t(label, params);
@@ -260,16 +323,14 @@ const Create = () => {
         setAmountValid(true);
     };
 
-    const setAmount = (amount: number) => {
+    const setAmount = async (amount: number) => {
+        setAmountChanged(Side.Send);
         setSendAmount(BigNumber(amount));
-        setReceiveAmount(
-            calculateReceiveAmount(
-                BigNumber(amount),
-                boltzFee(),
-                minerFee(),
-                swapType(),
-            ),
+        const receiveAmount = await pair().calculateReceiveAmount(
+            BigNumber(amount),
+            minerFee(),
         );
+        setReceiveAmount(receiveAmount);
         validateAmount();
         sendAmountRef?.focus();
     };
@@ -280,12 +341,13 @@ const Create = () => {
         // once the backup is done
         if (
             creatingSwap() &&
-            ((onchainAddress() === "" && btcChains.includes(assetReceive())) ||
+            ((onchainAddress() === "" && btcChains.includes(pair().toAsset)) ||
                 (signer() === undefined &&
-                    evmChains.includes(assetReceive())) ||
+                    (evmChains.includes(pair().toAsset) ||
+                        evmChains.includes(pair().fromAsset))) ||
                 (lnurl() === "" &&
                     bolt12Offer() === undefined &&
-                    assetReceive() === LN))
+                    pair().toAsset === LN))
         ) {
             navigate("/swap");
             return;
@@ -295,27 +357,26 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, swapType, assetReceive], () => {
-            if (amountChanged() === Side.Receive) {
-                setSendAmount(
-                    calculateSendAmount(
-                        receiveAmount(),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
-                );
-            } else {
-                setReceiveAmount(
-                    calculateReceiveAmount(
-                        sendAmount(),
-                        boltzFee(),
-                        minerFee(),
-                        swapType(),
-                    ),
-                );
-            }
-            if (receiveAmount().isGreaterThan(0)) validateAmount();
+        on([boltzFee, minerFee, pair], () => {
+            loadingGuard(async () => {
+                if (amountChanged() === Side.Receive) {
+                    setSendAmount(
+                        await pair().calculateSendAmount(
+                            receiveAmount(),
+                            minerFee(),
+                        ),
+                    );
+                } else {
+                    setReceiveAmount(
+                        await pair().calculateReceiveAmount(
+                            sendAmount(),
+                            minerFee(),
+                        ),
+                    );
+                }
+
+                validateAmount();
+            });
         }),
     );
 
@@ -337,6 +398,7 @@ const Create = () => {
                     BigNumber(rAmount),
                     denomination(),
                     separator(),
+                    pair().toAsset,
                 ).toString(),
             );
         } else {
@@ -349,6 +411,7 @@ const Create = () => {
                     BigNumber(sAmount),
                     denomination(),
                     separator(),
+                    pair().fromAsset,
                 ).toString(),
             );
         } else {
@@ -356,14 +419,36 @@ const Create = () => {
         }
     });
 
-    createEffect(() => {
-        if (searchParams.sendAsset) {
-            setAssetSend(searchParams.sendAsset as string);
-        }
-        if (searchParams.receiveAsset) {
-            setAssetReceive(searchParams.receiveAsset as string);
-        }
-    });
+    createEffect(
+        on(
+            [() => searchParams.sendAsset, () => searchParams.receiveAsset],
+            ([sendAsset, receiveAsset]) => {
+                const nextSendAsset = Array.isArray(sendAsset)
+                    ? sendAsset[0]
+                    : sendAsset;
+                const nextReceiveAsset = Array.isArray(receiveAsset)
+                    ? receiveAsset[0]
+                    : receiveAsset;
+
+                if (!nextSendAsset && !nextReceiveAsset) return;
+
+                setPair((current) => {
+                    const fromAsset = nextSendAsset ?? current.fromAsset;
+                    const toAsset = nextReceiveAsset ?? current.toAsset;
+
+                    if (
+                        fromAsset === current.fromAsset &&
+                        toAsset === current.toAsset
+                    ) {
+                        return current;
+                    }
+
+                    return new Pair(current.pairs, fromAsset, toAsset);
+                });
+            },
+            { defer: true },
+        ),
+    );
 
     // validate amounts when invoice is valid, because we
     // set the amount based on invoice amount if amount is 0
@@ -377,6 +462,15 @@ const Create = () => {
             validateAmount();
         }
     });
+
+    // Re-validate when min/max change (they are set asynchronously)
+    createEffect(
+        on([minimum, maximum], () => {
+            if (sendAmount().isGreaterThan(0)) {
+                validateAmount();
+            }
+        }),
+    );
 
     createEffect(() => {
         void fetchBtcPrice();
@@ -401,40 +495,17 @@ const Create = () => {
                     <SettingsCog />
                     <h2 data-testid="create-swap-title">{t("create_swap")}</h2>
                     {t("create_swap_subline")} <br />
-                    <span class="swap-limits">
-                        <span>
-                            {t("send")} {t("min")}:
-                            <span
-                                onClick={() => setAmount(minimum())}
-                                class="btn-small btn-light">
-                                {formatAmount(
-                                    BigNumber(minimum()),
-                                    denomination(),
-                                    separator(),
-                                )}
-                            </span>
-                            <span
-                                class="denominator"
-                                data-denominator={denomination()}
-                            />
-                        </span>
-                        <span>
-                            {t("max")}:
-                            <span
-                                onClick={() => setAmount(maximum())}
-                                class="btn-small btn-light">
-                                {formatAmount(
-                                    BigNumber(maximum()),
-                                    denomination(),
-                                    separator(),
-                                )}
-                            </span>
-                            <span
-                                class="denominator"
-                                data-denominator={denomination()}
-                            />
-                        </span>
-                    </span>
+                    <SwapLimits
+                        asset={pair().fromAsset}
+                        denomination={denomination()}
+                        maximum={maximum()}
+                        maximumLabel={t("max")}
+                        minimum={minimum()}
+                        minimumLabel={t("min")}
+                        onSelectAmount={setAmount}
+                        sendLabel={t("send")}
+                        separator={separator()}
+                    />
                     <Show when={config.isPro}>
                         <Accordion
                             title={t("swap_opportunities_accordion")}
@@ -447,13 +518,17 @@ const Create = () => {
                                 regularPairs={regularPairs()}
                                 onSelect={(opportunity) => {
                                     if (
-                                        assetSend() !== opportunity.assetSend ||
-                                        assetReceive() !==
+                                        pair().fromAsset !==
+                                            opportunity.assetSend ||
+                                        pair().toAsset !==
                                             opportunity.assetReceive
                                     ) {
-                                        setAssetSend(opportunity.assetSend);
-                                        setAssetReceive(
-                                            opportunity.assetReceive,
+                                        setPair(
+                                            new Pair(
+                                                pair().pairs,
+                                                opportunity.assetSend,
+                                                opportunity.assetReceive,
+                                            ),
                                         );
                                     }
                                     setIsAccordionOpen(false);
@@ -463,7 +538,10 @@ const Create = () => {
                     </Show>
                     <div class="icons">
                         <div>
-                            <Asset side={Side.Send} signal={assetSend} />
+                            <Asset
+                                side={Side.Send}
+                                signal={() => pair().fromAsset}
+                            />
                             <div
                                 class={`${showFiatAmount() ? "input-with-label" : ""}`}>
                                 <input
@@ -490,6 +568,7 @@ const Create = () => {
                                     onInput={(e) => changeSendAmount(e)}
                                 />
                                 <FiatAmount
+                                    asset={() => pair().fromAsset}
                                     amount={BigNumber(sendAmount()).toNumber()}
                                     variant="label"
                                     for="sendAmount"
@@ -498,7 +577,10 @@ const Create = () => {
                         </div>
                         <Reverse />
                         <div>
-                            <Asset side={Side.Receive} signal={assetReceive} />
+                            <Asset
+                                side={Side.Receive}
+                                signal={() => pair().toAsset}
+                            />
                             <div
                                 class={`${showFiatAmount() ? "input-with-label" : ""}`}>
                                 <input
@@ -524,6 +606,7 @@ const Create = () => {
                                     onInput={(e) => changeReceiveAmount(e)}
                                 />
                                 <FiatAmount
+                                    asset={() => pair().toAsset}
                                     amount={BigNumber(
                                         receiveAmount(),
                                     ).toNumber()}
@@ -537,23 +620,57 @@ const Create = () => {
                     <hr class="spacer" />
                     <Show
                         when={
-                            swapType() !== SwapType.Submarine &&
-                            assetReceive() !== RBTC
+                            (pair().requiredInput === RequiredInput.Address ||
+                                (pair().requiredInput ===
+                                    RequiredInput.Unknown &&
+                                    pair().toAsset !== LN)) &&
+                            config.assets?.[pair().toAsset]?.type ===
+                                AssetKind.UTXO
                         }>
                         <AddressInput />
                     </Show>
-                    <Show when={swapType() === SwapType.Submarine}>
+                    <Show
+                        when={
+                            pair().requiredInput === RequiredInput.Invoice ||
+                            (pair().requiredInput === RequiredInput.Unknown &&
+                                pair().toAsset === LN)
+                        }>
                         <Show when={webln()}>
                             <WeblnButton />
                             <hr class="spacer" />
                         </Show>
                         <InvoiceInput />
                     </Show>
-                    <Show when={isMobile() && assetReceive() !== RBTC}>
+                    <Show
+                        when={
+                            isMobile() &&
+                            config.assets?.[pair().toAsset]?.type ===
+                                AssetKind.UTXO
+                        }>
                         <QrScan />
                     </Show>
-                    <Show when={[assetSend(), assetReceive()].includes(RBTC)}>
-                        <ConnectWallet disabled={() => !pairValid()} />
+                    <Show
+                        when={[pair().fromAsset, pair().toAsset].some(
+                            isEvmAsset,
+                        )}>
+                        <ConnectWallet
+                            asset={
+                                isEvmAsset(pair().fromAsset)
+                                    ? pair().fromAsset
+                                    : pair().toAsset
+                            }
+                            syncAddress={isEvmAsset(pair().toAsset)}
+                            disabled={() => !pair().isRoutable}
+                        />
+                        {/* We have no gas abstraction for RBTC */}
+                        <Show
+                            when={
+                                isEvmAsset(pair().toAsset) &&
+                                pair().toAsset !== RBTC
+                            }>
+                            <hr class="spacer" />
+                            <AddressInput />
+                        </Show>
                         <hr class="spacer" />
                     </Show>
                     <CreateButton />

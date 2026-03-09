@@ -101,13 +101,15 @@ describe("validate responses", () => {
         `*/
             "$desc",
             async ({ valid, contractCode, swap }) => {
+                const contract = getEtherSwap(contractCode);
                 const promise = validateResponse(
                     swap,
                     () =>
                         ECPair.fromPrivateKey(
                             hex.decode(swap.refundPrivateKey),
                         ),
-                    getEtherSwap(contractCode),
+                    contract,
+                    contract,
                 );
                 if (valid) {
                     await expect(promise).resolves.toBeUndefined();
@@ -202,6 +204,7 @@ describe("validate responses", () => {
                     swap,
                     () =>
                         ECPair.fromPrivateKey(hex.decode(swap.claimPrivateKey)),
+                    contract,
                     contract,
                 );
                 if (valid) {

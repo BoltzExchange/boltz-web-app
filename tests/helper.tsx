@@ -8,15 +8,27 @@ import type { PayContextType } from "../src/context/Pay";
 import { PayProvider, usePayContext } from "../src/context/Pay";
 import { RescueProvider } from "../src/context/Rescue";
 import { Web3SignerProvider } from "../src/context/Web3";
+import { pairs as testPairs } from "./pairs";
 
 export let signals: CreateContextType;
 export let globalSignals: GlobalContextType;
 export let payContext: PayContextType;
 
 export const TestComponent = () => {
-    signals = useCreateContext();
+    const createSignals = useCreateContext();
     payContext = usePayContext();
     globalSignals = useGlobalContext();
+
+    // Keep test behavior stable by providing default routable pairs.
+    if (globalSignals.pairs() === undefined) {
+        globalSignals.setPairs(testPairs);
+    }
+    if (globalSignals.regularPairs() === undefined) {
+        globalSignals.setRegularPairs(testPairs);
+    }
+
+    signals = createSignals;
+
     return "";
 };
 

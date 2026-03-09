@@ -1,29 +1,17 @@
-import BigNumber from "bignumber.js";
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
-import {
-    For,
-    Show,
-    createEffect,
-    createMemo,
-    createResource,
-    createSignal,
-    onCleanup,
-} from "solid-js";
+import { For, Show, createEffect, createSignal, on, onCleanup } from "solid-js";
 
-import { RBTC } from "../consts/Assets";
+import { isEvmAsset } from "../consts/Assets";
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { type Signer, useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
-import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
-import { weiToSatoshi } from "../utils/rootstock";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
-import { WalletConnect } from "./WalletConnect";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
 const Modal = (props: {
@@ -172,8 +160,8 @@ const ShowAddress = (props: {
     address: Accessor<string | undefined>;
     addressOverride?: Accessor<string | undefined>;
 }) => {
-    const { t, separator, denomination, privacyMode } = useGlobalContext();
-    const { signer, clearSigner } = useWeb3Signer();
+    const { t, privacyMode } = useGlobalContext();
+    const { clearSigner } = useWeb3Signer();
 
     const formatAddress = (addr: string) => {
         if (privacyMode()) {
@@ -189,13 +177,6 @@ const ShowAddress = (props: {
 
     const [text, setText] = createSignal<string | undefined>(undefined);
 
-    const [rskBalance] = createResource(async () => {
-        if (signer() === undefined) {
-            return undefined;
-        }
-        return signer().provider.getBalance(await signer().getAddress());
-    });
-
     return (
         <button
             onClick={() => clearSigner()}
@@ -206,20 +187,6 @@ const ShowAddress = (props: {
                 (props.addressOverride
                     ? props.addressOverride() || formatAddress(props.address())
                     : formatAddress(props.address()))}
-            <Show
-                when={
-                    rskBalance.state === "ready" &&
-                    typeof rskBalance() === "bigint"
-                }>
-                <br />
-                {t("balance")}:{" "}
-                {formatAmount(
-                    BigNumber(weiToSatoshi(rskBalance()).toString()),
-                    denomination(),
-                    separator(),
-                )}{" "}
-                {formatDenomination(denomination(), RBTC)}
-            </Show>
         </button>
     );
 };
@@ -249,13 +216,12 @@ export const ConnectAddress = (props: {
                     );
                 }
             }}>
-            <WalletConnect />
             {t("connect_to_address")}
         </button>
     );
 };
 
-export const SwitchNetwork = () => {
+export const SwitchNetwork = (props: { asset: string }) => {
     const { t, notify } = useGlobalContext();
     const { switchNetwork } = useWeb3Signer();
 
@@ -264,7 +230,7 @@ export const SwitchNetwork = () => {
             class="btn"
             onClick={async () => {
                 try {
-                    await switchNetwork();
+                    await switchNetwork(props.asset);
                 } catch (e) {
                     log.error(`Network switch failed: ${formatError(e)}`);
                     notify("error", `Network switch failed: ${formatError(e)}`);
@@ -276,41 +242,72 @@ export const SwitchNetwork = () => {
 };
 
 const ConnectWallet = (props: {
+    asset: string;
     derivationPath?: string;
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
+    syncAddress?: boolean;
 }) => {
     const { t } = useGlobalContext();
-    const { providers, signer, getContracts } = useWeb3Signer();
-    const { setAddressValid, setOnchainAddress, assetReceive } =
-        useCreateContext();
+    const { providers, signer, getContractsForAsset } = useWeb3Signer();
+    const { setAddressValid, setOnchainAddress } = useCreateContext();
 
-    const address = createMemo(() => signer()?.address);
+    const address = () => signer()?.address;
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
 
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
+    let syncRequestId = 0;
+
+    const syncWalletState = async (
+        asset: string,
+        activeSigner: Signer | undefined,
+        currentAddress: string | undefined,
+    ) => {
+        const requestId = ++syncRequestId;
+        const contracts = getContractsForAsset(asset);
+
         if (
-            address() !== undefined &&
-            Number((await signer()?.provider.getNetwork())?.chainId || -1) !==
-                getContracts().network.chainId
+            currentAddress !== undefined &&
+            contracts &&
+            Number(
+                (await activeSigner?.provider.getNetwork())?.chainId || -1,
+            ) !== contracts.network.chainId
         ) {
+            if (requestId !== syncRequestId) {
+                return;
+            }
+
             setNetworkValid(false);
+            return;
+        }
+
+        if (requestId !== syncRequestId) {
             return;
         }
 
         setNetworkValid(true);
 
-        if (assetReceive() === RBTC) {
-            const addr = address();
-            setAddressValid(addr !== undefined);
-            setOnchainAddress(addr || "");
+        if (isEvmAsset(asset) && props.syncAddress) {
+            setAddressValid(currentAddress !== undefined);
+            setOnchainAddress(currentAddress || "");
+            return;
         }
-    });
+    };
+
+    createEffect(
+        on(
+            [() => props.asset, signer, address],
+            ([asset, activeSigner, addr]) => {
+                void syncWalletState(asset, activeSigner, addr);
+            },
+        ),
+    );
 
     onCleanup(() => {
-        setAddressValid(false);
-        setOnchainAddress("");
+        syncRequestId += 1;
+        if (props.syncAddress) {
+            setAddressValid(false);
+            setOnchainAddress("");
+        }
     });
 
     return (
@@ -321,7 +318,6 @@ const ConnectWallet = (props: {
                     {t("no_wallet")}
                 </button>
             }>
-            <WalletConnect />
             <Show
                 when={address() !== undefined}
                 fallback={
@@ -330,7 +326,9 @@ const ConnectWallet = (props: {
                         derivationPath={props.derivationPath}
                     />
                 }>
-                <Show when={networkValid()} fallback={<SwitchNetwork />}>
+                <Show
+                    when={networkValid()}
+                    fallback={<SwitchNetwork asset={props.asset} />}>
                     <ShowAddress
                         address={address}
                         addressOverride={props.addressOverride}

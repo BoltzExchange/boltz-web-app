@@ -11,6 +11,7 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { config } from "../config";
 import { type RefundableAssetType } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -23,7 +24,7 @@ import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
 import { getTimeoutEta } from "../utils/rescue";
-import { rskDerivationPath } from "../utils/rescueFile";
+import { evmPath } from "../utils/rescueFile";
 import { prefix0x, satoshiToWei } from "../utils/rootstock";
 
 type RescueData = LogRefundData & { currentHeight: bigint };
@@ -44,17 +45,16 @@ const RefundState = (props: {
                     new BigNumber(props.refundData.amount.toString()),
                     denomination(),
                     separator(),
+                    props.asset,
                 )}{" "}
                 {formatDenomination(denomination(), props.asset)}
             </p>
 
             <RefundButton
+                asset={props.asset}
                 setRefundTxId={props.setRefundTxId}
-                amount={Number(props.refundData.amount)}
-                preimageHash={props.refundData.preimageHash}
-                claimAddress={props.refundData.claimAddress}
                 signerAddress={props.refundData.refundAddress}
-                timeoutBlockHeight={Number(props.refundData.timelock)}
+                lockupTxHash={props.lockupTxHash}
             />
             <hr />
             <BlockExplorer
@@ -104,7 +104,7 @@ const ClaimState = (props: {
             if (useRif) {
                 transactionHash = await relayClaimTransaction(
                     signer(),
-                    getEtherSwap(),
+                    getEtherSwap(props.asset),
                     currentPreimage.toString("hex"),
                     Number(props.claimData.amount),
                     props.claimData.refundAddress,
@@ -112,7 +112,7 @@ const ClaimState = (props: {
                 );
             } else {
                 transactionHash = (
-                    await getEtherSwap()[
+                    await getEtherSwap(props.asset)[
                         "claim(bytes32,uint256,address,uint256)"
                     ](
                         prefix0x(currentPreimage.toString("hex")),
@@ -144,10 +144,13 @@ const ClaimState = (props: {
                 </>
             }>
             <ContractTransaction
+                asset={props.asset}
                 onClick={claimTransaction}
                 address={{
                     address: props.claimData.claimAddress,
-                    derivationPath: rskDerivationPath,
+                    derivationPath: evmPath(
+                        config.assets[props.asset].network.chainId,
+                    ),
                 }}
                 buttonText={t("continue")}
                 promptText={t("transaction_prompt_receive", {
@@ -183,7 +186,11 @@ const RescueEvm = () => {
         }
 
         const [logData, currentHeight] = await Promise.all([
-            getLogsFromReceipt(signer(), getEtherSwap(), params.txHash),
+            getLogsFromReceipt(
+                signer(),
+                getEtherSwap(params.asset),
+                params.txHash,
+            ),
             signer().provider.getBlockNumber(),
         ]);
 

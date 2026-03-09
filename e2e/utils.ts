@@ -160,6 +160,31 @@ export const generateInvoiceLnd = async (amount: number): Promise<string> => {
     ).payment_request as string;
 };
 
+const getInvoicePaymentHash = (invoice: string): string => {
+    const decoded = bolt11.decode(invoice);
+    let paymentHash: string | undefined;
+
+    for (const tag of decoded.tags) {
+        switch (tag.tagName) {
+            case "payment_hash":
+                paymentHash = tag.data as string;
+                break;
+        }
+    }
+
+    if (paymentHash === undefined) {
+        throw new Error("could not decode payment hash from invoice");
+    }
+
+    return paymentHash;
+};
+
+export const cancelInvoiceLnd = async (invoice: string): Promise<void> => {
+    await execCommand(
+        `lncli-sim 1 cancelinvoice ${getInvoicePaymentHash(invoice)}`,
+    );
+};
+
 export const waitForNodesToSync = async (): Promise<void> => {
     const height = JSON.parse(
         await execCommand("bitcoin-cli-sim-client getblockchaininfo"),
@@ -218,19 +243,10 @@ export const setReferral = (
 export const lookupInvoiceLnd = async (
     invoice: string,
 ): Promise<{ state: string; r_preimage: string }> => {
-    const decoded = bolt11.decode(invoice);
-    let paymentHash: string | undefined;
-
-    for (const tag of decoded.tags) {
-        switch (tag.tagName) {
-            case "payment_hash":
-                paymentHash = tag.data as string;
-                break;
-        }
-    }
-
     return JSON.parse(
-        await execCommand(`lncli-sim 1 lookupinvoice ${paymentHash}`),
+        await execCommand(
+            `lncli-sim 1 lookupinvoice ${getInvoicePaymentHash(invoice)}`,
+        ),
     ) as never;
 };
 

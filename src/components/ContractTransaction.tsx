@@ -1,15 +1,18 @@
+import type { Wallet } from "ethers";
 import log from "loglevel";
-import type { JSX } from "solid-js";
+import type { Accessor, JSX } from "solid-js";
 import { Show, createEffect, createSignal } from "solid-js";
 
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { type Signer, useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
 import ConnectWallet, { ConnectAddress, SwitchNetwork } from "./ConnectWallet";
 import LoadingSpinner from "./LoadingSpinner";
 
 const ContractTransaction = (props: {
+    asset: string;
     disabled?: boolean;
+    signerOverride?: Accessor<Signer | Wallet>;
     onClick: () => Promise<unknown>;
     children?: JSX.Element;
     showHr?: boolean;
@@ -18,10 +21,15 @@ const ContractTransaction = (props: {
     waitingText?: string;
     address: { address: string; derivationPath?: string };
 }) => {
-    const { notify } = useGlobalContext();
-    const { signer, getContracts } = useWeb3Signer();
+    const { notify, i18n, t } = useGlobalContext();
+    const { signer: contextSigner, getContractsForAsset } = useWeb3Signer();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
+
+    const signer = () =>
+        props.signerOverride !== undefined
+            ? props.signerOverride()
+            : contextSigner();
 
     const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
         undefined,
@@ -48,6 +56,7 @@ const ContractTransaction = (props: {
                     when={!allowAnyAddress()}
                     fallback={
                         <ConnectWallet
+                            asset={props.asset}
                             derivationPath={props.address.derivationPath}
                         />
                     }>
@@ -55,8 +64,11 @@ const ContractTransaction = (props: {
                 </Show>
             }>
             <Show
-                when={getContracts().network.chainId === signerNetwork()}
-                fallback={<SwitchNetwork />}>
+                when={
+                    getContractsForAsset(props.asset)?.network.chainId ===
+                    signerNetwork()
+                }
+                fallback={<SwitchNetwork asset={props.asset} />}>
                 <Show
                     when={!txSent()}
                     fallback={
@@ -85,13 +97,19 @@ const ContractTransaction = (props: {
                                 log.error(`EVM transaction failed`, e);
                                 notify(
                                     "error",
-                                    `Transaction failed: ${formatError(e)}`,
+                                    t("transaction_failed", {
+                                        error: formatError(e, i18n()),
+                                    }),
                                 );
                             } finally {
                                 setClicked(false);
                             }
                         }}>
-                        {props.buttonText}
+                        {clicked() ? (
+                            <LoadingSpinner class="inner-spinner" />
+                        ) : (
+                            props.buttonText
+                        )}
                     </button>
                     <Show when={props.showHr}>
                         <hr />

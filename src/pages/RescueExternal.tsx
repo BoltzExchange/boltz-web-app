@@ -12,7 +12,6 @@ import {
     createSignal,
     onCleanup,
 } from "solid-js";
-import { BTC, LBTC, RBTC } from "src/consts/Assets";
 
 import BlockExplorer from "../components/BlockExplorer";
 import ConnectWallet from "../components/ConnectWallet";
@@ -33,6 +32,7 @@ import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { BTC, LBTC, RBTC } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
@@ -395,7 +395,7 @@ export const RescueRsk = (props: { mode?: string }) => {
 
         const generator = scanLockupEvents(
             refundScanAbort.signal,
-            getEtherSwap(),
+            getEtherSwap(RBTC),
             {
                 filter: { address: signerAddress },
                 action: rskRescueMode(),
@@ -492,7 +492,6 @@ export const RescueRsk = (props: { mode?: string }) => {
         <>
             <p class="frame-text">{t("rsk_rescue_prompt")}</p>
             <hr />
-
             <div style={{ display: "flex", gap: "12px" }}>
                 <button
                     data-testid="rsk-rescue-refund-button"
@@ -624,7 +623,10 @@ export const RescueRsk = (props: { mode?: string }) => {
                         <RescueKeyInput />
                     </Show>
                 </Show>
-                <ConnectWallet addressOverride={refundScanProgress} />
+                <ConnectWallet
+                    asset={RBTC}
+                    addressOverride={refundScanProgress}
+                />
             </>
         );
     };

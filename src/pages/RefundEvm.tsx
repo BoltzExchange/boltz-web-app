@@ -35,6 +35,7 @@ const RefundState = (props: {
                     new BigNumber(props.refundData.amount.toString()),
                     denomination(),
                     separator(),
+                    props.asset,
                 )}{" "}
                 {formatDenomination(denomination(), props.asset)}
             </p>
@@ -51,13 +52,11 @@ const RefundState = (props: {
             </Show>
 
             <RefundButton
+                asset={props.asset}
                 disabled={!timelockExpired()}
                 setRefundTxId={props.setRefundTxId}
-                amount={Number(props.refundData.amount)}
-                preimageHash={props.refundData.preimageHash}
-                claimAddress={props.refundData.claimAddress}
                 signerAddress={props.refundData.refundAddress}
-                timeoutBlockHeight={Number(props.refundData.timelock)}
+                lockupTxHash={props.lockupTxHash}
             />
             <hr />
             <BlockExplorer
@@ -81,7 +80,11 @@ const RefundEvm = () => {
         }
 
         const [logData, currentHeight] = await Promise.all([
-            getLogsFromReceipt(signer(), getEtherSwap(), params.txHash),
+            getLogsFromReceipt(
+                signer(),
+                getEtherSwap(params.asset),
+                params.txHash,
+            ),
             signer().provider.getBlockNumber(),
         ]);
 

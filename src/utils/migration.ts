@@ -2,11 +2,11 @@ import { makePersisted } from "@solid-primitives/storage";
 import log from "loglevel";
 import { createSignal } from "solid-js";
 
-import { LN } from "../consts/Assets";
+import { LN, RBTC, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import type { SomeSwap } from "./swapCreator";
+import { GasAbstractionType, type SomeSwap } from "./swapCreator";
 
-export const latestStorageVersion = 2;
+export const latestStorageVersion = 3;
 
 const storageVersionKey = "version";
 
@@ -66,6 +66,43 @@ const migrateStorageToChainSwaps = async (swapsForage: LocalForage) => {
     return swaps.length;
 };
 
+const migrateSwapGasAbstraction = (swap: Record<string, unknown>): SomeSwap => {
+    if (swap.gasAbstraction !== undefined) {
+        return swap as SomeSwap;
+    }
+
+    let gasAbstraction = GasAbstractionType.None;
+    if (
+        swap.useGasAbstraction === true &&
+        typeof swap.assetReceive === "string"
+    ) {
+        gasAbstraction =
+            swap.assetReceive === RBTC
+                ? GasAbstractionType.RifRelay
+                : isEvmAsset(swap.assetReceive)
+                  ? GasAbstractionType.Signer
+                  : GasAbstractionType.None;
+    }
+
+    const migratedSwap = { ...swap };
+    delete migratedSwap.useGasAbstraction;
+    return {
+        ...migratedSwap,
+        gasAbstraction,
+    } as SomeSwap;
+};
+
+const migrateStorageGasAbstraction = async (swapsForage: LocalForage) => {
+    const swaps = await swapsForage.keys();
+
+    for (const swapId of swaps) {
+        const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        await swapsForage.setItem(swapId, migrateSwapGasAbstraction(swap));
+    }
+
+    return swaps.length;
+};
+
 const migrateLocalForage = async (
     paramsForage: LocalForage,
     swapsForage: LocalForage,
@@ -98,6 +135,17 @@ const migrateLocalForage = async (
             await migrateLocalForage(paramsForage, swapsForage);
             break;
         }
+
+        case 2: {
+            log.info(`Migrating gas abstraction storage format`);
+            const migratedSwaps =
+                await migrateStorageGasAbstraction(swapsForage);
+            log.info(`Migrated gas abstraction for ${migratedSwaps} swaps`);
+
+            await paramsForage.setItem(storageVersionKey, 3);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
     }
 };
 
@@ -124,6 +172,12 @@ export const migrateBackupFile = (
 
         case 1:
             return migrateBackupFile(version + 1, swaps);
+
+        case 2:
+            return migrateBackupFile(
+                version + 1,
+                swaps.map((swap) => migrateSwapGasAbstraction(swap)),
+            );
 
         default:
             throw `invalid backup file version: ${version}`;

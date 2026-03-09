@@ -67,7 +67,7 @@ test.describe("Chain Swap 0-amount", () => {
         const assetSelector = page.locator("div[class='asset asset-LN'] div");
         await assetSelector.click();
 
-        await page.locator("div[data-testid='select-L-BTC']").click();
+        await page.getByTestId("select-L-BTC").click();
 
         const inputOnchainAddress = page.locator(
             "input[data-testid='onchainAddress']",
@@ -90,7 +90,7 @@ test.describe("Chain Swap 0-amount", () => {
         const assetSelector = page.locator("div[class='asset asset-LN'] div");
         await assetSelector.click();
 
-        await page.locator("div[data-testid='select-RBTC']").click();
+        await page.getByTestId("select-RBTC").click();
 
         const inputOnchainAddress = page.locator(
             "input[data-testid='onchainAddress']",
