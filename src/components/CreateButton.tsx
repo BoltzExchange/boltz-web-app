@@ -494,7 +494,7 @@ const CreateButton = () => {
                             )
                         ) {
                             log.debug(
-                                `BIP21 amount ${bip21Amount.toString()} is less than minimal ${chainPair.limits.minimal} for chain swap. Creating submarine swap.`,
+                                `BIP21 amount ${bip21Amount.toString()} is less than minimal ${chainPair?.limits?.minimal ?? 0} for chain swap. Creating submarine swap.`,
                             );
                             await createSubmarineSwap();
                             break;

@@ -219,199 +219,214 @@ const lockupWithHops = async (
     setSwap: Setter<SomeSwap | null>,
     setSwapStorage: (swap: SomeSwap) => Promise<void>,
 ): Promise<string> => {
-    if (hops.length !== 1) {
-        throw new Error("only one hop is supported for now");
-    }
-
-    const hop = hops[0];
-
-    const { targetLockupAmount, quote, amountIn } = await getHopExecutionQuote(
-        hop,
-        lockupAmount,
-        slippage,
-    );
-    log.info(`Got DEX quote for lockup hop: ${quote.quote}`, quote.data);
-
     const transactionSigner = getSignerForGasAbstraction(
         gasAbstraction,
         signer(),
         getGasAbstractionSigner(asset),
     );
-    const router = createRouterContract(hop.from, transactionSigner);
-    const routerAddress = await router.getAddress();
-
-    const calldata = await encodeDexQuote(
-        hop.dexDetails.chain,
-        routerAddress,
-        amountIn,
-        targetLockupAmount,
-        quote.data,
-    );
-
     const erc20Swap = getErc20Swap(asset);
-    const [permit2Address, chainId, signerAddress, version] = await Promise.all(
-        [
+
+    const lockup = async () => {
+        if (hops.length !== 1) {
+            throw new Error("only one hop is supported for now");
+        }
+
+        const hop = hops[0];
+
+        const { targetLockupAmount, quote, amountIn } =
+            await getHopExecutionQuote(hop, lockupAmount, slippage);
+        log.info(`Got DEX quote for lockup hop: ${quote.quote}`, quote.data);
+
+        const router = createRouterContract(hop.from, transactionSigner);
+        const routerAddress = await router.getAddress();
+
+        const calldata = await encodeDexQuote(
+            hop.dexDetails.chain,
+            routerAddress,
+            amountIn,
+            targetLockupAmount,
+            quote.data,
+        );
+
+        const [permit2Address, chainId, signerAddress] = await Promise.all([
             router.PERMIT2(),
             transactionSigner.provider.getNetwork().then((n) => n.chainId),
             signer().getAddress(),
-            erc20Swap.version(),
-        ],
-    );
+        ]);
 
-    const calls = calldata.calls.map((call) => ({
-        target: call.to,
-        value: call.value,
-        callData: prefix0x(call.data),
-    }));
+        const calls = calldata.calls.map((call) => ({
+            target: call.to,
+            value: call.value,
+            callData: prefix0x(call.data),
+        }));
 
-    // Must match the Solidity contract's abi.encode of Call[] struct.
-    const callsHash = hashRouterCalls(calls);
+        // Must match the Solidity contract's abi.encode of Call[] struct.
+        const callsHash = hashRouterCalls(calls);
 
-    const nonce = BigInt("0x" + randomBytes(32).toString("hex"));
+        const nonce = BigInt("0x" + randomBytes(32).toString("hex"));
 
-    const permit2DeadlineSeconds = 1_800;
-    const deadline = BigInt(
-        Math.floor(Date.now() / 1000) + permit2DeadlineSeconds,
-    );
-
-    const tokenAddress = getTokenAddress(asset);
-    const commitmentLockupDetails = await getCommitmentLockupDetails(asset);
-    const commitmentPreimageHash = "00".repeat(32);
-
-    const permit2Signature = await signer().signTypedData(
-        {
-            name: "Permit2",
-            verifyingContract: permit2Address,
-            chainId,
-        },
-        {
-            PermitWitnessTransferFrom: [
-                { name: "permitted", type: "TokenPermissions" },
-                { name: "spender", type: "address" },
-                { name: "nonce", type: "uint256" },
-                { name: "deadline", type: "uint256" },
-                { name: "witness", type: "ExecuteAndLockERC20" },
-            ],
-            TokenPermissions: [
-                { name: "token", type: "address" },
-                { name: "amount", type: "uint256" },
-            ],
-            ExecuteAndLockERC20: [
-                { name: "preimageHash", type: "bytes32" },
-                { name: "token", type: "address" },
-                { name: "claimAddress", type: "address" },
-                { name: "refundAddress", type: "address" },
-                { name: "timelock", type: "uint256" },
-                { name: "callsHash", type: "bytes32" },
-            ],
-        },
-        {
-            permitted: {
-                token: hop.dexDetails.tokenIn,
-                amount: amountIn,
-            },
-            spender: routerAddress,
-            nonce,
-            deadline,
-            witness: {
-                preimageHash: prefix0x(commitmentPreimageHash),
-                token: tokenAddress,
-                claimAddress: commitmentLockupDetails.claimAddress,
-                refundAddress: signerAddress,
-                timelock: commitmentLockupDetails.timelock,
-                callsHash,
-            },
-        },
-    );
-
-    // Encode the transaction calldata without executing
-    const tx = await router.executeAndLockERC20WithPermit2.populateTransaction(
-        prefix0x(commitmentPreimageHash),
-        tokenAddress,
-        commitmentLockupDetails.claimAddress,
-        signerAddress,
-        commitmentLockupDetails.timelock,
-        calls,
-        {
-            permitted: {
-                token: hop.dexDetails.tokenIn,
-                amount: amountIn,
-            },
-            nonce,
-            deadline,
-        },
-        signerAddress,
-        permit2Signature,
-    );
-
-    const transactionHash = await sendPopulatedTransaction(
-        gasAbstraction,
-        transactionSigner,
-        tx,
-    );
-    const currentSwap = await getSwap(swapId);
-    currentSwap.commitmentLockupTxHash = transactionHash;
-    setSwap(currentSwap);
-    await setSwapStorage(currentSwap);
-
-    // The commitment signature must include the actually locked amount from the Lockup event.
-    const receipt = await transactionSigner.provider.waitForTransaction(
-        transactionHash,
-        1,
-        120_000,
-    );
-    if (receipt === null) {
-        throw new Error(
-            "could not fetch commitment lockup transaction receipt",
+        const permit2DeadlineSeconds = 1_800;
+        const deadline = BigInt(
+            Math.floor(Date.now() / 1000) + permit2DeadlineSeconds,
         );
-    }
 
-    const {
-        amount: lockupEventAmount,
-        tokenAddress: lockupTokenAddress,
-        claimAddress: lockupClaimAddress,
-        refundAddress: lockupRefundAddress,
-        timelock: lockupTimelock,
-        logIndex: lockupLogIndex,
-    } = getLockupEvent(erc20Swap, receipt, commitmentLockupDetails.contract);
+        const tokenAddress = getTokenAddress(asset);
+        const commitmentLockupDetails = await getCommitmentLockupDetails(asset);
+        const commitmentPreimageHash = "00".repeat(32);
 
-    const commitmentSignature = await signer().signTypedData(
-        {
-            name: "ERC20Swap",
-            version: String(version),
-            verifyingContract: commitmentLockupDetails.contract,
-            chainId,
-        },
-        {
-            Commit: [
-                { name: "preimageHash", type: "bytes32" },
-                { name: "amount", type: "uint256" },
-                { name: "tokenAddress", type: "address" },
-                { name: "claimAddress", type: "address" },
-                { name: "refundAddress", type: "address" },
-                { name: "timelock", type: "uint256" },
-            ],
-        },
-        {
-            preimageHash: prefix0x(preimageHash),
+        const permit2Signature = await signer().signTypedData(
+            {
+                name: "Permit2",
+                verifyingContract: permit2Address,
+                chainId,
+            },
+            {
+                PermitWitnessTransferFrom: [
+                    { name: "permitted", type: "TokenPermissions" },
+                    { name: "spender", type: "address" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "deadline", type: "uint256" },
+                    { name: "witness", type: "ExecuteAndLockERC20" },
+                ],
+                TokenPermissions: [
+                    { name: "token", type: "address" },
+                    { name: "amount", type: "uint256" },
+                ],
+                ExecuteAndLockERC20: [
+                    { name: "preimageHash", type: "bytes32" },
+                    { name: "token", type: "address" },
+                    { name: "claimAddress", type: "address" },
+                    { name: "refundAddress", type: "address" },
+                    { name: "timelock", type: "uint256" },
+                    { name: "callsHash", type: "bytes32" },
+                ],
+            },
+            {
+                permitted: {
+                    token: hop.dexDetails.tokenIn,
+                    amount: amountIn,
+                },
+                spender: routerAddress,
+                nonce,
+                deadline,
+                witness: {
+                    preimageHash: prefix0x(commitmentPreimageHash),
+                    token: tokenAddress,
+                    claimAddress: commitmentLockupDetails.claimAddress,
+                    refundAddress: signerAddress,
+                    timelock: commitmentLockupDetails.timelock,
+                    callsHash,
+                },
+            },
+        );
+
+        // Encode the transaction calldata without executing
+        const tx =
+            await router.executeAndLockERC20WithPermit2.populateTransaction(
+                prefix0x(commitmentPreimageHash),
+                tokenAddress,
+                commitmentLockupDetails.claimAddress,
+                signerAddress,
+                commitmentLockupDetails.timelock,
+                calls,
+                {
+                    permitted: {
+                        token: hop.dexDetails.tokenIn,
+                        amount: amountIn,
+                    },
+                    nonce,
+                    deadline,
+                },
+                signerAddress,
+                permit2Signature,
+            );
+
+        const transactionHash = await sendPopulatedTransaction(
+            gasAbstraction,
+            transactionSigner,
+            tx,
+        );
+        const currentSwap = await getSwap(swapId);
+        currentSwap.commitmentLockupTxHash = transactionHash;
+        setSwap(currentSwap);
+        await setSwapStorage(currentSwap);
+
+        return transactionHash;
+    };
+
+    const postCommitment = async (commitmentTxHash: string) => {
+        // The commitment signature must include the actually locked amount from the Lockup event.
+        const receipt = await transactionSigner.provider.waitForTransaction(
+            commitmentTxHash,
+            1,
+            120_000,
+        );
+        if (receipt === null) {
+            throw new Error(
+                "could not fetch commitment lockup transaction receipt",
+            );
+        }
+
+        const [chainId, contractAddress, version] = await Promise.all([
+            transactionSigner.provider.getNetwork().then((n) => n.chainId),
+            erc20Swap.getAddress(),
+            erc20Swap.version(),
+        ]);
+
+        const {
             amount: lockupEventAmount,
             tokenAddress: lockupTokenAddress,
             claimAddress: lockupClaimAddress,
             refundAddress: lockupRefundAddress,
             timelock: lockupTimelock,
-        },
-    );
+            logIndex: lockupLogIndex,
+        } = getLockupEvent(erc20Swap, receipt, contractAddress);
 
-    await postCommitmentSignature(
-        asset,
-        swapId,
-        commitmentSignature,
-        transactionHash,
-        lockupLogIndex,
-        slippage * 100,
-    );
+        const commitmentSignature = await signer().signTypedData(
+            {
+                name: "ERC20Swap",
+                version: String(version),
+                verifyingContract: contractAddress,
+                chainId,
+            },
+            {
+                Commit: [
+                    { name: "preimageHash", type: "bytes32" },
+                    { name: "amount", type: "uint256" },
+                    { name: "tokenAddress", type: "address" },
+                    { name: "claimAddress", type: "address" },
+                    { name: "refundAddress", type: "address" },
+                    { name: "timelock", type: "uint256" },
+                ],
+            },
+            {
+                preimageHash: prefix0x(preimageHash),
+                amount: lockupEventAmount,
+                tokenAddress: lockupTokenAddress,
+                claimAddress: lockupClaimAddress,
+                refundAddress: lockupRefundAddress,
+                timelock: lockupTimelock,
+            },
+        );
 
-    return transactionHash;
+        await postCommitmentSignature(
+            asset,
+            swapId,
+            commitmentSignature,
+            commitmentTxHash,
+            lockupLogIndex,
+            slippage * 100,
+        );
+    };
+
+    let commitmentTxHash: string | undefined = (await getSwap(swapId))
+        .commitmentLockupTxHash;
+    if (commitmentTxHash === undefined) {
+        commitmentTxHash = await lockup();
+    }
+
+    await postCommitment(commitmentTxHash);
+    return commitmentTxHash;
 };
 
 const InsufficientBalance = (props: { asset?: string }) => {
