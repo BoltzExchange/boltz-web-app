@@ -59,6 +59,7 @@ const config = {
             network: {
                 chainName: "Rootstock Testnet",
                 symbol: "RBTC",
+                gasToken: "RBTC",
                 chainId: 31,
                 rpcUrls: ["https://public-node.testnet.rsk.co"],
                 nativeCurrency: {

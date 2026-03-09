@@ -384,6 +384,51 @@ textarea.invalid {
     z-index: 10;
 }
 
+.get-gas-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-white-15);
+    border-radius: 10px;
+    background: var(--color-black-20);
+    color: var(--color-white-50);
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.get-gas-toggle input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.get-gas-toggle span {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.get-gas-toggle:focus-within {
+    color: var(--color-white-80);
+}
+
+@media (hover: hover) {
+    .get-gas-toggle:hover {
+        background: var(--color-black-30);
+        border-color: var(--color-white-30);
+        color: var(--color-white-80);
+    }
+}
+
 .skeleton {
     display: inline-block;
     height: 11px;

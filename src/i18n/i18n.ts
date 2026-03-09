@@ -44,6 +44,7 @@ const dict = {
         footer: "Made with 🧡 by Team Boltz",
         create_swap: "Create Atomic Swap",
         create_swap_subline: "Payment Includes Network and Boltz Fee",
+        get_gas_token_for_gas: "Get {{ gasToken }} for gas",
         new_swap: "New Swap",
         feecheck:
             "Network fee was updated based on network situation, please confirm new amounts and continue with swap.",
@@ -506,6 +507,7 @@ const dict = {
         footer: "Mit 🧡 gemacht von Team Boltz",
         create_swap: "Erstelle Atomic Swap",
         create_swap_subline: "Zahlung beinhaltet Netzwerk- und Boltzgebühr",
+        get_gas_token_for_gas: "Erhalte {{ gasToken }} für Gas",
         new_swap: "Neuer Swap",
         feecheck:
             "Die Netzwerkgebühr wurde aufgrund der Netzwerksituation aktualisiert. Bitte bestätige die neuen Beträge und fahren mit dem Swap fort.",
@@ -981,6 +983,7 @@ const dict = {
         create_swap: "Crear intercambio atómico",
         create_swap_subline:
             "El pago incluye la comisión de red y servicio de Boltz",
+        get_gas_token_for_gas: "Obtén {{ gasToken }} para gas",
         new_swap: "Nuevo intercambio",
         feecheck:
             "La comisión de red se actualizó según la situación de la red. Por favor, confirma los nuevos importes y continúa con el intercambio.",
@@ -1455,6 +1458,7 @@ const dict = {
         create_swap: "Criar troca atômica",
         create_swap_subline:
             "O pagamento inclui a taxa da rede e a taxa da Boltz",
+        get_gas_token_for_gas: "Obtenha {{ gasToken }} para gas",
         new_swap: "Nova troca",
         feecheck:
             "A taxa da rede foi atualizada conforme a situação atual, por favor confirme os novos valores e continue a troca.",
@@ -1924,6 +1928,7 @@ const dict = {
         footer: "Boltz团队倾情🧡制作",
         create_swap: "创建原子交换",
         create_swap_subline: "付款包括网络和Boltz服务费",
+        get_gas_token_for_gas: "获取{{ gasToken }}作为 Gas 费",
         new_swap: "新的交换",
         feecheck: "根据网络情况更新了网络费用，请确认新的金额并继续进行交换。",
         create_and_paste: "粘贴闪电发票、BOLT12 地址或 LNURL 以接收资金",
@@ -2348,6 +2353,7 @@ const dict = {
         create_swap: "Atomic Swapの作成",
         create_swap_subline:
             "支払いにはネットワーク手数料とBoltzサービス手数料が含まれます",
+        get_gas_token_for_gas: "{{ gasToken }}をガス代として取得",
         new_swap: "新しいスワップ",
         feecheck:
             "ネットワーク手数料はネットワーク状況に基づいて更新されました。新しい金額を確認し、スワップを続行してください",

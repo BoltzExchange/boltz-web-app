@@ -78,6 +78,7 @@ const Fees = () => {
         setBoltzFee,
         onchainAddress,
         addressValid,
+        getGasToken,
     } = useCreateContext();
     const { signer, getGasAbstractionSigner } = useWeb3Signer();
 
@@ -136,6 +137,7 @@ const Fees = () => {
                 () => signer,
                 onchainAddress,
                 getGasAbstractionSigner,
+                getGasToken(),
             );
             switch (gasAbstraction) {
                 case GasAbstractionType.RifRelay:

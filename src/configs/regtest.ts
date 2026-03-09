@@ -52,6 +52,7 @@ const config = {
             network: {
                 chainName: "Anvil",
                 symbol: "RBTC",
+                gasToken: "RBTC",
                 chainId: 33,
                 rpcUrls: ["http://localhost:8545"],
                 nativeCurrency: {

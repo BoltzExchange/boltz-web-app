@@ -9,6 +9,53 @@ import { formatError } from "./errors";
 import { constructRequestOptions } from "./helper";
 
 const requestTimeoutDuration = 6_000;
+const weiPerEther = BigNumber(10).pow(18);
+
+type KrakenTickerResponse = {
+    result: Record<
+        string,
+        {
+            c: [string, string];
+        }
+    >;
+};
+
+type CoinGeckoPriceResponse = {
+    ethereum?: Record<string, number>;
+};
+
+const getKrakenPrice = async (
+    asset: string,
+    pair: string,
+    currency: Currency,
+) => {
+    const { opts, requestTimeout } = constructRequestOptions(
+        {},
+        requestTimeoutDuration,
+    );
+    try {
+        const response = await fetch(
+            `${config.rateProviders.Kraken}?pair=${pair}`,
+            opts,
+        );
+        const data = (await response.json()) as KrakenTickerResponse;
+        const ticker = data.result[pair];
+
+        if (!ticker) {
+            throw new Error(`missing Kraken ticker for pair ${pair}`);
+        }
+
+        return BigNumber(ticker.c[0]);
+    } catch (e) {
+        throw new Error(
+            `failed to get ${asset} price from Kraken in ${currency}: ${formatError(
+                e,
+            )}`,
+        );
+    } finally {
+        clearTimeout(requestTimeout);
+    }
+};
 
 export const getBtcPriceYadio = async (currency: Currency) => {
     const { opts, requestTimeout } = constructRequestOptions(
@@ -32,29 +79,37 @@ export const getBtcPriceYadio = async (currency: Currency) => {
     }
 };
 
-export const getBtcPriceKraken = async (currency: Currency) => {
-    type KrakenResponse = {
-        result: {
-            XXBTZUSD: {
-                c: [string, string];
-            };
-        };
-    };
+export const getBtcPriceKraken = (currency: Currency) => {
+    return getKrakenPrice("BTC", `XXBTZ${currency}`, currency);
+};
 
+export const getEthPriceKraken = (currency: Currency) => {
+    return getKrakenPrice("ETH", `XETHZ${currency}`, currency);
+};
+
+export const getEthPriceCoinGecko = async (currency: Currency) => {
     const { opts, requestTimeout } = constructRequestOptions(
         {},
         requestTimeoutDuration,
     );
     try {
         const response = await fetch(
-            `${config.rateProviders.Kraken}?pair=XXBTZ${currency}`,
+            `${config.rateProviders.CoinGecko}?ids=ethereum&vs_currencies=${currency.toLowerCase()}`,
             opts,
         );
-        const data = (await response.json()) as KrakenResponse;
-        return BigNumber(data.result.XXBTZUSD.c[0]);
+        const data = (await response.json()) as CoinGeckoPriceResponse;
+        const price = data.ethereum?.[currency.toLowerCase()];
+
+        if (price === undefined) {
+            throw new Error(`missing CoinGecko price for ETH/${currency}`);
+        }
+
+        return BigNumber(price);
     } catch (e) {
         throw new Error(
-            `failed to get BTC price from Kraken: ${formatError(e)}`,
+            `failed to get ETH price from CoinGecko in ${currency}: ${formatError(
+                e,
+            )}`,
         );
     } finally {
         clearTimeout(requestTimeout);
@@ -97,6 +152,23 @@ export const getBtcPriceFailover = async (
     throw new Error("all attempts of getting BTC price failed");
 };
 
+export const getEthPriceFailover = async (
+    currency: Currency = Currency.USD,
+) => {
+    for (const [name, getEthPrice] of [
+        ["Kraken", getEthPriceKraken],
+        ["CoinGecko", getEthPriceCoinGecko],
+    ] as [string, typeof getEthPriceKraken][]) {
+        try {
+            return await getEthPrice(currency);
+        } catch (e) {
+            log.warn(`Failed to get ETH price from provider ${name}`, e);
+            continue;
+        }
+    }
+    throw new Error("all attempts of getting ETH price failed");
+};
+
 export const convertToFiat = (amount: BigNumber, rate: BigNumber) => {
     if (amount.isNaN() || rate.isNaN()) {
         return BigNumber(0);
@@ -104,4 +176,29 @@ export const convertToFiat = (amount: BigNumber, rate: BigNumber) => {
 
     const btcAmount = satToBtc(amount);
     return btcAmount.multipliedBy(BigNumber(rate));
+};
+
+export const usdCentsToWei = (
+    usdCents: BigNumber.Value,
+    ethUsdPrice: BigNumber,
+): bigint => {
+    const cents = BigNumber(usdCents);
+
+    if (
+        cents.isNaN() ||
+        ethUsdPrice.isNaN() ||
+        cents.lte(0) ||
+        ethUsdPrice.lte(0)
+    ) {
+        return 0n;
+    }
+
+    return BigInt(
+        cents
+            .multipliedBy(weiPerEther)
+            .dividedBy(100)
+            .dividedBy(ethUsdPrice)
+            .integerValue(BigNumber.ROUND_FLOOR)
+            .toFixed(0),
+    );
 };

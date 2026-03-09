@@ -74,6 +74,7 @@ const config = {
             network: {
                 chainName: "Rootstock",
                 symbol: "RBTC",
+                gasToken: "RBTC",
                 chainId: 30,
                 rpcUrls: rskRpcUrls,
                 nativeCurrency: {

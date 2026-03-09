@@ -77,6 +77,8 @@ const Create = () => {
     const {
         pair,
         setPair,
+        getGasToken,
+        setGetGasToken,
         assetSelect,
         assetSelected,
         invoiceValid,
@@ -672,6 +674,29 @@ const Create = () => {
                             <AddressInput />
                         </Show>
                         <hr class="spacer" />
+                        <Show
+                            when={
+                                config.assets?.[pair().toAsset]?.type ===
+                                AssetKind.ERC20
+                            }>
+                            <label class="get-gas-toggle" for="getGasToken">
+                                <input
+                                    id="getGasToken"
+                                    type="checkbox"
+                                    checked={getGasToken()}
+                                    onChange={(e) => {
+                                        setGetGasToken(e.currentTarget.checked);
+                                    }}
+                                />
+                                <span>
+                                    {t("get_gas_token_for_gas", {
+                                        gasToken:
+                                            config.assets?.[pair().toAsset]
+                                                ?.network?.gasToken ?? "",
+                                    })}
+                                </span>
+                            </label>
+                        </Show>
                     </Show>
                     <CreateButton />
                     <AssetSelect />

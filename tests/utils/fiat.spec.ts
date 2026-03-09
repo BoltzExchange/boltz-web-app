@@ -7,6 +7,9 @@ import {
     getBtcPriceKraken,
     getBtcPriceMempool,
     getBtcPriceYadio,
+    getEthPriceCoinGecko,
+    getEthPriceKraken,
+    usdCentsToWei,
 } from "../../src/utils/fiat";
 
 describe("fiat", () => {
@@ -20,8 +23,18 @@ describe("fiat", () => {
         ["Mempool", getBtcPriceMempool],
         ["Kraken", getBtcPriceKraken],
         ["Yadio", getBtcPriceYadio],
-    ])("should fetch BTC price from $1", async (_, getBtcPrice) => {
+    ])("should fetch BTC price from $0", async (_, getBtcPrice) => {
         const result = await getBtcPrice(Currency.USD);
+        checkResult(result);
+    });
+
+    test("should fetch ETH price from Kraken", async () => {
+        const result = await getEthPriceKraken(Currency.USD);
+        checkResult(result);
+    });
+
+    test("should fetch ETH price from CoinGecko", async () => {
+        const result = await getEthPriceCoinGecko(Currency.USD);
         checkResult(result);
     });
 
@@ -55,4 +68,19 @@ describe("fiat", () => {
         expect(result).toBeInstanceOf(BigNumber);
         expect(result.toNumber()).toBe(expected.toNumber());
     });
+
+    test.each([
+        ["one ether", 350_000, BigNumber(3_500), 1_000_000_000_000_000_000n],
+        ["fractional ether", 123, BigNumber(2_460), 500_000_000_000_000n],
+        ["round down partial wei", 1, BigNumber(3), 3_333_333_333_333_333n],
+        ["zero cents", 0, BigNumber(3_500), 0n],
+        ["zero price", 100, BigNumber(0), 0n],
+        ["NaN cents", Number.NaN, BigNumber(3_500), 0n],
+        ["NaN price", 100, BigNumber(NaN), 0n],
+    ])(
+        "should convert usd cents to wei: %s",
+        (_, cents, ethUsdPrice, expected) => {
+            expect(usdCentsToWei(cents, ethUsdPrice)).toBe(expected);
+        },
+    );
 });

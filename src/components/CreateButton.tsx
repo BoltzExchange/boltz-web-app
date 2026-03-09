@@ -65,6 +65,7 @@ export const getClaimAddress = async (
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
     getGasAbstractionSigner: (asset: string) => Wallet,
+    getGasToken: boolean,
 ): Promise<{
     gasAbstraction: GasAbstractionType;
     gasPrice: bigint;
@@ -104,7 +105,7 @@ export const getClaimAddress = async (
                 gasPrice: 0n,
                 gasAbstraction: GasAbstractionType.Signer,
                 claimAddress:
-                    assetReceive() !== USDT0
+                    assetReceive() !== USDT0 && !getGasToken
                         ? onchainAddress()
                         : gasSigner.address,
             };
@@ -140,6 +141,7 @@ const CreateButton = () => {
     const {
         pair,
         setPair,
+        getGasToken,
         invoice,
         lnurl,
         onchainAddress,
@@ -640,6 +642,7 @@ const CreateButton = () => {
 
             await setSwapStorage({
                 ...data,
+                getGasToken: getGasToken(),
                 dex:
                     hopsPosition !== undefined
                         ? {
@@ -705,6 +708,7 @@ const CreateButton = () => {
                 signer,
                 onchainAddress,
                 getGasAbstractionSigner,
+                getGasToken(),
             );
 
             if (!valid()) return;
