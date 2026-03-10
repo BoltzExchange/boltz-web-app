@@ -9,7 +9,7 @@ const enum Direction {
     Out = "out",
 }
 
-const gasTokenToGetUsdCents = 10;
+export const gasTokenToGetUsdCents = 10;
 
 export type DexQuote = {
     amountIn: bigint;

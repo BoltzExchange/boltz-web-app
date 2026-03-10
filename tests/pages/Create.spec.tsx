@@ -7,8 +7,7 @@ import {
 } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
-import { config } from "../../src/config";
-import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import { Side, SwapType } from "../../src/consts/Enums";
 import { Denomination } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
@@ -92,38 +91,6 @@ describe("Create", () => {
         setPairAssets(BTC, RBTC);
 
         expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
-    });
-
-    test("should keep the gas token checkbox in create state", async () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Create />
-                </>
-            ),
-            {
-                wrapper: contextWrapper,
-            },
-        );
-
-        globalSignals.setPairs(pairs);
-        setPairAssets(BTC, USDT0);
-
-        const gasToken = config.assets?.[USDT0]?.network?.gasToken ?? "";
-        const checkbox = (await screen.findByLabelText(
-            i18n.en.get_gas_token_for_gas.replace("{{ gasToken }}", gasToken),
-        )) as HTMLInputElement;
-
-        expect(signals.getGasToken()).toBe(false);
-        expect(checkbox.checked).toBe(false);
-
-        fireEvent.click(checkbox);
-
-        await waitFor(() => {
-            expect(signals.getGasToken()).toBe(true);
-            expect(checkbox.checked).toBe(true);
-        });
     });
 
     test("should show WASM error", async () => {

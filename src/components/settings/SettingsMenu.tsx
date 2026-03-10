@@ -10,6 +10,7 @@ import "../../style/settings.scss";
 import { isMobile } from "../../utils/helper";
 import Denomination from "./Denomination";
 import FiatAmountSetting from "./FiatAmountSetting";
+import GasTopUp from "./GasTopUp";
 import Logs from "./Logs";
 import PrivacyMode from "./PrivacyMode";
 import RescueFile from "./RescueKey";
@@ -90,6 +91,11 @@ const SettingsMenuContent = () => {
                         label={"slippage"}
                         tooltipLabel={"slippage_tooltip"}
                         settingElement={<Slippage />}
+                    />
+                    <Entry
+                        label={"gas_topup"}
+                        tooltipLabel={"gas_topup_tooltip"}
+                        settingElement={<GasTopUp />}
                     />
                 </Section>
 

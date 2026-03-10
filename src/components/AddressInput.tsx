@@ -7,7 +7,6 @@ import { LN, isEvmAsset } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
 import Pair from "../utils/Pair";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
@@ -21,7 +20,6 @@ const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
     const { t, notify, pairs, regularPairs } = useGlobalContext();
-    const { signer } = useWeb3Signer();
     const {
         pair,
         setPair,
@@ -36,8 +34,6 @@ const AddressInput = () => {
         setReceiveAmount,
         setSendAmount,
     } = useCreateContext();
-    const walletControlsAddress = () =>
-        isEvmAsset(pair().toAsset) && signer()?.address !== undefined;
 
     const handleInputChange = async (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
@@ -154,7 +150,6 @@ const AddressInput = () => {
         <input
             ref={inputRef}
             required
-            disabled={walletControlsAddress()}
             onInput={(e) => handleInputChange(e.currentTarget)}
             type="text"
             id="onchainAddress"

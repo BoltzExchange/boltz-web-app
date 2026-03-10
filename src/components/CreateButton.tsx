@@ -65,7 +65,7 @@ export const getClaimAddress = async (
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
     getGasAbstractionSigner: (asset: string) => Wallet,
-    getGasToken: boolean,
+    getGasToken: boolean | undefined,
 ): Promise<{
     gasAbstraction: GasAbstractionType;
     gasPrice: bigint;
@@ -747,6 +747,7 @@ const CreateButton = () => {
                 buttonDisable() ||
                 loading() ||
                 quoteLoading() ||
+                getGasToken() === undefined ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&

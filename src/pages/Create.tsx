@@ -3,6 +3,8 @@ import { BigNumber } from "bignumber.js";
 import {
     Show,
     createEffect,
+    createMemo,
+    createResource,
     createSignal,
     on,
     onCleanup,
@@ -48,6 +50,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
+import { createProvider } from "../utils/provider";
 import ErrorWasm from "./ErrorWasm";
 
 // TODO: formatted amounts should be *instant* and not depend on quote being calculated
@@ -73,6 +76,7 @@ const Create = () => {
         regularPairs,
         showFiatAmount,
         fetchBtcPrice,
+        gasTopUp,
     } = useGlobalContext();
     const {
         pair,
@@ -108,6 +112,50 @@ const Create = () => {
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
+
+    const gasTopUpSupported = () =>
+        config.assets?.[pair().toAsset]?.type === AssetKind.ERC20;
+    const connectedDestination = () => {
+        const signerAddress = signer()?.address;
+
+        return (
+            signerAddress !== undefined &&
+            onchainAddress() !== "" &&
+            onchainAddress().toLowerCase() === signerAddress.toLowerCase()
+        );
+    };
+    const gasTopUpTrigger = createMemo(() => {
+        const rpcUrls = config.assets?.[pair().toAsset]?.network?.rpcUrls;
+
+        return {
+            address: onchainAddress(),
+            enabled:
+                gasTopUpSupported() &&
+                connectedDestination() &&
+                addressValid() &&
+                onchainAddress() !== "" &&
+                rpcUrls !== undefined,
+            rpcUrls,
+        };
+    });
+    const [destinationNeedsGas] = createResource(
+        gasTopUpTrigger,
+        async ({ address, enabled, rpcUrls }) => {
+            if (!enabled || rpcUrls === undefined) {
+                return false;
+            }
+
+            const balance = await createProvider(rpcUrls).getBalance(address);
+            return balance === 0n;
+        },
+        { initialValue: undefined },
+    );
+    const shouldAutoIncludeGas = () => {
+        if (destinationNeedsGas.state !== "ready") {
+            return undefined;
+        }
+        return gasTopUp() && connectedDestination() && destinationNeedsGas() === true;
+    };
 
     const clearQuoteDebounce = () => {
         if (quoteDebounceTimeout !== undefined) {
@@ -356,6 +404,13 @@ const Create = () => {
         }
 
         sendAmountRef?.focus();
+    });
+
+    createEffect(() => {
+        const shouldInclude = shouldAutoIncludeGas();
+        if (getGasToken() !== shouldInclude) {
+            setGetGasToken(shouldInclude);
+        }
     });
 
     createEffect(
@@ -668,35 +723,13 @@ const Create = () => {
                         <Show
                             when={
                                 isEvmAsset(pair().toAsset) &&
-                                pair().toAsset !== RBTC
+                                pair().toAsset !== RBTC &&
+                                !connectedDestination()
                             }>
                             <hr class="spacer" />
                             <AddressInput />
                         </Show>
                         <hr class="spacer" />
-                        <Show
-                            when={
-                                config.assets?.[pair().toAsset]?.type ===
-                                AssetKind.ERC20
-                            }>
-                            <label class="get-gas-toggle" for="getGasToken">
-                                <input
-                                    id="getGasToken"
-                                    type="checkbox"
-                                    checked={getGasToken()}
-                                    onChange={(e) => {
-                                        setGetGasToken(e.currentTarget.checked);
-                                    }}
-                                />
-                                <span>
-                                    {t("get_gas_token_for_gas", {
-                                        gasToken:
-                                            config.assets?.[pair().toAsset]
-                                                ?.network?.gasToken ?? "",
-                                    })}
-                                </span>
-                            </label>
-                        </Show>
                     </Show>
                     <CreateButton />
                     <AssetSelect />

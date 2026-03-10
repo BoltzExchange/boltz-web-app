@@ -7,6 +7,7 @@ import {
     createResource,
     onMount,
 } from "solid-js";
+import { gasTokenToGetUsdCents } from "src/utils/qouter";
 
 import { config } from "../config";
 import { AssetKind, BTC, LBTC } from "../consts/Assets";
@@ -268,6 +269,15 @@ const Fees = () => {
                     <span data-testid="routing-fee-limit">
                         {pair().maxRoutingFee * ppmFactor} ppm
                     </span>
+                </Show>
+                <Show when={getGasToken()}>
+                    <br />
+                    {t("gas_topup_label", {
+                        cost: gasTokenToGetUsdCents,
+                        gasToken:
+                            config.assets?.[assetReceive()]?.network
+                                ?.gasToken ?? "",
+                    })}
                 </Show>
             </label>
         </div>

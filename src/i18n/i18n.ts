@@ -194,6 +194,10 @@ const dict = {
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
         slippage: "Slippage",
         slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
+        gas_topup: "Auto gas top-up",
+        gas_topup_tooltip:
+            "Automatically convert a small portion of your swap into native gas if your connected wallet has a zero gas balance.",
+        gas_topup_label: "$0.{{ cost }} will be used for {{ gasToken }} gas",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
