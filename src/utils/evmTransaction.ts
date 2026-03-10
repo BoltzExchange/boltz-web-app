@@ -7,11 +7,14 @@ import {
 } from "ethers";
 import log from "loglevel";
 
-import { sendTransaction as sendAlchemyTransaction } from "../alchemy/Alchemy";
+import {
+    type AlchemyCall,
+    sendTransaction as sendAlchemyTransaction,
+} from "../alchemy/Alchemy";
 import type { Signer } from "../context/Web3";
 import { GasAbstractionType } from "./swapCreator";
 
-export type CommitmentLockupEvent = {
+export type LockupEvent = {
     preimageHash: string;
     amount: bigint;
     tokenAddress?: string;
@@ -39,11 +42,15 @@ export const getSignerForGasAbstraction = (
 export const sendPopulatedTransaction = async (
     gasAbstraction: GasAbstractionType,
     signer: Signer | Wallet,
-    transaction: TransactionRequest,
+    transaction: TransactionRequest | AlchemyCall[],
 ): Promise<string> => {
     switch (gasAbstraction) {
         case GasAbstractionType.None:
         case GasAbstractionType.RifRelay: {
+            if (Array.isArray(transaction)) {
+                throw new Error("Transaction is an array of Alchemy calls");
+            }
+
             log.debug(
                 "Sending transaction via signer",
                 transaction.to,
@@ -60,20 +67,38 @@ export const sendPopulatedTransaction = async (
                 );
             }
 
+            const isCalls = Array.isArray(transaction);
             log.debug(
                 "Sending transaction via Alchemy",
-                transaction.to,
-                transaction.data,
+                isCalls
+                    ? transaction.map((call) => ({
+                          to: call.to,
+                          data: call.data,
+                          value: call.value?.toString() ?? undefined,
+                      }))
+                    : [
+                          {
+                              to: transaction.to as string,
+                              data: transaction.data,
+                              value: transaction.value?.toString() ?? undefined,
+                          },
+                      ],
             );
 
             const { chainId } = await signer.provider.getNetwork();
-            return await sendAlchemyTransaction(signer as Wallet, chainId, [
-                {
-                    data: transaction.data,
-                    to: transaction.to as string,
-                    value: transaction.value?.toString() ?? undefined,
-                },
-            ]);
+            return await sendAlchemyTransaction(
+                signer as Wallet,
+                chainId,
+                isCalls
+                    ? transaction
+                    : [
+                          {
+                              data: transaction.data,
+                              to: transaction.to as string,
+                              value: transaction.value?.toString() ?? undefined,
+                          },
+                      ],
+            );
         }
 
         default: {
@@ -89,7 +114,7 @@ export const getLockupEvent = (
     contract: EtherSwap | ERC20Swap,
     receipt: TransactionReceipt,
     contractAddress: string,
-): CommitmentLockupEvent => {
+): LockupEvent => {
     const lockupLog = receipt.logs.find((eventLog) => {
         if (eventLog.address.toLowerCase() !== contractAddress.toLowerCase()) {
             return false;

@@ -1,4 +1,4 @@
-import { type Wallet, getBytes } from "ethers";
+import { type Wallet, getBytes, toBeHex } from "ethers";
 
 import { formatError } from "../utils/errors";
 import { constructRequestOptions } from "../utils/helper";
@@ -124,10 +124,10 @@ const requestAlchemy = async <T extends JsonRpcSuccessResponse<unknown>>(
     } as T;
 };
 
-export const prepareCalls = async (
+const prepareCalls = async (
     signerAddress: string,
     chainId: string,
-    calls: { to: string; data?: string; value?: string }[],
+    calls: AlchemyCall[],
 ) => {
     return await requestAlchemy<PrepareCallsResponse>("wallet_prepareCalls", [
         {
@@ -188,7 +188,13 @@ type GetCallsStatusResponse = JsonRpcSuccessResponse<{
     receipts?: CallsStatusReceipt[];
 }>;
 
-export const signPreparedCalls = async (
+export type AlchemyCall = {
+    to: string;
+    data?: string;
+    value?: string;
+};
+
+const signPreparedCalls = async (
     signer: Wallet,
     prepareCallsResponse: PrepareCallsResponse,
 ): Promise<SignedEntry[] | SignedEntry> => {
@@ -267,7 +273,7 @@ export const signPreparedCalls = async (
     };
 };
 
-export const sendPreparedCalls = async (
+const sendPreparedCalls = async (
     signedData: SignedEntry[] | SignedEntry,
 ): Promise<string> => {
     const params = Array.isArray(signedData)
@@ -299,11 +305,20 @@ const getCallsStatus = async (
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const prefixHex = (data: string) =>
+    data.startsWith("0x") ? data : `0x${data}`;
+
 export const sendTransaction = async (
     signer: Wallet,
     chainId: bigint,
-    calls: { to: string; data?: string; value?: string }[],
+    calls: AlchemyCall[],
 ): Promise<string> => {
+    calls = calls.map((call) => ({
+        to: call.to,
+        value: call.value ? toBeHex(call.value) : undefined,
+        data: call.data ? prefixHex(call.data) : undefined,
+    }));
+
     const signerAddress = await signer.getAddress();
     const prepared = await prepareCalls(
         signerAddress,
