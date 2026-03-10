@@ -74,6 +74,8 @@
 .asset-TBTC {
     .icon {
         background-image: vars.$tbtc_icon;
+        background-size: 80%;
+        background-position: center;
     }
     .asset-text:before {
         content: "TBTC";
