@@ -601,11 +601,13 @@ export default class Pair {
         const firstHop = this.route[0];
         let boltzSendAmount = sendAmount;
         if (firstHop.type === SwapType.Dex) {
-            boltzSendAmount = await this.calculateReceiveAmount(
-                sendAmount,
-                minerFees,
-                [firstHop],
-            );
+            // Reuse the exact Boltz input from the latest reverse quote when available.
+            // Requoting the DEX hop forward can round down by 1 and drift from swap creation.
+            boltzSendAmount =
+                this.boltzSwapSendAmountFromLatestQuote(sendAmount) ??
+                (await this.calculateReceiveAmount(sendAmount, minerFees, [
+                    firstHop,
+                ]));
         }
 
         const receiveAmount = await this.calculateReceiveAmount(
