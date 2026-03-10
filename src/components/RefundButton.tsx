@@ -12,6 +12,7 @@ import {
     createSignal,
 } from "solid-js";
 
+import { type AlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { AssetKind, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -19,10 +20,17 @@ import type { deriveKeyFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { type Signer, useWeb3Signer } from "../context/Web3";
-import { getEipRefundSignature } from "../utils/boltzClient";
+import { HopsPosition } from "../utils/Pair";
+import {
+    encodeDexQuote,
+    getEipRefundSignature,
+    quoteDexAmountIn,
+} from "../utils/boltzClient";
+import { calculateAmountWithSlippage } from "../utils/calculate";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
+    type LockupEvent,
     getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
@@ -31,6 +39,7 @@ import { decodeInvoice } from "../utils/invoice";
 import { RefundType, refund } from "../utils/rescue";
 import {
     type ChainSwap,
+    type DexDetail,
     GasAbstractionType,
     type SubmarineSwap,
 } from "../utils/swapCreator";
@@ -52,7 +61,7 @@ export const sendRefundTransaction = async (
     gasAbstraction: GasAbstractionType,
     transactionSigner: Signer | Wallet,
     timeoutBlockHeight: number,
-    refundCooperative: () => Promise<TransactionRequest>,
+    refundCooperative: () => Promise<TransactionRequest | AlchemyCall[]>,
     refundTimeout: () => Promise<TransactionRequest>,
 ): Promise<string> => {
     const provider = assertTransactionSignerProvider(transactionSigner);
@@ -87,6 +96,90 @@ export const sendRefundTransaction = async (
     return transactionHash;
 };
 
+const refundErc20Cooperatively = async (
+    gasAbstraction: GasAbstractionType,
+    contract: ERC20Swap,
+    refundData: LockupEvent,
+    signature: Signature,
+    slippage: number,
+    dexDetails?: DexDetail,
+    destination?: string,
+) => {
+    if (
+        destination !== undefined &&
+        dexDetails !== undefined &&
+        dexDetails.position === HopsPosition.Before &&
+        gasAbstraction === GasAbstractionType.Signer
+    ) {
+        const desiredToken = dexDetails.hops[0].dexDetails.tokenIn;
+        log.debug(`Refunding via DEX to ${desiredToken}`);
+
+        const [quote] = await quoteDexAmountIn(
+            dexDetails.hops[0].dexDetails.chain,
+            refundData.tokenAddress,
+            desiredToken,
+            refundData.amount,
+        );
+        if (quote === undefined) {
+            throw new Error("could not get DEX quote for refund");
+        }
+
+        const quoteAmount = BigInt(quote.quote);
+        const amountWithSlippage = calculateAmountWithSlippage(
+            quoteAmount,
+            slippage,
+        );
+        const calldata = await encodeDexQuote(
+            dexDetails.hops[0].dexDetails.chain,
+            destination,
+            refundData.amount,
+            quoteAmount - (amountWithSlippage - quoteAmount),
+            quote.data,
+        );
+
+        const refund = contract.interface.encodeFunctionData(
+            "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
+            [
+                refundData.preimageHash,
+                refundData.amount,
+                refundData.tokenAddress,
+                refundData.claimAddress,
+                refundData.refundAddress,
+                refundData.timelock,
+                signature.v,
+                signature.r,
+                signature.s,
+            ],
+        );
+
+        return [
+            {
+                to: await contract.getAddress(),
+                data: refund,
+            },
+            ...calldata.calls.map((call) => ({
+                to: call.to,
+                value: call.value,
+                data: call.data,
+            })),
+        ];
+    }
+
+    return await contract[
+        "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)"
+    ].populateTransaction(
+        refundData.preimageHash,
+        refundData.amount,
+        refundData.tokenAddress,
+        refundData.claimAddress,
+        refundData.refundAddress,
+        refundData.timelock,
+        signature.v,
+        signature.r,
+        signature.s,
+    );
+};
+
 export const RefundEvm = (props: {
     asset: string;
     gasAbstraction?: GasAbstractionType;
@@ -98,10 +191,12 @@ export const RefundEvm = (props: {
     lockupTxHash?: string;
     commitmentLockupTxHash?: string;
     setRefundTxId: Setter<string>;
+    dexDetails?: DexDetail;
+    destination?: string;
 }) => {
     const { getErc20Swap, getEtherSwap, signer, getGasAbstractionSigner } =
         useWeb3Signer();
-    const { t } = useGlobalContext();
+    const { t, slippage } = useGlobalContext();
 
     const gasAbstraction = createMemo(
         () => props.gasAbstraction ?? GasAbstractionType.None,
@@ -260,18 +355,14 @@ export const RefundEvm = (props: {
                                 const contract = getErc20Swap(
                                     props.asset,
                                 ).connect(currentTransactionSigner);
-                                return await contract[
-                                    "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)"
-                                ].populateTransaction(
-                                    currentRefundData.preimageHash,
-                                    currentRefundData.amount,
-                                    currentRefundData.tokenAddress,
-                                    currentRefundData.claimAddress,
-                                    currentRefundData.refundAddress,
-                                    currentRefundData.timelock,
-                                    decSignature.v,
-                                    decSignature.r,
-                                    decSignature.s,
+                                return await refundErc20Cooperatively(
+                                    gasAbstraction(),
+                                    contract,
+                                    currentRefundData,
+                                    decSignature,
+                                    slippage(),
+                                    props.dexDetails,
+                                    props.destination,
                                 );
                             }
 
@@ -531,6 +622,8 @@ const RefundButton = (props: {
                                 props.swap().commitmentLockupTxHash
                             }
                             lockupTxHash={props.swap().lockupTx}
+                            dexDetails={props.swap().dex}
+                            destination={props.swap().signer}
                         />
                     }>
                     <Show
@@ -548,6 +641,8 @@ const RefundButton = (props: {
                                 props.swap().commitmentLockupTxHash
                             }
                             lockupTxHash={props.swap().lockupTx}
+                            dexDetails={props.swap().dex}
+                            destination={props.swap().signer}
                         />
                     </Show>
                 </Show>

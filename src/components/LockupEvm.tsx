@@ -12,9 +12,11 @@ import {
     type Setter,
     Show,
     createEffect,
+    createResource,
     createSignal,
 } from "solid-js";
 
+import { config } from "../config";
 import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -248,11 +250,12 @@ const lockupWithHops = async (
             quote.data,
         );
 
-        const [permit2Address, chainId, signerAddress] = await Promise.all([
+        const [permit2Address, chainId, ownerAddress] = await Promise.all([
             router.PERMIT2(),
             transactionSigner.provider.getNetwork().then((n) => n.chainId),
             signer().getAddress(),
         ]);
+        const refundAddress = transactionSigner.address;
 
         const calls = calldata.calls.map((call) => ({
             target: call.to,
@@ -313,7 +316,7 @@ const lockupWithHops = async (
                     preimageHash: prefix0x(commitmentPreimageHash),
                     token: tokenAddress,
                     claimAddress: commitmentLockupDetails.claimAddress,
-                    refundAddress: signerAddress,
+                    refundAddress: refundAddress,
                     timelock: commitmentLockupDetails.timelock,
                     callsHash,
                 },
@@ -326,7 +329,7 @@ const lockupWithHops = async (
                 prefix0x(commitmentPreimageHash),
                 tokenAddress,
                 commitmentLockupDetails.claimAddress,
-                signerAddress,
+                refundAddress,
                 commitmentLockupDetails.timelock,
                 calls,
                 {
@@ -337,7 +340,7 @@ const lockupWithHops = async (
                     nonce,
                     deadline,
                 },
-                signerAddress,
+                ownerAddress,
                 permit2Signature,
             );
 
@@ -382,7 +385,7 @@ const lockupWithHops = async (
             logIndex: lockupLogIndex,
         } = getLockupEvent(erc20Swap, receipt, contractAddress);
 
-        const commitmentSignature = await signer().signTypedData(
+        const commitmentSignature = await transactionSigner.signTypedData(
             {
                 name: "ERC20Swap",
                 version: String(version),
@@ -662,14 +665,27 @@ const LockupEvm = (props: {
     const userAsset = () =>
         hasHopsBefore() ? props.hops[0].from : props.asset;
 
+    const expectedChainId = () =>
+        config.assets?.[props.asset]?.network?.chainId;
+
     const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [requiredValue, setRequiredValue] = createSignal<bigint>(0n);
     const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
 
+    const [signerChainId] = createResource(signer, async (currentSigner) => {
+        return await currentSigner.provider
+            .getNetwork()
+            .then((n) => Number(n.chainId));
+    });
+
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
         if (signer() === undefined) {
+            return;
+        }
+
+        if (signerChainId() === undefined) {
             return;
         }
 
@@ -765,16 +781,16 @@ const LockupEvm = (props: {
                 when={signerBalance() !== undefined}
                 fallback={
                     <Show
-                        when={signer() !== undefined}
+                        when={
+                            signer() !== undefined &&
+                            signerChainId() === expectedChainId()
+                        }
                         fallback={<ConnectWallet asset={props.asset} />}>
                         <LoadingSpinner />
                     </Show>
                 }>
                 <Show
-                    when={
-                        signer() === undefined ||
-                        signerBalance() >= requiredValue()
-                    }
+                    when={signerBalance() >= requiredValue()}
                     fallback={<InsufficientBalance asset={userAsset()} />}>
                     <LockupTransaction
                         asset={props.asset}
