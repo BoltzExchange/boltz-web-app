@@ -126,10 +126,12 @@ const Create = () => {
     };
     const gasTopUpTrigger = createMemo(() => {
         const rpcUrls = config.assets?.[pair().toAsset]?.network?.rpcUrls;
+        const gasTopUpEnabled = gasTopUp();
 
         return {
             address: onchainAddress(),
             enabled:
+                gasTopUpEnabled &&
                 gasTopUpSupported(pair().toAsset) &&
                 connectedDestination() &&
                 addressValid() &&
@@ -153,11 +155,7 @@ const Create = () => {
                 gasTokenToGetUsdCents,
                 ethPrice,
             );
-            if (
-                balance < gasTokenCostWei &&
-                gasTopUp() &&
-                connectedDestination()
-            ) {
+            if (balance < gasTokenCostWei && connectedDestination()) {
                 setGetGasToken(true);
                 return;
             }
