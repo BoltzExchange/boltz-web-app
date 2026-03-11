@@ -247,6 +247,7 @@ const ConnectWallet = (props: {
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
     syncAddress?: boolean;
+    skipNetworkCheck?: boolean;
 }) => {
     const { t } = useGlobalContext();
     const { providers, signer, getContractsForAsset } = useWeb3Signer();
@@ -327,7 +328,7 @@ const ConnectWallet = (props: {
                     />
                 }>
                 <Show
-                    when={networkValid()}
+                    when={networkValid() || props.skipNetworkCheck}
                     fallback={<SwitchNetwork asset={props.asset} />}>
                     <ShowAddress
                         address={address}

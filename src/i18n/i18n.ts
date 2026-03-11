@@ -94,6 +94,8 @@ const dict = {
             "Try rescuing an external swap via rescue key and other emergency methods.",
         refund_external_scanning_rsk:
             "Scanning for rescuable swaps in your Rootstock Wallet...",
+        refund_external_scanning_evm:
+            "Scanning for rescuable swaps across EVM chains...",
         connected_wallet_no_swaps:
             "The connected Rootstock Wallet does not contain any rescuable swaps.",
         rescue_external_swap: "Rescue External Swap",
@@ -450,6 +452,8 @@ const dict = {
         rsk_rescue_refund_title: "Refund Swap",
         rsk_rescue_refund_explainer:
             "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
+        evm_rescue_refund_explainer:
+            "Connect your wallet to scan for EVM swaps that have expired and can be refunded.",
         rsk_rescue_resume_title: "Resume Swap",
         rsk_rescue_resume_explainer:
             "Use your rescue key to find pending swaps that can be resumed.",

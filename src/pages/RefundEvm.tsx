@@ -6,6 +6,7 @@ import { Match, Show, Switch, createResource, createSignal } from "solid-js";
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
+import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import type { LogRefundData } from "../utils/contractLogs";
@@ -72,7 +73,12 @@ const RefundEvm = () => {
     const params = useParams<{ asset: string; txHash: string }>();
 
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
+    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+
+    const getSwapContract = (asset: string) =>
+        getKindForAsset(asset) === AssetKind.ERC20
+            ? getErc20Swap(asset)
+            : getEtherSwap(asset);
 
     const [refundData] = createResource<RefundData>(async () => {
         if (signer() === undefined) {
@@ -82,7 +88,8 @@ const RefundEvm = () => {
         const [logData, currentHeight] = await Promise.all([
             getLogsFromReceipt(
                 signer(),
-                getEtherSwap(params.asset),
+                params.asset as AssetType,
+                getSwapContract(params.asset),
                 params.txHash,
             ),
             signer().provider.getBlockNumber(),

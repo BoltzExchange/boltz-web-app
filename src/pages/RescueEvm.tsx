@@ -12,7 +12,12 @@ import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { type RefundableAssetType } from "../consts/Assets";
+import {
+    AssetKind,
+    type AssetType,
+    type RefundableAssetType,
+    getKindForAsset,
+} from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
@@ -75,11 +80,11 @@ const ClaimState = (props: {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
     const { signer, getEtherSwap } = useWeb3Signer();
-    const { rskRescuableSwaps } = useRescueContext();
+    const { evmRescuableSwaps } = useRescueContext();
     const params = useParams();
 
     const preimage = () => {
-        const swapFromContext = rskRescuableSwaps().find(
+        const swapFromContext = evmRescuableSwaps().find(
             (s) => s.preimageHash === props.claimData.preimageHash,
         );
         return swapFromContext?.preimage
@@ -171,7 +176,12 @@ const RescueEvm = () => {
     }>();
 
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
+    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+
+    const getSwapContract = (asset: string) =>
+        getKindForAsset(asset) === AssetKind.ERC20
+            ? getErc20Swap(asset)
+            : getEtherSwap(asset);
 
     const [refundTxId, setRefundTxId] = createSignal<string | undefined>(
         undefined,
@@ -188,7 +198,8 @@ const RescueEvm = () => {
         const [logData, currentHeight] = await Promise.all([
             getLogsFromReceipt(
                 signer(),
-                getEtherSwap(params.asset),
+                params.asset as AssetType,
+                getSwapContract(params.asset),
                 params.txHash,
             ),
             signer().provider.getBlockNumber(),
