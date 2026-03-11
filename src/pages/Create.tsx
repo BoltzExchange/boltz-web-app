@@ -154,7 +154,11 @@ const Create = () => {
         if (destinationNeedsGas.state !== "ready") {
             return undefined;
         }
-        return gasTopUp() && connectedDestination() && destinationNeedsGas() === true;
+        return (
+            gasTopUp() &&
+            connectedDestination() &&
+            destinationNeedsGas() === true
+        );
     };
 
     const clearQuoteDebounce = () => {

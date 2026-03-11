@@ -196,7 +196,7 @@ const dict = {
         slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
         gas_topup: "Auto gas top-up",
         gas_topup_tooltip:
-            "Automatically convert a small portion of your swap into native gas if your connected wallet has a zero gas balance.",
+            "Automatically convert a small portion of your swap into native gas if your connected wallet has no gas.",
         gas_topup_label: "$0.{{ cost }} will be used for {{ gasToken }} gas",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
@@ -667,6 +667,10 @@ const dict = {
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
         slippage: "Slippage",
         slippage_tooltip: "Maximale Slippage-Toleranz bei DEX-Swaps",
+        gas_topup: "Auto Gas-Aufladung",
+        gas_topup_tooltip:
+            "Wandelt automatisch einen kleinen Teil deines Swaps in natives Gas um, wenn dein verbundenes Wallet kein Gas hat.",
+        gas_topup_label: "$0.{{ cost }} wird für {{ gasToken }}-Gas verwendet",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1143,6 +1147,10 @@ const dict = {
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
         slippage: "Slippage",
         slippage_tooltip: "Tolerancia máxima de slippage para swaps en DEX",
+        gas_topup: "Recarga automática de gas",
+        gas_topup_tooltip:
+            "Convierte automáticamente una pequeña parte de tu swap en gas nativo si tu monedero conectado no tiene gas.",
+        gas_topup_label: "$0.{{ cost }} se usará para gas de {{ gasToken }}",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1615,6 +1623,10 @@ const dict = {
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
         slippage: "Slippage",
         slippage_tooltip: "Tolerância máxima de slippage para trocas em DEX",
+        gas_topup: "Recarga automática de gas",
+        gas_topup_tooltip:
+            "Converte automaticamente uma pequena parte da sua troca em gas nativo se a sua carteira conectada não tiver gas.",
+        gas_topup_label: "$0.{{ cost }} será usado para gas de {{ gasToken }}",
         dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -2065,6 +2077,10 @@ const dict = {
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
         slippage: "滑点",
         slippage_tooltip: "DEX 交换的最大价格滑点容差",
+        gas_topup: "自动补充 Gas",
+        gas_topup_tooltip:
+            "如果您连接的钱包没有 Gas，将自动把交换的一小部分转换为原生 Gas。",
+        gas_topup_label: "$0.{{ cost }} 将用于 {{ gasToken }} Gas",
         dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
@@ -2508,6 +2524,11 @@ const dict = {
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
         slippage: "スリッページ",
         slippage_tooltip: "DEXスワップで許容する最大価格スリッページ",
+        gas_topup: "ガス自動チャージ",
+        gas_topup_tooltip:
+            "接続されたウォレットにガスがない場合、スワップの一部を自動的にネイティブガスに変換します。",
+        gas_topup_label:
+            "$0.{{ cost }} が {{ gasToken }} のガス代に使用されます",
         dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",
