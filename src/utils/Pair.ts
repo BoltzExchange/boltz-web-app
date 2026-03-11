@@ -293,7 +293,7 @@ export default class Pair {
 
     public get maxRoutingFee() {
         if (!this.isRoutable) {
-            return 0;
+            return undefined;
         }
 
         const maxFee = this.route
