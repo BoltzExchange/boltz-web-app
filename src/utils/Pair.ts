@@ -98,6 +98,13 @@ export default class Pair {
           }
         | undefined;
 
+    private dexRateCache:
+        | {
+              baseIn: bigint;
+              baseOut: bigint;
+          }
+        | undefined;
+
     constructor(
         public readonly pairs: Pairs | undefined,
         private readonly from: string,
@@ -239,7 +246,10 @@ export default class Pair {
     }
 
     public get needsNetworkForQuote() {
-        return this.route.some((hop) => hop.type === SwapType.Dex);
+        if (!this.route.some((hop) => hop.type === SwapType.Dex)) {
+            return false;
+        }
+        return this.dexRateCache === undefined;
     }
 
     public get requiredInput() {
@@ -360,6 +370,60 @@ export default class Pair {
         return undefined;
     }
 
+    public fetchDexRate = async (): Promise<void> => {
+        const dexHop = this.route.find((hop) => hop.type === SwapType.Dex);
+        if (dexHop === undefined) {
+            return;
+        }
+
+        const refAmount = isRoutedAsset(dexHop.from)
+            ? BigInt(
+                  10 ** (config.assets[dexHop.from]?.token?.decimals ?? 6),
+              ) * 100n
+            : toDexAmount(500_000, dexHop.from);
+
+        if (refAmount === 0n) {
+            return;
+        }
+
+        try {
+            const [quote] = await quoteDexAmountIn(
+                dexHop.dexDetails!.chain,
+                dexHop.dexDetails!.tokenIn,
+                dexHop.dexDetails!.tokenOut,
+                refAmount,
+            );
+            const quoteAmount = BigInt(quote?.quote ?? 0);
+            if (quoteAmount > 0n) {
+                this.dexRateCache = {
+                    baseIn: refAmount,
+                    baseOut: quoteAmount,
+                };
+            }
+        } catch (e) {
+            log.warn("Failed to fetch baseline DEX rate", e);
+        }
+    };
+
+    private applyDexRateForward = (inputDex: bigint): bigint => {
+        if (!this.dexRateCache || this.dexRateCache.baseIn === 0n) {
+            return 0n;
+        }
+        return (inputDex * this.dexRateCache.baseOut) / this.dexRateCache.baseIn;
+    };
+
+    private applyDexRateReverse = (outputDex: bigint): bigint => {
+        if (!this.dexRateCache || this.dexRateCache.baseOut === 0n) {
+            return 0n;
+        }
+        return (
+            (outputDex * this.dexRateCache.baseIn +
+                this.dexRateCache.baseOut -
+                1n) /
+            this.dexRateCache.baseOut
+        );
+    };
+
     public boltzSwapSendAmountFromLatestQuote = (sendAmount: BigNumber) => {
         const key = sendAmount.toFixed();
 
@@ -378,15 +442,22 @@ export default class Pair {
             return boltzSendAmount;
         }
 
-        const [quote] = await quoteDexAmountOut(
-            dexHop.dexDetails!.chain,
-            dexHop.dexDetails!.tokenIn,
-            dexHop.dexDetails!.tokenOut,
-            toDexAmount(boltzSendAmount, dexHop.to),
-        );
-        const quoteAmount = BigInt(quote?.quote ?? 0);
+        const outputDex = toDexAmount(boltzSendAmount, dexHop.to);
+        let inputDex: bigint;
 
-        return fromDexAmount(quoteAmount, dexHop.from).toNumber();
+        if (this.dexRateCache) {
+            inputDex = this.applyDexRateReverse(outputDex);
+        } else {
+            const [quote] = await quoteDexAmountOut(
+                dexHop.dexDetails!.chain,
+                dexHop.dexDetails!.tokenIn,
+                dexHop.dexDetails!.tokenOut,
+                outputDex,
+            );
+            inputDex = BigInt(quote?.quote ?? 0);
+        }
+
+        return fromDexAmount(inputDex, dexHop.from).toNumber();
     };
 
     public getMinimum = async (): Promise<number> => {
@@ -511,15 +582,25 @@ export default class Pair {
                         continue;
                     }
 
-                    const [quote] = await quoteDexAmountIn(
-                        hop.dexDetails!.chain,
-                        hop.dexDetails!.tokenIn,
-                        hop.dexDetails!.tokenOut,
-                        toDexAmount(amount.toNumber(), hop.from),
+                    const inputDex = toDexAmount(
+                        amount.toNumber(),
+                        hop.from,
                     );
-                    const quoteAmount = BigInt(quote?.quote ?? 0);
+                    let outputDex: bigint;
 
-                    amount = fromDexAmount(quoteAmount, hop.to);
+                    if (this.dexRateCache) {
+                        outputDex = this.applyDexRateForward(inputDex);
+                    } else {
+                        const [quote] = await quoteDexAmountIn(
+                            hop.dexDetails!.chain,
+                            hop.dexDetails!.tokenIn,
+                            hop.dexDetails!.tokenOut,
+                            inputDex,
+                        );
+                        outputDex = BigInt(quote?.quote ?? 0);
+                    }
+
+                    amount = fromDexAmount(outputDex, hop.to);
                     break;
                 }
 
@@ -552,15 +633,25 @@ export default class Pair {
         for (const hop of [...this.route].reverse()) {
             switch (hop.type) {
                 case SwapType.Dex: {
-                    const [quote] = await quoteDexAmountOut(
-                        hop.dexDetails!.chain,
-                        hop.dexDetails!.tokenIn,
-                        hop.dexDetails!.tokenOut,
-                        toDexAmount(amount.toNumber(), hop.to),
+                    const outputDex = toDexAmount(
+                        amount.toNumber(),
+                        hop.to,
                     );
-                    const quoteAmount = BigInt(quote?.quote ?? 0);
+                    let inputDex: bigint;
 
-                    amount = fromDexAmount(quoteAmount, hop.from);
+                    if (this.dexRateCache) {
+                        inputDex = this.applyDexRateReverse(outputDex);
+                    } else {
+                        const [quote] = await quoteDexAmountOut(
+                            hop.dexDetails!.chain,
+                            hop.dexDetails!.tokenIn,
+                            hop.dexDetails!.tokenOut,
+                            outputDex,
+                        );
+                        inputDex = BigInt(quote?.quote ?? 0);
+                    }
+
+                    amount = fromDexAmount(inputDex, hop.from);
                     break;
                 }
 

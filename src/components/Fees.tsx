@@ -189,17 +189,21 @@ const Fees = () => {
             }
 
             const initiatingPair = pair();
-            void Promise.all([
-                initiatingPair.getMinimum(),
-                initiatingPair.getMaximum(),
-            ]).then(([min, max]) => {
+            void (async () => {
+                await initiatingPair.fetchDexRate();
+
+                const [min, max] = await Promise.all([
+                    initiatingPair.getMinimum(),
+                    initiatingPair.getMaximum(),
+                ]);
+
                 if (pair() !== initiatingPair) {
                     return;
                 }
 
                 setMinimum(min);
                 setMaximum(max);
-            });
+            })();
         }
     });
 
