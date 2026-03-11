@@ -53,6 +53,12 @@ describe("Pair", () => {
         quoteDexAmountOutMock.mockReset();
     });
 
+    test("should return undefined maxRoutingFee for invalid pairs", () => {
+        const pair = new Pair(undefined, "NONEXISTENT", LN);
+        expect(pair.isRoutable).toBe(false);
+        expect(pair.maxRoutingFee).toBeUndefined();
+    });
+
     test("should keep the cached Boltz send amount for routed submarine creation", async () => {
         quoteDexAmountOutMock.mockResolvedValue([
             {
