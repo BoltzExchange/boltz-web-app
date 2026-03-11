@@ -40,6 +40,7 @@ import {
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
+import { gasTopUpSupported } from "../utils/qouter";
 import {
     GasAbstractionType,
     type SomeSwap,
@@ -747,7 +748,8 @@ const CreateButton = () => {
                 buttonDisable() ||
                 loading() ||
                 quoteLoading() ||
-                getGasToken() === undefined ||
+                (gasTopUpSupported(assetReceive()) &&
+                    getGasToken() === undefined) ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&

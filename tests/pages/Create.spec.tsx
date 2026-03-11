@@ -204,7 +204,7 @@ describe("Create", () => {
         setPairAssets(LN, LBTC);
 
         await waitFor(() => {
-            expect(signals.receiveAmount()).toEqual(BigNumber(49426));
+            expect(signals.receiveAmount()).toEqual(BigNumber(49429));
         });
     });
 

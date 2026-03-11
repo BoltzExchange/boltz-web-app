@@ -1,6 +1,8 @@
 import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
+import { config } from "../config";
+import { AssetKind } from "../consts/Assets";
 import { quoteDexAmountIn, quoteDexAmountOut } from "./boltzClient";
 import { getEthPriceFailover, usdCentsToWei } from "./fiat";
 
@@ -10,6 +12,9 @@ const enum Direction {
 }
 
 export const gasTokenToGetUsdCents = 10;
+
+export const gasTopUpSupported = (asset: string) =>
+    config.assets?.[asset]?.type === AssetKind.ERC20;
 
 export type DexQuote = {
     amountIn: bigint;
