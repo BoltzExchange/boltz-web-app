@@ -9,7 +9,6 @@ import {
     type Pairs,
     type ReversePairTypeTaproot,
     type SubmarinePairTypeTaproot,
-    quoteDexAmountIn,
     quoteDexAmountOut,
 } from "./boltzClient";
 import {
@@ -18,6 +17,7 @@ import {
     calculateSendAmount,
 } from "./calculate";
 import { coalesceLn } from "./helper";
+import { fetchDexQuote, fetchGasTokenQuote } from "./qouter";
 import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
 
 /**
@@ -481,6 +481,7 @@ export default class Pair {
         // TODO: only include lockup miner fees
         minerFees: number,
         route: Hop[] = this.route,
+        getGasToken: boolean = false,
     ) => {
         if (!this.isRoutable) {
             return BigNumber(0);
@@ -511,15 +512,18 @@ export default class Pair {
                         continue;
                     }
 
-                    const [quote] = await quoteDexAmountIn(
-                        hop.dexDetails!.chain,
-                        hop.dexDetails!.tokenIn,
-                        hop.dexDetails!.tokenOut,
-                        toDexAmount(amount.toNumber(), hop.from),
-                    );
-                    const quoteAmount = BigInt(quote?.quote ?? 0);
+                    const dexInput = toDexAmount(amount.toNumber(), hop.from);
 
-                    amount = fromDexAmount(quoteAmount, hop.to);
+                    try {
+                        const { trade } = await fetchDexQuote(
+                            hop.dexDetails!,
+                            dexInput,
+                            getGasToken,
+                        );
+                        amount = fromDexAmount(trade.amountOut, hop.to);
+                    } catch {
+                        amount = BigNumber(0);
+                    }
                     break;
                 }
 
@@ -539,6 +543,7 @@ export default class Pair {
     public calculateSendAmount = async (
         receiveAmount: BigNumber,
         minerFees: number,
+        getGasToken: boolean = false,
     ) => {
         if (!this.isRoutable) {
             return BigNumber(0);
@@ -558,7 +563,14 @@ export default class Pair {
                         hop.dexDetails!.tokenOut,
                         toDexAmount(amount.toNumber(), hop.to),
                     );
-                    const quoteAmount = BigInt(quote?.quote ?? 0);
+                    let quoteAmount = BigInt(quote?.quote ?? 0);
+
+                    if (getGasToken) {
+                        const gasQuote = await fetchGasTokenQuote(
+                            hop.dexDetails!,
+                        );
+                        quoteAmount += gasQuote.amountIn;
+                    }
 
                     amount = fromDexAmount(quoteAmount, hop.from);
                     break;

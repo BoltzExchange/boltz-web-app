@@ -43,10 +43,13 @@ describe("TransactionConfirmed claimAsset", () => {
                 "0xclaim",
                 "0xrefund",
                 123,
+                "0xdestination",
+                0.5,
                 signerAccessor as never,
                 getGasAbstractionSigner,
                 etherSwap,
                 erc20Swap,
+                false,
             ),
         ).resolves.toEqual("0xrelay");
 

@@ -8,6 +8,7 @@ const makeNetwork = (chainId: number, chainName: string, symbol: string) => ({
     chainId,
     chainName,
     symbol,
+    gasToken: symbol,
     rpcUrls: [`https://${chainName.toLowerCase()}.example`],
     nativeCurrency: {
         name: symbol,

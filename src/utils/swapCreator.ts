@@ -43,6 +43,7 @@ export type SwapBase = {
     status?: string;
     assetSend: string;
     assetReceive: string;
+    getGasToken?: boolean;
     sendAmount: number;
     receiveAmount: number;
     version: number;

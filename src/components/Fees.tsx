@@ -7,6 +7,7 @@ import {
     createResource,
     onMount,
 } from "solid-js";
+import { gasTokenToGetUsdCents } from "src/utils/qouter";
 
 import { config } from "../config";
 import { AssetKind, BTC, LBTC } from "../consts/Assets";
@@ -78,6 +79,7 @@ const Fees = () => {
         setBoltzFee,
         onchainAddress,
         addressValid,
+        getGasToken,
     } = useCreateContext();
     const { signer, getGasAbstractionSigner } = useWeb3Signer();
 
@@ -136,6 +138,7 @@ const Fees = () => {
                 () => signer,
                 onchainAddress,
                 getGasAbstractionSigner,
+                getGasToken(),
             );
             switch (gasAbstraction) {
                 case GasAbstractionType.RifRelay:
@@ -266,6 +269,16 @@ const Fees = () => {
                     <span data-testid="routing-fee-limit">
                         {pair().maxRoutingFee * ppmFactor} ppm
                     </span>
+                </Show>
+                <Show when={getGasToken()}>
+                    <br />
+                    {t("gas_topup_label", {
+                        cost: gasTokenToGetUsdCents,
+                        gasToken:
+                            config.assets?.[assetReceive()]?.network
+                                ?.gasToken ?? "",
+                    })}{" "}
+                    <span class="denominator" data-denominator="usd" />
                 </Show>
             </label>
         </div>

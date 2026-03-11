@@ -19,6 +19,7 @@ export type Asset = {
     network?: {
         chainName: string;
         symbol: string;
+        gasToken: string;
         chainId: number;
         rpcUrls: string[];
         nativeCurrency: {
@@ -67,6 +68,7 @@ export const arbitrumExplorer = {
 
 export const arbitrumNetwork = {
     symbol: "ARB",
+    gasToken: "ETH",
     chainName: Network.Arbitrum,
     chainId: 42161,
     rpcUrls: ["https://arb1.arbitrum.io/rpc"],
@@ -109,6 +111,7 @@ const defaults = {
         Yadio: "https://api.yadio.io/exrates/btc",
         Kraken: "https://api.kraken.com/0/public/Ticker",
         Mempool: "https://mempool.space/api/v1/prices",
+        CoinGecko: "https://api.coingecko.com/api/v3/simple/price",
     },
 };
 

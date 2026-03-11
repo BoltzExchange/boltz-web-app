@@ -3,13 +3,13 @@ import { BigNumber } from "bignumber.js";
 import {
     Show,
     createEffect,
+    createMemo,
+    createResource,
     createSignal,
     on,
     onCleanup,
     onMount,
 } from "solid-js";
-import FiatAmount from "src/components/FiatAmount";
-import { useWeb3Signer } from "src/context/Web3";
 
 import Accordion from "../components/Accordion";
 import AddressInput from "../components/AddressInput";
@@ -19,6 +19,7 @@ import ConnectWallet from "../components/ConnectWallet";
 import CreateButton, { BackupDone } from "../components/CreateButton";
 import { FeeComparisonTable } from "../components/FeeComparisonTable";
 import Fees from "../components/Fees";
+import FiatAmount from "../components/FiatAmount";
 import InvoiceInput from "../components/InvoiceInput";
 import LoadingSpinner from "../components/LoadingSpinner";
 import QrScan from "../components/QrScan";
@@ -39,6 +40,7 @@ import {
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
+import { useWeb3Signer } from "../context/Web3";
 import Pair, { RequiredInput } from "../utils/Pair";
 import {
     calculateDigits,
@@ -47,7 +49,10 @@ import {
     formatDenomination,
     getValidationRegex,
 } from "../utils/denomination";
+import { getEthPriceFailover, usdCentsToWei } from "../utils/fiat";
 import { isMobile } from "../utils/helper";
+import { createProvider } from "../utils/provider";
+import { gasTokenToGetUsdCents, gasTopUpSupported } from "../utils/qouter";
 import ErrorWasm from "./ErrorWasm";
 
 // TODO: formatted amounts should be *instant* and not depend on quote being calculated
@@ -73,10 +78,13 @@ const Create = () => {
         regularPairs,
         showFiatAmount,
         fetchBtcPrice,
+        gasTopUp,
     } = useGlobalContext();
     const {
         pair,
         setPair,
+        getGasToken,
+        setGetGasToken,
         assetSelect,
         assetSelected,
         invoiceValid,
@@ -106,6 +114,57 @@ const Create = () => {
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
+
+    const connectedDestination = () => {
+        const signerAddress = signer()?.address;
+
+        return (
+            signerAddress !== undefined &&
+            onchainAddress() !== "" &&
+            onchainAddress().toLowerCase() === signerAddress.toLowerCase()
+        );
+    };
+    const gasTopUpTrigger = createMemo(() => {
+        const rpcUrls = config.assets?.[pair().toAsset]?.network?.rpcUrls;
+        const gasTopUpEnabled = gasTopUp();
+
+        return {
+            address: onchainAddress(),
+            enabled:
+                gasTopUpEnabled &&
+                gasTopUpSupported(pair().toAsset) &&
+                connectedDestination() &&
+                addressValid() &&
+                onchainAddress() !== "" &&
+                rpcUrls !== undefined,
+            rpcUrls,
+        };
+    });
+    createResource(
+        gasTopUpTrigger,
+        async ({ address, enabled, rpcUrls }) => {
+            if (!enabled || rpcUrls === undefined) {
+                setGetGasToken(false);
+                return;
+            }
+
+            const balance = await createProvider(rpcUrls).getBalance(address);
+
+            const ethPrice = await getEthPriceFailover();
+            const gasTokenCostWei = usdCentsToWei(
+                gasTokenToGetUsdCents,
+                ethPrice,
+            );
+            if (balance < gasTokenCostWei && connectedDestination()) {
+                setGetGasToken(true);
+                return;
+            }
+
+            setGetGasToken(false);
+            return;
+        },
+        { initialValue: undefined },
+    );
 
     const clearQuoteDebounce = () => {
         if (quoteDebounceTimeout !== undefined) {
@@ -188,6 +247,7 @@ const Create = () => {
             const sendAmount = await pair().calculateSendAmount(
                 satAmount,
                 minerFee(),
+                getGasToken(),
             );
             setAmountChanged(Side.Receive);
             setReceiveAmount(satAmount);
@@ -218,6 +278,8 @@ const Create = () => {
             const receiveAmount = await pair().calculateReceiveAmount(
                 satAmount,
                 minerFee(),
+                undefined,
+                getGasToken(),
             );
             setAmountChanged(Side.Send);
             setSendAmount(satAmount);
@@ -329,6 +391,8 @@ const Create = () => {
         const receiveAmount = await pair().calculateReceiveAmount(
             BigNumber(amount),
             minerFee(),
+            undefined,
+            getGasToken(),
         );
         setReceiveAmount(receiveAmount);
         validateAmount();
@@ -357,13 +421,14 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, pair], () => {
+        on([boltzFee, minerFee, pair, getGasToken], () => {
             loadingGuard(async () => {
                 if (amountChanged() === Side.Receive) {
                     setSendAmount(
                         await pair().calculateSendAmount(
                             receiveAmount(),
                             minerFee(),
+                            getGasToken(),
                         ),
                     );
                 } else {
@@ -371,6 +436,8 @@ const Create = () => {
                         await pair().calculateReceiveAmount(
                             sendAmount(),
                             minerFee(),
+                            undefined,
+                            getGasToken(),
                         ),
                     );
                 }
@@ -666,7 +733,8 @@ const Create = () => {
                         <Show
                             when={
                                 isEvmAsset(pair().toAsset) &&
-                                pair().toAsset !== RBTC
+                                pair().toAsset !== RBTC &&
+                                !connectedDestination()
                             }>
                             <hr class="spacer" />
                             <AddressInput />

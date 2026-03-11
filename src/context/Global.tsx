@@ -83,6 +83,8 @@ export type GlobalContextType = {
     setPrivacyMode: Setter<boolean>;
     slippage: Accessor<number>;
     setSlippage: Setter<number>;
+    gasTopUp: Accessor<boolean>;
+    setGasTopUp: Setter<boolean>;
     zeroConf: Accessor<boolean>;
     setZeroConf: Setter<boolean>;
     showFiatAmount: Accessor<boolean>;
@@ -473,6 +475,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [gasTopUp, setGasTopUp] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<boolean>(true),
+        {
+            name: "gasTopUp",
+        },
+    );
+
     const [zeroConf, setZeroConf] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<boolean>(true),
@@ -562,6 +572,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setPrivacyMode,
                 slippage,
                 setSlippage,
+                gasTopUp,
+                setGasTopUp,
                 zeroConf,
                 setZeroConf,
                 showFiatAmount,

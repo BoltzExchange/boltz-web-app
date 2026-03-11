@@ -40,6 +40,7 @@ import {
 } from "../utils/invoice";
 import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
+import { gasTopUpSupported } from "../utils/qouter";
 import {
     GasAbstractionType,
     type SomeSwap,
@@ -65,6 +66,7 @@ export const getClaimAddress = async (
     signer: Accessor<Signer>,
     onchainAddress: Accessor<string>,
     getGasAbstractionSigner: (asset: string) => Wallet,
+    getGasToken: boolean | undefined,
 ): Promise<{
     gasAbstraction: GasAbstractionType;
     gasPrice: bigint;
@@ -104,7 +106,7 @@ export const getClaimAddress = async (
                 gasPrice: 0n,
                 gasAbstraction: GasAbstractionType.Signer,
                 claimAddress:
-                    assetReceive() !== USDT0
+                    assetReceive() !== USDT0 && !getGasToken
                         ? onchainAddress()
                         : gasSigner.address,
             };
@@ -140,6 +142,7 @@ const CreateButton = () => {
     const {
         pair,
         setPair,
+        getGasToken,
         invoice,
         lnurl,
         onchainAddress,
@@ -640,6 +643,7 @@ const CreateButton = () => {
 
             await setSwapStorage({
                 ...data,
+                getGasToken: getGasToken(),
                 dex:
                     hopsPosition !== undefined
                         ? {
@@ -705,6 +709,7 @@ const CreateButton = () => {
                 signer,
                 onchainAddress,
                 getGasAbstractionSigner,
+                getGasToken(),
             );
 
             if (!valid()) return;
@@ -743,6 +748,8 @@ const CreateButton = () => {
                 buttonDisable() ||
                 loading() ||
                 quoteLoading() ||
+                (gasTopUpSupported(assetReceive()) &&
+                    getGasToken() === undefined) ||
                 (onchainAddress() === "" &&
                     invoice() === "" &&
                     bolt12Offer() === undefined &&

@@ -4,7 +4,7 @@ import { BigNumber } from "bignumber.js";
 import CreateButton, {
     getClaimAddress,
 } from "../../src/components/CreateButton";
-import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
@@ -55,6 +55,7 @@ describe("CreateButton", () => {
                 () => signer,
                 () => "0xuser",
                 vi.fn(),
+                false,
             ),
         ).resolves.toEqual({
             gasAbstraction: GasAbstractionType.RifRelay,
@@ -71,6 +72,7 @@ describe("CreateButton", () => {
                 () => undefined,
                 () => "bc1qaddr",
                 vi.fn(),
+                false,
             ),
         ).resolves.toEqual({
             gasAbstraction: GasAbstractionType.None,
@@ -79,7 +81,51 @@ describe("CreateButton", () => {
         });
     });
 
-    test("should use signer gas abstraction for non-RBTC EVM claims", async () => {
+    test("should keep the user destination for TBTC claims without gas token", async () => {
+        const getGasAbstractionSigner = vi
+            .fn()
+            .mockReturnValue({ address: "0xgas" });
+
+        await expect(
+            getClaimAddress(
+                () => TBTC,
+                () => BTC,
+                () => undefined,
+                () => "0xuser",
+                getGasAbstractionSigner,
+                false,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.Signer,
+            gasPrice: 0n,
+            claimAddress: "0xuser",
+        });
+        expect(getGasAbstractionSigner).toHaveBeenCalledWith(TBTC);
+    });
+
+    test("should use gas signer address for TBTC claims with gas token", async () => {
+        const getGasAbstractionSigner = vi
+            .fn()
+            .mockReturnValue({ address: "0xgas" });
+
+        await expect(
+            getClaimAddress(
+                () => TBTC,
+                () => BTC,
+                () => undefined,
+                () => "0xuser",
+                getGasAbstractionSigner,
+                true,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.Signer,
+            gasPrice: 0n,
+            claimAddress: "0xgas",
+        });
+        expect(getGasAbstractionSigner).toHaveBeenCalledWith(TBTC);
+    });
+
+    test("should use signer gas abstraction for USDT0 claims", async () => {
         const getGasAbstractionSigner = vi
             .fn()
             .mockReturnValue({ address: "0xgas" });
@@ -91,6 +137,7 @@ describe("CreateButton", () => {
                 () => undefined,
                 () => "0xuser",
                 getGasAbstractionSigner,
+                false,
             ),
         ).resolves.toEqual({
             gasAbstraction: GasAbstractionType.Signer,
@@ -110,6 +157,7 @@ describe("CreateButton", () => {
                 () => undefined,
                 () => "bc1qaddr",
                 getGasAbstractionSigner,
+                false,
             ),
         ).resolves.toEqual({
             gasAbstraction: GasAbstractionType.None,

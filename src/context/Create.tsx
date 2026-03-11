@@ -234,6 +234,8 @@ const handleUrlParams = (
 export type CreateContextType = {
     pair: Accessor<Pair>;
     setPair: Setter<Pair>;
+    getGasToken: Accessor<boolean | undefined>;
+    setGetGasToken: Setter<boolean | undefined>;
     invoice: Accessor<string>;
     setInvoice: Setter<string>;
     lnurl: Accessor<string>;
@@ -305,6 +307,9 @@ const CreateProvider = (props: { children: JSX.Element }) => {
 
     const [pair, setPair] = createSignal<Pair>(
         new Pair(undefined, assetFrom(), assetTo()),
+    );
+    const [getGasToken, setGetGasToken] = createSignal<boolean | undefined>(
+        undefined,
     );
 
     // asset selection
@@ -391,6 +396,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
             value={{
                 pair,
                 setPair,
+                getGasToken,
+                setGetGasToken,
                 invoice,
                 setInvoice,
                 lnurl,
