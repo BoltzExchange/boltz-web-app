@@ -3,7 +3,14 @@ import { IoClose } from "solid-icons/io";
 import { For, Show } from "solid-js";
 
 import { config } from "../config";
-import { BTC, LBTC, LN, RBTC, getNetworkBadge } from "../consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    RBTC,
+    getAssetDisplaySymbol,
+    getNetworkBadge,
+} from "../consts/Assets";
 import { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -117,7 +124,7 @@ const SelectAsset = () => {
                                 return (
                                     <button
                                         type="button"
-                                        class={`asset-select-item asset-${asset}`}
+                                        class={`asset-select-item asset-${getAssetDisplaySymbol(asset)}`}
                                         data-network={getNetworkBadge(asset)}
                                         data-selected={isSelected(asset)}
                                         data-testid={`select-${asset}`}
@@ -125,7 +132,7 @@ const SelectAsset = () => {
                                         <span class="icon" />
                                         <div class="asset-select-info">
                                             <span class="asset-select-name">
-                                                {asset}
+                                                {getAssetDisplaySymbol(asset)}
                                             </span>
                                             <Show when={network}>
                                                 <span class="asset-select-network">

@@ -3,7 +3,7 @@ import log from "loglevel";
 import { createEffect, createMemo, createResource } from "solid-js";
 
 import { config } from "../config";
-import { evmChains } from "../consts/Assets";
+import { getEvmAssets } from "../consts/Assets";
 import { useWeb3Signer } from "../context/Web3";
 import loader from "../lazy/walletConnect";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
@@ -20,7 +20,7 @@ export const WalletConnect = () => {
 
     const networks = createMemo(() => {
         try {
-            return buildWalletConnectNetworks(config.assets, evmChains);
+            return buildWalletConnectNetworks(config.assets, getEvmAssets());
         } catch (error) {
             log.error(`WalletConnect network config invalid: ${String(error)}`);
             return undefined;

@@ -33,6 +33,7 @@ export type Asset = {
         decimals: number;
         routeVia?: string;
     };
+    oft?: AssetOftConfig;
 };
 
 export enum Explorer {
@@ -48,6 +49,16 @@ export type Url = {
 
 export type ExplorerUrl = Url & {
     id: Explorer;
+};
+
+export type AssetOftChain = {
+    name: string;
+    chainId: number;
+};
+
+export type AssetOftConfig = {
+    native: AssetOftChain[];
+    legacyMesh: AssetOftChain[];
 };
 
 export type Config = {

@@ -9,6 +9,7 @@ export const LBTC = "L-BTC";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
 export const USDT0 = "USDT0";
+export const USDT0_VARIANT_PREFIX = `${USDT0}-`;
 
 export type AssetType =
     | typeof LN
@@ -20,13 +21,35 @@ export type AssetType =
 
 export type RefundableAssetType = typeof BTC | typeof LBTC | typeof RBTC;
 
-export const assets = [LN, BTC, LBTC, RBTC, TBTC, USDT0];
+export const assets = [LN, ...Object.keys(config.assets ?? {})];
 
 export const refundableAssets = [BTC, LBTC, RBTC];
 
 export const btcChains = [BTC, LBTC];
 
 export const evmChains = [RBTC, TBTC, USDT0];
+
+const networkBadgeAliases: Record<string, string> = {
+    "Arbitrum One": "arbitrum",
+    "Conflux eSpace": "conflux",
+    "Polygon PoS": "polygon",
+};
+
+export const isUsdt0Variant = (asset: string): boolean =>
+    asset.startsWith(USDT0_VARIANT_PREFIX);
+
+export const isUsdt0Asset = (asset: string): boolean =>
+    asset === USDT0 || isUsdt0Variant(asset);
+
+export const getAssetDisplaySymbol = (asset: string): string =>
+    isUsdt0Asset(asset) ? USDT0 : asset;
+
+export const getCanonicalAsset = (asset: string): string =>
+    isUsdt0Variant(asset) ? USDT0 : asset;
+
+const normalizeNetworkBadge = (chainName: string): string =>
+    networkBadgeAliases[chainName] ??
+    chainName.toLowerCase().replace(/\s+/g, "");
 
 export const getKindForAsset = (asset: string): AssetKind => {
     const assetConfig = config.assets?.[asset];
@@ -104,7 +127,7 @@ export const getNetworkBadge = (asset: string): string | null => {
         return null;
     }
 
-    return chainName.toLowerCase();
+    return normalizeNetworkBadge(chainName);
 };
 
 export const getRouterAddress = (asset: string): string | undefined => {

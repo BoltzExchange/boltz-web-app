@@ -1,7 +1,13 @@
 import BigNumber from "bignumber.js";
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { Signature, type Wallet } from "ethers";
+import {
+    AbiCoder,
+    Signature,
+    type Wallet,
+    ZeroAddress,
+    keccak256,
+} from "ethers";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import { type Accessor, Show, createSignal, onMount } from "solid-js";
@@ -16,6 +22,7 @@ import {
     isEvmAsset,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { type Router } from "../consts/abis/router/Router";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
@@ -26,7 +33,11 @@ import {
 import type { DictKey } from "../i18n/i18n";
 import { relayClaimTransaction } from "../rif/Signer";
 import { type EncodedHop } from "../utils/Pair";
-import { encodeDexQuote } from "../utils/boltzClient";
+import {
+    encodeDexQuote,
+    quoteDexAmountIn,
+    quoteDexAmountOut,
+} from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
 import { formatAmount, getDecimals } from "../utils/denomination";
 import { formatError } from "../utils/errors";
@@ -34,6 +45,11 @@ import {
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
+import {
+    createOftContract,
+    getOftContract,
+    quoteOftSend,
+} from "../utils/oft/oft";
 import {
     type ClaimQuote,
     type DexQuote,
@@ -45,6 +61,7 @@ import {
     type ChainSwap,
     type DexDetail,
     GasAbstractionType,
+    type OftDetail,
     type ReverseSwap,
     getFinalAssetReceive,
 } from "../utils/swapCreator";
@@ -202,6 +219,30 @@ const signRouterClaim = async (
         ),
     );
 
+const hashOftSendData = async (
+    router: Router,
+    sendData: {
+        dstEid: number;
+        to: string;
+        extraOptions: string;
+        composeMsg: string;
+        oftCmd: string;
+    },
+): Promise<string> =>
+    keccak256(
+        AbiCoder.defaultAbiCoder().encode(
+            ["bytes32", "uint32", "bytes32", "bytes32", "bytes32", "bytes32"],
+            [
+                await router.TYPEHASH_SEND_DATA(),
+                sendData.dstEid,
+                sendData.to,
+                keccak256(sendData.extraOptions),
+                keccak256(sendData.composeMsg),
+                keccak256(sendData.oftCmd),
+            ],
+        ),
+    );
+
 const claimErc20ViaRouter = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
@@ -274,6 +315,192 @@ const claimErc20ViaRouter = async (
         routerSignature.v,
         routerSignature.r,
         routerSignature.s,
+    );
+
+    return await sendPopulatedTransaction(gasAbstraction, signer, tx);
+};
+
+// TODO: get gas tokens at destination
+const claimErc20ViaRouterOft = async (
+    gasAbstraction: GasAbstractionType,
+    asset: string,
+    preimage: string,
+    amount: number,
+    refundAddress: string,
+    timeoutBlockHeight: number,
+    destination: string,
+    signer: Signer | Wallet,
+    erc20Swap: ERC20Swap,
+    slippage: number,
+    hop: EncodedHop,
+    quote: ClaimQuote,
+    oft: OftDetail,
+) => {
+    if (getKindForAsset(asset) === AssetKind.EVMNative) {
+        throw new Error("EtherSwap is not supported for now");
+    }
+
+    if (signer.provider === null) {
+        throw new Error("router claim signer requires a provider");
+    }
+
+    const dexDetails = hop.dexDetails;
+    if (dexDetails === undefined) {
+        throw new Error("claim hop is missing DEX details");
+    }
+
+    const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
+    if (sourceChainId === undefined) {
+        throw new Error(
+            `missing OFT source chain id for asset: ${oft.sourceAsset}`,
+        );
+    }
+
+    const oftContract = await getOftContract(sourceChainId);
+    if (oftContract === undefined) {
+        throw new Error(`missing OFT contract for chain: ${sourceChainId}`);
+    }
+
+    const router = createRouterContract(asset, signer);
+    const assetAmount = satsToAssetAmount(amount, asset);
+    const tokenAddress = getTokenAddress(asset);
+    const [routerAddress, { chainId }] = await Promise.all([
+        router.getAddress(),
+        signer.provider.getNetwork(),
+    ]);
+    const claimSignature = await signErc20ClaimToRouter(
+        signer,
+        erc20Swap,
+        chainId,
+        preimage,
+        assetAmount,
+        tokenAddress,
+        refundAddress,
+        timeoutBlockHeight,
+        routerAddress,
+    );
+
+    const oftInstance = createOftContract(oftContract.address, signer);
+    const { msgFee } = await quoteOftSend(
+        oftInstance,
+        oft.destinationChainId,
+        destination,
+        quote.trade.amountOut,
+    );
+    const msgFeeEthAmountOut = calculateAmountWithSlippage(msgFee[0], slippage);
+    const [msgFeeEthQuote] = await quoteDexAmountOut(
+        dexDetails.chain,
+        dexDetails.tokenIn,
+        ZeroAddress,
+        msgFeeEthAmountOut,
+    );
+    const tradeAmountIn = assetAmount - BigInt(msgFeeEthQuote.quote);
+    if (tradeAmountIn <= 0n) {
+        throw new Error("amount too small to cover OFT messaging fee");
+    }
+
+    const [tradeQuote] = await quoteDexAmountIn(
+        dexDetails.chain,
+        dexDetails.tokenIn,
+        dexDetails.tokenOut,
+        tradeAmountIn,
+    );
+
+    const amountOutMin = calculateAmountOutMin(
+        BigInt(tradeQuote.quote),
+        slippage,
+    );
+    const { sendParam } = await quoteOftSend(
+        oftInstance,
+        oft.destinationChainId,
+        destination,
+        amountOutMin,
+    );
+    const amountLdWithSlippage = calculateAmountOutMin(sendParam[3], slippage);
+    const sendData = {
+        dstEid: sendParam[0],
+        to: sendParam[1],
+        extraOptions: sendParam[4],
+        composeMsg: sendParam[5],
+        oftCmd: sendParam[6],
+    };
+    const authSignature = Signature.from(
+        await signer.signTypedData(
+            {
+                name: "Router",
+                version: "2",
+                verifyingContract: routerAddress,
+                chainId,
+            },
+            {
+                ClaimSend: [
+                    { name: "preimage", type: "bytes32" },
+                    { name: "token", type: "address" },
+                    { name: "oft", type: "address" },
+                    { name: "sendData", type: "bytes32" },
+                    { name: "minAmountLD", type: "uint256" },
+                    { name: "lzTokenFee", type: "uint256" },
+                    { name: "refundAddress", type: "address" },
+                ],
+            },
+            {
+                preimage: prefix0x(preimage),
+                token: dexDetails.tokenOut,
+                oft: oftContract.address,
+                sendData: await hashOftSendData(router, sendData),
+                minAmountLD: amountLdWithSlippage,
+                lzTokenFee: msgFee[1],
+                refundAddress,
+            },
+        ),
+    );
+
+    const calldata = await Promise.all([
+        encodeDexQuote(
+            dexDetails.chain,
+            routerAddress,
+            tradeAmountIn,
+            amountOutMin,
+            tradeQuote.data,
+        ),
+        encodeDexQuote(
+            dexDetails.chain,
+            routerAddress,
+            BigInt(msgFeeEthQuote.quote),
+            msgFee[0],
+            msgFeeEthQuote.data,
+        ),
+    ]);
+
+    const tx = await router.claimERC20ExecuteOft.populateTransaction(
+        {
+            preimage: prefix0x(preimage),
+            amount: assetAmount,
+            tokenAddress,
+            refundAddress,
+            timelock: timeoutBlockHeight,
+            v: claimSignature.v,
+            r: claimSignature.r,
+            s: claimSignature.s,
+        },
+        calldata.flatMap(({ calls }) =>
+            calls.map((call) => ({
+                target: call.to,
+                value: call.value,
+                callData: prefix0x(call.data),
+            })),
+        ),
+        dexDetails.tokenOut,
+        oftContract.address,
+        sendData,
+        {
+            minAmountLd: amountLdWithSlippage,
+            lzTokenFee: msgFee[1],
+            refundAddress,
+            v: authSignature.v,
+            r: authSignature.r,
+            s: authSignature.s,
+        },
     );
 
     return await sendPopulatedTransaction(gasAbstraction, signer, tx);
@@ -452,7 +679,26 @@ const claimHops = async (
     erc20Swap: ERC20Swap,
     slippage: number,
     quote: ClaimQuote,
+    oft?: OftDetail,
 ) => {
+    if (oft !== undefined) {
+        return await claimErc20ViaRouterOft(
+            gasAbstraction,
+            asset,
+            preimage,
+            amount,
+            refundAddress,
+            timeoutBlockHeight,
+            destination,
+            signer(),
+            erc20Swap,
+            slippage,
+            getSingleClaimHop(hops),
+            quote,
+            oft,
+        );
+    }
+
     const hop = getSingleClaimHop(hops);
     const routerAddress = await createRouterContract(
         asset,
@@ -524,8 +770,9 @@ const AutoClaimHops = (props: {
     signerAddress: string;
     refundAddress: string;
     timeoutBlockHeight: number;
-    dex: DexDetail;
     getGasToken: boolean;
+    dex: DexDetail;
+    oft: OftDetail;
 }) => {
     const { getErc20Swap, signer, getGasAbstractionSigner } = useWeb3Signer();
     const { t, slippage, notify, getSwap, setSwapStorage } = useGlobalContext();
@@ -578,6 +825,7 @@ const AutoClaimHops = (props: {
                 getErc20Swap(props.assetReceive),
                 slippage(),
                 quote,
+                props.oft,
             );
 
             currentSwap.claimTx = transactionHash;
@@ -693,8 +941,9 @@ const ClaimEvm = (props: {
     derivationPath: string;
     timeoutBlockHeight: number;
     finalReceive: string;
-    dex?: DexDetail;
     getGasToken: boolean;
+    dex?: DexDetail;
+    oft?: OftDetail;
 }) => {
     const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
         useWeb3Signer();
@@ -757,8 +1006,9 @@ const ClaimEvm = (props: {
                     timeoutBlockHeight={props.timeoutBlockHeight}
                     assetSend={props.assetSend}
                     assetReceive={props.assetReceive}
-                    dex={props.dex}
                     getGasToken={props.getGasToken}
+                    dex={props.dex}
+                    oft={props.oft}
                 />
             }>
             <Show
@@ -822,6 +1072,7 @@ const TransactionConfirmed = () => {
                         dex={chain.dex}
                         finalReceive={getFinalAssetReceive(chain, true)}
                         getGasToken={chain.getGasToken}
+                        oft={chain.oft}
                     />
                 }>
                 <ClaimEvm
@@ -839,6 +1090,7 @@ const TransactionConfirmed = () => {
                     assetSend={reverse.assetSend}
                     assetReceive={reverse.assetReceive}
                     dex={reverse.dex}
+                    oft={reverse.oft}
                     finalReceive={getFinalAssetReceive(reverse, true)}
                     getGasToken={reverse.getGasToken}
                 />

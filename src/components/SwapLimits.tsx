@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 
-import { USDT0 } from "../consts/Assets";
+import { USDT0, isUsdt0Asset } from "../consts/Assets";
 import { type Denomination } from "../consts/Enums";
 import { formatAmount } from "../utils/denomination";
 
@@ -45,7 +45,7 @@ const SwapLimit = (props: SwapLimitProps) => {
 
 const SwapLimits = (props: SwapLimitsProps) => {
     const denomination = () => {
-        return props.asset === USDT0 ? USDT0 : props.denomination;
+        return isUsdt0Asset(props.asset) ? USDT0 : props.denomination;
     };
 
     return (

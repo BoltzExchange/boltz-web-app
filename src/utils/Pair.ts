@@ -2,7 +2,16 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 
 import { config } from "../config";
-import { AssetKind, BTC, LN, isEvmAsset } from "../consts/Assets";
+import {
+    AssetKind,
+    BTC,
+    LN,
+    USDT0,
+    getCanonicalAsset,
+    isEvmAsset,
+    isUsdt0Asset,
+    isUsdt0Variant,
+} from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
     type ChainPairTypeTaproot,
@@ -17,6 +26,7 @@ import {
     calculateSendAmount,
 } from "./calculate";
 import { coalesceLn } from "./helper";
+import { quoteOftAmountInForAmountOut, quoteOftReceiveAmount } from "./oft/oft";
 import { fetchDexQuote, fetchGasTokenQuote } from "./qouter";
 import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
 
@@ -26,7 +36,7 @@ import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
  * Non-routed assets (like TBTC) use sats internally and need conversion.
  */
 const isRoutedAsset = (asset: string) =>
-    config.assets[asset]?.token?.routeVia !== undefined;
+    config.assets[asset]?.token?.routeVia !== undefined || isUsdt0Asset(asset);
 
 /** Convert an internal amount to EVM base units for the DEX API. */
 const toDexAmount = (amount: number, asset: string): bigint =>
@@ -67,6 +77,12 @@ type Hop = {
     };
 };
 
+type PostOftRoute = {
+    from: string;
+    to: string;
+    destinationChainId: number;
+};
+
 export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
 
 export type CreationData = {
@@ -91,6 +107,7 @@ const toEncodedHop = (hop: Hop): EncodedHop => {
 
 export default class Pair {
     private readonly route: Hop[] = [];
+    private readonly postOft: PostOftRoute | undefined;
     private latestBoltzSwapSendAmount:
         | {
               sendAmount: string;
@@ -104,29 +121,45 @@ export default class Pair {
         private readonly to: string,
         private readonly regularPairs?: Pairs,
     ) {
-        const pair = Pair.findPair(pairs, from, to);
+        const routeTarget = getCanonicalAsset(to);
+        const postOft =
+            isUsdt0Variant(to) &&
+            routeTarget === USDT0 &&
+            config.assets?.[to]?.network?.chainId !== undefined
+                ? {
+                      from: routeTarget,
+                      to,
+                      destinationChainId: config.assets[to].network.chainId,
+                  }
+                : undefined;
+
+        const pair = Pair.findPair(pairs, from, routeTarget);
         if (pair !== undefined) {
-            log.debug(`Found direct pair for ${from} -> ${to}`);
+            log.debug(`Found direct pair for ${from} -> ${routeTarget}`);
             this.route = [
                 {
                     type: pair.type,
                     pair: pair.pair,
                     from,
-                    to,
+                    to: routeTarget,
                 },
             ];
+            this.postOft = postOft;
             return;
         }
 
-        const toAsset = config.assets[to];
+        const toAsset = config.assets[routeTarget];
         if (toAsset !== undefined && toAsset.type === AssetKind.ERC20) {
             const hopAssetSymbol = toAsset.token?.routeVia;
             const hopAsset = config.assets[hopAssetSymbol];
-            const hopPair = Pair.findPair(pairs, from, hopAssetSymbol);
+            const hopPair =
+                hopAssetSymbol !== undefined
+                    ? Pair.findPair(pairs, from, hopAssetSymbol)
+                    : undefined;
 
             if (hopPair !== undefined && hopAsset !== undefined) {
                 log.debug(
-                    `Found route for ${from} -> ${hopAssetSymbol} -> ${to}`,
+                    `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
                 this.route = [
                     {
@@ -138,7 +171,7 @@ export default class Pair {
                     {
                         type: SwapType.Dex,
                         from: hopAssetSymbol,
-                        to,
+                        to: routeTarget,
                         dexDetails: {
                             chain: hopAsset.network?.symbol,
                             tokenIn: hopAsset.token?.address,
@@ -146,6 +179,7 @@ export default class Pair {
                         },
                     },
                 ];
+                this.postOft = postOft;
                 return;
             }
         }
@@ -154,11 +188,14 @@ export default class Pair {
         if (fromAsset !== undefined && fromAsset.type === AssetKind.ERC20) {
             const hopAssetSymbol = fromAsset.token?.routeVia;
             const hopAsset = config.assets[hopAssetSymbol];
-            const hopPair = Pair.findPair(pairs, hopAssetSymbol, to);
+            const hopPair =
+                hopAssetSymbol !== undefined
+                    ? Pair.findPair(pairs, hopAssetSymbol, routeTarget)
+                    : undefined;
 
             if (hopPair !== undefined && hopAsset !== undefined) {
                 log.debug(
-                    `Found route for ${from} -> ${hopAssetSymbol} -> ${to}`,
+                    `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
                 this.route = [
                     {
@@ -175,13 +212,15 @@ export default class Pair {
                         type: hopPair.type,
                         pair: hopPair.pair,
                         from: hopAssetSymbol,
-                        to,
+                        to: routeTarget,
                     },
                 ];
+                this.postOft = postOft;
                 return;
             }
         }
 
+        this.postOft = undefined;
         log.info(`No pair found for ${from} -> ${to}`);
     }
 
@@ -239,12 +278,19 @@ export default class Pair {
     }
 
     public get needsNetworkForQuote() {
-        return this.route.some((hop) => hop.type === SwapType.Dex);
+        return (
+            this.postOft !== undefined ||
+            this.route.some((hop) => hop.type === SwapType.Dex)
+        );
     }
 
     public get requiredInput() {
         if (!this.isRoutable) {
             return RequiredInput.Unknown;
+        }
+
+        if (this.postOft !== undefined) {
+            return RequiredInput.Web3;
         }
 
         const lastHop = this.route[this.route.length - 1];
@@ -279,6 +325,7 @@ export default class Pair {
 
     public get canZeroAmount() {
         return (
+            this.postOft === undefined &&
             this.route.length === 1 &&
             this.route[0].type === SwapType.Chain &&
             !isEvmAsset(this.route[0].from)
@@ -359,6 +406,38 @@ export default class Pair {
 
         return undefined;
     }
+
+    private applyPostOftQuote = async (
+        amount: BigNumber,
+    ): Promise<BigNumber> => {
+        if (this.postOft === undefined || amount.isLessThanOrEqualTo(0)) {
+            return amount;
+        }
+
+        const quote = await quoteOftReceiveAmount(
+            this.postOft.from,
+            this.postOft.destinationChainId,
+            BigInt(amount.toFixed(0)),
+        );
+
+        return BigNumber(quote.amountOut.toString());
+    };
+
+    private invertPostOftQuote = async (
+        amount: BigNumber,
+    ): Promise<BigNumber> => {
+        if (this.postOft === undefined || amount.isLessThanOrEqualTo(0)) {
+            return amount;
+        }
+
+        const requiredAmount = await quoteOftAmountInForAmountOut(
+            this.postOft.from,
+            this.postOft.destinationChainId,
+            BigInt(amount.toFixed(0)),
+        );
+
+        return BigNumber(requiredAmount.toString());
+    };
 
     public boltzSwapSendAmountFromLatestQuote = (sendAmount: BigNumber) => {
         const key = sendAmount.toFixed();
@@ -537,6 +616,10 @@ export default class Pair {
             }
         }
 
+        if (route === this.route) {
+            return await this.applyPostOftQuote(amount);
+        }
+
         return amount;
     };
 
@@ -552,7 +635,7 @@ export default class Pair {
         const boltzHop = this.boltzHop;
         let boltzSwapSendAmountForCache: BigNumber | undefined;
 
-        let amount = receiveAmount;
+        let amount = await this.invertPostOftQuote(receiveAmount);
 
         for (const hop of [...this.route].reverse()) {
             switch (hop.type) {

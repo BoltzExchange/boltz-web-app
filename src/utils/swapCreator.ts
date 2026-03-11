@@ -32,6 +32,12 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
+export type OftDetail = {
+    sourceAsset: string;
+    destinationAsset: string;
+    destinationChainId: number;
+};
+
 export const enum GasAbstractionType {
     None = "none",
     RifRelay = "rifRelay",
@@ -64,6 +70,9 @@ export type SwapBase = {
 
     // DEX route for routed swaps (e.g. USDT0 via TBTC).
     dex?: DexDetail;
+
+    // OFT route for post-claim bridging (e.g. canonical USDT0 -> USDT0-ETH).
+    oft?: OftDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -130,6 +139,10 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.oft !== undefined) {
+        return swap.oft.destinationAsset;
+    }
+
     if (
         swap.dex !== undefined &&
         swap.dex.position === HopsPosition.After &&

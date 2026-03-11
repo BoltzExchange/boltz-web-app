@@ -1,0 +1,1119 @@
+[
+    {
+        "type": "constructor",
+        "inputs": [
+            {
+                "name": "swapContract",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "erc20SwapContract",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "permit2Contract",
+                "type": "address",
+                "internalType": "address"
+            }
+        ],
+        "stateMutability": "nonpayable"
+    },
+    { "type": "receive", "stateMutability": "payable" },
+    {
+        "type": "function",
+        "name": "DOMAIN_SEPARATOR",
+        "inputs": [],
+        "outputs": [
+            { "name": "", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "ERC20_SWAP_CONTRACT",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract ERC20Swap"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "PERMIT2",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract ISignatureTransfer"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "SWAP_CONTRACT",
+        "inputs": [],
+        "outputs": [
+            {
+                "name": "",
+                "type": "address",
+                "internalType": "contract EtherSwap"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "TYPEHASH_CLAIM",
+        "inputs": [],
+        "outputs": [
+            { "name": "", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "TYPEHASH_CLAIM_CALL",
+        "inputs": [],
+        "outputs": [
+            { "name": "", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "TYPEHASH_CLAIM_SEND",
+        "inputs": [],
+        "outputs": [
+            { "name": "", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "TYPEHASH_EXECUTE_LOCK_ERC20",
+        "inputs": [],
+        "outputs": [
+            { "name": "", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "TYPEHASH_SEND_DATA",
+        "inputs": [],
+        "outputs": [
+            { "name": "", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "TYPESTRING_EXECUTE_LOCK_ERC20",
+        "inputs": [],
+        "outputs": [{ "name": "", "type": "string", "internalType": "string" }],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "VERSION",
+        "inputs": [],
+        "outputs": [{ "name": "", "type": "uint8", "internalType": "uint8" }],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "claimCall",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "callee",
+                "type": "address",
+                "internalType": "address"
+            },
+            { "name": "callData", "type": "bytes", "internalType": "bytes" }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "claimCall",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "callee",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "callData",
+                "type": "bytes",
+                "internalType": "bytes"
+            },
+            { "name": "v", "type": "uint8", "internalType": "uint8" },
+            { "name": "r", "type": "bytes32", "internalType": "bytes32" },
+            { "name": "s", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "claimERC20Call",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Erc20Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "tokenAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "callee",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "callData",
+                "type": "bytes",
+                "internalType": "bytes"
+            },
+            { "name": "v", "type": "uint8", "internalType": "uint8" },
+            { "name": "r", "type": "bytes32", "internalType": "bytes32" },
+            { "name": "s", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "claimERC20Call",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Erc20Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "tokenAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "callee",
+                "type": "address",
+                "internalType": "address"
+            },
+            { "name": "callData", "type": "bytes", "internalType": "bytes" }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "claimERC20Execute",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Erc20Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "tokenAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            },
+            {
+                "name": "token",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "minAmountOut",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "destination",
+                "type": "address",
+                "internalType": "address"
+            },
+            { "name": "v", "type": "uint8", "internalType": "uint8" },
+            { "name": "r", "type": "bytes32", "internalType": "bytes32" },
+            { "name": "s", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "claimERC20Execute",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Erc20Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "tokenAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            },
+            {
+                "name": "token",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "minAmountOut",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "claimERC20ExecuteOft",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Erc20Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "tokenAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            },
+            {
+                "name": "token",
+                "type": "address",
+                "internalType": "address"
+            },
+            { "name": "oft", "type": "address", "internalType": "address" },
+            {
+                "name": "sendData",
+                "type": "tuple",
+                "internalType": "struct Router.SendData",
+                "components": [
+                    {
+                        "name": "dstEid",
+                        "type": "uint32",
+                        "internalType": "uint32"
+                    },
+                    {
+                        "name": "to",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "extraOptions",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    },
+                    {
+                        "name": "composeMsg",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    },
+                    {
+                        "name": "oftCmd",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            },
+            {
+                "name": "auth",
+                "type": "tuple",
+                "internalType": "struct Router.ClaimSendAuthorization",
+                "components": [
+                    {
+                        "name": "minAmountLd",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "lzTokenFee",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+    },
+    {
+        "type": "function",
+        "name": "claimExecute",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            },
+            {
+                "name": "token",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "minAmountOut",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "claimExecute",
+        "inputs": [
+            {
+                "name": "claim",
+                "type": "tuple",
+                "internalType": "struct Router.Claim",
+                "components": [
+                    {
+                        "name": "preimage",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "refundAddress",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "timelock",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "v",
+                        "type": "uint8",
+                        "internalType": "uint8"
+                    },
+                    {
+                        "name": "r",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    },
+                    {
+                        "name": "s",
+                        "type": "bytes32",
+                        "internalType": "bytes32"
+                    }
+                ]
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            },
+            {
+                "name": "token",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "minAmountOut",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "destination",
+                "type": "address",
+                "internalType": "address"
+            },
+            { "name": "v", "type": "uint8", "internalType": "uint8" },
+            { "name": "r", "type": "bytes32", "internalType": "bytes32" },
+            { "name": "s", "type": "bytes32", "internalType": "bytes32" }
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "executeAndLock",
+        "inputs": [
+            {
+                "name": "preimageHash",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            },
+            {
+                "name": "claimAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "refundAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "timelock",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+    },
+    {
+        "type": "function",
+        "name": "executeAndLockERC20",
+        "inputs": [
+            {
+                "name": "preimageHash",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            },
+            {
+                "name": "tokenAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "claimAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "refundAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "timelock",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+    },
+    {
+        "type": "function",
+        "name": "executeAndLockERC20WithPermit2",
+        "inputs": [
+            {
+                "name": "preimageHash",
+                "type": "bytes32",
+                "internalType": "bytes32"
+            },
+            {
+                "name": "tokenAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "claimAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "refundAddress",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "timelock",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "calls",
+                "type": "tuple[]",
+                "internalType": "struct Router.Call[]",
+                "components": [
+                    {
+                        "name": "target",
+                        "type": "address",
+                        "internalType": "address"
+                    },
+                    {
+                        "name": "value",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "callData",
+                        "type": "bytes",
+                        "internalType": "bytes"
+                    }
+                ]
+            },
+            {
+                "name": "permit",
+                "type": "tuple",
+                "internalType": "struct ISignatureTransfer.PermitTransferFrom",
+                "components": [
+                    {
+                        "name": "permitted",
+                        "type": "tuple",
+                        "internalType": "struct ISignatureTransfer.TokenPermissions",
+                        "components": [
+                            {
+                                "name": "token",
+                                "type": "address",
+                                "internalType": "address"
+                            },
+                            {
+                                "name": "amount",
+                                "type": "uint256",
+                                "internalType": "uint256"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "nonce",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    },
+                    {
+                        "name": "deadline",
+                        "type": "uint256",
+                        "internalType": "uint256"
+                    }
+                ]
+            },
+            {
+                "name": "owner",
+                "type": "address",
+                "internalType": "address"
+            },
+            {
+                "name": "signature",
+                "type": "bytes",
+                "internalType": "bytes"
+            }
+        ],
+        "outputs": [],
+        "stateMutability": "payable"
+    },
+    {
+        "type": "error",
+        "name": "CallFailed",
+        "inputs": [
+            {
+                "name": "index",
+                "type": "uint256",
+                "internalType": "uint256"
+            }
+        ]
+    },
+    { "type": "error", "name": "ClaimInvalidAddress", "inputs": [] },
+    { "type": "error", "name": "InsufficientBalance", "inputs": [] },
+    {
+        "type": "error",
+        "name": "ReentrancyGuardReentrantCall",
+        "inputs": []
+    },
+    {
+        "type": "error",
+        "name": "SafeERC20FailedOperation",
+        "inputs": [
+            {
+                "name": "token",
+                "type": "address",
+                "internalType": "address"
+            }
+        ]
+    },
+    { "type": "error", "name": "SwapCallNotAllowed", "inputs": [] }
+]

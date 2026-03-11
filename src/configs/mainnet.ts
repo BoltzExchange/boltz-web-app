@@ -1,4 +1,4 @@
-import type { Config } from "src/configs/base";
+import type { Asset, AssetOftChain, Config } from "src/configs/base";
 import {
     Explorer,
     arbitrumExplorer,
@@ -14,6 +14,291 @@ const rskRpcUrls = ["https://public-node.rsk.co"];
 if (rskFallback) {
     rskRpcUrls.push(rskFallback);
 }
+
+// TODO: which properties do we really need?
+type Usdt0Variant = {
+    asset: string;
+    chainName: string;
+    symbol: string;
+    chainId: number;
+    tokenAddress: string;
+    blockExplorerUrl: string;
+};
+
+const createUsdt0VariantAsset = ({
+    chainName,
+    symbol,
+    chainId,
+    tokenAddress,
+    blockExplorerUrl,
+}: Usdt0Variant): Asset => ({
+    type: AssetKind.ERC20,
+    blockExplorerUrl: {
+        id: Explorer.Blockscout,
+        normal: blockExplorerUrl,
+    },
+    network: {
+        chainName,
+        symbol,
+        gasToken: symbol,
+        chainId,
+        rpcUrls: [],
+        nativeCurrency: {
+            name: symbol,
+            symbol,
+            decimals: 18,
+        },
+    },
+    token: {
+        address: tokenAddress,
+        decimals: 6,
+    },
+});
+
+const usdt0Variants: Usdt0Variant[] = [
+    {
+        asset: "USDT0-ETH",
+        chainName: "Ethereum",
+        symbol: "ETH",
+        chainId: 1,
+        tokenAddress: "0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee",
+        blockExplorerUrl: "https://etherscan.io",
+    },
+    {
+        asset: "USDT0-BERA",
+        chainName: "Berachain",
+        symbol: "BERA",
+        chainId: 80094,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://berascan.com",
+    },
+    {
+        asset: "USDT0-CFX",
+        chainName: "Conflux eSpace",
+        symbol: "CFX",
+        chainId: 1030,
+        tokenAddress: "0xaf37E8B6C9ED7f6318979f56Fc287d76c30847ff",
+        blockExplorerUrl: "https://evm.confluxscan.org",
+    },
+    {
+        asset: "USDT0-CORN",
+        chainName: "Corn",
+        symbol: "CORN",
+        chainId: 21000000,
+        tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+        blockExplorerUrl: "https://cornscan.io",
+    },
+    {
+        asset: "USDT0-FLR",
+        chainName: "Flare",
+        symbol: "FLR",
+        chainId: 14,
+        tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        blockExplorerUrl: "https://flarescan.com",
+    },
+    {
+        asset: "USDT0-HYPE",
+        chainName: "HyperEVM",
+        symbol: "HYPE",
+        chainId: 999,
+        tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+        blockExplorerUrl: "https://hyperevmscan.io",
+    },
+    {
+        asset: "USDT0-INK",
+        chainName: "Ink",
+        symbol: "INK",
+        chainId: 57073,
+        tokenAddress: "0x0200C29006150606B650577BBE7B6248F58470c1",
+        blockExplorerUrl: "https://explorer.inkonchain.com",
+    },
+    {
+        asset: "USDT0-MNT",
+        chainName: "Mantle",
+        symbol: "MNT",
+        chainId: 5000,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://mantlescan.xyz",
+    },
+    {
+        asset: "USDT0-MEGAETH",
+        chainName: "MegaETH",
+        symbol: "MEGAETH",
+        chainId: 4326,
+        tokenAddress: "0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb",
+        blockExplorerUrl: "https://megaeth.blockscout.com",
+    },
+    {
+        asset: "USDT0-MON",
+        chainName: "Monad",
+        symbol: "MON",
+        chainId: 143,
+        tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        blockExplorerUrl: "https://monadexplorer.com",
+    },
+    {
+        asset: "USDT0-MORPH",
+        chainName: "Morph",
+        symbol: "MORPH",
+        chainId: 2818,
+        tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
+        blockExplorerUrl: "https://explorer.morph.network",
+    },
+    {
+        asset: "USDT0-OP",
+        chainName: "Optimism",
+        symbol: "OP",
+        chainId: 10,
+        tokenAddress: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
+        blockExplorerUrl: "https://optimistic.etherscan.io",
+    },
+    {
+        asset: "USDT0-PLASMA",
+        chainName: "Plasma",
+        symbol: "PLASMA",
+        chainId: 9745,
+        tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
+        blockExplorerUrl: "https://plasmascan.to",
+    },
+    {
+        asset: "USDT0-POL",
+        chainName: "Polygon PoS",
+        symbol: "POL",
+        chainId: 137,
+        tokenAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+        blockExplorerUrl: "https://polygonscan.com",
+    },
+    {
+        asset: "USDT0-RBTC",
+        chainName: "Rootstock",
+        symbol: "RBTC",
+        chainId: 30,
+        tokenAddress: "0x779dED0C9e1022225F8e0630b35A9B54Be713736",
+        blockExplorerUrl: "https://rootstock.blockscout.com",
+    },
+    {
+        asset: "USDT0-SEI",
+        chainName: "Sei",
+        symbol: "SEI",
+        chainId: 1329,
+        tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
+        blockExplorerUrl: "https://seitrace.com",
+    },
+    {
+        asset: "USDT0-STABLE",
+        chainName: "Stable",
+        symbol: "STABLE",
+        chainId: 988,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://stablescan.xyz",
+    },
+    {
+        asset: "USDT0-UNI",
+        chainName: "Unichain",
+        symbol: "UNI",
+        chainId: 130,
+        tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
+        blockExplorerUrl: "https://unichain.blockscout.com",
+    },
+    {
+        asset: "USDT0-XLAYER",
+        chainName: "XLayer",
+        symbol: "XLAYER",
+        chainId: 196,
+        tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
+        blockExplorerUrl: "https://www.oklink.com/x-layer",
+    },
+];
+
+const usdt0VariantAssets = Object.fromEntries(
+    usdt0Variants.map((variant) => [
+        variant.asset,
+        createUsdt0VariantAsset(variant),
+    ]),
+) as Record<string, Asset>;
+
+const usdt0NativeChains: AssetOftChain[] = [
+    {
+        name: "Ethereum",
+        chainId: 1,
+    },
+    {
+        name: "Arbitrum One",
+        chainId: 42161,
+    },
+    {
+        name: "Berachain",
+        chainId: 80094,
+    },
+    {
+        name: "Conflux eSpace",
+        chainId: 1030,
+    },
+    {
+        name: "Corn",
+        chainId: 21000000,
+    },
+    {
+        name: "Flare",
+        chainId: 14,
+    },
+    {
+        name: "HyperEVM",
+        chainId: 999,
+    },
+    {
+        name: "Ink",
+        chainId: 57073,
+    },
+    {
+        name: "Mantle",
+        chainId: 5000,
+    },
+    {
+        name: "MegaETH",
+        chainId: 4326,
+    },
+    {
+        name: "Monad",
+        chainId: 143,
+    },
+    {
+        name: "Morph",
+        chainId: 2818,
+    },
+    {
+        name: "Optimism",
+        chainId: 10,
+    },
+    {
+        name: "Plasma",
+        chainId: 9745,
+    },
+    {
+        name: "Polygon PoS",
+        chainId: 137,
+    },
+    {
+        name: "Rootstock",
+        chainId: 30,
+    },
+    {
+        name: "Sei",
+        chainId: 1329,
+    },
+    {
+        name: "Stable",
+        chainId: 988,
+    },
+    {
+        name: "Unichain",
+        chainId: 130,
+    },
+    {
+        name: "XLayer",
+        chainId: 196,
+    },
+];
 
 const config = {
     ...baseConfig,
@@ -101,7 +386,7 @@ const config = {
             },
             contracts: {
                 deployHeight: 435848678,
-                router: "0x812A4ede94cA28390e05c807A26A9118B5C952A6",
+                router: "0xaB6B467FC443Ca37a8E5aA11B04ea29434688d61",
             },
         },
         USDT0: {
@@ -113,7 +398,12 @@ const config = {
                 decimals: 6,
                 routeVia: "TBTC",
             },
+            oft: {
+                native: usdt0NativeChains,
+                legacyMesh: [],
+            },
         },
+        ...usdt0VariantAssets,
     },
 } as Config;
 

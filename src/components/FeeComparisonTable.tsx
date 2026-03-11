@@ -1,7 +1,7 @@
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Show } from "solid-js";
 
-import { LN } from "../consts/Assets";
+import { LN, getAssetDisplaySymbol } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { type Pairs } from "../utils/boltzClient";
@@ -124,15 +124,15 @@ export const FeeComparisonTable = (props: {
                                     <td>
                                         <div class="swaplist-asset">
                                             <span
-                                                data-asset={
-                                                    opportunity.assetSend
-                                                }
+                                                data-asset={getAssetDisplaySymbol(
+                                                    opportunity.assetSend,
+                                                )}
                                             />
                                             <VsArrowSmallRight />
                                             <span
-                                                data-asset={
-                                                    opportunity.assetReceive
-                                                }
+                                                data-asset={getAssetDisplaySymbol(
+                                                    opportunity.assetReceive,
+                                                )}
                                             />
                                         </div>
                                     </td>

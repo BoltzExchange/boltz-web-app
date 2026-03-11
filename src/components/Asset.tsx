@@ -1,6 +1,6 @@
 import type { Accessor } from "solid-js";
 
-import { getNetworkBadge } from "../consts/Assets";
+import { getAssetDisplaySymbol, getNetworkBadge } from "../consts/Assets";
 import type { Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import "../style/asset.scss";
@@ -17,7 +17,7 @@ const Asset = (props: { side: Side; signal: Accessor<string> }) => {
         <div class="asset-wrap" onClick={openSelect}>
             <div
                 data-testid={`asset-${props.side}`}
-                class={`asset asset-${props.signal()}`}
+                class={`asset asset-${getAssetDisplaySymbol(props.signal())}`}
                 data-network={getNetworkBadge(props.signal())}>
                 <div class="asset-selection">
                     <span class="icon" />

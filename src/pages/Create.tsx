@@ -29,14 +29,7 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import {
-    AssetKind,
-    LN,
-    RBTC,
-    btcChains,
-    evmChains,
-    isEvmAsset,
-} from "../consts/Assets";
+import { AssetKind, LN, RBTC, btcChains, isEvmAsset } from "../consts/Assets";
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -407,8 +400,8 @@ const Create = () => {
             creatingSwap() &&
             ((onchainAddress() === "" && btcChains.includes(pair().toAsset)) ||
                 (signer() === undefined &&
-                    (evmChains.includes(pair().toAsset) ||
-                        evmChains.includes(pair().fromAsset))) ||
+                    (isEvmAsset(pair().toAsset) ||
+                        isEvmAsset(pair().fromAsset))) ||
                 (lnurl() === "" &&
                     bolt12Offer() === undefined &&
                     pair().toAsset === LN))

@@ -96,3 +96,98 @@
 [data-network="arbitrum"] {
     @include network-badge(vars.$arbitrum_icon, var(--color-secondary-700));
 }
+
+[data-network="berachain"] {
+    @include network-badge(vars.$berachain_icon, var(--color-secondary-700));
+}
+
+[data-network="celo"] {
+    @include network-badge(vars.$celo_icon, var(--color-secondary-700));
+}
+
+[data-network="conflux"] {
+    @include network-badge(vars.$conflux_icon, var(--color-secondary-700));
+}
+
+[data-network="corn"] {
+    @include network-badge(vars.$corn_icon, var(--color-secondary-700));
+}
+
+[data-network="ethereum"] {
+    @include network-badge(vars.$ethereum_icon, var(--color-secondary-700));
+}
+
+[data-network="flare"] {
+    @include network-badge(vars.$flare_icon, var(--color-secondary-700));
+}
+
+[data-network="hyperevm"] {
+    @include network-badge(vars.$hyperevm_icon, var(--color-secondary-700));
+}
+
+[data-network="ink"] {
+    @include network-badge(vars.$ink_icon, var(--color-secondary-700));
+}
+
+[data-network="mantle"] {
+    @include network-badge(vars.$mantle_icon, var(--color-secondary-700));
+}
+
+[data-network="megaeth"] {
+    @include network-badge(vars.$megaeth_icon, var(--color-secondary-700));
+}
+
+[data-network="monad"] {
+    @include network-badge(vars.$monad_icon, var(--color-secondary-700));
+}
+
+[data-network="morph"] {
+    @include network-badge(vars.$morph_icon, var(--color-secondary-700));
+}
+
+[data-network="optimism"] {
+    @include network-badge(vars.$optimism_icon, var(--color-secondary-700));
+}
+
+[data-network="plasma"] {
+    @include network-badge(vars.$plasma_icon, var(--color-secondary-700));
+}
+
+[data-network="polygon"] {
+    @include network-badge(vars.$polygon_icon, var(--color-secondary-700));
+}
+
+[data-network="rootstock"] {
+    @include network-badge(
+        vars.$rootstock_network_icon,
+        var(--color-secondary-700)
+    );
+}
+
+[data-network="sei"] {
+    @include network-badge(vars.$sei_icon, var(--color-secondary-700));
+}
+
+[data-network="solana"] {
+    @include network-badge(vars.$solana_icon, var(--color-secondary-700));
+}
+
+[data-network="stable"] {
+    @include network-badge(vars.$stable_icon, var(--color-secondary-700));
+}
+
+[data-network="ton"] {
+    @include network-badge(vars.$ton_icon, var(--color-secondary-700));
+}
+
+[data-network="tron"] {
+    @include network-badge(vars.$tron_icon, var(--color-secondary-700));
+}
+
+[data-network="unichain"] {
+    @include network-badge(vars.$unichain_icon, var(--color-secondary-700));
+}
+
+[data-network="xlayer"] {
+    @include network-badge(vars.$xlayer_icon, var(--color-secondary-700));
+}

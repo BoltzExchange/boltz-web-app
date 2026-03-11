@@ -5,7 +5,16 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { BTC, RBTC, USDT0, isEvmAsset } from "../consts/Assets";
+import { config } from "../config";
+import {
+    BTC,
+    RBTC,
+    USDT0,
+    getCanonicalAsset,
+    isEvmAsset,
+    isUsdt0Asset,
+    isUsdt0Variant,
+} from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -100,13 +109,16 @@ export const getClaimAddress = async (
             const evmSide = isEvmAsset(assetSend())
                 ? assetSend()
                 : assetReceive();
-            const gasSigner = getGasAbstractionSigner(evmSide);
+
+            const gasSigner = getGasAbstractionSigner(
+                isUsdt0Asset(evmSide) ? USDT0 : evmSide,
+            );
             log.debug("Using gas abstraction signer", gasSigner.address);
             return {
                 gasPrice: 0n,
                 gasAbstraction: GasAbstractionType.Signer,
                 claimAddress:
-                    assetReceive() !== USDT0 && !getGasToken
+                    !isUsdt0Asset(assetReceive()) && !getGasToken
                         ? onchainAddress()
                         : gasSigner.address,
             };
@@ -655,6 +667,14 @@ const CreateButton = () => {
                                       : Number(sendAmount()),
                           }
                         : undefined,
+                oft: isUsdt0Variant(assetReceive())
+                    ? {
+                          sourceAsset: getCanonicalAsset(assetReceive()),
+                          destinationAsset: assetReceive(),
+                          destinationChainId:
+                              config.assets?.[assetReceive()]?.network?.chainId,
+                      }
+                    : undefined,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine

@@ -14,7 +14,7 @@ import type { Accessor, JSX, Setter } from "solid-js";
 import { getBtcPriceFailover } from "src/utils/fiat";
 
 import { config } from "../config";
-import { type AssetType, LBTC, evmChains } from "../consts/Assets";
+import { type AssetType, LBTC, isEvmAsset } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
 import type { DictKey } from "../i18n/i18n";
@@ -252,7 +252,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     };
 
     const newKey = async (asset: AssetType) => {
-        if (evmChains.includes(asset)) {
+        if (isEvmAsset(asset)) {
             const index = await getLastUsedEvmIndex(asset);
             await setLastUsedEvmIndex(asset, index + 1);
             return {
