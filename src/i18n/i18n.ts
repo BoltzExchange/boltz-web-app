@@ -197,7 +197,7 @@ const dict = {
         gas_topup: "Auto gas top-up",
         gas_topup_tooltip:
             "Automatically convert a small portion of your swap into native gas if your connected wallet has no gas.",
-        gas_topup_label: "$0.{{ cost }} will be used for {{ gasToken }} gas",
+        gas_topup_label: "Gas ({{ gasToken }}): 0.{{ cost }}",
         dex_quote_changed: "DEX quote has changed",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -670,7 +670,7 @@ const dict = {
         gas_topup: "Auto Gas-Aufladung",
         gas_topup_tooltip:
             "Wandelt automatisch einen kleinen Teil deines Swaps in natives Gas um, wenn dein verbundenes Wallet kein Gas hat.",
-        gas_topup_label: "$0.{{ cost }} wird für {{ gasToken }}-Gas verwendet",
+        gas_topup_label: "Gas ({{ gasToken }}): 0.{{ cost }}",
         dex_quote_changed: "DEX-Kurs hat sich geändert",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1150,7 +1150,7 @@ const dict = {
         gas_topup: "Recarga automática de gas",
         gas_topup_tooltip:
             "Convierte automáticamente una pequeña parte de tu swap en gas nativo si tu monedero conectado no tiene gas.",
-        gas_topup_label: "$0.{{ cost }} se usará para gas de {{ gasToken }}",
+        gas_topup_label: "Gas ({{ gasToken }}): 0.{{ cost }}",
         dex_quote_changed: "La cotización de DEX ha cambiado",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -1626,7 +1626,7 @@ const dict = {
         gas_topup: "Recarga automática de gas",
         gas_topup_tooltip:
             "Converte automaticamente uma pequena parte da sua troca em gas nativo se a sua carteira conectada não tiver gas.",
-        gas_topup_label: "$0.{{ cost }} será usado para gas de {{ gasToken }}",
+        gas_topup_label: "Gas ({{ gasToken }}): 0.{{ cost }}",
         dex_quote_changed: "A cotação da DEX mudou",
         zero_conf: "Zero-Conf",
         zero_conf_tooltip:
@@ -2080,7 +2080,7 @@ const dict = {
         gas_topup: "自动补充 Gas",
         gas_topup_tooltip:
             "如果您连接的钱包没有 Gas，将自动把交换的一小部分转换为原生 Gas。",
-        gas_topup_label: "$0.{{ cost }} 将用于 {{ gasToken }} Gas",
+        gas_topup_label: "Gas ({{ gasToken }}): 0.{{ cost }}",
         dex_quote_changed: "DEX 报价已变更",
         zero_conf: "零确认",
         zero_conf_tooltip: "接受尚未被区块确认的交易",
@@ -2527,8 +2527,7 @@ const dict = {
         gas_topup: "ガス自動チャージ",
         gas_topup_tooltip:
             "接続されたウォレットにガスがない場合、スワップの一部を自動的にネイティブガスに変換します。",
-        gas_topup_label:
-            "$0.{{ cost }} が {{ gasToken }} のガス代に使用されます",
+        gas_topup_label: "Gas ({{ gasToken }}): 0.{{ cost }}",
         dex_quote_changed: "DEXのクオートが変更されました",
         zero_conf: "ゼロ確認",
         zero_conf_tooltip: "ブロック内でまだ確認されていない取引を受け入れる",

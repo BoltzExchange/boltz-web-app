@@ -277,7 +277,8 @@ const Fees = () => {
                         gasToken:
                             config.assets?.[assetReceive()]?.network
                                 ?.gasToken ?? "",
-                    })}
+                    })}{" "}
+                    <span class="denominator" data-denominator="usd" />
                 </Show>
             </label>
         </div>

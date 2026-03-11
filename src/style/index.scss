@@ -563,6 +563,10 @@ textarea.invalid {
 [data-denominator="sat"] {
     background-image: url(../assets/sat.svg);
 }
+[data-denominator="usd"] {
+    background-image: url(../assets/usd.svg);
+    background-position: center;
+}
 [data-denominator="USDT0"] {
     margin: 2px;
     background-image: none;
