@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
@@ -112,6 +113,12 @@ export default class Pair {
         | {
               sendAmount: string;
               value: BigNumber;
+          }
+        | undefined;
+    private latestOftMessagingFee:
+        | {
+              sendAmount: string;
+              value: bigint;
           }
         | undefined;
 
@@ -407,27 +414,160 @@ export default class Pair {
         return undefined;
     }
 
-    private applyPostOftQuote = async (
-        amount: BigNumber,
-    ): Promise<BigNumber> => {
-        if (this.postOft === undefined || amount.isLessThanOrEqualTo(0)) {
-            return amount;
+    private get postOftDexHop(): Hop | undefined {
+        if (this.postOft === undefined || this.route.length === 0) {
+            return undefined;
         }
 
+        const lastHop = this.route[this.route.length - 1];
+        return lastHop.type === SwapType.Dex ? lastHop : undefined;
+    }
+
+    private get routeWithoutPostOftDex(): Hop[] {
+        return this.postOftDexHop !== undefined
+            ? this.route.slice(0, -1)
+            : this.route;
+    }
+
+    private get postOftClaimAsset() {
+        return this.postOftDexHop?.from ?? this.postOft?.from;
+    }
+
+    private get postOftFeeQuoteDetails():
+        | {
+              chain: string;
+              tokenIn: string;
+          }
+        | undefined {
+        const claimAsset = this.postOftClaimAsset;
+        if (claimAsset === undefined) {
+            return undefined;
+        }
+
+        const claimAssetConfig = config.assets?.[claimAsset];
+        const chain =
+            this.postOftDexHop?.dexDetails?.chain ??
+            claimAssetConfig?.network?.symbol;
+        const tokenIn =
+            this.postOftDexHop?.dexDetails?.tokenIn ??
+            claimAssetConfig?.token?.address;
+
+        if (chain === undefined || tokenIn === undefined) {
+            return undefined;
+        }
+
+        return {
+            chain,
+            tokenIn,
+        };
+    }
+
+    private convertClaimAmountToOftAmount = async (
+        claimAmount: BigNumber,
+    ): Promise<BigNumber> => {
+        const dexHop = this.postOftDexHop;
+        if (dexHop === undefined || claimAmount.isLessThanOrEqualTo(0)) {
+            return claimAmount;
+        }
+
+        const { trade } = await fetchDexQuote(
+            dexHop.dexDetails!,
+            toDexAmount(claimAmount.toNumber(), dexHop.from),
+        );
+        return fromDexAmount(trade.amountOut, dexHop.to);
+    };
+
+    private convertOftAmountToClaimAmount = async (
+        oftAmount: BigNumber,
+    ): Promise<BigNumber> => {
+        const dexHop = this.postOftDexHop;
+        if (dexHop === undefined || oftAmount.isLessThanOrEqualTo(0)) {
+            return oftAmount;
+        }
+
+        const [quote] = await quoteDexAmountOut(
+            dexHop.dexDetails!.chain,
+            dexHop.dexDetails!.tokenIn,
+            dexHop.dexDetails!.tokenOut,
+            toDexAmount(oftAmount.toNumber(), dexHop.to),
+        );
+
+        return fromDexAmount(BigInt(quote?.quote ?? 0), dexHop.from);
+    };
+
+    private quotePostOftMessagingFeeCost = async (
+        msgFee: bigint,
+    ): Promise<BigNumber> => {
+        if (msgFee === 0n) {
+            return BigNumber(0);
+        }
+
+        const quoteDetails = this.postOftFeeQuoteDetails;
+        const claimAsset = this.postOftClaimAsset;
+        if (quoteDetails === undefined || claimAsset === undefined) {
+            return BigNumber(0);
+        }
+
+        const [quote] = await quoteDexAmountOut(
+            quoteDetails.chain,
+            quoteDetails.tokenIn,
+            ZeroAddress,
+            msgFee,
+        );
+
+        return fromDexAmount(BigInt(quote?.quote ?? 0), claimAsset);
+    };
+
+    private applyPostOftQuote = async (
+        claimAmount: BigNumber,
+        sendAmountKey?: string,
+    ): Promise<BigNumber> => {
+        if (this.postOft === undefined || claimAmount.isLessThanOrEqualTo(0)) {
+            return claimAmount;
+        }
+
+        const quotedOftAmount =
+            await this.convertClaimAmountToOftAmount(claimAmount);
         const quote = await quoteOftReceiveAmount(
             this.postOft.from,
             this.postOft.destinationChainId,
-            BigInt(amount.toFixed(0)),
+            BigInt(quotedOftAmount.toFixed(0)),
+        );
+        const messagingFeeCost = await this.quotePostOftMessagingFeeCost(
+            quote.msgFee[0],
         );
 
-        return BigNumber(quote.amountOut.toString());
+        if (sendAmountKey !== undefined) {
+            this.latestOftMessagingFee = {
+                sendAmount: sendAmountKey,
+                value: quote.msgFee[0],
+            };
+        }
+
+        const adjustedClaimAmount = claimAmount.minus(messagingFeeCost);
+        if (adjustedClaimAmount.isLessThanOrEqualTo(0)) {
+            return BigNumber(0);
+        }
+
+        const adjustedOftAmount =
+            await this.convertClaimAmountToOftAmount(adjustedClaimAmount);
+        const adjustedQuote = await quoteOftReceiveAmount(
+            this.postOft.from,
+            this.postOft.destinationChainId,
+            BigInt(adjustedOftAmount.toFixed(0)),
+        );
+
+        return BigNumber(adjustedQuote.amountOut.toString());
     };
 
     private invertPostOftQuote = async (
         amount: BigNumber,
-    ): Promise<BigNumber> => {
+    ): Promise<{
+        amount: BigNumber;
+        msgFee?: bigint;
+    }> => {
         if (this.postOft === undefined || amount.isLessThanOrEqualTo(0)) {
-            return amount;
+            return { amount };
         }
 
         const requiredAmount = await quoteOftAmountInForAmountOut(
@@ -436,7 +576,22 @@ export default class Pair {
             BigInt(amount.toFixed(0)),
         );
 
-        return BigNumber(requiredAmount.toString());
+        const quote = await quoteOftReceiveAmount(
+            this.postOft.from,
+            this.postOft.destinationChainId,
+            requiredAmount,
+        );
+        const requiredClaimAmount = await this.convertOftAmountToClaimAmount(
+            BigNumber(requiredAmount.toString()),
+        );
+        const messagingFeeCost = await this.quotePostOftMessagingFeeCost(
+            quote.msgFee[0],
+        );
+
+        return {
+            amount: requiredClaimAmount.plus(messagingFeeCost),
+            msgFee: quote.msgFee[0],
+        };
     };
 
     public boltzSwapSendAmountFromLatestQuote = (sendAmount: BigNumber) => {
@@ -448,6 +603,22 @@ export default class Pair {
 
         return this.latestBoltzSwapSendAmount.value;
     };
+
+    public oftMessagingFeeFromLatestQuote = (sendAmount: BigNumber) => {
+        const key = sendAmount.toFixed();
+
+        if (this.latestOftMessagingFee?.sendAmount !== key) {
+            return undefined;
+        }
+
+        return this.latestOftMessagingFee.value;
+    };
+
+    public get oftMessagingFeeToken() {
+        return this.postOft !== undefined
+            ? config.assets?.[this.postOft.from]?.network?.gasToken
+            : undefined;
+    }
 
     private convertThroughPrecedingDex = async (
         boltzSendAmount: number,
@@ -569,9 +740,11 @@ export default class Pair {
         const boltzHop = this.boltzHop;
         const shouldCacheBoltzSwapSendAmount = route === this.route;
         const sendAmountKey = sendAmount.toFixed();
+        const routeToQuote =
+            route === this.route ? this.routeWithoutPostOftDex : route;
         let amount = sendAmount;
 
-        for (const hop of route) {
+        for (const hop of routeToQuote) {
             // Cache the amount that will be sent into the Boltz hop for this quote.
             if (
                 shouldCacheBoltzSwapSendAmount &&
@@ -617,7 +790,7 @@ export default class Pair {
         }
 
         if (route === this.route) {
-            return await this.applyPostOftQuote(amount);
+            return await this.applyPostOftQuote(amount, sendAmountKey);
         }
 
         return amount;
@@ -634,10 +807,12 @@ export default class Pair {
 
         const boltzHop = this.boltzHop;
         let boltzSwapSendAmountForCache: BigNumber | undefined;
+        const routeToQuote = this.routeWithoutPostOftDex;
 
-        let amount = await this.invertPostOftQuote(receiveAmount);
+        const postOftQuote = await this.invertPostOftQuote(receiveAmount);
+        let amount = postOftQuote.amount;
 
-        for (const hop of [...this.route].reverse()) {
+        for (const hop of [...routeToQuote].reverse()) {
             switch (hop.type) {
                 case SwapType.Dex: {
                     const [quote] = await quoteDexAmountOut(
@@ -679,6 +854,12 @@ export default class Pair {
             sendAmount: sendAmountKey,
             value: boltzSwapSendAmountForCache ?? amount,
         };
+        if (postOftQuote.msgFee !== undefined) {
+            this.latestOftMessagingFee = {
+                sendAmount: sendAmountKey,
+                value: postOftQuote.msgFee,
+            };
+        }
 
         return amount;
     };

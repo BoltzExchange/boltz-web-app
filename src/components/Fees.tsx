@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+import { formatEther } from "ethers";
 import type { Accessor } from "solid-js";
 import {
     Show,
@@ -116,6 +117,25 @@ const Fees = () => {
         }
 
         return pair().feeOnSend(boltzSwapSendAmount);
+    });
+    const oftMessagingFee = createMemo(() => {
+        if (!pair().isRoutable) {
+            return undefined;
+        }
+
+        receiveAmount();
+
+        return pair().oftMessagingFeeFromLatestQuote(sendAmount());
+    });
+    const formattedOftMessagingFee = createMemo(() => {
+        const fee = oftMessagingFee();
+        if (fee === undefined) {
+            return undefined;
+        }
+
+        return BigNumber(formatEther(fee))
+            .toFixed(6)
+            .replace(/\.?0+$/, "");
     });
 
     const gasAbstractionTrigger = createMemo(() => {
@@ -269,6 +289,19 @@ const Fees = () => {
                     <span data-testid="routing-fee-limit">
                         {pair().maxRoutingFee * ppmFactor} ppm
                     </span>
+                </Show>
+                <Show when={formattedOftMessagingFee() !== undefined}>
+                    <br />
+                    {t("oft_messaging_fee_label", {
+                        gasToken: pair().oftMessagingFeeToken ?? "",
+                    })}
+                    :{" "}
+                    <span
+                        class="oft-messaging-fee"
+                        data-testid="oft-messaging-fee">
+                        {formattedOftMessagingFee()}
+                    </span>{" "}
+                    {pair().oftMessagingFeeToken}
                 </Show>
                 <Show when={getGasToken()}>
                     <br />
