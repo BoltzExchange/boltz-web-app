@@ -16,3 +16,4 @@ src/config.ts
 docs/.vitepress/cache/
 index.html
 .index-build-cache
+.vercel
