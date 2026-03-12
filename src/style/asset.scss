@@ -121,6 +121,10 @@
     @include network-badge(vars.$flare_icon, var(--color-secondary-700));
 }
 
+[data-network="hedera"] {
+    @include network-badge(vars.$hedera_icon, var(--color-secondary-700));
+}
+
 [data-network="hyperevm"] {
     @include network-badge(vars.$hyperevm_icon, var(--color-secondary-700));
 }

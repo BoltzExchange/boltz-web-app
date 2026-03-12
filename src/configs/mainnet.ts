@@ -105,6 +105,14 @@ const usdt0Variants: Usdt0Variant[] = [
         blockExplorerUrl: "https://hyperevmscan.io",
     },
     {
+        asset: "USDT0-HBAR",
+        chainName: "Hedera",
+        symbol: "HBAR",
+        chainId: 295,
+        tokenAddress: "0x00000000000000000000000000000000009Ce723",
+        blockExplorerUrl: "https://hashscan.io/mainnet",
+    },
+    {
         asset: "USDT0-INK",
         chainName: "Ink",
         symbol: "INK",
@@ -245,6 +253,10 @@ const usdt0NativeChains: AssetOftChain[] = [
     {
         name: "HyperEVM",
         chainId: 999,
+    },
+    {
+        name: "Hedera",
+        chainId: 295,
     },
     {
         name: "Ink",
