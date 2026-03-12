@@ -48,6 +48,7 @@ import {
 import {
     createOftContract,
     getOftContract,
+    quoteOftReceiveAmount,
     quoteOftSend,
 } from "../utils/oft/oft";
 import {
@@ -78,6 +79,11 @@ type RouterClaimExecution = {
     quotes: RouterExecutionQuote[];
 };
 
+type ClaimResult = {
+    transactionHash: string;
+    receiveAmount: bigint;
+};
+
 const calculateAmountOutMin = (
     quoteAmount: bigint,
     slippage: number,
@@ -96,6 +102,52 @@ const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {
     }
 
     return BigInt(Math.round(quoteAmount));
+};
+
+const getAcceptedQuoteAmount = async (
+    amount: number,
+    assetReceive: string,
+    hop: EncodedHop,
+    quote: ClaimQuote,
+    oft?: OftDetail,
+): Promise<bigint> => {
+    if (oft === undefined) {
+        return quote.trade.amountOut;
+    }
+
+    const dexDetails = hop.dexDetails;
+    if (dexDetails === undefined) {
+        throw new Error("claim hop is missing DEX details");
+    }
+
+    const claimAmount = satsToAssetAmount(amount, assetReceive);
+    const initialOftQuote = await quoteOftReceiveAmount(
+        oft.sourceAsset,
+        oft.destinationChainId,
+        quote.trade.amountOut,
+    );
+    const [messagingFeeQuote] = await quoteDexAmountOut(
+        dexDetails.chain,
+        dexDetails.tokenIn,
+        ZeroAddress,
+        initialOftQuote.msgFee[0],
+    );
+    const adjustedClaimAmount = claimAmount - BigInt(messagingFeeQuote.quote);
+    if (adjustedClaimAmount <= 0n) {
+        throw new Error("amount too small to cover OFT messaging fee");
+    }
+
+    const adjustedTradeQuote = await fetchDexQuote(
+        dexDetails,
+        adjustedClaimAmount,
+    );
+    const adjustedOftQuote = await quoteOftReceiveAmount(
+        oft.sourceAsset,
+        oft.destinationChainId,
+        adjustedTradeQuote.trade.amountOut,
+    );
+
+    return adjustedOftQuote.amountOut;
 };
 
 const getAssetChain = (asset: string): string => {
@@ -586,21 +638,25 @@ export const claimAsset = async (
     etherSwap: EtherSwap,
     erc20Swap: ERC20Swap,
     getGasToken: boolean,
-) => {
+): Promise<ClaimResult> => {
+    const assetAmount = satsToAssetAmount(amount, asset);
+
     switch (gasAbstraction) {
         case GasAbstractionType.RifRelay:
-            return await relayClaimTransaction(
-                signer(),
-                etherSwap,
-                preimage,
-                amount,
-                refundAddress,
-                timeoutBlockHeight,
-            );
+            return {
+                transactionHash: await relayClaimTransaction(
+                    signer(),
+                    etherSwap,
+                    preimage,
+                    amount,
+                    refundAddress,
+                    timeoutBlockHeight,
+                ),
+                receiveAmount: assetAmount,
+            };
 
         case GasAbstractionType.None:
         case GasAbstractionType.Signer: {
-            const assetAmount = satsToAssetAmount(amount, asset);
             const claimSigner = getSignerForGasAbstraction(
                 gasAbstraction,
                 signer(),
@@ -613,19 +669,22 @@ export const claimAsset = async (
                     amount,
                     destination,
                 );
-                return await claimErc20ViaRouter(
-                    gasAbstraction,
-                    asset,
-                    preimage,
-                    amount,
-                    refundAddress,
-                    timeoutBlockHeight,
-                    destination,
-                    claimSigner,
-                    erc20Swap,
-                    slippage,
-                    execution,
-                );
+                return {
+                    transactionHash: await claimErc20ViaRouter(
+                        gasAbstraction,
+                        asset,
+                        preimage,
+                        amount,
+                        refundAddress,
+                        timeoutBlockHeight,
+                        destination,
+                        claimSigner,
+                        erc20Swap,
+                        slippage,
+                        execution,
+                    ),
+                    receiveAmount: execution.minAmountOut,
+                };
             }
 
             const tx =
@@ -650,11 +709,14 @@ export const claimAsset = async (
                           timeoutBlockHeight,
                       );
 
-            return await sendPopulatedTransaction(
-                gasAbstraction,
-                claimSigner,
-                tx,
-            );
+            return {
+                transactionHash: await sendPopulatedTransaction(
+                    gasAbstraction,
+                    claimSigner,
+                    tx,
+                ),
+                receiveAmount: assetAmount,
+            };
         }
 
         default: {
@@ -780,9 +842,13 @@ const AutoClaimHops = (props: {
 
     const [error, setError] = createSignal<string | undefined>(undefined);
     const [loading, setLoading] = createSignal(false);
-    const [freshQuote, setFreshQuote] = createSignal<ClaimQuote | undefined>(
-        undefined,
-    );
+    const [freshQuote, setFreshQuote] = createSignal<
+        | {
+              quote: ClaimQuote;
+              amount: bigint;
+          }
+        | undefined
+    >(undefined);
     const [quoteAccepted, setQuoteAccepted] = createSignal(false);
 
     const quoteThreshold = () =>
@@ -790,8 +856,8 @@ const AutoClaimHops = (props: {
             parsePersistedQuoteAmount(props.dex.quoteAmount),
             slippage(),
         );
-    const isOutsideSlippage = (quote: DexQuote) =>
-        quote.amountOut < quoteThreshold();
+    const isOutsideSlippage = (quoteAmount: bigint) =>
+        quoteAmount < quoteThreshold();
 
     const needsApproval = () => {
         const quote = freshQuote();
@@ -799,10 +865,13 @@ const AutoClaimHops = (props: {
             return false;
         }
 
-        return isOutsideSlippage(quote.trade);
+        return isOutsideSlippage(quote.amount);
     };
 
-    const executeClaim = async (quote: ClaimQuote) => {
+    const executeClaim = async (quote: {
+        quote: ClaimQuote;
+        amount: bigint;
+    }) => {
         setLoading(true);
         try {
             const currentSwap = await getSwap(props.swapId);
@@ -824,12 +893,12 @@ const AutoClaimHops = (props: {
                 () => claimSigner,
                 getErc20Swap(props.assetReceive),
                 slippage(),
-                quote,
+                quote.quote,
                 props.oft,
             );
 
             currentSwap.claimTx = transactionHash;
-            currentSwap.dex.quoteAmount = quote.trade.amountOut.toString();
+            currentSwap.dex.quoteAmount = quote.amount.toString();
             setSwap(currentSwap);
             await setSwapStorage(currentSwap);
         } catch (e) {
@@ -844,7 +913,7 @@ const AutoClaimHops = (props: {
 
     onMount(async () => {
         try {
-            const hop = props.dex.hops[0];
+            const hop = getSingleClaimHop(props.dex.hops);
             const amountIn = satsToAssetAmount(
                 props.amount,
                 props.assetReceive,
@@ -854,14 +923,25 @@ const AutoClaimHops = (props: {
                 amountIn,
                 props.getGasToken,
             );
-            setFreshQuote(quote);
+            const quoteAmount = await getAcceptedQuoteAmount(
+                props.amount,
+                props.assetReceive,
+                hop,
+                quote,
+                props.oft,
+            );
+            const freshQuoteData = {
+                quote,
+                amount: quoteAmount,
+            };
+            setFreshQuote(freshQuoteData);
 
-            if (!isOutsideSlippage(quote.trade)) {
+            if (!isOutsideSlippage(quoteAmount)) {
                 // Within slippage tolerance, auto-claim
-                await executeClaim(quote);
+                await executeClaim(freshQuoteData);
             } else {
                 log.info(
-                    `DEX quote ${quote.trade.amountOut.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
+                    `Claim quote ${quoteAmount.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
                 );
             }
         } catch (e) {
@@ -902,7 +982,7 @@ const AutoClaimHops = (props: {
                     <ImArrowDown size={15} style={{ opacity: 0.5 }} />
                     <Amount
                         label={"will_receive"}
-                        amount={freshQuote().trade.amountOut}
+                        amount={freshQuote().amount}
                         asset={getFinalAssetReceive(swap(), true)}
                     />
                 </div>
@@ -960,7 +1040,7 @@ const ClaimEvm = (props: {
         }
 
         const currentSwap = await getSwap(props.swapId);
-        const transactionHash = await claimAsset(
+        const { transactionHash, receiveAmount } = await claimAsset(
             props.gasAbstraction,
             props.assetReceive,
             props.preimage,
@@ -978,6 +1058,7 @@ const ClaimEvm = (props: {
         );
 
         currentSwap.claimTx = transactionHash;
+        currentSwap.receiveAmount = Number(receiveAmount.toString());
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
     };
