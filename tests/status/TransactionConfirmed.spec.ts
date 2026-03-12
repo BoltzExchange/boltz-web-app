@@ -2,6 +2,7 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 
 import { claimAsset } from "../../src/status/TransactionConfirmed";
+import { satsToAssetAmount } from "../../src/utils/rootstock";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
 
 const mockRelayClaimTransaction =
@@ -51,7 +52,10 @@ describe("TransactionConfirmed claimAsset", () => {
                 erc20Swap,
                 false,
             ),
-        ).resolves.toEqual("0xrelay");
+        ).resolves.toEqual({
+            transactionHash: "0xrelay",
+            receiveAmount: satsToAssetAmount(21, "RBTC"),
+        });
 
         expect(mockRelayClaimTransaction).toHaveBeenCalledWith(
             signer,

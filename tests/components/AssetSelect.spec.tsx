@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import SelectAsset from "../../src/components/AssetSelect";
-import { BTC, LBTC, LN } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, USDT0, isUsdt0Variant } from "../../src/consts/Assets";
 import { Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import Pair from "../../src/utils/Pair";
@@ -15,6 +15,10 @@ vi.mock("../../src/utils/boltzClient", () => ({
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
 };
+
+const usdt0VariantAssets = Object.keys(pairs).filter((asset) =>
+    isUsdt0Variant(asset),
+);
 
 describe("AssetSelect", () => {
     test.each`
@@ -182,5 +186,122 @@ describe("AssetSelect", () => {
 
         expect(signals.pair().toAsset).toEqual(BTC);
         expect(signals.onchainAddress()).toBe("");
+    });
+
+    describe("USDT0 multi-step selection", () => {
+        const openAssetSelect = () => {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <SelectAsset />
+                    </>
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            signals.setAssetSelect(true);
+            signals.setAssetSelected(Side.Send);
+        };
+
+        test("should not show USDT0 variants in asset list", async () => {
+            openAssetSelect();
+
+            await screen.findByTestId(`select-${USDT0}`);
+
+            for (const variant of usdt0VariantAssets) {
+                expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
+            }
+        });
+
+        test("should show single USDT0 entry in asset list", async () => {
+            openAssetSelect();
+
+            const entry = await screen.findByTestId(`select-${USDT0}`);
+            expect(entry).toBeDefined();
+        });
+
+        test("should show network selection when clicking USDT0", async () => {
+            openAssetSelect();
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+
+            expect(
+                await screen.findByText(i18n.en.select_network),
+            ).toBeDefined();
+        });
+
+        test("should show all USDT0 networks in step 2", async () => {
+            openAssetSelect();
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+            await screen.findByText(i18n.en.select_network);
+
+            expect(screen.queryByTestId(`select-${USDT0}`)).not.toBeNull();
+
+            for (const variant of usdt0VariantAssets) {
+                expect(
+                    screen.queryByTestId(`select-${variant}`),
+                ).not.toBeNull();
+            }
+        });
+
+        test("should return to asset list when clicking back", async () => {
+            openAssetSelect();
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+            await screen.findByTestId("network-back");
+
+            fireEvent.click(screen.getByTestId("network-back"));
+
+            expect(await screen.findByTestId(`select-${BTC}`)).toBeDefined();
+            expect(screen.queryByTestId("network-back")).toBeNull();
+        });
+
+        test("should filter networks with search", async () => {
+            openAssetSelect();
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+            await screen.findByText(i18n.en.select_network);
+
+            const searchInput = screen.getByPlaceholderText(i18n.en.search);
+            fireEvent.input(searchInput, { target: { value: "Arb" } });
+
+            expect(screen.queryByTestId("select-USDT0")).not.toBeNull(); // Arbitrum
+            expect(screen.queryByTestId("select-USDT0-BERA")).toBeNull();
+        });
+
+        test("should clear search when clicking clear button", async () => {
+            openAssetSelect();
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+            await screen.findByText(i18n.en.select_network);
+
+            const searchInput = screen.getByPlaceholderText(i18n.en.search);
+            fireEvent.input(searchInput, { target: { value: "Eth" } });
+
+            fireEvent.click(screen.getByTestId("search-clear"));
+
+            expect((searchInput as HTMLInputElement).value).toBe("");
+            for (const variant of usdt0VariantAssets) {
+                expect(
+                    screen.queryByTestId(`select-${variant}`),
+                ).not.toBeNull();
+            }
+        });
+
+        test("should reset to step 1 when closing and reopening", async () => {
+            openAssetSelect();
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+            await screen.findByTestId("network-back");
+
+            fireEvent.click(screen.getByTestId("asset-select-close"));
+
+            signals.setAssetSelect(true);
+
+            expect(await screen.findByTestId(`select-${BTC}`)).toBeDefined();
+            expect(screen.queryByTestId("network-back")).toBeNull();
+        });
     });
 });

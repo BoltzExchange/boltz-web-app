@@ -1,4 +1,4 @@
-import type { Asset, AssetOftChain, Config } from "src/configs/base";
+import type { Asset, Config, Usdt0Variant } from "src/configs/base";
 import {
     Explorer,
     arbitrumExplorer,
@@ -14,16 +14,6 @@ const rskRpcUrls = ["https://public-node.rsk.co"];
 if (rskFallback) {
     rskRpcUrls.push(rskFallback);
 }
-
-// TODO: which properties do we really need?
-type Usdt0Variant = {
-    asset: string;
-    chainName: string;
-    symbol: string;
-    chainId: number;
-    tokenAddress: string;
-    blockExplorerUrl: string;
-};
 
 const createUsdt0VariantAsset = ({
     chainName,
@@ -225,93 +215,6 @@ const usdt0VariantAssets = Object.fromEntries(
     ]),
 ) as Record<string, Asset>;
 
-const usdt0NativeChains: AssetOftChain[] = [
-    {
-        name: "Ethereum",
-        chainId: 1,
-    },
-    {
-        name: "Arbitrum One",
-        chainId: 42161,
-    },
-    {
-        name: "Berachain",
-        chainId: 80094,
-    },
-    {
-        name: "Conflux eSpace",
-        chainId: 1030,
-    },
-    {
-        name: "Corn",
-        chainId: 21000000,
-    },
-    {
-        name: "Flare",
-        chainId: 14,
-    },
-    {
-        name: "HyperEVM",
-        chainId: 999,
-    },
-    {
-        name: "Hedera",
-        chainId: 295,
-    },
-    {
-        name: "Ink",
-        chainId: 57073,
-    },
-    {
-        name: "Mantle",
-        chainId: 5000,
-    },
-    {
-        name: "MegaETH",
-        chainId: 4326,
-    },
-    {
-        name: "Monad",
-        chainId: 143,
-    },
-    {
-        name: "Morph",
-        chainId: 2818,
-    },
-    {
-        name: "Optimism",
-        chainId: 10,
-    },
-    {
-        name: "Plasma",
-        chainId: 9745,
-    },
-    {
-        name: "Polygon PoS",
-        chainId: 137,
-    },
-    {
-        name: "Rootstock",
-        chainId: 30,
-    },
-    {
-        name: "Sei",
-        chainId: 1329,
-    },
-    {
-        name: "Stable",
-        chainId: 988,
-    },
-    {
-        name: "Unichain",
-        chainId: 130,
-    },
-    {
-        name: "XLayer",
-        chainId: 196,
-    },
-];
-
 const config = {
     ...baseConfig,
     torUrl: "http://boltzzzbnus4m7mta3cxmflnps4fp7dueu2tgurstbvrbt6xswzcocyd.onion/",
@@ -409,10 +312,6 @@ const config = {
                 address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
                 decimals: 6,
                 routeVia: "TBTC",
-            },
-            oft: {
-                native: usdt0NativeChains,
-                legacyMesh: [],
             },
         },
         ...usdt0VariantAssets,

@@ -3,6 +3,16 @@ import type log from "loglevel";
 import { type AssetKind } from "../consts/AssetKind";
 import { Network } from "../consts/Network";
 
+// TODO: which properties do we really need?
+export type Usdt0Variant = {
+    asset: string;
+    chainName: string;
+    symbol: string;
+    chainId: number;
+    tokenAddress: string;
+    blockExplorerUrl: string;
+};
+
 export type Asset = {
     type: AssetKind;
 
@@ -33,7 +43,6 @@ export type Asset = {
         decimals: number;
         routeVia?: string;
     };
-    oft?: AssetOftConfig;
 };
 
 export enum Explorer {
@@ -49,16 +58,6 @@ export type Url = {
 
 export type ExplorerUrl = Url & {
     id: Explorer;
-};
-
-export type AssetOftChain = {
-    name: string;
-    chainId: number;
-};
-
-export type AssetOftConfig = {
-    native: AssetOftChain[];
-    legacyMesh: AssetOftChain[];
 };
 
 export type Config = {
