@@ -14,6 +14,7 @@ import {
 import type { BaseContract } from "ethers";
 import { ethers } from "ethers";
 
+import { config } from "../config";
 import {
     AssetKind,
     type AssetType,
@@ -30,6 +31,7 @@ import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import type { ECKeys } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { createProvider } from "./provider";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -62,9 +64,19 @@ const validateContract = async (
         return;
     }
 
-    const code = await (
+    const rpcUrls = config.assets?.[asset]?.network?.rpcUrls;
+    if (rpcUrls === undefined) {
+        throw new Error(`missing RPC configuration for asset: ${asset}`);
+    }
+
+    const contract = (
         isEtherSwap ? getEtherSwap(asset) : getErc20Swap(asset)
-    ).getDeployedCode();
+    ).connect(createProvider(rpcUrls));
+    const code = await contract.getDeployedCode();
+    if (code === null) {
+        throw new Error(`no deployed contract code found for asset: ${asset}`);
+    }
+
     const hash = ethers.keccak256(code);
 
     if (!codeHashes.includes(hash)) {

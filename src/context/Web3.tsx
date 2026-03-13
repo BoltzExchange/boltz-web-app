@@ -349,6 +349,20 @@ const Web3SignerProvider = (props: {
         return nextSigner;
     };
 
+    const logSignerNetwork = async (nextSigner: Signer) => {
+        try {
+            const network = await nextSigner.provider.getNetwork();
+            log.info(
+                `Connected signer ${nextSigner.address} from ${nextSigner.rdns} is on chain ${String(network.chainId)}`,
+            );
+        } catch (error) {
+            log.warn(
+                `Failed to determine network for connected signer ${nextSigner.address} from ${nextSigner.rdns}`,
+                error,
+            );
+        }
+    };
+
     const refreshConnectedSigner = async (
         provider: EIP1193Provider,
         rdns: string,
@@ -421,13 +435,13 @@ const Web3SignerProvider = (props: {
 
         await setRdns(addresses[0], wallet.info.rdns);
 
-        setSigner(
-            createConnectedSigner(
-                wallet.provider,
-                addresses[0],
-                wallet.info.rdns,
-            ),
+        const nextSigner = createConnectedSigner(
+            wallet.provider,
+            addresses[0],
+            wallet.info.rdns,
         );
+        setSigner(nextSigner);
+        void logSignerNetwork(nextSigner);
     };
 
     const switchNetwork = async (asset: string) => {
