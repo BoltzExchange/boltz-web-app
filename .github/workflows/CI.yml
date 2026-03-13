@@ -70,7 +70,9 @@ jobs:
                   matrix.shardTotal }}
 
             - name: Upload blob report to GitHub Actions Artifacts
-              if: ${{ !cancelled() }}
+              if:
+                  ${{ !cancelled() && github.server_url == 'https://github.com'
+                  }}
               uses: actions/upload-artifact@v5
               with:
                   name: blob-report-${{ matrix.shardIndex }}
@@ -78,7 +80,7 @@ jobs:
                   retention-days: 1
 
     playwright-reports:
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && github.server_url == 'https://github.com' }}
         needs: [e2e]
         runs-on: ubuntu-latest
         steps:

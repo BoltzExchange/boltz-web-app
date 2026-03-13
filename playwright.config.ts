@@ -56,6 +56,7 @@ export default defineConfig({
             ? "npm run regtest && npm run build && npx vite preview"
             : "npm run dev",
         port: process.env.CI ? 4173 : 5173,
+        timeout: 180_000,
         reuseExistingServer: !process.env.CI,
         stdout: "pipe",
         stderr: "pipe",
