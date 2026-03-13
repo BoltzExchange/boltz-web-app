@@ -22,6 +22,7 @@ import Fees from "../components/Fees";
 import FiatAmount from "../components/FiatAmount";
 import InvoiceInput from "../components/InvoiceInput";
 import LoadingSpinner from "../components/LoadingSpinner";
+import NetworkSelect from "../components/NetworkSelect";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import SwapLimits from "../components/SwapLimits";
@@ -78,7 +79,7 @@ const Create = () => {
         setPair,
         getGasToken,
         setGetGasToken,
-        assetSelect,
+        assetSelection,
         assetSelected,
         invoiceValid,
         addressValid,
@@ -378,18 +379,20 @@ const Create = () => {
         setAmountValid(true);
     };
 
-    const setAmount = async (amount: number) => {
-        setAmountChanged(Side.Send);
-        setSendAmount(BigNumber(amount));
-        const receiveAmount = await pair().calculateReceiveAmount(
-            BigNumber(amount),
-            minerFee(),
-            undefined,
-            getGasToken(),
-        );
-        setReceiveAmount(receiveAmount);
-        validateAmount();
-        sendAmountRef?.focus();
+    const setAmount = (amount: number) => {
+        loadingGuard(async () => {
+            setAmountChanged(Side.Send);
+            setSendAmount(BigNumber(amount));
+            const receiveAmount = await pair().calculateReceiveAmount(
+                BigNumber(amount),
+                minerFee(),
+                undefined,
+                getGasToken(),
+            );
+            setReceiveAmount(receiveAmount);
+            validateAmount();
+            sendAmountRef?.focus();
+        });
     };
 
     onMount(() => {
@@ -441,7 +444,7 @@ const Create = () => {
     );
 
     createEffect(() => {
-        if (assetSelect()) {
+        if (assetSelection() !== null) {
             return;
         }
 
@@ -736,6 +739,7 @@ const Create = () => {
                     </Show>
                     <CreateButton />
                     <AssetSelect />
+                    <NetworkSelect />
                     <SettingsMenu />
                 </div>
             </div>

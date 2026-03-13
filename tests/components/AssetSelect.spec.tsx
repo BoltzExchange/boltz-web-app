@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import SelectAsset from "../../src/components/AssetSelect";
+import NetworkSelect from "../../src/components/NetworkSelect";
 import { BTC, LBTC, LN, USDT0, isUsdt0Variant } from "../../src/consts/Assets";
-import { Side } from "../../src/consts/Enums";
+import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import Pair from "../../src/utils/Pair";
 import { TestComponent, contextWrapper, signals } from "../helper";
@@ -38,7 +39,7 @@ describe("AssetSelect", () => {
         );
 
         setPairAssets(asset, asset === BTC ? LN : BTC);
-        signals.setAssetSelect(true);
+        signals.setAssetSelection(AssetSelection.Asset);
         signals.setAssetSelected(Side.Send);
 
         for (const a of [LN, BTC, LBTC]) {
@@ -64,7 +65,7 @@ describe("AssetSelect", () => {
             { wrapper: contextWrapper },
         );
 
-        signals.setAssetSelect(true);
+        signals.setAssetSelection(AssetSelection.Asset);
         signals.setAssetSelected(side);
 
         const header = await screen.findByText(
@@ -88,7 +89,7 @@ describe("AssetSelect", () => {
         );
 
         setPairAssets(BTC, LN);
-        signals.setAssetSelect(true);
+        signals.setAssetSelection(AssetSelection.Asset);
         signals.setAssetSelected(Side.Send);
 
         const setPair = vi.spyOn(signals, "setPair");
@@ -118,7 +119,7 @@ describe("AssetSelect", () => {
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetSelect(true);
+            signals.setAssetSelection(AssetSelection.Asset);
             signals.setAssetSelected(side);
             setPairAssets(prevSend, prevReceive);
 
@@ -152,7 +153,7 @@ describe("AssetSelect", () => {
             );
 
             signals.setOnchainAddress(address);
-            signals.setAssetSelect(true);
+            signals.setAssetSelection(AssetSelection.Asset);
             signals.setAssetSelected(Side.Send);
             setPairAssets(LN, asset);
 
@@ -178,7 +179,7 @@ describe("AssetSelect", () => {
             "el1qqgdvkht3g2puwdwxqzfrekef8anygnvs093hntsz63f42gj5m0zksfvvvsss79pv7le474snv6n2slklg7ujvth99naldh9cy";
 
         signals.setOnchainAddress(initialAddress);
-        signals.setAssetSelect(true);
+        signals.setAssetSelection(AssetSelection.Asset);
         signals.setAssetSelected(Side.Receive);
         setPairAssets(BTC, LBTC);
 
@@ -195,12 +196,13 @@ describe("AssetSelect", () => {
                     <>
                         <TestComponent />
                         <SelectAsset />
+                        <NetworkSelect />
                     </>
                 ),
                 { wrapper: contextWrapper },
             );
 
-            signals.setAssetSelect(true);
+            signals.setAssetSelection(AssetSelection.Asset);
             signals.setAssetSelected(Side.Send);
         };
 
@@ -296,9 +298,9 @@ describe("AssetSelect", () => {
             fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
             await screen.findByTestId("network-back");
 
-            fireEvent.click(screen.getByTestId("asset-select-close"));
+            fireEvent.click(screen.getByTestId("network-close"));
 
-            signals.setAssetSelect(true);
+            signals.setAssetSelection(AssetSelection.Asset);
 
             expect(await screen.findByTestId(`select-${BTC}`)).toBeDefined();
             expect(screen.queryByTestId("network-back")).toBeNull();

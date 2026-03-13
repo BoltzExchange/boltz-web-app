@@ -81,6 +81,10 @@ hr.spacer {
 }
 
 .asset-wrap {
+    appearance: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
     background-color: var(--color-dark-gray);
     border: 1px solid var(--color-white-15);
     position: absolute;
@@ -730,6 +734,7 @@ textarea.invalid {
 }
 
 .asset-select-modal {
+    outline: none;
     background: color-mix(in srgb, var(--color-secondary-900) 70%, black);
     border: 1px solid var(--color-white-10);
     border-radius: var(--border-radius-lg);
@@ -876,6 +881,7 @@ textarea.invalid {
         background: var(--color-secondary-800);
     }
 
+    &[data-focused="true"],
     &:hover {
         background: var(--color-secondary-700);
     }

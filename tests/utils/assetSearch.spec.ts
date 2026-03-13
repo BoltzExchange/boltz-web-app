@@ -1,4 +1,4 @@
-import { fuzzyScore, fuzzySort } from "../../src/utils/search";
+import { fuzzyScore, fuzzySort } from "../../src/utils/assetSearch";
 
 describe("fuzzyScore", () => {
     test("should match exact prefix", () => {

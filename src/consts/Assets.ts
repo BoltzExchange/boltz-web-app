@@ -120,6 +120,19 @@ export const requireTokenConfig = (
     return tokenConfig;
 };
 
+export const getAssetNetwork = (asset: string): string | null => {
+    switch (asset) {
+        case BTC:
+            return "Bitcoin";
+        case LN:
+            return "Lightning";
+        case LBTC:
+            return "Liquid";
+        default:
+            return config.assets?.[asset]?.network?.chainName ?? null;
+    }
+};
+
 export const getNetworkBadge = (asset: string): string | null => {
     const chainName = config.assets?.[asset]?.network?.chainName;
 

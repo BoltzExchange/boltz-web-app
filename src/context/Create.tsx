@@ -13,7 +13,7 @@ import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
 import { type AssetType, BTC, LBTC, LN, assets } from "../consts/Assets";
-import { Side, UrlParam } from "../consts/Enums";
+import { type AssetSelection, Side, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
 import Pair, { RequiredInput } from "../utils/Pair";
 import { validateAddress } from "../utils/compat";
@@ -244,8 +244,8 @@ export type CreateContextType = {
     setBolt12Offer: Setter<string | undefined>;
     onchainAddress: Accessor<string>;
     setOnchainAddress: Setter<string>;
-    assetSelect: Accessor<boolean>;
-    setAssetSelect: Setter<boolean>;
+    assetSelection: Accessor<AssetSelection | null>;
+    setAssetSelection: Setter<AssetSelection | null>;
     assetSelected: Accessor<string>;
     setAssetSelected: Setter<string>;
     valid: Accessor<boolean>;
@@ -313,7 +313,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     );
 
     // asset selection
-    const [assetSelect, setAssetSelect] = createSignal(false);
+    const [assetSelection, setAssetSelection] =
+        createSignal<AssetSelection | null>(null);
     const [assetSelected, setAssetSelected] = createSignal(null);
 
     // validation
@@ -406,8 +407,8 @@ const CreateProvider = (props: { children: JSX.Element }) => {
                 setBolt12Offer,
                 onchainAddress,
                 setOnchainAddress,
-                assetSelect,
-                setAssetSelect,
+                assetSelection,
+                setAssetSelection,
                 assetSelected,
                 setAssetSelected,
                 valid,

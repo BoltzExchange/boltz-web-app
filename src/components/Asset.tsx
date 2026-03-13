@@ -1,20 +1,20 @@
 import type { Accessor } from "solid-js";
 
 import { getAssetDisplaySymbol, getNetworkBadge } from "../consts/Assets";
-import type { Side } from "../consts/Enums";
+import { AssetSelection, type Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import "../style/asset.scss";
 
 const Asset = (props: { side: Side; signal: Accessor<string> }) => {
     const openSelect = () => {
         setAssetSelected(props.side);
-        setAssetSelect(true);
+        setAssetSelection(AssetSelection.Asset);
     };
 
-    const { setAssetSelected, setAssetSelect } = useCreateContext();
+    const { setAssetSelected, setAssetSelection } = useCreateContext();
 
     return (
-        <div class="asset-wrap" onClick={openSelect}>
+        <button type="button" class="asset-wrap" onClick={openSelect}>
             <div
                 data-testid={`asset-${props.side}`}
                 class={`asset asset-${getAssetDisplaySymbol(props.signal())}`}
@@ -25,7 +25,7 @@ const Asset = (props: { side: Side; signal: Accessor<string> }) => {
                     <span class="arrow-down" />
                 </div>
             </div>
-        </div>
+        </button>
     );
 };
 
