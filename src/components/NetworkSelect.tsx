@@ -1,6 +1,6 @@
 import log from "loglevel";
 import { IoArrowBack, IoClose } from "solid-icons/io";
-import { For, Show, createEffect, createSignal } from "solid-js";
+import { For, Show, createEffect, createSignal, on } from "solid-js";
 
 import { config } from "../config";
 import {
@@ -54,10 +54,21 @@ const NetworkSelect = () => {
             (asset) => getAssetNetwork(asset) ?? "",
         );
 
-    createEffect(() => {
-        filtered();
-        setFocusedIndex(0);
-    });
+    createEffect(
+        on(
+            () => assetSelection(),
+            (selection) => {
+                if (selection !== AssetSelection.AssetNetwork) {
+                    return;
+                }
+
+                const idx = filtered().findIndex(isSelected);
+                setFocusedIndex(idx >= 0 ? idx : 0);
+            },
+        ),
+    );
+
+    createEffect(on(search, () => setFocusedIndex(0)));
 
     createEffect(() => scrollToFocused(listRef, focusedIndex()));
 

@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from "@solidjs/testing-library";
 
 import SelectAsset from "../../src/components/AssetSelect";
 import NetworkSelect from "../../src/components/NetworkSelect";
+import type * as ConfigModule from "../../src/config";
+import { config } from "../../src/config";
 import { BTC, LBTC, LN, USDT0, isUsdt0Variant } from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
@@ -13,11 +15,64 @@ vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+
+    return {
+        ...actual,
+        config: {
+            ...actual.config,
+            assets: {
+                ...actual.config.assets,
+                "USDT0-ETH": {
+                    ...actual.config.assets.USDT0,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Ethereum",
+                        symbol: "ETH",
+                        gasToken: "ETH",
+                        chainId: 1,
+                        nativeCurrency: {
+                            name: "ETH",
+                            symbol: "ETH",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000001",
+                    },
+                },
+                "USDT0-OP": {
+                    ...actual.config.assets.USDT0,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Optimism",
+                        symbol: "OP",
+                        gasToken: "OP",
+                        chainId: 10,
+                        nativeCurrency: {
+                            name: "OP",
+                            symbol: "OP",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000002",
+                    },
+                },
+            },
+        },
+    };
+});
+
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
 };
 
-const usdt0VariantAssets = Object.keys(pairs).filter((asset) =>
+const usdt0VariantAssets = Object.keys(config.assets).filter((asset) =>
     isUsdt0Variant(asset),
 );
 
@@ -303,6 +358,21 @@ describe("AssetSelect", () => {
             signals.setAssetSelection(AssetSelection.Asset);
 
             expect(await screen.findByTestId(`select-${BTC}`)).toBeDefined();
+            expect(screen.queryByTestId("network-back")).toBeNull();
+        });
+
+        test("should keep the active network focused when opening step 2", async () => {
+            openAssetSelect();
+            setPairAssets("USDT0-OP", BTC);
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+
+            const searchInput = await screen.findByPlaceholderText(
+                i18n.en.search,
+            );
+            fireEvent.keyDown(searchInput, { key: "Enter" });
+
+            expect(signals.pair().fromAsset).toEqual("USDT0-OP");
             expect(screen.queryByTestId("network-back")).toBeNull();
         });
     });
