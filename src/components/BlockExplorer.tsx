@@ -4,6 +4,7 @@ import ExternalLink from "./ExternalLink";
 
 type PropsBase = {
     asset: string;
+    href?: string;
     typeLabel?: "lockup_address" | "lockup_tx" | "claim_tx" | "refund_tx";
 };
 
@@ -24,13 +25,14 @@ const BlockExplorer = (props: PropsTxId | PropsAddress) => {
     const { t } = useGlobalContext();
 
     const href = () =>
-        "txId" in props && props.txId !== undefined
+        props.href ||
+        ("txId" in props && props.txId !== undefined
             ? blockExplorerLink(props.asset, true, props.txId)
             : blockExplorerLink(
                   props.asset,
                   false,
                   (props as PropsAddress).address,
-              );
+              ));
 
     const typeLabel = () =>
         props.typeLabel ||

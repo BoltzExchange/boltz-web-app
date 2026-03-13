@@ -3,7 +3,7 @@ import { createSignal } from "solid-js";
 
 import BlockExplorerLink from "../../src/components/BlockExplorerLink";
 import { config } from "../../src/config";
-import { BTC, LBTC } from "../../src/consts/Assets";
+import { BTC, LBTC, USDT0 } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import type { ChainSwap, SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
@@ -67,6 +67,38 @@ describe("BlockExplorerLink", () => {
                 );
             },
         );
+
+        test("should show LayerZero claim transaction for OFT swaps", async () => {
+            const claimTx = "123";
+            const [swap] = createSignal<SomeSwap>({
+                type: SwapType.Reverse,
+                assetReceive: USDT0,
+                claimTx,
+                oft: {
+                    sourceAsset: USDT0,
+                    destinationAsset: "USDT0-ETH",
+                    destinationChainId: 1,
+                },
+            } as SomeSwap);
+
+            render(
+                () => (
+                    <BlockExplorerLink
+                        swap={swap}
+                        swapStatus={() => "transaction.claimed"}
+                    />
+                ),
+                { wrapper: contextWrapper },
+            );
+
+            const button = (await screen.findByText(
+                "open claim transaction",
+            )) as HTMLAnchorElement;
+
+            expect(button.href).toEqual(
+                `${config.layerZeroExplorerUrl}/tx/${claimTx}`,
+            );
+        });
     });
 
     describe("Chain Swaps", () => {
@@ -125,6 +157,37 @@ describe("BlockExplorerLink", () => {
             expect(button.href).toEqual(
                 // eslint-disable-next-line solid/reactivity
                 `${config.assets[BTC].blockExplorerUrl.normal}/tx/${swap().claimTx}`,
+            );
+        });
+
+        test("should show LayerZero claim transaction for OFT chain swaps", async () => {
+            const claimTx = "123";
+            const [swap] = createSignal<ChainSwap>({
+                type: SwapType.Chain,
+                assetSend: LBTC,
+                assetReceive: USDT0,
+                claimTx,
+                oft: {
+                    sourceAsset: USDT0,
+                    destinationAsset: "USDT0-ETH",
+                    destinationChainId: 1,
+                },
+                lockupDetails: {
+                    lockupAddress: "bc1",
+                },
+            } as ChainSwap);
+
+            render(
+                () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
+                { wrapper: contextWrapper },
+            );
+
+            const button = (await screen.findByText(
+                "open claim transaction",
+            )) as HTMLAnchorElement;
+
+            expect(button.href).toEqual(
+                `${config.layerZeroExplorerUrl}/tx/${claimTx}`,
             );
         });
     });

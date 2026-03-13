@@ -117,6 +117,7 @@ const defaults = {
     dnsOverHttps: "https://1.1.1.1/dns-query",
     chatwootUrl: "https://support.boltz.exchange",
     preimageValidation: "https://validate-payment.com",
+    layerZeroExplorerUrl: "https://layerzeroscan.com",
     rateProviders: {
         Yadio: "https://api.yadio.io/exrates/btc",
         Kraken: "https://api.kraken.com/0/public/Ticker",

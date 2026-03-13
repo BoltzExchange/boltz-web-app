@@ -51,4 +51,24 @@ describe("BlockExplorer", () => {
             `${baseLink}/tx/${txId}`,
         );
     });
+
+    test("should prefer an explicit href override", async () => {
+        const txId =
+            "813c90372c9b774396c66099cf8015f9510a8ba5686cbb78d8e848959fe7bb5d";
+        const href = `${config.layerZeroExplorerUrl}/tx/${txId}`;
+
+        render(() => <BlockExplorer asset="BTC" txId={txId} href={href} />, {
+            wrapper: contextWrapper,
+        });
+
+        const button = await screen.findByText(
+            i18n.en.blockexplorer.replace(
+                "{{ typeLabel }}",
+                i18n.en.blockexplorer_claim_tx,
+            ),
+        );
+
+        expect(button).not.toBeUndefined();
+        expect((button as HTMLAnchorElement).href).toEqual(href);
+    });
 });
