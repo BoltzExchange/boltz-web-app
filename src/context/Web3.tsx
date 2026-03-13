@@ -95,7 +95,7 @@ const customDerivationPathRdns: string[] = [
     HardwareRdns.Trezor,
 ];
 
-export const createTokenContract = (asset: string, signer: Signer) => {
+export const createTokenContract = (asset: string, signer: Signer | Wallet) => {
     const tokenConfig = requireTokenConfig(asset);
     return new Contract(
         tokenConfig.address,

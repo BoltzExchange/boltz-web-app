@@ -11,6 +11,7 @@ export type Usdt0Variant = {
     chainId: number;
     tokenAddress: string;
     blockExplorerUrl: string;
+    rpcUrls: string[];
 };
 
 export type Asset = {

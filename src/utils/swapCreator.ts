@@ -32,10 +32,20 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
-export type OftDetail = {
+export type OftStageDetail = {
     sourceAsset: string;
     destinationAsset: string;
     destinationChainId: number;
+};
+
+export const enum OftPosition {
+    Pre = "pre",
+    Post = "post",
+}
+
+export type OftDetail = OftStageDetail & {
+    position: OftPosition;
+    txHash?: string;
 };
 
 export const enum GasAbstractionType {
@@ -71,7 +81,7 @@ export type SwapBase = {
     // DEX route for routed swaps (e.g. USDT0 via TBTC).
     dex?: DexDetail;
 
-    // OFT route for post-claim bridging (e.g. canonical USDT0 -> USDT0-ETH).
+    // OFT routes for bridging before lockup or after claim.
     oft?: OftDetail;
 };
 
@@ -124,6 +134,10 @@ export const getFinalAssetSend = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.oft?.position === OftPosition.Pre) {
+        return swap.oft.sourceAsset;
+    }
+
     if (
         swap.dex !== undefined &&
         swap.dex.position === HopsPosition.Before &&
@@ -139,7 +153,7 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
-    if (swap.oft !== undefined) {
+    if (swap.oft?.position === OftPosition.Post) {
         return swap.oft.destinationAsset;
     }
 
@@ -158,6 +172,12 @@ export const getFinalAssetReceive = (
 
 export const isEvmSwap = (swap: SomeSwap) =>
     isEvmAsset(getRelevantAssetForSwap(swap));
+
+export const getPreOftDetail = (oft?: OftDetail): OftDetail | undefined =>
+    oft?.position === OftPosition.Pre ? oft : undefined;
+
+export const getPostOftDetail = (oft?: OftDetail): OftDetail | undefined =>
+    oft?.position === OftPosition.Post ? oft : undefined;
 
 const generatePreimage = ({
     asset,

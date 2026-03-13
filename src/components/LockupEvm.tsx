@@ -6,14 +6,17 @@ import {
     type Wallet,
     keccak256 as ethersKeccak256,
 } from "ethers";
+import { JsonRpcProvider } from "ethers";
 import log from "loglevel";
 import {
     type Accessor,
     type Setter,
     Show,
     createEffect,
+    createMemo,
     createResource,
     createSignal,
+    onCleanup,
 } from "solid-js";
 
 import { config } from "../config";
@@ -42,8 +45,19 @@ import {
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
+import {
+    createOftContract,
+    getOftContract,
+    getOftSentEvent,
+    quoteOftSend,
+} from "../utils/oft/oft";
+import { fetchDexQuote } from "../utils/qouter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
-import { GasAbstractionType, type SomeSwap } from "../utils/swapCreator";
+import {
+    GasAbstractionType,
+    type OftDetail,
+    type SomeSwap,
+} from "../utils/swapCreator";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
@@ -486,6 +500,485 @@ const ApproveErc20 = (props: {
     );
 };
 
+// TODO: big clusterfuck
+const WaitForOft = (props: {
+    asset: string;
+    preimageHash: string;
+    timeoutBlockHeight: number;
+}) => {
+    const { swap, setSwap } = usePayContext();
+    const { slippage, setSwapStorage } = useGlobalContext();
+    const { getGasAbstractionSigner, getErc20Swap } = useWeb3Signer();
+
+    const [oftGuid, setOftGuid] = createSignal<string>(undefined);
+    const sourceChainId = createMemo(() => {
+        return config.assets?.[swap()?.oft?.sourceAsset]?.network?.chainId;
+    });
+    const destinationChainId = createMemo(() => {
+        return config.assets?.[swap()?.oft?.destinationAsset]?.network?.chainId;
+    });
+    const sourceProvider = createMemo(() => {
+        return new JsonRpcProvider(
+            config.assets?.[swap()?.oft?.sourceAsset]?.network?.rpcUrls[0],
+        );
+    });
+    const [sourceOftDetails] = createResource(
+        sourceChainId,
+        async (chainId) => {
+            if (chainId === undefined) {
+                return undefined;
+            }
+
+            return await getOftContract(chainId);
+        },
+    );
+    const sourceOftContract = createMemo(() => {
+        const oftContract = sourceOftDetails();
+        if (oftContract === undefined) {
+            return undefined;
+        }
+
+        return createOftContract(oftContract.address, sourceProvider());
+    });
+    const gasAbstractionSigner = createMemo(() => {
+        const destinationAsset = swap()?.oft?.destinationAsset;
+        if (destinationAsset === undefined) {
+            return undefined;
+        }
+
+        return getGasAbstractionSigner(destinationAsset);
+    });
+    const [destinationOftDetails] = createResource(
+        destinationChainId,
+        async (chainId) => {
+            if (chainId === undefined) {
+                return undefined;
+            }
+
+            return await getOftContract(chainId);
+        },
+    );
+    const destinationOftContract = createMemo(() => {
+        const oftContract = destinationOftDetails();
+        const signer = gasAbstractionSigner();
+        if (oftContract === undefined || signer === undefined) {
+            return undefined;
+        }
+
+        return createOftContract(oftContract.address, signer);
+    });
+
+    const checkForTransfer = async () => {
+        log.debug("Checking for OFT transfer");
+
+        // TODO: make that smarter
+        if (
+            oftGuid() !== undefined ||
+            destinationOftContract() === undefined ||
+            sourceOftContract() === undefined
+        ) {
+            return;
+        }
+
+        if (oftGuid() === undefined) {
+            const oftContract = sourceOftContract();
+            const oftAddress = sourceOftDetails()?.address;
+            if (oftContract === undefined || oftAddress === undefined) {
+                return;
+            }
+
+            const sendReceipt = await sourceProvider().getTransactionReceipt(
+                swap()?.oft?.txHash,
+            );
+            if (sendReceipt === null) {
+                log.debug("Could not fetch send transaction receipt");
+                return;
+            }
+
+            const sendEvent = getOftSentEvent(
+                oftContract,
+                sendReceipt,
+                oftAddress,
+            );
+            log.debug("OFT sent event", sendEvent.guid);
+            setOftGuid(sendEvent.guid);
+        }
+
+        // TODO: check for transfer with same guid on destination chain
+        const token = createTokenContract(
+            swap().oft!.destinationAsset,
+            gasAbstractionSigner(),
+        );
+        const balance = await token.balanceOf(gasAbstractionSigner().address);
+        if (balance === 0n) {
+            log.debug("OFT not received yet");
+            return;
+        }
+
+        log.debug("OFT received");
+        await lockup(balance);
+        clearInterval(timer);
+    };
+
+    const postCommitment = async (commitmentTxHash: string) => {
+        // The commitment signature must include the actually locked amount from the Lockup event.
+        const receipt =
+            await gasAbstractionSigner().provider.waitForTransaction(
+                commitmentTxHash,
+                1,
+                120_000,
+            );
+        if (receipt === null) {
+            throw new Error(
+                "could not fetch commitment lockup transaction receipt",
+            );
+        }
+
+        const erc20Swap = getErc20Swap(swap().oft!.destinationAsset);
+        const [chainId, contractAddress, version] = await Promise.all([
+            gasAbstractionSigner()
+                .provider.getNetwork()
+                .then((n) => n.chainId),
+            erc20Swap.getAddress(),
+            erc20Swap.version(),
+        ]);
+
+        const {
+            amount: lockupEventAmount,
+            tokenAddress: lockupTokenAddress,
+            claimAddress: lockupClaimAddress,
+            refundAddress: lockupRefundAddress,
+            timelock: lockupTimelock,
+            logIndex: lockupLogIndex,
+        } = getLockupEvent(erc20Swap, receipt, contractAddress);
+
+        const commitmentSignature = await gasAbstractionSigner().signTypedData(
+            {
+                name: "ERC20Swap",
+                version: String(version),
+                verifyingContract: contractAddress,
+                chainId,
+            },
+            {
+                Commit: [
+                    { name: "preimageHash", type: "bytes32" },
+                    { name: "amount", type: "uint256" },
+                    { name: "tokenAddress", type: "address" },
+                    { name: "claimAddress", type: "address" },
+                    { name: "refundAddress", type: "address" },
+                    { name: "timelock", type: "uint256" },
+                ],
+            },
+            {
+                preimageHash: prefix0x(props.preimageHash),
+                amount: lockupEventAmount,
+                tokenAddress: lockupTokenAddress,
+                claimAddress: lockupClaimAddress,
+                refundAddress: lockupRefundAddress,
+                timelock: lockupTimelock,
+            },
+        );
+
+        await postCommitmentSignature(
+            props.asset,
+            swap().id,
+            commitmentSignature,
+            commitmentTxHash,
+            lockupLogIndex,
+            slippage() * 100,
+        );
+    };
+
+    const lockup = async (balance: bigint) => {
+        if (swap().commitmentLockupTxHash === undefined) {
+            const expectedAmount = satsToAssetAmount(
+                swap().sendAmount,
+                swap().assetSend,
+            );
+            const quote = await fetchDexQuote(
+                swap().dex!.hops[0].dexDetails!,
+                balance,
+            );
+
+            if (quote.trade.amountOut < expectedAmount) {
+                // TODO: show error and refund
+                log.warn("OFT received amount is less than expected");
+                return;
+            }
+
+            log.debug("OFT received amount is enough for lockup");
+
+            const router = createRouterContract(
+                props.asset,
+                gasAbstractionSigner(),
+            );
+
+            const encoded = await encodeDexQuote(
+                swap().dex!.hops[0].dexDetails!.chain,
+                await router.getAddress(),
+                balance,
+                calculateAmountWithSlippage(quote.trade.amountOut, slippage()) -
+                    quote.trade.amountOut,
+                quote.trade.data,
+            );
+
+            const token = createTokenContract(
+                swap().oft.destinationAsset,
+                gasAbstractionSigner(),
+            );
+            const approveData = token.interface.encodeFunctionData("transfer", [
+                await router.getAddress(),
+                balance,
+            ]);
+            const calls = [
+                {
+                    to: getTokenAddress(swap().oft.destinationAsset),
+                    value: "0",
+                    data: approveData,
+                },
+            ];
+
+            const commitmentPreimageHash = "00".repeat(32);
+            const routerCall =
+                await router.executeAndLockERC20.populateTransaction(
+                    prefix0x(commitmentPreimageHash),
+                    getTokenAddress(props.asset),
+                    swap().claimAddress,
+                    gasAbstractionSigner().address,
+                    props.timeoutBlockHeight,
+                    encoded.calls.map((call) => ({
+                        target: call.to,
+                        value: call.value,
+                        callData: prefix0x(call.data),
+                    })),
+                );
+
+            calls.push(routerCall);
+
+            const tx = await sendPopulatedTransaction(
+                GasAbstractionType.Signer,
+                gasAbstractionSigner(),
+                calls,
+            );
+            swap().commitmentLockupTxHash = tx;
+            await setSwapStorage(swap());
+            setSwap(swap());
+
+            await postCommitment(tx);
+        }
+    };
+
+    const timer = setInterval(checkForTransfer, 1_000);
+    onCleanup(() => clearInterval(timer));
+
+    return (
+        <>
+            <h2>Waiting for OFT</h2>
+            <LoadingSpinner />
+        </>
+    );
+};
+
+const SendToOft = (props: {
+    oft: OftDetail;
+    asset: string;
+    preimageHash: string;
+    timeoutBlockHeight: number;
+    swapId: string;
+    signerAddress: string;
+    amount: bigint;
+    derivationPath?: string;
+}) => {
+    const { setSwap, swap } = usePayContext();
+    const { t, getSwap, setSwapStorage } = useGlobalContext();
+    const { signer, getGasAbstractionSigner } = useWeb3Signer();
+
+    const expectedChainId = () =>
+        config.assets?.[props.oft.sourceAsset]?.network?.chainId;
+
+    const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
+    const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
+    const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
+    const txSent = createMemo(() => {
+        return swap()?.oft?.txHash !== undefined;
+    });
+
+    const [signerChainId] = createResource(signer, async (currentSigner) => {
+        return await currentSigner.provider
+            .getNetwork()
+            .then((n) => Number(n.chainId));
+    });
+
+    // TODO: also check for enough for msg fee
+    createEffect(() => {
+        if (signer() === undefined || signerChainId() !== expectedChainId()) {
+            return;
+        }
+
+        const sourceChainId = expectedChainId();
+        if (sourceChainId === undefined) {
+            return;
+        }
+
+        void (async () => {
+            const oftContract = await getOftContract(sourceChainId);
+            if (oftContract === undefined) {
+                throw new Error(
+                    `missing OFT contract for chain: ${sourceChainId}`,
+                );
+            }
+
+            const connectedSigner = signer();
+            const signerAddress = await connectedSigner.getAddress();
+            const tokenContract = createTokenContract(
+                props.oft.sourceAsset,
+                connectedSigner,
+            );
+            const oftInstance = createOftContract(
+                oftContract.address,
+                connectedSigner,
+            );
+            const [balance, approvalRequired] = await Promise.all([
+                tokenContract.balanceOf(signerAddress),
+                oftInstance.approvalRequired(),
+            ]);
+
+            let needsApproval = false;
+            if (approvalRequired) {
+                const allowance = await tokenContract.allowance(
+                    signerAddress,
+                    oftContract.address,
+                );
+                needsApproval = allowance < props.amount;
+            }
+
+            setSignerBalance(balance);
+            setNeedsApproval(needsApproval);
+            setApprovalTarget(
+                approvalRequired ? oftContract.address : undefined,
+            );
+        })();
+    });
+
+    return (
+        <Show
+            when={!txSent()}
+            fallback={
+                <WaitForOft
+                    asset={props.asset}
+                    preimageHash={props.preimageHash}
+                    timeoutBlockHeight={props.timeoutBlockHeight}
+                />
+            }>
+            <Show
+                when={signerBalance() !== undefined}
+                fallback={
+                    <Show
+                        when={
+                            signer() !== undefined &&
+                            signerChainId() === expectedChainId()
+                        }
+                        fallback={
+                            <ConnectWallet asset={props.oft.sourceAsset} />
+                        }>
+                        <LoadingSpinner />
+                    </Show>
+                }>
+                <Show
+                    when={signerBalance() >= props.amount}
+                    fallback={
+                        <InsufficientBalance asset={props.oft.sourceAsset} />
+                    }>
+                    <Show
+                        when={!needsApproval()}
+                        fallback={
+                            <ApproveErc20
+                                asset={props.oft.sourceAsset}
+                                value={() => props.amount}
+                                signerAddress={props.signerAddress}
+                                derivationPath={props.derivationPath}
+                                setNeedsApproval={setNeedsApproval}
+                                approvalTarget={approvalTarget()}
+                            />
+                        }>
+                        <ContractTransaction
+                            asset={props.oft.sourceAsset}
+                            /* eslint-disable-next-line solid/reactivity */
+                            onClick={async () => {
+                                const sourceChainId = expectedChainId();
+                                if (sourceChainId === undefined) {
+                                    throw new Error(
+                                        `missing OFT source chain id for asset: ${props.oft.sourceAsset}`,
+                                    );
+                                }
+
+                                const connectedSigner = signer();
+                                const recipient = getGasAbstractionSigner(
+                                    props.oft.destinationAsset,
+                                ).address;
+                                log.debug(
+                                    `Sending OFT ${props.oft.destinationAsset} to ${recipient} on chain ${props.oft.destinationChainId}`,
+                                );
+                                const oftContract =
+                                    await getOftContract(sourceChainId);
+                                if (oftContract === undefined) {
+                                    throw new Error(
+                                        `missing OFT contract for chain: ${sourceChainId}`,
+                                    );
+                                }
+
+                                const oftInstance = createOftContract(
+                                    oftContract.address,
+                                    connectedSigner,
+                                );
+                                const { sendParam, msgFee } =
+                                    await quoteOftSend(
+                                        oftInstance,
+                                        props.oft.destinationChainId,
+                                        recipient,
+                                        props.amount,
+                                    );
+                                const tx = await oftInstance.send(
+                                    sendParam,
+                                    msgFee,
+                                    await signer().getAddress(),
+                                    {
+                                        value: msgFee[0],
+                                    },
+                                );
+
+                                const currentSwap = await getSwap(props.swapId);
+                                if (currentSwap.oft !== undefined) {
+                                    currentSwap.oft = {
+                                        ...currentSwap.oft,
+                                        txHash: tx.hash,
+                                    };
+                                }
+
+                                setSwap(currentSwap);
+                                await setSwapStorage(currentSwap);
+                            }}
+                            children={
+                                <ConnectWallet asset={props.oft.sourceAsset} />
+                            }
+                            address={{
+                                address: props.signerAddress,
+                                derivationPath: props.derivationPath,
+                            }}
+                            buttonText={t("send")}
+                            promptText={t("transaction_prompt", {
+                                button: t("send"),
+                            })}
+                            waitingText={t("tx_in_mempool_subline")}
+                            showHr={false}
+                        />
+                    </Show>
+                </Show>
+            </Show>
+        </Show>
+    );
+};
+
 const LockupTransaction = (props: {
     asset: string;
     gasAbstraction: GasAbstractionType;
@@ -652,6 +1145,7 @@ const LockupEvm = (props: {
     derivationPath?: string;
     timeoutBlockHeight: number;
     hops?: EncodedHop[];
+    oft?: OftDetail;
 }) => {
     const { slippage } = useGlobalContext();
     const { getErc20Swap, signer } = useWeb3Signer();
@@ -672,6 +1166,7 @@ const LockupEvm = (props: {
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [requiredValue, setRequiredValue] = createSignal<bigint>(0n);
     const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
+    const [oftValue, setOftValue] = createSignal<bigint>(undefined);
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
         return await currentSigner.provider
@@ -681,6 +1176,14 @@ const LockupEvm = (props: {
 
     // eslint-disable-next-line solid/reactivity
     createEffect(async () => {
+        if (props.oft !== undefined) {
+            setOftValue(
+                (await getHopExecutionQuote(props.hops[0], value(), slippage()))
+                    .amountIn,
+            );
+            return;
+        }
+
         if (signer() === undefined) {
             return;
         }
@@ -778,41 +1281,60 @@ const LockupEvm = (props: {
         <>
             <OptimizedRoute />
             <Show
-                when={signerBalance() !== undefined}
+                when={props.oft === undefined}
                 fallback={
                     <Show
-                        when={
-                            signer() !== undefined &&
-                            signerChainId() === expectedChainId()
-                        }
-                        fallback={<ConnectWallet asset={props.asset} />}>
-                        <LoadingSpinner />
+                        when={oftValue() !== undefined}
+                        fallback={<LoadingSpinner />}>
+                        <SendToOft
+                            oft={props.oft}
+                            swapId={props.swapId}
+                            signerAddress={props.signerAddress}
+                            derivationPath={props.derivationPath}
+                            timeoutBlockHeight={props.timeoutBlockHeight}
+                            amount={oftValue()}
+                            asset={props.asset}
+                            preimageHash={props.preimageHash}
+                        />
                     </Show>
                 }>
                 <Show
-                    when={signerBalance() >= requiredValue()}
-                    fallback={<InsufficientBalance asset={userAsset()} />}>
-                    <LockupTransaction
-                        asset={props.asset}
-                        gasAbstraction={props.gasAbstraction}
-                        value={value}
-                        preimageHash={props.preimageHash}
-                        claimAddress={props.claimAddress}
-                        timeoutBlockHeight={props.timeoutBlockHeight}
-                        signerAddress={props.signerAddress}
-                        derivationPath={props.derivationPath}
-                        swapId={props.swapId}
-                        needsApproval={needsApproval}
-                        setNeedsApproval={setNeedsApproval}
-                        approvalAsset={
-                            hasHopsBefore() ? props.hops[0].from : undefined
-                        }
-                        approvalValue={
-                            hasHopsBefore() ? () => MaxUint256 : undefined
-                        }
-                        approvalTarget={approvalTarget()}
-                        hops={hasHopsBefore() ? props.hops : undefined}
-                    />
+                    when={signerBalance() !== undefined}
+                    fallback={
+                        <Show
+                            when={
+                                signer() !== undefined &&
+                                signerChainId() === expectedChainId()
+                            }
+                            fallback={<ConnectWallet asset={props.asset} />}>
+                            <LoadingSpinner />
+                        </Show>
+                    }>
+                    <Show
+                        when={signerBalance() >= requiredValue()}
+                        fallback={<InsufficientBalance asset={userAsset()} />}>
+                        <LockupTransaction
+                            asset={props.asset}
+                            gasAbstraction={props.gasAbstraction}
+                            value={value}
+                            preimageHash={props.preimageHash}
+                            claimAddress={props.claimAddress}
+                            timeoutBlockHeight={props.timeoutBlockHeight}
+                            signerAddress={props.signerAddress}
+                            derivationPath={props.derivationPath}
+                            swapId={props.swapId}
+                            needsApproval={needsApproval}
+                            setNeedsApproval={setNeedsApproval}
+                            approvalAsset={
+                                hasHopsBefore() ? props.hops[0].from : undefined
+                            }
+                            approvalValue={
+                                hasHopsBefore() ? () => MaxUint256 : undefined
+                            }
+                            approvalTarget={approvalTarget()}
+                            hops={hasHopsBefore() ? props.hops : undefined}
+                        />
+                    </Show>
                 </Show>
             </Show>
         </>

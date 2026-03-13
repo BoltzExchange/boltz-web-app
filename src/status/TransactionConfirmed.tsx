@@ -65,6 +65,7 @@ import {
     type OftDetail,
     type ReverseSwap,
     getFinalAssetReceive,
+    getPostOftDetail,
 } from "../utils/swapCreator";
 
 type RouterExecutionQuote = {
@@ -834,7 +835,7 @@ const AutoClaimHops = (props: {
     timeoutBlockHeight: number;
     getGasToken: boolean;
     dex: DexDetail;
-    oft: OftDetail;
+    oft?: OftDetail;
 }) => {
     const { getErc20Swap, signer, getGasAbstractionSigner } = useWeb3Signer();
     const { t, slippage, notify, getSwap, setSwapStorage } = useGlobalContext();
@@ -1089,7 +1090,7 @@ const ClaimEvm = (props: {
                     assetReceive={props.assetReceive}
                     getGasToken={props.getGasToken}
                     dex={props.dex}
-                    oft={props.oft}
+                    oft={getPostOftDetail(props.oft)}
                 />
             }>
             <Show

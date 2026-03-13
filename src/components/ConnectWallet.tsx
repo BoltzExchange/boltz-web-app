@@ -3,6 +3,7 @@ import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
 import { For, Show, createEffect, createSignal, on, onCleanup } from "solid-js";
 
+import { config } from "../config";
 import { isEvmAsset } from "../consts/Assets";
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -249,38 +250,27 @@ const ConnectWallet = (props: {
     syncAddress?: boolean;
 }) => {
     const { t } = useGlobalContext();
-    const { providers, signer, getContractsForAsset } = useWeb3Signer();
+    const { providers, signer } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
 
     const address = () => signer()?.address;
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
-
-    let syncRequestId = 0;
 
     const syncWalletState = async (
         asset: string,
         activeSigner: Signer | undefined,
         currentAddress: string | undefined,
     ) => {
-        const requestId = ++syncRequestId;
-        const contracts = getContractsForAsset(asset);
+        const chainId = config.assets?.[asset]?.network?.chainId;
 
         if (
             currentAddress !== undefined &&
-            contracts &&
+            chainId !== undefined &&
             Number(
                 (await activeSigner?.provider.getNetwork())?.chainId || -1,
-            ) !== contracts.network.chainId
+            ) !== chainId
         ) {
-            if (requestId !== syncRequestId) {
-                return;
-            }
-
             setNetworkValid(false);
-            return;
-        }
-
-        if (requestId !== syncRequestId) {
             return;
         }
 
@@ -303,7 +293,6 @@ const ConnectWallet = (props: {
     );
 
     onCleanup(() => {
-        syncRequestId += 1;
         if (props.syncAddress) {
             setAddressValid(false);
             setOnchainAddress("");

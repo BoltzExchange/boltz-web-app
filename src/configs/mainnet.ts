@@ -21,6 +21,7 @@ const createUsdt0VariantAsset = ({
     chainId,
     tokenAddress,
     blockExplorerUrl,
+    rpcUrls,
 }: Usdt0Variant): Asset => ({
     type: AssetKind.ERC20,
     blockExplorerUrl: {
@@ -32,7 +33,7 @@ const createUsdt0VariantAsset = ({
         symbol,
         gasToken: symbol,
         chainId,
-        rpcUrls: [],
+        rpcUrls,
         nativeCurrency: {
             name: symbol,
             symbol,
@@ -165,6 +166,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 137,
         tokenAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
         blockExplorerUrl: "https://polygonscan.com",
+        rpcUrls: ["https://polygon.drpc.org"],
     },
     {
         asset: "USDT0-RBTC",
@@ -206,7 +208,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://www.oklink.com/x-layer",
     },
-];
+] as any;
 
 const usdt0VariantAssets = Object.fromEntries(
     usdt0Variants.map((variant) => [

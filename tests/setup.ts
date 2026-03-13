@@ -52,5 +52,6 @@ vi.mock("ethers", () => {
         JsonRpcProvider: vi.fn(),
         FallbackProvider: vi.fn(),
         Signature,
+        ZeroAddress: "0x0000000000000000000000000000000000000000",
     };
 });

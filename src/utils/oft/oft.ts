@@ -2,6 +2,7 @@ import {
     Contract,
     type ContractRunner,
     JsonRpcProvider,
+    type TransactionReceipt,
     ZeroAddress,
     zeroPadValue,
 } from "ethers";
@@ -39,7 +40,10 @@ const providerCache = new Map<string, JsonRpcProvider>();
 const oftAbi = [
     "function quoteOFT(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes)) view returns (tuple(uint256,uint256), tuple(int256,string)[], tuple(uint256,uint256))",
     "function quoteSend(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes), bool) view returns (tuple(uint256,uint256))",
+    "function approvalRequired() view returns (bool)",
     "function send(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes), tuple(uint256,uint256), address) payable returns (tuple(bytes32,uint64,tuple(uint256,uint256)), tuple(uint256,uint256))",
+    "event OFTSent(bytes32 indexed guid, uint32 dstEid, address indexed fromAddress, uint256 amountSentLD, uint256 amountReceivedLD)",
+    "event OFTReceived(bytes32 indexed guid, uint32 srcEid, address indexed toAddress, uint256 amountReceivedLD)",
 ] as const;
 
 export type SendParam = [
@@ -58,7 +62,27 @@ type OftLimit = [bigint, bigint];
 type OftFeeDetail = [bigint, string];
 type OftReceipt = [bigint, bigint];
 
+type OftEventName = "OFTSent" | "OFTReceived";
+
+export type OftSentEvent = {
+    guid: string;
+    dstEid: bigint;
+    fromAddress: string;
+    amountSentLD: bigint;
+    amountReceivedLD: bigint;
+    logIndex: number;
+};
+
+export type OftReceivedEvent = {
+    guid: string;
+    srcEid: bigint;
+    toAddress: string;
+    amountReceivedLD: bigint;
+    logIndex: number;
+};
+
 type OftContractInstance = {
+    interface: Contract["interface"];
     quoteOFT: {
         staticCall: (
             sendParam: SendParam,
@@ -70,6 +94,18 @@ type OftContractInstance = {
             payInLzToken: boolean,
         ) => Promise<MsgFee>;
     };
+    approvalRequired: () => Promise<boolean>;
+    send: (
+        sendParam: SendParam,
+        msgFee: MsgFee,
+        refundAddress: string,
+        overrides?: {
+            value?: bigint;
+        },
+    ) => Promise<{
+        hash: string;
+        wait: (confirmations?: number) => Promise<unknown>;
+    }>;
 };
 
 let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
@@ -172,6 +208,109 @@ export const createOftContract = (
     runner: ContractRunner,
 ): OftContractInstance =>
     new Contract(address, oftAbi, runner) as unknown as OftContractInstance;
+
+const getOftEventLog = (
+    contract: OftContractInstance,
+    receipt: TransactionReceipt,
+    contractAddress: string,
+    eventName: OftEventName,
+) => {
+    const oftLog = receipt.logs.find((eventLog) => {
+        if (eventLog.address.toLowerCase() !== contractAddress.toLowerCase()) {
+            return false;
+        }
+
+        try {
+            const parsedLog = contract.interface.parseLog({
+                data: eventLog.data,
+                topics: eventLog.topics,
+            });
+            return parsedLog?.name === eventName;
+        } catch {
+            return false;
+        }
+    });
+
+    if (oftLog === undefined) {
+        throw new Error(`could not find ${eventName} event`);
+    }
+
+    return oftLog;
+};
+
+export const getOftSentEvent = (
+    contract: OftContractInstance,
+    receipt: TransactionReceipt,
+    contractAddress: string,
+): OftSentEvent => {
+    const oftSentLog = getOftEventLog(
+        contract,
+        receipt,
+        contractAddress,
+        "OFTSent",
+    );
+    const parsedOftSent = contract.interface.parseLog({
+        data: oftSentLog.data,
+        topics: oftSentLog.topics,
+    });
+    if (parsedOftSent?.name !== "OFTSent") {
+        throw new Error("could not parse OFTSent event");
+    }
+
+    const { guid, dstEid, fromAddress, amountSentLD, amountReceivedLD } =
+        parsedOftSent.args;
+
+    return {
+        guid,
+        dstEid,
+        fromAddress,
+        amountSentLD,
+        amountReceivedLD,
+        logIndex: oftSentLog.index,
+    };
+};
+
+export const getOftReceivedEvent = (
+    contract: OftContractInstance,
+    receipt: TransactionReceipt,
+    contractAddress: string,
+): OftReceivedEvent => {
+    const oftReceivedLog = getOftEventLog(
+        contract,
+        receipt,
+        contractAddress,
+        "OFTReceived",
+    );
+    const parsedOftReceived = contract.interface.parseLog({
+        data: oftReceivedLog.data,
+        topics: oftReceivedLog.topics,
+    });
+    if (parsedOftReceived?.name !== "OFTReceived") {
+        throw new Error("could not parse OFTReceived event");
+    }
+
+    const { guid, srcEid, toAddress, amountReceivedLD } = parsedOftReceived.args;
+
+    return {
+        guid,
+        srcEid,
+        toAddress,
+        amountReceivedLD,
+        logIndex: oftReceivedLog.index,
+    };
+};
+
+export const getOftSentGuid = (
+    contract: OftContractInstance,
+    receipt: TransactionReceipt,
+    contractAddress: string,
+): string => getOftSentEvent(contract, receipt, contractAddress).guid;
+
+export const getOftReceivedGuid = (
+    contract: OftContractInstance,
+    receipt: TransactionReceipt,
+    contractAddress: string,
+): string => getOftReceivedEvent(contract, receipt, contractAddress).guid;
 
 const createOftSendParam = async (
     destinationChainId: number,
