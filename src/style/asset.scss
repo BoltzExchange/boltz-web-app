@@ -117,11 +117,6 @@
     @include network-primary-icon(vars.$berachain_icon);
 }
 
-[data-network="celo"] {
-    @include network-badge(vars.$celo_icon, var(--color-secondary-700));
-    @include network-primary-icon(vars.$celo_icon);
-}
-
 [data-network="conflux"] {
     @include network-badge(vars.$conflux_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$conflux_icon);
@@ -205,24 +200,9 @@
     @include network-primary-icon(vars.$sei_icon);
 }
 
-[data-network="solana"] {
-    @include network-badge(vars.$solana_icon, var(--color-secondary-700));
-    @include network-primary-icon(vars.$solana_icon);
-}
-
 [data-network="stable"] {
     @include network-badge(vars.$stable_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$stable_icon);
-}
-
-[data-network="ton"] {
-    @include network-badge(vars.$ton_icon, var(--color-secondary-700));
-    @include network-primary-icon(vars.$ton_icon);
-}
-
-[data-network="tron"] {
-    @include network-badge(vars.$tron_icon, var(--color-secondary-700));
-    @include network-primary-icon(vars.$tron_icon);
 }
 
 [data-network="unichain"] {
