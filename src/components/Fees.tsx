@@ -292,10 +292,7 @@ const Fees = () => {
                 </Show>
                 <Show when={formattedOftMessagingFee() !== undefined}>
                     <br />
-                    {t("oft_messaging_fee_label", {
-                        gasToken: pair().oftMessagingFeeToken ?? "",
-                    })}
-                    :{" "}
+                    {t("oft_messaging_fee_label")}:{" "}
                     <span
                         class="oft-messaging-fee"
                         data-testid="oft-messaging-fee">
