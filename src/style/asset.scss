@@ -122,9 +122,34 @@
     @include network-primary-icon(vars.$celo_icon);
 }
 
+[data-network="conflux"] {
+    @include network-badge(vars.$conflux_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$conflux_icon);
+}
+
+[data-network="corn"] {
+    @include network-badge(vars.$corn_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$corn_icon);
+}
+
 [data-network="ethereum"] {
     @include network-badge(vars.$ethereum_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$ethereum_icon);
+}
+
+[data-network="flare"] {
+    @include network-badge(vars.$flare_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$flare_icon);
+}
+
+[data-network="hedera"] {
+    @include network-badge(vars.$hedera_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$hedera_icon);
+}
+
+[data-network="hyperevm"] {
+    @include network-badge(vars.$hyperevm_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$hyperevm_icon);
 }
 
 [data-network="ink"] {
@@ -132,9 +157,34 @@
     @include network-primary-icon(vars.$ink_icon);
 }
 
+[data-network="mantle"] {
+    @include network-badge(vars.$mantle_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$mantle_icon);
+}
+
+[data-network="megaeth"] {
+    @include network-badge(vars.$megaeth_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$megaeth_icon);
+}
+
+[data-network="monad"] {
+    @include network-badge(vars.$monad_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$monad_icon);
+}
+
+[data-network="morph"] {
+    @include network-badge(vars.$morph_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$morph_icon);
+}
+
 [data-network="optimism"] {
     @include network-badge(vars.$optimism_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$optimism_icon);
+}
+
+[data-network="plasma"] {
+    @include network-badge(vars.$plasma_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$plasma_icon);
 }
 
 [data-network="polygon"] {
@@ -155,7 +205,32 @@
     @include network-primary-icon(vars.$sei_icon);
 }
 
+[data-network="solana"] {
+    @include network-badge(vars.$solana_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$solana_icon);
+}
+
+[data-network="stable"] {
+    @include network-badge(vars.$stable_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$stable_icon);
+}
+
+[data-network="ton"] {
+    @include network-badge(vars.$ton_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$ton_icon);
+}
+
+[data-network="tron"] {
+    @include network-badge(vars.$tron_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$tron_icon);
+}
+
 [data-network="unichain"] {
     @include network-badge(vars.$unichain_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$unichain_icon);
+}
+
+[data-network="xlayer"] {
+    @include network-badge(vars.$xlayer_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$xlayer_icon);
 }
