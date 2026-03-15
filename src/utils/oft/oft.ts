@@ -289,7 +289,8 @@ export const getOftReceivedEvent = (
         throw new Error("could not parse OFTReceived event");
     }
 
-    const { guid, srcEid, toAddress, amountReceivedLD } = parsedOftReceived.args;
+    const { guid, srcEid, toAddress, amountReceivedLD } =
+        parsedOftReceived.args;
 
     return {
         guid,

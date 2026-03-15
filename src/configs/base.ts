@@ -6,6 +6,7 @@ import { Network } from "../consts/Network";
 // TODO: which properties do we really need?
 export type Usdt0Variant = {
     asset: string;
+    canSend: boolean;
     chainName: string;
     symbol: string;
     chainId: number;
@@ -16,6 +17,7 @@ export type Usdt0Variant = {
 
 export type Asset = {
     type: AssetKind;
+    canSend?: boolean;
 
     blockExplorerUrl?: ExplorerUrl;
     blockExplorerApis?: ExplorerUrl[];

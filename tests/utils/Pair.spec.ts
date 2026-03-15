@@ -1,5 +1,6 @@
 import { BigNumber } from "bignumber.js";
 
+import type * as ConfigModule from "../../src/config";
 import { BTC, LN, USDT0 } from "../../src/consts/Assets";
 import Pair from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
@@ -17,9 +18,8 @@ const {
 } = vi.hoisted(() => ({
     quoteDexAmountInMock: vi.fn<() => Promise<QuoteData[]>>(),
     quoteDexAmountOutMock: vi.fn<() => Promise<QuoteData[]>>(),
-    quoteOftAmountInForAmountOutMock: vi.fn<
-        typeof OftModule.quoteOftAmountInForAmountOut
-    >(),
+    quoteOftAmountInForAmountOutMock:
+        vi.fn<typeof OftModule.quoteOftAmountInForAmountOut>(),
     quoteOftReceiveAmountMock: vi.fn<typeof OftModule.quoteOftReceiveAmount>(),
     fetchDexQuoteMock: vi.fn<typeof QouterModule.fetchDexQuote>(),
     fetchGasTokenQuoteMock: vi.fn<typeof QouterModule.fetchGasTokenQuote>(),
@@ -34,6 +34,40 @@ vi.mock("../../src/utils/boltzClient", async () => {
         ...actual,
         quoteDexAmountIn: quoteDexAmountInMock,
         quoteDexAmountOut: quoteDexAmountOutMock,
+    };
+});
+
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+
+    return {
+        ...actual,
+        config: {
+            ...actual.config,
+            assets: {
+                ...actual.config.assets,
+                "USDT0-POL": {
+                    ...actual.config.assets.USDT0,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Polygon PoS",
+                        symbol: "POL",
+                        gasToken: "POL",
+                        chainId: 137,
+                        nativeCurrency: {
+                            name: "POL",
+                            symbol: "POL",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000137",
+                    },
+                },
+            },
+        },
     };
 });
 
@@ -167,13 +201,12 @@ describe("Pair", () => {
     });
 
     test("should include OFT source messaging fees in reverse quotes", async () => {
-        quoteDexAmountOutMock
-            .mockResolvedValueOnce([
-                {
-                    quote: "1000000",
-                    data: { route: "exact-out" },
-                },
-            ]);
+        quoteDexAmountOutMock.mockResolvedValueOnce([
+            {
+                quote: "1000000",
+                data: { route: "exact-out" },
+            },
+        ]);
         quoteDexAmountInMock.mockResolvedValue([
             {
                 quote: tbtcAssetAmount(1479),
@@ -196,9 +229,9 @@ describe("Pair", () => {
         expect(sendAmount.toNumber()).toBe(1_000_000);
         expect(pair.oftMessagingFeeFromLatestQuote(sendAmount)).toBe(25n);
         expect(pair.oftMessagingFeeToken).toBe("POL");
-        expect(pair.boltzSwapSendAmountFromLatestQuote(sendAmount)?.toNumber()).toBe(
-            1480,
-        );
+        expect(
+            pair.boltzSwapSendAmountFromLatestQuote(sendAmount)?.toNumber(),
+        ).toBe(1480);
         expect(creationData?.sendAmount.toNumber()).toBe(1480);
         expect(creationData?.hops[0]?.from).toBe(USDT0);
         expect(creationData?.to).toBe(BTC);

@@ -1,6 +1,6 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import { For, Show, createEffect, createSignal } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 
 import { config } from "../config";
 import {
@@ -17,14 +17,11 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
 import { handleListKeyDown, scrollToFocused } from "../utils/assetSearch";
+import { canSelectAsset } from "../utils/selectableAsset";
 
 const hasUsdt0 = USDT0 in config.assets;
 
 const SelectAsset = () => {
-    const assets = [...Object.keys(config.assets), LN]
-        .filter((asset) => !isUsdt0Variant(asset))
-        .sort();
-
     const { t, fetchPairs, pairs, regularPairs } = useGlobalContext();
 
     const {
@@ -40,22 +37,32 @@ const SelectAsset = () => {
     const [focusedIndex, setFocusedIndex] = createSignal(0);
     let listRef: HTMLDivElement;
 
+    const assets = createMemo(() =>
+        [...Object.keys(config.assets), LN]
+            .filter(
+                (asset) =>
+                    !isUsdt0Variant(asset) &&
+                    canSelectAsset(assetSelected(), asset),
+            )
+            .sort(),
+    );
+
     createEffect(() => {
         if (assetSelection() === AssetSelection.Asset) {
-            const idx = assets.findIndex(isSelected);
+            const idx = assets().findIndex(isSelected);
             setFocusedIndex(idx >= 0 ? idx : 0);
         }
     });
 
     createEffect(() => scrollToFocused(listRef, focusedIndex()));
 
-    const selectFocused = () => handleAssetClick(assets[focusedIndex()]);
+    const selectFocused = () => handleAssetClick(assets()[focusedIndex()]);
     const close = () => setAssetSelection(null);
 
     const handleKeyDown = (e: KeyboardEvent) =>
         handleListKeyDown(
             e,
-            assets.length,
+            assets().length,
             setFocusedIndex,
             selectFocused,
             close,
@@ -138,7 +145,7 @@ const SelectAsset = () => {
                         </button>
                     </div>
                     <div class="asset-select-list" ref={listRef}>
-                        <For each={assets}>
+                        <For each={assets()}>
                             {(asset, i) => (
                                 <button
                                     type="button"

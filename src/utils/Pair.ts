@@ -139,7 +139,8 @@ export default class Pair {
                 ? {
                       from,
                       to: routeSource,
-                      destinationChainId: config.assets[routeSource].network.chainId,
+                      destinationChainId:
+                          config.assets[routeSource].network.chainId,
                   }
                 : undefined;
         const postOft =
@@ -508,7 +509,11 @@ export default class Pair {
             | undefined,
         msgFee: bigint,
     ): Promise<BigNumber> => {
-        if (msgFee === 0n || asset === undefined || quoteDetails === undefined) {
+        if (
+            msgFee === 0n ||
+            asset === undefined ||
+            quoteDetails === undefined
+        ) {
             return BigNumber(0);
         }
 
@@ -763,9 +768,8 @@ export default class Pair {
     private convertFromBoltzSendAmount = async (
         boltzSendAmount: number,
     ): Promise<number> => {
-        const amountBeforeBoltz = await this.convertThroughPrecedingDex(
-            boltzSendAmount,
-        );
+        const amountBeforeBoltz =
+            await this.convertThroughPrecedingDex(boltzSendAmount);
         const preOftQuote = await this.invertPreOftQuote(
             BigNumber(amountBeforeBoltz),
         );
