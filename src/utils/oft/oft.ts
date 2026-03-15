@@ -2,10 +2,12 @@ import {
     Contract,
     type ContractRunner,
     JsonRpcProvider,
+    type Log,
     type TransactionReceipt,
     ZeroAddress,
     zeroPadValue,
 } from "ethers";
+import log from "loglevel";
 
 import { config } from "../../config";
 
@@ -148,7 +150,7 @@ const getOftChain = async (
     return getOftChains(tokenConfig).find((chain) => chain.chainId === chainId);
 };
 
-const getOftQuoteProvider = (sourceAsset: string): JsonRpcProvider => {
+export const getOftProvider = (sourceAsset: string): JsonRpcProvider => {
     const rpcUrl = config.assets?.[sourceAsset]?.network?.rpcUrls[0];
     if (!rpcUrl) {
         throw new Error(`Missing RPC URL for OFT source asset ${sourceAsset}`);
@@ -161,6 +163,10 @@ const getOftQuoteProvider = (sourceAsset: string): JsonRpcProvider => {
 
     const provider = new JsonRpcProvider(rpcUrl);
     providerCache.set(rpcUrl, provider);
+    log.debug("Created OFT provider", {
+        sourceAsset,
+        rpcUrl,
+    });
     return provider;
 };
 
@@ -180,10 +186,7 @@ const getQuotedOftContract = async (
         );
     }
 
-    return createOftContract(
-        oftContract.address,
-        getOftQuoteProvider(sourceAsset),
-    );
+    return createOftContract(oftContract.address, getOftProvider(sourceAsset));
 };
 
 export const getOftLzEid = async (
@@ -211,7 +214,7 @@ export const createOftContract = (
 
 const getOftEventLog = (
     contract: OftContractInstance,
-    receipt: TransactionReceipt,
+    receipt: Pick<TransactionReceipt, "logs">,
     contractAddress: string,
     eventName: OftEventName,
 ) => {
@@ -238,6 +241,30 @@ const getOftEventLog = (
     return oftLog;
 };
 
+const parseOftReceivedLog = (
+    contract: OftContractInstance,
+    oftReceivedLog: Log,
+) => {
+    const parsedOftReceived = contract.interface.parseLog({
+        data: oftReceivedLog.data,
+        topics: oftReceivedLog.topics,
+    });
+    if (parsedOftReceived?.name !== "OFTReceived") {
+        throw new Error("could not parse OFTReceived event");
+    }
+
+    const { guid, srcEid, toAddress, amountReceivedLD } =
+        parsedOftReceived.args;
+
+    return {
+        guid,
+        srcEid,
+        toAddress,
+        amountReceivedLD,
+        logIndex: oftReceivedLog.index,
+    };
+};
+
 export const getOftSentEvent = (
     contract: OftContractInstance,
     receipt: TransactionReceipt,
@@ -260,7 +287,7 @@ export const getOftSentEvent = (
     const { guid, dstEid, fromAddress, amountSentLD, amountReceivedLD } =
         parsedOftSent.args;
 
-    return {
+    const event = {
         guid,
         dstEid,
         fromAddress,
@@ -268,6 +295,18 @@ export const getOftSentEvent = (
         amountReceivedLD,
         logIndex: oftSentLog.index,
     };
+
+    log.debug("Parsed OFTSent event", {
+        contractAddress,
+        guid,
+        dstEid: dstEid.toString(),
+        fromAddress,
+        amountSentLD: amountSentLD.toString(),
+        amountReceivedLD: amountReceivedLD.toString(),
+        logIndex: oftSentLog.index,
+    });
+
+    return event;
 };
 
 export const getOftReceivedEvent = (
@@ -281,24 +320,18 @@ export const getOftReceivedEvent = (
         contractAddress,
         "OFTReceived",
     );
-    const parsedOftReceived = contract.interface.parseLog({
-        data: oftReceivedLog.data,
-        topics: oftReceivedLog.topics,
+    const event = parseOftReceivedLog(contract, oftReceivedLog);
+
+    log.debug("Parsed OFTReceived event", {
+        contractAddress,
+        guid: event.guid,
+        srcEid: event.srcEid.toString(),
+        toAddress: event.toAddress,
+        amountReceivedLD: event.amountReceivedLD.toString(),
+        logIndex: event.logIndex,
     });
-    if (parsedOftReceived?.name !== "OFTReceived") {
-        throw new Error("could not parse OFTReceived event");
-    }
 
-    const { guid, srcEid, toAddress, amountReceivedLD } =
-        parsedOftReceived.args;
-
-    return {
-        guid,
-        srcEid,
-        toAddress,
-        amountReceivedLD,
-        logIndex: oftReceivedLog.index,
-    };
+    return event;
 };
 
 export const getOftSentGuid = (
@@ -312,6 +345,51 @@ export const getOftReceivedGuid = (
     receipt: TransactionReceipt,
     contractAddress: string,
 ): string => getOftReceivedEvent(contract, receipt, contractAddress).guid;
+
+export const getOftReceivedEventByGuid = async (
+    contract: OftContractInstance,
+    provider: Pick<JsonRpcProvider, "getLogs">,
+    contractAddress: string,
+    guid: string,
+): Promise<OftReceivedEvent | undefined> => {
+    const [eventTopic, guidTopic] = contract.interface.encodeFilterTopics(
+        "OFTReceived",
+        [guid],
+    );
+    const logs = await provider.getLogs({
+        address: contractAddress,
+        fromBlock: 0,
+        toBlock: "latest",
+        topics: [eventTopic, guidTopic],
+    });
+    const receivedLog = logs.find((eventLog) => {
+        try {
+            const parsedLog = contract.interface.parseLog({
+                data: eventLog.data,
+                topics: eventLog.topics,
+            });
+            return parsedLog?.name === "OFTReceived";
+        } catch {
+            return false;
+        }
+    });
+
+    if (receivedLog === undefined) {
+        return undefined;
+    }
+
+    const event = parseOftReceivedLog(contract, receivedLog);
+    log.debug("Found OFTReceived event by guid", {
+        contractAddress,
+        guid: event.guid,
+        srcEid: event.srcEid.toString(),
+        toAddress: event.toAddress,
+        amountReceivedLD: event.amountReceivedLD.toString(),
+        logIndex: event.logIndex,
+    });
+
+    return event;
+};
 
 const createOftSendParam = async (
     destinationChainId: number,

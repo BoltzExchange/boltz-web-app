@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { Currency } from "../../src/consts/Enums";
 import {
@@ -13,6 +13,10 @@ import {
 } from "../../src/utils/fiat";
 
 describe("fiat", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     const checkResult = (result: BigNumber) => {
         expect(result).toBeInstanceOf(BigNumber);
         expect(result.toNumber()).toBeLessThan(10_000_000);
@@ -20,20 +24,40 @@ describe("fiat", () => {
     };
 
     test.each([
-        ["Mempool", getBtcPriceMempool],
-        ["Kraken", getBtcPriceKraken],
-        ["Yadio", getBtcPriceYadio],
-    ])("should fetch BTC price from $0", async (_, getBtcPrice) => {
+        ["Mempool", getBtcPriceMempool, { USD: 102_345 }],
+        [
+            "Kraken",
+            getBtcPriceKraken,
+            { result: { XXBTZUSD: { c: ["102345.6", "1"] } } },
+        ],
+        ["Yadio", getBtcPriceYadio, { BTC: { USD: 102_345 } }],
+    ])("should fetch BTC price from $0", async (_, getBtcPrice, response) => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue(response),
+        } as unknown as Response);
+
         const result = await getBtcPrice(Currency.USD);
         checkResult(result);
     });
 
     test("should fetch ETH price from Kraken", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                result: { XETHZUSD: { c: ["3456.78", "1"] } },
+            }),
+        } as unknown as Response);
+
         const result = await getEthPriceKraken(Currency.USD);
         checkResult(result);
     });
 
     test("should fetch ETH price from CoinGecko", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                ethereum: { usd: 3456.78 },
+            }),
+        } as unknown as Response);
+
         const result = await getEthPriceCoinGecko(Currency.USD);
         checkResult(result);
     });

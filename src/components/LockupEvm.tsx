@@ -1,4 +1,3 @@
-import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import { randomBytes } from "crypto";
 import {
     AbiCoder,
@@ -6,7 +5,6 @@ import {
     type Wallet,
     keccak256 as ethersKeccak256,
 } from "ethers";
-import { JsonRpcProvider } from "ethers";
 import log from "loglevel";
 import {
     type Accessor,
@@ -16,7 +14,6 @@ import {
     createMemo,
     createResource,
     createSignal,
-    onCleanup,
 } from "solid-js";
 
 import { config } from "../config";
@@ -35,12 +32,10 @@ import {
     type QuoteData,
     encodeDexQuote,
     getCommitmentLockupDetails,
-    postCommitmentSignature,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
 import { calculateAmountWithSlippage } from "../utils/calculate";
 import {
-    getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
@@ -48,10 +43,8 @@ import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import {
     createOftContract,
     getOftContract,
-    getOftSentEvent,
     quoteOftSend,
 } from "../utils/oft/oft";
-import { fetchDexQuote } from "../utils/qouter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     GasAbstractionType,
@@ -226,8 +219,6 @@ const lockupWithHops = async (
     asset: string,
     swapId: string,
     lockupAmount: bigint,
-    preimageHash: string,
-    getErc20Swap: (asset: string) => ERC20Swap,
     signer: Accessor<Signer>,
     getGasAbstractionSigner: (asset: string) => Wallet,
     slippage: number,
@@ -240,7 +231,6 @@ const lockupWithHops = async (
         signer(),
         getGasAbstractionSigner(asset),
     );
-    const erc20Swap = getErc20Swap(asset);
 
     const lockup = async () => {
         if (hops.length !== 1) {
@@ -358,6 +348,14 @@ const lockupWithHops = async (
                 permit2Signature,
             );
 
+        log.info("Broadcasting commitment lockup with hops", {
+            swapId,
+            asset,
+            gasAbstraction,
+            amountIn: amountIn.toString(),
+            targetLockupAmount: targetLockupAmount.toString(),
+            routerAddress,
+        });
         const transactionHash = await sendPopulatedTransaction(
             gasAbstraction,
             transactionSigner,
@@ -365,84 +363,30 @@ const lockupWithHops = async (
         );
         const currentSwap = await getSwap(swapId);
         currentSwap.commitmentLockupTxHash = transactionHash;
+        currentSwap.commitmentSignatureSubmitted = false;
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
+        log.info("Persisted commitment lockup tx hash for background worker", {
+            swapId,
+            asset,
+            commitmentLockupTxHash: transactionHash,
+        });
 
         return transactionHash;
-    };
-
-    const postCommitment = async (commitmentTxHash: string) => {
-        // The commitment signature must include the actually locked amount from the Lockup event.
-        const receipt = await transactionSigner.provider.waitForTransaction(
-            commitmentTxHash,
-            1,
-            120_000,
-        );
-        if (receipt === null) {
-            throw new Error(
-                "could not fetch commitment lockup transaction receipt",
-            );
-        }
-
-        const [chainId, contractAddress, version] = await Promise.all([
-            transactionSigner.provider.getNetwork().then((n) => n.chainId),
-            erc20Swap.getAddress(),
-            erc20Swap.version(),
-        ]);
-
-        const {
-            amount: lockupEventAmount,
-            tokenAddress: lockupTokenAddress,
-            claimAddress: lockupClaimAddress,
-            refundAddress: lockupRefundAddress,
-            timelock: lockupTimelock,
-            logIndex: lockupLogIndex,
-        } = getLockupEvent(erc20Swap, receipt, contractAddress);
-
-        const commitmentSignature = await transactionSigner.signTypedData(
-            {
-                name: "ERC20Swap",
-                version: String(version),
-                verifyingContract: contractAddress,
-                chainId,
-            },
-            {
-                Commit: [
-                    { name: "preimageHash", type: "bytes32" },
-                    { name: "amount", type: "uint256" },
-                    { name: "tokenAddress", type: "address" },
-                    { name: "claimAddress", type: "address" },
-                    { name: "refundAddress", type: "address" },
-                    { name: "timelock", type: "uint256" },
-                ],
-            },
-            {
-                preimageHash: prefix0x(preimageHash),
-                amount: lockupEventAmount,
-                tokenAddress: lockupTokenAddress,
-                claimAddress: lockupClaimAddress,
-                refundAddress: lockupRefundAddress,
-                timelock: lockupTimelock,
-            },
-        );
-
-        await postCommitmentSignature(
-            asset,
-            swapId,
-            commitmentSignature,
-            commitmentTxHash,
-            lockupLogIndex,
-            slippage * 100,
-        );
     };
 
     let commitmentTxHash: string | undefined = (await getSwap(swapId))
         .commitmentLockupTxHash;
     if (commitmentTxHash === undefined) {
         commitmentTxHash = await lockup();
+    } else {
+        log.debug("Reusing existing commitment lockup tx hash", {
+            swapId,
+            asset,
+            commitmentLockupTxHash: commitmentTxHash,
+        });
     }
 
-    await postCommitment(commitmentTxHash);
     return commitmentTxHash;
 };
 
@@ -500,277 +444,7 @@ const ApproveErc20 = (props: {
     );
 };
 
-// TODO: big clusterfuck
-const WaitForOft = (props: {
-    asset: string;
-    preimageHash: string;
-    timeoutBlockHeight: number;
-}) => {
-    const { swap, setSwap } = usePayContext();
-    const { slippage, setSwapStorage } = useGlobalContext();
-    const { getGasAbstractionSigner, getErc20Swap } = useWeb3Signer();
-
-    const [oftGuid, setOftGuid] = createSignal<string>(undefined);
-    const sourceChainId = createMemo(() => {
-        return config.assets?.[swap()?.oft?.sourceAsset]?.network?.chainId;
-    });
-    const destinationChainId = createMemo(() => {
-        return config.assets?.[swap()?.oft?.destinationAsset]?.network?.chainId;
-    });
-    const sourceProvider = createMemo(() => {
-        return new JsonRpcProvider(
-            config.assets?.[swap()?.oft?.sourceAsset]?.network?.rpcUrls[0],
-        );
-    });
-    const [sourceOftDetails] = createResource(
-        sourceChainId,
-        async (chainId) => {
-            if (chainId === undefined) {
-                return undefined;
-            }
-
-            return await getOftContract(chainId);
-        },
-    );
-    const sourceOftContract = createMemo(() => {
-        const oftContract = sourceOftDetails();
-        if (oftContract === undefined) {
-            return undefined;
-        }
-
-        return createOftContract(oftContract.address, sourceProvider());
-    });
-    const gasAbstractionSigner = createMemo(() => {
-        const destinationAsset = swap()?.oft?.destinationAsset;
-        if (destinationAsset === undefined) {
-            return undefined;
-        }
-
-        return getGasAbstractionSigner(destinationAsset);
-    });
-    const [destinationOftDetails] = createResource(
-        destinationChainId,
-        async (chainId) => {
-            if (chainId === undefined) {
-                return undefined;
-            }
-
-            return await getOftContract(chainId);
-        },
-    );
-    const destinationOftContract = createMemo(() => {
-        const oftContract = destinationOftDetails();
-        const signer = gasAbstractionSigner();
-        if (oftContract === undefined || signer === undefined) {
-            return undefined;
-        }
-
-        return createOftContract(oftContract.address, signer);
-    });
-
-    const checkForTransfer = async () => {
-        log.debug("Checking for OFT transfer");
-
-        // TODO: make that smarter
-        if (
-            oftGuid() !== undefined ||
-            destinationOftContract() === undefined ||
-            sourceOftContract() === undefined
-        ) {
-            return;
-        }
-
-        if (oftGuid() === undefined) {
-            const oftContract = sourceOftContract();
-            const oftAddress = sourceOftDetails()?.address;
-            if (oftContract === undefined || oftAddress === undefined) {
-                return;
-            }
-
-            const sendReceipt = await sourceProvider().getTransactionReceipt(
-                swap()?.oft?.txHash,
-            );
-            if (sendReceipt === null) {
-                log.debug("Could not fetch send transaction receipt");
-                return;
-            }
-
-            const sendEvent = getOftSentEvent(
-                oftContract,
-                sendReceipt,
-                oftAddress,
-            );
-            log.debug("OFT sent event", sendEvent.guid);
-            setOftGuid(sendEvent.guid);
-        }
-
-        // TODO: check for transfer with same guid on destination chain
-        const token = createTokenContract(
-            swap().oft!.destinationAsset,
-            gasAbstractionSigner(),
-        );
-        const balance = await token.balanceOf(gasAbstractionSigner().address);
-        if (balance === 0n) {
-            log.debug("OFT not received yet");
-            return;
-        }
-
-        log.debug("OFT received");
-        await lockup(balance);
-        clearInterval(timer);
-    };
-
-    const postCommitment = async (commitmentTxHash: string) => {
-        // The commitment signature must include the actually locked amount from the Lockup event.
-        const receipt =
-            await gasAbstractionSigner().provider.waitForTransaction(
-                commitmentTxHash,
-                1,
-                120_000,
-            );
-        if (receipt === null) {
-            throw new Error(
-                "could not fetch commitment lockup transaction receipt",
-            );
-        }
-
-        const erc20Swap = getErc20Swap(swap().oft!.destinationAsset);
-        const [chainId, contractAddress, version] = await Promise.all([
-            gasAbstractionSigner()
-                .provider.getNetwork()
-                .then((n) => n.chainId),
-            erc20Swap.getAddress(),
-            erc20Swap.version(),
-        ]);
-
-        const {
-            amount: lockupEventAmount,
-            tokenAddress: lockupTokenAddress,
-            claimAddress: lockupClaimAddress,
-            refundAddress: lockupRefundAddress,
-            timelock: lockupTimelock,
-            logIndex: lockupLogIndex,
-        } = getLockupEvent(erc20Swap, receipt, contractAddress);
-
-        const commitmentSignature = await gasAbstractionSigner().signTypedData(
-            {
-                name: "ERC20Swap",
-                version: String(version),
-                verifyingContract: contractAddress,
-                chainId,
-            },
-            {
-                Commit: [
-                    { name: "preimageHash", type: "bytes32" },
-                    { name: "amount", type: "uint256" },
-                    { name: "tokenAddress", type: "address" },
-                    { name: "claimAddress", type: "address" },
-                    { name: "refundAddress", type: "address" },
-                    { name: "timelock", type: "uint256" },
-                ],
-            },
-            {
-                preimageHash: prefix0x(props.preimageHash),
-                amount: lockupEventAmount,
-                tokenAddress: lockupTokenAddress,
-                claimAddress: lockupClaimAddress,
-                refundAddress: lockupRefundAddress,
-                timelock: lockupTimelock,
-            },
-        );
-
-        await postCommitmentSignature(
-            props.asset,
-            swap().id,
-            commitmentSignature,
-            commitmentTxHash,
-            lockupLogIndex,
-            slippage() * 100,
-        );
-    };
-
-    const lockup = async (balance: bigint) => {
-        if (swap().commitmentLockupTxHash === undefined) {
-            const expectedAmount = satsToAssetAmount(
-                swap().sendAmount,
-                swap().assetSend,
-            );
-            const quote = await fetchDexQuote(
-                swap().dex!.hops[0].dexDetails!,
-                balance,
-            );
-
-            if (quote.trade.amountOut < expectedAmount) {
-                // TODO: show error and refund
-                log.warn("OFT received amount is less than expected");
-                return;
-            }
-
-            log.debug("OFT received amount is enough for lockup");
-
-            const router = createRouterContract(
-                props.asset,
-                gasAbstractionSigner(),
-            );
-
-            const encoded = await encodeDexQuote(
-                swap().dex!.hops[0].dexDetails!.chain,
-                await router.getAddress(),
-                balance,
-                calculateAmountWithSlippage(quote.trade.amountOut, slippage()) -
-                    quote.trade.amountOut,
-                quote.trade.data,
-            );
-
-            const token = createTokenContract(
-                swap().oft.destinationAsset,
-                gasAbstractionSigner(),
-            );
-            const approveData = token.interface.encodeFunctionData("transfer", [
-                await router.getAddress(),
-                balance,
-            ]);
-            const calls = [
-                {
-                    to: getTokenAddress(swap().oft.destinationAsset),
-                    value: "0",
-                    data: approveData,
-                },
-            ];
-
-            const commitmentPreimageHash = "00".repeat(32);
-            const routerCall =
-                await router.executeAndLockERC20.populateTransaction(
-                    prefix0x(commitmentPreimageHash),
-                    getTokenAddress(props.asset),
-                    swap().claimAddress,
-                    gasAbstractionSigner().address,
-                    props.timeoutBlockHeight,
-                    encoded.calls.map((call) => ({
-                        target: call.to,
-                        value: call.value,
-                        callData: prefix0x(call.data),
-                    })),
-                );
-
-            calls.push(routerCall);
-
-            const tx = await sendPopulatedTransaction(
-                GasAbstractionType.Signer,
-                gasAbstractionSigner(),
-                calls,
-            );
-            swap().commitmentLockupTxHash = tx;
-            await setSwapStorage(swap());
-            setSwap(swap());
-
-            await postCommitment(tx);
-        }
-    };
-
-    const timer = setInterval(checkForTransfer, 1_000);
-    onCleanup(() => clearInterval(timer));
-
+const WaitForOft = () => {
     return (
         <>
             <h2>Waiting for OFT</h2>
@@ -781,9 +455,6 @@ const WaitForOft = (props: {
 
 const SendToOft = (props: {
     oft: OftDetail;
-    asset: string;
-    preimageHash: string;
-    timeoutBlockHeight: number;
     swapId: string;
     signerAddress: string;
     amount: bigint;
@@ -861,15 +532,7 @@ const SendToOft = (props: {
     });
 
     return (
-        <Show
-            when={!txSent()}
-            fallback={
-                <WaitForOft
-                    asset={props.asset}
-                    preimageHash={props.preimageHash}
-                    timeoutBlockHeight={props.timeoutBlockHeight}
-                />
-            }>
+        <Show when={!txSent()} fallback={<WaitForOft />}>
             <Show
                 when={signerBalance() !== undefined}
                 fallback={
@@ -938,6 +601,18 @@ const SendToOft = (props: {
                                         recipient,
                                         props.amount,
                                     );
+                                log.debug("Quoted OFT send", {
+                                    swapId: props.swapId,
+                                    sourceAsset: props.oft.sourceAsset,
+                                    destinationAsset:
+                                        props.oft.destinationAsset,
+                                    destinationChainId:
+                                        props.oft.destinationChainId,
+                                    recipient,
+                                    amount: props.amount.toString(),
+                                    nativeFee: msgFee[0].toString(),
+                                    lzTokenFee: msgFee[1].toString(),
+                                });
                                 const tx = await oftInstance.send(
                                     sendParam,
                                     msgFee,
@@ -957,6 +632,18 @@ const SendToOft = (props: {
 
                                 setSwap(currentSwap);
                                 await setSwapStorage(currentSwap);
+                                log.info(
+                                    "Persisted OFT send tx hash for background worker",
+                                    {
+                                        swapId: props.swapId,
+                                        sourceAsset: props.oft.sourceAsset,
+                                        destinationAsset:
+                                            props.oft.destinationAsset,
+                                        destinationChainId:
+                                            props.oft.destinationChainId,
+                                        txHash: tx.hash,
+                                    },
+                                );
                             }}
                             children={
                                 <ConnectWallet asset={props.oft.sourceAsset} />
@@ -1041,8 +728,6 @@ const LockupTransaction = (props: {
                             props.asset,
                             props.swapId,
                             props.value(),
-                            props.preimageHash,
-                            getErc20Swap,
                             signer,
                             getGasAbstractionSigner,
                             slippage(),
@@ -1291,10 +976,7 @@ const LockupEvm = (props: {
                             swapId={props.swapId}
                             signerAddress={props.signerAddress}
                             derivationPath={props.derivationPath}
-                            timeoutBlockHeight={props.timeoutBlockHeight}
                             amount={oftValue()}
-                            asset={props.asset}
-                            preimageHash={props.preimageHash}
                         />
                     </Show>
                 }>

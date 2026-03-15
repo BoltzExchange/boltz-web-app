@@ -110,6 +110,17 @@ export const sendPopulatedTransaction = async (
     }
 };
 
+export const assertTransactionSignerProvider = (
+    signer: Signer | Wallet,
+    context = "transaction signer",
+) => {
+    if (signer.provider === null) {
+        throw new Error(`${context} requires a provider`);
+    }
+
+    return signer.provider;
+};
+
 export const getLockupEvent = (
     contract: EtherSwap | ERC20Swap,
     receipt: TransactionReceipt,

@@ -31,6 +31,7 @@ import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
     type LockupEvent,
+    assertTransactionSignerProvider,
     getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
@@ -48,14 +49,6 @@ import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 
 export const incorrectAssetError = "incorrect asset was sent";
-
-const assertTransactionSignerProvider = (signer: Signer | Wallet) => {
-    if (signer.provider === null) {
-        throw new Error("refund transaction signer requires a provider");
-    }
-
-    return signer.provider;
-};
 
 export const sendRefundTransaction = async (
     gasAbstraction: GasAbstractionType,

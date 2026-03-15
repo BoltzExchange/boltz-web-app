@@ -69,6 +69,7 @@ export type SwapBase = {
     claimTx?: string;
     lockupTx?: string;
     commitmentLockupTxHash?: string;
+    commitmentSignatureSubmitted?: boolean;
 
     gasAbstraction: GasAbstractionType;
     signer?: string;

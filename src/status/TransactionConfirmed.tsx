@@ -198,7 +198,7 @@ const encodeRouterExecutionCalls = async (
     );
 };
 
-const signErc20ClaimToRouter = async (
+export const signErc20ClaimToRouter = async (
     signer: Signer | Wallet,
     erc20Swap: ERC20Swap,
     chainId: bigint,
@@ -208,13 +208,19 @@ const signErc20ClaimToRouter = async (
     refundAddress: string,
     timeoutBlockHeight: number,
     routerAddress: string,
-) =>
-    Signature.from(
+) => {
+    const connectedErc20Swap = erc20Swap.connect(signer) as ERC20Swap;
+    const [version, verifyingContract] = await Promise.all([
+        connectedErc20Swap.version(),
+        connectedErc20Swap.getAddress(),
+    ]);
+
+    return Signature.from(
         await signer.signTypedData(
             {
                 name: "ERC20Swap",
-                version: String(await erc20Swap.version()),
-                verifyingContract: await erc20Swap.getAddress(),
+                version: String(version),
+                verifyingContract,
                 chainId,
             },
             {
@@ -237,6 +243,7 @@ const signErc20ClaimToRouter = async (
             },
         ),
     );
+};
 
 const signRouterClaim = async (
     signer: Signer | Wallet,
