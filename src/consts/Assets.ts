@@ -28,6 +28,17 @@ export const btcChains = [BTC, LBTC];
 
 export const evmChains = [RBTC, TBTC, USDT0];
 
+export const isBitcoinOnlyAsset = (asset: string): boolean =>
+    asset === LN || asset === BTC;
+
+export const isBitcoinOnlyPair = (
+    fromAsset: string,
+    toAsset: string,
+): boolean =>
+    isBitcoinOnlyAsset(fromAsset) &&
+    isBitcoinOnlyAsset(toAsset) &&
+    fromAsset !== toAsset;
+
 export const getKindForAsset = (asset: string): AssetKind => {
     const assetConfig = config.assets?.[asset];
     if (!assetConfig) {

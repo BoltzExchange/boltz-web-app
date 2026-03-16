@@ -3,7 +3,17 @@ import { render } from "@solidjs/testing-library";
 import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import Pair from "../../src/utils/Pair";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
+
+afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+});
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
@@ -99,4 +109,39 @@ describe("signals", () => {
             }
         },
     );
+
+    test.each`
+        fromAsset | toAsset
+        ${LBTC}   | ${RBTC}
+        ${LN}     | ${LBTC}
+        ${RBTC}   | ${LN}
+    `(
+        "should normalize $fromAsset → $toAsset to LN → BTC",
+        ({ fromAsset, toAsset }) => {
+            render(() => <TestComponent />, { wrapper: contextWrapper });
+            setPairAssets(fromAsset, toAsset);
+            globalSignals.setBitcoinOnly(true);
+            expect(signals.pair().fromAsset).toEqual(LN);
+            expect(signals.pair().toAsset).toEqual(BTC);
+        },
+    );
+
+    test("should clear incompatible destination state when bitcoinOnly normalizes the pair", () => {
+        render(() => <TestComponent />, { wrapper: contextWrapper });
+
+        signals.setAmountValid(true);
+        signals.setOnchainAddress("0xdeadbeef");
+        signals.setAddressValid(true);
+        setPairAssets(BTC, RBTC);
+
+        expect(signals.valid()).toEqual(true);
+
+        globalSignals.setBitcoinOnly(true);
+
+        expect(signals.pair().fromAsset).toEqual(LN);
+        expect(signals.pair().toAsset).toEqual(BTC);
+        expect(signals.onchainAddress()).toEqual("");
+        expect(signals.addressValid()).toEqual(false);
+        expect(signals.valid()).toEqual(false);
+    });
 });

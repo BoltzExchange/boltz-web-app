@@ -5,12 +5,21 @@ import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import Pair from "../../src/utils/Pair";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 import { pairs } from "../pairs";
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
+
+afterEach(() => {
+    localStorage.clear();
+});
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
@@ -182,5 +191,22 @@ describe("AssetSelect", () => {
 
         expect(signals.pair().toAsset).toEqual(BTC);
         expect(signals.onchainAddress()).toBe("");
+    });
+
+    test("should not render when bitcoinOnly is true", () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setBitcoinOnly(true);
+        signals.setAssetSelect(true);
+
+        expect(screen.queryByTestId(`select-${BTC}`)).toBeNull();
     });
 });

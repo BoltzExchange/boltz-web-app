@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
 import { createEffect, on } from "solid-js";
 
-import { LN } from "../consts/Assets";
+import { LN, isBitcoinOnlyAsset } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -21,7 +21,7 @@ import { validateInvoice } from "../utils/validation";
 const InvoiceInput = () => {
     let inputRef: HTMLTextAreaElement;
 
-    const { t, notify, pairs, regularPairs } = useGlobalContext();
+    const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
     const {
         pair,
         setPair,
@@ -85,7 +85,11 @@ const InvoiceInput = () => {
         }
 
         // Auto switch direction based on address
-        if (actualAsset !== LN && actualAsset !== null) {
+        if (
+            actualAsset !== LN &&
+            actualAsset !== null &&
+            (!bitcoinOnly() || isBitcoinOnlyAsset(actualAsset))
+        ) {
             const fromAsset =
                 pair().fromAsset === actualAsset ? LN : pair().fromAsset;
             setPair(new Pair(pairs(), fromAsset, actualAsset, regularPairs()));

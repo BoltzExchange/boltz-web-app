@@ -94,6 +94,15 @@ hr.spacer {
     &:hover {
         background: var(--color-secondary-600);
     }
+    &.no-select {
+        cursor: default;
+        &:hover {
+            background-color: var(--color-dark-gray);
+        }
+        .arrow-down {
+            display: none;
+        }
+    }
 }
 
 .asset-selection {

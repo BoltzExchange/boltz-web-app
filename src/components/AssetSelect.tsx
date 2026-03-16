@@ -32,7 +32,8 @@ const getAssetNetwork = (asset: string): string | null => {
 const SelectAsset = () => {
     const assets = [...Object.keys(config.assets), LN].sort();
 
-    const { t, fetchPairs, pairs, regularPairs } = useGlobalContext();
+    const { t, fetchPairs, pairs, regularPairs, bitcoinOnly } =
+        useGlobalContext();
 
     const {
         pair,
@@ -87,7 +88,7 @@ const SelectAsset = () => {
     };
 
     return (
-        <Show when={assetSelect()}>
+        <Show when={assetSelect() && !bitcoinOnly()}>
             <div
                 class="asset-select-overlay"
                 onClick={() => setAssetSelect(false)}>
