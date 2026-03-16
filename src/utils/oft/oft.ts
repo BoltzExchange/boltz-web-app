@@ -5,6 +5,9 @@ import {
     type Log,
     type TransactionReceipt,
     ZeroAddress,
+    concat,
+    getBytes,
+    solidityPacked,
     zeroPadValue,
 } from "ethers";
 import log from "loglevel";
@@ -38,6 +41,7 @@ type OftRegistry = Record<string, OftTokenConfig>;
 const oftDeploymentsEndpoint = "https://docs.usdt0.to/api/deployments";
 const defaultOftName = "usdt0";
 const providerCache = new Map<string, JsonRpcProvider>();
+const executorNativeAmountExceedsCapSelector = "0x0084ce02";
 
 const oftAbi = [
     "function quoteOFT(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes)) view returns (tuple(uint256,uint256), tuple(int256,string)[], tuple(uint256,uint256))",
@@ -60,6 +64,17 @@ export type SendParam = [
 
 export type MsgFee = [bigint, bigint];
 
+export type OftNativeDrop = {
+    amount: bigint;
+    receiver: string;
+};
+
+export type OftQuoteOptions = {
+    recipient?: string;
+    nativeDrop?: OftNativeDrop;
+    oftName?: string;
+};
+
 type OftLimit = [bigint, bigint];
 type OftFeeDetail = [bigint, string];
 type OftReceipt = [bigint, bigint];
@@ -81,6 +96,55 @@ export type OftReceivedEvent = {
     toAddress: string;
     amountReceivedLD: bigint;
     logIndex: number;
+};
+
+const getErrorData = (error: unknown): string | undefined => {
+    if (typeof error !== "object" || error === null) {
+        return undefined;
+    }
+
+    const candidate = error as {
+        data?: unknown;
+        error?: unknown;
+        info?: {
+            error?: unknown;
+        };
+    };
+
+    if (typeof candidate.data === "string") {
+        return candidate.data;
+    }
+
+    return getErrorData(candidate.error) ?? getErrorData(candidate.info?.error);
+};
+
+export const isExecutorNativeAmountExceedsCapError = (
+    error: unknown,
+): boolean =>
+    getErrorData(error)?.startsWith(executorNativeAmountExceedsCapSelector) ??
+    false;
+
+export const decodeExecutorNativeAmountExceedsCapError = (
+    error: unknown,
+):
+    | {
+          amount: bigint;
+          cap: bigint;
+      }
+    | undefined => {
+    const data = getErrorData(error);
+    if (
+        data === undefined ||
+        !data.startsWith(executorNativeAmountExceedsCapSelector) ||
+        data.length < 138
+    ) {
+        return undefined;
+    }
+
+    return {
+        amount: BigInt(`0x${data.slice(10, 74)}`),
+        cap: BigInt(`0x${data.slice(74, 138)}`),
+    };
 };
 
 type OftContractInstance = {
@@ -111,6 +175,10 @@ type OftContractInstance = {
 };
 
 let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
+
+const type3Option = 3;
+const executorWorkerId = 1;
+const optionTypeNativeDrop = 2;
 
 const fetchOftDeployments = async (): Promise<OftRegistry> => {
     const response = await fetch(oftDeploymentsEndpoint);
@@ -170,7 +238,7 @@ export const getOftProvider = (sourceAsset: string): JsonRpcProvider => {
     return provider;
 };
 
-const getQuotedOftContract = async (
+export const getQuotedOftContract = async (
     sourceAsset: string,
     oftName = defaultOftName,
 ): Promise<OftContractInstance> => {
@@ -391,11 +459,48 @@ export const getOftReceivedEventByGuid = async (
     return event;
 };
 
+const newOptions = (): string => solidityPacked(["uint16"], [type3Option]);
+
+const addExecutorOption = (
+    options: string,
+    optionType: number,
+    option: string,
+): string => {
+    const optionSize = getBytes(option).length + 1;
+
+    return concat([
+        options,
+        solidityPacked(["uint8"], [executorWorkerId]),
+        solidityPacked(["uint16"], [optionSize]),
+        solidityPacked(["uint8"], [optionType]),
+        option,
+    ]);
+};
+
+const buildOftExtraOptions = (nativeDrop?: OftNativeDrop): string => {
+    if (nativeDrop === undefined || nativeDrop.amount <= 0n) {
+        return "0x";
+    }
+
+    const option = solidityPacked(
+        ["uint128", "bytes32"],
+        [nativeDrop.amount, zeroPadValue(nativeDrop.receiver, 32)],
+    );
+
+    return addExecutorOption(newOptions(), optionTypeNativeDrop, option);
+};
+
 const createOftSendParam = async (
     destinationChainId: number,
     recipient: string,
     amount: bigint,
-    oftName = defaultOftName,
+    {
+        oftName = defaultOftName,
+        extraOptions = "0x",
+    }: {
+        oftName?: string;
+        extraOptions?: string;
+    } = {},
 ): Promise<SendParam> => {
     const lzEid = await getOftLzEid(destinationChainId, oftName);
     if (!lzEid) {
@@ -409,7 +514,7 @@ const createOftSendParam = async (
         zeroPadValue(recipient, 32),
         amount,
         0n,
-        "0x",
+        extraOptions,
         "0x",
         "0x",
     ];
@@ -420,7 +525,7 @@ export const quoteOftSend = async (
     destinationChainId: number,
     recipient: string,
     amount: bigint,
-    oftName = defaultOftName,
+    { oftName = defaultOftName, nativeDrop }: OftQuoteOptions = {},
 ): Promise<{
     sendParam: SendParam;
     msgFee: MsgFee;
@@ -432,7 +537,10 @@ export const quoteOftSend = async (
         destinationChainId,
         recipient,
         amount,
-        oftName,
+        {
+            oftName,
+            extraOptions: buildOftExtraOptions(nativeDrop),
+        },
     );
     const [oftLimit, oftFeeDetails, oftReceipt] =
         await oft.quoteOFT.staticCall(sendParam);
@@ -455,7 +563,7 @@ export const quoteOftReceiveAmount = async (
     sourceAsset: string,
     destinationChainId: number,
     amount: bigint,
-    oftName = defaultOftName,
+    options: OftQuoteOptions = {},
 ): Promise<{
     amountIn: bigint;
     amountOut: bigint;
@@ -475,13 +583,13 @@ export const quoteOftReceiveAmount = async (
         };
     }
 
-    const oft = await getQuotedOftContract(sourceAsset, oftName);
+    const oft = await getQuotedOftContract(sourceAsset, options.oftName);
     const { msgFee, oftLimit, oftFeeDetails, oftReceipt } = await quoteOftSend(
         oft,
         destinationChainId,
-        ZeroAddress,
+        options.recipient ?? ZeroAddress,
         amount,
-        oftName,
+        options,
     );
 
     return {
@@ -498,7 +606,7 @@ export const quoteOftAmountInForAmountOut = async (
     sourceAsset: string,
     destinationChainId: number,
     amountOut: bigint,
-    oftName = defaultOftName,
+    options: OftQuoteOptions = {},
 ): Promise<bigint> => {
     if (amountOut === 0n) {
         return 0n;
@@ -510,7 +618,7 @@ export const quoteOftAmountInForAmountOut = async (
         sourceAsset,
         destinationChainId,
         high,
-        oftName,
+        options,
     );
 
     let attempts = 0;
@@ -521,7 +629,7 @@ export const quoteOftAmountInForAmountOut = async (
             sourceAsset,
             destinationChainId,
             high,
-            oftName,
+            options,
         );
         attempts += 1;
 
@@ -538,7 +646,7 @@ export const quoteOftAmountInForAmountOut = async (
             sourceAsset,
             destinationChainId,
             mid,
-            oftName,
+            options,
         );
 
         if (midQuote.amountOut >= amountOut) {

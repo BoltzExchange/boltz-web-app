@@ -43,6 +43,7 @@ import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import {
     createOftContract,
     getOftContract,
+    getQuotedOftContract,
     quoteOftSend,
 } from "../utils/oft/oft";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
@@ -590,13 +591,17 @@ const SendToOft = (props: {
                                     );
                                 }
 
+                                const quotedOftInstance =
+                                    await getQuotedOftContract(
+                                        props.oft.sourceAsset,
+                                    );
                                 const oftInstance = createOftContract(
                                     oftContract.address,
                                     connectedSigner,
                                 );
                                 const { sendParam, msgFee } =
                                     await quoteOftSend(
-                                        oftInstance,
+                                        quotedOftInstance,
                                         props.oft.destinationChainId,
                                         recipient,
                                         props.amount,

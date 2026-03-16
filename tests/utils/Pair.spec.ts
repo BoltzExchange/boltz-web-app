@@ -15,6 +15,8 @@ const {
     quoteOftReceiveAmountMock,
     fetchDexQuoteMock,
     fetchGasTokenQuoteMock,
+    gasTopUpSupportedMock,
+    getGasTopUpNativeAmountMock,
 } = vi.hoisted(() => ({
     quoteDexAmountInMock: vi.fn<() => Promise<QuoteData[]>>(),
     quoteDexAmountOutMock: vi.fn<() => Promise<QuoteData[]>>(),
@@ -23,6 +25,9 @@ const {
     quoteOftReceiveAmountMock: vi.fn<typeof OftModule.quoteOftReceiveAmount>(),
     fetchDexQuoteMock: vi.fn<typeof QouterModule.fetchDexQuote>(),
     fetchGasTokenQuoteMock: vi.fn<typeof QouterModule.fetchGasTokenQuote>(),
+    gasTopUpSupportedMock: vi.fn<typeof QouterModule.gasTopUpSupported>(),
+    getGasTopUpNativeAmountMock:
+        vi.fn<typeof QouterModule.getGasTopUpNativeAmount>(),
 }));
 
 vi.mock("../../src/utils/boltzClient", async () => {
@@ -93,6 +98,19 @@ vi.mock("../../src/config", async () => {
 });
 
 vi.mock("../../src/utils/oft/oft", () => ({
+    decodeExecutorNativeAmountExceedsCapError: (error: unknown) => {
+        const data = (error as { data?: string })?.data;
+        if (data === undefined || !data.startsWith("0x0084ce02")) {
+            return undefined;
+        }
+
+        return {
+            amount: BigInt(`0x${data.slice(10, 74)}`),
+            cap: BigInt(`0x${data.slice(74, 138)}`),
+        };
+    },
+    isExecutorNativeAmountExceedsCapError: (error: unknown) =>
+        (error as { data?: string })?.data?.startsWith("0x0084ce02") ?? false,
     quoteOftAmountInForAmountOut: quoteOftAmountInForAmountOutMock,
     quoteOftReceiveAmount: quoteOftReceiveAmountMock,
 }));
@@ -100,6 +118,8 @@ vi.mock("../../src/utils/oft/oft", () => ({
 vi.mock("../../src/utils/qouter", () => ({
     fetchDexQuote: fetchDexQuoteMock,
     fetchGasTokenQuote: fetchGasTokenQuoteMock,
+    gasTopUpSupported: gasTopUpSupportedMock,
+    getGasTopUpNativeAmount: getGasTopUpNativeAmountMock,
 }));
 
 const tbtcAssetAmount = (sats: number) =>
@@ -140,7 +160,25 @@ const pairs: Pairs = {
             },
         },
     },
-    reverse: {},
+    reverse: {
+        BTC: {
+            USDT0: {
+                hash: "ln-usdt0-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: {
+                        claim: 0,
+                        lockup: 0,
+                    },
+                },
+            },
+        },
+    },
     chain: {},
 };
 
@@ -152,6 +190,9 @@ describe("Pair", () => {
         quoteOftReceiveAmountMock.mockReset();
         fetchDexQuoteMock.mockReset();
         fetchGasTokenQuoteMock.mockReset();
+        gasTopUpSupportedMock.mockReset();
+        getGasTopUpNativeAmountMock.mockReset();
+        gasTopUpSupportedMock.mockReturnValue(true);
     });
 
     test("should return undefined maxRoutingFee for invalid pairs", () => {
@@ -224,6 +265,7 @@ describe("Pair", () => {
             expect.anything(),
             2000n,
             false,
+            undefined,
         );
         expect(pair.oftMessagingFeeFromLatestQuote(sendAmount)).toBe(10n);
         expect(pair.oftMessagingFeeToken).toBe("POL");
@@ -264,5 +306,95 @@ describe("Pair", () => {
         expect(creationData?.sendAmount.toNumber()).toBe(1480);
         expect(creationData?.hops[0]?.from).toBe(USDT0);
         expect(creationData?.to).toBe(BTC);
+    });
+
+    test("should include OFT native drop costs in post-OFT receive quotes", async () => {
+        getGasTopUpNativeAmountMock.mockResolvedValue(77n);
+        quoteDexAmountOutMock.mockResolvedValue([
+            {
+                quote: "100",
+                data: { route: "native-fee" },
+            },
+        ]);
+        quoteOftReceiveAmountMock.mockImplementation(
+            (_sourceAsset, _destinationChainId, amount) =>
+                Promise.resolve(
+                    makeOftQuote({
+                        amountIn: amount,
+                        amountOut: amount,
+                        msgFee: 25n,
+                    }),
+                ),
+        );
+
+        const pair = new Pair(pairs, LN, "USDT0-POL");
+        const recipient = "0x5000000000000000000000000000000000000000";
+
+        const receiveAmount = await pair.calculateReceiveAmount(
+            BigNumber(1_000),
+            0,
+            undefined,
+            true,
+            recipient,
+        );
+
+        expect(receiveAmount.toNumber()).toBe(900);
+        expect(quoteOftReceiveAmountMock).toHaveBeenCalledWith(
+            USDT0,
+            137,
+            1000n,
+            {
+                recipient,
+                nativeDrop: {
+                    amount: 77n,
+                    receiver: recipient,
+                },
+            },
+        );
+        expect(fetchGasTokenQuoteMock).not.toHaveBeenCalled();
+        expect(getGasTopUpNativeAmountMock).toHaveBeenCalledWith("USDT0-POL");
+        expect(pair.oftMessagingFeeFromLatestQuote(BigNumber(1_000))).toBe(25n);
+    });
+
+    test("should fall back when post-OFT native drop exceeds the executor cap", async () => {
+        getGasTopUpNativeAmountMock.mockResolvedValue(77n);
+        quoteDexAmountOutMock.mockResolvedValue([
+            {
+                quote: "0",
+                data: { route: "native-fee" },
+            },
+        ]);
+        quoteOftReceiveAmountMock.mockImplementation(
+            (_sourceAsset, _destinationChainId, amount, options) => {
+                if (options?.nativeDrop !== undefined) {
+                    throw {
+                        data: "0x0084ce020000000000000000000000000000000000000000000000000c49bf8c0491425000000000000000000000000000000000000000000000000002ea11e32ad50000",
+                    };
+                }
+
+                return Promise.resolve(
+                    makeOftQuote({
+                        amountIn: amount,
+                        amountOut: amount === 1_000n ? 900n : amount,
+                        msgFee: 5n,
+                    }),
+                );
+            },
+        );
+
+        const pair = new Pair(pairs, LN, "USDT0-POL");
+        const recipient = "0x5000000000000000000000000000000000000000";
+
+        await expect(
+            pair.calculateReceiveAmount(
+                BigNumber(1_000),
+                0,
+                undefined,
+                true,
+                recipient,
+            ),
+        ).resolves.toEqual(BigNumber(900));
+
+        await expect(pair.canPostOftNativeDrop(recipient)).resolves.toBe(false);
     });
 });

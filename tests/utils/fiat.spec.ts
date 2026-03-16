@@ -9,6 +9,9 @@ import {
     getBtcPriceYadio,
     getEthPriceCoinGecko,
     getEthPriceKraken,
+    getGasTokenPriceCoinGecko,
+    getGasTokenPriceFailover,
+    hasGasTokenPriceLookup,
     usdCentsToWei,
 } from "../../src/utils/fiat";
 
@@ -60,6 +63,58 @@ describe("fiat", () => {
 
         const result = await getEthPriceCoinGecko(Currency.USD);
         checkResult(result);
+    });
+
+    test("should fetch POL price from CoinGecko", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                "polygon-ecosystem-token": { usd: 0.25 },
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceCoinGecko("POL", Currency.USD);
+        checkResult(result);
+    });
+
+    test("should fetch HBAR price from CoinGecko", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                "hedera-hashgraph": { usd: 0.098585 },
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceCoinGecko("HBAR", Currency.USD);
+        checkResult(result);
+    });
+
+    test("should fail over gas token pricing with the configured lookup", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                usdt0: { usd: 1 },
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceFailover("USDT0", Currency.USD);
+        checkResult(result);
+        expect(result.toNumber()).toBe(1);
+    });
+
+    test("should price RBTC gas tokens with the BTC failover providers", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                USD: 102_345,
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceFailover("RBTC", Currency.USD);
+        checkResult(result);
+        expect(result.toNumber()).toBe(102_345);
+    });
+
+    test("should report whether a gas token has a USD price lookup", () => {
+        expect(hasGasTokenPriceLookup("POL")).toBe(true);
+        expect(hasGasTokenPriceLookup("RBTC")).toBe(true);
+        expect(hasGasTokenPriceLookup("BTCN")).toBe(false);
     });
 
     test.each([

@@ -4,7 +4,11 @@ import log from "loglevel";
 import { config } from "../config";
 import { AssetKind } from "../consts/Assets";
 import { quoteDexAmountIn, quoteDexAmountOut } from "./boltzClient";
-import { getEthPriceFailover, usdCentsToWei } from "./fiat";
+import {
+    getGasTokenPriceFailover,
+    hasGasTokenPriceLookup,
+    usdCentsToWei,
+} from "./fiat";
 
 const enum Direction {
     In = "in",
@@ -13,8 +17,38 @@ const enum Direction {
 
 export const gasTokenToGetUsdCents = 10;
 
+export const getGasTopUpToken = (asset: string): string | undefined =>
+    config.assets?.[asset]?.network?.gasToken;
+
+const gasDropsDisabled = (gasToken: string | undefined) => gasToken === "USDT0";
+
 export const gasTopUpSupported = (asset: string) =>
-    config.assets?.[asset]?.type === AssetKind.ERC20;
+    config.assets?.[asset]?.type === AssetKind.ERC20 &&
+    !gasDropsDisabled(getGasTopUpToken(asset)) &&
+    hasGasTokenPriceLookup(getGasTopUpToken(asset) ?? "");
+
+export const getGasTopUpNativeAmount = async (
+    asset: string,
+): Promise<bigint> => {
+    const gasToken = getGasTopUpToken(asset);
+    if (gasToken === undefined) {
+        throw new Error(`missing gas token for top-up asset ${asset}`);
+    }
+    if (gasDropsDisabled(gasToken)) {
+        throw new Error(`gas drops are disabled for gas token ${gasToken}`);
+    }
+
+    const gasTokenPrice = await getGasTokenPriceFailover(gasToken);
+    const gasTokenAmount = usdCentsToWei(gasTokenToGetUsdCents, gasTokenPrice);
+    log.info("Calculated gas top-up native amount", {
+        asset,
+        gasToken,
+        gasTokenPrice: gasTokenPrice.toString(),
+        gasTokenAmount: gasTokenAmount.toString(),
+        usdCents: gasTokenToGetUsdCents,
+    });
+    return gasTokenAmount;
+};
 
 export type DexQuote = {
     amountIn: bigint;
@@ -37,9 +71,14 @@ export const fetchDexQuote = async (
     hop: Hop,
     amountIn: bigint,
     getGasToken?: boolean,
+    gasTokenAmount?: bigint,
 ): Promise<ClaimQuote> => {
     if (getGasToken) {
-        const gasToken = await fetchGasTokenQuote(hop);
+        if (gasTokenAmount === undefined) {
+            throw new Error("missing gas token amount");
+        }
+
+        const gasToken = await fetchGasTokenQuote(hop, gasTokenAmount);
         const tradeAmountIn = amountIn - gasToken.amountIn;
 
         log.info(
@@ -84,9 +123,13 @@ const fetchQuote = async (
     };
 };
 
-export const fetchGasTokenQuote = async (hop: Hop): Promise<DexQuote> => {
-    const ethPrice = await getEthPriceFailover();
-    const gasTokenAmount = usdCentsToWei(gasTokenToGetUsdCents, ethPrice);
+export const fetchGasTokenQuote = async (
+    hop: Hop,
+    gasTokenAmount: bigint,
+): Promise<DexQuote> => {
+    if (gasTokenAmount <= 0n) {
+        throw new Error("gas token amount must be positive");
+    }
 
     return await fetchQuote(
         Direction.Out,
