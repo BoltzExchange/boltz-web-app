@@ -130,6 +130,11 @@ export default class Pair {
         private readonly to: string,
         private readonly regularPairs?: Pairs,
     ) {
+        if (config.assets[from]?.canSend === false) {
+            log.info(`Send asset ${from} is not allowed`);
+            return;
+        }
+
         const routeSource = getCanonicalAsset(from);
         const routeTarget = getCanonicalAsset(to);
         this.preOft =

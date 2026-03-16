@@ -2,7 +2,7 @@ import { BigNumber } from "bignumber.js";
 
 import type * as ConfigModule from "../../src/config";
 import { BTC, LN, USDT0 } from "../../src/consts/Assets";
-import Pair from "../../src/utils/Pair";
+import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
 import type * as OftModule from "../../src/utils/oft/oft";
@@ -49,6 +49,7 @@ vi.mock("../../src/config", async () => {
                 ...actual.config.assets,
                 "USDT0-POL": {
                     ...actual.config.assets.USDT0,
+                    canSend: true,
                     network: {
                         ...actual.config.assets.USDT0.network,
                         chainName: "Polygon PoS",
@@ -64,6 +65,26 @@ vi.mock("../../src/config", async () => {
                     token: {
                         ...actual.config.assets.USDT0.token,
                         address: "0x0000000000000000000000000000000000000137",
+                    },
+                },
+                "USDT0-CFX": {
+                    ...actual.config.assets.USDT0,
+                    canSend: false,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Conflux eSpace",
+                        symbol: "CFX",
+                        gasToken: "CFX",
+                        chainId: 1030,
+                        nativeCurrency: {
+                            name: "CFX",
+                            symbol: "CFX",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000001030",
                     },
                 },
             },
@@ -137,6 +158,14 @@ describe("Pair", () => {
         const pair = new Pair(undefined, "NONEXISTENT", LN);
         expect(pair.isRoutable).toBe(false);
         expect(pair.maxRoutingFee).toBeUndefined();
+    });
+
+    test("should treat unsupported send variants as non-routable", () => {
+        const pair = new Pair(pairs, "USDT0-CFX", LN);
+
+        expect(pair.isRoutable).toBe(false);
+        expect(pair.swapToCreate).toBeUndefined();
+        expect(pair.requiredInput).toBe(RequiredInput.Unknown);
     });
 
     test("should keep the cached Boltz send amount for routed submarine creation", async () => {

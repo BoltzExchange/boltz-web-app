@@ -1,13 +1,15 @@
-import { render, screen } from "@solidjs/testing-library";
+import { render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import CreateButton, {
     getClaimAddress,
 } from "../../src/components/CreateButton";
+import type * as ConfigModule from "../../src/config";
 import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
 import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
+import type { Pairs } from "../../src/utils/boltzClient";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
 import {
     TestComponent,
@@ -16,11 +18,96 @@ import {
     signals,
 } from "../helper";
 
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+
+    return {
+        ...actual,
+        config: {
+            ...actual.config,
+            assets: {
+                ...actual.config.assets,
+                "USDT0-POL": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Polygon PoS",
+                        symbol: "POL",
+                        gasToken: "POL",
+                        chainId: 137,
+                        nativeCurrency: {
+                            name: "POL",
+                            symbol: "POL",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000137",
+                    },
+                },
+                "USDT0-CFX": {
+                    ...actual.config.assets.USDT0,
+                    canSend: false,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Conflux eSpace",
+                        symbol: "CFX",
+                        gasToken: "CFX",
+                        chainId: 1030,
+                        nativeCurrency: {
+                            name: "CFX",
+                            symbol: "CFX",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000001030",
+                    },
+                },
+            },
+        },
+    };
+});
+
 const invoice =
     "lnbcrt600u1p5ynhmgpp5l8j7lnaql4mqeukvcqmhr8zp9vh3rngfgmla6km2fh9vf8pt678sdqqcqzzsxqrpwusp56gha98s9xk2f4eeyhs7dcsx4j4rt79llks72nf6l6hc9cna6vfgs9qxpqysgqqnt8lqcrujmuuv3ajvrlu5z7ydvvge4efv39hj28etf8v72vpcl597evz5e0tvq04tv3z089wxtugee4xh5hvu6309ymrfddrlzfhzgqumsrpk";
 
+const usdt0Pairs: Pairs = {
+    submarine: {
+        TBTC: {
+            BTC: {
+                hash: "tbtc-ln-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: 0,
+                },
+            },
+        },
+    },
+    reverse: {},
+    chain: {},
+};
+
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
+};
+
+const setPairAssetsWithPairs = (
+    pairs: Pairs,
+    fromAsset: string,
+    toAsset: string,
+) => {
+    signals.setPair(new Pair(pairs, fromAsset, toAsset, pairs));
 };
 
 describe("CreateButton", () => {
@@ -360,6 +447,64 @@ describe("CreateButton", () => {
         )) as HTMLButtonElement;
         expect(btn).not.toBeUndefined();
         expect(btn.disabled).toBeTruthy();
+    });
+
+    test("should be enabled for sendable USDT0 variants", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-POL", LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(signals.valid()).toBe(true);
+            expect(btn.disabled).toBe(false);
+            expect(btn.textContent).toBe(i18n.en.create_swap);
+        });
+    });
+
+    test("should reject unsendable USDT0 variants as invalid pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <CreateButton />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setOnline(true);
+        signals.setSendAmount(BigNumber(100_000));
+        signals.setAmountValid(true);
+        signals.setInvoice(invoice);
+        signals.setInvoiceValid(true);
+        setPairAssetsWithPairs(usdt0Pairs, "USDT0-CFX", LN);
+
+        const btn = (await screen.findByTestId(
+            "create-swap-button",
+        )) as HTMLButtonElement;
+
+        await waitFor(() => {
+            expect(signals.valid()).toBe(false);
+            expect(btn.disabled).toBe(true);
+            expect(btn.textContent).toBe(i18n.en.invalid_pair);
+        });
     });
 
     test("should be disabled with LNURL min amount error", async () => {
