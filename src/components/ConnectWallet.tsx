@@ -16,6 +16,7 @@ import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
 const Modal = (props: {
+    asset: string;
     derivationPath: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
@@ -48,9 +49,9 @@ const Modal = (props: {
                     const connected = await connect(
                         notify,
                         connectProvider,
-                        providers,
                         providerProps.provider,
                         props.derivationPath,
+                        props.asset,
                     );
                     setWalletConnected(connected);
                 }}>
@@ -107,6 +108,7 @@ const Modal = (props: {
                 </For>
             </div>
             <HardwareDerivationPaths
+                asset={props.asset}
                 show={showDerivationPaths}
                 provider={hardwareProvider}
                 setShow={setShowDerivationPaths}
@@ -116,6 +118,7 @@ const Modal = (props: {
 };
 
 const ConnectModal = (props: {
+    asset: string;
     derivationPath: string;
     disabled?: Accessor<boolean>;
 }) => {
@@ -139,9 +142,9 @@ const ConnectModal = (props: {
                         const connected = await connect(
                             notify,
                             connectProvider,
-                            providers,
                             Object.values(providers())[0].info,
                             props.derivationPath,
+                            props.asset,
                         );
                         setWalletConnected(connected);
                     }
@@ -149,6 +152,7 @@ const ConnectModal = (props: {
                 {t("connect_wallet")}
             </button>
             <Modal
+                asset={props.asset}
                 show={show}
                 setShow={setShow}
                 derivationPath={props.derivationPath}
@@ -193,6 +197,7 @@ const ShowAddress = (props: {
 };
 
 export const ConnectAddress = (props: {
+    asset: string;
     address: { address: string; derivationPath?: string };
 }) => {
     const { t, notify } = useGlobalContext();
@@ -206,6 +211,7 @@ export const ConnectAddress = (props: {
                     await connectProviderForAddress(
                         props.address.address,
                         props.address.derivationPath,
+                        props.asset,
                     );
                 } catch (e) {
                     log.error(
@@ -255,20 +261,31 @@ const ConnectWallet = (props: {
 
     const address = () => signer()?.address;
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
+    let latestSyncId = 0;
 
     const syncWalletState = async (
         asset: string,
         activeSigner: Signer | undefined,
         currentAddress: string | undefined,
+        syncId: number,
     ) => {
         const chainId = config.assets?.[asset]?.network?.chainId;
+        const signerChainId =
+            currentAddress !== undefined && chainId !== undefined
+                ? Number(
+                      (await activeSigner?.provider.getNetwork())?.chainId ||
+                          -1,
+                  )
+                : undefined;
+
+        if (syncId !== latestSyncId) {
+            return;
+        }
 
         if (
             currentAddress !== undefined &&
             chainId !== undefined &&
-            Number(
-                (await activeSigner?.provider.getNetwork())?.chainId || -1,
-            ) !== chainId
+            signerChainId !== chainId
         ) {
             setNetworkValid(false);
             return;
@@ -287,7 +304,8 @@ const ConnectWallet = (props: {
         on(
             [() => props.asset, signer, address],
             ([asset, activeSigner, addr]) => {
-                void syncWalletState(asset, activeSigner, addr);
+                const syncId = ++latestSyncId;
+                void syncWalletState(asset, activeSigner, addr, syncId);
             },
         ),
     );
@@ -311,6 +329,7 @@ const ConnectWallet = (props: {
                 when={address() !== undefined}
                 fallback={
                     <ConnectModal
+                        asset={props.asset}
                         disabled={props.disabled}
                         derivationPath={props.derivationPath}
                     />

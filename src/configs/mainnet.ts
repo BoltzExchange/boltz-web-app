@@ -58,7 +58,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 1,
         tokenAddress: "0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee",
         blockExplorerUrl: "https://etherscan.io",
-        rpcUrls: ["https://eth.drpc.org"],
+        rpcUrls: ["https://ethereum-rpc.publicnode.com"],
     },
     {
         asset: "USDT0-BERA",
@@ -68,7 +68,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 80094,
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://berascan.com",
-        rpcUrls: ["https://berachain.drpc.org"],
+        rpcUrls: ["https://rpc.berachain.com"],
     },
     {
         asset: "USDT0-CFX",
@@ -110,7 +110,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 999,
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
         blockExplorerUrl: "https://hyperevmscan.io",
-        rpcUrls: ["https://hyperliquid.drpc.org"],
+        rpcUrls: ["https://rpc.hyperliquid.xyz/evm"],
     },
     {
         asset: "USDT0-HBAR",
@@ -131,7 +131,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 57073,
         tokenAddress: "0x0200C29006150606B650577BBE7B6248F58470c1",
         blockExplorerUrl: "https://explorer.inkonchain.com",
-        rpcUrls: ["https://ink.drpc.org"],
+        rpcUrls: ["https://rpc-gel.inkonchain.com"],
     },
     {
         asset: "USDT0-MNT",
@@ -141,7 +141,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 5000,
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://mantlescan.xyz",
-        rpcUrls: ["https://mantle.drpc.org"],
+        rpcUrls: ["https://rpc.mantle.xyz"],
     },
     {
         asset: "USDT0-MEGAETH",
@@ -152,7 +152,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 4326,
         tokenAddress: "0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb",
         blockExplorerUrl: "https://mega.etherscan.io/",
-        rpcUrls: ["https://megaeth.drpc.org"],
+        rpcUrls: ["https://mainnet.megaeth.com/rpc"],
     },
     {
         asset: "USDT0-MON",
@@ -162,7 +162,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 143,
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
         blockExplorerUrl: "https://monadexplorer.com",
-        rpcUrls: ["https://monad-mainnet.drpc.org"],
+        rpcUrls: ["https://rpc3.monad.xyz"],
     },
     {
         asset: "USDT0-MORPH",
@@ -184,7 +184,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 10,
         tokenAddress: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071",
         blockExplorerUrl: "https://optimistic.etherscan.io",
-        rpcUrls: ["https://optimism.drpc.org"],
+        rpcUrls: ["https://mainnet.optimism.io/"],
     },
     {
         asset: "USDT0-PLASMA",
@@ -195,7 +195,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 9745,
         tokenAddress: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
         blockExplorerUrl: "https://plasmascan.to",
-        rpcUrls: ["https://plasma.drpc.org"],
+        rpcUrls: ["https://rpc.plasma.to"],
     },
     {
         asset: "USDT0-POL",
@@ -205,7 +205,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 137,
         tokenAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
         blockExplorerUrl: "https://polygonscan.com",
-        rpcUrls: ["https://polygon.drpc.org"],
+        rpcUrls: ["https://polygon-bor-rpc.publicnode.com"],
     },
     {
         asset: "USDT0-RBTC",
@@ -215,7 +215,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 30,
         tokenAddress: "0x779dED0C9e1022225F8e0630b35A9B54Be713736",
         blockExplorerUrl: "https://rootstock.blockscout.com",
-        rpcUrls: ["https://rootstock.drpc.org"],
+        rpcUrls: rskRpcUrls,
     },
     {
         asset: "USDT0-SEI",
@@ -225,7 +225,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 1329,
         tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
         blockExplorerUrl: "https://seitrace.com",
-        rpcUrls: ["https://sei.drpc.org"],
+        rpcUrls: ["https://sei.api.pocket.network"],
     },
     {
         asset: "USDT0-STABLE",
@@ -258,7 +258,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 196,
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://www.oklink.com/x-layer",
-        rpcUrls: ["https://xlayer.drpc.org"],
+        rpcUrls: ["https://xlayerrpc.okx.com"],
     },
 ];
 
