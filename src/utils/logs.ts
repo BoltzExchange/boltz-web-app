@@ -24,6 +24,10 @@ export const parseDate = (date: string): Date => {
     return parsed;
 };
 
+const replaceBigInt = (_key: string, value: unknown) => {
+    return typeof value === "bigint" ? value.toString() : value;
+};
+
 export const deleteOldLogs = async (logsForage: LocalForage) => {
     const currentDate = new Date();
     await logsForage.iterate<string[], unknown>((_, date) => {
@@ -52,7 +56,7 @@ export const formatLogLine = (message: unknown[]) => {
                     return entry;
                 }
                 if (typeof entry === "object") {
-                    return JSON.stringify(entry);
+                    return JSON.stringify(entry, replaceBigInt);
                 }
 
                 return entry;
