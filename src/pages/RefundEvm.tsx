@@ -6,10 +6,11 @@ import { Match, Show, Switch, createResource, createSignal } from "solid-js";
 import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { RefundEvm as RefundButton } from "../components/RefundButton";
+import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import type { LogRefundData } from "../utils/contractLogs";
-import { getLogsFromReceipt } from "../utils/contractLogs";
+import { createAssetProvider, getLogsFromReceipt } from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
@@ -72,20 +73,31 @@ const RefundEvm = () => {
     const params = useParams<{ asset: string; txHash: string }>();
 
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
+    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+
+    const getSwapContract = (asset: string) =>
+        getKindForAsset(asset) === AssetKind.ERC20
+            ? getErc20Swap(asset)
+            : getEtherSwap(asset);
 
     const [refundData] = createResource<RefundData>(async () => {
         if (signer() === undefined) {
             return undefined;
         }
 
+        const provider = createAssetProvider(params.asset);
+        const contract = getSwapContract(params.asset).connect(
+            provider,
+        ) as ReturnType<typeof getSwapContract>;
+
         const [logData, currentHeight] = await Promise.all([
             getLogsFromReceipt(
-                signer(),
-                getEtherSwap(params.asset),
+                provider,
+                params.asset as AssetType,
+                contract,
                 params.txHash,
             ),
-            signer().provider.getBlockNumber(),
+            provider.getBlockNumber(),
         ]);
 
         return {

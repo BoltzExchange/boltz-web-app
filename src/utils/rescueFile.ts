@@ -28,7 +28,7 @@ const getPath = (index: number) => `${derivationPath}/${index}`;
 const getEvmPath = (chainId: number, index: number) =>
     `${evmPath(chainId)}/${index}`;
 
-const getPathGasAbstraction = (chainId: number) => `m/44/${chainId}/1/0`;
+export const getPathGasAbstraction = (chainId: number) => `m/44/${chainId}/1/0`;
 
 export const mnemonicToHDKey = (mnemonic: string) => {
     const seed = mnemonicToSeedSync(mnemonic);
