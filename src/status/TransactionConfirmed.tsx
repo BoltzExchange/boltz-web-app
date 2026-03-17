@@ -39,7 +39,10 @@ import {
     quoteDexAmountIn,
     quoteDexAmountOut,
 } from "../utils/boltzClient";
-import { calculateAmountWithSlippage } from "../utils/calculate";
+import {
+    calculateAmountOutMin,
+    calculateAmountWithSlippage,
+} from "../utils/calculate";
 import { formatAmount, getDecimals } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
@@ -87,18 +90,6 @@ type RouterClaimExecution = {
 type ClaimResult = {
     transactionHash: string;
     receiveAmount: bigint;
-};
-
-const calculateAmountOutMin = (
-    quoteAmount: bigint,
-    slippage: number,
-): bigint => {
-    const amountWithSlippage = calculateAmountWithSlippage(
-        quoteAmount,
-        slippage,
-    );
-    const slippageAmount = amountWithSlippage - quoteAmount;
-    return quoteAmount - slippageAmount;
 };
 
 const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {

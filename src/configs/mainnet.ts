@@ -165,7 +165,10 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 143,
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
         blockExplorerUrl: "https://monadexplorer.com",
-        rpcUrls: ["https://rpc3.monad.xyz"],
+        rpcUrls: [
+            "https://rpc3.monad.xyz",
+            "https://rpc-mainnet.monadinfra.com",
+        ],
     },
     {
         asset: "USDT0-MORPH",

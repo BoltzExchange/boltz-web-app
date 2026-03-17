@@ -23,6 +23,16 @@ export const calculateAmountWithSlippage = (
     return (numerator + slippageBpsScaleBigInt - 1n) / slippageBpsScaleBigInt;
 };
 
+export const calculateAmountOutMin = (
+    amountOut: bigint,
+    slippage: number,
+): bigint => {
+    const amountWithSlippage = calculateAmountWithSlippage(amountOut, slippage);
+    const slippageAmount = amountWithSlippage - amountOut;
+
+    return amountOut - slippageAmount;
+};
+
 export const calculateReceiveAmount = (
     sendAmount: BigNumber,
     boltzFee: number,

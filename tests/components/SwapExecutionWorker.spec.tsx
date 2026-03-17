@@ -117,6 +117,7 @@ vi.mock("../../src/utils/boltzClient", () => ({
 }));
 
 vi.mock("../../src/utils/calculate", () => ({
+    calculateAmountOutMin: (amount: bigint) => amount,
     calculateAmountWithSlippage: (amount: bigint) => amount,
 }));
 

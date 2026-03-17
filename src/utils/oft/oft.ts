@@ -578,13 +578,13 @@ export const buildOftSendAlchemyCall = async ({
 }): Promise<AlchemyCall> => {
     const sourceChainId = config.assets?.[sourceAsset]?.network?.chainId;
     if (sourceChainId === undefined) {
-        throw new Error(`Missing OFT source chain id for asset ${sourceAsset}`);
+        throw new Error(`missing OFT source chain id for asset ${sourceAsset}`);
     }
 
     const oftContract = await getOftContract(sourceChainId, oftName);
     if (oftContract === undefined) {
         throw new Error(
-            `Missing OFT contract for chain ${sourceChainId} and OFT ${oftName}`,
+            `missing OFT contract for chain ${sourceChainId} and OFT ${oftName}`,
         );
     }
 

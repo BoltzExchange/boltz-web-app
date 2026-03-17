@@ -27,7 +27,7 @@ import {
     getEipRefundSignature,
     quoteDexAmountIn,
 } from "../utils/boltzClient";
-import { calculateAmountWithSlippage } from "../utils/calculate";
+import { calculateAmountOutMin } from "../utils/calculate";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
@@ -91,14 +91,6 @@ export const sendRefundTransaction = async (
 
     await provider.waitForTransaction(transactionHash, 1);
     return transactionHash;
-};
-
-const getAmountOutMin = (quoteAmount: bigint, slippage: number) => {
-    const amountWithSlippage = calculateAmountWithSlippage(
-        quoteAmount,
-        slippage,
-    );
-    return quoteAmount - (amountWithSlippage - quoteAmount);
 };
 
 const toAlchemyCall = (transaction: TransactionRequest): AlchemyCall => {
@@ -171,7 +163,7 @@ const buildRefundFollowUpCalls = async (
     }
 
     const quoteAmount = BigInt(quote.quote);
-    const amountOutMin = getAmountOutMin(quoteAmount, slippage);
+    const amountOutMin = calculateAmountOutMin(quoteAmount, slippage);
     const dexRecipient =
         oft?.position === OftPosition.Pre
             ? refundData.refundAddress

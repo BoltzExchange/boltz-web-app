@@ -16,7 +16,7 @@ import {
 } from "../context/Web3";
 import { HopsPosition } from "../utils/Pair";
 import { encodeDexQuote } from "../utils/boltzClient";
-import { calculateAmountWithSlippage } from "../utils/calculate";
+import { calculateAmountOutMin } from "../utils/calculate";
 import { postCommitmentSignatureForTransaction } from "../utils/commitment";
 import {
     assertTransactionSignerProvider,
@@ -53,13 +53,6 @@ const getSwapExecutionLogContext = (
     swapId,
     ...extra,
 });
-
-const calculateAmountOutMin = (amountOut: bigint, slippage: number): bigint => {
-    const amountWithSlippage = calculateAmountWithSlippage(amountOut, slippage);
-    const slippageAmount = amountWithSlippage - amountOut;
-
-    return amountOut - slippageAmount;
-};
 
 const withBrowserLock = async <T,>(name: string, fn: () => Promise<T>) => {
     if (navigator.locks?.request === undefined) {
