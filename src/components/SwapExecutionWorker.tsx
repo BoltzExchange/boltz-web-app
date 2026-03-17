@@ -53,6 +53,13 @@ const getSwapExecutionLogContext = (
     ...extra,
 });
 
+const calculateAmountOutMin = (amountOut: bigint, slippage: number): bigint => {
+    const amountWithSlippage = calculateAmountWithSlippage(amountOut, slippage);
+    const slippageAmount = amountWithSlippage - amountOut;
+
+    return amountOut - slippageAmount;
+};
+
 const withBrowserLock = async <T,>(name: string, fn: () => Promise<T>) => {
     if (navigator.locks?.request === undefined) {
         return await fn();
@@ -360,8 +367,7 @@ export const SwapExecutionWorker = () => {
             hop.dexDetails.chain,
             routerAddress,
             receivedAmount,
-            calculateAmountWithSlippage(quote.trade.amountOut, slippage()) -
-                quote.trade.amountOut,
+            calculateAmountOutMin(quote.trade.amountOut, slippage()),
             quote.trade.data,
         );
 

@@ -630,14 +630,18 @@ export default class Pair {
         }
 
         try {
-            const [quote] = await quoteDexAmountOut(
+            const [quoteRes] = await quoteDexAmountOut(
                 quoteDetails.chain,
                 quoteDetails.tokenIn,
                 ZeroAddress,
                 msgFee,
             );
 
-            return fromDexAmount(BigInt(quote?.quote ?? 0), asset);
+            if (quoteRes === undefined || quoteRes.quote === undefined) {
+                throw new Error("undefined quote");
+            }
+
+            return fromDexAmount(BigInt(quoteRes.quote), asset);
         } catch (error) {
             log.warn("Could not quote OFT messaging fee cost", {
                 asset,
