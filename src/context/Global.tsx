@@ -89,6 +89,8 @@ export type GlobalContextType = {
     setZeroConf: Setter<boolean>;
     showFiatAmount: Accessor<boolean>;
     setShowFiatAmount: Setter<boolean>;
+    bitcoinOnly: Accessor<boolean>;
+    setBitcoinOnly: Setter<boolean>;
     btcPrice: Accessor<BigNumber | Error | null>;
     fetchBtcPrice: () => Promise<void>;
     // functions
@@ -507,6 +509,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         },
     );
 
+    const [bitcoinOnly, setBitcoinOnly] = makePersisted(
+        // eslint-disable-next-line solid/reactivity
+        createSignal<boolean>(false),
+        {
+            name: "bitcoinOnly",
+        },
+    );
+
     const [backupImportTimestamp, setBackupImportTimestamp] = makePersisted(
         // eslint-disable-next-line solid/reactivity
         createSignal<number>(),
@@ -578,6 +588,8 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
                 setZeroConf,
                 showFiatAmount,
                 setShowFiatAmount,
+                bitcoinOnly,
+                setBitcoinOnly,
                 btcPrice,
                 fetchBtcPrice,
                 // functions

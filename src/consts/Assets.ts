@@ -51,6 +51,17 @@ const normalizeNetworkBadge = (chainName: string): string =>
     networkBadgeAliases[chainName] ??
     chainName.toLowerCase().replace(/\s+/g, "");
 
+export const isBitcoinOnlyAsset = (asset: string): boolean =>
+    asset === LN || asset === BTC;
+
+export const isBitcoinOnlyPair = (
+    fromAsset: string,
+    toAsset: string,
+): boolean =>
+    isBitcoinOnlyAsset(fromAsset) &&
+    isBitcoinOnlyAsset(toAsset) &&
+    fromAsset !== toAsset;
+
 export const getKindForAsset = (asset: string): AssetKind => {
     const assetConfig = config.assets?.[asset];
     if (!assetConfig) {

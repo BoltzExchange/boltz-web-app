@@ -22,7 +22,8 @@ import { canSelectAsset } from "../utils/selectableAsset";
 const hasUsdt0 = USDT0 in config.assets;
 
 const SelectAsset = () => {
-    const { t, fetchPairs, pairs, regularPairs } = useGlobalContext();
+    const { t, fetchPairs, pairs, regularPairs, bitcoinOnly } =
+        useGlobalContext();
 
     const {
         pair,
@@ -119,7 +120,8 @@ const SelectAsset = () => {
     };
 
     return (
-        <Show when={assetSelection() === AssetSelection.Asset}>
+        <Show
+            when={assetSelection() === AssetSelection.Asset && !bitcoinOnly()}>
             <div class="asset-select-overlay" onClick={close}>
                 <div
                     class="asset-select-modal"

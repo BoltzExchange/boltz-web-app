@@ -3,7 +3,7 @@ import log from "loglevel";
 import { createEffect, on } from "solid-js";
 import { btcToSat } from "src/utils/denomination";
 
-import { LN, isEvmAsset } from "../consts/Assets";
+import { LN, isBitcoinOnlyAsset, isEvmAsset } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -19,7 +19,7 @@ import {
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
-    const { t, notify, pairs, regularPairs } = useGlobalContext();
+    const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
     const {
         pair,
         setPair,
@@ -101,6 +101,10 @@ const AddressInput = () => {
                     throw new Error();
 
                 default: {
+                    if (bitcoinOnly() && !isBitcoinOnlyAsset(actualAsset)) {
+                        throw new Error();
+                    }
+
                     if (assetName !== actualAsset) {
                         setPair(
                             new Pair(

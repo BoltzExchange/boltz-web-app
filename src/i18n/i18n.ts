@@ -194,6 +194,9 @@ const dict = {
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
+        bitcoin_only: "Bitcoin-Only Mode",
+        bitcoin_only_tooltip:
+            "Only show Bitcoin and Lightning, hide all other pairs",
         slippage: "Slippage",
         slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
         gas_topup: "Auto gas top-up",
@@ -670,6 +673,9 @@ const dict = {
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
+        bitcoin_only: "Bitcoin-Only Modus",
+        bitcoin_only_tooltip:
+            "Nur Bitcoin und Lightning anzeigen, alle anderen Paare ausblenden",
         slippage: "Slippage",
         slippage_tooltip: "Maximale Slippage-Toleranz bei DEX-Swaps",
         gas_topup: "Auto Gas-Aufladung",
@@ -1153,6 +1159,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
+        bitcoin_only: "Modo Bitcoin-Only",
+        bitcoin_only_tooltip:
+            "Mostrar solo Bitcoin y Lightning, ocultando todos los demás pares",
         slippage: "Slippage",
         slippage_tooltip: "Tolerancia máxima de slippage para swaps en DEX",
         gas_topup: "Recarga automática de gas",
@@ -1632,6 +1641,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
+        bitcoin_only: "Modo Bitcoin-Only",
+        bitcoin_only_tooltip:
+            "Mostrar apenas Bitcoin e Lightning, ocultando todos os outros pares",
         slippage: "Slippage",
         slippage_tooltip: "Tolerância máxima de slippage para trocas em DEX",
         gas_topup: "Recarga automática de gas",
@@ -2089,6 +2101,8 @@ const dict = {
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
+        bitcoin_only: "仅比特币模式",
+        bitcoin_only_tooltip: "仅显示比特币和闪电网络，隐藏所有其他交易对",
         slippage: "滑点",
         slippage_tooltip: "DEX 交换的最大价格滑点容差",
         gas_topup: "自动补充 Gas",
@@ -2540,6 +2554,9 @@ const dict = {
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
+        bitcoin_only: "ビットコイン専用モード",
+        bitcoin_only_tooltip:
+            "ビットコインとライトニングのみを表示し、他のすべてのペアを非表示にします",
         slippage: "スリッページ",
         slippage_tooltip: "DEXスワップで許容する最大価格スリッページ",
         gas_topup: "ガス自動チャージ",

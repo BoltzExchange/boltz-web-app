@@ -7,7 +7,12 @@ import { config } from "../../src/config";
 import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 import { pairs } from "../pairs";
 import {
     getSendableUsdt0VariantAssets,
@@ -97,6 +102,10 @@ vi.mock("../../src/config", async () => {
             },
         },
     };
+});
+
+afterEach(() => {
+    localStorage.clear();
 });
 
 const usdt0VariantAssets = getUsdt0Variants(config.assets);
@@ -307,6 +316,23 @@ describe("AssetSelect", () => {
         signals.setAssetSelected(Side.Receive);
 
         expect(await screen.findByTestId(`select-${RBTC}`)).toBeDefined();
+    });
+
+    test("should not render when bitcoinOnly is true", () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setBitcoinOnly(true);
+        signals.setAssetSelection(AssetSelection.Asset);
+
+        expect(screen.queryByTestId(`select-${BTC}`)).toBeNull();
     });
 
     describe("USDT0 multi-step selection", () => {
