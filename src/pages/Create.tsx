@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
+import log from "loglevel";
 import {
     Show,
     createEffect,
@@ -43,10 +44,9 @@ import {
     formatDenomination,
     getValidationRegex,
 } from "../utils/denomination";
-import { getEthPriceFailover, usdCentsToWei } from "../utils/fiat";
 import { isMobile } from "../utils/helper";
 import { createProvider } from "../utils/provider";
-import { gasTokenToGetUsdCents, gasTopUpSupported } from "../utils/qouter";
+import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/qouter";
 import ErrorWasm from "./ErrorWasm";
 
 // TODO: formatted amounts should be *instant* and not depend on quote being calculated
@@ -121,39 +121,117 @@ const Create = () => {
     const gasTopUpTrigger = createMemo(() => {
         const rpcUrls = config.assets?.[pair().toAsset]?.network?.rpcUrls;
         const gasTopUpEnabled = gasTopUp();
+        const supported = gasTopUpSupported(pair().toAsset);
+        const connected = connectedDestination();
+        const validAddress = addressValid();
+        const hasAddress = onchainAddress() !== "";
+        const hasRpcUrls = rpcUrls !== undefined;
 
         return {
             address: onchainAddress(),
             enabled:
                 gasTopUpEnabled &&
-                gasTopUpSupported(pair().toAsset) &&
-                connectedDestination() &&
-                addressValid() &&
-                onchainAddress() !== "" &&
-                rpcUrls !== undefined,
+                supported &&
+                connected &&
+                validAddress &&
+                hasAddress &&
+                hasRpcUrls,
             rpcUrls,
+            supported,
+            connected,
+            validAddress,
+            hasAddress,
+            hasRpcUrls,
+            gasTopUpEnabled,
+            asset: pair().toAsset,
+            hasPostOft: pair().hasPostOft,
         };
     });
     createResource(
         gasTopUpTrigger,
-        async ({ address, enabled, rpcUrls }) => {
+        async ({
+            address,
+            enabled,
+            rpcUrls,
+            supported,
+            connected,
+            validAddress,
+            hasAddress,
+            hasRpcUrls,
+            gasTopUpEnabled,
+            asset,
+            hasPostOft,
+        }) => {
             if (!enabled || rpcUrls === undefined) {
+                log.info("Gas top-up auto-detect skipped", {
+                    asset,
+                    address,
+                    gasTopUpEnabled,
+                    supported,
+                    connected,
+                    validAddress,
+                    hasAddress,
+                    hasRpcUrls,
+                    hasPostOft,
+                });
                 setGetGasToken(false);
                 return;
             }
 
-            const balance = await createProvider(rpcUrls).getBalance(address);
+            try {
+                log.info("Gas top-up auto-detect started", {
+                    asset,
+                    address,
+                    hasPostOft,
+                    rpcUrlCount: rpcUrls.length,
+                });
+                const balance =
+                    await createProvider(rpcUrls).getBalance(address);
+                const gasTokenCostWei = await getGasTopUpNativeAmount(asset);
+                log.info("Gas top-up balance check", {
+                    asset,
+                    address,
+                    balance: balance.toString(),
+                    gasTokenCostWei: gasTokenCostWei.toString(),
+                    connectedDestination: connectedDestination(),
+                });
+                if (balance < gasTokenCostWei && connectedDestination()) {
+                    if (
+                        hasPostOft &&
+                        !(await pair().canPostOftNativeDrop(address))
+                    ) {
+                        log.info(
+                            "Gas top-up disabled because post-OFT native drop is unavailable",
+                            {
+                                asset,
+                                address,
+                            },
+                        );
+                        setGetGasToken(false);
+                        return;
+                    }
 
-            const ethPrice = await getEthPriceFailover();
-            const gasTokenCostWei = usdCentsToWei(
-                gasTokenToGetUsdCents,
-                ethPrice,
-            );
-            if (balance < gasTokenCostWei && connectedDestination()) {
-                setGetGasToken(true);
+                    log.info("Gas top-up enabled", {
+                        asset,
+                        address,
+                    });
+                    setGetGasToken(true);
+                    return;
+                }
+            } catch (error) {
+                log.warn("Gas top-up auto-detect failed", {
+                    asset,
+                    address,
+                    error,
+                });
+                setGetGasToken(false);
                 return;
             }
 
+            log.info("Gas top-up disabled because balance is sufficient", {
+                asset,
+                address,
+            });
             setGetGasToken(false);
             return;
         },
@@ -242,6 +320,7 @@ const Create = () => {
                 satAmount,
                 minerFee(),
                 getGasToken(),
+                onchainAddress(),
             );
             setAmountChanged(Side.Receive);
             setReceiveAmount(satAmount);
@@ -274,6 +353,7 @@ const Create = () => {
                 minerFee(),
                 undefined,
                 getGasToken(),
+                onchainAddress(),
             );
             setAmountChanged(Side.Send);
             setSendAmount(satAmount);
@@ -388,6 +468,7 @@ const Create = () => {
                 minerFee(),
                 undefined,
                 getGasToken(),
+                onchainAddress(),
             );
             setReceiveAmount(receiveAmount);
             validateAmount();
@@ -425,6 +506,7 @@ const Create = () => {
                             receiveAmount(),
                             minerFee(),
                             getGasToken(),
+                            onchainAddress(),
                         ),
                     );
                 } else {
@@ -434,6 +516,7 @@ const Create = () => {
                             minerFee(),
                             undefined,
                             getGasToken(),
+                            onchainAddress(),
                         ),
                     );
                 }

@@ -61,7 +61,10 @@ const ContractTransaction = (props: {
                             derivationPath={props.address.derivationPath}
                         />
                     }>
-                    <ConnectAddress address={props.address} />
+                    <ConnectAddress
+                        asset={props.asset}
+                        address={props.address}
+                    />
                 </Show>
             }>
             <Show

@@ -2,22 +2,27 @@ import type { TransactionLike } from "ethers";
 import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
 
-import { config } from "../../config";
 import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import type { Transport } from "../../lazy/ledger";
 import ledgerLoader from "../../lazy/ledger";
 import { type Provider, createProvider } from "../provider";
-import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
-import { derivationPaths } from "./HardwareSigner";
+import {
+    type DerivedAddress,
+    type HardwareSigner,
+    derivationPaths,
+    getDefaultNetworkAsset,
+    getNetworkRpcUrls,
+} from "./HardwareSigner";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];
 
-    private readonly provider: Provider;
     private readonly loader: typeof ledgerLoader;
 
     private transport?: Transport;
+    private provider: Provider;
+    private networkAsset: string;
     private derivationPath = derivationPaths.Ethereum;
 
     constructor(
@@ -26,14 +31,21 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             values?: Record<string, unknown>,
         ) => string,
     ) {
-        this.provider = createProvider(
-            config.assets["RBTC"]?.network?.rpcUrls || [],
-        );
-
         this.loader = ledgerLoader;
+        this.networkAsset = getDefaultNetworkAsset();
+        this.provider = createProvider(getNetworkRpcUrls(this.networkAsset));
     }
 
     public getProvider = (): Provider => this.provider;
+
+    public setNetworkAsset = (asset: string) => {
+        if (asset === this.networkAsset) {
+            return;
+        }
+
+        this.networkAsset = asset;
+        this.provider = createProvider(getNetworkRpcUrls(asset));
+    };
 
     public deriveAddresses = async (
         basePath: string,

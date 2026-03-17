@@ -2,7 +2,6 @@ import type { TransactionLike } from "ethers";
 import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
 
-import { config } from "../../config";
 import type { EIP1193Provider } from "../../consts/Types";
 import type {
     Address,
@@ -13,25 +12,39 @@ import type {
 import trezorLoader from "../../lazy/trezor";
 import { type Provider, createProvider } from "../provider";
 import { trimPrefix } from "../strings";
-import type { DerivedAddress, HardwareSigner } from "./HardwareSigner";
-import { derivationPaths } from "./HardwareSigner";
+import {
+    type DerivedAddress,
+    type HardwareSigner,
+    derivationPaths,
+    getDefaultNetworkAsset,
+    getNetworkRpcUrls,
+} from "./HardwareSigner";
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
-    private readonly provider: Provider;
     private readonly loader: typeof trezorLoader;
 
     private initialized = false;
+    private provider: Provider;
+    private networkAsset: string;
     private derivationPath!: string;
 
     constructor() {
-        this.provider = createProvider(
-            config.assets["RBTC"]?.network?.rpcUrls || [],
-        );
+        this.networkAsset = getDefaultNetworkAsset();
+        this.provider = createProvider(getNetworkRpcUrls(this.networkAsset));
         this.setDerivationPath(derivationPaths.Ethereum);
         this.loader = trezorLoader;
     }
 
     public getProvider = () => this.provider;
+
+    public setNetworkAsset = (asset: string) => {
+        if (asset === this.networkAsset) {
+            return;
+        }
+
+        this.networkAsset = asset;
+        this.provider = createProvider(getNetworkRpcUrls(asset));
+    };
 
     public deriveAddresses = async (
         basePath: string,

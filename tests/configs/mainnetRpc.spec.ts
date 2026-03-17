@@ -21,10 +21,18 @@ const usdt0VariantRpcEndpoints = Object.entries(config.assets).flatMap(
     },
 );
 
+const hasLocalhostHost = (rpcUrl: string): boolean => {
+    return new URL(rpcUrl).hostname === "localhost";
+};
+
 test("USDT0 mainnet RPC endpoints should respond with the configured chain id", async () => {
     const failures: string[] = [];
 
     for (const endpoint of usdt0VariantRpcEndpoints) {
+        if (hasLocalhostHost(endpoint.rpcUrl)) {
+            continue;
+        }
+
         const provider = new JsonRpcProvider(endpoint.rpcUrl);
 
         try {

@@ -9,6 +9,7 @@ export type Usdt0Variant = {
     canSend: boolean;
     chainName: string;
     symbol: string;
+    gasToken?: string;
     chainId: number;
     tokenAddress: string;
     blockExplorerUrl: string;
