@@ -151,5 +151,26 @@ export const pairs: Pairs = {
                 },
             },
         },
+        USDT0: {
+            BTC: {
+                hash: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+                rate: 1,
+                limits: {
+                    maximal: 4294967,
+                    minimal: 50000,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0.5,
+                    minerFees: {
+                        server: 19346,
+                        user: {
+                            claim: 4423,
+                            lockup: 15400,
+                        },
+                    },
+                },
+            },
+        },
     },
 };

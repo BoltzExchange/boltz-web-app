@@ -6,6 +6,9 @@ const mockSendPopulatedTransaction =
     vi.fn<(...args: unknown[]) => Promise<string>>();
 
 vi.mock("../../src/utils/evmTransaction", () => ({
+    assertTransactionSignerProvider: vi.fn(
+        (signer: { provider: unknown }) => signer.provider,
+    ),
     getSignerForGasAbstraction: vi.fn(),
     sendPopulatedTransaction: (...args: unknown[]) =>
         mockSendPopulatedTransaction(...args),

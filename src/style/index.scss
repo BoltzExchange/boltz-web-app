@@ -98,6 +98,15 @@ hr.spacer {
     &:hover {
         background: var(--color-secondary-600);
     }
+    &.no-select {
+        cursor: default;
+        &:hover {
+            background-color: var(--color-dark-gray);
+        }
+        .arrow-down {
+            display: none;
+        }
+    }
 }
 
 .asset-selection {
@@ -571,7 +580,7 @@ textarea.invalid {
     background-image: url(../assets/usd.svg);
     background-position: center;
 }
-[data-denominator="USDT0"] {
+[data-denominator="USDT"] {
     margin: 2px;
     background-image: none;
     background-color: var(--color-text);

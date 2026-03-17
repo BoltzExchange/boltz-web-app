@@ -4,9 +4,14 @@ import { createSignal } from "solid-js";
 
 import { LN, RBTC, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { GasAbstractionType, type SomeSwap } from "./swapCreator";
+import {
+    GasAbstractionType,
+    type OftDetail,
+    OftPosition,
+    type SomeSwap,
+} from "./swapCreator";
 
-export const latestStorageVersion = 3;
+export const latestStorageVersion = 4;
 
 const storageVersionKey = "version";
 
@@ -103,6 +108,76 @@ const migrateStorageGasAbstraction = async (swapsForage: LocalForage) => {
     return swaps.length;
 };
 
+const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
+    const oft = swap.oft as
+        | (Record<string, unknown> & {
+              sourceAsset?: string;
+              destinationAsset?: string;
+              destinationChainId?: number;
+              position?: string;
+              pre?: Record<string, unknown>;
+              post?: Record<string, unknown>;
+          })
+        | undefined;
+
+    if (oft === undefined) {
+        return swap as SomeSwap;
+    }
+
+    const toOftDetail = (
+        detail: Record<string, unknown> | undefined,
+        position: OftPosition,
+    ): OftDetail | undefined => {
+        if (
+            detail === undefined ||
+            typeof detail.sourceAsset !== "string" ||
+            typeof detail.destinationAsset !== "string" ||
+            typeof detail.destinationChainId !== "number"
+        ) {
+            return undefined;
+        }
+
+        return {
+            sourceAsset: detail.sourceAsset,
+            destinationAsset: detail.destinationAsset,
+            destinationChainId: detail.destinationChainId,
+            position,
+        };
+    };
+
+    const migratedOft =
+        typeof oft.sourceAsset === "string" &&
+        typeof oft.destinationAsset === "string" &&
+        typeof oft.destinationChainId === "number"
+            ? {
+                  sourceAsset: oft.sourceAsset,
+                  destinationAsset: oft.destinationAsset,
+                  destinationChainId: oft.destinationChainId,
+                  position:
+                      oft.position === OftPosition.Pre
+                          ? OftPosition.Pre
+                          : OftPosition.Post,
+              }
+            : (toOftDetail(oft.pre, OftPosition.Pre) ??
+              toOftDetail(oft.post, OftPosition.Post));
+
+    return {
+        ...swap,
+        oft: migratedOft,
+    } as SomeSwap;
+};
+
+const migrateStorageOftShape = async (swapsForage: LocalForage) => {
+    const swaps = await swapsForage.keys();
+
+    for (const swapId of swaps) {
+        const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        await swapsForage.setItem(swapId, migrateSwapOftShape(swap));
+    }
+
+    return swaps.length;
+};
+
 const migrateLocalForage = async (
     paramsForage: LocalForage,
     swapsForage: LocalForage,
@@ -146,6 +221,16 @@ const migrateLocalForage = async (
             await migrateLocalForage(paramsForage, swapsForage);
             break;
         }
+
+        case 3: {
+            log.info(`Migrating OFT storage format`);
+            const migratedSwaps = await migrateStorageOftShape(swapsForage);
+            log.info(`Migrated OFT shape for ${migratedSwaps} swaps`);
+
+            await paramsForage.setItem(storageVersionKey, 4);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
     }
 };
 
@@ -177,6 +262,12 @@ export const migrateBackupFile = (
             return migrateBackupFile(
                 version + 1,
                 swaps.map((swap) => migrateSwapGasAbstraction(swap)),
+            );
+
+        case 3:
+            return migrateBackupFile(
+                version + 1,
+                swaps.map((swap) => migrateSwapOftShape(swap)),
             );
 
         default:

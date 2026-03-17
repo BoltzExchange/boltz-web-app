@@ -6,7 +6,7 @@ const dict = {
         fast: "Fast",
         l2: "Built on Layer 2",
         l2_sub: "Boltz utilizes Layer 2 scaling technologies like the Lightning Network",
-        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
+        assets_sub: "Bitcoin Layers and Stablecoins",
         safe: "Safe",
         non_custodial: "Non-Custodial",
         non_custodial_sub:
@@ -140,7 +140,7 @@ const dict = {
         headline: "Non-Custodial Bitcoin Bridge",
         headline_pro: "Stack Sats Non-Custodially",
         subline:
-            "Swap between different Bitcoin layers while staying in full control.",
+            "Swap between different Bitcoin layers and Stablecoins while staying in full control.",
         subline_pro:
             "Earn sats for swapping Bitcoin in directions that help balance our liquidity.",
         start_swapping: "Start Swapping",
@@ -194,6 +194,9 @@ const dict = {
         hide_wallet_address: "Privacy Mode",
         hide_wallet_address_tooltip:
             "Hides EVM wallet address and Swap ID for privacy in demos/recordings",
+        bitcoin_only: "Bitcoin-Only Mode",
+        bitcoin_only_tooltip:
+            "Only show Bitcoin and Lightning, hide all other pairs",
         slippage: "Slippage",
         slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
         gas_topup: "Auto gas top-up",
@@ -475,7 +478,7 @@ const dict = {
         fast: "Schnell",
         l2: "Auf Layer-2 gebaut",
         l2_sub: "Boltz nutzt Layer-2 Skalierungstechnologien wie das Lightning-Netzwerk",
-        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
+        assets_sub: "Bitcoin-Layer und Stablecoins",
         safe: "Sicher",
         non_custodial: "Non-Custodial",
         non_custodial_sub:
@@ -613,7 +616,7 @@ const dict = {
         headline: "Non-Custodial Bitcoin Bridge",
         headline_pro: "Stacke Sats mit voller Kontrolle",
         subline:
-            "Tausche zwischen verschiedenen Bitcoin Layern, während du immer die volle Kontrolle behältst.",
+            "Tausche zwischen verschiedenen Bitcoin-Layern und Stablecoins, während du immer die volle Kontrolle behältst.",
         subline_pro:
             "Verdiene Sats für Swaps, die uns helfen unsere Liquidität zu managen.",
         start_swapping: "Starte Swap",
@@ -670,6 +673,9 @@ const dict = {
         hide_wallet_address: "Privatsphäre-Modus",
         hide_wallet_address_tooltip:
             "Blendet EVM Wallet-Adresse und Swap ID aus für besser Privatsphäre in Demos und Bildschirmaufnahmen",
+        bitcoin_only: "Bitcoin-Only Modus",
+        bitcoin_only_tooltip:
+            "Nur Bitcoin und Lightning anzeigen, alle anderen Paare ausblenden",
         slippage: "Slippage",
         slippage_tooltip: "Maximale Slippage-Toleranz bei DEX-Swaps",
         gas_topup: "Auto Gas-Aufladung",
@@ -958,7 +964,7 @@ const dict = {
         fast: "Rápido",
         l2: "Construido en la Capa 2",
         l2_sub: "Boltz utiliza tecnologías de segunda capa como la red de Lightning",
-        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
+        assets_sub: "Capas de Bitcoin y Stablecoins",
         safe: "Seguro",
         non_custodial: "Sin Custodia",
         non_custodial_sub:
@@ -1097,7 +1103,7 @@ const dict = {
         headline: "Bitcoin Bridge Sin Custodia",
         headline_pro: "Apilar Sats Con Autocustodia",
         subline:
-            "Intercambia entre diferentes capas de Bitcoin mientras mantienes el control total.",
+            "Intercambia entre diferentes capas de Bitcoin y Stablecoins mientras mantienes el control total.",
         subline_pro:
             "Gana sats por intercambiar Bitcoin en direcciones que ayudan a equilibrar nuestra liquidez.",
         start_swapping: "Comenzar a intercambiar",
@@ -1153,6 +1159,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidad",
         hide_wallet_address_tooltip:
             "Oculta la dirección del monedero EVM y el ID de Swap para privacidad en demos y grabaciones",
+        bitcoin_only: "Modo Bitcoin-Only",
+        bitcoin_only_tooltip:
+            "Mostrar solo Bitcoin y Lightning, ocultando todos los demás pares",
         slippage: "Slippage",
         slippage_tooltip: "Tolerancia máxima de slippage para swaps en DEX",
         gas_topup: "Recarga automática de gas",
@@ -1440,7 +1449,7 @@ const dict = {
         fast: "Rápido",
         l2: "Construído na Segunda Camada",
         l2_sub: "A Boltz utiliza tecnologias de segunda camada como a rede Lightning",
-        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
+        assets_sub: "Camadas de Bitcoin e Stablecoins",
         safe: "Seguro",
         non_custodial: "Não-Custodial",
         non_custodial_sub:
@@ -1577,7 +1586,7 @@ const dict = {
         headline: "Bitcoin Bridge Não-Custodial",
         headline_pro: "Acumule Sats Com Autocustódia",
         subline:
-            "Troque entre as diferentes camadas do Bitcoin, mantendo controle total.",
+            "Troque entre as diferentes camadas do Bitcoin e Stablecoins, mantendo controle total.",
         subline_pro:
             "Ganhe sats por trocar Bitcoin em direções que ajudam a balancear nossa liquidez.",
         start_swapping: "Começar a trocar",
@@ -1632,6 +1641,9 @@ const dict = {
         hide_wallet_address: "Modo de Privacidade",
         hide_wallet_address_tooltip:
             "Oculta o endereço da carteira EVM e o ID do Swap para privacidade em demos e gravações",
+        bitcoin_only: "Modo Bitcoin-Only",
+        bitcoin_only_tooltip:
+            "Mostrar apenas Bitcoin e Lightning, ocultando todos os outros pares",
         slippage: "Slippage",
         slippage_tooltip: "Tolerância máxima de slippage para trocas em DEX",
         gas_topup: "Recarga automática de gas",
@@ -1918,7 +1930,7 @@ const dict = {
         fast: "快速",
         l2: "建立在二层网络之上",
         l2_sub: "Boltz利用像闪电网络这样的二层网络扩展技术",
-        assets_sub: "闪电网络/比特币/Liquid/Rootstock",
+        assets_sub: "比特币层和稳定币",
         safe: "安全",
         non_custodial: "非托管",
         non_custodial_sub:
@@ -2039,7 +2051,7 @@ const dict = {
         id: "ID",
         headline: "非托管比特币跨链桥",
         headline_pro: "积累聪，非托管！",
-        subline: "在不同比特币层之间交换，同时保持完全控制。",
+        subline: "在不同比特币层和稳定币之间交换，同时保持完全控制。",
         subline_pro: "通过交换比特币赚取聪，在有助于平衡我们的流动性方向上。",
         start_swapping: "开始交换",
         partners: "合作伙伴",
@@ -2089,6 +2101,8 @@ const dict = {
         hide_wallet_address: "隐私模式",
         hide_wallet_address_tooltip:
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
+        bitcoin_only: "仅比特币模式",
+        bitcoin_only_tooltip: "仅显示比特币和闪电网络，隐藏所有其他交易对",
         slippage: "滑点",
         slippage_tooltip: "DEX 交换的最大价格滑点容差",
         gas_topup: "自动补充 Gas",
@@ -2349,7 +2363,7 @@ const dict = {
         fast: "高速",
         l2: "L2技術を活用",
         l2_sub: "Boltzは、LiquidネットワークやLightningネットワークなどのL2スケーリング技術を利用しています",
-        assets_sub: "Lightning / Bitcoin / Liquid / Rootstock",
+        assets_sub: "ビットコインレイヤーとステーブルコイン",
         safe: "安全",
         non_custodial: "ノンカストディアル型",
         non_custodial_sub:
@@ -2485,7 +2499,8 @@ const dict = {
         headline:
             "プライバシーファースト、ノンカストディアル型のビットコイン取引所",
         headline_pro: "聪を積み上げる、非托管で！",
-        subline: "誰にも奪われない。常に、お金はあなたの管理下に。",
+        subline:
+            "異なるビットコインレイヤーとステーブルコインの間で、完全な管理を保ちながらスワップ。",
         subline_pro:
             "ビットコインをスワップするためサットを稼ぐ、私たちの流動性を調整する方向で。",
         start_swapping: "取引を開始する",
@@ -2539,6 +2554,9 @@ const dict = {
         hide_wallet_address: "プライバシーモード",
         hide_wallet_address_tooltip:
             "デモや録画時のプライバシー保護のため、EVMウォレットアドレスとスワップIDを非表示にします",
+        bitcoin_only: "ビットコイン専用モード",
+        bitcoin_only_tooltip:
+            "ビットコインとライトニングのみを表示し、他のすべてのペアを非表示にします",
         slippage: "スリッページ",
         slippage_tooltip: "DEXスワップで許容する最大価格スリッページ",
         gas_topup: "ガス自動チャージ",

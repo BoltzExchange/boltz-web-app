@@ -1,6 +1,13 @@
 import log from "loglevel";
 import { IoArrowBack, IoClose } from "solid-icons/io";
-import { For, Show, createEffect, createSignal, on } from "solid-js";
+import {
+    For,
+    Show,
+    createEffect,
+    createMemo,
+    createSignal,
+    on,
+} from "solid-js";
 
 import { config } from "../config";
 import {
@@ -18,17 +25,11 @@ import {
     handleListKeyDown,
     scrollToFocused,
 } from "../utils/assetSearch";
+import { canSelectAsset } from "../utils/selectableAsset";
 
 const isTouchDevice = () =>
     typeof window.matchMedia === "function" &&
     window.matchMedia("(pointer: coarse)").matches;
-
-const usdt0Networks = [
-    USDT0,
-    ...Object.keys(config.assets).filter(isUsdt0Variant),
-].sort((a, b) =>
-    (getAssetNetwork(a) ?? "").localeCompare(getAssetNetwork(b) ?? ""),
-);
 
 const NetworkSelect = () => {
     const { t, fetchPairs, pairs, regularPairs } = useGlobalContext();
@@ -47,9 +48,19 @@ const NetworkSelect = () => {
     const [focusedIndex, setFocusedIndex] = createSignal(0);
     let listRef: HTMLDivElement;
 
+    const usdt0Networks = createMemo(() =>
+        [USDT0, ...Object.keys(config.assets).filter(isUsdt0Variant)]
+            .filter((asset) => canSelectAsset(assetSelected(), asset))
+            .sort((a, b) =>
+                (getAssetNetwork(a) ?? "").localeCompare(
+                    getAssetNetwork(b) ?? "",
+                ),
+            ),
+    );
+
     const filtered = () =>
         fuzzySort(
-            usdt0Networks,
+            usdt0Networks(),
             search(),
             (asset) => getAssetNetwork(asset) ?? "",
         );

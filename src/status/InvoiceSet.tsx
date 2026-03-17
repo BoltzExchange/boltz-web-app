@@ -7,7 +7,7 @@ import { isEvmAsset } from "../consts/Assets";
 import { usePayContext } from "../context/Pay";
 import { HopsPosition } from "../utils/Pair";
 import { decodeInvoice } from "../utils/invoice";
-import type { SubmarineSwap } from "../utils/swapCreator";
+import { type SubmarineSwap, getPreOftDetail } from "../utils/swapCreator";
 
 const InvoiceSet = () => {
     const { swap } = usePayContext();
@@ -45,6 +45,7 @@ const InvoiceSet = () => {
                             ? submarine.dex.hops
                             : undefined
                     }
+                    oft={getPreOftDetail(submarine.oft)}
                 />
             </Show>
         </Show>

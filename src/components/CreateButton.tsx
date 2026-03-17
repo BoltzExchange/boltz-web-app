@@ -52,6 +52,8 @@ import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { gasTopUpSupported } from "../utils/qouter";
 import {
     GasAbstractionType,
+    type OftDetail,
+    OftPosition,
     type SomeSwap,
     createChain,
     createReverse,
@@ -63,6 +65,25 @@ import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
+
+const buildOftDetail = (
+    sourceAsset: string,
+    destinationAsset: string,
+    position: OftPosition,
+): OftDetail | undefined => {
+    const destinationChainId =
+        config.assets?.[destinationAsset]?.network?.chainId;
+    if (destinationChainId === undefined) {
+        return undefined;
+    }
+
+    return {
+        sourceAsset,
+        destinationAsset,
+        destinationChainId,
+        position,
+    };
+};
 
 export const enum BackupDone {
     True = "true",
@@ -273,7 +294,9 @@ const CreateButton = () => {
                     if (!addressValid()) {
                         setButtonLabel({
                             key: "invalid_address",
-                            params: { asset: assetReceive() },
+                            params: {
+                                asset: assetReceive(),
+                            },
                         });
                         return;
                     }
@@ -667,14 +690,19 @@ const CreateButton = () => {
                                       : Number(sendAmount()),
                           }
                         : undefined,
-                oft: isUsdt0Variant(assetReceive())
-                    ? {
-                          sourceAsset: getCanonicalAsset(assetReceive()),
-                          destinationAsset: assetReceive(),
-                          destinationChainId:
-                              config.assets?.[assetReceive()]?.network?.chainId,
-                      }
-                    : undefined,
+                oft: isUsdt0Variant(assetSend())
+                    ? buildOftDetail(
+                          assetSend(),
+                          getCanonicalAsset(assetSend()),
+                          OftPosition.Pre,
+                      )
+                    : isUsdt0Variant(assetReceive())
+                      ? buildOftDetail(
+                            getCanonicalAsset(assetReceive()),
+                            assetReceive(),
+                            OftPosition.Post,
+                        )
+                      : undefined,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine

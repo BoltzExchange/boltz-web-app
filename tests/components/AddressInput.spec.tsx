@@ -21,6 +21,10 @@ vi.mock("../../src/utils/invoice", async () => {
     };
 });
 
+afterEach(() => {
+    localStorage.clear();
+});
+
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(globalSignals.pairs(), fromAsset, toAsset));
 };
@@ -186,4 +190,36 @@ describe("AddressInput", () => {
             });
         },
     );
+
+    test("should reject non-bitcoin assets when bitcoinOnly is enabled", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <AddressInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setBitcoinOnly(true);
+        setPairAssets(LN, BTC);
+
+        const input = (await screen.findByTestId(
+            "onchainAddress",
+        )) as HTMLInputElement;
+
+        fireEvent.input(input, {
+            target: {
+                value: "el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu",
+            },
+        });
+
+        await waitFor(() => {
+            expect(signals.pair().fromAsset).toEqual(LN);
+            expect(signals.pair().toAsset).toEqual(BTC);
+            expect(signals.addressValid()).toEqual(false);
+            expect(input.className).toContain("invalid");
+        });
+    });
 });

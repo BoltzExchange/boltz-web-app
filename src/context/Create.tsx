@@ -12,7 +12,14 @@ import {
 import type { Accessor, JSX, Setter } from "solid-js";
 
 import { config } from "../config";
-import { type AssetType, BTC, LBTC, LN, assets } from "../consts/Assets";
+import {
+    type AssetType,
+    BTC,
+    LBTC,
+    LN,
+    assets,
+    isBitcoinOnlyPair,
+} from "../consts/Assets";
 import { type AssetSelection, Side, UrlParam } from "../consts/Enums";
 import type { DictKey } from "../i18n/i18n";
 import Pair, { RequiredInput } from "../utils/Pair";
@@ -286,7 +293,7 @@ const CreateContext = createContext<CreateContextType>();
 
 const CreateProvider = (props: { children: JSX.Element }) => {
     const navigate = useNavigate();
-    const { pairs, regularPairs } = useGlobalContext();
+    const { pairs, regularPairs, bitcoinOnly } = useGlobalContext();
 
     const [invoice, setInvoice] = createSignal<string>("");
     const [lnurl, setLnurl] = createSignal("");
@@ -328,6 +335,24 @@ const CreateProvider = (props: { children: JSX.Element }) => {
     const [bolt12Loading, setBolt12Loading] = createSignal(false);
     const [quoteLoading, setQuoteLoading] = createSignal(false);
 
+    const resetDestinationState = () => {
+        setInvoice("");
+        setInvoiceValid(false);
+        setInvoiceError(undefined);
+        setLnurl("");
+        setBolt12Offer(undefined);
+        setOnchainAddress("");
+        setAddressValid(false);
+    };
+
+    const normalizeBitcoinOnlyPair = (current: Pair) => {
+        if (isBitcoinOnlyPair(current.fromAsset, current.toAsset)) {
+            return current;
+        }
+
+        return new Pair(pairs(), LN, BTC, regularPairs());
+    };
+
     createEffect(() => {
         if (amountValid() && pair().isRoutable) {
             const requiredInput = pair().requiredInput;
@@ -361,6 +386,25 @@ const CreateProvider = (props: { children: JSX.Element }) => {
         const latest = pair();
         setAssetFrom(latest.fromAsset);
         setAssetTo(latest.toAsset);
+    });
+
+    createEffect(() => {
+        if (!bitcoinOnly()) return;
+
+        const latest = pair();
+        const normalized = normalizeBitcoinOnlyPair(latest);
+        if (
+            latest.fromAsset === normalized.fromAsset &&
+            latest.toAsset === normalized.toAsset
+        ) {
+            return;
+        }
+
+        if (latest.toAsset !== normalized.toAsset) {
+            resetDestinationState();
+        }
+
+        setPair(normalized);
     });
 
     // amounts

@@ -176,6 +176,61 @@ describe("Create", () => {
         }
     });
 
+    test("should forward the destination address to receive quote calculations", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            const currentPair = signals.pair();
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn(() => Promise.resolve(BigNumber(90_000)))
+                .mockName("calculateReceiveAmount");
+
+            signals.setOnchainAddress(
+                "0x5000000000000000000000000000000000000000",
+            );
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "100000" },
+            });
+
+            await vi.advanceTimersByTimeAsync(500);
+
+            await waitFor(() => {
+                expect(currentPair.calculateReceiveAmount).toHaveBeenCalled();
+            });
+
+            const latestCall = vi
+                .mocked(currentPair.calculateReceiveAmount)
+                .mock.calls.at(-1);
+            expect(latestCall).toBeDefined();
+            expect(latestCall?.[0]?.toString()).toBe("100000");
+            expect(latestCall?.[1]).toBe(signals.minerFee());
+            expect(latestCall?.[2]).toBeUndefined();
+            expect(latestCall?.[3]).toBe(signals.getGasToken());
+            expect(latestCall?.[4]).toBe(
+                "0x5000000000000000000000000000000000000000",
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("should update receive amount on asset change", async () => {
         render(
             () => (
@@ -202,9 +257,12 @@ describe("Create", () => {
         });
 
         setPairAssets(LN, LBTC);
+        const expectedReceiveAmount = await signals
+            .pair()
+            .calculateReceiveAmount(BigNumber(50_000), signals.minerFee());
 
         await waitFor(() => {
-            expect(signals.receiveAmount()).toEqual(BigNumber(49429));
+            expect(signals.receiveAmount()).toEqual(expectedReceiveAmount);
         });
     });
 

@@ -42,7 +42,7 @@ export const isUsdt0Asset = (asset: string): boolean =>
     asset === USDT0 || isUsdt0Variant(asset);
 
 export const getAssetDisplaySymbol = (asset: string): string =>
-    isUsdt0Asset(asset) ? USDT0 : asset;
+    isUsdt0Asset(asset) ? "USDT" : asset;
 
 export const getCanonicalAsset = (asset: string): string =>
     isUsdt0Variant(asset) ? USDT0 : asset;
@@ -50,6 +50,17 @@ export const getCanonicalAsset = (asset: string): string =>
 const normalizeNetworkBadge = (chainName: string): string =>
     networkBadgeAliases[chainName] ??
     chainName.toLowerCase().replace(/\s+/g, "");
+
+export const isBitcoinOnlyAsset = (asset: string): boolean =>
+    asset === LN || asset === BTC;
+
+export const isBitcoinOnlyPair = (
+    fromAsset: string,
+    toAsset: string,
+): boolean =>
+    isBitcoinOnlyAsset(fromAsset) &&
+    isBitcoinOnlyAsset(toAsset) &&
+    fromAsset !== toAsset;
 
 export const getKindForAsset = (asset: string): AssetKind => {
     const assetConfig = config.assets?.[asset];
@@ -134,6 +145,11 @@ export const getAssetNetwork = (asset: string): string | null => {
 };
 
 export const getNetworkBadge = (asset: string): string | null => {
+    // avoid network badge on native assets like RBTC
+    if (getKindForAsset(asset) !== AssetKind.ERC20) {
+        return null;
+    }
+
     const chainName = config.assets?.[asset]?.network?.chainName;
 
     if (!chainName) {

@@ -1,7 +1,7 @@
 import { VsArrowSmallRight } from "solid-icons/vs";
 import { For, Show } from "solid-js";
 
-import { LN, getAssetDisplaySymbol } from "../consts/Assets";
+import { LN, getAssetDisplaySymbol, isBitcoinOnlyPair } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { type Pairs } from "../utils/boltzClient";
@@ -22,7 +22,7 @@ export const FeeComparisonTable = (props: {
     regularPairs: Pairs;
     onSelect: (opportunity: SwapFees) => void;
 }) => {
-    const { t } = useGlobalContext();
+    const { t, bitcoinOnly } = useGlobalContext();
 
     const getSwapFees = (
         proPairs: Pairs,
@@ -61,7 +61,13 @@ export const FeeComparisonTable = (props: {
         return swapTypes
             .flatMap(({ type, key }) =>
                 getSwapFees(pro[key], regular[key], type).filter(
-                    (swap) => swap.proFee < swap.regularFee,
+                    (swap) =>
+                        swap.proFee < swap.regularFee &&
+                        (!bitcoinOnly() ||
+                            isBitcoinOnlyPair(
+                                swap.assetSend,
+                                swap.assetReceive,
+                            )),
                 ),
             )
             .sort((a, b) => a.proFee - b.proFee);

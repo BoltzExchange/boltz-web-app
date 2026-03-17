@@ -3,7 +3,7 @@ import log from "loglevel";
 import { createEffect, on } from "solid-js";
 import { btcToSat } from "src/utils/denomination";
 
-import { LN, isEvmAsset } from "../consts/Assets";
+import { LN, isBitcoinOnlyAsset, isEvmAsset } from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -19,7 +19,7 @@ import {
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
 
-    const { t, notify, pairs, regularPairs } = useGlobalContext();
+    const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
     const {
         pair,
         setPair,
@@ -101,6 +101,10 @@ const AddressInput = () => {
                     throw new Error();
 
                 default: {
+                    if (bitcoinOnly() && !isBitcoinOnlyAsset(actualAsset)) {
+                        throw new Error();
+                    }
+
                     if (assetName !== actualAsset) {
                         setPair(
                             new Pair(
@@ -126,7 +130,9 @@ const AddressInput = () => {
             if (inputValue.length !== 0) {
                 log.debug(`Invalid address input: ${formatError(e)}`);
 
-                const msg = t("invalid_address", { asset: pair().toAsset });
+                const msg = t("invalid_address", {
+                    asset: pair().toAsset,
+                });
                 input.classList.add("invalid");
                 input.setCustomValidity(msg);
             }
@@ -156,7 +162,9 @@ const AddressInput = () => {
             data-testid="onchainAddress"
             name="onchainAddress"
             autocomplete="off"
-            placeholder={t("onchain_address", { asset: pair().toAsset })}
+            placeholder={t("onchain_address", {
+                asset: pair().toAsset,
+            })}
             value={onchainAddress()}
         />
     );

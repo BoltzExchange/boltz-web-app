@@ -4,12 +4,22 @@ import SelectAsset from "../../src/components/AssetSelect";
 import NetworkSelect from "../../src/components/NetworkSelect";
 import type * as ConfigModule from "../../src/config";
 import { config } from "../../src/config";
-import { BTC, LBTC, LN, USDT0, isUsdt0Variant } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
-import Pair from "../../src/utils/Pair";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 import { pairs } from "../pairs";
+import {
+    getSendableUsdt0VariantAssets,
+    getUnsendableUsdt0VariantAssets,
+    getUsdt0Variants,
+    setPairAssets,
+} from "./selectTestUtils";
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
@@ -25,8 +35,13 @@ vi.mock("../../src/config", async () => {
             ...actual.config,
             assets: {
                 ...actual.config.assets,
+                RBTC: {
+                    ...actual.config.assets.RBTC,
+                    canSend: false,
+                },
                 "USDT0-ETH": {
                     ...actual.config.assets.USDT0,
+                    canSend: true,
                     network: {
                         ...actual.config.assets.USDT0.network,
                         chainName: "Ethereum",
@@ -46,6 +61,7 @@ vi.mock("../../src/config", async () => {
                 },
                 "USDT0-OP": {
                     ...actual.config.assets.USDT0,
+                    canSend: true,
                     network: {
                         ...actual.config.assets.USDT0.network,
                         chainName: "Optimism",
@@ -63,17 +79,39 @@ vi.mock("../../src/config", async () => {
                         address: "0x0000000000000000000000000000000000000002",
                     },
                 },
+                "USDT0-CFX": {
+                    ...actual.config.assets.USDT0,
+                    canSend: false,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Conflux eSpace",
+                        symbol: "CFX",
+                        gasToken: "CFX",
+                        chainId: 1030,
+                        nativeCurrency: {
+                            name: "CFX",
+                            symbol: "CFX",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000003",
+                    },
+                },
             },
         },
     };
 });
 
-const setPairAssets = (fromAsset: string, toAsset: string) => {
-    signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
-};
+afterEach(() => {
+    localStorage.clear();
+});
 
-const usdt0VariantAssets = Object.keys(config.assets).filter((asset) =>
-    isUsdt0Variant(asset),
+const usdt0VariantAssets = getUsdt0Variants(config.assets);
+const sendableUsdt0VariantAssets = getSendableUsdt0VariantAssets(config.assets);
+const unsendableUsdt0VariantAssets = getUnsendableUsdt0VariantAssets(
+    config.assets,
 );
 
 describe("AssetSelect", () => {
@@ -244,8 +282,61 @@ describe("AssetSelect", () => {
         expect(signals.onchainAddress()).toBe("");
     });
 
+    test("should hide unsendable assets when selecting send asset", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Send);
+
+        await screen.findByTestId(`select-${BTC}`);
+
+        expect(screen.queryByTestId(`select-${RBTC}`)).toBeNull();
+    });
+
+    test("should still show unsendable assets when selecting receive asset", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Receive);
+
+        expect(await screen.findByTestId(`select-${RBTC}`)).toBeDefined();
+    });
+
+    test("should not render when bitcoinOnly is true", () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setBitcoinOnly(true);
+        signals.setAssetSelection(AssetSelection.Asset);
+
+        expect(screen.queryByTestId(`select-${BTC}`)).toBeNull();
+    });
+
     describe("USDT0 multi-step selection", () => {
-        const openAssetSelect = () => {
+        const openAssetSelect = (side = Side.Send) => {
             render(
                 () => (
                     <>
@@ -258,7 +349,7 @@ describe("AssetSelect", () => {
             );
 
             signals.setAssetSelection(AssetSelection.Asset);
-            signals.setAssetSelected(Side.Send);
+            signals.setAssetSelected(side);
         };
 
         test("should not show USDT0 variants in asset list", async () => {
@@ -288,13 +379,30 @@ describe("AssetSelect", () => {
             ).toBeDefined();
         });
 
-        test("should show all USDT0 networks in step 2", async () => {
+        test("should hide unsendable USDT0 networks in step 2 for send selection", async () => {
             openAssetSelect();
 
             fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
             await screen.findByText(i18n.en.select_network);
 
             expect(screen.queryByTestId(`select-${USDT0}`)).not.toBeNull();
+
+            for (const variant of sendableUsdt0VariantAssets) {
+                expect(
+                    screen.queryByTestId(`select-${variant}`),
+                ).not.toBeNull();
+            }
+
+            for (const variant of unsendableUsdt0VariantAssets) {
+                expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
+            }
+        });
+
+        test("should still show unsendable USDT0 networks in step 2 for receive selection", async () => {
+            openAssetSelect(Side.Receive);
+
+            fireEvent.click(await screen.findByTestId(`select-${USDT0}`));
+            await screen.findByText(i18n.en.select_network);
 
             for (const variant of usdt0VariantAssets) {
                 expect(
@@ -340,10 +448,14 @@ describe("AssetSelect", () => {
             fireEvent.click(screen.getByTestId("search-clear"));
 
             expect((searchInput as HTMLInputElement).value).toBe("");
-            for (const variant of usdt0VariantAssets) {
+            for (const variant of sendableUsdt0VariantAssets) {
                 expect(
                     screen.queryByTestId(`select-${variant}`),
                 ).not.toBeNull();
+            }
+
+            for (const variant of unsendableUsdt0VariantAssets) {
+                expect(screen.queryByTestId(`select-${variant}`)).toBeNull();
             }
         });
 

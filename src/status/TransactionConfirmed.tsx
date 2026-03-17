@@ -46,8 +46,9 @@ import {
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import {
-    createOftContract,
+    type OftQuoteOptions,
     getOftContract,
+    getQuotedOftContract,
     quoteOftReceiveAmount,
     quoteOftSend,
 } from "../utils/oft/oft";
@@ -56,6 +57,8 @@ import {
     type DexQuote,
     fetchDexQuote,
     fetchGasTokenQuote,
+    gasTopUpSupported,
+    getGasTopUpNativeAmount,
 } from "../utils/qouter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
@@ -65,6 +68,7 @@ import {
     type OftDetail,
     type ReverseSwap,
     getFinalAssetReceive,
+    getPostOftDetail,
 } from "../utils/swapCreator";
 
 type RouterExecutionQuote = {
@@ -104,11 +108,28 @@ const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {
     return BigInt(Math.round(quoteAmount));
 };
 
+const getPostOftQuoteOptions = async (
+    destinationAsset: string,
+    destination: string,
+    getGasToken: boolean,
+): Promise<OftQuoteOptions> => ({
+    recipient: destination,
+    nativeDrop:
+        getGasToken && gasTopUpSupported(destinationAsset)
+            ? {
+                  amount: await getGasTopUpNativeAmount(destinationAsset),
+                  receiver: destination,
+              }
+            : undefined,
+});
+
 const getAcceptedQuoteAmount = async (
     amount: number,
     assetReceive: string,
     hop: EncodedHop,
     quote: ClaimQuote,
+    destination: string,
+    getGasToken: boolean,
     oft?: OftDetail,
 ): Promise<bigint> => {
     if (oft === undefined) {
@@ -121,10 +142,16 @@ const getAcceptedQuoteAmount = async (
     }
 
     const claimAmount = satsToAssetAmount(amount, assetReceive);
+    const oftQuoteOptions = await getPostOftQuoteOptions(
+        oft.destinationAsset,
+        destination,
+        getGasToken,
+    );
     const initialOftQuote = await quoteOftReceiveAmount(
         oft.sourceAsset,
         oft.destinationChainId,
         quote.trade.amountOut,
+        oftQuoteOptions,
     );
     const [messagingFeeQuote] = await quoteDexAmountOut(
         dexDetails.chain,
@@ -145,6 +172,7 @@ const getAcceptedQuoteAmount = async (
         oft.sourceAsset,
         oft.destinationChainId,
         adjustedTradeQuote.trade.amountOut,
+        oftQuoteOptions,
     );
 
     return adjustedOftQuote.amountOut;
@@ -197,7 +225,7 @@ const encodeRouterExecutionCalls = async (
     );
 };
 
-const signErc20ClaimToRouter = async (
+export const signErc20ClaimToRouter = async (
     signer: Signer | Wallet,
     erc20Swap: ERC20Swap,
     chainId: bigint,
@@ -207,13 +235,19 @@ const signErc20ClaimToRouter = async (
     refundAddress: string,
     timeoutBlockHeight: number,
     routerAddress: string,
-) =>
-    Signature.from(
+) => {
+    const connectedErc20Swap = erc20Swap.connect(signer) as ERC20Swap;
+    const [version, verifyingContract] = await Promise.all([
+        connectedErc20Swap.version(),
+        connectedErc20Swap.getAddress(),
+    ]);
+
+    return Signature.from(
         await signer.signTypedData(
             {
                 name: "ERC20Swap",
-                version: String(await erc20Swap.version()),
-                verifyingContract: await erc20Swap.getAddress(),
+                version: String(version),
+                verifyingContract,
                 chainId,
             },
             {
@@ -236,6 +270,7 @@ const signErc20ClaimToRouter = async (
             },
         ),
     );
+};
 
 const signRouterClaim = async (
     signer: Signer | Wallet,
@@ -372,7 +407,6 @@ const claimErc20ViaRouter = async (
     return await sendPopulatedTransaction(gasAbstraction, signer, tx);
 };
 
-// TODO: get gas tokens at destination
 const claimErc20ViaRouterOft = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
@@ -387,6 +421,7 @@ const claimErc20ViaRouterOft = async (
     hop: EncodedHop,
     quote: ClaimQuote,
     oft: OftDetail,
+    getGasToken: boolean,
 ) => {
     if (getKindForAsset(asset) === AssetKind.EVMNative) {
         throw new Error("EtherSwap is not supported for now");
@@ -432,12 +467,18 @@ const claimErc20ViaRouterOft = async (
         routerAddress,
     );
 
-    const oftInstance = createOftContract(oftContract.address, signer);
+    const oftQuoteInstance = await getQuotedOftContract(oft.sourceAsset);
+    const oftQuoteOptions = await getPostOftQuoteOptions(
+        oft.destinationAsset,
+        destination,
+        getGasToken,
+    );
     const { msgFee } = await quoteOftSend(
-        oftInstance,
+        oftQuoteInstance,
         oft.destinationChainId,
         destination,
         quote.trade.amountOut,
+        oftQuoteOptions,
     );
     const msgFeeEthAmountOut = calculateAmountWithSlippage(msgFee[0], slippage);
     const [msgFeeEthQuote] = await quoteDexAmountOut(
@@ -463,10 +504,11 @@ const claimErc20ViaRouterOft = async (
         slippage,
     );
     const { sendParam } = await quoteOftSend(
-        oftInstance,
+        oftQuoteInstance,
         oft.destinationChainId,
         destination,
         amountOutMin,
+        oftQuoteOptions,
     );
     const amountLdWithSlippage = calculateAmountOutMin(sendParam[3], slippage);
     const sendData = {
@@ -600,11 +642,15 @@ const getGasTokenRouterClaimExecution = async (
     const assetAmount = satsToAssetAmount(amount, asset);
     const chain = getAssetChain(asset);
     const finalToken = getTokenAddress(asset);
-    const gasToken = await fetchGasTokenQuote({
-        chain,
-        tokenIn: finalToken,
-        tokenOut: finalToken,
-    });
+    const gasTokenAmount = await getGasTopUpNativeAmount(asset);
+    const gasToken = await fetchGasTokenQuote(
+        {
+            chain,
+            tokenIn: finalToken,
+            tokenOut: finalToken,
+        },
+        gasTokenAmount,
+    );
 
     if (gasToken.amountIn > assetAmount) {
         throw new Error("gas token quote exceeds claim amount");
@@ -663,7 +709,11 @@ export const claimAsset = async (
                 getGasAbstractionSigner(asset),
             );
 
-            if (getKindForAsset(asset) !== AssetKind.EVMNative && getGasToken) {
+            if (
+                getKindForAsset(asset) !== AssetKind.EVMNative &&
+                getGasToken &&
+                gasTopUpSupported(asset)
+            ) {
                 const execution = await getGasTokenRouterClaimExecution(
                     asset,
                     amount,
@@ -741,6 +791,7 @@ const claimHops = async (
     erc20Swap: ERC20Swap,
     slippage: number,
     quote: ClaimQuote,
+    getGasToken: boolean,
     oft?: OftDetail,
 ) => {
     if (oft !== undefined) {
@@ -758,6 +809,7 @@ const claimHops = async (
             getSingleClaimHop(hops),
             quote,
             oft,
+            getGasToken,
         );
     }
 
@@ -834,7 +886,7 @@ const AutoClaimHops = (props: {
     timeoutBlockHeight: number;
     getGasToken: boolean;
     dex: DexDetail;
-    oft: OftDetail;
+    oft?: OftDetail;
 }) => {
     const { getErc20Swap, signer, getGasAbstractionSigner } = useWeb3Signer();
     const { t, slippage, notify, getSwap, setSwapStorage } = useGlobalContext();
@@ -894,6 +946,7 @@ const AutoClaimHops = (props: {
                 getErc20Swap(props.assetReceive),
                 slippage(),
                 quote.quote,
+                props.getGasToken,
                 props.oft,
             );
 
@@ -918,16 +971,25 @@ const AutoClaimHops = (props: {
                 props.amount,
                 props.assetReceive,
             );
+            const useDexGasToken =
+                props.oft === undefined &&
+                props.getGasToken &&
+                gasTopUpSupported(props.assetReceive);
             const quote = await fetchDexQuote(
                 hop.dexDetails,
                 amountIn,
-                props.getGasToken,
+                useDexGasToken,
+                useDexGasToken
+                    ? await getGasTopUpNativeAmount(props.assetReceive)
+                    : undefined,
             );
             const quoteAmount = await getAcceptedQuoteAmount(
                 props.amount,
                 props.assetReceive,
                 hop,
                 quote,
+                props.signerAddress,
+                props.getGasToken,
                 props.oft,
             );
             const freshQuoteData = {
@@ -1089,7 +1151,7 @@ const ClaimEvm = (props: {
                     assetReceive={props.assetReceive}
                     getGasToken={props.getGasToken}
                     dex={props.dex}
-                    oft={props.oft}
+                    oft={getPostOftDetail(props.oft)}
                 />
             }>
             <Show

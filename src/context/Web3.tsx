@@ -70,6 +70,11 @@ export type Signer = JsonRpcSigner & {
     rdns: string;
 };
 
+export type ConnectProviderOptions = {
+    asset?: string;
+    derivationPath?: string;
+};
+
 type AddEthereumChainParams = {
     chainId: string;
     chainName: string;
@@ -95,7 +100,7 @@ const customDerivationPathRdns: string[] = [
     HardwareRdns.Trezor,
 ];
 
-export const createTokenContract = (asset: string, signer: Signer) => {
+export const createTokenContract = (asset: string, signer: Signer | Wallet) => {
     const tokenConfig = requireTokenConfig(asset);
     return new Contract(
         tokenConfig.address,
@@ -116,10 +121,14 @@ const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
     hasBrowserWallet: Accessor<boolean>;
 
-    connectProvider: (rdns: string) => Promise<void>;
+    connectProvider: (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => Promise<void>;
     connectProviderForAddress: (
         address: string,
         derivationPath?: string,
+        asset?: string,
     ) => Promise<void>;
 
     signer: Accessor<Signer | undefined>;
@@ -284,20 +293,33 @@ const Web3SignerProvider = (props: {
     const connectProviderForAddress = async (
         address: string,
         derivationPath?: string,
+        asset?: string,
     ) => {
         const rdns = await getRdnsForAddress(address);
+        await connectProvider(rdns, { asset, derivationPath });
+    };
 
-        if (derivationPath !== undefined) {
-            log.debug(
-                `Setting derivation path (${derivationPath}) for signer:`,
-                rdns,
-            );
-            const prov = providers()[rdns]
-                .provider as unknown as HardwareSigner;
-            prov.setDerivationPath(derivationPath);
+    const configureHardwareProvider = (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => {
+        if (options === undefined || !customDerivationPathRdns.includes(rdns)) {
+            return;
         }
 
-        await connectProvider(rdns);
+        const prov = providers()[rdns].provider as unknown as HardwareSigner;
+
+        if (options.asset !== undefined) {
+            prov.setNetworkAsset(options.asset);
+        }
+
+        if (options.derivationPath !== undefined) {
+            log.debug(
+                `Setting derivation path (${options.derivationPath}) for signer:`,
+                rdns,
+            );
+            prov.setDerivationPath(options.derivationPath);
+        }
     };
 
     const getSwapContract = <T,>(
@@ -402,11 +424,16 @@ const Web3SignerProvider = (props: {
         setWalletConnected(true);
     };
 
-    const connectProvider = async (rdns: string) => {
+    const connectProvider = async (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => {
         const wallet = providers()[rdns];
         if (wallet == undefined) {
             throw "wallet not found";
         }
+
+        configureHardwareProvider(rdns, options);
 
         log.debug(`Using wallet ${wallet.info.rdns}: ${wallet.info.name}`);
         const addresses = (await wallet.provider.request({
@@ -456,6 +483,22 @@ const Web3SignerProvider = (props: {
         }
 
         const sanitizedChainId = `0x${assetConfig.network.chainId.toString(16)}`;
+        const activeSigner = signer();
+
+        if (
+            activeSigner !== undefined &&
+            customDerivationPathRdns.includes(activeSigner.rdns)
+        ) {
+            const hardwareProvider = providers()[activeSigner.rdns]
+                .provider as unknown as EIP1193Provider;
+            configureHardwareProvider(activeSigner.rdns, { asset });
+            await refreshConnectedSigner(
+                hardwareProvider,
+                activeSigner.rdns,
+                sanitizedChainId,
+            );
+            return;
+        }
 
         try {
             await rawProvider().request({

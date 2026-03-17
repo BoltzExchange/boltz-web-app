@@ -132,8 +132,8 @@ describe("denomination utils", () => {
         ${Denomination.Sat} | ${LBTC}  | ${"sats"}
         ${Denomination.Btc} | ${BTC}   | ${BTC}
         ${Denomination.Btc} | ${LBTC}  | ${LBTC}
-        ${Denomination.Sat} | ${USDT0} | ${USDT0}
-        ${Denomination.Btc} | ${USDT0} | ${USDT0}
+        ${Denomination.Sat} | ${USDT0} | ${"USDT"}
+        ${Denomination.Btc} | ${USDT0} | ${"USDT"}
     `("should format denomination", ({ denomination, input, expected }) => {
         expect(formatDenomination(denomination, input)).toEqual(expected);
     });

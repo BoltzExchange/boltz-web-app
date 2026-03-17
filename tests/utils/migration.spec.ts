@@ -4,7 +4,7 @@ import {
     latestStorageVersion,
     migrateBackupFile,
 } from "../../src/utils/migration";
-import { GasAbstractionType } from "../../src/utils/swapCreator";
+import { GasAbstractionType, OftPosition } from "../../src/utils/swapCreator";
 
 describe("migration", () => {
     test("should migrate backup files", () => {
@@ -84,6 +84,77 @@ describe("migration", () => {
                 id: "submarine",
                 assetReceive: LN,
                 gasAbstraction: GasAbstractionType.None,
+            },
+        ]);
+    });
+
+    test("should migrate legacy flat OFT detail to enum-based post OFT", () => {
+        const swaps = [
+            {
+                id: "post-oft",
+                oft: {
+                    sourceAsset: USDT0,
+                    destinationAsset: "USDT0-ETH",
+                    destinationChainId: 1,
+                },
+            },
+        ];
+
+        expect(migrateBackupFile(3, swaps)).toEqual([
+            {
+                id: "post-oft",
+                oft: {
+                    sourceAsset: USDT0,
+                    destinationAsset: "USDT0-ETH",
+                    destinationChainId: 1,
+                    position: OftPosition.Post,
+                },
+            },
+        ]);
+    });
+
+    test("should migrate pre/post OFT shape to enum-based OFT", () => {
+        const swaps = [
+            {
+                id: "pre-oft",
+                oft: {
+                    pre: {
+                        sourceAsset: "USDT0-POL",
+                        destinationAsset: USDT0,
+                        destinationChainId: 42161,
+                    },
+                },
+            },
+            {
+                id: "post-oft",
+                oft: {
+                    post: {
+                        sourceAsset: USDT0,
+                        destinationAsset: "USDT0-ETH",
+                        destinationChainId: 1,
+                    },
+                },
+            },
+        ];
+
+        expect(migrateBackupFile(3, swaps)).toEqual([
+            {
+                id: "pre-oft",
+                oft: {
+                    sourceAsset: "USDT0-POL",
+                    destinationAsset: USDT0,
+                    destinationChainId: 42161,
+                    position: OftPosition.Pre,
+                },
+            },
+            {
+                id: "post-oft",
+                oft: {
+                    sourceAsset: USDT0,
+                    destinationAsset: "USDT0-ETH",
+                    destinationChainId: 1,
+                    position: OftPosition.Post,
+                },
             },
         ]);
     });

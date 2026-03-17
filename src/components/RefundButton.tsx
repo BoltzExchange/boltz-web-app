@@ -31,6 +31,7 @@ import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
     type LockupEvent,
+    assertTransactionSignerProvider,
     getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
@@ -48,14 +49,6 @@ import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
 
 export const incorrectAssetError = "incorrect asset was sent";
-
-const assertTransactionSignerProvider = (signer: Signer | Wallet) => {
-    if (signer.provider === null) {
-        throw new Error("refund transaction signer requires a provider");
-    }
-
-    return signer.provider;
-};
 
 export const sendRefundTransaction = async (
     gasAbstraction: GasAbstractionType,
@@ -529,7 +522,9 @@ export const RefundBtc = (props: {
         if (valid() || !refundAddress() || !props.swap()) {
             return t("refund");
         }
-        return t("invalid_address", { asset: props.swap()?.assetSend });
+        return t("invalid_address", {
+            asset: props.swap()?.assetSend ?? "",
+        });
     });
 
     return (
@@ -545,7 +540,7 @@ export const RefundBtc = (props: {
                 <h3 style={{ color: "var(--color-text)" }}>
                     {props.swap()
                         ? t("refund_address_header", {
-                              asset: props.swap()?.assetSend,
+                              asset: props.swap()?.assetSend ?? "",
                           })
                         : t("refund_address_header_no_asset")}
                 </h3>
@@ -563,7 +558,7 @@ export const RefundBtc = (props: {
                     placeholder={
                         props.swap()
                             ? t("onchain_address", {
-                                  asset: props.swap()?.assetSend,
+                                  asset: props.swap()?.assetSend ?? "",
                               })
                             : t("onchain_address_no_asset")
                     }

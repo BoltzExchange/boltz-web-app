@@ -6,14 +6,10 @@ import type { Accessor, Setter } from "solid-js";
 import { For, Show, createMemo, createResource, createSignal } from "solid-js";
 
 import { config } from "../config";
-import { RBTC } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
-import type {
-    EIP6963ProviderDetail,
-    EIP6963ProviderInfo,
-} from "../consts/Types";
+import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useGlobalContext } from "../context/Global";
-import { useWeb3Signer } from "../context/Web3";
+import { type ConnectProviderOptions, useWeb3Signer } from "../context/Web3";
 import { formatAmount } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
@@ -28,19 +24,19 @@ import LoadingSpinner from "./LoadingSpinner";
 
 export const connect = async (
     notify: (type: string, message: string) => void,
-    connectProvider: (rdns: string) => Promise<void>,
-    providers: Accessor<Record<string, EIP6963ProviderDetail>>,
+    connectProvider: (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => Promise<void>,
     provider: EIP6963ProviderInfo,
     derivationPath?: string,
+    asset?: string,
 ) => {
     try {
-        if (derivationPath !== undefined) {
-            const prov = providers()[provider.rdns]
-                .provider as unknown as HardwareSigner;
-            prov.setDerivationPath(derivationPath);
-        }
-
-        await connectProvider(provider.rdns);
+        await connectProvider(provider.rdns, {
+            asset,
+            derivationPath,
+        });
         return true;
     } catch (e) {
         log.error(
@@ -53,22 +49,19 @@ export const connect = async (
 
 const connectHardware = async (
     notify: (type: string, message: string) => void,
-    connectProvider: (rdns: string) => Promise<void>,
+    connectProvider: (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => Promise<void>,
     provider: Accessor<EIP6963ProviderInfo>,
-    providers: Accessor<Record<string, EIP6963ProviderDetail>>,
     path: string,
+    asset: string,
     setLoading: Setter<boolean>,
 ) => {
     try {
         setLoading(true);
 
-        return await connect(
-            notify,
-            connectProvider,
-            providers,
-            provider(),
-            path,
-        );
+        return await connect(notify, connectProvider, provider(), path, asset);
     } finally {
         setLoading(false);
     }
@@ -99,6 +92,7 @@ const HwAddressSelection = (props: {
     basePath: Accessor<string>;
     setBasePath: Setter<string>;
     provider: Accessor<EIP6963ProviderInfo>;
+    asset: string;
 }) => {
     const limit = 5;
 
@@ -107,12 +101,16 @@ const HwAddressSelection = (props: {
 
     const [offset, setOffset] = createSignal(0);
     const isFirstPage = () => offset() === 0;
+    const gasTokenSymbol = createMemo(
+        () => config.assets?.[props.asset]?.network?.gasToken ?? props.asset,
+    );
 
     // eslint-disable-next-line solid/reactivity
     const [addresses] = createResource(offset, async () => {
         try {
             const prov = providers()[props.provider().rdns]
                 .provider as unknown as HardwareSigner;
+            prov.setNetworkAsset(props.asset);
 
             const addresses = await prov.deriveAddresses(
                 props.basePath(),
@@ -145,8 +143,8 @@ const HwAddressSelection = (props: {
                                 notify,
                                 connectProvider,
                                 props.provider,
-                                providers,
                                 path,
+                                props.asset,
                                 props.setLoading,
                             );
                             setWalletConnected(connected);
@@ -165,9 +163,9 @@ const HwAddressSelection = (props: {
                                     ),
                                     Denomination.Btc,
                                     separator(),
-                                    RBTC,
+                                    gasTokenSymbol(),
                                 )}{" "}
-                                {RBTC}
+                                {gasTokenSymbol()}
                             </span>
                         </div>
                     </div>
@@ -198,12 +196,13 @@ const HwAddressSelection = (props: {
 };
 
 const CustomPath = (props: {
+    asset: string;
     provider: Accessor<EIP6963ProviderInfo>;
     setLoading: Setter<boolean>;
 }) => {
     const { t, notify, hardwareDerivationPath, setHardwareDerivationPath } =
         useGlobalContext();
-    const { connectProvider, providers, setWalletConnected } = useWeb3Signer();
+    const { connectProvider, setWalletConnected } = useWeb3Signer();
 
     const [path, setPath] = createSignal<string>(hardwareDerivationPath());
 
@@ -241,8 +240,8 @@ const CustomPath = (props: {
                             notify,
                             connectProvider,
                             props.provider,
-                            providers,
                             path(),
+                            props.asset,
                             props.setLoading,
                         );
                         setWalletConnected(connected);
@@ -255,6 +254,7 @@ const CustomPath = (props: {
 };
 
 const HardwareDerivationPaths = (props: {
+    asset: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
     provider: Accessor<EIP6963ProviderInfo>;
@@ -308,6 +308,7 @@ const HardwareDerivationPaths = (props: {
                         when={basePath() === undefined}
                         fallback={
                             <HwAddressSelection
+                                asset={props.asset}
                                 basePath={basePath}
                                 setLoading={setLoading}
                                 setBasePath={setBasePath}
@@ -328,6 +329,7 @@ const HardwareDerivationPaths = (props: {
                         </For>
                         <hr style={{ "margin-top": "0" }} />
                         <CustomPath
+                            asset={props.asset}
                             provider={props.provider}
                             setLoading={setLoading}
                         />

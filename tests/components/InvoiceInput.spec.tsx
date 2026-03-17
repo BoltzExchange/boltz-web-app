@@ -6,7 +6,12 @@ import InvoiceInput from "../../src/components/InvoiceInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import Pair from "../../src/utils/Pair";
 import { extractInvoice, invoicePrefix } from "../../src/utils/invoice";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
 
 vi.mock("../../src/utils/invoice", async () => {
     const actual = await vi.importActual("../../src/utils/invoice");
@@ -72,6 +77,10 @@ vi.mock("../../src/utils/compat", async () => {
             return Promise.resolve(null);
         }),
     };
+});
+
+afterEach(() => {
+    localStorage.clear();
 });
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
@@ -335,4 +344,37 @@ describe("InvoiceInput", () => {
             });
         },
     );
+
+    test("should keep bitcoin-only mode on bitcoin assets when pasting another chain address", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setBitcoinOnly(true);
+        setPairAssets(BTC, LN);
+
+        const input = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        fireEvent.input(input, {
+            target: {
+                value: "el1qq2yjqfz9evc3c5m0rzw0cdtfcdfl5kmcf9xsskpsgza34zhezxzq7y6y4dnldxhtd935k8dn63n8cywy3jlzuvftycsmytjmu",
+            },
+        });
+
+        await waitFor(() => {
+            expect(signals.pair().fromAsset).toEqual(BTC);
+            expect(signals.pair().toAsset).toEqual(LN);
+            expect(signals.onchainAddress()).toEqual("");
+            expect(signals.invoiceValid()).toEqual(false);
+            expect(input.className).toContain("invalid");
+        });
+    });
 });
