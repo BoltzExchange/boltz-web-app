@@ -11,6 +11,7 @@ import {
 } from "ethers";
 import log from "loglevel";
 
+import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
 import {
     type Provider,
@@ -557,6 +558,53 @@ export const quoteOftSend = async (
         oftLimit,
         oftFeeDetails,
         oftReceipt,
+    };
+};
+
+export const buildOftSendAlchemyCall = async ({
+    sourceAsset,
+    destinationChainId,
+    recipient,
+    amount,
+    refundAddress,
+    oftName = defaultOftName,
+}: {
+    sourceAsset: string;
+    destinationChainId: number;
+    recipient: string;
+    amount: bigint;
+    refundAddress: string;
+    oftName?: string;
+}): Promise<AlchemyCall> => {
+    const sourceChainId = config.assets?.[sourceAsset]?.network?.chainId;
+    if (sourceChainId === undefined) {
+        throw new Error(`Missing OFT source chain id for asset ${sourceAsset}`);
+    }
+
+    const oftContract = await getOftContract(sourceChainId, oftName);
+    if (oftContract === undefined) {
+        throw new Error(
+            `Missing OFT contract for chain ${sourceChainId} and OFT ${oftName}`,
+        );
+    }
+
+    const quotedOft = await getQuotedOftContract(sourceAsset, oftName);
+    const { sendParam, msgFee } = await quoteOftSend(
+        quotedOft,
+        destinationChainId,
+        recipient,
+        amount,
+        { oftName },
+    );
+
+    return {
+        to: oftContract.address,
+        data: quotedOft.interface.encodeFunctionData("send", [
+            sendParam,
+            msgFee,
+            refundAddress,
+        ]),
+        value: msgFee[0].toString(),
     };
 };
 
