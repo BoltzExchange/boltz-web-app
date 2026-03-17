@@ -469,6 +469,8 @@ const SendToOft = (props: {
         config.assets?.[props.oft.sourceAsset]?.network?.chainId;
 
     const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
+    const [hasEnoughMsgFee, setHasEnoughMsgFee] =
+        createSignal<boolean>(undefined);
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
     const txSent = createMemo(() => {
@@ -481,7 +483,6 @@ const SendToOft = (props: {
             .then((n) => Number(n.chainId));
     });
 
-    // TODO: also check for enough for msg fee
     createEffect(() => {
         if (signer() === undefined || signerChainId() !== expectedChainId()) {
             return;
@@ -502,6 +503,9 @@ const SendToOft = (props: {
 
             const connectedSigner = signer();
             const signerAddress = await connectedSigner.getAddress();
+            const recipient = getGasAbstractionSigner(
+                props.oft.destinationAsset,
+            ).address;
             const tokenContract = createTokenContract(
                 props.oft.sourceAsset,
                 connectedSigner,
@@ -510,10 +514,25 @@ const SendToOft = (props: {
                 oftContract.address,
                 connectedSigner,
             );
-            const [balance, approvalRequired] = await Promise.all([
-                tokenContract.balanceOf(signerAddress),
-                oftInstance.approvalRequired(),
-            ]);
+            const quotedOftInstance = await getQuotedOftContract(
+                props.oft.sourceAsset,
+            );
+            const [balance, approvalRequired, nativeBalance, { msgFee }] =
+                await Promise.all([
+                    tokenContract.balanceOf(signerAddress),
+                    oftInstance.approvalRequired(),
+                    connectedSigner.provider.getBalance(signerAddress),
+                    quoteOftSend(
+                        quotedOftInstance,
+                        props.oft.destinationChainId,
+                        recipient,
+                        props.amount,
+                    ),
+                ]);
+
+            // Some buffer to pay for gas
+            const requiredNativeBalance =
+                (msgFee[0] * BigInt(110)) / BigInt(100);
 
             let needsApproval = false;
             if (approvalRequired) {
@@ -524,7 +543,26 @@ const SendToOft = (props: {
                 needsApproval = allowance < props.amount;
             }
 
+            const hasEnoughTokenBalance = balance >= props.amount;
+            const hasEnoughNativeBalanceForMsgFee =
+                nativeBalance >= requiredNativeBalance;
+
+            log.info("OFT signer token balance check", {
+                asset: props.oft.sourceAsset,
+                balance: balance.toString(),
+                requiredAmount: props.amount.toString(),
+                sufficient: hasEnoughTokenBalance,
+            });
+            log.info("OFT signer native balance check", {
+                asset: props.oft.sourceAsset,
+                destinationAsset: props.oft.destinationAsset,
+                nativeBalance: nativeBalance.toString(),
+                requiredMsgFee: requiredNativeBalance.toString(),
+                sufficient: hasEnoughNativeBalanceForMsgFee,
+            });
+
             setSignerBalance(balance);
+            setHasEnoughMsgFee(hasEnoughNativeBalanceForMsgFee);
             setNeedsApproval(needsApproval);
             setApprovalTarget(
                 approvalRequired ? oftContract.address : undefined,
@@ -535,7 +573,10 @@ const SendToOft = (props: {
     return (
         <Show when={!txSent()} fallback={<WaitForOft />}>
             <Show
-                when={signerBalance() !== undefined}
+                when={
+                    signerBalance() !== undefined &&
+                    hasEnoughMsgFee() !== undefined
+                }
                 fallback={
                     <Show
                         when={
@@ -554,116 +595,128 @@ const SendToOft = (props: {
                         <InsufficientBalance asset={props.oft.sourceAsset} />
                     }>
                     <Show
-                        when={!needsApproval()}
+                        when={hasEnoughMsgFee()}
                         fallback={
-                            <ApproveErc20
+                            <InsufficientBalance
                                 asset={props.oft.sourceAsset}
-                                value={() => props.amount}
-                                signerAddress={props.signerAddress}
-                                derivationPath={props.derivationPath}
-                                setNeedsApproval={setNeedsApproval}
-                                approvalTarget={approvalTarget()}
                             />
                         }>
-                        <ContractTransaction
-                            asset={props.oft.sourceAsset}
-                            /* eslint-disable-next-line solid/reactivity */
-                            onClick={async () => {
-                                const sourceChainId = expectedChainId();
-                                if (sourceChainId === undefined) {
-                                    throw new Error(
-                                        `missing OFT source chain id for asset: ${props.oft.sourceAsset}`,
-                                    );
-                                }
+                        <Show
+                            when={!needsApproval()}
+                            fallback={
+                                <ApproveErc20
+                                    asset={props.oft.sourceAsset}
+                                    value={() => props.amount}
+                                    signerAddress={props.signerAddress}
+                                    derivationPath={props.derivationPath}
+                                    setNeedsApproval={setNeedsApproval}
+                                    approvalTarget={approvalTarget()}
+                                />
+                            }>
+                            <ContractTransaction
+                                asset={props.oft.sourceAsset}
+                                /* eslint-disable-next-line solid/reactivity */
+                                onClick={async () => {
+                                    const sourceChainId = expectedChainId();
+                                    if (sourceChainId === undefined) {
+                                        throw new Error(
+                                            `missing OFT source chain id for asset: ${props.oft.sourceAsset}`,
+                                        );
+                                    }
 
-                                const connectedSigner = signer();
-                                const recipient = getGasAbstractionSigner(
-                                    props.oft.destinationAsset,
-                                ).address;
-                                log.debug(
-                                    `Sending OFT ${props.oft.destinationAsset} to ${recipient} on chain ${props.oft.destinationChainId}`,
-                                );
-                                const oftContract =
-                                    await getOftContract(sourceChainId);
-                                if (oftContract === undefined) {
-                                    throw new Error(
-                                        `missing OFT contract for chain: ${sourceChainId}`,
-                                    );
-                                }
-
-                                const quotedOftInstance =
-                                    await getQuotedOftContract(
-                                        props.oft.sourceAsset,
-                                    );
-                                const oftInstance = createOftContract(
-                                    oftContract.address,
-                                    connectedSigner,
-                                );
-                                const { sendParam, msgFee } =
-                                    await quoteOftSend(
-                                        quotedOftInstance,
-                                        props.oft.destinationChainId,
-                                        recipient,
-                                        props.amount,
-                                    );
-                                log.debug("Quoted OFT send", {
-                                    swapId: props.swapId,
-                                    sourceAsset: props.oft.sourceAsset,
-                                    destinationAsset:
+                                    const connectedSigner = signer();
+                                    const recipient = getGasAbstractionSigner(
                                         props.oft.destinationAsset,
-                                    destinationChainId:
-                                        props.oft.destinationChainId,
-                                    recipient,
-                                    amount: props.amount.toString(),
-                                    nativeFee: msgFee[0].toString(),
-                                    lzTokenFee: msgFee[1].toString(),
-                                });
-                                const tx = await oftInstance.send(
-                                    sendParam,
-                                    msgFee,
-                                    await signer().getAddress(),
-                                    {
-                                        value: msgFee[0],
-                                    },
-                                );
+                                    ).address;
+                                    log.debug(
+                                        `Sending OFT ${props.oft.destinationAsset} to ${recipient} on chain ${props.oft.destinationChainId}`,
+                                    );
+                                    const oftContract =
+                                        await getOftContract(sourceChainId);
+                                    if (oftContract === undefined) {
+                                        throw new Error(
+                                            `missing OFT contract for chain: ${sourceChainId}`,
+                                        );
+                                    }
 
-                                const currentSwap = await getSwap(props.swapId);
-                                if (currentSwap.oft !== undefined) {
-                                    currentSwap.oft = {
-                                        ...currentSwap.oft,
-                                        txHash: tx.hash,
-                                    };
-                                }
-
-                                setSwap(currentSwap);
-                                await setSwapStorage(currentSwap);
-                                log.info(
-                                    "Persisted OFT send tx hash for background worker",
-                                    {
+                                    const quotedOftInstance =
+                                        await getQuotedOftContract(
+                                            props.oft.sourceAsset,
+                                        );
+                                    const oftInstance = createOftContract(
+                                        oftContract.address,
+                                        connectedSigner,
+                                    );
+                                    const { sendParam, msgFee } =
+                                        await quoteOftSend(
+                                            quotedOftInstance,
+                                            props.oft.destinationChainId,
+                                            recipient,
+                                            props.amount,
+                                        );
+                                    log.debug("Quoted OFT send", {
                                         swapId: props.swapId,
                                         sourceAsset: props.oft.sourceAsset,
                                         destinationAsset:
                                             props.oft.destinationAsset,
                                         destinationChainId:
                                             props.oft.destinationChainId,
-                                        txHash: tx.hash,
-                                    },
-                                );
-                            }}
-                            children={
-                                <ConnectWallet asset={props.oft.sourceAsset} />
-                            }
-                            address={{
-                                address: props.signerAddress,
-                                derivationPath: props.derivationPath,
-                            }}
-                            buttonText={t("send")}
-                            promptText={t("transaction_prompt", {
-                                button: t("send"),
-                            })}
-                            waitingText={t("tx_in_mempool_subline")}
-                            showHr={false}
-                        />
+                                        recipient,
+                                        amount: props.amount.toString(),
+                                        nativeFee: msgFee[0].toString(),
+                                        lzTokenFee: msgFee[1].toString(),
+                                    });
+                                    const tx = await oftInstance.send(
+                                        sendParam,
+                                        msgFee,
+                                        await signer().getAddress(),
+                                        {
+                                            value: msgFee[0],
+                                        },
+                                    );
+
+                                    const currentSwap = await getSwap(
+                                        props.swapId,
+                                    );
+                                    if (currentSwap.oft !== undefined) {
+                                        currentSwap.oft = {
+                                            ...currentSwap.oft,
+                                            txHash: tx.hash,
+                                        };
+                                    }
+
+                                    setSwap(currentSwap);
+                                    await setSwapStorage(currentSwap);
+                                    log.info(
+                                        "Persisted OFT send tx hash for background worker",
+                                        {
+                                            swapId: props.swapId,
+                                            sourceAsset: props.oft.sourceAsset,
+                                            destinationAsset:
+                                                props.oft.destinationAsset,
+                                            destinationChainId:
+                                                props.oft.destinationChainId,
+                                            txHash: tx.hash,
+                                        },
+                                    );
+                                }}
+                                children={
+                                    <ConnectWallet
+                                        asset={props.oft.sourceAsset}
+                                    />
+                                }
+                                address={{
+                                    address: props.signerAddress,
+                                    derivationPath: props.derivationPath,
+                                }}
+                                buttonText={t("send")}
+                                promptText={t("transaction_prompt", {
+                                    button: t("send"),
+                                })}
+                                waitingText={t("tx_in_mempool_subline")}
+                                showHr={false}
+                            />
+                        </Show>
                     </Show>
                 </Show>
             </Show>
