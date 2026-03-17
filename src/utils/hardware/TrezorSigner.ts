@@ -1,4 +1,3 @@
-import type { TransactionLike } from "ethers";
 import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
 
@@ -19,6 +18,11 @@ import {
     getDefaultNetworkAsset,
     getNetworkRpcUrls,
 } from "./HardwareSigner";
+import {
+    type HardwareTransactionLike,
+    resolveHardwareTransaction,
+    toHexQuantity,
+} from "./evmTransaction";
 
 class TrezorSigner implements EIP1193Provider, HardwareSigner {
     private readonly loader: typeof trezorLoader;
@@ -111,7 +115,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
                 await this.initialize();
 
-                const txParams = request.params[0] as TransactionLike;
+                const txParams = request.params[0] as HardwareTransactionLike;
 
                 const [connect, nonce, network, feeData] = await Promise.all([
                     this.loader.get(),
@@ -120,15 +124,32 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                     this.provider.getFeeData(),
                 ]);
 
-                const value = BigInt(txParams.value || 0);
+                const resolvedTx = resolveHardwareTransaction(
+                    txParams,
+                    network.chainId,
+                    nonce,
+                    feeData,
+                );
                 const trezorTx = {
-                    to: txParams.to,
-                    data: txParams.data,
-                    nonce: nonce.toString(16),
-                    chainId: Number(network.chainId),
-                    gasPrice: feeData.gasPrice.toString(16),
-                    value: "0x" + value.toString(16),
-                    gasLimit: (txParams as unknown as { gas: number }).gas,
+                    chainId: Number(resolvedTx.chainId),
+                    data: resolvedTx.data,
+                    gasLimit: toHexQuantity(resolvedTx.gasLimit),
+                    nonce: toHexQuantity(resolvedTx.nonce),
+                    to: resolvedTx.to ?? null,
+                    value: toHexQuantity(resolvedTx.value),
+                    ...(resolvedTx.type === 2
+                        ? {
+                              maxFeePerGas: toHexQuantity(
+                                  resolvedTx.maxFeePerGas,
+                              ),
+                              maxPriorityFeePerGas: toHexQuantity(
+                                  resolvedTx.maxPriorityFeePerGas,
+                              ),
+                              txType: 2,
+                          }
+                        : {
+                              gasPrice: toHexQuantity(resolvedTx.gasPrice),
+                          }),
                 };
 
                 const signature = this.handleError(
@@ -139,10 +160,23 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
                 );
 
                 const transactionLike = {
-                    ...trezorTx,
-                    type: 0,
-                    gasPrice: feeData.gasPrice,
-                    nonce: parseInt(trezorTx.nonce, 16),
+                    chainId: resolvedTx.chainId,
+                    data: resolvedTx.data,
+                    gasLimit: resolvedTx.gasLimit,
+                    nonce: resolvedTx.nonce,
+                    to: resolvedTx.to,
+                    value: resolvedTx.value,
+                    ...(resolvedTx.type === 2
+                        ? {
+                              maxFeePerGas: resolvedTx.maxFeePerGas,
+                              maxPriorityFeePerGas:
+                                  resolvedTx.maxPriorityFeePerGas,
+                              type: 2,
+                          }
+                        : {
+                              gasPrice: resolvedTx.gasPrice,
+                              type: 0,
+                          }),
                     signature: Signature.from(signature.payload),
                 };
 

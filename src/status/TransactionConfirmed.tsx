@@ -17,6 +17,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import {
     AssetKind,
+    TBTC,
     getKindForAsset,
     getTokenAddress,
     isEvmAsset,
@@ -32,7 +33,7 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import { relayClaimTransaction } from "../rif/Signer";
-import { type EncodedHop } from "../utils/Pair";
+import { type EncodedHop, HopsPosition } from "../utils/Pair";
 import {
     encodeDexQuote,
     quoteDexAmountIn,
@@ -952,6 +953,18 @@ const AutoClaimHops = (props: {
 
             currentSwap.claimTx = transactionHash;
             currentSwap.dex.quoteAmount = quote.amount.toString();
+
+            if (
+                props.dex.position === HopsPosition.After &&
+                getFinalAssetReceive(swap()) === TBTC
+            ) {
+                currentSwap.dex.quoteAmount = BigNumber(
+                    currentSwap.dex.quoteAmount,
+                )
+                    .div(10 ** 10)
+                    .toString();
+            }
+
             setSwap(currentSwap);
             await setSwapStorage(currentSwap);
         } catch (e) {
