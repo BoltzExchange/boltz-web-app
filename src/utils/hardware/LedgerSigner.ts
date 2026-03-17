@@ -1,4 +1,3 @@
-import type { TransactionLike } from "ethers";
 import { Signature, Transaction, TypedDataEncoder } from "ethers";
 import log from "loglevel";
 
@@ -14,6 +13,10 @@ import {
     getDefaultNetworkAsset,
     getNetworkRpcUrls,
 } from "./HardwareSigner";
+import {
+    type HardwareTransactionLike,
+    resolveHardwareTransaction,
+} from "./evmTransaction";
 
 class LedgerSigner implements EIP1193Provider, HardwareSigner {
     private static readonly supportedApps = ["Ethereum", "RSK", "RSK Test"];
@@ -99,7 +102,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
             case "eth_sendTransaction": {
                 log.debug("Signing transaction with Ledger");
 
-                const txParams = request.params[0] as TransactionLike;
+                const txParams = request.params[0] as HardwareTransactionLike;
 
                 const [nonce, network, feeData] = await Promise.all([
                     this.provider.getTransactionCount(txParams.from),
@@ -107,14 +110,31 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
                     this.provider.getFeeData(),
                 ]);
 
-                const transactionLike = {
-                    ...txParams,
+                const resolvedTx = resolveHardwareTransaction(
+                    txParams,
+                    network.chainId,
                     nonce,
-                    type: 0,
+                    feeData,
+                );
+                const transactionLike = {
+                    chainId: resolvedTx.chainId,
+                    data: resolvedTx.data,
                     from: undefined,
-                    chainId: network.chainId,
-                    gasPrice: feeData.gasPrice,
-                    gasLimit: (txParams as unknown as { gas: number }).gas,
+                    gasLimit: resolvedTx.gasLimit,
+                    nonce: resolvedTx.nonce,
+                    to: resolvedTx.to,
+                    value: resolvedTx.value,
+                    ...(resolvedTx.type === 2
+                        ? {
+                              maxFeePerGas: resolvedTx.maxFeePerGas,
+                              maxPriorityFeePerGas:
+                                  resolvedTx.maxPriorityFeePerGas,
+                              type: 2,
+                          }
+                        : {
+                              gasPrice: resolvedTx.gasPrice,
+                              type: 0,
+                          }),
                 };
 
                 log.debug("Broadcasting Ledger transaction", transactionLike);
