@@ -92,7 +92,7 @@ const HwAddressSelection = (props: {
     basePath: Accessor<string>;
     setBasePath: Setter<string>;
     provider: Accessor<EIP6963ProviderInfo>;
-    asset: string;
+    asset?: string;
 }) => {
     const limit = 5;
 
@@ -107,10 +107,11 @@ const HwAddressSelection = (props: {
 
     // eslint-disable-next-line solid/reactivity
     const [addresses] = createResource(offset, async () => {
+        const asset = props.asset;
         try {
             const prov = providers()[props.provider().rdns]
                 .provider as unknown as HardwareSigner;
-            prov.setNetworkAsset(props.asset);
+            prov.setNetworkAsset(asset);
 
             const addresses = await prov.deriveAddresses(
                 props.basePath(),
@@ -121,7 +122,9 @@ const HwAddressSelection = (props: {
                 addresses.map(async ({ address, path }) => ({
                     path,
                     address,
-                    balance: await prov.getProvider().getBalance(address),
+                    balance: asset
+                        ? await prov.getProvider().getBalance(address)
+                        : undefined,
                 })),
             );
         } catch (e) {
@@ -156,17 +159,19 @@ const HwAddressSelection = (props: {
                             <h4 class="no-grow">
                                 {cropString(address, 15, 10)}
                             </h4>
-                            <span>
-                                {formatAmount(
-                                    new BigNumber(
-                                        weiToSatoshi(balance).toString(),
-                                    ),
-                                    Denomination.Btc,
-                                    separator(),
-                                    gasTokenSymbol(),
-                                )}{" "}
-                                {gasTokenSymbol()}
-                            </span>
+                            <Show when={balance !== undefined}>
+                                <span>
+                                    {formatAmount(
+                                        new BigNumber(
+                                            weiToSatoshi(balance).toString(),
+                                        ),
+                                        Denomination.Btc,
+                                        separator(),
+                                        gasTokenSymbol(),
+                                    )}{" "}
+                                    {gasTokenSymbol()}
+                                </span>
+                            </Show>
                         </div>
                     </div>
                 )}
@@ -196,7 +201,7 @@ const HwAddressSelection = (props: {
 };
 
 const CustomPath = (props: {
-    asset: string;
+    asset?: string;
     provider: Accessor<EIP6963ProviderInfo>;
     setLoading: Setter<boolean>;
 }) => {
@@ -254,7 +259,7 @@ const CustomPath = (props: {
 };
 
 const HardwareDerivationPaths = (props: {
-    asset: string;
+    asset?: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
     provider: Accessor<EIP6963ProviderInfo>;

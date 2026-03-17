@@ -19,7 +19,11 @@ export type AssetType =
     | typeof TBTC
     | typeof USDT0;
 
-export type RefundableAssetType = typeof BTC | typeof LBTC | typeof RBTC;
+export type RefundableAssetType =
+    | typeof BTC
+    | typeof LBTC
+    | typeof RBTC
+    | typeof TBTC;
 
 const assetDisplayOrder: string[] = [LN, BTC, LBTC, RBTC, TBTC, USDT0];
 
@@ -32,7 +36,7 @@ export const assets: string[] = [
     ),
 ];
 
-export const refundableAssets = [BTC, LBTC, RBTC];
+export const refundableAssets = [BTC, LBTC, RBTC, TBTC];
 
 export const btcChains = [BTC, LBTC];
 

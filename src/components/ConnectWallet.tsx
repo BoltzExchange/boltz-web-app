@@ -16,7 +16,7 @@ import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
 const Modal = (props: {
-    asset: string;
+    asset?: string;
     derivationPath: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
@@ -118,7 +118,7 @@ const Modal = (props: {
 };
 
 const ConnectModal = (props: {
-    asset: string;
+    asset?: string;
     derivationPath: string;
     disabled?: Accessor<boolean>;
 }) => {
@@ -249,11 +249,12 @@ export const SwitchNetwork = (props: { asset: string }) => {
 };
 
 const ConnectWallet = (props: {
-    asset: string;
+    asset?: string;
     derivationPath?: string;
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
     syncAddress?: boolean;
+    skipNetworkCheck?: boolean;
 }) => {
     const { t } = useGlobalContext();
     const { providers, signer } = useWeb3Signer();
@@ -335,7 +336,7 @@ const ConnectWallet = (props: {
                     />
                 }>
                 <Show
-                    when={networkValid()}
+                    when={networkValid() || props.skipNetworkCheck}
                     fallback={<SwitchNetwork asset={props.asset} />}>
                     <ShowAddress
                         address={address}

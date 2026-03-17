@@ -11,21 +11,25 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { config } from "../config";
-import { type RefundableAssetType } from "../consts/Assets";
+import {
+    AssetKind,
+    type AssetType,
+    RBTC,
+    type RefundableAssetType,
+    getKindForAsset,
+} from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim, relayClaimTransaction } from "../rif/Signer";
 import type { LogRefundData } from "../utils/contractLogs";
-import { getLogsFromReceipt } from "../utils/contractLogs";
+import { createAssetProvider, getLogsFromReceipt } from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
 import { getTimeoutEta } from "../utils/rescue";
-import { evmPath } from "../utils/rescueFile";
-import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 
 type RescueData = LogRefundData & { currentHeight: bigint };
 
@@ -66,6 +70,23 @@ const RefundState = (props: {
     );
 };
 
+// Some providers return malformed tx responses (e.g. nonce: "undefined")
+// after the tx has already been submitted. Extract the hash when possible.
+const sendClaimTx = async (
+    send: () => Promise<{ hash: string }>,
+): Promise<string> => {
+    try {
+        return (await send()).hash;
+    } catch (e) {
+        const txData = (e as { value?: { hash?: string } })?.value;
+        if (txData?.hash?.startsWith("0x")) {
+            log.warn("Claim tx sent but response parsing failed:", txData.hash);
+            return txData.hash;
+        }
+        throw e;
+    }
+};
+
 const ClaimState = (props: {
     asset: string;
     lockupTxHash: string;
@@ -74,12 +95,14 @@ const ClaimState = (props: {
 }) => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
-    const { rskRescuableSwaps } = useRescueContext();
+    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+    const { evmRescuableSwaps } = useRescueContext();
     const params = useParams();
 
+    const isErc20 = () => getKindForAsset(props.asset) === AssetKind.ERC20;
+
     const preimage = () => {
-        const swapFromContext = rskRescuableSwaps().find(
+        const swapFromContext = evmRescuableSwaps().find(
             (s) => s.preimageHash === props.claimData.preimageHash,
         );
         return swapFromContext?.preimage
@@ -91,36 +114,62 @@ const ClaimState = (props: {
         const currentPreimage = preimage();
         if (!currentPreimage) return;
 
+        const asset = props.asset;
+        const { amount, tokenAddress, claimAddress, refundAddress, timelock } =
+            props.claimData;
+        const preimageHex = prefix0x(currentPreimage.toString("hex"));
+
         try {
             let transactionHash: string;
 
-            const balance = await signer().provider.getBalance(
-                await signer().getAddress(),
-            );
-            const gasPrice = (await signer().provider.getFeeData()).gasPrice;
-            const useRif =
-                gasPrice === null || balance <= gasPrice * GasNeededToClaim;
+            const isRsk = asset === RBTC;
+            let useRif = false;
+
+            if (isRsk) {
+                const balance = await signer().provider.getBalance(
+                    await signer().getAddress(),
+                );
+                const gasPrice = (await signer().provider.getFeeData())
+                    .gasPrice;
+                useRif =
+                    gasPrice === null || balance <= gasPrice * GasNeededToClaim;
+            }
 
             if (useRif) {
                 transactionHash = await relayClaimTransaction(
                     signer(),
-                    getEtherSwap(props.asset),
+                    getEtherSwap(asset),
                     currentPreimage.toString("hex"),
-                    Number(props.claimData.amount),
-                    props.claimData.refundAddress,
-                    Number(props.claimData.timelock),
+                    amount,
+                    refundAddress,
+                    timelock,
+                );
+            } else if (isErc20()) {
+                const rawAmount = satsToAssetAmount(amount, asset);
+                const erc20Swap = getErc20Swap(asset);
+                transactionHash = await sendClaimTx(() =>
+                    erc20Swap[
+                        "claim(bytes32,uint256,address,address,address,uint256)"
+                    ](
+                        preimageHex,
+                        rawAmount,
+                        tokenAddress,
+                        claimAddress,
+                        refundAddress,
+                        timelock,
+                    ),
                 );
             } else {
-                transactionHash = (
-                    await getEtherSwap(props.asset)[
-                        "claim(bytes32,uint256,address,uint256)"
-                    ](
-                        prefix0x(currentPreimage.toString("hex")),
-                        satoshiToWei(Number(props.claimData.amount)),
-                        props.claimData.refundAddress,
-                        props.claimData.timelock,
-                    )
-                ).hash;
+                const rawAmount = satsToAssetAmount(amount, asset);
+                const etherSwap = getEtherSwap(asset);
+                transactionHash = await sendClaimTx(() =>
+                    etherSwap["claim(bytes32,uint256,address,uint256)"](
+                        preimageHex,
+                        rawAmount,
+                        refundAddress,
+                        timelock,
+                    ),
+                );
             }
 
             props.setClaimTxId(transactionHash);
@@ -147,10 +196,7 @@ const ClaimState = (props: {
                 asset={props.asset}
                 onClick={claimTransaction}
                 address={{
-                    address: props.claimData.claimAddress,
-                    derivationPath: evmPath(
-                        config.assets[props.asset].network.chainId,
-                    ),
+                    address: undefined,
                 }}
                 buttonText={t("continue")}
                 promptText={t("transaction_prompt_receive", {
@@ -171,7 +217,12 @@ const RescueEvm = () => {
     }>();
 
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
+    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+
+    const getSwapContract = (asset: string) =>
+        getKindForAsset(asset) === AssetKind.ERC20
+            ? getErc20Swap(asset)
+            : getEtherSwap(asset);
 
     const [refundTxId, setRefundTxId] = createSignal<string | undefined>(
         undefined,
@@ -185,13 +236,19 @@ const RescueEvm = () => {
             return undefined;
         }
 
+        const provider = createAssetProvider(params.asset);
+        const contract = getSwapContract(params.asset).connect(
+            provider,
+        ) as ReturnType<typeof getSwapContract>;
+
         const [logData, currentHeight] = await Promise.all([
             getLogsFromReceipt(
-                signer(),
-                getEtherSwap(params.asset),
+                provider,
+                params.asset as AssetType,
+                contract,
                 params.txHash,
             ),
-            signer().provider.getBlockNumber(),
+            provider.getBlockNumber(),
         ]);
 
         return {

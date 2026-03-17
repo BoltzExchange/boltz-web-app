@@ -7,6 +7,7 @@ import {
     LBTC,
     RBTC,
     type RefundableAssetType,
+    TBTC,
     refundableAssets,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -34,6 +35,7 @@ export const blockTimeMinutes: Record<RefundableAssetType, number> = {
     [BTC]: 10,
     [LBTC]: 1,
     [RBTC]: 25 / 60,
+    [TBTC]: 0.25 / 60,
 };
 
 export const getNetworkName = (asset: string) => {
@@ -44,6 +46,8 @@ export const getNetworkName = (asset: string) => {
             return "Liquid";
         case RBTC:
             return "Rootstock";
+        case TBTC:
+            return "Arbitrum";
         default:
             return "";
     }
