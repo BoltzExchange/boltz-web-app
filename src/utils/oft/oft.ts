@@ -15,7 +15,7 @@ import { config } from "../../config";
 import {
     type Provider,
     createAssetProvider,
-    getAssetRpcUrls,
+    requireRpcUrls,
 } from "../provider";
 
 // TODO: legacy mesh is not supported yet
@@ -223,7 +223,7 @@ const getOftChain = async (
 };
 
 export const getOftProvider = (sourceAsset: string): Provider => {
-    const rpcUrls = getAssetRpcUrls(sourceAsset);
+    const rpcUrls = requireRpcUrls(sourceAsset);
     const cacheKey = `${sourceAsset}:${rpcUrls.join(",")}`;
     const cached = providerCache.get(cacheKey);
     if (cached) {

@@ -45,10 +45,7 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import {
-    createAssetProvider,
-    getOptionalAssetRpcUrls,
-} from "../utils/provider";
+import { createAssetProvider, getRpcUrls } from "../utils/provider";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/qouter";
 import ErrorWasm from "./ErrorWasm";
 
@@ -122,7 +119,7 @@ const Create = () => {
         );
     };
     const gasTopUpTrigger = createMemo(() => {
-        const rpcUrls = getOptionalAssetRpcUrls(pair().toAsset);
+        const rpcUrls = getRpcUrls(pair().toAsset);
         const gasTopUpEnabled = gasTopUp();
         const supported = gasTopUpSupported(pair().toAsset);
         const connected = connectedDestination();

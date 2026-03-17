@@ -5,8 +5,8 @@ import {
 
 import {
     createAssetProvider,
-    getAssetRpcUrls,
-    getOptionalAssetRpcUrls,
+    getRpcUrls,
+    requireRpcUrls,
 } from "../../src/utils/provider";
 
 vi.mock("../../src/config", () => ({
@@ -44,7 +44,7 @@ describe("provider utils", () => {
     test("creates a fallback provider for multi-rpc assets", () => {
         createAssetProvider("MULTI");
 
-        expect(getAssetRpcUrls("MULTI")).toEqual([
+        expect(requireRpcUrls("MULTI")).toEqual([
             "https://one.example",
             "https://two.example",
             "https://three.example",
@@ -71,7 +71,7 @@ describe("provider utils", () => {
     });
 
     test("treats empty rpc configuration as unavailable", () => {
-        expect(getOptionalAssetRpcUrls("EMPTY")).toBeUndefined();
+        expect(getRpcUrls("EMPTY")).toBeUndefined();
         expect(() => createAssetProvider("EMPTY")).toThrow(
             /missing RPC configuration/,
         );

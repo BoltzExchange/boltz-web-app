@@ -46,8 +46,8 @@ import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
 import {
     createAssetProvider,
-    getAssetRpcUrls,
-    getOptionalAssetRpcUrls,
+    getRpcUrls,
+    requireRpcUrls,
 } from "../utils/provider";
 import { useGlobalContext } from "./Global";
 
@@ -200,7 +200,7 @@ const Web3SignerProvider = (props: {
     const getGasAbstractionSigner = (asset: string): Wallet => {
         const assetConfig = config.assets?.[asset];
         const chainId = assetConfig?.network?.chainId;
-        const rpcUrls = getOptionalAssetRpcUrls(asset);
+        const rpcUrls = getRpcUrls(asset);
 
         if (chainId === undefined || rpcUrls === undefined) {
             throw new Error(`missing network config for asset: ${asset}`);
@@ -521,7 +521,7 @@ const Web3SignerProvider = (props: {
                 const addChainParams: AddEthereumChainParams = {
                     chainId: sanitizedChainId,
                     chainName: assetConfig.network.chainName,
-                    rpcUrls: getAssetRpcUrls(asset),
+                    rpcUrls: requireRpcUrls(asset),
                     nativeCurrency: assetConfig.network.nativeCurrency,
                 };
 

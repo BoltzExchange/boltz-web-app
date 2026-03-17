@@ -1,9 +1,5 @@
 import { config } from "../../config";
-import {
-    type Provider,
-    getAssetRpcUrls,
-    getOptionalAssetRpcUrls,
-} from "../provider";
+import { type Provider, getRpcUrls } from "../provider";
 
 export const derivationPaths = {
     Ethereum: "44'/60'/0'/0",
@@ -17,11 +13,9 @@ export const derivationPathsTestnet = {
     ["Rootstock Testnet"]: "44'/37310'/0'/0",
 };
 
-export const getNetworkRpcUrls = getAssetRpcUrls;
-
 export const getDefaultNetworkAsset = (): string => {
     const asset = Object.entries(config.assets ?? {}).find(
-        ([asset]) => (getOptionalAssetRpcUrls(asset)?.length ?? 0) > 0,
+        ([asset]) => (getRpcUrls(asset)?.length ?? 0) > 0,
     )?.[0];
 
     if (asset === undefined) {
