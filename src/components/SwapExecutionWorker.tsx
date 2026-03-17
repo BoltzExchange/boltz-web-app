@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import log from "loglevel";
-import { createEffect, onMount } from "solid-js";
+import { createEffect, onCleanup, onMount } from "solid-js";
 
 import { config } from "../config";
 import { getTokenAddress } from "../consts/Assets";
@@ -16,7 +16,7 @@ import {
 } from "../context/Web3";
 import { HopsPosition } from "../utils/Pair";
 import { encodeDexQuote } from "../utils/boltzClient";
-import { calculateAmountWithSlippage } from "../utils/calculate";
+import { calculateAmountOutMin } from "../utils/calculate";
 import { postCommitmentSignatureForTransaction } from "../utils/commitment";
 import {
     assertTransactionSignerProvider,
@@ -41,6 +41,7 @@ import {
 } from "../utils/swapCreator";
 
 const retryIntervalMs = 1_000;
+const taskRetryIntervalMs = 3_000;
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -52,13 +53,6 @@ const getSwapExecutionLogContext = (
     swapId,
     ...extra,
 });
-
-const calculateAmountOutMin = (amountOut: bigint, slippage: number): bigint => {
-    const amountWithSlippage = calculateAmountWithSlippage(amountOut, slippage);
-    const slippageAmount = amountWithSlippage - amountOut;
-
-    return amountOut - slippageAmount;
-};
 
 const withBrowserLock = async <T,>(name: string, fn: () => Promise<T>) => {
     if (navigator.locks?.request === undefined) {
@@ -127,12 +121,35 @@ const needsCommitmentPost = (swap: SomeSwap | null | undefined) =>
     !swap.commitmentSignatureSubmitted &&
     isPendingCommitmentStatus(swap.status);
 
+type TaskStage = "pre-oft" | "commitment";
+
+const isTaskRelevant = (
+    stage: TaskStage,
+    swap: SomeSwap | null | undefined,
+) => {
+    switch (stage) {
+        case "pre-oft":
+            return needsPreOftLockup(swap);
+
+        case "commitment":
+            return needsCommitmentPost(swap);
+
+        default: {
+            const exhaustiveStage: never = stage;
+            throw new Error(
+                `unsupported swap execution stage: ${String(exhaustiveStage)}`,
+            );
+        }
+    }
+};
+
 export const SwapExecutionWorker = () => {
     const { getSwap, getSwaps, setSwapStorage, slippage } = useGlobalContext();
     const { swap, setSwap } = usePayContext();
     const { getErc20Swap, getGasAbstractionSigner, signer } = useWeb3Signer();
 
     const runningTasks = new Set<string>();
+    const scheduledRetries = new Map<string, number>();
 
     const persistSwap = async (updatedSwap: SomeSwap) => {
         await setSwapStorage(updatedSwap);
@@ -426,12 +443,62 @@ export const SwapExecutionWorker = () => {
         queueRelevantTasks(latestSwap);
     };
 
+    const clearScheduledRetry = (taskId: string) => {
+        const timeout = scheduledRetries.get(taskId);
+        if (timeout === undefined) {
+            return;
+        }
+
+        window.clearTimeout(timeout);
+        scheduledRetries.delete(taskId);
+    };
+
+    const scheduleTaskRetry = (swapId: string, stage: TaskStage) => {
+        const taskId = `${stage}:${swapId}`;
+        if (scheduledRetries.has(taskId)) {
+            log.debug("Swap execution task retry already scheduled", {
+                taskId,
+            });
+            return;
+        }
+
+        const timeout = window.setTimeout(async () => {
+            scheduledRetries.delete(taskId);
+
+            const latestSwap = await getSwap<SomeSwap>(swapId);
+            if (!isTaskRelevant(stage, latestSwap)) {
+                log.debug(
+                    "Swap execution task no longer relevant before retry",
+                    {
+                        taskId,
+                        swapId,
+                    },
+                );
+                return;
+            }
+
+            log.info("Swap execution retrying failed task", {
+                taskId,
+                swapId,
+            });
+            queueRelevantTasks(latestSwap);
+        }, taskRetryIntervalMs);
+
+        scheduledRetries.set(taskId, timeout);
+        log.debug("Swap execution task retry scheduled", {
+            taskId,
+            swapId,
+            retryDelayMs: taskRetryIntervalMs,
+        });
+    };
+
     const runTask = async (
         swapId: string,
-        stage: string,
+        stage: TaskStage,
         handler: (currentSwap: SomeSwap) => Promise<void>,
     ) => {
         const taskId = `${stage}:${swapId}`;
+        clearScheduledRetry(taskId);
         if (runningTasks.has(taskId)) {
             log.debug("Swap execution task already running", { taskId });
             return;
@@ -454,9 +521,9 @@ export const SwapExecutionWorker = () => {
             log.debug("Swap execution task completed", { taskId });
         } catch (error) {
             const latestSwap = await getSwap<SomeSwap>(swapId);
-            if (stage === "pre-oft" && !needsPreOftLockup(latestSwap)) {
+            if (!isTaskRelevant(stage, latestSwap)) {
                 log.debug(
-                    "Swap execution pre-OFT task no longer relevant after failure",
+                    "Swap execution task no longer relevant after failure",
                     {
                         taskId,
                         swapId,
@@ -466,6 +533,7 @@ export const SwapExecutionWorker = () => {
             }
 
             log.warn(`swap execution task ${taskId} failed`, error);
+            scheduleTaskRetry(swapId, stage);
         } finally {
             runningTasks.delete(taskId);
         }
@@ -557,6 +625,13 @@ export const SwapExecutionWorker = () => {
     createEffect(() => {
         signer();
         void scanStoredSwaps();
+    });
+
+    onCleanup(() => {
+        for (const timeout of scheduledRetries.values()) {
+            window.clearTimeout(timeout);
+        }
+        scheduledRetries.clear();
     });
 
     return "";

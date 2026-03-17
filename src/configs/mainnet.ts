@@ -100,7 +100,10 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 14,
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
         blockExplorerUrl: "https://flarescan.com",
-        rpcUrls: ["https://rpc.ankr.com/flare"],
+        rpcUrls: [
+            "https://rpc.ankr.com/flare",
+            "https://flare-api.flare.network/ext/C/rpc",
+        ],
     },
     {
         asset: "USDT0-HYPE",
@@ -162,7 +165,10 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 143,
         tokenAddress: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D",
         blockExplorerUrl: "https://monadexplorer.com",
-        rpcUrls: ["https://rpc3.monad.xyz"],
+        rpcUrls: [
+            "https://rpc3.monad.xyz",
+            "https://rpc-mainnet.monadinfra.com",
+        ],
     },
     {
         asset: "USDT0-MORPH",
