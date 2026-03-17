@@ -7,6 +7,8 @@ import bitcoin from "../assets/bitcoin-icon.svg";
 import lightning from "../assets/lightning-icon.svg";
 import liquid from "../assets/liquid-icon.svg";
 import rbtc from "../assets/rootstock-icon.svg";
+import tbtc from "../assets/tbtc-icon.svg";
+import usdt from "../assets/usdt-icon.svg";
 import ExternalLink from "../components/ExternalLink";
 import { config } from "../config";
 import { BTC } from "../consts/Assets";
@@ -92,10 +94,22 @@ export const Hero = () => {
                         <h2>{t("assets")}</h2>
                         <h3>{t("assets_sub")}</h3>
                         <hr />
-                        <img src={lightning} alt="Lightning Bitcoin" />
-                        <img src={bitcoin} alt="Bitcoin" />
-                        <img src={liquid} alt="Liquid Bitcoin" />
-                        <img src={rbtc} alt="Rootstock Bitcoin" />
+                        <div class="hero-icons">
+                            <img
+                                src={lightning}
+                                alt="Lightning Bitcoin"
+                                class="full-bleed"
+                            />
+                            <img src={bitcoin} alt="Bitcoin" class="padded" />
+                            <img
+                                src={liquid}
+                                alt="Liquid Bitcoin"
+                                class="padded"
+                            />
+                            <img src={rbtc} alt="Rootstock Bitcoin" />
+                            <img src={tbtc} alt="tBTC" class="full-bleed" />
+                            <img src={usdt} alt="USDT" class="full-bleed" />
+                        </div>
                     </div>
                 </div>
                 <h2 class="headline">{t("node")}</h2>

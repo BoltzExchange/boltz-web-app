@@ -96,14 +96,19 @@
     }
 }
 
-.asset-USDT0 {
+.asset-USDT {
     .icon {
         background-image: vars.$usdt0_icon;
         background-size: 80%;
         background-position: center;
     }
+
+    &:not([data-network]) .icon {
+        background-image: vars.$usdt_icon;
+        background-size: 75%;
+    }
     .asset-text:before {
-        content: "USDT0";
+        content: "USDT";
     }
 }
 
@@ -130,6 +135,11 @@
 [data-network="ethereum"] {
     @include network-badge(vars.$ethereum_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$ethereum_icon);
+
+    &.asset-USDT .icon {
+        background-image: vars.$usdt_icon;
+        background-size: 75%;
+    }
 }
 
 [data-network="flare"] {

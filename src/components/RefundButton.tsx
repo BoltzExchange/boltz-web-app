@@ -522,7 +522,9 @@ export const RefundBtc = (props: {
         if (valid() || !refundAddress() || !props.swap()) {
             return t("refund");
         }
-        return t("invalid_address", { asset: props.swap()?.assetSend });
+        return t("invalid_address", {
+            asset: props.swap()?.assetSend ?? "",
+        });
     });
 
     return (
@@ -538,7 +540,7 @@ export const RefundBtc = (props: {
                 <h3 style={{ color: "var(--color-text)" }}>
                     {props.swap()
                         ? t("refund_address_header", {
-                              asset: props.swap()?.assetSend,
+                              asset: props.swap()?.assetSend ?? "",
                           })
                         : t("refund_address_header_no_asset")}
                 </h3>
@@ -556,7 +558,7 @@ export const RefundBtc = (props: {
                     placeholder={
                         props.swap()
                             ? t("onchain_address", {
-                                  asset: props.swap()?.assetSend,
+                                  asset: props.swap()?.assetSend ?? "",
                               })
                             : t("onchain_address_no_asset")
                     }

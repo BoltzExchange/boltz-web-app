@@ -35,17 +35,21 @@ const Terms: Component = () => {
             <h2>3. Service Description</h2>
             <p>
                 The Service allows users to swap between different Bitcoin
-                layers. Boltz Swaps use advanced cryptography and are
-                non-custodial, which means users retain full control of their
-                bitcoin throughout the entire flow of a swap. Users need to
-                provide the following information to use the Service:
+                layers and supported digital assets. Boltz does not operate swap
+                infrastructure for non-Bitcoin-denominated assets (e.g.
+                stablecoins); these swaps are facilitated through third-party
+                liquidity protocols and executed client-side. All Boltz Swaps
+                use advanced cryptography and are non-custodial, which means
+                users retain full control of their assets throughout the entire
+                flow of a swap. Users need to provide the following information
+                to use the Service:
             </p>
             <p>
-                3.1. Select the Bitcoin layer that you want to swap from and the
-                Bitcoin layer that you want to swap to (jointly referred to as
-                "swap pair").
+                3.1. Select the asset and network that you want to swap from and
+                the asset and network that you want to swap to (jointly referred
+                to as "swap pair").
             </p>
-            <p>3.2. Select the amount of bitcoin to be swapped.</p>
+            <p>3.2. Select the amount to be swapped.</p>
             <p>
                 3.3. Provide the destination information where the swapped
                 amount will be sent.
@@ -122,9 +126,12 @@ const Terms: Component = () => {
                 4.13. You agree that there are risks associated with
                 Internet-based systems, such as the failure of hardware,
                 software, and Internet connections and with the different
-                Bitcoin protocols, such as any malfunction, unintended function,
-                unexpected functioning of or attack on the Bitcoin layer's
-                protocol.
+                blockchain protocols, such as any malfunction, unintended
+                function, unexpected functioning of or attack on a protocol.
+                This includes risks specific to EVM-compatible networks and
+                smart contracts, such as smart contract vulnerabilities, network
+                congestion, gas price fluctuations, and bridge or cross-chain
+                messaging failures.
             </p>
             <p>
                 4.14. Users shall not use sending/destination addresses or
@@ -166,6 +173,23 @@ const Terms: Component = () => {
                 bodies for the prevention and disclosure of prohibited or
                 illegal actions.
             </p>
+            <p>
+                4.19. For swaps involving assets that are not denominated in
+                Bitcoin (e.g. stablecoins), you acknowledge and accept exchange
+                rate risk. Rates may fluctuate between the time you initiate a
+                swap and when it is executed. Boltz does not provide any
+                guarantees regarding exchange rates.
+            </p>
+            <p>
+                4.20. Certain supported assets are issued or managed by third
+                parties and may be swapped via third-party liquidity protocols
+                not operated by Boltz. Boltz disclaims any responsibility for
+                the actions or failures of token issuers, bridge operators, or
+                liquidity protocols, including but not limited to freezing or
+                blacklisting of addresses, loss of peg, bridge failures,
+                liquidity shortfalls, or changes to token contracts. You
+                acknowledge and accept these risks when swapping such assets.
+            </p>
 
             <h2>5. Contact Info</h2>
             <p>
@@ -183,7 +207,7 @@ const Terms: Component = () => {
             </p>
 
             <p class="last-updated">
-                <strong>Last updated: June 16, 2025</strong>
+                <strong>Last updated: March 16, 2026</strong>
             </p>
         </div>
     );

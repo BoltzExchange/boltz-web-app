@@ -126,7 +126,9 @@ const AddressInput = () => {
             if (inputValue.length !== 0) {
                 log.debug(`Invalid address input: ${formatError(e)}`);
 
-                const msg = t("invalid_address", { asset: pair().toAsset });
+                const msg = t("invalid_address", {
+                    asset: pair().toAsset,
+                });
                 input.classList.add("invalid");
                 input.setCustomValidity(msg);
             }
@@ -156,7 +158,9 @@ const AddressInput = () => {
             data-testid="onchainAddress"
             name="onchainAddress"
             autocomplete="off"
-            placeholder={t("onchain_address", { asset: pair().toAsset })}
+            placeholder={t("onchain_address", {
+                asset: pair().toAsset,
+            })}
             value={onchainAddress()}
         />
     );

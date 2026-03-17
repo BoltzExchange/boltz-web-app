@@ -294,7 +294,9 @@ const CreateButton = () => {
                     if (!addressValid()) {
                         setButtonLabel({
                             key: "invalid_address",
-                            params: { asset: assetReceive() },
+                            params: {
+                                asset: assetReceive(),
+                            },
                         });
                         return;
                     }
