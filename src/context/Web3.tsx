@@ -44,7 +44,11 @@ import { getContracts } from "../utils/boltzClient";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
-import { createProvider } from "../utils/provider";
+import {
+    createAssetProvider,
+    getRpcUrls,
+    requireRpcUrls,
+} from "../utils/provider";
 import { useGlobalContext } from "./Global";
 
 declare global {
@@ -196,7 +200,7 @@ const Web3SignerProvider = (props: {
     const getGasAbstractionSigner = (asset: string): Wallet => {
         const assetConfig = config.assets?.[asset];
         const chainId = assetConfig?.network?.chainId;
-        const rpcUrls = assetConfig?.network?.rpcUrls;
+        const rpcUrls = getRpcUrls(asset);
 
         if (chainId === undefined || rpcUrls === undefined) {
             throw new Error(`missing network config for asset: ${asset}`);
@@ -204,7 +208,7 @@ const Web3SignerProvider = (props: {
 
         return new Wallet(
             hex.encode(deriveKeyGasAbstraction(chainId).privateKey),
-            createProvider(rpcUrls),
+            createAssetProvider(asset),
         );
     };
 
@@ -326,7 +330,6 @@ const Web3SignerProvider = (props: {
         asset: string,
         contractType: keyof ContractAddresses,
     ) => {
-        const assetConfig = config.assets?.[asset];
         const assetContracts = getContractsForAsset(asset);
         const address = assetContracts?.swapContracts[contractType];
         const version = Number(
@@ -347,7 +350,7 @@ const Web3SignerProvider = (props: {
         return new Contract(
             assetContracts?.swapContracts[contractType],
             abi,
-            signer() || createProvider(assetConfig?.network?.rpcUrls),
+            signer() || createAssetProvider(asset),
         ) as unknown as T;
     };
 
@@ -518,7 +521,7 @@ const Web3SignerProvider = (props: {
                 const addChainParams: AddEthereumChainParams = {
                     chainId: sanitizedChainId,
                     chainName: assetConfig.network.chainName,
-                    rpcUrls: assetConfig.network.rpcUrls,
+                    rpcUrls: requireRpcUrls(asset),
                     nativeCurrency: assetConfig.network.nativeCurrency,
                 };
 

@@ -1133,7 +1133,13 @@ const ClaimEvm = (props: {
         );
 
         currentSwap.claimTx = transactionHash;
-        currentSwap.receiveAmount = Number(receiveAmount.toString());
+        if (getFinalAssetReceive(currentSwap) === TBTC) {
+            currentSwap.receiveAmount = Math.floor(
+                Number(receiveAmount.toString()) / 10 ** 10,
+            );
+        } else {
+            currentSwap.receiveAmount = Number(receiveAmount.toString());
+        }
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
     };

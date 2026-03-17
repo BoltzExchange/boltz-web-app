@@ -5,13 +5,12 @@ import type { EIP1193Provider } from "../../consts/Types";
 import type { DictKey } from "../../i18n/i18n";
 import type { Transport } from "../../lazy/ledger";
 import ledgerLoader from "../../lazy/ledger";
-import { type Provider, createProvider } from "../provider";
+import { type Provider, createProvider, requireRpcUrls } from "../provider";
 import {
     type DerivedAddress,
     type HardwareSigner,
     derivationPaths,
     getDefaultNetworkAsset,
-    getNetworkRpcUrls,
 } from "./HardwareSigner";
 import {
     type HardwareTransactionLike,
@@ -36,7 +35,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
     ) {
         this.loader = ledgerLoader;
         this.networkAsset = getDefaultNetworkAsset();
-        this.provider = createProvider(getNetworkRpcUrls(this.networkAsset));
+        this.provider = createProvider(requireRpcUrls(this.networkAsset));
     }
 
     public getProvider = (): Provider => this.provider;
@@ -47,7 +46,7 @@ class LedgerSigner implements EIP1193Provider, HardwareSigner {
         }
 
         this.networkAsset = asset;
-        this.provider = createProvider(getNetworkRpcUrls(asset));
+        this.provider = createProvider(requireRpcUrls(asset));
     };
 
     public deriveAddresses = async (

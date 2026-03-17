@@ -9,14 +9,13 @@ import type {
     Unsuccessful,
 } from "../../lazy/trezor";
 import trezorLoader from "../../lazy/trezor";
-import { type Provider, createProvider } from "../provider";
+import { type Provider, createProvider, requireRpcUrls } from "../provider";
 import { trimPrefix } from "../strings";
 import {
     type DerivedAddress,
     type HardwareSigner,
     derivationPaths,
     getDefaultNetworkAsset,
-    getNetworkRpcUrls,
 } from "./HardwareSigner";
 import {
     type HardwareTransactionLike,
@@ -34,7 +33,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
 
     constructor() {
         this.networkAsset = getDefaultNetworkAsset();
-        this.provider = createProvider(getNetworkRpcUrls(this.networkAsset));
+        this.provider = createProvider(requireRpcUrls(this.networkAsset));
         this.setDerivationPath(derivationPaths.Ethereum);
         this.loader = trezorLoader;
     }
@@ -47,7 +46,7 @@ class TrezorSigner implements EIP1193Provider, HardwareSigner {
         }
 
         this.networkAsset = asset;
-        this.provider = createProvider(getNetworkRpcUrls(asset));
+        this.provider = createProvider(requireRpcUrls(asset));
     };
 
     public deriveAddresses = async (
