@@ -4,15 +4,16 @@ import {
     JsonRpcProvider,
 } from "ethers";
 
+import { config } from "../config";
 import { formatError } from "./errors";
 
 export type Provider = EthersProvider & {
     send: (method: string, params: unknown[]) => Promise<unknown>;
 };
 
-export class FallbackProvider extends EthersFallbackProvider {
+class FallbackProvider extends EthersFallbackProvider {
     constructor(private readonly providers: JsonRpcProvider[]) {
-        super(providers);
+        super(providers, undefined, { quorum: 1 });
     }
 
     public send = async (
@@ -33,10 +34,34 @@ export class FallbackProvider extends EthersFallbackProvider {
     };
 }
 
-export const createProvider = (rpcUrls: string[]): Provider => {
+export const getOptionalAssetRpcUrls = (
+    asset: string,
+): string[] | undefined => {
+    const rpcUrls = config.assets?.[asset]?.network?.rpcUrls;
+
+    return rpcUrls && rpcUrls.length > 0 ? rpcUrls : undefined;
+};
+
+export const getAssetRpcUrls = (asset: string): string[] => {
+    const rpcUrls = getOptionalAssetRpcUrls(asset);
+    if (rpcUrls === undefined || rpcUrls.length === 0) {
+        throw new Error(`missing RPC configuration for asset: ${asset}`);
+    }
+
+    return rpcUrls;
+};
+
+export const createProvider = (rpcUrls: string[] | undefined): Provider => {
+    if (rpcUrls === undefined || rpcUrls.length === 0) {
+        throw new Error("missing RPC configuration");
+    }
+
     if (rpcUrls.length === 1) {
         return new JsonRpcProvider(rpcUrls[0]);
     }
 
     return new FallbackProvider(rpcUrls.map((url) => new JsonRpcProvider(url)));
 };
+
+export const createAssetProvider = (asset: string): Provider =>
+    createProvider(getAssetRpcUrls(asset));

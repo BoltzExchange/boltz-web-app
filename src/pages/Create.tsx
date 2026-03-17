@@ -45,7 +45,10 @@ import {
     getValidationRegex,
 } from "../utils/denomination";
 import { isMobile } from "../utils/helper";
-import { createProvider } from "../utils/provider";
+import {
+    createAssetProvider,
+    getOptionalAssetRpcUrls,
+} from "../utils/provider";
 import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/qouter";
 import ErrorWasm from "./ErrorWasm";
 
@@ -119,7 +122,7 @@ const Create = () => {
         );
     };
     const gasTopUpTrigger = createMemo(() => {
-        const rpcUrls = config.assets?.[pair().toAsset]?.network?.rpcUrls;
+        const rpcUrls = getOptionalAssetRpcUrls(pair().toAsset);
         const gasTopUpEnabled = gasTopUp();
         const supported = gasTopUpSupported(pair().toAsset);
         const connected = connectedDestination();
@@ -186,7 +189,7 @@ const Create = () => {
                     rpcUrlCount: rpcUrls.length,
                 });
                 const balance =
-                    await createProvider(rpcUrls).getBalance(address);
+                    await createAssetProvider(asset).getBalance(address);
                 const gasTokenCostWei = await getGasTopUpNativeAmount(asset);
                 log.info("Gas top-up balance check", {
                     asset,

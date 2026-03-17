@@ -1,7 +1,6 @@
 import {
     Contract,
     type ContractRunner,
-    JsonRpcProvider,
     type Log,
     type TransactionReceipt,
     ZeroAddress,
@@ -13,6 +12,11 @@ import {
 import log from "loglevel";
 
 import { config } from "../../config";
+import {
+    type Provider,
+    createAssetProvider,
+    getAssetRpcUrls,
+} from "../provider";
 
 // TODO: legacy mesh is not supported yet
 // TODO: review quote methods
@@ -40,7 +44,7 @@ type OftRegistry = Record<string, OftTokenConfig>;
 
 const oftDeploymentsEndpoint = "https://docs.usdt0.to/api/deployments";
 const defaultOftName = "usdt0";
-const providerCache = new Map<string, JsonRpcProvider>();
+const providerCache = new Map<string, Provider>();
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
 
 const oftAbi = [
@@ -218,22 +222,19 @@ const getOftChain = async (
     return getOftChains(tokenConfig).find((chain) => chain.chainId === chainId);
 };
 
-export const getOftProvider = (sourceAsset: string): JsonRpcProvider => {
-    const rpcUrl = config.assets?.[sourceAsset]?.network?.rpcUrls[0];
-    if (!rpcUrl) {
-        throw new Error(`Missing RPC URL for OFT source asset ${sourceAsset}`);
-    }
-
-    const cached = providerCache.get(rpcUrl);
+export const getOftProvider = (sourceAsset: string): Provider => {
+    const rpcUrls = getAssetRpcUrls(sourceAsset);
+    const cacheKey = `${sourceAsset}:${rpcUrls.join(",")}`;
+    const cached = providerCache.get(cacheKey);
     if (cached) {
         return cached;
     }
 
-    const provider = new JsonRpcProvider(rpcUrl);
-    providerCache.set(rpcUrl, provider);
+    const provider = createAssetProvider(sourceAsset);
+    providerCache.set(cacheKey, provider);
     log.debug("Created OFT provider", {
         sourceAsset,
-        rpcUrl,
+        rpcUrlCount: rpcUrls.length,
     });
     return provider;
 };
@@ -416,7 +417,7 @@ export const getOftReceivedGuid = (
 
 export const getOftReceivedEventByGuid = async (
     contract: OftContractInstance,
-    provider: Pick<JsonRpcProvider, "getLogs">,
+    provider: Pick<Provider, "getLogs">,
     contractAddress: string,
     guid: string,
 ): Promise<OftReceivedEvent | undefined> => {
