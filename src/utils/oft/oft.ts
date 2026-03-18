@@ -13,6 +13,7 @@ import log from "loglevel";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
+import { formatError } from "../errors";
 import {
     type Provider,
     createAssetProvider,
@@ -199,7 +200,16 @@ const fetchOftDeployments = async (): Promise<OftRegistry> => {
 
 const getOftDeployments = (): Promise<OftRegistry> => {
     if (!oftDeploymentsPromise) {
-        oftDeploymentsPromise = fetchOftDeployments();
+        oftDeploymentsPromise = fetchOftDeployments().catch(
+            (error: unknown) => {
+                log.error(
+                    "Failed to fetch OFT deployments",
+                    formatError(error),
+                );
+                oftDeploymentsPromise = undefined;
+                throw error;
+            },
+        );
     }
 
     return oftDeploymentsPromise;

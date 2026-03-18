@@ -3,6 +3,7 @@ import { hex } from "@scure/base";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
+import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import { config } from "../config";
 import { getTokenAddress } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -396,7 +397,7 @@ export const SwapExecutionWorker = () => {
             routerAddress,
             receivedAmount,
         ]);
-        const calls = [
+        const calls: AlchemyCall[] = [
             {
                 to: getTokenAddress(latestSwap.oft.destinationAsset),
                 value: "0",
@@ -425,7 +426,7 @@ export const SwapExecutionWorker = () => {
                 callData: prefix0x(call.data),
             })),
         );
-        calls.push(tx);
+        calls.push(toAlchemyCall(tx));
 
         latestSwap.commitmentLockupTxHash = await sendPopulatedTransaction(
             GasAbstractionType.Signer,

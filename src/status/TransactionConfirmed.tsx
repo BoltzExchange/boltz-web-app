@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { Router } from "boltz-core/typechain/Router";
 import {
     AbiCoder,
     Signature,
@@ -23,7 +24,6 @@ import {
     isEvmAsset,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
-import { type Router } from "../consts/abis/router/Router";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {

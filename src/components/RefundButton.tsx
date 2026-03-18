@@ -17,7 +17,7 @@ import {
     createSignal,
 } from "solid-js";
 
-import { type AlchemyCall } from "../alchemy/Alchemy";
+import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
 import { AssetKind, getKindForAsset, isEvmAsset } from "../consts/Assets";
@@ -105,22 +105,6 @@ export const sendRefundTransaction = async (
 
     await provider.waitForTransaction(transactionHash, 1);
     return transactionHash;
-};
-
-const toAlchemyCall = (transaction: TransactionRequest): AlchemyCall => {
-    if (typeof transaction.to !== "string") {
-        throw new Error("refund transaction is missing destination address");
-    }
-
-    return {
-        to: transaction.to,
-        data:
-            typeof transaction.data === "string" ? transaction.data : undefined,
-        value:
-            transaction.value !== undefined
-                ? transaction.value.toString()
-                : undefined,
-    };
 };
 
 const buildRefundFollowUpCalls = async (

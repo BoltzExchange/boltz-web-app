@@ -2,9 +2,11 @@ import { hex } from "@scure/base";
 import { abi as ERC20Abi } from "boltz-core/out/ERC20.sol/ERC20.json";
 import { abi as ERC20SwapAbi } from "boltz-core/out/ERC20Swap.sol/ERC20Swap.json";
 import { abi as EtherSwapAbi } from "boltz-core/out/EtherSwap.sol/EtherSwap.json";
+import { abi as RouterAbi } from "boltz-core/out/Router.sol/Router.json";
 import type { ERC20 } from "boltz-core/typechain/ERC20";
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { Router } from "boltz-core/typechain/Router";
 import {
     BrowserProvider,
     Contract,
@@ -34,8 +36,6 @@ import {
     requireTokenConfig,
 } from "../consts/Assets";
 import type { EIP1193Provider, EIP6963ProviderDetail } from "../consts/Types";
-import type { Router } from "../consts/abis/router/Router";
-import RouterAbi from "../consts/abis/router/Router.json";
 import ERC20SwapAbiV5 from "../consts/abis/v5/ERC20Swap.json";
 import EtherSwapAbiV5 from "../consts/abis/v5/EtherSwap.json";
 import WalletConnectProvider from "../utils/WalletConnectProvider";
