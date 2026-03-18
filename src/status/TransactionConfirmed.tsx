@@ -919,6 +919,19 @@ const AutoClaimHops = (props: {
         setLoading(true);
         try {
             const currentSwap = await getSwap(props.swapId);
+            if (currentSwap === null) {
+                log.warn(
+                    `Skipping auto claim hops for missing swap ${props.swapId}`,
+                );
+                return;
+            }
+            if (currentSwap.dex === undefined) {
+                log.warn(
+                    `Skipping auto claim hops without DEX data for ${props.swapId}`,
+                );
+                return;
+            }
+
             const claimSigner = getSignerForGasAbstraction(
                 props.gasAbstraction,
                 signer(),
@@ -947,7 +960,7 @@ const AutoClaimHops = (props: {
 
             if (
                 props.dex.position === HopsPosition.After &&
-                getFinalAssetReceive(swap()) === TBTC
+                getFinalAssetReceive(currentSwap) === TBTC
             ) {
                 currentSwap.dex.quoteAmount = BigNumber(
                     currentSwap.dex.quoteAmount,
