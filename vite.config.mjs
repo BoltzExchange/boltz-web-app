@@ -6,10 +6,13 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 import solidPlugin from "vite-plugin-solid";
 import wasm from "vite-plugin-wasm";
 
-const commitHash = child
-    .execSync("git rev-parse --short HEAD")
-    .toString()
-    .trim();
+const commitHash = (() => {
+    try {
+        return child.execSync("git rev-parse --short HEAD").toString().trim();
+    } catch {
+        return "";
+    }
+})();
 
 const packageJson = JSON.parse(
     fs.readFileSync(path.join(__dirname, "package.json"), "utf8"),

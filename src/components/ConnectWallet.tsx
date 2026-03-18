@@ -3,6 +3,7 @@ import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
 import { For, Show, createEffect, createSignal, on, onCleanup } from "solid-js";
 
+import { config } from "../config";
 import { isEvmAsset } from "../consts/Assets";
 import type { EIP6963ProviderInfo } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -15,6 +16,7 @@ import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
 const Modal = (props: {
+    asset: string;
     derivationPath: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
@@ -47,9 +49,9 @@ const Modal = (props: {
                     const connected = await connect(
                         notify,
                         connectProvider,
-                        providers,
                         providerProps.provider,
                         props.derivationPath,
+                        props.asset,
                     );
                     setWalletConnected(connected);
                 }}>
@@ -106,6 +108,7 @@ const Modal = (props: {
                 </For>
             </div>
             <HardwareDerivationPaths
+                asset={props.asset}
                 show={showDerivationPaths}
                 provider={hardwareProvider}
                 setShow={setShowDerivationPaths}
@@ -115,6 +118,7 @@ const Modal = (props: {
 };
 
 const ConnectModal = (props: {
+    asset: string;
     derivationPath: string;
     disabled?: Accessor<boolean>;
 }) => {
@@ -138,9 +142,9 @@ const ConnectModal = (props: {
                         const connected = await connect(
                             notify,
                             connectProvider,
-                            providers,
                             Object.values(providers())[0].info,
                             props.derivationPath,
+                            props.asset,
                         );
                         setWalletConnected(connected);
                     }
@@ -148,6 +152,7 @@ const ConnectModal = (props: {
                 {t("connect_wallet")}
             </button>
             <Modal
+                asset={props.asset}
                 show={show}
                 setShow={setShow}
                 derivationPath={props.derivationPath}
@@ -192,6 +197,7 @@ const ShowAddress = (props: {
 };
 
 export const ConnectAddress = (props: {
+    asset: string;
     address: { address: string; derivationPath?: string };
 }) => {
     const { t, notify } = useGlobalContext();
@@ -205,6 +211,7 @@ export const ConnectAddress = (props: {
                     await connectProviderForAddress(
                         props.address.address,
                         props.address.derivationPath,
+                        props.asset,
                     );
                 } catch (e) {
                     log.error(
@@ -249,38 +256,38 @@ const ConnectWallet = (props: {
     syncAddress?: boolean;
 }) => {
     const { t } = useGlobalContext();
-    const { providers, signer, getContractsForAsset } = useWeb3Signer();
+    const { providers, signer } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
 
     const address = () => signer()?.address;
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
-
-    let syncRequestId = 0;
+    let latestSyncId = 0;
 
     const syncWalletState = async (
         asset: string,
         activeSigner: Signer | undefined,
         currentAddress: string | undefined,
+        syncId: number,
     ) => {
-        const requestId = ++syncRequestId;
-        const contracts = getContractsForAsset(asset);
+        const chainId = config.assets?.[asset]?.network?.chainId;
+        const signerChainId =
+            currentAddress !== undefined && chainId !== undefined
+                ? Number(
+                      (await activeSigner?.provider.getNetwork())?.chainId ||
+                          -1,
+                  )
+                : undefined;
 
-        if (
-            currentAddress !== undefined &&
-            contracts &&
-            Number(
-                (await activeSigner?.provider.getNetwork())?.chainId || -1,
-            ) !== contracts.network.chainId
-        ) {
-            if (requestId !== syncRequestId) {
-                return;
-            }
-
-            setNetworkValid(false);
+        if (syncId !== latestSyncId) {
             return;
         }
 
-        if (requestId !== syncRequestId) {
+        if (
+            currentAddress !== undefined &&
+            chainId !== undefined &&
+            signerChainId !== chainId
+        ) {
+            setNetworkValid(false);
             return;
         }
 
@@ -297,13 +304,13 @@ const ConnectWallet = (props: {
         on(
             [() => props.asset, signer, address],
             ([asset, activeSigner, addr]) => {
-                void syncWalletState(asset, activeSigner, addr);
+                const syncId = ++latestSyncId;
+                void syncWalletState(asset, activeSigner, addr, syncId);
             },
         ),
     );
 
     onCleanup(() => {
-        syncRequestId += 1;
         if (props.syncAddress) {
             setAddressValid(false);
             setOnchainAddress("");
@@ -322,6 +329,7 @@ const ConnectWallet = (props: {
                 when={address() !== undefined}
                 fallback={
                     <ConnectModal
+                        asset={props.asset}
                         disabled={props.disabled}
                         derivationPath={props.derivationPath}
                     />

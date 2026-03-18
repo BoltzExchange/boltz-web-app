@@ -1,6 +1,11 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { Signature, type TransactionRequest, type Wallet } from "ethers";
+import {
+    Signature,
+    type TransactionRequest,
+    type Wallet,
+    ZeroAddress,
+} from "ethers";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
 import {
@@ -12,8 +17,9 @@ import {
     createSignal,
 } from "solid-js";
 
-import { type AlchemyCall } from "../alchemy/Alchemy";
+import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
+import { config } from "../config";
 import { AssetKind, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
@@ -25,22 +31,35 @@ import {
     encodeDexQuote,
     getEipRefundSignature,
     quoteDexAmountIn,
+    quoteDexAmountOut,
 } from "../utils/boltzClient";
-import { calculateAmountWithSlippage } from "../utils/calculate";
+import {
+    calculateAmountOutMin,
+    calculateAmountWithSlippage,
+} from "../utils/calculate";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
     type LockupEvent,
+    assertTransactionSignerProvider,
     getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
+import {
+    buildOftSendAlchemyCall,
+    getOftProvider,
+    getQuotedOftContract,
+    quoteOftSend,
+} from "../utils/oft/oft";
 import { RefundType, refund } from "../utils/rescue";
 import {
     type ChainSwap,
     type DexDetail,
     GasAbstractionType,
+    type OftDetail,
+    OftPosition,
     type SubmarineSwap,
 } from "../utils/swapCreator";
 import ConnectWallet from "./ConnectWallet";
@@ -49,20 +68,12 @@ import LoadingSpinner from "./LoadingSpinner";
 
 export const incorrectAssetError = "incorrect asset was sent";
 
-const assertTransactionSignerProvider = (signer: Signer | Wallet) => {
-    if (signer.provider === null) {
-        throw new Error("refund transaction signer requires a provider");
-    }
-
-    return signer.provider;
-};
-
 export const sendRefundTransaction = async (
     gasAbstraction: GasAbstractionType,
     transactionSigner: Signer | Wallet,
     timeoutBlockHeight: number,
     refundCooperative: () => Promise<TransactionRequest | AlchemyCall[]>,
-    refundTimeout: () => Promise<TransactionRequest>,
+    refundTimeout: () => Promise<TransactionRequest | AlchemyCall[]>,
 ): Promise<string> => {
     const provider = assertTransactionSignerProvider(transactionSigner);
     let transactionHash: string;
@@ -96,88 +107,250 @@ export const sendRefundTransaction = async (
     return transactionHash;
 };
 
-const refundErc20Cooperatively = async (
-    gasAbstraction: GasAbstractionType,
-    contract: ERC20Swap,
+const buildRefundFollowUpCalls = async (
     refundData: LockupEvent,
-    signature: Signature,
     slippage: number,
     dexDetails?: DexDetail,
     destination?: string,
+    oft?: OftDetail,
 ) => {
-    if (
-        destination !== undefined &&
-        dexDetails !== undefined &&
-        dexDetails.position === HopsPosition.Before &&
-        gasAbstraction === GasAbstractionType.Signer
-    ) {
-        const desiredToken = dexDetails.hops[0].dexDetails.tokenIn;
-        log.debug(`Refunding via DEX to ${desiredToken}`);
+    let resolvedDestination = destination;
 
-        const [quote] = await quoteDexAmountIn(
-            dexDetails.hops[0].dexDetails.chain,
-            refundData.tokenAddress,
-            desiredToken,
-            refundData.amount,
-        );
-        if (quote === undefined) {
-            throw new Error("could not get DEX quote for refund");
+    if (oft?.position === OftPosition.Pre) {
+        if (oft.txHash === undefined) {
+            throw new Error("missing OFT transaction hash for pre-OFT refund");
         }
 
-        const quoteAmount = BigInt(quote.quote);
-        const amountWithSlippage = calculateAmountWithSlippage(
-            quoteAmount,
-            slippage,
-        );
+        if (
+            dexDetails === undefined ||
+            dexDetails.position !== HopsPosition.Before
+        ) {
+            throw new Error("missing reverse DEX details for pre-OFT refund");
+        }
+
+        const oftTransaction = await getOftProvider(
+            oft.sourceAsset,
+        ).getTransaction(oft.txHash);
+        if (oftTransaction?.from === undefined) {
+            throw new Error(
+                `could not resolve original sender from OFT transaction: ${oft.txHash}`,
+            );
+        }
+
+        resolvedDestination = oftTransaction.from;
+    }
+
+    if (
+        resolvedDestination === undefined ||
+        dexDetails === undefined ||
+        dexDetails.position !== HopsPosition.Before
+    ) {
+        return undefined;
+    }
+
+    const desiredToken = dexDetails.hops[0].dexDetails.tokenIn;
+    const quoteChain = dexDetails.hops[0].dexDetails.chain;
+    const [quote] = await quoteDexAmountIn(
+        quoteChain,
+        refundData.tokenAddress,
+        desiredToken,
+        refundData.amount,
+    );
+    if (quote === undefined) {
+        throw new Error("could not get DEX quote for refund");
+    }
+
+    const quoteAmount = BigInt(quote.quote);
+    const amountOutMin = calculateAmountOutMin(quoteAmount, slippage);
+    const dexRecipient =
+        oft?.position === OftPosition.Pre
+            ? refundData.refundAddress
+            : resolvedDestination;
+
+    log.debug(
+        oft?.position === OftPosition.Pre
+            ? `Refunding via DEX and OFT to ${resolvedDestination}`
+            : `Refunding via DEX to ${desiredToken}`,
+    );
+
+    if (oft?.position !== OftPosition.Pre) {
         const calldata = await encodeDexQuote(
-            dexDetails.hops[0].dexDetails.chain,
-            destination,
+            quoteChain,
+            dexRecipient,
             refundData.amount,
-            quoteAmount - (amountWithSlippage - quoteAmount),
+            amountOutMin,
             quote.data,
         );
 
-        const refund = contract.interface.encodeFunctionData(
-            "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
-            [
-                refundData.preimageHash,
-                refundData.amount,
-                refundData.tokenAddress,
-                refundData.claimAddress,
-                refundData.refundAddress,
-                refundData.timelock,
-                signature.v,
-                signature.r,
-                signature.s,
-            ],
-        );
-
-        return [
-            {
-                to: await contract.getAddress(),
-                data: refund,
-            },
-            ...calldata.calls.map((call) => ({
-                to: call.to,
-                value: call.value,
-                data: call.data,
-            })),
-        ];
+        return calldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        }));
     }
 
-    return await contract[
-        "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)"
-    ].populateTransaction(
-        refundData.preimageHash,
-        refundData.amount,
-        refundData.tokenAddress,
-        refundData.claimAddress,
-        refundData.refundAddress,
-        refundData.timelock,
-        signature.v,
-        signature.r,
-        signature.s,
+    const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
+    if (sourceChainId === undefined) {
+        throw new Error(
+            `missing OFT source chain id for asset: ${oft.sourceAsset}`,
+        );
+    }
+
+    const quotedOft = await getQuotedOftContract(oft.destinationAsset);
+    const { msgFee } = await quoteOftSend(
+        quotedOft,
+        sourceChainId,
+        resolvedDestination,
+        quoteAmount,
     );
+
+    let tradeAmountIn = refundData.amount;
+    let msgFeeCalls: AlchemyCall[] = [];
+    if (msgFee[0] > 0n) {
+        const msgFeeAmountOut = calculateAmountWithSlippage(
+            msgFee[0],
+            slippage,
+        );
+        const [msgFeeQuote] = await quoteDexAmountOut(
+            quoteChain,
+            refundData.tokenAddress,
+            ZeroAddress,
+            msgFeeAmountOut,
+        );
+        if (msgFeeQuote === undefined) {
+            throw new Error("could not get DEX quote for OFT messaging fee");
+        }
+
+        const msgFeeAmountIn = BigInt(msgFeeQuote.quote);
+        tradeAmountIn -= msgFeeAmountIn;
+        if (tradeAmountIn <= 0n) {
+            throw new Error("amount too small to cover OFT messaging fee");
+        }
+
+        const msgFeeCalldata = await encodeDexQuote(
+            quoteChain,
+            refundData.refundAddress,
+            msgFeeAmountIn,
+            msgFee[0],
+            msgFeeQuote.data,
+        );
+        msgFeeCalls = msgFeeCalldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        }));
+    }
+
+    const [tradeQuote] = await quoteDexAmountIn(
+        quoteChain,
+        refundData.tokenAddress,
+        desiredToken,
+        tradeAmountIn,
+    );
+    if (tradeQuote === undefined) {
+        throw new Error("could not get DEX quote for refund");
+    }
+
+    const tradeAmountOutMin = calculateAmountOutMin(
+        BigInt(tradeQuote.quote),
+        slippage,
+    );
+    const tradeCalldata = await encodeDexQuote(
+        quoteChain,
+        dexRecipient,
+        tradeAmountIn,
+        tradeAmountOutMin,
+        tradeQuote.data,
+    );
+    const tradeCalls: AlchemyCall[] = tradeCalldata.calls.map((call) => ({
+        to: call.to,
+        value: call.value,
+        data: call.data,
+    }));
+
+    return [
+        ...tradeCalls,
+        ...msgFeeCalls,
+        await buildOftSendAlchemyCall({
+            sourceAsset: oft.destinationAsset,
+            destinationChainId: sourceChainId,
+            recipient: resolvedDestination,
+            amount: tradeAmountOutMin,
+            refundAddress: resolvedDestination,
+        }),
+    ];
+};
+
+const buildErc20RefundTransaction = async ({
+    gasAbstraction,
+    contract,
+    refundData,
+    signature,
+    slippage,
+    dexDetails,
+    destination,
+    oft,
+    cooperative,
+}: {
+    gasAbstraction: GasAbstractionType;
+    contract: ERC20Swap;
+    refundData: LockupEvent;
+    signature?: Signature;
+    slippage: number;
+    dexDetails?: DexDetail;
+    destination?: string;
+    oft?: OftDetail;
+    cooperative: boolean;
+}): Promise<TransactionRequest | AlchemyCall[]> => {
+    if (cooperative && signature === undefined) {
+        throw new Error("missing cooperative refund signature");
+    }
+
+    const refundTransaction: TransactionRequest = {
+        to: await contract.getAddress(),
+        data: cooperative
+            ? contract.interface.encodeFunctionData(
+                  "refundCooperative(bytes32,uint256,address,address,address,uint256,uint8,bytes32,bytes32)",
+                  [
+                      refundData.preimageHash,
+                      refundData.amount,
+                      refundData.tokenAddress,
+                      refundData.claimAddress,
+                      refundData.refundAddress,
+                      refundData.timelock,
+                      signature?.v,
+                      signature?.r,
+                      signature?.s,
+                  ],
+              )
+            : contract.interface.encodeFunctionData(
+                  "refund(bytes32,uint256,address,address,address,uint256)",
+                  [
+                      refundData.preimageHash,
+                      refundData.amount,
+                      refundData.tokenAddress,
+                      refundData.claimAddress,
+                      refundData.refundAddress,
+                      refundData.timelock,
+                  ],
+              ),
+    };
+
+    if (gasAbstraction !== GasAbstractionType.Signer) {
+        return refundTransaction;
+    }
+
+    const followUpCalls = await buildRefundFollowUpCalls(
+        refundData,
+        slippage,
+        dexDetails,
+        destination,
+        oft,
+    );
+
+    return followUpCalls === undefined
+        ? refundTransaction
+        : [toAlchemyCall(refundTransaction), ...followUpCalls];
 };
 
 export const RefundEvm = (props: {
@@ -193,6 +366,7 @@ export const RefundEvm = (props: {
     setRefundTxId: Setter<string>;
     dexDetails?: DexDetail;
     destination?: string;
+    oft?: OftDetail;
 }) => {
     const { getErc20Swap, getEtherSwap, signer, getGasAbstractionSigner } =
         useWeb3Signer();
@@ -355,15 +529,17 @@ export const RefundEvm = (props: {
                                 const contract = getErc20Swap(
                                     props.asset,
                                 ).connect(currentTransactionSigner);
-                                return await refundErc20Cooperatively(
-                                    gasAbstraction(),
+                                return await buildErc20RefundTransaction({
+                                    gasAbstraction: gasAbstraction(),
                                     contract,
-                                    currentRefundData,
-                                    decSignature,
-                                    slippage(),
-                                    props.dexDetails,
-                                    props.destination,
-                                );
+                                    refundData: currentRefundData,
+                                    signature: decSignature,
+                                    slippage: slippage(),
+                                    dexDetails: props.dexDetails,
+                                    destination: props.destination,
+                                    oft: props.oft,
+                                    cooperative: true,
+                                });
                             }
 
                             const contract = getEtherSwap(props.asset).connect(
@@ -388,16 +564,16 @@ export const RefundEvm = (props: {
                                 const contract = getErc20Swap(
                                     props.asset,
                                 ).connect(currentTransactionSigner);
-                                return await contract[
-                                    "refund(bytes32,uint256,address,address,address,uint256)"
-                                ].populateTransaction(
-                                    currentRefundData.preimageHash,
-                                    currentRefundData.amount,
-                                    currentRefundData.tokenAddress,
-                                    currentRefundData.claimAddress,
-                                    currentRefundData.refundAddress,
-                                    currentRefundData.timelock,
-                                );
+                                return await buildErc20RefundTransaction({
+                                    gasAbstraction: gasAbstraction(),
+                                    contract,
+                                    refundData: currentRefundData,
+                                    slippage: slippage(),
+                                    dexDetails: props.dexDetails,
+                                    destination: props.destination,
+                                    oft: props.oft,
+                                    cooperative: false,
+                                });
                             }
 
                             const contract = getEtherSwap(props.asset).connect(
@@ -529,7 +705,9 @@ export const RefundBtc = (props: {
         if (valid() || !refundAddress() || !props.swap()) {
             return t("refund");
         }
-        return t("invalid_address", { asset: props.swap()?.assetSend });
+        return t("invalid_address", {
+            asset: props.swap()?.assetSend ?? "",
+        });
     });
 
     return (
@@ -545,7 +723,7 @@ export const RefundBtc = (props: {
                 <h3 style={{ color: "var(--color-text)" }}>
                     {props.swap()
                         ? t("refund_address_header", {
-                              asset: props.swap()?.assetSend,
+                              asset: props.swap()?.assetSend ?? "",
                           })
                         : t("refund_address_header_no_asset")}
                 </h3>
@@ -563,7 +741,7 @@ export const RefundBtc = (props: {
                     placeholder={
                         props.swap()
                             ? t("onchain_address", {
-                                  asset: props.swap()?.assetSend,
+                                  asset: props.swap()?.assetSend ?? "",
                               })
                             : t("onchain_address_no_asset")
                     }
@@ -624,6 +802,7 @@ const RefundButton = (props: {
                             lockupTxHash={props.swap().lockupTx}
                             dexDetails={props.swap().dex}
                             destination={props.swap().signer}
+                            oft={props.swap().oft}
                         />
                     }>
                     <Show
@@ -643,6 +822,7 @@ const RefundButton = (props: {
                             lockupTxHash={props.swap().lockupTx}
                             dexDetails={props.swap().dex}
                             destination={props.swap().signer}
+                            oft={props.swap().oft}
                         />
                     </Show>
                 </Show>

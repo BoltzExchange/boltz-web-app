@@ -1,6 +1,6 @@
 import { BigNumber } from "bignumber.js";
 
-import { USDT0 } from "../consts/Assets";
+import { getAssetDisplaySymbol, isUsdt0Asset } from "../consts/Assets";
 import { type Denomination } from "../consts/Enums";
 import { formatAmount } from "../utils/denomination";
 
@@ -11,7 +11,7 @@ type SwapLimitProps = {
     label: string;
     onClick: () => void;
     separator: string;
-    icon: Denomination | typeof USDT0;
+    icon: Denomination | string;
 };
 
 type SwapLimitsProps = {
@@ -45,7 +45,9 @@ const SwapLimit = (props: SwapLimitProps) => {
 
 const SwapLimits = (props: SwapLimitsProps) => {
     const denomination = () => {
-        return props.asset === USDT0 ? USDT0 : props.denomination;
+        return isUsdt0Asset(props.asset)
+            ? getAssetDisplaySymbol(props.asset)
+            : props.denomination;
     };
 
     return (

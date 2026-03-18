@@ -3,6 +3,7 @@ import log from "loglevel";
 import type { Accessor, JSX } from "solid-js";
 import { Show, createEffect, createSignal } from "solid-js";
 
+import { config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import { type Signer, useWeb3Signer } from "../context/Web3";
 import { formatError } from "../utils/errors";
@@ -22,7 +23,7 @@ const ContractTransaction = (props: {
     address: { address: string; derivationPath?: string };
 }) => {
     const { notify, i18n, t } = useGlobalContext();
-    const { signer: contextSigner, getContractsForAsset } = useWeb3Signer();
+    const { signer: contextSigner } = useWeb3Signer();
     const [txSent, setTxSent] = createSignal(false);
     const [clicked, setClicked] = createSignal(false);
 
@@ -60,12 +61,15 @@ const ContractTransaction = (props: {
                             derivationPath={props.address.derivationPath}
                         />
                     }>
-                    <ConnectAddress address={props.address} />
+                    <ConnectAddress
+                        asset={props.asset}
+                        address={props.address}
+                    />
                 </Show>
             }>
             <Show
                 when={
-                    getContractsForAsset(props.asset)?.network.chainId ===
+                    config.assets?.[props.asset]?.network?.chainId ===
                     signerNetwork()
                 }
                 fallback={<SwitchNetwork asset={props.asset} />}>

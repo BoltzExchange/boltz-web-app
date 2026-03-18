@@ -443,7 +443,9 @@ const Pay = () => {
                                         swapStatus() ===
                                             swapStatusSuccess.InvoiceSettled ||
                                         swapStatus() ===
-                                            swapStatusPending.TransactionClaimPending
+                                            swapStatusPending.TransactionClaimPending ||
+                                        swapStatus() ===
+                                            swapStatusPending.InvoicePaid
                                     }>
                                     <TransactionClaimed />
                                 </Match>

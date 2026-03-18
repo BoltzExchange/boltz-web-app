@@ -1,15 +1,31 @@
 import { render } from "@solidjs/testing-library";
 
 import SwapList from "../../src/components/SwapList";
+import { BTC, LN } from "../../src/consts/Assets";
 import type { SomeSwap } from "../../src/utils/swapCreator";
 import { contextWrapper } from "../helper";
 
 describe("SwapList", () => {
     it("should sort correctly", () => {
         const swapsSorted: SomeSwap[] = [
-            { id: "first", date: new Date().getTime() } as SomeSwap,
-            { id: "second", date: 1454533445545 } as SomeSwap,
-            { id: "third", date: 1 } as SomeSwap,
+            {
+                id: "first",
+                date: new Date().getTime(),
+                assetSend: BTC,
+                assetReceive: LN,
+            } as SomeSwap,
+            {
+                id: "second",
+                date: 1454533445545,
+                assetSend: BTC,
+                assetReceive: LN,
+            } as SomeSwap,
+            {
+                id: "third",
+                date: 1,
+                assetSend: BTC,
+                assetReceive: LN,
+            } as SomeSwap,
         ];
         const swapsSignal = (): SomeSwap[] => [
             swapsSorted[2],

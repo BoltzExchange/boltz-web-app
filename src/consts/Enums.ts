@@ -25,6 +25,11 @@ export enum UrlParam {
     Ref = "ref",
 }
 
+export enum AssetSelection {
+    Asset = "asset",
+    AssetNetwork = "assetNetwork",
+}
+
 export enum InvoiceValidation {
     MinAmount = "minAmount",
     MaxAmount = "maxAmount",

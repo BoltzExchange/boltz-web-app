@@ -13,6 +13,7 @@ import Footer from "./components/Footer";
 import Nav from "./components/Nav";
 import Notification from "./components/Notification";
 import { SwapChecker } from "./components/SwapChecker";
+import { SwapExecutionWorker } from "./components/SwapExecutionWorker";
 import { WalletConnect } from "./components/WalletConnect";
 import { config } from "./config";
 import { CreateProvider } from "./context/Create";
@@ -68,6 +69,7 @@ const App = (props: RouteSectionProps) => {
                     <PayProvider>
                         <RescueProvider>
                             <SwapChecker />
+                            <SwapExecutionWorker />
                             <Chatwoot />
                             <Nav
                                 isPro={config.isPro}

@@ -28,8 +28,8 @@ const Privacy: Component = () => {
             </p>
             <p>
                 2.1 Swap Destination: We collect and store data related to
-                transaction destinations, such as Bitcoin addresses or Lightning
-                invoices.
+                transaction destinations, such as Bitcoin addresses, Lightning
+                invoices, or blockchain wallet addresses.
             </p>
             <p>
                 2.2 Swap Origin: We collect and store data related to
@@ -77,6 +77,14 @@ const Privacy: Component = () => {
                     </ExternalLink>
                     .
                 </li>
+                <li>
+                    Third-party liquidity protocols and token issuers: Swaps may
+                    interact with third-party smart contracts, liquidity
+                    protocols, or cross-chain messaging protocols (e.g.
+                    LayerZero). The respective protocol operators or token
+                    issuers may collect data independently. Boltz has no control
+                    over these third parties' data practices.
+                </li>
             </ul>
 
             <h2>4. Data Protection Contact</h2>
@@ -89,7 +97,7 @@ const Privacy: Component = () => {
             </p>
 
             <p class="last-updated">
-                <strong>Last updated: June 9, 2025</strong>
+                <strong>Last updated: March 16, 2026</strong>
             </p>
         </div>
     );

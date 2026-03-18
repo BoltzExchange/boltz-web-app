@@ -1,9 +1,55 @@
 import { render } from "@solidjs/testing-library";
 
+import type * as ConfigModule from "../../src/config";
 import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import Pair from "../../src/utils/Pair";
-import { TestComponent, contextWrapper, signals } from "../helper";
+import {
+    TestComponent,
+    contextWrapper,
+    globalSignals,
+    signals,
+} from "../helper";
+
+afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+});
+
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+
+    return {
+        ...actual,
+        config: {
+            ...actual.config,
+            assets: {
+                ...actual.config.assets,
+                "USDT0-ETH": {
+                    ...actual.config.assets.USDT0,
+                    canSend: true,
+                    network: {
+                        ...actual.config.assets.USDT0.network,
+                        chainName: "Ethereum",
+                        symbol: "ETH",
+                        gasToken: "ETH",
+                        chainId: 1,
+                        nativeCurrency: {
+                            name: "ETH",
+                            symbol: "ETH",
+                            decimals: 18,
+                        },
+                    },
+                    token: {
+                        ...actual.config.assets.USDT0.token,
+                        address: "0x0000000000000000000000000000000000000001",
+                    },
+                },
+            },
+        },
+    };
+});
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
@@ -44,15 +90,18 @@ describe("signals", () => {
     );
 
     test.each`
-        sendAsset | receiveAsset | amount
-        ${BTC}    | ${LBTC}      | ${1000000}
-        ${BTC}    | ${RBTC}      | ${0}
-        ${LN}     | ${RBTC}      | ${1000000}
-        ${LN}     | ${BTC}       | ${0}
-        ${LBTC}   | ${LN}        | ${1000000}
-        ${LBTC}   | ${BTC}       | ${0}
-        ${RBTC}   | ${BTC}       | ${1000000}
-        ${RBTC}   | ${LN}        | ${0}
+        sendAsset      | receiveAsset   | amount
+        ${BTC}         | ${LBTC}        | ${1000000}
+        ${BTC}         | ${RBTC}        | ${0}
+        ${LN}          | ${RBTC}        | ${1000000}
+        ${LN}          | ${BTC}         | ${0}
+        ${LBTC}        | ${LN}          | ${1000000}
+        ${LBTC}        | ${BTC}         | ${0}
+        ${RBTC}        | ${BTC}         | ${1000000}
+        ${RBTC}        | ${LN}          | ${0}
+        ${"USDT0-ETH"} | ${BTC}         | ${1000000}
+        ${"USDT0-ETH"} | ${LN}          | ${0}
+        ${LN}          | ${"USDT0-ETH"} | ${1000000}
     `(
         "should set assets $sendAsset > $receiveAsset based on urlParams",
         ({ sendAsset, receiveAsset, amount }) => {
@@ -99,4 +148,39 @@ describe("signals", () => {
             }
         },
     );
+
+    test.each`
+        fromAsset | toAsset
+        ${LBTC}   | ${RBTC}
+        ${LN}     | ${LBTC}
+        ${RBTC}   | ${LN}
+    `(
+        "should normalize $fromAsset → $toAsset to LN → BTC",
+        ({ fromAsset, toAsset }) => {
+            render(() => <TestComponent />, { wrapper: contextWrapper });
+            setPairAssets(fromAsset, toAsset);
+            globalSignals.setBitcoinOnly(true);
+            expect(signals.pair().fromAsset).toEqual(LN);
+            expect(signals.pair().toAsset).toEqual(BTC);
+        },
+    );
+
+    test("should clear incompatible destination state when bitcoinOnly normalizes the pair", () => {
+        render(() => <TestComponent />, { wrapper: contextWrapper });
+
+        signals.setAmountValid(true);
+        signals.setOnchainAddress("0xdeadbeef");
+        signals.setAddressValid(true);
+        setPairAssets(BTC, RBTC);
+
+        expect(signals.valid()).toEqual(true);
+
+        globalSignals.setBitcoinOnly(true);
+
+        expect(signals.pair().fromAsset).toEqual(LN);
+        expect(signals.pair().toAsset).toEqual(BTC);
+        expect(signals.onchainAddress()).toEqual("");
+        expect(signals.addressValid()).toEqual(false);
+        expect(signals.valid()).toEqual(false);
+    });
 });

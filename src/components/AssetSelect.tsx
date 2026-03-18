@@ -1,52 +1,77 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
-import { For, Show } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 
 import { config } from "../config";
-import { BTC, LBTC, LN, RBTC, getNetworkBadge } from "../consts/Assets";
-import { Side } from "../consts/Enums";
+import {
+    LN,
+    USDT0,
+    getAssetDisplaySymbol,
+    getAssetNetwork,
+    getNetworkBadge,
+    isUsdt0Asset,
+    isUsdt0Variant,
+} from "../consts/Assets";
+import { AssetSelection, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
+import { handleListKeyDown, scrollToFocused } from "../utils/assetSearch";
+import { canSelectAsset } from "../utils/selectableAsset";
 
-const getAssetNetwork = (asset: string): string | null => {
-    switch (asset) {
-        case BTC:
-            return "Bitcoin";
-        case LN:
-            return "Lightning";
-        case LBTC:
-            return "Liquid";
-        case RBTC:
-            return "Rootstock";
-        default: {
-            const assetConfig = config.assets?.[asset];
-            if (assetConfig?.network?.chainName) {
-                return assetConfig.network.chainName;
-            }
-            return null;
-        }
-    }
-};
+const hasUsdt0 = USDT0 in config.assets;
 
 const SelectAsset = () => {
-    const assets = [...Object.keys(config.assets), LN].sort();
-
-    const { t, fetchPairs, pairs, regularPairs } = useGlobalContext();
+    const { t, fetchPairs, pairs, regularPairs, bitcoinOnly } =
+        useGlobalContext();
 
     const {
         pair,
         setPair,
-        assetSelect,
+        assetSelection,
+        setAssetSelection,
         assetSelected,
-        setAssetSelect,
         setInvoice,
         setOnchainAddress,
     } = useCreateContext();
 
+    const [focusedIndex, setFocusedIndex] = createSignal(0);
+    let listRef: HTMLDivElement;
+
+    const assets = createMemo(() =>
+        [...Object.keys(config.assets), LN]
+            .filter(
+                (asset) =>
+                    !isUsdt0Variant(asset) &&
+                    canSelectAsset(assetSelected(), asset),
+            )
+            .sort(),
+    );
+
+    createEffect(() => {
+        if (assetSelection() === AssetSelection.Asset) {
+            const idx = assets().findIndex(isSelected);
+            setFocusedIndex(idx >= 0 ? idx : 0);
+        }
+    });
+
+    createEffect(() => scrollToFocused(listRef, focusedIndex()));
+
+    const selectFocused = () => handleAssetClick(assets()[focusedIndex()]);
+    const close = () => setAssetSelection(null);
+
+    const handleKeyDown = (e: KeyboardEvent) =>
+        handleListKeyDown(
+            e,
+            assets().length,
+            setFocusedIndex,
+            selectFocused,
+            close,
+        );
+
     const changeAsset = (newAsset: string) => {
         if (isSelected(newAsset)) {
-            setAssetSelect(false);
+            close();
             return;
         }
 
@@ -72,27 +97,37 @@ const SelectAsset = () => {
             setOnchainAddress("");
         }
 
-        setAssetSelect(false);
+        close();
 
         void fetchPairs().catch((err) =>
             log.error("Could not fetch pairs", err),
         );
     };
 
+    const handleAssetClick = (asset: string) => {
+        if (asset === USDT0 && hasUsdt0) {
+            setAssetSelection(AssetSelection.AssetNetwork);
+            return;
+        }
+        changeAsset(asset);
+    };
+
     const isSelected = (asset: string) => {
-        return (
-            asset ===
-            (assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset)
-        );
+        const current =
+            assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset;
+        if (asset === USDT0 && hasUsdt0) return isUsdt0Asset(current);
+        return asset === current;
     };
 
     return (
-        <Show when={assetSelect()}>
-            <div
-                class="asset-select-overlay"
-                onClick={() => setAssetSelect(false)}>
+        <Show
+            when={assetSelection() === AssetSelection.Asset && !bitcoinOnly()}>
+            <div class="asset-select-overlay" onClick={close}>
                 <div
                     class="asset-select-modal"
+                    ref={(el) => setTimeout(() => el.focus())}
+                    tabIndex={-1}
+                    onKeyDown={handleKeyDown}
                     onClick={(e) => e.stopPropagation()}>
                     <div class="asset-select-header">
                         <h3>
@@ -106,36 +141,40 @@ const SelectAsset = () => {
                         <button
                             type="button"
                             class="asset-select-close"
-                            onClick={() => setAssetSelect(false)}>
+                            data-testid="asset-select-close"
+                            onClick={close}>
                             <IoClose />
                         </button>
                     </div>
-                    <div class="asset-select-list">
-                        <For each={assets}>
-                            {(asset) => {
-                                const network = getAssetNetwork(asset);
-                                return (
-                                    <button
-                                        type="button"
-                                        class={`asset-select-item asset-${asset}`}
-                                        data-network={getNetworkBadge(asset)}
-                                        data-selected={isSelected(asset)}
-                                        data-testid={`select-${asset}`}
-                                        onClick={() => changeAsset(asset)}>
-                                        <span class="icon" />
-                                        <div class="asset-select-info">
-                                            <span class="asset-select-name">
-                                                {asset}
-                                            </span>
-                                            <Show when={network}>
-                                                <span class="asset-select-network">
-                                                    {network}
-                                                </span>
-                                            </Show>
-                                        </div>
-                                    </button>
-                                );
-                            }}
+                    <div class="asset-select-list" ref={listRef}>
+                        <For each={assets()}>
+                            {(asset, i) => (
+                                <button
+                                    type="button"
+                                    class={`asset-select-item asset-${getAssetDisplaySymbol(asset)}`}
+                                    data-network={
+                                        asset !== USDT0 || !hasUsdt0
+                                            ? getNetworkBadge(asset)
+                                            : null
+                                    }
+                                    data-selected={isSelected(asset)}
+                                    data-focused={focusedIndex() === i()}
+                                    data-testid={`select-${asset}`}
+                                    onMouseEnter={() => setFocusedIndex(i())}
+                                    onClick={() => handleAssetClick(asset)}>
+                                    <span class="icon" />
+                                    <div class="asset-select-info">
+                                        <span class="asset-select-name">
+                                            {getAssetDisplaySymbol(asset)}
+                                        </span>
+                                        <span class="asset-select-network">
+                                            {asset === USDT0 && hasUsdt0
+                                                ? t("select_network")
+                                                : getAssetNetwork(asset)}
+                                        </span>
+                                    </div>
+                                </button>
+                            )}
                         </For>
                     </div>
                 </div>

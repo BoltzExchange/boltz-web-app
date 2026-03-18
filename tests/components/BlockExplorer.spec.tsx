@@ -1,6 +1,8 @@
 import { render, screen } from "@solidjs/testing-library";
 
-import BlockExplorer from "../../src/components/BlockExplorer";
+import BlockExplorer, {
+    ExplorerKind,
+} from "../../src/components/BlockExplorer";
 import { config } from "../../src/config";
 import i18n from "../../src/i18n/i18n";
 import { contextWrapper } from "../helper";
@@ -49,6 +51,36 @@ describe("BlockExplorer", () => {
         expect(button).not.toBeUndefined();
         expect((button as HTMLAnchorElement).href).toEqual(
             `${baseLink}/tx/${txId}`,
+        );
+    });
+
+    test("should link LayerZero transactions when requested", async () => {
+        const txId =
+            "813c90372c9b774396c66099cf8015f9510a8ba5686cbb78d8e848959fe7bb5d";
+
+        render(
+            () => (
+                <BlockExplorer
+                    asset="BTC"
+                    txId={txId}
+                    explorer={ExplorerKind.LayerZero}
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const button = await screen.findByText(
+            i18n.en.blockexplorer.replace(
+                "{{ typeLabel }}",
+                i18n.en.blockexplorer_claim_tx,
+            ),
+        );
+
+        expect(button).not.toBeUndefined();
+        expect((button as HTMLAnchorElement).href).toEqual(
+            `${config.layerZeroExplorerUrl}/tx/${txId}`,
         );
     });
 });

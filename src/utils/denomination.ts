@@ -2,6 +2,7 @@ import { BigNumber } from "bignumber.js";
 
 import { config } from "../config";
 import { AssetKind } from "../consts/AssetKind";
+import { getAssetDisplaySymbol, isUsdt0Asset } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 
 const miliFactor = 1_000;
@@ -21,7 +22,7 @@ export const getDecimals = (asset: string) => {
 
     const isRoutedErc20 =
         assetConfig?.type === AssetKind.ERC20 &&
-        assetConfig?.token?.routeVia !== undefined;
+        (assetConfig?.token?.routeVia !== undefined || isUsdt0Asset(asset));
 
     return {
         isErc20: isRoutedErc20,
@@ -103,7 +104,7 @@ export const formatAmountDenomination = (
 export const formatDenomination = (denom: Denomination, asset: string) => {
     const { isErc20 } = getDecimals(asset);
     if (isErc20) {
-        return asset;
+        return getAssetDisplaySymbol(asset);
     }
     return denom === Denomination.Sat ? "sats" : asset;
 };

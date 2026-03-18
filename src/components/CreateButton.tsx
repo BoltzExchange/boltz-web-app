@@ -5,7 +5,16 @@ import log from "loglevel";
 import type { Accessor } from "solid-js";
 import { createEffect, createSignal, on, onMount } from "solid-js";
 
-import { BTC, RBTC, USDT0, isEvmAsset } from "../consts/Assets";
+import { config } from "../config";
+import {
+    BTC,
+    RBTC,
+    USDT0,
+    getCanonicalAsset,
+    isEvmAsset,
+    isUsdt0Asset,
+    isUsdt0Variant,
+} from "../consts/Assets";
 import { InvoiceValidation, SwapType } from "../consts/Enums";
 import type { ButtonLabelParams } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
@@ -43,6 +52,8 @@ import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { gasTopUpSupported } from "../utils/qouter";
 import {
     GasAbstractionType,
+    type OftDetail,
+    OftPosition,
     type SomeSwap,
     createChain,
     createReverse,
@@ -54,6 +65,25 @@ import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
+
+const buildOftDetail = (
+    sourceAsset: string,
+    destinationAsset: string,
+    position: OftPosition,
+): OftDetail | undefined => {
+    const destinationChainId =
+        config.assets?.[destinationAsset]?.network?.chainId;
+    if (destinationChainId === undefined) {
+        return undefined;
+    }
+
+    return {
+        sourceAsset,
+        destinationAsset,
+        destinationChainId,
+        position,
+    };
+};
 
 export const enum BackupDone {
     True = "true",
@@ -100,13 +130,16 @@ export const getClaimAddress = async (
             const evmSide = isEvmAsset(assetSend())
                 ? assetSend()
                 : assetReceive();
-            const gasSigner = getGasAbstractionSigner(evmSide);
+
+            const gasSigner = getGasAbstractionSigner(
+                isUsdt0Asset(evmSide) ? USDT0 : evmSide,
+            );
             log.debug("Using gas abstraction signer", gasSigner.address);
             return {
                 gasPrice: 0n,
                 gasAbstraction: GasAbstractionType.Signer,
                 claimAddress:
-                    assetReceive() !== USDT0 && !getGasToken
+                    !isUsdt0Asset(assetReceive()) && !getGasToken
                         ? onchainAddress()
                         : gasSigner.address,
             };
@@ -261,7 +294,9 @@ const CreateButton = () => {
                     if (!addressValid()) {
                         setButtonLabel({
                             key: "invalid_address",
-                            params: { asset: assetReceive() },
+                            params: {
+                                asset: assetReceive(),
+                            },
                         });
                         return;
                     }
@@ -655,6 +690,19 @@ const CreateButton = () => {
                                       : Number(sendAmount()),
                           }
                         : undefined,
+                oft: isUsdt0Variant(assetSend())
+                    ? buildOftDetail(
+                          assetSend(),
+                          getCanonicalAsset(assetSend()),
+                          OftPosition.Pre,
+                      )
+                    : isUsdt0Variant(assetReceive())
+                      ? buildOftDetail(
+                            getCanonicalAsset(assetReceive()),
+                            assetReceive(),
+                            OftPosition.Post,
+                        )
+                      : undefined,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine

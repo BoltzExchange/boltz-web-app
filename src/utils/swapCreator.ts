@@ -32,6 +32,22 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
+export type OftStageDetail = {
+    sourceAsset: string;
+    destinationAsset: string;
+    destinationChainId: number;
+};
+
+export const enum OftPosition {
+    Pre = "pre",
+    Post = "post",
+}
+
+export type OftDetail = OftStageDetail & {
+    position: OftPosition;
+    txHash?: string;
+};
+
 export const enum GasAbstractionType {
     None = "none",
     RifRelay = "rifRelay",
@@ -53,6 +69,7 @@ export type SwapBase = {
     claimTx?: string;
     lockupTx?: string;
     commitmentLockupTxHash?: string;
+    commitmentSignatureSubmitted?: boolean;
 
     gasAbstraction: GasAbstractionType;
     signer?: string;
@@ -64,6 +81,9 @@ export type SwapBase = {
 
     // DEX route for routed swaps (e.g. USDT0 via TBTC).
     dex?: DexDetail;
+
+    // OFT routes for bridging before lockup or after claim.
+    oft?: OftDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -115,6 +135,10 @@ export const getFinalAssetSend = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.oft?.position === OftPosition.Pre) {
+        return swap.oft.sourceAsset;
+    }
+
     if (
         swap.dex !== undefined &&
         swap.dex.position === HopsPosition.Before &&
@@ -130,6 +154,10 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.oft?.position === OftPosition.Post) {
+        return swap.oft.destinationAsset;
+    }
+
     if (
         swap.dex !== undefined &&
         swap.dex.position === HopsPosition.After &&
@@ -145,6 +173,12 @@ export const getFinalAssetReceive = (
 
 export const isEvmSwap = (swap: SomeSwap) =>
     isEvmAsset(getRelevantAssetForSwap(swap));
+
+export const getPreOftDetail = (oft?: OftDetail): OftDetail | undefined =>
+    oft?.position === OftPosition.Pre ? oft : undefined;
+
+export const getPostOftDetail = (oft?: OftDetail): OftDetail | undefined =>
+    oft?.position === OftPosition.Post ? oft : undefined;
 
 const generatePreimage = ({
     asset,

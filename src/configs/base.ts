@@ -3,8 +3,22 @@ import type log from "loglevel";
 import { type AssetKind } from "../consts/AssetKind";
 import { Network } from "../consts/Network";
 
+// TODO: which properties do we really need?
+export type Usdt0Variant = {
+    asset: string;
+    canSend: boolean;
+    chainName: string;
+    symbol: string;
+    gasToken?: string;
+    chainId: number;
+    tokenAddress: string;
+    blockExplorerUrl: string;
+    rpcUrls: string[];
+};
+
 export type Asset = {
     type: AssetKind;
+    canSend?: boolean;
 
     blockExplorerUrl?: ExplorerUrl;
     blockExplorerApis?: ExplorerUrl[];
@@ -107,6 +121,7 @@ const defaults = {
     dnsOverHttps: "https://1.1.1.1/dns-query",
     chatwootUrl: "https://support.boltz.exchange",
     preimageValidation: "https://validate-payment.com",
+    layerZeroExplorerUrl: "https://layerzeroscan.com",
     rateProviders: {
         Yadio: "https://api.yadio.io/exrates/btc",
         Kraken: "https://api.kraken.com/0/public/Ticker",

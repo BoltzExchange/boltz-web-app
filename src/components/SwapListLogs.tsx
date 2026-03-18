@@ -2,7 +2,7 @@ import { useNavigate } from "@solidjs/router";
 import type { Accessor } from "solid-js";
 import { For, Show, createMemo } from "solid-js";
 
-import type { AssetType } from "../consts/Assets";
+import { type AssetType, getAssetDisplaySymbol } from "../consts/Assets";
 import type { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import "../style/swaplist.scss";
@@ -11,7 +11,7 @@ import { cropString } from "../utils/helper";
 
 const AssetIcon = (props: { asset: AssetType }) => (
     <span class="swaplist-asset swaplist-asset-single">
-        <span data-asset={props.asset} />
+        <span data-asset={getAssetDisplaySymbol(props.asset)} />
     </span>
 );
 

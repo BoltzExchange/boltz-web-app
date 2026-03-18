@@ -9,7 +9,7 @@ import type {
     SubmarineSwap,
 } from "../utils/swapCreator";
 import { getRelevantAssetForSwap, isEvmSwap } from "../utils/swapCreator";
-import BlockExplorer from "./BlockExplorer";
+import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
 
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
@@ -29,6 +29,11 @@ const ChainSwapLink = (props: {
                     : props.swap().assetSend
             }
             txId={props.swap().claimTx}
+            explorer={
+                props.swap().oft !== undefined
+                    ? ExplorerKind.LayerZero
+                    : undefined
+            }
             address={
                 // When it has been claimed, the "txId" is populated
                 hasBeenClaimed()
@@ -65,6 +70,11 @@ const BlockExplorerLink = (props: {
                         <BlockExplorer
                             asset={getRelevantAssetForSwap(props.swap())}
                             txId={props.swap().claimTx}
+                            explorer={
+                                props.swap().oft !== undefined
+                                    ? ExplorerKind.LayerZero
+                                    : undefined
+                            }
                             address={
                                 props.swap().type === SwapType.Submarine
                                     ? (props.swap() as SubmarineSwap).address
@@ -93,6 +103,11 @@ const BlockExplorerLink = (props: {
                         <BlockExplorer
                             asset={getRelevantAssetForSwap(props.swap())}
                             txId={props.swap().claimTx}
+                            explorer={
+                                props.swap().oft !== undefined
+                                    ? ExplorerKind.LayerZero
+                                    : undefined
+                            }
                             typeLabel={"claim_tx"}
                         />
                     </Show>

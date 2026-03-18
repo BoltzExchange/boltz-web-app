@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { Currency } from "../../src/consts/Enums";
 import {
@@ -9,10 +9,17 @@ import {
     getBtcPriceYadio,
     getEthPriceCoinGecko,
     getEthPriceKraken,
+    getGasTokenPriceCoinGecko,
+    getGasTokenPriceFailover,
+    hasGasTokenPriceLookup,
     usdCentsToWei,
 } from "../../src/utils/fiat";
 
 describe("fiat", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     const checkResult = (result: BigNumber) => {
         expect(result).toBeInstanceOf(BigNumber);
         expect(result.toNumber()).toBeLessThan(10_000_000);
@@ -20,22 +27,94 @@ describe("fiat", () => {
     };
 
     test.each([
-        ["Mempool", getBtcPriceMempool],
-        ["Kraken", getBtcPriceKraken],
-        ["Yadio", getBtcPriceYadio],
-    ])("should fetch BTC price from $0", async (_, getBtcPrice) => {
+        ["Mempool", getBtcPriceMempool, { USD: 102_345 }],
+        [
+            "Kraken",
+            getBtcPriceKraken,
+            { result: { XXBTZUSD: { c: ["102345.6", "1"] } } },
+        ],
+        ["Yadio", getBtcPriceYadio, { BTC: { USD: 102_345 } }],
+    ])("should fetch BTC price from $0", async (_, getBtcPrice, response) => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue(response),
+        } as unknown as Response);
+
         const result = await getBtcPrice(Currency.USD);
         checkResult(result);
     });
 
     test("should fetch ETH price from Kraken", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                result: { XETHZUSD: { c: ["3456.78", "1"] } },
+            }),
+        } as unknown as Response);
+
         const result = await getEthPriceKraken(Currency.USD);
         checkResult(result);
     });
 
     test("should fetch ETH price from CoinGecko", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                ethereum: { usd: 3456.78 },
+            }),
+        } as unknown as Response);
+
         const result = await getEthPriceCoinGecko(Currency.USD);
         checkResult(result);
+    });
+
+    test("should fetch POL price from CoinGecko", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                "polygon-ecosystem-token": { usd: 0.25 },
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceCoinGecko("POL", Currency.USD);
+        checkResult(result);
+    });
+
+    test("should fetch HBAR price from CoinGecko", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                "hedera-hashgraph": { usd: 0.098585 },
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceCoinGecko("HBAR", Currency.USD);
+        checkResult(result);
+    });
+
+    test("should fail over gas token pricing with the configured lookup", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                usdt0: { usd: 1 },
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceFailover("USDT0", Currency.USD);
+        checkResult(result);
+        expect(result.toNumber()).toBe(1);
+    });
+
+    test("should price RBTC gas tokens with the BTC failover providers", async () => {
+        vi.spyOn(globalThis, "fetch").mockResolvedValue({
+            json: vi.fn().mockResolvedValue({
+                USD: 102_345,
+            }),
+        } as unknown as Response);
+
+        const result = await getGasTokenPriceFailover("RBTC", Currency.USD);
+        checkResult(result);
+        expect(result.toNumber()).toBe(102_345);
+    });
+
+    test("should report whether a gas token has a USD price lookup", () => {
+        expect(hasGasTokenPriceLookup("POL")).toBe(true);
+        expect(hasGasTokenPriceLookup("RBTC")).toBe(true);
+        expect(hasGasTokenPriceLookup("BTCN")).toBe(false);
     });
 
     test.each([

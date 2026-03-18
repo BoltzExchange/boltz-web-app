@@ -2,8 +2,14 @@ import { chooseUrl, config } from "../config";
 import { useGlobalContext } from "../context/Global";
 import ExternalLink from "./ExternalLink";
 
+export enum ExplorerKind {
+    Asset = "asset",
+    LayerZero = "layerzero",
+}
+
 type PropsBase = {
     asset: string;
+    explorer?: ExplorerKind;
     typeLabel?: "lockup_address" | "lockup_tx" | "claim_tx" | "refund_tx";
 };
 
@@ -15,8 +21,23 @@ type PropsAddress = PropsBase & {
     address: string;
 };
 
-const blockExplorerLink = (asset: string, isTxId: boolean, val: string) => {
-    const basePath = chooseUrl(config.assets[asset].blockExplorerUrl);
+const getExplorerBaseUrl = (asset: string, explorer: ExplorerKind) => {
+    switch (explorer) {
+        case ExplorerKind.Asset:
+            return chooseUrl(config.assets[asset].blockExplorerUrl);
+
+        case ExplorerKind.LayerZero:
+            return config.layerZeroExplorerUrl;
+    }
+};
+
+const blockExplorerLink = (
+    asset: string,
+    isTxId: boolean,
+    val: string,
+    explorer: ExplorerKind = ExplorerKind.Asset,
+) => {
+    const basePath = getExplorerBaseUrl(asset, explorer);
     return `${basePath}/${isTxId ? "tx" : "address"}/${val}`;
 };
 
@@ -25,7 +46,7 @@ const BlockExplorer = (props: PropsTxId | PropsAddress) => {
 
     const href = () =>
         "txId" in props && props.txId !== undefined
-            ? blockExplorerLink(props.asset, true, props.txId)
+            ? blockExplorerLink(props.asset, true, props.txId, props.explorer)
             : blockExplorerLink(
                   props.asset,
                   false,

@@ -71,9 +71,29 @@ h3 {
     color: var(--color-text);
     background: var(--color-black-30);
     border: 1px solid var(--color-white-10);
+    display: flex;
+    flex-direction: column;
 }
-.hero-box img {
-    width: 36px;
+.hero-icons {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    img {
+        width: 45px;
+        height: 45px;
+
+        &.full-bleed {
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        &.padded {
+            transform: scale(1.037);
+        }
+    }
 }
 @media (max-width: 768px) {
     .hero-boxes {

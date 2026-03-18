@@ -1,7 +1,14 @@
 import BigNumber from "bignumber.js";
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { Signature, type Wallet } from "ethers";
+import type { Router } from "boltz-core/typechain/Router";
+import {
+    AbiCoder,
+    Signature,
+    type Wallet,
+    ZeroAddress,
+    keccak256,
+} from "ethers";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
 import { type Accessor, Show, createSignal, onMount } from "solid-js";
@@ -11,6 +18,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import {
     AssetKind,
+    TBTC,
     getKindForAsset,
     getTokenAddress,
     isEvmAsset,
@@ -25,9 +33,16 @@ import {
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
 import { relayClaimTransaction } from "../rif/Signer";
-import { type EncodedHop } from "../utils/Pair";
-import { encodeDexQuote } from "../utils/boltzClient";
-import { calculateAmountWithSlippage } from "../utils/calculate";
+import { type EncodedHop, HopsPosition } from "../utils/Pair";
+import {
+    encodeDexQuote,
+    quoteDexAmountIn,
+    quoteDexAmountOut,
+} from "../utils/boltzClient";
+import {
+    calculateAmountOutMin,
+    calculateAmountWithSlippage,
+} from "../utils/calculate";
 import { formatAmount, getDecimals } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import {
@@ -35,18 +50,29 @@ import {
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import {
+    type OftQuoteOptions,
+    getOftContract,
+    getQuotedOftContract,
+    quoteOftReceiveAmount,
+    quoteOftSend,
+} from "../utils/oft/oft";
+import {
     type ClaimQuote,
     type DexQuote,
     fetchDexQuote,
     fetchGasTokenQuote,
+    gasTopUpSupported,
+    getGasTopUpNativeAmount,
 } from "../utils/qouter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     type ChainSwap,
     type DexDetail,
     GasAbstractionType,
+    type OftDetail,
     type ReverseSwap,
     getFinalAssetReceive,
+    getPostOftDetail,
 } from "../utils/swapCreator";
 
 type RouterExecutionQuote = {
@@ -61,16 +87,9 @@ type RouterClaimExecution = {
     quotes: RouterExecutionQuote[];
 };
 
-const calculateAmountOutMin = (
-    quoteAmount: bigint,
-    slippage: number,
-): bigint => {
-    const amountWithSlippage = calculateAmountWithSlippage(
-        quoteAmount,
-        slippage,
-    );
-    const slippageAmount = amountWithSlippage - quoteAmount;
-    return quoteAmount - slippageAmount;
+type ClaimResult = {
+    transactionHash: string;
+    receiveAmount: bigint;
 };
 
 const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {
@@ -79,6 +98,76 @@ const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {
     }
 
     return BigInt(Math.round(quoteAmount));
+};
+
+const getPostOftQuoteOptions = async (
+    destinationAsset: string,
+    destination: string,
+    getGasToken: boolean,
+): Promise<OftQuoteOptions> => ({
+    recipient: destination,
+    nativeDrop:
+        getGasToken && gasTopUpSupported(destinationAsset)
+            ? {
+                  amount: await getGasTopUpNativeAmount(destinationAsset),
+                  receiver: destination,
+              }
+            : undefined,
+});
+
+const getAcceptedQuoteAmount = async (
+    amount: number,
+    assetReceive: string,
+    hop: EncodedHop,
+    quote: ClaimQuote,
+    destination: string,
+    getGasToken: boolean,
+    oft?: OftDetail,
+): Promise<bigint> => {
+    if (oft === undefined) {
+        return quote.trade.amountOut;
+    }
+
+    const dexDetails = hop.dexDetails;
+    if (dexDetails === undefined) {
+        throw new Error("claim hop is missing DEX details");
+    }
+
+    const claimAmount = satsToAssetAmount(amount, assetReceive);
+    const oftQuoteOptions = await getPostOftQuoteOptions(
+        oft.destinationAsset,
+        destination,
+        getGasToken,
+    );
+    const initialOftQuote = await quoteOftReceiveAmount(
+        oft.sourceAsset,
+        oft.destinationChainId,
+        quote.trade.amountOut,
+        oftQuoteOptions,
+    );
+    const [messagingFeeQuote] = await quoteDexAmountOut(
+        dexDetails.chain,
+        dexDetails.tokenIn,
+        ZeroAddress,
+        initialOftQuote.msgFee[0],
+    );
+    const adjustedClaimAmount = claimAmount - BigInt(messagingFeeQuote.quote);
+    if (adjustedClaimAmount <= 0n) {
+        throw new Error("amount too small to cover OFT messaging fee");
+    }
+
+    const adjustedTradeQuote = await fetchDexQuote(
+        dexDetails,
+        adjustedClaimAmount,
+    );
+    const adjustedOftQuote = await quoteOftReceiveAmount(
+        oft.sourceAsset,
+        oft.destinationChainId,
+        adjustedTradeQuote.trade.amountOut,
+        oftQuoteOptions,
+    );
+
+    return adjustedOftQuote.amountOut;
 };
 
 const getAssetChain = (asset: string): string => {
@@ -128,7 +217,7 @@ const encodeRouterExecutionCalls = async (
     );
 };
 
-const signErc20ClaimToRouter = async (
+export const signErc20ClaimToRouter = async (
     signer: Signer | Wallet,
     erc20Swap: ERC20Swap,
     chainId: bigint,
@@ -138,13 +227,19 @@ const signErc20ClaimToRouter = async (
     refundAddress: string,
     timeoutBlockHeight: number,
     routerAddress: string,
-) =>
-    Signature.from(
+) => {
+    const connectedErc20Swap = erc20Swap.connect(signer) as ERC20Swap;
+    const [version, verifyingContract] = await Promise.all([
+        connectedErc20Swap.version(),
+        connectedErc20Swap.getAddress(),
+    ]);
+
+    return Signature.from(
         await signer.signTypedData(
             {
                 name: "ERC20Swap",
-                version: String(await erc20Swap.version()),
-                verifyingContract: await erc20Swap.getAddress(),
+                version: String(version),
+                verifyingContract,
                 chainId,
             },
             {
@@ -167,6 +262,7 @@ const signErc20ClaimToRouter = async (
             },
         ),
     );
+};
 
 const signRouterClaim = async (
     signer: Signer | Wallet,
@@ -199,6 +295,30 @@ const signRouterClaim = async (
                 minAmountOut,
                 destination,
             },
+        ),
+    );
+
+const hashOftSendData = async (
+    router: Router,
+    sendData: {
+        dstEid: number;
+        to: string;
+        extraOptions: string;
+        composeMsg: string;
+        oftCmd: string;
+    },
+): Promise<string> =>
+    keccak256(
+        AbiCoder.defaultAbiCoder().encode(
+            ["bytes32", "uint32", "bytes32", "bytes32", "bytes32", "bytes32"],
+            [
+                await router.TYPEHASH_SEND_DATA(),
+                sendData.dstEid,
+                sendData.to,
+                keccak256(sendData.extraOptions),
+                keccak256(sendData.composeMsg),
+                keccak256(sendData.oftCmd),
+            ],
         ),
     );
 
@@ -279,6 +399,199 @@ const claimErc20ViaRouter = async (
     return await sendPopulatedTransaction(gasAbstraction, signer, tx);
 };
 
+const claimErc20ViaRouterOft = async (
+    gasAbstraction: GasAbstractionType,
+    asset: string,
+    preimage: string,
+    amount: number,
+    refundAddress: string,
+    timeoutBlockHeight: number,
+    destination: string,
+    signer: Signer | Wallet,
+    erc20Swap: ERC20Swap,
+    slippage: number,
+    hop: EncodedHop,
+    quote: ClaimQuote,
+    oft: OftDetail,
+    getGasToken: boolean,
+) => {
+    if (getKindForAsset(asset) === AssetKind.EVMNative) {
+        throw new Error("EtherSwap is not supported for now");
+    }
+
+    if (signer.provider === null) {
+        throw new Error("router claim signer requires a provider");
+    }
+
+    const dexDetails = hop.dexDetails;
+    if (dexDetails === undefined) {
+        throw new Error("claim hop is missing DEX details");
+    }
+
+    const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
+    if (sourceChainId === undefined) {
+        throw new Error(
+            `missing OFT source chain id for asset: ${oft.sourceAsset}`,
+        );
+    }
+
+    const oftContract = await getOftContract(sourceChainId);
+    if (oftContract === undefined) {
+        throw new Error(`missing OFT contract for chain: ${sourceChainId}`);
+    }
+
+    const router = createRouterContract(asset, signer);
+    const assetAmount = satsToAssetAmount(amount, asset);
+    const tokenAddress = getTokenAddress(asset);
+    const [routerAddress, { chainId }] = await Promise.all([
+        router.getAddress(),
+        signer.provider.getNetwork(),
+    ]);
+    const claimSignature = await signErc20ClaimToRouter(
+        signer,
+        erc20Swap,
+        chainId,
+        preimage,
+        assetAmount,
+        tokenAddress,
+        refundAddress,
+        timeoutBlockHeight,
+        routerAddress,
+    );
+
+    const oftQuoteInstance = await getQuotedOftContract(oft.sourceAsset);
+    const oftQuoteOptions = await getPostOftQuoteOptions(
+        oft.destinationAsset,
+        destination,
+        getGasToken,
+    );
+    const { msgFee } = await quoteOftSend(
+        oftQuoteInstance,
+        oft.destinationChainId,
+        destination,
+        quote.trade.amountOut,
+        oftQuoteOptions,
+    );
+    const msgFeeEthAmountOut = calculateAmountWithSlippage(msgFee[0], slippage);
+    const [msgFeeEthQuote] = await quoteDexAmountOut(
+        dexDetails.chain,
+        dexDetails.tokenIn,
+        ZeroAddress,
+        msgFeeEthAmountOut,
+    );
+    const tradeAmountIn = assetAmount - BigInt(msgFeeEthQuote.quote);
+    if (tradeAmountIn <= 0n) {
+        throw new Error("amount too small to cover OFT messaging fee");
+    }
+
+    const [tradeQuote] = await quoteDexAmountIn(
+        dexDetails.chain,
+        dexDetails.tokenIn,
+        dexDetails.tokenOut,
+        tradeAmountIn,
+    );
+
+    const amountOutMin = calculateAmountOutMin(
+        BigInt(tradeQuote.quote),
+        slippage,
+    );
+    const { sendParam } = await quoteOftSend(
+        oftQuoteInstance,
+        oft.destinationChainId,
+        destination,
+        amountOutMin,
+        oftQuoteOptions,
+    );
+    const amountLdWithSlippage = calculateAmountOutMin(sendParam[3], slippage);
+    const sendData = {
+        dstEid: sendParam[0],
+        to: sendParam[1],
+        extraOptions: sendParam[4],
+        composeMsg: sendParam[5],
+        oftCmd: sendParam[6],
+    };
+    const authSignature = Signature.from(
+        await signer.signTypedData(
+            {
+                name: "Router",
+                version: "2",
+                verifyingContract: routerAddress,
+                chainId,
+            },
+            {
+                ClaimSend: [
+                    { name: "preimage", type: "bytes32" },
+                    { name: "token", type: "address" },
+                    { name: "oft", type: "address" },
+                    { name: "sendData", type: "bytes32" },
+                    { name: "minAmountLD", type: "uint256" },
+                    { name: "lzTokenFee", type: "uint256" },
+                    { name: "refundAddress", type: "address" },
+                ],
+            },
+            {
+                preimage: prefix0x(preimage),
+                token: dexDetails.tokenOut,
+                oft: oftContract.address,
+                sendData: await hashOftSendData(router, sendData),
+                minAmountLD: amountLdWithSlippage,
+                lzTokenFee: msgFee[1],
+                refundAddress,
+            },
+        ),
+    );
+
+    const calldata = await Promise.all([
+        encodeDexQuote(
+            dexDetails.chain,
+            routerAddress,
+            tradeAmountIn,
+            amountOutMin,
+            tradeQuote.data,
+        ),
+        encodeDexQuote(
+            dexDetails.chain,
+            routerAddress,
+            BigInt(msgFeeEthQuote.quote),
+            msgFee[0],
+            msgFeeEthQuote.data,
+        ),
+    ]);
+
+    const tx = await router.claimERC20ExecuteOft.populateTransaction(
+        {
+            preimage: prefix0x(preimage),
+            amount: assetAmount,
+            tokenAddress,
+            refundAddress,
+            timelock: timeoutBlockHeight,
+            v: claimSignature.v,
+            r: claimSignature.r,
+            s: claimSignature.s,
+        },
+        calldata.flatMap(({ calls }) =>
+            calls.map((call) => ({
+                target: call.to,
+                value: call.value,
+                callData: prefix0x(call.data),
+            })),
+        ),
+        dexDetails.tokenOut,
+        oftContract.address,
+        sendData,
+        {
+            minAmountLd: amountLdWithSlippage,
+            lzTokenFee: msgFee[1],
+            refundAddress,
+            v: authSignature.v,
+            r: authSignature.r,
+            s: authSignature.s,
+        },
+    );
+
+    return await sendPopulatedTransaction(gasAbstraction, signer, tx);
+};
+
 const getHopRouterClaimExecution = (
     hop: EncodedHop,
     routerAddress: string,
@@ -321,11 +634,15 @@ const getGasTokenRouterClaimExecution = async (
     const assetAmount = satsToAssetAmount(amount, asset);
     const chain = getAssetChain(asset);
     const finalToken = getTokenAddress(asset);
-    const gasToken = await fetchGasTokenQuote({
-        chain,
-        tokenIn: finalToken,
-        tokenOut: finalToken,
-    });
+    const gasTokenAmount = await getGasTopUpNativeAmount(asset);
+    const gasToken = await fetchGasTokenQuote(
+        {
+            chain,
+            tokenIn: finalToken,
+            tokenOut: finalToken,
+        },
+        gasTokenAmount,
+    );
 
     if (gasToken.amountIn > assetAmount) {
         throw new Error("gas token quote exceeds claim amount");
@@ -359,46 +676,57 @@ export const claimAsset = async (
     etherSwap: EtherSwap,
     erc20Swap: ERC20Swap,
     getGasToken: boolean,
-) => {
+): Promise<ClaimResult> => {
+    const assetAmount = satsToAssetAmount(amount, asset);
+
     switch (gasAbstraction) {
         case GasAbstractionType.RifRelay:
-            return await relayClaimTransaction(
-                signer(),
-                etherSwap,
-                preimage,
-                amount,
-                refundAddress,
-                timeoutBlockHeight,
-            );
+            return {
+                transactionHash: await relayClaimTransaction(
+                    signer(),
+                    etherSwap,
+                    preimage,
+                    amount,
+                    refundAddress,
+                    timeoutBlockHeight,
+                ),
+                receiveAmount: assetAmount,
+            };
 
         case GasAbstractionType.None:
         case GasAbstractionType.Signer: {
-            const assetAmount = satsToAssetAmount(amount, asset);
             const claimSigner = getSignerForGasAbstraction(
                 gasAbstraction,
                 signer(),
                 getGasAbstractionSigner(asset),
             );
 
-            if (getKindForAsset(asset) !== AssetKind.EVMNative && getGasToken) {
+            if (
+                getKindForAsset(asset) !== AssetKind.EVMNative &&
+                getGasToken &&
+                gasTopUpSupported(asset)
+            ) {
                 const execution = await getGasTokenRouterClaimExecution(
                     asset,
                     amount,
                     destination,
                 );
-                return await claimErc20ViaRouter(
-                    gasAbstraction,
-                    asset,
-                    preimage,
-                    amount,
-                    refundAddress,
-                    timeoutBlockHeight,
-                    destination,
-                    claimSigner,
-                    erc20Swap,
-                    slippage,
-                    execution,
-                );
+                return {
+                    transactionHash: await claimErc20ViaRouter(
+                        gasAbstraction,
+                        asset,
+                        preimage,
+                        amount,
+                        refundAddress,
+                        timeoutBlockHeight,
+                        destination,
+                        claimSigner,
+                        erc20Swap,
+                        slippage,
+                        execution,
+                    ),
+                    receiveAmount: execution.minAmountOut,
+                };
             }
 
             const tx =
@@ -423,11 +751,14 @@ export const claimAsset = async (
                           timeoutBlockHeight,
                       );
 
-            return await sendPopulatedTransaction(
-                gasAbstraction,
-                claimSigner,
-                tx,
-            );
+            return {
+                transactionHash: await sendPopulatedTransaction(
+                    gasAbstraction,
+                    claimSigner,
+                    tx,
+                ),
+                receiveAmount: assetAmount,
+            };
         }
 
         default: {
@@ -452,7 +783,28 @@ const claimHops = async (
     erc20Swap: ERC20Swap,
     slippage: number,
     quote: ClaimQuote,
+    getGasToken: boolean,
+    oft?: OftDetail,
 ) => {
+    if (oft !== undefined) {
+        return await claimErc20ViaRouterOft(
+            gasAbstraction,
+            asset,
+            preimage,
+            amount,
+            refundAddress,
+            timeoutBlockHeight,
+            destination,
+            signer(),
+            erc20Swap,
+            slippage,
+            getSingleClaimHop(hops),
+            quote,
+            oft,
+            getGasToken,
+        );
+    }
+
     const hop = getSingleClaimHop(hops);
     const routerAddress = await createRouterContract(
         asset,
@@ -524,8 +876,9 @@ const AutoClaimHops = (props: {
     signerAddress: string;
     refundAddress: string;
     timeoutBlockHeight: number;
-    dex: DexDetail;
     getGasToken: boolean;
+    dex: DexDetail;
+    oft?: OftDetail;
 }) => {
     const { getErc20Swap, signer, getGasAbstractionSigner } = useWeb3Signer();
     const { t, slippage, notify, getSwap, setSwapStorage } = useGlobalContext();
@@ -533,9 +886,13 @@ const AutoClaimHops = (props: {
 
     const [error, setError] = createSignal<string | undefined>(undefined);
     const [loading, setLoading] = createSignal(false);
-    const [freshQuote, setFreshQuote] = createSignal<ClaimQuote | undefined>(
-        undefined,
-    );
+    const [freshQuote, setFreshQuote] = createSignal<
+        | {
+              quote: ClaimQuote;
+              amount: bigint;
+          }
+        | undefined
+    >(undefined);
     const [quoteAccepted, setQuoteAccepted] = createSignal(false);
 
     const quoteThreshold = () =>
@@ -543,8 +900,8 @@ const AutoClaimHops = (props: {
             parsePersistedQuoteAmount(props.dex.quoteAmount),
             slippage(),
         );
-    const isOutsideSlippage = (quote: DexQuote) =>
-        quote.amountOut < quoteThreshold();
+    const isOutsideSlippage = (quoteAmount: bigint) =>
+        quoteAmount < quoteThreshold();
 
     const needsApproval = () => {
         const quote = freshQuote();
@@ -552,13 +909,29 @@ const AutoClaimHops = (props: {
             return false;
         }
 
-        return isOutsideSlippage(quote.trade);
+        return isOutsideSlippage(quote.amount);
     };
 
-    const executeClaim = async (quote: ClaimQuote) => {
+    const executeClaim = async (quote: {
+        quote: ClaimQuote;
+        amount: bigint;
+    }) => {
         setLoading(true);
         try {
             const currentSwap = await getSwap(props.swapId);
+            if (currentSwap === null) {
+                log.warn(
+                    `Skipping auto claim hops for missing swap ${props.swapId}`,
+                );
+                return;
+            }
+            if (currentSwap.dex === undefined) {
+                log.warn(
+                    `Skipping auto claim hops without DEX data for ${props.swapId}`,
+                );
+                return;
+            }
+
             const claimSigner = getSignerForGasAbstraction(
                 props.gasAbstraction,
                 signer(),
@@ -577,11 +950,25 @@ const AutoClaimHops = (props: {
                 () => claimSigner,
                 getErc20Swap(props.assetReceive),
                 slippage(),
-                quote,
+                quote.quote,
+                props.getGasToken,
+                props.oft,
             );
 
             currentSwap.claimTx = transactionHash;
-            currentSwap.dex.quoteAmount = quote.trade.amountOut.toString();
+            currentSwap.dex.quoteAmount = quote.amount.toString();
+
+            if (
+                props.dex.position === HopsPosition.After &&
+                getFinalAssetReceive(currentSwap) === TBTC
+            ) {
+                currentSwap.dex.quoteAmount = BigNumber(
+                    currentSwap.dex.quoteAmount,
+                )
+                    .div(10 ** 10)
+                    .toString();
+            }
+
             setSwap(currentSwap);
             await setSwapStorage(currentSwap);
         } catch (e) {
@@ -596,24 +983,44 @@ const AutoClaimHops = (props: {
 
     onMount(async () => {
         try {
-            const hop = props.dex.hops[0];
+            const hop = getSingleClaimHop(props.dex.hops);
             const amountIn = satsToAssetAmount(
                 props.amount,
                 props.assetReceive,
             );
+            const useDexGasToken =
+                props.oft === undefined &&
+                props.getGasToken &&
+                gasTopUpSupported(props.assetReceive);
             const quote = await fetchDexQuote(
                 hop.dexDetails,
                 amountIn,
-                props.getGasToken,
+                useDexGasToken,
+                useDexGasToken
+                    ? await getGasTopUpNativeAmount(props.assetReceive)
+                    : undefined,
             );
-            setFreshQuote(quote);
+            const quoteAmount = await getAcceptedQuoteAmount(
+                props.amount,
+                props.assetReceive,
+                hop,
+                quote,
+                props.signerAddress,
+                props.getGasToken,
+                props.oft,
+            );
+            const freshQuoteData = {
+                quote,
+                amount: quoteAmount,
+            };
+            setFreshQuote(freshQuoteData);
 
-            if (!isOutsideSlippage(quote.trade)) {
+            if (!isOutsideSlippage(quoteAmount)) {
                 // Within slippage tolerance, auto-claim
-                await executeClaim(quote);
+                await executeClaim(freshQuoteData);
             } else {
                 log.info(
-                    `DEX quote ${quote.trade.amountOut.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
+                    `Claim quote ${quoteAmount.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
                 );
             }
         } catch (e) {
@@ -654,7 +1061,7 @@ const AutoClaimHops = (props: {
                     <ImArrowDown size={15} style={{ opacity: 0.5 }} />
                     <Amount
                         label={"will_receive"}
-                        amount={freshQuote().trade.amountOut}
+                        amount={freshQuote().amount}
                         asset={getFinalAssetReceive(swap(), true)}
                     />
                 </div>
@@ -693,8 +1100,9 @@ const ClaimEvm = (props: {
     derivationPath: string;
     timeoutBlockHeight: number;
     finalReceive: string;
-    dex?: DexDetail;
     getGasToken: boolean;
+    dex?: DexDetail;
+    oft?: OftDetail;
 }) => {
     const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
         useWeb3Signer();
@@ -711,7 +1119,7 @@ const ClaimEvm = (props: {
         }
 
         const currentSwap = await getSwap(props.swapId);
-        const transactionHash = await claimAsset(
+        const { transactionHash, receiveAmount } = await claimAsset(
             props.gasAbstraction,
             props.assetReceive,
             props.preimage,
@@ -729,6 +1137,13 @@ const ClaimEvm = (props: {
         );
 
         currentSwap.claimTx = transactionHash;
+        if (getFinalAssetReceive(currentSwap) === TBTC) {
+            currentSwap.receiveAmount = Math.floor(
+                Number(receiveAmount.toString()) / 10 ** 10,
+            );
+        } else {
+            currentSwap.receiveAmount = Number(receiveAmount.toString());
+        }
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
     };
@@ -757,8 +1172,9 @@ const ClaimEvm = (props: {
                     timeoutBlockHeight={props.timeoutBlockHeight}
                     assetSend={props.assetSend}
                     assetReceive={props.assetReceive}
-                    dex={props.dex}
                     getGasToken={props.getGasToken}
+                    dex={props.dex}
+                    oft={getPostOftDetail(props.oft)}
                 />
             }>
             <Show
@@ -822,6 +1238,7 @@ const TransactionConfirmed = () => {
                         dex={chain.dex}
                         finalReceive={getFinalAssetReceive(chain, true)}
                         getGasToken={chain.getGasToken}
+                        oft={chain.oft}
                     />
                 }>
                 <ClaimEvm
@@ -839,6 +1256,7 @@ const TransactionConfirmed = () => {
                     assetSend={reverse.assetSend}
                     assetReceive={reverse.assetReceive}
                     dex={reverse.dex}
+                    oft={reverse.oft}
                     finalReceive={getFinalAssetReceive(reverse, true)}
                     getGasToken={reverse.getGasToken}
                 />

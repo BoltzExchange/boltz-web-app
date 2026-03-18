@@ -8,7 +8,7 @@ import {
     createSignal,
 } from "solid-js";
 
-import { USDT0, requireTokenConfig } from "../consts/Assets";
+import { isUsdt0Asset, requireTokenConfig } from "../consts/Assets";
 import { Currency } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { convertToFiat } from "../utils/fiat";
@@ -24,7 +24,7 @@ const FiatAmount = (props: {
     const [fiatAmount, setFiatAmount] = createSignal<BigNumber>(BigNumber(0));
 
     createEffect(() => {
-        if (props.asset() === USDT0) {
+        if (isUsdt0Asset(props.asset())) {
             setFiatAmount(
                 BigNumber(props.amount).div(
                     BigNumber(10).pow(

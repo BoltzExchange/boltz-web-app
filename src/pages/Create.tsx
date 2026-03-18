@@ -1,5 +1,6 @@
 import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
+import log from "loglevel";
 import {
     Show,
     createEffect,
@@ -22,6 +23,7 @@ import Fees from "../components/Fees";
 import FiatAmount from "../components/FiatAmount";
 import InvoiceInput from "../components/InvoiceInput";
 import LoadingSpinner from "../components/LoadingSpinner";
+import NetworkSelect from "../components/NetworkSelect";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
 import SwapLimits from "../components/SwapLimits";
@@ -29,14 +31,7 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import {
-    AssetKind,
-    LN,
-    RBTC,
-    btcChains,
-    evmChains,
-    isEvmAsset,
-} from "../consts/Assets";
+import { AssetKind, LN, RBTC, btcChains, isEvmAsset } from "../consts/Assets";
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -49,10 +44,9 @@ import {
     formatDenomination,
     getValidationRegex,
 } from "../utils/denomination";
-import { getEthPriceFailover, usdCentsToWei } from "../utils/fiat";
 import { isMobile } from "../utils/helper";
-import { createProvider } from "../utils/provider";
-import { gasTokenToGetUsdCents, gasTopUpSupported } from "../utils/qouter";
+import { createAssetProvider, getRpcUrls } from "../utils/provider";
+import { gasTopUpSupported, getGasTopUpNativeAmount } from "../utils/qouter";
 import ErrorWasm from "./ErrorWasm";
 
 // TODO: formatted amounts should be *instant* and not depend on quote being calculated
@@ -85,7 +79,7 @@ const Create = () => {
         setPair,
         getGasToken,
         setGetGasToken,
-        assetSelect,
+        assetSelection,
         assetSelected,
         invoiceValid,
         addressValid,
@@ -125,41 +119,119 @@ const Create = () => {
         );
     };
     const gasTopUpTrigger = createMemo(() => {
-        const rpcUrls = config.assets?.[pair().toAsset]?.network?.rpcUrls;
+        const rpcUrls = getRpcUrls(pair().toAsset);
         const gasTopUpEnabled = gasTopUp();
+        const supported = gasTopUpSupported(pair().toAsset);
+        const connected = connectedDestination();
+        const validAddress = addressValid();
+        const hasAddress = onchainAddress() !== "";
+        const hasRpcUrls = rpcUrls !== undefined;
 
         return {
             address: onchainAddress(),
             enabled:
                 gasTopUpEnabled &&
-                gasTopUpSupported(pair().toAsset) &&
-                connectedDestination() &&
-                addressValid() &&
-                onchainAddress() !== "" &&
-                rpcUrls !== undefined,
+                supported &&
+                connected &&
+                validAddress &&
+                hasAddress &&
+                hasRpcUrls,
             rpcUrls,
+            supported,
+            connected,
+            validAddress,
+            hasAddress,
+            hasRpcUrls,
+            gasTopUpEnabled,
+            asset: pair().toAsset,
+            hasPostOft: pair().hasPostOft,
         };
     });
     createResource(
         gasTopUpTrigger,
-        async ({ address, enabled, rpcUrls }) => {
+        async ({
+            address,
+            enabled,
+            rpcUrls,
+            supported,
+            connected,
+            validAddress,
+            hasAddress,
+            hasRpcUrls,
+            gasTopUpEnabled,
+            asset,
+            hasPostOft,
+        }) => {
             if (!enabled || rpcUrls === undefined) {
+                log.info("Gas top-up auto-detect skipped", {
+                    asset,
+                    address,
+                    gasTopUpEnabled,
+                    supported,
+                    connected,
+                    validAddress,
+                    hasAddress,
+                    hasRpcUrls,
+                    hasPostOft,
+                });
                 setGetGasToken(false);
                 return;
             }
 
-            const balance = await createProvider(rpcUrls).getBalance(address);
+            try {
+                log.info("Gas top-up auto-detect started", {
+                    asset,
+                    address,
+                    hasPostOft,
+                    rpcUrlCount: rpcUrls.length,
+                });
+                const balance =
+                    await createAssetProvider(asset).getBalance(address);
+                const gasTokenCostWei = await getGasTopUpNativeAmount(asset);
+                log.info("Gas top-up balance check", {
+                    asset,
+                    address,
+                    balance: balance.toString(),
+                    gasTokenCostWei: gasTokenCostWei.toString(),
+                    connectedDestination: connectedDestination(),
+                });
+                if (balance < gasTokenCostWei && connectedDestination()) {
+                    if (
+                        hasPostOft &&
+                        !(await pair().canPostOftNativeDrop(address))
+                    ) {
+                        log.info(
+                            "Gas top-up disabled because post-OFT native drop is unavailable",
+                            {
+                                asset,
+                                address,
+                            },
+                        );
+                        setGetGasToken(false);
+                        return;
+                    }
 
-            const ethPrice = await getEthPriceFailover();
-            const gasTokenCostWei = usdCentsToWei(
-                gasTokenToGetUsdCents,
-                ethPrice,
-            );
-            if (balance < gasTokenCostWei && connectedDestination()) {
-                setGetGasToken(true);
+                    log.info("Gas top-up enabled", {
+                        asset,
+                        address,
+                    });
+                    setGetGasToken(true);
+                    return;
+                }
+            } catch (error) {
+                log.warn("Gas top-up auto-detect failed", {
+                    asset,
+                    address,
+                    error,
+                });
+                setGetGasToken(false);
                 return;
             }
 
+            log.info("Gas top-up disabled because balance is sufficient", {
+                asset,
+                address,
+            });
             setGetGasToken(false);
             return;
         },
@@ -248,6 +320,7 @@ const Create = () => {
                 satAmount,
                 minerFee(),
                 getGasToken(),
+                onchainAddress(),
             );
             setAmountChanged(Side.Receive);
             setReceiveAmount(satAmount);
@@ -280,6 +353,7 @@ const Create = () => {
                 minerFee(),
                 undefined,
                 getGasToken(),
+                onchainAddress(),
             );
             setAmountChanged(Side.Send);
             setSendAmount(satAmount);
@@ -385,18 +459,21 @@ const Create = () => {
         setAmountValid(true);
     };
 
-    const setAmount = async (amount: number) => {
-        setAmountChanged(Side.Send);
-        setSendAmount(BigNumber(amount));
-        const receiveAmount = await pair().calculateReceiveAmount(
-            BigNumber(amount),
-            minerFee(),
-            undefined,
-            getGasToken(),
-        );
-        setReceiveAmount(receiveAmount);
-        validateAmount();
-        sendAmountRef?.focus();
+    const setAmount = (amount: number) => {
+        loadingGuard(async () => {
+            setAmountChanged(Side.Send);
+            setSendAmount(BigNumber(amount));
+            const receiveAmount = await pair().calculateReceiveAmount(
+                BigNumber(amount),
+                minerFee(),
+                undefined,
+                getGasToken(),
+                onchainAddress(),
+            );
+            setReceiveAmount(receiveAmount);
+            validateAmount();
+            sendAmountRef?.focus();
+        });
     };
 
     onMount(() => {
@@ -407,8 +484,8 @@ const Create = () => {
             creatingSwap() &&
             ((onchainAddress() === "" && btcChains.includes(pair().toAsset)) ||
                 (signer() === undefined &&
-                    (evmChains.includes(pair().toAsset) ||
-                        evmChains.includes(pair().fromAsset))) ||
+                    (isEvmAsset(pair().toAsset) ||
+                        isEvmAsset(pair().fromAsset))) ||
                 (lnurl() === "" &&
                     bolt12Offer() === undefined &&
                     pair().toAsset === LN))
@@ -429,6 +506,7 @@ const Create = () => {
                             receiveAmount(),
                             minerFee(),
                             getGasToken(),
+                            onchainAddress(),
                         ),
                     );
                 } else {
@@ -438,6 +516,7 @@ const Create = () => {
                             minerFee(),
                             undefined,
                             getGasToken(),
+                            onchainAddress(),
                         ),
                     );
                 }
@@ -448,7 +527,7 @@ const Create = () => {
     );
 
     createEffect(() => {
-        if (assetSelect()) {
+        if (assetSelection() !== null) {
             return;
         }
 
@@ -743,6 +822,7 @@ const Create = () => {
                     </Show>
                     <CreateButton />
                     <AssetSelect />
+                    <NetworkSelect />
                     <SettingsMenu />
                 </div>
             </div>

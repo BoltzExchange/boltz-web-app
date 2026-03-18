@@ -33,7 +33,7 @@ const config = {
         boltzUrl: "https://boltz.exchange",
         boltzTitle: "Boltz | Non-Custodial Bitcoin Bridge",
         boltzDescription:
-            "Swap between different Bitcoin layers while staying in full control. Fast and non-custodial Lightning / Bitcoin / Liquid / Rootstock swaps.",
+            "Swap between different Bitcoin layers and Stablecoins while staying in full control. Fast and non-custodial Bitcoin / Lightning / Liquid / Rootstock / TBTC / USDT swaps.",
         boltzColor100: "#FFE96D",
         boltzColor200: "#E1C218",
         backgroundColor: "#142840",

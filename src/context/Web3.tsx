@@ -44,7 +44,11 @@ import { getContracts } from "../utils/boltzClient";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import LedgerSigner from "../utils/hardware/LedgerSigner";
 import TrezorSigner from "../utils/hardware/TrezorSigner";
-import { createProvider } from "../utils/provider";
+import {
+    createAssetProvider,
+    getRpcUrls,
+    requireRpcUrls,
+} from "../utils/provider";
 import { useGlobalContext } from "./Global";
 
 declare global {
@@ -68,6 +72,11 @@ type EIP6963AnnounceProviderEvent = {
 
 export type Signer = JsonRpcSigner & {
     rdns: string;
+};
+
+export type ConnectProviderOptions = {
+    asset?: string;
+    derivationPath?: string;
 };
 
 type AddEthereumChainParams = {
@@ -95,7 +104,7 @@ const customDerivationPathRdns: string[] = [
     HardwareRdns.Trezor,
 ];
 
-export const createTokenContract = (asset: string, signer: Signer) => {
+export const createTokenContract = (asset: string, signer: Signer | Wallet) => {
     const tokenConfig = requireTokenConfig(asset);
     return new Contract(
         tokenConfig.address,
@@ -116,10 +125,14 @@ const Web3SignerContext = createContext<{
     providers: Accessor<Record<string, EIP6963ProviderDetail>>;
     hasBrowserWallet: Accessor<boolean>;
 
-    connectProvider: (rdns: string) => Promise<void>;
+    connectProvider: (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => Promise<void>;
     connectProviderForAddress: (
         address: string,
         derivationPath?: string,
+        asset?: string,
     ) => Promise<void>;
 
     signer: Accessor<Signer | undefined>;
@@ -187,7 +200,7 @@ const Web3SignerProvider = (props: {
     const getGasAbstractionSigner = (asset: string): Wallet => {
         const assetConfig = config.assets?.[asset];
         const chainId = assetConfig?.network?.chainId;
-        const rpcUrls = assetConfig?.network?.rpcUrls;
+        const rpcUrls = getRpcUrls(asset);
 
         if (chainId === undefined || rpcUrls === undefined) {
             throw new Error(`missing network config for asset: ${asset}`);
@@ -195,7 +208,7 @@ const Web3SignerProvider = (props: {
 
         return new Wallet(
             hex.encode(deriveKeyGasAbstraction(chainId).privateKey),
-            createProvider(rpcUrls),
+            createAssetProvider(asset),
         );
     };
 
@@ -284,27 +297,39 @@ const Web3SignerProvider = (props: {
     const connectProviderForAddress = async (
         address: string,
         derivationPath?: string,
+        asset?: string,
     ) => {
         const rdns = await getRdnsForAddress(address);
+        await connectProvider(rdns, { asset, derivationPath });
+    };
 
-        if (derivationPath !== undefined) {
-            log.debug(
-                `Setting derivation path (${derivationPath}) for signer:`,
-                rdns,
-            );
-            const prov = providers()[rdns]
-                .provider as unknown as HardwareSigner;
-            prov.setDerivationPath(derivationPath);
+    const configureHardwareProvider = (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => {
+        if (options === undefined || !customDerivationPathRdns.includes(rdns)) {
+            return;
         }
 
-        await connectProvider(rdns);
+        const prov = providers()[rdns].provider as unknown as HardwareSigner;
+
+        if (options.asset !== undefined) {
+            prov.setNetworkAsset(options.asset);
+        }
+
+        if (options.derivationPath !== undefined) {
+            log.debug(
+                `Setting derivation path (${options.derivationPath}) for signer:`,
+                rdns,
+            );
+            prov.setDerivationPath(options.derivationPath);
+        }
     };
 
     const getSwapContract = <T,>(
         asset: string,
         contractType: keyof ContractAddresses,
     ) => {
-        const assetConfig = config.assets?.[asset];
         const assetContracts = getContractsForAsset(asset);
         const address = assetContracts?.swapContracts[contractType];
         const version = Number(
@@ -325,7 +350,7 @@ const Web3SignerProvider = (props: {
         return new Contract(
             assetContracts?.swapContracts[contractType],
             abi,
-            signer() || createProvider(assetConfig?.network?.rpcUrls),
+            signer() || createAssetProvider(asset),
         ) as unknown as T;
     };
 
@@ -347,6 +372,20 @@ const Web3SignerProvider = (props: {
         nextSigner.rdns = rdns;
 
         return nextSigner;
+    };
+
+    const logSignerNetwork = async (nextSigner: Signer) => {
+        try {
+            const network = await nextSigner.provider.getNetwork();
+            log.info(
+                `Connected signer ${nextSigner.address} from ${nextSigner.rdns} is on chain ${String(network.chainId)}`,
+            );
+        } catch (error) {
+            log.warn(
+                `Failed to determine network for connected signer ${nextSigner.address} from ${nextSigner.rdns}`,
+                error,
+            );
+        }
     };
 
     const refreshConnectedSigner = async (
@@ -388,11 +427,16 @@ const Web3SignerProvider = (props: {
         setWalletConnected(true);
     };
 
-    const connectProvider = async (rdns: string) => {
+    const connectProvider = async (
+        rdns: string,
+        options?: ConnectProviderOptions,
+    ) => {
         const wallet = providers()[rdns];
         if (wallet == undefined) {
             throw "wallet not found";
         }
+
+        configureHardwareProvider(rdns, options);
 
         log.debug(`Using wallet ${wallet.info.rdns}: ${wallet.info.name}`);
         const addresses = (await wallet.provider.request({
@@ -421,13 +465,13 @@ const Web3SignerProvider = (props: {
 
         await setRdns(addresses[0], wallet.info.rdns);
 
-        setSigner(
-            createConnectedSigner(
-                wallet.provider,
-                addresses[0],
-                wallet.info.rdns,
-            ),
+        const nextSigner = createConnectedSigner(
+            wallet.provider,
+            addresses[0],
+            wallet.info.rdns,
         );
+        setSigner(nextSigner);
+        void logSignerNetwork(nextSigner);
     };
 
     const switchNetwork = async (asset: string) => {
@@ -442,6 +486,22 @@ const Web3SignerProvider = (props: {
         }
 
         const sanitizedChainId = `0x${assetConfig.network.chainId.toString(16)}`;
+        const activeSigner = signer();
+
+        if (
+            activeSigner !== undefined &&
+            customDerivationPathRdns.includes(activeSigner.rdns)
+        ) {
+            const hardwareProvider = providers()[activeSigner.rdns]
+                .provider as unknown as EIP1193Provider;
+            configureHardwareProvider(activeSigner.rdns, { asset });
+            await refreshConnectedSigner(
+                hardwareProvider,
+                activeSigner.rdns,
+                sanitizedChainId,
+            );
+            return;
+        }
 
         try {
             await rawProvider().request({
@@ -461,7 +521,7 @@ const Web3SignerProvider = (props: {
                 const addChainParams: AddEthereumChainParams = {
                     chainId: sanitizedChainId,
                     chainName: assetConfig.network.chainName,
-                    rpcUrls: assetConfig.network.rpcUrls,
+                    rpcUrls: requireRpcUrls(asset),
                     nativeCurrency: assetConfig.network.nativeCurrency,
                 };
 

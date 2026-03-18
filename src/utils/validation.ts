@@ -30,6 +30,7 @@ import { decodeAddress } from "./compat";
 import { formatAmountDenomination } from "./denomination";
 import type { ECKeys } from "./ecpair";
 import { decodeInvoice, isInvoice, isLnurl } from "./invoice";
+import { createAssetProvider } from "./provider";
 import type {
     ChainSwap,
     ReverseSwap,
@@ -62,9 +63,14 @@ const validateContract = async (
         return;
     }
 
-    const code = await (
+    const contract = (
         isEtherSwap ? getEtherSwap(asset) : getErc20Swap(asset)
-    ).getDeployedCode();
+    ).connect(createAssetProvider(asset));
+    const code = await contract.getDeployedCode();
+    if (code === null) {
+        throw new Error(`no deployed contract code found for asset: ${asset}`);
+    }
+
     const hash = ethers.keccak256(code);
 
     if (!codeHashes.includes(hash)) {

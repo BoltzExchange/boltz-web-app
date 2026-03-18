@@ -1,4 +1,9 @@
-import { type Wallet, getBytes, toBeHex } from "ethers";
+import {
+    type TransactionRequest,
+    type Wallet,
+    getBytes,
+    toBeHex,
+} from "ethers";
 
 import { formatError } from "../utils/errors";
 import { constructRequestOptions } from "../utils/helper";
@@ -192,6 +197,22 @@ export type AlchemyCall = {
     to: string;
     data?: string;
     value?: string;
+};
+
+export const toAlchemyCall = (transaction: TransactionRequest): AlchemyCall => {
+    if (typeof transaction.to !== "string") {
+        throw new Error("transaction is missing destination address");
+    }
+
+    return {
+        to: transaction.to,
+        data:
+            typeof transaction.data === "string" ? transaction.data : undefined,
+        value:
+            transaction.value !== undefined
+                ? transaction.value.toString()
+                : undefined,
+    };
 };
 
 const signPreparedCalls = async (
