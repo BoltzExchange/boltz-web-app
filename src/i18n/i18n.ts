@@ -197,6 +197,8 @@ const dict = {
         bitcoin_only: "Bitcoin-Only Mode",
         bitcoin_only_tooltip:
             "Only show Bitcoin and Lightning, hide all other pairs",
+        bitcoin_only_warning:
+            "Bitcoin-only mode is enabled. Disable it in settings to swap non-Bitcoin assets.",
         slippage: "Slippage",
         slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
         gas_topup: "Auto gas top-up",
