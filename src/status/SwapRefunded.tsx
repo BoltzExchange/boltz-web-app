@@ -1,7 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 
-import BlockExplorer from "../components/BlockExplorer";
-import { config } from "../config";
+import BlockExplorer, { ExplorerKind } from "../components/BlockExplorer";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import { OftPosition } from "../utils/swapCreator";
@@ -19,11 +18,7 @@ const SwapRefunded = (props: { refundTxId: string }) => {
             <BlockExplorer
                 asset={isPreOft() ? swap().oft.sourceAsset : swap().assetSend}
                 txId={props.refundTxId}
-                href={
-                    isPreOft()
-                        ? `${config.layerZeroExplorerUrl}/tx/${props.refundTxId}`
-                        : undefined
-                }
+                explorer={isPreOft() ? ExplorerKind.LayerZero : undefined}
                 typeLabel="refund_tx"
             />
             <hr />

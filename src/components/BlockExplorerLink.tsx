@@ -1,7 +1,6 @@
 import type { Accessor } from "solid-js";
 import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 
-import { config } from "../config";
 import { SwapType } from "../consts/Enums";
 import type {
     ChainSwap,
@@ -10,15 +9,7 @@ import type {
     SubmarineSwap,
 } from "../utils/swapCreator";
 import { getRelevantAssetForSwap, isEvmSwap } from "../utils/swapCreator";
-import BlockExplorer from "./BlockExplorer";
-
-const getClaimTxExplorerUrl = (swap: SomeSwap) => {
-    if (swap.oft === undefined || swap.claimTx === undefined) {
-        return undefined;
-    }
-
-    return `${config.layerZeroExplorerUrl}/tx/${swap.claimTx}`;
-};
+import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
 
 const ChainSwapLink = (props: {
     swap: Accessor<SomeSwap>;
@@ -38,7 +29,11 @@ const ChainSwapLink = (props: {
                     : props.swap().assetSend
             }
             txId={props.swap().claimTx}
-            href={getClaimTxExplorerUrl(props.swap())}
+            explorer={
+                props.swap().oft !== undefined
+                    ? ExplorerKind.LayerZero
+                    : undefined
+            }
             address={
                 // When it has been claimed, the "txId" is populated
                 hasBeenClaimed()
@@ -75,7 +70,11 @@ const BlockExplorerLink = (props: {
                         <BlockExplorer
                             asset={getRelevantAssetForSwap(props.swap())}
                             txId={props.swap().claimTx}
-                            href={getClaimTxExplorerUrl(props.swap())}
+                            explorer={
+                                props.swap().oft !== undefined
+                                    ? ExplorerKind.LayerZero
+                                    : undefined
+                            }
                             address={
                                 props.swap().type === SwapType.Submarine
                                     ? (props.swap() as SubmarineSwap).address
@@ -104,7 +103,11 @@ const BlockExplorerLink = (props: {
                         <BlockExplorer
                             asset={getRelevantAssetForSwap(props.swap())}
                             txId={props.swap().claimTx}
-                            href={getClaimTxExplorerUrl(props.swap())}
+                            explorer={
+                                props.swap().oft !== undefined
+                                    ? ExplorerKind.LayerZero
+                                    : undefined
+                            }
                             typeLabel={"claim_tx"}
                         />
                     </Show>

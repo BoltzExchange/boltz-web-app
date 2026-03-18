@@ -1,6 +1,8 @@
 import { render, screen } from "@solidjs/testing-library";
 
-import BlockExplorer from "../../src/components/BlockExplorer";
+import BlockExplorer, {
+    ExplorerKind,
+} from "../../src/components/BlockExplorer";
 import { config } from "../../src/config";
 import i18n from "../../src/i18n/i18n";
 import { contextWrapper } from "../helper";
@@ -52,14 +54,22 @@ describe("BlockExplorer", () => {
         );
     });
 
-    test("should prefer an explicit href override", async () => {
+    test("should link LayerZero transactions when requested", async () => {
         const txId =
             "813c90372c9b774396c66099cf8015f9510a8ba5686cbb78d8e848959fe7bb5d";
-        const href = `${config.layerZeroExplorerUrl}/tx/${txId}`;
 
-        render(() => <BlockExplorer asset="BTC" txId={txId} href={href} />, {
-            wrapper: contextWrapper,
-        });
+        render(
+            () => (
+                <BlockExplorer
+                    asset="BTC"
+                    txId={txId}
+                    explorer={ExplorerKind.LayerZero}
+                />
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
 
         const button = await screen.findByText(
             i18n.en.blockexplorer.replace(
@@ -69,6 +79,8 @@ describe("BlockExplorer", () => {
         );
 
         expect(button).not.toBeUndefined();
-        expect((button as HTMLAnchorElement).href).toEqual(href);
+        expect((button as HTMLAnchorElement).href).toEqual(
+            `${config.layerZeroExplorerUrl}/tx/${txId}`,
+        );
     });
 });

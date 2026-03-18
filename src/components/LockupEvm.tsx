@@ -52,7 +52,7 @@ import {
     type OftDetail,
     type SomeSwap,
 } from "../utils/swapCreator";
-import BlockExplorer from "./BlockExplorer";
+import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
@@ -456,7 +456,7 @@ const WaitForOft = (props: { asset: string; transactionHash: string }) => {
             <BlockExplorer
                 asset={props.asset}
                 txId={props.transactionHash}
-                href={`${config.layerZeroExplorerUrl}/tx/${props.transactionHash}`}
+                explorer={ExplorerKind.LayerZero}
                 typeLabel={"lockup_tx"}
             />
         </>
