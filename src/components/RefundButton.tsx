@@ -1,6 +1,11 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import { Signature, type TransactionRequest, type Wallet } from "ethers";
+import {
+    Signature,
+    type TransactionRequest,
+    type Wallet,
+    ZeroAddress,
+} from "ethers";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
 import {
@@ -26,8 +31,12 @@ import {
     encodeDexQuote,
     getEipRefundSignature,
     quoteDexAmountIn,
+    quoteDexAmountOut,
 } from "../utils/boltzClient";
-import { calculateAmountOutMin } from "../utils/calculate";
+import {
+    calculateAmountOutMin,
+    calculateAmountWithSlippage,
+} from "../utils/calculate";
 import { validateAddress } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
@@ -38,7 +47,12 @@ import {
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
-import { buildOftSendAlchemyCall, getOftProvider } from "../utils/oft/oft";
+import {
+    buildOftSendAlchemyCall,
+    getOftProvider,
+    getQuotedOftContract,
+    quoteOftSend,
+} from "../utils/oft/oft";
 import { RefundType, refund } from "../utils/rescue";
 import {
     type ChainSwap,
@@ -175,22 +189,20 @@ const buildRefundFollowUpCalls = async (
             : `Refunding via DEX to ${desiredToken}`,
     );
 
-    const calldata = await encodeDexQuote(
-        quoteChain,
-        dexRecipient,
-        refundData.amount,
-        amountOutMin,
-        quote.data,
-    );
-
-    const followUpCalls: AlchemyCall[] = calldata.calls.map((call) => ({
-        to: call.to,
-        value: call.value,
-        data: call.data,
-    }));
-
     if (oft?.position !== OftPosition.Pre) {
-        return followUpCalls;
+        const calldata = await encodeDexQuote(
+            quoteChain,
+            dexRecipient,
+            refundData.amount,
+            amountOutMin,
+            quote.data,
+        );
+
+        return calldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        }));
     }
 
     const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
@@ -200,17 +212,89 @@ const buildRefundFollowUpCalls = async (
         );
     }
 
-    followUpCalls.push(
+    const quotedOft = await getQuotedOftContract(oft.destinationAsset);
+    const { msgFee } = await quoteOftSend(
+        quotedOft,
+        sourceChainId,
+        resolvedDestination,
+        quoteAmount,
+    );
+
+    let tradeAmountIn = refundData.amount;
+    let msgFeeCalls: AlchemyCall[] = [];
+    if (msgFee[0] > 0n) {
+        const msgFeeAmountOut = calculateAmountWithSlippage(
+            msgFee[0],
+            slippage,
+        );
+        const [msgFeeQuote] = await quoteDexAmountOut(
+            quoteChain,
+            refundData.tokenAddress,
+            ZeroAddress,
+            msgFeeAmountOut,
+        );
+        if (msgFeeQuote === undefined) {
+            throw new Error("could not get DEX quote for OFT messaging fee");
+        }
+
+        const msgFeeAmountIn = BigInt(msgFeeQuote.quote);
+        tradeAmountIn -= msgFeeAmountIn;
+        if (tradeAmountIn <= 0n) {
+            throw new Error("amount too small to cover OFT messaging fee");
+        }
+
+        const msgFeeCalldata = await encodeDexQuote(
+            quoteChain,
+            refundData.refundAddress,
+            msgFeeAmountIn,
+            msgFee[0],
+            msgFeeQuote.data,
+        );
+        msgFeeCalls = msgFeeCalldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        }));
+    }
+
+    const [tradeQuote] = await quoteDexAmountIn(
+        quoteChain,
+        refundData.tokenAddress,
+        desiredToken,
+        tradeAmountIn,
+    );
+    if (tradeQuote === undefined) {
+        throw new Error("could not get DEX quote for refund");
+    }
+
+    const tradeAmountOutMin = calculateAmountOutMin(
+        BigInt(tradeQuote.quote),
+        slippage,
+    );
+    const tradeCalldata = await encodeDexQuote(
+        quoteChain,
+        dexRecipient,
+        tradeAmountIn,
+        tradeAmountOutMin,
+        tradeQuote.data,
+    );
+    const tradeCalls: AlchemyCall[] = tradeCalldata.calls.map((call) => ({
+        to: call.to,
+        value: call.value,
+        data: call.data,
+    }));
+
+    return [
+        ...tradeCalls,
+        ...msgFeeCalls,
         await buildOftSendAlchemyCall({
             sourceAsset: oft.destinationAsset,
             destinationChainId: sourceChainId,
             recipient: resolvedDestination,
-            amount: amountOutMin,
+            amount: tradeAmountOutMin,
             refundAddress: resolvedDestination,
         }),
-    );
-
-    return followUpCalls;
+    ];
 };
 
 const buildErc20RefundTransaction = async ({
