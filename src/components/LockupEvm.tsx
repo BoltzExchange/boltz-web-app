@@ -52,6 +52,7 @@ import {
     type OftDetail,
     type SomeSwap,
 } from "../utils/swapCreator";
+import BlockExplorer from "./BlockExplorer";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
 import LoadingSpinner from "./LoadingSpinner";
@@ -445,11 +446,19 @@ const ApproveErc20 = (props: {
     );
 };
 
-const WaitForOft = () => {
+const WaitForOft = (props: { asset: string; transactionHash: string }) => {
+    const { t } = useGlobalContext();
+
     return (
         <>
-            <h2>Waiting for OFT</h2>
+            <h2>{t("waiting_for_oft")}</h2>
             <LoadingSpinner />
+            <BlockExplorer
+                asset={props.asset}
+                txId={props.transactionHash}
+                href={`${config.layerZeroExplorerUrl}/tx/${props.transactionHash}`}
+                typeLabel={"lockup_tx"}
+            />
         </>
     );
 };
@@ -474,7 +483,7 @@ const SendToOft = (props: {
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
     const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
     const txSent = createMemo(() => {
-        return swap()?.oft?.txHash !== undefined;
+        return swap()?.oft?.txHash;
     });
 
     const [signerChainId] = createResource(signer, async (currentSigner) => {
@@ -571,7 +580,14 @@ const SendToOft = (props: {
     });
 
     return (
-        <Show when={!txSent()} fallback={<WaitForOft />}>
+        <Show
+            when={txSent() === undefined}
+            fallback={
+                <WaitForOft
+                    asset={props.oft.sourceAsset}
+                    transactionHash={txSent()}
+                />
+            }>
             <Show
                 when={
                     signerBalance() !== undefined &&
