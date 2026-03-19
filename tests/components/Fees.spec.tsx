@@ -10,6 +10,7 @@ import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
 import { getPairs } from "../../src/utils/boltzClient";
 import {
+    calculateBoltzFeeOnSend,
     calculateReceiveAmount,
     calculateSendAmount,
 } from "../../src/utils/calculate";
@@ -270,6 +271,55 @@ describe("Fees component", () => {
             expect(signals.minerFee()).toEqual(baseMinerFee);
         });
         expect(globalSignals.notification()).toEqual("");
+    });
+
+    test("should use the quoted Boltz input for OFT-routed service fees", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Btc);
+
+        const feeOnSend = vi.fn((amount: BigNumber) =>
+            calculateBoltzFeeOnSend(amount, 1, 0, SwapType.Submarine),
+        );
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: "USDT0-POL",
+            toAsset: LN,
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            preOft: null,
+            dexHopBeforeBoltz: null,
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            oftMessagingFeeToken: undefined,
+            feeOnSend,
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1480)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("boltz-fee").textContent).toEqual(
+                "0.00000015",
+            );
+        });
+        expect(feeOnSend).toHaveBeenCalled();
+        expect(feeOnSend.mock.calls.at(-1)?.[0].toNumber()).toBe(1480);
     });
 
     test.each`
