@@ -61,7 +61,7 @@ declare global {
     }
 
     interface Window {
-        // @ts-expect-error - we can safely ignore this
+        // @ts-expect-error - conflicts with @reown/appkit-utils non-optional declaration
         ethereum?: EIP1193Provider;
     }
 }

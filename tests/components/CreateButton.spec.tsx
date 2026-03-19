@@ -443,7 +443,7 @@ describe("CreateButton", () => {
         setPairAssets(LN, LBTC);
         signals.setOnchainAddress("");
         const btn = (await screen.findByText(
-            i18n.en.invalid_address.replace("{{ asset }}", "L-BTC"),
+            i18n.en.invalid_address.replace("{{ asset }}", "LBTC"),
         )) as HTMLButtonElement;
         expect(btn).not.toBeUndefined();
         expect(btn.disabled).toBeTruthy();

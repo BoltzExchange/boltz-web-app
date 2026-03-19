@@ -2,7 +2,13 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 import BigNumber from "bignumber.js";
 
-import { BTC, LBTC, LN, RBTC } from "../src/consts/Assets";
+import {
+    BTC,
+    LBTC,
+    LN,
+    RBTC,
+    getAssetDisplaySymbol,
+} from "../src/consts/Assets";
 import { Denomination } from "../src/consts/Enums";
 import { formatAmount } from "../src/utils/denomination";
 import {
@@ -39,7 +45,7 @@ test.describe("URL params", () => {
         const address = await getLiquidAddress();
 
         await page.goto(`/?destination=${address}`);
-        const receiveAsset = page.locator(".asset-L-BTC");
+        const receiveAsset = page.locator(".asset-LBTC");
         expect(receiveAsset).toBeDefined();
 
         const onchainAddress = page.getByTestId("onchainAddress");
@@ -253,14 +259,14 @@ test.describe("URL params", () => {
             if (condition.expectedSendAsset !== undefined) {
                 const sendAsset = page.getByTestId(`asset-send`);
                 await expect(sendAsset).toContainClass(
-                    `asset-${condition.expectedSendAsset}`,
+                    `asset-${getAssetDisplaySymbol(condition.expectedSendAsset)}`,
                 );
             }
 
             if (condition.expectedReceiveAsset !== undefined) {
                 const receiveAsset = page.getByTestId(`asset-receive`);
                 await expect(receiveAsset).toContainClass(
-                    `asset-${condition.expectedReceiveAsset}`,
+                    `asset-${getAssetDisplaySymbol(condition.expectedReceiveAsset)}`,
                 );
             }
 

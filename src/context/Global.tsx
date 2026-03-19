@@ -1,5 +1,10 @@
 /* @refresh skip */
-import { flatten, resolveTemplate, translator } from "@solid-primitives/i18n";
+import {
+    type BaseTemplateArgs,
+    flatten,
+    resolveTemplate,
+    translator,
+} from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
 import localforage from "localforage";
 import log from "loglevel";
@@ -14,7 +19,14 @@ import type { Accessor, JSX, Setter } from "solid-js";
 import { getBtcPriceFailover } from "src/utils/fiat";
 
 import { config } from "../config";
-import { type AssetType, LBTC, isEvmAsset } from "../consts/Assets";
+import {
+    type AssetType,
+    LBTC,
+    getAssetDisplaySymbol,
+    getAssetNetwork,
+    isEvmAsset,
+    isUsdt0Asset,
+} from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
 import type { DictKey } from "../i18n/i18n";
@@ -539,10 +551,28 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         () => flatten(dict[i18n() || config.defaultLanguage]) as never,
     );
 
+    const resolveDisplaySymbols = (
+        template: string,
+        values?: BaseTemplateArgs,
+    ) => {
+        if (typeof values?.asset === "string") {
+            const raw = values.asset;
+            let display = getAssetDisplaySymbol(raw);
+            if (isUsdt0Asset(raw)) {
+                const network = getAssetNetwork(raw);
+                if (network) {
+                    display = `${display} (${network})`;
+                }
+            }
+            values = { ...values, asset: display };
+        }
+        return resolveTemplate(template, values);
+    };
+
     // eslint-disable-next-line solid/reactivity
-    const t = translator(dictLocale, resolveTemplate) as (
+    const t = translator(dictLocale, resolveDisplaySymbols) as (
         key: DictKey,
-        values?: Record<string, unknown>,
+        values?: BaseTemplateArgs,
     ) => string;
 
     return (

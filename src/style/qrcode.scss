@@ -19,7 +19,7 @@ $size: 40px;
     &[data-asset="BTC"] span {
         background-image: vars.$bitcoin_icon;
     }
-    &[data-asset="L-BTC"] span {
+    &[data-asset="LBTC"] span {
         background-image: vars.$liquid_icon;
     }
     &[data-asset="RBTC"] span {
