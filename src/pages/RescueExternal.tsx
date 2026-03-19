@@ -34,7 +34,7 @@ import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { BTC, LBTC, RBTC, TBTC } from "../consts/Assets";
+import { type AssetType, BTC, LBTC, RBTC, TBTC } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
@@ -357,6 +357,8 @@ const getEvmScanTargets = (
             providerUrl: rskEndpoint,
             contract: getEtherSwap(RBTC),
         });
+    } else {
+        log.warn("rsk log endpoint not set");
     }
 
     const arbEndpoint = import.meta.env.VITE_ARBITRUM_LOG_SCAN_ENDPOINT;
@@ -367,6 +369,8 @@ const getEvmScanTargets = (
             scanInterval: 100_000,
             contract: getErc20Swap(TBTC),
         });
+    } else {
+        log.warn("arbitrum log endpoint not set");
     }
 
     return targets;
@@ -478,6 +482,7 @@ export const RescueEvm = (props: { mode?: string }) => {
         signerAddress: string,
         action: RskRescueMode,
         scanProgress: ScanProgress,
+        signal: AbortSignal,
         mnemonic?: string,
     ) => {
         const extraAddresses: string[] = [];
@@ -495,22 +500,18 @@ export const RescueEvm = (props: { mode?: string }) => {
             }
         }
 
-        const generator = scanLockupEvents(
-            refundScanAbort.signal,
-            target.contract,
-            {
-                asset: target.asset as AssetType,
-                providerUrl: target.providerUrl,
-                scanInterval: target.scanInterval,
-                filter: {
-                    address: signerAddress,
-                    extraAddresses:
-                        extraAddresses.length > 0 ? extraAddresses : undefined,
-                },
-                action,
-                mnemonic,
+        const generator = scanLockupEvents(signal, target.contract, {
+            asset: target.asset as AssetType,
+            providerUrl: target.providerUrl,
+            scanInterval: target.scanInterval,
+            filter: {
+                address: signerAddress,
+                extraAddresses:
+                    extraAddresses.length > 0 ? extraAddresses : undefined,
             },
-        );
+            action,
+            mnemonic,
+        });
 
         for await (const {
             events,
@@ -518,7 +519,7 @@ export const RescueEvm = (props: { mode?: string }) => {
             derivedKeys,
             unmatchedSwaps: unmatched,
         } of generator) {
-            if (refundScanAbort?.signal.aborted) {
+            if (signal.aborted) {
                 break;
             }
 
@@ -549,6 +550,7 @@ export const RescueEvm = (props: { mode?: string }) => {
 
         setIsScanning(true);
         setLogRefundableSwaps([]);
+        setEvmRescuableSwaps([]);
         setUnmatchedSwaps(0);
         setRefundScanProgress(
             t("logs_scan_progress", {
@@ -557,6 +559,7 @@ export const RescueEvm = (props: { mode?: string }) => {
         );
 
         refundScanAbort = new AbortController();
+        const signal = refundScanAbort.signal;
 
         const signerAddress = await currentSigner.getAddress();
         const rescueFile = uploadedRescueFile();
@@ -573,12 +576,13 @@ export const RescueEvm = (props: { mode?: string }) => {
                     signerAddress,
                     action,
                     scanProgress,
+                    signal,
                     rescueFile?.mnemonic,
                 ),
             ),
         );
 
-        if (!refundScanAbort?.signal.aborted) {
+        if (!signal.aborted) {
             setIsScanning(false);
             setRefundScanProgress(undefined);
         }
@@ -807,7 +811,7 @@ const RescueExternal = () => {
         name: "Bitcoin / Liquid",
         values: [BTC, LBTC],
     };
-    const tabEvm = { name: "EVM", values: [RBTC, TBTC, "RSK"] };
+    const tabEvm = { name: "EVM", values: ["EVM", RBTC, TBTC, "RSK"] };
     const validTypes = evmAvailable
         ? [...tabBtc.values, ...tabEvm.values]
         : [...tabBtc.values];

@@ -92,7 +92,7 @@ const HwAddressSelection = (props: {
     basePath: Accessor<string>;
     setBasePath: Setter<string>;
     provider: Accessor<EIP6963ProviderInfo>;
-    asset?: string;
+    asset: string;
 }) => {
     const limit = 5;
 

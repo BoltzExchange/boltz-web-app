@@ -1,11 +1,9 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 
-import {
-    claimAsset,
-    signErc20ClaimToRouter,
-} from "../../src/status/TransactionConfirmed";
+import { signErc20ClaimToRouter } from "../../src/status/TransactionConfirmed";
 import type * as EvmTransactionModule from "../../src/utils/evmTransaction";
+import { claimAsset } from "../../src/utils/evmTransaction";
 import type * as QouterModule from "../../src/utils/qouter";
 import { satsToAssetAmount } from "../../src/utils/rootstock";
 import { GasAbstractionType } from "../../src/utils/swapCreator";
@@ -40,11 +38,18 @@ vi.mock("../../src/utils/qouter", async () => {
     };
 });
 
-vi.mock("../../src/utils/evmTransaction", () => ({
-    getSignerForGasAbstraction: mockGetSignerForGasAbstraction,
-    sendPopulatedTransaction: (...args: unknown[]) =>
-        mockSendPopulatedTransaction(...args),
-}));
+vi.mock("../../src/utils/evmTransaction", async () => {
+    const actual = await vi.importActual<typeof EvmTransactionModule>(
+        "../../src/utils/evmTransaction",
+    );
+
+    return {
+        ...actual,
+        getSignerForGasAbstraction: mockGetSignerForGasAbstraction,
+        sendPopulatedTransaction: (...args: unknown[]) =>
+            mockSendPopulatedTransaction(...args),
+    };
+});
 
 describe("TransactionConfirmed claimAsset", () => {
     beforeEach(() => {
@@ -71,12 +76,10 @@ describe("TransactionConfirmed claimAsset", () => {
                 "0xrefund",
                 123,
                 "0xdestination",
-                0.5,
                 signerAccessor as never,
                 getGasAbstractionSigner,
                 etherSwap,
                 erc20Swap,
-                false,
             ),
         ).resolves.toEqual({
             transactionHash: "0xrelay",
@@ -92,7 +95,6 @@ describe("TransactionConfirmed claimAsset", () => {
             123,
         );
         expect(getGasAbstractionSigner).not.toHaveBeenCalled();
-        expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
     });
 
     test("should read the ERC20 swap domain from the active claim signer connection", async () => {
@@ -147,12 +149,8 @@ describe("TransactionConfirmed claimAsset", () => {
         );
     });
 
-    test("should skip router gas top-up claims when the destination asset is unsupported", async () => {
-        const signer = { address: "0xsigner" };
-        const claimSigner = { provider: {} };
-        const signerAccessor = () => signer;
-        const getGasAbstractionSigner = vi.fn();
-        const populatedTx = { to: "0xclaimtx" };
+    test("should use direct ERC20 claim path", async () => {
+        const populatedTx = { to: "0xclaimtx", data: "0xdata" };
         const populateTransaction = vi.fn().mockResolvedValue(populatedTx);
         const connectedErc20Swap = {
             "claim(bytes32,uint256,address,address,address,uint256)": {
@@ -162,10 +160,12 @@ describe("TransactionConfirmed claimAsset", () => {
         const erc20Swap = {
             connect: vi.fn().mockReturnValue(connectedErc20Swap),
         };
-
-        mockGasTopUpSupported.mockReturnValue(false);
-        mockGetSignerForGasAbstraction.mockReturnValue(claimSigner as never);
-        mockSendPopulatedTransaction.mockResolvedValue("0xdirect");
+        const signer = {
+            address: "0xsigner",
+            sendTransaction: vi.fn().mockResolvedValue({ hash: "0xdirect" }),
+        };
+        const signerAccessor = () => signer;
+        const getGasAbstractionSigner = vi.fn().mockReturnValue({});
 
         await expect(
             claimAsset(
@@ -177,21 +177,17 @@ describe("TransactionConfirmed claimAsset", () => {
                 "0x2000000000000000000000000000000000000000",
                 123,
                 "0x3000000000000000000000000000000000000000",
-                0.5,
                 signerAccessor as never,
                 getGasAbstractionSigner,
                 {} as EtherSwap,
                 erc20Swap as never,
-                true,
             ),
         ).resolves.toEqual({
             transactionHash: "0xdirect",
             receiveAmount: satsToAssetAmount(21, "USDT0"),
         });
 
-        expect(mockGasTopUpSupported).toHaveBeenCalledWith("USDT0");
-        expect(getGasAbstractionSigner).toHaveBeenCalledWith("USDT0");
-        expect(erc20Swap.connect).toHaveBeenCalledWith(claimSigner);
+        expect(erc20Swap.connect).toHaveBeenCalledWith(signer);
         expect(populateTransaction).toHaveBeenCalledWith(
             `0x${"11".repeat(32)}`,
             satsToAssetAmount(21, "USDT0"),
@@ -200,10 +196,6 @@ describe("TransactionConfirmed claimAsset", () => {
             "0x2000000000000000000000000000000000000000",
             123,
         );
-        expect(mockSendPopulatedTransaction).toHaveBeenCalledWith(
-            GasAbstractionType.None,
-            claimSigner,
-            populatedTx,
-        );
+        expect(signer.sendTransaction).toHaveBeenCalledWith(populatedTx);
     });
 });

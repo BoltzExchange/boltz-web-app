@@ -31,7 +31,10 @@ const tokenToSats = (amount: bigint, decimals: number) => {
  * - For EVMNative assets (like RBTC): converts to wei (18 decimals)
  * - For ERC20 tokens: converts based on the token's configured decimals
  */
-export const satsToAssetAmount = (sats: number | bigint, asset: string): bigint => {
+export const satsToAssetAmount = (
+    sats: number | bigint,
+    asset: string,
+): bigint => {
     const kind = getKindForAsset(asset);
 
     if (kind === AssetKind.EVMNative) {

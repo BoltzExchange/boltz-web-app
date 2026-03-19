@@ -20,7 +20,12 @@ import {
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
-import { AssetKind, getKindForAsset, isEvmAsset } from "../consts/Assets";
+import {
+    AssetKind,
+    type AssetType,
+    getKindForAsset,
+    isEvmAsset,
+} from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
@@ -38,6 +43,7 @@ import {
     calculateAmountWithSlippage,
 } from "../utils/calculate";
 import { validateAddress } from "../utils/compat";
+import { getTimelockBlockNumber } from "../utils/contractLogs";
 import { formatError } from "../utils/errors";
 import {
     type LockupEvent,
@@ -71,6 +77,7 @@ export const incorrectAssetError = "incorrect asset was sent";
 export const sendRefundTransaction = async (
     gasAbstraction: GasAbstractionType,
     transactionSigner: Signer | Wallet,
+    asset: AssetType,
     timeoutBlockHeight: number,
     refundCooperative: () => Promise<TransactionRequest | AlchemyCall[]>,
     refundTimeout: () => Promise<TransactionRequest | AlchemyCall[]>,
@@ -86,8 +93,7 @@ export const sendRefundTransaction = async (
             tx,
         );
     } catch (cooperativeError) {
-        // TODO: For Arbitrum that block height is the L1 block height; we gotta fetch that
-        const currentBlock = await provider.getBlockNumber();
+        const currentBlock = await getTimelockBlockNumber(provider, asset);
         if (timeoutBlockHeight >= currentBlock) {
             throw cooperativeError;
         }
@@ -593,6 +599,7 @@ export const RefundEvm = (props: {
                         const transactionHash = await sendRefundTransaction(
                             gasAbstraction(),
                             currentTransactionSigner,
+                            props.asset as AssetType,
                             Number(currentRefundData.timelock),
                             refundCooperative,
                             refundTimeout,
