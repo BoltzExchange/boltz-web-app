@@ -16,7 +16,7 @@ vi.mock("../../src/utils/invoice", async () => {
     return {
         ...actual,
         isBolt12Offer: vi.fn((offer: string) => {
-            return Promise.resolve(offer.startsWith("lno1"));
+            return offer.startsWith("lno1");
         }),
     };
 });

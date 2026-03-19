@@ -108,7 +108,7 @@ describe("invoice", () => {
             ${0}          | ${0}         | ${"zero amount"}
         `(
             "should round $millisatoshis msat to $expectedSats sats ($description)",
-            async ({ millisatoshis, expectedSats }) => {
+            ({ millisatoshis, expectedSats }) => {
                 vi.spyOn(bolt11, "decode").mockReturnValue({
                     millisatoshis: millisatoshis.toString(),
                     tags: [
@@ -119,7 +119,7 @@ describe("invoice", () => {
                     ],
                 } as ReturnType<typeof bolt11.decode>);
 
-                const result = await decodeInvoice(mockInvoice);
+                const result = decodeInvoice(mockInvoice);
 
                 expect(result.satoshis).toBe(expectedSats);
             },
