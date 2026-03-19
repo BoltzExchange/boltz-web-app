@@ -41,11 +41,18 @@ export const isUsdt0Variant = (asset: string): boolean =>
 export const isUsdt0Asset = (asset: string): boolean =>
     asset === USDT0 || isUsdt0Variant(asset);
 
-export const getAssetDisplaySymbol = (asset: string): string =>
-    isUsdt0Asset(asset) ? "USDT" : asset;
-
 export const getCanonicalAsset = (asset: string): string =>
     isUsdt0Variant(asset) ? USDT0 : asset;
+
+const assetDisplaySymbols: Record<string, string> = {
+    [LBTC]: "LBTC",
+    [USDT0]: "USDT",
+};
+
+export const getAssetDisplaySymbol = (asset: string): string => {
+    const canonicalAsset = getCanonicalAsset(asset);
+    return assetDisplaySymbols[canonicalAsset] ?? canonicalAsset;
+};
 
 const normalizeNetworkBadge = (chainName: string): string =>
     networkBadgeAliases[chainName] ??

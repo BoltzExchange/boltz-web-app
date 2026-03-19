@@ -336,7 +336,7 @@ const assetRescueRefund = async <T extends SubmarineSwap | ChainSwap>(
     transactionsToRefund: TransactionInterface[],
 ) => {
     if (swap.assetSend !== LBTC) {
-        throw new Error("Asset rescue refund is only supported for L-BTC");
+        throw new Error("Asset rescue refund is only supported for LBTC");
     }
 
     if (transactionsToRefund.length !== 1) {

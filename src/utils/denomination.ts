@@ -106,7 +106,7 @@ export const formatDenomination = (denom: Denomination, asset: string) => {
     if (isErc20) {
         return getAssetDisplaySymbol(asset);
     }
-    return denom === Denomination.Sat ? "sats" : asset;
+    return denom === Denomination.Sat ? "sats" : getAssetDisplaySymbol(asset);
 };
 
 export const convertAmount = (

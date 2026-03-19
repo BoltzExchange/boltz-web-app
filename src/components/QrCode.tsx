@@ -2,6 +2,7 @@ import log from "loglevel";
 import QRCode from "qrcode/lib/server";
 import { createResource, createSignal } from "solid-js";
 
+import { getAssetDisplaySymbol } from "../consts/Assets";
 import "../style/qrcode.scss";
 import { formatError } from "../utils/errors";
 
@@ -12,6 +13,10 @@ interface QrCodeProps {
 
 export const Qrcode = (params: QrCodeProps) => {
     const [dataUrl, setDataUrl] = createSignal("");
+    const displayAsset = () =>
+        params.asset === undefined
+            ? undefined
+            : getAssetDisplaySymbol(params.asset);
 
     createResource(async () => {
         try {
@@ -27,7 +32,7 @@ export const Qrcode = (params: QrCodeProps) => {
 
     return (
         <div
-            data-asset={params.asset}
+            data-asset={displayAsset()}
             id="qrcode"
             style={{ position: "relative" }}>
             <img src={dataUrl()} alt="Payment QR Code" />

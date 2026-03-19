@@ -83,7 +83,7 @@ const dict = {
         copy_bip21: "BIP21",
         refund_swap: "Refund Swap",
         rescue_a_swap_subline:
-            "If you sent BTC or L-BTC into a Boltz swap, upload or enter your rescue key to rescue a swap that is not available in this browser’s swap history.",
+            "If you sent BTC or LBTC into a Boltz swap, upload or enter your rescue key to rescue a swap that is not available in this browser’s swap history.",
         rescue_a_swap_mnemonic:
             "Enter your rescue key to rescue a swap that is not available in this browser’s swap history.",
         refund_past_swaps: "Past swaps",
@@ -1048,7 +1048,7 @@ const dict = {
         copy_bip21: "BIP21",
         refund_swap: "Reembolsar Intercambio",
         rescue_a_swap_subline:
-            "Si enviaste BTC o L-BTC a un intercambio Boltz, carga o introduce tu clave de rescate para rescatar un swap que no esté disponible en el historial de swaps de este navegador",
+            "Si enviaste BTC o LBTC a un intercambio Boltz, carga o introduce tu clave de rescate para rescatar un swap que no esté disponible en el historial de swaps de este navegador",
         rescue_a_swap_mnemonic:
             "Introduce tu clave de rescate para rescatar un intercambio que no está disponible en el historial de este navegador.",
         refund_past_swaps: "Intercambios anteriores",
@@ -1536,7 +1536,7 @@ const dict = {
         copy_bip21: "BIP21",
         refund_swap: "Reembolsar troca",
         rescue_a_swap_subline:
-            "Se enviou BTC ou L-BTC para uma troca Boltz, faça upload ou insira sua chave de resgate para resgatar uma troca que não está no histórico deste navegador.",
+            "Se enviou BTC ou LBTC para uma troca Boltz, faça upload ou insira sua chave de resgate para resgatar uma troca que não está no histórico deste navegador.",
         rescue_a_swap_mnemonic:
             "Insira sua chave de resgate para resgatar uma troca que não está no histórico deste navegador.",
         refund_past_swaps: "Trocas passadas",
@@ -2014,7 +2014,7 @@ const dict = {
         copy_bip21: "BIP21",
         refund_swap: "退还交换",
         rescue_a_swap_subline:
-            "如果您向 Boltz 交换发送了 BTC 或 L-BTC，请上传或输入您的救援密钥，以恢复在该浏览器的交换历史记录中不可用的交换。",
+            "如果您向 Boltz 交换发送了 BTC 或 LBTC，请上传或输入您的救援密钥，以恢复在该浏览器的交换历史记录中不可用的交换。",
         rescue_a_swap_mnemonic:
             "输入您的救援密钥以恢复此浏览器交换历史记录中不存在的交换。",
         refund_past_swaps: "过去的交换",
@@ -2456,7 +2456,7 @@ const dict = {
         copy_bip21: "BIP21をコピー",
         refund_swap: "スワップを返金する",
         rescue_a_swap_subline:
-            "BTCまたはL-BTCをBoltzスワップに送金した場合、このブラウザのスワップ履歴に表示されないスワップを復旧するには、復旧キーをアップロードまたは入力してください。",
+            "BTCまたはLBTCをBoltzスワップに送金した場合、このブラウザのスワップ履歴に表示されないスワップを復旧するには、復旧キーをアップロードまたは入力してください。",
         rescue_a_swap_mnemonic:
             "このブラウザの交換履歴にない交換を復元するには、復元キーを入力してください。",
         refund_past_swaps: "過去のスワップ",

@@ -103,7 +103,7 @@ describe("FeeComparisonTable", () => {
         expect(
             container.querySelectorAll("tbody .fee-comparison-row"),
         ).toHaveLength(1);
-        expect(container.querySelector('[data-asset="L-BTC"]')).toBeNull();
+        expect(container.querySelector('[data-asset="LBTC"]')).toBeNull();
         expect(container.querySelector('[data-asset="LN"]')).not.toBeNull();
         expect(container.querySelector('[data-asset="BTC"]')).not.toBeNull();
     });

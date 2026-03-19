@@ -2,7 +2,7 @@ import { type Page, expect, test } from "@playwright/test";
 import BigNumber from "bignumber.js";
 import fs from "fs";
 
-import { BTC, LBTC, LN } from "../src/consts/Assets";
+import { BTC, LBTC, LN, getAssetDisplaySymbol } from "../src/consts/Assets";
 import { Denomination } from "../src/consts/Enums";
 import dict from "../src/i18n/i18n";
 import { formatAmount } from "../src/utils/denomination";
@@ -72,7 +72,7 @@ test.describe("BIP21 URIs", () => {
 
             const receiveAsset = page.getByTestId("asset-receive");
             await expect(receiveAsset).toContainClass(
-                `asset-${condition.expectedAsset}`,
+                `asset-${getAssetDisplaySymbol(condition.expectedAsset)}`,
             );
         });
     });
