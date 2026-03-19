@@ -1,17 +1,18 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
-import type { BytesLike, DeferredTopicFilter, Provider, Result } from "ethers";
+import type { BytesLike, DeferredTopicFilter, Provider } from "ethers";
 import { JsonRpcProvider } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
+import { Network } from "../consts/Network";
 import {
     PreimageHashesWorker,
     type PreimageMap,
 } from "../workers/preimageHashes/PreimageHashesWorker";
-import { assetAmountToSats } from "./rootstock";
+import { prefix0x } from "./rootstock";
 
 export type SwapContract = EtherSwap | ERC20Swap;
 
@@ -21,6 +22,29 @@ export const createAssetProvider = (asset: string) => {
         throw new Error(`No RPC URL configured for asset ${asset}`);
     }
     return new JsonRpcProvider(rpcUrl);
+};
+
+/**
+ * Returns the block number used for timelock comparison.
+ * On Arbitrum, the contract's `block.number` is the L1 block number,
+ * while `provider.getBlockNumber()` returns L2 — so we fetch L1 instead.
+ */
+export const getTimelockBlockNumber = async (
+    provider: Provider,
+    asset: AssetType,
+): Promise<number> => {
+    const network = config.assets?.[asset as string]?.network;
+
+    if (network?.chainName === Network.Arbitrum) {
+        const rpcProvider = createAssetProvider(asset as string);
+        const block = await rpcProvider.send("eth_getBlockByNumber", [
+            "latest",
+            false,
+        ]);
+        return Number(block.l1BlockNumber);
+    }
+
+    return provider.getBlockNumber();
 };
 
 const defaultScanInterval = 2_000;
@@ -265,59 +289,58 @@ const fetchEventsForRanges = async (
 
 const parseLockupEvent = (
     asset: AssetType,
-    isErc20: boolean,
     contract: SwapContract,
-    event: {
-        data: BytesLike;
-        blockNumber: number;
-        transactionHash: string;
-        topics: readonly string[];
-    },
-): {
-    data: LogRefundData;
-    decoded: Result;
-} => {
-    const decoded = contract.interface.decodeEventLog(
-        contract.interface.getEvent("Lockup"),
-        event.data,
-        event.topics,
-    );
+    event: LockupEvent,
+): LogRefundData => {
+    const parsedLog = contract.interface.parseLog({
+        data: event.data as string,
+        topics: event.topics as string[],
+    });
+
+    if (parsedLog?.name !== "Lockup") {
+        throw new Error("Failed to parse Lockup event");
+    }
+
+    const {
+        preimageHash,
+        amount,
+        tokenAddress,
+        claimAddress,
+        refundAddress,
+        timelock,
+    } = parsedLog.args;
 
     return {
-        decoded,
-        data: {
-            asset,
-            blockNumber: event.blockNumber,
-            transactionHash: event.transactionHash,
-            preimageHash: decoded[0].substring(2),
-            amount: assetAmountToSats(decoded[1], asset),
-            tokenAddress: isErc20 ? decoded[2] : undefined,
-            claimAddress: isErc20 ? decoded[3] : decoded[2],
-            refundAddress: isErc20 ? decoded[4] : decoded[3],
-            timelock: isErc20 ? decoded[5] : decoded[4],
-        },
+        asset,
+        blockNumber: event.blockNumber,
+        transactionHash: event.transactionHash,
+        preimageHash: (preimageHash as string).substring(2),
+        amount,
+        tokenAddress,
+        claimAddress,
+        refundAddress,
+        timelock,
     };
 };
 
 const computeSwapHash = async (
     contract: SwapContract,
     isErc20: boolean,
-    decoded: Result,
     data: LogRefundData,
 ): Promise<string> => {
     if (isErc20) {
         return await (contract as ERC20Swap).hashValues(
-            decoded[0],
-            decoded[1],
-            data.tokenAddress,
+            prefix0x(data.preimageHash),
+            data.amount,
+            data.tokenAddress!,
             data.claimAddress,
             data.refundAddress,
             data.timelock,
         );
     }
     return await (contract as EtherSwap).hashValues(
-        decoded[0],
-        decoded[1],
+        prefix0x(data.preimageHash),
+        data.amount,
         data.claimAddress,
         data.refundAddress,
         data.timelock,
@@ -354,22 +377,27 @@ export const getLogsFromReceipt = async (
     contract: SwapContract,
     txHash: string,
 ): Promise<LogRefundData> => {
-    const receipt = await provider.getTransactionReceipt(txHash);
+    const [receipt, contractAddress] = await Promise.all([
+        provider.getTransactionReceipt(txHash),
+        contract.getAddress(),
+    ]);
 
     if (receipt === null) {
         throw new Error(`Transaction receipt not found for ${txHash}`);
     }
 
-    const isErc20 = getKindForAsset(asset) === AssetKind.ERC20;
-
     for (const event of receipt.logs) {
+        if (event.address.toLowerCase() !== contractAddress.toLowerCase()) {
+            continue;
+        }
+
         if (
             event.topics[0] !== contract.interface.getEvent("Lockup").topicHash
         ) {
             continue;
         }
 
-        return parseLockupEvent(asset, isErc20, contract, event).data;
+        return parseLockupEvent(asset, contract, event);
     }
 
     throw new Error(`Lockup event not found in transaction ${txHash}`);
@@ -433,12 +461,7 @@ export async function* scanLockupEvents(
         };
 
         for (const event of events) {
-            const { data, decoded } = parseLockupEvent(
-                ctx.asset,
-                ctx.isErc20,
-                ctx.contract,
-                event,
-            );
+            const data = parseLockupEvent(ctx.asset, ctx.contract, event);
             const match = matchesFilter(data, scanConfig.filter);
 
             if (match === null || match !== scanConfig.action) {
@@ -452,7 +475,6 @@ export async function* scanLockupEvents(
             const swapHash = await computeSwapHash(
                 ctx.contract,
                 ctx.isErc20,
-                decoded,
                 data,
             );
             const stillLocked = await ctx.contract.swaps(swapHash);

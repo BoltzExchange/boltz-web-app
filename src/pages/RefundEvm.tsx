@@ -10,10 +10,15 @@ import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import type { LogRefundData } from "../utils/contractLogs";
-import { createAssetProvider, getLogsFromReceipt } from "../utils/contractLogs";
+import {
+    createAssetProvider,
+    getLogsFromReceipt,
+    getTimelockBlockNumber,
+} from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
+import { assetAmountToSats } from "../utils/rootstock";
 
 type RefundData = LogRefundData & { currentHeight: bigint };
 
@@ -33,7 +38,12 @@ const RefundState = (props: {
             <p>
                 {t("refund")}{" "}
                 {formatAmount(
-                    new BigNumber(props.refundData.amount.toString()),
+                    new BigNumber(
+                        assetAmountToSats(
+                            props.refundData.amount,
+                            props.asset,
+                        ).toString(),
+                    ),
                     denomination(),
                     separator(),
                     props.asset,
@@ -97,7 +107,7 @@ const RefundEvm = () => {
                 contract,
                 params.txHash,
             ),
-            provider.getBlockNumber(),
+            getTimelockBlockNumber(provider, params.asset as AssetType),
         ]);
 
         return {

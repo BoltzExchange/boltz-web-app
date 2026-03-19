@@ -79,6 +79,9 @@ vi.mock("ethers", () => {
 
     return {
         Contract: vi.fn(),
+        Interface: class {
+            encodeFunctionData = vi.fn(() => "0xencoded");
+        },
         JsonRpcProvider: vi.fn(),
         FallbackProvider: vi.fn(),
         Signature: {
