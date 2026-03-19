@@ -4,7 +4,6 @@ import { vi } from "vitest";
 import AddressInput from "../../src/components/AddressInput";
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import Pair from "../../src/utils/Pair";
-import * as compat from "../../src/utils/compat";
 import {
     TestComponent,
     contextWrapper,
@@ -17,7 +16,7 @@ vi.mock("../../src/utils/invoice", async () => {
     return {
         ...actual,
         isBolt12Offer: vi.fn((offer: string) => {
-            return Promise.resolve(offer.startsWith("lno1"));
+            return offer.startsWith("lno1");
         }),
     };
 });
@@ -220,61 +219,6 @@ describe("AddressInput", () => {
             expect(signals.pair().fromAsset).toEqual(LN);
             expect(signals.pair().toAsset).toEqual(BTC);
             expect(signals.addressValid()).toEqual(false);
-            expect(input.className).toContain("invalid");
-        });
-    });
-
-    test("should ignore stale address validation results", async () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <AddressInput />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
-
-        setPairAssets(signals.pair().fromAsset, LBTC);
-
-        const input = (await screen.findByTestId(
-            "onchainAddress",
-        )) as HTMLInputElement;
-        const validAddress = "ert1qhtlluwskenvrf4w8hwds70w9wdwem4fwsd0pk8";
-        const invalidAddress = "lq1invalid";
-
-        let resolveProbe!: (asset: string | null) => void;
-        vi.spyOn(compat, "probeUserInput").mockImplementationOnce(
-            () =>
-                new Promise((resolve) => {
-                    resolveProbe = resolve;
-                }),
-        );
-
-        fireEvent.input(input, {
-            target: { value: validAddress },
-        });
-
-        await waitFor(() => {
-            expect(signals.addressValid()).toBe(false);
-            expect(signals.onchainAddress()).toEqual(validAddress);
-        });
-
-        fireEvent.input(input, {
-            target: { value: invalidAddress },
-        });
-
-        await waitFor(() => {
-            expect(signals.addressValid()).toBe(false);
-            expect(signals.onchainAddress()).toEqual(invalidAddress);
-            expect(input.className).toContain("invalid");
-        });
-
-        resolveProbe(LBTC);
-
-        await waitFor(() => {
-            expect(signals.addressValid()).toBe(false);
-            expect(signals.onchainAddress()).toEqual(invalidAddress);
             expect(input.className).toContain("invalid");
         });
     });

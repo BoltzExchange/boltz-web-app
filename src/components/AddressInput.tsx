@@ -63,21 +63,6 @@ const AddressInput = () => {
         const address = extractAddress(inputValue);
         const invoice = extractInvoice(inputValue);
 
-        const bip21Amount = extractBip21Amount(inputValue);
-        if (bip21Amount) {
-            const satAmount = btcToSat(bip21Amount);
-            setAmountChanged(Side.Receive);
-            setReceiveAmount(satAmount);
-            const sendAmt = await pair().calculateSendAmount(
-                satAmount,
-                minerFee(),
-            );
-            if (isStale()) {
-                return;
-            }
-            setSendAmount(sendAmt);
-        }
-
         try {
             const assetName = pair().toAsset;
             if (isEvmAsset(assetName)) {
@@ -114,8 +99,8 @@ const AddressInput = () => {
             }
 
             const actualAsset =
-                (await probeUserInput(assetName, invoice)) ??
-                (await probeUserInput(assetName, address));
+                probeUserInput(assetName, invoice) ??
+                probeUserInput(assetName, address);
 
             if (isStale()) {
                 return;
@@ -145,6 +130,21 @@ const AddressInput = () => {
                 default: {
                     if (bitcoinOnly() && !isBitcoinOnlyAsset(actualAsset)) {
                         throw new Error();
+                    }
+
+                    const bip21Amount = extractBip21Amount(inputValue);
+                    if (bip21Amount) {
+                        const satAmount = btcToSat(bip21Amount);
+                        setAmountChanged(Side.Receive);
+                        setReceiveAmount(satAmount);
+                        const sendAmt = await pair().calculateSendAmount(
+                            satAmount,
+                            minerFee(),
+                        );
+                        if (isStale()) {
+                            return;
+                        }
+                        setSendAmount(sendAmt);
                     }
 
                     if (assetName !== actualAsset) {

@@ -115,17 +115,12 @@ export const isConfidentialAddress = (addr: string): boolean => {
     }
 };
 
-const probeUserInputOption = async (
-    asset: string,
-    input: string,
-): Promise<boolean> => {
+const probeUserInputOption = (asset: string, input: string): boolean => {
     switch (asset) {
         case LN: {
             const invoice = extractInvoice(input);
             return (
-                isLnurl(invoice) ||
-                isInvoice(invoice) ||
-                (await isBolt12Offer(invoice))
+                isLnurl(invoice) || isInvoice(invoice) || isBolt12Offer(invoice)
             );
         }
 
@@ -142,23 +137,20 @@ const probeUserInputOption = async (
     }
 };
 
-const probeUserInput = async (
+const probeUserInput = (
     expectedAsset: string,
     input: string,
-): Promise<string | null> => {
+): string | null => {
     if (typeof input !== "string") {
         return null;
     }
 
-    if (
-        expectedAsset !== "" &&
-        (await probeUserInputOption(expectedAsset, input))
-    ) {
+    if (expectedAsset !== "" && probeUserInputOption(expectedAsset, input)) {
         return expectedAsset;
     }
 
     for (const asset of possibleUserInputTypes) {
-        if (await probeUserInputOption(asset, input)) {
+        if (probeUserInputOption(asset, input)) {
             return asset;
         }
     }

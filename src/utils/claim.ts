@@ -377,7 +377,7 @@ export const createSubmarineSignature = async (
     const claimDetails = await getSubmarineClaimDetails(swap.id);
     if (
         hex.encode(sha256(claimDetails.preimage)) !==
-        (await decodeInvoice(swap.invoice)).preimageHash
+        decodeInvoice(swap.invoice).preimageHash
     ) {
         throw "invalid preimage";
     }

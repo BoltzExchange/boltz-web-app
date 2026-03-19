@@ -28,6 +28,7 @@ const InvoiceInput = () => {
         setPair,
         minerFee,
         invoice,
+        amountValid,
         receiveAmount,
         sendAmount,
         setAmountChanged,
@@ -57,11 +58,12 @@ const InvoiceInput = () => {
 
     const validate = async (input: HTMLTextAreaElement) => {
         const requestId = ++validationRequest;
-        const inputValue = input.value.trim();
+        const getCurrentInputValue = () =>
+            input.value.trim() || invoice().trim();
+        const inputValue = getCurrentInputValue();
         const isStale = () =>
             requestId !== validationRequest ||
-            input.value.trim() !== inputValue;
-
+            getCurrentInputValue() !== inputValue;
         setInvoice(inputValue);
         setBolt12Loading(false);
 
@@ -78,11 +80,7 @@ const InvoiceInput = () => {
         const invoiceValue = extractInvoice(inputValue);
 
         const actualAsset =
-            (await probeUserInput(LN, invoiceValue)) ??
-            (await probeUserInput(LN, address));
-        if (isStale()) {
-            return;
-        }
+            probeUserInput(LN, invoiceValue) ?? probeUserInput(LN, address);
 
         const bip21Amount = extractBip21Amount(inputValue);
         if (bip21Amount) {
@@ -126,7 +124,7 @@ const InvoiceInput = () => {
                 setBolt12Loading(true);
                 let isBolt12: boolean;
                 try {
-                    isBolt12 = await isBolt12Offer(invoiceValue);
+                    isBolt12 = isBolt12Offer(invoiceValue);
                 } finally {
                     if (!isStale()) {
                         setBolt12Loading(false);
@@ -140,10 +138,7 @@ const InvoiceInput = () => {
                     setBolt12Offer(invoiceValue);
                     setInvoice(invoiceValue);
                 } else {
-                    const sats = await validateInvoice(invoiceValue);
-                    if (isStale()) {
-                        return;
-                    }
+                    const sats = validateInvoice(invoiceValue);
                     const sendAmount = await pair().calculateSendAmount(
                         BigNumber(sats),
                         minerFee(),
@@ -177,7 +172,7 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([invoice, pair, minerFee], async () => {
+        on([amountValid, invoice, pair, minerFee], async () => {
             if (
                 pair().swapToCreate?.type === SwapType.Submarine ||
                 pair().toAsset === LN
@@ -189,7 +184,7 @@ const InvoiceInput = () => {
 
     // reset invoice if amount is changed
     createEffect(
-        on([receiveAmount, sendAmount, invoice], async () => {
+        on([receiveAmount, sendAmount, invoice], () => {
             const amount = Number(receiveAmount());
             if (
                 invoice() !== "" &&
@@ -197,7 +192,7 @@ const InvoiceInput = () => {
                 !receiveAmount().isZero()
             ) {
                 try {
-                    const inv = await decodeInvoice(invoice());
+                    const inv = decodeInvoice(invoice());
                     if (inv.satoshis !== 0 && inv.satoshis !== amount) {
                         setInvoice("");
                     }

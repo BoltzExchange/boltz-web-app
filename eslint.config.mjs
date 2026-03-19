@@ -47,7 +47,6 @@ export default [
                         {
                             message: "It is a heavy dependency",
                             group: [
-                                "boltz-bolt12",
                                 "@reown/appkit",
                                 "@trezor/connect",
                                 "@trezor/connect-web",

@@ -19,12 +19,12 @@ vi.mock("../../src/utils/invoice", async () => {
         ...actual,
         decodeInvoice: vi.fn((input: string) => {
             if (input.startsWith("lnzeroamt")) {
-                return Promise.resolve({ satoshis: 0 });
+                return { satoshis: 0 };
             }
-            return Promise.resolve({ satoshis: 1000 });
+            return { satoshis: 1000 };
         }),
         isBolt12Offer: vi.fn((offer: string) => {
-            return Promise.resolve(offer.startsWith("lno1"));
+            return offer.startsWith("lno1");
         }),
     };
 });
@@ -35,12 +35,12 @@ vi.mock("../../src/utils/validation", async () => {
         ...actual,
         validateInvoice: vi.fn((inputValue: string) => {
             if (inputValue.startsWith("lnzeroamt")) {
-                return Promise.reject(new Error("invalid_0_amount"));
+                throw new Error("invalid_0_amount");
             }
             if (inputValue.startsWith("ln")) {
-                return Promise.resolve(1000);
+                return 1000;
             }
-            return Promise.reject(new Error("invalid_invoice"));
+            throw new Error("invalid_invoice");
         }),
     };
 });
@@ -51,30 +51,30 @@ vi.mock("../../src/utils/compat", async () => {
         ...actual,
         probeUserInput: vi.fn((expectedAsset: string, input: string) => {
             if (!input || input.length === 0) {
-                return Promise.resolve(null);
+                return null;
             }
             if (
                 input.startsWith("bc1") ||
                 input.startsWith("bcrt1") ||
                 input.startsWith("tb1")
             ) {
-                return Promise.resolve(BTC);
+                return BTC;
             }
             if (
                 input.startsWith("el1") ||
                 input.startsWith("ert1") ||
                 input.startsWith("ex1")
             ) {
-                return Promise.resolve(LBTC);
+                return LBTC;
             }
             if (
                 expectedAsset !== "" &&
                 expectedAsset === LN &&
                 input.length > 0
             ) {
-                return Promise.resolve(LN);
+                return LN;
             }
-            return Promise.resolve(null);
+            return null;
         }),
     };
 });
