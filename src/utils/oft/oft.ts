@@ -283,7 +283,10 @@ export const getOftContract = async (
 ): Promise<OftContract | undefined> => {
     const chain = await getOftChain(chainId, oftName);
 
-    return chain?.contracts.find((contract) => contract.name === "OFT");
+    return (
+        chain?.contracts.find((contract) => contract.name === "OFT") ??
+        chain?.contracts.find((contract) => contract.name === "OFT Adapter")
+    );
 };
 
 export const createOftContract = (

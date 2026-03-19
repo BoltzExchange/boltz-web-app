@@ -1,5 +1,6 @@
 const {
     decodeExecutorNativeAmountExceedsCapError,
+    getOftContract,
     getOftReceivedEventByGuid,
     isExecutorNativeAmountExceedsCapError,
     quoteOftSend,
@@ -19,6 +20,18 @@ describe("oft", () => {
                 json: vi.fn().mockResolvedValue({
                     usdt0: {
                         native: [
+                            {
+                                chainId: 1,
+                                lzEid: "30101",
+                                contracts: [
+                                    {
+                                        name: "OFT Adapter",
+                                        address:
+                                            "0x1000000000000000000000000000000000000001",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
                             {
                                 chainId: 137,
                                 lzEid: "30109",
@@ -74,6 +87,12 @@ describe("oft", () => {
             ]),
         );
         expect(msgFee).toEqual([5n, 0n]);
+
+        await expect(getOftContract(1)).resolves.toEqual({
+            name: "OFT Adapter",
+            address: "0x1000000000000000000000000000000000000001",
+            explorer: "",
+        });
     });
 
     test("should fetch the received event by guid", async () => {

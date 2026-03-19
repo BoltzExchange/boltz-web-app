@@ -56,7 +56,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainName: "Ethereum",
         symbol: "ETH",
         chainId: 1,
-        tokenAddress: "0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee",
+        tokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         blockExplorerUrl: "https://etherscan.io",
         rpcUrls: ["https://ethereum-rpc.publicnode.com"],
     },
