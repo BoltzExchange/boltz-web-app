@@ -7,10 +7,13 @@ import { useGlobalContext } from "../context/Global";
 import "../style/asset.scss";
 
 const Asset = (props: { side: Side; signal: Accessor<string> }) => {
-    const { bitcoinOnly } = useGlobalContext();
+    const { bitcoinOnly, notify, t } = useGlobalContext();
 
     const openSelect = () => {
-        if (bitcoinOnly()) return;
+        if (bitcoinOnly()) {
+            notify("error", t("bitcoin_only_warning"));
+            return;
+        }
         setAssetSelected(props.side);
         setAssetSelection(AssetSelection.Asset);
     };

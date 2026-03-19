@@ -197,6 +197,8 @@ const dict = {
         bitcoin_only: "Bitcoin-Only Mode",
         bitcoin_only_tooltip:
             "Only show Bitcoin and Lightning, hide all other pairs",
+        bitcoin_only_warning:
+            "Bitcoin-Only Mode is enabled. Disable it in settings to swap other assets.",
         slippage: "Slippage",
         slippage_tooltip: "Maximum price slippage tolerance for DEX swaps",
         gas_topup: "Auto gas top-up",
@@ -677,6 +679,8 @@ const dict = {
         bitcoin_only: "Bitcoin-Only Modus",
         bitcoin_only_tooltip:
             "Nur Bitcoin und Lightning anzeigen, alle anderen Paare ausblenden",
+        bitcoin_only_warning:
+            "Bitcoin-Only Modus ist aktiviert. Deaktiviere ihn in den Einstellungen, um andere Assets zu tauschen.",
         slippage: "Slippage",
         slippage_tooltip: "Maximale Slippage-Toleranz bei DEX-Swaps",
         gas_topup: "Auto Gas-Aufladung",
@@ -1164,6 +1168,8 @@ const dict = {
         bitcoin_only: "Modo Bitcoin-Only",
         bitcoin_only_tooltip:
             "Mostrar solo Bitcoin y Lightning, ocultando todos los demás pares",
+        bitcoin_only_warning:
+            "Modo Bitcoin-Only está activado. Desactívalo en los ajustes para intercambiar otros activos.",
         slippage: "Slippage",
         slippage_tooltip: "Tolerancia máxima de slippage para swaps en DEX",
         gas_topup: "Recarga automática de gas",
@@ -1647,6 +1653,8 @@ const dict = {
         bitcoin_only: "Modo Bitcoin-Only",
         bitcoin_only_tooltip:
             "Mostrar apenas Bitcoin e Lightning, ocultando todos os outros pares",
+        bitcoin_only_warning:
+            "Modo Bitcoin-Only está ativado. Desative-o nas configurações para trocar outros ativos.",
         slippage: "Slippage",
         slippage_tooltip: "Tolerância máxima de slippage para trocas em DEX",
         gas_topup: "Recarga automática de gas",
@@ -2107,6 +2115,8 @@ const dict = {
             "在演示和录屏时隐藏EVM钱包地址和交换ID以保护隐私",
         bitcoin_only: "仅比特币模式",
         bitcoin_only_tooltip: "仅显示比特币和闪电网络，隐藏所有其他交易对",
+        bitcoin_only_warning:
+            "仅比特币模式已启用。请在设置中关闭此模式以兑换其他资产。",
         slippage: "滑点",
         slippage_tooltip: "DEX 交换的最大价格滑点容差",
         gas_topup: "自动补充 Gas",
@@ -2562,6 +2572,8 @@ const dict = {
         bitcoin_only: "ビットコイン専用モード",
         bitcoin_only_tooltip:
             "ビットコインとライトニングのみを表示し、他のすべてのペアを非表示にします",
+        bitcoin_only_warning:
+            "ビットコイン専用モードが有効です。他の資産をスワップするには、設定で無効にしてください。",
         slippage: "スリッページ",
         slippage_tooltip: "DEXスワップで許容する最大価格スリッページ",
         gas_topup: "ガス自動チャージ",
