@@ -933,6 +933,10 @@ export default class Pair {
     };
 
     public boltzSwapSendAmountFromLatestQuote = (sendAmount: BigNumber) => {
+        if (this.preOft === undefined && this.dexHopBeforeBoltz === undefined) {
+            return sendAmount;
+        }
+
         const key = sendAmount.toFixed();
 
         if (this.latestBoltzSwapSendAmount?.sendAmount !== key) {
