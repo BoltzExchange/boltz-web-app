@@ -245,6 +245,7 @@ test.describe("RSK Rescue", () => {
 
         await fillReceiveAmount(page, "0.001");
         await clickCreateSwap(page);
+        await downloadAndVerifyRescueFile(page, rescueFileName);
         await waitForSwapCreated(page);
 
         await page.getByRole("button", { name: "Send" }).click();

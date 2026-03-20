@@ -234,6 +234,8 @@ test.describe("EVM", () => {
                 await expect(buttonCreateSwap).toBeEnabled({ timeout: 5000 });
                 await buttonCreateSwap.click();
 
+                await verifyRescueFile(page);
+
                 await expect(
                     page.locator("div[data-status='swap.created']"),
                 ).toBeVisible();
@@ -348,6 +350,8 @@ test.describe("EVM", () => {
         await expect(buttonCreateSwap).toBeEnabled();
         await buttonCreateSwap.click();
 
+        await verifyRescueFile(page);
+
         await expect(
             page.locator("div[data-status='invoice.set']"),
         ).toBeVisible();
@@ -402,6 +406,8 @@ test.describe("EVM", () => {
         );
         await expect(buttonCreateSwap).toBeEnabled();
         await buttonCreateSwap.click();
+
+        await verifyRescueFile(page);
 
         await expect(
             page.locator("div[data-status='invoice.set']"),
