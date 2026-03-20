@@ -62,7 +62,6 @@ const TransactionLockupFailed = (props: {
     const { t, fetchPairs, setSwapStorage, pairs } = useGlobalContext();
     const { failureReason, swap, setSwap, setFailureReason } = usePayContext();
     const [loading, setLoading] = createSignal(false);
-    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     const [newQuote, newQuoteActions] = createResource<
         { sentAmount: number; quote: number; receiveAmount: number } | undefined
@@ -144,7 +143,7 @@ const TransactionLockupFailed = (props: {
                     when={newQuote() !== undefined && !quoteRejected()}
                     fallback={
                         <>
-                            <Show when={refundTxId() === ""}>
+                            <Show when={swap()?.refundTx === undefined}>
                                 <h2>{t("lockup_failed")}</h2>
                                 <p>
                                     {t("failure_reason")}: {failureReason()}
@@ -157,13 +156,12 @@ const TransactionLockupFailed = (props: {
                                                 SubmarineSwap | ChainSwap
                                             >
                                         }
-                                        setRefundTxId={setRefundTxId}
                                     />
                                     <hr />
                                 </Show>
                             </Show>
-                            <Show when={refundTxId() !== ""}>
-                                <SwapRefunded refundTxId={refundTxId()} />
+                            <Show when={swap()?.refundTx !== undefined}>
+                                <SwapRefunded refundTxId={swap().refundTx} />
                             </Show>
                         </>
                     }>

@@ -93,8 +93,6 @@ const Pay = () => {
     const [copyDestinationActive, setCopyDestinationActive] =
         createSignal(false);
     const [loading, setLoading] = createSignal<boolean>(false);
-    const [refundTxId, setRefundTxId] = createSignal<string>("");
-
     const prevSwapStatus = { value: "" };
 
     const copyBoxText = (content: string) => {
@@ -338,7 +336,7 @@ const Pay = () => {
             </span>
             <Show when={!loading()} fallback={<LoadingSpinner />}>
                 <Show when={swap()}>
-                    <Show when={refundTxId() !== ""}>
+                    <Show when={swap()?.refundTx !== undefined}>
                         <p class="swap-status">
                             {t("status")}:{" "}
                             <span class="btn-small btn-success">
@@ -346,10 +344,10 @@ const Pay = () => {
                             </span>
                         </p>
                         <hr />
-                        <SwapRefunded refundTxId={refundTxId()} />
+                        <SwapRefunded refundTxId={swap().refundTx} />
                     </Show>
 
-                    <Show when={refundTxId() === ""}>
+                    <Show when={swap()?.refundTx === undefined}>
                         <Show when={swapStatus()} fallback={<LoadingSpinner />}>
                             <div class="swap-status">
                                 {t("status")}:
@@ -478,7 +476,6 @@ const Pay = () => {
                                                 ChainSwap | SubmarineSwap
                                             >
                                         }
-                                        setRefundTxId={setRefundTxId}
                                     />
                                 </Match>
                                 <Match
