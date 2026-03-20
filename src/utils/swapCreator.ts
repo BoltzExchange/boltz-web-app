@@ -48,6 +48,28 @@ export type OftDetail = OftStageDetail & {
     txHash?: string;
 };
 
+export const enum SideSwapStatus {
+    Pending = "pending",
+    WaitingConfirmation = "waitingConfirmation",
+    Quoting = "quoting",
+    Signing = "signing",
+    Broadcasting = "broadcasting",
+    Confirmed = "confirmed",
+    Failed = "failed",
+}
+
+export type SideSwapDetail = {
+    baseAssetId: string;
+    quoteAssetId: string;
+    userAddress: string;
+    tempKeyIndex: number;
+    tempAddress: string;
+    quoteAmountEstimate: number;
+    status: SideSwapStatus;
+    txid?: string;
+    error?: string;
+};
+
 export const enum GasAbstractionType {
     None = "none",
     RifRelay = "rifRelay",
@@ -84,6 +106,9 @@ export type SwapBase = {
 
     // OFT routes for bridging before lockup or after claim.
     oft?: OftDetail;
+
+    // SideSwap post-hop for L-BTC -> Liquid token swaps.
+    sideswap?: SideSwapDetail;
 };
 
 export type SubmarineSwap = SwapBase &
@@ -154,6 +179,12 @@ export const getFinalAssetReceive = (
     swap: SwapBase,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.sideswap !== undefined) {
+        return swap.dex?.hops?.find(
+            (h) => h.type === SwapType.SideSwap,
+        )?.to ?? swap.assetReceive;
+    }
+
     if (swap.oft?.position === OftPosition.Post) {
         return swap.oft.destinationAsset;
     }

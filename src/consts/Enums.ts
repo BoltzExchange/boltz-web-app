@@ -3,6 +3,7 @@ export enum SwapType {
     Reverse = "reverse",
     Chain = "chain",
     Dex = "dex",
+    SideSwap = "sideswap",
 }
 
 export enum Denomination {

@@ -1,5 +1,7 @@
 import BigNumber from "bignumber.js";
 import { ZeroAddress } from "ethers";
+import { networks as LiquidNetworks } from "liquidjs-lib";
+import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
 
 import { config } from "../config";
@@ -41,6 +43,7 @@ import {
     getGasTopUpNativeAmount,
 } from "./qouter";
 import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
+import { estimateSideSwapReceive, estimateSideSwapSend } from "./sideswap";
 
 /**
  * Whether an asset is a routed ERC20 (like USDT0) whose internal
@@ -87,6 +90,10 @@ type Hop = {
         tokenIn: string;
         tokenOut: string;
     };
+    sideswapDetails?: {
+        baseAssetId: string;
+        quoteAssetId: string;
+    };
 };
 
 type OftRoute = {
@@ -95,7 +102,10 @@ type OftRoute = {
     destinationChainId: number;
 };
 
-export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
+export type EncodedHop = Pick<
+    Hop,
+    "type" | "from" | "to" | "dexDetails" | "sideswapDetails"
+>;
 
 export type CreationData = {
     type: SwapType;
@@ -114,6 +124,7 @@ const toEncodedHop = (hop: Hop): EncodedHop => {
         from: hop.from,
         to: hop.to,
         dexDetails: hop.dexDetails,
+        sideswapDetails: hop.sideswapDetails,
     };
 };
 
@@ -220,6 +231,53 @@ export default class Pair {
             }
         }
 
+        const toAssetLiquid = config.assets[routeTarget];
+        if (
+            toAssetLiquid !== undefined &&
+            toAssetLiquid.type === AssetKind.LiquidToken
+        ) {
+            const hopAssetSymbol = toAssetLiquid.liquidToken?.routeVia;
+            const hopPair =
+                hopAssetSymbol !== undefined
+                    ? Pair.findPair(pairs, routeSource, hopAssetSymbol)
+                    : undefined;
+
+            if (
+                hopPair !== undefined &&
+                hopAssetSymbol !== undefined &&
+                toAssetLiquid.liquidToken !== undefined
+            ) {
+                log.debug(
+                    `Found SideSwap route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
+                );
+                const liquidNet =
+                    config.network === "mainnet" ? "liquid" : config.network;
+                const lbtcAssetId =
+                    (LiquidNetworks[liquidNet] as LiquidNetwork)?.assetHash ??
+                    "";
+
+                this.route = [
+                    {
+                        type: hopPair.type,
+                        pair: hopPair.pair,
+                        from: routeSource,
+                        to: hopAssetSymbol,
+                    },
+                    {
+                        type: SwapType.SideSwap,
+                        from: hopAssetSymbol,
+                        to: routeTarget,
+                        sideswapDetails: {
+                            baseAssetId: lbtcAssetId,
+                            quoteAssetId:
+                                toAssetLiquid.liquidToken.assetId,
+                        },
+                    },
+                ];
+                return;
+            }
+        }
+
         const fromAsset = config.assets[routeSource];
         if (fromAsset !== undefined && fromAsset.type === AssetKind.ERC20) {
             const hopAssetSymbol = fromAsset.token?.routeVia;
@@ -315,7 +373,11 @@ export default class Pair {
         return (
             this.preOft !== undefined ||
             this.postOft !== undefined ||
-            this.route.some((hop) => hop.type === SwapType.Dex)
+            this.route.some(
+                (hop) =>
+                    hop.type === SwapType.Dex ||
+                    hop.type === SwapType.SideSwap,
+            )
         );
     }
 
@@ -338,11 +400,23 @@ export default class Pair {
             return RequiredInput.Web3;
         }
 
+        if (lastHop.type === SwapType.SideSwap) {
+            return RequiredInput.Address;
+        }
+
         return RequiredInput.Address;
     }
 
     public get hasPostOft() {
         return this.postOft !== undefined;
+    }
+
+    public get hasSideSwapHop() {
+        return this.route.some((hop) => hop.type === SwapType.SideSwap);
+    }
+
+    public get sideSwapHop(): Hop | undefined {
+        return this.route.find((hop) => hop.type === SwapType.SideSwap);
     }
 
     public get needsBackup() {
@@ -1061,7 +1135,10 @@ export default class Pair {
     }
 
     public get swapToCreate() {
-        return this.route.find((hop) => hop.type !== SwapType.Dex);
+        return this.route.find(
+            (hop) =>
+                hop.type !== SwapType.Dex && hop.type !== SwapType.SideSwap,
+        );
     }
 
     public feeOnSend = (sendAmount: BigNumber) => {
@@ -1147,6 +1224,22 @@ export default class Pair {
                     break;
                 }
 
+                case SwapType.SideSwap: {
+                    if (Number.isNaN(amount.toNumber())) {
+                        amount = BigNumber(0);
+                        continue;
+                    }
+                    try {
+                        const estimate = await estimateSideSwapReceive(
+                            amount.toNumber(),
+                        );
+                        amount = BigNumber(estimate.receiveAmount);
+                    } catch {
+                        amount = BigNumber(0);
+                    }
+                    break;
+                }
+
                 default:
                     amount = calculateReceiveAmount(
                         amount,
@@ -1217,6 +1310,18 @@ export default class Pair {
                     }
 
                     amount = fromDexAmount(quoteAmount, hop.from);
+                    break;
+                }
+
+                case SwapType.SideSwap: {
+                    try {
+                        const required = await estimateSideSwapSend(
+                            amount.toNumber(),
+                        );
+                        amount = BigNumber(required);
+                    } catch {
+                        amount = BigNumber(0);
+                    }
                     break;
                 }
 
@@ -1296,7 +1401,11 @@ export default class Pair {
             [boltzHop],
         );
 
-        const dexHops = this.route.filter((hop) => hop.type === SwapType.Dex);
+        const nonBoltzHops = this.route.filter(
+            (hop) =>
+                hop.type === SwapType.Dex ||
+                hop.type === SwapType.SideSwap,
+        );
         const boltzIndex = this.route.indexOf(boltzHop);
         return {
             type: boltzHop.type,
@@ -1305,10 +1414,10 @@ export default class Pair {
             from: coalesceLn(boltzHop.from),
             to: coalesceLn(boltzHop.to),
             pairHash: boltzHop.pair!.hash,
-            hops: dexHops.map(toEncodedHop),
+            hops: nonBoltzHops.map(toEncodedHop),
             hopsPosition:
-                dexHops.length > 0
-                    ? this.route.indexOf(dexHops[0]) < boltzIndex
+                nonBoltzHops.length > 0
+                    ? this.route.indexOf(nonBoltzHops[0]) < boltzIndex
                         ? HopsPosition.Before
                         : HopsPosition.After
                     : undefined,

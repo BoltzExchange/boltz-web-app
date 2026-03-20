@@ -47,6 +47,11 @@ export type Asset = {
         decimals: number;
         routeVia?: string;
     };
+    liquidToken?: {
+        assetId: string;
+        precision: number;
+        routeVia: string;
+    };
 };
 
 export enum Explorer {
@@ -73,6 +78,7 @@ export type Config = {
     isPro?: boolean;
     assets?: Record<string, Asset>;
     torUrl?: string;
+    sideswapUrl?: string;
 } & typeof defaults;
 
 export const arbitrumExplorer = {

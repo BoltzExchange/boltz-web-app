@@ -5,6 +5,7 @@ import { AssetKind } from "src/consts/AssetKind";
 const config = {
     ...baseConfig,
     network: "testnet",
+    sideswapUrl: "wss://api-testnet.sideswap.io/json-rpc-ws",
     loglevel: "debug",
     apiUrl: {
         normal: "https://api.testnet.boltz.exchange",
@@ -49,6 +50,33 @@ const config = {
                     tor: "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion/liquidtestnet/api/v1",
                 },
             ],
+        },
+        "L-USDt": {
+            type: AssetKind.LiquidToken,
+            canSend: false,
+            blockExplorerUrl: {
+                id: Explorer.Esplora,
+                normal: "https://blockstream.info/liquidtestnet",
+                tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquidtestnet",
+            },
+            blockExplorerApis: [
+                {
+                    id: Explorer.Esplora,
+                    normal: "https://blockstream.info/liquidtestnet/api",
+                    tor: "http://explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion/liquidtestnet/api",
+                },
+                {
+                    id: Explorer.Mempool,
+                    normal: "https://liquid.network/liquidtestnet/api/v1",
+                    tor: "http://liquidmom47f6s3m53ebfxn47p76a6tlnxib3wp6deux7wuzotdr6cyd.onion/liquidtestnet/api/v1",
+                },
+            ],
+            liquidToken: {
+                assetId:
+                    "b612eb46313a2cd6ebabd8b7a8eed5696e29898b87a43571f5c2f8dad1554571",
+                precision: 8,
+                routeVia: "L-BTC",
+            },
         },
         RBTC: {
             type: AssetKind.EVMNative,

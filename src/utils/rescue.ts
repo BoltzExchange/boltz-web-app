@@ -148,7 +148,8 @@ export const hasSwapTimedOut = (swap: SomeSwap, currentBlockHeight: number) => {
             (swap as ChainSwap).lockupDetails.timeoutBlockHeight,
         [SwapType.Reverse]: () => (swap as ReverseSwap).timeoutBlockHeight,
         [SwapType.Submarine]: () => (swap as SubmarineSwap).timeoutBlockHeight,
-        [SwapType.Dex]: () => Number.MAX_SAFE_INTEGER, // TODO: fix that
+        [SwapType.Dex]: () => Number.MAX_SAFE_INTEGER,
+        [SwapType.SideSwap]: () => Number.MAX_SAFE_INTEGER,
     };
 
     return currentBlockHeight >= swapTimeoutBlockHeight[swap.type]();

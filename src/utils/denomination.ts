@@ -5,6 +5,29 @@ import { AssetKind } from "../consts/AssetKind";
 import { getAssetDisplaySymbol, isUsdt0Asset } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 
+const isTokenDenominated = (asset: string): boolean => {
+    const assetConfig = config.assets?.[asset];
+    if (!assetConfig) return false;
+    if (
+        assetConfig.type === AssetKind.ERC20 &&
+        (assetConfig.token?.routeVia !== undefined || isUsdt0Asset(asset))
+    ) {
+        return true;
+    }
+    if (assetConfig.type === AssetKind.LiquidToken) {
+        return true;
+    }
+    return false;
+};
+
+const getTokenDecimals = (asset: string): number => {
+    const assetConfig = config.assets?.[asset];
+    if (assetConfig?.type === AssetKind.LiquidToken) {
+        return assetConfig.liquidToken?.precision ?? 8;
+    }
+    return assetConfig?.token?.decimals ?? 8;
+};
+
 const miliFactor = 1_000;
 const satDecimals = 8;
 const satFactor = 100_000_000;
@@ -18,15 +41,11 @@ export const getValidationRegex = (maximum: number): RegExp => {
 };
 
 export const getDecimals = (asset: string) => {
-    const assetConfig = config.assets?.[asset];
-
-    const isRoutedErc20 =
-        assetConfig?.type === AssetKind.ERC20 &&
-        (assetConfig?.token?.routeVia !== undefined || isUsdt0Asset(asset));
+    const isToken = isTokenDenominated(asset);
 
     return {
-        isErc20: isRoutedErc20,
-        decimals: isRoutedErc20 ? assetConfig?.token?.decimals : satDecimals,
+        isErc20: isToken,
+        decimals: isToken ? getTokenDecimals(asset) : satDecimals,
     };
 };
 

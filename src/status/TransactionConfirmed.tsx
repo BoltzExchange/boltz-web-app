@@ -74,6 +74,7 @@ import {
     getFinalAssetReceive,
     getPostOftDetail,
 } from "../utils/swapCreator";
+import SideSwapExecution from "./SideSwapExecution";
 
 type RouterExecutionQuote = {
     chain: string;
@@ -1210,11 +1211,17 @@ const TransactionConfirmed = () => {
         <Show
             when={isEvmAsset(swap().assetReceive)}
             fallback={
-                <div>
-                    <h2>{t("tx_confirmed")}</h2>
-                    <p>{t("tx_ready_to_claim")}</p>
-                    <LoadingSpinner />
-                </div>
+                <Show
+                    when={swap().sideswap !== undefined}
+                    fallback={
+                        <div>
+                            <h2>{t("tx_confirmed")}</h2>
+                            <p>{t("tx_ready_to_claim")}</p>
+                            <LoadingSpinner />
+                        </div>
+                    }>
+                    <SideSwapExecution swap={swap()} />
+                </Show>
             }>
             <Show
                 when={swap().type !== SwapType.Chain}

@@ -126,6 +126,26 @@ const dict = {
         search: "Search",
         tx_confirmed: "Transaction confirmed",
         tx_ready_to_claim: "Claiming transaction now...",
+        preparing_sideswap: "Preparing SideSwap trade...",
+        waiting_liquid_confirmation:
+            "Waiting for Liquid confirmation...",
+        sideswap_quoting: "Getting SideSwap quote",
+        getting_sideswap_quote:
+            "Fetching best available quote from SideSwap...",
+        sideswap_signing: "Signing trade",
+        signing_sideswap_transaction:
+            "Signing and submitting SideSwap transaction...",
+        sideswap_complete: "SideSwap trade complete",
+        sideswap_failed: "SideSwap trade failed",
+        sideswap_recovery_available:
+            "You can recover the intermediate L-BTC below.",
+        recover_intermediate_lbtc: "Recover L-BTC",
+        sideswap_recovery_description:
+            "Enter a Liquid address to sweep the intermediate L-BTC to.",
+        liquid_address: "Liquid address",
+        sweep_lbtc: "Sweep L-BTC",
+        sweep_successful: "Funds swept successfully",
+        sideswap_transaction: "Transaction",
         refunded: "Swap has been refunded successfully!",
         locktime_not_satisfied: "Locktime requirement not satisfied",
         already_refunded: "Swap already refunded",

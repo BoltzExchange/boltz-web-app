@@ -6,6 +6,7 @@ export { AssetKind };
 export const LN = "LN";
 export const BTC = "BTC";
 export const LBTC = "L-BTC";
+export const LUSDT = "L-USDt";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
 export const USDT0 = "USDT0";
@@ -46,6 +47,7 @@ export const getCanonicalAsset = (asset: string): string =>
 
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
+    [LUSDT]: "USDt",
     [USDT0]: "USDT",
 };
 
@@ -76,6 +78,14 @@ export const getKindForAsset = (asset: string): AssetKind => {
     }
 
     return assetConfig.type;
+};
+
+export const isLiquidAsset = (asset: string): boolean =>
+    asset === LBTC || isLiquidTokenAsset(asset);
+
+export const isLiquidTokenAsset = (asset: string): boolean => {
+    const assetConfig = config.assets?.[asset];
+    return assetConfig?.type === AssetKind.LiquidToken;
 };
 
 export const isEvmAsset = (asset: string): boolean => {
@@ -145,6 +155,7 @@ export const getAssetNetwork = (asset: string): string | null => {
         case LN:
             return "Lightning";
         case LBTC:
+        case LUSDT:
             return "Liquid";
         default:
             return config.assets?.[asset]?.network?.chainName ?? null;

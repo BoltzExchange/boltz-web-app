@@ -1,0 +1,237 @@
+import log from "loglevel";
+import { Show, createSignal, onCleanup, onMount } from "solid-js";
+
+import LoadingSpinner from "../components/LoadingSpinner";
+import SideSwapRecovery from "../components/SideSwapRecovery";
+import { LBTC } from "../consts/Assets";
+import { useGlobalContext } from "../context/Global";
+import { usePayContext } from "../context/Pay";
+import {
+    type SideSwapDetail,
+    SideSwapStatus,
+    type SomeSwap,
+} from "../utils/swapCreator";
+import { deriveTempLiquidWallet } from "../utils/liquidWallet";
+import {
+    findOutputForScript,
+    signPset,
+    unblindOutput,
+} from "../utils/liquidWallet";
+import {
+    type SideSwapUtxo,
+    executeSideSwapTrade,
+} from "../utils/sideswap";
+import { fetchBlockExplorerTx } from "../utils/sideswapHelpers";
+
+const CONFIRMATION_POLL_INTERVAL = 5_000;
+const SLIPPAGE_TOLERANCE = 0.03;
+
+type SideSwapExecutionProps = {
+    swap: SomeSwap;
+};
+
+const SideSwapExecution = (props: SideSwapExecutionProps) => {
+    const { t, setSwapStorage, rescueFile } = useGlobalContext();
+    const { setSwap } = usePayContext();
+
+    const [status, setStatus] = createSignal<SideSwapStatus>(
+        props.swap.sideswap?.status ?? SideSwapStatus.Pending,
+    );
+    const [error, setError] = createSignal<string | undefined>(
+        props.swap.sideswap?.error,
+    );
+    const [txid, setTxid] = createSignal<string | undefined>(
+        props.swap.sideswap?.txid,
+    );
+
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const updateSwapSideswap = async (
+        update: Partial<SideSwapDetail>,
+    ) => {
+        const current = props.swap.sideswap;
+        if (!current) return;
+
+        const updated = { ...current, ...update };
+        const updatedSwap = { ...props.swap, sideswap: updated };
+        await setSwapStorage(updatedSwap);
+        setSwap(updatedSwap);
+    };
+
+    const waitForConfirmation = async (): Promise<string> => {
+        const claimTx = props.swap.claimTx;
+        if (!claimTx) {
+            throw new Error("No claim transaction found");
+        }
+
+        setStatus(SideSwapStatus.WaitingConfirmation);
+        await updateSwapSideswap({ status: SideSwapStatus.WaitingConfirmation });
+
+        return new Promise<string>((resolve, reject) => {
+            const check = async () => {
+                try {
+                    const txHex = await fetchBlockExplorerTx(LBTC, claimTx);
+                    if (txHex) {
+                        resolve(txHex);
+                        return;
+                    }
+                } catch (e) {
+                    log.debug("Waiting for claim tx confirmation:", e);
+                }
+                pollTimer = setTimeout(check, CONFIRMATION_POLL_INTERVAL);
+            };
+            void check();
+        });
+    };
+
+    const executeSideSwap = async () => {
+        const sideswap = props.swap.sideswap;
+        if (!sideswap) return;
+
+        try {
+            if (sideswap.status === SideSwapStatus.Confirmed) {
+                setStatus(SideSwapStatus.Confirmed);
+                return;
+            }
+
+            if (sideswap.txid) {
+                setStatus(SideSwapStatus.Confirmed);
+                setTxid(sideswap.txid);
+                return;
+            }
+
+            const txHex = await waitForConfirmation();
+
+            setStatus(SideSwapStatus.Quoting);
+            await updateSwapSideswap({ status: SideSwapStatus.Quoting });
+
+            const wallet = deriveTempLiquidWallet(
+                rescueFile(),
+                sideswap.tempKeyIndex,
+            );
+
+            const vout = await findOutputForScript(txHex, wallet.outputScript);
+            if (vout === undefined) {
+                throw new Error(
+                    "Could not find temp wallet output in claim transaction",
+                );
+            }
+
+            const unblindedUtxo = await unblindOutput(
+                txHex,
+                vout,
+                wallet.blindingPrivateKey,
+            );
+
+            log.info("Unblinded intermediate UTXO:", {
+                asset: unblindedUtxo.asset,
+                value: unblindedUtxo.value,
+            });
+
+            const utxo: SideSwapUtxo = {
+                txid: unblindedUtxo.txid,
+                vout: unblindedUtxo.vout,
+                asset: unblindedUtxo.asset,
+                value: unblindedUtxo.value,
+                asset_bf: unblindedUtxo.assetBlindingFactor,
+                value_bf: unblindedUtxo.valueBlindingFactor,
+            };
+
+            setStatus(SideSwapStatus.Signing);
+            await updateSwapSideswap({ status: SideSwapStatus.Signing });
+
+            const result = await executeSideSwapTrade(
+                [utxo],
+                (psetBase64: string) => signPset(psetBase64, wallet),
+            );
+
+            const withinSlippage =
+                sideswap.quoteAmountEstimate <= 0 ||
+                result.quoteAmount >=
+                    sideswap.quoteAmountEstimate * (1 - SLIPPAGE_TOLERANCE);
+
+            if (!withinSlippage) {
+                log.warn("SideSwap quote outside slippage tolerance", {
+                    expected: sideswap.quoteAmountEstimate,
+                    actual: result.quoteAmount,
+                    tolerance: SLIPPAGE_TOLERANCE,
+                });
+            }
+
+            setStatus(SideSwapStatus.Confirmed);
+            setTxid(result.txid);
+            await updateSwapSideswap({
+                status: SideSwapStatus.Confirmed,
+                txid: result.txid,
+            });
+
+            log.info("SideSwap trade completed:", result.txid);
+        } catch (e) {
+            const errorMsg = e instanceof Error ? e.message : String(e);
+            log.error("SideSwap execution failed:", errorMsg);
+            setStatus(SideSwapStatus.Failed);
+            setError(errorMsg);
+            await updateSwapSideswap({
+                status: SideSwapStatus.Failed,
+                error: errorMsg,
+            });
+        }
+    };
+
+    onMount(() => {
+        void executeSideSwap();
+    });
+
+    onCleanup(() => {
+        if (pollTimer) {
+            clearTimeout(pollTimer);
+        }
+    });
+
+    return (
+        <div>
+            <Show when={status() === SideSwapStatus.Pending}>
+                <h2>{t("tx_confirmed")}</h2>
+                <p>{t("preparing_sideswap")}</p>
+                <LoadingSpinner />
+            </Show>
+
+            <Show when={status() === SideSwapStatus.WaitingConfirmation}>
+                <h2>{t("tx_confirmed")}</h2>
+                <p>{t("waiting_liquid_confirmation")}</p>
+                <LoadingSpinner />
+            </Show>
+
+            <Show when={status() === SideSwapStatus.Quoting}>
+                <h2>{t("sideswap_quoting")}</h2>
+                <p>{t("getting_sideswap_quote")}</p>
+                <LoadingSpinner />
+            </Show>
+
+            <Show when={status() === SideSwapStatus.Signing}>
+                <h2>{t("sideswap_signing")}</h2>
+                <p>{t("signing_sideswap_transaction")}</p>
+                <LoadingSpinner />
+            </Show>
+
+            <Show when={status() === SideSwapStatus.Confirmed}>
+                <h2>{t("sideswap_complete")}</h2>
+                <Show when={txid()}>
+                    <p>
+                        {t("sideswap_transaction")}: {txid()}
+                    </p>
+                </Show>
+            </Show>
+
+            <Show when={status() === SideSwapStatus.Failed}>
+                <h2>{t("sideswap_failed")}</h2>
+                <Show when={error()}>
+                    <p class="error">{error()}</p>
+                </Show>
+                <SideSwapRecovery swap={props.swap} />
+            </Show>
+        </div>
+    );
+};
+
+export default SideSwapExecution;

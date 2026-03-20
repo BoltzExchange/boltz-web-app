@@ -32,7 +32,7 @@ import {
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 
 import { config } from "../config";
-import { BTC, LBTC, LN } from "../consts/Assets";
+import { BTC, LBTC, LN, isLiquidAsset } from "../consts/Assets";
 import secp from "../lazy/secp";
 import {
     extractAddress,
@@ -48,7 +48,7 @@ type LiquidTransactionOutputWithKey = LiquidTransactionOutput & {
 
 type DecodedAddress = { script: Uint8Array; blindingKey?: Buffer };
 
-const possibleUserInputTypes = [LN, LBTC, BTC];
+const possibleUserInputTypes = [LN, LBTC, "L-USDt", BTC];
 
 const getBtcNetwork = (network?: string): BTC_NETWORK => {
     switch (network ?? config.network) {
@@ -64,7 +64,7 @@ const getBtcNetwork = (network?: string): BTC_NETWORK => {
 };
 
 const decodeAddress = (asset: string, addr: string): DecodedAddress => {
-    if (asset === LBTC) {
+    if (isLiquidAsset(asset)) {
         const liquidNet =
             config.network === "mainnet" ? "liquid" : config.network;
         const network = LiquidNetworks[liquidNet] as LiquidNetwork;
@@ -171,7 +171,7 @@ const getNetwork = (
     network?: string,
 ): BTC_NETWORK | LiquidNetwork => {
     network = network ?? config.network;
-    if (asset === LBTC) {
+    if (isLiquidAsset(asset)) {
         const liquidNet = network === "mainnet" ? "liquid" : network;
         return LiquidNetworks[liquidNet] as LiquidNetwork;
     } else {

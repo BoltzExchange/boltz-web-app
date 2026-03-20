@@ -54,11 +54,14 @@ import {
     GasAbstractionType,
     type OftDetail,
     OftPosition,
+    type SideSwapDetail,
+    SideSwapStatus,
     type SomeSwap,
     createChain,
     createReverse,
     createSubmarine,
 } from "../utils/swapCreator";
+import { deriveTempLiquidWallet } from "../utils/liquidWallet";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
 import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
@@ -82,6 +85,41 @@ const buildOftDetail = (
         destinationAsset,
         destinationChainId,
         position,
+    };
+};
+
+const buildSideSwapDetail = (
+    pairInstance: Pair,
+    userAddress: string,
+    swapData: SomeSwap,
+    receiveAmountEstimate: number,
+    rescueFileData: { mnemonic: string },
+): SideSwapDetail | undefined => {
+    if (!pairInstance.hasSideSwapHop) {
+        return undefined;
+    }
+
+    const ssHop = pairInstance.sideSwapHop;
+    if (!ssHop?.sideswapDetails) {
+        return undefined;
+    }
+
+    const claimKeyIndex =
+        "claimPrivateKeyIndex" in swapData
+            ? (swapData as { claimPrivateKeyIndex?: number })
+                  .claimPrivateKeyIndex ?? 0
+            : 0;
+
+    const tempWallet = getTempClaimWallet(rescueFileData, claimKeyIndex);
+
+    return {
+        baseAssetId: ssHop.sideswapDetails.baseAssetId,
+        quoteAssetId: ssHop.sideswapDetails.quoteAssetId,
+        userAddress,
+        tempKeyIndex: tempWallet.keyIndex,
+        tempAddress: tempWallet.address,
+        quoteAmountEstimate: receiveAmountEstimate,
+        status: SideSwapStatus.Pending,
     };
 };
 
@@ -151,6 +189,22 @@ export const getClaimAddress = async (
         gasPrice: 0n,
         gasAbstraction: GasAbstractionType.None,
         claimAddress: onchainAddress(),
+    };
+};
+
+export type TempWalletInfo = {
+    keyIndex: number;
+    address: string;
+};
+
+export const getTempClaimWallet = (
+    rescueFile: { mnemonic: string },
+    keyIndex: number,
+): TempWalletInfo => {
+    const wallet = deriveTempLiquidWallet(rescueFile, keyIndex);
+    return {
+        keyIndex: wallet.keyIndex,
+        address: wallet.address,
     };
 };
 
@@ -676,6 +730,14 @@ const CreateButton = () => {
                 receiveAmount: data.receiveAmount,
             });
 
+            const sideswapDetail = buildSideSwapDetail(
+                pair(),
+                onchainAddress(),
+                data,
+                Number(receiveAmount()),
+                rescueFile(),
+            );
+
             await setSwapStorage({
                 ...data,
                 getGasToken: getGasToken(),
@@ -703,6 +765,7 @@ const CreateButton = () => {
                             OftPosition.Post,
                         )
                       : undefined,
+                sideswap: sideswapDetail,
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
@@ -751,20 +814,38 @@ const CreateButton = () => {
                 await fetchInvoice();
             }
 
-            const { gasAbstraction, claimAddress } = await getClaimAddress(
-                assetReceive,
-                assetSend,
-                signer,
-                onchainAddress,
-                getGasAbstractionSigner,
-                getGasToken(),
-            );
+            let resolvedClaimAddress: string;
+            let resolvedGasAbstraction: GasAbstractionType;
+
+            if (pair().hasSideSwapHop) {
+                const tempWallet = getTempClaimWallet(
+                    rescueFile(),
+                    0,
+                );
+                resolvedClaimAddress = tempWallet.address;
+                resolvedGasAbstraction = GasAbstractionType.None;
+                log.debug(
+                    "Using temp Liquid wallet for SideSwap claim:",
+                    resolvedClaimAddress,
+                );
+            } else {
+                const result = await getClaimAddress(
+                    assetReceive,
+                    assetSend,
+                    signer,
+                    onchainAddress,
+                    getGasAbstractionSigner,
+                    getGasToken(),
+                );
+                resolvedClaimAddress = result.claimAddress;
+                resolvedGasAbstraction = result.gasAbstraction;
+            }
 
             if (!valid()) return;
 
-            log.debug("Creating with EVM address", claimAddress);
+            log.debug("Creating with claim address", resolvedClaimAddress);
 
-            await createSwap(claimAddress, gasAbstraction);
+            await createSwap(resolvedClaimAddress, resolvedGasAbstraction);
         } catch (e) {
             log.error("Error creating swap", e);
             notify("error", e);
