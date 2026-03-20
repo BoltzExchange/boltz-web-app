@@ -347,6 +347,8 @@ type EvmScanTarget = {
 const getEvmScanTargets = (
     getEtherSwap: (asset: string) => SwapContract,
     getErc20Swap: (asset: string) => SwapContract,
+    action: RskRescueMode,
+    hasRescueFile: boolean,
 ): EvmScanTarget[] => {
     const targets: EvmScanTarget[] = [];
 
@@ -361,15 +363,21 @@ const getEvmScanTargets = (
         log.warn("rsk log endpoint not set");
     }
 
+    const skipArbitrum = action === RskRescueMode.Refund && !hasRescueFile;
+
     const arbEndpoint = import.meta.env.VITE_ARBITRUM_LOG_SCAN_ENDPOINT;
-    if (arbEndpoint && config.assets?.[TBTC]?.contracts?.deployHeight) {
+    if (
+        !skipArbitrum &&
+        arbEndpoint &&
+        config.assets?.[TBTC]?.contracts?.deployHeight
+    ) {
         targets.push({
             asset: TBTC,
             providerUrl: arbEndpoint,
             scanInterval: 100_000,
             contract: getErc20Swap(TBTC),
         });
-    } else {
+    } else if (!arbEndpoint) {
         log.warn("arbitrum log endpoint not set");
     }
 
@@ -382,7 +390,10 @@ export const RescueEvm = (props: { mode?: string }) => {
     const params = useParams();
     const [searchParams] = useSearchParams();
     const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
-    const { setEvmRescuableSwaps, resetRescueKey } = useRescueContext();
+    const { setEvmRescuableSwaps, setRescueFile: setContextRescueFile, resetRescueKey } =
+        useRescueContext();
+
+    resetRescueKey();
 
     const rescueMode = () => {
         if (props.mode === RskRescueMode.Refund) return RskRescueMode.Refund;
@@ -567,6 +578,8 @@ export const RescueEvm = (props: { mode?: string }) => {
         const targets = getEvmScanTargets(
             getEtherSwap as (a: string) => SwapContract,
             getErc20Swap as (a: string) => SwapContract,
+            action,
+            rescueFile !== undefined,
         );
         const scanProgress = createScanProgress();
         await Promise.all(
@@ -613,8 +626,10 @@ export const RescueEvm = (props: { mode?: string }) => {
                 throw new Error("invalid rescue file type: " + result.type);
             }
 
+            const rescueFile = result.data as RescueFile;
             setRescueFileError(null);
-            setUploadedRescueFile(result.data as RescueFile);
+            setUploadedRescueFile(rescueFile);
+            setContextRescueFile(rescueFile);
         } catch (err) {
             log.error("invalid file upload", formatError(err));
             setRescueFileError(t("invalid_refund_file"));
@@ -634,7 +649,6 @@ export const RescueEvm = (props: { mode?: string }) => {
 
     onCleanup(() => {
         stopScan();
-        resetRescueKey();
     });
 
     const basePath = `/rescue/external/${params.type?.toLowerCase() ?? ""}`;
@@ -679,11 +693,6 @@ export const RescueEvm = (props: { mode?: string }) => {
                     unmatchedSwaps() === 0
                 }>
                 <h3>{t("connected_wallet_no_swaps")}</h3>
-                <button
-                    class="btn btn-light"
-                    onClick={() => navigate(basePath)}>
-                    {t("back")}
-                </button>
             </Match>
             <Match when={unmatchedSwaps() > 0}>
                 <p class="frame-text">
@@ -695,7 +704,6 @@ export const RescueEvm = (props: { mode?: string }) => {
 
     const showMnemonicMode = () => inputMode() === rescueKeyModeConst;
 
-    // Inline rescue key input UI
     const RescueKeyInput = () => (
         <>
             <Show when={!showMnemonicMode()}>
@@ -713,7 +721,7 @@ export const RescueEvm = (props: { mode?: string }) => {
                         class="btn btn-light"
                         onClick={() =>
                             navigate(
-                                `${basePath}/${RskRescueMode.Claim}?mode=${rescueKeyModeConst}`,
+                                `${basePath}/${rescueMode()}?mode=${rescueKeyModeConst}`,
                             )
                         }>
                         {t("enter_mnemonic")}
@@ -729,13 +737,17 @@ export const RescueEvm = (props: { mode?: string }) => {
     const ScanMode = (props: {
         explainerKey: string;
         requiresRescueFile?: boolean;
+        manualScan?: boolean;
     }) => {
+        const [isHovered, setIsHovered] = createSignal(false);
+
         const canScan = () =>
             signer() !== undefined &&
             (!props.requiresRescueFile || uploadedRescueFile());
 
         createEffect(() => {
             if (
+                !props.manualScan &&
                 canScan() &&
                 !isScanning() &&
                 logRefundableSwaps() === undefined
@@ -743,6 +755,22 @@ export const RescueEvm = (props: { mode?: string }) => {
                 void startScan();
             }
         });
+
+        const scanButtonText = () => {
+            if (isScanning()) {
+                if (isHovered()) return t("stop_scanning");
+                return refundScanProgress() ?? t("start_scanning");
+            }
+            return t("start_scanning");
+        };
+
+        const scanFinished = () =>
+            !isScanning() && logRefundableSwaps() !== undefined;
+
+        const showRescueKeyInput = () =>
+            !isScanning() &&
+            !scanFinished() &&
+            (props.requiresRescueFile || props.manualScan);
 
         return (
             <>
@@ -767,16 +795,44 @@ export const RescueEvm = (props: { mode?: string }) => {
                     />
                 </Show>
 
-                <Show
-                    when={!isScanning() && logRefundableSwaps() === undefined}>
-                    <Show when={props.requiresRescueFile}>
-                        <RescueKeyInput />
+                <Show when={scanFinished()}>
+                    <button
+                        class="btn btn-light"
+                        onClick={() => navigate(basePath)}>
+                        {t("back")}
+                    </button>
+                </Show>
+
+                <Show when={showRescueKeyInput()}>
+                    <RescueKeyInput />
+                </Show>
+
+                <Show when={!scanFinished()}>
+                    <Show
+                        when={props.manualScan}
+                        fallback={
+                            <ConnectWallet
+                                skipNetworkCheck
+                                addressOverride={refundScanProgress}
+                            />
+                        }>
+                        <ConnectWallet skipNetworkCheck />
+                        <button
+                            class="btn"
+                            disabled={!canScan()}
+                            onMouseEnter={() => setIsHovered(true)}
+                            onMouseLeave={() => setIsHovered(false)}
+                            onClick={() => {
+                                if (isScanning()) {
+                                    stopScan();
+                                } else {
+                                    void startScan();
+                                }
+                            }}>
+                            {scanButtonText()}
+                        </button>
                     </Show>
                 </Show>
-                <ConnectWallet
-                    skipNetworkCheck
-                    addressOverride={refundScanProgress}
-                />
             </>
         );
     };
@@ -784,7 +840,10 @@ export const RescueEvm = (props: { mode?: string }) => {
     return (
         <Switch fallback={<ModeSelector />}>
             <Match when={rescueMode() === RskRescueMode.Refund}>
-                <ScanMode explainerKey="evm_rescue_refund_explainer" />
+                <ScanMode
+                    explainerKey="evm_rescue_refund_explainer"
+                    manualScan
+                />
             </Match>
             <Match when={rescueMode() === RskRescueMode.Claim}>
                 <ScanMode

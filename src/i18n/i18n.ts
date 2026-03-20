@@ -468,7 +468,9 @@ const dict = {
         rsk_rescue_refund_explainer:
             "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
         evm_rescue_refund_explainer:
-            "Connect your wallet to scan for EVM swaps that have expired and can be refunded.",
+            "Connect your wallet to scan for EVM swaps that have expired and can be refunded. If you sent USDT0 or TBTC to a swap, use your Rescue Key to find it. Rescue Key is not necessary to refund RBTC.",
+        start_scanning: "Start scanning",
+        stop_scanning: "Stop scanning",
         rsk_rescue_resume_title: "Resume Swap",
         rsk_rescue_resume_explainer:
             "Use your rescue key to find pending swaps that can be resumed.",

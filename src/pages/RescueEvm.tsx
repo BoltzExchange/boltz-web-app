@@ -1,5 +1,7 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
+import { Wallet } from "ethers";
+import { hex } from "@scure/base";
 import log from "loglevel";
 import type { Setter } from "solid-js";
 import { Match, Show, Switch, createResource, createSignal } from "solid-js";
@@ -11,6 +13,7 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
+import { config } from "../config";
 import {
     AssetKind,
     type AssetType,
@@ -34,10 +37,28 @@ import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
 import { getTimeoutEta } from "../utils/rescue";
+import {
+    deriveKeyGasAbstraction,
+    type RescueFile,
+} from "../utils/rescueFile";
 import { assetAmountToSats } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
 
 type RescueData = LogRefundData & { currentHeight: bigint };
+
+const createRescueGasAbstractionSigner = (
+    rescueFile: RescueFile,
+    asset: string,
+): Wallet | undefined => {
+    const chainId = config.assets?.[asset]?.network?.chainId;
+    if (chainId === undefined) return undefined;
+
+    const key = deriveKeyGasAbstraction(rescueFile, chainId);
+    return new Wallet(
+        hex.encode(key.privateKey),
+        createAssetProvider(asset),
+    );
+};
 
 const RefundState = (props: {
     asset: string;
@@ -46,6 +67,28 @@ const RefundState = (props: {
     setRefundTxId: Setter<string>;
 }) => {
     const { t, denomination, separator } = useGlobalContext();
+    const { signer } = useWeb3Signer();
+    const { rescueFile } = useRescueContext();
+
+    const isErc20 = () => getKindForAsset(props.asset) === AssetKind.ERC20;
+
+    const gasAbstraction = () =>
+        isErc20() && rescueFile() ? GasAbstractionType.Signer : undefined;
+
+    const transactionSigner = () => {
+        const rf = rescueFile();
+        if (!isErc20() || !rf) return undefined;
+        return createRescueGasAbstractionSigner(rf, props.asset);
+    };
+
+    const destination = () => {
+        if (!isErc20() || !rescueFile()) return undefined;
+        try {
+            return signer()?.address;
+        } catch {
+            return undefined;
+        }
+    };
 
     return (
         <>
@@ -70,6 +113,9 @@ const RefundState = (props: {
                 setRefundTxId={props.setRefundTxId}
                 signerAddress={props.refundData.refundAddress}
                 lockupTxHash={props.lockupTxHash}
+                gasAbstraction={gasAbstraction()}
+                transactionSigner={transactionSigner()}
+                destination={destination()}
             />
             <hr />
             <BlockExplorer

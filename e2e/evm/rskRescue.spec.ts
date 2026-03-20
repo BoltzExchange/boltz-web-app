@@ -256,6 +256,8 @@ test.describe("RSK Rescue", () => {
 
         await navigateToRskRescue(page, "refund");
         await connectWallet(page, walletClient, { waitForAddress: false });
+        const startScanningBtn = page.getByText(/start scanning/i);
+        await startScanningBtn.click();
         await selectAndClickSwapItem(page);
 
         const refundButton = page.getByRole("button", {

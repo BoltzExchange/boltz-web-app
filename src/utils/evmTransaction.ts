@@ -184,7 +184,7 @@ export type ClaimResult = {
     receiveAmount: bigint;
 };
 
-const erc20TransferInterface = new Interface([
+export const erc20TransferInterface = new Interface([
     "function transfer(address to, uint256 amount)",
 ]);
 
