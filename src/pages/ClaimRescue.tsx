@@ -220,13 +220,13 @@ const ClaimRescue = () => {
         }
     });
 
-    const handleInputChange = async (input: HTMLInputElement) => {
+    const handleInputChange = (input: HTMLInputElement) => {
         const inputValue = input.value.trim();
         const address = extractAddress(inputValue);
 
         try {
             const assetName = claimableSwap().assetReceive;
-            const actualAsset = await probeUserInput(assetName, address);
+            const actualAsset = probeUserInput(assetName, address);
 
             if (actualAsset !== assetName) {
                 throw new Error("Invalid asset");

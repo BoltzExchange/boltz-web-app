@@ -1,13 +1,14 @@
+import { schnorr } from "@noble/curves/secp256k1.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bech32, hex, utf8 } from "@scure/base";
 import { BigNumber } from "bignumber.js";
 import bolt11 from "bolt11";
+import * as Bolt12 from "bolt12-utils";
 import log from "loglevel";
 
 import { config } from "../config";
 import { BTC, LBTC, LN } from "../consts/Assets";
 import { InvoiceValidation } from "../consts/Enums";
-import Bolt12 from "../lazy/bolt12";
 import { fetchBolt12Invoice } from "./boltzClient";
 import { satToMiliSat } from "./denomination";
 import { lookup } from "./dnssec/dohLookup";
@@ -42,10 +43,131 @@ const bolt11Prefixes = {
 };
 
 const bip353Prefix = "₿";
+const compressedPubkeyLength = 33;
+const encodedPathLengthCandidates = [8, compressedPubkeyLength];
 
-export const decodeInvoice = async (
+const equalBytes = (a: Uint8Array, b: Uint8Array) => {
+    return a.length === b.length && a.every((byte, index) => byte === b[index]);
+};
+
+const compressedPubkeyToXOnly = (pubkey: Uint8Array) => {
+    const point = schnorr.Point.fromBytes(pubkey);
+    return hex.decode(point.x.toString(16).padStart(64, "0"));
+};
+
+// `bolt12-utils` exposes blinded paths as raw bytes, so parse just enough to
+// recover the final `blinded_node_id` values that can sign returned invoices.
+const parseFinalBlindedNodeIdSets = (
+    paths: Uint8Array,
+    offset: number,
+    memo: Map<number, Uint8Array[][] | null>,
+): Uint8Array[][] | null => {
+    const cached = memo.get(offset);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    if (offset === paths.length) {
+        return [[]];
+    }
+
+    const matches: Uint8Array[][] = [];
+
+    for (const firstNodeLength of encodedPathLengthCandidates) {
+        let cursor = offset;
+        if (
+            cursor + firstNodeLength + compressedPubkeyLength + 1 >
+            paths.length
+        ) {
+            continue;
+        }
+
+        cursor += firstNodeLength;
+        cursor += compressedPubkeyLength;
+
+        const numHops = paths[cursor];
+        cursor += 1;
+        if (numHops === 0) {
+            continue;
+        }
+
+        let finalNodeId: Uint8Array | undefined;
+        let valid = true;
+
+        for (let hop = 0; hop < numHops; hop += 1) {
+            if (cursor + compressedPubkeyLength + 2 > paths.length) {
+                valid = false;
+                break;
+            }
+
+            finalNodeId = paths.slice(cursor, cursor + compressedPubkeyLength);
+            cursor += compressedPubkeyLength;
+
+            const encryptedDataLength =
+                (paths[cursor] << 8) | paths[cursor + 1];
+            cursor += 2;
+            if (cursor + encryptedDataLength > paths.length) {
+                valid = false;
+                break;
+            }
+
+            cursor += encryptedDataLength;
+        }
+
+        if (!valid || finalNodeId === undefined) {
+            continue;
+        }
+
+        const remainder = parseFinalBlindedNodeIdSets(paths, cursor, memo);
+        if (remainder === null) {
+            continue;
+        }
+
+        for (const rest of remainder) {
+            matches.push([finalNodeId, ...rest]);
+        }
+    }
+
+    const result = matches.length > 0 ? matches : null;
+    memo.set(offset, result);
+
+    return result;
+};
+
+const extractFinalBlindedNodeIds = (paths: Uint8Array) => {
+    const parsed = parseFinalBlindedNodeIdSets(paths, 0, new Map());
+    if (parsed === null) {
+        return [];
+    }
+
+    const uniqueNodeIds = new Map<string, Uint8Array>();
+    for (const candidates of parsed) {
+        for (const nodeId of candidates) {
+            uniqueNodeIds.set(hex.encode(nodeId), nodeId);
+        }
+    }
+
+    return [...uniqueNodeIds.values()];
+};
+
+const decodeBolt12Invoice = (invoice: string) => {
+    const { hrp, data } = Bolt12.decodeBolt12(invoice);
+    if (hrp !== "lni") {
+        throw new Error("invalid_bolt12_invoice");
+    }
+
+    const records = Bolt12.parseTlvStream(data);
+    const fields = Bolt12.extractInvoiceFields(records);
+
+    return {
+        fields,
+        records,
+    };
+};
+
+export const decodeInvoice = (
     invoice: string,
-): Promise<{ type: InvoiceType; satoshis: number; preimageHash: string }> => {
+): { type: InvoiceType; satoshis: number; preimageHash: string } => {
     try {
         const decoded = bolt11.decode(invoice);
         const sats = BigNumber(decoded.millisatoshis || 0)
@@ -63,16 +185,16 @@ export const decodeInvoice = async (
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
         try {
-            const mod = await Bolt12.get();
-            const decoded = new mod.Invoice(invoice);
-            const res = {
-                type: InvoiceType.Bolt12,
-                satoshis: Number(decoded.amount_msat / 1_000n),
-                preimageHash: Buffer.from(decoded.payment_hash).toString("hex"),
-            };
+            const { fields } = decodeBolt12Invoice(invoice);
+            if (fields.invoice_payment_hash === undefined) {
+                throw new Error("missing bolt12 payment hash");
+            }
 
-            decoded.free();
-            return res;
+            return {
+                type: InvoiceType.Bolt12,
+                satoshis: Number((fields.invoice_amount ?? 0n) / 1_000n),
+                preimageHash: hex.encode(fields.invoice_payment_hash),
+            };
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
@@ -301,10 +423,9 @@ export const isLnurl = (data: string | null | undefined) => {
     );
 };
 
-export const isBolt12Offer = async (offer: string) => {
+export const isBolt12Offer = (offer: string): boolean => {
     try {
-        const { Offer } = await Bolt12.get();
-        new Offer(offer).free();
+        Bolt12.decodeOffer(offer);
         return true;
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -313,56 +434,51 @@ export const isBolt12Offer = async (offer: string) => {
     }
 };
 
-export const validateInvoiceForOffer = async (
+export const validateInvoiceForOffer = (
     offer: string,
     invoice: string,
-) => {
-    const { Offer, Invoice } = await Bolt12.get();
-    const of = new Offer(offer);
+): boolean => {
     const possibleSigners: Uint8Array[] = [];
+    const decodedOffer = Bolt12.decodeOffer(offer);
+    const { fields, records } = decodeBolt12Invoice(invoice);
 
-    if (of.signing_pubkey !== undefined) {
-        possibleSigners.push(of.signing_pubkey);
+    if (decodedOffer.issuer_id !== undefined) {
+        possibleSigners.push(hex.decode(decodedOffer.issuer_id));
     }
 
-    for (const path of of.paths) {
-        const hops = path.hops;
-        if (hops.length > 0) {
-            possibleSigners.push(hops[hops.length - 1].pubkey);
-        }
-
-        hops.forEach((hop) => hop.free());
-        path.free();
+    if (decodedOffer.paths !== undefined) {
+        possibleSigners.push(
+            ...extractFinalBlindedNodeIds(hex.decode(decodedOffer.paths)),
+        );
     }
 
-    of.free();
+    if (
+        fields.invoice_node_id === undefined ||
+        fields.signature === undefined ||
+        !Bolt12.verifySignature(
+            "invoice",
+            Bolt12.computeMerkleRoot(records),
+            compressedPubkeyToXOnly(fields.invoice_node_id),
+            fields.signature,
+        )
+    ) {
+        throw "invalid invoice signature";
+    }
 
-    const inv = new Invoice(invoice);
-
-    try {
-        const invoiceSigner = inv.signing_pubkey;
-
-        for (const signer of possibleSigners) {
-            if (signer.length !== invoiceSigner.length) {
-                continue;
-            }
-
-            if (signer.every((b, i) => b === invoiceSigner[i])) {
-                return true;
-            }
+    for (const signer of possibleSigners) {
+        if (equalBytes(signer, fields.invoice_node_id)) {
+            return true;
         }
-    } finally {
-        inv.free();
     }
 
     throw "invoice does not belong to offer";
 };
 
-export const checkInvoicePreimage = async (
+export const checkInvoicePreimage = (
     invoice: string,
     preimage: string,
-) => {
-    const dec = await decodeInvoice(invoice);
+): void => {
+    const dec = decodeInvoice(invoice);
     const hash = hex.encode(sha256(hex.decode(preimage)));
 
     if (hash !== dec.preimageHash) {

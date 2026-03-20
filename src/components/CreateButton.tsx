@@ -486,7 +486,7 @@ const CreateButton = () => {
                         );
                     };
 
-                    const decodedInvoice = await decodeInvoice(invoice());
+                    const decodedInvoice = decodeInvoice(invoice());
                     const isBolt12 = decodedInvoice.type === InvoiceType.Bolt12;
 
                     const magicRoutingHint = !isBolt12

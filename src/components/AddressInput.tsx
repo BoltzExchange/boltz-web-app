@@ -76,8 +76,8 @@ const AddressInput = () => {
             }
 
             const actualAsset =
-                (await probeUserInput(assetName, invoice)) ??
-                (await probeUserInput(assetName, address));
+                probeUserInput(assetName, invoice) ??
+                probeUserInput(assetName, address);
 
             switch (actualAsset) {
                 case LN: {

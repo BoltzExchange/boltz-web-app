@@ -58,7 +58,7 @@ const TransactionClaimed = () => {
 
         const res = await getSubmarinePreimage(submarine.id);
         try {
-            await checkInvoicePreimage(submarine.invoice, res.preimage);
+            checkInvoicePreimage(submarine.invoice, res.preimage);
         } catch (e) {
             log.error("Preimage check failed", e);
             notify("error", formatError(e));

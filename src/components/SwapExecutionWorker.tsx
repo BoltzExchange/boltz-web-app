@@ -73,11 +73,10 @@ const getCommitmentChainAsset = (swap: SomeSwap) =>
         ? swap.oft.destinationAsset
         : swap.assetSend;
 
-const getSwapPreimageHash = async (swap: SomeSwap): Promise<string> => {
+const getSwapPreimageHash = (swap: SomeSwap): string => {
     switch (swap.type) {
         case SwapType.Submarine:
-            return (await decodeInvoice((swap as SubmarineSwap).invoice))
-                .preimageHash;
+            return decodeInvoice((swap as SubmarineSwap).invoice).preimageHash;
 
         case SwapType.Chain:
             return hex.encode(sha256(hex.decode((swap as ChainSwap).preimage)));
@@ -585,7 +584,7 @@ export const SwapExecutionWorker = () => {
                 await postCommitmentSignatureForTransaction({
                     asset: storedSwap.assetSend,
                     swapId: storedSwap.id,
-                    preimageHash: await getSwapPreimageHash(storedSwap),
+                    preimageHash: getSwapPreimageHash(storedSwap),
                     commitmentTxHash: storedSwap.commitmentLockupTxHash,
                     slippage: slippage(),
                     erc20Swap: getErc20Swap(commitmentAsset),
