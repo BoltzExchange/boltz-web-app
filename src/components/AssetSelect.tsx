@@ -4,13 +4,13 @@ import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 
 import { config } from "../config";
 import {
-    LN,
     USDT0,
     getAssetDisplaySymbol,
     getAssetNetwork,
     getNetworkBadge,
     isUsdt0Asset,
     isUsdt0Variant,
+    assets as orderedAssets,
 } from "../consts/Assets";
 import { AssetSelection, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
@@ -39,13 +39,11 @@ const SelectAsset = () => {
     let listRef: HTMLDivElement;
 
     const assets = createMemo(() =>
-        [...Object.keys(config.assets), LN]
-            .filter(
-                (asset) =>
-                    !isUsdt0Variant(asset) &&
-                    canSelectAsset(assetSelected(), asset),
-            )
-            .sort(),
+        orderedAssets.filter(
+            (asset) =>
+                !isUsdt0Variant(asset) &&
+                canSelectAsset(assetSelected(), asset),
+        ),
     );
 
     createEffect(() => {
