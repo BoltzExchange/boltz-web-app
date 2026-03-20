@@ -48,6 +48,7 @@ import { formatError } from "../utils/errors";
 import {
     type LockupEvent,
     assertTransactionSignerProvider,
+    erc20TransferInterface,
     getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
@@ -354,14 +355,30 @@ const buildErc20RefundTransaction = async ({
         oft,
     );
 
-    return followUpCalls === undefined
-        ? refundTransaction
-        : [toAlchemyCall(refundTransaction), ...followUpCalls];
+    if (followUpCalls !== undefined) {
+        return [toAlchemyCall(refundTransaction), ...followUpCalls];
+    }
+
+    if (destination && refundData.tokenAddress) {
+        return [
+            toAlchemyCall(refundTransaction),
+            {
+                to: refundData.tokenAddress,
+                data: erc20TransferInterface.encodeFunctionData("transfer", [
+                    destination,
+                    refundData.amount,
+                ]),
+            },
+        ];
+    }
+
+    return refundTransaction;
 };
 
 export const RefundEvm = (props: {
     asset: string;
     gasAbstraction?: GasAbstractionType;
+    transactionSigner?: Signer | Wallet;
     disabled?: boolean;
     swapId?: string;
     signerAddress: string;
@@ -382,6 +399,7 @@ export const RefundEvm = (props: {
         () => props.gasAbstraction ?? GasAbstractionType.None,
     );
     const transactionSigner = createMemo<Signer | Wallet | undefined>(() => {
+        if (props.transactionSigner) return props.transactionSigner;
         return getSignerForGasAbstraction(
             gasAbstraction(),
             signer(),
