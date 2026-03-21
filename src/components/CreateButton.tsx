@@ -450,11 +450,7 @@ const CreateButton = () => {
         claimAddress: string,
         gasAbstraction: GasAbstractionType,
     ): Promise<boolean> => {
-        if (
-            !rescueFileBackupDone() &&
-            !isEvmAsset(assetSend()) &&
-            swapType() !== SwapType.Reverse
-        ) {
+        if (!rescueFileBackupDone() && swapType() !== SwapType.Reverse) {
             navigate("/backup");
             return false;
         }
