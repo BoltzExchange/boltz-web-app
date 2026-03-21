@@ -221,7 +221,7 @@ const lockupWithHops = async (
     asset: string,
     swapId: string,
     lockupAmount: bigint,
-    signer: Accessor<Signer>,
+    connectedSigner: Signer,
     getGasAbstractionSigner: (asset: string) => Wallet,
     slippage: number,
     getSwap: (id: string) => Promise<SomeSwap>,
@@ -230,7 +230,7 @@ const lockupWithHops = async (
 ): Promise<string> => {
     const transactionSigner = getSignerForGasAbstraction(
         gasAbstraction,
-        signer(),
+        connectedSigner,
         getGasAbstractionSigner(asset),
     );
 
@@ -259,7 +259,7 @@ const lockupWithHops = async (
         const [permit2Address, chainId, ownerAddress] = await Promise.all([
             router.PERMIT2(),
             transactionSigner.provider.getNetwork().then((n) => n.chainId),
-            signer().getAddress(),
+            connectedSigner.getAddress(),
         ]);
         const refundAddress = transactionSigner.address;
 
@@ -283,7 +283,7 @@ const lockupWithHops = async (
         const commitmentLockupDetails = await getCommitmentLockupDetails(asset);
         const commitmentPreimageHash = "00".repeat(32);
 
-        const permit2Signature = await signer().signTypedData(
+        const permit2Signature = await connectedSigner.signTypedData(
             {
                 name: "Permit2",
                 verifyingContract: permit2Address,
@@ -366,6 +366,7 @@ const lockupWithHops = async (
         const currentSwap = await getSwap(swapId);
         currentSwap.commitmentLockupTxHash = transactionHash;
         currentSwap.commitmentSignatureSubmitted = false;
+        currentSwap.signer = ownerAddress;
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
         log.info("Persisted commitment lockup tx hash for background worker", {
@@ -788,10 +789,17 @@ const LockupTransaction = (props: {
                 asset={props.asset}
                 /* eslint-disable-next-line solid/reactivity */
                 onClick={async () => {
+                    const connectedSigner = signer();
+                    if (connectedSigner === undefined) {
+                        throw new Error(
+                            "connected signer is required for lockup",
+                        );
+                    }
+
                     let transactionHash: string;
                     const transactionSigner = getSignerForGasAbstraction(
                         props.gasAbstraction,
-                        signer(),
+                        connectedSigner,
                         getGasAbstractionSigner(props.asset),
                     );
 
@@ -802,7 +810,7 @@ const LockupTransaction = (props: {
                             props.asset,
                             props.swapId,
                             props.value(),
-                            signer,
+                            connectedSigner,
                             getGasAbstractionSigner,
                             slippage(),
                             getSwap,
@@ -857,7 +865,7 @@ const LockupTransaction = (props: {
                                 props.preimageHash,
                                 props.claimAddress,
                                 props.timeoutBlockHeight,
-                                signer(),
+                                connectedSigner,
                                 transactionSigner,
                             );
                         }
@@ -865,11 +873,13 @@ const LockupTransaction = (props: {
 
                     const currentSwap = await getSwap(props.swapId);
                     currentSwap.lockupTx = transactionHash;
-                    currentSwap.signer = signer().address;
+                    currentSwap.signer = await connectedSigner.getAddress();
 
-                    if (customDerivationPathRdns.includes(signer().rdns)) {
+                    if (
+                        customDerivationPathRdns.includes(connectedSigner.rdns)
+                    ) {
                         currentSwap.derivationPath = (
-                            providers()[signer().rdns]
+                            providers()[connectedSigner.rdns]
                                 .provider as unknown as HardwareSigner
                         ).getDerivationPath();
                     }

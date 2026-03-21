@@ -141,11 +141,14 @@ const buildRefundFollowUpCalls = async (
     }
 
     if (
-        resolvedDestination === undefined ||
         dexDetails === undefined ||
         dexDetails.position !== HopsPosition.Before
     ) {
         return undefined;
+    }
+
+    if (resolvedDestination === undefined) {
+        throw new Error("missing refund destination for routed refund");
     }
 
     const desiredToken = dexDetails.hops[0].dexDetails.tokenIn;
