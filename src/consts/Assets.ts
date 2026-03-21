@@ -21,7 +21,16 @@ export type AssetType =
 
 export type RefundableAssetType = typeof BTC | typeof LBTC | typeof RBTC;
 
-export const assets = [LN, ...Object.keys(config.assets ?? {})];
+const assetDisplayOrder: string[] = [LN, BTC, LBTC, RBTC, TBTC, USDT0];
+
+export const assets: string[] = [
+    ...assetDisplayOrder.filter(
+        (asset) => asset === LN || asset in (config.assets ?? {}),
+    ),
+    ...Object.keys(config.assets ?? {}).filter(
+        (asset) => !assetDisplayOrder.includes(asset),
+    ),
+];
 
 export const refundableAssets = [BTC, LBTC, RBTC];
 

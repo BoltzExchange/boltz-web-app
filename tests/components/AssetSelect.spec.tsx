@@ -4,7 +4,7 @@ import SelectAsset from "../../src/components/AssetSelect";
 import NetworkSelect from "../../src/components/NetworkSelect";
 import type * as ConfigModule from "../../src/config";
 import { config } from "../../src/config";
-import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
 import { AssetSelection, Side } from "../../src/consts/Enums";
 import i18n from "../../src/i18n/i18n";
 import {
@@ -168,6 +168,38 @@ describe("AssetSelect", () => {
             ),
         );
         expect(header).not.toBeUndefined();
+    });
+
+    test("should render assets in configured order", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <SelectAsset />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        signals.setAssetSelection(AssetSelection.Asset);
+        signals.setAssetSelected(Side.Receive);
+
+        await screen.findByTestId(`select-${USDT0}`);
+
+        const assetIds = Array.from(
+            document.querySelectorAll(
+                ".asset-select-list [data-testid^='select-']",
+            ),
+        ).map((element) => element.getAttribute("data-testid"));
+
+        expect(assetIds).toEqual([
+            `select-${LN}`,
+            `select-${BTC}`,
+            `select-${LBTC}`,
+            `select-${RBTC}`,
+            `select-${TBTC}`,
+            `select-${USDT0}`,
+        ]);
     });
 
     test("should ignore same asset selection", async () => {
