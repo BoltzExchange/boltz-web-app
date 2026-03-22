@@ -815,11 +815,11 @@ export const RescueEvm = (props: { mode?: string }) => {
                         when={props.manualScan}
                         fallback={
                             <ConnectWallet
-                                skipNetworkCheck
+                                networkIndependent
                                 addressOverride={refundScanProgress}
                             />
                         }>
-                        <ConnectWallet skipNetworkCheck />
+                        <ConnectWallet networkIndependent />
                         <button
                             class="btn"
                             disabled={!canScan()}
@@ -865,8 +865,8 @@ const RescueExternal = () => {
     const navigate = useNavigate();
 
     const evmAvailable =
-        import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined ||
-        (import.meta.env.VITE_ARBITRUM_LOG_SCAN_ENDPOINT !== undefined &&
+        !!import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT ||
+        (!!import.meta.env.VITE_ARBITRUM_LOG_SCAN_ENDPOINT &&
             config.assets?.[TBTC]?.contracts?.deployHeight !== undefined);
 
     const tabBtc = {
