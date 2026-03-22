@@ -37,22 +37,11 @@ import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
 import { getTimeoutEta } from "../utils/rescue";
-import { type RescueFile, deriveKeyGasAbstraction } from "../utils/rescueFile";
+import { deriveKeyGasAbstraction } from "../utils/rescueFile";
 import { assetAmountToSats } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
 
 type RescueData = LogRefundData & { currentHeight: bigint };
-
-const createRescueGasAbstractionSigner = (
-    rescueFile: RescueFile,
-    asset: string,
-): Wallet | undefined => {
-    const chainId = config.assets?.[asset]?.network?.chainId;
-    if (chainId === undefined) return undefined;
-
-    const key = deriveKeyGasAbstraction(rescueFile, chainId);
-    return new Wallet(hex.encode(key.privateKey), createAssetProvider(asset));
-};
 
 const RefundState = (props: {
     asset: string;
@@ -70,13 +59,24 @@ const RefundState = (props: {
         isErc20() && rescueFile() ? GasAbstractionType.Signer : undefined;
 
     const transactionSigner = () => {
-        const rf = rescueFile();
-        if (!isErc20() || !rf) return undefined;
-        return createRescueGasAbstractionSigner(rf, props.asset);
+        const chainId = config.assets?.[props.asset]?.network?.chainId;
+
+        if (!isErc20() || rescueFile() === undefined || chainId === undefined) {
+            return undefined;
+        }
+
+        const key = deriveKeyGasAbstraction(rescueFile(), chainId);
+
+        return new Wallet(
+            hex.encode(key.privateKey),
+            createAssetProvider(props.asset),
+        );
     };
 
     const destination = () => {
-        if (!isErc20() || !rescueFile()) return undefined;
+        if (!isErc20() || !rescueFile()) {
+            return undefined;
+        }
         try {
             return signer()?.address;
         } catch {
@@ -192,7 +192,7 @@ const ClaimState = (props: {
             props.setClaimTxId(transactionHash);
         } catch (error) {
             log.error(error);
-            throw error;
+            throw error; // will be catched by ContractTransaction and notified
         }
     };
 
@@ -212,9 +212,6 @@ const ClaimState = (props: {
             <ContractTransaction
                 asset={props.asset}
                 onClick={claimTransaction}
-                address={{
-                    address: undefined,
-                }}
                 buttonText={t("continue")}
                 promptText={t("transaction_prompt_receive", {
                     button: t("continue"),
