@@ -93,12 +93,10 @@ const dict = {
         cant_find_swap: "Can't find your swap?",
         rescue_external_explainer:
             "Try rescuing an external swap via rescue key and other emergency methods.",
-        refund_external_scanning_rsk:
-            "Scanning for rescuable swaps in your Rootstock Wallet...",
         refund_external_scanning_evm:
             "Scanning for rescuable swaps across EVM chains...",
         connected_wallet_no_swaps:
-            "The connected Rootstock Wallet does not contain any rescuable swaps.",
+            "The connected wallet does not contain any rescuable swaps.",
         rescue_external_swap: "Rescue External Swap",
         history_no_swaps: "Looks like you didn't do any swaps yet.",
         refund_address_header:
@@ -462,22 +460,18 @@ const dict = {
             "This rescue key is not associated with this swap. Please try again using a different rescue key.",
         error_occurred: "An error occurred: {{ error }}",
 
-        rsk_rescue_prompt:
-            'If you sent RBTC into a Boltz swap, use "Refund Swap"; if you were receiving RBTC, use "Resume Swap" to rescue a swap that is not available in this browser’s swap history.',
-        rsk_rescue_refund_title: "Refund Swap",
-        rsk_rescue_refund_explainer:
-            "Connect your Rootstock wallet to scan for swaps that have expired and can be refunded.",
+        evm_rescue_prompt:
+            'If you sent funds into a Boltz swap on an EVM chain, use "Refund Swap"; if you were receiving funds, use "Resume Swap" to rescue a swap that is not available in this browser’s swap history.',
+        evm_rescue_refund_title: "Refund Swap",
         evm_rescue_refund_explainer:
             "Connect your wallet to scan for EVM swaps that have expired and can be refunded. If you sent USDT0 or TBTC to a swap, use your Rescue Key to find it. Rescue Key is not necessary to refund RBTC.",
         start_scanning: "Start scanning",
         stop_scanning: "Stop scanning",
-        rsk_rescue_resume_title: "Resume Swap",
-        rsk_rescue_resume_explainer:
+        evm_rescue_resume_title: "Resume Swap",
+        evm_rescue_resume_explainer:
             "Use your rescue key to find pending swaps that can be resumed.",
-        searching_resumable_swaps:
-            "Searching for resumable swaps... {{ progress }}%",
         unmatched_swaps:
-            "This wallet has {{ count }} additional claimable swaps. To access them, please switch to the Rescue Key used to initiate those swaps.",
+            "This wallet has {{ count }} additional rescuable swaps. To access them, please switch to the Rescue Key used to initiate those swaps.",
         approve_erc20: "Approve",
         approve_erc20_line: "Set ERC20 allowance for the swap contract",
     },

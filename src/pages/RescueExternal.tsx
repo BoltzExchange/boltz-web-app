@@ -390,8 +390,11 @@ export const RescueEvm = (props: { mode?: string }) => {
     const params = useParams();
     const [searchParams] = useSearchParams();
     const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
-    const { setEvmRescuableSwaps, setRescueFile: setContextRescueFile, resetRescueKey } =
-        useRescueContext();
+    const {
+        setEvmRescuableSwaps,
+        setRescueFile: setContextRescueFile,
+        resetRescueKey,
+    } = useRescueContext();
 
     resetRescueKey();
 
@@ -655,7 +658,7 @@ export const RescueEvm = (props: { mode?: string }) => {
 
     const ModeSelector = () => (
         <>
-            <p class="frame-text">{t("rsk_rescue_prompt")}</p>
+            <p class="frame-text">{t("evm_rescue_prompt")}</p>
             <hr />
             <div style={{ display: "flex", gap: "12px" }}>
                 <button
@@ -664,7 +667,7 @@ export const RescueEvm = (props: { mode?: string }) => {
                     onClick={() =>
                         navigate(`${basePath}/${RskRescueMode.Refund}`)
                     }>
-                    {t("rsk_rescue_refund_title")}
+                    {t("evm_rescue_refund_title")}
                     <br />
                 </button>
 
@@ -674,7 +677,7 @@ export const RescueEvm = (props: { mode?: string }) => {
                     onClick={() =>
                         navigate(`${basePath}/${RskRescueMode.Claim}`)
                     }>
-                    {t("rsk_rescue_resume_title")}
+                    {t("evm_rescue_resume_title")}
                 </button>
             </div>
         </>
@@ -847,7 +850,7 @@ export const RescueEvm = (props: { mode?: string }) => {
             </Match>
             <Match when={rescueMode() === RskRescueMode.Claim}>
                 <ScanMode
-                    explainerKey="rsk_rescue_resume_explainer"
+                    explainerKey="evm_rescue_resume_explainer"
                     requiresRescueFile
                 />
             </Match>
