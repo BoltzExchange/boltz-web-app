@@ -1,7 +1,7 @@
+import { hex } from "@scure/base";
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import { Wallet } from "ethers";
-import { hex } from "@scure/base";
 import log from "loglevel";
 import type { Setter } from "solid-js";
 import { Match, Show, Switch, createResource, createSignal } from "solid-js";
@@ -37,10 +37,7 @@ import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
 import { getTimeoutEta } from "../utils/rescue";
-import {
-    deriveKeyGasAbstraction,
-    type RescueFile,
-} from "../utils/rescueFile";
+import { type RescueFile, deriveKeyGasAbstraction } from "../utils/rescueFile";
 import { assetAmountToSats } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
 
@@ -54,10 +51,7 @@ const createRescueGasAbstractionSigner = (
     if (chainId === undefined) return undefined;
 
     const key = deriveKeyGasAbstraction(rescueFile, chainId);
-    return new Wallet(
-        hex.encode(key.privateKey),
-        createAssetProvider(asset),
-    );
+    return new Wallet(hex.encode(key.privateKey), createAssetProvider(asset));
 };
 
 const RefundState = (props: {
