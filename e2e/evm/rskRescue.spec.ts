@@ -123,7 +123,7 @@ const navigateToRskRescue = async (page: Page, mode: "resume" | "refund") => {
         .getByRole("button", { name: dict.en.rescue_external_swap })
         .click();
 
-    await page.getByText("Rootstock").click();
+    await page.getByText("EVM").click();
 
     if (mode === "resume") {
         await page.getByTestId("rsk-rescue-resume-button").click();
@@ -256,6 +256,8 @@ test.describe("RSK Rescue", () => {
 
         await navigateToRskRescue(page, "refund");
         await connectWallet(page, walletClient, { waitForAddress: false });
+        const startScanningBtn = page.getByText(/start scanning/i);
+        await startScanningBtn.click();
         await selectAndClickSwapItem(page);
 
         const refundButton = page.getByRole("button", {

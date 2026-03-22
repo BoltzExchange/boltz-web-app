@@ -1,4 +1,5 @@
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
+import { computeAddress } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
 import {
@@ -32,7 +33,8 @@ import SwapList, { getSwapListHeight, sortSwaps } from "../components/SwapList";
 import SwapListLogs from "../components/SwapListLogs";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { BTC, LBTC, RBTC } from "../consts/Assets";
+import { config } from "../config";
+import { type AssetType, BTC, LBTC, RBTC, TBTC } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { paginationLimit } from "../consts/Pagination";
 import { useGlobalContext } from "../context/Global";
@@ -44,7 +46,7 @@ import {
 import { useWeb3Signer } from "../context/Web3";
 import "../style/tabs.scss";
 import { type RestorableSwap, getRestorableSwaps } from "../utils/boltzClient";
-import type { LogRefundData } from "../utils/contractLogs";
+import type { LogRefundData, SwapContract } from "../utils/contractLogs";
 import { scanLockupEvents } from "../utils/contractLogs";
 import { rescueFileTypes } from "../utils/download";
 import { formatError } from "../utils/errors";
@@ -54,9 +56,13 @@ import {
     createRescueList,
     getRescuableUTXOs,
 } from "../utils/rescue";
-import { type RescueFile, getXpub } from "../utils/rescueFile";
+import {
+    type RescueFile,
+    getPathGasAbstraction,
+    getXpub,
+    mnemonicToHDKey,
+} from "../utils/rescueFile";
 import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
-import { maxIterations } from "../workers/preimageHashes/constants";
 import ErrorWasm from "./ErrorWasm";
 import NotFound from "./NotFound";
 import { mapSwap } from "./RefundRescue";
@@ -331,15 +337,68 @@ export const RefundBtcLike = () => {
     );
 };
 
-export const RescueRsk = (props: { mode?: string }) => {
+type EvmScanTarget = {
+    asset: string;
+    providerUrl: string;
+    scanInterval?: number;
+    contract: SwapContract;
+};
+
+const getEvmScanTargets = (
+    getEtherSwap: (asset: string) => SwapContract,
+    getErc20Swap: (asset: string) => SwapContract,
+    action: RskRescueMode,
+    hasRescueFile: boolean,
+): EvmScanTarget[] => {
+    const targets: EvmScanTarget[] = [];
+
+    const rskEndpoint = import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT;
+    if (rskEndpoint) {
+        targets.push({
+            asset: RBTC,
+            providerUrl: rskEndpoint,
+            contract: getEtherSwap(RBTC),
+        });
+    } else {
+        log.warn("rsk log endpoint not set");
+    }
+
+    const skipArbitrum = action === RskRescueMode.Refund && !hasRescueFile;
+
+    const arbEndpoint = import.meta.env.VITE_ARBITRUM_LOG_SCAN_ENDPOINT;
+    if (
+        !skipArbitrum &&
+        arbEndpoint &&
+        config.assets?.[TBTC]?.contracts?.deployHeight
+    ) {
+        targets.push({
+            asset: TBTC,
+            providerUrl: arbEndpoint,
+            scanInterval: 100_000,
+            contract: getErc20Swap(TBTC),
+        });
+    } else if (!arbEndpoint) {
+        log.warn("arbitrum log endpoint not set");
+    }
+
+    return targets;
+};
+
+export const RescueEvm = (props: { mode?: string }) => {
     const { t } = useGlobalContext();
     const navigate = useNavigate();
     const params = useParams();
     const [searchParams] = useSearchParams();
-    const { signer, getEtherSwap } = useWeb3Signer();
-    const { setRskRescuableSwaps, resetRescueKey } = useRescueContext();
+    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+    const {
+        setEvmRescuableSwaps,
+        setRescueFile: setContextRescueFile,
+        resetRescueKey,
+    } = useRescueContext();
 
-    const rskRescueMode = () => {
+    resetRescueKey();
+
+    const rescueMode = () => {
         if (props.mode === RskRescueMode.Refund) return RskRescueMode.Refund;
         if (props.mode === RskRescueMode.Claim) return RskRescueMode.Claim;
         return undefined;
@@ -372,6 +431,125 @@ export const RescueRsk = (props: { mode?: string }) => {
         setUnmatchedSwaps(0);
     };
 
+    type ScanProgress = {
+        byAsset: Map<string, { progress: number; derivedKeys?: number }>;
+        unmatchedByAsset: Map<string, number>;
+        update: (asset: string, progress: number, derivedKeys?: number) => void;
+        updateUnmatched: (asset: string, unmatched: number) => void;
+    };
+
+    const createScanProgress = (): ScanProgress => {
+        const byAsset = new Map<
+            string,
+            { progress: number; derivedKeys?: number }
+        >();
+        const unmatchedByAsset = new Map<string, number>();
+
+        const update = (
+            asset: string,
+            progress: number,
+            derivedKeys?: number,
+        ) => {
+            byAsset.set(asset, { progress, derivedKeys });
+
+            let totalProgress = 0;
+            let totalDeriving = 0;
+            let anyDeriving = false;
+
+            for (const v of byAsset.values()) {
+                totalProgress += v.progress;
+                if (v.progress >= 1 && v.derivedKeys !== undefined) {
+                    totalDeriving += v.derivedKeys;
+                    anyDeriving = true;
+                }
+            }
+
+            const combined = totalProgress / byAsset.size;
+
+            if (combined >= 1 && anyDeriving) {
+                setRefundScanProgress(
+                    t("logs_deriving_keys", { count: totalDeriving }),
+                );
+            } else {
+                setRefundScanProgress(
+                    t("logs_scan_progress", {
+                        value: (combined * 100).toFixed(2),
+                    }),
+                );
+            }
+        };
+
+        const updateUnmatched = (asset: string, unmatched: number) => {
+            unmatchedByAsset.set(asset, unmatched);
+            let total = 0;
+            for (const v of unmatchedByAsset.values()) {
+                total += v;
+            }
+            setUnmatchedSwaps(total);
+        };
+
+        return { byAsset, unmatchedByAsset, update, updateUnmatched };
+    };
+
+    const runSingleScan = async (
+        target: EvmScanTarget,
+        signerAddress: string,
+        action: RskRescueMode,
+        scanProgress: ScanProgress,
+        signal: AbortSignal,
+        mnemonic?: string,
+    ) => {
+        const extraAddresses: string[] = [];
+        if (mnemonic) {
+            const chainId = config.assets?.[target.asset]?.network?.chainId;
+            if (chainId !== undefined) {
+                const gasKey = mnemonicToHDKey(mnemonic).derive(
+                    getPathGasAbstraction(chainId),
+                );
+                extraAddresses.push(
+                    computeAddress(
+                        `0x${Buffer.from(gasKey.publicKey).toString("hex")}`,
+                    ),
+                );
+            }
+        }
+
+        const generator = scanLockupEvents(signal, target.contract, {
+            asset: target.asset as AssetType,
+            providerUrl: target.providerUrl,
+            scanInterval: target.scanInterval,
+            filter: {
+                address: signerAddress,
+                extraAddresses:
+                    extraAddresses.length > 0 ? extraAddresses : undefined,
+            },
+            action,
+            mnemonic,
+        });
+
+        for await (const {
+            events,
+            progress,
+            derivedKeys,
+            unmatchedSwaps: unmatched,
+        } of generator) {
+            if (signal.aborted) {
+                break;
+            }
+
+            scanProgress.update(target.asset, progress, derivedKeys);
+
+            if (events.length > 0) {
+                const updatedSwaps = (logRefundableSwaps() ?? []).concat(
+                    events,
+                );
+                setLogRefundableSwaps(updatedSwaps);
+                setEvmRescuableSwaps(updatedSwaps);
+            }
+            scanProgress.updateUnmatched(target.asset, unmatched);
+        }
+    };
+
     const startScan = async () => {
         const currentSigner = signer();
 
@@ -379,8 +557,14 @@ export const RescueRsk = (props: { mode?: string }) => {
             return;
         }
 
+        const action = rescueMode();
+        if (action === undefined) {
+            return;
+        }
+
         setIsScanning(true);
         setLogRefundableSwaps([]);
+        setEvmRescuableSwaps([]);
         setUnmatchedSwaps(0);
         setRefundScanProgress(
             t("logs_scan_progress", {
@@ -389,48 +573,32 @@ export const RescueRsk = (props: { mode?: string }) => {
         );
 
         refundScanAbort = new AbortController();
+        const signal = refundScanAbort.signal;
 
         const signerAddress = await currentSigner.getAddress();
         const rescueFile = uploadedRescueFile();
 
-        const generator = scanLockupEvents(
-            refundScanAbort.signal,
-            getEtherSwap(RBTC),
-            {
-                filter: { address: signerAddress },
-                action: rskRescueMode(),
-                mnemonic: rescueFile?.mnemonic,
-            },
+        const targets = getEvmScanTargets(
+            getEtherSwap as (a: string) => SwapContract,
+            getErc20Swap as (a: string) => SwapContract,
+            action,
+            rescueFile !== undefined,
+        );
+        const scanProgress = createScanProgress();
+        await Promise.all(
+            targets.map((target) =>
+                runSingleScan(
+                    target,
+                    signerAddress,
+                    action,
+                    scanProgress,
+                    signal,
+                    rescueFile?.mnemonic,
+                ),
+            ),
         );
 
-        for await (const {
-            progress,
-            events,
-            derivedKeys,
-            unmatchedSwaps,
-        } of generator) {
-            if (refundScanAbort?.signal.aborted) {
-                break;
-            }
-            setRefundScanProgress(
-                progress === 1
-                    ? t("searching_resumable_swaps", {
-                          progress: Math.floor(
-                              ((derivedKeys ?? 0) / maxIterations) * 100,
-                          ).toFixed(2),
-                      })
-                    : t("logs_scan_progress", {
-                          value: (progress * 100).toFixed(2),
-                      }),
-            );
-
-            const updatedSwaps = logRefundableSwaps()?.concat(events);
-            setLogRefundableSwaps(updatedSwaps);
-            setRskRescuableSwaps(updatedSwaps);
-            setUnmatchedSwaps(unmatchedSwaps);
-        }
-
-        if (!refundScanAbort?.signal.aborted) {
+        if (!signal.aborted) {
             setIsScanning(false);
             setRefundScanProgress(undefined);
         }
@@ -461,8 +629,10 @@ export const RescueRsk = (props: { mode?: string }) => {
                 throw new Error("invalid rescue file type: " + result.type);
             }
 
+            const rescueFile = result.data as RescueFile;
             setRescueFileError(null);
-            setUploadedRescueFile(result.data as RescueFile);
+            setUploadedRescueFile(rescueFile);
+            setContextRescueFile(rescueFile);
         } catch (err) {
             log.error("invalid file upload", formatError(err));
             setRescueFileError(t("invalid_refund_file"));
@@ -482,15 +652,13 @@ export const RescueRsk = (props: { mode?: string }) => {
 
     onCleanup(() => {
         stopScan();
-        resetRescueKey();
     });
 
     const basePath = `/rescue/external/${params.type?.toLowerCase() ?? ""}`;
 
-    // Mode selection screen
     const ModeSelector = () => (
         <>
-            <p class="frame-text">{t("rsk_rescue_prompt")}</p>
+            <p class="frame-text">{t("evm_rescue_prompt")}</p>
             <hr />
             <div style={{ display: "flex", gap: "12px" }}>
                 <button
@@ -499,7 +667,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                     onClick={() =>
                         navigate(`${basePath}/${RskRescueMode.Refund}`)
                     }>
-                    {t("rsk_rescue_refund_title")}
+                    {t("evm_rescue_refund_title")}
                     <br />
                 </button>
 
@@ -509,17 +677,16 @@ export const RescueRsk = (props: { mode?: string }) => {
                     onClick={() =>
                         navigate(`${basePath}/${RskRescueMode.Claim}`)
                     }>
-                    {t("rsk_rescue_resume_title")}
+                    {t("evm_rescue_resume_title")}
                 </button>
             </div>
         </>
     );
 
-    // Scanning UI (shared between modes)
     const ScanningStatus = () => (
         <Switch>
             <Match when={isScanning()}>
-                <p class="frame-text">{t("refund_external_scanning_rsk")}</p>
+                <p class="frame-text">{t("refund_external_scanning_evm")}</p>
             </Match>
             <Match
                 when={
@@ -529,11 +696,6 @@ export const RescueRsk = (props: { mode?: string }) => {
                     unmatchedSwaps() === 0
                 }>
                 <h3>{t("connected_wallet_no_swaps")}</h3>
-                <button
-                    class="btn btn-light"
-                    onClick={() => navigate(basePath)}>
-                    {t("back")}
-                </button>
             </Match>
             <Match when={unmatchedSwaps() > 0}>
                 <p class="frame-text">
@@ -545,7 +707,6 @@ export const RescueRsk = (props: { mode?: string }) => {
 
     const showMnemonicMode = () => inputMode() === rescueKeyModeConst;
 
-    // Inline rescue key input UI
     const RescueKeyInput = () => (
         <>
             <Show when={!showMnemonicMode()}>
@@ -563,7 +724,7 @@ export const RescueRsk = (props: { mode?: string }) => {
                         class="btn btn-light"
                         onClick={() =>
                             navigate(
-                                `${basePath}/${RskRescueMode.Claim}?mode=${rescueKeyModeConst}`,
+                                `${basePath}/${rescueMode()}?mode=${rescueKeyModeConst}`,
                             )
                         }>
                         {t("enter_mnemonic")}
@@ -579,13 +740,17 @@ export const RescueRsk = (props: { mode?: string }) => {
     const ScanMode = (props: {
         explainerKey: string;
         requiresRescueFile?: boolean;
+        manualScan?: boolean;
     }) => {
+        const [isHovered, setIsHovered] = createSignal(false);
+
         const canScan = () =>
             signer() !== undefined &&
             (!props.requiresRescueFile || uploadedRescueFile());
 
         createEffect(() => {
             if (
+                !props.manualScan &&
                 canScan() &&
                 !isScanning() &&
                 logRefundableSwaps() === undefined
@@ -593,6 +758,22 @@ export const RescueRsk = (props: { mode?: string }) => {
                 void startScan();
             }
         });
+
+        const scanButtonText = () => {
+            if (isScanning()) {
+                if (isHovered()) return t("stop_scanning");
+                return refundScanProgress() ?? t("start_scanning");
+            }
+            return t("start_scanning");
+        };
+
+        const scanFinished = () =>
+            !isScanning() && logRefundableSwaps() !== undefined;
+
+        const showRescueKeyInput = () =>
+            !isScanning() &&
+            !scanFinished() &&
+            (props.requiresRescueFile || props.manualScan);
 
         return (
             <>
@@ -613,32 +794,63 @@ export const RescueRsk = (props: { mode?: string }) => {
                 <Show when={logRefundableSwaps()?.length > 0}>
                     <SwapListLogs
                         swaps={logRefundableSwaps}
-                        action={rskRescueMode()}
+                        action={rescueMode()}
                     />
                 </Show>
 
-                <Show
-                    when={!isScanning() && logRefundableSwaps() === undefined}>
-                    <Show when={props.requiresRescueFile}>
-                        <RescueKeyInput />
+                <Show when={scanFinished()}>
+                    <button
+                        class="btn btn-light"
+                        onClick={() => navigate(basePath)}>
+                        {t("back")}
+                    </button>
+                </Show>
+
+                <Show when={showRescueKeyInput()}>
+                    <RescueKeyInput />
+                </Show>
+
+                <Show when={!scanFinished()}>
+                    <Show
+                        when={props.manualScan}
+                        fallback={
+                            <ConnectWallet
+                                networkIndependent
+                                addressOverride={refundScanProgress}
+                            />
+                        }>
+                        <ConnectWallet networkIndependent />
+                        <button
+                            class="btn"
+                            disabled={!canScan()}
+                            onMouseEnter={() => setIsHovered(true)}
+                            onMouseLeave={() => setIsHovered(false)}
+                            onClick={() => {
+                                if (isScanning()) {
+                                    stopScan();
+                                } else {
+                                    void startScan();
+                                }
+                            }}>
+                            {scanButtonText()}
+                        </button>
                     </Show>
                 </Show>
-                <ConnectWallet
-                    asset={RBTC}
-                    addressOverride={refundScanProgress}
-                />
             </>
         );
     };
 
     return (
         <Switch fallback={<ModeSelector />}>
-            <Match when={rskRescueMode() === RskRescueMode.Refund}>
-                <ScanMode explainerKey="rsk_rescue_refund_explainer" />
-            </Match>
-            <Match when={rskRescueMode() === RskRescueMode.Claim}>
+            <Match when={rescueMode() === RskRescueMode.Refund}>
                 <ScanMode
-                    explainerKey="rsk_rescue_resume_explainer"
+                    explainerKey="evm_rescue_refund_explainer"
+                    manualScan
+                />
+            </Match>
+            <Match when={rescueMode() === RskRescueMode.Claim}>
+                <ScanMode
+                    explainerKey="evm_rescue_resume_explainer"
                     requiresRescueFile
                 />
             </Match>
@@ -652,23 +864,25 @@ const RescueExternal = () => {
     const params = useParams();
     const navigate = useNavigate();
 
-    const rskAvailable =
-        import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT !== undefined;
+    const evmAvailable =
+        !!import.meta.env.VITE_RSK_LOG_SCAN_ENDPOINT ||
+        (!!import.meta.env.VITE_ARBITRUM_LOG_SCAN_ENDPOINT &&
+            config.assets?.[TBTC]?.contracts?.deployHeight !== undefined);
 
     const tabBtc = {
         name: "Bitcoin / Liquid",
         values: [BTC, LBTC],
     };
-    const tabRbtc = { name: "Rootstock", values: [RBTC, "RSK"] }; // keeping the network for retrocompatibility
-    const validTypes = rskAvailable
-        ? [...tabBtc.values, ...tabRbtc.values]
+    const tabEvm = { name: "EVM", values: ["EVM", RBTC, TBTC, "RSK"] };
+    const validTypes = evmAvailable
+        ? [...tabBtc.values, ...tabEvm.values]
         : [...tabBtc.values];
 
     const selected = () =>
         params.type?.toLowerCase() ?? tabBtc.values[0].toLowerCase();
 
-    if (!rskAvailable) {
-        log.warn("RSK log scan endpoint not available");
+    if (!evmAvailable) {
+        log.warn("No EVM log scan endpoints available");
     }
 
     const validType = () =>
@@ -684,9 +898,9 @@ const RescueExternal = () => {
                             <SettingsCog />
                             <h2>{t("rescue_external_swap")}</h2>
                         </header>
-                        <Show when={rskAvailable}>
+                        <Show when={evmAvailable}>
                             <div class="tabs">
-                                <For each={[tabBtc, tabRbtc]}>
+                                <For each={[tabBtc, tabEvm]}>
                                     {(tab) => (
                                         <div
                                             class={`tab ${tab.values.includes(selected().toUpperCase()) ? "active" : ""}`}
@@ -709,12 +923,10 @@ const RescueExternal = () => {
                         </Show>
                         <Show
                             when={
-                                rskAvailable &&
-                                tabRbtc.values.includes(
-                                    selected().toUpperCase(),
-                                )
+                                evmAvailable &&
+                                tabEvm.values.includes(selected().toUpperCase())
                             }>
-                            <RescueRsk mode={params.mode} />
+                            <RescueEvm mode={params.mode} />
                         </Show>
                         <SettingsMenu />
                     </div>
