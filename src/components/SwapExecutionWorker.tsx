@@ -5,6 +5,7 @@ import { createEffect, onCleanup, onMount } from "solid-js";
 
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import { config } from "../config";
+import { NetworkTransport } from "../configs/base";
 import { getTokenAddress } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
@@ -25,11 +26,13 @@ import {
 } from "../utils/evmTransaction";
 import { decodeInvoice } from "../utils/invoice";
 import {
-    createOftContract,
+    createEvmOftContract,
     getOftContract,
+    getLayerZeroMessageGuidByTxHash,
     getOftProvider,
     getOftReceivedEventByGuid,
     getOftSentEvent,
+    getSolanaOftConnection,
 } from "../utils/oft/oft";
 import { fetchDexQuote } from "../utils/qouter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
@@ -205,6 +208,100 @@ export const SwapExecutionWorker = () => {
         }
     };
 
+    const waitForSolanaOftSendConfirmation = async (
+        swapId: string,
+        sourceAsset: string,
+        txHash: string,
+    ) => {
+        const connection = getSolanaOftConnection(sourceAsset);
+
+        log.debug(
+            "Swap execution waiting for Solana OFT send confirmation",
+            getSwapExecutionLogContext(swapId, {
+                sourceAsset,
+                txHash,
+            }),
+        );
+
+        while (true) {
+            const currentSwap = await getSwap<SomeSwap>(swapId);
+            if (!needsPreOftLockup(currentSwap)) {
+                log.debug(
+                    "Swap execution stopped waiting for Solana OFT send confirmation",
+                    getSwapExecutionLogContext(swapId, {
+                        sourceAsset,
+                        txHash,
+                    }),
+                );
+                return undefined;
+            }
+
+            const transaction = await connection.getTransaction(txHash, {
+                commitment: "confirmed",
+                maxSupportedTransactionVersion: 0,
+            });
+            if (transaction !== null) {
+                log.info(
+                    "Swap execution found Solana OFT send confirmation",
+                    getSwapExecutionLogContext(swapId, {
+                        sourceAsset,
+                        txHash,
+                        slot: transaction.slot,
+                    }),
+                );
+                return transaction;
+            }
+
+            await sleep(retryIntervalMs);
+        }
+    };
+
+    const waitForLayerZeroGuidByTxHash = async (swapId: string, txHash: string) => {
+        log.debug(
+            "Swap execution waiting for LayerZero guid",
+            getSwapExecutionLogContext(swapId, {
+                txHash,
+            }),
+        );
+
+        while (true) {
+            const currentSwap = await getSwap<SomeSwap>(swapId);
+            if (!needsPreOftLockup(currentSwap)) {
+                log.debug(
+                    "Swap execution stopped waiting for LayerZero guid",
+                    getSwapExecutionLogContext(swapId, {
+                        txHash,
+                    }),
+                );
+                return undefined;
+            }
+
+            try {
+                const guid = await getLayerZeroMessageGuidByTxHash(txHash);
+                if (guid !== undefined) {
+                    log.info(
+                        "Swap execution found LayerZero guid",
+                        getSwapExecutionLogContext(swapId, {
+                            txHash,
+                            guid,
+                        }),
+                    );
+                    return guid;
+                }
+            } catch (error) {
+                log.debug(
+                    "LayerZero guid not available yet",
+                    getSwapExecutionLogContext(swapId, {
+                        txHash,
+                        error,
+                    }),
+                );
+            }
+
+            await sleep(retryIntervalMs);
+        }
+    };
+
     const waitForOftReceiptByGuid = async (
         swapId: string,
         destinationAsset: string,
@@ -212,16 +309,10 @@ export const SwapExecutionWorker = () => {
     ) => {
         const destinationChainId =
             config.assets?.[destinationAsset]?.network?.chainId;
-        if (destinationChainId === undefined) {
-            throw new Error(
-                `missing OFT destination chain id for asset: ${destinationAsset}`,
-            );
-        }
-
-        const oftContract = await getOftContract(destinationChainId);
+        const oftContract = await getOftContract(destinationAsset);
         if (oftContract === undefined) {
             throw new Error(
-                `missing OFT contract for chain: ${destinationChainId}`,
+                `missing OFT contract for asset: ${destinationAsset}`,
             );
         }
 
@@ -229,7 +320,7 @@ export const SwapExecutionWorker = () => {
             getGasAbstractionSigner(destinationAsset),
             "OFT destination signer",
         );
-        const contract = createOftContract(oftContract.address, provider);
+        const contract = createEvmOftContract(oftContract.address, provider);
 
         log.debug(
             "Swap execution waiting for OFT receive event",
@@ -292,38 +383,56 @@ export const SwapExecutionWorker = () => {
             }),
         );
 
-        const sourceChainId =
-            config.assets?.[currentSwap.oft.sourceAsset]?.network?.chainId;
-        if (sourceChainId === undefined) {
+        const sourceOft = await getOftContract(currentSwap.oft.sourceAsset);
+        if (sourceOft === undefined) {
             throw new Error(
-                `missing OFT source chain id for asset: ${currentSwap.oft.sourceAsset}`,
+                `missing OFT contract for asset: ${currentSwap.oft.sourceAsset}`,
             );
         }
+        let guid: string | undefined;
+        if (sourceOft.transport === NetworkTransport.Evm) {
+            const sendReceipt = await waitForOftSendReceipt(
+                currentSwap.id,
+                currentSwap.oft.sourceAsset,
+                currentSwap.oft.txHash,
+            );
+            if (sendReceipt === undefined) {
+                return;
+            }
 
-        const sourceOft = await getOftContract(sourceChainId);
-        if (sourceOft === undefined) {
-            throw new Error(`missing OFT contract for chain: ${sourceChainId}`);
+            const sourceProvider = getOftProvider(currentSwap.oft.sourceAsset);
+            const sourceContract = createEvmOftContract(
+                sourceOft.address,
+                sourceProvider,
+            );
+            guid = getOftSentEvent(
+                sourceContract,
+                sendReceipt,
+                sourceOft.address,
+            ).guid;
+        } else if (sourceOft.transport === NetworkTransport.Solana) {
+            const sendTransaction = await waitForSolanaOftSendConfirmation(
+                currentSwap.id,
+                currentSwap.oft.sourceAsset,
+                currentSwap.oft.txHash,
+            );
+            if (sendTransaction === undefined) {
+                return;
+            }
+
+            guid = await waitForLayerZeroGuidByTxHash(
+                currentSwap.id,
+                currentSwap.oft.txHash,
+            );
+        } else {
+            throw new Error(
+                `Unsupported OFT source transport for pre-lockup execution: ${sourceOft.transport}`,
+            );
         }
-
-        const sendReceipt = await waitForOftSendReceipt(
-            currentSwap.id,
-            currentSwap.oft.sourceAsset,
-            currentSwap.oft.txHash,
-        );
-        if (sendReceipt === undefined) {
+        if (guid === undefined) {
             return;
         }
 
-        const sourceProvider = getOftProvider(currentSwap.oft.sourceAsset);
-        const sourceContract = createOftContract(
-            sourceOft.address,
-            sourceProvider,
-        );
-        const { guid } = getOftSentEvent(
-            sourceContract,
-            sendReceipt,
-            sourceOft.address,
-        );
         log.info(
             "Swap execution decoded OFT send guid",
             getSwapExecutionLogContext(currentSwap.id, {

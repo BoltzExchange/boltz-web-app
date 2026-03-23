@@ -3,6 +3,7 @@ import { BigNumber } from "bignumber.js";
 
 import CreateButton, {
     getClaimAddress,
+    resolveOriginalDestination,
 } from "../../src/components/CreateButton";
 import type * as ConfigModule from "../../src/config";
 import { BTC, LBTC, LN, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
@@ -232,6 +233,38 @@ describe("CreateButton", () => {
             claimAddress: "0xgas",
         });
         expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
+    });
+
+    test("should use canonical USDT0 gas abstraction for legacy mesh receives", async () => {
+        const getGasAbstractionSigner = vi
+            .fn()
+            .mockReturnValue({ address: "0xgas" });
+
+        await expect(
+            getClaimAddress(
+                () => "USDT0-SOL",
+                () => BTC,
+                () => undefined,
+                () => "So11111111111111111111111111111111111111112",
+                getGasAbstractionSigner,
+                false,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: GasAbstractionType.Signer,
+            gasPrice: 0n,
+            claimAddress: "0xgas",
+        });
+        expect(getGasAbstractionSigner).toHaveBeenCalledWith(USDT0);
+    });
+
+    test("should persist manual non-EVM destinations as originalDestination", () => {
+        expect(
+            resolveOriginalDestination({
+                originalDestination: undefined,
+                assetReceive: "USDT0-SOL",
+                onchainAddress: "8osqMAPX4crAWuRcytMRmKd4oXgtmxzCamxx1GQ99mbj",
+            }),
+        ).toEqual("8osqMAPX4crAWuRcytMRmKd4oXgtmxzCamxx1GQ99mbj");
     });
 
     test("should not use signer gas abstraction when sending RBTC", async () => {

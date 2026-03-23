@@ -4,6 +4,34 @@ import BigNumber from "bignumber.js";
 import { createEffect, createMemo, createSignal } from "solid-js";
 
 vi.mock("ethers", () => {
+    const stripPrefix = (value: string) =>
+        value.startsWith("0x") ? value.slice(2) : value;
+    const zeroPadValue = (value: string, length: number) =>
+        `0x${stripPrefix(value).padStart(length * 2, "0")}`;
+    const getBytes = (value: string) =>
+        Uint8Array.from(Buffer.from(stripPrefix(value), "hex"));
+    const concat = (values: string[]) =>
+        `0x${values.map((value) => stripPrefix(value)).join("")}`;
+    const solidityPacked = (types: string[], values: Array<string | bigint>) =>
+        `0x${types
+            .map((type, index) => {
+                if (type.startsWith("uint")) {
+                    const bytes = Number(type.slice(4)) / 8;
+                    return BigInt(values[index] as bigint | number)
+                        .toString(16)
+                        .padStart(bytes * 2, "0");
+                }
+
+                if (type === "bytes32") {
+                    return stripPrefix(
+                        zeroPadValue(values[index] as string, 32),
+                    );
+                }
+
+                throw new Error(`unsupported solidityPacked type: ${type}`);
+            })
+            .join("")}`;
+
     class MockJsonRpcProvider {
         public send = vi.fn();
         public getTransactionCount = vi.fn();
@@ -60,10 +88,24 @@ vi.mock("ethers", () => {
         constructor() {}
     }
 
+    class Interface {
+        public encodeFunctionData = vi.fn(() => "0xencoded");
+
+        public encodeFilterTopics = vi.fn(() => []);
+
+        public parseLog = vi.fn();
+    }
+
     return {
+        AbiCoder: {
+            defaultAbiCoder: () => ({
+                encode: vi.fn(() => "0xencoded"),
+            }),
+        },
         BrowserProvider: MockBrowserProvider,
         Contract: MockContract,
         FallbackProvider: MockFallbackProvider,
+        Interface,
         JsonRpcProvider: MockJsonRpcProvider,
         JsonRpcSigner: MockJsonRpcSigner,
         Signature: {
@@ -77,6 +119,11 @@ vi.mock("ethers", () => {
             hashStruct: vi.fn(),
         },
         Wallet: MockWallet,
+        ZeroAddress: "0x0000000000000000000000000000000000000000",
+        concat,
+        getBytes,
+        solidityPacked,
+        zeroPadValue,
     };
 });
 
@@ -97,6 +144,7 @@ vi.mock("../../src/utils/boltzClient", async () => {
 });
 
 const { RBTC } = await import("../../src/consts/Assets");
+const { config } = await import("../../src/config");
 const { CreateProvider, useCreateContext } =
     await import("../../src/context/Create");
 const { GlobalProvider } = await import("../../src/context/Global");
@@ -253,10 +301,14 @@ describe("ConnectWallet", () => {
             expect(screen.getByTestId("chain-id").textContent).toBe("1");
         });
 
-        provider.emitChainChanged("0x21");
+        provider.emitChainChanged(
+            `0x${config.assets.RBTC.network.chainId.toString(16)}`,
+        );
 
         await waitFor(() => {
-            expect(screen.getByTestId("chain-id").textContent).toBe("33");
+            expect(screen.getByTestId("chain-id").textContent).toBe(
+                String(config.assets.RBTC.network.chainId),
+            );
         });
         await waitFor(() => {
             expect(

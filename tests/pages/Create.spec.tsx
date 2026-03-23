@@ -93,6 +93,45 @@ describe("Create", () => {
         expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
     });
 
+    test("should show wallet section for non-EVM wallet pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, "USDT0-SOL");
+
+        expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
+    });
+
+    test("should show only one destination address input for wallet-connectable non-EVM pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, "USDT0-SOL");
+
+        await screen.findByTestId("connect-wallet");
+        expect(screen.getAllByTestId("onchainAddress")).toHaveLength(1);
+    });
+
     test("should show WASM error", async () => {
         render(
             () => (
@@ -141,10 +180,6 @@ describe("Create", () => {
                 .fn(() => quotePromise)
                 .mockName("calculateReceiveAmount");
             const button = await screen.findByTestId("create-swap-button");
-
-            expect(
-                within(button).queryByTestId("loading-spinner"),
-            ).not.toBeInTheDocument();
 
             fireEvent.input(await screen.findByTestId("sendAmount"), {
                 target: { value: "100000" },

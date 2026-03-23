@@ -16,6 +16,7 @@ import { type Accessor, Show, createSignal, onMount } from "solid-js";
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
+import { NetworkTransport } from "../configs/base";
 import {
     AssetKind,
     TBTC,
@@ -29,6 +30,7 @@ import { usePayContext } from "../context/Pay";
 import {
     type Signer,
     createRouterContract,
+    createTokenContract,
     useWeb3Signer,
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
@@ -51,6 +53,7 @@ import {
 } from "../utils/evmTransaction";
 import {
     type OftQuoteOptions,
+    createEvmOftContract,
     getOftContract,
     getQuotedOftContract,
     quoteOftReceiveAmount,
@@ -106,6 +109,7 @@ const getPostOftQuoteOptions = async (
     getGasToken: boolean,
 ): Promise<OftQuoteOptions> => ({
     recipient: destination,
+    meshKind: config.assets?.[destinationAsset]?.mesh?.kind,
     nativeDrop:
         getGasToken && gasTopUpSupported(destinationAsset)
             ? {
@@ -141,7 +145,7 @@ const getAcceptedQuoteAmount = async (
     );
     const initialOftQuote = await quoteOftReceiveAmount(
         oft.sourceAsset,
-        oft.destinationChainId,
+        oft.destinationAsset,
         quote.trade.amountOut,
         oftQuoteOptions,
     );
@@ -162,7 +166,7 @@ const getAcceptedQuoteAmount = async (
     );
     const adjustedOftQuote = await quoteOftReceiveAmount(
         oft.sourceAsset,
-        oft.destinationChainId,
+        oft.destinationAsset,
         adjustedTradeQuote.trade.amountOut,
         oftQuoteOptions,
     );
@@ -322,19 +326,32 @@ const hashOftSendData = async (
         ),
     );
 
-const claimErc20ViaRouter = async (
-    gasAbstraction: GasAbstractionType,
-    asset: string,
-    preimage: string,
-    amount: number,
-    refundAddress: string,
-    timeoutBlockHeight: number,
-    destination: string,
-    signer: Signer | Wallet,
-    erc20Swap: ERC20Swap,
-    slippage: number,
-    execution: RouterClaimExecution,
-) => {
+type ClaimErc20ExecuteTxParams = {
+    asset: string;
+    preimage: string;
+    amount: number;
+    refundAddress: string;
+    timeoutBlockHeight: number;
+    destination: string;
+    signer: Signer | Wallet;
+    erc20Swap: ERC20Swap;
+    slippage: number;
+    execution: RouterClaimExecution;
+};
+
+const buildClaimErc20ExecuteTx = async (params: ClaimErc20ExecuteTxParams) => {
+    const {
+        asset,
+        preimage,
+        amount,
+        refundAddress,
+        timeoutBlockHeight,
+        destination,
+        signer,
+        erc20Swap,
+        slippage,
+        execution,
+    } = params;
     if (getKindForAsset(asset) === AssetKind.EVMNative) {
         throw new Error("EtherSwap is not supported for now");
     }
@@ -396,6 +413,35 @@ const claimErc20ViaRouter = async (
         routerSignature.s,
     );
 
+    return tx;
+};
+
+const claimErc20ViaRouter = async (
+    gasAbstraction: GasAbstractionType,
+    asset: string,
+    preimage: string,
+    amount: number,
+    refundAddress: string,
+    timeoutBlockHeight: number,
+    destination: string,
+    signer: Signer | Wallet,
+    erc20Swap: ERC20Swap,
+    slippage: number,
+    execution: RouterClaimExecution,
+) => {
+    const tx = await buildClaimErc20ExecuteTx({
+        asset,
+        preimage,
+        amount,
+        refundAddress,
+        timeoutBlockHeight,
+        destination,
+        signer,
+        erc20Swap,
+        slippage,
+        execution,
+    });
+
     return await sendPopulatedTransaction(gasAbstraction, signer, tx);
 };
 
@@ -428,38 +474,37 @@ const claimErc20ViaRouterOft = async (
         throw new Error("claim hop is missing DEX details");
     }
 
-    const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
-    if (sourceChainId === undefined) {
+    const oftContract = await getOftContract(
+        oft.sourceAsset,
+        "usdt0",
+        oft.meshKind,
+    );
+    if (oftContract === undefined) {
+        throw new Error(`missing OFT contract for asset: ${oft.sourceAsset}`);
+    }
+    if (oftContract.transport !== NetworkTransport.Evm) {
         throw new Error(
-            `missing OFT source chain id for asset: ${oft.sourceAsset}`,
+            `OFT approvals require an EVM source contract, got ${oftContract.transport}`,
         );
     }
 
-    const oftContract = await getOftContract(sourceChainId);
-    if (oftContract === undefined) {
-        throw new Error(`missing OFT contract for chain: ${sourceChainId}`);
-    }
-
+    const oftExecutionInstance = createEvmOftContract(
+        oftContract.address,
+        signer,
+    );
+    const approvalRequired = await oftExecutionInstance.approvalRequired();
     const router = createRouterContract(asset, signer);
     const assetAmount = satsToAssetAmount(amount, asset);
-    const tokenAddress = getTokenAddress(asset);
     const [routerAddress, { chainId }] = await Promise.all([
         router.getAddress(),
         signer.provider.getNetwork(),
     ]);
-    const claimSignature = await signErc20ClaimToRouter(
-        signer,
-        erc20Swap,
-        chainId,
-        preimage,
-        assetAmount,
-        tokenAddress,
-        refundAddress,
-        timeoutBlockHeight,
-        routerAddress,
-    );
 
-    const oftQuoteInstance = await getQuotedOftContract(oft.sourceAsset);
+    const oftQuoteInstance = await getQuotedOftContract(
+        oft.sourceAsset,
+        "usdt0",
+        oft.meshKind,
+    );
     const oftQuoteOptions = await getPostOftQuoteOptions(
         oft.destinationAsset,
         destination,
@@ -467,7 +512,7 @@ const claimErc20ViaRouterOft = async (
     );
     const { msgFee } = await quoteOftSend(
         oftQuoteInstance,
-        oft.destinationChainId,
+        oft.destinationAsset,
         destination,
         quote.trade.amountOut,
         oftQuoteOptions,
@@ -497,7 +542,7 @@ const claimErc20ViaRouterOft = async (
     );
     const { sendParam } = await quoteOftSend(
         oftQuoteInstance,
-        oft.destinationChainId,
+        oft.destinationAsset,
         destination,
         amountOutMin,
         oftQuoteOptions,
@@ -558,6 +603,46 @@ const claimErc20ViaRouterOft = async (
         ),
     ]);
 
+    const tokenAddress = getTokenAddress(asset);
+    const claimSignature = await signErc20ClaimToRouter(
+        signer,
+        erc20Swap,
+        chainId,
+        preimage,
+        assetAmount,
+        tokenAddress,
+        refundAddress,
+        timeoutBlockHeight,
+        routerAddress,
+    );
+    const routerCalls = calldata.flatMap(({ calls }) =>
+        calls.map((call) => ({
+            target: call.to,
+            value: call.value,
+            callData: prefix0x(call.data),
+        })),
+    );
+
+    if (approvalRequired) {
+        const tokenContract = createTokenContract(oft.sourceAsset, signer);
+        const approveTx = await tokenContract.approve.populateTransaction(
+            oftContract.address,
+            BigInt(tradeQuote.quote),
+        );
+        if (
+            typeof approveTx.to !== "string" ||
+            typeof approveTx.data !== "string"
+        ) {
+            throw new Error("failed to populate OFT approval transaction");
+        }
+
+        routerCalls.push({
+            target: approveTx.to,
+            value: "0",
+            callData: approveTx.data,
+        });
+    }
+
     const tx = await router.claimERC20ExecuteOft.populateTransaction(
         {
             preimage: prefix0x(preimage),
@@ -569,13 +654,7 @@ const claimErc20ViaRouterOft = async (
             r: claimSignature.r,
             s: claimSignature.s,
         },
-        calldata.flatMap(({ calls }) =>
-            calls.map((call) => ({
-                target: call.to,
-                value: call.value,
-                callData: prefix0x(call.data),
-            })),
-        ),
+        routerCalls,
         dexDetails.tokenOut,
         oftContract.address,
         sendData,

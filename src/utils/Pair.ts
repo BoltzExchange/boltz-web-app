@@ -9,6 +9,7 @@ import {
     LN,
     USDT0,
     getCanonicalAsset,
+    getUsdt0MeshKind,
     isEvmAsset,
     isUsdt0Asset,
     isUsdt0Variant,
@@ -92,7 +93,6 @@ type Hop = {
 type OftRoute = {
     from: string;
     to: string;
-    destinationChainId: number;
 };
 
 export type EncodedHop = Pick<Hop, "type" | "from" | "to" | "dexDetails">;
@@ -140,6 +140,13 @@ export default class Pair {
               token: string | undefined;
           }
         | undefined;
+    private latestOftTransferFee:
+        | {
+              sendAmount: string;
+              value: BigNumber;
+              asset: string | undefined;
+          }
+        | undefined;
 
     constructor(
         public readonly pairs: Pairs | undefined,
@@ -157,22 +164,19 @@ export default class Pair {
         this.preOft =
             isUsdt0Variant(from) &&
             routeSource === USDT0 &&
-            config.assets?.[routeSource]?.network?.chainId !== undefined
+            config.assets?.[routeSource] !== undefined
                 ? {
                       from,
                       to: routeSource,
-                      destinationChainId:
-                          config.assets[routeSource].network.chainId,
                   }
                 : undefined;
         const postOft =
             isUsdt0Variant(to) &&
             routeTarget === USDT0 &&
-            config.assets?.[to]?.network?.chainId !== undefined
+            config.assets?.[to] !== undefined
                 ? {
                       from: routeTarget,
                       to,
-                      destinationChainId: config.assets[to].network.chainId,
                   }
                 : undefined;
         this.postOft = postOft;
@@ -331,7 +335,9 @@ export default class Pair {
         }
 
         if (this.postOft !== undefined) {
-            return RequiredInput.Web3;
+            return isEvmAsset(this.postOft.to)
+                ? RequiredInput.Web3
+                : RequiredInput.Address;
         }
 
         const lastHop = this.route[this.route.length - 1];
@@ -492,6 +498,18 @@ export default class Pair {
         };
     };
 
+    private cacheLatestOftTransferFee = (
+        sendAmountKey: string,
+        value: BigNumber,
+        asset: string | undefined,
+    ) => {
+        this.latestOftTransferFee = {
+            sendAmount: sendAmountKey,
+            value,
+            asset,
+        };
+    };
+
     private get postOftClaimAsset() {
         return this.postOftDexHop?.from ?? this.postOft?.from;
     }
@@ -549,6 +567,7 @@ export default class Pair {
         });
         return {
             recipient: postOftRecipient,
+            meshKind: getUsdt0MeshKind(this.postOft.from, this.postOft.to),
             nativeDrop:
                 nativeDropAmount !== undefined
                     ? {
@@ -581,12 +600,15 @@ export default class Pair {
             log.info("Checking post-OFT native drop capability", {
                 sourceAsset: this.postOft.from,
                 destinationAsset: this.to,
-                destinationChainId: this.postOft.destinationChainId,
+                destinationMeshKind: getUsdt0MeshKind(
+                    this.postOft.from,
+                    this.postOft.to,
+                ),
                 postOftRecipient,
             });
             await quoteOftReceiveAmount(
                 this.postOft.from,
-                this.postOft.destinationChainId,
+                this.postOft.to,
                 1n,
                 await this.getPostOftQuoteOptions(postOftRecipient, true),
             );
@@ -676,7 +698,7 @@ export default class Pair {
 
         const quote = await quoteOftReceiveAmount(
             this.preOft.from,
-            this.preOft.destinationChainId,
+            this.preOft.to,
             BigInt(sendAmount.toFixed(0)),
         );
 
@@ -685,6 +707,13 @@ export default class Pair {
                 sendAmountKey,
                 quote.msgFee[0],
                 this.preOftMessagingFeeToken,
+            );
+            this.cacheLatestOftTransferFee(
+                sendAmountKey,
+                BigNumber(
+                    (BigInt(sendAmount.toFixed(0)) - quote.amountOut).toString(),
+                ),
+                this.preOft.from,
             );
         }
 
@@ -711,12 +740,12 @@ export default class Pair {
 
         const requiredAmount = await quoteOftAmountInForAmountOut(
             this.preOft.from,
-            this.preOft.destinationChainId,
+            this.preOft.to,
             BigInt(amount.toFixed(0)),
         );
         const quote = await quoteOftReceiveAmount(
             this.preOft.from,
-            this.preOft.destinationChainId,
+            this.preOft.to,
             requiredAmount,
         );
 
@@ -776,7 +805,10 @@ export default class Pair {
             log.info("Applying post-OFT quote", {
                 sourceAsset: this.postOft.from,
                 destinationAsset: this.to,
-                destinationChainId: this.postOft.destinationChainId,
+                destinationMeshKind: getUsdt0MeshKind(
+                    this.postOft.from,
+                    this.postOft.to,
+                ),
                 claimAmount: claimAmount.toFixed(),
                 getGasToken,
                 postOftRecipient,
@@ -789,7 +821,7 @@ export default class Pair {
                 await this.convertClaimAmountToOftAmount(claimAmount);
             const quote = await quoteOftReceiveAmount(
                 this.postOft.from,
-                this.postOft.destinationChainId,
+                this.postOft.to,
                 BigInt(quotedOftAmount.toFixed(0)),
                 postOftQuoteOptions,
             );
@@ -827,10 +859,23 @@ export default class Pair {
                 await this.convertClaimAmountToOftAmount(adjustedClaimAmount);
             const adjustedQuote = await quoteOftReceiveAmount(
                 this.postOft.from,
-                this.postOft.destinationChainId,
+                this.postOft.to,
                 BigInt(adjustedOftAmount.toFixed(0)),
                 postOftQuoteOptions,
             );
+
+            if (sendAmountKey !== undefined) {
+                this.cacheLatestOftTransferFee(
+                    sendAmountKey,
+                    BigNumber(
+                        (
+                            BigInt(adjustedOftAmount.toFixed(0)) -
+                            adjustedQuote.amountOut
+                        ).toString(),
+                    ),
+                    this.postOft.to,
+                );
+            }
 
             return BigNumber(adjustedQuote.amountOut.toString());
         } catch (error) {
@@ -871,7 +916,10 @@ export default class Pair {
             log.info("Inverting post-OFT quote", {
                 sourceAsset: this.postOft.from,
                 destinationAsset: this.to,
-                destinationChainId: this.postOft.destinationChainId,
+                destinationMeshKind: getUsdt0MeshKind(
+                    this.postOft.from,
+                    this.postOft.to,
+                ),
                 requestedAmount: amount.toFixed(),
                 getGasToken,
                 postOftRecipient,
@@ -882,14 +930,14 @@ export default class Pair {
             );
             const requiredAmount = await quoteOftAmountInForAmountOut(
                 this.postOft.from,
-                this.postOft.destinationChainId,
+                this.postOft.to,
                 BigInt(amount.toFixed(0)),
                 postOftQuoteOptions,
             );
 
             const quote = await quoteOftReceiveAmount(
                 this.postOft.from,
-                this.postOft.destinationChainId,
+                this.postOft.to,
                 requiredAmount,
                 postOftQuoteOptions,
             );
@@ -962,11 +1010,27 @@ export default class Pair {
         return this.latestOftMessagingFee.value;
     };
 
+    public oftTransferFeeFromLatestQuote = (sendAmount: BigNumber) => {
+        const key = sendAmount.toFixed();
+
+        if (this.latestOftTransferFee?.sendAmount !== key) {
+            return undefined;
+        }
+
+        return this.latestOftTransferFee.value;
+    };
+
     public get oftMessagingFeeToken() {
         return (
             this.latestOftMessagingFee?.token ??
             this.postOftMessagingFeeToken ??
             this.preOftMessagingFeeToken
+        );
+    }
+
+    public get oftTransferFeeAsset() {
+        return (
+            this.latestOftTransferFee?.asset ?? this.postOft?.to ?? this.preOft?.from
         );
     }
 

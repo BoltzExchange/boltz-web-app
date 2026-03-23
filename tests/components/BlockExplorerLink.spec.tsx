@@ -2,6 +2,7 @@ import { render, screen } from "@solidjs/testing-library";
 import { createSignal } from "solid-js";
 
 import BlockExplorerLink from "../../src/components/BlockExplorerLink";
+import { Usdt0MeshKind } from "../../src/configs/base";
 import { config } from "../../src/config";
 import { BTC, LBTC, USDT0 } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
@@ -77,9 +78,9 @@ describe("BlockExplorerLink", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
+                    meshKind: Usdt0MeshKind.Native,
                 },
-            } as SomeSwap);
+            } as unknown as SomeSwap);
 
             render(
                 () => (
@@ -110,7 +111,7 @@ describe("BlockExplorerLink", () => {
                 lockupDetails: {
                     lockupAddress: "bc1",
                 },
-            } as ChainSwap);
+            } as unknown as ChainSwap);
 
             render(
                 () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
@@ -170,7 +171,7 @@ describe("BlockExplorerLink", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
+                    meshKind: Usdt0MeshKind.Native,
                 },
                 lockupDetails: {
                     lockupAddress: "bc1",

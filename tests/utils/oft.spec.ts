@@ -1,15 +1,22 @@
+import { base58, hex } from "@scure/base";
+
+import { NetworkTransport, Usdt0MeshKind } from "../../src/configs/base";
+import { config } from "../../src/config";
 const {
     decodeExecutorNativeAmountExceedsCapError,
     getOftContract,
+    getOftContracts,
     getOftReceivedEventByGuid,
     isExecutorNativeAmountExceedsCapError,
     quoteOftSend,
+    resetOftStateForTests,
 } = await import("../../src/utils/oft/oft");
 
 describe("oft", () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
+        resetOftStateForTests();
     });
 
     test("should include native drop options in OFT send params", async () => {
@@ -52,14 +59,10 @@ describe("oft", () => {
         );
 
         const oft = {
-            quoteOFT: {
-                staticCall: vi
-                    .fn()
-                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
-            },
-            quoteSend: {
-                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
-            },
+            transport: NetworkTransport.Evm,
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
+            send: vi.fn(),
         };
 
         const { sendParam, msgFee } = await quoteOftSend(
@@ -77,7 +80,7 @@ describe("oft", () => {
 
         expect(sendParam[4]).not.toBe("0x");
         expect(sendParam[4].startsWith("0x0003")).toBe(true);
-        expect(oft.quoteOFT.staticCall).toHaveBeenCalledWith(
+        expect(oft.quoteOFT).toHaveBeenCalledWith(
             expect.arrayContaining([
                 expect.any(Number),
                 expect.any(String),
@@ -92,7 +95,169 @@ describe("oft", () => {
             name: "OFT Adapter",
             address: "0x1000000000000000000000000000000000000001",
             explorer: "",
+            transport: NetworkTransport.Evm,
         });
+    });
+
+    test("should resolve legacy mesh assets by configured endpoint id", async () => {
+        const originalAsset = config.assets["USDT0-TRON"];
+        config.assets["USDT0-TRON"] = {
+            ...config.assets.USDT0,
+            canSend: false,
+            network: {
+                chainName: "Tron",
+                symbol: "TRX",
+                gasToken: "TRX",
+                transport: NetworkTransport.Tron,
+            },
+            token: {
+                address: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+                decimals: 6,
+            },
+            mesh: {
+                kind: Usdt0MeshKind.Legacy,
+                lzEid: "30420",
+                recipientFormat: NetworkTransport.Tron,
+            },
+        };
+
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [],
+                        legacyMesh: [
+                            {
+                                name: "Tron",
+                                lzEid: "30420",
+                                contracts: [
+                                    {
+                                        name: "OFT",
+                                        address:
+                                            "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                }),
+            }),
+        );
+
+        await expect(getOftContract("USDT0-TRON")).resolves.toEqual({
+            name: "OFT",
+            address: "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
+            explorer: "",
+            transport: NetworkTransport.Tron,
+        });
+
+        if (originalAsset === undefined) {
+            delete config.assets["USDT0-TRON"];
+        } else {
+            config.assets["USDT0-TRON"] = originalAsset;
+        }
+    });
+
+    test("should encode Solana recipients as 32-byte public keys", async () => {
+        const originalAsset = config.assets["USDT0-SOL"];
+        config.assets["USDT0-SOL"] = {
+            ...config.assets.USDT0,
+            canSend: false,
+            network: {
+                chainName: "Solana",
+                symbol: "SOL",
+                gasToken: "SOL",
+                transport: NetworkTransport.Solana,
+            },
+            token: {
+                address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+                decimals: 6,
+            },
+            mesh: {
+                kind: Usdt0MeshKind.Legacy,
+                lzEid: "30168",
+                recipientFormat: NetworkTransport.Solana,
+            },
+        };
+
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [],
+                        legacyMesh: [
+                            {
+                                name: "Solana",
+                                lzEid: "30168",
+                                contracts: [
+                                    {
+                                        name: "OFT Store",
+                                        address:
+                                            "HyXJcgYpURfDhgzuyRL7zxP4FhLg7LZQMeDrR4MXZcMN",
+                                        explorer: "",
+                                    },
+                                    {
+                                        name: "OFT Program",
+                                        address:
+                                            "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                }),
+            }),
+        );
+
+        await expect(getOftContracts("USDT0-SOL")).resolves.toEqual([
+            {
+                name: "OFT Store",
+                address: "HyXJcgYpURfDhgzuyRL7zxP4FhLg7LZQMeDrR4MXZcMN",
+                explorer: "",
+                transport: NetworkTransport.Solana,
+            },
+            {
+                name: "OFT Program",
+                address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
+                explorer: "",
+                transport: NetworkTransport.Solana,
+            },
+        ]);
+        await expect(getOftContract("USDT0-SOL")).resolves.toEqual({
+            name: "OFT Program",
+            address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
+            explorer: "",
+            transport: NetworkTransport.Solana,
+        });
+
+        const oft = {
+            transport: NetworkTransport.Evm,
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
+            send: vi.fn(),
+        };
+        const recipient = "11111111111111111111111111111111";
+
+        const { sendParam } = await quoteOftSend(
+            oft as never,
+            "USDT0-SOL",
+            recipient,
+            100n,
+        );
+
+        expect(sendParam[1]).toEqual(`0x${hex.encode(base58.decode(recipient))}`);
+
+        if (originalAsset === undefined) {
+            delete config.assets["USDT0-SOL"];
+        } else {
+            config.assets["USDT0-SOL"] = originalAsset;
+        }
     });
 
     test("should fetch the received event by guid", async () => {

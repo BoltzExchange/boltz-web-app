@@ -3,6 +3,7 @@ import { hex } from "@scure/base";
 import type BigNumber from "bignumber.js";
 import { OutputType } from "boltz-core";
 
+import { Usdt0MeshKind } from "../configs/base";
 import { type AssetType } from "../consts/Assets";
 import { LN, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -35,7 +36,7 @@ export type DexDetail = {
 export type OftStageDetail = {
     sourceAsset: string;
     destinationAsset: string;
-    destinationChainId: number;
+    meshKind: Usdt0MeshKind;
 };
 
 export const enum OftPosition {

@@ -2,7 +2,7 @@ import { ZeroAddress } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
-import { AssetKind } from "../consts/Assets";
+import { AssetKind, isEvmAsset } from "../consts/Assets";
 import { quoteDexAmountIn, quoteDexAmountOut } from "./boltzClient";
 import {
     getGasTokenPriceFailover,
@@ -24,6 +24,7 @@ const gasDropsDisabled = (gasToken: string | undefined) => gasToken === "USDT0";
 
 export const gasTopUpSupported = (asset: string) =>
     config.assets?.[asset]?.type === AssetKind.ERC20 &&
+    isEvmAsset(asset) &&
     !gasDropsDisabled(getGasTopUpToken(asset)) &&
     hasGasTokenPriceLookup(getGasTopUpToken(asset) ?? "");
 

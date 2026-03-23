@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 
 import { JsonRpcProvider } from "../../node_modules/ethers/lib.commonjs/providers/provider-jsonrpc.js";
 import { config } from "../../src/configs/mainnet";
+import { isEvmAsset } from "../../src/consts/Assets";
 
 const hasLocalhostHost = (rpcUrl: string): boolean => {
     return new URL(rpcUrl).hostname === "localhost";
@@ -12,7 +13,13 @@ const usdt0VariantRpcEndpoints = Object.entries(config.assets).flatMap(
     ([asset, assetConfig]) => {
         const network = assetConfig.network;
 
-        if (!asset.startsWith("USDT0-") || network === undefined) {
+        if (
+            !asset.startsWith("USDT0-") ||
+            network === undefined ||
+            !isEvmAsset(asset) ||
+            network.chainId === undefined ||
+            network.rpcUrls === undefined
+        ) {
             return [];
         }
 

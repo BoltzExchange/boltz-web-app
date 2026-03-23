@@ -77,8 +77,17 @@ vi.mock("ethers", () => {
             })
             .join("")}`;
 
+    class Interface {
+        public encodeFunctionData = vi.fn(() => "0xencoded");
+
+        public encodeFilterTopics = vi.fn(() => []);
+
+        public parseLog = vi.fn();
+    }
+
     return {
         Contract: vi.fn(),
+        Interface,
         JsonRpcProvider: vi.fn(),
         FallbackProvider: vi.fn(),
         Signature: {

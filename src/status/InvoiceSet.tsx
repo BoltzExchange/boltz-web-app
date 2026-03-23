@@ -19,7 +19,10 @@ const InvoiceSet = () => {
 
     return (
         <Show
-            when={isEvmAsset(submarine.assetSend)}
+            when={
+                isEvmAsset(submarine.assetSend) ||
+                getPreOftDetail(submarine.oft) !== undefined
+            }
             fallback={
                 <PayOnchain
                     type={submarine.type}

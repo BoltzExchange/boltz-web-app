@@ -20,7 +20,6 @@ import {
 
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
-import { config } from "../config";
 import { AssetKind, getKindForAsset, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
@@ -50,7 +49,7 @@ import {
 import { decodeInvoice } from "../utils/invoice";
 import {
     buildOftSendAlchemyCall,
-    getOftProvider,
+    getOftTransactionSender,
     getQuotedOftContract,
     quoteOftSend,
 } from "../utils/oft/oft";
@@ -129,16 +128,17 @@ const buildRefundFollowUpCalls = async (
             throw new Error("missing reverse DEX details for pre-OFT refund");
         }
 
-        const oftTransaction = await getOftProvider(
+        const transactionSender = await getOftTransactionSender(
             oft.sourceAsset,
-        ).getTransaction(oft.txHash);
-        if (oftTransaction?.from === undefined) {
+            oft.txHash,
+        );
+        if (transactionSender === undefined) {
             throw new Error(
                 `could not resolve original sender from OFT transaction: ${oft.txHash}`,
             );
         }
 
-        resolvedDestination = oftTransaction.from;
+        resolvedDestination = transactionSender;
     }
 
     if (
@@ -193,17 +193,10 @@ const buildRefundFollowUpCalls = async (
         }));
     }
 
-    const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
-    if (sourceChainId === undefined) {
-        throw new Error(
-            `missing OFT source chain id for asset: ${oft.sourceAsset}`,
-        );
-    }
-
     const quotedOft = await getQuotedOftContract(oft.destinationAsset);
     const { msgFee } = await quoteOftSend(
         quotedOft,
-        sourceChainId,
+        oft.sourceAsset,
         resolvedDestination,
         quoteAmount,
     );
@@ -277,7 +270,7 @@ const buildRefundFollowUpCalls = async (
         ...msgFeeCalls,
         await buildOftSendAlchemyCall({
             sourceAsset: oft.destinationAsset,
-            destinationChainId: sourceChainId,
+            destinationAsset: oft.sourceAsset,
             recipient: resolvedDestination,
             amount: tradeAmountOutMin,
             refundAddress: resolvedDestination,

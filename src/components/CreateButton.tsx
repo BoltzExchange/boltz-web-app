@@ -8,10 +8,12 @@ import { createEffect, createSignal, on, onMount } from "solid-js";
 import { config } from "../config";
 import {
     BTC,
+    LN,
     RBTC,
     USDT0,
     getCanonicalAsset,
     isEvmAsset,
+    getUsdt0MeshKind,
     isUsdt0Asset,
     isUsdt0Variant,
 } from "../consts/Assets";
@@ -66,21 +68,31 @@ import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
 // In milliseconds
 const invoiceFetchTimeout = 25_000;
 
+export const resolveOriginalDestination = ({
+    originalDestination,
+    assetReceive,
+    onchainAddress,
+}: {
+    originalDestination?: string;
+    assetReceive: string;
+    onchainAddress: string;
+}): string | undefined =>
+    originalDestination ||
+    (assetReceive !== LN && onchainAddress !== "" ? onchainAddress : undefined);
+
 const buildOftDetail = (
     sourceAsset: string,
     destinationAsset: string,
     position: OftPosition,
 ): OftDetail | undefined => {
-    const destinationChainId =
-        config.assets?.[destinationAsset]?.network?.chainId;
-    if (destinationChainId === undefined) {
+    if (config.assets?.[destinationAsset] === undefined) {
         return undefined;
     }
 
     return {
         sourceAsset,
         destinationAsset,
-        destinationChainId,
+        meshKind: getUsdt0MeshKind(sourceAsset, destinationAsset),
         position,
     };
 };
@@ -102,7 +114,12 @@ export const getClaimAddress = async (
     gasPrice: bigint;
     claimAddress: string;
 }> => {
-    if (isEvmAsset(assetReceive()) || isEvmAsset(assetSend())) {
+    if (
+        isEvmAsset(assetReceive()) ||
+        isEvmAsset(assetSend()) ||
+        isUsdt0Asset(assetReceive()) ||
+        isUsdt0Asset(assetSend())
+    ) {
         if (assetReceive() === RBTC && signer() !== undefined) {
             const [balance, gasPrice] = await Promise.all([
                 signer().provider.getBalance(await signer().getAddress()),
@@ -129,7 +146,9 @@ export const getClaimAddress = async (
         } else if (assetSend() !== RBTC) {
             const evmSide = isEvmAsset(assetSend())
                 ? assetSend()
-                : assetReceive();
+                : isEvmAsset(assetReceive())
+                  ? assetReceive()
+                  : USDT0;
 
             const gasSigner = getGasAbstractionSigner(
                 isUsdt0Asset(evmSide) ? USDT0 : evmSide,
@@ -202,6 +221,7 @@ const CreateButton = () => {
     } = useCreateContext();
     const {
         signer,
+        connectedWallet,
         providers,
         getEtherSwap,
         getErc20Swap,
@@ -339,8 +359,11 @@ const CreateButton = () => {
     };
 
     const getOriginalDestination = () =>
-        originalDestination() ||
-        (isEvmAsset(assetReceive()) ? onchainAddress() : undefined);
+        resolveOriginalDestination({
+            originalDestination: originalDestination(),
+            assetReceive: assetReceive(),
+            onchainAddress: onchainAddress(),
+        });
 
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
@@ -702,7 +725,7 @@ const CreateButton = () => {
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
-                        ? signer()?.address
+                        ? (signer()?.address ?? connectedWallet()?.address)
                         : undefined,
                 derivationPath:
                     swapType() !== SwapType.Submarine &&

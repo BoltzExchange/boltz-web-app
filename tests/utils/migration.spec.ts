@@ -1,3 +1,4 @@
+import { Usdt0MeshKind } from "../../src/configs/base";
 import { LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
 import {
@@ -106,7 +107,7 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
+                    meshKind: Usdt0MeshKind.Native,
                     position: OftPosition.Post,
                 },
             },
@@ -143,7 +144,7 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: "USDT0-POL",
                     destinationAsset: USDT0,
-                    destinationChainId: 42161,
+                    meshKind: Usdt0MeshKind.Native,
                     position: OftPosition.Pre,
                 },
             },
@@ -152,7 +153,7 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
+                    meshKind: Usdt0MeshKind.Native,
                     position: OftPosition.Post,
                 },
             },

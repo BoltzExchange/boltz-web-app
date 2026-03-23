@@ -9,7 +9,11 @@ import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
 import { HopsPosition } from "../utils/Pair";
-import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    getPreOftDetail,
+} from "../utils/swapCreator";
 
 const SwapCreated = () => {
     const { swap } = usePayContext();
@@ -27,7 +31,10 @@ const SwapCreated = () => {
                 />
             }>
             <Show
-                when={isEvmAsset(chain.assetSend)}
+                when={
+                    isEvmAsset(chain.assetSend) ||
+                    getPreOftDetail(chain.oft) !== undefined
+                }
                 fallback={
                     <PayOnchain
                         type={chain.type}
@@ -54,6 +61,7 @@ const SwapCreated = () => {
                             ? chain.dex.hops
                             : undefined
                     }
+                    oft={getPreOftDetail(chain.oft)}
                 />
             </Show>
         </Show>

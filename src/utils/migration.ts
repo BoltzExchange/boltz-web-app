@@ -2,6 +2,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import log from "loglevel";
 import { createSignal } from "solid-js";
 
+import { Usdt0MeshKind } from "../configs/base";
 import { LN, RBTC, isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import {
@@ -11,7 +12,7 @@ import {
     type SomeSwap,
 } from "./swapCreator";
 
-export const latestStorageVersion = 4;
+export const latestStorageVersion = 5;
 
 const storageVersionKey = "version";
 
@@ -114,6 +115,7 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
               sourceAsset?: string;
               destinationAsset?: string;
               destinationChainId?: number;
+              meshKind?: string;
               position?: string;
               pre?: Record<string, unknown>;
               post?: Record<string, unknown>;
@@ -132,7 +134,8 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
             detail === undefined ||
             typeof detail.sourceAsset !== "string" ||
             typeof detail.destinationAsset !== "string" ||
-            typeof detail.destinationChainId !== "number"
+            (typeof detail.destinationChainId !== "number" &&
+                typeof detail.meshKind !== "string")
         ) {
             return undefined;
         }
@@ -140,7 +143,7 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
         return {
             sourceAsset: detail.sourceAsset,
             destinationAsset: detail.destinationAsset,
-            destinationChainId: detail.destinationChainId,
+            meshKind: Usdt0MeshKind.Native,
             position,
         };
     };
@@ -148,11 +151,15 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
     const migratedOft =
         typeof oft.sourceAsset === "string" &&
         typeof oft.destinationAsset === "string" &&
-        typeof oft.destinationChainId === "number"
+        (typeof oft.destinationChainId === "number" ||
+            typeof oft.meshKind === "string")
             ? {
                   sourceAsset: oft.sourceAsset,
                   destinationAsset: oft.destinationAsset,
-                  destinationChainId: oft.destinationChainId,
+                  meshKind:
+                      oft.meshKind === Usdt0MeshKind.Legacy
+                          ? Usdt0MeshKind.Legacy
+                          : Usdt0MeshKind.Native,
                   position:
                       oft.position === OftPosition.Pre
                           ? OftPosition.Pre
@@ -231,6 +238,16 @@ const migrateLocalForage = async (
             await migrateLocalForage(paramsForage, swapsForage);
             break;
         }
+
+        case 4: {
+            log.info(`Migrating OFT mesh metadata`);
+            const migratedSwaps = await migrateStorageOftShape(swapsForage);
+            log.info(`Migrated OFT mesh metadata for ${migratedSwaps} swaps`);
+
+            await paramsForage.setItem(storageVersionKey, 5);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
     }
 };
 
@@ -265,6 +282,12 @@ export const migrateBackupFile = (
             );
 
         case 3:
+            return migrateBackupFile(
+                version + 1,
+                swaps.map((swap) => migrateSwapOftShape(swap)),
+            );
+
+        case 4:
             return migrateBackupFile(
                 version + 1,
                 swaps.map((swap) => migrateSwapOftShape(swap)),

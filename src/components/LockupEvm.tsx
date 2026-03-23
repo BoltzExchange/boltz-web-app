@@ -15,6 +15,7 @@ import {
     createResource,
     createSignal,
 } from "solid-js";
+import { NetworkTransport } from "src/configs/base";
 
 import { config } from "../config";
 import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
@@ -42,11 +43,15 @@ import {
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import {
     createOftContract,
+    createEvmOftContract,
     getOftContract,
     getQuotedOftContract,
+    getSolanaOftNativeBalance,
+    getSolanaOftTokenBalance,
     quoteOftSend,
 } from "../utils/oft/oft";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
+import WalletConnectProvider from "../utils/WalletConnectProvider";
 import {
     GasAbstractionType,
     type OftDetail,
@@ -473,7 +478,11 @@ const SendToOft = (props: {
 }) => {
     const { setSwap, swap } = usePayContext();
     const { t, getSwap, setSwapStorage } = useGlobalContext();
-    const { signer, getGasAbstractionSigner } = useWeb3Signer();
+    const { signer, connectedWallet, getGasAbstractionSigner } = useWeb3Signer();
+
+    const sourceTransport = () =>
+        config.assets?.[props.oft.sourceAsset]?.network?.transport ??
+        NetworkTransport.Evm;
 
     const expectedChainId = () =>
         config.assets?.[props.oft.sourceAsset]?.network?.chainId;
@@ -493,21 +502,95 @@ const SendToOft = (props: {
             .then((n) => Number(n.chainId));
     });
 
+    const sourceWalletReady = () =>
+        sourceTransport() === NetworkTransport.Solana
+            ? connectedWallet()?.transport === NetworkTransport.Solana &&
+              connectedWallet()?.address !== undefined
+            : signer() !== undefined && signerChainId() === expectedChainId();
+
     createEffect(() => {
+        if (sourceTransport() === NetworkTransport.Solana) {
+            if (
+                connectedWallet()?.transport !== NetworkTransport.Solana ||
+                connectedWallet()?.address === undefined
+            ) {
+                return;
+            }
+
+            void (async () => {
+                const recipient = getGasAbstractionSigner(
+                    props.oft.destinationAsset,
+                ).address;
+                const quotedOftInstance = await getQuotedOftContract(
+                    props.oft.sourceAsset,
+                    "usdt0",
+                    props.oft.meshKind,
+                );
+                const [balance, nativeBalance, { msgFee }] = await Promise.all([
+                    getSolanaOftTokenBalance(
+                        props.oft.sourceAsset,
+                        connectedWallet().address,
+                        "usdt0",
+                        props.oft.meshKind,
+                    ),
+                    getSolanaOftNativeBalance(
+                        props.oft.sourceAsset,
+                        connectedWallet().address,
+                    ),
+                    quoteOftSend(
+                        quotedOftInstance,
+                        props.oft.destinationAsset,
+                        recipient,
+                        props.amount,
+                        {
+                            meshKind: props.oft.meshKind,
+                        },
+                    ),
+                ]);
+
+                const requiredNativeBalance =
+                    (msgFee[0] * BigInt(110)) / BigInt(100);
+
+                log.info("Solana OFT signer token balance check", {
+                    asset: props.oft.sourceAsset,
+                    balance: balance.toString(),
+                    requiredAmount: props.amount.toString(),
+                    sufficient: balance >= props.amount,
+                });
+                log.info("Solana OFT signer native balance check", {
+                    asset: props.oft.sourceAsset,
+                    destinationAsset: props.oft.destinationAsset,
+                    nativeBalance: nativeBalance.toString(),
+                    requiredMsgFee: requiredNativeBalance.toString(),
+                    sufficient: nativeBalance >= requiredNativeBalance,
+                });
+
+                setSignerBalance(balance);
+                setHasEnoughMsgFee(nativeBalance >= requiredNativeBalance);
+                setNeedsApproval(false);
+                setApprovalTarget(undefined);
+            })();
+            return;
+        }
+
         if (signer() === undefined || signerChainId() !== expectedChainId()) {
             return;
         }
 
-        const sourceChainId = expectedChainId();
-        if (sourceChainId === undefined) {
-            return;
-        }
-
         void (async () => {
-            const oftContract = await getOftContract(sourceChainId);
+            const oftContract = await getOftContract(
+                props.oft.sourceAsset,
+                "usdt0",
+                props.oft.meshKind,
+            );
             if (oftContract === undefined) {
                 throw new Error(
-                    `missing OFT contract for chain: ${sourceChainId}`,
+                    `missing OFT contract for asset: ${props.oft.sourceAsset}`,
+                );
+            }
+            if (oftContract.transport !== NetworkTransport.Evm) {
+                throw new Error(
+                    `OFT approvals require an EVM source contract, got ${oftContract.transport}`,
                 );
             }
 
@@ -520,12 +603,14 @@ const SendToOft = (props: {
                 props.oft.sourceAsset,
                 connectedSigner,
             );
-            const oftInstance = createOftContract(
+            const oftInstance = createEvmOftContract(
                 oftContract.address,
                 connectedSigner,
             );
             const quotedOftInstance = await getQuotedOftContract(
                 props.oft.sourceAsset,
+                "usdt0",
+                props.oft.meshKind,
             );
             const [balance, approvalRequired, nativeBalance, { msgFee }] =
                 await Promise.all([
@@ -534,9 +619,12 @@ const SendToOft = (props: {
                     connectedSigner.provider.getBalance(signerAddress),
                     quoteOftSend(
                         quotedOftInstance,
-                        props.oft.destinationChainId,
+                        props.oft.destinationAsset,
                         recipient,
                         props.amount,
+                        {
+                            meshKind: props.oft.meshKind,
+                        },
                     ),
                 ]);
 
@@ -596,13 +684,8 @@ const SendToOft = (props: {
                 }
                 fallback={
                     <Show
-                        when={
-                            signer() !== undefined &&
-                            signerChainId() === expectedChainId()
-                        }
-                        fallback={
-                            <ConnectWallet asset={props.oft.sourceAsset} />
-                        }>
+                        when={sourceWalletReady()}
+                        fallback={<ConnectWallet asset={props.oft.sourceAsset} />}>
                         <LoadingSpinner />
                     </Show>
                 }>
@@ -634,62 +717,72 @@ const SendToOft = (props: {
                                 asset={props.oft.sourceAsset}
                                 /* eslint-disable-next-line solid/reactivity */
                                 onClick={async () => {
-                                    const sourceChainId = expectedChainId();
-                                    if (sourceChainId === undefined) {
-                                        throw new Error(
-                                            `missing OFT source chain id for asset: ${props.oft.sourceAsset}`,
-                                        );
-                                    }
-
-                                    const connectedSigner = signer();
                                     const recipient = getGasAbstractionSigner(
                                         props.oft.destinationAsset,
                                     ).address;
                                     log.debug(
-                                        `Sending OFT ${props.oft.destinationAsset} to ${recipient} on chain ${props.oft.destinationChainId}`,
+                                        `Sending OFT ${props.oft.destinationAsset} to ${recipient}`,
                                     );
-                                    const oftContract =
-                                        await getOftContract(sourceChainId);
+                                    const oftContract = await getOftContract(
+                                        props.oft.sourceAsset,
+                                    );
                                     if (oftContract === undefined) {
                                         throw new Error(
-                                            `missing OFT contract for chain: ${sourceChainId}`,
+                                            `missing OFT contract for asset: ${props.oft.sourceAsset}`,
                                         );
                                     }
 
                                     const quotedOftInstance =
                                         await getQuotedOftContract(
                                             props.oft.sourceAsset,
+                                            "usdt0",
+                                            props.oft.meshKind,
                                         );
                                     const oftInstance = createOftContract(
-                                        oftContract.address,
-                                        connectedSigner,
+                                        props.oft.sourceAsset,
+                                        oftContract,
+                                        oftContract.transport ===
+                                            NetworkTransport.Solana
+                                            ? WalletConnectProvider.getSolanaProvider()
+                                            : signer(),
                                     );
                                     const { sendParam, msgFee } =
                                         await quoteOftSend(
                                             quotedOftInstance,
-                                            props.oft.destinationChainId,
+                                            props.oft.destinationAsset,
                                             recipient,
                                             props.amount,
+                                            {
+                                                meshKind: props.oft.meshKind,
+                                            },
                                         );
                                     log.debug("Quoted OFT send", {
                                         swapId: props.swapId,
                                         sourceAsset: props.oft.sourceAsset,
                                         destinationAsset:
                                             props.oft.destinationAsset,
-                                        destinationChainId:
-                                            props.oft.destinationChainId,
+                                        destinationMeshKind: props.oft.meshKind,
                                         recipient,
                                         amount: props.amount.toString(),
                                         nativeFee: msgFee[0].toString(),
                                         lzTokenFee: msgFee[1].toString(),
                                     });
+                                    const refundAddress =
+                                        oftContract.transport ===
+                                        NetworkTransport.Solana
+                                            ? connectedWallet()?.address ??
+                                              props.signerAddress
+                                            : await signer().getAddress();
                                     const tx = await oftInstance.send(
                                         sendParam,
                                         msgFee,
-                                        await signer().getAddress(),
-                                        {
-                                            value: msgFee[0],
-                                        },
+                                        refundAddress,
+                                        oftContract.transport ===
+                                            NetworkTransport.Evm
+                                            ? {
+                                                  value: msgFee[0],
+                                              }
+                                            : undefined,
                                     );
 
                                     const currentSwap = await getSwap(
@@ -711,8 +804,8 @@ const SendToOft = (props: {
                                             sourceAsset: props.oft.sourceAsset,
                                             destinationAsset:
                                                 props.oft.destinationAsset,
-                                            destinationChainId:
-                                                props.oft.destinationChainId,
+                                            destinationMeshKind:
+                                                props.oft.meshKind,
                                             txHash: tx.hash,
                                         },
                                     );
