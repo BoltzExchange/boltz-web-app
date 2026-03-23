@@ -212,7 +212,7 @@ const TransactionLockupFailed = (props: {
 
     const acceptQuote = async (
         currentSwap: ChainSwap,
-        quoteData: { quote: number; receiveAmount: number },
+        quoteData: { sentAmount: number; quote: number; receiveAmount: number },
     ) => {
         log.info(
             `Accepting replacement quote for chain swap ${currentSwap.id}`,
@@ -226,12 +226,19 @@ const TransactionLockupFailed = (props: {
         setLoading(true);
         currentSwap.receiveAmount = quoteData.receiveAmount;
         currentSwap.claimDetails.amount = quoteData.quote;
+        if (currentSwap.dex !== undefined) {
+            currentSwap.dex.quoteAmount =
+                currentSwap.dex.position === HopsPosition.Before
+                    ? quoteData.sentAmount
+                    : quoteData.receiveAmount;
+        }
 
         await setSwapStorage(currentSwap);
         setSwap(currentSwap);
 
         try {
             await acceptChainSwapNewQuote(currentSwap.id, quoteData.quote);
+            setAutoAcceptedQuote(quoteData.quote);
             log.info(
                 `Accepted replacement quote for chain swap ${currentSwap.id}`,
             );
@@ -289,7 +296,6 @@ const TransactionLockupFailed = (props: {
                 backendQuoteAmount: quoteData.quote,
             },
         );
-        setAutoAcceptedQuote(quoteData.quote);
         void acceptQuote(chainSwap, quoteData);
     });
 

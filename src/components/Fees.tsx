@@ -145,7 +145,7 @@ const Fees = () => {
                 getGasAbstractionSigner,
                 getGasToken(),
             );
-            switch (gasAbstraction) {
+            switch (gasAbstraction.claim) {
                 case GasAbstractionType.RifRelay:
                     notify("success", t("rif_extra_fee"));
                     return Number(

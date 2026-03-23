@@ -51,6 +51,7 @@ import { findMagicRoutingHint } from "../utils/magicRoutingHint";
 import { firstResolved, promiseWithTimeout } from "../utils/promise";
 import { gasTopUpSupported } from "../utils/qouter";
 import {
+    type GasAbstraction,
     GasAbstractionType,
     type OftDetail,
     OftPosition,
@@ -85,6 +86,14 @@ const buildOftDetail = (
     };
 };
 
+const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
+    if (isEvmAsset(assetSend) && assetSend !== RBTC) {
+        return GasAbstractionType.Signer;
+    }
+
+    return GasAbstractionType.None;
+};
+
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
     assetSend: Accessor<string>,
@@ -93,58 +102,64 @@ export const getClaimAddress = async (
     getGasAbstractionSigner: (asset: string) => Wallet,
     getGasToken: boolean | undefined,
 ): Promise<{
-    gasAbstraction: GasAbstractionType;
+    gasAbstraction: GasAbstraction;
     gasPrice: bigint;
     claimAddress: string;
 }> => {
-    if (isEvmAsset(assetReceive()) || isEvmAsset(assetSend())) {
-        if (assetReceive() === RBTC && signer() !== undefined) {
-            const [balance, gasPrice] = await Promise.all([
-                signer().provider.getBalance(await signer().getAddress()),
-                signer()
-                    .provider.getFeeData()
-                    .then((data) => data.gasPrice),
-            ]);
-            log.debug("RSK balance", balance);
+    const lockupGasAbstraction = getLockupGasAbstraction(assetSend());
 
-            const balanceNeeded = gasPrice * GasNeededToClaim;
-            log.debug("RSK balance needed", balanceNeeded);
+    if (assetReceive() === RBTC && signer() !== undefined) {
+        const [balance, gasPrice] = await Promise.all([
+            signer().provider.getBalance(await signer().getAddress()),
+            signer()
+                .provider.getFeeData()
+                .then((data) => data.gasPrice),
+        ]);
+        log.debug("RSK balance", balance);
 
-            if (balance <= balanceNeeded) {
-                log.info("Using RIF smart wallet as claim address");
-                return {
-                    gasPrice,
-                    gasAbstraction: GasAbstractionType.RifRelay,
-                    claimAddress: (await getSmartWalletAddress(signer()))
-                        .address,
-                };
-            } else {
-                log.info("RIF smart wallet not needed");
-            }
-        } else if (assetSend() !== RBTC) {
-            const evmSide = isEvmAsset(assetSend())
-                ? assetSend()
-                : assetReceive();
+        const balanceNeeded = gasPrice * GasNeededToClaim;
+        log.debug("RSK balance needed", balanceNeeded);
 
-            const gasSigner = getGasAbstractionSigner(
-                isUsdt0Asset(evmSide) ? USDT0 : evmSide,
-            );
-            log.debug("Using gas abstraction signer", gasSigner.address);
+        if (balance <= balanceNeeded) {
+            log.info("Using RIF smart wallet as claim address");
             return {
-                gasPrice: 0n,
-                gasAbstraction: GasAbstractionType.Signer,
-                claimAddress:
-                    !isUsdt0Asset(assetReceive()) && !getGasToken
-                        ? onchainAddress()
-                        : gasSigner.address,
+                gasPrice,
+                gasAbstraction: {
+                    lockup: lockupGasAbstraction,
+                    claim: GasAbstractionType.RifRelay,
+                },
+                claimAddress: (await getSmartWalletAddress(signer())).address,
             };
         }
+
+        log.info("RIF smart wallet not needed");
+    }
+
+    if (isEvmAsset(assetReceive()) && assetReceive() !== RBTC) {
+        const gasSigner = getGasAbstractionSigner(
+            isUsdt0Asset(assetReceive()) ? USDT0 : assetReceive(),
+        );
+        log.debug("Using gas abstraction signer", gasSigner.address);
+        return {
+            gasPrice: 0n,
+            gasAbstraction: {
+                lockup: lockupGasAbstraction,
+                claim: GasAbstractionType.Signer,
+            },
+            claimAddress:
+                !isUsdt0Asset(assetReceive()) && !getGasToken
+                    ? onchainAddress()
+                    : gasSigner.address,
+        };
     }
 
     log.debug("Using no gas abstraction");
     return {
         gasPrice: 0n,
-        gasAbstraction: GasAbstractionType.None,
+        gasAbstraction: {
+            lockup: lockupGasAbstraction,
+            claim: GasAbstractionType.None,
+        },
         claimAddress: onchainAddress(),
     };
 };
@@ -430,7 +445,7 @@ const CreateButton = () => {
 
     const createSwap = async (
         claimAddress: string,
-        gasAbstraction: GasAbstractionType,
+        gasAbstraction: GasAbstraction,
     ): Promise<boolean> => {
         try {
             let data: SomeSwap;

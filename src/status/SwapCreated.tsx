@@ -9,7 +9,11 @@ import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { usePayContext } from "../context/Pay";
 import { HopsPosition } from "../utils/Pair";
-import type { ChainSwap, ReverseSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    getLockupGasAbstraction,
+} from "../utils/swapCreator";
 
 const SwapCreated = () => {
     const { swap } = usePayContext();
@@ -40,7 +44,7 @@ const SwapCreated = () => {
                 }>
                 <LockupEvm
                     swapId={chain.id}
-                    gasAbstraction={chain.gasAbstraction}
+                    gasAbstraction={getLockupGasAbstraction(chain)}
                     signerAddress={chain.signer}
                     amount={chain.lockupDetails.amount}
                     claimAddress={chain.lockupDetails.claimAddress}

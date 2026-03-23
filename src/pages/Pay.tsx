@@ -271,6 +271,15 @@ const Pay = () => {
                       ),
                   ];
 
+            if (utxos === null || utxos === undefined) {
+                setRefundableUTXOs([]);
+                log.debug(
+                    "Failed to get refundable UTXOs for swap:",
+                    swap().id,
+                );
+                return;
+            }
+
             setRefundableUTXOs(utxos);
 
             if (utxos.length > 0) {

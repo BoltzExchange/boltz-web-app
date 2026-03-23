@@ -184,7 +184,10 @@ describe("SwapExecutionWorker", () => {
             status: "invoice.set",
             assetSend: "FINAL",
             sendAmount: 100,
-            gasAbstraction: "signer",
+            gasAbstraction: {
+                lockup: "signer",
+                claim: "none",
+            },
             claimAddress: "0xc000000000000000000000000000000000000000",
             preimage: "11".repeat(32),
             lockupDetails: {

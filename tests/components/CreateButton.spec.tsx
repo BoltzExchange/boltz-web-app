@@ -10,7 +10,10 @@ import i18n from "../../src/i18n/i18n";
 import * as rifSigner from "../../src/rif/Signer";
 import Pair from "../../src/utils/Pair";
 import type { Pairs } from "../../src/utils/boltzClient";
-import { GasAbstractionType } from "../../src/utils/swapCreator";
+import {
+    GasAbstractionType,
+    createUniformGasAbstraction,
+} from "../../src/utils/swapCreator";
 import {
     TestComponent,
     contextWrapper,
@@ -145,7 +148,43 @@ describe("CreateButton", () => {
                 false,
             ),
         ).resolves.toEqual({
-            gasAbstraction: GasAbstractionType.RifRelay,
+            gasAbstraction: {
+                lockup: GasAbstractionType.None,
+                claim: GasAbstractionType.RifRelay,
+            },
+            gasPrice: 1n,
+            claimAddress: "0xsmartwallet",
+        });
+    });
+
+    test("should keep signer lockup gas abstraction for TBTC to low-balance RBTC swaps", async () => {
+        vi.spyOn(rifSigner, "getSmartWalletAddress").mockResolvedValue({
+            address: "0xsmartwallet",
+            nonce: 0n,
+        });
+
+        const signer = {
+            getAddress: vi.fn().mockResolvedValue("0xsigner"),
+            provider: {
+                getBalance: vi.fn().mockResolvedValue(0n),
+                getFeeData: vi.fn().mockResolvedValue({ gasPrice: 1n }),
+            },
+        } as never;
+
+        await expect(
+            getClaimAddress(
+                () => RBTC,
+                () => TBTC,
+                () => signer,
+                () => "0xuser",
+                vi.fn(),
+                false,
+            ),
+        ).resolves.toEqual({
+            gasAbstraction: {
+                lockup: GasAbstractionType.Signer,
+                claim: GasAbstractionType.RifRelay,
+            },
             gasPrice: 1n,
             claimAddress: "0xsmartwallet",
         });
@@ -162,7 +201,9 @@ describe("CreateButton", () => {
                 false,
             ),
         ).resolves.toEqual({
-            gasAbstraction: GasAbstractionType.None,
+            gasAbstraction: createUniformGasAbstraction(
+                GasAbstractionType.None,
+            ),
             gasPrice: 0n,
             claimAddress: "bc1qaddr",
         });
@@ -183,7 +224,10 @@ describe("CreateButton", () => {
                 false,
             ),
         ).resolves.toEqual({
-            gasAbstraction: GasAbstractionType.Signer,
+            gasAbstraction: {
+                lockup: GasAbstractionType.None,
+                claim: GasAbstractionType.Signer,
+            },
             gasPrice: 0n,
             claimAddress: "0xuser",
         });
@@ -205,7 +249,10 @@ describe("CreateButton", () => {
                 true,
             ),
         ).resolves.toEqual({
-            gasAbstraction: GasAbstractionType.Signer,
+            gasAbstraction: {
+                lockup: GasAbstractionType.None,
+                claim: GasAbstractionType.Signer,
+            },
             gasPrice: 0n,
             claimAddress: "0xgas",
         });
@@ -227,7 +274,10 @@ describe("CreateButton", () => {
                 false,
             ),
         ).resolves.toEqual({
-            gasAbstraction: GasAbstractionType.Signer,
+            gasAbstraction: {
+                lockup: GasAbstractionType.None,
+                claim: GasAbstractionType.Signer,
+            },
             gasPrice: 0n,
             claimAddress: "0xgas",
         });
@@ -247,7 +297,9 @@ describe("CreateButton", () => {
                 false,
             ),
         ).resolves.toEqual({
-            gasAbstraction: GasAbstractionType.None,
+            gasAbstraction: createUniformGasAbstraction(
+                GasAbstractionType.None,
+            ),
             gasPrice: 0n,
             claimAddress: "bc1qaddr",
         });

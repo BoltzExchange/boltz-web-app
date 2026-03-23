@@ -10,19 +10,26 @@ import {
 } from "ethers";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
-import { type Accessor, Show, createSignal, onMount, untrack } from "solid-js";
+import {
+    type Accessor,
+    Show,
+    createEffect,
+    createSignal,
+    on,
+    untrack,
+} from "solid-js";
 
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { config } from "../config";
 import {
     AssetKind,
-    TBTC,
     getKindForAsset,
     getTokenAddress,
     isEvmAsset,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
+import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
 import {
@@ -64,13 +71,18 @@ import {
     gasTopUpSupported,
     getGasTopUpNativeAmount,
 } from "../utils/qouter";
-import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
+import {
+    assetAmountToSats,
+    prefix0x,
+    satsToAssetAmount,
+} from "../utils/rootstock";
 import {
     type ChainSwap,
     type DexDetail,
     GasAbstractionType,
     type OftDetail,
     type ReverseSwap,
+    getClaimGasAbstraction,
     getFinalAssetReceive,
     getPostOftDetail,
 } from "../utils/swapCreator";
@@ -85,6 +97,17 @@ type RouterClaimExecution = {
     finalToken: string;
     minAmountOut: bigint;
     quotes: RouterExecutionQuote[];
+};
+
+export const normalizePersistedReceiveAmount = (
+    amount: bigint,
+    asset: string,
+): string => {
+    if (isEvmAsset(asset) && !getDecimals(asset).isErc20) {
+        return assetAmountToSats(amount, asset).toString();
+    }
+
+    return amount.toString();
 };
 
 const withAutoClaimLock = async <T,>(
@@ -789,6 +812,7 @@ const AutoClaimHops = (props: {
     getGasToken: boolean;
     dex: DexDetail;
     oft?: OftDetail;
+    autoClaimEnabled: boolean;
 }) => {
     const { getErc20Swap, signer, getGasAbstractionSigner } = useWeb3Signer();
     const { t, slippage, notify, getSwap, setSwapStorage } = useGlobalContext();
@@ -866,18 +890,10 @@ const AutoClaimHops = (props: {
             );
 
             currentSwap.claimTx = transactionHash;
-            currentSwap.dex.quoteAmount = quote.amount.toString();
-
-            if (
-                props.dex.position === HopsPosition.After &&
-                getFinalAssetReceive(currentSwap) === TBTC
-            ) {
-                currentSwap.dex.quoteAmount = BigNumber(
-                    currentSwap.dex.quoteAmount,
-                )
-                    .div(10 ** 10)
-                    .toString();
-            }
+            currentSwap.dex.quoteAmount = normalizePersistedReceiveAmount(
+                quote.amount,
+                getFinalAssetReceive(currentSwap),
+            );
 
             setSwap(currentSwap);
             await setSwapStorage(currentSwap);
@@ -891,57 +907,66 @@ const AutoClaimHops = (props: {
         }
     };
 
-    onMount(async () => {
-        try {
-            const hop = getSingleClaimHop(props.dex.hops);
-            const amountIn = satsToAssetAmount(
-                props.amount,
-                props.assetReceive,
-            );
-            const useDexGasToken =
-                props.oft === undefined &&
-                props.getGasToken &&
-                gasTopUpSupported(props.assetReceive);
-            const quote = await fetchDexQuote(
-                hop.dexDetails,
-                amountIn,
-                useDexGasToken,
-                useDexGasToken
-                    ? await getGasTopUpNativeAmount(props.assetReceive)
-                    : undefined,
-            );
-            const quoteAmount = await getAcceptedQuoteAmount(
-                props.amount,
-                props.assetReceive,
-                hop,
-                quote,
-                props.signerAddress,
-                props.getGasToken,
-                props.oft,
-            );
-            const freshQuoteData = {
-                quote,
-                amount: quoteAmount,
-            };
-            setFreshQuote(freshQuoteData);
+    createEffect(
+        on(
+            () => props.autoClaimEnabled,
+            async (autoClaimEnabled) => {
+                if (!autoClaimEnabled) {
+                    return;
+                }
 
-            if (!isOutsideSlippage(quoteAmount)) {
-                // Within slippage tolerance, auto-claim
-                await withAutoClaimLock(props.swapId, async () => {
-                    await untrack(() => executeClaim(freshQuoteData));
-                });
-            } else {
-                log.info(
-                    `Claim quote ${quoteAmount.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
-                );
-            }
-        } catch (e) {
-            log.error("Auto claim hops failed", e);
-            const msg = `Transaction failed: ${formatError(e)}`;
-            notify("error", msg);
-            setError(msg);
-        }
-    });
+                try {
+                    const hop = getSingleClaimHop(props.dex.hops);
+                    const amountIn = satsToAssetAmount(
+                        props.amount,
+                        props.assetReceive,
+                    );
+                    const useDexGasToken =
+                        props.oft === undefined &&
+                        props.getGasToken &&
+                        gasTopUpSupported(props.assetReceive);
+                    const quote = await fetchDexQuote(
+                        hop.dexDetails,
+                        amountIn,
+                        useDexGasToken,
+                        useDexGasToken
+                            ? await getGasTopUpNativeAmount(props.assetReceive)
+                            : undefined,
+                    );
+                    const quoteAmount = await getAcceptedQuoteAmount(
+                        props.amount,
+                        props.assetReceive,
+                        hop,
+                        quote,
+                        props.signerAddress,
+                        props.getGasToken,
+                        props.oft,
+                    );
+                    const freshQuoteData = {
+                        quote,
+                        amount: quoteAmount,
+                    };
+                    setFreshQuote(freshQuoteData);
+
+                    if (!isOutsideSlippage(quoteAmount)) {
+                        // Within slippage tolerance, auto-claim
+                        await withAutoClaimLock(props.swapId, async () => {
+                            await untrack(() => executeClaim(freshQuoteData));
+                        });
+                    } else {
+                        log.info(
+                            `Claim quote ${quoteAmount.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,
+                        );
+                    }
+                } catch (e) {
+                    log.error("Auto claim hops failed", e);
+                    const msg = `Transaction failed: ${formatError(e)}`;
+                    notify("error", msg);
+                    setError(msg);
+                }
+            },
+        ),
+    );
 
     return (
         <Show when={!error()} fallback={<p>{error()}</p>}>
@@ -1015,6 +1040,7 @@ const ClaimEvm = (props: {
     getGasToken: boolean;
     dex?: DexDetail;
     oft?: OftDetail;
+    autoClaimEnabled: boolean;
 }) => {
     const { getEtherSwap, getErc20Swap, getGasAbstractionSigner, signer } =
         useWeb3Signer();
@@ -1085,22 +1111,28 @@ const ClaimEvm = (props: {
         const { transactionHash, receiveAmount } = result;
 
         currentSwap.claimTx = transactionHash;
-        if (getFinalAssetReceive(currentSwap) === TBTC) {
-            currentSwap.receiveAmount = Math.floor(
-                Number(receiveAmount.toString()) / 10 ** 10,
-            );
-        } else {
-            currentSwap.receiveAmount = Number(receiveAmount.toString());
-        }
+        currentSwap.receiveAmount = Number(
+            normalizePersistedReceiveAmount(
+                receiveAmount,
+                getFinalAssetReceive(currentSwap),
+            ),
+        );
         setSwap(currentSwap);
         await setSwapStorage(currentSwap);
     };
 
-    onMount(async () => {
-        if (claimableWithoutInteraction()) {
-            await claimWithoutHops();
-        }
-    });
+    createEffect(
+        on(
+            () => props.autoClaimEnabled,
+            async (autoClaimEnabled) => {
+                if (autoClaimEnabled && claimableWithoutInteraction()) {
+                    await withAutoClaimLock(props.swapId, async () => {
+                        await untrack(() => claimWithoutHops());
+                    });
+                }
+            },
+        ),
+    );
 
     return (
         <Show
@@ -1123,6 +1155,7 @@ const ClaimEvm = (props: {
                     getGasToken={props.getGasToken}
                     dex={props.dex}
                     oft={getPostOftDetail(props.oft)}
+                    autoClaimEnabled={props.autoClaimEnabled}
                 />
             }>
             <Show
@@ -1149,10 +1182,18 @@ const ClaimEvm = (props: {
 
 const TransactionConfirmed = () => {
     const { t } = useGlobalContext();
-    const { swap } = usePayContext();
+    const { swap, swapStatus } = usePayContext();
 
     const chain = swap() as ChainSwap;
     const reverse = swap() as ReverseSwap;
+
+    const dexToClaim = (dex?: DexDetail) => {
+        if (dex?.position === HopsPosition.After) {
+            return dex;
+        }
+
+        return undefined;
+    };
 
     return (
         <Show
@@ -1169,7 +1210,7 @@ const TransactionConfirmed = () => {
                 fallback={
                     <ClaimEvm
                         swapId={chain.id}
-                        gasAbstraction={chain.gasAbstraction}
+                        gasAbstraction={getClaimGasAbstraction(chain)}
                         preimage={chain.preimage}
                         signerAddress={
                             chain.originalDestination || chain.signer
@@ -1183,15 +1224,19 @@ const TransactionConfirmed = () => {
                         }
                         assetSend={chain.assetSend}
                         assetReceive={chain.assetReceive}
-                        dex={chain.dex}
+                        dex={dexToClaim(chain.dex)}
                         finalReceive={getFinalAssetReceive(chain, true)}
                         getGasToken={chain.getGasToken}
                         oft={chain.oft}
+                        autoClaimEnabled={
+                            swapStatus() ===
+                            swapStatusPending.TransactionServerConfirmed
+                        }
                     />
                 }>
                 <ClaimEvm
                     swapId={reverse.id}
-                    gasAbstraction={reverse.gasAbstraction}
+                    gasAbstraction={getClaimGasAbstraction(reverse)}
                     preimage={reverse.preimage}
                     amount={reverse.onchainAmount}
                     signerAddress={
@@ -1203,10 +1248,11 @@ const TransactionConfirmed = () => {
                     timeoutBlockHeight={reverse.timeoutBlockHeight}
                     assetSend={reverse.assetSend}
                     assetReceive={reverse.assetReceive}
-                    dex={reverse.dex}
+                    dex={dexToClaim(reverse.dex)}
                     oft={reverse.oft}
                     finalReceive={getFinalAssetReceive(reverse, true)}
                     getGasToken={reverse.getGasToken}
+                    autoClaimEnabled={true}
                 />
             </Show>
         </Show>

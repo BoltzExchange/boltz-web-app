@@ -2,7 +2,10 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import type { Wallet } from "ethers";
 
-import { signErc20ClaimToRouter } from "../../src/status/TransactionConfirmed";
+import {
+    normalizePersistedReceiveAmount,
+    signErc20ClaimToRouter,
+} from "../../src/status/TransactionConfirmed";
 import type * as EvmTransactionModule from "../../src/utils/evmTransaction";
 import { claimAsset } from "../../src/utils/evmTransaction";
 import type * as QouterModule from "../../src/utils/qouter";
@@ -136,6 +139,24 @@ describe("TransactionConfirmed claimAsset", () => {
             "0xrefund",
             123,
         );
+    });
+
+    test("should normalize RBTC receive amounts to satoshis", () => {
+        expect(
+            normalizePersistedReceiveAmount(
+                satsToAssetAmount(51_990, "RBTC"),
+                "RBTC",
+            ),
+        ).toEqual("51990");
+    });
+
+    test("should keep routed ERC20 receive amounts in token units", () => {
+        expect(
+            normalizePersistedReceiveAmount(
+                satsToAssetAmount(51_990, "USDT0"),
+                "USDT0",
+            ),
+        ).toEqual(satsToAssetAmount(51_990, "USDT0").toString());
     });
 
     test("should read the ERC20 swap domain from the active claim signer connection", async () => {

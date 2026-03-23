@@ -70,6 +70,7 @@ import {
     type OftDetail,
     OftPosition,
     type SubmarineSwap,
+    getLockupGasAbstraction,
 } from "../utils/swapCreator";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
@@ -878,7 +879,9 @@ const RefundButton = (props: {
                     fallback={
                         <RefundEvm
                             swapId={props.swap().id}
-                            gasAbstraction={props.swap().gasAbstraction}
+                            gasAbstraction={getLockupGasAbstraction(
+                                props.swap(),
+                            )}
                             signerAddress={props.swap().signer}
                             derivationPath={props.swap().derivationPath}
                             swapType={SwapType.Chain}
@@ -898,7 +901,9 @@ const RefundButton = (props: {
                         fallback={<LoadingSpinner />}>
                         <RefundEvm
                             swapId={props.swap().id}
-                            gasAbstraction={props.swap().gasAbstraction}
+                            gasAbstraction={getLockupGasAbstraction(
+                                props.swap(),
+                            )}
                             signerAddress={props.swap().signer}
                             derivationPath={props.swap().derivationPath}
                             swapType={SwapType.Submarine}
