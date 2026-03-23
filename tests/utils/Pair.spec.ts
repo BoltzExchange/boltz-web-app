@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js";
 
 import type * as ConfigModule from "../../src/config";
-import { BTC, LN, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
@@ -203,6 +203,41 @@ describe("Pair", () => {
 
     test("should treat unsupported send variants as non-routable", () => {
         const pair = new Pair(pairs, "USDT0-CFX", LN);
+
+        expect(pair.isRoutable).toBe(false);
+        expect(pair.swapToCreate).toBeUndefined();
+        expect(pair.requiredInput).toBe(RequiredInput.Unknown);
+    });
+
+    test("should reject fallback routes that require a chain-swap Boltz hop", () => {
+        const chainOnlyFallbackPairs: Pairs = {
+            ...pairs,
+            chain: {
+                LBTC: {
+                    TBTC: {
+                        hash: "lbtc-tbtc-chain-hop",
+                        rate: 1,
+                        limits: {
+                            maximal: 1_000_000,
+                            minimal: 1,
+                            maximalZeroConf: 0,
+                        },
+                        fees: {
+                            percentage: 0,
+                            minerFees: {
+                                server: 0,
+                                user: {
+                                    claim: 0,
+                                    lockup: 0,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        const pair = new Pair(chainOnlyFallbackPairs, LBTC, USDT0);
 
         expect(pair.isRoutable).toBe(false);
         expect(pair.swapToCreate).toBeUndefined();
