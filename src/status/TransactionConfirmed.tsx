@@ -10,7 +10,7 @@ import {
 } from "ethers";
 import log from "loglevel";
 import { ImArrowDown } from "solid-icons/im";
-import { type Accessor, Show, createSignal, onMount } from "solid-js";
+import { type Accessor, Show, createSignal, onMount, untrack } from "solid-js";
 
 import ContractTransaction from "../components/ContractTransaction";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -85,6 +85,30 @@ type RouterClaimExecution = {
     finalToken: string;
     minAmountOut: bigint;
     quotes: RouterExecutionQuote[];
+};
+
+const withAutoClaimLock = async <T,>(
+    swapId: string,
+    fn: () => Promise<T>,
+): Promise<T | undefined> => {
+    if (navigator.locks?.request === undefined) {
+        return await fn();
+    }
+
+    return await navigator.locks.request(
+        "transactionConfirmedAutoClaim",
+        { ifAvailable: true },
+        async (lock) => {
+            if (lock === null) {
+                log.info(
+                    `Skipping duplicate auto-claim execution for swap ${swapId}`,
+                );
+                return undefined;
+            }
+
+            return await fn();
+        },
+    );
 };
 
 const parsePersistedQuoteAmount = (quoteAmount: number | string): bigint => {
@@ -903,7 +927,9 @@ const AutoClaimHops = (props: {
 
             if (!isOutsideSlippage(quoteAmount)) {
                 // Within slippage tolerance, auto-claim
-                await executeClaim(freshQuoteData);
+                await withAutoClaimLock(props.swapId, async () => {
+                    await untrack(() => executeClaim(freshQuoteData));
+                });
             } else {
                 log.info(
                     `Claim quote ${quoteAmount.toString()} is below threshold ${quoteThreshold().toString()} (expected ${props.dex.quoteAmount.toString()}, slippage ${slippage()})`,

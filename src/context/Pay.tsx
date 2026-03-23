@@ -124,6 +124,36 @@ const PayProvider = (props: { children: JSX.Element }) => {
         }
     };
 
+    const pendingServerClaimHelp = new Set<string>();
+    const helpingServerClaims = new Set<string>();
+    const maybeHelpServerClaim = async (chainSwap: ChainSwap) => {
+        if (!pendingServerClaimHelp.has(chainSwap.id)) {
+            return;
+        }
+
+        if (helpingServerClaims.has(chainSwap.id)) {
+            return;
+        }
+
+        if (chainSwap.claimTx === undefined) {
+            log.debug(
+                `Deferred server claim help for Chain Swap ${chainSwap.id} is still waiting for claimTx`,
+            );
+            return;
+        }
+
+        helpingServerClaims.add(chainSwap.id);
+        try {
+            log.info(
+                `Retrying deferred server claim help for Chain Swap ${chainSwap.id}`,
+            );
+            await helpServerClaim(chainSwap);
+        } finally {
+            pendingServerClaimHelp.delete(chainSwap.id);
+            helpingServerClaims.delete(chainSwap.id);
+        }
+    };
+
     const claimingSwaps = new Set<string>();
     const claimSwap = async (swapId: string, data: SwapStatus) => {
         if (claimingSwaps.has(swapId)) {
@@ -141,7 +171,17 @@ const PayProvider = (props: { children: JSX.Element }) => {
             data.status === swapStatusPending.TransactionClaimPending &&
             coopClaimableSymbols.includes((currentSwap as ChainSwap).assetSend)
         ) {
-            await helpServerClaim(currentSwap as ChainSwap);
+            const chainSwap = currentSwap as ChainSwap;
+            pendingServerClaimHelp.add(chainSwap.id);
+
+            if (chainSwap.claimTx === undefined) {
+                log.info(
+                    `Deferring server claim help for Chain Swap ${chainSwap.id} until claimTx is known`,
+                );
+                return;
+            }
+
+            await maybeHelpServerClaim(chainSwap);
             return;
         }
 
@@ -290,6 +330,20 @@ const PayProvider = (props: { children: JSX.Element }) => {
                     }
                 }
             }
+        }),
+    );
+
+    createEffect(
+        on([swap, swapStatus], ([currentSwap, currentStatus]) => {
+            if (
+                currentSwap === null ||
+                currentSwap.type !== SwapType.Chain ||
+                currentStatus !== swapStatusPending.TransactionClaimPending
+            ) {
+                return;
+            }
+
+            void maybeHelpServerClaim(currentSwap as ChainSwap);
         }),
     );
 
