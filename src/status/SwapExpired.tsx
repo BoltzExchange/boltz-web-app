@@ -1,5 +1,5 @@
 import { useNavigate } from "@solidjs/router";
-import { type Accessor, Show, createSignal } from "solid-js";
+import { type Accessor, Show } from "solid-js";
 
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
@@ -11,7 +11,6 @@ const SwapExpired = () => {
     const navigate = useNavigate();
     const { failureReason, swap, refundableUTXOs } = usePayContext();
     const { t } = useGlobalContext();
-    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     return (
         <div>
@@ -19,15 +18,18 @@ const SwapExpired = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <Show when={refundableUTXOs().length > 0 && refundTxId() === ""}>
+            <Show
+                when={
+                    refundableUTXOs().length > 0 &&
+                    swap()?.refundTx === undefined
+                }>
                 <RefundButton
                     swap={swap as Accessor<SubmarineSwap | ChainSwap>}
-                    setRefundTxId={setRefundTxId}
                 />
                 <hr />
             </Show>
-            <Show when={refundTxId() !== ""}>
-                <SwapRefunded refundTxId={refundTxId()} />
+            <Show when={swap()?.refundTx !== undefined}>
+                <SwapRefunded refundTxId={swap().refundTx} />
                 <hr />
             </Show>
             <button class="btn" onClick={() => navigate("/swap")}>

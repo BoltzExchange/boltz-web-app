@@ -67,6 +67,7 @@ export type SwapBase = {
 
     // Not set for submarine swaps; but set for interface compatibility
     claimTx?: string;
+    refundTx?: string;
     lockupTx?: string;
     commitmentLockupTxHash?: string;
     commitmentSignatureSubmitted?: boolean;

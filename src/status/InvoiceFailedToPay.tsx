@@ -1,4 +1,4 @@
-import { type Accessor, Show, createSignal } from "solid-js";
+import { type Accessor, Show } from "solid-js";
 
 import RefundButton from "../components/RefundButton";
 import { useGlobalContext } from "../context/Global";
@@ -9,7 +9,6 @@ import SwapRefunded from "./SwapRefunded";
 const InvoiceFailedToPay = () => {
     const { failureReason, swap } = usePayContext();
     const { t } = useGlobalContext();
-    const [refundTxId, setRefundTxId] = createSignal<string>("");
 
     return (
         <div>
@@ -18,14 +17,13 @@ const InvoiceFailedToPay = () => {
                 {t("failure_reason")}: {failureReason()}
             </p>
             <hr />
-            <Show when={refundTxId() === ""}>
+            <Show when={swap()?.refundTx === undefined}>
                 <RefundButton
                     swap={swap as Accessor<SubmarineSwap | ChainSwap>}
-                    setRefundTxId={setRefundTxId}
                 />
             </Show>
-            <Show when={refundTxId() !== ""}>
-                <SwapRefunded refundTxId={refundTxId()} />
+            <Show when={swap()?.refundTx !== undefined}>
+                <SwapRefunded refundTxId={swap().refundTx} />
             </Show>
             <hr />
         </div>

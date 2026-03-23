@@ -18,6 +18,7 @@ export default [
             "dnssec-prover",
             "vite.config.mjs",
             "src/utils/dnssec/dnssec_prover*",
+            "playwright-report",
         ],
     },
     pluginJs.configs.recommended,

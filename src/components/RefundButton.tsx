@@ -12,6 +12,7 @@ import {
     Match,
     Show,
     Switch,
+    createEffect,
     createMemo,
     createResource,
     createSignal,
@@ -771,13 +772,34 @@ export const RefundBtc = (props: {
 
 const RefundButton = (props: {
     swap: Accessor<SubmarineSwap | ChainSwap>;
-    setRefundTxId: Setter<string>;
+    setRefundTxId?: Setter<string>;
     buttonOverride?: string;
     deriveKeyFn?: deriveKeyFn;
 }) => {
+    const { setSwapStorage, getSwap } = useGlobalContext();
+    const { setSwap } = usePayContext();
+
     const [preimageHash] = createResource(async () => {
         return (await decodeInvoice((props.swap() as SubmarineSwap).invoice))
             .preimageHash;
+    });
+
+    const [refundTxId, setRefundTxId] = createSignal<string>("");
+
+    createEffect(() => {
+        const txId = refundTxId();
+        if (txId === "") {
+            return;
+        }
+
+        props.setRefundTxId?.(txId);
+        setSwap({ ...props.swap(), refundTx: txId });
+        void getSwap(props.swap().id).then((swapFromStorage) => {
+            if (swapFromStorage) {
+                swapFromStorage.refundTx = txId;
+                void setSwapStorage(swapFromStorage);
+            }
+        });
     });
 
     return (
@@ -797,7 +819,7 @@ const RefundButton = (props: {
                             signerAddress={props.swap().signer}
                             derivationPath={props.swap().derivationPath}
                             swapType={SwapType.Chain}
-                            setRefundTxId={props.setRefundTxId}
+                            setRefundTxId={setRefundTxId}
                             asset={props.swap().assetSend}
                             commitmentLockupTxHash={
                                 props.swap().commitmentLockupTxHash
@@ -817,7 +839,7 @@ const RefundButton = (props: {
                             signerAddress={props.swap().signer}
                             derivationPath={props.swap().derivationPath}
                             swapType={SwapType.Submarine}
-                            setRefundTxId={props.setRefundTxId}
+                            setRefundTxId={setRefundTxId}
                             asset={props.swap().assetSend}
                             commitmentLockupTxHash={
                                 props.swap().commitmentLockupTxHash
@@ -830,7 +852,7 @@ const RefundButton = (props: {
                     </Show>
                 </Show>
             }>
-            <RefundBtc {...props} />
+            <RefundBtc {...props} setRefundTxId={setRefundTxId} />
         </Show>
     );
 };

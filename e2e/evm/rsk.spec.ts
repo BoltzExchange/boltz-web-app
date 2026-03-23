@@ -365,7 +365,7 @@ test.describe("EVM", () => {
         await expect(settled.or(claimPending)).toBeVisible();
     });
 
-    test("RBTC -> LN submarine swap shows already refunded after refresh", async ({
+    test("RBTC -> LN submarine preseves 'Open refund transaction' btn after refresh", async ({
         page,
         walletClient,
     }) => {
@@ -434,21 +434,8 @@ test.describe("EVM", () => {
 
         await page.reload();
 
-        await page
-            .getByRole("button", { name: dict.en.connect_wallet, exact: true })
-            .click();
-
-        const reconnectModal = page.locator(
-            "[data-testid='wallet-connect-modal']",
-        );
-        if (
-            await reconnectModal.isVisible({ timeout: 2000 }).catch(() => false)
-        ) {
-            await page.getByText(/metamask/i).click();
-        }
-
-        await expect(page.getByText(dict.en.already_refunded)).toBeVisible({
-            timeout: 30_000,
-        });
+        const refundTxLink = page.getByText("open refund transaction");
+        const txId = (await refundTxLink.getAttribute("href")).split("/").pop();
+        expect(txId).toBeDefined();
     });
 });
