@@ -10,6 +10,7 @@ import log from "loglevel";
 
 import {
     type AssetType,
+    type ETH,
     LBTC,
     type RefundableAssetType,
     refundableAssets,
@@ -626,7 +627,7 @@ export const createRescueList = async (
 };
 
 export const getTimeoutEta = (
-    asset: RefundableAssetType,
+    asset: RefundableAssetType | typeof ETH,
     timeoutBlockHeight: number,
     currentBlockHeight: number,
 ) => {

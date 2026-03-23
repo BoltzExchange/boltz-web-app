@@ -207,7 +207,7 @@ const RefundRescue = () => {
                             <RefundEta
                                 timeoutEta={timeoutEta}
                                 timeoutBlockHeight={timeoutBlockHeight}
-                                refundableAsset={swap().assetSend}
+                                asset={swap().assetSend}
                             />
                             <BlockExplorer
                                 asset={swap().assetSend}

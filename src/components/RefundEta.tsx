@@ -1,14 +1,13 @@
 import type { Accessor } from "solid-js";
 import { Show } from "solid-js";
 
-import { TBTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { getNetworkName } from "../utils/blockchain";
 
 const RefundEta = (props: {
     timeoutEta: Accessor<number>;
     timeoutBlockHeight: Accessor<number>;
-    refundableAsset: string;
+    asset: string;
 }) => {
     const { t } = useGlobalContext();
     const getDateString = (timestamp: number) =>
@@ -18,10 +17,7 @@ const RefundEta = (props: {
             <h3>{t("refund_explainer")}</h3>
             <p class="frame-text">
                 {t("pay_timeout_blockheight", {
-                    network:
-                        props.refundableAsset === TBTC
-                            ? "Ethereum"
-                            : getNetworkName(props.refundableAsset),
+                    network: getNetworkName(props.asset),
                 })}
                 : {props.timeoutBlockHeight()}
                 <Show when={props.timeoutEta()}>

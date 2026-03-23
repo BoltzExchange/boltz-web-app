@@ -17,8 +17,10 @@ import { config } from "../config";
 import {
     AssetKind,
     type AssetType,
+    ETH,
     RBTC,
     type RefundableAssetType,
+    TBTC,
     getKindForAsset,
 } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
@@ -285,6 +287,10 @@ const RescueEvm = () => {
         return t("claim");
     };
 
+    // for Arbitrum, we need to get timeout ETA from ETH L1
+    const getEtaRelevantAsset = () =>
+        params.asset === TBTC ? ETH : (params.asset as RefundableAssetType);
+
     return (
         <div class="frame">
             <Show
@@ -348,7 +354,7 @@ const RescueEvm = () => {
                                 <RefundEta
                                     timeoutEta={() =>
                                         getTimeoutEta(
-                                            params.asset as RefundableAssetType,
+                                            getEtaRelevantAsset(),
                                             Number(rescueData().timelock),
                                             Number(rescueData().currentHeight),
                                         )
@@ -356,9 +362,7 @@ const RescueEvm = () => {
                                     timeoutBlockHeight={() =>
                                         Number(rescueData().timelock)
                                     }
-                                    refundableAsset={
-                                        params.asset as RefundableAssetType
-                                    }
+                                    asset={getEtaRelevantAsset()}
                                 />
                             </Match>
                         </Switch>

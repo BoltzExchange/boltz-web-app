@@ -745,7 +745,7 @@ export const RefundBtc = (props: {
                 <RefundEta
                     timeoutEta={timeoutEta}
                     timeoutBlockHeight={timeoutBlockheight}
-                    refundableAsset={props.swap().assetSend}
+                    asset={props.swap().assetSend}
                 />
             </Show>
             <Show when={refundableUTXOs().length > 0}>

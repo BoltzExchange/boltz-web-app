@@ -1,7 +1,7 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import type { BytesLike, DeferredTopicFilter, Provider } from "ethers";
-import { JsonRpcProvider } from "ethers";
+import { JsonRpcProvider, toBeHex } from "ethers";
 import log from "loglevel";
 
 import { config } from "../config";
@@ -45,6 +45,29 @@ export const getTimelockBlockNumber = async (
     }
 
     return provider.getBlockNumber();
+};
+
+/**
+ * For Arbitrum, log/receipt `blockNumber` is the rollup (L2) height; the block
+ * header includes `l1BlockNumber` (Ethereum L1). Elsewhere returns the input.
+ */
+export const getRollupL1BlockNumber = async (
+    provider: Provider,
+    asset: AssetType,
+    rollupBlockNumber: number,
+): Promise<number> => {
+    const network = config.assets?.[asset as string]?.network;
+
+    if (network?.chainName !== Network.Arbitrum) {
+        return rollupBlockNumber;
+    }
+
+    const rpcProvider = createAssetProvider(asset as string);
+    const block = await rpcProvider.send("eth_getBlockByNumber", [
+        toBeHex(rollupBlockNumber),
+        false,
+    ]);
+    return Number(block.l1BlockNumber);
 };
 
 const defaultScanInterval = 2_000;
@@ -397,7 +420,13 @@ export const getLogsFromReceipt = async (
             continue;
         }
 
-        return parseLockupEvent(asset, contract, event);
+        const data = parseLockupEvent(asset, contract, event);
+        data.blockNumber = await getRollupL1BlockNumber(
+            provider,
+            asset,
+            data.blockNumber,
+        );
+        return data;
     }
 
     throw new Error(`Lockup event not found in transaction ${txHash}`);
@@ -487,6 +516,12 @@ export async function* scanLockupEvents(
             }
 
             log.info(`Found rescuable swap in: ${event.transactionHash}`);
+
+            data.blockNumber = await getRollupL1BlockNumber(
+                ctx.contract.runner as Provider,
+                ctx.asset,
+                data.blockNumber,
+            );
 
             switch (match) {
                 case RskRescueMode.Refund: {

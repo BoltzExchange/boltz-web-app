@@ -9,6 +9,7 @@ export const LBTC = "L-BTC";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
 export const USDT0 = "USDT0";
+export const ETH = "ETH";
 export const USDT0_VARIANT_PREFIX = `${USDT0}-`;
 
 export type AssetType =
