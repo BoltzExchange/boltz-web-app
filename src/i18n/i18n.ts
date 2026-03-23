@@ -461,10 +461,10 @@ const dict = {
         error_occurred: "An error occurred: {{ error }}",
 
         evm_rescue_prompt:
-            'If you sent funds into a Boltz swap on an EVM chain, use "Refund Swap"; if you were receiving funds, use "Resume Swap" to rescue a swap that is not available in this browser’s swap history.',
+            'If you sent funds into a Boltz swap on an EVM chain, use "Refund Swap"; if you were receiving funds from an EVM chain, use "Resume Swap" to rescue a swap that is not available in this browser’s swap history.',
         evm_rescue_refund_title: "Refund Swap",
         evm_rescue_refund_explainer:
-            "Connect your wallet to scan for EVM swaps that have expired and can be refunded. If you sent USDT0 or TBTC to a swap, use your Rescue Key to find it. Rescue Key is not necessary to refund RBTC.",
+            "Connect your wallet to scan for EVM swaps that have expired and can be refunded. If you sent USDT0 or TBTC into a Boltz swap, use your Rescue Key to find it. Rescue Key is not necessary to refund RBTC.",
         start_scanning: "Start scanning",
         stop_scanning: "Stop scanning",
         evm_rescue_resume_title: "Resume Swap",
@@ -572,8 +572,8 @@ const dict = {
         cant_find_swap: "Swap nicht gefunden?",
         rescue_external_explainer:
             "Versuche einen externen Swap über einen Rettungsschlüssel und andere Notfallmethoden wiederherszustellen.",
-        refund_external_scanning_rsk:
-            "Scanne nach wiederherstellbaren Swaps in Rootstock-Wallet...",
+        refund_external_scanning_evm:
+            "Scanne nach wiederherstellbaren Swaps auf EVM-Chains...",
         connected_wallet_no_swaps:
             "Das verbundene Rootstock Wallet enthält keine wiederherstellbaren Swaps.",
         rescue_external_swap: "Externen Swap Retten",
@@ -709,6 +709,8 @@ const dict = {
         switch_network: "Netzwerk wechseln",
         block: "Block",
         logs_scan_progress: "Scan-Fortschritt {{ value }}%",
+        logs_deriving_keys:
+            "Schlüssel werden abgeleitet... (bisher {{ count }})",
         accept: "Akzeptieren",
         wallet_connect_failed:
             "Verbindung zu Wallet fehlgeschlagen: {{ error }}",
@@ -949,16 +951,16 @@ const dict = {
         invalid_rescue_key_evm:
             "Dieser Rettungsschlüssel ist nicht mit diesem Swap verbunden. Bitte versuche es erneut mit einem anderen Rettungsschlüssel.",
         error_occurred: "Ein Fehler ist aufgetreten: {{ error }}",
-        rsk_rescue_prompt:
-            'Wenn du RBTC in einen Boltz-Swap gesendet hast, nutze "Swap erstatten"; wenn du RBTC empfangen hast, nutze "Swap fortsetzen", um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.',
-        rsk_rescue_refund_title: "Swap erstatten",
-        rsk_rescue_refund_explainer:
-            "Verbinde dein Rootstock-Wallet, um nach Swaps zu suchen, die abgelaufen sind und erstattet werden können.",
-        rsk_rescue_resume_title: "Swap fortsetzen",
-        rsk_rescue_resume_explainer:
+        evm_rescue_prompt:
+            'Wenn du Guthaben in einen Boltz-Swap auf einer EVM-Chain gesendet hast, nutze "Swap erstatten"; wenn du Guthaben von einer EVM-Chain empfangen hast, nutze "Swap fortsetzen", um einen Swap zu retten, der nicht im Verlauf dieses Browsers verfügbar ist.',
+        evm_rescue_refund_title: "Swap erstatten",
+        evm_rescue_refund_explainer:
+            "Verbinde dein Wallet, um nach EVM-Swaps zu suchen, die abgelaufen sind und erstattet werden können. Wenn du USDT0 oder TBTC in einen Boltz-Swap gesendet hast, nutze deinen Rettungsschlüssel, um ihn zu finden. Für die Rückerstattung von RBTC ist kein Rettungsschlüssel erforderlich.",
+        start_scanning: "Scannen starten",
+        stop_scanning: "Scannen stoppen",
+        evm_rescue_resume_title: "Swap fortsetzen",
+        evm_rescue_resume_explainer:
             "Nutze deinen Rettungsschlüssel, um ausstehende Swaps zu finden, die fortgesetzt werden können.",
-        searching_resumable_swaps:
-            "Suche nach fortsetzbaren Swaps... {{ progress }}%",
         unmatched_swaps:
             "Dieses Wallet hat {{ count }} zusätzliche claimbare Swaps. Um darauf zuzugreifen, wechsle bitte zu dem Rettungsschlüssel, mit dem diese Swaps gestartet wurden.",
         approve_erc20: "Freigeben",
@@ -1060,8 +1062,8 @@ const dict = {
         cant_find_swap: "¿No encuentras tu intercambio?",
         rescue_external_explainer:
             "Intenta rescatar un intercambio externo mediante una clave de rescate y otros métodos de emergencia.",
-        refund_external_scanning_rsk:
-            "Escaneando en busca de intercambios rescatables en tu monedero Rootstock...",
+        refund_external_scanning_evm:
+            "Escaneando en busca de intercambios rescatables en cadenas EVM...",
         connected_wallet_no_swaps:
             "El monedero Rootstock conectado no contiene ningún intercambio rescatable.",
         rescue_external_swap: "Rescatar Intercambio Externo",
@@ -1198,6 +1200,7 @@ const dict = {
         switch_network: "Cambiar red",
         block: "bloque",
         logs_scan_progress: "Progreso del escaneo {{ value }}%",
+        logs_deriving_keys: "Derivando claves... ({{ count }} hasta ahora)",
         accept: "Aceptar",
         wallet_connect_failed: "Fallo en la conexión del monedero: {{ error }}",
         ledger_open_app_prompt: "Abrir aplicación Ethereum o RSK",
@@ -1436,16 +1439,16 @@ const dict = {
         invalid_rescue_key_evm:
             "Esta clave de rescate no está asociada con este intercambio. Por favor, intenta de nuevo usando una clave de rescate diferente.",
         error_occurred: "Ocurrió un error: {{ error }}",
-        rsk_rescue_prompt:
-            'Si enviaste RBTC a un intercambio de Boltz, usa "Reembolsar intercambio"; si estabas recibiendo RBTC, usa "Reanudar intercambio" para rescatar un intercambio que no está disponible en el historial de este navegador.',
-        rsk_rescue_refund_title: "Reembolsar intercambio",
-        rsk_rescue_refund_explainer:
-            "Conecta tu monedero Rootstock para buscar intercambios que han expirado y pueden ser reembolsados.",
-        rsk_rescue_resume_title: "Reanudar intercambio",
-        rsk_rescue_resume_explainer:
+        evm_rescue_prompt:
+            'Si enviaste fondos a un intercambio de Boltz en una cadena EVM, usa "Reembolsar intercambio"; si estabas recibiendo fondos desde una cadena EVM, usa "Reanudar intercambio" para rescatar un intercambio que no está disponible en el historial de este navegador.',
+        evm_rescue_refund_title: "Reembolsar intercambio",
+        evm_rescue_refund_explainer:
+            "Conecta tu monedero para buscar intercambios EVM que hayan expirado y puedan reembolsarse. Si enviaste USDT0 o TBTC a un intercambio de Boltz, usa tu clave de rescate para encontrarlo. No se necesita la clave de rescate para reembolsar RBTC.",
+        start_scanning: "Iniciar escaneo",
+        stop_scanning: "Detener escaneo",
+        evm_rescue_resume_title: "Reanudar intercambio",
+        evm_rescue_resume_explainer:
             "Usa tu clave de rescate para encontrar intercambios pendientes que se puedan reanudar.",
-        searching_resumable_swaps:
-            "Buscando intercambios reanudables... {{ progress }}%",
         unmatched_swaps:
             "Este monedero tiene {{ count }} intercambios adicionales reclamables. Para acceder a ellos, cambia a la clave de rescate usada para iniciar esos intercambios.",
         approve_erc20: "Aprobar",
@@ -1548,8 +1551,8 @@ const dict = {
         cant_find_swap: "Não consegue encontrar sua troca?",
         rescue_external_explainer:
             "Tente resgatar uma troca externa usando a chave de resgate ou outros métodos de emergência.",
-        refund_external_scanning_rsk:
-            "Procurando trocas resgatáveis na sua carteira Rootstock...",
+        refund_external_scanning_evm:
+            "Procurando trocas resgatáveis em redes EVM...",
         connected_wallet_no_swaps:
             "A carteira Rootstock conectada não contém nenhuma troca resgatável.",
         rescue_external_swap: "Resgatar troca externa",
@@ -1683,6 +1686,7 @@ const dict = {
         switch_network: "Trocar rede",
         block: "bloco",
         logs_scan_progress: "Progresso da varredura {{ value }}%",
+        logs_deriving_keys: "Derivando chaves... ({{ count }} até agora)",
         accept: "Aceitar",
         wallet_connect_failed: "Falha ao conectar carteira: {{ error }}",
         ledger_open_app_prompt: "Abra o app Ethereum ou RSK",
@@ -1920,16 +1924,16 @@ const dict = {
         invalid_rescue_key_evm:
             "Esta chave de resgate não está associada a esta troca. Por favor, tente novamente usando uma chave de resgate diferente.",
         error_occurred: "Ocorreu um erro: {{ error }}",
-        rsk_rescue_prompt:
-            'Se você enviou RBTC para uma troca da Boltz, use "Reembolsar troca"; se estava recebendo RBTC, use "Continuar troca" para resgatar uma troca que não está disponível no histórico de trocas deste navegador.',
-        rsk_rescue_refund_title: "Reembolsar troca",
-        rsk_rescue_refund_explainer:
-            "Conecte sua carteira Rootstock para procurar trocas que expiraram e podem ser reembolsadas.",
-        rsk_rescue_resume_title: "Continuar troca",
-        rsk_rescue_resume_explainer:
+        evm_rescue_prompt:
+            'Se você enviou fundos para uma troca da Boltz em uma rede EVM, use "Reembolsar troca"; se estava recebendo fundos de uma rede EVM, use "Continuar troca" para resgatar uma troca que não está disponível no histórico deste navegador.',
+        evm_rescue_refund_title: "Reembolsar troca",
+        evm_rescue_refund_explainer:
+            "Conecte sua carteira para procurar trocas em EVM que expiraram e podem ser reembolsadas. Se você enviou USDT0 ou TBTC para uma troca da Boltz, use sua chave de resgate para encontrá-la. A chave de resgate não é necessária para reembolsar RBTC.",
+        start_scanning: "Iniciar varredura",
+        stop_scanning: "Parar varredura",
+        evm_rescue_resume_title: "Continuar troca",
+        evm_rescue_resume_explainer:
             "Use sua chave de resgate para encontrar trocas pendentes que podem ser continuadas.",
-        searching_resumable_swaps:
-            "Buscando trocas retomáveis... {{ progress }}%",
         unmatched_swaps:
             "Esta carteira tem {{ count }} trocas adicionais reivindicáveis. Para acessá-las, mude para a chave de resgate usada para iniciar essas trocas.",
         approve_erc20: "Aprovar",
@@ -2024,7 +2028,7 @@ const dict = {
         cant_find_swap: "找不到您的交换？",
         rescue_external_explainer:
             "尝试通过救援密钥和其他紧急方法恢复外部交换分区。",
-        refund_external_scanning_rsk: "正在扫描Rootstock钱包中的可恢复交换...",
+        refund_external_scanning_evm: "正在扫描 EVM 链上的可恢复交换...",
         connected_wallet_no_swaps:
             "已连接的Rootstock钱包中不包含任何可恢复的交换。",
         rescue_external_swap: "救援外部交换",
@@ -2142,6 +2146,7 @@ const dict = {
         switch_network: "转换网络",
         block: "块",
         logs_scan_progress: "扫描进度{{ value }}%",
+        logs_deriving_keys: "正在派生密钥...（目前 {{ count }} 个）",
         accept: "接受",
         wallet_connect_failed: "钱包连接失败：{{ error }}",
         ledger_open_app_prompt: "打开以太坊或 RSK 应用",
@@ -2358,15 +2363,16 @@ const dict = {
         invalid_rescue_key_evm:
             "此救援密钥与此交换不关联。请使用其他救援密钥重试。",
         error_occurred: "发生错误：{{ error }}",
-        rsk_rescue_prompt:
-            "如果你向 Boltz 交换发送了 RBTC，请使用“退还交换”；如果你正在接收 RBTC，请使用“继续交换”，以救援一个未在此浏览器交换历史中显示的交换。",
-        rsk_rescue_refund_title: "退还交换",
-        rsk_rescue_refund_explainer:
-            "连接你的 Rootstock 钱包以扫描已过期且可退款的交换。",
-        rsk_rescue_resume_title: "继续交换",
-        rsk_rescue_resume_explainer:
+        evm_rescue_prompt:
+            "如果你向 EVM 链上的 Boltz 交换发送了资金，请使用“退还交换”；如果你正在从 EVM 链接收资金，请使用“继续交换”，以救援一个未在此浏览器交换历史中显示的交换。",
+        evm_rescue_refund_title: "退还交换",
+        evm_rescue_refund_explainer:
+            "连接你的钱包以扫描已过期且可退款的 EVM 交换。如果你向 Boltz 交换发送了 USDT0 或 TBTC，请使用你的救援密钥来找到该交换。退还 RBTC 不需要救援密钥。",
+        start_scanning: "开始扫描",
+        stop_scanning: "停止扫描",
+        evm_rescue_resume_title: "继续交换",
+        evm_rescue_resume_explainer:
             "使用你的救援密钥查找可以继续的待处理交换。",
-        searching_resumable_swaps: "正在搜索可继续的交换... {{ progress }}%",
         unmatched_swaps:
             "该钱包有 {{ count }} 个额外可领取的交换。要访问它们，请切换到用于发起这些交换的救援密钥。",
         approve_erc20: "授权",
@@ -2467,8 +2473,8 @@ const dict = {
         cant_find_swap: "スワップが見つからない？",
         rescue_external_explainer:
             "外部スワップをレスキューキーやその他の緊急手段を使用して復旧を試みてください。",
-        refund_external_scanning_rsk:
-            "Rootstockウォレット内の救済可能なスワップを検索中です...",
+        refund_external_scanning_evm:
+            "EVM チェーン上の復旧可能なスワップを検索中です...",
         connected_wallet_no_swaps:
             "接続されたRootstockウォレットには、復元可能なスワップは含まれていません。",
         rescue_external_swap: "外部スワップの復旧",
@@ -2601,6 +2607,7 @@ const dict = {
         switch_network: "ネットワークの切り替え",
         block: "ブロック",
         logs_scan_progress: " 進捗度 {{ value }}%",
+        logs_deriving_keys: "キーを導出中...（現在 {{ count }} 件）",
         accept: "受入れる",
         wallet_connect_failed: "ウォレット接続の失敗: {{ error }}",
         ledger_open_app_prompt: "イーサリアムもしくはRSKのアプリを開く",
@@ -2836,16 +2843,16 @@ const dict = {
         invalid_rescue_key_evm:
             "このレスキューキーはこのスワップに関連付けられていません。別のレスキューキーを使用してもう一度お試しください。",
         error_occurred: "エラーが発生しました：{{ error }}",
-        rsk_rescue_prompt:
-            "Boltz スワップに RBTC を送金した場合は「スワップを返金」を使用し、RBTC を受け取っていた場合は「スワップを再開」を使用して、このブラウザのスワップ履歴にないスワップを救済してください。",
-        rsk_rescue_refund_title: "スワップを返金",
-        rsk_rescue_refund_explainer:
-            "Rootstock ウォレットを接続して、期限切れで返金可能なスワップをスキャンします。",
-        rsk_rescue_resume_title: "スワップを再開",
-        rsk_rescue_resume_explainer:
+        evm_rescue_prompt:
+            "EVM チェーン上の Boltz スワップに資金を送金した場合は「スワップを返金」を使用し、EVM チェーンから資金を受け取っていた場合は「スワップを再開」を使用して、このブラウザのスワップ履歴にないスワップを救済してください。",
+        evm_rescue_refund_title: "スワップを返金",
+        evm_rescue_refund_explainer:
+            "ウォレットを接続して、期限切れで返金可能な EVM スワップをスキャンします。USDT0 または TBTC を Boltz スワップに送金した場合は、レスキューキーを使ってそのスワップを見つけてください。RBTC の返金にはレスキューキーは不要です。",
+        start_scanning: "スキャンを開始",
+        stop_scanning: "スキャンを停止",
+        evm_rescue_resume_title: "スワップを再開",
+        evm_rescue_resume_explainer:
             "レスキューキーを使用して、再開できる保留中のスワップを見つけます。",
-        searching_resumable_swaps:
-            "再開可能なスワップを検索中... {{ progress }}%",
         unmatched_swaps:
             "このウォレットには追加で {{ count }} 件の請求可能なスワップがあります。アクセスするには、これらのスワップの開始に使用したレスキューキーに切り替えてください。",
         approve_erc20: "承認",
