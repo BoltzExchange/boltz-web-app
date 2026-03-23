@@ -1,6 +1,7 @@
 import type { Accessor } from "solid-js";
 import { Show } from "solid-js";
 
+import { TBTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { getNetworkName } from "../utils/blockchain";
 
@@ -17,7 +18,10 @@ const RefundEta = (props: {
             <h3>{t("refund_explainer")}</h3>
             <p class="frame-text">
                 {t("pay_timeout_blockheight", {
-                    network: getNetworkName(props.refundableAsset),
+                    network:
+                        props.refundableAsset === TBTC
+                            ? "Ethereum"
+                            : getNetworkName(props.refundableAsset),
                 })}
                 : {props.timeoutBlockHeight()}
                 <Show when={props.timeoutEta()}>
