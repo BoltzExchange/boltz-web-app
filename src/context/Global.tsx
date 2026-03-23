@@ -351,6 +351,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
     });
 
     injectLogWriter(logsForage);
+    log.info(`Version ${__APP_VERSION__}, commit hash ${__GIT_COMMIT__}`);
 
     createEffect(() => deleteOldLogs(logsForage));
 
