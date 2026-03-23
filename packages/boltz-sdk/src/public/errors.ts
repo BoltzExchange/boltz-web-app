@@ -44,25 +44,106 @@ export class SwapError extends BoltzError {
     }
 }
 
+const walletRejectionPhrases = [
+    "user rejected action",
+    "user denied transaction signature",
+    "ethers-user-denied",
+    "rejectallapprovals",
+] as const;
+
+const defaultWalletRejectionMessage = "Wallet request rejected";
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === "object" && value !== null;
+
+const getRecord = (
+    record: Record<string, unknown>,
+    key: string,
+): Record<string, unknown> | undefined => {
+    const value = record[key];
+    return isRecord(value) ? value : undefined;
+};
+
+const hasWalletRejectionCode = (value: unknown): boolean =>
+    value === "ACTION_REJECTED" || value === 4001 || value === "4001";
+
+const hasWalletRejectionPhrase = (value: unknown): boolean =>
+    typeof value === "string" &&
+    walletRejectionPhrases.some((phrase) =>
+        value.toLowerCase().includes(phrase),
+    );
+
+const getWalletRejectionFields = (
+    message: Record<string, unknown>,
+): {
+    codes: unknown[];
+    phrases: unknown[];
+} => {
+    const error = getRecord(message, "error");
+    const info = getRecord(message, "info");
+    const infoError = info ? getRecord(info, "error") : undefined;
+    const data = getRecord(message, "data");
+    const infoErrorData = infoError ? getRecord(infoError, "data") : undefined;
+
+    return {
+        codes: [message.code, error?.code, infoError?.code],
+        phrases: [
+            message.message,
+            error?.message,
+            infoError?.message,
+            data?.cause,
+            infoErrorData?.cause,
+        ],
+    };
+};
+
+const isWalletRejectionError = (message: unknown): boolean => {
+    if (hasWalletRejectionPhrase(message)) {
+        return true;
+    }
+
+    if (!isRecord(message)) {
+        return false;
+    }
+
+    const { codes, phrases } = getWalletRejectionFields(message);
+
+    return (
+        codes.some((code) => hasWalletRejectionCode(code)) ||
+        phrases.some((phrase) => hasWalletRejectionPhrase(phrase))
+    );
+};
+
 /**
  * Extract a human-readable error message from an unknown value.
  *
- * Handles plain strings, objects with `error.message`, `message`, `error`,
- * or `data` properties, and falls back to `JSON.stringify`.
+ * Detects common wallet-rejection error patterns and returns a
+ * normalised message for those. Otherwise handles plain strings,
+ * objects with `error.message`, `message`, `error`, or `data`
+ * properties, and falls back to `JSON.stringify`.
  *
  * @param message - The unknown error value to format.
+ * @param walletRejectionMessage - Custom message to return for wallet rejections
+ *   (defaults to `"Wallet request rejected"`).
  * @returns A string representation of the error.
  */
-export const formatError = (message: unknown): string => {
+export const formatError = (
+    message: unknown,
+    walletRejectionMessage?: string,
+): string => {
+    if (isWalletRejectionError(message)) {
+        return walletRejectionMessage ?? defaultWalletRejectionMessage;
+    }
+
     if (typeof message === "string") {
         return message;
     }
 
-    if (typeof message === "object" && message !== null) {
-        const msgObj = message as Record<string, unknown>;
+    if (isRecord(message)) {
+        const msgObj = message;
 
-        if (typeof msgObj.error === "object") {
-            const err = msgObj.error as Record<string, unknown>;
+        if (isRecord(msgObj.error)) {
+            const err = msgObj.error;
 
             if (typeof err.message === "string") {
                 return err.message;

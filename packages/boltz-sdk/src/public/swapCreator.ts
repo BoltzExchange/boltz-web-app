@@ -79,6 +79,25 @@ export type DexDetail = {
     quoteAmount: number | string;
 };
 
+/** A single stage of an OFT (Omnichain Fungible Token) bridge. */
+export type OftStageDetail = {
+    sourceAsset: string;
+    destinationAsset: string;
+    destinationChainId: number;
+};
+
+/** Whether the OFT bridge runs before or after the Boltz swap. */
+export const enum OftPosition {
+    Pre = "pre",
+    Post = "post",
+}
+
+/** OFT bridge metadata attached to a swap. */
+export type OftDetail = OftStageDetail & {
+    position: OftPosition;
+    txHash?: string;
+};
+
 /** Properties shared by all swap types. */
 export type SwapBase = {
     /** Swap direction. */
@@ -107,6 +126,8 @@ export type SwapBase = {
     originalDestination?: string;
     /** DEX route for routed swaps (e.g. USDT0 via TBTC). */
     dex?: DexDetail;
+    /** OFT bridge detail for cross-chain token bridging. */
+    oft?: OftDetail;
 };
 
 /**
@@ -220,9 +241,13 @@ export const isEvmSwap = (
  *   of the on-chain `assetSend`.
  */
 export const getFinalAssetSend = (
-    swap: Pick<SwapBase, "type" | "assetSend" | "dex">,
+    swap: Pick<SwapBase, "type" | "assetSend" | "dex" | "oft">,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.oft?.position === OftPosition.Pre) {
+        return swap.oft.sourceAsset;
+    }
+
     if (
         swap.dex !== undefined &&
         swap.dex.position === HopsPosition.Before &&
@@ -246,9 +271,13 @@ export const getFinalAssetSend = (
  *   instead of the on-chain `assetReceive`.
  */
 export const getFinalAssetReceive = (
-    swap: Pick<SwapBase, "type" | "assetReceive" | "dex">,
+    swap: Pick<SwapBase, "type" | "assetReceive" | "dex" | "oft">,
     coalesceLn: boolean = false,
 ): string => {
+    if (swap.oft?.position === OftPosition.Post) {
+        return swap.oft.destinationAsset;
+    }
+
     if (
         swap.dex !== undefined &&
         swap.dex.position === HopsPosition.After &&
@@ -261,3 +290,11 @@ export const getFinalAssetReceive = (
         ? LN
         : swap.assetReceive;
 };
+
+/** Return the OFT detail only if it's a pre-swap bridge, otherwise `undefined`. */
+export const getPreOftDetail = (oft?: OftDetail): OftDetail | undefined =>
+    oft?.position === OftPosition.Pre ? oft : undefined;
+
+/** Return the OFT detail only if it's a post-swap bridge, otherwise `undefined`. */
+export const getPostOftDetail = (oft?: OftDetail): OftDetail | undefined =>
+    oft?.position === OftPosition.Post ? oft : undefined;

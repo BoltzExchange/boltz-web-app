@@ -26,6 +26,8 @@ export type AssetNetwork = {
     symbol?: string;
     chainId: number;
     rpcUrls: string[];
+    /** Native gas token symbol for DEX gas-top-up quotes (e.g. `"ETH"`). */
+    gasToken?: string;
     nativeCurrency: {
         name: string;
         symbol: string;
@@ -36,12 +38,22 @@ export type AssetNetwork = {
 /** Per-asset configuration (chain details, contracts, token info). */
 export type Asset = {
     type: AssetKind;
+    /** When `false`, routing treats this asset as non-sendable (same as web app). */
+    canSend?: boolean;
     blockExplorerUrl?: { id: string; normal: string; tor?: string };
     blockExplorerApis?: { id: string; normal: string; tor?: string }[];
     rifRelay?: string;
     contracts?: AssetContracts;
     network?: AssetNetwork;
     token?: AssetToken;
+};
+
+/** Public HTTP endpoints used for fiat/gas-token price lookups (optional). */
+export type RateProviderUrls = {
+    Yadio?: string;
+    Kraken?: string;
+    Mempool?: string;
+    CoinGecko?: string;
 };
 
 /**
@@ -63,6 +75,11 @@ export type BoltzConfiguration = {
     defaultTimeout?: number;
     /** Per-asset chain/contract/token configuration. */
     assets?: Record<string, Asset>;
+    /**
+     * Fiat price API base URLs for gas-top-up calculations in routing (`Pair`).
+     * Defaults match the Boltz web app when omitted.
+     */
+    rateProviders?: RateProviderUrls;
 };
 
 const validNetworks: NetworkType[] = ["mainnet", "testnet", "regtest"];

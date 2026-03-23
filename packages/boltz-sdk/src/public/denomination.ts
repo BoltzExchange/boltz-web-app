@@ -1,5 +1,6 @@
 import { BigNumber } from "bignumber.js";
 
+import { isUsdt0Asset } from "./assets";
 import { getConfig } from "./config";
 import { AssetKind, Denomination } from "./enums";
 
@@ -10,8 +11,8 @@ const satDecimals = 8;
 /**
  * Get the decimal precision for an asset.
  *
- * For routed ERC-20 tokens, returns the token's decimal count;
- * for all other assets, returns 8 (satoshi precision).
+ * For routed ERC-20 tokens (including USDT0 variants), returns the
+ * token's decimal count; for all other assets, returns 8 (satoshi precision).
  *
  * @param asset - Asset identifier.
  */
@@ -20,7 +21,7 @@ export const getDecimals = (asset: string) => {
 
     const isRoutedErc20 =
         assetConfig?.type === AssetKind.ERC20 &&
-        assetConfig?.token?.routeVia !== undefined;
+        (assetConfig?.token?.routeVia !== undefined || isUsdt0Asset(asset));
 
     return {
         isErc20: isRoutedErc20,

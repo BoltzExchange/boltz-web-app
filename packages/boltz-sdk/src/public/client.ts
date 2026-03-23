@@ -232,14 +232,24 @@ export const postCommitmentSignature = (
 export const fetchBolt12Invoice = async (
     offer: string,
     amountSat: number,
+    validateInvoiceForOffer?: (
+        offer: string,
+        invoice: string,
+    ) => Promise<void>,
 ): Promise<{ invoice: string }> => {
-    return await fetcher<{ invoice: string }>(
+    const res = await fetcher<{ invoice: string }>(
         "/v2/lightning/BTC/bolt12/fetch",
         {
             offer,
             amount: amountSat,
         },
     );
+
+    if (validateInvoiceForOffer) {
+        await validateInvoiceForOffer(offer, res.invoice);
+    }
+
+    return res;
 };
 
 /**
@@ -527,13 +537,35 @@ export const getSwapStatus = (id: string) =>
  * @param txHex - Hex-encoded signed transaction.
  * @returns An object containing the broadcast transaction ID.
  */
-export const broadcastTransaction = (
+export const broadcastTransaction = async (
     asset: string,
     txHex: string,
-): Promise<{ id: string }> =>
-    fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, {
-        hex: txHex,
-    });
+    explorerBroadcast?: (
+        asset: string,
+        txHex: string,
+    ) => Promise<{ id: string }>,
+): Promise<{ id: string }> => {
+    const promises: Promise<{ id: string }>[] = [
+        fetcher<{ id: string }>(`/v2/chain/${asset}/transaction`, {
+            hex: txHex,
+        }),
+    ];
+
+    if (explorerBroadcast) {
+        promises.push(explorerBroadcast(asset, txHex));
+    }
+
+    const results = await Promise.allSettled(promises);
+    const successfulResult = results.find(
+        (result) => result.status === "fulfilled",
+    );
+    if (successfulResult) {
+        return (successfulResult as PromiseFulfilledResult<{ id: string }>)
+            .value;
+    }
+
+    throw (results[0] as PromiseRejectedResult).reason;
+};
 
 /**
  * Fetch both user-lock and server-lock transactions for a chain swap.
@@ -712,6 +744,25 @@ export const assetRescueBroadcast = (
         partialSignature: hex.encode(partialSignature),
     });
 
+const sortDexQuotes = (
+    quotes: QuoteData[],
+    direction: "in" | "out",
+): QuoteData[] =>
+    [...quotes].sort((first, second) => {
+        const firstAmount = BigInt(first.quote);
+        const secondAmount = BigInt(second.quote);
+
+        if (firstAmount === secondAmount) {
+            return 0;
+        }
+
+        if (direction === "in") {
+            return firstAmount > secondAmount ? -1 : 1;
+        }
+
+        return firstAmount < secondAmount ? -1 : 1;
+    });
+
 /**
  * Request DEX quotes for a fixed input amount.
  *
@@ -719,7 +770,7 @@ export const assetRescueBroadcast = (
  * @param tokenIn - Input token address.
  * @param tokenOut - Output token address.
  * @param amountIn - Input amount in token base units.
- * @returns Candidate quotes ordered by the backend.
+ * @returns Candidate quotes sorted by best price.
  */
 export const quoteDexAmountIn = async (
     chain: string,
@@ -727,11 +778,18 @@ export const quoteDexAmountIn = async (
     tokenOut: string,
     amountIn: bigint,
 ): Promise<QuoteData[]> => {
+    if (amountIn === 0n) {
+        return [];
+    }
+
     const params = new URLSearchParams();
     params.set("tokenIn", tokenIn);
     params.set("tokenOut", tokenOut);
     params.set("amountIn", amountIn.toString());
-    return await fetcher(`/v2/quote/${chain}/in?${params.toString()}`);
+    return sortDexQuotes(
+        await fetcher(`/v2/quote/${chain}/in?${params.toString()}`),
+        "in",
+    );
 };
 
 /**
@@ -749,11 +807,18 @@ export const quoteDexAmountOut = async (
     tokenOut: string,
     amountOut: bigint,
 ): Promise<QuoteData[]> => {
+    if (amountOut === 0n) {
+        return [];
+    }
+
     const params = new URLSearchParams();
     params.set("tokenIn", tokenIn);
     params.set("tokenOut", tokenOut);
     params.set("amountOut", amountOut.toString());
-    return await fetcher(`/v2/quote/${chain}/out?${params.toString()}`);
+    return sortDexQuotes(
+        await fetcher(`/v2/quote/${chain}/out?${params.toString()}`),
+        "out",
+    );
 };
 
 /**

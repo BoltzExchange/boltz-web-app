@@ -22,6 +22,7 @@
         "bolt11": "^1.4.1",
         "boltz-core": "^4.0.0",
         "buffer": "^6.0.3",
+        "ethers": "^6.16.0",
         "liquidjs-lib": "^6.0.2-liquid.37"
     },
     "devDependencies": {

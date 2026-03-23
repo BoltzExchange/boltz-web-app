@@ -28,6 +28,11 @@ export enum InvoiceValidation {
     MaxAmount = "maxAmount",
 }
 
+/** Fiat currency for price lookups (gas top-up, etc.). */
+export enum Currency {
+    USD = "USD",
+}
+
 /** Classification of chain assets by their underlying technology. */
 export const enum AssetKind {
     /** Bitcoin or Liquid UTXO chain. */
