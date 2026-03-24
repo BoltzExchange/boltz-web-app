@@ -303,9 +303,11 @@ describe("Fees component", () => {
             minerFees: 0,
             maxRoutingFee: undefined,
             oftMessagingFeeToken: undefined,
+            oftTransferFeeAsset: undefined,
             feeOnSend,
             boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1480)),
             oftMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
             getMinimum: vi.fn().mockResolvedValue(1),
             getMaximum: vi.fn().mockResolvedValue(10_000),
         } as unknown as Pair;
@@ -320,6 +322,50 @@ describe("Fees component", () => {
         });
         expect(feeOnSend).toHaveBeenCalled();
         expect(feeOnSend.mock.calls.at(-1)?.[0].toNumber()).toBe(1480);
+    });
+
+    test("should display legacy mesh transfer fees when present", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Btc);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: BTC,
+            toAsset: "USDT0-SOL",
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            oftMessagingFeeToken: "ETH",
+            oftTransferFeeAsset: USDT0,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => 0n),
+            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("legacy-mesh-fee").textContent).toEqual(
+                "0.030000",
+            );
+        });
     });
 
     test.each`

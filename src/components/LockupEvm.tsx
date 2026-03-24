@@ -454,21 +454,23 @@ const SendToOft = (props: {
             .then((n) => Number(n.chainId));
     });
 
+    const sourceWalletReady = () =>
+        signer() !== undefined && signerChainId() === expectedChainId();
+
     createEffect(() => {
         if (signer() === undefined || signerChainId() !== expectedChainId()) {
             return;
         }
 
-        const sourceChainId = expectedChainId();
-        if (sourceChainId === undefined) {
-            return;
-        }
-
         void (async () => {
-            const oftContract = await getOftContract(sourceChainId);
+            const oftRoute = {
+                from: props.oft.sourceAsset,
+                to: props.oft.destinationAsset,
+            };
+            const oftContract = await getOftContract(oftRoute);
             if (oftContract === undefined) {
                 throw new Error(
-                    `missing OFT contract for chain: ${sourceChainId}`,
+                    `missing OFT contract for asset: ${props.oft.sourceAsset}`,
                 );
             }
 
@@ -485,9 +487,7 @@ const SendToOft = (props: {
                 oftContract.address,
                 connectedSigner,
             );
-            const quotedOftInstance = await getQuotedOftContract(
-                props.oft.sourceAsset,
-            );
+            const quotedOftInstance = await getQuotedOftContract(oftRoute);
             const [balance, approvalRequired, nativeBalance, { msgFee }] =
                 await Promise.all([
                     tokenContract.balanceOf(signerAddress),
@@ -495,7 +495,7 @@ const SendToOft = (props: {
                     connectedSigner.provider.getBalance(signerAddress),
                     quoteOftSend(
                         quotedOftInstance,
-                        props.oft.destinationChainId,
+                        oftRoute,
                         recipient,
                         props.amount,
                     ),
@@ -557,10 +557,7 @@ const SendToOft = (props: {
                 }
                 fallback={
                     <Show
-                        when={
-                            signer() !== undefined &&
-                            signerChainId() === expectedChainId()
-                        }
+                        when={sourceWalletReady()}
                         fallback={
                             <ConnectWallet asset={props.oft.sourceAsset} />
                         }>
@@ -596,32 +593,27 @@ const SendToOft = (props: {
                                 asset={props.oft.sourceAsset}
                                 /* eslint-disable-next-line solid/reactivity */
                                 onClick={async () => {
-                                    const sourceChainId = expectedChainId();
-                                    if (sourceChainId === undefined) {
-                                        throw new Error(
-                                            `missing OFT source chain id for asset: ${props.oft.sourceAsset}`,
-                                        );
-                                    }
-
                                     const connectedSigner = signer();
                                     const recipient = getGasAbstractionSigner(
                                         props.oft.destinationAsset,
                                     ).address;
                                     log.debug(
-                                        `Sending OFT ${props.oft.destinationAsset} to ${recipient} on chain ${props.oft.destinationChainId}`,
+                                        `Sending OFT ${props.oft.destinationAsset} to ${recipient}`,
                                     );
+                                    const oftRoute = {
+                                        from: props.oft.sourceAsset,
+                                        to: props.oft.destinationAsset,
+                                    };
                                     const oftContract =
-                                        await getOftContract(sourceChainId);
+                                        await getOftContract(oftRoute);
                                     if (oftContract === undefined) {
                                         throw new Error(
-                                            `missing OFT contract for chain: ${sourceChainId}`,
+                                            `missing OFT contract for asset: ${props.oft.sourceAsset}`,
                                         );
                                     }
 
                                     const quotedOftInstance =
-                                        await getQuotedOftContract(
-                                            props.oft.sourceAsset,
-                                        );
+                                        await getQuotedOftContract(oftRoute);
                                     const oftInstance = createOftContract(
                                         oftContract.address,
                                         connectedSigner,
@@ -629,7 +621,7 @@ const SendToOft = (props: {
                                     const { sendParam, msgFee } =
                                         await quoteOftSend(
                                             quotedOftInstance,
-                                            props.oft.destinationChainId,
+                                            oftRoute,
                                             recipient,
                                             props.amount,
                                         );
@@ -638,8 +630,6 @@ const SendToOft = (props: {
                                         sourceAsset: props.oft.sourceAsset,
                                         destinationAsset:
                                             props.oft.destinationAsset,
-                                        destinationChainId:
-                                            props.oft.destinationChainId,
                                         recipient,
                                         amount: props.amount.toString(),
                                         nativeFee: msgFee[0].toString(),
@@ -673,8 +663,6 @@ const SendToOft = (props: {
                                             sourceAsset: props.oft.sourceAsset,
                                             destinationAsset:
                                                 props.oft.destinationAsset,
-                                            destinationChainId:
-                                                props.oft.destinationChainId,
                                             txHash: tx.hash,
                                         },
                                     );
