@@ -403,13 +403,42 @@ export const RefundEvm = (props: {
         () => props.gasAbstraction ?? GasAbstractionType.None,
     );
     const transactionSigner = createMemo<Signer | Wallet | undefined>(() => {
-        if (props.transactionSigner) return props.transactionSigner;
+        if (props.transactionSigner) {
+            return props.transactionSigner;
+        }
         return getSignerForGasAbstraction(
             gasAbstraction(),
             signer(),
             getGasAbstractionSigner(props.asset),
         );
     });
+
+    const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
+        undefined,
+    );
+
+    createEffect(() => {
+        if (signer() === undefined) {
+            setSignerNetwork(undefined);
+            return;
+        }
+        void signer()
+            .provider?.getNetwork()
+            .then((network) => setSignerNetwork(Number(network?.chainId)))
+            .catch(() => setSignerNetwork(undefined));
+    });
+
+    const networkValid = (): boolean | undefined => {
+        const expected = config.assets?.[props.asset]?.network?.chainId;
+        if (expected === undefined) {
+            return true;
+        }
+        if (signerNetwork() === undefined) {
+            return undefined;
+        }
+        return expected === signerNetwork();
+    };
+
     const contractKind = createMemo(() => getKindForAsset(props.asset));
     const refundDataTrigger = createMemo<
         | {
@@ -423,6 +452,10 @@ export const RefundEvm = (props: {
     >(() => {
         const txSigner = transactionSigner();
         if (txSigner === undefined) {
+            return undefined;
+        }
+
+        if (!networkValid()) {
             return undefined;
         }
 
