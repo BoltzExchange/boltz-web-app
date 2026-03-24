@@ -117,14 +117,101 @@ hr.spacer {
 }
 
 .fees-dyn {
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
 }
-.fees-dyn > * {
-    flex-grow: 1;
+
+.fees-dyn > .fees-dyn-denom {
     display: flex;
     align-items: center;
-    justify-content: start;
+}
+
+.fees-dyn-right {
+    text-align: right;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--color-white-60);
+
+    .denominator {
+        transform-origin: right center;
+        margin-left: 0.5em;
+    }
+}
+
+.fees-toggle {
+    display: inline;
+    border: none;
+    background: none;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    text-align: right;
+}
+
+@media (hover: hover) {
+    .fees-toggle:hover {
+        color: var(--color-text);
+    }
+}
+
+.fees-toggle-icon {
+    display: inline-flex;
+    vertical-align: middle;
+    font-size: 0.85em;
+}
+
+.fees-details-shell {
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: hidden;
+    transition: grid-template-rows 0.3s ease-out;
+}
+
+.fees-details-shell.is-expanded {
+    grid-template-rows: 1fr;
+    overflow: visible;
+}
+
+.fees-details-inner {
+    min-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.85s ease-out;
+}
+
+.fees-details-shell.is-expanded .fees-details-inner {
+    overflow: visible;
+    opacity: 1;
+}
+
+.fees-details {
+    display: block;
+    text-align: right;
+    padding: 0.1rem 0 0.1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fees-details-shell {
+        transition: none;
+    }
+
+    .fees-details-inner {
+        transition: none;
+        opacity: 1;
+    }
+}
+
+.fees-abbrev-underline {
+    border-bottom: 1px dashed currentColor;
+    cursor: pointer;
+}
+
+.fees-oft-line {
+    display: block;
+    text-align: right;
 }
 .fees-dyn,
 .icons > div {
@@ -359,6 +446,7 @@ textarea.invalid {
 }
 .fees-dyn label {
     display: block;
+    margin: 0;
 }
 #receiveAmount,
 #sendAmount {
@@ -579,12 +667,13 @@ textarea.invalid {
 [data-denominator="usd"] {
     background-image: url(../assets/usd.svg);
     background-position: center;
+    transform: scale(1.5);
 }
 [data-denominator="USDT"] {
     margin: 2px;
     background-image: none;
     background-color: var(--color-text);
-    width: 10px;
+    width: 13px;
     height: 10px;
     background-position: center;
     transform: scale(1.35) translateY(1px);

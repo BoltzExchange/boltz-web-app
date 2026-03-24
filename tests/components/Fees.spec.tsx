@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@solidjs/testing-library";
+import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import Fees from "../../src/components/Fees";
@@ -15,6 +15,7 @@ import {
     calculateSendAmount,
 } from "../../src/utils/calculate";
 import * as solanaUtils from "../../src/utils/chains/solana";
+import * as fiat from "../../src/utils/fiat";
 import { weiToSatoshi } from "../../src/utils/rootstock";
 import {
     TestComponent,
@@ -36,6 +37,12 @@ const setPairAssets = (fromAsset: string, toAsset: string) => {
 
 describe("Fees component", () => {
     beforeEach(() => {
+        vi.spyOn(fiat, "getBtcPriceFailover").mockResolvedValue(
+            BigNumber(100_000),
+        );
+        vi.spyOn(fiat, "getGasTokenPriceFailover").mockResolvedValue(
+            BigNumber(200),
+        );
         vi.spyOn(web3Context, "useWeb3Signer").mockImplementation(
             () =>
                 mockUseWeb3Signer() as ReturnType<
@@ -316,6 +323,8 @@ describe("Fees component", () => {
         signals.setPair(mockPair);
         signals.setSendAmount(BigNumber(2000));
 
+        fireEvent.click(screen.getByTestId("fees-toggle"));
+
         await waitFor(() => {
             expect(screen.getByTestId("boltz-fee").textContent).toEqual(
                 "0.00000015",
@@ -362,11 +371,102 @@ describe("Fees component", () => {
         signals.setPair(mockPair);
         signals.setSendAmount(BigNumber(2_000_000));
 
+        fireEvent.click(screen.getByTestId("fees-toggle"));
+
         await waitFor(() => {
             expect(screen.getByTestId("legacy-mesh-fee").textContent).toEqual(
                 "0.030000",
             );
         });
+    });
+
+    test("should hide the OFT fee row for pure post-OFT routes", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: BTC,
+            toAsset: "USDT0-ETH",
+            hasPreOft: false,
+            hasPostOft: true,
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            oftMessagingFeeToken: "ETH",
+            oftTransferFeeAsset: undefined,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000_000_000_000n),
+            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(0)),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.queryByTestId("oft-messaging-fee")).toBeNull();
+        });
+    });
+
+    test("should show the OFT fee row when any pre-OFT fee exists", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: "USDT0-POL",
+            toAsset: "USDT0-ETH",
+            hasPreOft: true,
+            hasPostOft: true,
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            oftMessagingFeeToken: "POL",
+            oftTransferFeeAsset: undefined,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000_000_000_000n),
+            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(0)),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
+                "0.001",
+            );
+        });
+        expect(screen.getByText(/POL$/)).not.toBeNull();
     });
 
     test("should display the Solana token account fee when creation is required", async () => {
@@ -419,10 +519,13 @@ describe("Fees component", () => {
                     .textContent,
             ).not.toBeNull();
         });
+
         expect(
-            screen.getByTestId("solana-token-account-creation-fee")
-                .parentElement?.textContent,
-        ).toContain(`${i18n.en.solana_token_account_fee_label}:`);
+            screen.getByTestId("solana-token-account-creation-fee"),
+        ).toBeDefined();
+        expect(
+            screen.getByText(i18n.en.solana_token_account_fee_abbrev),
+        ).toBeDefined();
 
         expect(solanaUtils.shouldCreateSolanaTokenAccount).toHaveBeenCalledWith(
             mockPair.toAsset,
@@ -478,6 +581,8 @@ describe("Fees component", () => {
                     SwapType.Submarine,
                 ),
             );
+
+            fireEvent.click(await screen.findByTestId("fees-toggle"));
 
             const networkFeeElement = (await screen.findByTestId("network-fee"))
                 .textContent;

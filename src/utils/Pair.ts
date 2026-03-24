@@ -347,6 +347,10 @@ export default class Pair {
         return RequiredInput.Address;
     }
 
+    public get hasPreOft() {
+        return this.preOft !== undefined;
+    }
+
     public get hasPostOft() {
         return this.postOft !== undefined;
     }

@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import log from "loglevel";
 
 import { config } from "../config";
-import { BTC } from "../consts/Assets";
+import { BTC, isUsdt0Asset, requireTokenConfig } from "../consts/Assets";
 import { Currency } from "../consts/Enums";
 import { satToBtc } from "./denomination";
 import { formatError } from "./errors";
@@ -58,6 +58,9 @@ const gasTokenPriceLookups: Record<string, PriceLookupConfig> = {
     },
     SEI: {
         coinGeckoId: "sei",
+    },
+    SOL: {
+        coinGeckoId: "solana",
     },
     SGB: {
         coinGeckoId: "songbird",
@@ -319,6 +322,23 @@ export const convertToFiat = (amount: BigNumber, rate: BigNumber) => {
 
     const btcAmount = satToBtc(amount);
     return btcAmount.multipliedBy(BigNumber(rate));
+};
+
+export const convertAssetFeeToUsd = (
+    amount: BigNumber,
+    asset: string,
+    btcUsdRate: BigNumber,
+): BigNumber => {
+    if (amount.isNaN() || amount.lte(0)) {
+        return BigNumber(0);
+    }
+
+    if (isUsdt0Asset(asset)) {
+        const { decimals } = requireTokenConfig(asset);
+        return amount.div(BigNumber(10).pow(decimals));
+    }
+
+    return convertToFiat(amount, btcUsdRate);
 };
 
 export const usdCentsToWei = (

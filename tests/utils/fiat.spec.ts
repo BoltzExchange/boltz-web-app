@@ -1,8 +1,10 @@
 import { BigNumber } from "bignumber.js";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
+import { USDT0 } from "../../src/consts/Assets";
 import { Currency } from "../../src/consts/Enums";
 import {
+    convertAssetFeeToUsd,
     convertToFiat,
     getBtcPriceKraken,
     getBtcPriceMempool,
@@ -114,6 +116,7 @@ describe("fiat", () => {
     test("should report whether a gas token has a USD price lookup", () => {
         expect(hasGasTokenPriceLookup("POL")).toBe(true);
         expect(hasGasTokenPriceLookup("RBTC")).toBe(true);
+        expect(hasGasTokenPriceLookup("SOL")).toBe(true);
         expect(hasGasTokenPriceLookup("BTCN")).toBe(false);
     });
 
@@ -147,6 +150,31 @@ describe("fiat", () => {
         expect(result).toBeInstanceOf(BigNumber);
         expect(result.toNumber()).toBe(expected.toNumber());
     });
+
+    test.each([
+        [
+            "BTC fee in sats",
+            BigNumber(100_000_000),
+            "BTC",
+            BigNumber(50_000),
+            BigNumber(50_000),
+        ],
+        [
+            "USDT0 fee in token units",
+            BigNumber(30_000),
+            USDT0,
+            BigNumber(50_000),
+            BigNumber(0.03),
+        ],
+        ["zero amount", BigNumber(0), USDT0, BigNumber(50_000), BigNumber(0)],
+    ])(
+        "should convert asset fee to USD: %s",
+        (_, amount, asset, btcUsd, expected) => {
+            const result = convertAssetFeeToUsd(amount, asset, btcUsd);
+            expect(result).toBeInstanceOf(BigNumber);
+            expect(result.toNumber()).toBe(expected.toNumber());
+        },
+    );
 
     test.each([
         ["one ether", 350_000, BigNumber(3_500), 1_000_000_000_000_000_000n],
