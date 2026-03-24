@@ -71,16 +71,13 @@ const buildOftDetail = (
     destinationAsset: string,
     position: OftPosition,
 ): OftDetail | undefined => {
-    const destinationChainId =
-        config.assets?.[destinationAsset]?.network?.chainId;
-    if (destinationChainId === undefined) {
+    if (config.assets?.[destinationAsset] === undefined) {
         return undefined;
     }
 
     return {
         sourceAsset,
         destinationAsset,
-        destinationChainId,
         position,
     };
 };
@@ -102,7 +99,12 @@ export const getClaimAddress = async (
     gasPrice: bigint;
     claimAddress: string;
 }> => {
-    if (isEvmAsset(assetReceive()) || isEvmAsset(assetSend())) {
+    if (
+        isEvmAsset(assetReceive()) ||
+        isEvmAsset(assetSend()) ||
+        isUsdt0Asset(assetReceive()) ||
+        isUsdt0Asset(assetSend())
+    ) {
         if (assetReceive() === RBTC && signer() !== undefined) {
             const [balance, gasPrice] = await Promise.all([
                 signer().provider.getBalance(await signer().getAddress()),
@@ -129,7 +131,9 @@ export const getClaimAddress = async (
         } else if (assetSend() !== RBTC) {
             const evmSide = isEvmAsset(assetSend())
                 ? assetSend()
-                : assetReceive();
+                : isEvmAsset(assetReceive())
+                  ? assetReceive()
+                  : USDT0;
 
             const gasSigner = getGasAbstractionSigner(
                 isUsdt0Asset(evmSide) ? USDT0 : evmSide,
@@ -202,6 +206,7 @@ const CreateButton = () => {
     } = useCreateContext();
     const {
         signer,
+        connectedWallet,
         providers,
         getEtherSwap,
         getErc20Swap,
@@ -340,7 +345,9 @@ const CreateButton = () => {
 
     const getOriginalDestination = () =>
         originalDestination() ||
-        (isEvmAsset(assetReceive()) ? onchainAddress() : undefined);
+        (assetReceive() !== "LN" && onchainAddress() !== ""
+            ? onchainAddress()
+            : undefined);
 
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
@@ -702,7 +709,7 @@ const CreateButton = () => {
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
-                        ? signer()?.address
+                        ? (signer()?.address ?? connectedWallet()?.address)
                         : undefined,
                 derivationPath:
                     swapType() !== SwapType.Submarine &&

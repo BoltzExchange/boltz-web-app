@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { base58, hex } from "@scure/base";
 import {
     Contract,
     type ContractRunner,
@@ -10,9 +12,12 @@ import {
     zeroPadValue,
 } from "ethers";
 import log from "loglevel";
+import { getUsdt0MeshKind } from "src/consts/Assets";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
+import { NetworkTransport, Usdt0MeshKind } from "../../configs/base";
+import type { OftRoute } from "../Pair";
 import { formatError } from "../errors";
 import {
     type Provider,
@@ -20,7 +25,6 @@ import {
     requireRpcUrls,
 } from "../provider";
 
-// TODO: legacy mesh is not supported yet
 // TODO: review quote methods
 
 type OftContract = {
@@ -182,6 +186,11 @@ type OftContractInstance = {
 
 let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
 
+export const resetOftStateForTests = () => {
+    oftDeploymentsPromise = undefined;
+    providerCache.clear();
+};
+
 const type3Option = 3;
 const executorWorkerId = 1;
 const optionTypeNativeDrop = 2;
@@ -215,22 +224,31 @@ const getOftDeployments = (): Promise<OftRegistry> => {
     return oftDeploymentsPromise;
 };
 
-const getOftChains = (tokenConfig?: OftTokenConfig): OftChain[] => {
-    if (!tokenConfig) {
-        return [];
-    }
-
-    return tokenConfig.native;
-};
-
 const getOftChain = async (
-    chainId: number,
+    asset: string,
+    route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftChain | undefined> => {
     const deployments = await getOftDeployments();
     const tokenConfig = deployments[oftName.toLowerCase()];
+    if (tokenConfig === undefined) {
+        return undefined;
+    }
 
-    return getOftChains(tokenConfig).find((chain) => chain.chainId === chainId);
+    const assetConfig = config.assets?.[asset];
+    const meshKind = getUsdt0MeshKind(route.from, route.to);
+    const registryKey: keyof OftTokenConfig =
+        meshKind === Usdt0MeshKind.Legacy ? "legacyMesh" : "native";
+
+    const chains = tokenConfig[registryKey];
+    const assetChainId = assetConfig?.network?.chainId;
+    const assetChainName = assetConfig?.network?.chainName?.toLowerCase();
+    return chains.find(
+        (chain) =>
+            (assetChainId !== undefined && chain.chainId === assetChainId) ||
+            (assetChainName !== undefined &&
+                chain.name.toLowerCase() === assetChainName),
+    );
 };
 
 export const getOftProvider = (sourceAsset: string): Provider => {
@@ -251,41 +269,29 @@ export const getOftProvider = (sourceAsset: string): Provider => {
 };
 
 export const getQuotedOftContract = async (
-    sourceAsset: string,
+    route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftContractInstance> => {
-    const sourceChainId = config.assets?.[sourceAsset]?.network?.chainId;
-    if (!sourceChainId) {
-        throw new Error(`Missing OFT source chain id for asset ${sourceAsset}`);
-    }
-
-    const oftContract = await getOftContract(sourceChainId, oftName);
+    const oftContract = await getOftContract(route, oftName);
     if (!oftContract) {
         throw new Error(
-            `Missing OFT contract for chain ${sourceChainId} and OFT ${oftName}`,
+            `Missing OFT contract for asset ${route.from} and OFT ${oftName}`,
         );
     }
 
-    return createOftContract(oftContract.address, getOftProvider(sourceAsset));
-};
-
-export const getOftLzEid = async (
-    chainId: number,
-    oftName = defaultOftName,
-): Promise<string | undefined> => {
-    const chain = await getOftChain(chainId, oftName);
-    return chain?.lzEid;
+    return createOftContract(oftContract.address, getOftProvider(route.from));
 };
 
 export const getOftContract = async (
-    chainId: number,
+    route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftContract | undefined> => {
-    const chain = await getOftChain(chainId, oftName);
+    const chain = await getOftChain(route.from, route, oftName);
 
     return (
         chain?.contracts.find((contract) => contract.name === "OFT") ??
-        chain?.contracts.find((contract) => contract.name === "OFT Adapter")
+        chain?.contracts.find((contract) => contract.name === "OFT Adapter") ??
+        chain?.contracts.find((contract) => contract.name === "OFT Program")
     );
 };
 
@@ -476,6 +482,80 @@ export const getOftReceivedEventByGuid = async (
 
 const newOptions = (): string => solidityPacked(["uint16"], [type3Option]);
 
+const equalsBytes = (a: Uint8Array, b: Uint8Array) =>
+    a.length === b.length && a.every((byte, index) => byte === b[index]);
+
+const decodeTronBase58Address = (recipient: string): Uint8Array => {
+    const decoded = base58.decode(recipient);
+    if (decoded.length !== 25) {
+        throw new Error(`Invalid Tron recipient address: ${recipient}`);
+    }
+
+    const payload = decoded.subarray(0, 21);
+    const checksum = decoded.subarray(21);
+    const expectedChecksum = sha256(sha256(payload)).slice(0, 4);
+    if (!equalsBytes(checksum, expectedChecksum)) {
+        throw new Error(`Invalid Tron recipient checksum: ${recipient}`);
+    }
+
+    if (payload[0] !== 0x41) {
+        throw new Error(`Invalid Tron recipient prefix: ${recipient}`);
+    }
+
+    return payload.subarray(1);
+};
+
+const encodeRecipient = (
+    transport: NetworkTransport,
+    recipient: string,
+): string => {
+    switch (transport) {
+        case NetworkTransport.Evm:
+            return zeroPadValue(recipient, 32);
+
+        case NetworkTransport.Solana: {
+            if (recipient.startsWith("0x")) {
+                return recipient;
+            }
+
+            const decoded = base58.decode(recipient);
+            if (decoded.length !== 32) {
+                throw new Error(
+                    `Invalid Solana recipient address: ${recipient}`,
+                );
+            }
+
+            return `0x${hex.encode(decoded)}`;
+        }
+
+        case NetworkTransport.Tron:
+            return zeroPadValue(
+                `0x${hex.encode(decodeTronBase58Address(recipient))}`,
+                32,
+            );
+
+        default: {
+            return transport as never;
+        }
+    }
+};
+
+const encodeOftRecipient = (
+    destination: number | string,
+    recipient: string,
+): string => {
+    if (typeof destination !== "string" || recipient === ZeroAddress) {
+        return encodeRecipient(NetworkTransport.Evm, recipient);
+    }
+
+    const recipientFormat =
+        config.assets?.[destination]?.mesh?.recipientFormat ??
+        config.assets?.[destination]?.network?.transport ??
+        NetworkTransport.Evm;
+
+    return encodeRecipient(recipientFormat, recipient);
+};
+
 const addExecutorOption = (
     options: string,
     optionType: number,
@@ -506,27 +586,21 @@ const buildOftExtraOptions = (nativeDrop?: OftNativeDrop): string => {
 };
 
 const createOftSendParam = async (
-    destinationChainId: number,
+    route: OftRoute,
     recipient: string,
     amount: bigint,
-    {
-        oftName = defaultOftName,
-        extraOptions = "0x",
-    }: {
-        oftName?: string;
-        extraOptions?: string;
-    } = {},
+    oftName = defaultOftName,
+    extraOptions = "0x",
 ): Promise<SendParam> => {
-    const lzEid = await getOftLzEid(destinationChainId, oftName);
-    if (!lzEid) {
+    const lzEid = (await getOftChain(route.to, route, oftName))?.lzEid;
+    if (lzEid === undefined) {
         throw new Error(
-            `Missing LayerZero endpoint id for chain ${destinationChainId} and OFT ${oftName}`,
+            `Missing LayerZero endpoint id for route ${route.from} to ${route.to} and OFT ${oftName}`,
         );
     }
-
     return [
         Number(lzEid),
-        zeroPadValue(recipient, 32),
+        encodeOftRecipient(route.to, recipient),
         amount,
         0n,
         extraOptions,
@@ -537,7 +611,7 @@ const createOftSendParam = async (
 
 export const quoteOftSend = async (
     oft: OftContractInstance,
-    destinationChainId: number,
+    route: OftRoute,
     recipient: string,
     amount: bigint,
     { oftName = defaultOftName, nativeDrop }: OftQuoteOptions = {},
@@ -549,13 +623,11 @@ export const quoteOftSend = async (
     oftReceipt: OftReceipt;
 }> => {
     const sendParam = await createOftSendParam(
-        destinationChainId,
+        route,
         recipient,
         amount,
-        {
-            oftName,
-            extraOptions: buildOftExtraOptions(nativeDrop),
-        },
+        oftName,
+        buildOftExtraOptions(nativeDrop),
     );
     const [oftLimit, oftFeeDetails, oftReceipt] =
         await oft.quoteOFT.staticCall(sendParam);
@@ -575,37 +647,30 @@ export const quoteOftSend = async (
 };
 
 export const buildOftSendAlchemyCall = async ({
-    sourceAsset,
-    destinationChainId,
+    route,
     recipient,
     amount,
     refundAddress,
     oftName = defaultOftName,
 }: {
-    sourceAsset: string;
-    destinationChainId: number;
+    route: OftRoute;
     recipient: string;
     amount: bigint;
     refundAddress: string;
     oftName?: string;
 }): Promise<AlchemyCall> => {
-    const sourceChainId = config.assets?.[sourceAsset]?.network?.chainId;
-    if (sourceChainId === undefined) {
-        throw new Error(`missing OFT source chain id for asset ${sourceAsset}`);
-    }
-
-    const oftContract = await getOftContract(sourceChainId, oftName);
+    const oftContract = await getOftContract(route, oftName);
     if (oftContract === undefined) {
         throw new Error(
-            `missing OFT contract for chain ${sourceChainId} and OFT ${oftName}`,
+            `missing OFT contract for asset ${route.from} and OFT ${oftName}`,
         );
     }
 
-    const quotedOft = await getQuotedOftContract(sourceAsset, oftName);
+    const quotedOft = await getQuotedOftContract(route, oftName);
     const { sendParam, msgFee } = await quoteOftSend(
         quotedOft,
-        destinationChainId,
-        recipient,
+        route,
+        recipient ?? ZeroAddress,
         amount,
         { oftName },
     );
@@ -622,8 +687,7 @@ export const buildOftSendAlchemyCall = async ({
 };
 
 export const quoteOftReceiveAmount = async (
-    sourceAsset: string,
-    destinationChainId: number,
+    route: OftRoute,
     amount: bigint,
     options: OftQuoteOptions = {},
 ): Promise<{
@@ -645,10 +709,10 @@ export const quoteOftReceiveAmount = async (
         };
     }
 
-    const oft = await getQuotedOftContract(sourceAsset, options.oftName);
+    const oft = await getQuotedOftContract(route, options.oftName);
     const { msgFee, oftLimit, oftFeeDetails, oftReceipt } = await quoteOftSend(
         oft,
-        destinationChainId,
+        route,
         options.recipient ?? ZeroAddress,
         amount,
         options,
@@ -665,8 +729,7 @@ export const quoteOftReceiveAmount = async (
 };
 
 export const quoteOftAmountInForAmountOut = async (
-    sourceAsset: string,
-    destinationChainId: number,
+    route: OftRoute,
     amountOut: bigint,
     options: OftQuoteOptions = {},
 ): Promise<bigint> => {
@@ -676,40 +739,25 @@ export const quoteOftAmountInForAmountOut = async (
 
     let low = amountOut;
     let high = amountOut;
-    let quote = await quoteOftReceiveAmount(
-        sourceAsset,
-        destinationChainId,
-        high,
-        options,
-    );
+    let quote = await quoteOftReceiveAmount(route, high, options);
 
     let attempts = 0;
     while (quote.amountOut < amountOut) {
         low = high + 1n;
         high *= 2n;
-        quote = await quoteOftReceiveAmount(
-            sourceAsset,
-            destinationChainId,
-            high,
-            options,
-        );
+        quote = await quoteOftReceiveAmount(route, high, options);
         attempts += 1;
 
         if (attempts > 32) {
             throw new Error(
-                `Could not quote OFT amount for ${sourceAsset} to ${destinationChainId}`,
+                `Could not quote OFT amount for ${route.from} to ${route.to}`,
             );
         }
     }
 
     while (low < high) {
         const mid = low + (high - low) / 2n;
-        const midQuote = await quoteOftReceiveAmount(
-            sourceAsset,
-            destinationChainId,
-            mid,
-            options,
-        );
+        const midQuote = await quoteOftReceiveAmount(route, mid, options);
 
         if (midQuote.amountOut >= amountOut) {
             high = mid;

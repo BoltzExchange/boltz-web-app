@@ -1,15 +1,40 @@
+import { base58, hex } from "@scure/base";
+
+import { config as runtimeConfig } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
+
 const {
     decodeExecutorNativeAmountExceedsCapError,
     getOftContract,
     getOftReceivedEventByGuid,
     isExecutorNativeAmountExceedsCapError,
     quoteOftSend,
+    resetOftStateForTests,
 } = await import("../../src/utils/oft/oft");
 
+const getOftRoute = (from: string, to = from) => ({
+    from,
+    to,
+});
+
+const originalAssets = structuredClone(runtimeConfig.assets ?? {});
+const originalNetwork = runtimeConfig.network;
+
 describe("oft", () => {
+    beforeAll(() => {
+        runtimeConfig.assets = structuredClone(mainnetConfig.assets);
+        runtimeConfig.network = mainnetConfig.network;
+    });
+
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
+        resetOftStateForTests();
+    });
+
+    afterAll(() => {
+        runtimeConfig.assets = originalAssets;
+        runtimeConfig.network = originalNetwork;
     });
 
     test("should include native drop options in OFT send params", async () => {
@@ -21,6 +46,7 @@ describe("oft", () => {
                     usdt0: {
                         native: [
                             {
+                                name: "Ethereum",
                                 chainId: 1,
                                 lzEid: "30101",
                                 contracts: [
@@ -33,6 +59,7 @@ describe("oft", () => {
                                 ],
                             },
                             {
+                                name: "Polygon PoS",
                                 chainId: 137,
                                 lzEid: "30109",
                                 contracts: [
@@ -64,7 +91,7 @@ describe("oft", () => {
 
         const { sendParam, msgFee } = await quoteOftSend(
             oft as never,
-            137,
+            getOftRoute("USDT0-ETH", "USDT0-POL"),
             "0x2000000000000000000000000000000000000000",
             100n,
             {
@@ -88,11 +115,115 @@ describe("oft", () => {
         );
         expect(msgFee).toEqual([5n, 0n]);
 
-        await expect(getOftContract(1)).resolves.toEqual({
-            name: "OFT Adapter",
-            address: "0x1000000000000000000000000000000000000001",
+        await expect(getOftContract(getOftRoute("USDT0-ETH"))).resolves.toEqual(
+            {
+                name: "OFT Adapter",
+                address: "0x1000000000000000000000000000000000000001",
+                explorer: "",
+            },
+        );
+    });
+
+    test("should resolve legacy mesh assets by configured endpoint id", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [],
+                        legacyMesh: [
+                            {
+                                name: "Tron",
+                                lzEid: "30420",
+                                contracts: [
+                                    {
+                                        name: "OFT",
+                                        address:
+                                            "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                }),
+            }),
+        );
+
+        await expect(
+            getOftContract(getOftRoute("USDT0-TRON")),
+        ).resolves.toEqual({
+            name: "OFT",
+            address: "TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt",
             explorer: "",
         });
+    });
+
+    test("should encode Solana recipients as 32-byte public keys", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [],
+                        legacyMesh: [
+                            {
+                                name: "Solana",
+                                lzEid: "30168",
+                                contracts: [
+                                    {
+                                        name: "OFT Store",
+                                        address:
+                                            "HyXJcgYpURfDhgzuyRL7zxP4FhLg7LZQMeDrR4MXZcMN",
+                                        explorer: "",
+                                    },
+                                    {
+                                        name: "OFT Program",
+                                        address:
+                                            "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                }),
+            }),
+        );
+
+        await expect(getOftContract(getOftRoute("USDT0-SOL"))).resolves.toEqual(
+            {
+                name: "OFT Program",
+                address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
+                explorer: "",
+            },
+        );
+
+        const oft = {
+            quoteOFT: {
+                staticCall: vi
+                    .fn()
+                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            },
+            quoteSend: {
+                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
+            },
+            send: vi.fn(),
+        };
+        const recipient = "11111111111111111111111111111111";
+
+        const { sendParam } = await quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0-ETH", "USDT0-SOL"),
+            recipient,
+            100n,
+        );
+
+        expect(sendParam[1]).toEqual(
+            `0x${hex.encode(base58.decode(recipient))}`,
+        );
     });
 
     test("should fetch the received event by guid", async () => {

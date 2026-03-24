@@ -210,9 +210,19 @@
     @include network-primary-icon(vars.$sei_icon);
 }
 
+[data-network="solana"] {
+    @include network-badge(vars.$solana_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$solana_icon);
+}
+
 [data-network="stable"] {
     @include network-badge(vars.$stable_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$stable_icon);
+}
+
+[data-network="tron"] {
+    @include network-badge(vars.$tron_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$tron_icon);
 }
 
 [data-network="unichain"] {

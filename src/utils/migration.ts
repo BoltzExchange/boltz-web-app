@@ -131,8 +131,7 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
         if (
             detail === undefined ||
             typeof detail.sourceAsset !== "string" ||
-            typeof detail.destinationAsset !== "string" ||
-            typeof detail.destinationChainId !== "number"
+            typeof detail.destinationAsset !== "string"
         ) {
             return undefined;
         }
@@ -140,19 +139,16 @@ const migrateSwapOftShape = (swap: Record<string, unknown>): SomeSwap => {
         return {
             sourceAsset: detail.sourceAsset,
             destinationAsset: detail.destinationAsset,
-            destinationChainId: detail.destinationChainId,
             position,
         };
     };
 
     const migratedOft =
         typeof oft.sourceAsset === "string" &&
-        typeof oft.destinationAsset === "string" &&
-        typeof oft.destinationChainId === "number"
+        typeof oft.destinationAsset === "string"
             ? {
                   sourceAsset: oft.sourceAsset,
                   destinationAsset: oft.destinationAsset,
-                  destinationChainId: oft.destinationChainId,
                   position:
                       oft.position === OftPosition.Pre
                           ? OftPosition.Pre

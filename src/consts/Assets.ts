@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { NetworkTransport, Usdt0MeshKind } from "../configs/base";
 import { AssetKind } from "./AssetKind";
 
 export { AssetKind };
@@ -50,8 +51,37 @@ export const isUsdt0Variant = (asset: string): boolean =>
 export const isUsdt0Asset = (asset: string): boolean =>
     asset === USDT0 || isUsdt0Variant(asset);
 
+export const getNetworkTransport = (
+    asset: string,
+): NetworkTransport | undefined => {
+    const transport = config.assets?.[asset]?.network?.transport;
+    if (transport !== undefined) {
+        return transport;
+    }
+
+    return config.assets?.[asset]?.network?.chainId !== undefined
+        ? NetworkTransport.Evm
+        : undefined;
+};
+
 export const getCanonicalAsset = (asset: string): string =>
     isUsdt0Variant(asset) ? USDT0 : asset;
+
+export const getUsdt0MeshKind = (from: string, to?: string): Usdt0MeshKind => {
+    const meshKinds = [from, to]
+        .filter((candidate): candidate is string => candidate !== undefined)
+        .map(
+            (candidate) =>
+                config.assets?.[candidate]?.mesh?.kind ?? Usdt0MeshKind.Native,
+        );
+
+    return meshKinds.includes(Usdt0MeshKind.Legacy)
+        ? Usdt0MeshKind.Legacy
+        : Usdt0MeshKind.Native;
+};
+
+export const isLegacyUsdt0Asset = (asset: string): boolean =>
+    isUsdt0Asset(asset) && getUsdt0MeshKind(asset) === Usdt0MeshKind.Legacy;
 
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
@@ -93,9 +123,22 @@ export const isEvmAsset = (asset: string): boolean => {
         return false;
     }
 
+    if (assetConfig.type === AssetKind.EVMNative) {
+        return true;
+    }
+
     return (
-        assetConfig.type === AssetKind.EVMNative ||
-        assetConfig.type === AssetKind.ERC20
+        assetConfig.type === AssetKind.ERC20 &&
+        getNetworkTransport(asset) === NetworkTransport.Evm
+    );
+};
+
+export const isWalletConnectableAsset = (asset: string): boolean => {
+    const transport = getNetworkTransport(asset);
+    return (
+        transport === NetworkTransport.Evm ||
+        transport === NetworkTransport.Solana ||
+        transport === NetworkTransport.Tron
     );
 };
 

@@ -95,7 +95,6 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
                 },
             },
         ];
@@ -106,7 +105,6 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
                     position: OftPosition.Post,
                 },
             },
@@ -121,7 +119,6 @@ describe("migration", () => {
                     pre: {
                         sourceAsset: "USDT0-POL",
                         destinationAsset: USDT0,
-                        destinationChainId: 42161,
                     },
                 },
             },
@@ -131,7 +128,6 @@ describe("migration", () => {
                     post: {
                         sourceAsset: USDT0,
                         destinationAsset: "USDT0-ETH",
-                        destinationChainId: 1,
                     },
                 },
             },
@@ -143,7 +139,6 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: "USDT0-POL",
                     destinationAsset: USDT0,
-                    destinationChainId: 42161,
                     position: OftPosition.Pre,
                 },
             },
@@ -152,7 +147,6 @@ describe("migration", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
                     position: OftPosition.Post,
                 },
             },

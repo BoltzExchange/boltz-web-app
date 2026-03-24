@@ -35,7 +35,6 @@ export type DexDetail = {
 export type OftStageDetail = {
     sourceAsset: string;
     destinationAsset: string;
-    destinationChainId: number;
 };
 
 export const enum OftPosition {

@@ -5,7 +5,8 @@ import { createEffect, onCleanup, onMount } from "solid-js";
 
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import { config } from "../config";
-import { getTokenAddress } from "../consts/Assets";
+import { NetworkTransport } from "../configs/base";
+import { getNetworkTransport, getTokenAddress } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
@@ -209,19 +210,18 @@ export const SwapExecutionWorker = () => {
         swapId: string,
         destinationAsset: string,
         guid: string,
+        sourceAsset: string,
     ) => {
         const destinationChainId =
             config.assets?.[destinationAsset]?.network?.chainId;
-        if (destinationChainId === undefined) {
-            throw new Error(
-                `missing OFT destination chain id for asset: ${destinationAsset}`,
-            );
-        }
-
-        const oftContract = await getOftContract(destinationChainId);
+        const oftRoute = {
+            from: destinationAsset,
+            to: sourceAsset,
+        };
+        const oftContract = await getOftContract(oftRoute);
         if (oftContract === undefined) {
             throw new Error(
-                `missing OFT contract for chain: ${destinationChainId}`,
+                `missing OFT contract for asset: ${destinationAsset}`,
             );
         }
 
@@ -292,17 +292,15 @@ export const SwapExecutionWorker = () => {
             }),
         );
 
-        const sourceChainId =
-            config.assets?.[currentSwap.oft.sourceAsset]?.network?.chainId;
-        if (sourceChainId === undefined) {
-            throw new Error(
-                `missing OFT source chain id for asset: ${currentSwap.oft.sourceAsset}`,
-            );
-        }
-
-        const sourceOft = await getOftContract(sourceChainId);
+        const oftRoute = {
+            from: currentSwap.oft.sourceAsset,
+            to: currentSwap.oft.destinationAsset,
+        };
+        const sourceOft = await getOftContract(oftRoute);
         if (sourceOft === undefined) {
-            throw new Error(`missing OFT contract for chain: ${sourceChainId}`);
+            throw new Error(
+                `missing OFT contract for asset: ${currentSwap.oft.sourceAsset}`,
+            );
         }
 
         const sendReceipt = await waitForOftSendReceipt(
@@ -315,15 +313,24 @@ export const SwapExecutionWorker = () => {
         }
 
         const sourceProvider = getOftProvider(currentSwap.oft.sourceAsset);
+        const sourceTransport = getNetworkTransport(
+            currentSwap.oft.sourceAsset,
+        );
+        if (sourceTransport !== NetworkTransport.Evm) {
+            throw new Error(
+                `OFT send decoding requires an EVM source asset, got ${String(sourceTransport)}`,
+            );
+        }
         const sourceContract = createOftContract(
             sourceOft.address,
             sourceProvider,
         );
-        const { guid } = getOftSentEvent(
+        const guid = getOftSentEvent(
             sourceContract,
             sendReceipt,
             sourceOft.address,
-        );
+        ).guid;
+
         log.info(
             "Swap execution decoded OFT send guid",
             getSwapExecutionLogContext(currentSwap.id, {
@@ -335,6 +342,7 @@ export const SwapExecutionWorker = () => {
             currentSwap.id,
             currentSwap.oft.destinationAsset,
             guid,
+            currentSwap.oft.sourceAsset,
         );
         if (receivedEvent === undefined) {
             return;

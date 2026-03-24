@@ -2,17 +2,33 @@
 import { expect, test } from "vitest";
 
 import { JsonRpcProvider } from "../../node_modules/ethers/lib.commonjs/providers/provider-jsonrpc.js";
+import { NetworkTransport } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
 
 const hasLocalhostHost = (rpcUrl: string): boolean => {
     return new URL(rpcUrl).hostname === "localhost";
 };
 
+const getAssetTransport = (asset: string): NetworkTransport | undefined => {
+    const network = config.assets[asset]?.network;
+    if (network?.transport !== undefined) {
+        return network.transport;
+    }
+
+    return network?.chainId !== undefined ? NetworkTransport.Evm : undefined;
+};
+
 const usdt0VariantRpcEndpoints = Object.entries(config.assets).flatMap(
     ([asset, assetConfig]) => {
         const network = assetConfig.network;
 
-        if (!asset.startsWith("USDT0-") || network === undefined) {
+        if (
+            !asset.startsWith("USDT0-") ||
+            network === undefined ||
+            getAssetTransport(asset) !== NetworkTransport.Evm ||
+            network.chainId === undefined ||
+            network.rpcUrls === undefined
+        ) {
             return [];
         }
 
