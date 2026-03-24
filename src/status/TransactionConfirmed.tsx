@@ -586,7 +586,7 @@ const claimErc20ViaRouterOft = async (
         const tokenContract = createTokenContract(oft.sourceAsset, signer);
         const approveTx = await tokenContract.approve.populateTransaction(
             oftContract.address,
-            BigInt(tradeQuote.quote),
+            tradeAmountIn,
         );
         if (
             typeof approveTx.to !== "string" ||
