@@ -77,9 +77,8 @@ describe("BlockExplorerLink", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
                 },
-            } as SomeSwap);
+            } as unknown as SomeSwap);
 
             render(
                 () => (
@@ -110,7 +109,7 @@ describe("BlockExplorerLink", () => {
                 lockupDetails: {
                     lockupAddress: "bc1",
                 },
-            } as ChainSwap);
+            } as unknown as ChainSwap);
 
             render(
                 () => <BlockExplorerLink swap={swap} swapStatus={() => ""} />,
@@ -170,7 +169,6 @@ describe("BlockExplorerLink", () => {
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
-                    destinationChainId: 1,
                 },
                 lockupDetails: {
                     lockupAddress: "bc1",

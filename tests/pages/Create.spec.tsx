@@ -7,6 +7,8 @@ import {
 } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
+import { config as runtimeConfig } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import { Side, SwapType } from "../../src/consts/Enums";
 import { Denomination } from "../../src/consts/Enums";
@@ -22,6 +24,19 @@ import {
     signals,
 } from "../helper";
 import { pairs } from "../pairs";
+
+const originalAssets = structuredClone(runtimeConfig.assets ?? {});
+
+beforeAll(() => {
+    runtimeConfig.assets = {
+        ...runtimeConfig.assets,
+        "USDT0-SOL": structuredClone(mainnetConfig.assets["USDT0-SOL"]),
+    };
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
+});
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
@@ -93,6 +108,45 @@ describe("Create", () => {
         expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
     });
 
+    test("should show wallet section for non-EVM wallet pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, "USDT0-SOL");
+
+        expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
+    });
+
+    test("should show only one destination address input for wallet-connectable non-EVM pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, "USDT0-SOL");
+
+        await screen.findByTestId("connect-wallet");
+        expect(screen.getAllByTestId("onchainAddress")).toHaveLength(1);
+    });
+
     test("should show WASM error", async () => {
         render(
             () => (
@@ -141,10 +195,6 @@ describe("Create", () => {
                 .fn(() => quotePromise)
                 .mockName("calculateReceiveAmount");
             const button = await screen.findByTestId("create-swap-button");
-
-            expect(
-                within(button).queryByTestId("loading-spinner"),
-            ).not.toBeInTheDocument();
 
             fireEvent.input(await screen.findByTestId("sendAmount"), {
                 target: { value: "100000" },

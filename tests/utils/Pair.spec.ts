@@ -308,6 +308,26 @@ describe("Pair", () => {
         expect(creationData?.to).toBe(BTC);
     });
 
+    test("should cache OFT transfer fees in reverse quotes for post-OFT pairs", async () => {
+        quoteOftAmountInForAmountOutMock.mockResolvedValue(1_030n);
+        quoteOftReceiveAmountMock.mockResolvedValue(
+            makeOftQuote({
+                amountIn: 1_030n,
+                amountOut: 1_000n,
+                msgFee: 0n,
+            }),
+        );
+
+        const pair = new Pair(pairs, LN, "USDT0-POL");
+        const sendAmount = await pair.calculateSendAmount(BigNumber(1_000), 0);
+
+        expect(sendAmount.toNumber()).toBe(1_030);
+        expect(pair.oftTransferFeeFromLatestQuote(sendAmount)?.toNumber()).toBe(
+            30,
+        );
+        expect(pair.oftTransferFeeAsset).toBe("USDT0-POL");
+    });
+
     test("should include OFT native drop costs in post-OFT receive quotes", async () => {
         getGasTopUpNativeAmountMock.mockResolvedValue(77n);
         quoteDexAmountOutMock.mockResolvedValue([
@@ -316,15 +336,14 @@ describe("Pair", () => {
                 data: { route: "native-fee" },
             },
         ]);
-        quoteOftReceiveAmountMock.mockImplementation(
-            (_sourceAsset, _destinationChainId, amount) =>
-                Promise.resolve(
-                    makeOftQuote({
-                        amountIn: amount,
-                        amountOut: amount,
-                        msgFee: 25n,
-                    }),
-                ),
+        quoteOftReceiveAmountMock.mockImplementation((_route, amount) =>
+            Promise.resolve(
+                makeOftQuote({
+                    amountIn: amount,
+                    amountOut: amount,
+                    msgFee: 25n,
+                }),
+            ),
         );
 
         const pair = new Pair(pairs, LN, "USDT0-POL");
@@ -340,8 +359,10 @@ describe("Pair", () => {
 
         expect(receiveAmount.toNumber()).toBe(900);
         expect(quoteOftReceiveAmountMock).toHaveBeenCalledWith(
-            USDT0,
-            137,
+            {
+                from: USDT0,
+                to: "USDT0-POL",
+            },
             1000n,
             {
                 recipient,
@@ -365,7 +386,7 @@ describe("Pair", () => {
             },
         ]);
         quoteOftReceiveAmountMock.mockImplementation(
-            (_sourceAsset, _destinationChainId, amount, options) => {
+            (_route, amount, options) => {
                 if (options?.nativeDrop !== undefined) {
                     throw {
                         data: "0x0084ce020000000000000000000000000000000000000000000000000c49bf8c0491425000000000000000000000000000000000000000000000000002ea11e32ad50000",
