@@ -12,6 +12,7 @@ import {
     type AssetType,
     LBTC,
     type RefundableAssetType,
+    isLiquidAsset,
     refundableAssets,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -25,6 +26,7 @@ import type { deriveKeyFn } from "../context/Global";
 import secp from "../lazy/secp";
 import {
     blockTimeMinutes,
+    getAddressUTXOs,
     getBlockTipHeight,
     getSwapUTXOs,
 } from "./blockchain";
@@ -49,9 +51,12 @@ import type { ECKeys } from "./ecpair";
 import { formatError } from "./errors";
 import { getFeeEstimationsFailover } from "./fees";
 import { parseBlindingKey, parsePrivateKey } from "./helper";
+import { deriveTempLiquidWallet } from "./liquidWallet";
+import type { RescueFile } from "./rescueFile";
 import {
     type ChainSwap,
     type ReverseSwap,
+    SideSwapStatus,
     type SomeSwap,
     type SubmarineSwap,
     isEvmSwap,
@@ -64,6 +69,7 @@ export enum RescueAction {
     Refund = "refund",
     Pending = "pending",
     Failed = "failed",
+    SweepTempWallet = "sweepTempWallet",
 }
 
 export const enum RefundType {
@@ -634,4 +640,64 @@ export const getTimeoutEta = (
     const blocksRemaining = timeoutBlockHeight - currentBlockHeight;
     const secondsRemaining = blocksRemaining * blockTimeMinutes[asset] * 60;
     return Math.floor(Date.now() / 1000) + secondsRemaining;
+};
+
+/**
+ * For a completed Boltz swap that routed through a SideSwap temp wallet,
+ * check if there are still UTXOs sitting at the temp wallet address.
+ * Returns the temp wallet address if UTXOs are detected, undefined otherwise.
+ */
+export const checkTempWalletForUtxos = async (
+    rescueFile: RescueFile,
+    swap: SomeSwap,
+): Promise<string | undefined> => {
+    const castSwap = swap as ReverseSwap | ChainSwap;
+    const keyIndex = castSwap.claimPrivateKeyIndex;
+
+    if (keyIndex === undefined) return undefined;
+    if (!isLiquidAsset(swap.assetReceive)) return undefined;
+
+    try {
+        const wallet = deriveTempLiquidWallet(rescueFile, keyIndex);
+        const utxos = await getAddressUTXOs(LBTC, wallet.address);
+        if (utxos.length > 0) {
+            return wallet.address;
+        }
+    } catch (e) {
+        log.debug(`Temp wallet check failed for swap ${swap.id}:`, e);
+    }
+
+    return undefined;
+};
+
+/**
+ * Scan restored swaps for stuck temp wallet UTXOs and inject sideswap
+ * detail so the recovery UI can handle them.
+ */
+export const enrichSwapsWithTempWalletData = async (
+    rescueFile: RescueFile,
+    swaps: SomeSwap[],
+): Promise<SomeSwap[]> => {
+    return await Promise.all(
+        swaps.map(async (swap) => {
+            if (swap.sideswap !== undefined) return swap;
+
+            const tempAddr = await checkTempWalletForUtxos(rescueFile, swap);
+            if (!tempAddr) return swap;
+
+            log.info(`Found stuck UTXOs at temp wallet for swap ${swap.id}`);
+
+            return {
+                ...swap,
+                sideswap: {
+                    baseAssetId: "",
+                    quoteAssetId: "",
+                    userAddress: "",
+                    quoteAmountEstimate: 0,
+                    status: SideSwapStatus.Failed,
+                    error: "Funds detected at intermediate Liquid address",
+                },
+            };
+        }),
+    );
 };

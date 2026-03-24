@@ -8,8 +8,10 @@ import { createEffect, createSignal, on, onMount } from "solid-js";
 import { config } from "../config";
 import {
     BTC,
+    LBTC,
     RBTC,
     USDT0,
+    type AssetType,
     getCanonicalAsset,
     isEvmAsset,
     isUsdt0Asset,
@@ -62,6 +64,7 @@ import {
     createSubmarine,
 } from "../utils/swapCreator";
 import { deriveTempLiquidWallet } from "../utils/liquidWallet";
+import type { newKeyFn } from "../context/Global";
 import { validateResponse } from "../utils/validation";
 import LoadingSpinner from "./LoadingSpinner";
 import { getMagicRoutingHintSavedFees } from "./OptimizedRoute";
@@ -91,9 +94,7 @@ const buildOftDetail = (
 const buildSideSwapDetail = (
     pairInstance: Pair,
     userAddress: string,
-    swapData: SomeSwap,
     receiveAmountEstimate: number,
-    rescueFileData: { mnemonic: string },
 ): SideSwapDetail | undefined => {
     if (!pairInstance.hasSideSwapHop) {
         return undefined;
@@ -104,20 +105,10 @@ const buildSideSwapDetail = (
         return undefined;
     }
 
-    const claimKeyIndex =
-        "claimPrivateKeyIndex" in swapData
-            ? (swapData as { claimPrivateKeyIndex?: number })
-                  .claimPrivateKeyIndex ?? 0
-            : 0;
-
-    const tempWallet = getTempClaimWallet(rescueFileData, claimKeyIndex);
-
     return {
         baseAssetId: ssHop.sideswapDetails.baseAssetId,
         quoteAssetId: ssHop.sideswapDetails.quoteAssetId,
         userAddress,
-        tempKeyIndex: tempWallet.keyIndex,
-        tempAddress: tempWallet.address,
         quoteAmountEstimate: receiveAmountEstimate,
         status: SideSwapStatus.Pending,
     };
@@ -189,22 +180,6 @@ export const getClaimAddress = async (
         gasPrice: 0n,
         gasAbstraction: GasAbstractionType.None,
         claimAddress: onchainAddress(),
-    };
-};
-
-export type TempWalletInfo = {
-    keyIndex: number;
-    address: string;
-};
-
-export const getTempClaimWallet = (
-    rescueFile: { mnemonic: string },
-    keyIndex: number,
-): TempWalletInfo => {
-    const wallet = deriveTempLiquidWallet(rescueFile, keyIndex);
-    return {
-        keyIndex: wallet.keyIndex,
-        address: wallet.address,
     };
 };
 
@@ -503,6 +478,7 @@ const CreateButton = () => {
     const createSwap = async (
         claimAddress: string,
         gasAbstraction: GasAbstractionType,
+        newKeyOverride?: newKeyFn,
     ): Promise<boolean> => {
         if (
             !rescueFileBackupDone() &&
@@ -517,6 +493,8 @@ const CreateButton = () => {
             let data: SomeSwap;
             let hops: EncodedHop[];
             let hopsPosition: HopsPosition | undefined;
+
+            const effectiveNewKey = newKeyOverride ?? newKey;
 
             switch (swapType()) {
                 case SwapType.Submarine: {
@@ -535,7 +513,7 @@ const CreateButton = () => {
                             invoice(),
                             creationData.pairHash,
                             gasAbstraction,
-                            newKey,
+                            effectiveNewKey,
                             originalDestination(),
                         );
                     };
@@ -647,7 +625,7 @@ const CreateButton = () => {
                             chainPair.hash,
                             gasAbstraction,
                             rescueFile(),
-                            newKey,
+                            effectiveNewKey,
                             originalDestination(),
                         );
 
@@ -679,7 +657,7 @@ const CreateButton = () => {
                         creationData.pairHash,
                         gasAbstraction,
                         rescueFile(),
-                        newKey,
+                        effectiveNewKey,
                         getOriginalDestination(),
                     );
                     break;
@@ -701,7 +679,7 @@ const CreateButton = () => {
                         creationData.pairHash,
                         gasAbstraction,
                         rescueFile(),
-                        newKey,
+                        effectiveNewKey,
                         getOriginalDestination(),
                     );
                     break;
@@ -733,9 +711,7 @@ const CreateButton = () => {
             const sideswapDetail = buildSideSwapDetail(
                 pair(),
                 onchainAddress(),
-                data,
                 Number(receiveAmount()),
-                rescueFile(),
             );
 
             await setSwapStorage({
@@ -816,11 +792,13 @@ const CreateButton = () => {
 
             let resolvedClaimAddress: string;
             let resolvedGasAbstraction: GasAbstractionType;
+            let newKeyFn: newKeyFn = newKey;
 
             if (pair().hasSideSwapHop) {
-                const tempWallet = getTempClaimWallet(
+                const preAllocatedKey = await newKey(LBTC as AssetType);
+                const tempWallet = deriveTempLiquidWallet(
                     rescueFile(),
-                    0,
+                    preAllocatedKey.index,
                 );
                 resolvedClaimAddress = tempWallet.address;
                 resolvedGasAbstraction = GasAbstractionType.None;
@@ -828,6 +806,15 @@ const CreateButton = () => {
                     "Using temp Liquid wallet for SideSwap claim:",
                     resolvedClaimAddress,
                 );
+
+                let claimed = false;
+                newKeyFn = async (asset: AssetType) => {
+                    if (!claimed) {
+                        claimed = true;
+                        return preAllocatedKey;
+                    }
+                    return newKey(asset);
+                };
             } else {
                 const result = await getClaimAddress(
                     assetReceive,
@@ -845,7 +832,11 @@ const CreateButton = () => {
 
             log.debug("Creating with claim address", resolvedClaimAddress);
 
-            await createSwap(resolvedClaimAddress, resolvedGasAbstraction);
+            await createSwap(
+                resolvedClaimAddress,
+                resolvedGasAbstraction,
+                newKeyFn,
+            );
         } catch (e) {
             log.error("Error creating swap", e);
             notify("error", e);

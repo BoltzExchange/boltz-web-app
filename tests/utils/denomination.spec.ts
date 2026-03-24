@@ -1,14 +1,39 @@
 import { BigNumber } from "bignumber.js";
 
-import { BTC, LBTC, USDT0 } from "../../src/consts/Assets";
+import type * as ConfigModule from "../../src/config";
+import { BTC, LBTC, LUSDT, USDT0 } from "../../src/consts/Assets";
 import { Denomination } from "../../src/consts/Enums";
 import {
     calculateDigits,
     convertAmount,
     formatAmount,
     formatDenomination,
+    getDecimals,
     getValidationRegex,
 } from "../../src/utils/denomination";
+
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+    return {
+        ...actual,
+        config: {
+            ...actual.config,
+            assets: {
+                ...actual.config.assets,
+                "L-USDt": {
+                    type: "LIQUID_TOKEN" as const,
+                    canSend: false,
+                    liquidToken: {
+                        assetId: "fake-lusdt-asset-id",
+                        precision: 8,
+                        routeVia: "L-BTC",
+                    },
+                },
+            },
+        },
+    };
+});
 
 describe("denomination utils", () => {
     describe("convert amount", () => {
@@ -136,5 +161,66 @@ describe("denomination utils", () => {
         ${Denomination.Btc} | ${USDT0} | ${"USDT"}
     `("should format denomination", ({ denomination, input, expected }) => {
         expect(formatDenomination(denomination, input)).toEqual(expected);
+    });
+
+    describe("L-USDt denomination", () => {
+        test("should treat L-USDt as token-denominated", () => {
+            const { isErc20, decimals } = getDecimals(LUSDT);
+            expect(isErc20).toBe(true);
+            expect(decimals).toBe(8);
+        });
+
+        test.each`
+            denomination        | expected
+            ${Denomination.Sat} | ${"USDT"}
+            ${Denomination.Btc} | ${"USDT"}
+        `(
+            "should format L-USDt denomination as USDT in $denomination",
+            ({ denomination, expected }) => {
+                expect(formatDenomination(denomination, LUSDT)).toEqual(
+                    expected,
+                );
+            },
+        );
+
+        test.each`
+            amount              | expected
+            ${100_000_000}      | ${"1"}
+            ${50_000_000}       | ${"0.5"}
+            ${1_000_000}        | ${"0.01"}
+            ${12_345_678}       | ${"0.12345678"}
+            ${0}                | ${"0.0"}
+        `(
+            "should format L-USDt amount $amount correctly",
+            ({ amount, expected }) => {
+                expect(
+                    formatAmount(
+                        BigNumber(amount),
+                        Denomination.Sat,
+                        ".",
+                        LUSDT,
+                    ),
+                ).toEqual(expected);
+            },
+        );
+
+        test.each`
+            input           | expected
+            ${"1.0"}        | ${100_000_000}
+            ${"0.5"}        | ${50_000_000}
+            ${"0.01"}       | ${1_000_000}
+            ${"0.12345678"} | ${12_345_678}
+        `(
+            "should convert L-USDt amount $input to internal representation",
+            ({ input, expected }) => {
+                expect(
+                    convertAmount(
+                        LUSDT,
+                        BigNumber(input),
+                        Denomination.Sat,
+                    ).toNumber(),
+                ).toEqual(expected);
+            },
+        );
     });
 });

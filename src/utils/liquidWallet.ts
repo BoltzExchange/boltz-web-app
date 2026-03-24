@@ -1,4 +1,5 @@
 import { secp256k1 } from "@noble/curves/secp256k1.js";
+import { sha256 } from "@noble/hashes/sha2.js";
 import { hex } from "@scure/base";
 import { Buffer } from "buffer";
 import {
@@ -15,10 +16,7 @@ import log from "loglevel";
 import { config } from "../config";
 import secp from "../lazy/secp";
 import type { RescueFile } from "./rescueFile";
-import { mnemonicToHDKey } from "./rescueFile";
-
-const tempLiquidWalletPath = "m/44/1776/0/0";
-const tempLiquidBlindingPath = "m/44/1776/1/0";
+import { derivationPath, mnemonicToHDKey } from "./rescueFile";
 
 export type TempLiquidWallet = {
     keyIndex: number;
@@ -46,21 +44,25 @@ const getLiquidNetwork = (): LiquidNetwork => {
     return LiquidNetworks[liquidNet] as LiquidNetwork;
 };
 
+/**
+ * Derives a temporary Liquid P2WPKH wallet using the same key path as
+ * the Boltz claim key (m/44/0/0/0/{index}). The blinding key is derived
+ * deterministically as SHA256(spend_private_key), which allows reconstruction
+ * from just the rescue mnemonic + key index.
+ */
 export const deriveTempLiquidWallet = (
     rescueFile: RescueFile,
     keyIndex: number,
 ): TempLiquidWallet => {
     const hdKey = mnemonicToHDKey(rescueFile.mnemonic);
-
-    const spendKey = hdKey.derive(`${tempLiquidWalletPath}/${keyIndex}`);
-    const blindingKey = hdKey.derive(`${tempLiquidBlindingPath}/${keyIndex}`);
+    const spendKey = hdKey.derive(`${derivationPath}/${keyIndex}`);
 
     const spendPrivateKey = spendKey.privateKey;
     const spendPublicKey = secp256k1.getPublicKey(spendPrivateKey, true);
 
-    const blindingPrivateKey = Buffer.from(blindingKey.privateKey);
+    const blindingPrivateKey = Buffer.from(sha256(spendPrivateKey));
     const blindingPublicKey = Buffer.from(
-        secp256k1.getPublicKey(blindingKey.privateKey, true),
+        secp256k1.getPublicKey(blindingPrivateKey, true),
     );
 
     const network = getLiquidNetwork();
@@ -205,8 +207,51 @@ export const signPset = async (
     return pset.toBase64();
 };
 
+export const findAllOutputsForScript = async (
+    txHex: string,
+    targetScript: Buffer,
+    blindingPrivateKey: Buffer,
+): Promise<UnblindedUtxo[]> => {
+    const tx = LiquidTransaction.fromHex(txHex);
+    const utxos: UnblindedUtxo[] = [];
+
+    for (let i = 0; i < tx.outs.length; i++) {
+        if (!tx.outs[i].script || !targetScript.equals(tx.outs[i].script)) {
+            continue;
+        }
+        try {
+            const unblinded = await unblindOutput(txHex, i, blindingPrivateKey);
+            utxos.push(unblinded);
+        } catch (e) {
+            log.warn(`Could not unblind output ${i}:`, e);
+        }
+    }
+
+    return utxos;
+};
+
 export const buildSweepTransaction = async (
     utxo: UnblindedUtxo,
+    wallet: TempLiquidWallet,
+    destinationAddress: string,
+    feeRate: number,
+): Promise<string> => {
+    return buildMultiAssetSweepTransaction(
+        [utxo],
+        wallet,
+        destinationAddress,
+        feeRate,
+    );
+};
+
+/**
+ * Build a Liquid transaction sweeping multiple UTXOs (possibly different
+ * assets) from the temp wallet to a single destination address. L-BTC
+ * is used to pay the network fee; if no L-BTC UTXO is present, the call
+ * throws.
+ */
+export const buildMultiAssetSweepTransaction = async (
+    utxos: UnblindedUtxo[],
     wallet: TempLiquidWallet,
     destinationAddress: string,
     feeRate: number,
@@ -216,14 +261,10 @@ export const buildSweepTransaction = async (
     );
 
     const network = getLiquidNetwork();
+    const lbtcAssetId = network.assetHash;
 
-    const estimatedVsize = 300;
+    const estimatedVsize = 150 + utxos.length * 150;
     const fee = Math.ceil(feeRate * estimatedVsize);
-
-    const sendValue = utxo.value - fee;
-    if (sendValue <= 0) {
-        throw new Error("Insufficient funds to cover fee");
-    }
 
     const destScript = LiquidAddress.toOutputScript(
         destinationAddress,
@@ -233,39 +274,58 @@ export const buildSweepTransaction = async (
     const pset = Creator.newPset();
     const updater = new Updater(pset);
 
-    const assetPrefix = Buffer.concat([
-        Buffer.from([0x01]),
-        Buffer.from(hex.decode(utxo.asset)).reverse(),
-    ]);
-    const valueEncoded = confidential.satoshiToConfidentialValue(utxo.value);
+    for (const utxo of utxos) {
+        const assetPrefix = Buffer.concat([
+            Buffer.from([0x01]),
+            Buffer.from(hex.decode(utxo.asset)).reverse(),
+        ]);
+        const valueEncoded = confidential.satoshiToConfidentialValue(
+            utxo.value,
+        );
 
-    updater.addInputs([
-        {
-            txid: utxo.txid,
-            txIndex: utxo.vout,
-            sighashType: 0x01,
-            witnessUtxo: {
-                script: wallet.outputScript,
-                asset: assetPrefix,
-                value: valueEncoded,
-                nonce: Buffer.alloc(1),
-                rangeProof: Buffer.alloc(0),
-                surjectionProof: Buffer.alloc(0),
+        updater.addInputs([
+            {
+                txid: utxo.txid,
+                txIndex: utxo.vout,
+                sighashType: 0x01,
+                witnessUtxo: {
+                    script: wallet.outputScript,
+                    asset: assetPrefix,
+                    value: valueEncoded,
+                    nonce: Buffer.alloc(1),
+                    rangeProof: Buffer.alloc(0),
+                    surjectionProof: Buffer.alloc(0),
+                },
             },
-        },
-    ]);
+        ]);
+    }
 
-    updater.addOutputs([
-        {
-            asset: network.assetHash,
-            amount: sendValue,
-            script: destScript,
-        },
-        {
-            asset: network.assetHash,
-            amount: fee,
-        },
-    ]);
+    const assetTotals = new Map<string, number>();
+    for (const utxo of utxos) {
+        assetTotals.set(
+            utxo.asset,
+            (assetTotals.get(utxo.asset) ?? 0) + utxo.value,
+        );
+    }
+
+    const lbtcTotal = assetTotals.get(lbtcAssetId) ?? 0;
+    if (lbtcTotal < fee) {
+        throw new Error("Insufficient L-BTC for transaction fee");
+    }
+
+    const outputs: { asset: string; amount: number; script?: Buffer }[] = [];
+    for (const [assetId, total] of assetTotals) {
+        let amount = total;
+        if (assetId === lbtcAssetId) {
+            amount -= fee;
+            if (amount <= 0) continue;
+        }
+        outputs.push({ asset: assetId, amount, script: destScript });
+    }
+
+    outputs.push({ asset: lbtcAssetId, amount: fee });
+
+    updater.addOutputs(outputs);
 
     const signed = await signPset(pset.toBase64(), wallet);
     const finalPset = Pset.fromBase64(signed);

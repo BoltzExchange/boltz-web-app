@@ -11,6 +11,7 @@ import {
 
 import { config } from "../config";
 import {
+    LUSDT,
     USDT0,
     getAssetNetwork,
     getNetworkBadge,
@@ -49,7 +50,11 @@ const NetworkSelect = () => {
     let listRef: HTMLDivElement;
 
     const usdt0Networks = createMemo(() =>
-        [USDT0, ...Object.keys(config.assets).filter(isUsdt0Variant)]
+        [
+            USDT0,
+            ...Object.keys(config.assets).filter(isUsdt0Variant),
+            ...(LUSDT in config.assets ? [LUSDT] : []),
+        ]
             .filter((asset) => canSelectAsset(assetSelected(), asset))
             .sort((a, b) =>
                 (getAssetNetwork(a) ?? "").localeCompare(

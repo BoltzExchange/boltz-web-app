@@ -62,12 +62,15 @@ export type SideSwapDetail = {
     baseAssetId: string;
     quoteAssetId: string;
     userAddress: string;
-    tempKeyIndex: number;
-    tempAddress: string;
     quoteAmountEstimate: number;
     status: SideSwapStatus;
     txid?: string;
     error?: string;
+
+    /** @deprecated kept for backwards compat with stored swaps */
+    tempKeyIndex?: number;
+    /** @deprecated kept for backwards compat with stored swaps */
+    tempAddress?: string;
 };
 
 export const enum GasAbstractionType {

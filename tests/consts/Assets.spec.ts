@@ -1,3 +1,4 @@
+import type * as ConfigModule from "../../src/config";
 import {
     BTC,
     LBTC,
@@ -11,6 +12,29 @@ import {
     isLiquidAsset,
     isLiquidTokenAsset,
 } from "../../src/consts/Assets";
+
+vi.mock("../../src/config", async () => {
+    const actual =
+        await vi.importActual<typeof ConfigModule>("../../src/config");
+    return {
+        ...actual,
+        config: {
+            ...actual.config,
+            assets: {
+                ...actual.config.assets,
+                "L-USDt": {
+                    type: "LIQUID_TOKEN" as const,
+                    canSend: false,
+                    liquidToken: {
+                        assetId: "fake-lusdt-asset-id",
+                        precision: 8,
+                        routeVia: "L-BTC",
+                    },
+                },
+            },
+        },
+    };
+});
 
 describe("Assets", () => {
     describe("getCanonicalAsset", () => {
@@ -35,7 +59,7 @@ describe("Assets", () => {
             input           | expected
             ${BTC}          | ${"BTC"}
             ${LBTC}         | ${"LBTC"}
-            ${LUSDT}        | ${"USDt"}
+            ${LUSDT}        | ${"USDT"}
             ${LN}           | ${"LN"}
             ${RBTC}         | ${"RBTC"}
             ${USDT0}        | ${"USDT"}

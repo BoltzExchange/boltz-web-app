@@ -1,12 +1,14 @@
 import { BigNumber } from "bignumber.js";
 
 import type * as ConfigModule from "../../src/config";
-import { BTC, LN, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, LUSDT, USDT0 } from "../../src/consts/Assets";
+import { SwapType } from "../../src/consts/Enums";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
 import type * as OftModule from "../../src/utils/oft/oft";
 import type * as QouterModule from "../../src/utils/qouter";
+import type * as SideSwapModule from "../../src/utils/sideswap";
 
 const {
     quoteDexAmountInMock,
@@ -17,6 +19,8 @@ const {
     fetchGasTokenQuoteMock,
     gasTopUpSupportedMock,
     getGasTopUpNativeAmountMock,
+    estimateSideSwapReceiveMock,
+    estimateSideSwapSendMock,
 } = vi.hoisted(() => ({
     quoteDexAmountInMock: vi.fn<() => Promise<QuoteData[]>>(),
     quoteDexAmountOutMock: vi.fn<() => Promise<QuoteData[]>>(),
@@ -28,6 +32,10 @@ const {
     gasTopUpSupportedMock: vi.fn<typeof QouterModule.gasTopUpSupported>(),
     getGasTopUpNativeAmountMock:
         vi.fn<typeof QouterModule.getGasTopUpNativeAmount>(),
+    estimateSideSwapReceiveMock:
+        vi.fn<typeof SideSwapModule.estimateSideSwapReceive>(),
+    estimateSideSwapSendMock:
+        vi.fn<typeof SideSwapModule.estimateSideSwapSend>(),
 }));
 
 vi.mock("../../src/utils/boltzClient", async () => {
@@ -92,6 +100,15 @@ vi.mock("../../src/config", async () => {
                         address: "0x0000000000000000000000000000000000001030",
                     },
                 },
+                "L-USDt": {
+                    type: "LIQUID_TOKEN" as const,
+                    canSend: false,
+                    liquidToken: {
+                        assetId: "ce091c998b83c78bb71a632313ba3760f1763d9cfcffae02258ffa9865a37bd2",
+                        precision: 8,
+                        routeVia: "L-BTC",
+                    },
+                },
             },
         },
     };
@@ -120,6 +137,11 @@ vi.mock("../../src/utils/qouter", () => ({
     fetchGasTokenQuote: fetchGasTokenQuoteMock,
     gasTopUpSupported: gasTopUpSupportedMock,
     getGasTopUpNativeAmount: getGasTopUpNativeAmountMock,
+}));
+
+vi.mock("../../src/utils/sideswap", () => ({
+    estimateSideSwapReceive: estimateSideSwapReceiveMock,
+    estimateSideSwapSend: estimateSideSwapSendMock,
 }));
 
 const tbtcAssetAmount = (sats: number) =>
@@ -159,6 +181,21 @@ const pairs: Pairs = {
                 },
             },
         },
+        BTC: {
+            BTC: {
+                hash: "btc-ln-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1_000,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0.1,
+                    minerFees: 100,
+                },
+            },
+        },
     },
     reverse: {
         BTC: {
@@ -177,9 +214,43 @@ const pairs: Pairs = {
                     },
                 },
             },
+            "L-BTC": {
+                hash: "ln-lbtc-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 10_000_000,
+                    minimal: 1_000,
+                },
+                fees: {
+                    percentage: 0.25,
+                    minerFees: {
+                        claim: 150,
+                        lockup: 200,
+                    },
+                },
+            },
         },
     },
-    chain: {},
+    chain: {
+        BTC: {
+            "L-BTC": {
+                hash: "btc-lbtc-chain-hash",
+                rate: 1,
+                limits: {
+                    maximal: 10_000_000,
+                    minimal: 10_000,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0.1,
+                    minerFees: {
+                        server: 200,
+                        user: { claim: 150, lockup: 200 },
+                    },
+                },
+            },
+        },
+    },
 };
 
 describe("Pair", () => {
@@ -192,6 +263,8 @@ describe("Pair", () => {
         fetchGasTokenQuoteMock.mockReset();
         gasTopUpSupportedMock.mockReset();
         getGasTopUpNativeAmountMock.mockReset();
+        estimateSideSwapReceiveMock.mockReset();
+        estimateSideSwapSendMock.mockReset();
         gasTopUpSupportedMock.mockReturnValue(true);
     });
 
@@ -396,5 +469,128 @@ describe("Pair", () => {
         ).resolves.toEqual(BigNumber(900));
 
         await expect(pair.canPostOftNativeDrop(recipient)).resolves.toBe(false);
+    });
+
+    describe("SideSwap routing", () => {
+        test("should find SideSwap route for BTC -> L-USDt via L-BTC", () => {
+            const pair = new Pair(pairs, BTC, LUSDT);
+
+            expect(pair.isRoutable).toBe(true);
+            expect(pair.hasSideSwapHop).toBe(true);
+            expect(pair.sideSwapHop).toBeDefined();
+            expect(pair.sideSwapHop?.type).toBe(SwapType.SideSwap);
+            expect(pair.sideSwapHop?.from).toBe(LBTC);
+            expect(pair.sideSwapHop?.to).toBe(LUSDT);
+            expect(pair.sideSwapHop?.sideswapDetails).toBeDefined();
+        });
+
+        test("should find SideSwap route for LN -> L-USDt via L-BTC", () => {
+            const pair = new Pair(pairs, LN, LUSDT);
+
+            expect(pair.isRoutable).toBe(true);
+            expect(pair.hasSideSwapHop).toBe(true);
+            expect(pair.requiredInput).toBe(RequiredInput.Address);
+        });
+
+        test("should use Boltz reverse + SideSwap for LN -> L-USDt", () => {
+            const pair = new Pair(pairs, LN, LUSDT);
+            const swap = pair.swapToCreate;
+
+            expect(swap?.type).toBe(SwapType.Reverse);
+            expect(swap?.from).toBe(LN);
+            expect(swap?.to).toBe(LBTC);
+        });
+
+        test("should use Boltz chain + SideSwap for BTC -> L-USDt", () => {
+            const pair = new Pair(pairs, BTC, LUSDT);
+            const swap = pair.swapToCreate;
+
+            expect(swap?.type).toBe(SwapType.Chain);
+            expect(swap?.from).toBe(BTC);
+            expect(swap?.to).toBe(LBTC);
+        });
+
+        test("should report non-routable when no L-BTC pair exists", () => {
+            const noPairs: Pairs = {
+                submarine: {},
+                reverse: {},
+                chain: {},
+            };
+            const pair = new Pair(noPairs, BTC, LUSDT);
+
+            expect(pair.isRoutable).toBe(false);
+            expect(pair.hasSideSwapHop).toBe(false);
+        });
+
+        test("should calculate receive amount through SideSwap hop", async () => {
+            estimateSideSwapReceiveMock.mockResolvedValue({
+                receiveAmount: 500_000,
+                feeAmount: 100,
+                rate: 50_000,
+            });
+
+            const pair = new Pair(pairs, LN, LUSDT);
+            const receiveAmount = await pair.calculateReceiveAmount(
+                BigNumber(11_000),
+                350,
+            );
+
+            expect(receiveAmount.toNumber()).toBe(500_000);
+            expect(estimateSideSwapReceiveMock).toHaveBeenCalled();
+        });
+
+        test("should calculate send amount through SideSwap hop", async () => {
+            estimateSideSwapSendMock.mockResolvedValue(11_000);
+
+            const pair = new Pair(pairs, LN, LUSDT);
+            const sendAmount = await pair.calculateSendAmount(
+                BigNumber(500_000),
+                350,
+            );
+
+            expect(sendAmount.toNumber()).toBeGreaterThan(0);
+            expect(estimateSideSwapSendMock).toHaveBeenCalled();
+        });
+
+        test("should include SideSwap hop in creation data hops", async () => {
+            estimateSideSwapReceiveMock.mockResolvedValue({
+                receiveAmount: 500_000,
+                feeAmount: 100,
+                rate: 50_000,
+            });
+
+            const pair = new Pair(pairs, LN, LUSDT);
+            await pair.calculateReceiveAmount(BigNumber(11_000), 350);
+            const creationData = await pair.creationData(
+                BigNumber(11_000),
+                350,
+            );
+
+            expect(creationData).toBeDefined();
+            expect(creationData?.from).toBe(BTC);
+            expect(creationData?.to).toBe(LBTC);
+            expect(creationData?.hops).toHaveLength(1);
+            expect(creationData?.hops[0].type).toBe(SwapType.SideSwap);
+            expect(creationData?.hops[0].sideswapDetails).toBeDefined();
+        });
+
+        test("should report needsNetworkForQuote for SideSwap routes", () => {
+            const pair = new Pair(pairs, LN, LUSDT);
+            expect(pair.needsNetworkForQuote).toBe(true);
+        });
+
+        test("should return 0 when SideSwap estimate fails", async () => {
+            estimateSideSwapReceiveMock.mockRejectedValue(
+                new Error("SideSwap error"),
+            );
+
+            const pair = new Pair(pairs, LN, LUSDT);
+            const receiveAmount = await pair.calculateReceiveAmount(
+                BigNumber(11_000),
+                350,
+            );
+
+            expect(receiveAmount.toNumber()).toBe(0);
+        });
     });
 });

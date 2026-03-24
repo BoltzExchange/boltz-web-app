@@ -25,7 +25,7 @@ import {
     getAssetDisplaySymbol,
     getAssetNetwork,
     isEvmAsset,
-    isUsdt0Asset,
+    isUsdtGroupAsset,
 } from "../consts/Assets";
 import { Denomination } from "../consts/Enums";
 import { detectLanguage } from "../i18n/detect";
@@ -558,7 +558,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         if (typeof values?.asset === "string") {
             const raw = values.asset;
             let display = getAssetDisplaySymbol(raw);
-            if (isUsdt0Asset(raw)) {
+            if (isUsdtGroupAsset(raw)) {
                 const network = getAssetNetwork(raw);
                 if (network) {
                     display = `${display} (${network})`;

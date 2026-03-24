@@ -48,6 +48,7 @@
 .swaplist-asset {
     display: inline-flex;
     align-items: center;
+    gap: 2px;
     margin: 0 10px;
 }
 .swaplist-asset span {
@@ -80,8 +81,8 @@
     background-image: vars.$tbtc_icon;
 }
 .swaplist-asset span[data-asset="USDT"] {
-    background-image: vars.$usdt0_icon;
+    background-image: vars.$usdt_icon;
 }
 .swaplist-asset span[data-asset="USDt"] {
-    background-image: vars.$usdt0_icon;
+    background-image: vars.$usdt_icon;
 }

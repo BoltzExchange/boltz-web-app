@@ -6,13 +6,12 @@ import SideSwapRecovery from "../components/SideSwapRecovery";
 import { LBTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
+import { broadcastToExplorer, getFeeEstimations } from "../utils/blockchain";
+import { config } from "../config";
 import {
-    type SideSwapDetail,
-    SideSwapStatus,
-    type SomeSwap,
-} from "../utils/swapCreator";
-import { deriveTempLiquidWallet } from "../utils/liquidWallet";
-import {
+    buildMultiAssetSweepTransaction,
+    deriveTempLiquidWallet,
+    findAllOutputsForScript,
     findOutputForScript,
     signPset,
     unblindOutput,
@@ -22,9 +21,22 @@ import {
     executeSideSwapTrade,
 } from "../utils/sideswap";
 import { fetchBlockExplorerTx } from "../utils/sideswapHelpers";
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    type SideSwapDetail,
+    SideSwapStatus,
+    type SomeSwap,
+} from "../utils/swapCreator";
 
 const CONFIRMATION_POLL_INTERVAL = 5_000;
 const SLIPPAGE_TOLERANCE = 0.03;
+
+const getClaimKeyIndex = (swap: SomeSwap): number => {
+    const legacy = swap.sideswap?.tempKeyIndex;
+    const castSwap = swap as ReverseSwap | ChainSwap;
+    return castSwap.claimPrivateKeyIndex ?? legacy ?? 0;
+};
 
 type SideSwapExecutionProps = {
     swap: SomeSwap;
@@ -84,6 +96,66 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
         });
     };
 
+    const sweepToUserAddress = async (
+        tradeTxid: string,
+        wallet: ReturnType<typeof deriveTempLiquidWallet>,
+        userAddress: string,
+    ) => {
+        setStatus(SideSwapStatus.Broadcasting);
+        await updateSwapSideswap({ status: SideSwapStatus.Broadcasting });
+
+        let tradeTxHex: string | undefined;
+        for (let attempt = 0; attempt < 30; attempt++) {
+            try {
+                tradeTxHex = await fetchBlockExplorerTx(LBTC, tradeTxid);
+                if (tradeTxHex) break;
+            } catch {
+                // tx may not be indexed yet
+            }
+            await new Promise((r) => setTimeout(r, CONFIRMATION_POLL_INTERVAL));
+        }
+
+        if (!tradeTxHex) {
+            throw new Error("Could not fetch SideSwap trade transaction");
+        }
+
+        const utxos = await findAllOutputsForScript(
+            tradeTxHex,
+            wallet.outputScript,
+            wallet.blindingPrivateKey,
+        );
+
+        if (utxos.length === 0) {
+            log.warn("No outputs found at temp wallet after trade");
+            return;
+        }
+
+        log.info("Sweeping temp wallet UTXOs:", utxos);
+
+        const feeApis = config.assets[LBTC]?.blockExplorerApis;
+        let feeRate = 0.1;
+        if (feeApis?.length > 0) {
+            try {
+                feeRate = await getFeeEstimations(feeApis[0]);
+            } catch (e) {
+                log.warn(
+                    "Could not fetch fee estimation, using default:",
+                    e,
+                );
+            }
+        }
+
+        const sweepHex = await buildMultiAssetSweepTransaction(
+            utxos,
+            wallet,
+            userAddress,
+            feeRate,
+        );
+
+        const result = await broadcastToExplorer(LBTC, sweepHex);
+        log.info("Sweep transaction broadcast:", result.id);
+    };
+
     const executeSideSwap = async () => {
         const sideswap = props.swap.sideswap;
         if (!sideswap) return;
@@ -105,10 +177,8 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
             setStatus(SideSwapStatus.Quoting);
             await updateSwapSideswap({ status: SideSwapStatus.Quoting });
 
-            const wallet = deriveTempLiquidWallet(
-                rescueFile(),
-                sideswap.tempKeyIndex,
-            );
+            const keyIndex = getClaimKeyIndex(props.swap);
+            const wallet = deriveTempLiquidWallet(rescueFile(), keyIndex);
 
             const vout = await findOutputForScript(txHex, wallet.outputScript);
             if (vout === undefined) {
@@ -142,6 +212,9 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
 
             const result = await executeSideSwapTrade(
                 [utxo],
+                unblindedUtxo.value,
+                sideswap.userAddress,
+                wallet.address,
                 (psetBase64: string) => signPset(psetBase64, wallet),
             );
 
@@ -156,6 +229,19 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
                     actual: result.quoteAmount,
                     tolerance: SLIPPAGE_TOLERANCE,
                 });
+            }
+
+            try {
+                await sweepToUserAddress(
+                    result.txid,
+                    wallet,
+                    sideswap.userAddress,
+                );
+            } catch (e) {
+                log.warn(
+                    "Post-trade sweep failed (user can retry via recovery):",
+                    e,
+                );
             }
 
             setStatus(SideSwapStatus.Confirmed);
@@ -211,6 +297,12 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
             <Show when={status() === SideSwapStatus.Signing}>
                 <h2>{t("sideswap_signing")}</h2>
                 <p>{t("signing_sideswap_transaction")}</p>
+                <LoadingSpinner />
+            </Show>
+
+            <Show when={status() === SideSwapStatus.Broadcasting}>
+                <h2>{t("sideswap_complete")}</h2>
+                <p>{t("preparing_sideswap")}</p>
                 <LoadingSpinner />
             </Show>
 

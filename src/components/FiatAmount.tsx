@@ -8,9 +8,9 @@ import {
     createSignal,
 } from "solid-js";
 
-import { isUsdt0Asset, requireTokenConfig } from "../consts/Assets";
 import { Currency } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
+import { getDecimals } from "../utils/denomination";
 import { convertToFiat } from "../utils/fiat";
 
 const FiatAmount = (props: {
@@ -24,13 +24,10 @@ const FiatAmount = (props: {
     const [fiatAmount, setFiatAmount] = createSignal<BigNumber>(BigNumber(0));
 
     createEffect(() => {
-        if (isUsdt0Asset(props.asset())) {
+        const { isErc20: isToken, decimals } = getDecimals(props.asset());
+        if (isToken) {
             setFiatAmount(
-                BigNumber(props.amount).div(
-                    BigNumber(10).pow(
-                        requireTokenConfig(props.asset()).decimals,
-                    ),
-                ),
+                BigNumber(props.amount).div(BigNumber(10).pow(decimals)),
             );
             return;
         }

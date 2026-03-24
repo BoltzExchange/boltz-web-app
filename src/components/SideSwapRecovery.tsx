@@ -8,13 +8,17 @@ import { usePayContext } from "../context/Pay";
 import { broadcastToExplorer, getFeeEstimations } from "../utils/blockchain";
 import { validateAddress } from "../utils/compat";
 import {
-    buildSweepTransaction,
+    buildMultiAssetSweepTransaction,
     deriveTempLiquidWallet,
-    findOutputForScript,
-    unblindOutput,
+    findAllOutputsForScript,
 } from "../utils/liquidWallet";
 import { fetchBlockExplorerTx } from "../utils/sideswapHelpers";
-import { SideSwapStatus, type SomeSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    type ReverseSwap,
+    SideSwapStatus,
+    type SomeSwap,
+} from "../utils/swapCreator";
 import LoadingSpinner from "./LoadingSpinner";
 
 type SideSwapRecoveryProps = {
@@ -42,33 +46,36 @@ const SideSwapRecovery = (props: SideSwapRecoveryProps) => {
 
         setLoading(true);
         try {
-            const wallet = deriveTempLiquidWallet(
-                rescueFile(),
-                sideswap.tempKeyIndex,
-            );
+            const castSwap = props.swap as ReverseSwap | ChainSwap;
+            const keyIndex =
+                castSwap.claimPrivateKeyIndex ??
+                sideswap.tempKeyIndex ??
+                0;
+            const wallet = deriveTempLiquidWallet(rescueFile(), keyIndex);
 
             const claimTx = props.swap.claimTx;
-            if (!claimTx) {
-                throw new Error("No claim transaction to sweep from");
+            const tradeTx = sideswap.txid;
+            const sourceTx = tradeTx ?? claimTx;
+            if (!sourceTx) {
+                throw new Error("No transaction to sweep from");
             }
 
-            const txHex = await fetchBlockExplorerTx(LBTC, claimTx);
+            const txHex = await fetchBlockExplorerTx(LBTC, sourceTx);
 
-            const vout = await findOutputForScript(txHex, wallet.outputScript);
-            if (vout === undefined) {
-                throw new Error(
-                    "Could not find temp wallet output in claim transaction",
-                );
-            }
-
-            const unblindedUtxo = await unblindOutput(
+            const utxos = await findAllOutputsForScript(
                 txHex,
-                vout,
+                wallet.outputScript,
                 wallet.blindingPrivateKey,
             );
 
-            log.info("Sweeping intermediate L-BTC:", {
-                value: unblindedUtxo.value,
+            if (utxos.length === 0) {
+                throw new Error(
+                    "No UTXOs found at temp wallet in transaction",
+                );
+            }
+
+            log.info("Sweeping temp wallet:", {
+                utxoCount: utxos.length,
                 to: sweepAddress(),
             });
 
@@ -78,12 +85,15 @@ const SideSwapRecovery = (props: SideSwapRecoveryProps) => {
                 try {
                     feeRate = await getFeeEstimations(feeApis[0]);
                 } catch (e) {
-                    log.warn("Could not fetch fee estimation, using default:", e);
+                    log.warn(
+                        "Could not fetch fee estimation, using default:",
+                        e,
+                    );
                 }
             }
 
-            const sweepTxHex = await buildSweepTransaction(
-                unblindedUtxo,
+            const sweepTxHex = await buildMultiAssetSweepTransaction(
+                utxos,
                 wallet,
                 sweepAddress(),
                 feeRate,

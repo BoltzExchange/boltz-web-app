@@ -31,7 +31,14 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { AssetKind, LN, RBTC, btcChains, isEvmAsset } from "../consts/Assets";
+import {
+    AssetKind,
+    LN,
+    RBTC,
+    btcChains,
+    isEvmAsset,
+    isLiquidTokenAsset,
+} from "../consts/Assets";
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -482,7 +489,9 @@ const Create = () => {
         // once the backup is done
         if (
             creatingSwap() &&
-            ((onchainAddress() === "" && btcChains.includes(pair().toAsset)) ||
+            ((onchainAddress() === "" &&
+                    (btcChains.includes(pair().toAsset) ||
+                        isLiquidTokenAsset(pair().toAsset))) ||
                 (signer() === undefined &&
                     (isEvmAsset(pair().toAsset) ||
                         isEvmAsset(pair().fromAsset))) ||
@@ -770,8 +779,10 @@ const Create = () => {
                                 (pair().requiredInput ===
                                     RequiredInput.Unknown &&
                                     pair().toAsset !== LN)) &&
-                            config.assets?.[pair().toAsset]?.type ===
-                                AssetKind.UTXO
+                            (config.assets?.[pair().toAsset]?.type ===
+                                AssetKind.UTXO ||
+                                config.assets?.[pair().toAsset]?.type ===
+                                    AssetKind.LiquidToken)
                         }>
                         <AddressInput />
                     </Show>
@@ -790,8 +801,10 @@ const Create = () => {
                     <Show
                         when={
                             isMobile() &&
-                            config.assets?.[pair().toAsset]?.type ===
-                                AssetKind.UTXO
+                            (config.assets?.[pair().toAsset]?.type ===
+                                AssetKind.UTXO ||
+                                config.assets?.[pair().toAsset]?.type ===
+                                    AssetKind.LiquidToken)
                         }>
                         <QrScan />
                     </Show>

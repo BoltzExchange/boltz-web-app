@@ -5,11 +5,12 @@ import { For, Show, createEffect, createMemo, createSignal } from "solid-js";
 import { config } from "../config";
 import {
     LN,
+    LUSDT,
     USDT0,
     getAssetDisplaySymbol,
     getAssetNetwork,
     getNetworkBadge,
-    isUsdt0Asset,
+    isUsdtGroupAsset,
     isUsdt0Variant,
 } from "../consts/Assets";
 import { AssetSelection, Side } from "../consts/Enums";
@@ -43,6 +44,7 @@ const SelectAsset = () => {
             .filter(
                 (asset) =>
                     !isUsdt0Variant(asset) &&
+                    asset !== LUSDT &&
                     canSelectAsset(assetSelected(), asset),
             )
             .sort(),
@@ -115,7 +117,7 @@ const SelectAsset = () => {
     const isSelected = (asset: string) => {
         const current =
             assetSelected() === Side.Send ? pair().fromAsset : pair().toAsset;
-        if (asset === USDT0 && hasUsdt0) return isUsdt0Asset(current);
+        if (asset === USDT0 && hasUsdt0) return isUsdtGroupAsset(current);
         return asset === current;
     };
 

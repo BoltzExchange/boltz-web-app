@@ -42,12 +42,15 @@ export const isUsdt0Variant = (asset: string): boolean =>
 export const isUsdt0Asset = (asset: string): boolean =>
     asset === USDT0 || isUsdt0Variant(asset);
 
+export const isUsdtGroupAsset = (asset: string): boolean =>
+    isUsdt0Asset(asset) || asset === LUSDT;
+
 export const getCanonicalAsset = (asset: string): string =>
     isUsdt0Variant(asset) ? USDT0 : asset;
 
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
-    [LUSDT]: "USDt",
+    [LUSDT]: "USDT",
     [USDT0]: "USDT",
 };
 
@@ -163,7 +166,10 @@ export const getAssetNetwork = (asset: string): string | null => {
 };
 
 export const getNetworkBadge = (asset: string): string | null => {
-    // avoid network badge on native assets like RBTC
+    if (asset === LUSDT) {
+        return "liquid";
+    }
+
     if (getKindForAsset(asset) !== AssetKind.ERC20) {
         return null;
     }

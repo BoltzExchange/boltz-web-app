@@ -132,6 +132,16 @@
     @include network-primary-icon(vars.$corn_icon);
 }
 
+[data-network="liquid"] {
+    @include network-badge(vars.$liquid_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$liquid_icon);
+
+    &.asset-USDT .icon {
+        background-image: vars.$usdt_icon;
+        background-size: 75%;
+    }
+}
+
 [data-network="ethereum"] {
     @include network-badge(vars.$ethereum_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$ethereum_icon);
