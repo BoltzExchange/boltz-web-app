@@ -12,7 +12,7 @@ import { Show, createSignal } from "solid-js";
 import { copyIconTimeout } from "../../consts/CopyContent";
 import { useCreateContext } from "../../context/Create";
 import { useGlobalContext } from "../../context/Global";
-import { downloadRescueFile } from "../../pages/Backup";
+import { downloadRescueFile } from "../../utils/backup";
 import { clipboard } from "../../utils/helper";
 import { generateRescueFile } from "../../utils/rescueFile";
 

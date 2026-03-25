@@ -1,28 +1,23 @@
-import { useNavigate } from "@solidjs/router";
-import type { Accessor } from "solid-js";
-
-import Warning from "../components/Warning";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
-import { downloadJson } from "../utils/download";
+import { downloadRescueFile } from "../utils/backup";
+import { formatError } from "../utils/errors";
 import { isMobile } from "../utils/helper";
-import type { RescueFile } from "../utils/rescueFile";
+import Warning from "./Warning";
 
-const rescueFileName = "boltz-rescue-key-DO-NOT-DELETE";
-
-export const downloadRescueFile = (rescueFile: Accessor<RescueFile>) => {
-    downloadJson(rescueFileName, rescueFile());
+type BackupDownloadContentProps = {
+    onFileDownloaded: () => void;
+    onMnemonicRequested: () => void;
 };
 
-const Backup = () => {
-    const navigate = useNavigate();
-    const { t, rescueFile } = useGlobalContext();
+const BackupDownloadContent = (props: BackupDownloadContentProps) => {
+    const { t, rescueFile, notify } = useGlobalContext();
     const { hasBrowserWallet } = useWeb3Signer();
 
     const isMobileEvmBrowser = () => isMobile() && hasBrowserWallet();
 
     return (
-        <div class="frame">
+        <>
             <h2>{t("download_boltz_rescue_key")}</h2>
             <h4>{t("download_boltz_rescue_key_subline")}</h4>
             <p>{t("download_boltz_rescue_key_subline_second")}</p>
@@ -33,20 +28,24 @@ const Backup = () => {
                     class="btn"
                     onClick={() => {
                         if (isMobileEvmBrowser()) {
-                            navigate("/backup/mnemonic");
+                            props.onMnemonicRequested();
                             return;
                         }
 
-                        downloadRescueFile(rescueFile);
-                        navigate("/backup/verify");
+                        try {
+                            downloadRescueFile(rescueFile);
+                            props.onFileDownloaded();
+                        } catch (e) {
+                            notify("error", formatError(e));
+                        }
                     }}>
                     {isMobileEvmBrowser()
                         ? t("generate_key")
                         : t("download_new_key")}
                 </button>
             </div>
-        </div>
+        </>
     );
 };
 
-export default Backup;
+export default BackupDownloadContent;

@@ -15,6 +15,7 @@ import {
 } from "solid-js";
 import { getSwapUTXOs } from "src/utils/blockchain";
 
+import BackupFlow from "../components/BackupFlow";
 import BlockExplorer from "../components/BlockExplorer";
 import BlockExplorerLink from "../components/BlockExplorerLink";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -69,7 +70,8 @@ const Pay = () => {
         waitForSwapTimeout?: boolean | undefined;
     }>();
 
-    const { getSwap, t, privacyMode } = useGlobalContext();
+    const { getSwap, privacyMode, rescueFileBackupDone, t } =
+        useGlobalContext();
 
     const {
         swap,
@@ -135,38 +137,82 @@ const Pay = () => {
         prevSwapStatus.value = swapStatus();
     });
 
-    createResource(async () => {
-        const currentSwap = await getSwap(params.id);
-
-        if (!currentSwap) {
-            return;
-        }
-
-        // For uncooperative swaps, we don't rely on the backend for status updates
-        setShouldIgnoreBackendStatus(
-            timedOutRefundable() || waitForSwapTimeout(),
+    const backupVerificationRequired = createMemo(() => {
+        const currentSwap = swap();
+        return (
+            currentSwap !== null &&
+            currentSwap.type !== SwapType.Reverse &&
+            !rescueFileBackupDone()
         );
-        setSwap(currentSwap);
-
-        if (timedOutRefundable()) {
-            log.info(
-                `Refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
-            );
-            setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
-            return;
-        }
-
-        const res = await getSwapStatus(currentSwap.id);
-        log.info(`Swap ${currentSwap.id} status fetched: ${res.status}`);
-        setSwapStatus(res.status);
-        setSwapStatusTransaction(res.transaction);
-        setFailureReason(res.failureReason);
     });
+
+    createResource(
+        () => ({
+            id: params.id,
+            shouldIgnoreBackendStatus:
+                timedOutRefundable() || waitForSwapTimeout(),
+        }),
+        async ({ id, shouldIgnoreBackendStatus }) => {
+            const currentSwap = await getSwap(id);
+
+            if (!currentSwap) {
+                return;
+            }
+
+            // For uncooperative swaps, we don't rely on the backend for status updates
+            setShouldIgnoreBackendStatus(shouldIgnoreBackendStatus);
+            setSwap(currentSwap);
+        },
+    );
+
+    createResource(
+        () => {
+            const currentSwap = swap();
+            if (currentSwap === null) {
+                return undefined;
+            }
+
+            return {
+                backupDone: rescueFileBackupDone(),
+                id: currentSwap.id,
+                timedOutRefundable: timedOutRefundable(),
+                type: currentSwap.type,
+            };
+        },
+        async (currentSwap) => {
+            if (
+                currentSwap.type !== SwapType.Reverse &&
+                !currentSwap.backupDone
+            ) {
+                return;
+            }
+
+            if (currentSwap.timedOutRefundable) {
+                log.info(
+                    `Refundable swap ${currentSwap.id} timed out, uncooperative refund is possible`,
+                );
+                setSwapStatus(swapStatusFailed.SwapWaitingForRefund);
+                return;
+            }
+
+            const res = await getSwapStatus(currentSwap.id);
+            log.info(`Swap ${currentSwap.id} status fetched: ${res.status}`);
+            setSwapStatus(res.status);
+            setSwapStatusTransaction(res.transaction);
+            setFailureReason(res.failureReason);
+        },
+    );
 
     // eslint-disable-next-line solid/reactivity
     createResource(swapStatus, async () => {
+        const currentSwap = swap();
+
+        if (currentSwap === null || backupVerificationRequired()) {
+            return;
+        }
+
         // no need to check UTXOs for non-refundable assets
-        if (!refundableAssets.includes(swap().assetSend)) {
+        if (!refundableAssets.includes(currentSwap.assetSend)) {
             return;
         }
 
@@ -196,7 +242,7 @@ const Pay = () => {
             swapJustClaimed ||
             swapStatus() === swapStatusPending.InvoicePaid ||
             swapStatus() === swapStatusPending.TransactionClaimPending ||
-            swap().type === SwapType.Reverse
+            currentSwap.type === SwapType.Reverse
         ) {
             return;
         }
@@ -218,26 +264,34 @@ const Pay = () => {
 
             const utxos = shouldCheckBlockExplorer
                 ? await getRefundableUTXOs()
-                : [await getLockupTransaction(swap().id, swap().type)];
+                : [
+                      await getLockupTransaction(
+                          currentSwap.id,
+                          currentSwap.type,
+                      ),
+                  ];
 
             setRefundableUTXOs(utxos);
 
             if (utxos.length > 0) {
-                if (isRefundableSwapType(swap()) && !timedOutRefundable()) {
+                if (
+                    isRefundableSwapType(currentSwap) &&
+                    !timedOutRefundable()
+                ) {
                     const timeoutBlockHeight =
-                        swap().type === SwapType.Submarine
-                            ? (swap() as SubmarineSwap).timeoutBlockHeight
-                            : (swap() as ChainSwap).lockupDetails
+                        currentSwap.type === SwapType.Submarine
+                            ? (currentSwap as SubmarineSwap).timeoutBlockHeight
+                            : (currentSwap as ChainSwap).lockupDetails
                                   .timeoutBlockHeight;
 
                     try {
                         const currentBlockHeight = (
-                            await getCurrentBlockHeight([swap()])
-                        )?.[swap().assetSend];
+                            await getCurrentBlockHeight([currentSwap])
+                        )?.[currentSwap.assetSend];
 
                         if (
                             typeof currentBlockHeight === "number" &&
-                            hasSwapTimedOut(swap(), currentBlockHeight)
+                            hasSwapTimedOut(currentSwap, currentBlockHeight)
                         ) {
                             setTimedOutRefundable(true);
                             setWaitForTimeout(false);
@@ -272,7 +326,7 @@ const Pay = () => {
                         }
                     } catch (e) {
                         log.error(
-                            `failed to get uncooperative timeout ETA for swap ${swap().id}:`,
+                            `failed to get uncooperative timeout ETA for swap ${currentSwap.id}:`,
                             e,
                         );
                         // if we can't obtain block height data because 3rd party explorer is down, we allow the user to attempt an uncoop refund anyway
@@ -322,229 +376,253 @@ const Pay = () => {
     );
 
     return (
-        <div data-status={status()} class="frame">
-            <span class="frame-header">
-                <h2>
-                    {t("pay_invoice", {
-                        id: privacyMode() ? hiddenInformation : params.id,
-                    })}
-                    <Show when={swap()}>
-                        <SwapIcons swap={swap()} />
-                    </Show>
-                </h2>
-                <SettingsCog />
-            </span>
-            <Show when={!loading()} fallback={<LoadingSpinner />}>
-                <Show when={swap()}>
-                    <Show when={swap()?.refundTx !== undefined}>
-                        <p class="swap-status">
-                            {t("status")}:{" "}
-                            <span class="btn-small btn-success">
-                                {swapStatusFailed.SwapRefunded}
-                            </span>
-                        </p>
-                        <hr />
-                        <SwapRefunded refundTxId={swap().refundTx} />
-                    </Show>
-
-                    <Show when={swap()?.refundTx === undefined}>
-                        <Show when={swapStatus()} fallback={<LoadingSpinner />}>
-                            <div class="swap-status">
-                                {t("status")}:
-                                <span class="btn-small">{status()}</span>
-                                <Show
-                                    when={
-                                        getDestinationAddress(swap()) &&
-                                        (swapStatus() ===
-                                            swapStatusPending.SwapCreated ||
-                                            swapStatus() ===
-                                                swapStatusPending.InvoiceSet)
-                                    }>
-                                    <span class="vertical-line" />
-                                    <Tooltip
-                                        pxDistance={20}
-                                        label={{
-                                            key: "destination_address",
-                                            variables: {
-                                                address: cropString(
-                                                    getDestinationAddress(
-                                                        swap(),
-                                                    ),
-                                                    14,
-                                                    8,
-                                                ),
-                                            },
-                                        }}
-                                        direction={[
-                                            "top",
-                                            isMobile() ? "left" : "right",
-                                        ]}>
-                                        <button
-                                            id="copy-destination"
-                                            onClick={() =>
-                                                copyBoxText(
-                                                    getDestinationAddress(
-                                                        swap(),
-                                                    ),
-                                                )
-                                            }>
-                                            <Show
-                                                when={copyDestinationActive()}
-                                                fallback={
-                                                    <BiRegularCopy size={14} />
-                                                }>
-                                                <IoCheckmark size={14} />
-                                            </Show>
-                                            {t("destination")}
-                                        </button>
-                                    </Tooltip>
-                                </Show>
-                            </div>
-                            <hr />
-                        </Show>
-                        <Show
-                            when={!waitForSwapTimeout()}
-                            fallback={
-                                <>
-                                    <RefundEta
-                                        timeoutEta={timeoutEta}
-                                        timeoutBlockHeight={timeoutBlockHeight}
-                                        asset={swap().assetSend}
-                                    />
-                                    <BlockExplorer
-                                        asset={swap().assetSend}
-                                        txId={swap().lockupTx}
-                                        address={
-                                            swap().type === SwapType.Submarine
-                                                ? (swap() as SubmarineSwap)
-                                                      .address
-                                                : (swap() as ChainSwap)
-                                                      .lockupDetails
-                                                      .lockupAddress
-                                        }
-                                    />
-                                    <button
-                                        class="btn btn-light"
-                                        data-testid="backBtn"
-                                        onClick={() => {
-                                            navigate(-1);
-                                        }}>
-                                        {t("back")}
-                                    </button>
-                                </>
-                            }>
-                            <Switch>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                            swapStatusSuccess.TransactionClaimed ||
-                                        swapStatus() ===
-                                            swapStatusSuccess.InvoiceSettled ||
-                                        swapStatus() ===
-                                            swapStatusPending.TransactionClaimPending ||
-                                        swapStatus() ===
-                                            swapStatusPending.InvoicePaid
-                                    }>
-                                    <TransactionClaimed />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                        swapStatusFailed.InvoiceFailedToPay
-                                    }>
-                                    <InvoiceFailedToPay />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                            swapStatusFailed.TransactionLockupFailed ||
-                                        swapStatus() ===
-                                            swapStatusFailed.TransactionFailed
-                                    }>
-                                    <TransactionLockupFailed
-                                        setStatusOverride={setStatusOverride}
-                                    />
-                                </Match>
-                                <Match
-                                    when={
-                                        timedOutRefundable() ||
-                                        backendRefunded()
-                                    }>
-                                    <RefundButton
-                                        swap={
-                                            swap as Accessor<
-                                                ChainSwap | SubmarineSwap
-                                            >
-                                        }
-                                    />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                        swapStatusFailed.SwapExpired
-                                    }>
-                                    <SwapExpired />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                        swapStatusFailed.InvoiceExpired
-                                    }>
-                                    <InvoiceExpired />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                            swapStatusPending.TransactionConfirmed ||
-                                        swapStatus() ===
-                                            swapStatusPending.TransactionServerConfirmed
-                                    }>
-                                    <TransactionConfirmed />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                            swapStatusPending.TransactionMempool ||
-                                        swapStatus() ===
-                                            swapStatusPending.TransactionServerMempool
-                                    }>
-                                    <TransactionMempool swap={swap} />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                        swapStatusPending.InvoiceSet
-                                    }>
-                                    <InvoiceSet />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                        swapStatusPending.InvoicePending
-                                    }>
-                                    <InvoicePending />
-                                </Match>
-                                <Match
-                                    when={
-                                        swapStatus() ===
-                                        swapStatusPending.SwapCreated
-                                    }>
-                                    <SwapCreated />
-                                </Match>
-                            </Switch>
-                            <BlockExplorerLink
-                                swap={swap}
-                                swapStatus={swapStatus}
-                            />
-                        </Show>
-                    </Show>
-                </Show>
-                <Show when={!swap()}>
+        <Show
+            when={swap()}
+            fallback={
+                <div class="frame">
                     <h2 class="not-found">{t("pay_swap_404")}</h2>
-                </Show>
+                    <SettingsMenu />
+                </div>
+            }>
+            <Show
+                when={!backupVerificationRequired()}
+                fallback={
+                    <div class="frame">
+                        <BackupFlow resetKey={params.id} />
+                        <SettingsMenu />
+                    </div>
+                }>
+                <div data-status={status()} class="frame">
+                    <span class="frame-header">
+                        <h2>
+                            {t("pay_invoice", {
+                                id: privacyMode()
+                                    ? hiddenInformation
+                                    : params.id,
+                            })}
+                            <Show when={swap()}>
+                                <SwapIcons swap={swap()} />
+                            </Show>
+                        </h2>
+                        <SettingsCog />
+                    </span>
+                    <Show when={!loading()} fallback={<LoadingSpinner />}>
+                        <Show when={swap()?.refundTx !== undefined}>
+                            <p class="swap-status">
+                                {t("status")}:{" "}
+                                <span class="btn-small btn-success">
+                                    {swapStatusFailed.SwapRefunded}
+                                </span>
+                            </p>
+                            <hr />
+                            <SwapRefunded refundTxId={swap().refundTx} />
+                        </Show>
+
+                        <Show when={swap()?.refundTx === undefined}>
+                            <Show
+                                when={swapStatus()}
+                                fallback={<LoadingSpinner />}>
+                                <div class="swap-status">
+                                    {t("status")}:
+                                    <span class="btn-small">{status()}</span>
+                                    <Show
+                                        when={
+                                            getDestinationAddress(swap()) &&
+                                            (swapStatus() ===
+                                                swapStatusPending.SwapCreated ||
+                                                swapStatus() ===
+                                                    swapStatusPending.InvoiceSet)
+                                        }>
+                                        <span class="vertical-line" />
+                                        <Tooltip
+                                            pxDistance={20}
+                                            label={{
+                                                key: "destination_address",
+                                                variables: {
+                                                    address: cropString(
+                                                        getDestinationAddress(
+                                                            swap(),
+                                                        ),
+                                                        14,
+                                                        8,
+                                                    ),
+                                                },
+                                            }}
+                                            direction={[
+                                                "top",
+                                                isMobile() ? "left" : "right",
+                                            ]}>
+                                            <button
+                                                id="copy-destination"
+                                                onClick={() =>
+                                                    copyBoxText(
+                                                        getDestinationAddress(
+                                                            swap(),
+                                                        ),
+                                                    )
+                                                }>
+                                                <Show
+                                                    when={copyDestinationActive()}
+                                                    fallback={
+                                                        <BiRegularCopy
+                                                            size={14}
+                                                        />
+                                                    }>
+                                                    <IoCheckmark size={14} />
+                                                </Show>
+                                                {t("destination")}
+                                            </button>
+                                        </Tooltip>
+                                    </Show>
+                                </div>
+                                <hr />
+                            </Show>
+                            <Show
+                                when={!waitForSwapTimeout()}
+                                fallback={
+                                    <>
+                                        <RefundEta
+                                            timeoutEta={timeoutEta}
+                                            timeoutBlockHeight={
+                                                timeoutBlockHeight
+                                            }
+                                            asset={swap().assetSend}
+                                        />
+                                        <BlockExplorer
+                                            asset={swap().assetSend}
+                                            txId={swap().lockupTx}
+                                            address={
+                                                swap().type ===
+                                                SwapType.Submarine
+                                                    ? (swap() as SubmarineSwap)
+                                                          .address
+                                                    : (swap() as ChainSwap)
+                                                          .lockupDetails
+                                                          .lockupAddress
+                                            }
+                                        />
+                                        <button
+                                            class="btn btn-light"
+                                            data-testid="backBtn"
+                                            onClick={() => {
+                                                navigate(-1);
+                                            }}>
+                                            {t("back")}
+                                        </button>
+                                    </>
+                                }>
+                                <Switch>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                                swapStatusSuccess.TransactionClaimed ||
+                                            swapStatus() ===
+                                                swapStatusSuccess.InvoiceSettled ||
+                                            swapStatus() ===
+                                                swapStatusPending.TransactionClaimPending ||
+                                            swapStatus() ===
+                                                swapStatusPending.InvoicePaid
+                                        }>
+                                        <TransactionClaimed />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                            swapStatusFailed.InvoiceFailedToPay
+                                        }>
+                                        <InvoiceFailedToPay />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                                swapStatusFailed.TransactionLockupFailed ||
+                                            swapStatus() ===
+                                                swapStatusFailed.TransactionFailed
+                                        }>
+                                        <TransactionLockupFailed
+                                            setStatusOverride={
+                                                setStatusOverride
+                                            }
+                                        />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            timedOutRefundable() ||
+                                            backendRefunded()
+                                        }>
+                                        <RefundButton
+                                            swap={
+                                                swap as Accessor<
+                                                    ChainSwap | SubmarineSwap
+                                                >
+                                            }
+                                        />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                            swapStatusFailed.SwapExpired
+                                        }>
+                                        <SwapExpired />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                            swapStatusFailed.InvoiceExpired
+                                        }>
+                                        <InvoiceExpired />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                                swapStatusPending.TransactionConfirmed ||
+                                            swapStatus() ===
+                                                swapStatusPending.TransactionServerConfirmed
+                                        }>
+                                        <TransactionConfirmed />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                                swapStatusPending.TransactionMempool ||
+                                            swapStatus() ===
+                                                swapStatusPending.TransactionServerMempool
+                                        }>
+                                        <TransactionMempool swap={swap} />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                            swapStatusPending.InvoiceSet
+                                        }>
+                                        <InvoiceSet />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                            swapStatusPending.InvoicePending
+                                        }>
+                                        <InvoicePending />
+                                    </Match>
+                                    <Match
+                                        when={
+                                            swapStatus() ===
+                                            swapStatusPending.SwapCreated
+                                        }>
+                                        <SwapCreated />
+                                    </Match>
+                                </Switch>
+                                <BlockExplorerLink
+                                    swap={swap}
+                                    swapStatus={swapStatus}
+                                />
+                            </Show>
+                        </Show>
+                    </Show>
+                    <SettingsMenu />
+                </div>
             </Show>
-            <SettingsMenu />
-        </div>
+        </Show>
     );
 };
 

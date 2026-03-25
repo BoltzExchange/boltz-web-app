@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useSearchParams } from "@solidjs/router";
+import { useSearchParams } from "@solidjs/router";
 import { BigNumber } from "bignumber.js";
 import log from "loglevel";
 import {
@@ -17,12 +17,11 @@ import AddressInput from "../components/AddressInput";
 import Asset from "../components/Asset";
 import AssetSelect from "../components/AssetSelect";
 import ConnectWallet from "../components/ConnectWallet";
-import CreateButton, { BackupDone } from "../components/CreateButton";
+import CreateButton from "../components/CreateButton";
 import { FeeComparisonTable } from "../components/FeeComparisonTable";
 import Fees from "../components/Fees";
 import FiatAmount from "../components/FiatAmount";
 import InvoiceInput from "../components/InvoiceInput";
-import LoadingSpinner from "../components/LoadingSpinner";
 import NetworkSelect from "../components/NetworkSelect";
 import QrScan from "../components/QrScan";
 import Reverse from "../components/Reverse";
@@ -31,7 +30,7 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { AssetKind, LN, RBTC, btcChains, isEvmAsset } from "../consts/Assets";
+import { AssetKind, LN, RBTC, isEvmAsset } from "../consts/Assets";
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -55,7 +54,6 @@ const Create = () => {
     let receiveAmountRef: HTMLInputElement | undefined;
     let sendAmountRef: HTMLInputElement | undefined;
 
-    const location = useLocation<{ backupDone?: string }>();
     const [searchParams] = useSearchParams();
     const [isAccordionOpen, setIsAccordionOpen] = createSignal(false);
 
@@ -99,12 +97,9 @@ const Create = () => {
         boltzFee,
         minerFee,
         onchainAddress,
-        lnurl,
-        bolt12Offer,
         setQuoteLoading,
     } = useCreateContext();
     const { signer } = useWeb3Signer();
-    const navigate = useNavigate();
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
@@ -477,23 +472,6 @@ const Create = () => {
     };
 
     onMount(() => {
-        // if user reloads during backup phase, we don't have enough information
-        // to create the swap after the backup is done, so we redirect to /swap
-        // once the backup is done
-        if (
-            creatingSwap() &&
-            ((onchainAddress() === "" && btcChains.includes(pair().toAsset)) ||
-                (signer() === undefined &&
-                    (isEvmAsset(pair().toAsset) ||
-                        isEvmAsset(pair().fromAsset))) ||
-                (lnurl() === "" &&
-                    bolt12Offer() === undefined &&
-                    pair().toAsset === LN))
-        ) {
-            navigate("/swap");
-            return;
-        }
-
         sendAmountRef?.focus();
     });
 
@@ -622,209 +600,185 @@ const Create = () => {
         void fetchBtcPrice();
     });
 
-    const creatingSwap = () => location.state?.backupDone === BackupDone.True;
-
     return (
         <Show when={wasmSupported()} fallback={<ErrorWasm />}>
             <div class="frame">
-                <div
-                    class="creating-swap-loading"
-                    style={{
-                        display: creatingSwap() ? "flex" : "none",
-                    }}>
-                    <LoadingSpinner />
-                </div>
-                <div
-                    style={{
-                        display: !creatingSwap() ? "block" : "none",
-                    }}>
-                    <SettingsCog />
-                    <h2 data-testid="create-swap-title">{t("create_swap")}</h2>
-                    {t("create_swap_subline")} <br />
-                    <SwapLimits
-                        asset={pair().fromAsset}
-                        denomination={denomination()}
-                        maximum={maximum()}
-                        maximumLabel={t("max")}
-                        minimum={minimum()}
-                        minimumLabel={t("min")}
-                        onSelectAmount={setAmount}
-                        sendLabel={t("send")}
-                        separator={separator()}
-                    />
-                    <Show when={config.isPro}>
-                        <Accordion
-                            title={t("swap_opportunities_accordion")}
-                            isOpen={isAccordionOpen()}
-                            onClick={() =>
-                                setIsAccordionOpen(!isAccordionOpen())
-                            }>
-                            <FeeComparisonTable
-                                proPairs={pairs()}
-                                regularPairs={regularPairs()}
-                                onSelect={(opportunity) => {
-                                    if (
-                                        pair().fromAsset !==
-                                            opportunity.assetSend ||
-                                        pair().toAsset !==
-                                            opportunity.assetReceive
-                                    ) {
-                                        setPair(
-                                            new Pair(
-                                                pair().pairs,
-                                                opportunity.assetSend,
-                                                opportunity.assetReceive,
-                                            ),
-                                        );
-                                    }
-                                    setIsAccordionOpen(false);
-                                }}
+                <SettingsCog />
+                <h2 data-testid="create-swap-title">{t("create_swap")}</h2>
+                {t("create_swap_subline")} <br />
+                <SwapLimits
+                    asset={pair().fromAsset}
+                    denomination={denomination()}
+                    maximum={maximum()}
+                    maximumLabel={t("max")}
+                    minimum={minimum()}
+                    minimumLabel={t("min")}
+                    onSelectAmount={setAmount}
+                    sendLabel={t("send")}
+                    separator={separator()}
+                />
+                <Show when={config.isPro}>
+                    <Accordion
+                        title={t("swap_opportunities_accordion")}
+                        isOpen={isAccordionOpen()}
+                        onClick={() => setIsAccordionOpen(!isAccordionOpen())}>
+                        <FeeComparisonTable
+                            proPairs={pairs()}
+                            regularPairs={regularPairs()}
+                            onSelect={(opportunity) => {
+                                if (
+                                    pair().fromAsset !==
+                                        opportunity.assetSend ||
+                                    pair().toAsset !== opportunity.assetReceive
+                                ) {
+                                    setPair(
+                                        new Pair(
+                                            pair().pairs,
+                                            opportunity.assetSend,
+                                            opportunity.assetReceive,
+                                        ),
+                                    );
+                                }
+                                setIsAccordionOpen(false);
+                            }}
+                        />
+                    </Accordion>
+                </Show>
+                <div class="icons">
+                    <div>
+                        <Asset
+                            side={Side.Send}
+                            signal={() => pair().fromAsset}
+                        />
+                        <div
+                            class={`${showFiatAmount() ? "input-with-label" : ""}`}>
+                            <input
+                                ref={sendAmountRef}
+                                autofocus
+                                required
+                                type="text"
+                                placeholder="0"
+                                maxlength={calculateDigits(
+                                    maximum(),
+                                    denomination(),
+                                )}
+                                inputmode={
+                                    denomination() == "btc"
+                                        ? "decimal"
+                                        : "numeric"
+                                }
+                                id="sendAmount"
+                                data-testid="sendAmount"
+                                autocomplete="off"
+                                value={sendAmountFormatted()}
+                                onPaste={(e) => validatePaste(e)}
+                                onKeyPress={(e) => validateInput(e)}
+                                onInput={(e) => changeSendAmount(e)}
                             />
-                        </Accordion>
-                    </Show>
-                    <div class="icons">
-                        <div>
-                            <Asset
-                                side={Side.Send}
-                                signal={() => pair().fromAsset}
+                            <FiatAmount
+                                asset={() => pair().fromAsset}
+                                amount={BigNumber(sendAmount()).toNumber()}
+                                variant="label"
+                                for="sendAmount"
                             />
-                            <div
-                                class={`${showFiatAmount() ? "input-with-label" : ""}`}>
-                                <input
-                                    ref={sendAmountRef}
-                                    autofocus
-                                    required
-                                    type="text"
-                                    placeholder="0"
-                                    maxlength={calculateDigits(
-                                        maximum(),
-                                        denomination(),
-                                    )}
-                                    inputmode={
-                                        denomination() == "btc"
-                                            ? "decimal"
-                                            : "numeric"
-                                    }
-                                    id="sendAmount"
-                                    data-testid="sendAmount"
-                                    autocomplete="off"
-                                    value={sendAmountFormatted()}
-                                    onPaste={(e) => validatePaste(e)}
-                                    onKeyPress={(e) => validateInput(e)}
-                                    onInput={(e) => changeSendAmount(e)}
-                                />
-                                <FiatAmount
-                                    asset={() => pair().fromAsset}
-                                    amount={BigNumber(sendAmount()).toNumber()}
-                                    variant="label"
-                                    for="sendAmount"
-                                />
-                            </div>
-                        </div>
-                        <Reverse />
-                        <div>
-                            <Asset
-                                side={Side.Receive}
-                                signal={() => pair().toAsset}
-                            />
-                            <div
-                                class={`${showFiatAmount() ? "input-with-label" : ""}`}>
-                                <input
-                                    ref={receiveAmountRef}
-                                    required
-                                    type="text"
-                                    placeholder="0"
-                                    maxlength={calculateDigits(
-                                        maximum(),
-                                        denomination(),
-                                    )}
-                                    inputmode={
-                                        denomination() == "btc"
-                                            ? "decimal"
-                                            : "numeric"
-                                    }
-                                    id="receiveAmount"
-                                    data-testid="receiveAmount"
-                                    autocomplete="off"
-                                    value={receiveAmountFormatted()}
-                                    onPaste={(e) => validatePaste(e)}
-                                    onKeyPress={(e) => validateInput(e)}
-                                    onInput={(e) => changeReceiveAmount(e)}
-                                />
-                                <FiatAmount
-                                    asset={() => pair().toAsset}
-                                    amount={BigNumber(
-                                        receiveAmount(),
-                                    ).toNumber()}
-                                    variant="label"
-                                    for="receiveAmount"
-                                />
-                            </div>
                         </div>
                     </div>
-                    <Fees />
-                    <hr class="spacer" />
-                    <Show
-                        when={
-                            (pair().requiredInput === RequiredInput.Address ||
-                                (pair().requiredInput ===
-                                    RequiredInput.Unknown &&
-                                    pair().toAsset !== LN)) &&
-                            config.assets?.[pair().toAsset]?.type ===
-                                AssetKind.UTXO
-                        }>
-                        <AddressInput />
-                    </Show>
-                    <Show
-                        when={
-                            pair().requiredInput === RequiredInput.Invoice ||
-                            (pair().requiredInput === RequiredInput.Unknown &&
-                                pair().toAsset === LN)
-                        }>
-                        <Show when={webln()}>
-                            <WeblnButton />
-                            <hr class="spacer" />
-                        </Show>
-                        <InvoiceInput />
-                    </Show>
-                    <Show
-                        when={
-                            isMobile() &&
-                            config.assets?.[pair().toAsset]?.type ===
-                                AssetKind.UTXO
-                        }>
-                        <QrScan />
-                    </Show>
-                    <Show
-                        when={[pair().fromAsset, pair().toAsset].some(
-                            isEvmAsset,
-                        )}>
-                        <ConnectWallet
-                            asset={
-                                isEvmAsset(pair().fromAsset)
-                                    ? pair().fromAsset
-                                    : pair().toAsset
-                            }
-                            syncAddress={isEvmAsset(pair().toAsset)}
-                            disabled={() => !pair().isRoutable}
+                    <Reverse />
+                    <div>
+                        <Asset
+                            side={Side.Receive}
+                            signal={() => pair().toAsset}
                         />
-                        {/* We have no gas abstraction for RBTC */}
-                        <Show
-                            when={
-                                isEvmAsset(pair().toAsset) &&
-                                pair().toAsset !== RBTC &&
-                                !connectedDestination()
-                            }>
-                            <hr class="spacer" />
-                            <AddressInput />
-                        </Show>
+                        <div
+                            class={`${showFiatAmount() ? "input-with-label" : ""}`}>
+                            <input
+                                ref={receiveAmountRef}
+                                required
+                                type="text"
+                                placeholder="0"
+                                maxlength={calculateDigits(
+                                    maximum(),
+                                    denomination(),
+                                )}
+                                inputmode={
+                                    denomination() == "btc"
+                                        ? "decimal"
+                                        : "numeric"
+                                }
+                                id="receiveAmount"
+                                data-testid="receiveAmount"
+                                autocomplete="off"
+                                value={receiveAmountFormatted()}
+                                onPaste={(e) => validatePaste(e)}
+                                onKeyPress={(e) => validateInput(e)}
+                                onInput={(e) => changeReceiveAmount(e)}
+                            />
+                            <FiatAmount
+                                asset={() => pair().toAsset}
+                                amount={BigNumber(receiveAmount()).toNumber()}
+                                variant="label"
+                                for="receiveAmount"
+                            />
+                        </div>
+                    </div>
+                </div>
+                <Fees />
+                <hr class="spacer" />
+                <Show
+                    when={
+                        (pair().requiredInput === RequiredInput.Address ||
+                            (pair().requiredInput === RequiredInput.Unknown &&
+                                pair().toAsset !== LN)) &&
+                        config.assets?.[pair().toAsset]?.type === AssetKind.UTXO
+                    }>
+                    <AddressInput />
+                </Show>
+                <Show
+                    when={
+                        pair().requiredInput === RequiredInput.Invoice ||
+                        (pair().requiredInput === RequiredInput.Unknown &&
+                            pair().toAsset === LN)
+                    }>
+                    <Show when={webln()}>
+                        <WeblnButton />
                         <hr class="spacer" />
                     </Show>
-                    <CreateButton />
-                    <AssetSelect />
-                    <NetworkSelect />
-                    <SettingsMenu />
-                </div>
+                    <InvoiceInput />
+                </Show>
+                <Show
+                    when={
+                        isMobile() &&
+                        config.assets?.[pair().toAsset]?.type === AssetKind.UTXO
+                    }>
+                    <QrScan />
+                </Show>
+                <Show
+                    when={[pair().fromAsset, pair().toAsset].some(isEvmAsset)}>
+                    <ConnectWallet
+                        asset={
+                            isEvmAsset(pair().fromAsset)
+                                ? pair().fromAsset
+                                : pair().toAsset
+                        }
+                        syncAddress={isEvmAsset(pair().toAsset)}
+                        disabled={() => !pair().isRoutable}
+                    />
+                    {/* We have no gas abstraction for RBTC */}
+                    <Show
+                        when={
+                            isEvmAsset(pair().toAsset) &&
+                            pair().toAsset !== RBTC &&
+                            !connectedDestination()
+                        }>
+                        <hr class="spacer" />
+                        <AddressInput />
+                    </Show>
+                    <hr class="spacer" />
+                </Show>
+                <CreateButton />
+                <AssetSelect />
+                <NetworkSelect />
+                <SettingsMenu />
             </div>
         </Show>
     );

@@ -1,6 +1,6 @@
 import type * as SolidRouter from "@solidjs/router";
 import { useLocation } from "@solidjs/router";
-import { render, screen } from "@solidjs/testing-library";
+import { render, screen, waitFor } from "@solidjs/testing-library";
 
 import { BTC, LBTC, LN } from "../../src/consts/Assets";
 import { SwapType } from "../../src/consts/Enums";
@@ -9,6 +9,7 @@ import {
     swapStatusPending,
     swapStatusSuccess,
 } from "../../src/consts/SwapStatus";
+import dict from "../../src/i18n/i18n";
 import Pay from "../../src/pages/Pay";
 import { getSwapUTXOs } from "../../src/utils/blockchain";
 import {
@@ -27,7 +28,7 @@ import type {
     SomeSwap,
 } from "../../src/utils/swapCreator";
 import { TestComponent } from "../helper";
-import { contextWrapper, payContext } from "../helper";
+import { contextWrapper, globalSignals, payContext } from "../helper";
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getSwapStatus: vi.fn(),
@@ -46,6 +47,10 @@ vi.mock("../../src/utils/rescue", () => ({
     hasSwapTimedOut: vi.fn(),
     isRefundableSwapType: vi.fn(),
 }));
+vi.mock("../../src/components/QrCode", () => ({
+    default: () => <div data-testid="mock-qrcode" />,
+}));
+
 const mockGetSwapStatus = vi.mocked(getSwapStatus);
 mockGetSwapStatus.mockResolvedValue({
     status: swapStatusFailed.TransactionRefunded,
@@ -91,21 +96,38 @@ vi.mock("@solidjs/router", async () => {
     };
 });
 
+const renderPay = (backupDone: boolean = true) => {
+    render(
+        () => (
+            <>
+                <TestComponent />
+                <Pay />
+            </>
+        ),
+        { wrapper: contextWrapper },
+    );
+
+    globalSignals.setRescueFileBackupDone(backupDone);
+};
+
 describe("Pay", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        localStorage.clear();
+        mockUseLocation.mockReturnValue({
+            hash: "",
+            key: "",
+            pathname: "",
+            search: "",
+            state: undefined,
+        } as unknown as ReturnType<typeof useLocation>);
+        mockGetSwapStatus.mockResolvedValue({
+            status: swapStatusFailed.TransactionRefunded,
+        });
     });
 
     test("should rename `transaction.refunded` to `swap.waitingForRefund` on ChainSwap", async () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Pay />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
+        renderPay();
         payContext.setSwap({
             type: SwapType.Chain,
             assetReceive: BTC,
@@ -119,15 +141,7 @@ describe("Pay", () => {
     });
 
     test("should allow to refund `transaction.refunded` on ChainSwap", async () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Pay />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
+        renderPay();
         payContext.setSwap({
             type: SwapType.Chain,
             assetReceive: BTC,
@@ -143,15 +157,7 @@ describe("Pay", () => {
     });
 
     test("should not rename `transaction.refunded` status on ReverseSwap", async () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Pay />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
+        renderPay();
         payContext.setSwap({
             type: SwapType.Reverse,
             assetReceive: LBTC,
@@ -165,15 +171,7 @@ describe("Pay", () => {
     });
 
     test("should not allow to refund `transaction.refunded` on ReverseSwap", () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Pay />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
+        renderPay();
         payContext.setSwap({
             type: SwapType.Reverse,
             assetReceive: LBTC,
@@ -198,18 +196,31 @@ describe("Pay", () => {
             status: swapStatusSuccess.TransactionClaimed, // Frontend should ignore this status when timedOutRefundable is true
         });
 
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Pay />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
+        renderPay();
 
         const status = await screen.findByText("swap.waitingForRefund");
         expect(status).toBeVisible();
+    });
+
+    test("should show backup flow and skip status fetch for unverified non-reverse swaps", async () => {
+        renderPay(false);
+
+        await screen.findByText(dict.en.download_boltz_rescue_key);
+        expect(mockGetSwapStatus).not.toHaveBeenCalled();
+    });
+
+    test("should fetch status once backup has been verified", async () => {
+        mockGetSwapStatus.mockResolvedValue({
+            status: swapStatusPending.SwapCreated,
+        });
+
+        renderPay(false);
+        globalSignals.setRescueFileBackupDone(true);
+
+        await waitFor(() => {
+            expect(mockGetSwapStatus).toHaveBeenCalledWith("123");
+        });
+        expect(await screen.findByText("swap.created")).toBeVisible();
     });
 
     test.each([
@@ -229,15 +240,7 @@ describe("Pay", () => {
             mockGetSwapStatus.mockResolvedValue({
                 status: swapStatusPending.SwapCreated,
             });
-            render(
-                () => (
-                    <>
-                        <TestComponent />
-                        <Pay />
-                    </>
-                ),
-                { wrapper: contextWrapper },
-            );
+            renderPay();
             payContext.setSwap({
                 type: swapType,
                 assetReceive,
@@ -290,15 +293,7 @@ describe("Pay", () => {
         mockIsRefundableSwapType.mockReturnValue(true);
         mockHasSwapTimedOut.mockReturnValue(false);
 
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Pay />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
+        renderPay();
 
         payContext.setSwap({
             type: SwapType.Chain,
@@ -333,15 +328,7 @@ describe("Pay", () => {
         mockIsRefundableSwapType.mockReturnValue(true);
         mockHasSwapTimedOut.mockReturnValue(true);
 
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Pay />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
+        renderPay();
 
         payContext.setSwap({
             type: SwapType.Chain,

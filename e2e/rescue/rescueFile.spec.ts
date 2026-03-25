@@ -12,6 +12,7 @@ import {
     elementsSendToAddress,
     fillSwapDetails,
     generateLiquidBlock,
+    getCurrentSwapId,
     getElementsWalletTx,
     getLiquidAddress,
     setupSwapAssets,
@@ -47,10 +48,32 @@ test.describe("Rescue file", () => {
         await page.getByText(dict.en.verify_key_failed).click();
     });
 
-    test("should create swap after new backup download", async ({ page }) => {
-        await createAndVerifySwap(page, rescueFileJson);
-        // Verify that the swap was created
+    test("should create swap before backup verification", async ({ page }) => {
+        await page.goto("/");
+        await setupSwapAssets(page);
+        await fillSwapDetails(page);
+
+        await expect(page).toHaveURL(/\/swap\/.+/);
+        expect(getCurrentSwapId(page)).toBeTruthy();
+        await expect(
+            page.getByRole("heading", {
+                name: dict.en.download_boltz_rescue_key,
+            }),
+        ).toBeVisible();
+        await expect(page.getByTestId("copy_address")).toHaveCount(0);
+
+        const downloadPromise = page.waitForEvent("download");
+        await page
+            .getByRole("button", { name: dict.en.download_new_key })
+            .click();
+        await (await downloadPromise).saveAs(rescueFileJson);
+
         expect(await getRestorableSwaps(rescueFileJson)).toHaveLength(1);
+
+        await page
+            .getByTestId("rescueFileUpload")
+            .setInputFiles(rescueFileJson);
+        await expect(page.getByTestId("copy_address")).toBeVisible();
     });
 
     test("should show entries for swaps with no lockup transaction as disabled", async ({

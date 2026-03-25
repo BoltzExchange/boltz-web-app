@@ -2,19 +2,10 @@ import { generateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 import { fireEvent, render, screen, within } from "@solidjs/testing-library";
 
-import { BackupDone } from "../../src/components/CreateButton";
-import MnemonicVerify from "../../src/pages/MnemonicVerify";
+import MnemonicVerifyContent from "../../src/components/MnemonicVerifyContent";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
-const navigate = vi.fn();
-
-vi.mock("@solidjs/router", async () => {
-    const actual = await vi.importActual("@solidjs/router");
-    return {
-        ...actual,
-        useNavigate: () => navigate,
-    };
-});
+const onIncorrect = vi.fn();
 
 const getButtonTexts = async () => {
     const buttonsContainer = await screen.findByTestId("verification-buttons");
@@ -28,9 +19,10 @@ const getButtonTexts = async () => {
     return buttonTexts;
 };
 
-describe("MnemonicVerify", () => {
+describe("MnemonicVerifyContent", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        localStorage.clear();
     });
 
     it("should hide 1 out of 4 words", async () => {
@@ -38,7 +30,7 @@ describe("MnemonicVerify", () => {
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicVerify />
+                    <MnemonicVerifyContent onIncorrect={onIncorrect} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -63,7 +55,7 @@ describe("MnemonicVerify", () => {
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicVerify />
+                    <MnemonicVerifyContent onIncorrect={onIncorrect} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -87,12 +79,12 @@ describe("MnemonicVerify", () => {
         expect(incorrectButtonTexts.length).toEqual(3);
     });
 
-    it("should invoke `backupDone` when all words are correct", async () => {
+    it("should set rescueFileBackupDone when all words are correct", async () => {
         render(
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicVerify />
+                    <MnemonicVerifyContent onIncorrect={onIncorrect} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -115,17 +107,15 @@ describe("MnemonicVerify", () => {
             fireEvent.click(correctButtonElement);
         }
 
-        expect(navigate).toHaveBeenCalledWith("/swap", {
-            state: { backupDone: BackupDone.True },
-        });
+        expect(globalSignals.rescueFileBackupDone()).toBe(true);
     });
 
-    it("should navigate to backup page when incorrect word is clicked", async () => {
+    it("should invoke incorrect callback when incorrect word is clicked", async () => {
         render(
             () => (
                 <>
                     <TestComponent />
-                    <MnemonicVerify />
+                    <MnemonicVerifyContent onIncorrect={onIncorrect} />
                 </>
             ),
             { wrapper: contextWrapper },
@@ -146,6 +136,6 @@ describe("MnemonicVerify", () => {
 
         fireEvent.click(incorrectButtonElement);
 
-        expect(navigate).toHaveBeenCalledWith("/backup/mnemonic");
+        expect(onIncorrect).toHaveBeenCalled();
     });
 });

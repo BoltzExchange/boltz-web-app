@@ -10,6 +10,7 @@ import {
     generateInvoiceLnd,
     getBitcoinAddress,
     getBolt12Offer,
+    getCurrentSwapId,
     getLiquidAddress,
 } from "./utils";
 
@@ -222,7 +223,7 @@ const completeBackup = async (page: Page) => {
     }
 };
 
-test.describe("page reload during backup: redirect to /swap after completion", () => {
+test.describe("page reload during inline backup flow", () => {
     [
         {
             description: `${BTC} -> ${LN}`,
@@ -267,6 +268,8 @@ test.describe("page reload during backup: redirect to /swap after completion", (
                     name: dict.en.download_boltz_rescue_key,
                 }),
             ).toBeVisible();
+            const swapId = getCurrentSwapId(page);
+            expect(swapId).toBeTruthy();
 
             await page.reload();
 
@@ -275,9 +278,10 @@ test.describe("page reload during backup: redirect to /swap after completion", (
                     name: dict.en.download_boltz_rescue_key,
                 }),
             ).toBeVisible();
+            await expect(page).toHaveURL(new RegExp(`/swap/${swapId}$`));
 
             await completeBackup(page);
-            await expect(page).toHaveURL(/\/swap$/);
+            await expect(page).toHaveURL(new RegExp(`/swap/${swapId}$`));
         });
     });
 });
