@@ -9,7 +9,7 @@ export const enum NetworkTransport {
     Tron = "tron",
 }
 
-export const enum Usdt0MeshKind {
+export const enum Usdt0Mesh {
     Native = "native",
     Legacy = "legacy",
 }
@@ -25,9 +25,8 @@ export type Usdt0Variant = {
     chainId?: number;
     tokenAddress: string;
     blockExplorerUrl: string;
-    rpcUrls?: string[];
-    meshKind?: Usdt0MeshKind;
-    lzEid?: string;
+    rpcUrls: string[];
+    mesh?: Usdt0Mesh;
 };
 
 export type Asset = {
@@ -48,24 +47,20 @@ export type Asset = {
         chainName: string;
         symbol: string;
         gasToken: string;
-        transport?: NetworkTransport;
+        transport: NetworkTransport;
         chainId?: number;
-        rpcUrls?: string[];
+        rpcUrls: string[];
         nativeCurrency?: {
             name: string;
             symbol: string;
             decimals: number;
         };
+        mesh?: Usdt0Mesh;
     };
     token?: {
         address: string;
         decimals: number;
         routeVia?: string;
-    };
-    mesh?: {
-        kind: Usdt0MeshKind;
-        lzEid?: string;
-        recipientFormat?: NetworkTransport;
     };
 };
 
@@ -73,6 +68,8 @@ export enum Explorer {
     Mempool = "mempool",
     Esplora = "esplora",
     Blockscout = "blockscout",
+    Solscan = "solscan",
+    Tronscan = "tronscan",
 }
 
 export type Url = {
