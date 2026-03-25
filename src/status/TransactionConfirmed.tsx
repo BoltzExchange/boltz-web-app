@@ -3,6 +3,7 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { Router } from "boltz-core/typechain/Router";
 import {
     AbiCoder,
+    MaxUint256,
     Signature,
     type Wallet,
     ZeroAddress,
@@ -621,22 +622,28 @@ const claimErc20ViaRouterOft = async (
 
     if (approvalRequired) {
         const tokenContract = createTokenContract(oft.sourceAsset, signer);
-        const approveTx = await tokenContract.approve.populateTransaction(
+        const allowance = await tokenContract.allowance(
+            routerAddress,
             oftContract.address,
-            amountOut,
         );
-        if (
-            typeof approveTx.to !== "string" ||
-            typeof approveTx.data !== "string"
-        ) {
-            throw new Error("failed to populate OFT approval transaction");
-        }
+        if (allowance < amountOut * 10n) {
+            const approveTx = await tokenContract.approve.populateTransaction(
+                oftContract.address,
+                MaxUint256,
+            );
+            if (
+                typeof approveTx.to !== "string" ||
+                typeof approveTx.data !== "string"
+            ) {
+                throw new Error("failed to populate OFT approval transaction");
+            }
 
-        routerCalls.push({
-            target: approveTx.to,
-            value: "0",
-            callData: approveTx.data,
-        });
+            routerCalls.push({
+                target: approveTx.to,
+                value: "0",
+                callData: approveTx.data,
+            });
+        }
     }
 
     const tx = await router.claimERC20ExecuteOft.populateTransaction(
