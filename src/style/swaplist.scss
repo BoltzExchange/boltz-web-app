@@ -66,6 +66,8 @@
 
 .swaplist-asset span[data-asset="LN"] {
     background-image: vars.$lightning_icon;
+    background-size: 66%;
+    background-position: center;
 }
 .swaplist-asset span[data-asset="BTC"] {
     background-image: vars.$bitcoin_icon;
@@ -81,4 +83,6 @@
 }
 .swaplist-asset span[data-asset="USDT"] {
     background-image: vars.$usdt0_icon;
+    background-size: 76%;
+    background-position: center;
 }

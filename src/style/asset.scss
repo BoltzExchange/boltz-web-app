@@ -50,7 +50,7 @@
 .asset-LN {
     .icon {
         background-image: vars.$lightning_icon;
-        background-size: 80%;
+        background-size: 66%;
         background-position: center;
     }
     .asset-text:before {
@@ -99,13 +99,13 @@
 .asset-USDT {
     .icon {
         background-image: vars.$usdt0_icon;
-        background-size: 80%;
+        background-size: 76%;
         background-position: center;
     }
 
     &:not([data-network]) .icon {
         background-image: vars.$usdt_icon;
-        background-size: 75%;
+        background-size: 72%;
     }
     .asset-text:before {
         content: "USDT";
@@ -138,7 +138,7 @@
 
     &.asset-USDT .icon {
         background-image: vars.$usdt_icon;
-        background-size: 75%;
+        background-size: 72%;
     }
 }
 
