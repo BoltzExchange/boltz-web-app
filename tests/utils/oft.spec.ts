@@ -9,7 +9,7 @@ const {
     getOftReceivedEventByGuid,
     isExecutorNativeAmountExceedsCapError,
     quoteOftSend,
-    resetOftStateForTests,
+    clearOftDeployments,
 } = await import("../../src/utils/oft/oft");
 
 const getOftRoute = (from: string, to = from) => ({
@@ -29,7 +29,7 @@ describe("oft", () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
-        resetOftStateForTests();
+        clearOftDeployments();
     });
 
     afterAll(() => {
