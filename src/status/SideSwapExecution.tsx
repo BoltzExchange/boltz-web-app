@@ -43,14 +43,11 @@ type SideSwapExecutionProps = {
 };
 
 const SideSwapExecution = (props: SideSwapExecutionProps) => {
-    const { t, setSwapStorage, rescueFile } = useGlobalContext();
+    const { t, setSwapStorage, rescueFile, notify } = useGlobalContext();
     const { setSwap } = usePayContext();
 
     const [status, setStatus] = createSignal<SideSwapStatus>(
         props.swap.sideswap?.status ?? SideSwapStatus.Pending,
-    );
-    const [error, setError] = createSignal<string | undefined>(
-        props.swap.sideswap?.error,
     );
     const [txid, setTxid] = createSignal<string | undefined>(
         props.swap.sideswap?.txid,
@@ -194,8 +191,14 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
             );
 
             log.info("Unblinded intermediate UTXO:", {
+                txid: unblindedUtxo.txid,
+                vout: unblindedUtxo.vout,
                 asset: unblindedUtxo.asset,
                 value: unblindedUtxo.value,
+                asset_bf_len: unblindedUtxo.assetBlindingFactor.length,
+                value_bf_len: unblindedUtxo.valueBlindingFactor.length,
+                asset_bf: unblindedUtxo.assetBlindingFactor,
+                value_bf: unblindedUtxo.valueBlindingFactor,
             });
 
             const utxo: SideSwapUtxo = {
@@ -256,7 +259,7 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
             const errorMsg = e instanceof Error ? e.message : String(e);
             log.error("SideSwap execution failed:", errorMsg);
             setStatus(SideSwapStatus.Failed);
-            setError(errorMsg);
+            notify("error", errorMsg);
             await updateSwapSideswap({
                 status: SideSwapStatus.Failed,
                 error: errorMsg,
@@ -265,6 +268,15 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
     };
 
     onMount(() => {
+        if (
+            props.swap.sideswap?.status === SideSwapStatus.Failed &&
+            !props.swap.sideswap?.txid
+        ) {
+            const storedError = props.swap.sideswap?.error;
+            if (storedError) {
+                log.warn("Retrying previously failed SideSwap:", storedError);
+            }
+        }
         void executeSideSwap();
     });
 
@@ -317,9 +329,6 @@ const SideSwapExecution = (props: SideSwapExecutionProps) => {
 
             <Show when={status() === SideSwapStatus.Failed}>
                 <h2>{t("sideswap_failed")}</h2>
-                <Show when={error()}>
-                    <p class="error">{error()}</p>
-                </Show>
                 <SideSwapRecovery swap={props.swap} />
             </Show>
         </div>

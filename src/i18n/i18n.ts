@@ -137,11 +137,15 @@ const dict = {
             "Signing and submitting SideSwap transaction...",
         sideswap_complete: "SideSwap trade complete",
         sideswap_failed: "SideSwap trade failed",
+        sideswap_amount_too_small:
+            "Amount is below the SideSwap minimum of {{ min }} sats. Use refund to recover your {{ asset }}.",
         sideswap_recovery_available:
             "You can recover the intermediate L-BTC below.",
         recover_intermediate_lbtc: "Recover L-BTC",
         sideswap_recovery_description:
             "Enter a Liquid address to sweep the intermediate L-BTC to.",
+        sideswap_refund_description:
+            "Enter an address to refund your {{ asset }}.",
         liquid_address: "Liquid address",
         sweep_lbtc: "Sweep L-BTC",
         sweep_successful: "Funds swept successfully",

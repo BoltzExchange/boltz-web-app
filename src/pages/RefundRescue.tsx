@@ -15,6 +15,7 @@ import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
+import SideSwapRecovery from "../components/SideSwapRecovery";
 import { type AssetType, type RefundableAssetType } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
@@ -24,12 +25,18 @@ import type { ChainSwapDetails, RestorableSwap } from "../utils/boltzClient";
 import { getSwapStatus } from "../utils/boltzClient";
 import { ECPair } from "../utils/ecpair";
 import {
+    checkTempWalletForUtxos,
     getCurrentBlockHeight,
     getRescuableUTXOs,
     getTimeoutEta,
 } from "../utils/rescue";
 import { deriveKey } from "../utils/rescueFile";
-import type { ChainSwap, SomeSwap, SubmarineSwap } from "../utils/swapCreator";
+import {
+    type ChainSwap,
+    SideSwapStatus,
+    type SomeSwap,
+    type SubmarineSwap,
+} from "../utils/swapCreator";
 
 export const mapSwap = (
     swap?: RestorableSwap,
@@ -115,15 +122,18 @@ const RefundRescue = () => {
     const [timeoutBlockHeight, setTimeoutBlockHeight] = createSignal<number>(0);
     const [refundTxId, setRefundTxId] = createSignal<string>("");
     const [loading, setLoading] = createSignal<boolean>(false);
+    const [isTempWalletSweep, setIsTempWalletSweep] =
+        createSignal<boolean>(false);
 
     createResource(async () => {
         try {
             if (rescuableSwap()) {
                 setLoading(true);
+                const currentSwap = rescuableSwap() as SomeSwap;
                 try {
-                    setSwap(rescuableSwap() as SomeSwap);
-                    log.debug("selecting swap", rescuableSwap());
-                    const res = await getSwapStatus(rescuableSwap().id);
+                    setSwap(currentSwap);
+                    log.debug("selecting swap", currentSwap);
+                    const res = await getSwapStatus(currentSwap.id);
                     setSwapStatus(res.status);
                     setSwapStatusTransaction(res.transaction);
                     setFailureReason(res.failureReason);
@@ -137,11 +147,36 @@ const RefundRescue = () => {
                 // For uncooperative swaps, we don't rely on backend for status updates
                 setShouldIgnoreBackendStatus(waitForSwapTimeout());
 
-                const utxos = await getRescuableUTXOs(
-                    rescuableSwap() as SomeSwap,
-                );
+                const utxos = await getRescuableUTXOs(currentSwap);
 
                 if (utxos.length === 0) {
+                    const rf = rescueFile();
+                    if (rf) {
+                        const tempAddr = await checkTempWalletForUtxos(
+                            rf,
+                            currentSwap,
+                        );
+                        if (tempAddr) {
+                            log.info(
+                                `Found temp wallet UTXOs for swap ${currentSwap.id}`,
+                            );
+                            const enrichedSwap = {
+                                ...currentSwap,
+                                sideswap: {
+                                    baseAssetId: "",
+                                    quoteAssetId: "",
+                                    userAddress: "",
+                                    quoteAmountEstimate: 0,
+                                    status: SideSwapStatus.Failed,
+                                    error: "Funds detected at intermediate Liquid address",
+                                },
+                            };
+                            setSwap(enrichedSwap);
+                            setIsTempWalletSweep(true);
+                            return;
+                        }
+                    }
+
                     throw new Error(
                         `failed to get refundable UTXOs for swap ${swap().id}`,
                     );
@@ -202,6 +237,14 @@ const RefundRescue = () => {
                     <h2>{t("refund_swap")}</h2>
 
                     <Switch>
+                        <Match when={isTempWalletSweep()}>
+                            <hr />
+                            <h3>{t("sideswap_failed")}</h3>
+                            <SideSwapRecovery
+                                swap={swap() as SomeSwap}
+                                rescueFileOverride={rescueFile()}
+                            />
+                        </Match>
                         <Match when={waitForSwapTimeout()}>
                             <hr />
                             <RefundEta

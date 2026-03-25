@@ -5,7 +5,11 @@ import { config } from "../config";
 import { LBTC } from "../consts/Assets";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
-import { broadcastToExplorer, getFeeEstimations } from "../utils/blockchain";
+import {
+    broadcastToExplorer,
+    getAddressUTXOs,
+    getFeeEstimations,
+} from "../utils/blockchain";
 import { validateAddress } from "../utils/compat";
 import {
     buildMultiAssetSweepTransaction,
@@ -13,6 +17,7 @@ import {
     findAllOutputsForScript,
 } from "../utils/liquidWallet";
 import { fetchBlockExplorerTx } from "../utils/sideswapHelpers";
+import type { RescueFile } from "../utils/rescueFile";
 import {
     type ChainSwap,
     type ReverseSwap,
@@ -23,11 +28,14 @@ import LoadingSpinner from "./LoadingSpinner";
 
 type SideSwapRecoveryProps = {
     swap: SomeSwap;
+    rescueFileOverride?: RescueFile;
 };
 
 const SideSwapRecovery = (props: SideSwapRecoveryProps) => {
-    const { t, setSwapStorage, rescueFile, notify } = useGlobalContext();
+    const { t, setSwapStorage, rescueFile: globalRescueFile, notify } = useGlobalContext();
     const { setSwap } = usePayContext();
+
+    const rescueFile = () => props.rescueFileOverride ?? globalRescueFile();
 
     const [sweepAddress, setSweepAddress] = createSignal("");
     const [addressValid, setAddressValid] = createSignal(false);
@@ -37,6 +45,13 @@ const SideSwapRecovery = (props: SideSwapRecoveryProps) => {
     const onAddressInput = (value: string) => {
         setSweepAddress(value);
         setAddressValid(validateAddress(LBTC, value));
+    };
+
+    const buttonMessage = () => {
+        if (addressValid() || !sweepAddress()) {
+            return t("refund");
+        }
+        return t("invalid_address", { asset: LBTC });
     };
 
     const executeSweep = async () => {
@@ -56,21 +71,39 @@ const SideSwapRecovery = (props: SideSwapRecoveryProps) => {
             const claimTx = props.swap.claimTx;
             const tradeTx = sideswap.txid;
             const sourceTx = tradeTx ?? claimTx;
-            if (!sourceTx) {
-                throw new Error("No transaction to sweep from");
+
+            let utxos: Awaited<ReturnType<typeof findAllOutputsForScript>>;
+
+            if (sourceTx) {
+                const txHex = await fetchBlockExplorerTx(LBTC, sourceTx);
+                utxos = await findAllOutputsForScript(
+                    txHex,
+                    wallet.outputScript,
+                    wallet.blindingPrivateKey,
+                );
+            } else {
+                const addressUtxos = await getAddressUTXOs(
+                    LBTC,
+                    wallet.address,
+                );
+                const allUtxos: Awaited<
+                    ReturnType<typeof findAllOutputsForScript>
+                > = [];
+                for (const u of addressUtxos) {
+                    const txHex = await fetchBlockExplorerTx(LBTC, u.txid);
+                    const outputs = await findAllOutputsForScript(
+                        txHex,
+                        wallet.outputScript,
+                        wallet.blindingPrivateKey,
+                    );
+                    allUtxos.push(...outputs);
+                }
+                utxos = allUtxos;
             }
-
-            const txHex = await fetchBlockExplorerTx(LBTC, sourceTx);
-
-            const utxos = await findAllOutputsForScript(
-                txHex,
-                wallet.outputScript,
-                wallet.blindingPrivateKey,
-            );
 
             if (utxos.length === 0) {
                 throw new Error(
-                    "No UTXOs found at temp wallet in transaction",
+                    "No UTXOs found at temp wallet",
                 );
             }
 
@@ -115,10 +148,10 @@ const SideSwapRecovery = (props: SideSwapRecoveryProps) => {
             await setSwapStorage(updatedSwap);
             setSwap(updatedSwap);
 
-            notify("success", t("sweep_successful"));
+            notify("success", t("refunded"));
         } catch (e) {
             const errorMsg = e instanceof Error ? e.message : String(e);
-            log.error("Sweep failed:", errorMsg);
+            log.error("Refund failed:", errorMsg);
             notify("error", errorMsg);
         } finally {
             setLoading(false);
@@ -131,29 +164,25 @@ const SideSwapRecovery = (props: SideSwapRecoveryProps) => {
                 when={!sweepTxid()}
                 fallback={
                     <div>
-                        <h3>{t("sweep_successful")}</h3>
+                        <h3>{t("refunded")}</h3>
                         <p>
                             {t("sideswap_transaction")}: {sweepTxid()}
                         </p>
                     </div>
                 }>
-                <h3>{t("recover_intermediate_lbtc")}</h3>
-                <p>{t("sideswap_recovery_description")}</p>
+                <p>{t("sideswap_refund_description", { asset: LBTC })}</p>
                 <input
                     type="text"
-                    placeholder={t("liquid_address")}
+                    placeholder={t("onchain_address", { asset: LBTC })}
                     value={sweepAddress()}
                     onInput={(e) => onAddressInput(e.currentTarget.value)}
                     disabled={loading()}
                 />
-                <Show when={sweepAddress() !== "" && !addressValid()}>
-                    <p class="error">{t("invalid_address", { asset: LBTC })}</p>
-                </Show>
                 <button
                     class="btn"
                     disabled={!addressValid() || loading()}
                     onClick={executeSweep}>
-                    <Show when={loading()} fallback={t("sweep_lbtc")}>
+                    <Show when={loading()} fallback={buttonMessage()}>
                         <LoadingSpinner class="inner-spinner" />
                     </Show>
                 </button>

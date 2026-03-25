@@ -52,6 +52,7 @@ import { isMobile } from "../utils/helper";
 import {
     RescueAction,
     createRescueList,
+    enrichSwapsWithTempWalletData,
     getRescuableUTXOs,
 } from "../utils/rescue";
 import { type RescueFile, getXpub } from "../utils/rescueFile";
@@ -178,7 +179,14 @@ export const RefundBtcLike = () => {
                 const res = await fetchPaginatedSwaps();
                 rescueContext.setRescuableSwaps(res);
 
-                return res.map((swap) => mapSwap(swap));
+                const mapped = res
+                    .map((swap) => mapSwap(swap))
+                    .filter(Boolean) as SomeSwap[];
+                const enriched = await enrichSwapsWithTempWalletData(
+                    source.refundJson,
+                    mapped,
+                );
+                return enriched;
             } catch (e) {
                 log.error("failed to get restorable swaps", formatError(e));
                 throw e;

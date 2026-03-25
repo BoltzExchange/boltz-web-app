@@ -67,9 +67,12 @@ type PendingRequest<T> = {
 };
 
 type QuoteListener = (quote: SideSwapQuoteSuccess) => void;
+type QuoteErrorListener = (errorMsg: string) => void;
 
 const RPC_TIMEOUT_MS = 30_000;
 const IDLE_DISCONNECT_MS = 120_000;
+
+export const SIDESWAP_MIN_LBTC_SATS = 30_000;
 
 class SideSwapClient {
     private ws: WebSocket | null = null;
@@ -77,6 +80,7 @@ class SideSwapClient {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private pending = new Map<number, PendingRequest<any>>();
     private quoteListeners = new Set<QuoteListener>();
+    private quoteErrorListeners = new Set<QuoteErrorListener>();
     private connectPromise: Promise<void> | null = null;
     private idleTimer: ReturnType<typeof setTimeout> | null = null;
     private activeSubscriptions = 0;
@@ -214,7 +218,19 @@ class SideSwapClient {
                         }
                     }
                 } else if ("Error" in status) {
-                    log.warn("SideSwap quote error:", status.Error.error_msg);
+                    if (this.quoteErrorListeners.size === 0) {
+                        log.warn(
+                            "SideSwap quote error:",
+                            status.Error.error_msg,
+                        );
+                    }
+                    for (const listener of this.quoteErrorListeners) {
+                        try {
+                            listener(status.Error.error_msg);
+                        } catch (e) {
+                            log.error("SideSwap error listener error:", e);
+                        }
+                    }
                 }
                 return;
             }
@@ -311,6 +327,11 @@ class SideSwapClient {
         this.quoteListeners.add(listener);
         return () => this.quoteListeners.delete(listener);
     }
+
+    onQuoteError(listener: QuoteErrorListener): () => void {
+        this.quoteErrorListeners.add(listener);
+        return () => this.quoteErrorListeners.delete(listener);
+    }
 }
 
 let clientInstance: SideSwapClient | null = null;
@@ -375,7 +396,7 @@ const getPlaceholderAddress = (): string => {
 export const estimateSideSwapReceive = async (
     lbtcSats: number,
 ): Promise<SideSwapEstimate> => {
-    if (lbtcSats <= 0) {
+    if (lbtcSats <= 0 || lbtcSats < SIDESWAP_MIN_LBTC_SATS) {
         return { receiveAmount: 0, feeAmount: 0, rate: 0 };
     }
 
@@ -401,30 +422,41 @@ export const estimateSideSwapReceive = async (
 
     return new Promise<SideSwapEstimate>((resolve, reject) => {
         const timeout = setTimeout(() => {
-            cleanup();
+            cleanupQuote();
+            cleanupError();
             reject(new Error("SideSwap quote estimation timeout"));
         }, RPC_TIMEOUT_MS);
 
-        const cleanup = client.onQuote((quote: SideSwapQuoteSuccess) => {
+        const cleanupQuote = client.onQuote(
+            (quote: SideSwapQuoteSuccess) => {
+                clearTimeout(timeout);
+                cleanupQuote();
+                cleanupError();
+
+                const rate =
+                    quote.base_amount > 0
+                        ? quote.quote_amount / quote.base_amount
+                        : 0;
+
+                cachedEstimate = {
+                    rate,
+                    updatedAt: Date.now(),
+                };
+
+                const receiveAmount = Math.floor(lbtcSats * rate);
+                resolve({
+                    receiveAmount,
+                    feeAmount: quote.server_fee + quote.fixed_fee,
+                    rate,
+                });
+            },
+        );
+
+        const cleanupError = client.onQuoteError((errorMsg) => {
             clearTimeout(timeout);
-            cleanup();
-
-            const rate =
-                quote.base_amount > 0
-                    ? quote.quote_amount / quote.base_amount
-                    : 0;
-
-            cachedEstimate = {
-                rate,
-                updatedAt: Date.now(),
-            };
-
-            const receiveAmount = Math.floor(lbtcSats * rate);
-            resolve({
-                receiveAmount,
-                feeAmount: quote.server_fee + quote.fixed_fee,
-                rate,
-            });
+            cleanupQuote();
+            cleanupError();
+            reject(new Error(errorMsg));
         });
 
         const placeholderAddr = getPlaceholderAddress();
@@ -439,7 +471,8 @@ export const estimateSideSwapReceive = async (
             })
             .catch((e) => {
                 clearTimeout(timeout);
-                cleanup();
+                cleanupQuote();
+                cleanupError();
                 reject(e);
             });
     }).finally(() => {
@@ -465,6 +498,12 @@ export const executeSideSwapTrade = async (
     changeAddress: string,
     signPset: (psetBase64: string) => Promise<string>,
 ): Promise<{ txid: string; quoteAmount: number }> => {
+    if (lbtcAmount < SIDESWAP_MIN_LBTC_SATS) {
+        throw new Error(
+            `Amount ${lbtcAmount} sats is below SideSwap minimum of ${SIDESWAP_MIN_LBTC_SATS} sats`,
+        );
+    }
+
     const assetPair = getSideSwapAssetPair();
     if (!assetPair) {
         throw new Error("SideSwap asset pair not configured");
@@ -473,17 +512,35 @@ export const executeSideSwapTrade = async (
     const client = getSideSwapClient();
     await client.connect();
 
+    const MAX_QUOTE_ERRORS = 5;
+
     const quote = await new Promise<SideSwapQuoteSuccess>(
         (resolve, reject) => {
+            let errorCount = 0;
+            let lastError = "";
+
             const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error("SideSwap quote timeout during execution"));
+                cleanupQuote();
+                cleanupError();
+                reject(new Error(lastError || "SideSwap quote timeout"));
             }, RPC_TIMEOUT_MS);
 
-            const cleanup = client.onQuote((q) => {
+            const cleanupQuote = client.onQuote((q) => {
                 clearTimeout(timeout);
-                cleanup();
+                cleanupQuote();
+                cleanupError();
                 resolve(q);
+            });
+
+            const cleanupError = client.onQuoteError((errorMsg) => {
+                errorCount++;
+                lastError = errorMsg;
+                if (errorCount >= MAX_QUOTE_ERRORS) {
+                    clearTimeout(timeout);
+                    cleanupQuote();
+                    cleanupError();
+                    reject(new Error(errorMsg));
+                }
             });
 
             client
@@ -498,7 +555,8 @@ export const executeSideSwapTrade = async (
                 })
                 .catch((e) => {
                     clearTimeout(timeout);
-                    cleanup();
+                    cleanupQuote();
+                    cleanupError();
                     reject(e);
                 });
         },

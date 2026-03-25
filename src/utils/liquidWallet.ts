@@ -4,13 +4,14 @@ import { hex } from "@scure/base";
 import { Buffer } from "buffer";
 import {
     Transaction as LiquidTransaction,
+    Pset,
+    Signer,
     address as LiquidAddress,
     confidential,
     networks as LiquidNetworks,
     payments,
 } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
-import { Pset, Signer } from "liquidjs-lib/src/psetv2";
 import log from "loglevel";
 
 import { config } from "../config";
@@ -36,6 +37,14 @@ export type UnblindedUtxo = {
     assetBlindingFactor: string;
     valueBlindingFactor: string;
     script: string;
+    witnessUtxo?: {
+        script: Buffer;
+        asset: Buffer;
+        value: Buffer;
+        nonce: Buffer;
+        rangeProof: Buffer;
+        surjectionProof: Buffer;
+    };
 };
 
 const getLiquidNetwork = (): LiquidNetwork => {
@@ -98,6 +107,15 @@ export const unblindOutput = async (
 
     const { confidential: confidentialInstance } = await secp.get();
 
+    const rawWitnessUtxo = {
+        script: output.script,
+        asset: output.asset,
+        value: output.value,
+        nonce: output.nonce ?? Buffer.alloc(1),
+        rangeProof: output.rangeProof ?? Buffer.alloc(0),
+        surjectionProof: output.surjectionProof ?? Buffer.alloc(0),
+    };
+
     if (output.rangeProof?.length > 0) {
         const unblinded = confidentialInstance.unblindOutputWithKey(
             output,
@@ -111,9 +129,14 @@ export const unblindOutput = async (
                 Buffer.from(unblinded.asset).reverse(),
             ),
             value: parseInt(unblinded.value, 10),
-            assetBlindingFactor: hex.encode(unblinded.assetBlindingFactor),
-            valueBlindingFactor: hex.encode(unblinded.valueBlindingFactor),
+            assetBlindingFactor: hex.encode(
+                Buffer.from(unblinded.assetBlindingFactor).reverse(),
+            ),
+            valueBlindingFactor: hex.encode(
+                Buffer.from(unblinded.valueBlindingFactor).reverse(),
+            ),
             script: output.script.toString("hex"),
+            witnessUtxo: rawWitnessUtxo,
         };
     }
 
@@ -130,6 +153,7 @@ export const unblindOutput = async (
             "0000000000000000000000000000000000000000000000000000000000000000",
         valueBlindingFactor:
             "0000000000000000000000000000000000000000000000000000000000000000",
+        witnessUtxo: rawWitnessUtxo,
         script: output.script.toString("hex"),
     };
 };
@@ -182,13 +206,10 @@ export const signPset = async (
             pubkey: Buffer,
             msghash: Buffer,
             signature: Buffer,
-        ): boolean => {
-            const sigOnly = signature.subarray(0, signature.length - 1);
-            return secp256k1.verify(sigOnly, msghash, pubkey, {
+        ): boolean =>
+            secp256k1.verify(signature, msghash, pubkey, {
                 prehash: false,
-                format: "der",
             });
-        };
 
         signer.addSignature(
             i,
@@ -230,25 +251,13 @@ export const findAllOutputsForScript = async (
     return utxos;
 };
 
-export const buildSweepTransaction = async (
-    utxo: UnblindedUtxo,
-    wallet: TempLiquidWallet,
-    destinationAddress: string,
-    feeRate: number,
-): Promise<string> => {
-    return buildMultiAssetSweepTransaction(
-        [utxo],
-        wallet,
-        destinationAddress,
-        feeRate,
-    );
-};
-
 /**
- * Build a Liquid transaction sweeping multiple UTXOs (possibly different
- * assets) from the temp wallet to a single destination address. L-BTC
- * is used to pay the network fee; if no L-BTC UTXO is present, the call
- * throws.
+ * Build a Liquid transaction sweeping UTXOs from the temp wallet to a
+ * destination address. Follows the same PSET construction + blinding
+ * pattern as boltz-core's constructClaimTransaction for Liquid.
+ *
+ * TODO: This duplicates boltz-core's Liquid tx building logic and should
+ * ideally be upstreamed as a generic P2WPKH sweep helper in boltz-core.
  */
 export const buildMultiAssetSweepTransaction = async (
     utxos: UnblindedUtxo[],
@@ -256,9 +265,21 @@ export const buildMultiAssetSweepTransaction = async (
     destinationAddress: string,
     feeRate: number,
 ): Promise<string> => {
-    const { Creator, Updater, Finalizer, Extractor } = await import(
-        "liquidjs-lib/src/psetv2"
-    );
+    const {
+        Blinder,
+        Creator,
+        CreatorInput,
+        CreatorOutput,
+        Extractor,
+        Finalizer,
+        Signer: PsetSigner,
+        Updater,
+        ZKPGenerator,
+        ZKPValidator,
+        witnessStackToScriptWitness,
+    } = await import("liquidjs-lib");
+
+    const zkp = await secp.get();
 
     const network = getLiquidNetwork();
     const lbtcAssetId = network.assetHash;
@@ -270,34 +291,39 @@ export const buildMultiAssetSweepTransaction = async (
         destinationAddress,
         network,
     );
+    let destBlindingKey: Buffer | undefined;
+    try {
+        const decoded = LiquidAddress.fromConfidential(destinationAddress);
+        destBlindingKey = decoded.blindingKey;
+    } catch {
+        // non-confidential address
+    }
 
     const pset = Creator.newPset();
     const updater = new Updater(pset);
 
-    for (const utxo of utxos) {
-        const assetPrefix = Buffer.concat([
-            Buffer.from([0x01]),
-            Buffer.from(hex.decode(utxo.asset)).reverse(),
-        ]);
-        const valueEncoded = confidential.satoshiToConfidentialValue(
-            utxo.value,
-        );
+    const inputsAreConfidential = utxos.some(
+        (u) => u.witnessUtxo?.rangeProof?.length > 0,
+    );
 
-        updater.addInputs([
-            {
-                txid: utxo.txid,
-                txIndex: utxo.vout,
-                sighashType: 0x01,
-                witnessUtxo: {
-                    script: wallet.outputScript,
-                    asset: assetPrefix,
-                    value: valueEncoded,
-                    nonce: Buffer.alloc(1),
-                    rangeProof: Buffer.alloc(0),
-                    surjectionProof: Buffer.alloc(0),
-                },
-            },
-        ]);
+    for (const [i, utxo] of utxos.entries()) {
+        pset.addInput(
+            new CreatorInput(utxo.txid, utxo.vout, 0xffffffff).toPartialInput(),
+        );
+        updater.addInSighashType(i, LiquidTransaction.SIGHASH_ALL);
+
+        const witUtxo = utxo.witnessUtxo ?? {
+            script: wallet.outputScript,
+            asset: Buffer.concat([
+                Buffer.from([0x01]),
+                Buffer.from(hex.decode(utxo.asset)).reverse(),
+            ]),
+            value: confidential.satoshiToConfidentialValue(utxo.value),
+            nonce: Buffer.alloc(1),
+            rangeProof: Buffer.alloc(0),
+            surjectionProof: Buffer.alloc(0),
+        };
+        updater.addInWitnessUtxo(i, witUtxo);
     }
 
     const assetTotals = new Map<string, number>();
@@ -313,25 +339,105 @@ export const buildMultiAssetSweepTransaction = async (
         throw new Error("Insufficient L-BTC for transaction fee");
     }
 
-    const outputs: { asset: string; amount: number; script?: Buffer }[] = [];
     for (const [assetId, total] of assetTotals) {
         let amount = total;
         if (assetId === lbtcAssetId) {
             amount -= fee;
             if (amount <= 0) continue;
         }
-        outputs.push({ asset: assetId, amount, script: destScript });
+        updater.addOutputs([
+            {
+                script: destScript,
+                blindingPublicKey: destBlindingKey,
+                asset: assetId,
+                amount,
+                blinderIndex:
+                    destBlindingKey !== undefined ? 0 : undefined,
+            },
+        ]);
     }
 
-    outputs.push({ asset: lbtcAssetId, amount: fee });
+    if (inputsAreConfidential && !destBlindingKey) {
+        const OP_RETURN = 0x6a;
+        const randomPubKey = Buffer.from(
+            secp256k1.getPublicKey(secp256k1.utils.randomSecretKey()),
+        );
+        pset.addOutput(
+            new CreatorOutput(
+                lbtcAssetId,
+                1,
+                Buffer.of(OP_RETURN),
+                randomPubKey,
+                0,
+            ).toPartialOutput(),
+        );
+        updater.addOutputs([{ amount: fee - 1, asset: lbtcAssetId }]);
+    } else {
+        updater.addOutputs([{ amount: fee, asset: lbtcAssetId }]);
+    }
 
-    updater.addOutputs(outputs);
+    if (inputsAreConfidential || destBlindingKey) {
+        const blindingKeys = utxos.map(() =>
+            inputsAreConfidential ? wallet.blindingPrivateKey : undefined,
+        );
+        const zkpGenerator = new ZKPGenerator(
+            zkp.secpZkp,
+            ZKPGenerator.WithBlindingKeysOfInputs(blindingKeys),
+        );
+        const zkpValidator = new ZKPValidator(zkp.secpZkp);
+        const outputBlindingArgs = zkpGenerator.blindOutputs(
+            pset,
+            Pset.ECCKeysGenerator(zkp.secpZkp.ecc),
+        );
+        const blinder = new Blinder(
+            pset,
+            zkpGenerator.unblindInputs(pset),
+            zkpValidator,
+            zkpGenerator,
+        );
+        blinder.blindLast({ outputBlindingArgs });
+    }
 
-    const signed = await signPset(pset.toBase64(), wallet);
-    const finalPset = Pset.fromBase64(signed);
+    const signer = new PsetSigner(pset);
+    const pubkeyBuf = Buffer.from(wallet.spendPublicKey);
+    const signatures: Buffer[] = [];
 
-    const finalizer = new Finalizer(finalPset);
-    finalizer.finalize();
+    for (let i = 0; i < utxos.length; i++) {
+        const preimage = pset.getInputPreimage(
+            i,
+            LiquidTransaction.SIGHASH_ALL,
+        );
+        const derBytes = secp256k1.sign(preimage, wallet.spendPrivateKey, {
+            prehash: false,
+            format: "der",
+        });
+        const sigWithHashType = Buffer.concat([
+            Buffer.from(derBytes),
+            Buffer.from([0x01]),
+        ]);
+        signatures.push(sigWithHashType);
 
-    return Extractor.extract(finalPset).toHex();
+        signer.addSignature(
+            i,
+            {
+                partialSig: {
+                    pubkey: pubkeyBuf,
+                    signature: sigWithHashType,
+                },
+            },
+            Pset.ECDSASigValidator(zkp.secpZkp.ecc),
+        );
+    }
+
+    const finalizer = new Finalizer(pset);
+    for (let i = 0; i < utxos.length; i++) {
+        finalizer.finalizeInput(i, () => ({
+            finalScriptWitness: witnessStackToScriptWitness([
+                signatures[i],
+                pubkeyBuf,
+            ]),
+        }));
+    }
+
+    return Extractor.extract(pset).toHex();
 };

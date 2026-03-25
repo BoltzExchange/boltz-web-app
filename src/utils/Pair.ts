@@ -43,7 +43,11 @@ import {
     getGasTopUpNativeAmount,
 } from "./qouter";
 import { assetAmountToSats, satsToAssetAmount } from "./rootstock";
-import { estimateSideSwapReceive, estimateSideSwapSend } from "./sideswap";
+import {
+    SIDESWAP_MIN_LBTC_SATS,
+    estimateSideSwapReceive,
+    estimateSideSwapSend,
+} from "./sideswap";
 
 /**
  * Whether an asset is a routed ERC20 (like USDT0) whose internal
@@ -1089,6 +1093,10 @@ export default class Pair {
                 this.minerFees,
                 boltzHop.type,
             ).toNumber();
+        }
+
+        if (this.hasSideSwapHop) {
+            boltzSendLimit = Math.max(boltzSendLimit, SIDESWAP_MIN_LBTC_SATS);
         }
 
         return await this.convertFromBoltzSendAmount(boltzSendLimit);

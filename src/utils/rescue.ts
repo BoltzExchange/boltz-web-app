@@ -567,6 +567,13 @@ export const createRescueList = async (
     return await Promise.all(
         swaps.map(async (swap) => {
             try {
+                if (
+                    swap.sideswap?.status === SideSwapStatus.Failed &&
+                    !swap.sideswap?.txid
+                ) {
+                    return { ...swap, action: RescueAction.SweepTempWallet };
+                }
+
                 const utxos = isRefundableSwapType(swap)
                     ? await getRescuableUTXOs(swap)
                     : [];

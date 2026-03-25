@@ -29,7 +29,7 @@ export const rescueListAction = ({ t, swap }: { t: tFn; swap: Swap }) => {
         case RescueAction.Refund:
             return t("refund");
         case RescueAction.SweepTempWallet:
-            return t("sweep_lbtc");
+            return t("refund");
         case RescueAction.Failed:
             return t("failed");
         case RescueAction.Successful:
