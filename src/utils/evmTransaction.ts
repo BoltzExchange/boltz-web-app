@@ -198,7 +198,7 @@ export const claimAsset = async (
     timeoutBlockHeight: number,
     destination: string,
     signer: Accessor<Signer>,
-    getGasAbstractionSigner: (asset: string) => Wallet,
+    getGasAbstractionSigner: Wallet,
     etherSwap: EtherSwap,
     erc20Swap: ERC20Swap,
 ): Promise<ClaimResult> => {
@@ -223,7 +223,7 @@ export const claimAsset = async (
             const claimSigner = getSignerForGasAbstraction(
                 gasAbstraction,
                 signer(),
-                getGasAbstractionSigner(asset),
+                getGasAbstractionSigner,
             );
 
             const isErc20 = getKindForAsset(asset) !== AssetKind.EVMNative;

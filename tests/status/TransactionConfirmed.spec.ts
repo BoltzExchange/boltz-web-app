@@ -1,5 +1,6 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
+import type { Wallet } from "ethers";
 
 import { signErc20ClaimToRouter } from "../../src/status/TransactionConfirmed";
 import type * as EvmTransactionModule from "../../src/utils/evmTransaction";
@@ -62,7 +63,7 @@ describe("TransactionConfirmed claimAsset", () => {
         const signerAccessor = () => signer;
         const etherSwap = {} as EtherSwap;
         const erc20Swap = {} as ERC20Swap;
-        const getGasAbstractionSigner = vi.fn();
+        const gasAbstractionSigner = {} as Wallet;
 
         mockRelayClaimTransaction.mockResolvedValue("0xrelay");
 
@@ -77,7 +78,7 @@ describe("TransactionConfirmed claimAsset", () => {
                 123,
                 "0xdestination",
                 signerAccessor as never,
-                getGasAbstractionSigner,
+                gasAbstractionSigner,
                 etherSwap,
                 erc20Swap,
             ),
@@ -94,7 +95,6 @@ describe("TransactionConfirmed claimAsset", () => {
             "0xrefund",
             123,
         );
-        expect(getGasAbstractionSigner).not.toHaveBeenCalled();
     });
 
     test("should read the ERC20 swap domain from the active claim signer connection", async () => {
@@ -165,7 +165,7 @@ describe("TransactionConfirmed claimAsset", () => {
             sendTransaction: vi.fn().mockResolvedValue({ hash: "0xdirect" }),
         };
         const signerAccessor = () => signer;
-        const getGasAbstractionSigner = vi.fn().mockReturnValue({});
+        const gasAbstractionSigner = {} as Wallet;
 
         await expect(
             claimAsset(
@@ -178,7 +178,7 @@ describe("TransactionConfirmed claimAsset", () => {
                 123,
                 "0x3000000000000000000000000000000000000000",
                 signerAccessor as never,
-                getGasAbstractionSigner,
+                gasAbstractionSigner,
                 {} as EtherSwap,
                 erc20Swap as never,
             ),

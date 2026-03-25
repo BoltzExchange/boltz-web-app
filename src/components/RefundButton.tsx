@@ -5,6 +5,7 @@ import {
     type TransactionRequest,
     type Wallet,
     ZeroAddress,
+    getAddress,
 } from "ethers";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
@@ -361,6 +362,10 @@ const buildErc20RefundTransaction = async ({
 
     if (followUpCalls !== undefined) {
         return [toAlchemyCall(refundTransaction), ...followUpCalls];
+    }
+
+    if (getAddress(destination) === getAddress(refundData.refundAddress)) {
+        return [toAlchemyCall(refundTransaction)];
     }
 
     if (destination && refundData.tokenAddress) {

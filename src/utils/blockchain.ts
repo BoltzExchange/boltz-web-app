@@ -7,8 +7,8 @@ import {
     ETH,
     LBTC,
     RBTC,
-    type RefundableAssetType,
     TBTC,
+    type blockChainsAssets,
     refundableAssets,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -32,14 +32,10 @@ type MempoolFeeEstimation = Record<
     number
 >;
 
-export const blockTimeMinutes: Record<
-    RefundableAssetType | typeof ETH,
-    number
-> = {
+export const blockTimeMinutes: Record<blockChainsAssets, number> = {
     [BTC]: 10,
     [LBTC]: 1,
     [RBTC]: 25 / 60,
-    [TBTC]: 0.25 / 60,
     [ETH]: 12 / 60,
 };
 

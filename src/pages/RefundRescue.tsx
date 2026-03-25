@@ -15,7 +15,7 @@ import BlockExplorer from "../components/BlockExplorer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import RefundButton from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
-import { type AssetType, type RefundableAssetType } from "../consts/Assets";
+import { type AssetType, type blockChainsAssets } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { usePayContext } from "../context/Pay";
@@ -162,7 +162,7 @@ const RefundRescue = () => {
                         ).refundDetails.timeoutBlockHeight;
 
                         const timeoutEta = getTimeoutEta(
-                            rescuableSwap().assetSend as RefundableAssetType,
+                            rescuableSwap().assetSend as blockChainsAssets,
                             timeoutBlockHeight,
                             currentBlockHeight,
                         );

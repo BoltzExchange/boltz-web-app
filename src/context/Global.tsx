@@ -130,7 +130,10 @@ export type GlobalContextType = {
 
     newKey: newKeyFn;
     deriveKey: deriveKeyFn;
-    deriveKeyGasAbstraction: (chainId: number) => ECKeys;
+    deriveKeyGasAbstraction: (
+        chainId: number,
+        rescueFile?: RescueFile,
+    ) => ECKeys;
     getXpub: () => string;
     setLastUsedKey: Setter<number>;
     getLastUsedEvmIndex: (currency: string) => Promise<number>;
@@ -257,10 +260,14 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         );
     };
 
-    const deriveKeyGasAbstractionWrapper = (chainId: number) => {
+    const deriveKeyGasAbstractionWrapper = (
+        chainId: number,
+        rf?: RescueFile,
+    ) => {
         return ECPair.fromPrivateKey(
             new Uint8Array(
-                deriveKeyGasAbstraction(rescueFile(), chainId).privateKey,
+                deriveKeyGasAbstraction(rf ? rf : rescueFile(), chainId)
+                    .privateKey,
             ),
         );
     };

@@ -25,7 +25,7 @@ import { hiddenInformation } from "../components/settings/PrivacyMode";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import Tooltip from "../components/settings/Tooltip";
-import { type RefundableAssetType, refundableAssets } from "../consts/Assets";
+import { type blockChainsAssets, refundableAssets } from "../consts/Assets";
 import { copyIconTimeout } from "../consts/CopyContent";
 import { SwapType } from "../consts/Enums";
 import {
@@ -261,7 +261,7 @@ const Pay = () => {
                             )
                         ) {
                             const timeoutEta = getTimeoutEta(
-                                swap().assetSend as RefundableAssetType,
+                                swap().assetSend as blockChainsAssets,
                                 timeoutBlockHeight,
                                 currentBlockHeight,
                             );

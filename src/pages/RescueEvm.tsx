@@ -1,7 +1,5 @@
-import { hex } from "@scure/base";
 import { useNavigate, useParams } from "@solidjs/router";
 import BigNumber from "bignumber.js";
-import { Wallet } from "ethers";
 import log from "loglevel";
 import type { Setter } from "solid-js";
 import { Match, Show, Switch, createResource, createSignal } from "solid-js";
@@ -13,14 +11,11 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { config } from "../config";
-import { arbitrumNetwork } from "../configs/base";
 import {
     AssetKind,
     type AssetType,
-    ETH,
     RBTC,
-    type RefundableAssetType,
+    type blockChainsAssets,
     getKindForAsset,
 } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
@@ -30,7 +25,6 @@ import { useWeb3Signer } from "../context/Web3";
 import { GasNeededToClaim } from "../rif/Signer";
 import type { LogRefundData } from "../utils/contractLogs";
 import {
-    createAssetProvider,
     getLogsFromReceipt,
     getTimelockBlockNumber,
 } from "../utils/contractLogs";
@@ -38,8 +32,8 @@ import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
+import { createAssetProvider } from "../utils/provider";
 import { getTimeoutEta } from "../utils/rescue";
-import { deriveKeyGasAbstraction } from "../utils/rescueFile";
 import { assetAmountToSats } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
 
@@ -52,28 +46,18 @@ const RefundState = (props: {
     setRefundTxId: Setter<string>;
 }) => {
     const { t, denomination, separator } = useGlobalContext();
-    const { signer } = useWeb3Signer();
+    const { signer, getGasAbstractionSigner } = useWeb3Signer();
     const { rescueFile } = useRescueContext();
 
     const isErc20 = () => getKindForAsset(props.asset) === AssetKind.ERC20;
 
     const gasAbstraction = () =>
-        isErc20() && rescueFile() ? GasAbstractionType.Signer : undefined;
-
-    const transactionSigner = () => {
-        const chainId = config.assets?.[props.asset]?.network?.chainId;
-
-        if (!isErc20() || rescueFile() === undefined || chainId === undefined) {
-            return undefined;
-        }
-
-        const key = deriveKeyGasAbstraction(rescueFile(), chainId);
-
-        return new Wallet(
-            hex.encode(key.privateKey),
-            createAssetProvider(props.asset),
-        );
-    };
+        isErc20() && rescueFile()
+            ? {
+                  type: GasAbstractionType.Signer,
+                  signer: getGasAbstractionSigner(props.asset, rescueFile()),
+              }
+            : undefined;
 
     const destination = () => {
         if (!isErc20() || !rescueFile()) {
@@ -109,8 +93,8 @@ const RefundState = (props: {
                 setRefundTxId={props.setRefundTxId}
                 signerAddress={props.refundData.refundAddress}
                 lockupTxHash={props.lockupTxHash}
-                gasAbstraction={gasAbstraction()}
-                transactionSigner={transactionSigner()}
+                gasAbstraction={gasAbstraction().type}
+                transactionSigner={gasAbstraction().signer}
                 destination={destination()}
             />
             <hr />
@@ -133,7 +117,7 @@ const ClaimState = (props: {
     const { t } = useGlobalContext();
     const { signer, getEtherSwap, getErc20Swap, getGasAbstractionSigner } =
         useWeb3Signer();
-    const { evmRescuableSwaps } = useRescueContext();
+    const { evmRescuableSwaps, rescueFile } = useRescueContext();
     const params = useParams();
 
     const preimage = () => {
@@ -186,7 +170,7 @@ const ClaimState = (props: {
                 Number(timelock),
                 connectedAddress,
                 signer,
-                getGasAbstractionSigner,
+                getGasAbstractionSigner(asset, rescueFile()),
                 getEtherSwap(asset),
                 getErc20Swap(asset),
             );
@@ -287,13 +271,6 @@ const RescueEvm = () => {
         return t("claim");
     };
 
-    // for Arbitrum, we need to get timeout ETA from ETH L1
-    const getEtaRelevantAsset = () =>
-        config.assets?.[params.asset]?.network?.chainId ===
-        arbitrumNetwork.chainId
-            ? ETH
-            : (params.asset as RefundableAssetType);
-
     return (
         <div class="frame">
             <Show
@@ -357,7 +334,7 @@ const RescueEvm = () => {
                                 <RefundEta
                                     timeoutEta={() =>
                                         getTimeoutEta(
-                                            getEtaRelevantAsset(),
+                                            params.asset as blockChainsAssets,
                                             Number(rescueData().timelock),
                                             Number(rescueData().currentHeight),
                                         )
@@ -365,7 +342,7 @@ const RescueEvm = () => {
                                     timeoutBlockHeight={() =>
                                         Number(rescueData().timelock)
                                     }
-                                    asset={getEtaRelevantAsset()}
+                                    asset={params.asset}
                                 />
                             </Match>
                         </Switch>

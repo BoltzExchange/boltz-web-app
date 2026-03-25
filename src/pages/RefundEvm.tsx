@@ -11,13 +11,13 @@ import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import type { LogRefundData } from "../utils/contractLogs";
 import {
-    createAssetProvider,
     getLogsFromReceipt,
     getTimelockBlockNumber,
 } from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
 import { cropString } from "../utils/helper";
+import { createAssetProvider } from "../utils/provider";
 import { assetAmountToSats } from "../utils/rootstock";
 
 type RefundData = LogRefundData & { currentHeight: bigint };

@@ -26,6 +26,12 @@ export type RefundableAssetType =
     | typeof RBTC
     | typeof TBTC;
 
+export type blockChainsAssets =
+    | typeof BTC
+    | typeof LBTC
+    | typeof RBTC
+    | typeof ETH;
+
 const assetDisplayOrder: string[] = [LN, BTC, LBTC, RBTC, TBTC, USDT0];
 
 export const assets: string[] = [

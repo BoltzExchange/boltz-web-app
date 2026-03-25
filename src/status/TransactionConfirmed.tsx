@@ -1050,7 +1050,7 @@ const ClaimEvm = (props: {
                 props.timeoutBlockHeight,
                 props.signerAddress,
                 signer,
-                getGasAbstractionSigner,
+                getGasAbstractionSigner(props.assetReceive),
                 getEtherSwap(props.assetReceive),
                 getErc20Swap(props.assetReceive),
             );
