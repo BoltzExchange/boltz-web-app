@@ -160,6 +160,39 @@ describe("oft", () => {
         });
     });
 
+    test("should throw when a route has no OFT contract", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [
+                            {
+                                name: "Ethereum",
+                                chainId: 1,
+                                lzEid: "30101",
+                                contracts: [
+                                    {
+                                        name: "OFT Store",
+                                        address:
+                                            "0x1000000000000000000000000000000000000001",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                        legacyMesh: [],
+                    },
+                }),
+            }),
+        );
+
+        await expect(getOftContract(getOftRoute("USDT0-ETH"))).rejects.toThrow(
+            "Missing OFT contract for route USDT0-ETH -> USDT0-ETH and OFT usdt0",
+        );
+    });
+
     test("should encode Solana recipients as 32-byte public keys", async () => {
         vi.stubGlobal(
             "fetch",
@@ -216,7 +249,7 @@ describe("oft", () => {
 
         const { sendParam } = await quoteOftSend(
             oft as never,
-            getOftRoute("USDT0-ETH", "USDT0-SOL"),
+            getOftRoute("USDT0", "USDT0-SOL"),
             recipient,
             100n,
         );
@@ -224,6 +257,29 @@ describe("oft", () => {
         expect(sendParam[1]).toEqual(
             `0x${hex.encode(base58.decode(recipient))}`,
         );
+    });
+
+    test("should reject invalid hex-prefixed Solana recipients", async () => {
+        const oft = {
+            quoteOFT: {
+                staticCall: vi
+                    .fn()
+                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            },
+            quoteSend: {
+                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
+            },
+            send: vi.fn(),
+        };
+
+        await expect(
+            quoteOftSend(
+                oft as never,
+                getOftRoute("USDT0", "USDT0-SOL"),
+                "0x1234",
+                100n,
+            ),
+        ).rejects.toThrow();
     });
 
     test("should fetch the received event by guid", async () => {

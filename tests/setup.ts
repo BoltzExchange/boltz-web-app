@@ -50,6 +50,21 @@ vi.mock("ethers", () => {
         BigInt(value)
             .toString(16)
             .padStart(bytes * 2, "0");
+    const formatEther = (value: bigint | number | string) => {
+        const amount = BigInt(value);
+        const negative = amount < 0n;
+        const normalized = negative ? -amount : amount;
+        const divisor = 10n ** 18n;
+        const whole = normalized / divisor;
+        const fraction = (normalized % divisor)
+            .toString()
+            .padStart(18, "0")
+            .replace(/0+$/, "");
+
+        return `${negative ? "-" : ""}${whole.toString()}${
+            fraction === "" ? "" : `.${fraction}`
+        }`;
+    };
 
     const zeroPadValue = (value: string, length: number) =>
         `0x${stripPrefix(value).padStart(length * 2, "0")}`;
@@ -91,6 +106,7 @@ vi.mock("ethers", () => {
         },
         ZeroAddress: "0x0000000000000000000000000000000000000000",
         concat,
+        formatEther,
         getBytes,
         keccak256: vi.fn((value: string) => value),
         solidityPacked,

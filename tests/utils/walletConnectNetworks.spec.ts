@@ -1,14 +1,19 @@
 import log from "loglevel";
 
-import { Explorer } from "../../src/configs/base";
+import { Explorer, NetworkTransport } from "../../src/configs/base";
 import { AssetKind, RBTC, TBTC, USDT0 } from "../../src/consts/Assets";
 import { buildWalletConnectNetworks } from "../../src/utils/walletConnectNetworks";
 
-const makeNetwork = (chainId: number, chainName: string, symbol: string) => ({
+const makeEvmNetwork = (
+    chainId: number,
+    chainName: string,
+    symbol: string,
+) => ({
     chainId,
     chainName,
     symbol,
     gasToken: symbol,
+    transport: NetworkTransport.Evm,
     rpcUrls: [`https://${chainName.toLowerCase()}.example`],
     nativeCurrency: {
         name: symbol,
@@ -19,7 +24,7 @@ const makeNetwork = (chainId: number, chainName: string, symbol: string) => ({
 
 const validRbtcConfig = {
     type: AssetKind.EVMNative,
-    network: makeNetwork(30, "Rootstock", "RBTC"),
+    network: makeEvmNetwork(30, "Rootstock", "RBTC"),
     blockExplorerUrl: {
         id: Explorer.Blockscout,
         normal: "https://rootstock.example",
@@ -36,7 +41,7 @@ describe("walletConnectNetworks", () => {
             [RBTC]: validRbtcConfig,
             [TBTC]: {
                 type: AssetKind.EVMNative,
-                network: makeNetwork(42161, "Arbitrum", "ETH"),
+                network: makeEvmNetwork(42161, "Arbitrum", "ETH"),
                 blockExplorerUrl: {
                     id: Explorer.Blockscout,
                     normal: "https://arb-tbtc.example",
@@ -44,7 +49,7 @@ describe("walletConnectNetworks", () => {
             },
             [USDT0]: {
                 type: AssetKind.ERC20,
-                network: makeNetwork(42161, "Arbitrum", "ETH"),
+                network: makeEvmNetwork(42161, "Arbitrum", "ETH"),
                 blockExplorerUrl: {
                     id: Explorer.Blockscout,
                     normal: "https://arb-usdt0.example",
@@ -106,7 +111,7 @@ describe("walletConnectNetworks", () => {
             [TBTC]: {
                 type: AssetKind.EVMNative,
                 network: {
-                    ...makeNetwork(42161, "Arbitrum", "ETH"),
+                    ...makeEvmNetwork(42161, "Arbitrum", "ETH"),
                     rpcUrls: [],
                 },
                 blockExplorerUrl: {
@@ -129,7 +134,7 @@ describe("walletConnectNetworks", () => {
             [RBTC]: validRbtcConfig,
             [TBTC]: {
                 type: AssetKind.EVMNative,
-                network: makeNetwork(42161, "Arbitrum", "ETH"),
+                network: makeEvmNetwork(42161, "Arbitrum", "ETH"),
             },
         };
 

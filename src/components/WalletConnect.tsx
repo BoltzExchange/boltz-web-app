@@ -18,15 +18,14 @@ const getWalletConnectNamespace = (
     transport: NetworkTransport,
 ): "eip155" | "solana" | "tron" => {
     switch (transport) {
+        case NetworkTransport.Evm:
+            return "eip155";
+
         case NetworkTransport.Solana:
             return "solana";
 
         case NetworkTransport.Tron:
             return "tron";
-
-        case NetworkTransport.Evm:
-        default:
-            return "eip155";
     }
 };
 
@@ -131,12 +130,6 @@ export const WalletConnect = () => {
                 case NetworkTransport.Tron:
                     provider = created.getProvider<TronConnector>("tron");
                     break;
-
-                default: {
-                    throw new Error(
-                        `Unsupported WalletConnect transport: ${String(transport)}`,
-                    );
-                }
             }
 
             WalletConnectProvider.resolveClosePromise(

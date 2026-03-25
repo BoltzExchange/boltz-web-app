@@ -28,14 +28,7 @@ type Usdt0ChainTestCase = {
 };
 
 const getAssetTransport = (asset: string): NetworkTransport | undefined => {
-    const transport = config.assets[asset]?.network?.transport;
-    if (transport !== undefined) {
-        return transport;
-    }
-
-    return config.assets[asset]?.network?.chainId !== undefined
-        ? NetworkTransport.Evm
-        : undefined;
+    return config.assets[asset]?.network?.transport;
 };
 
 const usdt0ChainTestCases = Object.entries(config.assets).flatMap(
@@ -86,6 +79,8 @@ const expectTransportAddressFormat = (
 };
 
 const getOftRoute = (asset: string) => ({
+    // The self-route is intentional here: we are validating that a chain's
+    // own OFT deployment can be resolved, not modeling a cross-chain transfer.
     from: asset,
     to: asset,
 });
