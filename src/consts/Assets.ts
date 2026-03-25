@@ -1,5 +1,5 @@
 import { config } from "../config";
-import { NetworkTransport, Usdt0Mesh } from "../configs/base";
+import { NetworkTransport, Usdt0Kind } from "../configs/base";
 import { AssetKind } from "./AssetKind";
 
 export { AssetKind };
@@ -71,21 +71,21 @@ export const getNetworkTransport = (
 export const getCanonicalAsset = (asset: string): string =>
     isUsdt0Variant(asset) ? USDT0 : asset;
 
-export const getUsdt0Mesh = (from: string, to?: string): Usdt0Mesh => {
+export const getUsdt0Mesh = (from: string, to?: string): Usdt0Kind => {
     const meshKinds = [from, to]
         .filter((candidate): candidate is string => candidate !== undefined)
         .map(
             (candidate) =>
-                config.assets?.[candidate]?.network?.mesh ?? Usdt0Mesh.Native,
+                config.assets?.[candidate]?.network?.mesh ?? Usdt0Kind.Native,
         );
 
-    return meshKinds.includes(Usdt0Mesh.Legacy)
-        ? Usdt0Mesh.Legacy
-        : Usdt0Mesh.Native;
+    return meshKinds.includes(Usdt0Kind.Legacy)
+        ? Usdt0Kind.Legacy
+        : Usdt0Kind.Native;
 };
 
 export const isLegacyUsdt0Asset = (asset: string): boolean =>
-    isUsdt0Asset(asset) && getUsdt0Mesh(asset) === Usdt0Mesh.Legacy;
+    isUsdt0Asset(asset) && getUsdt0Mesh(asset) === Usdt0Kind.Legacy;
 
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
