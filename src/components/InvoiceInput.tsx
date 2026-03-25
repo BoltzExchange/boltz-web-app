@@ -29,7 +29,6 @@ const InvoiceInput = () => {
         invoice,
         receiveAmount,
         sendAmount,
-        amountValid,
         setAmountChanged,
         setInvoice,
         setInvoiceValid,
@@ -143,7 +142,7 @@ const InvoiceInput = () => {
     };
 
     createEffect(
-        on([amountValid, invoice], async () => {
+        on([invoice, pair, minerFee], async () => {
             if (
                 pair().swapToCreate?.type === SwapType.Submarine ||
                 pair().toAsset === LN
