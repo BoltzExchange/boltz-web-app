@@ -495,10 +495,8 @@ const claimErc20ViaRouterOft = async (
         tradeAmountIn,
     );
 
-    const amountOutMin = calculateAmountOutMin(
-        BigInt(tradeQuote.quote),
-        slippage,
-    );
+    const amountOut = BigInt(tradeQuote.quote);
+    const amountOutMin = calculateAmountOutMin(amountOut, slippage);
     const { sendParam } = await quoteOftSend(
         oftQuoteInstance,
         oftRoute,
@@ -586,7 +584,7 @@ const claimErc20ViaRouterOft = async (
         const tokenContract = createTokenContract(oft.sourceAsset, signer);
         const approveTx = await tokenContract.approve.populateTransaction(
             oftContract.address,
-            tradeAmountIn,
+            amountOut,
         );
         if (
             typeof approveTx.to !== "string" ||
