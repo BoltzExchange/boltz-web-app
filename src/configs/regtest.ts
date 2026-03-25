@@ -1,6 +1,7 @@
 import type { Config } from "src/configs/base";
 import {
     Explorer,
+    NetworkTransport,
     arbitrumExplorer,
     arbitrumNetwork,
     baseConfig,
@@ -54,6 +55,7 @@ const config = {
                 symbol: "RBTC",
                 gasToken: "RBTC",
                 chainId: 33,
+                transport: NetworkTransport.Evm,
                 rpcUrls: ["http://localhost:8545"],
                 nativeCurrency: {
                     name: "RBTC",
