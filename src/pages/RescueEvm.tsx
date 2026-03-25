@@ -51,13 +51,15 @@ const RefundState = (props: {
 
     const isErc20 = () => getKindForAsset(props.asset) === AssetKind.ERC20;
 
-    const gasAbstraction = () =>
-        isErc20() && rescueFile()
-            ? {
-                  type: GasAbstractionType.Signer,
-                  signer: getGasAbstractionSigner(props.asset, rescueFile()),
-              }
-            : undefined;
+    const gasAbstraction = () => {
+        if (isErc20() && rescueFile()) {
+            return {
+                type: GasAbstractionType.Signer,
+                signer: getGasAbstractionSigner(props.asset, rescueFile()),
+            };
+        }
+        return undefined;
+    };
 
     const destination = () => {
         if (!isErc20() || !rescueFile()) {
@@ -93,8 +95,8 @@ const RefundState = (props: {
                 setRefundTxId={props.setRefundTxId}
                 signerAddress={props.refundData.refundAddress}
                 lockupTxHash={props.lockupTxHash}
-                gasAbstraction={gasAbstraction().type}
-                transactionSigner={gasAbstraction().signer}
+                gasAbstraction={gasAbstraction()?.type}
+                transactionSigner={gasAbstraction()?.signer}
                 destination={destination()}
             />
             <hr />
@@ -164,7 +166,7 @@ const ClaimState = (props: {
                 gasAbstraction,
                 asset,
                 currentPreimage.toString("hex"),
-                Number(amount),
+                assetAmountToSats(amount, asset),
                 claimAddress,
                 refundAddress,
                 Number(timelock),

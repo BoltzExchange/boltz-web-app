@@ -192,7 +192,7 @@ export const claimAsset = async (
     gasAbstraction: GasAbstractionType,
     asset: string,
     preimage: string,
-    amount: number,
+    amount: number | bigint,
     claimAddress: string,
     refundAddress: string,
     timeoutBlockHeight: number,

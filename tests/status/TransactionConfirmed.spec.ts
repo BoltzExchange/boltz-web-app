@@ -97,6 +97,47 @@ describe("TransactionConfirmed claimAsset", () => {
         );
     });
 
+    test("should accept satoshi amount as bigint for RifRelay", async () => {
+        const signer = { address: "0xsigner" };
+        const signerAccessor = () => signer;
+        const etherSwap = {} as EtherSwap;
+        const erc20Swap = {} as ERC20Swap;
+        const gasAbstractionSigner = {} as Wallet;
+
+        mockRelayClaimTransaction.mockResolvedValue("0xrelay");
+
+        const sats = 9_000_000_000_001n;
+
+        await expect(
+            claimAsset(
+                GasAbstractionType.RifRelay,
+                "RBTC",
+                "preimage",
+                sats,
+                "0xclaim",
+                "0xrefund",
+                123,
+                "0xdestination",
+                signerAccessor as never,
+                gasAbstractionSigner,
+                etherSwap,
+                erc20Swap,
+            ),
+        ).resolves.toEqual({
+            transactionHash: "0xrelay",
+            receiveAmount: satsToAssetAmount(sats, "RBTC"),
+        });
+
+        expect(mockRelayClaimTransaction).toHaveBeenCalledWith(
+            signer,
+            etherSwap,
+            "preimage",
+            sats,
+            "0xrefund",
+            123,
+        );
+    });
+
     test("should read the ERC20 swap domain from the active claim signer connection", async () => {
         const signer = {
             signTypedData: vi.fn().mockResolvedValue("0xsigned"),

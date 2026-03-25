@@ -369,7 +369,8 @@ const getEvmScanTargets = (
     if (
         !skipArbitrum &&
         arbEndpoint &&
-        config.assets?.[TBTC]?.contracts?.deployHeight
+        config.assets?.[TBTC]?.contracts?.deployHeight &&
+        config.network !== "regtest"
     ) {
         targets.push({
             asset: TBTC,
