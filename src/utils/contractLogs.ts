@@ -3,6 +3,7 @@ import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import type { BytesLike, DeferredTopicFilter, Provider } from "ethers";
 import { JsonRpcProvider, toBeHex } from "ethers";
 import log from "loglevel";
+import { arbitrumNetwork } from "src/configs/base";
 
 import { config } from "../config";
 import { AssetKind, type AssetType, getKindForAsset } from "../consts/Assets";
@@ -12,17 +13,10 @@ import {
     PreimageHashesWorker,
     type PreimageMap,
 } from "../workers/preimageHashes/PreimageHashesWorker";
+import { createAssetProvider } from "./provider";
 import { prefix0x } from "./rootstock";
 
 export type SwapContract = EtherSwap | ERC20Swap;
-
-export const createAssetProvider = (asset: string) => {
-    const rpcUrl = config.assets?.[asset]?.network?.rpcUrls?.[0];
-    if (!rpcUrl) {
-        throw new Error(`No RPC URL configured for asset ${asset}`);
-    }
-    return new JsonRpcProvider(rpcUrl);
-};
 
 /**
  * Returns the block number used for timelock comparison.
@@ -35,13 +29,9 @@ export const getTimelockBlockNumber = async (
 ): Promise<number> => {
     const network = config.assets?.[asset as string]?.network;
 
-    if (network?.chainName === Network.Arbitrum) {
-        const rpcProvider = createAssetProvider(asset as string);
-        const block = await rpcProvider.send("eth_getBlockByNumber", [
-            "latest",
-            false,
-        ]);
-        return Number(block.l1BlockNumber);
+    if (network?.chainId === arbitrumNetwork.chainId) {
+        const block = await provider.getBlockNumber();
+        return Number(block);
     }
 
     return provider.getBlockNumber();
@@ -52,7 +42,6 @@ export const getTimelockBlockNumber = async (
  * header includes `l1BlockNumber` (Ethereum L1). Elsewhere returns the input.
  */
 export const getRollupL1BlockNumber = async (
-    provider: Provider,
     asset: AssetType,
     rollupBlockNumber: number,
 ): Promise<number> => {
@@ -63,10 +52,10 @@ export const getRollupL1BlockNumber = async (
     }
 
     const rpcProvider = createAssetProvider(asset as string);
-    const block = await rpcProvider.send("eth_getBlockByNumber", [
+    const block = (await rpcProvider.send("eth_getBlockByNumber", [
         toBeHex(rollupBlockNumber),
         false,
-    ]);
+    ])) as { l1BlockNumber: string };
     return Number(block.l1BlockNumber);
 };
 
@@ -422,7 +411,6 @@ export const getLogsFromReceipt = async (
 
         const data = parseLockupEvent(asset, contract, event);
         data.blockNumber = await getRollupL1BlockNumber(
-            provider,
             asset,
             data.blockNumber,
         );
@@ -518,7 +506,6 @@ export async function* scanLockupEvents(
             log.info(`Found rescuable swap in: ${event.transactionHash}`);
 
             data.blockNumber = await getRollupL1BlockNumber(
-                ctx.contract.runner as Provider,
                 ctx.asset,
                 data.blockNumber,
             );

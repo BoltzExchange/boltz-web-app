@@ -815,11 +815,10 @@ export const RescueEvm = (props: { mode?: string }) => {
                         when={props.manualScan}
                         fallback={
                             <ConnectWallet
-                                networkIndependent
                                 addressOverride={refundScanProgress}
                             />
                         }>
-                        <ConnectWallet networkIndependent />
+                        <ConnectWallet />
                         <button
                             class="btn"
                             disabled={!canScan()}

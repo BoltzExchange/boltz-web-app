@@ -14,13 +14,13 @@ import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
+import { arbitrumNetwork } from "../configs/base";
 import {
     AssetKind,
     type AssetType,
     ETH,
     RBTC,
     type RefundableAssetType,
-    TBTC,
     getKindForAsset,
 } from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
@@ -180,7 +180,7 @@ const ClaimState = (props: {
                 gasAbstraction,
                 asset,
                 currentPreimage.toString("hex"),
-                Number(assetAmountToSats(amount, asset)),
+                Number(amount),
                 claimAddress,
                 refundAddress,
                 Number(timelock),
@@ -289,7 +289,10 @@ const RescueEvm = () => {
 
     // for Arbitrum, we need to get timeout ETA from ETH L1
     const getEtaRelevantAsset = () =>
-        params.asset === TBTC ? ETH : (params.asset as RefundableAssetType);
+        config.assets?.[params.asset]?.network?.chainId ===
+        arbitrumNetwork.chainId
+            ? ETH
+            : (params.asset as RefundableAssetType);
 
     return (
         <div class="frame">

@@ -249,12 +249,11 @@ export const SwitchNetwork = (props: { asset: string }) => {
 };
 
 const ConnectWallet = (props: {
-    asset?: string;
+    asset?: string; // when asset is not passed, the component is network independent
     derivationPath?: string;
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
     syncAddress?: boolean;
-    networkIndependent?: boolean;
 }) => {
     const { t } = useGlobalContext();
     const { providers, signer } = useWeb3Signer();
@@ -336,7 +335,7 @@ const ConnectWallet = (props: {
                     />
                 }>
                 <Show
-                    when={networkValid() || props.networkIndependent}
+                    when={networkValid() || !props.asset}
                     fallback={<SwitchNetwork asset={props.asset} />}>
                     <ShowAddress
                         address={address}
