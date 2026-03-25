@@ -1,4 +1,5 @@
 import { BigNumber } from "bignumber.js";
+import { formatEther } from "ethers";
 import type { Accessor } from "solid-js";
 import {
     Show,
@@ -117,8 +118,7 @@ const Fees = () => {
             return undefined;
         }
 
-        return BigNumber(fee.toString())
-            .div(BigNumber(10).pow(18))
+        return BigNumber(formatEther(fee))
             .toFixed(6)
             .replace(/\.?0+$/, "");
     });
