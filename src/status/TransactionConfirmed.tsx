@@ -483,9 +483,6 @@ const claimErc20ViaRouterOft = async (
         to: oft.destinationAsset,
     };
     const oftContract = await getOftContract(oftRoute);
-    if (oftContract === undefined) {
-        throw new Error(`missing OFT contract for asset: ${oft.sourceAsset}`);
-    }
     const sourceTransport = getNetworkTransport(oft.sourceAsset);
     if (sourceTransport !== NetworkTransport.Evm) {
         throw new Error(

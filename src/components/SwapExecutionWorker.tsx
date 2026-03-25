@@ -220,11 +220,6 @@ export const SwapExecutionWorker = () => {
             to: sourceAsset,
         };
         const oftContract = await getOftContract(oftRoute);
-        if (oftContract === undefined) {
-            throw new Error(
-                `missing OFT contract for asset: ${destinationAsset}`,
-            );
-        }
 
         const provider = assertTransactionSignerProvider(
             getGasAbstractionSigner(destinationAsset),
@@ -298,11 +293,6 @@ export const SwapExecutionWorker = () => {
             to: currentSwap.oft.destinationAsset,
         };
         const sourceOft = await getOftContract(oftRoute);
-        if (sourceOft === undefined) {
-            throw new Error(
-                `missing OFT contract for asset: ${currentSwap.oft.sourceAsset}`,
-            );
-        }
 
         const sendReceipt = await waitForOftSendReceipt(
             currentSwap.id,
