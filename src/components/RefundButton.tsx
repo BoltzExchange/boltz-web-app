@@ -5,6 +5,7 @@ import {
     type TransactionRequest,
     type Wallet,
     ZeroAddress,
+    getAddress,
 } from "ethers";
 import log from "loglevel";
 import type { Accessor, Setter } from "solid-js";
@@ -21,7 +22,12 @@ import {
 import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
 import RefundEta from "../components/RefundEta";
 import { config } from "../config";
-import { AssetKind, getKindForAsset, isEvmAsset } from "../consts/Assets";
+import {
+    AssetKind,
+    type AssetType,
+    getKindForAsset,
+    isEvmAsset,
+} from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type { deriveKeyFn } from "../context/Global";
 import { useGlobalContext } from "../context/Global";
@@ -39,10 +45,12 @@ import {
     calculateAmountWithSlippage,
 } from "../utils/calculate";
 import { validateAddress } from "../utils/compat";
+import { getTimelockBlockNumber } from "../utils/contractLogs";
 import { formatError } from "../utils/errors";
 import {
     type LockupEvent,
     assertTransactionSignerProvider,
+    erc20TransferInterface,
     getLockupEvent,
     getSignerForGasAbstraction,
     sendPopulatedTransaction,
@@ -72,6 +80,7 @@ export const incorrectAssetError = "incorrect asset was sent";
 export const sendRefundTransaction = async (
     gasAbstraction: GasAbstractionType,
     transactionSigner: Signer | Wallet,
+    asset: AssetType,
     timeoutBlockHeight: number,
     refundCooperative: () => Promise<TransactionRequest | AlchemyCall[]>,
     refundTimeout: () => Promise<TransactionRequest | AlchemyCall[]>,
@@ -87,8 +96,7 @@ export const sendRefundTransaction = async (
             tx,
         );
     } catch (cooperativeError) {
-        // TODO: For Arbitrum that block height is the L1 block height; we gotta fetch that
-        const currentBlock = await provider.getBlockNumber();
+        const currentBlock = await getTimelockBlockNumber(provider, asset);
         if (timeoutBlockHeight >= currentBlock) {
             throw cooperativeError;
         }
@@ -352,14 +360,34 @@ const buildErc20RefundTransaction = async ({
         oft,
     );
 
-    return followUpCalls === undefined
-        ? refundTransaction
-        : [toAlchemyCall(refundTransaction), ...followUpCalls];
+    if (followUpCalls !== undefined) {
+        return [toAlchemyCall(refundTransaction), ...followUpCalls];
+    }
+
+    if (getAddress(destination) === getAddress(refundData.refundAddress)) {
+        return [toAlchemyCall(refundTransaction)];
+    }
+
+    if (destination && refundData.tokenAddress) {
+        return [
+            toAlchemyCall(refundTransaction),
+            {
+                to: refundData.tokenAddress,
+                data: erc20TransferInterface.encodeFunctionData("transfer", [
+                    destination,
+                    refundData.amount,
+                ]),
+            },
+        ];
+    }
+
+    return refundTransaction;
 };
 
 export const RefundEvm = (props: {
     asset: string;
     gasAbstraction?: GasAbstractionType;
+    transactionSigner?: Signer | Wallet;
     disabled?: boolean;
     swapId?: string;
     signerAddress: string;
@@ -380,12 +408,42 @@ export const RefundEvm = (props: {
         () => props.gasAbstraction ?? GasAbstractionType.None,
     );
     const transactionSigner = createMemo<Signer | Wallet | undefined>(() => {
+        if (props.transactionSigner) {
+            return props.transactionSigner;
+        }
         return getSignerForGasAbstraction(
             gasAbstraction(),
             signer(),
             getGasAbstractionSigner(props.asset),
         );
     });
+
+    const [signerNetwork, setSignerNetwork] = createSignal<number | undefined>(
+        undefined,
+    );
+
+    createEffect(() => {
+        if (signer() === undefined) {
+            setSignerNetwork(undefined);
+            return;
+        }
+        void signer()
+            .provider?.getNetwork()
+            .then((network) => setSignerNetwork(Number(network?.chainId)))
+            .catch(() => setSignerNetwork(undefined));
+    });
+
+    const networkValid = (): boolean | undefined => {
+        const expected = config.assets?.[props.asset]?.network?.chainId;
+        if (expected === undefined) {
+            return true;
+        }
+        if (signerNetwork() === undefined) {
+            return undefined;
+        }
+        return expected === signerNetwork();
+    };
+
     const contractKind = createMemo(() => getKindForAsset(props.asset));
     const refundDataTrigger = createMemo<
         | {
@@ -399,6 +457,10 @@ export const RefundEvm = (props: {
     >(() => {
         const txSigner = transactionSigner();
         if (txSigner === undefined) {
+            return undefined;
+        }
+
+        if (!networkValid()) {
             return undefined;
         }
 
@@ -597,6 +659,7 @@ export const RefundEvm = (props: {
                         const transactionHash = await sendRefundTransaction(
                             gasAbstraction(),
                             currentTransactionSigner,
+                            props.asset as AssetType,
                             Number(currentRefundData.timelock),
                             refundCooperative,
                             refundTimeout,
@@ -720,7 +783,7 @@ export const RefundBtc = (props: {
                 <RefundEta
                     timeoutEta={timeoutEta}
                     timeoutBlockHeight={timeoutBlockheight}
-                    refundableAsset={props.swap().assetSend}
+                    asset={props.swap().assetSend}
                 />
             </Show>
             <Show when={refundableUTXOs().length > 0}>

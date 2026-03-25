@@ -41,9 +41,9 @@ export const relayClaimTransaction = async (
     signer: Signer,
     etherSwap: EtherSwap,
     preimage: string,
-    amount: number,
+    amount: number | bigint,
     refundAddress: string,
-    timeoutBlockHeight: number,
+    timeoutBlockHeight: number | bigint,
 ) => {
     const callData = etherSwap.interface.encodeFunctionData(
         "claim(bytes32,uint256,address,uint256)",

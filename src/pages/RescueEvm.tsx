@@ -11,21 +11,31 @@ import { RefundEvm as RefundButton } from "../components/RefundButton";
 import RefundEta from "../components/RefundEta";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
-import { config } from "../config";
-import { type RefundableAssetType } from "../consts/Assets";
+import {
+    AssetKind,
+    type AssetType,
+    RBTC,
+    type blockChainsAssets,
+    getKindForAsset,
+} from "../consts/Assets";
 import { RskRescueMode } from "../consts/Enums";
 import { useGlobalContext } from "../context/Global";
 import { useRescueContext } from "../context/Rescue";
 import { useWeb3Signer } from "../context/Web3";
-import { GasNeededToClaim, relayClaimTransaction } from "../rif/Signer";
+import { GasNeededToClaim } from "../rif/Signer";
 import type { LogRefundData } from "../utils/contractLogs";
-import { getLogsFromReceipt } from "../utils/contractLogs";
+import {
+    getLogsFromReceipt,
+    getTimelockBlockNumber,
+} from "../utils/contractLogs";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { formatError } from "../utils/errors";
+import { claimAsset } from "../utils/evmTransaction";
 import { cropString } from "../utils/helper";
+import { createAssetProvider } from "../utils/provider";
 import { getTimeoutEta } from "../utils/rescue";
-import { evmPath } from "../utils/rescueFile";
-import { prefix0x, satoshiToWei } from "../utils/rootstock";
+import { assetAmountToSats } from "../utils/rootstock";
+import { GasAbstractionType } from "../utils/swapCreator";
 
 type RescueData = LogRefundData & { currentHeight: bigint };
 
@@ -36,13 +46,43 @@ const RefundState = (props: {
     setRefundTxId: Setter<string>;
 }) => {
     const { t, denomination, separator } = useGlobalContext();
+    const { signer, getGasAbstractionSigner } = useWeb3Signer();
+    const { rescueFile } = useRescueContext();
+
+    const isErc20 = () => getKindForAsset(props.asset) === AssetKind.ERC20;
+
+    const gasAbstraction = () => {
+        if (isErc20() && rescueFile()) {
+            return {
+                type: GasAbstractionType.Signer,
+                signer: getGasAbstractionSigner(props.asset, rescueFile()),
+            };
+        }
+        return undefined;
+    };
+
+    const destination = () => {
+        if (!isErc20() || !rescueFile()) {
+            return undefined;
+        }
+        try {
+            return signer()?.address;
+        } catch {
+            return undefined;
+        }
+    };
 
     return (
         <>
             <p>
                 {t("refund")}{" "}
                 {formatAmount(
-                    new BigNumber(props.refundData.amount.toString()),
+                    new BigNumber(
+                        assetAmountToSats(
+                            props.refundData.amount,
+                            props.asset,
+                        ).toString(),
+                    ),
                     denomination(),
                     separator(),
                     props.asset,
@@ -55,6 +95,9 @@ const RefundState = (props: {
                 setRefundTxId={props.setRefundTxId}
                 signerAddress={props.refundData.refundAddress}
                 lockupTxHash={props.lockupTxHash}
+                gasAbstraction={gasAbstraction()?.type}
+                transactionSigner={gasAbstraction()?.signer}
+                destination={destination()}
             />
             <hr />
             <BlockExplorer
@@ -74,12 +117,13 @@ const ClaimState = (props: {
 }) => {
     const navigate = useNavigate();
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
-    const { rskRescuableSwaps } = useRescueContext();
+    const { signer, getEtherSwap, getErc20Swap, getGasAbstractionSigner } =
+        useWeb3Signer();
+    const { evmRescuableSwaps, rescueFile } = useRescueContext();
     const params = useParams();
 
     const preimage = () => {
-        const swapFromContext = rskRescuableSwaps().find(
+        const swapFromContext = evmRescuableSwaps().find(
             (s) => s.preimageHash === props.claimData.preimageHash,
         );
         return swapFromContext?.preimage
@@ -87,41 +131,51 @@ const ClaimState = (props: {
             : undefined;
     };
 
-    const claimTransaction = async () => {
-        const currentPreimage = preimage();
-        if (!currentPreimage) return;
-
-        try {
-            let transactionHash: string;
-
+    const getGasAbstraction = async (): Promise<GasAbstractionType> => {
+        if (props.asset === RBTC) {
             const balance = await signer().provider.getBalance(
                 await signer().getAddress(),
             );
             const gasPrice = (await signer().provider.getFeeData()).gasPrice;
-            const useRif =
-                gasPrice === null || balance <= gasPrice * GasNeededToClaim;
-
-            if (useRif) {
-                transactionHash = await relayClaimTransaction(
-                    signer(),
-                    getEtherSwap(props.asset),
-                    currentPreimage.toString("hex"),
-                    Number(props.claimData.amount),
-                    props.claimData.refundAddress,
-                    Number(props.claimData.timelock),
-                );
-            } else {
-                transactionHash = (
-                    await getEtherSwap(props.asset)[
-                        "claim(bytes32,uint256,address,uint256)"
-                    ](
-                        prefix0x(currentPreimage.toString("hex")),
-                        satoshiToWei(Number(props.claimData.amount)),
-                        props.claimData.refundAddress,
-                        props.claimData.timelock,
-                    )
-                ).hash;
+            if (gasPrice === null || balance <= gasPrice * GasNeededToClaim) {
+                return GasAbstractionType.RifRelay;
             }
+            return GasAbstractionType.None;
+        }
+
+        if (getKindForAsset(props.asset) === AssetKind.ERC20) {
+            return GasAbstractionType.Signer;
+        }
+
+        return GasAbstractionType.None;
+    };
+
+    const claimTransaction = async () => {
+        const currentPreimage = preimage();
+        if (!currentPreimage) return;
+
+        const asset = props.asset;
+        const { amount, claimAddress, refundAddress, timelock } =
+            props.claimData;
+
+        try {
+            const gasAbstraction = await getGasAbstraction();
+            const connectedAddress = await signer().getAddress();
+
+            const { transactionHash } = await claimAsset(
+                gasAbstraction,
+                asset,
+                currentPreimage.toString("hex"),
+                assetAmountToSats(amount, asset),
+                claimAddress,
+                refundAddress,
+                Number(timelock),
+                connectedAddress,
+                signer,
+                getGasAbstractionSigner(asset, rescueFile()),
+                getEtherSwap(asset),
+                getErc20Swap(asset),
+            );
 
             props.setClaimTxId(transactionHash);
         } catch (error) {
@@ -146,12 +200,6 @@ const ClaimState = (props: {
             <ContractTransaction
                 asset={props.asset}
                 onClick={claimTransaction}
-                address={{
-                    address: props.claimData.claimAddress,
-                    derivationPath: evmPath(
-                        config.assets[props.asset].network.chainId,
-                    ),
-                }}
                 buttonText={t("continue")}
                 promptText={t("transaction_prompt_receive", {
                     button: t("continue"),
@@ -171,7 +219,12 @@ const RescueEvm = () => {
     }>();
 
     const { t } = useGlobalContext();
-    const { signer, getEtherSwap } = useWeb3Signer();
+    const { signer, getEtherSwap, getErc20Swap } = useWeb3Signer();
+
+    const getSwapContract = (asset: string) =>
+        getKindForAsset(asset) === AssetKind.ERC20
+            ? getErc20Swap(asset)
+            : getEtherSwap(asset);
 
     const [refundTxId, setRefundTxId] = createSignal<string | undefined>(
         undefined,
@@ -185,13 +238,19 @@ const RescueEvm = () => {
             return undefined;
         }
 
+        const provider = createAssetProvider(params.asset);
+        const contract = getSwapContract(params.asset).connect(
+            provider,
+        ) as ReturnType<typeof getSwapContract>;
+
         const [logData, currentHeight] = await Promise.all([
             getLogsFromReceipt(
-                signer(),
-                getEtherSwap(params.asset),
+                provider,
+                params.asset as AssetType,
+                contract,
                 params.txHash,
             ),
-            signer().provider.getBlockNumber(),
+            getTimelockBlockNumber(provider, params.asset as AssetType),
         ]);
 
         return {
@@ -277,7 +336,7 @@ const RescueEvm = () => {
                                 <RefundEta
                                     timeoutEta={() =>
                                         getTimeoutEta(
-                                            params.asset as RefundableAssetType,
+                                            params.asset as blockChainsAssets,
                                             Number(rescueData().timelock),
                                             Number(rescueData().currentHeight),
                                         )
@@ -285,9 +344,7 @@ const RescueEvm = () => {
                                     timeoutBlockHeight={() =>
                                         Number(rescueData().timelock)
                                     }
-                                    refundableAsset={
-                                        params.asset as RefundableAssetType
-                                    }
+                                    asset={params.asset}
                                 />
                             </Match>
                         </Switch>

@@ -20,7 +20,7 @@ const ContractTransaction = (props: {
     buttonText: string;
     promptText?: string;
     waitingText?: string;
-    address: { address: string; derivationPath?: string };
+    address?: { address: string; derivationPath?: string };
 }) => {
     const { notify, i18n, t } = useGlobalContext();
     const { signer: contextSigner } = useWeb3Signer();
@@ -50,7 +50,7 @@ const ContractTransaction = (props: {
             when={
                 signer() !== undefined &&
                 (allowAnyAddress() ||
-                    props.address.address === signer().address)
+                    props.address?.address === signer().address)
             }
             fallback={
                 <Show
@@ -58,7 +58,7 @@ const ContractTransaction = (props: {
                     fallback={
                         <ConnectWallet
                             asset={props.asset}
-                            derivationPath={props.address.derivationPath}
+                            derivationPath={props.address?.derivationPath}
                         />
                     }>
                     <ConnectAddress

@@ -4,9 +4,11 @@ import { chooseUrl, config } from "../config";
 import { Explorer, type ExplorerUrl, type Url } from "../configs/base";
 import {
     BTC,
+    ETH,
     LBTC,
     RBTC,
-    type RefundableAssetType,
+    TBTC,
+    type blockChainsAssets,
     refundableAssets,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -30,10 +32,11 @@ type MempoolFeeEstimation = Record<
     number
 >;
 
-export const blockTimeMinutes: Record<RefundableAssetType, number> = {
+export const blockTimeMinutes: Record<blockChainsAssets, number> = {
     [BTC]: 10,
     [LBTC]: 1,
     [RBTC]: 25 / 60,
+    [ETH]: 12 / 60,
 };
 
 export const getNetworkName = (asset: string) => {
@@ -44,6 +47,10 @@ export const getNetworkName = (asset: string) => {
             return "Liquid";
         case RBTC:
             return "Rootstock";
+        case TBTC:
+            return "Arbitrum";
+        case ETH:
+            return "Ethereum";
         default:
             return "";
     }

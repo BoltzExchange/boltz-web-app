@@ -9,6 +9,7 @@ export const LBTC = "L-BTC";
 export const RBTC = "RBTC";
 export const TBTC = "TBTC";
 export const USDT0 = "USDT0";
+export const ETH = "ETH";
 export const USDT0_VARIANT_PREFIX = `${USDT0}-`;
 
 export type AssetType =
@@ -19,7 +20,17 @@ export type AssetType =
     | typeof TBTC
     | typeof USDT0;
 
-export type RefundableAssetType = typeof BTC | typeof LBTC | typeof RBTC;
+export type RefundableAssetType =
+    | typeof BTC
+    | typeof LBTC
+    | typeof RBTC
+    | typeof TBTC;
+
+export type blockChainsAssets =
+    | typeof BTC
+    | typeof LBTC
+    | typeof RBTC
+    | typeof ETH;
 
 const assetDisplayOrder: string[] = [LN, BTC, LBTC, RBTC, TBTC, USDT0];
 
@@ -32,7 +43,7 @@ export const assets: string[] = [
     ),
 ];
 
-export const refundableAssets = [BTC, LBTC, RBTC];
+export const refundableAssets = [BTC, LBTC, RBTC, TBTC];
 
 export const btcChains = [BTC, LBTC];
 

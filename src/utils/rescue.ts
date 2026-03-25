@@ -7,11 +7,15 @@ import { Buffer } from "buffer";
 import { Transaction as LiquidTransaction } from "liquidjs-lib";
 import type { Network as LiquidNetwork } from "liquidjs-lib/src/networks";
 import log from "loglevel";
+import { config } from "src/config";
+import { arbitrumNetwork } from "src/configs/base";
 
 import {
     type AssetType,
+    ETH,
     LBTC,
     type RefundableAssetType,
+    type blockChainsAssets,
     refundableAssets,
 } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -626,11 +630,18 @@ export const createRescueList = async (
 };
 
 export const getTimeoutEta = (
-    asset: RefundableAssetType,
+    asset: blockChainsAssets,
     timeoutBlockHeight: number,
     currentBlockHeight: number,
 ) => {
+    // for assets on Arbitrum, we need to get timeout ETA from ETH L1
+    const blockchainAsset =
+        config.assets?.[asset]?.network?.chainId === arbitrumNetwork.chainId
+            ? ETH
+            : asset;
+
     const blocksRemaining = timeoutBlockHeight - currentBlockHeight;
-    const secondsRemaining = blocksRemaining * blockTimeMinutes[asset] * 60;
+    const secondsRemaining =
+        blocksRemaining * blockTimeMinutes[blockchainAsset] * 60;
     return Math.floor(Date.now() / 1000) + secondsRemaining;
 };

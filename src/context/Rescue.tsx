@@ -18,8 +18,8 @@ export type RescueContextType = {
     rescuableSwaps: Accessor<RestorableSwap[]>;
     setRescuableSwaps: Setter<RestorableSwap[]>;
 
-    rskRescuableSwaps: Accessor<LogRefundData[]>;
-    setRskRescuableSwaps: Setter<LogRefundData[]>;
+    evmRescuableSwaps: Accessor<LogRefundData[]>;
+    setEvmRescuableSwaps: Setter<LogRefundData[]>;
 
     validRescueKey: Accessor<boolean>;
     setValidRescueKey: Setter<boolean>;
@@ -36,7 +36,7 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
     const [rescuableSwaps, setRescuableSwaps] = createSignal<RestorableSwap[]>(
         [],
     );
-    const [rskRescuableSwaps, setRskRescuableSwaps] = createSignal<
+    const [evmRescuableSwaps, setEvmRescuableSwaps] = createSignal<
         LogRefundData[]
     >([]);
     const [validRescueKey, setValidRescueKey] = createSignal<boolean>(false);
@@ -59,8 +59,8 @@ export const RescueProvider = (props: { children: JSX.Element }) => {
                 setRescueFile,
                 rescuableSwaps,
                 setRescuableSwaps,
-                rskRescuableSwaps,
-                setRskRescuableSwaps,
+                evmRescuableSwaps,
+                setEvmRescuableSwaps,
                 validRescueKey,
                 setValidRescueKey,
                 resetRescueKey,

@@ -3,13 +3,14 @@ import { AssetKind, getKindForAsset, getTokenDecimals } from "../consts/Assets";
 // Satoshis are 10 ** 8 and Wei 10 ** 18 -> sats to wei 10 ** 10
 const weiFactor = BigInt(10 ** 10);
 
-export const satoshiToWei = (satoshis: number) => BigInt(satoshis) * weiFactor;
+export const satoshiToWei = (satoshis: number | bigint) =>
+    BigInt(satoshis) * weiFactor;
 
 export const weiToSatoshi = (wei: bigint) => BigInt(wei) / weiFactor;
 
 export const prefix0x = (val: string) => `0x${val}`;
 
-const satsToToken = (sats: number, decimals: number) => {
+const satsToToken = (sats: number | bigint, decimals: number) => {
     const diff = decimals - 8;
     if (diff >= 0) {
         return BigInt(sats) * BigInt(10 ** diff);
@@ -30,7 +31,10 @@ const tokenToSats = (amount: bigint, decimals: number) => {
  * - For EVMNative assets (like RBTC): converts to wei (18 decimals)
  * - For ERC20 tokens: converts based on the token's configured decimals
  */
-export const satsToAssetAmount = (sats: number, asset: string): bigint => {
+export const satsToAssetAmount = (
+    sats: number | bigint,
+    asset: string,
+): bigint => {
     const kind = getKindForAsset(asset);
 
     if (kind === AssetKind.EVMNative) {

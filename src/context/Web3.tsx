@@ -24,6 +24,7 @@ import {
     untrack,
     useContext,
 } from "solid-js";
+import { type RescueFile } from "src/utils/rescueFile";
 
 import LedgerIcon from "../assets/ledger.svg";
 import TrezorIcon from "../assets/trezor.svg";
@@ -150,7 +151,7 @@ const Web3SignerContext = createContext<{
     walletConnected: Accessor<boolean>;
     setWalletConnected: Setter<boolean>;
 
-    getGasAbstractionSigner: (asset: string) => Wallet;
+    getGasAbstractionSigner: (asset: string, rescueFile?: RescueFile) => Wallet;
 }>();
 
 const Web3SignerProvider = (props: {
@@ -197,7 +198,10 @@ const Web3SignerProvider = (props: {
         createSignal<boolean>(false);
     const [walletConnected, setWalletConnected] = createSignal<boolean>(false);
 
-    const getGasAbstractionSigner = (asset: string): Wallet => {
+    const getGasAbstractionSigner = (
+        asset: string,
+        rescueFile?: RescueFile,
+    ): Wallet => {
         const assetConfig = config.assets?.[asset];
         const chainId = assetConfig?.network?.chainId;
         const rpcUrls = getRpcUrls(asset);
@@ -207,7 +211,7 @@ const Web3SignerProvider = (props: {
         }
 
         return new Wallet(
-            hex.encode(deriveKeyGasAbstraction(chainId).privateKey),
+            hex.encode(deriveKeyGasAbstraction(chainId, rescueFile).privateKey),
             createAssetProvider(asset),
         );
     };

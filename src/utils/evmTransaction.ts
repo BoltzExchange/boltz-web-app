@@ -1,17 +1,22 @@
 import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { EtherSwap } from "boltz-core/typechain/EtherSwap";
 import {
+    Interface,
     type TransactionReceipt,
     type TransactionRequest,
     type Wallet,
 } from "ethers";
 import log from "loglevel";
+import type { Accessor } from "solid-js";
 
 import {
     type AlchemyCall,
     sendTransaction as sendAlchemyTransaction,
 } from "../alchemy/Alchemy";
+import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
 import type { Signer } from "../context/Web3";
+import { relayClaimTransaction } from "../rif/Signer";
+import { prefix0x, satsToAssetAmount } from "./rootstock";
 import { GasAbstractionType } from "./swapCreator";
 
 export type LockupEvent = {
@@ -172,4 +177,117 @@ export const getLockupEvent = (
         preimageHash,
         logIndex: lockupLog.index,
     };
+};
+
+export type ClaimResult = {
+    transactionHash: string;
+    receiveAmount: bigint;
+};
+
+export const erc20TransferInterface = new Interface([
+    "function transfer(address to, uint256 amount)",
+]);
+
+export const claimAsset = async (
+    gasAbstraction: GasAbstractionType,
+    asset: string,
+    preimage: string,
+    amount: number | bigint,
+    claimAddress: string,
+    refundAddress: string,
+    timeoutBlockHeight: number,
+    destination: string,
+    signer: Accessor<Signer>,
+    getGasAbstractionSigner: Wallet,
+    etherSwap: EtherSwap,
+    erc20Swap: ERC20Swap,
+): Promise<ClaimResult> => {
+    const assetAmount = satsToAssetAmount(amount, asset);
+
+    switch (gasAbstraction) {
+        case GasAbstractionType.RifRelay:
+            return {
+                transactionHash: await relayClaimTransaction(
+                    signer(),
+                    etherSwap,
+                    preimage,
+                    amount,
+                    refundAddress,
+                    timeoutBlockHeight,
+                ),
+                receiveAmount: assetAmount,
+            };
+
+        case GasAbstractionType.None:
+        case GasAbstractionType.Signer: {
+            const claimSigner = getSignerForGasAbstraction(
+                gasAbstraction,
+                signer(),
+                getGasAbstractionSigner,
+            );
+
+            const isErc20 = getKindForAsset(asset) !== AssetKind.EVMNative;
+            const tx = isErc20
+                ? await (erc20Swap.connect(claimSigner) as ERC20Swap)[
+                      "claim(bytes32,uint256,address,address,address,uint256)"
+                  ].populateTransaction(
+                      prefix0x(preimage),
+                      assetAmount,
+                      getTokenAddress(asset),
+                      claimAddress,
+                      refundAddress,
+                      timeoutBlockHeight,
+                  )
+                : await (etherSwap.connect(claimSigner) as EtherSwap)[
+                      "claim(bytes32,uint256,address,address,uint256)"
+                  ].populateTransaction(
+                      prefix0x(preimage),
+                      assetAmount,
+                      claimAddress,
+                      refundAddress,
+                      timeoutBlockHeight,
+                  );
+
+            if (
+                gasAbstraction === GasAbstractionType.Signer &&
+                isErc20 &&
+                claimAddress.toLowerCase() !== destination.toLowerCase()
+            ) {
+                const calls: AlchemyCall[] = [
+                    { to: tx.to as string, data: tx.data as string },
+                    {
+                        to: getTokenAddress(asset),
+                        data: erc20TransferInterface.encodeFunctionData(
+                            "transfer",
+                            [destination, assetAmount],
+                        ),
+                    },
+                ];
+                return {
+                    transactionHash: await sendPopulatedTransaction(
+                        gasAbstraction,
+                        claimSigner,
+                        calls,
+                    ),
+                    receiveAmount: assetAmount,
+                };
+            }
+
+            return {
+                transactionHash: await sendPopulatedTransaction(
+                    gasAbstraction,
+                    claimSigner,
+                    tx,
+                ),
+                receiveAmount: assetAmount,
+            };
+        }
+
+        default: {
+            const exhaustiveCheck: never = gasAbstraction;
+            throw new Error(
+                `Unsupported gas abstraction type: ${String(exhaustiveCheck)}`,
+            );
+        }
+    }
 };

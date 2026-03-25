@@ -16,7 +16,7 @@ import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { hiddenInformation } from "./settings/PrivacyMode";
 
 const Modal = (props: {
-    asset: string;
+    asset?: string;
     derivationPath: string;
     show: Accessor<boolean>;
     setShow: Setter<boolean>;
@@ -118,7 +118,7 @@ const Modal = (props: {
 };
 
 const ConnectModal = (props: {
-    asset: string;
+    asset?: string;
     derivationPath: string;
     disabled?: Accessor<boolean>;
 }) => {
@@ -249,7 +249,7 @@ export const SwitchNetwork = (props: { asset: string }) => {
 };
 
 const ConnectWallet = (props: {
-    asset: string;
+    asset?: string; // when asset is not passed, the component is network independent
     derivationPath?: string;
     disabled?: Accessor<boolean>;
     addressOverride?: Accessor<string | undefined>;
@@ -335,7 +335,7 @@ const ConnectWallet = (props: {
                     />
                 }>
                 <Show
-                    when={networkValid()}
+                    when={networkValid() || !props.asset}
                     fallback={<SwitchNetwork asset={props.asset} />}>
                     <ShowAddress
                         address={address}
