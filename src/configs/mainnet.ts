@@ -2,7 +2,7 @@ import type { Asset, Config, Usdt0Variant } from "src/configs/base";
 import {
     Explorer,
     NetworkTransport,
-    Usdt0Mesh,
+    Usdt0Kind,
     arbitrumExplorer,
     arbitrumNetwork,
     baseConfig,
@@ -32,7 +32,7 @@ const getExplorerId = (transport: NetworkTransport): Explorer => {
 
 const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
     const transport = variant.transport ?? NetworkTransport.Evm;
-    const mesh = variant.mesh ?? Usdt0Mesh.Native;
+    const mesh = variant.mesh ?? Usdt0Kind.Native;
 
     const asset: Asset = {
         type: AssetKind.ERC20,
@@ -288,7 +288,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: "https://solscan.io",
         rpcUrls: ["https://solana-rpc.publicnode.com"],
-        mesh: Usdt0Mesh.Legacy,
+        mesh: Usdt0Kind.Legacy,
     },
     {
         asset: "USDT0-TRON",
@@ -300,7 +300,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
         blockExplorerUrl: "https://tronscan.org/#",
         rpcUrls: ["https://api.trongrid.io"],
-        mesh: Usdt0Mesh.Legacy,
+        mesh: Usdt0Kind.Legacy,
     },
     {
         asset: "USDT0-XLAYER",

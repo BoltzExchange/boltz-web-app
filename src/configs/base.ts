@@ -9,7 +9,7 @@ export const enum NetworkTransport {
     Tron = "tron",
 }
 
-export const enum Usdt0Mesh {
+export const enum Usdt0Kind {
     Native = "native",
     Legacy = "legacy",
 }
@@ -26,7 +26,7 @@ export type Usdt0Variant = {
     tokenAddress: string;
     blockExplorerUrl: string;
     rpcUrls: string[];
-    mesh?: Usdt0Mesh;
+    mesh?: Usdt0Kind;
 };
 
 export type Asset = {
@@ -55,7 +55,7 @@ export type Asset = {
             symbol: string;
             decimals: number;
         };
-        mesh?: Usdt0Mesh;
+        mesh?: Usdt0Kind;
     };
     token?: {
         address: string;
