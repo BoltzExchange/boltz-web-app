@@ -19,8 +19,8 @@ import { NetworkTransport, Usdt0Kind } from "../../configs/base";
 import type { OftRoute } from "../Pair";
 import {
     decodeSolanaAddress,
-    solanaAtaRentExemptLamports,
     shouldCreateSolanaTokenAccount,
+    solanaAtaRentExemptLamports,
 } from "../chains/solana";
 import { decodeTronBase58Address } from "../chains/tron";
 import { formatError } from "../errors";
@@ -203,6 +203,8 @@ const type3Option = 3;
 const executorWorkerId = 1;
 const optionTypeLzReceive = 1;
 const optionTypeNativeDrop = 2;
+const hundredPercentBps = 10_000n;
+const legacyBridgeFeeBps = 3n;
 
 const fetchOftDeployments = async (): Promise<OftRegistry> => {
     const response = await fetch(oftDeploymentsEndpoint);
@@ -553,7 +555,10 @@ const appendExecutorOption = (
 const buildOftExtraOptions = ({
     nativeDrop,
     createSolanaTokenAccount,
-}: Pick<OftQuoteOptions, "nativeDrop" | "createSolanaTokenAccount">): string => {
+}: Pick<
+    OftQuoteOptions,
+    "nativeDrop" | "createSolanaTokenAccount"
+>): string => {
     let options = "0x";
 
     if (createSolanaTokenAccount) {
@@ -577,6 +582,25 @@ const buildOftExtraOptions = ({
     );
 
     return appendExecutorOption(options, optionTypeNativeDrop, option);
+};
+
+const ceilDiv = (numerator: bigint, denominator: bigint): bigint => {
+    if (denominator <= 0n) {
+        throw new Error("denominator must be greater than zero");
+    }
+
+    return (numerator + denominator - 1n) / denominator;
+};
+
+const getLegacyMeshSourceAmount = (destinationAmount: bigint): bigint => {
+    if (legacyBridgeFeeBps >= hundredPercentBps) {
+        throw new Error("legacyBridgeFeeBps must be less than 100%");
+    }
+
+    return ceilDiv(
+        destinationAmount * hundredPercentBps,
+        hundredPercentBps - legacyBridgeFeeBps,
+    );
 };
 
 const createOftSendParam = async (
@@ -733,6 +757,10 @@ export const quoteOftAmountInForAmountOut = async (
 ): Promise<bigint> => {
     if (amountOut === 0n) {
         return 0n;
+    }
+
+    if (getUsdt0Mesh(route.from, route.to) === Usdt0Kind.Legacy) {
+        return getLegacyMeshSourceAmount(amountOut);
     }
 
     let low = amountOut;

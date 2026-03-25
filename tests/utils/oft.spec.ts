@@ -12,9 +12,8 @@ const {
     quoteOftSend,
     clearOftDeployments,
 } = await import("../../src/utils/oft/oft");
-const { shouldCreateSolanaTokenAccount } = await import(
-    "../../src/utils/chains/solana"
-);
+const { shouldCreateSolanaTokenAccount } =
+    await import("../../src/utils/chains/solana");
 
 const getOftRoute = (from: string, to = from) => ({
     from,
@@ -309,9 +308,7 @@ describe("oft", () => {
                                 ],
                             },
                         ],
-                        legacyMesh: [
-                            createSolanaLegacyMeshDeployment(),
-                        ],
+                        legacyMesh: [createSolanaLegacyMeshDeployment()],
                     },
                 }),
             }),
@@ -349,9 +346,7 @@ describe("oft", () => {
                 json: vi.fn().mockResolvedValue({
                     usdt0: {
                         native: [],
-                        legacyMesh: [
-                            createSolanaLegacyMeshDeployment(),
-                        ],
+                        legacyMesh: [createSolanaLegacyMeshDeployment()],
                     },
                 }),
             }),
