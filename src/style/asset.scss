@@ -213,6 +213,11 @@
 [data-network="solana"] {
     @include network-badge(vars.$solana_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$solana_icon);
+
+    &.asset-USDT .icon {
+        background-image: vars.$usdt_icon;
+        background-size: 75%;
+    }
 }
 
 [data-network="stable"] {
@@ -223,6 +228,11 @@
 [data-network="tron"] {
     @include network-badge(vars.$tron_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$tron_icon);
+
+    &.asset-USDT .icon {
+        background-image: vars.$usdt_icon;
+        background-size: 75%;
+    }
 }
 
 [data-network="unichain"] {
