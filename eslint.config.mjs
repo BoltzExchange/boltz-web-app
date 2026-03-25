@@ -54,6 +54,8 @@ export default [
                                 "@ledgerhq/hw-app-eth",
                                 "@ledgerhq/hw-transport",
                                 "@reown/appkit-adapter-ethers",
+                                "@reown/appkit-adapter-solana",
+                                "@reown/appkit-adapter-tron",
                                 "@ledgerhq/hw-transport-webhid",
                                 "@vulpemventures/secp256k1-zkp",
                             ],
