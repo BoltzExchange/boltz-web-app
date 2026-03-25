@@ -1,6 +1,16 @@
 import { base58 } from "@scure/base";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
+import log from "loglevel";
+
+import { config } from "../../config";
+import { NetworkTransport } from "../../configs/base";
+import { formatError } from "../errors";
+import { requireRpcUrls } from "../provider";
 
 export const solanaAddressLength = 32;
+export const solanaAtaRentExemptLamports = 2_039_280n;
+const solanaGetAccountInfoMethod = "getAccountInfo";
 
 export const decodeSolanaAddress = (address: string): Uint8Array => {
     const decoded = base58.decode(address);
@@ -18,4 +28,98 @@ export const isValidSolanaAddress = (address: string): boolean => {
     } catch {
         return false;
     }
+};
+
+export const shouldCreateSolanaTokenAccount = async (
+    destinationAsset: string,
+    recipient: string | undefined,
+): Promise<boolean> => {
+    if (recipient === undefined || recipient === "") {
+        return false;
+    }
+
+    const destinationConfig = config.assets?.[destinationAsset];
+    if (destinationConfig?.network?.transport !== NetworkTransport.Solana) {
+        return false;
+    }
+
+    const mintAddress = destinationConfig.token?.address;
+    if (mintAddress === undefined || mintAddress === "") {
+        throw new Error(
+            `Missing Solana token mint address for asset: ${destinationAsset}`,
+        );
+    }
+
+    decodeSolanaAddress(recipient);
+
+    const recipientPublicKey = new PublicKey(recipient);
+    const associatedTokenAddress = getAssociatedTokenAddressSync(
+        new PublicKey(mintAddress),
+        recipientPublicKey,
+        true,
+    );
+
+    const rpcUrls = requireRpcUrls(destinationAsset);
+    let lastError: unknown;
+    for (const rpcUrl of rpcUrls) {
+        try {
+            const response = await fetch(rpcUrl, {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: solanaGetAccountInfoMethod,
+                    params: [
+                        associatedTokenAddress.toBase58(),
+                        {
+                            encoding: "base64",
+                        },
+                    ],
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(
+                    `Solana RPC ${response.status} ${response.statusText}`,
+                );
+            }
+
+            const payload: unknown = await response.json();
+            const { error, result } = payload as {
+                error?: {
+                    code?: number;
+                    message?: string;
+                };
+                result?: {
+                    value?: Record<string, unknown> | null;
+                };
+            };
+            if (error !== undefined) {
+                throw new Error(
+                    `Solana RPC error ${error.code ?? "unknown"}: ${error.message ?? "unknown error"}`,
+                );
+            }
+            if (result?.value === undefined) {
+                throw new Error("Unexpected Solana account info response");
+            }
+
+            return result.value === null;
+        } catch (error) {
+            lastError = error;
+            log.warn("Failed to query Solana associated token account", {
+                destinationAsset,
+                recipient,
+                associatedTokenAddress: associatedTokenAddress.toBase58(),
+                rpcUrl,
+                error: formatError(error),
+            });
+        }
+    }
+
+    throw new Error(
+        `Failed to query Solana associated token account for ${destinationAsset}: ${formatError(lastError)}`,
+    );
 };

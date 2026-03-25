@@ -8,13 +8,36 @@ const {
     getOftContract,
     getOftReceivedEventByGuid,
     isExecutorNativeAmountExceedsCapError,
+    quoteOftAmountInForAmountOut,
     quoteOftSend,
     clearOftDeployments,
 } = await import("../../src/utils/oft/oft");
+const { shouldCreateSolanaTokenAccount } = await import(
+    "../../src/utils/chains/solana"
+);
 
 const getOftRoute = (from: string, to = from) => ({
     from,
     to,
+});
+
+const validSolanaRecipient = "6TEStwWeG24Yxhh7rx4pwpC7TVwJXNGDM5FqeiiKtZGX";
+const solanaOftProgramContract = {
+    name: "OFT Program",
+    address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
+    explorer: "",
+};
+const solanaOftStoreContract = {
+    name: "OFT Store",
+    address: "HyXJcgYpURfDhgzuyRL7zxP4FhLg7LZQMeDrR4MXZcMN",
+    explorer: "",
+};
+const createSolanaLegacyMeshDeployment = (
+    contracts = [solanaOftProgramContract],
+) => ({
+    name: "Solana",
+    lzEid: "30168",
+    contracts,
 });
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
@@ -160,6 +183,20 @@ describe("oft", () => {
         });
     });
 
+    test("should calculate legacy mesh amount in locally", async () => {
+        const fetchSpy = vi.fn();
+        vi.stubGlobal("fetch", fetchSpy);
+
+        await expect(
+            quoteOftAmountInForAmountOut(
+                getOftRoute("USDT0-ETH", "USDT0-SOL"),
+                1_000_000_000n,
+            ),
+        ).resolves.toEqual(1_000_300_091n);
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
     test("should throw when a route has no OFT contract", async () => {
         vi.stubGlobal(
             "fetch",
@@ -202,24 +239,10 @@ describe("oft", () => {
                     usdt0: {
                         native: [],
                         legacyMesh: [
-                            {
-                                name: "Solana",
-                                lzEid: "30168",
-                                contracts: [
-                                    {
-                                        name: "OFT Store",
-                                        address:
-                                            "HyXJcgYpURfDhgzuyRL7zxP4FhLg7LZQMeDrR4MXZcMN",
-                                        explorer: "",
-                                    },
-                                    {
-                                        name: "OFT Program",
-                                        address:
-                                            "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
-                                        explorer: "",
-                                    },
-                                ],
-                            },
+                            createSolanaLegacyMeshDeployment([
+                                solanaOftStoreContract,
+                                solanaOftProgramContract,
+                            ]),
                         ],
                     },
                 }),
@@ -227,11 +250,7 @@ describe("oft", () => {
         );
 
         await expect(getOftContract(getOftRoute("USDT0-SOL"))).resolves.toEqual(
-            {
-                name: "OFT Program",
-                address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
-                explorer: "",
-            },
+            solanaOftProgramContract,
         );
 
         const oft = {
@@ -245,13 +264,16 @@ describe("oft", () => {
             },
             send: vi.fn(),
         };
-        const recipient = "11111111111111111111111111111111";
+        const recipient = validSolanaRecipient;
 
         const { sendParam } = await quoteOftSend(
             oft as never,
             getOftRoute("USDT0", "USDT0-SOL"),
             recipient,
             100n,
+            {
+                createSolanaTokenAccount: false,
+            },
         );
 
         expect(sendParam[1]).toEqual(
@@ -259,7 +281,82 @@ describe("oft", () => {
         );
     });
 
+    test("should skip token account checks for non-Solana assets", async () => {
+        await expect(
+            shouldCreateSolanaTokenAccount("USDT0-ETH", validSolanaRecipient),
+        ).resolves.toBe(false);
+    });
+
+    test("should include Solana ATA creation options in OFT send params", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [
+                            {
+                                name: "Arbitrum",
+                                chainId: 42161,
+                                lzEid: "30110",
+                                contracts: [
+                                    {
+                                        name: "OFT Adapter",
+                                        address:
+                                            "0x1000000000000000000000000000000000000001",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                        legacyMesh: [
+                            createSolanaLegacyMeshDeployment(),
+                        ],
+                    },
+                }),
+            }),
+        );
+
+        const oft = {
+            quoteOFT: {
+                staticCall: vi
+                    .fn()
+                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            },
+            quoteSend: {
+                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
+            },
+        };
+
+        const { sendParam } = await quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0", "USDT0-SOL"),
+            validSolanaRecipient,
+            100n,
+            {
+                createSolanaTokenAccount: true,
+            },
+        );
+
+        expect(sendParam[4]).toContain("000301002101");
+    });
+
     test("should reject invalid hex-prefixed Solana recipients", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [],
+                        legacyMesh: [
+                            createSolanaLegacyMeshDeployment(),
+                        ],
+                    },
+                }),
+            }),
+        );
+
         const oft = {
             quoteOFT: {
                 staticCall: vi
@@ -278,6 +375,9 @@ describe("oft", () => {
                 getOftRoute("USDT0", "USDT0-SOL"),
                 "0x1234",
                 100n,
+                {
+                    createSolanaTokenAccount: false,
+                },
             ),
         ).rejects.toThrow();
     });
