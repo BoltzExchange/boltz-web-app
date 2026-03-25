@@ -119,7 +119,7 @@ const withAutoClaimLock = async <T,>(
     }
 
     return await navigator.locks.request(
-        "transactionConfirmedAutoClaim",
+        `transactionConfirmedAutoClaim:${swapId}`,
         { ifAvailable: true },
         async (lock) => {
             if (lock === null) {

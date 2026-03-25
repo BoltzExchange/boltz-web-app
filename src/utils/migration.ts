@@ -152,13 +152,37 @@ const parseGasAbstraction = (gasAbstraction: unknown) => {
     };
 };
 
+const deriveLockupGasAbstraction = (
+    assetSend: unknown,
+): GasAbstractionType | undefined => {
+    if (typeof assetSend !== "string") {
+        return undefined;
+    }
+
+    if (assetSend === RBTC) {
+        return GasAbstractionType.None;
+    }
+
+    return isEvmAsset(assetSend)
+        ? GasAbstractionType.Signer
+        : GasAbstractionType.None;
+};
+
 const migrateSwapGasAbstractionShape = (
     swap: Record<string, unknown>,
 ): SomeSwap => {
+    const claim = parseGasAbstraction(swap.gasAbstraction)?.claim;
+    const lockup = deriveLockupGasAbstraction(swap.assetSend);
+
     return {
         ...swap,
         gasAbstraction:
-            parseGasAbstraction(swap.gasAbstraction) ?? noGasAbstraction(),
+            claim !== undefined && lockup !== undefined
+                ? {
+                      claim,
+                      lockup,
+                  }
+                : noGasAbstraction(),
     } as SomeSwap;
 };
 

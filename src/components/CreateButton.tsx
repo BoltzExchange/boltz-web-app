@@ -113,7 +113,7 @@ export const getClaimAddress = async (
             signer().provider.getBalance(await signer().getAddress()),
             signer()
                 .provider.getFeeData()
-                .then((data) => data.gasPrice),
+                .then((data) => data.gasPrice ?? 0n),
         ]);
         log.debug("RSK balance", balance);
 

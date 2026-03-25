@@ -62,16 +62,19 @@ describe("migration", () => {
         const swaps = [
             {
                 id: "reverse-rbtc",
+                assetSend: LN,
                 assetReceive: RBTC,
                 useGasAbstraction: true,
             },
             {
                 id: "reverse-usdt0",
+                assetSend: LN,
                 assetReceive: USDT0,
                 useGasAbstraction: true,
             },
             {
                 id: "submarine",
+                assetSend: LBTC,
                 assetReceive: LN,
                 useGasAbstraction: false,
             },
@@ -80,20 +83,25 @@ describe("migration", () => {
         expect(migrateBackupFile(2, swaps)).toEqual([
             {
                 id: "reverse-rbtc",
+                assetSend: LN,
                 assetReceive: RBTC,
-                gasAbstraction: createUniformGasAbstraction(
-                    GasAbstractionType.RifRelay,
-                ),
+                gasAbstraction: {
+                    claim: GasAbstractionType.RifRelay,
+                    lockup: GasAbstractionType.None,
+                },
             },
             {
                 id: "reverse-usdt0",
+                assetSend: LN,
                 assetReceive: USDT0,
-                gasAbstraction: createUniformGasAbstraction(
-                    GasAbstractionType.Signer,
-                ),
+                gasAbstraction: {
+                    claim: GasAbstractionType.Signer,
+                    lockup: GasAbstractionType.None,
+                },
             },
             {
                 id: "submarine",
+                assetSend: LBTC,
                 assetReceive: LN,
                 gasAbstraction: createUniformGasAbstraction(
                     GasAbstractionType.None,
