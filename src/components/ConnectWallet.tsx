@@ -23,11 +23,7 @@ import type {
 } from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import {
-    type ConnectedWallet,
-    type Signer,
-    useWeb3Signer,
-} from "../context/Web3";
+import { type ConnectedWallet, useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
@@ -307,7 +303,7 @@ const ConnectWallet = (props: {
     syncAddress?: boolean;
 }) => {
     const { t } = useGlobalContext();
-    const { providers, signer, connectedWallet } = useWeb3Signer();
+    const { providers, connectedWallet } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
 
     const address = () => connectedWallet()?.address;
@@ -317,7 +313,6 @@ const ConnectWallet = (props: {
 
     const syncWalletState = async (
         asset: string,
-        activeSigner: Signer | undefined,
         activeWallet: ConnectedWallet | undefined,
         currentAddress: string | undefined,
         syncId: number,
@@ -329,8 +324,8 @@ const ConnectWallet = (props: {
             transport === NetworkTransport.Evm &&
             chainId !== undefined
                 ? Number(
-                      (await activeSigner?.provider.getNetwork())?.chainId ||
-                          -1,
+                      (await activeWallet?.signer?.provider.getNetwork())
+                          ?.chainId || -1,
                   )
                 : undefined;
 
@@ -375,16 +370,10 @@ const ConnectWallet = (props: {
 
     createEffect(
         on(
-            [() => props.asset, signer, connectedWallet, address],
-            ([asset, activeSigner, activeWallet, addr]) => {
+            [() => props.asset, connectedWallet, address],
+            ([asset, activeWallet, addr]) => {
                 const syncId = ++latestSyncId;
-                void syncWalletState(
-                    asset,
-                    activeSigner,
-                    activeWallet,
-                    addr,
-                    syncId,
-                );
+                void syncWalletState(asset, activeWallet, addr, syncId);
             },
         ),
     );
