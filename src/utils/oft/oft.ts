@@ -15,7 +15,7 @@ import { getUsdt0Mesh } from "src/consts/Assets";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
-import { NetworkTransport, Usdt0Mesh } from "../../configs/base";
+import { NetworkTransport, Usdt0Kind } from "../../configs/base";
 import type { OftRoute } from "../Pair";
 import { decodeSolanaAddress } from "../chains/solana";
 import { decodeTronBase58Address } from "../chains/tron";
@@ -241,7 +241,7 @@ const getOftChain = async (
     const assetConfig = config.assets?.[asset];
     const meshKind = getUsdt0Mesh(route.from, route.to);
     const registryKey: keyof OftTokenConfig =
-        meshKind === Usdt0Mesh.Legacy ? "legacyMesh" : "native";
+        meshKind === Usdt0Kind.Legacy ? "legacyMesh" : "native";
 
     const chains = tokenConfig[registryKey];
     const assetChainId = assetConfig?.network?.chainId;
