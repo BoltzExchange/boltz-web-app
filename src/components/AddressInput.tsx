@@ -1,5 +1,3 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { base58 } from "@scure/base";
 import { getAddress, isAddress } from "ethers";
 import log from "loglevel";
 import { createEffect, on } from "solid-js";
@@ -16,6 +14,8 @@ import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
+import { isValidSolanaAddress } from "../utils/chains/solana";
+import { isValidTronAddress } from "../utils/chains/tron";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
@@ -23,33 +23,6 @@ import {
     extractBip21Amount,
     extractInvoice,
 } from "../utils/invoice";
-
-const isValidSolanaAddress = (address: string) => {
-    try {
-        return base58.decode(address).length === 32;
-    } catch {
-        return false;
-    }
-};
-
-const isValidTronAddress = (address: string) => {
-    try {
-        const decoded = base58.decode(address);
-        if (decoded.length !== 25) {
-            return false;
-        }
-
-        const payload = decoded.subarray(0, 21);
-        const checksum = decoded.subarray(21);
-        const expectedChecksum = sha256(sha256(payload)).slice(0, 4);
-        return (
-            payload[0] === 0x41 &&
-            checksum.every((byte, index) => byte === expectedChecksum[index])
-        );
-    } catch {
-        return false;
-    }
-};
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
@@ -112,27 +85,23 @@ const AddressInput = () => {
 
             const transport = getNetworkTransport(assetName);
             if (transport === NetworkTransport.Solana) {
-                if (!isValidSolanaAddress(address)) {
-                    throw new Error();
+                if (isValidSolanaAddress(address)) {
+                    input.setCustomValidity("");
+                    input.classList.remove("invalid");
+                    setAddressValid(true);
+                    setOnchainAddress(address);
+                    return;
                 }
-
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setAddressValid(true);
-                setOnchainAddress(address);
-                return;
             }
 
             if (transport === NetworkTransport.Tron) {
-                if (!isValidTronAddress(address)) {
-                    throw new Error();
+                if (isValidTronAddress(address)) {
+                    input.setCustomValidity("");
+                    input.classList.remove("invalid");
+                    setAddressValid(true);
+                    setOnchainAddress(address);
+                    return;
                 }
-
-                input.setCustomValidity("");
-                input.classList.remove("invalid");
-                setAddressValid(true);
-                setOnchainAddress(address);
-                return;
             }
 
             const actualAsset =

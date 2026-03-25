@@ -1,5 +1,4 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { base58, hex } from "@scure/base";
+import { hex } from "@scure/base";
 import {
     Contract,
     type ContractRunner,
@@ -12,12 +11,14 @@ import {
     zeroPadValue,
 } from "ethers";
 import log from "loglevel";
-import { getUsdt0MeshKind } from "src/consts/Assets";
+import { getUsdt0Mesh } from "src/consts/Assets";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
-import { NetworkTransport, Usdt0MeshKind } from "../../configs/base";
+import { NetworkTransport, Usdt0Mesh } from "../../configs/base";
 import type { OftRoute } from "../Pair";
+import { decodeSolanaAddress } from "../chains/solana";
+import { decodeTronBase58Address } from "../chains/tron";
 import { formatError } from "../errors";
 import {
     type Provider,
@@ -52,6 +53,8 @@ const oftDeploymentsEndpoint = "https://docs.usdt0.to/api/deployments";
 const defaultOftName = "usdt0";
 const providerCache = new Map<string, Provider>();
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
+
+export const formatRoute = (route: OftRoute) => `${route.from} -> ${route.to}`;
 
 const oftAbi = [
     "function quoteOFT(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes)) view returns (tuple(uint256,uint256), tuple(int256,string)[], tuple(uint256,uint256))",
@@ -236,9 +239,9 @@ const getOftChain = async (
     }
 
     const assetConfig = config.assets?.[asset];
-    const meshKind = getUsdt0MeshKind(route.from, route.to);
+    const meshKind = getUsdt0Mesh(route.from, route.to);
     const registryKey: keyof OftTokenConfig =
-        meshKind === Usdt0MeshKind.Legacy ? "legacyMesh" : "native";
+        meshKind === Usdt0Mesh.Legacy ? "legacyMesh" : "native";
 
     const chains = tokenConfig[registryKey];
     const assetChainId = assetConfig?.network?.chainId;
@@ -273,26 +276,25 @@ export const getQuotedOftContract = async (
     oftName = defaultOftName,
 ): Promise<OftContractInstance> => {
     const oftContract = await getOftContract(route, oftName);
-    if (!oftContract) {
-        throw new Error(
-            `Missing OFT contract for asset ${route.from} and OFT ${oftName}`,
-        );
-    }
-
     return createOftContract(oftContract.address, getOftProvider(route.from));
 };
 
 export const getOftContract = async (
     route: OftRoute,
     oftName = defaultOftName,
-): Promise<OftContract | undefined> => {
+): Promise<OftContract> => {
     const chain = await getOftChain(route.from, route, oftName);
-
-    return (
+    const contract =
         chain?.contracts.find((contract) => contract.name === "OFT") ??
         chain?.contracts.find((contract) => contract.name === "OFT Adapter") ??
-        chain?.contracts.find((contract) => contract.name === "OFT Program")
-    );
+        chain?.contracts.find((contract) => contract.name === "OFT Program");
+    if (contract === undefined) {
+        throw new Error(
+            `Missing OFT contract for route ${formatRoute(route)} and OFT ${oftName}`,
+        );
+    }
+
+    return contract;
 };
 
 export const createOftContract = (
@@ -482,29 +484,6 @@ export const getOftReceivedEventByGuid = async (
 
 const newOptions = (): string => solidityPacked(["uint16"], [type3Option]);
 
-const equalsBytes = (a: Uint8Array, b: Uint8Array) =>
-    a.length === b.length && a.every((byte, index) => byte === b[index]);
-
-const decodeTronBase58Address = (recipient: string): Uint8Array => {
-    const decoded = base58.decode(recipient);
-    if (decoded.length !== 25) {
-        throw new Error(`Invalid Tron recipient address: ${recipient}`);
-    }
-
-    const payload = decoded.subarray(0, 21);
-    const checksum = decoded.subarray(21);
-    const expectedChecksum = sha256(sha256(payload)).slice(0, 4);
-    if (!equalsBytes(checksum, expectedChecksum)) {
-        throw new Error(`Invalid Tron recipient checksum: ${recipient}`);
-    }
-
-    if (payload[0] !== 0x41) {
-        throw new Error(`Invalid Tron recipient prefix: ${recipient}`);
-    }
-
-    return payload.subarray(1);
-};
-
 const encodeRecipient = (
     transport: NetworkTransport,
     recipient: string,
@@ -514,18 +493,7 @@ const encodeRecipient = (
             return zeroPadValue(recipient, 32);
 
         case NetworkTransport.Solana: {
-            if (recipient.startsWith("0x")) {
-                return recipient;
-            }
-
-            const decoded = base58.decode(recipient);
-            if (decoded.length !== 32) {
-                throw new Error(
-                    `Invalid Solana recipient address: ${recipient}`,
-                );
-            }
-
-            return `0x${hex.encode(decoded)}`;
+            return `0x${hex.encode(decodeSolanaAddress(recipient))}`;
         }
 
         case NetworkTransport.Tron:
@@ -533,27 +501,20 @@ const encodeRecipient = (
                 `0x${hex.encode(decodeTronBase58Address(recipient))}`,
                 32,
             );
-
-        default: {
-            return transport as never;
-        }
     }
 };
 
 const encodeOftRecipient = (
-    destination: number | string,
-    recipient: string,
+    asset: string,
+    recipient: string | undefined,
 ): string => {
-    if (typeof destination !== "string" || recipient === ZeroAddress) {
-        return encodeRecipient(NetworkTransport.Evm, recipient);
+    if (recipient === undefined) {
+        return encodeRecipient(NetworkTransport.Evm, ZeroAddress);
     }
-
-    const recipientFormat =
-        config.assets?.[destination]?.mesh?.recipientFormat ??
-        config.assets?.[destination]?.network?.transport ??
-        NetworkTransport.Evm;
-
-    return encodeRecipient(recipientFormat, recipient);
+    return encodeRecipient(
+        config.assets?.[asset]?.network?.transport,
+        recipient,
+    );
 };
 
 const addExecutorOption = (
@@ -587,7 +548,7 @@ const buildOftExtraOptions = (nativeDrop?: OftNativeDrop): string => {
 
 const createOftSendParam = async (
     route: OftRoute,
-    recipient: string,
+    recipient: string | undefined,
     amount: bigint,
     oftName = defaultOftName,
     extraOptions = "0x",
@@ -595,7 +556,7 @@ const createOftSendParam = async (
     const lzEid = (await getOftChain(route.to, route, oftName))?.lzEid;
     if (lzEid === undefined) {
         throw new Error(
-            `Missing LayerZero endpoint id for route ${route.from} to ${route.to} and OFT ${oftName}`,
+            `Missing LayerZero endpoint id for route ${formatRoute(route)} and OFT ${oftName}`,
         );
     }
     return [
@@ -612,7 +573,7 @@ const createOftSendParam = async (
 export const quoteOftSend = async (
     oft: OftContractInstance,
     route: OftRoute,
-    recipient: string,
+    recipient: string | undefined,
     amount: bigint,
     { oftName = defaultOftName, nativeDrop }: OftQuoteOptions = {},
 ): Promise<{
@@ -660,17 +621,11 @@ export const buildOftSendAlchemyCall = async ({
     oftName?: string;
 }): Promise<AlchemyCall> => {
     const oftContract = await getOftContract(route, oftName);
-    if (oftContract === undefined) {
-        throw new Error(
-            `missing OFT contract for asset ${route.from} and OFT ${oftName}`,
-        );
-    }
-
     const quotedOft = await getQuotedOftContract(route, oftName);
     const { sendParam, msgFee } = await quoteOftSend(
         quotedOft,
         route,
-        recipient ?? ZeroAddress,
+        recipient,
         amount,
         { oftName },
     );
@@ -713,7 +668,7 @@ export const quoteOftReceiveAmount = async (
     const { msgFee, oftLimit, oftFeeDetails, oftReceipt } = await quoteOftSend(
         oft,
         route,
-        options.recipient ?? ZeroAddress,
+        options.recipient,
         amount,
         options,
     );
@@ -750,7 +705,7 @@ export const quoteOftAmountInForAmountOut = async (
 
         if (attempts > 32) {
             throw new Error(
-                `Could not quote OFT amount for ${route.from} to ${route.to}`,
+                `Could not quote OFT amount for route ${formatRoute(route)}`,
             );
         }
     }

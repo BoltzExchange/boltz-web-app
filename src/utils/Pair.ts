@@ -9,7 +9,7 @@ import {
     LN,
     USDT0,
     getCanonicalAsset,
-    getUsdt0MeshKind,
+    getUsdt0Mesh,
     isEvmAsset,
     isUsdt0Asset,
     isUsdt0Variant,
@@ -629,7 +629,7 @@ export default class Pair {
             log.info("Checking post-OFT native drop capability", {
                 sourceAsset: this.postOft.from,
                 destinationAsset: this.to,
-                destinationMeshKind: getUsdt0MeshKind(
+                destinationMeshKind: getUsdt0Mesh(
                     this.postOft.from,
                     this.postOft.to,
                 ),
@@ -833,7 +833,7 @@ export default class Pair {
             log.info("Applying post-OFT quote", {
                 sourceAsset: this.postOft.from,
                 destinationAsset: this.to,
-                destinationMeshKind: getUsdt0MeshKind(
+                destinationMeshKind: getUsdt0Mesh(
                     this.postOft.from,
                     this.postOft.to,
                 ),
@@ -943,7 +943,7 @@ export default class Pair {
             log.info("Inverting post-OFT quote", {
                 sourceAsset: this.postOft.from,
                 destinationAsset: this.to,
-                destinationMeshKind: getUsdt0MeshKind(
+                destinationMeshKind: getUsdt0Mesh(
                     this.postOft.from,
                     this.postOft.to,
                 ),

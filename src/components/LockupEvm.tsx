@@ -468,11 +468,6 @@ const SendToOft = (props: {
                 to: props.oft.destinationAsset,
             };
             const oftContract = await getOftContract(oftRoute);
-            if (oftContract === undefined) {
-                throw new Error(
-                    `missing OFT contract for asset: ${props.oft.sourceAsset}`,
-                );
-            }
 
             const connectedSigner = signer();
             const signerAddress = await connectedSigner.getAddress();
@@ -606,11 +601,6 @@ const SendToOft = (props: {
                                     };
                                     const oftContract =
                                         await getOftContract(oftRoute);
-                                    if (oftContract === undefined) {
-                                        throw new Error(
-                                            `missing OFT contract for asset: ${props.oft.sourceAsset}`,
-                                        );
-                                    }
 
                                     const quotedOftInstance =
                                         await getQuotedOftContract(oftRoute);
