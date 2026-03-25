@@ -32,10 +32,7 @@ const SwapCreated = () => {
                 />
             }>
             <Show
-                when={
-                    isEvmAsset(chain.assetSend) ||
-                    getPreOftDetail(chain.oft) !== undefined
-                }
+                when={isEvmAsset(chain.assetSend)}
                 fallback={
                     <PayOnchain
                         type={chain.type}
