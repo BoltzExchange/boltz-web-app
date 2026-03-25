@@ -117,12 +117,6 @@ const toEncodedHop = (hop: Hop): EncodedHop => {
     };
 };
 
-const canUseRoutedBoltzHop = (
-    hop: Pick<Hop, "type" | "pair"> | undefined,
-): hop is Pick<Hop, "type" | "pair"> =>
-    hop !== undefined &&
-    (hop.type === SwapType.Submarine || hop.type === SwapType.Reverse);
-
 export default class Pair {
     private readonly route: Hop[] = [];
     private readonly preOft: OftRoute | undefined;
@@ -200,7 +194,7 @@ export default class Pair {
                     ? Pair.findPair(pairs, routeSource, hopAssetSymbol)
                     : undefined;
 
-            if (canUseRoutedBoltzHop(hopPair) && hopAsset !== undefined) {
+            if (hopPair !== undefined && hopAsset !== undefined) {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
@@ -235,7 +229,7 @@ export default class Pair {
                     ? Pair.findPair(pairs, hopAssetSymbol, routeTarget)
                     : undefined;
 
-            if (canUseRoutedBoltzHop(hopPair) && hopAsset !== undefined) {
+            if (hopPair !== undefined && hopAsset !== undefined) {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
