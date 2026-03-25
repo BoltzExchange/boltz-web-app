@@ -2,7 +2,7 @@ import type { Asset, Config, Usdt0Variant } from "src/configs/base";
 import {
     Explorer,
     NetworkTransport,
-    Usdt0MeshKind,
+    Usdt0Mesh,
     arbitrumExplorer,
     arbitrumNetwork,
     baseConfig,
@@ -17,52 +17,53 @@ if (rskFallback) {
     rskRpcUrls.push(rskFallback);
 }
 
-const createUsdt0VariantAsset = ({
-    chainName,
-    canSend,
-    symbol,
-    gasToken,
-    transport,
-    chainId,
-    tokenAddress,
-    blockExplorerUrl,
-    rpcUrls,
-    meshKind,
-    lzEid,
-}: Usdt0Variant): Asset => ({
-    type: AssetKind.ERC20,
-    canSend,
-    blockExplorerUrl: {
-        id: Explorer.Blockscout,
-        normal: blockExplorerUrl,
-    },
-    network: {
-        chainName,
-        symbol,
-        gasToken: gasToken ?? symbol,
-        transport: transport ?? NetworkTransport.Evm,
-        ...(chainId !== undefined ? { chainId } : {}),
-        ...(rpcUrls !== undefined ? { rpcUrls } : {}),
-        ...(transport === undefined || transport === NetworkTransport.Evm
-            ? {
-                  nativeCurrency: {
-                      name: gasToken ?? symbol,
-                      symbol: gasToken ?? symbol,
-                      decimals: 18,
-                  },
-              }
-            : {}),
-    },
-    token: {
-        address: tokenAddress,
-        decimals: 6,
-    },
-    mesh: {
-        kind: meshKind ?? Usdt0MeshKind.Native,
-        lzEid,
-        recipientFormat: transport ?? NetworkTransport.Evm,
-    },
-});
+const getExplorerId = (transport: NetworkTransport): Explorer => {
+    switch (transport) {
+        case NetworkTransport.Evm:
+            return Explorer.Blockscout;
+
+        case NetworkTransport.Solana:
+            return Explorer.Solscan;
+
+        case NetworkTransport.Tron:
+            return Explorer.Tronscan;
+    }
+};
+
+const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
+    const transport = variant.transport ?? NetworkTransport.Evm;
+    const mesh = variant.mesh ?? Usdt0Mesh.Native;
+
+    const asset: Asset = {
+        type: AssetKind.ERC20,
+        canSend: variant.canSend,
+        blockExplorerUrl: {
+            id: getExplorerId(transport),
+            normal: variant.blockExplorerUrl,
+        },
+        network: {
+            chainName: variant.chainName,
+            symbol: variant.symbol,
+            gasToken: variant.gasToken ?? variant.symbol,
+            transport,
+            rpcUrls: variant.rpcUrls,
+            mesh,
+        },
+        token: {
+            address: variant.tokenAddress,
+            decimals: 6,
+        },
+    };
+    if (transport === NetworkTransport.Evm) {
+        asset.network.chainId = variant.chainId;
+        asset.network.nativeCurrency = {
+            name: variant.gasToken ?? variant.symbol,
+            symbol: variant.gasToken ?? variant.symbol,
+            decimals: 18,
+        };
+    }
+    return asset;
+};
 
 const usdt0Variants: Usdt0Variant[] = [
     {
@@ -70,7 +71,6 @@ const usdt0Variants: Usdt0Variant[] = [
         canSend: true,
         chainName: "Ethereum",
         symbol: "ETH",
-        transport: NetworkTransport.Evm,
         chainId: 1,
         tokenAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         blockExplorerUrl: "https://etherscan.io",
@@ -288,8 +288,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: "https://solscan.io",
         rpcUrls: ["https://solana-rpc.publicnode.com"],
-        meshKind: Usdt0MeshKind.Legacy,
-        lzEid: "30168",
+        mesh: Usdt0Mesh.Legacy,
     },
     {
         asset: "USDT0-TRON",
@@ -301,8 +300,7 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
         blockExplorerUrl: "https://tronscan.org/#",
         rpcUrls: ["https://api.trongrid.io"],
-        meshKind: Usdt0MeshKind.Legacy,
-        lzEid: "30420",
+        mesh: Usdt0Mesh.Legacy,
     },
     {
         asset: "USDT0-XLAYER",
@@ -384,6 +382,7 @@ const config = {
                 chainName: "Rootstock",
                 symbol: "RBTC",
                 gasToken: "RBTC",
+                transport: NetworkTransport.Evm,
                 chainId: 30,
                 rpcUrls: rskRpcUrls,
                 nativeCurrency: {
@@ -421,11 +420,6 @@ const config = {
                 address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
                 decimals: 6,
                 routeVia: "TBTC",
-            },
-            mesh: {
-                kind: Usdt0MeshKind.Native,
-                lzEid: "30110",
-                recipientFormat: NetworkTransport.Evm,
             },
         },
         ...usdt0VariantAssets,

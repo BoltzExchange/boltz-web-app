@@ -1,5 +1,5 @@
 import { config } from "../config";
-import { NetworkTransport, Usdt0MeshKind } from "../configs/base";
+import { NetworkTransport, Usdt0Mesh } from "../configs/base";
 import { AssetKind } from "./AssetKind";
 
 export { AssetKind };
@@ -65,34 +65,27 @@ export const isUsdt0Asset = (asset: string): boolean =>
 export const getNetworkTransport = (
     asset: string,
 ): NetworkTransport | undefined => {
-    const transport = config.assets?.[asset]?.network?.transport;
-    if (transport !== undefined) {
-        return transport;
-    }
-
-    return config.assets?.[asset]?.network?.chainId !== undefined
-        ? NetworkTransport.Evm
-        : undefined;
+    return config.assets?.[asset]?.network?.transport;
 };
 
 export const getCanonicalAsset = (asset: string): string =>
     isUsdt0Variant(asset) ? USDT0 : asset;
 
-export const getUsdt0MeshKind = (from: string, to?: string): Usdt0MeshKind => {
+export const getUsdt0Mesh = (from: string, to?: string): Usdt0Mesh => {
     const meshKinds = [from, to]
         .filter((candidate): candidate is string => candidate !== undefined)
         .map(
             (candidate) =>
-                config.assets?.[candidate]?.mesh?.kind ?? Usdt0MeshKind.Native,
+                config.assets?.[candidate]?.network?.mesh ?? Usdt0Mesh.Native,
         );
 
-    return meshKinds.includes(Usdt0MeshKind.Legacy)
-        ? Usdt0MeshKind.Legacy
-        : Usdt0MeshKind.Native;
+    return meshKinds.includes(Usdt0Mesh.Legacy)
+        ? Usdt0Mesh.Legacy
+        : Usdt0Mesh.Native;
 };
 
 export const isLegacyUsdt0Asset = (asset: string): boolean =>
-    isUsdt0Asset(asset) && getUsdt0MeshKind(asset) === Usdt0MeshKind.Legacy;
+    isUsdt0Asset(asset) && getUsdt0Mesh(asset) === Usdt0Mesh.Legacy;
 
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
