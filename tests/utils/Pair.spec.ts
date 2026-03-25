@@ -410,7 +410,9 @@ describe("Pair", () => {
         );
 
         expect(receiveAmount.toNumber()).toBe(900);
-        expect(quoteOftReceiveAmountMock).toHaveBeenCalledWith(
+        expect(quoteOftReceiveAmountMock).toHaveBeenCalledTimes(2);
+        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+            1,
             {
                 from: USDT0,
                 to: "USDT0-POL",
@@ -422,7 +424,21 @@ describe("Pair", () => {
                     amount: 77n,
                     receiver: recipient,
                 },
-                createSolanaTokenAccount: false,
+            },
+        );
+        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+            2,
+            {
+                from: USDT0,
+                to: "USDT0-POL",
+            },
+            900n,
+            {
+                recipient,
+                nativeDrop: {
+                    amount: 77n,
+                    receiver: recipient,
+                },
             },
         );
         expect(fetchGasTokenQuoteMock).not.toHaveBeenCalled();
