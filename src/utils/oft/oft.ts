@@ -189,7 +189,7 @@ type OftContractInstance = {
 
 let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
 
-export const resetOftStateForTests = () => {
+export const clearOftDeployments = () => {
     oftDeploymentsPromise = undefined;
     providerCache.clear();
 };
