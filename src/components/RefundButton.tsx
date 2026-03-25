@@ -58,10 +58,7 @@ import {
 import { decodeInvoice } from "../utils/invoice";
 import {
     buildOftSendAlchemyCall,
-    createOftContract,
-    getOftContract,
     getOftProvider,
-    getOftSentEvent,
     getQuotedOftContract,
     quoteOftSend,
 } from "../utils/oft/oft";
@@ -120,29 +117,6 @@ export const sendRefundTransaction = async (
     return transactionHash;
 };
 
-const getPreOftTransactionSender = async (
-    sourceAsset: string,
-    destinationAsset: string,
-    txHash: string,
-): Promise<string | undefined> => {
-    const oftContract = await getOftContract({
-        from: sourceAsset,
-        to: destinationAsset,
-    });
-    if (oftContract === undefined) {
-        throw new Error(`missing OFT contract for asset: ${sourceAsset}`);
-    }
-
-    const provider = getOftProvider(sourceAsset);
-    const receipt = await provider.getTransactionReceipt(txHash);
-    if (receipt === null) {
-        return undefined;
-    }
-
-    const contract = createOftContract(oftContract.address, provider);
-    return getOftSentEvent(contract, receipt, oftContract.address).fromAddress;
-};
-
 const buildRefundFollowUpCalls = async (
     refundData: LockupEvent,
     slippage: number,
@@ -164,18 +138,16 @@ const buildRefundFollowUpCalls = async (
             throw new Error("missing reverse DEX details for pre-OFT refund");
         }
 
-        const transactionSender = await getPreOftTransactionSender(
+        const oftTransaction = await getOftProvider(
             oft.sourceAsset,
-            oft.destinationAsset,
-            oft.txHash,
-        );
-        if (transactionSender === undefined) {
+        ).getTransaction(oft.txHash);
+        if (oftTransaction?.from === undefined) {
             throw new Error(
                 `could not resolve original sender from OFT transaction: ${oft.txHash}`,
             );
         }
 
-        resolvedDestination = transactionSender;
+        resolvedDestination = oftTransaction.from;
     }
 
     if (
@@ -230,16 +202,21 @@ const buildRefundFollowUpCalls = async (
         }));
     }
 
-    const quotedOft = await getQuotedOftContract({
-        from: oft.destinationAsset,
-        to: oft.sourceAsset,
-    });
+    const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
+    if (sourceChainId === undefined) {
+        throw new Error(
+            `missing OFT source chain id for asset: ${oft.sourceAsset}`,
+        );
+    }
+
+    const route = {
+        from: oft.sourceAsset,
+        to: oft.destinationAsset,
+    };
+    const quotedOft = await getQuotedOftContract(route);
     const { msgFee } = await quoteOftSend(
         quotedOft,
-        {
-            from: oft.destinationAsset,
-            to: oft.sourceAsset,
-        },
+        route,
         resolvedDestination,
         quoteAmount,
     );
@@ -312,10 +289,7 @@ const buildRefundFollowUpCalls = async (
         ...tradeCalls,
         ...msgFeeCalls,
         await buildOftSendAlchemyCall({
-            route: {
-                from: oft.destinationAsset,
-                to: oft.sourceAsset,
-            },
+            route,
             recipient: resolvedDestination,
             amount: tradeAmountOutMin,
             refundAddress: resolvedDestination,
