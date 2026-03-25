@@ -30,8 +30,12 @@ export const getTimelockBlockNumber = async (
     const network = config.assets?.[asset as string]?.network;
 
     if (network?.chainId === arbitrumNetwork.chainId) {
-        const block = await provider.getBlockNumber();
-        return Number(block);
+        const rpcProvider = createAssetProvider(asset as string);
+        const block = (await rpcProvider.send("eth_getBlockByNumber", [
+            "latest",
+            false,
+        ])) as { l1BlockNumber: string };
+        return Number(block.l1BlockNumber);
     }
 
     return provider.getBlockNumber();
