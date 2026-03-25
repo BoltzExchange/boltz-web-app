@@ -82,6 +82,7 @@ export type ConnectedWallet = {
     rdns: string;
     transport: NetworkTransport;
     chainId?: number;
+    signer?: Signer;
 };
 
 export type ConnectProviderOptions = {
@@ -198,10 +199,10 @@ const Web3SignerProvider = (props: {
             },
         },
     });
-    const [signer, setSigner] = createSignal<Signer | undefined>(undefined);
     const [connectedWallet, setConnectedWallet] = createSignal<
         ConnectedWallet | undefined
     >(undefined);
+    const signer = () => connectedWallet()?.signer;
     const [rawProvider, setRawProvider] = createSignal<
         EIP1193Provider | undefined
     >(undefined);
@@ -418,7 +419,7 @@ const Web3SignerProvider = (props: {
         rdns: string,
         chainId?: string,
     ) => {
-        const currentAddress = untrack(() => signer()?.address);
+        const currentAddress = untrack(() => connectedWallet()?.address);
         let nextAddress = currentAddress;
 
         try {
@@ -440,7 +441,6 @@ const Web3SignerProvider = (props: {
                 `Clearing signer after network switch to ${chainId ?? "unknown chain"} because no connected address is available`,
             );
             setWalletConnected(false);
-            setSigner(undefined);
             setConnectedWallet(undefined);
             return;
         }
@@ -449,12 +449,12 @@ const Web3SignerProvider = (props: {
             `Refreshing signer for ${rdns} after network switch to ${chainId ?? "unknown chain"} using ${nextAddress}`,
         );
         await setRdns(nextAddress, rdns);
-        setSigner(createConnectedSigner(provider, nextAddress, rdns));
         setConnectedWallet({
             address: nextAddress,
             rdns,
             transport: NetworkTransport.Evm,
             chainId: parseChainId(chainId),
+            signer: createConnectedSigner(provider, nextAddress, rdns),
         });
         setWalletConnected(true);
     };
@@ -487,7 +487,6 @@ const Web3SignerProvider = (props: {
 
             await setRdns(account.address, wallet.info.rdns);
             setWalletConnected(true);
-            setSigner(undefined);
             setConnectedWallet({
                 address: account.address,
                 rdns: wallet.info.rdns,
@@ -534,11 +533,11 @@ const Web3SignerProvider = (props: {
             addresses[0],
             wallet.info.rdns,
         );
-        setSigner(nextSigner);
         setConnectedWallet({
             address: addresses[0],
             rdns: wallet.info.rdns,
             transport: NetworkTransport.Evm,
+            signer: nextSigner,
         });
         void logSignerNetwork(nextSigner);
     };
@@ -637,7 +636,6 @@ const Web3SignerProvider = (props: {
                     }
 
                     setWalletConnected(false);
-                    setSigner(undefined);
                     setConnectedWallet(undefined);
                     setRawProvider(undefined);
                 },
