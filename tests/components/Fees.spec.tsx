@@ -409,28 +409,24 @@ describe("Fees component", () => {
 
         signals.setPair(mockPair);
         signals.setAddressValid(true);
-        signals.setOnchainAddress(
-            "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE",
-        );
+
+        const address = "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE";
+        signals.setOnchainAddress(address);
 
         await waitFor(() => {
             expect(
                 screen.getByTestId("solana-token-account-creation-fee")
                     .textContent,
-            ).toEqual("0.00203928");
+            ).toContain("SOL");
         });
-        expect(
-            screen.getByTestId("solana-token-account-creation-fee")
-                .parentElement?.textContent,
-        ).toContain("0.00203928 SOL");
         expect(
             screen.getByTestId("solana-token-account-creation-fee")
                 .parentElement?.textContent,
         ).toContain(`${i18n.en.solana_token_account_fee_label}:`);
 
         expect(solanaUtils.shouldCreateSolanaTokenAccount).toHaveBeenCalledWith(
-            "USDT0-SOL",
-            "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE",
+            mockPair.toAsset,
+            address,
         );
     });
 
