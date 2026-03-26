@@ -49,6 +49,10 @@ const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
 };
 
+const flushQuoteDebounce = async () => {
+    await vi.runOnlyPendingTimersAsync();
+};
+
 describe("Create", () => {
     test("should render Create", async () => {
         render(
@@ -204,7 +208,7 @@ describe("Create", () => {
                 within(button).getByTestId("loading-spinner"),
             ).toBeInTheDocument();
 
-            await vi.advanceTimersByTimeAsync(500);
+            await flushQuoteDebounce();
 
             await waitFor(() => {
                 expect(currentPair.calculateReceiveAmount).toHaveBeenCalled();
@@ -259,7 +263,7 @@ describe("Create", () => {
                 target: { value: "100000" },
             });
 
-            await vi.advanceTimersByTimeAsync(500);
+            await flushQuoteDebounce();
 
             await waitFor(() => {
                 expect(currentPair.calculateReceiveAmount).toHaveBeenCalled();
@@ -275,6 +279,71 @@ describe("Create", () => {
             expect(latestCall?.[3]).toBe(signals.getGasToken());
             expect(latestCall?.[4]).toBe(
                 "0x5000000000000000000000000000000000000000",
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("should re-fetch receive quote when the destination address changes", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            const currentPair = signals.pair();
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn(() => Promise.resolve(BigNumber(90_000)))
+                .mockName("calculateReceiveAmount");
+
+            signals.setAddressValid(true);
+            signals.setOnchainAddress(
+                "0x5000000000000000000000000000000000000000",
+            );
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "100000" },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(1);
+            });
+
+            signals.setOnchainAddress(
+                "0x6000000000000000000000000000000000000000",
+            );
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(2);
+            });
+
+            const latestCall = vi
+                .mocked(currentPair.calculateReceiveAmount)
+                .mock.calls.at(-1);
+            expect(latestCall?.[4]).toBe(
+                "0x6000000000000000000000000000000000000000",
             );
         } finally {
             vi.useRealTimers();

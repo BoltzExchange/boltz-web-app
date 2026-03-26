@@ -6,6 +6,7 @@ import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
+import type * as SolanaModule from "../../src/utils/chains/solana";
 import type * as OftModule from "../../src/utils/oft/oft";
 import type * as QouterModule from "../../src/utils/qouter";
 
@@ -14,6 +15,7 @@ const {
     quoteDexAmountOutMock,
     quoteOftAmountInForAmountOutMock,
     quoteOftReceiveAmountMock,
+    shouldCreateSolanaTokenAccountMock,
     fetchDexQuoteMock,
     fetchGasTokenQuoteMock,
     gasTopUpSupportedMock,
@@ -24,6 +26,8 @@ const {
     quoteOftAmountInForAmountOutMock:
         vi.fn<typeof OftModule.quoteOftAmountInForAmountOut>(),
     quoteOftReceiveAmountMock: vi.fn<typeof OftModule.quoteOftReceiveAmount>(),
+    shouldCreateSolanaTokenAccountMock:
+        vi.fn<typeof SolanaModule.shouldCreateSolanaTokenAccount>(),
     fetchDexQuoteMock: vi.fn<typeof QouterModule.fetchDexQuote>(),
     fetchGasTokenQuoteMock: vi.fn<typeof QouterModule.fetchGasTokenQuote>(),
     gasTopUpSupportedMock: vi.fn<typeof QouterModule.gasTopUpSupported>(),
@@ -115,6 +119,17 @@ vi.mock("../../src/utils/oft/oft", () => ({
     quoteOftAmountInForAmountOut: quoteOftAmountInForAmountOutMock,
     quoteOftReceiveAmount: quoteOftReceiveAmountMock,
 }));
+
+vi.mock("../../src/utils/chains/solana", async () => {
+    const actual = await vi.importActual<typeof SolanaModule>(
+        "../../src/utils/chains/solana",
+    );
+
+    return {
+        ...actual,
+        shouldCreateSolanaTokenAccount: shouldCreateSolanaTokenAccountMock,
+    };
+});
 
 vi.mock("../../src/utils/qouter", () => ({
     fetchDexQuote: fetchDexQuoteMock,
@@ -230,11 +245,13 @@ describe("Pair", () => {
         quoteDexAmountOutMock.mockReset();
         quoteOftAmountInForAmountOutMock.mockReset();
         quoteOftReceiveAmountMock.mockReset();
+        shouldCreateSolanaTokenAccountMock.mockReset();
         fetchDexQuoteMock.mockReset();
         fetchGasTokenQuoteMock.mockReset();
         gasTopUpSupportedMock.mockReset();
         getGasTopUpNativeAmountMock.mockReset();
         gasTopUpSupportedMock.mockReturnValue(true);
+        shouldCreateSolanaTokenAccountMock.mockResolvedValue(false);
     });
 
     afterEach(() => {
@@ -468,12 +485,29 @@ describe("Pair", () => {
         );
 
         expect(receiveAmount.toNumber()).toBe(900);
-        expect(quoteOftReceiveAmountMock).toHaveBeenCalledWith(
+        expect(quoteOftReceiveAmountMock).toHaveBeenCalledTimes(2);
+        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+            1,
             {
                 from: USDT0,
                 to: "USDT0-POL",
             },
             1000n,
+            {
+                recipient,
+                nativeDrop: {
+                    amount: 77n,
+                    receiver: recipient,
+                },
+            },
+        );
+        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+            2,
+            {
+                from: USDT0,
+                to: "USDT0-POL",
+            },
+            900n,
             {
                 recipient,
                 nativeDrop: {

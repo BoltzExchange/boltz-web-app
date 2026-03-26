@@ -16,6 +16,10 @@ import { SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
+import {
+    shouldCreateSolanaTokenAccount,
+    solanaAtaRentExemptLamports,
+} from "../utils/chains/solana";
 import { isConfidentialAddress } from "../utils/compat";
 import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair } from "../utils/helper";
@@ -31,6 +35,7 @@ const ppmFactor = 10_000;
 export const unconfidentialExtra = 5;
 
 const gasAbstractionExtraGasCost = 157_000n;
+const solanaLamportsPerSol = BigNumber(1_000_000_000);
 
 export const getFeeHighlightClass = (fee: number, regularFee: number) => {
     if (fee < 0) {
@@ -131,6 +136,21 @@ const Fees = () => {
 
         return pair().oftTransferFeeFromLatestQuote(sendAmount());
     });
+    const solanaTokenAccountCreationTrigger = createMemo(() => ({
+        destinationAsset: assetReceive(),
+        recipient: addressValid() ? onchainAddress() : undefined,
+    }));
+    const [requiresSolanaTokenAccountCreation] = createResource(
+        solanaTokenAccountCreationTrigger,
+        ({ destinationAsset, recipient }) =>
+            shouldCreateSolanaTokenAccount(destinationAsset, recipient),
+    );
+    const formattedSolanaTokenAccountCreationFee = createMemo(() =>
+        BigNumber(solanaAtaRentExemptLamports.toString())
+            .dividedBy(solanaLamportsPerSol)
+            .toFixed(9)
+            .replace(/\.?0+$/, ""),
+    );
 
     const gasAbstractionTrigger = createMemo(() => {
         return {
@@ -318,6 +338,14 @@ const Fees = () => {
                             pair().oftTransferFeeAsset!,
                         )}
                     />
+                </Show>
+                <Show when={requiresSolanaTokenAccountCreation() === true}>
+                    <br />
+                    {t("solana_token_account_fee_label")}:{" "}
+                    <span data-testid="solana-token-account-creation-fee">
+                        {formattedSolanaTokenAccountCreationFee()}
+                    </span>
+                    {" SOL"}
                 </Show>
                 <Show when={getGasToken()}>
                     <br />
