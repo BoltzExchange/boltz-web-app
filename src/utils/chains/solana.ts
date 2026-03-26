@@ -135,6 +135,9 @@ export const shouldCreateSolanaTokenAccount = (
     if (destinationConfig?.network?.transport !== NetworkTransport.Solana) {
         return Promise.resolve(false);
     }
+    if (!isValidSolanaAddress(recipient)) {
+        return Promise.resolve(false);
+    }
 
     const cacheKey = `${destinationAsset}:${recipient}`;
     if (solanaTokenAccountCreationCache.has(cacheKey)) {
