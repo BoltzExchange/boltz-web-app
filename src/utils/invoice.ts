@@ -232,7 +232,9 @@ export const extractInvoice = (data: string) => {
 export const extractAddress = (data: string) => {
     if (isBip21(data)) {
         const url = new URL(data);
-        return url.pathname;
+        return url.pathname.length > 0
+            ? url.pathname.replace(/^\/+/, "")
+            : url.host;
     }
     return data;
 };
