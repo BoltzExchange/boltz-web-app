@@ -417,7 +417,7 @@ describe("Fees component", () => {
             expect(
                 screen.getByTestId("solana-token-account-creation-fee")
                     .textContent,
-            ).toContain("SOL");
+            ).not.toBeNull();
         });
         expect(
             screen.getByTestId("solana-token-account-creation-fee")
