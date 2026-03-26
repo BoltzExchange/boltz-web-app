@@ -17,7 +17,12 @@ import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
 import { NetworkTransport, Usdt0Kind } from "../../configs/base";
 import type { OftRoute } from "../Pair";
-import { decodeSolanaAddress } from "../chains/solana";
+import {
+    clearSolanaTokenAccountCreationCache,
+    decodeSolanaAddress,
+    shouldCreateSolanaTokenAccount,
+    solanaAtaRentExemptLamports,
+} from "../chains/solana";
 import { decodeTronBase58Address } from "../chains/tron";
 import { formatError } from "../errors";
 import {
@@ -192,11 +197,15 @@ let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
 export const clearOftDeployments = () => {
     oftDeploymentsPromise = undefined;
     providerCache.clear();
+    clearSolanaTokenAccountCreationCache();
 };
 
 const type3Option = 3;
 const executorWorkerId = 1;
+const optionTypeLzReceive = 1;
 const optionTypeNativeDrop = 2;
+const hundredPercentBps = 10_000n;
+const legacyBridgeFeeBps = 3n;
 
 const fetchOftDeployments = async (): Promise<OftRegistry> => {
     const response = await fetch(oftDeploymentsEndpoint);
@@ -533,9 +542,36 @@ const addExecutorOption = (
     ]);
 };
 
-const buildOftExtraOptions = (nativeDrop?: OftNativeDrop): string => {
+const appendExecutorOption = (
+    options: string,
+    optionType: number,
+    option: string,
+): string =>
+    addExecutorOption(
+        options === "0x" ? newOptions() : options,
+        optionType,
+        option,
+    );
+
+const buildOftExtraOptions = (
+    nativeDrop: OftNativeDrop | undefined,
+    createSolanaTokenAccount: boolean,
+): string => {
+    let options = "0x";
+
+    if (createSolanaTokenAccount) {
+        options = appendExecutorOption(
+            options,
+            optionTypeLzReceive,
+            solidityPacked(
+                ["uint128", "uint128"],
+                [0n, solanaAtaRentExemptLamports],
+            ),
+        );
+    }
+
     if (nativeDrop === undefined || nativeDrop.amount <= 0n) {
-        return "0x";
+        return options;
     }
 
     const option = solidityPacked(
@@ -543,7 +579,26 @@ const buildOftExtraOptions = (nativeDrop?: OftNativeDrop): string => {
         [nativeDrop.amount, zeroPadValue(nativeDrop.receiver, 32)],
     );
 
-    return addExecutorOption(newOptions(), optionTypeNativeDrop, option);
+    return appendExecutorOption(options, optionTypeNativeDrop, option);
+};
+
+const ceilDiv = (numerator: bigint, denominator: bigint): bigint => {
+    if (denominator <= 0n) {
+        throw new Error("denominator must be greater than zero");
+    }
+
+    return (numerator + denominator - 1n) / denominator;
+};
+
+const getLegacyMeshSourceAmount = (destinationAmount: bigint): bigint => {
+    if (legacyBridgeFeeBps >= hundredPercentBps) {
+        throw new Error("legacyBridgeFeeBps must be less than 100%");
+    }
+
+    return ceilDiv(
+        destinationAmount * hundredPercentBps,
+        hundredPercentBps - legacyBridgeFeeBps,
+    );
 };
 
 const createOftSendParam = async (
@@ -583,12 +638,16 @@ export const quoteOftSend = async (
     oftFeeDetails: OftFeeDetail[];
     oftReceipt: OftReceipt;
 }> => {
+    const createSolanaTokenAccount = await shouldCreateSolanaTokenAccount(
+        route.to,
+        recipient,
+    );
     const sendParam = await createOftSendParam(
         route,
         recipient,
         amount,
         oftName,
-        buildOftExtraOptions(nativeDrop),
+        buildOftExtraOptions(nativeDrop, createSolanaTokenAccount),
     );
     const [oftLimit, oftFeeDetails, oftReceipt] =
         await oft.quoteOFT.staticCall(sendParam);
@@ -690,6 +749,10 @@ export const quoteOftAmountInForAmountOut = async (
 ): Promise<bigint> => {
     if (amountOut === 0n) {
         return 0n;
+    }
+
+    if (getUsdt0Mesh(route.from, route.to) === Usdt0Kind.Legacy) {
+        return getLegacyMeshSourceAmount(amountOut);
     }
 
     let low = amountOut;
