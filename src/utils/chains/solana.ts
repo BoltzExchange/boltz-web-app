@@ -38,17 +38,9 @@ export const clearSolanaTokenAccountCreationCache = () => {
 
 const queryShouldCreateSolanaTokenAccount = async (
     destinationAsset: string,
-    recipient: string | undefined,
+    recipient: string,
 ): Promise<boolean> => {
-    if (recipient === undefined || recipient === "") {
-        return false;
-    }
-
     const destinationConfig = config.assets?.[destinationAsset];
-    if (destinationConfig?.network?.transport !== NetworkTransport.Solana) {
-        return false;
-    }
-
     const mintAddress = destinationConfig.token?.address;
     if (mintAddress === undefined || mintAddress === "") {
         throw new Error(
@@ -135,14 +127,16 @@ export const shouldCreateSolanaTokenAccount = (
     destinationAsset: string,
     recipient: string | undefined,
 ): Promise<boolean> => {
-    const cacheKey =
-        recipient === undefined || recipient === ""
-            ? undefined
-            : `${destinationAsset}:${recipient}`;
-    if (cacheKey === undefined) {
-        return queryShouldCreateSolanaTokenAccount(destinationAsset, recipient);
+    if (recipient === undefined || recipient === "") {
+        return Promise.resolve(false);
     }
 
+    const destinationConfig = config.assets?.[destinationAsset];
+    if (destinationConfig?.network?.transport !== NetworkTransport.Solana) {
+        return Promise.resolve(false);
+    }
+
+    const cacheKey = `${destinationAsset}:${recipient}`;
     if (solanaTokenAccountCreationCache.has(cacheKey)) {
         return Promise.resolve(true);
     }
