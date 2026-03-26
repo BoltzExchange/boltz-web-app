@@ -11,9 +11,24 @@ import {
     type SomeSwap,
 } from "./swapCreator";
 
-export const latestStorageVersion = 4;
+export const latestStorageVersion = 5;
 
 const storageVersionKey = "version";
+
+type ParsedGasAbstraction = {
+    lockup: GasAbstractionType;
+    claim: GasAbstractionType;
+};
+
+const toUniformGasAbstraction = (
+    gasAbstraction: GasAbstractionType,
+): ParsedGasAbstraction => ({
+    lockup: gasAbstraction,
+    claim: gasAbstraction,
+});
+
+const noGasAbstraction = (): ParsedGasAbstraction =>
+    toUniformGasAbstraction(GasAbstractionType.None);
 
 const migrateSwapsFromLocalStorage = async (swapsForage: LocalForage) => {
     const [localStorageSwaps, setLocalStorageSwaps] = makePersisted(
@@ -76,17 +91,17 @@ const migrateSwapGasAbstraction = (swap: Record<string, unknown>): SomeSwap => {
         return swap as SomeSwap;
     }
 
-    let gasAbstraction = GasAbstractionType.None;
+    let gasAbstraction = noGasAbstraction();
     if (
         swap.useGasAbstraction === true &&
         typeof swap.assetReceive === "string"
     ) {
         gasAbstraction =
             swap.assetReceive === RBTC
-                ? GasAbstractionType.RifRelay
+                ? toUniformGasAbstraction(GasAbstractionType.RifRelay)
                 : isEvmAsset(swap.assetReceive)
-                  ? GasAbstractionType.Signer
-                  : GasAbstractionType.None;
+                  ? toUniformGasAbstraction(GasAbstractionType.Signer)
+                  : noGasAbstraction();
     }
 
     const migratedSwap = { ...swap };
@@ -97,12 +112,97 @@ const migrateSwapGasAbstraction = (swap: Record<string, unknown>): SomeSwap => {
     } as SomeSwap;
 };
 
+const parseGasAbstractionType = (
+    gasAbstraction: unknown,
+): GasAbstractionType | undefined => {
+    switch (gasAbstraction) {
+        case GasAbstractionType.None:
+        case GasAbstractionType.RifRelay:
+        case GasAbstractionType.Signer:
+            return gasAbstraction;
+
+        default:
+            return undefined;
+    }
+};
+
+const parseGasAbstraction = (gasAbstraction: unknown) => {
+    const legacyGasAbstraction = parseGasAbstractionType(gasAbstraction);
+    if (legacyGasAbstraction !== undefined) {
+        return toUniformGasAbstraction(legacyGasAbstraction);
+    }
+
+    if (typeof gasAbstraction !== "object" || gasAbstraction === null) {
+        return undefined;
+    }
+
+    const lockup = parseGasAbstractionType(
+        (gasAbstraction as { lockup?: unknown }).lockup,
+    );
+    const claim = parseGasAbstractionType(
+        (gasAbstraction as { claim?: unknown }).claim,
+    );
+    if (lockup === undefined || claim === undefined) {
+        return undefined;
+    }
+
+    return {
+        lockup,
+        claim,
+    };
+};
+
+const deriveLockupGasAbstraction = (
+    assetSend: unknown,
+): GasAbstractionType | undefined => {
+    if (typeof assetSend !== "string") {
+        return undefined;
+    }
+
+    if (assetSend === RBTC) {
+        return GasAbstractionType.None;
+    }
+
+    return isEvmAsset(assetSend)
+        ? GasAbstractionType.Signer
+        : GasAbstractionType.None;
+};
+
+const migrateSwapGasAbstractionShape = (
+    swap: Record<string, unknown>,
+): SomeSwap => {
+    const claim = parseGasAbstraction(swap.gasAbstraction)?.claim;
+    const lockup = deriveLockupGasAbstraction(swap.assetSend);
+
+    return {
+        ...swap,
+        gasAbstraction:
+            claim !== undefined && lockup !== undefined
+                ? {
+                      claim,
+                      lockup,
+                  }
+                : noGasAbstraction(),
+    } as SomeSwap;
+};
+
 const migrateStorageGasAbstraction = async (swapsForage: LocalForage) => {
     const swaps = await swapsForage.keys();
 
     for (const swapId of swaps) {
         const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
         await swapsForage.setItem(swapId, migrateSwapGasAbstraction(swap));
+    }
+
+    return swaps.length;
+};
+
+const migrateStorageGasAbstractionShape = async (swapsForage: LocalForage) => {
+    const swaps = await swapsForage.keys();
+
+    for (const swapId of swaps) {
+        const swap = await swapsForage.getItem<Record<string, unknown>>(swapId);
+        await swapsForage.setItem(swapId, migrateSwapGasAbstractionShape(swap));
     }
 
     return swaps.length;
@@ -231,6 +331,19 @@ const migrateLocalForage = async (
             await migrateLocalForage(paramsForage, swapsForage);
             break;
         }
+
+        case 4: {
+            log.info(`Migrating gas abstraction shape`);
+            const migratedSwaps =
+                await migrateStorageGasAbstractionShape(swapsForage);
+            log.info(
+                `Migrated gas abstraction shape for ${migratedSwaps} swaps`,
+            );
+
+            await paramsForage.setItem(storageVersionKey, 5);
+            await migrateLocalForage(paramsForage, swapsForage);
+            break;
+        }
     }
 };
 
@@ -268,6 +381,12 @@ export const migrateBackupFile = (
             return migrateBackupFile(
                 version + 1,
                 swaps.map((swap) => migrateSwapOftShape(swap)),
+            );
+
+        case 4:
+            return migrateBackupFile(
+                version + 1,
+                swaps.map((swap) => migrateSwapGasAbstractionShape(swap)),
             );
 
         default:

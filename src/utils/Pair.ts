@@ -117,12 +117,6 @@ const toEncodedHop = (hop: Hop): EncodedHop => {
     };
 };
 
-const canUseRoutedBoltzHop = (
-    hop: Pick<Hop, "type" | "pair"> | undefined,
-): hop is Pick<Hop, "type" | "pair"> =>
-    hop !== undefined &&
-    (hop.type === SwapType.Submarine || hop.type === SwapType.Reverse);
-
 export default class Pair {
     private readonly route: Hop[] = [];
     private readonly preOft: OftRoute | undefined;
@@ -200,7 +194,7 @@ export default class Pair {
                     ? Pair.findPair(pairs, routeSource, hopAssetSymbol)
                     : undefined;
 
-            if (canUseRoutedBoltzHop(hopPair) && hopAsset !== undefined) {
+            if (hopPair !== undefined && hopAsset !== undefined) {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
@@ -235,7 +229,7 @@ export default class Pair {
                     ? Pair.findPair(pairs, hopAssetSymbol, routeTarget)
                     : undefined;
 
-            if (canUseRoutedBoltzHop(hopPair) && hopAsset !== undefined) {
+            if (hopPair !== undefined && hopAsset !== undefined) {
                 log.debug(
                     `Found route for ${from} -> ${hopAssetSymbol} -> ${routeTarget}`,
                 );
@@ -970,6 +964,54 @@ export default class Pair {
         );
     }
 
+    private quoteReceiveHop = async (
+        amount: BigNumber,
+        hop: Hop,
+        minerFees: number,
+        useDexGasToken: boolean,
+    ): Promise<BigNumber> => {
+        switch (hop.type) {
+            case SwapType.Dex: {
+                if (Number.isNaN(amount.toNumber())) {
+                    return BigNumber(0);
+                }
+
+                const dexInput = toDexAmount(amount.toNumber(), hop.from);
+                const gasTokenAmount = useDexGasToken
+                    ? await getGasTopUpNativeAmount(this.to)
+                    : undefined;
+
+                try {
+                    const { trade } = await fetchDexQuote(
+                        hop.dexDetails!,
+                        dexInput,
+                        useDexGasToken,
+                        gasTokenAmount,
+                    );
+                    return fromDexAmount(trade.amountOut, hop.to);
+                } catch {
+                    return BigNumber(0);
+                }
+            }
+
+            case SwapType.Submarine:
+            case SwapType.Reverse:
+            case SwapType.Chain:
+                return calculateReceiveAmount(
+                    amount,
+                    hop.pair!.fees.percentage,
+                    minerFees,
+                    hop.type,
+                );
+            default: {
+                const exhaustiveCheck: never = hop.type;
+                throw new Error(
+                    `unsupported hop type encountered: ${String(exhaustiveCheck)}`,
+                );
+            }
+        }
+    };
+
     private convertThroughPrecedingDex = async (
         boltzSendAmount: number,
     ): Promise<number> => {
@@ -1127,46 +1169,61 @@ export default class Pair {
                 };
             }
 
-            switch (hop.type) {
-                case SwapType.Dex: {
-                    if (Number.isNaN(amount.toNumber())) {
-                        amount = BigNumber(0);
-                        continue;
-                    }
-
-                    const dexInput = toDexAmount(amount.toNumber(), hop.from);
-                    const gasTokenAmount = useDexGasToken
-                        ? await getGasTopUpNativeAmount(this.to)
-                        : undefined;
-
-                    try {
-                        const { trade } = await fetchDexQuote(
-                            hop.dexDetails!,
-                            dexInput,
-                            useDexGasToken,
-                            gasTokenAmount,
-                        );
-                        amount = fromDexAmount(trade.amountOut, hop.to);
-                    } catch {
-                        amount = BigNumber(0);
-                    }
-                    break;
-                }
-
-                default:
-                    amount = calculateReceiveAmount(
-                        amount,
-                        hop.pair!.fees.percentage,
-                        minerFees,
-                        hop.type,
-                    );
-            }
+            amount = await this.quoteReceiveHop(
+                amount,
+                hop,
+                minerFees,
+                useDexGasToken,
+            );
         }
 
         if (route === this.route) {
             return await this.applyPostOftQuote(
                 amount,
                 sendAmountKey,
+                getGasToken,
+                postOftRecipient,
+            );
+        }
+
+        return amount;
+    };
+
+    public calculatePostBoltzReceiveAmount = async (
+        boltzReceiveAmount: BigNumber,
+        getGasToken: boolean = false,
+        postOftRecipient?: string,
+    ) => {
+        if (!this.isRoutable) {
+            return BigNumber(0);
+        }
+
+        const boltzHop = this.boltzHop;
+        if (boltzHop === undefined) {
+            return BigNumber(0);
+        }
+
+        const boltzIndex = this.route.indexOf(boltzHop);
+        const postBoltzRoute = this.route.slice(boltzIndex + 1);
+        const routeToQuote =
+            this.postOftDexHop !== undefined &&
+            postBoltzRoute[postBoltzRoute.length - 1] === this.postOftDexHop
+                ? postBoltzRoute.slice(0, -1)
+                : postBoltzRoute;
+        const useDexGasToken =
+            getGasToken &&
+            this.postOft === undefined &&
+            gasTopUpSupported(this.to);
+        let amount = boltzReceiveAmount;
+
+        for (const hop of routeToQuote) {
+            amount = await this.quoteReceiveHop(amount, hop, 0, useDexGasToken);
+        }
+
+        if (this.postOft !== undefined) {
+            return await this.applyPostOftQuote(
+                amount,
+                undefined,
                 getGasToken,
                 postOftRecipient,
             );

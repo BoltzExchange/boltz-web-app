@@ -39,6 +39,7 @@ import {
     OftPosition,
     type SomeSwap,
     type SubmarineSwap,
+    getLockupGasAbstraction,
 } from "../utils/swapCreator";
 
 const retryIntervalMs = 1_000;
@@ -559,7 +560,7 @@ export const SwapExecutionWorker = () => {
                         ? getGasAbstractionSigner(
                               storedSwap.oft.destinationAsset,
                           )
-                        : storedSwap.gasAbstraction ===
+                        : getLockupGasAbstraction(storedSwap) ===
                             GasAbstractionType.Signer
                           ? getGasAbstractionSigner(commitmentAsset)
                           : signer();

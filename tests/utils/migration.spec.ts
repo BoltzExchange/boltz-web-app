@@ -4,7 +4,11 @@ import {
     latestStorageVersion,
     migrateBackupFile,
 } from "../../src/utils/migration";
-import { GasAbstractionType, OftPosition } from "../../src/utils/swapCreator";
+import {
+    GasAbstractionType,
+    OftPosition,
+    createUniformGasAbstraction,
+} from "../../src/utils/swapCreator";
 
 describe("migration", () => {
     test("should migrate backup files", () => {
@@ -30,7 +34,9 @@ describe("migration", () => {
                 ...swaps[0],
                 assetSend: LBTC,
                 assetReceive: LN,
-                gasAbstraction: GasAbstractionType.None,
+                gasAbstraction: createUniformGasAbstraction(
+                    GasAbstractionType.None,
+                ),
                 type: SwapType.Submarine,
                 refundPrivateKey: swaps[0].privateKey,
             },
@@ -38,7 +44,9 @@ describe("migration", () => {
                 ...swaps[1],
                 assetSend: LN,
                 assetReceive: RBTC,
-                gasAbstraction: GasAbstractionType.None,
+                gasAbstraction: createUniformGasAbstraction(
+                    GasAbstractionType.None,
+                ),
                 type: SwapType.Reverse,
                 claimPrivateKey: swaps[1].privateKey,
             },
@@ -54,16 +62,19 @@ describe("migration", () => {
         const swaps = [
             {
                 id: "reverse-rbtc",
+                assetSend: LN,
                 assetReceive: RBTC,
                 useGasAbstraction: true,
             },
             {
                 id: "reverse-usdt0",
+                assetSend: LN,
                 assetReceive: USDT0,
                 useGasAbstraction: true,
             },
             {
                 id: "submarine",
+                assetSend: LBTC,
                 assetReceive: LN,
                 useGasAbstraction: false,
             },
@@ -72,18 +83,29 @@ describe("migration", () => {
         expect(migrateBackupFile(2, swaps)).toEqual([
             {
                 id: "reverse-rbtc",
+                assetSend: LN,
                 assetReceive: RBTC,
-                gasAbstraction: GasAbstractionType.RifRelay,
+                gasAbstraction: {
+                    claim: GasAbstractionType.RifRelay,
+                    lockup: GasAbstractionType.None,
+                },
             },
             {
                 id: "reverse-usdt0",
+                assetSend: LN,
                 assetReceive: USDT0,
-                gasAbstraction: GasAbstractionType.Signer,
+                gasAbstraction: {
+                    claim: GasAbstractionType.Signer,
+                    lockup: GasAbstractionType.None,
+                },
             },
             {
                 id: "submarine",
+                assetSend: LBTC,
                 assetReceive: LN,
-                gasAbstraction: GasAbstractionType.None,
+                gasAbstraction: createUniformGasAbstraction(
+                    GasAbstractionType.None,
+                ),
             },
         ]);
     });
@@ -103,6 +125,9 @@ describe("migration", () => {
         expect(migrateBackupFile(3, swaps)).toEqual([
             {
                 id: "post-oft",
+                gasAbstraction: createUniformGasAbstraction(
+                    GasAbstractionType.None,
+                ),
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",
@@ -140,6 +165,9 @@ describe("migration", () => {
         expect(migrateBackupFile(3, swaps)).toEqual([
             {
                 id: "pre-oft",
+                gasAbstraction: createUniformGasAbstraction(
+                    GasAbstractionType.None,
+                ),
                 oft: {
                     sourceAsset: "USDT0-POL",
                     destinationAsset: USDT0,
@@ -149,6 +177,9 @@ describe("migration", () => {
             },
             {
                 id: "post-oft",
+                gasAbstraction: createUniformGasAbstraction(
+                    GasAbstractionType.None,
+                ),
                 oft: {
                     sourceAsset: USDT0,
                     destinationAsset: "USDT0-ETH",

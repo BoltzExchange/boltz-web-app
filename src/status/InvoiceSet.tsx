@@ -7,7 +7,11 @@ import { isEvmAsset } from "../consts/Assets";
 import { usePayContext } from "../context/Pay";
 import { HopsPosition } from "../utils/Pair";
 import { decodeInvoice } from "../utils/invoice";
-import { type SubmarineSwap, getPreOftDetail } from "../utils/swapCreator";
+import {
+    type SubmarineSwap,
+    getLockupGasAbstraction,
+    getPreOftDetail,
+} from "../utils/swapCreator";
 
 const InvoiceSet = () => {
     const { swap } = usePayContext();
@@ -33,7 +37,7 @@ const InvoiceSet = () => {
             <Show when={!preimageHash.loading} fallback={<LoadingSpinner />}>
                 <LockupEvm
                     swapId={submarine.id}
-                    gasAbstraction={submarine.gasAbstraction}
+                    gasAbstraction={getLockupGasAbstraction(submarine)}
                     signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}
