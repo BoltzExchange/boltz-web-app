@@ -17,7 +17,10 @@ import {
     useWeb3Signer,
 } from "../context/Web3";
 import { HopsPosition } from "../utils/Pair";
-import { encodeDexQuote } from "../utils/boltzClient";
+import {
+    encodeDexQuote,
+    getCommitmentLockupDetails,
+} from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
 import { postCommitmentSignatureForTransaction } from "../utils/commitment";
 import {
@@ -83,21 +86,6 @@ const getSwapPreimageHash = async (swap: SomeSwap): Promise<string> => {
 
         case SwapType.Chain:
             return hex.encode(sha256(hex.decode((swap as ChainSwap).preimage)));
-
-        default:
-            throw new Error(
-                `unsupported swap type for commitment execution: ${swap.type}`,
-            );
-    }
-};
-
-const getSwapTimeoutBlockHeight = (swap: SomeSwap) => {
-    switch (swap.type) {
-        case SwapType.Submarine:
-            return (swap as SubmarineSwap).timeoutBlockHeight;
-
-        case SwapType.Chain:
-            return (swap as ChainSwap).lockupDetails.timeoutBlockHeight;
 
         default:
             throw new Error(
@@ -344,6 +332,9 @@ export const SwapExecutionWorker = () => {
             return;
         }
 
+        const commitmentLockupDetails = await getCommitmentLockupDetails(
+            latestSwap.assetSend,
+        );
         const hop = latestSwap.dex.hops[0];
         const gasAbstractionSigner = getGasAbstractionSigner(
             latestSwap.oft.destinationAsset,
@@ -416,9 +407,9 @@ export const SwapExecutionWorker = () => {
         const tx = await router.executeAndLockERC20.populateTransaction(
             prefix0x("00".repeat(32)),
             getTokenAddress(latestSwap.assetSend),
-            latestSwap.claimAddress,
+            commitmentLockupDetails.claimAddress,
             gasAbstractionSigner.address,
-            getSwapTimeoutBlockHeight(latestSwap),
+            commitmentLockupDetails.timelock,
             encoded.calls.map((call) => ({
                 target: call.to,
                 value: call.value,

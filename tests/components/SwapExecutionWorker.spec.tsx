@@ -115,6 +115,10 @@ vi.mock("../../src/utils/boltzClient", () => ({
             },
         ],
     }),
+    getCommitmentLockupDetails: vi.fn().mockResolvedValue({
+        claimAddress: "0xb000000000000000000000000000000000000000",
+        timelock: 321,
+    }),
 }));
 
 vi.mock("../../src/utils/calculate", () => ({
