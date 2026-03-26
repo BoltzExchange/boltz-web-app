@@ -362,14 +362,54 @@ export default class Pair {
         return this.to;
     }
 
+    private getCanZeroAmountBlockers = (): string[] => {
+        const blockers: string[] = [];
+
+        if (this.preOft !== undefined) {
+            blockers.push("pre-OFT routing is enabled");
+        }
+
+        if (this.postOft !== undefined) {
+            blockers.push("post-OFT routing is enabled");
+        }
+
+        const firstHop = this.route[0];
+        if (firstHop === undefined) {
+            blockers.push("route has no first hop");
+            return blockers;
+        }
+
+        if (firstHop.type !== SwapType.Chain) {
+            blockers.push(`first hop type is ${firstHop.type}`);
+        }
+
+        if (isEvmAsset(firstHop.from)) {
+            blockers.push(`send asset ${firstHop.from} is EVM`);
+        }
+
+        return blockers;
+    };
+
     public get canZeroAmount() {
-        return (
-            this.preOft === undefined &&
-            this.postOft === undefined &&
-            this.route.length === 1 &&
-            this.route[0].type === SwapType.Chain &&
-            !isEvmAsset(this.route[0].from)
-        );
+        const blockers = this.getCanZeroAmountBlockers();
+        const canZeroAmount = blockers.length === 0;
+
+        if (!canZeroAmount) {
+            log.debug("0-amount swap disabled for pair", {
+                from: this.from,
+                to: this.to,
+                blockers,
+                route: this.route.map(({ from, to, type }) => ({
+                    from,
+                    to,
+                    type,
+                })),
+                hasPreOft: this.preOft !== undefined,
+                hasPostOft: this.postOft !== undefined,
+            });
+        }
+
+        return canZeroAmount;
     }
 
     public get feePercentage() {

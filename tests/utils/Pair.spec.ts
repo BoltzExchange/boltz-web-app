@@ -1,7 +1,8 @@
 import { BigNumber } from "bignumber.js";
+import log from "loglevel";
 
 import type * as ConfigModule from "../../src/config";
-import { BTC, LN, USDT0 } from "../../src/consts/Assets";
+import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
@@ -179,7 +180,29 @@ const pairs: Pairs = {
             },
         },
     },
-    chain: {},
+    chain: {
+        BTC: {
+            [LBTC]: {
+                hash: "btc-lbtc-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: {
+                        server: 0,
+                        user: {
+                            claim: 0,
+                            lockup: 0,
+                        },
+                    },
+                },
+            },
+        },
+    },
 };
 
 describe("Pair", () => {
@@ -195,6 +218,10 @@ describe("Pair", () => {
         gasTopUpSupportedMock.mockReturnValue(true);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     test("should return undefined maxRoutingFee for invalid pairs", () => {
         const pair = new Pair(undefined, "NONEXISTENT", LN);
         expect(pair.isRoutable).toBe(false);
@@ -207,6 +234,63 @@ describe("Pair", () => {
         expect(pair.isRoutable).toBe(false);
         expect(pair.swapToCreate).toBeUndefined();
         expect(pair.requiredInput).toBe(RequiredInput.Unknown);
+    });
+
+    test("should allow 0-amount direct non-EVM chain swaps without logging blockers", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pair = new Pair(pairs, BTC, LBTC);
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+    });
+
+    test("should log blockers when 0-amount swaps are disabled by routing", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pair = new Pair(pairs, LN, "USDT0-POL");
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(false);
+        expect(debugSpy).toHaveBeenCalledWith(
+            "0-amount swap disabled for pair",
+            expect.objectContaining({
+                from: LN,
+                to: "USDT0-POL",
+                blockers: [
+                    "post-OFT routing is enabled",
+                    "first hop type is reverse",
+                ],
+                route: [
+                    {
+                        from: LN,
+                        to: USDT0,
+                        type: "reverse",
+                    },
+                ],
+                hasPreOft: false,
+                hasPostOft: true,
+            }),
+        );
+    });
+
+    test("should log missing route blockers when 0-amount swaps are not routable", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pair = new Pair(undefined, "NONEXISTENT", LN);
+
+        expect(pair.canZeroAmount).toBe(false);
+        expect(debugSpy).toHaveBeenCalledWith(
+            "0-amount swap disabled for pair",
+            expect.objectContaining({
+                from: "NONEXISTENT",
+                to: LN,
+                blockers: ["route has no first hop"],
+                route: [],
+                hasPreOft: false,
+                hasPostOft: false,
+            }),
+        );
     });
 
     test("should keep the cached Boltz send amount for routed submarine creation", async () => {
