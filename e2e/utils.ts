@@ -305,6 +305,7 @@ export const createAndVerifySwap = async (page: Page, rescueFile: string) => {
     await (await downloadPromise).saveAs(rescueFile);
 
     await page.getByTestId("rescueFileUpload").setInputFiles(rescueFile);
+    await expect(page.getByTestId("copy_address")).toBeVisible();
     await page.getByTestId("copy_address").click();
 };
 

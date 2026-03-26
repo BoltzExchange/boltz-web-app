@@ -3,11 +3,10 @@ import userEvent from "@testing-library/user-event";
 import log from "loglevel";
 import { vi } from "vitest";
 
-import { BackupDone } from "../../src/components/CreateButton";
-import BackupVerify from "../../src/pages/BackupVerify";
+import BackupVerifyContent from "../../src/components/BackupVerifyContent";
 import { TestComponent, contextWrapper, globalSignals } from "../helper";
 
-const navigate = vi.fn();
+const onRetry = vi.fn();
 
 const testRescueFile = {
     mnemonic:
@@ -18,19 +17,11 @@ const invalidRescueFile = {
     mnemonic: "invalid mnemonic",
 };
 
-vi.mock("@solidjs/router", async () => {
-    const actual = await vi.importActual("@solidjs/router");
-    return {
-        ...actual,
-        useParams: vi.fn(() => ({})),
-        useNavigate: () => navigate,
-    };
-});
-
-describe("BackupVerify", () => {
+describe("BackupVerifyContent", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         log.disableAll();
+        localStorage.clear();
     });
 
     test("should verify rescue file", async () => {
@@ -40,7 +31,7 @@ describe("BackupVerify", () => {
             () => (
                 <>
                     <TestComponent />
-                    <BackupVerify />
+                    <BackupVerifyContent onRetry={onRetry} />
                 </>
             ),
             {
@@ -65,11 +56,7 @@ describe("BackupVerify", () => {
         );
 
         await waitFor(() => {
-            expect(navigate).toHaveBeenCalledWith("/swap", {
-                state: {
-                    backupDone: BackupDone.True,
-                },
-            });
+            expect(globalSignals.rescueFileBackupDone()).toBe(true);
         });
     });
 
@@ -80,7 +67,7 @@ describe("BackupVerify", () => {
             () => (
                 <>
                     <TestComponent />
-                    <BackupVerify />
+                    <BackupVerifyContent onRetry={onRetry} />
                 </>
             ),
             {
@@ -102,7 +89,7 @@ describe("BackupVerify", () => {
         );
 
         await waitFor(() => {
-            expect(navigate).not.toHaveBeenCalled();
+            expect(globalSignals.rescueFileBackupDone()).toBe(false);
         });
     });
 
@@ -113,7 +100,7 @@ describe("BackupVerify", () => {
             () => (
                 <>
                     <TestComponent />
-                    <BackupVerify />
+                    <BackupVerifyContent onRetry={onRetry} />
                 </>
             ),
             {
@@ -140,7 +127,40 @@ describe("BackupVerify", () => {
         );
 
         await waitFor(() => {
-            expect(navigate).not.toHaveBeenCalled();
+            expect(globalSignals.rescueFileBackupDone()).toBe(false);
         });
+    });
+
+    test("should invoke retry callback when verification fails", async () => {
+        const user = userEvent.setup();
+
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <BackupVerifyContent onRetry={onRetry} />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        const fileInput = screen.getByTestId("rescueFileUpload");
+
+        File.prototype.text = vi
+            .fn()
+            .mockResolvedValue(JSON.stringify(invalidRescueFile));
+
+        await user.upload(
+            fileInput,
+            new File([], "rescueFile.json", {
+                type: "application/json",
+            }),
+        );
+
+        await user.click(await screen.findByRole("button"));
+
+        expect(onRetry).toHaveBeenCalled();
     });
 });

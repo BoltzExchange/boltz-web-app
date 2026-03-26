@@ -1,9 +1,9 @@
-import { useLocation, useNavigate } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import BigNumber from "bignumber.js";
 import type { Wallet } from "ethers";
 import log from "loglevel";
 import type { Accessor } from "solid-js";
-import { createEffect, createSignal, on, onMount } from "solid-js";
+import { createEffect, createSignal, on } from "solid-js";
 
 import { config } from "../config";
 import {
@@ -85,11 +85,6 @@ const buildOftDetail = (
     };
 };
 
-export const enum BackupDone {
-    True = "true",
-    False = "false",
-}
-
 export const getClaimAddress = async (
     assetReceive: Accessor<string>,
     assetSend: Accessor<string>,
@@ -156,7 +151,6 @@ export const getClaimAddress = async (
 
 const CreateButton = () => {
     const navigate = useNavigate();
-    const location = useLocation<{ backupDone?: string }>().state;
     const {
         separator,
         setSwapStorage,
@@ -168,7 +162,6 @@ const CreateButton = () => {
         t,
         newKey,
         deriveKey,
-        rescueFileBackupDone,
         rescueFile,
         regularPairs,
     } = useGlobalContext();
@@ -317,17 +310,6 @@ const CreateButton = () => {
         ),
     );
 
-    const clearBackupDoneState = () => {
-        if (location?.backupDone === BackupDone.True) {
-            navigate("/swap", {
-                replace: true,
-                state: {
-                    backupDone: BackupDone.False,
-                },
-            });
-        }
-    };
-
     const validWayToFetchInvoice = (): boolean => {
         return (
             swapType() === SwapType.Submarine &&
@@ -450,11 +432,6 @@ const CreateButton = () => {
         claimAddress: string,
         gasAbstraction: GasAbstractionType,
     ): Promise<boolean> => {
-        if (!rescueFileBackupDone() && swapType() !== SwapType.Reverse) {
-            navigate("/backup");
-            return false;
-        }
-
         try {
             let data: SomeSwap;
             let hops: EncodedHop[];
@@ -721,8 +698,6 @@ const CreateButton = () => {
             setAddressValid(false);
             setOriginalDestination(undefined);
 
-            clearBackupDoneState();
-
             navigate("/swap/" + data.id);
 
             return true;
@@ -733,8 +708,6 @@ const CreateButton = () => {
             } else {
                 notify("error", err);
             }
-
-            clearBackupDoneState();
 
             return false;
         }
@@ -768,14 +741,6 @@ const CreateButton = () => {
             setLoading(false);
         }
     };
-
-    onMount(() => {
-        if (location?.backupDone === BackupDone.True) {
-            void buttonClick();
-            return;
-        }
-        clearBackupDoneState();
-    });
 
     const getButtonLabel = (label: ButtonLabelParams) => {
         return t(label.key, label.params);
