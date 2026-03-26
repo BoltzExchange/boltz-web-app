@@ -1,6 +1,8 @@
+// @vitest-environment node
 import { base58, hex } from "@scure/base";
 
 import { config as runtimeConfig } from "../../src/config";
+import { NetworkTransport } from "../../src/configs/base";
 import { config as mainnetConfig } from "../../src/configs/mainnet";
 
 const {
@@ -20,7 +22,7 @@ const getOftRoute = (from: string, to = from) => ({
     to,
 });
 
-const validSolanaRecipient = "6TEStwWeG24Yxhh7rx4pwpC7TVwJXNGDM5FqeiiKtZGX";
+const validSolanaRecipient = "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE";
 const solanaOftProgramContract = {
     name: "OFT Program",
     address: "Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7",
@@ -38,6 +40,21 @@ const createSolanaLegacyMeshDeployment = (
     lzEid: "30168",
     contracts,
 });
+const createOkFetchResponse = (json: unknown) => ({
+    ok: true,
+    json: vi.fn().mockResolvedValue(json),
+});
+const createFetchWithDeployments = (
+    deployments: unknown,
+    rpcFetchSpy: () => Promise<unknown>,
+) =>
+    vi.fn().mockImplementation((input: string) => {
+        if (input === "https://docs.usdt0.to/api/deployments") {
+            return Promise.resolve(createOkFetchResponse(deployments));
+        }
+
+        return rpcFetchSpy();
+    });
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 const originalNetwork = runtimeConfig.network;
@@ -230,11 +247,15 @@ describe("oft", () => {
     });
 
     test("should encode Solana recipients as 32-byte public keys", async () => {
+        const rpcFetchSpy = vi
+            .fn()
+            .mockResolvedValue(
+                createOkFetchResponse({ result: { value: {} } }),
+            );
         vi.stubGlobal(
             "fetch",
-            vi.fn().mockResolvedValue({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
+            createFetchWithDeployments(
+                {
                     usdt0: {
                         native: [],
                         legacyMesh: [
@@ -244,8 +265,9 @@ describe("oft", () => {
                             ]),
                         ],
                     },
-                }),
-            }),
+                },
+                rpcFetchSpy,
+            ),
         );
 
         await expect(getOftContract(getOftRoute("USDT0-SOL"))).resolves.toEqual(
@@ -270,9 +292,6 @@ describe("oft", () => {
             getOftRoute("USDT0", "USDT0-SOL"),
             recipient,
             100n,
-            {
-                createSolanaTokenAccount: false,
-            },
         );
 
         expect(sendParam[1]).toEqual(
@@ -286,12 +305,76 @@ describe("oft", () => {
         ).resolves.toBe(false);
     });
 
-    test("should include Solana ATA creation options in OFT send params", async () => {
+    test("should cache positive Solana ATA creation checks per recipient", async () => {
+        runtimeConfig.assets = {
+            ...runtimeConfig.assets,
+            "TEST-SOL": {
+                network: {
+                    transport: NetworkTransport.Solana,
+                    rpcUrls: ["https://solana-rpc.test"],
+                    chainName: "Solana",
+                },
+                token: {
+                    address: "So11111111111111111111111111111111111111112",
+                },
+            },
+        } as never;
+
+        const rpcFetchSpy = vi
+            .fn()
+            .mockResolvedValue(
+                createOkFetchResponse({ result: { value: null } }),
+            );
         vi.stubGlobal(
             "fetch",
-            vi.fn().mockResolvedValue({
-                ok: true,
-                json: vi.fn().mockResolvedValue({
+            createFetchWithDeployments(
+                {
+                    usdt0: {
+                        native: [createSolanaLegacyMeshDeployment()],
+                        legacyMesh: [createSolanaLegacyMeshDeployment()],
+                    },
+                },
+                rpcFetchSpy,
+            ),
+        );
+
+        const oft = {
+            quoteOFT: {
+                staticCall: vi
+                    .fn()
+                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            },
+            quoteSend: {
+                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
+            },
+        };
+
+        await quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0", "TEST-SOL"),
+            validSolanaRecipient,
+            100n,
+        );
+        await quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0", "TEST-SOL"),
+            validSolanaRecipient,
+            200n,
+        );
+
+        expect(rpcFetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    test("should include Solana ATA creation options in OFT send params", async () => {
+        const rpcFetchSpy = vi
+            .fn()
+            .mockResolvedValue(
+                createOkFetchResponse({ result: { value: null } }),
+            );
+        vi.stubGlobal(
+            "fetch",
+            createFetchWithDeployments(
+                {
                     usdt0: {
                         native: [
                             {
@@ -310,8 +393,9 @@ describe("oft", () => {
                         ],
                         legacyMesh: [createSolanaLegacyMeshDeployment()],
                     },
-                }),
-            }),
+                },
+                rpcFetchSpy,
+            ),
         );
 
         const oft = {
@@ -330,9 +414,6 @@ describe("oft", () => {
             getOftRoute("USDT0", "USDT0-SOL"),
             validSolanaRecipient,
             100n,
-            {
-                createSolanaTokenAccount: true,
-            },
         );
 
         expect(sendParam[4]).toContain("000301002101");
@@ -370,9 +451,6 @@ describe("oft", () => {
                 getOftRoute("USDT0", "USDT0-SOL"),
                 "0x1234",
                 100n,
-                {
-                    createSolanaTokenAccount: false,
-                },
             ),
         ).rejects.toThrow();
     });

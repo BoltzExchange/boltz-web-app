@@ -18,6 +18,7 @@ import { config } from "../../config";
 import { NetworkTransport, Usdt0Kind } from "../../configs/base";
 import type { OftRoute } from "../Pair";
 import {
+    clearSolanaTokenAccountCreationCache,
     decodeSolanaAddress,
     shouldCreateSolanaTokenAccount,
     solanaAtaRentExemptLamports,
@@ -89,7 +90,6 @@ export type OftNativeDrop = {
 export type OftQuoteOptions = {
     recipient?: string;
     nativeDrop?: OftNativeDrop;
-    createSolanaTokenAccount?: boolean;
     oftName?: string;
 };
 
@@ -197,6 +197,7 @@ let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
 export const clearOftDeployments = () => {
     oftDeploymentsPromise = undefined;
     providerCache.clear();
+    clearSolanaTokenAccountCreationCache();
 };
 
 const type3Option = 3;
@@ -552,13 +553,10 @@ const appendExecutorOption = (
         option,
     );
 
-const buildOftExtraOptions = ({
-    nativeDrop,
-    createSolanaTokenAccount,
-}: Pick<
-    OftQuoteOptions,
-    "nativeDrop" | "createSolanaTokenAccount"
->): string => {
+const buildOftExtraOptions = (
+    nativeDrop: OftNativeDrop | undefined,
+    createSolanaTokenAccount: boolean,
+): string => {
     let options = "0x";
 
     if (createSolanaTokenAccount) {
@@ -632,11 +630,7 @@ export const quoteOftSend = async (
     route: OftRoute,
     recipient: string | undefined,
     amount: bigint,
-    {
-        oftName = defaultOftName,
-        nativeDrop,
-        createSolanaTokenAccount,
-    }: OftQuoteOptions = {},
+    { oftName = defaultOftName, nativeDrop }: OftQuoteOptions = {},
 ): Promise<{
     sendParam: SendParam;
     msgFee: MsgFee;
@@ -644,18 +638,16 @@ export const quoteOftSend = async (
     oftFeeDetails: OftFeeDetail[];
     oftReceipt: OftReceipt;
 }> => {
-    const resolvedCreateSolanaTokenAccount =
-        createSolanaTokenAccount ??
-        (await shouldCreateSolanaTokenAccount(route.to, recipient));
+    const createSolanaTokenAccount = await shouldCreateSolanaTokenAccount(
+        route.to,
+        recipient,
+    );
     const sendParam = await createOftSendParam(
         route,
         recipient,
         amount,
         oftName,
-        buildOftExtraOptions({
-            nativeDrop,
-            createSolanaTokenAccount: resolvedCreateSolanaTokenAccount,
-        }),
+        buildOftExtraOptions(nativeDrop, createSolanaTokenAccount),
     );
     const [oftLimit, oftFeeDetails, oftReceipt] =
         await oft.quoteOFT.staticCall(sendParam);

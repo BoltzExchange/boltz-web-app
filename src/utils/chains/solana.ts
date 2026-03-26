@@ -1,16 +1,17 @@
 import { base58 } from "@scure/base";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
 import log from "loglevel";
 
 import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
+import lazySolana from "../../lazy/solana";
 import { formatError } from "../errors";
 import { requireRpcUrls } from "../provider";
 
 export const solanaAddressLength = 32;
 export const solanaAtaRentExemptLamports = 2_039_280n;
 const solanaGetAccountInfoMethod = "getAccountInfo";
+const solanaTokenAccountCreationCache = new Set<string>();
+const pendingSolanaTokenAccountChecks = new Map<string, Promise<boolean>>();
 
 export const decodeSolanaAddress = (address: string): Uint8Array => {
     const decoded = base58.decode(address);
@@ -30,7 +31,12 @@ export const isValidSolanaAddress = (address: string): boolean => {
     }
 };
 
-export const shouldCreateSolanaTokenAccount = async (
+export const clearSolanaTokenAccountCreationCache = () => {
+    solanaTokenAccountCreationCache.clear();
+    pendingSolanaTokenAccountChecks.clear();
+};
+
+const queryShouldCreateSolanaTokenAccount = async (
     destinationAsset: string,
     recipient: string | undefined,
 ): Promise<boolean> => {
@@ -51,6 +57,7 @@ export const shouldCreateSolanaTokenAccount = async (
     }
 
     decodeSolanaAddress(recipient);
+    const { PublicKey, getAssociatedTokenAddressSync } = await lazySolana.get();
 
     const recipientPublicKey = new PublicKey(recipient);
     const associatedTokenAddress = getAssociatedTokenAddressSync(
@@ -122,4 +129,44 @@ export const shouldCreateSolanaTokenAccount = async (
     throw new Error(
         `Failed to query Solana associated token account for ${destinationAsset}: ${formatError(lastError)}`,
     );
+};
+
+export const shouldCreateSolanaTokenAccount = (
+    destinationAsset: string,
+    recipient: string | undefined,
+): Promise<boolean> => {
+    const cacheKey =
+        recipient === undefined || recipient === ""
+            ? undefined
+            : `${destinationAsset}:${recipient}`;
+    if (cacheKey === undefined) {
+        return queryShouldCreateSolanaTokenAccount(destinationAsset, recipient);
+    }
+
+    if (solanaTokenAccountCreationCache.has(cacheKey)) {
+        return Promise.resolve(true);
+    }
+
+    const pendingCheck = pendingSolanaTokenAccountChecks.get(cacheKey);
+    if (pendingCheck !== undefined) {
+        return pendingCheck;
+    }
+
+    const checkPromise = queryShouldCreateSolanaTokenAccount(
+        destinationAsset,
+        recipient,
+    )
+        .then((shouldCreate) => {
+            if (shouldCreate) {
+                solanaTokenAccountCreationCache.add(cacheKey);
+            }
+
+            return shouldCreate;
+        })
+        .finally(() => {
+            pendingSolanaTokenAccountChecks.delete(cacheKey);
+        });
+
+    pendingSolanaTokenAccountChecks.set(cacheKey, checkPromise);
+    return checkPromise;
 };
