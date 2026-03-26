@@ -512,7 +512,7 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, pair, getGasToken], () => {
+        on([boltzFee, minerFee, pair, getGasToken, onchainAddress], () => {
             loadingGuard(async () => {
                 if (amountChanged() === Side.Receive) {
                     setSendAmount(
