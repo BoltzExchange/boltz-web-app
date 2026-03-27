@@ -8,6 +8,7 @@ import { createEffect, createSignal, on } from "solid-js";
 import { config } from "../config";
 import {
     BTC,
+    LN,
     RBTC,
     USDT0,
     getCanonicalAsset,
@@ -338,7 +339,7 @@ const CreateButton = () => {
 
     const getOriginalDestination = () =>
         originalDestination() ||
-        (assetReceive() !== "LN" && onchainAddress() !== ""
+        (assetReceive() !== LN && onchainAddress() !== ""
             ? onchainAddress()
             : undefined);
 
