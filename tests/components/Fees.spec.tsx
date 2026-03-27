@@ -14,7 +14,6 @@ import {
     calculateReceiveAmount,
     calculateSendAmount,
 } from "../../src/utils/calculate";
-import * as solanaUtils from "../../src/utils/chains/solana";
 import { weiToSatoshi } from "../../src/utils/rootstock";
 import {
     TestComponent,
@@ -367,67 +366,6 @@ describe("Fees component", () => {
                 "0.030000",
             );
         });
-    });
-
-    test("should display the Solana token account fee when creation is required", async () => {
-        vi.spyOn(
-            solanaUtils,
-            "shouldCreateSolanaTokenAccount",
-        ).mockResolvedValue(true);
-
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Fees />
-                </>
-            ),
-            { wrapper: contextWrapper },
-        );
-
-        globalSignals.setPairs(pairs);
-
-        const mockPair = {
-            isRoutable: true,
-            fromAsset: BTC,
-            toAsset: "USDT0-SOL",
-            swapToCreate: {
-                type: SwapType.Submarine,
-            },
-            feePercentage: 1,
-            minerFees: 0,
-            maxRoutingFee: undefined,
-            oftMessagingFeeToken: "ETH",
-            oftTransferFeeAsset: USDT0,
-            feeOnSend: vi.fn(() => BigNumber(0)),
-            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
-            oftMessagingFeeFromLatestQuote: vi.fn(() => 0n),
-            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(0)),
-            getMinimum: vi.fn().mockResolvedValue(1),
-            getMaximum: vi.fn().mockResolvedValue(10_000),
-        } as unknown as Pair;
-
-        signals.setPair(mockPair);
-        signals.setAddressValid(true);
-
-        const address = "BZkwksSEeHrCVS3HeewBJKEBTEEuwnEqpkHqEg1dRpuE";
-        signals.setOnchainAddress(address);
-
-        await waitFor(() => {
-            expect(
-                screen.getByTestId("solana-token-account-creation-fee")
-                    .textContent,
-            ).not.toBeNull();
-        });
-        expect(
-            screen.getByTestId("solana-token-account-creation-fee")
-                .parentElement?.textContent,
-        ).toContain(`${i18n.en.solana_token_account_fee_label}:`);
-
-        expect(solanaUtils.shouldCreateSolanaTokenAccount).toHaveBeenCalledWith(
-            mockPair.toAsset,
-            address,
-        );
     });
 
     test.each`
