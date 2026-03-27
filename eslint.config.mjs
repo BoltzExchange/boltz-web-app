@@ -51,6 +51,8 @@ export default [
                                 "@reown/appkit",
                                 "@trezor/connect",
                                 "@trezor/connect-web",
+                                "@solana/web3.js",
+                                "@solana/spl-token",
                                 "@ledgerhq/hw-app-eth",
                                 "@ledgerhq/hw-transport",
                                 "@reown/appkit-adapter-ethers",
