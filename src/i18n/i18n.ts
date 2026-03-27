@@ -474,6 +474,8 @@ const dict = {
             "This wallet has {{ count }} additional rescuable swaps. To access them, please switch to the Rescue Key used to initiate those swaps.",
         approve_erc20: "Approve",
         approve_erc20_line: "Set ERC20 allowance for the swap contract",
+        approve_erc20_reset_line:
+            "Some ERC20 tokens require resetting the allowance to 0 before setting a new amount. You may need to approve twice.",
     },
     de: {
         language: "Deutsch",
@@ -965,6 +967,8 @@ const dict = {
             "Dieses Wallet hat {{ count }} zusätzliche claimbare Swaps. Um darauf zuzugreifen, wechsle bitte zu dem Rettungsschlüssel, mit dem diese Swaps gestartet wurden.",
         approve_erc20: "Freigeben",
         approve_erc20_line: "ERC20-Freigabe für den Swap-Contract festlegen",
+        approve_erc20_reset_line:
+            "Einige ERC20-Token verlangen, dass die Freigabe zuerst auf 0 gesetzt wird, bevor ein neuer Betrag gesetzt werden kann. Möglicherweise musst du zweimal freigeben.",
     },
     es: {
         language: "Español",
@@ -1454,6 +1458,8 @@ const dict = {
         approve_erc20: "Aprobar",
         approve_erc20_line:
             "Configura la asignación de ERC20 para el contrato de intercambio",
+        approve_erc20_reset_line:
+            "Algunos tokens ERC20 requieren restablecer la asignación a 0 antes de establecer una nueva cantidad. Es posible que debas aprobar dos veces.",
     },
     pt: {
         language: "Português",
@@ -1939,6 +1945,8 @@ const dict = {
         approve_erc20: "Aprovar",
         approve_erc20_line:
             "Definir a permissão de ERC20 para o contrato de troca",
+        approve_erc20_reset_line:
+            "Alguns tokens ERC20 exigem redefinir a permissão para 0 antes de definir um novo valor. Talvez você precise aprovar duas vezes.",
     },
     zh: {
         language: "中文",
@@ -2377,6 +2385,8 @@ const dict = {
             "该钱包有 {{ count }} 个额外可领取的交换。要访问它们，请切换到用于发起这些交换的救援密钥。",
         approve_erc20: "授权",
         approve_erc20_line: "为交换合约设置 ERC20 授权额度",
+        approve_erc20_reset_line:
+            "某些 ERC20 代币要求先将授权额度重置为 0，然后才能设置新的额度。你可能需要授权两次。",
     },
     ja: {
         language: "日本語",
@@ -2857,6 +2867,8 @@ const dict = {
             "このウォレットには追加で {{ count }} 件の請求可能なスワップがあります。アクセスするには、これらのスワップの開始に使用したレスキューキーに切り替えてください。",
         approve_erc20: "承認",
         approve_erc20_line: "スワップコントラクトのERC20許可額を設定",
+        approve_erc20_reset_line:
+            "一部のERC20トークンでは、新しい金額を設定する前に許可額を0にリセットする必要があります。2回承認が必要になる場合があります。",
     },
 };
 

@@ -52,6 +52,7 @@ import {
     type OftDetail,
     type SomeSwap,
 } from "../utils/swapCreator";
+import ApproveErc20 from "./ApproveErc20";
 import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
@@ -407,46 +408,6 @@ const InsufficientBalance = (props: { asset?: string }) => {
     );
 };
 
-const ApproveErc20 = (props: {
-    asset: string;
-    value: () => bigint;
-    signerAddress: string;
-    derivationPath: string;
-    setNeedsApproval: Setter<boolean>;
-    approvalTarget?: string;
-}) => {
-    const { t } = useGlobalContext();
-    const { signer, getErc20Swap } = useWeb3Signer();
-
-    return (
-        <ContractTransaction
-            asset={props.asset}
-            /* eslint-disable-next-line solid/reactivity */
-            onClick={async () => {
-                const contract = createTokenContract(props.asset, signer());
-                const target =
-                    props.approvalTarget ??
-                    (await getErc20Swap(props.asset).getAddress());
-                const tx = await contract.approve(target, props.value());
-                await tx.wait(1);
-                log.info("ERC20 approval successful", tx.hash);
-                props.setNeedsApproval(false);
-            }}
-            children={<ConnectWallet asset={props.asset} />}
-            address={{
-                address: props.signerAddress,
-                derivationPath: props.derivationPath,
-            }}
-            buttonText={t("approve_erc20")}
-            promptText={t("approve_erc20_line", {
-                button: t("approve_erc20"),
-            })}
-            waitingText={t("tx_in_mempool_subline")}
-            showHr={false}
-        />
-    );
-};
-
 const WaitForOft = (props: { asset: string; transactionHash: string }) => {
     const { t } = useGlobalContext();
 
@@ -628,6 +589,7 @@ const SendToOft = (props: {
                                     derivationPath={props.derivationPath}
                                     setNeedsApproval={setNeedsApproval}
                                     approvalTarget={approvalTarget()}
+                                    resetAllowanceFirst={true}
                                 />
                             }>
                             <ContractTransaction
