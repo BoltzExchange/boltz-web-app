@@ -6,6 +6,7 @@ import {
     translator,
 } from "@solid-primitives/i18n";
 import { makePersisted } from "@solid-primitives/storage";
+import { BigNumber } from "bignumber.js";
 import localforage from "localforage";
 import log from "loglevel";
 import {
@@ -467,12 +468,12 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         try {
             const fetchedRecently =
                 Date.now() - lastPriceFetch() < 1000 * 60 * 5; // 5 minutes
-            if (!showFiatAmount() || fetchedRecently) {
+            if (fetchedRecently && btcPrice() instanceof BigNumber) {
                 return;
             }
-            const btcPrice = await getBtcPriceFailover();
+            const btcPriceFetched = await getBtcPriceFailover();
 
-            setBtcPrice(btcPrice);
+            setBtcPrice(btcPriceFetched);
             setLastPriceFetch(Date.now());
         } catch {
             setBtcPrice(

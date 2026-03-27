@@ -30,6 +30,7 @@ import {
 import { coalesceLn } from "./helper";
 import {
     type OftQuoteOptions,
+    type OftReceiveQuote,
     decodeExecutorNativeAmountExceedsCapError,
     isExecutorNativeAmountExceedsCapError,
     quoteOftAmountInForAmountOut,
@@ -127,18 +128,16 @@ export default class Pair {
               value: BigNumber;
           }
         | undefined;
-    private latestOftMessagingFee:
+    private latestOftFee:
         | {
               sendAmount: string;
-              value: bigint;
-              token: string | undefined;
-          }
-        | undefined;
-    private latestOftTransferFee:
-        | {
-              sendAmount: string;
-              value: BigNumber;
-              asset: string | undefined;
+              messaging?:
+                  | {
+                        value: bigint;
+                        token: string | undefined;
+                    }
+                  | undefined;
+              transfer?: BigNumber | undefined;
           }
         | undefined;
 
@@ -347,6 +346,10 @@ export default class Pair {
         return RequiredInput.Address;
     }
 
+    public get hasPreOft() {
+        return this.preOft !== undefined;
+    }
+
     public get hasPostOft() {
         return this.postOft !== undefined;
     }
@@ -516,27 +519,17 @@ export default class Pair {
             : undefined;
     }
 
-    private cacheLatestOftMessagingFee = (
+    private cacheLatestOftFee = (
         sendAmountKey: string,
-        value: bigint,
-        token: string | undefined,
+        quote: OftReceiveQuote,
     ) => {
-        this.latestOftMessagingFee = {
+        this.latestOftFee = {
             sendAmount: sendAmountKey,
-            value,
-            token,
-        };
-    };
-
-    private cacheLatestOftTransferFee = (
-        sendAmountKey: string,
-        value: BigNumber,
-        asset: string | undefined,
-    ) => {
-        this.latestOftTransferFee = {
-            sendAmount: sendAmountKey,
-            value,
-            asset,
+            messaging: {
+                value: quote.msgFee[0],
+                token: this.oftMessagingFeeToken,
+            },
+            transfer: BigNumber((quote.amountIn - quote.amountOut).toString()),
         };
     };
 
@@ -730,20 +723,7 @@ export default class Pair {
         );
 
         if (sendAmountKey !== undefined) {
-            this.cacheLatestOftMessagingFee(
-                sendAmountKey,
-                quote.msgFee[0],
-                this.preOftMessagingFeeToken,
-            );
-            this.cacheLatestOftTransferFee(
-                sendAmountKey,
-                BigNumber(
-                    (
-                        BigInt(sendAmount.toFixed(0)) - quote.amountOut
-                    ).toString(),
-                ),
-                this.preOft.from,
-            );
+            this.cacheLatestOftFee(sendAmountKey, quote);
         }
 
         return BigNumber(quote.amountOut.toString());
@@ -753,8 +733,7 @@ export default class Pair {
         amount: BigNumber,
     ): Promise<{
         amount: BigNumber;
-        msgFee?: bigint;
-        oftTransferFee?: BigNumber;
+        quote?: OftReceiveQuote;
     }> => {
         if (this.preOft === undefined) {
             return { amount };
@@ -776,10 +755,7 @@ export default class Pair {
 
         return {
             amount: BigNumber(requiredAmount.toString()),
-            msgFee: quote.msgFee[0],
-            oftTransferFee: BigNumber(
-                (requiredAmount - quote.amountOut).toString(),
-            ),
+            quote,
         };
     };
 
@@ -858,13 +834,6 @@ export default class Pair {
                 quote.msgFee[0],
             );
 
-            if (sendAmountKey !== undefined) {
-                this.cacheLatestOftMessagingFee(
-                    sendAmountKey,
-                    quote.msgFee[0],
-                    this.postOftMessagingFeeToken,
-                );
-            }
             log.info("Applied post-OFT quote", {
                 destinationAsset: this.to,
                 quotedOftAmount: quotedOftAmount.toFixed(),
@@ -891,16 +860,7 @@ export default class Pair {
             );
 
             if (sendAmountKey !== undefined) {
-                this.cacheLatestOftTransferFee(
-                    sendAmountKey,
-                    BigNumber(
-                        (
-                            BigInt(adjustedOftAmount.toFixed(0)) -
-                            adjustedQuote.amountOut
-                        ).toString(),
-                    ),
-                    this.postOft.to,
-                );
+                this.cacheLatestOftFee(sendAmountKey, adjustedQuote);
             }
 
             return BigNumber(adjustedQuote.amountOut.toString());
@@ -932,8 +892,7 @@ export default class Pair {
         postOftRecipient?: string,
     ): Promise<{
         amount: BigNumber;
-        msgFee?: bigint;
-        oftTransferFee?: BigNumber;
+        quote?: OftReceiveQuote;
     }> => {
         try {
             if (this.postOft === undefined || amount.isLessThanOrEqualTo(0)) {
@@ -985,10 +944,7 @@ export default class Pair {
 
             return {
                 amount: requiredClaimAmount.plus(messagingFeeCost),
-                msgFee: quote.msgFee[0],
-                oftTransferFee: BigNumber(
-                    (requiredAmount - quote.amountOut).toString(),
-                ),
+                quote,
             };
         } catch (error) {
             if (getGasToken && isExecutorNativeAmountExceedsCapError(error)) {
@@ -1031,37 +987,33 @@ export default class Pair {
     public oftMessagingFeeFromLatestQuote = (sendAmount: BigNumber) => {
         const key = sendAmount.toFixed();
 
-        if (this.latestOftMessagingFee?.sendAmount !== key) {
+        if (this.latestOftFee?.sendAmount !== key) {
             return undefined;
         }
 
-        return this.latestOftMessagingFee.value;
+        return this.latestOftFee.messaging?.value;
     };
 
     public oftTransferFeeFromLatestQuote = (sendAmount: BigNumber) => {
         const key = sendAmount.toFixed();
 
-        if (this.latestOftTransferFee?.sendAmount !== key) {
+        if (this.latestOftFee?.sendAmount !== key) {
             return undefined;
         }
 
-        return this.latestOftTransferFee.value;
+        return this.latestOftFee.transfer;
     };
 
     public get oftMessagingFeeToken() {
         return (
-            this.latestOftMessagingFee?.token ??
+            this.latestOftFee?.messaging?.token ??
             this.postOftMessagingFeeToken ??
             this.preOftMessagingFeeToken
         );
     }
 
     public get oftTransferFeeAsset() {
-        return (
-            this.latestOftTransferFee?.asset ??
-            this.postOft?.to ??
-            this.preOft?.from
-        );
+        return this.postOft?.from ?? this.preOft?.from;
     }
 
     private quoteReceiveHop = async (
@@ -1406,38 +1358,9 @@ export default class Pair {
             sendAmount: sendAmountKey,
             value: boltzSwapSendAmountForCache ?? amount,
         };
-        if (preOftQuote.msgFee !== undefined) {
-            this.cacheLatestOftMessagingFee(
-                sendAmountKey,
-                preOftQuote.msgFee,
-                this.preOftMessagingFeeToken,
-            );
-        } else if (postOftQuote.msgFee !== undefined) {
-            this.cacheLatestOftMessagingFee(
-                sendAmountKey,
-                postOftQuote.msgFee,
-                this.postOftMessagingFeeToken,
-            );
-        }
-
-        if (
-            this.postOft !== undefined &&
-            postOftQuote.oftTransferFee !== undefined
-        ) {
-            this.cacheLatestOftTransferFee(
-                sendAmountKey,
-                postOftQuote.oftTransferFee,
-                this.postOft.to,
-            );
-        } else if (
-            this.preOft !== undefined &&
-            preOftQuote.oftTransferFee !== undefined
-        ) {
-            this.cacheLatestOftTransferFee(
-                sendAmountKey,
-                preOftQuote.oftTransferFee,
-                this.preOft.from,
-            );
+        const quote = preOftQuote.quote ?? postOftQuote.quote;
+        if (quote !== undefined) {
+            this.cacheLatestOftFee(sendAmountKey, quote);
         }
 
         return amount;
