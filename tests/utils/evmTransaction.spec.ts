@@ -53,13 +53,61 @@ describe("evmTransaction", () => {
             }),
         ).resolves.toEqual("0xalchemy");
 
-        expect(mockAlchemySendTransaction).toHaveBeenCalledWith(signer, 31n, [
-            {
-                to: "0x2000000000000000000000000000000000000000",
-                data: "0xabcd",
-                value: "5",
+        expect(mockAlchemySendTransaction).toHaveBeenCalledWith(
+            signer,
+            31n,
+            [
+                {
+                    to: "0x2000000000000000000000000000000000000000",
+                    data: "0xabcd",
+                    value: "5",
+                },
+            ],
+            undefined,
+        );
+    });
+
+    test("should forward Alchemy resume options for GasAbstractionType.Signer", async () => {
+        const signer = {
+            provider: {
+                getNetwork: vi.fn().mockResolvedValue({ chainId: 42161n }),
             },
-        ]);
+        } as unknown as Wallet;
+        const onPreparedCallId = vi.fn();
+        mockAlchemySendTransaction.mockResolvedValue("0xalchemy");
+
+        await expect(
+            sendPopulatedTransaction(
+                GasAbstractionType.Signer,
+                signer,
+                {
+                    to: "0x2000000000000000000000000000000000000000",
+                    data: "0xabcd",
+                },
+                {
+                    alchemy: {
+                        existingCallId: "0xprepared",
+                        onPreparedCallId,
+                    },
+                },
+            ),
+        ).resolves.toEqual("0xalchemy");
+
+        expect(mockAlchemySendTransaction).toHaveBeenCalledWith(
+            signer,
+            42161n,
+            [
+                {
+                    to: "0x2000000000000000000000000000000000000000",
+                    data: "0xabcd",
+                    value: undefined,
+                },
+            ],
+            {
+                existingCallId: "0xprepared",
+                onPreparedCallId,
+            },
+        );
     });
 
     test("should treat GasAbstractionType.RifRelay as a direct send", async () => {

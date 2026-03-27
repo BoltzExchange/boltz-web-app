@@ -11,6 +11,7 @@ import type { Accessor } from "solid-js";
 
 import {
     type AlchemyCall,
+    type SendAlchemyTransactionOptions,
     sendTransaction as sendAlchemyTransaction,
 } from "../alchemy/Alchemy";
 import { AssetKind, getKindForAsset, getTokenAddress } from "../consts/Assets";
@@ -27,6 +28,10 @@ export type LockupEvent = {
     refundAddress: string;
     timelock: bigint;
     logIndex: number;
+};
+
+type SendPopulatedTransactionOptions = {
+    alchemy?: SendAlchemyTransactionOptions;
 };
 
 export const getSignerForGasAbstraction = (
@@ -48,6 +53,7 @@ export const sendPopulatedTransaction = async (
     gasAbstraction: GasAbstractionType,
     signer: Signer | Wallet,
     transaction: TransactionRequest | AlchemyCall[],
+    options?: SendPopulatedTransactionOptions,
 ): Promise<string> => {
     switch (gasAbstraction) {
         case GasAbstractionType.None:
@@ -103,6 +109,7 @@ export const sendPopulatedTransaction = async (
                               value: transaction.value?.toString() ?? undefined,
                           },
                       ],
+                options?.alchemy,
             );
         }
 

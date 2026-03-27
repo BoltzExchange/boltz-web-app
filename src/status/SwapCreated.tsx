@@ -13,6 +13,7 @@ import {
     type ChainSwap,
     type ReverseSwap,
     getLockupGasAbstraction,
+    getPreOftDetail,
 } from "../utils/swapCreator";
 
 const SwapCreated = () => {
@@ -58,6 +59,7 @@ const SwapCreated = () => {
                             ? chain.dex.hops
                             : undefined
                     }
+                    oft={getPreOftDetail(chain.oft)}
                 />
             </Show>
         </Show>
