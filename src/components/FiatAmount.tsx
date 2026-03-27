@@ -18,6 +18,7 @@ const FiatAmount = (props: {
     amount: number;
     variant: "label" | "text";
     for?: string;
+    loading?: Accessor<boolean>;
 }) => {
     const { showFiatAmount, t, btcPrice } = useGlobalContext();
 
@@ -42,19 +43,25 @@ const FiatAmount = (props: {
         }
     });
 
-    const renderFiatAmount = () => (
-        <Switch>
-            <Match when={btcPrice() instanceof BigNumber}>
-                ≈ {fiatAmount().toFixed(2)} {Currency.USD}
-            </Match>
-            <Match when={btcPrice() === null}>
-                <div class="skeleton" />
-            </Match>
-            <Match when={btcPrice() instanceof Error}>
-                {t("fiat_rate_not_available")}
-            </Match>
-        </Switch>
-    );
+    const renderFiatAmount = () => {
+        if (props.loading?.()) {
+            return null;
+        }
+
+        return (
+            <Switch>
+                <Match when={btcPrice() instanceof BigNumber}>
+                    ≈ {fiatAmount().toFixed(2)} {Currency.USD}
+                </Match>
+                <Match when={btcPrice() === null}>
+                    <div class="skeleton" />
+                </Match>
+                <Match when={btcPrice() instanceof Error}>
+                    {t("fiat_rate_not_available")}
+                </Match>
+            </Switch>
+        );
+    };
 
     return (
         <Show when={showFiatAmount()}>
