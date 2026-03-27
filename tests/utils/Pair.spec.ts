@@ -201,6 +201,25 @@ const pairs: Pairs = {
                     },
                 },
             },
+            USDT0: {
+                hash: "btc-usdt0-pair-hash",
+                rate: 1,
+                limits: {
+                    maximal: 1_000_000,
+                    minimal: 1,
+                    maximalZeroConf: 0,
+                },
+                fees: {
+                    percentage: 0,
+                    minerFees: {
+                        server: 0,
+                        user: {
+                            claim: 0,
+                            lockup: 0,
+                        },
+                    },
+                },
+            },
         },
     },
 };
@@ -246,6 +265,16 @@ describe("Pair", () => {
         expect(debugSpy).not.toHaveBeenCalled();
     });
 
+    test("should allow 0-amount chain swaps with post-OFT routing", () => {
+        const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
+        const pair = new Pair(pairs, BTC, "USDT0-POL");
+
+        debugSpy.mockClear();
+
+        expect(pair.canZeroAmount).toBe(true);
+        expect(debugSpy).not.toHaveBeenCalled();
+    });
+
     test("should log blockers when 0-amount swaps are disabled by routing", () => {
         const debugSpy = vi.spyOn(log, "debug").mockImplementation(() => {});
         const pair = new Pair(pairs, LN, "USDT0-POL");
@@ -258,10 +287,7 @@ describe("Pair", () => {
             expect.objectContaining({
                 from: LN,
                 to: "USDT0-POL",
-                blockers: [
-                    "post-OFT routing is enabled",
-                    "first hop type is reverse",
-                ],
+                blockers: ["first hop type is reverse"],
                 route: [
                     {
                         from: LN,

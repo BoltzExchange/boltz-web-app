@@ -369,10 +369,6 @@ export default class Pair {
             blockers.push("pre-OFT routing is enabled");
         }
 
-        if (this.postOft !== undefined) {
-            blockers.push("post-OFT routing is enabled");
-        }
-
         const firstHop = this.route[0];
         if (firstHop === undefined) {
             blockers.push("route has no first hop");
