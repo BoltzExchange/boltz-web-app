@@ -428,7 +428,7 @@ const WaitForOft = (props: { asset: string; transactionHash: string }) => {
 const SendToOft = (props: {
     oft: OftDetail;
     swapId: string;
-    signerAddress: string;
+    signerAddress?: string;
     amount: bigint;
     derivationPath?: string;
 }) => {
@@ -662,10 +662,15 @@ const SendToOft = (props: {
                                         asset={props.oft.sourceAsset}
                                     />
                                 }
-                                address={{
-                                    address: props.signerAddress,
-                                    derivationPath: props.derivationPath,
-                                }}
+                                address={
+                                    props.signerAddress === undefined
+                                        ? undefined
+                                        : {
+                                              address: props.signerAddress,
+                                              derivationPath:
+                                                  props.derivationPath,
+                                          }
+                                }
                                 buttonText={t("send")}
                                 promptText={t("transaction_prompt", {
                                     button: t("send"),
@@ -688,7 +693,7 @@ const LockupTransaction = (props: {
     preimageHash: string;
     claimAddress: string;
     timeoutBlockHeight: number;
-    signerAddress: string;
+    signerAddress?: string;
     derivationPath?: string;
     swapId: string;
     needsApproval: Accessor<boolean>;
@@ -828,10 +833,14 @@ const LockupTransaction = (props: {
                     await setSwapStorage(currentSwap);
                 }}
                 children={<ConnectWallet asset={props.asset} />}
-                address={{
-                    address: props.signerAddress,
-                    derivationPath: props.derivationPath,
-                }}
+                address={
+                    props.signerAddress === undefined
+                        ? undefined
+                        : {
+                              address: props.signerAddress,
+                              derivationPath: props.derivationPath,
+                          }
+                }
                 buttonText={t("send")}
                 promptText={t("transaction_prompt", {
                     button: t("send"),
@@ -850,7 +859,7 @@ const LockupEvm = (props: {
     amount: number;
     preimageHash: string;
     claimAddress: string;
-    signerAddress: string;
+    signerAddress?: string;
     derivationPath?: string;
     timeoutBlockHeight: number;
     hops?: EncodedHop[];
