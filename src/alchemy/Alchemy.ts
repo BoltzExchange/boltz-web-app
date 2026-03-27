@@ -199,6 +199,11 @@ export type AlchemyCall = {
     value?: string;
 };
 
+export type SendAlchemyTransactionOptions = {
+    existingCallId?: string;
+    onPreparedCallId?: (callId: string) => Promise<void> | void;
+};
+
 export const toAlchemyCall = (transaction: TransactionRequest): AlchemyCall => {
     if (typeof transaction.to !== "string") {
         throw new Error("transaction is missing destination address");
@@ -333,7 +338,12 @@ export const sendTransaction = async (
     signer: Wallet,
     chainId: bigint,
     calls: AlchemyCall[],
+    options: SendAlchemyTransactionOptions = {},
 ): Promise<string> => {
+    if (options.existingCallId !== undefined) {
+        return await waitForTransactionHash(options.existingCallId);
+    }
+
     calls = calls.map((call) => ({
         to: call.to,
         value: call.value ? toBeHex(call.value) : undefined,
@@ -348,6 +358,7 @@ export const sendTransaction = async (
     );
     const signed = await signPreparedCalls(signer, prepared);
     const callId = await sendPreparedCalls(signed);
+    await options.onPreparedCallId?.(callId);
     return await waitForTransactionHash(callId);
 };
 
@@ -356,18 +367,34 @@ const waitForTransactionHash = async (
     intervalMs = 1_000,
     maxAttempts = 60,
 ): Promise<string> => {
-    for (let i = 0; i < maxAttempts; i++) {
-        const status = await getCallsStatus(callId);
+    let lastStatusError: unknown;
 
-        if (
-            status.result.receipts !== undefined &&
-            status.result.receipts.length > 0
-        ) {
-            return status.result.receipts[0].transactionHash;
+    for (let i = 0; i < maxAttempts; i++) {
+        try {
+            const status = await getCallsStatus(callId);
+            lastStatusError = undefined;
+
+            if (
+                status.result.receipts !== undefined &&
+                status.result.receipts.length > 0
+            ) {
+                return status.result.receipts[0].transactionHash;
+            }
+        } catch (error) {
+            lastStatusError = error;
         }
 
         await sleep(intervalMs);
     }
 
+    if (lastStatusError !== undefined) {
+        throw new Error(
+            `Transaction status unavailable after ${maxAttempts} attempts for call ${callId}: ${formatError(lastStatusError)}`,
+        );
+    }
+
     throw new Error(`Transaction not confirmed after ${maxAttempts} attempts`);
 };
+
+export const waitForPreparedCallTransactionHash = async (callId: string) =>
+    await waitForTransactionHash(callId);

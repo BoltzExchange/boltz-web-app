@@ -3,7 +3,11 @@ import { hex } from "@scure/base";
 import log from "loglevel";
 import { createEffect, onCleanup, onMount } from "solid-js";
 
-import { type AlchemyCall, toAlchemyCall } from "../alchemy/Alchemy";
+import {
+    type AlchemyCall,
+    toAlchemyCall,
+    waitForPreparedCallTransactionHash,
+} from "../alchemy/Alchemy";
 import { config } from "../config";
 import { getTokenAddress } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
@@ -44,6 +48,10 @@ import {
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
+const recoveredCommitmentLockupTxHashes: Record<string, string> = {
+    qRAXNTXoZcmv:
+        "0xec60a73cd210c506826ed18ff5e502342aebff9a3cb510e173dedd5ec5cdb7ad",
+};
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -159,6 +167,36 @@ export const SwapExecutionWorker = () => {
         if (swap()?.id === updatedSwap.id) {
             setSwap(updatedSwap);
         }
+    };
+
+    const abandonFailedOftSend = async (
+        swapId: string,
+        sourceAsset: string,
+        txHash: string,
+        blockNumber: number,
+    ) => {
+        const latestSwap = await getSwap<SomeSwap>(swapId);
+        if (
+            latestSwap === undefined ||
+            latestSwap === null ||
+            latestSwap.oft === undefined
+        ) {
+            return;
+        }
+
+        latestSwap.oft = {
+            ...latestSwap.oft,
+            txHash: undefined,
+        };
+        await persistSwap(latestSwap);
+        log.warn(
+            "Swap execution abandoning failed OFT send transaction",
+            getSwapExecutionLogContext(swapId, {
+                sourceAsset,
+                txHash,
+                blockNumber,
+            }),
+        );
     };
 
     const waitForOftSendReceipt = async (
@@ -284,6 +322,55 @@ export const SwapExecutionWorker = () => {
             return;
         }
 
+        const recoveredCommitmentLockupTxHash =
+            recoveredCommitmentLockupTxHashes[currentSwap.id];
+        if (recoveredCommitmentLockupTxHash !== undefined) {
+            currentSwap.commitmentLockupTxHash =
+                recoveredCommitmentLockupTxHash;
+            currentSwap.commitmentLockupCallId = undefined;
+            currentSwap.commitmentSignatureSubmitted = false;
+            await persistSwap(currentSwap);
+            log.info(
+                "Swap execution recovered lost commitment lockup transaction",
+                getSwapExecutionLogContext(currentSwap.id, {
+                    commitmentLockupTxHash: recoveredCommitmentLockupTxHash,
+                }),
+            );
+            queueRelevantTasks(currentSwap);
+            return;
+        }
+
+        if (currentSwap.commitmentLockupCallId !== undefined) {
+            log.info(
+                "Swap execution resuming pending commitment lockup call",
+                getSwapExecutionLogContext(currentSwap.id, {
+                    callId: currentSwap.commitmentLockupCallId,
+                }),
+            );
+
+            const commitmentLockupTxHash =
+                await waitForPreparedCallTransactionHash(
+                    currentSwap.commitmentLockupCallId,
+                );
+            const latestSwap = await getSwap<SomeSwap>(currentSwap.id);
+            if (latestSwap === undefined || latestSwap === null) {
+                return;
+            }
+
+            latestSwap.commitmentLockupTxHash = commitmentLockupTxHash;
+            latestSwap.commitmentLockupCallId = undefined;
+            latestSwap.commitmentSignatureSubmitted = false;
+            await persistSwap(latestSwap);
+            log.info(
+                "Swap execution persisted resumed commitment lockup transaction",
+                getSwapExecutionLogContext(latestSwap.id, {
+                    commitmentLockupTxHash,
+                }),
+            );
+            queueRelevantTasks(latestSwap);
+            return;
+        }
+
         log.info(
             "Swap execution resuming pre-OFT lockup",
             getSwapExecutionLogContext(currentSwap.id, {
@@ -312,6 +399,16 @@ export const SwapExecutionWorker = () => {
             currentSwap.oft.txHash,
         );
         if (sendReceipt === undefined) {
+            return;
+        }
+
+        if (sendReceipt.status === 0) {
+            await abandonFailedOftSend(
+                currentSwap.id,
+                currentSwap.oft.sourceAsset,
+                currentSwap.oft.txHash,
+                sendReceipt.blockNumber,
+            );
             return;
         }
 
@@ -418,7 +515,9 @@ export const SwapExecutionWorker = () => {
         const tx = await router.executeAndLockERC20.populateTransaction(
             prefix0x("00".repeat(32)),
             getTokenAddress(latestSwap.assetSend),
-            latestSwap.claimAddress,
+            latestSwap.type === SwapType.Chain
+                ? (latestSwap as ChainSwap).lockupDetails.claimAddress
+                : latestSwap.claimAddress,
             gasAbstractionSigner.address,
             getSwapTimeoutBlockHeight(latestSwap),
             encoded.calls.map((call) => ({
@@ -433,7 +532,22 @@ export const SwapExecutionWorker = () => {
             GasAbstractionType.Signer,
             gasAbstractionSigner,
             calls,
+            {
+                alchemy: {
+                    onPreparedCallId: async (callId) => {
+                        latestSwap.commitmentLockupCallId = callId;
+                        await persistSwap(latestSwap);
+                        log.info(
+                            "Swap execution persisted commitment lockup call ID",
+                            getSwapExecutionLogContext(latestSwap.id, {
+                                callId,
+                            }),
+                        );
+                    },
+                },
+            },
         );
+        latestSwap.commitmentLockupCallId = undefined;
         latestSwap.commitmentSignatureSubmitted = false;
         await persistSwap(latestSwap);
         log.info(

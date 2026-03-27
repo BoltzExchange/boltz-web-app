@@ -1,6 +1,7 @@
 import type { Accessor } from "solid-js";
 import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
 
+import { isEvmAsset } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import type {
     ChainSwap,
@@ -21,16 +22,15 @@ const ChainSwapLink = (props: {
         setHasBeenClaimed(props.swap().claimTx !== undefined);
     });
 
+    const asset = () =>
+        hasBeenClaimed() ? props.swap().assetReceive : props.swap().assetSend;
+
     return (
         <BlockExplorer
-            asset={
-                hasBeenClaimed()
-                    ? props.swap().assetReceive
-                    : props.swap().assetSend
-            }
+            asset={asset()}
             txId={props.swap().claimTx}
             explorer={
-                props.swap().oft !== undefined
+                props.swap().oft !== undefined && isEvmAsset(asset())
                     ? ExplorerKind.LayerZero
                     : undefined
             }
