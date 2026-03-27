@@ -1,9 +1,10 @@
 import { ETH } from "../consts/Assets";
-import { Denomination } from "../consts/Enums";
+import { Currency, Denomination } from "../consts/Enums";
 
 const iconDenominators = new Set<string>([
     Denomination.Btc,
     Denomination.Sat,
+    Currency.USD,
     "usd",
     "USDT",
 ]);

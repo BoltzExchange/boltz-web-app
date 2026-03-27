@@ -104,6 +104,7 @@ const Create = () => {
         boltzFee,
         minerFee,
         onchainAddress,
+        quoteLoading,
         setQuoteLoading,
     } = useCreateContext();
     const { connectedWallet } = useWeb3Signer();
@@ -125,6 +126,13 @@ const Create = () => {
             normalize(onchainAddress()) === normalize(walletAddress)
         );
     };
+    const receiveAmountQuoteLoading = createMemo(
+        () => quoteLoading() && amountChanged() === Side.Send,
+    );
+    const sendAmountQuoteLoading = createMemo(
+        () => quoteLoading() && amountChanged() === Side.Receive,
+    );
+
     const gasTopUpTrigger = createMemo(() => {
         const rpcUrls = getRpcUrls(pair().toAsset);
         const gasTopUpEnabled = gasTopUp();
@@ -252,12 +260,13 @@ const Create = () => {
         }
     };
 
-    const loadingGuard = (fn: () => Promise<void>) => {
+    const loadingGuard = (fn: (isCurrent: () => boolean) => Promise<void>) => {
         if (!pair().needsNetworkForQuote) {
             ++quoteRequestId;
             clearQuoteDebounce();
             setQuoteLoading(false);
-            void fn();
+            const id = quoteRequestId;
+            void fn(() => id === quoteRequestId);
             return;
         }
 
@@ -269,7 +278,7 @@ const Create = () => {
             quoteDebounceTimeout = undefined;
             void (async () => {
                 try {
-                    await fn();
+                    await fn(() => requestId === quoteRequestId);
                 } finally {
                     if (requestId === quoteRequestId) {
                         setQuoteLoading(false);
@@ -311,7 +320,8 @@ const Create = () => {
             .replaceAll(" ", "")
             .replaceAll(",", ".");
 
-        loadingGuard(async () => {
+        setAmountChanged(Side.Receive);
+        loadingGuard(async (isCurrent) => {
             if (isEmptyAmount(amount)) {
                 resetAmounts();
                 validateAmount();
@@ -335,7 +345,9 @@ const Create = () => {
                 getGasToken(),
                 onchainAddress(),
             );
-            setAmountChanged(Side.Receive);
+            if (!isCurrent()) {
+                return;
+            }
             setReceiveAmount(satAmount);
             setSendAmount(sendAmount);
             validateAmount();
@@ -349,7 +361,8 @@ const Create = () => {
             .replaceAll(" ", "")
             .replaceAll(",", ".");
 
-        loadingGuard(async () => {
+        setAmountChanged(Side.Send);
+        loadingGuard(async (isCurrent) => {
             if (isEmptyAmount(amount)) {
                 resetAmounts();
                 validateAmount();
@@ -368,7 +381,9 @@ const Create = () => {
                 getGasToken(),
                 onchainAddress(),
             );
-            setAmountChanged(Side.Send);
+            if (!isCurrent()) {
+                return;
+            }
             setSendAmount(satAmount);
             setReceiveAmount(receiveAmount);
             validateAmount();
@@ -473,8 +488,8 @@ const Create = () => {
     };
 
     const setAmount = (amount: number) => {
-        loadingGuard(async () => {
-            setAmountChanged(Side.Send);
+        setAmountChanged(Side.Send);
+        loadingGuard(async (isCurrent) => {
             setSendAmount(BigNumber(amount));
             const receiveAmount = await pair().calculateReceiveAmount(
                 BigNumber(amount),
@@ -483,6 +498,9 @@ const Create = () => {
                 getGasToken(),
                 onchainAddress(),
             );
+            if (!isCurrent()) {
+                return;
+            }
             setReceiveAmount(receiveAmount);
             validateAmount();
             sendAmountRef?.focus();
@@ -495,30 +513,34 @@ const Create = () => {
 
     createEffect(
         on([boltzFee, minerFee, pair, getGasToken, onchainAddress], () => {
-            loadingGuard(async () => {
+            loadingGuard(async (isCurrent) => {
                 if (amountChanged() === Side.Receive) {
                     if (receiveAmount().isZero()) {
                         setSendAmount(BigNumber(0));
                     } else {
-                        setSendAmount(
-                            await pair().calculateSendAmount(
-                                receiveAmount(),
-                                minerFee(),
-                                getGasToken(),
-                                onchainAddress(),
-                            ),
-                        );
-                    }
-                } else {
-                    setReceiveAmount(
-                        await pair().calculateReceiveAmount(
-                            sendAmount(),
+                        const result = await pair().calculateSendAmount(
+                            receiveAmount(),
                             minerFee(),
-                            undefined,
                             getGasToken(),
                             onchainAddress(),
-                        ),
+                        );
+                        if (!isCurrent()) {
+                            return;
+                        }
+                        setSendAmount(result);
+                    }
+                } else {
+                    const result = await pair().calculateReceiveAmount(
+                        sendAmount(),
+                        minerFee(),
+                        undefined,
+                        getGasToken(),
+                        onchainAddress(),
                     );
+                    if (!isCurrent()) {
+                        return;
+                    }
+                    setReceiveAmount(result);
                 }
 
                 validateAmount();
@@ -673,35 +695,50 @@ const Create = () => {
                             signal={() => pair().fromAsset}
                         />
                         <div
-                            class={`${showFiatAmount() ? "input-with-label" : ""}`}>
-                            <input
-                                ref={sendAmountRef}
-                                autofocus
-                                required
-                                type="text"
-                                placeholder="0"
-                                maxlength={calculateDigits(
-                                    maximum(),
-                                    denomination(),
-                                )}
-                                inputmode={
-                                    denomination() == "btc"
-                                        ? "decimal"
-                                        : "numeric"
-                                }
-                                id="sendAmount"
-                                data-testid="sendAmount"
-                                autocomplete="off"
-                                value={sendAmountFormatted()}
-                                onPaste={(e) => validatePaste(e)}
-                                onKeyPress={(e) => validateInput(e)}
-                                onInput={(e) => changeSendAmount(e)}
-                            />
+                            class={`amount-field ${showFiatAmount() ? "input-with-label" : ""}`}>
+                            <div class="amount-input-wrap">
+                                <Show when={sendAmountQuoteLoading()}>
+                                    <div
+                                        class="amount-value-skeleton"
+                                        aria-hidden="true"
+                                    />
+                                </Show>
+                                <input
+                                    ref={sendAmountRef}
+                                    autofocus
+                                    required
+                                    type="text"
+                                    placeholder="0"
+                                    maxlength={calculateDigits(
+                                        maximum(),
+                                        denomination(),
+                                    )}
+                                    inputmode={
+                                        denomination() == "btc"
+                                            ? "decimal"
+                                            : "numeric"
+                                    }
+                                    id="sendAmount"
+                                    data-testid="sendAmount"
+                                    autocomplete="off"
+                                    disabled={sendAmountQuoteLoading()}
+                                    classList={{
+                                        "amount-input--quote-pending":
+                                            sendAmountQuoteLoading(),
+                                    }}
+                                    aria-busy={sendAmountQuoteLoading()}
+                                    value={sendAmountFormatted()}
+                                    onPaste={(e) => validatePaste(e)}
+                                    onKeyPress={(e) => validateInput(e)}
+                                    onInput={(e) => changeSendAmount(e)}
+                                />
+                            </div>
                             <FiatAmount
                                 asset={() => pair().fromAsset}
                                 amount={BigNumber(sendAmount()).toNumber()}
                                 variant="label"
                                 for="sendAmount"
+                                loading={sendAmountQuoteLoading}
                             />
                         </div>
                     </div>
@@ -712,34 +749,49 @@ const Create = () => {
                             signal={() => pair().toAsset}
                         />
                         <div
-                            class={`${showFiatAmount() ? "input-with-label" : ""}`}>
-                            <input
-                                ref={receiveAmountRef}
-                                required
-                                type="text"
-                                placeholder="0"
-                                maxlength={calculateDigits(
-                                    maximum(),
-                                    denomination(),
-                                )}
-                                inputmode={
-                                    denomination() == "btc"
-                                        ? "decimal"
-                                        : "numeric"
-                                }
-                                id="receiveAmount"
-                                data-testid="receiveAmount"
-                                autocomplete="off"
-                                value={receiveAmountFormatted()}
-                                onPaste={(e) => validatePaste(e)}
-                                onKeyPress={(e) => validateInput(e)}
-                                onInput={(e) => changeReceiveAmount(e)}
-                            />
+                            class={`amount-field ${showFiatAmount() ? "input-with-label" : ""}`}>
+                            <div class="amount-input-wrap">
+                                <Show when={receiveAmountQuoteLoading()}>
+                                    <div
+                                        class="amount-value-skeleton"
+                                        aria-hidden="true"
+                                    />
+                                </Show>
+                                <input
+                                    ref={receiveAmountRef}
+                                    required
+                                    type="text"
+                                    placeholder="0"
+                                    maxlength={calculateDigits(
+                                        maximum(),
+                                        denomination(),
+                                    )}
+                                    inputmode={
+                                        denomination() == "btc"
+                                            ? "decimal"
+                                            : "numeric"
+                                    }
+                                    id="receiveAmount"
+                                    data-testid="receiveAmount"
+                                    autocomplete="off"
+                                    disabled={receiveAmountQuoteLoading()}
+                                    classList={{
+                                        "amount-input--quote-pending":
+                                            receiveAmountQuoteLoading(),
+                                    }}
+                                    aria-busy={receiveAmountQuoteLoading()}
+                                    value={receiveAmountFormatted()}
+                                    onPaste={(e) => validatePaste(e)}
+                                    onKeyPress={(e) => validateInput(e)}
+                                    onInput={(e) => changeReceiveAmount(e)}
+                                />
+                            </div>
                             <FiatAmount
                                 asset={() => pair().toAsset}
                                 amount={BigNumber(receiveAmount()).toNumber()}
                                 variant="label"
                                 for="receiveAmount"
+                                loading={receiveAmountQuoteLoading}
                             />
                         </div>
                     </div>
