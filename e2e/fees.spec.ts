@@ -25,6 +25,8 @@ test.describe("Fees", () => {
             .click();
         await page.getByTestId("select-LN").click();
 
+        await page.getByTestId("fees-toggle").click();
+
         const routingFees = page.getByTestId("routing-fee-limit");
         await expect(routingFees).toHaveText(
             `${feeConfig.maxRoutingFee * 100 * 10_000} ppm`,

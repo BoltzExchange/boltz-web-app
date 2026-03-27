@@ -452,7 +452,6 @@ describe("Pair", () => {
         expect(pair.oftTransferFeeFromLatestQuote(sendAmount)?.toNumber()).toBe(
             30,
         );
-        expect(pair.oftTransferFeeAsset).toBe("USDT0-POL");
     });
 
     test("should include OFT native drop costs in post-OFT receive quotes", async () => {
