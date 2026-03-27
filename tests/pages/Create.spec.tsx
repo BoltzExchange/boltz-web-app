@@ -554,4 +554,47 @@ describe("Create", () => {
             expect(sendAmountInput.value).toEqual(amount);
         });
     });
+
+    test("should keep send amount at zero when receive amount is zero", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, LBTC);
+        await waitFor(() => {
+            expect(signals.maximum()).toBeGreaterThan(0);
+        });
+
+        const updateConfig = () => {
+            const updatedCfg = structuredClone(pairs);
+            updatedCfg.chain[BTC][LBTC].fees.minerFees.server += 1;
+            globalSignals.setPairs(updatedCfg);
+        };
+
+        fireEvent.input(await screen.findByTestId("receiveAmount"), {
+            target: { value: "0" },
+        });
+
+        await waitFor(() => {
+            expect(signals.amountChanged()).toEqual(Side.Receive);
+            expect(signals.receiveAmount()).toEqual(BigNumber(0));
+            expect(signals.sendAmount()).toEqual(BigNumber(0));
+        });
+
+        updateConfig();
+
+        await waitFor(() => {
+            expect(signals.receiveAmount()).toEqual(BigNumber(0));
+            expect(signals.sendAmount()).toEqual(BigNumber(0));
+        });
+    });
 });

@@ -311,6 +311,12 @@ const Create = () => {
                 BigNumber(amount),
                 denomination(),
             );
+            if (satAmount.isZero()) {
+                setAmountChanged(Side.Receive);
+                resetAmounts();
+                validateAmount();
+                return;
+            }
             const sendAmount = await pair().calculateSendAmount(
                 satAmount,
                 minerFee(),
@@ -479,14 +485,18 @@ const Create = () => {
         on([boltzFee, minerFee, pair, getGasToken], () => {
             loadingGuard(async () => {
                 if (amountChanged() === Side.Receive) {
-                    setSendAmount(
-                        await pair().calculateSendAmount(
-                            receiveAmount(),
-                            minerFee(),
-                            getGasToken(),
-                            onchainAddress(),
-                        ),
-                    );
+                    if (receiveAmount().isZero()) {
+                        setSendAmount(BigNumber(0));
+                    } else {
+                        setSendAmount(
+                            await pair().calculateSendAmount(
+                                receiveAmount(),
+                                minerFee(),
+                                getGasToken(),
+                                onchainAddress(),
+                            ),
+                        );
+                    }
                 } else {
                     setReceiveAmount(
                         await pair().calculateReceiveAmount(
