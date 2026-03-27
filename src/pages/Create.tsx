@@ -780,9 +780,9 @@ const Create = () => {
                     )}>
                     <ConnectWallet
                         asset={
-                            isWalletConnectableAsset(pair().fromAsset)
-                                ? pair().fromAsset
-                                : pair().toAsset
+                            isWalletConnectableAsset(pair().toAsset)
+                                ? pair().toAsset
+                                : pair().fromAsset
                         }
                         syncAddress={isWalletConnectableAsset(pair().toAsset)}
                         disabled={() => !pair().isRoutable}
