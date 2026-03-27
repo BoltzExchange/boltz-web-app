@@ -428,7 +428,7 @@ const WaitForOft = (props: { asset: string; transactionHash: string }) => {
 const SendToOft = (props: {
     oft: OftDetail;
     swapId: string;
-    signerAddress?: string;
+    signerAddress: string;
     amount: bigint;
     derivationPath?: string;
 }) => {
@@ -577,8 +577,6 @@ const SendToOft = (props: {
                                 <ApproveErc20
                                     asset={props.oft.sourceAsset}
                                     value={() => props.amount}
-                                    signerAddress={props.signerAddress}
-                                    derivationPath={props.derivationPath}
                                     setNeedsApproval={setNeedsApproval}
                                     approvalTarget={approvalTarget()}
                                     resetAllowanceFirst={true}
@@ -662,15 +660,10 @@ const SendToOft = (props: {
                                         asset={props.oft.sourceAsset}
                                     />
                                 }
-                                address={
-                                    props.signerAddress === undefined
-                                        ? undefined
-                                        : {
-                                              address: props.signerAddress,
-                                              derivationPath:
-                                                  props.derivationPath,
-                                          }
-                                }
+                                address={{
+                                    address: props.signerAddress,
+                                    derivationPath: props.derivationPath,
+                                }}
                                 buttonText={t("send")}
                                 promptText={t("transaction_prompt", {
                                     button: t("send"),
@@ -693,7 +686,7 @@ const LockupTransaction = (props: {
     preimageHash: string;
     claimAddress: string;
     timeoutBlockHeight: number;
-    signerAddress?: string;
+    signerAddress: string;
     derivationPath?: string;
     swapId: string;
     needsApproval: Accessor<boolean>;
@@ -724,8 +717,6 @@ const LockupTransaction = (props: {
                             ? () => MaxUint256
                             : (props.approvalValue ?? props.value)
                     }
-                    signerAddress={props.signerAddress}
-                    derivationPath={props.derivationPath}
                     setNeedsApproval={props.setNeedsApproval}
                     approvalTarget={props.approvalTarget}
                 />
@@ -833,14 +824,10 @@ const LockupTransaction = (props: {
                     await setSwapStorage(currentSwap);
                 }}
                 children={<ConnectWallet asset={props.asset} />}
-                address={
-                    props.signerAddress === undefined
-                        ? undefined
-                        : {
-                              address: props.signerAddress,
-                              derivationPath: props.derivationPath,
-                          }
-                }
+                address={{
+                    address: props.signerAddress,
+                    derivationPath: props.derivationPath,
+                }}
                 buttonText={t("send")}
                 promptText={t("transaction_prompt", {
                     button: t("send"),
@@ -859,7 +846,7 @@ const LockupEvm = (props: {
     amount: number;
     preimageHash: string;
     claimAddress: string;
-    signerAddress?: string;
+    signerAddress: string;
     derivationPath?: string;
     timeoutBlockHeight: number;
     hops?: EncodedHop[];

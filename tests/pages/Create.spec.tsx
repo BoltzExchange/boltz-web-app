@@ -30,7 +30,6 @@ const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 beforeAll(() => {
     runtimeConfig.assets = {
         ...runtimeConfig.assets,
-        "USDT0-POL": structuredClone(mainnetConfig.assets["USDT0-POL"]),
         "USDT0-SOL": structuredClone(mainnetConfig.assets["USDT0-SOL"]),
     };
 });
@@ -43,9 +42,7 @@ vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
 vi.mock("../../src/components/ConnectWallet", () => ({
-    default: (props: { asset?: string }) => (
-        <div data-testid="connect-wallet" data-asset={props.asset ?? ""} />
-    ),
+    default: () => <div data-testid="connect-wallet" />,
 }));
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
@@ -132,52 +129,6 @@ describe("Create", () => {
         setPairAssets(BTC, "USDT0-SOL");
 
         expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
-    });
-
-    test("should prefer the destination wallet for EVM to EVM pairs", async () => {
-        render(
-            () => (
-                <>
-                    <TestComponent />
-                    <Create />
-                </>
-            ),
-            {
-                wrapper: contextWrapper,
-            },
-        );
-
-        const evmToEvmPairs = structuredClone(pairs);
-        evmToEvmPairs.chain.RBTC = {
-            ...evmToEvmPairs.chain.RBTC,
-            USDT0: {
-                hash: "c34da28f9ceab6ad446e6a8fb5a2c9ff9024db2f883f0db6150bf6c7a27fdc40",
-                rate: 1,
-                limits: {
-                    maximal: 4294967,
-                    minimal: 50000,
-                    maximalZeroConf: 0,
-                },
-                fees: {
-                    percentage: 0.5,
-                    minerFees: {
-                        server: 19346,
-                        user: {
-                            claim: 4423,
-                            lockup: 8246,
-                        },
-                    },
-                },
-            },
-        };
-
-        globalSignals.setPairs(evmToEvmPairs);
-        signals.setPair(new Pair(evmToEvmPairs, RBTC, "USDT0-POL"));
-
-        expect(await screen.findByTestId("connect-wallet")).toHaveAttribute(
-            "data-asset",
-            "USDT0-POL",
-        );
     });
 
     test("should show only one destination address input for wallet-connectable non-EVM pairs", async () => {

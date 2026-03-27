@@ -230,9 +230,6 @@ const CreateButton = () => {
     const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
     const assetReceive = () => pair().toAsset;
-    const persistSignerOnCreate = () =>
-        // if we go EVM->EVM we want to allow receiving and sending signer to be different
-        !isEvmAsset(assetSend()) && isEvmAsset(assetReceive());
 
     createEffect(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
@@ -697,11 +694,13 @@ const CreateButton = () => {
                             OftPosition.Post,
                         )
                       : undefined,
-                signer: persistSignerOnCreate()
-                    ? (signer()?.address ?? connectedWallet()?.address)
-                    : undefined,
+                signer:
+                    // We do not have to commit to a signer when creating submarine swaps
+                    swapType() !== SwapType.Submarine
+                        ? (signer()?.address ?? connectedWallet()?.address)
+                        : undefined,
                 derivationPath:
-                    persistSignerOnCreate() &&
+                    swapType() !== SwapType.Submarine &&
                     signer() !== undefined &&
                     customDerivationPathRdns.includes(signer().rdns)
                         ? (
