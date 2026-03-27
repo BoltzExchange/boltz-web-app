@@ -528,18 +528,18 @@ const Web3SignerProvider = (props: {
 
         await setRdns(addresses[0], wallet.info.rdns);
 
-        const nextSigner = createConnectedSigner(
+        const signer = createConnectedSigner(
             wallet.provider,
             addresses[0],
             wallet.info.rdns,
         );
         setConnectedWallet({
-            address: addresses[0],
+            address: signer.address,
             rdns: wallet.info.rdns,
             transport: NetworkTransport.Evm,
-            signer: nextSigner,
+            signer,
         });
-        void logSignerNetwork(nextSigner);
+        void logSignerNetwork(signer);
     };
 
     const switchNetwork = async (asset: string) => {
