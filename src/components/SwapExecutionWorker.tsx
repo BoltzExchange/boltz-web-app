@@ -48,10 +48,6 @@ import {
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
-const recoveredCommitmentLockupTxHashes: Record<string, string> = {
-    qRAXNTXoZcmv:
-        "0xec60a73cd210c506826ed18ff5e502342aebff9a3cb510e173dedd5ec5cdb7ad",
-};
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -319,24 +315,6 @@ export const SwapExecutionWorker = () => {
 
     const executePreOftLockup = async (currentSwap: SomeSwap) => {
         if (!needsPreOftLockup(currentSwap)) {
-            return;
-        }
-
-        const recoveredCommitmentLockupTxHash =
-            recoveredCommitmentLockupTxHashes[currentSwap.id];
-        if (recoveredCommitmentLockupTxHash !== undefined) {
-            currentSwap.commitmentLockupTxHash =
-                recoveredCommitmentLockupTxHash;
-            currentSwap.commitmentLockupCallId = undefined;
-            currentSwap.commitmentSignatureSubmitted = false;
-            await persistSwap(currentSwap);
-            log.info(
-                "Swap execution recovered lost commitment lockup transaction",
-                getSwapExecutionLogContext(currentSwap.id, {
-                    commitmentLockupTxHash: recoveredCommitmentLockupTxHash,
-                }),
-            );
-            queueRelevantTasks(currentSwap);
             return;
         }
 
