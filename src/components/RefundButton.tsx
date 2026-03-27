@@ -210,8 +210,8 @@ const buildRefundFollowUpCalls = async (
     }
 
     const route = {
-        from: oft.sourceAsset,
-        to: oft.destinationAsset,
+        from: oft.destinationAsset,
+        to: oft.sourceAsset,
     };
     const quotedOft = await getQuotedOftContract(route);
     const { msgFee } = await quoteOftSend(
