@@ -9,10 +9,19 @@ import {
 import { AssetKind } from "src/consts/AssetKind";
 
 const rskFallback = import.meta.env.VITE_RSK_FALLBACK_ENDPOINT;
+const polygonRpcEndpoint = import.meta.env.VITE_POLYGON_RPC_ENDPOINT;
 
 const rskRpcUrls = ["https://public-node.rsk.co"];
 if (rskFallback) {
     rskRpcUrls.push(rskFallback);
+}
+
+const polygonRpcUrls = [
+    "https://polygon-bor-rpc.publicnode.com",
+    "https://rpc-mainnet.matic.quiknode.pro",
+];
+if (polygonRpcEndpoint) {
+    polygonRpcUrls.unshift(polygonRpcEndpoint);
 }
 
 const createUsdt0VariantAsset = ({
@@ -211,11 +220,7 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 137,
         tokenAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
         blockExplorerUrl: "https://polygonscan.com",
-        rpcUrls: [
-            "https://polygon-bor-rpc.publicnode.com",
-            "https://rpc-mainnet.matic.quiknode.pro",
-            "https://poly.api.pocket.network",
-        ],
+        rpcUrls: polygonRpcUrls,
     },
     {
         asset: "USDT0-RBTC",
