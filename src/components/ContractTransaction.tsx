@@ -57,8 +57,7 @@ const ContractTransaction = (props: {
         <Show
             when={
                 walletAddress() !== undefined &&
-                (expectedTransport() === undefined ||
-                    walletTransport() === expectedTransport()) &&
+                walletTransport() === expectedTransport() &&
                 (allowAnyAddress() ||
                     props.address?.address === walletAddress())
             }

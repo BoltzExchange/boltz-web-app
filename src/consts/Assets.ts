@@ -84,9 +84,6 @@ export const getUsdt0Mesh = (from: string, to?: string): Usdt0Kind => {
         : Usdt0Kind.Native;
 };
 
-export const isLegacyUsdt0Asset = (asset: string): boolean =>
-    isUsdt0Asset(asset) && getUsdt0Mesh(asset) === Usdt0Kind.Legacy;
-
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
     [USDT0]: "USDT",

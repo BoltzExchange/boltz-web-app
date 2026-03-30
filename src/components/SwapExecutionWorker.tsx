@@ -379,11 +379,11 @@ export const SwapExecutionWorker = () => {
             sourceOft.address,
             sourceProvider,
         );
-        const guid = getOftSentEvent(
+        const { guid } = getOftSentEvent(
             sourceContract,
             sendReceipt,
             sourceOft.address,
-        ).guid;
+        );
 
         log.info(
             "Swap execution decoded OFT send guid",
