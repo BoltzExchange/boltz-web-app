@@ -5,11 +5,13 @@ import { config } from "../../config";
 import { NetworkTransport } from "../../configs/base";
 import lazySolana from "../../lazy/solana";
 import { formatError } from "../errors";
+import { constructRequestOptions } from "../helper";
 import { requireRpcUrls } from "../provider";
 
 export const solanaAddressLength = 32;
 export const solanaAtaRentExemptLamports = 2_039_280n;
 const solanaGetAccountInfoMethod = "getAccountInfo";
+const solanaRpcProbeTimeout = 5_000;
 const solanaTokenAccountCreationCache = new Set<string>();
 const pendingSolanaTokenAccountChecks = new Map<string, Promise<boolean>>();
 
@@ -61,8 +63,8 @@ const queryShouldCreateSolanaTokenAccount = async (
     const rpcUrls = requireRpcUrls(destinationAsset);
     let lastError: unknown;
     for (const rpcUrl of rpcUrls) {
-        try {
-            const response = await fetch(rpcUrl, {
+        const { opts, requestTimeout } = constructRequestOptions(
+            {
                 method: "POST",
                 headers: {
                     "content-type": "application/json",
@@ -78,7 +80,12 @@ const queryShouldCreateSolanaTokenAccount = async (
                         },
                     ],
                 }),
-            });
+            },
+            solanaRpcProbeTimeout,
+        );
+
+        try {
+            const response = await fetch(rpcUrl, opts);
 
             if (!response.ok) {
                 throw new Error(
@@ -107,14 +114,24 @@ const queryShouldCreateSolanaTokenAccount = async (
 
             return result.value === null;
         } catch (error) {
-            lastError = error;
+            const isAbortError =
+                (error instanceof DOMException &&
+                    error.name === "AbortError") ||
+                opts.signal?.aborted === true;
+            lastError = isAbortError
+                ? new Error(
+                      `Solana RPC request timed out after ${solanaRpcProbeTimeout}ms`,
+                  )
+                : error;
             log.warn("Failed to query Solana associated token account", {
                 destinationAsset,
                 recipient,
                 associatedTokenAddress: associatedTokenAddress.toBase58(),
                 rpcUrl,
-                error: formatError(error),
+                error: formatError(lastError),
             });
+        } finally {
+            clearTimeout(requestTimeout);
         }
     }
 
