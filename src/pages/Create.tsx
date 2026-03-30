@@ -30,7 +30,14 @@ import WeblnButton from "../components/WeblnButton";
 import SettingsCog from "../components/settings/SettingsCog";
 import SettingsMenu from "../components/settings/SettingsMenu";
 import { config } from "../config";
-import { AssetKind, LN, RBTC, isEvmAsset } from "../consts/Assets";
+import { NetworkTransport } from "../configs/base";
+import {
+    AssetKind,
+    LN,
+    RBTC,
+    getNetworkTransport,
+    isWalletConnectableAsset,
+} from "../consts/Assets";
 import { Denomination, Side } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -99,18 +106,23 @@ const Create = () => {
         onchainAddress,
         setQuoteLoading,
     } = useCreateContext();
-    const { signer } = useWeb3Signer();
+    const { connectedWallet } = useWeb3Signer();
 
     let quoteDebounceTimeout: number | undefined;
     let quoteRequestId = 0;
 
     const connectedDestination = () => {
-        const signerAddress = signer()?.address;
+        const walletAddress = connectedWallet()?.address;
+        const transport = getNetworkTransport(pair().toAsset);
+        const normalize = (address: string) =>
+            transport === NetworkTransport.Evm
+                ? address.toLowerCase()
+                : address;
 
         return (
-            signerAddress !== undefined &&
+            walletAddress !== undefined &&
             onchainAddress() !== "" &&
-            onchainAddress().toLowerCase() === signerAddress.toLowerCase()
+            normalize(onchainAddress()) === normalize(walletAddress)
         );
     };
     const gasTopUpTrigger = createMemo(() => {
@@ -482,7 +494,7 @@ const Create = () => {
     });
 
     createEffect(
-        on([boltzFee, minerFee, pair, getGasToken], () => {
+        on([boltzFee, minerFee, pair, getGasToken, onchainAddress], () => {
             loadingGuard(async () => {
                 if (amountChanged() === Side.Receive) {
                     if (receiveAmount().isZero()) {
@@ -739,7 +751,7 @@ const Create = () => {
                         (pair().requiredInput === RequiredInput.Address ||
                             (pair().requiredInput === RequiredInput.Unknown &&
                                 pair().toAsset !== LN)) &&
-                        config.assets?.[pair().toAsset]?.type === AssetKind.UTXO
+                        !isWalletConnectableAsset(pair().toAsset)
                     }>
                     <AddressInput />
                 </Show>
@@ -763,20 +775,22 @@ const Create = () => {
                     <QrScan />
                 </Show>
                 <Show
-                    when={[pair().fromAsset, pair().toAsset].some(isEvmAsset)}>
+                    when={[pair().fromAsset, pair().toAsset].some(
+                        isWalletConnectableAsset,
+                    )}>
                     <ConnectWallet
                         asset={
-                            isEvmAsset(pair().fromAsset)
-                                ? pair().fromAsset
-                                : pair().toAsset
+                            isWalletConnectableAsset(pair().toAsset)
+                                ? pair().toAsset
+                                : pair().fromAsset
                         }
-                        syncAddress={isEvmAsset(pair().toAsset)}
+                        syncAddress={isWalletConnectableAsset(pair().toAsset)}
                         disabled={() => !pair().isRoutable}
                     />
                     {/* We have no gas abstraction for RBTC */}
                     <Show
                         when={
-                            isEvmAsset(pair().toAsset) &&
+                            isWalletConnectableAsset(pair().toAsset) &&
                             pair().toAsset !== RBTC &&
                             !connectedDestination()
                         }>

@@ -7,6 +7,8 @@ import {
 } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
+import { config as runtimeConfig } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { BTC, LBTC, LN, RBTC } from "../../src/consts/Assets";
 import { Side, SwapType } from "../../src/consts/Enums";
 import { Denomination } from "../../src/consts/Enums";
@@ -23,6 +25,19 @@ import {
 } from "../helper";
 import { pairs } from "../pairs";
 
+const originalAssets = structuredClone(runtimeConfig.assets ?? {});
+
+beforeAll(() => {
+    runtimeConfig.assets = {
+        ...runtimeConfig.assets,
+        "USDT0-SOL": structuredClone(mainnetConfig.assets["USDT0-SOL"]),
+    };
+});
+
+afterAll(() => {
+    runtimeConfig.assets = originalAssets;
+});
+
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
 }));
@@ -32,6 +47,10 @@ vi.mock("../../src/components/ConnectWallet", () => ({
 
 const setPairAssets = (fromAsset: string, toAsset: string) => {
     signals.setPair(new Pair(signals.pair().pairs, fromAsset, toAsset));
+};
+
+const flushQuoteDebounce = async () => {
+    await vi.runOnlyPendingTimersAsync();
 };
 
 describe("Create", () => {
@@ -93,6 +112,45 @@ describe("Create", () => {
         expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
     });
 
+    test("should show wallet section for non-EVM wallet pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, "USDT0-SOL");
+
+        expect(await screen.findByTestId("connect-wallet")).toBeInTheDocument();
+    });
+
+    test("should show only one destination address input for wallet-connectable non-EVM pairs", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Create />
+                </>
+            ),
+            {
+                wrapper: contextWrapper,
+            },
+        );
+
+        globalSignals.setPairs(pairs);
+        setPairAssets(BTC, "USDT0-SOL");
+
+        await screen.findByTestId("connect-wallet");
+        expect(screen.getAllByTestId("onchainAddress")).toHaveLength(1);
+    });
+
     test("should show WASM error", async () => {
         render(
             () => (
@@ -142,10 +200,6 @@ describe("Create", () => {
                 .mockName("calculateReceiveAmount");
             const button = await screen.findByTestId("create-swap-button");
 
-            expect(
-                within(button).queryByTestId("loading-spinner"),
-            ).not.toBeInTheDocument();
-
             fireEvent.input(await screen.findByTestId("sendAmount"), {
                 target: { value: "100000" },
             });
@@ -154,7 +208,7 @@ describe("Create", () => {
                 within(button).getByTestId("loading-spinner"),
             ).toBeInTheDocument();
 
-            await vi.advanceTimersByTimeAsync(500);
+            await flushQuoteDebounce();
 
             await waitFor(() => {
                 expect(currentPair.calculateReceiveAmount).toHaveBeenCalled();
@@ -209,7 +263,7 @@ describe("Create", () => {
                 target: { value: "100000" },
             });
 
-            await vi.advanceTimersByTimeAsync(500);
+            await flushQuoteDebounce();
 
             await waitFor(() => {
                 expect(currentPair.calculateReceiveAmount).toHaveBeenCalled();
@@ -225,6 +279,71 @@ describe("Create", () => {
             expect(latestCall?.[3]).toBe(signals.getGasToken());
             expect(latestCall?.[4]).toBe(
                 "0x5000000000000000000000000000000000000000",
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("should re-fetch receive quote when the destination address changes", async () => {
+        vi.useFakeTimers();
+
+        try {
+            render(
+                () => (
+                    <>
+                        <TestComponent />
+                        <Create />
+                    </>
+                ),
+                {
+                    wrapper: contextWrapper,
+                },
+            );
+
+            const currentPair = signals.pair();
+            Object.defineProperty(currentPair, "needsNetworkForQuote", {
+                configurable: true,
+                get: () => true,
+            });
+            currentPair.calculateReceiveAmount = vi
+                .fn(() => Promise.resolve(BigNumber(90_000)))
+                .mockName("calculateReceiveAmount");
+
+            signals.setAddressValid(true);
+            signals.setOnchainAddress(
+                "0x5000000000000000000000000000000000000000",
+            );
+
+            fireEvent.input(await screen.findByTestId("sendAmount"), {
+                target: { value: "100000" },
+            });
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(1);
+            });
+
+            signals.setOnchainAddress(
+                "0x6000000000000000000000000000000000000000",
+            );
+
+            await flushQuoteDebounce();
+
+            await waitFor(() => {
+                expect(
+                    currentPair.calculateReceiveAmount,
+                ).toHaveBeenCalledTimes(2);
+            });
+
+            const latestCall = vi
+                .mocked(currentPair.calculateReceiveAmount)
+                .mock.calls.at(-1);
+            expect(latestCall?.[4]).toBe(
+                "0x6000000000000000000000000000000000000000",
             );
         } finally {
             vi.useRealTimers();

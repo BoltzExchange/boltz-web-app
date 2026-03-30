@@ -36,6 +36,7 @@ vi.mock("../../src/config", () => ({
 }));
 
 vi.mock("../../src/consts/Assets", () => ({
+    getNetworkTransport: () => "evm",
     getTokenAddress: (asset: string) =>
         asset === "FINAL"
             ? "0xf100000000000000000000000000000000000000"
@@ -114,6 +115,10 @@ vi.mock("../../src/utils/boltzClient", () => ({
             },
         ],
     }),
+    getCommitmentLockupDetails: vi.fn().mockResolvedValue({
+        claimAddress: "0xb000000000000000000000000000000000000000",
+        timelock: 321,
+    }),
 }));
 
 vi.mock("../../src/utils/calculate", () => ({
@@ -135,10 +140,10 @@ vi.mock("../../src/utils/evmTransaction", () => ({
 
 vi.mock("../../src/utils/oft/oft", () => ({
     createOftContract: vi.fn((address: string) => ({ address })),
-    getOftContract: vi.fn((chainId: number) =>
+    getOftContract: vi.fn((route: { from: string }) =>
         Promise.resolve({
             address:
-                chainId === 1
+                route.from === "SRC"
                     ? "0x1111111111111111111111111111111111111111"
                     : "0x2222222222222222222222222222222222222222",
         }),
@@ -146,6 +151,7 @@ vi.mock("../../src/utils/oft/oft", () => ({
     getOftProvider: vi.fn(() => ({
         getTransactionReceipt: vi.fn().mockResolvedValue({
             logs: [],
+            blockNumber: 1,
         }),
     })),
     getOftReceivedEventByGuid: vi.fn().mockResolvedValue({
@@ -178,6 +184,15 @@ const oftUtils = await import("../../src/utils/oft/oft");
 describe("SwapExecutionWorker", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        Object.defineProperty(window.navigator, "locks", {
+            configurable: true,
+            value: {
+                request: vi.fn(
+                    async (_name: string, callback: () => Promise<unknown>) =>
+                        await callback(),
+                ),
+            },
+        });
         currentSwap = {
             id: "swap-1",
             type: "chain",
@@ -211,7 +226,6 @@ describe("SwapExecutionWorker", () => {
             oft: {
                 sourceAsset: "SRC",
                 destinationAsset: "DST",
-                destinationChainId: 2,
                 position: "pre",
                 txHash: "0xoftsend",
             },

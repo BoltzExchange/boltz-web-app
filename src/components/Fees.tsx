@@ -17,7 +17,7 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import { useWeb3Signer } from "../context/Web3";
 import { isConfidentialAddress } from "../utils/compat";
-import { formatAmount } from "../utils/denomination";
+import { formatAmount, formatDenomination } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 import { weiToSatoshi } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
@@ -121,6 +121,15 @@ const Fees = () => {
         return BigNumber(formatEther(fee))
             .toFixed(6)
             .replace(/\.?0+$/, "");
+    });
+    const oftTransferFee = createMemo(() => {
+        if (!pair().isRoutable) {
+            return undefined;
+        }
+
+        receiveAmount();
+
+        return pair().oftTransferFeeFromLatestQuote(sendAmount());
     });
 
     const gasAbstractionTrigger = createMemo(() => {
@@ -284,6 +293,31 @@ const Fees = () => {
                         {formattedOftMessagingFee()}
                     </span>{" "}
                     {pair().oftMessagingFeeToken}
+                </Show>
+                <Show
+                    when={
+                        oftTransferFee() !== undefined &&
+                        oftTransferFee()!.isGreaterThan(0) &&
+                        pair().oftTransferFeeAsset !== undefined
+                    }>
+                    <br />
+                    {t("legacy_mesh_fee_label")}:{" "}
+                    <span data-testid="legacy-mesh-fee">
+                        {formatAmount(
+                            oftTransferFee()!,
+                            denomination(),
+                            separator(),
+                            pair().oftTransferFeeAsset!,
+                            true,
+                        )}
+                    </span>
+                    <span
+                        class="denominator"
+                        data-denominator={formatDenomination(
+                            denomination(),
+                            pair().oftTransferFeeAsset!,
+                        )}
+                    />
                 </Show>
                 <Show when={getGasToken()}>
                     <br />

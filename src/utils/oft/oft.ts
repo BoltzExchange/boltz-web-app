@@ -1,3 +1,4 @@
+import { hex } from "@scure/base";
 import {
     Contract,
     type ContractRunner,
@@ -10,9 +11,19 @@ import {
     zeroPadValue,
 } from "ethers";
 import log from "loglevel";
+import { getUsdt0Mesh } from "src/consts/Assets";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
+import { NetworkTransport, Usdt0Kind } from "../../configs/base";
+import type { OftRoute } from "../Pair";
+import {
+    clearSolanaTokenAccountCreationCache,
+    decodeSolanaAddress,
+    shouldCreateSolanaTokenAccount,
+    solanaAtaRentExemptLamports,
+} from "../chains/solana";
+import { decodeTronBase58Address } from "../chains/tron";
 import { formatError } from "../errors";
 import {
     type Provider,
@@ -20,7 +31,6 @@ import {
     requireRpcUrls,
 } from "../provider";
 
-// TODO: legacy mesh is not supported yet
 // TODO: review quote methods
 
 type OftContract = {
@@ -48,6 +58,8 @@ const oftDeploymentsEndpoint = "https://docs.usdt0.to/api/deployments";
 const defaultOftName = "usdt0";
 const providerCache = new Map<string, Provider>();
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
+
+export const formatRoute = (route: OftRoute) => `${route.from} -> ${route.to}`;
 
 const oftAbi = [
     "function quoteOFT(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes)) view returns (tuple(uint256,uint256), tuple(int256,string)[], tuple(uint256,uint256))",
@@ -182,9 +194,18 @@ type OftContractInstance = {
 
 let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
 
+export const clearOftDeployments = () => {
+    oftDeploymentsPromise = undefined;
+    providerCache.clear();
+    clearSolanaTokenAccountCreationCache();
+};
+
 const type3Option = 3;
 const executorWorkerId = 1;
+const optionTypeLzReceive = 1;
 const optionTypeNativeDrop = 2;
+const hundredPercentBps = 10_000n;
+const legacyBridgeFeeBps = 3n;
 
 const fetchOftDeployments = async (): Promise<OftRegistry> => {
     const response = await fetch(oftDeploymentsEndpoint);
@@ -215,22 +236,31 @@ const getOftDeployments = (): Promise<OftRegistry> => {
     return oftDeploymentsPromise;
 };
 
-const getOftChains = (tokenConfig?: OftTokenConfig): OftChain[] => {
-    if (!tokenConfig) {
-        return [];
-    }
-
-    return tokenConfig.native;
-};
-
 const getOftChain = async (
-    chainId: number,
+    asset: string,
+    route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftChain | undefined> => {
     const deployments = await getOftDeployments();
     const tokenConfig = deployments[oftName.toLowerCase()];
+    if (tokenConfig === undefined) {
+        return undefined;
+    }
 
-    return getOftChains(tokenConfig).find((chain) => chain.chainId === chainId);
+    const assetConfig = config.assets?.[asset];
+    const meshKind = getUsdt0Mesh(route.from, route.to);
+    const registryKey: keyof OftTokenConfig =
+        meshKind === Usdt0Kind.Legacy ? "legacyMesh" : "native";
+
+    const chains = tokenConfig[registryKey];
+    const assetChainId = assetConfig?.network?.chainId;
+    const assetChainName = assetConfig?.network?.chainName?.toLowerCase();
+    return chains.find(
+        (chain) =>
+            (assetChainId !== undefined && chain.chainId === assetChainId) ||
+            (assetChainName !== undefined &&
+                chain.name.toLowerCase() === assetChainName),
+    );
 };
 
 export const getOftProvider = (sourceAsset: string): Provider => {
@@ -251,42 +281,29 @@ export const getOftProvider = (sourceAsset: string): Provider => {
 };
 
 export const getQuotedOftContract = async (
-    sourceAsset: string,
+    route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftContractInstance> => {
-    const sourceChainId = config.assets?.[sourceAsset]?.network?.chainId;
-    if (!sourceChainId) {
-        throw new Error(`Missing OFT source chain id for asset ${sourceAsset}`);
-    }
-
-    const oftContract = await getOftContract(sourceChainId, oftName);
-    if (!oftContract) {
-        throw new Error(
-            `Missing OFT contract for chain ${sourceChainId} and OFT ${oftName}`,
-        );
-    }
-
-    return createOftContract(oftContract.address, getOftProvider(sourceAsset));
-};
-
-export const getOftLzEid = async (
-    chainId: number,
-    oftName = defaultOftName,
-): Promise<string | undefined> => {
-    const chain = await getOftChain(chainId, oftName);
-    return chain?.lzEid;
+    const oftContract = await getOftContract(route, oftName);
+    return createOftContract(oftContract.address, getOftProvider(route.from));
 };
 
 export const getOftContract = async (
-    chainId: number,
+    route: OftRoute,
     oftName = defaultOftName,
-): Promise<OftContract | undefined> => {
-    const chain = await getOftChain(chainId, oftName);
-
-    return (
+): Promise<OftContract> => {
+    const chain = await getOftChain(route.from, route, oftName);
+    const contract =
         chain?.contracts.find((contract) => contract.name === "OFT") ??
-        chain?.contracts.find((contract) => contract.name === "OFT Adapter")
-    );
+        chain?.contracts.find((contract) => contract.name === "OFT Adapter") ??
+        chain?.contracts.find((contract) => contract.name === "OFT Program");
+    if (contract === undefined) {
+        throw new Error(
+            `Missing OFT contract for route ${formatRoute(route)} and OFT ${oftName}`,
+        );
+    }
+
+    return contract;
 };
 
 export const createOftContract = (
@@ -476,6 +493,39 @@ export const getOftReceivedEventByGuid = async (
 
 const newOptions = (): string => solidityPacked(["uint16"], [type3Option]);
 
+const encodeRecipient = (
+    transport: NetworkTransport,
+    recipient: string,
+): string => {
+    switch (transport) {
+        case NetworkTransport.Evm:
+            return zeroPadValue(recipient, 32);
+
+        case NetworkTransport.Solana: {
+            return `0x${hex.encode(decodeSolanaAddress(recipient))}`;
+        }
+
+        case NetworkTransport.Tron:
+            return zeroPadValue(
+                `0x${hex.encode(decodeTronBase58Address(recipient))}`,
+                32,
+            );
+    }
+};
+
+const encodeOftRecipient = (
+    asset: string,
+    recipient: string | undefined,
+): string => {
+    if (recipient === undefined) {
+        return encodeRecipient(NetworkTransport.Evm, ZeroAddress);
+    }
+    return encodeRecipient(
+        config.assets?.[asset]?.network?.transport,
+        recipient,
+    );
+};
+
 const addExecutorOption = (
     options: string,
     optionType: number,
@@ -492,9 +542,36 @@ const addExecutorOption = (
     ]);
 };
 
-const buildOftExtraOptions = (nativeDrop?: OftNativeDrop): string => {
+const appendExecutorOption = (
+    options: string,
+    optionType: number,
+    option: string,
+): string =>
+    addExecutorOption(
+        options === "0x" ? newOptions() : options,
+        optionType,
+        option,
+    );
+
+const buildOftExtraOptions = (
+    nativeDrop: OftNativeDrop | undefined,
+    createSolanaTokenAccount: boolean,
+): string => {
+    let options = "0x";
+
+    if (createSolanaTokenAccount) {
+        options = appendExecutorOption(
+            options,
+            optionTypeLzReceive,
+            solidityPacked(
+                ["uint128", "uint128"],
+                [0n, solanaAtaRentExemptLamports],
+            ),
+        );
+    }
+
     if (nativeDrop === undefined || nativeDrop.amount <= 0n) {
-        return "0x";
+        return options;
     }
 
     const option = solidityPacked(
@@ -502,31 +579,44 @@ const buildOftExtraOptions = (nativeDrop?: OftNativeDrop): string => {
         [nativeDrop.amount, zeroPadValue(nativeDrop.receiver, 32)],
     );
 
-    return addExecutorOption(newOptions(), optionTypeNativeDrop, option);
+    return appendExecutorOption(options, optionTypeNativeDrop, option);
+};
+
+const ceilDiv = (numerator: bigint, denominator: bigint): bigint => {
+    if (denominator <= 0n) {
+        throw new Error("denominator must be greater than zero");
+    }
+
+    return (numerator + denominator - 1n) / denominator;
+};
+
+const getLegacyMeshSourceAmount = (destinationAmount: bigint): bigint => {
+    if (legacyBridgeFeeBps >= hundredPercentBps) {
+        throw new Error("legacyBridgeFeeBps must be less than 100%");
+    }
+
+    return ceilDiv(
+        destinationAmount * hundredPercentBps,
+        hundredPercentBps - legacyBridgeFeeBps,
+    );
 };
 
 const createOftSendParam = async (
-    destinationChainId: number,
-    recipient: string,
+    route: OftRoute,
+    recipient: string | undefined,
     amount: bigint,
-    {
-        oftName = defaultOftName,
-        extraOptions = "0x",
-    }: {
-        oftName?: string;
-        extraOptions?: string;
-    } = {},
+    oftName = defaultOftName,
+    extraOptions = "0x",
 ): Promise<SendParam> => {
-    const lzEid = await getOftLzEid(destinationChainId, oftName);
-    if (!lzEid) {
+    const lzEid = (await getOftChain(route.to, route, oftName))?.lzEid;
+    if (lzEid === undefined) {
         throw new Error(
-            `Missing LayerZero endpoint id for chain ${destinationChainId} and OFT ${oftName}`,
+            `Missing LayerZero endpoint id for route ${formatRoute(route)} and OFT ${oftName}`,
         );
     }
-
     return [
         Number(lzEid),
-        zeroPadValue(recipient, 32),
+        encodeOftRecipient(route.to, recipient),
         amount,
         0n,
         extraOptions,
@@ -537,8 +627,8 @@ const createOftSendParam = async (
 
 export const quoteOftSend = async (
     oft: OftContractInstance,
-    destinationChainId: number,
-    recipient: string,
+    route: OftRoute,
+    recipient: string | undefined,
     amount: bigint,
     { oftName = defaultOftName, nativeDrop }: OftQuoteOptions = {},
 ): Promise<{
@@ -548,14 +638,16 @@ export const quoteOftSend = async (
     oftFeeDetails: OftFeeDetail[];
     oftReceipt: OftReceipt;
 }> => {
+    const createSolanaTokenAccount = await shouldCreateSolanaTokenAccount(
+        route.to,
+        recipient,
+    );
     const sendParam = await createOftSendParam(
-        destinationChainId,
+        route,
         recipient,
         amount,
-        {
-            oftName,
-            extraOptions: buildOftExtraOptions(nativeDrop),
-        },
+        oftName,
+        buildOftExtraOptions(nativeDrop, createSolanaTokenAccount),
     );
     const [oftLimit, oftFeeDetails, oftReceipt] =
         await oft.quoteOFT.staticCall(sendParam);
@@ -575,36 +667,23 @@ export const quoteOftSend = async (
 };
 
 export const buildOftSendAlchemyCall = async ({
-    sourceAsset,
-    destinationChainId,
+    route,
     recipient,
     amount,
     refundAddress,
     oftName = defaultOftName,
 }: {
-    sourceAsset: string;
-    destinationChainId: number;
+    route: OftRoute;
     recipient: string;
     amount: bigint;
     refundAddress: string;
     oftName?: string;
 }): Promise<AlchemyCall> => {
-    const sourceChainId = config.assets?.[sourceAsset]?.network?.chainId;
-    if (sourceChainId === undefined) {
-        throw new Error(`missing OFT source chain id for asset ${sourceAsset}`);
-    }
-
-    const oftContract = await getOftContract(sourceChainId, oftName);
-    if (oftContract === undefined) {
-        throw new Error(
-            `missing OFT contract for chain ${sourceChainId} and OFT ${oftName}`,
-        );
-    }
-
-    const quotedOft = await getQuotedOftContract(sourceAsset, oftName);
+    const oftContract = await getOftContract(route, oftName);
+    const quotedOft = await getQuotedOftContract(route, oftName);
     const { sendParam, msgFee } = await quoteOftSend(
         quotedOft,
-        destinationChainId,
+        route,
         recipient,
         amount,
         { oftName },
@@ -622,8 +701,7 @@ export const buildOftSendAlchemyCall = async ({
 };
 
 export const quoteOftReceiveAmount = async (
-    sourceAsset: string,
-    destinationChainId: number,
+    route: OftRoute,
     amount: bigint,
     options: OftQuoteOptions = {},
 ): Promise<{
@@ -645,11 +723,11 @@ export const quoteOftReceiveAmount = async (
         };
     }
 
-    const oft = await getQuotedOftContract(sourceAsset, options.oftName);
+    const oft = await getQuotedOftContract(route, options.oftName);
     const { msgFee, oftLimit, oftFeeDetails, oftReceipt } = await quoteOftSend(
         oft,
-        destinationChainId,
-        options.recipient ?? ZeroAddress,
+        route,
+        options.recipient,
         amount,
         options,
     );
@@ -665,8 +743,7 @@ export const quoteOftReceiveAmount = async (
 };
 
 export const quoteOftAmountInForAmountOut = async (
-    sourceAsset: string,
-    destinationChainId: number,
+    route: OftRoute,
     amountOut: bigint,
     options: OftQuoteOptions = {},
 ): Promise<bigint> => {
@@ -674,42 +751,31 @@ export const quoteOftAmountInForAmountOut = async (
         return 0n;
     }
 
+    if (getUsdt0Mesh(route.from, route.to) === Usdt0Kind.Legacy) {
+        return getLegacyMeshSourceAmount(amountOut);
+    }
+
     let low = amountOut;
     let high = amountOut;
-    let quote = await quoteOftReceiveAmount(
-        sourceAsset,
-        destinationChainId,
-        high,
-        options,
-    );
+    let quote = await quoteOftReceiveAmount(route, high, options);
 
     let attempts = 0;
     while (quote.amountOut < amountOut) {
         low = high + 1n;
         high *= 2n;
-        quote = await quoteOftReceiveAmount(
-            sourceAsset,
-            destinationChainId,
-            high,
-            options,
-        );
+        quote = await quoteOftReceiveAmount(route, high, options);
         attempts += 1;
 
         if (attempts > 32) {
             throw new Error(
-                `Could not quote OFT amount for ${sourceAsset} to ${destinationChainId}`,
+                `Could not quote OFT amount for route ${formatRoute(route)}`,
             );
         }
     }
 
     while (low < high) {
         const mid = low + (high - low) / 2n;
-        const midQuote = await quoteOftReceiveAmount(
-            sourceAsset,
-            destinationChainId,
-            mid,
-            options,
-        );
+        const midQuote = await quoteOftReceiveAmount(route, mid, options);
 
         if (midQuote.amountOut >= amountOut) {
             high = mid;

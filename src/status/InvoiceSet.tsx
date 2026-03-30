@@ -38,7 +38,6 @@ const InvoiceSet = () => {
                 <LockupEvm
                     swapId={submarine.id}
                     gasAbstraction={getLockupGasAbstraction(submarine)}
-                    signerAddress={submarine.signer}
                     amount={submarine.expectedAmount}
                     claimAddress={submarine.claimAddress}
                     preimageHash={preimageHash()}

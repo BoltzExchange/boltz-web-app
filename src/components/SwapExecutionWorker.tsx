@@ -9,7 +9,8 @@ import {
     waitForPreparedCallTransactionHash,
 } from "../alchemy/Alchemy";
 import { config } from "../config";
-import { getTokenAddress } from "../consts/Assets";
+import { NetworkTransport } from "../configs/base";
+import { getNetworkTransport, getTokenAddress } from "../consts/Assets";
 import { SwapType } from "../consts/Enums";
 import { swapStatusPending } from "../consts/SwapStatus";
 import { useGlobalContext } from "../context/Global";
@@ -20,7 +21,10 @@ import {
     useWeb3Signer,
 } from "../context/Web3";
 import { HopsPosition } from "../utils/Pair";
-import { encodeDexQuote } from "../utils/boltzClient";
+import {
+    encodeDexQuote,
+    getCommitmentLockupDetails,
+} from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
 import { postCommitmentSignatureForTransaction } from "../utils/commitment";
 import {
@@ -86,21 +90,6 @@ const getSwapPreimageHash = async (swap: SomeSwap): Promise<string> => {
 
         case SwapType.Chain:
             return hex.encode(sha256(hex.decode((swap as ChainSwap).preimage)));
-
-        default:
-            throw new Error(
-                `unsupported swap type for commitment execution: ${swap.type}`,
-            );
-    }
-};
-
-const getSwapTimeoutBlockHeight = (swap: SomeSwap) => {
-    switch (swap.type) {
-        case SwapType.Submarine:
-            return (swap as SubmarineSwap).timeoutBlockHeight;
-
-        case SwapType.Chain:
-            return (swap as ChainSwap).lockupDetails.timeoutBlockHeight;
 
         default:
             throw new Error(
@@ -244,21 +233,15 @@ export const SwapExecutionWorker = () => {
         swapId: string,
         destinationAsset: string,
         guid: string,
+        sourceAsset: string,
     ) => {
         const destinationChainId =
             config.assets?.[destinationAsset]?.network?.chainId;
-        if (destinationChainId === undefined) {
-            throw new Error(
-                `missing OFT destination chain id for asset: ${destinationAsset}`,
-            );
-        }
-
-        const oftContract = await getOftContract(destinationChainId);
-        if (oftContract === undefined) {
-            throw new Error(
-                `missing OFT contract for chain: ${destinationChainId}`,
-            );
-        }
+        const oftRoute = {
+            from: destinationAsset,
+            to: sourceAsset,
+        };
+        const oftContract = await getOftContract(oftRoute);
 
         const provider = assertTransactionSignerProvider(
             getGasAbstractionSigner(destinationAsset),
@@ -358,18 +341,11 @@ export const SwapExecutionWorker = () => {
             }),
         );
 
-        const sourceChainId =
-            config.assets?.[currentSwap.oft.sourceAsset]?.network?.chainId;
-        if (sourceChainId === undefined) {
-            throw new Error(
-                `missing OFT source chain id for asset: ${currentSwap.oft.sourceAsset}`,
-            );
-        }
-
-        const sourceOft = await getOftContract(sourceChainId);
-        if (sourceOft === undefined) {
-            throw new Error(`missing OFT contract for chain: ${sourceChainId}`);
-        }
+        const oftRoute = {
+            from: currentSwap.oft.sourceAsset,
+            to: currentSwap.oft.destinationAsset,
+        };
+        const sourceOft = await getOftContract(oftRoute);
 
         const sendReceipt = await waitForOftSendReceipt(
             currentSwap.id,
@@ -391,6 +367,14 @@ export const SwapExecutionWorker = () => {
         }
 
         const sourceProvider = getOftProvider(currentSwap.oft.sourceAsset);
+        const sourceTransport = getNetworkTransport(
+            currentSwap.oft.sourceAsset,
+        );
+        if (sourceTransport !== NetworkTransport.Evm) {
+            throw new Error(
+                `OFT send decoding requires an EVM source asset, got ${String(sourceTransport)}`,
+            );
+        }
         const sourceContract = createOftContract(
             sourceOft.address,
             sourceProvider,
@@ -400,6 +384,7 @@ export const SwapExecutionWorker = () => {
             sendReceipt,
             sourceOft.address,
         );
+
         log.info(
             "Swap execution decoded OFT send guid",
             getSwapExecutionLogContext(currentSwap.id, {
@@ -411,6 +396,7 @@ export const SwapExecutionWorker = () => {
             currentSwap.id,
             currentSwap.oft.destinationAsset,
             guid,
+            currentSwap.oft.sourceAsset,
         );
         if (receivedEvent === undefined) {
             return;
@@ -421,6 +407,9 @@ export const SwapExecutionWorker = () => {
             return;
         }
 
+        const commitmentLockupDetails = await getCommitmentLockupDetails(
+            latestSwap.assetSend,
+        );
         const hop = latestSwap.dex.hops[0];
         const gasAbstractionSigner = getGasAbstractionSigner(
             latestSwap.oft.destinationAsset,
@@ -497,7 +486,7 @@ export const SwapExecutionWorker = () => {
                 ? (latestSwap as ChainSwap).lockupDetails.claimAddress
                 : latestSwap.claimAddress,
             gasAbstractionSigner.address,
-            getSwapTimeoutBlockHeight(latestSwap),
+            commitmentLockupDetails.timelock,
             encoded.calls.map((call) => ({
                 target: call.to,
                 value: call.value,

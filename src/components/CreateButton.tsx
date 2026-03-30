@@ -8,6 +8,7 @@ import { createEffect, createSignal, on } from "solid-js";
 import { config } from "../config";
 import {
     BTC,
+    LN,
     RBTC,
     USDT0,
     getCanonicalAsset,
@@ -72,16 +73,13 @@ const buildOftDetail = (
     destinationAsset: string,
     position: OftPosition,
 ): OftDetail | undefined => {
-    const destinationChainId =
-        config.assets?.[destinationAsset]?.network?.chainId;
-    if (destinationChainId === undefined) {
+    if (config.assets?.[destinationAsset] === undefined) {
         return undefined;
     }
 
     return {
         sourceAsset,
         destinationAsset,
-        destinationChainId,
         position,
     };
 };
@@ -135,7 +133,10 @@ export const getClaimAddress = async (
         log.info("RIF smart wallet not needed");
     }
 
-    if (isEvmAsset(assetReceive()) && assetReceive() !== RBTC) {
+    if (
+        (isEvmAsset(assetReceive()) || isUsdt0Asset(assetReceive())) &&
+        assetReceive() !== RBTC
+    ) {
         const gasSigner = getGasAbstractionSigner(
             isUsdt0Asset(assetReceive()) ? USDT0 : assetReceive(),
         );
@@ -210,6 +211,7 @@ const CreateButton = () => {
     } = useCreateContext();
     const {
         signer,
+        connectedWallet,
         providers,
         getEtherSwap,
         getErc20Swap,
@@ -337,7 +339,9 @@ const CreateButton = () => {
 
     const getOriginalDestination = () =>
         originalDestination() ||
-        (isEvmAsset(assetReceive()) ? onchainAddress() : undefined);
+        (assetReceive() !== LN && onchainAddress() !== ""
+            ? onchainAddress()
+            : undefined);
 
     const fetchInvoice = async () => {
         if (lnurl() !== undefined && lnurl() !== "") {
@@ -694,7 +698,7 @@ const CreateButton = () => {
                 signer:
                     // We do not have to commit to a signer when creating submarine swaps
                     swapType() !== SwapType.Submarine
-                        ? signer()?.address
+                        ? (signer()?.address ?? connectedWallet()?.address)
                         : undefined,
                 derivationPath:
                     swapType() !== SwapType.Submarine &&

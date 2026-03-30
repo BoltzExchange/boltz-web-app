@@ -1,6 +1,8 @@
 import type { Asset, Config, Usdt0Variant } from "src/configs/base";
 import {
     Explorer,
+    NetworkTransport,
+    Usdt0Kind,
     arbitrumExplorer,
     arbitrumNetwork,
     baseConfig,
@@ -24,39 +26,53 @@ if (polygonRpcEndpoint) {
     polygonRpcUrls.unshift(polygonRpcEndpoint);
 }
 
-const createUsdt0VariantAsset = ({
-    chainName,
-    canSend,
-    symbol,
-    gasToken,
-    chainId,
-    tokenAddress,
-    blockExplorerUrl,
-    rpcUrls,
-}: Usdt0Variant): Asset => ({
-    type: AssetKind.ERC20,
-    canSend,
-    blockExplorerUrl: {
-        id: Explorer.Blockscout,
-        normal: blockExplorerUrl,
-    },
-    network: {
-        chainName,
-        symbol,
-        gasToken: gasToken ?? symbol,
-        chainId,
-        rpcUrls,
-        nativeCurrency: {
-            name: gasToken ?? symbol,
-            symbol: gasToken ?? symbol,
-            decimals: 18,
+const getExplorerId = (transport: NetworkTransport): Explorer => {
+    switch (transport) {
+        case NetworkTransport.Evm:
+            return Explorer.Blockscout;
+
+        case NetworkTransport.Solana:
+            return Explorer.Solscan;
+
+        case NetworkTransport.Tron:
+            return Explorer.Tronscan;
+    }
+};
+
+const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
+    const transport = variant.transport ?? NetworkTransport.Evm;
+    const mesh = variant.mesh ?? Usdt0Kind.Native;
+
+    const asset: Asset = {
+        type: AssetKind.ERC20,
+        canSend: variant.canSend,
+        blockExplorerUrl: {
+            id: getExplorerId(transport),
+            normal: variant.blockExplorerUrl,
         },
-    },
-    token: {
-        address: tokenAddress,
-        decimals: 6,
-    },
-});
+        network: {
+            chainName: variant.chainName,
+            symbol: variant.symbol,
+            gasToken: variant.gasToken ?? variant.symbol,
+            transport,
+            rpcUrls: variant.rpcUrls,
+            mesh,
+        },
+        token: {
+            address: variant.tokenAddress,
+            decimals: 6,
+        },
+    };
+    if (transport === NetworkTransport.Evm) {
+        asset.network.chainId = variant.chainId;
+        asset.network.nativeCurrency = {
+            name: variant.gasToken ?? variant.symbol,
+            symbol: variant.gasToken ?? variant.symbol,
+            decimals: 18,
+        };
+    }
+    return asset;
+};
 
 const usdt0Variants: Usdt0Variant[] = [
     {
@@ -265,6 +281,30 @@ const usdt0Variants: Usdt0Variant[] = [
         rpcUrls: ["https://unichain-rpc.publicnode.com"],
     },
     {
+        asset: "USDT0-SOL",
+        canSend: false,
+        chainName: "Solana",
+        symbol: "SOL",
+        gasToken: "SOL",
+        transport: NetworkTransport.Solana,
+        tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        blockExplorerUrl: "https://solscan.io",
+        rpcUrls: ["https://solana-rpc.publicnode.com"],
+        mesh: Usdt0Kind.Legacy,
+    },
+    {
+        asset: "USDT0-TRON",
+        canSend: false,
+        chainName: "Tron",
+        symbol: "TRX",
+        gasToken: "TRX",
+        transport: NetworkTransport.Tron,
+        tokenAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        blockExplorerUrl: "https://tronscan.org/#",
+        rpcUrls: ["https://api.trongrid.io"],
+        mesh: Usdt0Kind.Legacy,
+    },
+    {
         asset: "USDT0-XLAYER",
         canSend: false,
         chainName: "XLayer",
@@ -344,6 +384,7 @@ const config = {
                 chainName: "Rootstock",
                 symbol: "RBTC",
                 gasToken: "RBTC",
+                transport: NetworkTransport.Evm,
                 chainId: 30,
                 rpcUrls: rskRpcUrls,
                 nativeCurrency: {

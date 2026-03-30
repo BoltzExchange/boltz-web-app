@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { NetworkTransport, Usdt0Kind } from "../configs/base";
 import { AssetKind } from "./AssetKind";
 
 export { AssetKind };
@@ -61,8 +62,27 @@ export const isUsdt0Variant = (asset: string): boolean =>
 export const isUsdt0Asset = (asset: string): boolean =>
     asset === USDT0 || isUsdt0Variant(asset);
 
+export const getNetworkTransport = (
+    asset: string,
+): NetworkTransport | undefined => {
+    return config.assets?.[asset]?.network?.transport;
+};
+
 export const getCanonicalAsset = (asset: string): string =>
     isUsdt0Variant(asset) ? USDT0 : asset;
+
+export const getUsdt0Mesh = (from: string, to?: string): Usdt0Kind => {
+    const meshKinds = [from, to]
+        .filter((candidate): candidate is string => candidate !== undefined)
+        .map(
+            (candidate) =>
+                config.assets?.[candidate]?.network?.mesh ?? Usdt0Kind.Native,
+        );
+
+    return meshKinds.includes(Usdt0Kind.Legacy)
+        ? Usdt0Kind.Legacy
+        : Usdt0Kind.Native;
+};
 
 const assetDisplaySymbols: Record<string, string> = {
     [LBTC]: "LBTC",
@@ -104,9 +124,22 @@ export const isEvmAsset = (asset: string): boolean => {
         return false;
     }
 
+    if (assetConfig.type === AssetKind.EVMNative) {
+        return true;
+    }
+
     return (
-        assetConfig.type === AssetKind.EVMNative ||
-        assetConfig.type === AssetKind.ERC20
+        assetConfig.type === AssetKind.ERC20 &&
+        getNetworkTransport(asset) === NetworkTransport.Evm
+    );
+};
+
+export const isWalletConnectableAsset = (asset: string): boolean => {
+    const transport = getNetworkTransport(asset);
+    return (
+        transport === NetworkTransport.Evm ||
+        transport === NetworkTransport.Solana ||
+        transport === NetworkTransport.Tron
     );
 };
 

@@ -6,6 +6,7 @@ import { BTC, LBTC, LN, USDT0 } from "../../src/consts/Assets";
 import Pair, { RequiredInput } from "../../src/utils/Pair";
 import type * as BoltzClientModule from "../../src/utils/boltzClient";
 import type { Pairs, QuoteData } from "../../src/utils/boltzClient";
+import type * as SolanaModule from "../../src/utils/chains/solana";
 import type * as OftModule from "../../src/utils/oft/oft";
 import type * as QouterModule from "../../src/utils/qouter";
 
@@ -14,6 +15,7 @@ const {
     quoteDexAmountOutMock,
     quoteOftAmountInForAmountOutMock,
     quoteOftReceiveAmountMock,
+    shouldCreateSolanaTokenAccountMock,
     fetchDexQuoteMock,
     fetchGasTokenQuoteMock,
     gasTopUpSupportedMock,
@@ -24,6 +26,8 @@ const {
     quoteOftAmountInForAmountOutMock:
         vi.fn<typeof OftModule.quoteOftAmountInForAmountOut>(),
     quoteOftReceiveAmountMock: vi.fn<typeof OftModule.quoteOftReceiveAmount>(),
+    shouldCreateSolanaTokenAccountMock:
+        vi.fn<typeof SolanaModule.shouldCreateSolanaTokenAccount>(),
     fetchDexQuoteMock: vi.fn<typeof QouterModule.fetchDexQuote>(),
     fetchGasTokenQuoteMock: vi.fn<typeof QouterModule.fetchGasTokenQuote>(),
     gasTopUpSupportedMock: vi.fn<typeof QouterModule.gasTopUpSupported>(),
@@ -115,6 +119,17 @@ vi.mock("../../src/utils/oft/oft", () => ({
     quoteOftAmountInForAmountOut: quoteOftAmountInForAmountOutMock,
     quoteOftReceiveAmount: quoteOftReceiveAmountMock,
 }));
+
+vi.mock("../../src/utils/chains/solana", async () => {
+    const actual = await vi.importActual<typeof SolanaModule>(
+        "../../src/utils/chains/solana",
+    );
+
+    return {
+        ...actual,
+        shouldCreateSolanaTokenAccount: shouldCreateSolanaTokenAccountMock,
+    };
+});
 
 vi.mock("../../src/utils/qouter", () => ({
     fetchDexQuote: fetchDexQuoteMock,
@@ -230,11 +245,13 @@ describe("Pair", () => {
         quoteDexAmountOutMock.mockReset();
         quoteOftAmountInForAmountOutMock.mockReset();
         quoteOftReceiveAmountMock.mockReset();
+        shouldCreateSolanaTokenAccountMock.mockReset();
         fetchDexQuoteMock.mockReset();
         fetchGasTokenQuoteMock.mockReset();
         gasTopUpSupportedMock.mockReset();
         getGasTopUpNativeAmountMock.mockReset();
         gasTopUpSupportedMock.mockReturnValue(true);
+        shouldCreateSolanaTokenAccountMock.mockResolvedValue(false);
     });
 
     afterEach(() => {
@@ -418,6 +435,26 @@ describe("Pair", () => {
         expect(creationData?.to).toBe(BTC);
     });
 
+    test("should cache OFT transfer fees in reverse quotes for post-OFT pairs", async () => {
+        quoteOftAmountInForAmountOutMock.mockResolvedValue(1_030n);
+        quoteOftReceiveAmountMock.mockResolvedValue(
+            makeOftQuote({
+                amountIn: 1_030n,
+                amountOut: 1_000n,
+                msgFee: 0n,
+            }),
+        );
+
+        const pair = new Pair(pairs, LN, "USDT0-POL");
+        const sendAmount = await pair.calculateSendAmount(BigNumber(1_000), 0);
+
+        expect(sendAmount.toNumber()).toBe(1_030);
+        expect(pair.oftTransferFeeFromLatestQuote(sendAmount)?.toNumber()).toBe(
+            30,
+        );
+        expect(pair.oftTransferFeeAsset).toBe("USDT0-POL");
+    });
+
     test("should include OFT native drop costs in post-OFT receive quotes", async () => {
         getGasTopUpNativeAmountMock.mockResolvedValue(77n);
         quoteDexAmountOutMock.mockResolvedValue([
@@ -426,15 +463,14 @@ describe("Pair", () => {
                 data: { route: "native-fee" },
             },
         ]);
-        quoteOftReceiveAmountMock.mockImplementation(
-            (_sourceAsset, _destinationChainId, amount) =>
-                Promise.resolve(
-                    makeOftQuote({
-                        amountIn: amount,
-                        amountOut: amount,
-                        msgFee: 25n,
-                    }),
-                ),
+        quoteOftReceiveAmountMock.mockImplementation((_route, amount) =>
+            Promise.resolve(
+                makeOftQuote({
+                    amountIn: amount,
+                    amountOut: amount,
+                    msgFee: 25n,
+                }),
+            ),
         );
 
         const pair = new Pair(pairs, LN, "USDT0-POL");
@@ -449,10 +485,29 @@ describe("Pair", () => {
         );
 
         expect(receiveAmount.toNumber()).toBe(900);
-        expect(quoteOftReceiveAmountMock).toHaveBeenCalledWith(
-            USDT0,
-            137,
+        expect(quoteOftReceiveAmountMock).toHaveBeenCalledTimes(2);
+        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+            1,
+            {
+                from: USDT0,
+                to: "USDT0-POL",
+            },
             1000n,
+            {
+                recipient,
+                nativeDrop: {
+                    amount: 77n,
+                    receiver: recipient,
+                },
+            },
+        );
+        expect(quoteOftReceiveAmountMock).toHaveBeenNthCalledWith(
+            2,
+            {
+                from: USDT0,
+                to: "USDT0-POL",
+            },
+            900n,
             {
                 recipient,
                 nativeDrop: {
@@ -475,7 +530,7 @@ describe("Pair", () => {
             },
         ]);
         quoteOftReceiveAmountMock.mockImplementation(
-            (_sourceAsset, _destinationChainId, amount, options) => {
+            (_route, amount, options) => {
                 if (options?.nativeDrop !== undefined) {
                     throw {
                         data: "0x0084ce020000000000000000000000000000000000000000000000000c49bf8c0491425000000000000000000000000000000000000000000000000002ea11e32ad50000",

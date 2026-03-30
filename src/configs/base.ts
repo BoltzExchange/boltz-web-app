@@ -3,6 +3,17 @@ import type log from "loglevel";
 import { type AssetKind } from "../consts/AssetKind";
 import { Network } from "../consts/Network";
 
+export const enum NetworkTransport {
+    Evm = "evm",
+    Solana = "solana",
+    Tron = "tron",
+}
+
+export const enum Usdt0Kind {
+    Native = "native",
+    Legacy = "legacy",
+}
+
 // TODO: which properties do we really need?
 export type Usdt0Variant = {
     asset: string;
@@ -10,10 +21,12 @@ export type Usdt0Variant = {
     chainName: string;
     symbol: string;
     gasToken?: string;
-    chainId: number;
+    transport?: NetworkTransport;
+    chainId?: number;
     tokenAddress: string;
     blockExplorerUrl: string;
     rpcUrls: string[];
+    mesh?: Usdt0Kind;
 };
 
 export type Asset = {
@@ -34,13 +47,15 @@ export type Asset = {
         chainName: string;
         symbol: string;
         gasToken: string;
-        chainId: number;
+        transport: NetworkTransport;
+        chainId?: number;
         rpcUrls: string[];
-        nativeCurrency: {
+        nativeCurrency?: {
             name: string;
             symbol: string;
             decimals: number;
         };
+        mesh?: Usdt0Kind;
     };
     token?: {
         address: string;
@@ -53,6 +68,8 @@ export enum Explorer {
     Mempool = "mempool",
     Esplora = "esplora",
     Blockscout = "blockscout",
+    Solscan = "solscan",
+    Tronscan = "tronscan",
 }
 
 export type Url = {
@@ -84,6 +101,7 @@ export const arbitrumNetwork = {
     symbol: "ARB",
     gasToken: "ETH",
     chainName: Network.Arbitrum,
+    transport: NetworkTransport.Evm,
     chainId: 42161,
     rpcUrls: ["https://arb1.arbitrum.io/rpc"],
     nativeCurrency: {

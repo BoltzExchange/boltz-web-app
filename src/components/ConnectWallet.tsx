@@ -1,19 +1,52 @@
 import log from "loglevel";
 import { IoClose } from "solid-icons/io";
 import type { Accessor, Setter } from "solid-js";
-import { For, Show, createEffect, createSignal, on, onCleanup } from "solid-js";
+import {
+    For,
+    Show,
+    createEffect,
+    createMemo,
+    createSignal,
+    on,
+    onCleanup,
+} from "solid-js";
 
 import { config } from "../config";
-import { isEvmAsset } from "../consts/Assets";
-import type { EIP6963ProviderInfo } from "../consts/Types";
+import { NetworkTransport } from "../configs/base";
+import {
+    getNetworkTransport,
+    isWalletConnectableAsset,
+} from "../consts/Assets";
+import type {
+    EIP6963ProviderDetail,
+    EIP6963ProviderInfo,
+} from "../consts/Types";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
-import { type Signer, useWeb3Signer } from "../context/Web3";
+import { type ConnectedWallet, useWeb3Signer } from "../context/Web3";
 import "../style/web3.scss";
 import { formatError } from "../utils/errors";
 import { cropString, isMobile } from "../utils/helper";
 import HardwareDerivationPaths, { connect } from "./HardwareDerivationPaths";
 import { hiddenInformation } from "./settings/PrivacyMode";
+
+const walletConnectRdns = "wallet-connect";
+
+const getSupportedProviders = (
+    asset: string,
+    allProviders: Record<string, EIP6963ProviderDetail>,
+) => {
+    const transport = getNetworkTransport(asset);
+    const providers = Object.values(allProviders);
+
+    if (transport === undefined || transport === NetworkTransport.Evm) {
+        return providers;
+    }
+
+    return providers.filter(
+        (provider) => provider.info.rdns === walletConnectRdns,
+    );
+};
 
 const Modal = (props: {
     asset?: string;
@@ -22,13 +55,16 @@ const Modal = (props: {
     setShow: Setter<boolean>;
 }) => {
     const { t, notify } = useGlobalContext();
-    const { providers, connectProvider, hasBrowserWallet, setWalletConnected } =
+    const { providers, connectProvider, setWalletConnected, hasBrowserWallet } =
         useWeb3Signer();
 
     const [showDerivationPaths, setShowDerivationPaths] =
         createSignal<boolean>(false);
     const [hardwareProvider, setHardwareProvider] =
         createSignal<EIP6963ProviderInfo>(undefined);
+    const availableProviders = createMemo(() =>
+        getSupportedProviders(props.asset, providers()),
+    );
 
     const Provider = (providerProps: { provider: EIP6963ProviderInfo }) => {
         return (
@@ -90,7 +126,11 @@ const Modal = (props: {
                     <IoClose />
                 </span>
                 <hr class="spacer" />
-                <Show when={!hasBrowserWallet()}>
+                <Show
+                    when={
+                        getNetworkTransport(props.asset) ===
+                            NetworkTransport.Evm && !hasBrowserWallet()
+                    }>
                     <hr />
 
                     <div class="no-browser-wallet">
@@ -99,7 +139,7 @@ const Modal = (props: {
                     <hr class="spacer" />
                 </Show>
                 <For
-                    each={Object.values(providers()).sort((a, b) =>
+                    each={availableProviders().sort((a, b) =>
                         a.info.name
                             .toLowerCase()
                             .localeCompare(b.info.name.toLowerCase()),
@@ -124,6 +164,9 @@ const ConnectModal = (props: {
 }) => {
     const { t, notify } = useGlobalContext();
     const { providers, connectProvider, setWalletConnected } = useWeb3Signer();
+    const availableProviders = createMemo(() =>
+        getSupportedProviders(props.asset, providers()),
+    );
 
     const [show, setShow] = createSignal<boolean>(false);
 
@@ -135,14 +178,18 @@ const ConnectModal = (props: {
                     props.disabled !== undefined ? props.disabled() : false
                 }
                 onClick={async () => {
-                    if (Object.keys(providers()).length > 1) {
+                    if (availableProviders().length === 0) {
+                        return;
+                    }
+
+                    if (availableProviders().length > 1) {
                         setShow(true);
                     } else {
                         // Do not show the modal when there is only one option to select
                         const connected = await connect(
                             notify,
                             connectProvider,
-                            Object.values(providers())[0].info,
+                            availableProviders()[0].info,
                             props.derivationPath,
                             props.asset,
                         );
@@ -256,31 +303,52 @@ const ConnectWallet = (props: {
     syncAddress?: boolean;
 }) => {
     const { t } = useGlobalContext();
-    const { providers, signer } = useWeb3Signer();
+    const { providers, connectedWallet } = useWeb3Signer();
     const { setAddressValid, setOnchainAddress } = useCreateContext();
 
-    const address = () => signer()?.address;
+    const address = () => connectedWallet()?.address;
     const [networkValid, setNetworkValid] = createSignal<boolean>(true);
+    const [walletCompatible, setWalletCompatible] = createSignal<boolean>(true);
     let latestSyncId = 0;
 
     const syncWalletState = async (
         asset: string,
-        activeSigner: Signer | undefined,
+        activeWallet: ConnectedWallet | undefined,
         currentAddress: string | undefined,
         syncId: number,
     ) => {
+        const transport = getNetworkTransport(asset);
         const chainId = config.assets?.[asset]?.network?.chainId;
         const signerChainId =
-            currentAddress !== undefined && chainId !== undefined
+            currentAddress !== undefined &&
+            transport === NetworkTransport.Evm &&
+            chainId !== undefined
                 ? Number(
-                      (await activeSigner?.provider.getNetwork())?.chainId ||
-                          -1,
+                      (await activeWallet?.signer?.provider.getNetwork())
+                          ?.chainId || -1,
                   )
                 : undefined;
 
         if (syncId !== latestSyncId) {
             return;
         }
+
+        if (
+            currentAddress !== undefined &&
+            transport !== undefined &&
+            activeWallet?.transport !== transport
+        ) {
+            setWalletCompatible(false);
+            setNetworkValid(true);
+
+            if (props.syncAddress) {
+                setAddressValid(false);
+                setOnchainAddress("");
+            }
+            return;
+        }
+
+        setWalletCompatible(true);
 
         if (
             currentAddress !== undefined &&
@@ -293,7 +361,7 @@ const ConnectWallet = (props: {
 
         setNetworkValid(true);
 
-        if (isEvmAsset(asset) && props.syncAddress) {
+        if (isWalletConnectableAsset(asset) && props.syncAddress) {
             setAddressValid(currentAddress !== undefined);
             setOnchainAddress(currentAddress || "");
             return;
@@ -302,10 +370,10 @@ const ConnectWallet = (props: {
 
     createEffect(
         on(
-            [() => props.asset, signer, address],
-            ([asset, activeSigner, addr]) => {
+            [() => props.asset, connectedWallet, address],
+            ([asset, activeWallet, addr]) => {
                 const syncId = ++latestSyncId;
-                void syncWalletState(asset, activeSigner, addr, syncId);
+                void syncWalletState(asset, activeWallet, addr, syncId);
             },
         ),
     );
@@ -319,14 +387,14 @@ const ConnectWallet = (props: {
 
     return (
         <Show
-            when={Object.keys(providers()).length > 0}
+            when={getSupportedProviders(props.asset, providers()).length > 0}
             fallback={
                 <button class="btn" disabled>
                     {t("no_wallet")}
                 </button>
             }>
             <Show
-                when={address() !== undefined}
+                when={address() !== undefined && walletCompatible()}
                 fallback={
                     <ConnectModal
                         asset={props.asset}

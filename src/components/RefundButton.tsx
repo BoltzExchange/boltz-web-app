@@ -209,10 +209,14 @@ const buildRefundFollowUpCalls = async (
         );
     }
 
-    const quotedOft = await getQuotedOftContract(oft.destinationAsset);
+    const route = {
+        from: oft.destinationAsset,
+        to: oft.sourceAsset,
+    };
+    const quotedOft = await getQuotedOftContract(route);
     const { msgFee } = await quoteOftSend(
         quotedOft,
-        sourceChainId,
+        route,
         resolvedDestination,
         quoteAmount,
     );
@@ -285,8 +289,7 @@ const buildRefundFollowUpCalls = async (
         ...tradeCalls,
         ...msgFeeCalls,
         await buildOftSendAlchemyCall({
-            sourceAsset: oft.destinationAsset,
-            destinationChainId: sourceChainId,
+            route,
             recipient: resolvedDestination,
             amount: tradeAmountOutMin,
             refundAddress: resolvedDestination,

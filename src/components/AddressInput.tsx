@@ -3,11 +3,19 @@ import log from "loglevel";
 import { createEffect, on } from "solid-js";
 import { btcToSat } from "src/utils/denomination";
 
-import { LN, isBitcoinOnlyAsset, isEvmAsset } from "../consts/Assets";
+import { NetworkTransport } from "../configs/base";
+import {
+    LN,
+    getNetworkTransport,
+    isBitcoinOnlyAsset,
+    isEvmAsset,
+} from "../consts/Assets";
 import { Side, SwapType } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
+import { isValidSolanaAddress } from "../utils/chains/solana";
+import { isValidTronAddress } from "../utils/chains/tron";
 import { probeUserInput } from "../utils/compat";
 import { formatError } from "../utils/errors";
 import {
@@ -73,6 +81,27 @@ const AddressInput = () => {
                 setAddressValid(true);
                 setOnchainAddress(getAddress(address));
                 return;
+            }
+
+            const transport = getNetworkTransport(assetName);
+            if (transport === NetworkTransport.Solana) {
+                if (isValidSolanaAddress(address)) {
+                    input.setCustomValidity("");
+                    input.classList.remove("invalid");
+                    setAddressValid(true);
+                    setOnchainAddress(address);
+                    return;
+                }
+            }
+
+            if (transport === NetworkTransport.Tron) {
+                if (isValidTronAddress(address)) {
+                    input.setCustomValidity("");
+                    input.classList.remove("invalid");
+                    setAddressValid(true);
+                    setOnchainAddress(address);
+                    return;
+                }
             }
 
             const actualAsset =

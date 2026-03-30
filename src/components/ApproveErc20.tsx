@@ -9,8 +9,6 @@ import ContractTransaction from "./ContractTransaction";
 const ApproveErc20 = (props: {
     asset: string;
     value: () => bigint;
-    signerAddress: string;
-    derivationPath?: string;
     setNeedsApproval: Setter<boolean>;
     approvalTarget?: string;
     resetAllowanceFirst?: boolean;
@@ -41,7 +39,7 @@ const ApproveErc20 = (props: {
 
                 if (props.resetAllowanceFirst && requestedValue !== 0n) {
                     const allowance = await contract.allowance(
-                        props.signerAddress,
+                        await connectedSigner.getAddress(),
                         target,
                     );
 
@@ -64,10 +62,6 @@ const ApproveErc20 = (props: {
                 props.setNeedsApproval(false);
             }}
             children={<ConnectWallet asset={props.asset} />}
-            address={{
-                address: props.signerAddress,
-                derivationPath: props.derivationPath,
-            }}
             buttonText={t("approve_erc20")}
             promptText={
                 props.resetAllowanceFirst

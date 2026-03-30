@@ -24,8 +24,8 @@ vi.mock("../../src/components/ContractTransaction", () => ({
 }));
 
 describe("ApproveErc20", () => {
-    const signerAddress = "0x1000000000000000000000000000000000000000";
     const approvalTarget = "0x2000000000000000000000000000000000000000";
+    const walletAddress = "0x1000000000000000000000000000000000000000";
 
     const mockSetNeedsApproval = vi.fn();
     const mockGetAddress = vi.fn().mockResolvedValue(approvalTarget);
@@ -33,6 +33,7 @@ describe("ApproveErc20", () => {
         getAddress: mockGetAddress,
     }));
     const mockSigner = {
+        getAddress: vi.fn(),
         getNonce: vi.fn(),
     };
     const mockContract = {
@@ -47,7 +48,6 @@ describe("ApproveErc20", () => {
             <ApproveErc20
                 asset="USDT0"
                 value={() => 42n}
-                signerAddress={signerAddress}
                 setNeedsApproval={mockSetNeedsApproval}
                 approvalTarget={approvalTarget}
                 {...props}
@@ -62,6 +62,8 @@ describe("ApproveErc20", () => {
         mockSetNeedsApproval.mockReset();
         mockGetAddress.mockClear();
         mockGetErc20Swap.mockClear();
+        mockSigner.getAddress.mockReset();
+        mockSigner.getAddress.mockResolvedValue(walletAddress);
         mockSigner.getNonce.mockReset();
         mockSigner.getNonce.mockResolvedValue(7);
         mockContract.allowance.mockReset();
@@ -130,6 +132,10 @@ describe("ApproveErc20", () => {
         fireEvent.click(screen.getByRole("button", { name: "approve_erc20" }));
 
         await waitFor(() => {
+            expect(mockContract.allowance).toHaveBeenCalledWith(
+                walletAddress,
+                approvalTarget,
+            );
             expect(mockContract.approve).toHaveBeenNthCalledWith(
                 1,
                 approvalTarget,
@@ -141,10 +147,6 @@ describe("ApproveErc20", () => {
                 42n,
             );
         });
-        expect(mockContract.allowance).toHaveBeenCalledWith(
-            signerAddress,
-            approvalTarget,
-        );
         expect(mockSigner.getNonce).not.toHaveBeenCalled();
         expect(resetTx.wait).toHaveBeenCalledWith(1);
         expect(finalTx.wait).toHaveBeenCalledWith(1);
