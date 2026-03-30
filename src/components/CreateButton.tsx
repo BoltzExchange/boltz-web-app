@@ -8,6 +8,7 @@ import { createEffect, createSignal, on } from "solid-js";
 import { config } from "../config";
 import {
     BTC,
+    LBTC,
     LN,
     RBTC,
     USDT0,
@@ -32,6 +33,7 @@ import {
     getPairs,
 } from "../utils/boltzClient";
 import { calculateSendAmount } from "../utils/calculate";
+import { validateAddress as validateOnchainAddress } from "../utils/compat";
 import {
     btcToSat,
     formatAmount,
@@ -231,6 +233,24 @@ const CreateButton = () => {
     const swapType = () => pair().swapToCreate?.type;
     const assetSend = () => pair().fromAsset;
     const assetReceive = () => pair().toAsset;
+    const getSwapCreationLogContext = (
+        claimAddress?: string,
+        gasAbstraction?: GasAbstraction,
+    ) => ({
+        swapType: swapType() ?? "unknown",
+        assetSend: assetSend(),
+        assetReceive: assetReceive(),
+        sendAmount: String(sendAmount()),
+        receiveAmount: String(receiveAmount()),
+        onchainAddress: onchainAddress(),
+        claimAddress,
+        gasAbstraction,
+        originalDestination: originalDestination(),
+        getGasToken: getGasToken(),
+        hasInvoice: Boolean(invoice()),
+        hasLnurl: Boolean(lnurl()),
+        hasBolt12Offer: Boolean(bolt12Offer()),
+    });
 
     createEffect(() => {
         setButtonClass(!online() ? "btn btn-danger" : "btn");
@@ -502,13 +522,14 @@ const CreateButton = () => {
                         break;
                     }
 
+                    const chainAddress = bip21Decoded.pathname;
+                    const bip21Amount = BigNumber(
+                        bip21Decoded.searchParams.get("amount") ?? 0,
+                    );
+
                     try {
                         // Create swap using its Magic Routing Hint (MRH)
                         log.debug("MRH detected. Preparing swap");
-                        const chainAddress = bip21Decoded.pathname;
-                        const bip21Amount = BigNumber(
-                            bip21Decoded.searchParams.get("amount") ?? 0,
-                        );
 
                         // If bip21Amount is less than the minimal for the new pair, don't use the MRH
                         const chainPair = getPair<ChainPairTypeTaproot>(
@@ -596,7 +617,16 @@ const CreateButton = () => {
 
                         break;
                     } catch (e) {
-                        log.error("Error creating MRH swap", e);
+                        log.error("Error creating MRH swap", {
+                            ...getSwapCreationLogContext(
+                                claimAddress,
+                                gasAbstraction,
+                            ),
+                            bip21Asset,
+                            chainAddress,
+                            bip21Amount: bip21Amount.toString(),
+                            error: formatError(e),
+                        });
                         throw new Error(t("invalid_invoice"));
                     }
                 }
@@ -721,6 +751,11 @@ const CreateButton = () => {
 
             return true;
         } catch (err) {
+            log.error("Swap creation failed", {
+                ...getSwapCreationLogContext(claimAddress, gasAbstraction),
+                error: formatError(err),
+            });
+
             if (err === "invalid pair hash") {
                 setPairs(await getPairs());
                 notify("error", t("feecheck"));
@@ -748,13 +783,30 @@ const CreateButton = () => {
                 getGasToken(),
             );
 
+            if (
+                (assetReceive() === BTC || assetReceive() === LBTC) &&
+                !validateOnchainAddress(assetReceive(), claimAddress)
+            ) {
+                setAddressValid(false);
+                notify(
+                    "error",
+                    t("invalid_address", {
+                        asset: assetReceive(),
+                    }),
+                );
+                return;
+            }
+
             if (!valid()) return;
 
             log.debug("Creating with EVM address", claimAddress);
 
             await createSwap(claimAddress, gasAbstraction);
         } catch (e) {
-            log.error("Error creating swap", e);
+            log.error("Swap creation setup failed", {
+                ...getSwapCreationLogContext(),
+                error: formatError(e),
+            });
             notify("error", e);
         } finally {
             setLoading(false);
