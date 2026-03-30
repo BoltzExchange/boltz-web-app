@@ -26,6 +26,7 @@ import {
 
 const AddressInput = () => {
     let inputRef: HTMLInputElement;
+    let validationRequest = 0;
 
     const { t, notify, pairs, regularPairs, bitcoinOnly } = useGlobalContext();
     const {
@@ -44,13 +45,18 @@ const AddressInput = () => {
     } = useCreateContext();
 
     const handleInputChange = async (input: HTMLInputElement) => {
+        const requestId = ++validationRequest;
         const inputValue = input.value.trim();
+        const isStale = () =>
+            requestId !== validationRequest ||
+            input.value.trim() !== inputValue;
+
         setOnchainAddress(inputValue);
+        setAddressValid(false);
+        input.classList.remove("invalid");
+        input.setCustomValidity("");
 
         if (inputValue.length === 0) {
-            setAddressValid(false);
-            input.classList.remove("invalid");
-            input.setCustomValidity("");
             return;
         }
 
@@ -66,6 +72,9 @@ const AddressInput = () => {
                 satAmount,
                 minerFee(),
             );
+            if (isStale()) {
+                return;
+            }
             setSendAmount(sendAmt);
         }
 
@@ -107,6 +116,10 @@ const AddressInput = () => {
             const actualAsset =
                 (await probeUserInput(assetName, invoice)) ??
                 (await probeUserInput(assetName, address));
+
+            if (isStale()) {
+                return;
+            }
 
             switch (actualAsset) {
                 case LN: {
@@ -154,6 +167,10 @@ const AddressInput = () => {
                 }
             }
         } catch (e) {
+            if (isStale()) {
+                return;
+            }
+
             setAddressValid(false);
 
             if (inputValue.length !== 0) {
