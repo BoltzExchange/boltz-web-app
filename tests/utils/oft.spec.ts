@@ -305,7 +305,7 @@ describe("oft", () => {
         ).resolves.toBe(false);
     });
 
-    test("should cache positive Solana ATA creation checks per recipient", async () => {
+    test("should not cache positive Solana ATA creation checks per recipient", async () => {
         runtimeConfig.assets = {
             ...runtimeConfig.assets,
             "TEST-SOL": {
@@ -362,7 +362,7 @@ describe("oft", () => {
             200n,
         );
 
-        expect(rpcFetchSpy).toHaveBeenCalledTimes(1);
+        expect(rpcFetchSpy).toHaveBeenCalledTimes(2);
     });
 
     test("should include Solana ATA creation options in OFT send params", async () => {

@@ -12,8 +12,7 @@ export const solanaAddressLength = 32;
 export const solanaAtaRentExemptLamports = 2_039_280n;
 const solanaGetAccountInfoMethod = "getAccountInfo";
 const solanaRpcProbeTimeout = 5_000;
-const solanaTokenAccountCreationCache = new Set<string>();
-const pendingSolanaTokenAccountChecks = new Map<string, Promise<boolean>>();
+const solanaTokenAccountExistsCache = new Set<string>();
 
 export const decodeSolanaAddress = (address: string): Uint8Array => {
     const decoded = base58.decode(address);
@@ -34,8 +33,7 @@ export const isValidSolanaAddress = (address: string): boolean => {
 };
 
 export const clearSolanaTokenAccountCreationCache = () => {
-    solanaTokenAccountCreationCache.clear();
-    pendingSolanaTokenAccountChecks.clear();
+    solanaTokenAccountExistsCache.clear();
 };
 
 const queryShouldCreateSolanaTokenAccount = async (
@@ -157,30 +155,18 @@ export const shouldCreateSolanaTokenAccount = (
     }
 
     const cacheKey = `${destinationAsset}:${recipient}`;
-    if (solanaTokenAccountCreationCache.has(cacheKey)) {
-        return Promise.resolve(true);
+    if (solanaTokenAccountExistsCache.has(cacheKey)) {
+        return Promise.resolve(false);
     }
 
-    const pendingCheck = pendingSolanaTokenAccountChecks.get(cacheKey);
-    if (pendingCheck !== undefined) {
-        return pendingCheck;
-    }
-
-    const checkPromise = queryShouldCreateSolanaTokenAccount(
+    return queryShouldCreateSolanaTokenAccount(
         destinationAsset,
         recipient,
-    )
-        .then((shouldCreate) => {
-            if (shouldCreate) {
-                solanaTokenAccountCreationCache.add(cacheKey);
-            }
+    ).then((shouldCreate) => {
+        if (!shouldCreate) {
+            solanaTokenAccountExistsCache.add(cacheKey);
+        }
 
-            return shouldCreate;
-        })
-        .finally(() => {
-            pendingSolanaTokenAccountChecks.delete(cacheKey);
-        });
-
-    pendingSolanaTokenAccountChecks.set(cacheKey, checkPromise);
-    return checkPromise;
+        return shouldCreate;
+    });
 };
