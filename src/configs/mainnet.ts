@@ -68,7 +68,7 @@ const createUsdt0VariantAsset = (variant: Usdt0Variant): Asset => {
         asset.network.nativeCurrency = {
             name: variant.gasToken ?? variant.symbol,
             symbol: variant.gasToken ?? variant.symbol,
-            decimals: 18,
+            decimals: variant.nativeDecimals ?? 18,
         };
     }
     return asset;
@@ -314,6 +314,17 @@ const usdt0Variants: Usdt0Variant[] = [
         tokenAddress: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736",
         blockExplorerUrl: "https://www.oklink.com/x-layer",
         rpcUrls: ["https://xlayerrpc.okx.com"],
+    },
+    {
+        asset: "USDT0-TEMPO",
+        canSend: false,
+        chainName: "Tempo",
+        symbol: "USD",
+        nativeDecimals: 6,
+        chainId: 4217,
+        tokenAddress: "0x20C00000000000000000000014f22CA97301EB73",
+        blockExplorerUrl: "https://explore.mainnet.tempo.xyz",
+        rpcUrls: ["https://rpc.tempo.xyz"],
     },
 ];
 

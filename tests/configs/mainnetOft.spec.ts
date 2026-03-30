@@ -6,6 +6,11 @@ import { expect, test } from "vitest";
 import { config as runtimeConfig } from "../../src/config";
 import { NetworkTransport } from "../../src/configs/base";
 import { config } from "../../src/configs/mainnet";
+import type { OftDirectSendTarget } from "../../src/utils/oft/directSend";
+import {
+    OftDirectSendTargetKind,
+    getOftDirectSendTarget,
+} from "../../src/utils/oft/directSend";
 import { getOftContract } from "../../src/utils/oft/oft";
 
 const originalAssets = structuredClone(runtimeConfig.assets ?? {});
@@ -85,6 +90,14 @@ const getOftRoute = (asset: string) => ({
     to: asset,
 });
 
+const expectDirectSendTargetKind = <TKind extends OftDirectSendTargetKind>(
+    target: OftDirectSendTarget,
+    kind: TKind,
+): Extract<OftDirectSendTarget, { kind: TKind }> => {
+    expect(target.kind).toBe(kind);
+    return target as Extract<OftDirectSendTarget, { kind: TKind }>;
+};
+
 test.each(usdt0ChainTestCases)(
     "$asset ($chainName) should resolve live OFT contracts",
     async ({ asset, chainName, transport }: Usdt0ChainTestCase) => {
@@ -119,3 +132,38 @@ test.each(usdt0ChainTestCases)(
     },
     60_000,
 );
+
+test("USDT0-TEMPO should resolve the Tempo wrapper for direct sends", async () => {
+    const target = expectDirectSendTargetKind(
+        await getOftDirectSendTarget(getOftRoute("USDT0-TEMPO")),
+        OftDirectSendTargetKind.TempoWrapper,
+    );
+
+    expect(target.oftContract.name).toBe("OFT");
+    expect(target.executionContract.name).toBe("TempoOFTWrapper");
+    expectTransportAddressFormat(
+        NetworkTransport.Evm,
+        target.executionContract.address,
+    );
+    expect(target.feeTokenAddress).toBe(
+        config.assets["USDT0-TEMPO"]?.token?.address,
+    );
+});
+
+test("USDT0-TEMPO should expose 6-decimal native fee metadata", () => {
+    expect(config.assets["USDT0-TEMPO"]?.network?.nativeCurrency).toEqual({
+        name: "USD",
+        symbol: "USD",
+        decimals: 6,
+    });
+});
+
+test("USDT0-ETH should keep the primary OFT direct send target", async () => {
+    const target = expectDirectSendTargetKind(
+        await getOftDirectSendTarget(getOftRoute("USDT0-ETH")),
+        OftDirectSendTargetKind.Oft,
+    );
+
+    expect(target.executionContract.address).toBe(target.oftContract.address);
+    expect(["OFT", "OFT Adapter"]).toContain(target.executionContract.name);
+});

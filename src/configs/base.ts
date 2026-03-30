@@ -20,6 +20,7 @@ export type Usdt0Variant = {
     canSend: boolean;
     chainName: string;
     symbol: string;
+    nativeDecimals?: number;
     gasToken?: string;
     transport?: NetworkTransport;
     chainId?: number;

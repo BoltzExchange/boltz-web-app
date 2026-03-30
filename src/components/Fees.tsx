@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { formatEther } from "ethers";
+import { formatUnits } from "ethers";
 import type { Accessor } from "solid-js";
 import {
     Show,
@@ -118,7 +118,13 @@ const Fees = () => {
             return undefined;
         }
 
-        return BigNumber(formatEther(fee))
+        return BigNumber(
+            formatUnits(
+                fee,
+                config.assets[assetSend()]?.network?.nativeCurrency?.decimals ??
+                    18,
+            ),
+        )
             .toFixed(6)
             .replace(/\.?0+$/, "");
     });

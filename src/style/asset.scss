@@ -225,6 +225,11 @@
     @include network-primary-icon(vars.$stable_icon);
 }
 
+[data-network="tempo"] {
+    @include network-badge(vars.$tempo_icon, var(--color-secondary-700));
+    @include network-primary-icon(vars.$tempo_icon);
+}
+
 [data-network="tron"] {
     @include network-badge(vars.$tron_icon, var(--color-secondary-700));
     @include network-primary-icon(vars.$tron_icon);
