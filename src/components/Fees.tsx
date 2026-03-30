@@ -1,5 +1,6 @@
 import { BigNumber } from "bignumber.js";
 import { formatEther, formatUnits } from "ethers";
+import log from "loglevel";
 import { VsChevronDown, VsChevronRight } from "solid-icons/vs";
 import type { Accessor } from "solid-js";
 import {
@@ -154,7 +155,10 @@ const Fees = () => {
         return pair().oftTransferFeeFromLatestQuote(sendAmount());
     });
 
-    const [oftMessagingFeeTokenUsdPrice] = createResource(
+    const [oftMessagingFeeTokenUsdPrice] = createResource<
+        BigNumber | undefined,
+        string
+    >(
         () => {
             const token = pair().oftMessagingFeeToken;
             return token !== undefined && hasGasTokenPriceLookup(token)
@@ -162,7 +166,12 @@ const Fees = () => {
                 : undefined;
         },
         async (token) => {
-            return await getGasTokenPriceFailover(token, Currency.USD);
+            try {
+                return await getGasTokenPriceFailover(token, Currency.USD);
+            } catch (error) {
+                log.warn("Failed to get gas token price", error);
+                return undefined;
+            }
         },
     );
 
