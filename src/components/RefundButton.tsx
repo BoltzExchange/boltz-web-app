@@ -56,8 +56,9 @@ import {
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import {
+    buildOftApprovalCall,
     buildOftSendAlchemyCall,
-    getOftProvider,
+    getOftTransactionSender,
     getQuotedOftContract,
     quoteOftSend,
 } from "../utils/oft/oft";
@@ -118,6 +119,7 @@ export const sendRefundTransaction = async (
 
 const buildRefundFollowUpCalls = async (
     refundData: LockupEvent,
+    refundSigner: Signer | Wallet,
     slippage: number,
     dexDetails?: DexDetail,
     destination?: string,
@@ -137,16 +139,17 @@ const buildRefundFollowUpCalls = async (
             throw new Error("missing reverse DEX details for pre-OFT refund");
         }
 
-        const oftTransaction = await getOftProvider(
+        const sender = await getOftTransactionSender(
             oft.sourceAsset,
-        ).getTransaction(oft.txHash);
-        if (oftTransaction?.from === undefined) {
+            oft.txHash,
+        );
+        if (sender === undefined) {
             throw new Error(
                 `could not resolve original sender from OFT transaction: ${oft.txHash}`,
             );
         }
 
-        resolvedDestination = oftTransaction.from;
+        resolvedDestination = sender;
     }
 
     if (
@@ -201,13 +204,6 @@ const buildRefundFollowUpCalls = async (
         }));
     }
 
-    const sourceChainId = config.assets?.[oft.sourceAsset]?.network?.chainId;
-    if (sourceChainId === undefined) {
-        throw new Error(
-            `missing OFT source chain id for asset: ${oft.sourceAsset}`,
-        );
-    }
-
     const route = {
         from: oft.destinationAsset,
         to: oft.sourceAsset,
@@ -221,7 +217,7 @@ const buildRefundFollowUpCalls = async (
     );
 
     let tradeAmountIn = refundData.amount;
-    let msgFeeCalls: AlchemyCall[] = [];
+    const calls: AlchemyCall[] = [];
     if (msgFee[0] > 0n) {
         const msgFeeAmountOut = calculateAmountWithSlippage(
             msgFee[0],
@@ -250,11 +246,13 @@ const buildRefundFollowUpCalls = async (
             msgFee[0],
             msgFeeQuote.data,
         );
-        msgFeeCalls = msgFeeCalldata.calls.map((call) => ({
-            to: call.to,
-            value: call.value,
-            data: call.data,
-        }));
+        calls.push(
+            ...msgFeeCalldata.calls.map((call) => ({
+                to: call.to,
+                value: call.value,
+                data: call.data,
+            })),
+        );
     }
 
     const [tradeQuote] = await quoteDexAmountIn(
@@ -278,22 +276,35 @@ const buildRefundFollowUpCalls = async (
         tradeAmountOutMin,
         tradeQuote.data,
     );
-    const tradeCalls: AlchemyCall[] = tradeCalldata.calls.map((call) => ({
-        to: call.to,
-        value: call.value,
-        data: call.data,
-    }));
+    calls.push(
+        ...tradeCalldata.calls.map((call) => ({
+            to: call.to,
+            value: call.value,
+            data: call.data,
+        })),
+    );
 
-    return [
-        ...tradeCalls,
-        ...msgFeeCalls,
+    const approvalCall = await buildOftApprovalCall(
+        route,
+        refundSigner.address,
+        tradeAmountOutMin,
+        refundSigner,
+    );
+
+    if (approvalCall !== undefined) {
+        calls.push(approvalCall);
+    }
+
+    calls.push(
         await buildOftSendAlchemyCall({
             route,
             recipient: resolvedDestination,
             amount: tradeAmountOutMin,
-            refundAddress: resolvedDestination,
+            refundAddress: refundData.refundAddress,
         }),
-    ];
+    );
+
+    return calls;
 };
 
 const buildErc20RefundTransaction = async ({
@@ -357,6 +368,7 @@ const buildErc20RefundTransaction = async ({
 
     const followUpCalls = await buildRefundFollowUpCalls(
         refundData,
+        contract.runner as Signer,
         slippage,
         dexDetails,
         destination,

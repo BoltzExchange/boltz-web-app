@@ -4,15 +4,15 @@ import { config } from "../../config";
 import { requireTokenConfig } from "../../consts/Assets";
 import TempoOFTWrapperAbi from "../../consts/abis/tempo/TempoOFTWrapper.json";
 import type { OftRoute } from "../Pair";
-import type { MsgFee, SendParam } from "./oft";
-import { createOftContract } from "./oft";
+import { createEvmOftContract } from "./evm";
 import {
     type OftContract,
     defaultOftName,
     findOftChainContract,
     getOftChain,
-    getPrimaryOftContract,
+    getOftContract,
 } from "./registry";
+import type { MsgFee, SendParam } from "./types";
 
 export const enum OftDirectSendTargetKind {
     Oft = "oft",
@@ -70,7 +70,7 @@ export const getOftDirectSendTarget = async (
     route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftDirectSendTarget> => {
-    const oftContract = await getPrimaryOftContract(route, oftName);
+    const oftContract = await getOftContract(route, oftName);
     if (!isTempoSourceAsset(route.from)) {
         return {
             kind: OftDirectSendTargetKind.Oft,
@@ -144,7 +144,7 @@ export const requiresOftDirectUserApproval = async (
 ): Promise<boolean> => {
     switch (target.kind) {
         case OftDirectSendTargetKind.Oft:
-            return await createOftContract(
+            return await createEvmOftContract(
                 target.executionContract.address,
                 runner,
             ).approvalRequired();
@@ -176,7 +176,7 @@ export const sendOftDirect = async ({
 }): Promise<OftDirectSendTransaction> => {
     switch (target.kind) {
         case OftDirectSendTargetKind.Oft:
-            return await createOftContract(
+            return await createEvmOftContract(
                 target.executionContract.address,
                 runner,
             ).send(sendParam, msgFee, refundAddress, {

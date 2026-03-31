@@ -1,17 +1,19 @@
+import type { Provider as SolanaWalletProvider } from "@reown/appkit-utils/solana";
 import { hex } from "@scure/base";
 import {
-    Contract,
     type ContractRunner,
-    type Log,
-    type TransactionReceipt,
+    MaxUint256,
     ZeroAddress,
     concat,
     getBytes,
     solidityPacked,
     zeroPadValue,
 } from "ethers";
+import type { Wallet } from "ethers";
 import log from "loglevel";
 import { getUsdt0Mesh } from "src/consts/Assets";
+import { createTokenContract } from "src/context/Web3";
+import type { Signer } from "src/context/Web3";
 
 import type { AlchemyCall } from "../../alchemy/Alchemy";
 import { config } from "../../config";
@@ -19,9 +21,10 @@ import { NetworkTransport, Usdt0Kind } from "../../configs/base";
 import type { OftRoute } from "../Pair";
 import {
     clearSolanaTokenAccountCreationCache,
-    decodeSolanaAddress,
+    encodeSolanaAtaCreationOption,
+    encodeSolanaRecipient,
+    getSolanaTransactionSender,
     shouldCreateSolanaTokenAccount,
-    solanaAtaRentExemptLamports,
 } from "../chains/solana";
 import { decodeTronBase58Address } from "../chains/tron";
 import {
@@ -29,84 +32,57 @@ import {
     createAssetProvider,
     requireRpcUrls,
 } from "../provider";
+import type { EvmOftTransportClient } from "./evm";
+import {
+    createEvmOftContract,
+    getEvmOftReceivedEvent,
+    getEvmOftReceivedEventByGuid,
+    getEvmOftSentEvent,
+} from "./evm";
 import {
     type OftContract,
     clearOftRegistry,
     defaultOftName,
     formatRoute,
     getOftChain,
-    getPrimaryOftContract,
+    getOftContract,
 } from "./registry";
+import {
+    createSolanaOftContract,
+    getSolanaOftTokenBalance as getSolanaLegacyMeshTokenBalance,
+} from "./solana";
+import type {
+    MsgFee,
+    OftFeeDetail,
+    OftLimit,
+    OftNativeDrop,
+    OftQuoteOptions,
+    OftReceipt,
+    OftReceivedEvent,
+    OftSentEvent,
+    OftTransportClient,
+    OftTransportRunner,
+    SendParam,
+} from "./types";
 
-// TODO: review quote methods
+export type {
+    MsgFee,
+    OftNativeDrop,
+    OftQuoteOptions,
+    OftReceivedEvent,
+    OftSentEvent,
+    OftTransportClient,
+    SendParam,
+} from "./types";
 
 const providerCache = new Map<string, Provider>();
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
-
-const oftAbi = [
-    "function quoteOFT(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes)) view returns (tuple(uint256,uint256), tuple(int256,string)[], tuple(uint256,uint256))",
-    "function quoteSend(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes), bool) view returns (tuple(uint256,uint256))",
-    "function approvalRequired() view returns (bool)",
-    "function send(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes), tuple(uint256,uint256), address) payable returns (tuple(bytes32,uint64,tuple(uint256,uint256)), tuple(uint256,uint256))",
-    "event OFTSent(bytes32 indexed guid, uint32 dstEid, address indexed fromAddress, uint256 amountSentLD, uint256 amountReceivedLD)",
-    "event OFTReceived(bytes32 indexed guid, uint32 srcEid, address indexed toAddress, uint256 amountReceivedLD)",
-] as const;
-
-export type SendParam = [
-    number,
-    string,
-    bigint,
-    bigint,
-    string,
-    string,
-    string,
-];
-
-export type MsgFee = [bigint, bigint];
-
-export type OftNativeDrop = {
-    amount: bigint;
-    receiver: string;
-};
-
-export type OftQuoteOptions = {
-    recipient?: string;
-    nativeDrop?: OftNativeDrop;
-    oftName?: string;
-};
-
-type OftLimit = [bigint, bigint];
-type OftFeeDetail = [bigint, string];
-type OftReceipt = [bigint, bigint];
-
-export type OftReceiveQuote = {
-    amountIn: bigint;
-    amountOut: bigint;
-    msgFee: MsgFee;
-    oftLimit: OftLimit;
-    oftFeeDetails: OftFeeDetail[];
-    oftReceipt: OftReceipt;
-};
-
-type OftEventName = "OFTSent" | "OFTReceived";
-
-export type OftSentEvent = {
-    guid: string;
-    dstEid: bigint;
-    fromAddress: string;
-    amountSentLD: bigint;
-    amountReceivedLD: bigint;
-    logIndex: number;
-};
-
-export type OftReceivedEvent = {
-    guid: string;
-    srcEid: bigint;
-    toAddress: string;
-    amountReceivedLD: bigint;
-    blockNumber: number;
-    logIndex: number;
-};
+const type3Option = 3;
+const executorWorkerId = 1;
+const optionTypeLzReceive = 1;
+const optionTypeNativeDrop = 2;
+const hundredPercentBps = 10_000n;
+const legacyBridgeFeeBps = 3n;
 
 const getErrorData = (error: unknown): string | undefined => {
     if (typeof error !== "object" || error === null) {
@@ -157,47 +133,28 @@ export const decodeExecutorNativeAmountExceedsCapError = (
     };
 };
 
-type OftContractInstance = {
-    interface: Contract["interface"];
-    quoteOFT: {
-        staticCall: (
-            sendParam: SendParam,
-        ) => Promise<[OftLimit, OftFeeDetail[], OftReceipt]>;
-    };
-    quoteSend: {
-        staticCall: (
-            sendParam: SendParam,
-            payInLzToken: boolean,
-        ) => Promise<MsgFee>;
-    };
-    approvalRequired: () => Promise<boolean>;
-    send: (
-        sendParam: SendParam,
-        msgFee: MsgFee,
-        refundAddress: string,
-        overrides?: {
-            value?: bigint;
-        },
-    ) => Promise<{
-        hash: string;
-        wait: (confirmations?: number) => Promise<unknown>;
-    }>;
-};
-
 export const clearOftDeployments = () => {
     clearOftRegistry();
     providerCache.clear();
     clearSolanaTokenAccountCreationCache();
 };
 
-const type3Option = 3;
-const executorWorkerId = 1;
-const optionTypeLzReceive = 1;
-const optionTypeNativeDrop = 2;
-const hundredPercentBps = 10_000n;
-const legacyBridgeFeeBps = 3n;
+export const getOftTransport = (asset: string): NetworkTransport => {
+    const transport = config.assets?.[asset]?.network?.transport;
+    if (transport === undefined) {
+        throw new Error(`missing OFT transport for asset ${asset}`);
+    }
+
+    return transport;
+};
 
 export const getOftProvider = (sourceAsset: string): Provider => {
+    if (getOftTransport(sourceAsset) !== NetworkTransport.Evm) {
+        throw new Error(
+            `OFT JSON-RPC provider is only available for EVM assets, got ${getOftTransport(sourceAsset)}`,
+        );
+    }
+
     const rpcUrls = requireRpcUrls(sourceAsset);
     const cacheKey = `${sourceAsset}:${rpcUrls.join(",")}`;
     const cached = providerCache.get(cacheKey);
@@ -214,133 +171,128 @@ export const getOftProvider = (sourceAsset: string): Provider => {
     return provider;
 };
 
-export const getQuotedOftContract = async (
+const getOftStoreContract = async (
     route: OftRoute,
     oftName = defaultOftName,
-): Promise<OftContractInstance> => {
+): Promise<OftContract> => {
+    const chain = await getOftChain(route.from, route, oftName);
+    const contract = chain?.contracts.find(
+        (candidate) => candidate.name === "OFT Store",
+    );
+    if (contract === undefined) {
+        throw new Error(
+            `Missing OFT store contract for route ${formatRoute(route)} and OFT ${oftName}`,
+        );
+    }
+
+    return contract;
+};
+
+const isSolanaWalletProvider = (
+    runner: OftTransportRunner,
+): runner is SolanaWalletProvider =>
+    runner !== undefined && "signAndSendTransaction" in runner;
+
+const getEvmOftRunner = (
+    route: OftRoute,
+    runner: OftTransportRunner,
+): ContractRunner => {
+    if (runner === undefined) {
+        return getOftProvider(route.from);
+    }
+    if (isSolanaWalletProvider(runner)) {
+        throw new Error(
+            `Expected an EVM runner for OFT route ${formatRoute(route)}`,
+        );
+    }
+
+    return runner;
+};
+
+const getSolanaOftWalletProvider = (
+    route: OftRoute,
+    runner: OftTransportRunner,
+): SolanaWalletProvider | undefined => {
+    if (runner === undefined) {
+        return undefined;
+    }
+    if (isSolanaWalletProvider(runner)) {
+        return runner;
+    }
+
+    throw new Error(
+        `Expected a Solana wallet provider for OFT route ${formatRoute(route)}`,
+    );
+};
+
+export const createOftContract = async (
+    route: OftRoute,
+    runner?: OftTransportRunner,
+    oftName = defaultOftName,
+): Promise<OftTransportClient> => {
+    const sourceTransport = getOftTransport(route.from);
     const oftContract = await getOftContract(route, oftName);
-    return createOftContract(oftContract.address, getOftProvider(route.from));
+
+    switch (sourceTransport) {
+        case NetworkTransport.Evm:
+            return createEvmOftContract(
+                oftContract.address,
+                getEvmOftRunner(route, runner),
+            );
+
+        case NetworkTransport.Solana: {
+            const oftStore = await getOftStoreContract(route, oftName);
+            return createSolanaOftContract({
+                sourceAsset: route.from,
+                programAddress: oftContract.address,
+                storeAddress: oftStore.address,
+                walletProvider: getSolanaOftWalletProvider(route, runner),
+            });
+        }
+
+        case NetworkTransport.Tron:
+            throw new Error(
+                `OFT sending is not implemented for ${NetworkTransport.Tron} yet`,
+            );
+    }
 };
 
-export const getOftContract = (
+export const getQuotedOftContract = (
     route: OftRoute,
     oftName = defaultOftName,
-): Promise<OftContract> => getPrimaryOftContract(route, oftName);
+): Promise<OftTransportClient> => createOftContract(route, undefined, oftName);
 
-export const createOftContract = (
-    address: string,
-    runner: ContractRunner,
-): OftContractInstance =>
-    new Contract(address, oftAbi, runner) as unknown as OftContractInstance;
-
-const getOftEventLog = (
-    contract: OftContractInstance,
-    receipt: Pick<TransactionReceipt, "logs">,
-    contractAddress: string,
-    eventName: OftEventName,
-) => {
-    const oftLog = receipt.logs.find((eventLog) => {
-        if (eventLog.address.toLowerCase() !== contractAddress.toLowerCase()) {
-            return false;
-        }
-
-        try {
-            const parsedLog = contract.interface.parseLog({
-                data: eventLog.data,
-                topics: eventLog.topics,
-            });
-            return parsedLog?.name === eventName;
-        } catch {
-            return false;
-        }
-    });
-
-    if (oftLog === undefined) {
-        throw new Error(`could not find ${eventName} event`);
+const requireEvmOftClient = (
+    contract: OftTransportClient,
+    operation: string,
+): EvmOftTransportClient => {
+    if (contract.transport !== NetworkTransport.Evm) {
+        throw new Error(`${operation} requires an EVM OFT client`);
     }
 
-    return oftLog;
-};
-
-const parseOftReceivedLog = (
-    contract: OftContractInstance,
-    oftReceivedLog: Log,
-) => {
-    const parsedOftReceived = contract.interface.parseLog({
-        data: oftReceivedLog.data,
-        topics: oftReceivedLog.topics,
-    });
-    if (parsedOftReceived?.name !== "OFTReceived") {
-        throw new Error("could not parse OFTReceived event");
-    }
-
-    const { guid, srcEid, toAddress, amountReceivedLD } =
-        parsedOftReceived.args;
-
-    return {
-        guid,
-        srcEid,
-        toAddress,
-        amountReceivedLD,
-        blockNumber: oftReceivedLog.blockNumber,
-        logIndex: oftReceivedLog.index,
-    };
+    return contract as EvmOftTransportClient;
 };
 
 export const getOftSentEvent = (
-    contract: OftContractInstance,
-    receipt: TransactionReceipt,
+    contract: OftTransportClient,
+    receipt: Parameters<typeof getEvmOftSentEvent>[1],
     contractAddress: string,
-): OftSentEvent => {
-    const oftSentLog = getOftEventLog(
-        contract,
+): OftSentEvent =>
+    getEvmOftSentEvent(
+        requireEvmOftClient(contract, "OFTSent decoding"),
         receipt,
         contractAddress,
-        "OFTSent",
     );
-    const parsedOftSent = contract.interface.parseLog({
-        data: oftSentLog.data,
-        topics: oftSentLog.topics,
-    });
-    if (parsedOftSent?.name !== "OFTSent") {
-        throw new Error("could not parse OFTSent event");
-    }
-
-    const { guid, dstEid, fromAddress, amountSentLD, amountReceivedLD } =
-        parsedOftSent.args;
-
-    const event = {
-        guid,
-        dstEid,
-        fromAddress,
-        amountSentLD,
-        amountReceivedLD,
-        logIndex: oftSentLog.index,
-    };
-
-    log.debug("Parsed OFTSent event", {
-        contractAddress,
-        guid,
-        dstEid: dstEid.toString(),
-        fromAddress,
-        amountSentLD: amountSentLD.toString(),
-        amountReceivedLD: amountReceivedLD.toString(),
-        logIndex: oftSentLog.index,
-    });
-
-    return event;
-};
 
 export const getOftReceivedEvent = (
-    contract: OftContractInstance,
-    receipt: TransactionReceipt,
+    contract: OftTransportClient,
+    receipt: Parameters<typeof getEvmOftReceivedEvent>[1],
     contractAddress: string,
-): OftReceivedEvent => {
-    const oftReceivedLog = getOftEventLog(
-        contract,
+): OftReceivedEvent =>
+    getEvmOftReceivedEvent(
+        requireEvmOftClient(contract, "OFTReceived decoding"),
         receipt,
         contractAddress,
-        "OFTReceived",
     );
     const event = parseOftReceivedLog(contract, oftReceivedLog);
 
@@ -358,62 +310,29 @@ export const getOftReceivedEvent = (
 };
 
 export const getOftSentGuid = (
-    contract: OftContractInstance,
-    receipt: TransactionReceipt,
+    contract: OftTransportClient,
+    receipt: Parameters<typeof getEvmOftSentEvent>[1],
     contractAddress: string,
 ): string => getOftSentEvent(contract, receipt, contractAddress).guid;
 
 export const getOftReceivedGuid = (
-    contract: OftContractInstance,
-    receipt: TransactionReceipt,
+    contract: OftTransportClient,
+    receipt: Parameters<typeof getEvmOftReceivedEvent>[1],
     contractAddress: string,
 ): string => getOftReceivedEvent(contract, receipt, contractAddress).guid;
 
 export const getOftReceivedEventByGuid = async (
-    contract: OftContractInstance,
+    contract: OftTransportClient,
     provider: Pick<Provider, "getLogs">,
     contractAddress: string,
     guid: string,
-): Promise<OftReceivedEvent | undefined> => {
-    const [eventTopic, guidTopic] = contract.interface.encodeFilterTopics(
-        "OFTReceived",
-        [guid],
-    );
-    const logs = await provider.getLogs({
-        address: contractAddress,
-        fromBlock: 0,
-        toBlock: "latest",
-        topics: [eventTopic, guidTopic],
-    });
-    const receivedLog = logs.find((eventLog) => {
-        try {
-            const parsedLog = contract.interface.parseLog({
-                data: eventLog.data,
-                topics: eventLog.topics,
-            });
-            return parsedLog?.name === "OFTReceived";
-        } catch {
-            return false;
-        }
-    });
-
-    if (receivedLog === undefined) {
-        return undefined;
-    }
-
-    const event = parseOftReceivedLog(contract, receivedLog);
-    log.debug("Found OFTReceived event by guid", {
+): Promise<OftReceivedEvent | undefined> =>
+    await getEvmOftReceivedEventByGuid(
+        requireEvmOftClient(contract, "OFT receive lookup"),
+        provider,
         contractAddress,
-        guid: event.guid,
-        srcEid: event.srcEid.toString(),
-        toAddress: event.toAddress,
-        amountReceivedLD: event.amountReceivedLD.toString(),
-        blockNumber: event.blockNumber,
-        logIndex: event.logIndex,
-    });
-
-    return event;
-};
+        guid,
+    );
 
 const newOptions = (): string => solidityPacked(["uint16"], [type3Option]);
 
@@ -425,9 +344,8 @@ const encodeRecipient = (
         case NetworkTransport.Evm:
             return zeroPadValue(recipient, 32);
 
-        case NetworkTransport.Solana: {
-            return `0x${hex.encode(decodeSolanaAddress(recipient))}`;
-        }
+        case NetworkTransport.Solana:
+            return encodeSolanaRecipient(recipient);
 
         case NetworkTransport.Tron:
             return zeroPadValue(
@@ -444,10 +362,8 @@ const encodeOftRecipient = (
     if (recipient === undefined) {
         return encodeRecipient(NetworkTransport.Evm, ZeroAddress);
     }
-    return encodeRecipient(
-        config.assets?.[asset]?.network?.transport,
-        recipient,
-    );
+
+    return encodeRecipient(getOftTransport(asset), recipient);
 };
 
 const addExecutorOption = (
@@ -487,10 +403,7 @@ const buildOftExtraOptions = (
         options = appendExecutorOption(
             options,
             optionTypeLzReceive,
-            solidityPacked(
-                ["uint128", "uint128"],
-                [0n, solanaAtaRentExemptLamports],
-            ),
+            encodeSolanaAtaCreationOption(),
         );
     }
 
@@ -538,6 +451,7 @@ const createOftSendParam = async (
             `Missing LayerZero endpoint id for route ${formatRoute(route)} and OFT ${oftName}`,
         );
     }
+
     return [
         Number(lzEid),
         encodeOftRecipient(route.to, recipient),
@@ -550,7 +464,7 @@ const createOftSendParam = async (
 };
 
 export const quoteOftSend = async (
-    oft: OftContractInstance,
+    oft: OftTransportClient,
     route: OftRoute,
     recipient: string | undefined,
     amount: bigint,
@@ -573,12 +487,11 @@ export const quoteOftSend = async (
         oftName,
         buildOftExtraOptions(nativeDrop, createSolanaTokenAccount),
     );
-    const [oftLimit, oftFeeDetails, oftReceipt] =
-        await oft.quoteOFT.staticCall(sendParam);
+    const [oftLimit, oftFeeDetails, oftReceipt] = await oft.quoteOFT(sendParam);
     const quotedSendParam: SendParam = [...sendParam];
     quotedSendParam[3] = oftReceipt[1];
 
-    const quotedMsgFee = await oft.quoteSend.staticCall(quotedSendParam, false);
+    const quotedMsgFee = await oft.quoteSend(quotedSendParam, false);
     const msgFee: MsgFee = [quotedMsgFee[0], quotedMsgFee[1]];
 
     return {
@@ -588,6 +501,32 @@ export const quoteOftSend = async (
         oftFeeDetails,
         oftReceipt,
     };
+};
+
+export const buildOftApprovalCall = async (
+    route: OftRoute,
+    owner: string,
+    amount: bigint,
+    signer: Signer | Wallet,
+): Promise<AlchemyCall | undefined> => {
+    const oftContract = await createOftContract(route);
+    const approvalRequired = await oftContract.approvalRequired?.();
+    if (approvalRequired) {
+        const { address } = await getOftContract(route);
+        const tokenContract = createTokenContract(route.from, signer);
+        const allowance = await tokenContract.allowance(owner, address);
+        if (allowance < amount * 10n) {
+            return {
+                to: await tokenContract.getAddress(),
+                value: undefined,
+                data: tokenContract.interface.encodeFunctionData("approve", [
+                    address,
+                    MaxUint256,
+                ]),
+            };
+        }
+    }
+    return undefined;
 };
 
 export const buildOftSendAlchemyCall = async ({
@@ -603,8 +542,17 @@ export const buildOftSendAlchemyCall = async ({
     refundAddress: string;
     oftName?: string;
 }): Promise<AlchemyCall> => {
+    if (getOftTransport(route.from) !== NetworkTransport.Evm) {
+        throw new Error(
+            "Alchemy OFT send call is only supported for EVM routes",
+        );
+    }
+
     const oftContract = await getOftContract(route, oftName);
-    const quotedOft = await getQuotedOftContract(route, oftName);
+    const quotedOft = requireEvmOftClient(
+        await getQuotedOftContract(route, oftName),
+        "Alchemy OFT send encoding",
+    );
     const { sendParam, msgFee } = await quoteOftSend(
         quotedOft,
         route,
@@ -703,3 +651,42 @@ export const quoteOftAmountInForAmountOut = async (
 
     return low;
 };
+
+export const getSolanaOftTokenBalance = async (
+    route: OftRoute,
+    ownerAddress: string,
+    oftName = defaultOftName,
+): Promise<bigint> => {
+    const oftContract = await getOftContract(route, oftName);
+    const oftStore = await getOftStoreContract(route, oftName);
+
+    return await getSolanaLegacyMeshTokenBalance(
+        {
+            sourceAsset: route.from,
+            programAddress: oftContract.address,
+            storeAddress: oftStore.address,
+        },
+        ownerAddress,
+    );
+};
+
+export const getOftTransactionSender = async (
+    sourceAsset: string,
+    txHash: string,
+): Promise<string | undefined> => {
+    switch (getOftTransport(sourceAsset)) {
+        case NetworkTransport.Evm:
+            return (await getOftProvider(sourceAsset).getTransaction(txHash))
+                ?.from;
+
+        case NetworkTransport.Solana:
+            return await getSolanaTransactionSender(sourceAsset, txHash);
+
+        case NetworkTransport.Tron:
+            return undefined;
+    }
+};
+function parseOftReceivedLog(contract: any, oftReceivedLog: any) {
+    throw new Error("Function not implemented.");
+}
+

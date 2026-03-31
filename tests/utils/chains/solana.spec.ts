@@ -58,14 +58,18 @@ const stubSolanaAtaLookup = (
     accountInfoValue: Record<string, unknown> | null,
 ) => {
     vi.spyOn(lazySolana, "get").mockResolvedValue({
-        PublicKey: class {
-            constructor(private readonly value: string) {}
+        web3: {
+            PublicKey: class {
+                constructor(private readonly value: string) {}
 
-            toBase58 = () => this.value;
+                toBase58 = () => this.value;
+            },
         },
-        getAssociatedTokenAddressSync: () => ({
-            toBase58: () => mockAssociatedTokenAddress,
-        }),
+        splToken: {
+            getAssociatedTokenAddressSync: () => ({
+                toBase58: () => mockAssociatedTokenAddress,
+            }),
+        },
     } as never);
 
     const fetchSpy = vi.fn().mockResolvedValue({

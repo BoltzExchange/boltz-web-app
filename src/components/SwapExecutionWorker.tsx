@@ -26,6 +26,7 @@ import {
     getCommitmentLockupDetails,
 } from "../utils/boltzClient";
 import { calculateAmountOutMin } from "../utils/calculate";
+import { getSolanaConnection } from "../utils/chains/solana";
 import { postCommitmentSignatureForTransaction } from "../utils/commitment";
 import {
     assertTransactionSignerProvider,
@@ -34,11 +35,12 @@ import {
 import { decodeInvoice } from "../utils/invoice";
 import {
     createOftContract,
-    getOftContract,
     getOftProvider,
     getOftReceivedEventByGuid,
     getOftSentEvent,
 } from "../utils/oft/oft";
+import { getOftContract } from "../utils/oft/registry";
+import { getSolanaOftGuidFromLogs } from "../utils/oft/solana";
 import { createAssetProvider } from "../utils/provider";
 import { fetchDexQuote } from "../utils/qouter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
@@ -392,6 +394,54 @@ export const SwapExecutionWorker = () => {
         }
     };
 
+    const waitForSolanaOftSendConfirmation = async (
+        swapId: string,
+        sourceAsset: string,
+        txHash: string,
+    ) => {
+        const connection = await getSolanaConnection(sourceAsset);
+
+        log.debug(
+            "Swap execution waiting for Solana OFT send confirmation",
+            getSwapExecutionLogContext(swapId, {
+                sourceAsset,
+                txHash,
+            }),
+        );
+
+        while (true) {
+            const currentSwap = await getSwap<SomeSwap>(swapId);
+            if (!needsPreOftLockup(currentSwap)) {
+                log.debug(
+                    "Swap execution stopped waiting for Solana OFT send confirmation",
+                    getSwapExecutionLogContext(swapId, {
+                        sourceAsset,
+                        txHash,
+                    }),
+                );
+                return undefined;
+            }
+
+            const transaction = await connection.getTransaction(txHash, {
+                commitment: "confirmed",
+                maxSupportedTransactionVersion: 0,
+            });
+            if (transaction !== null) {
+                log.info(
+                    "Swap execution found Solana OFT send confirmation",
+                    getSwapExecutionLogContext(swapId, {
+                        sourceAsset,
+                        txHash,
+                        slot: transaction.slot,
+                    }),
+                );
+                return transaction;
+            }
+
+            await sleep(retryIntervalMs);
+        }
+    };
+
     const waitForOftReceiptByGuid = async (
         swapId: string,
         destinationAsset: string,
@@ -410,7 +460,7 @@ export const SwapExecutionWorker = () => {
             getGasAbstractionSigner(destinationAsset),
             "OFT destination signer",
         );
-        const contract = createOftContract(oftContract.address, provider);
+        const contract = await createOftContract(oftRoute, provider);
 
         log.debug(
             "Swap execution waiting for OFT receive event",
@@ -499,43 +549,72 @@ export const SwapExecutionWorker = () => {
         };
         const sourceOft = await getOftContract(oftRoute);
 
-        const sendReceipt = await waitForOftSendReceipt(
-            currentSwap.id,
-            currentSwap.oft.sourceAsset,
-            currentSwap.oft.txHash,
-        );
-        if (sendReceipt === undefined) {
-            return;
-        }
-
-        if (sendReceipt.status === 0) {
-            await abandonFailedOftSend(
-                currentSwap.id,
-                currentSwap.oft.sourceAsset,
-                currentSwap.oft.txHash,
-                sendReceipt.blockNumber,
-            );
-            return;
-        }
-
-        const sourceProvider = getOftProvider(currentSwap.oft.sourceAsset);
         const sourceTransport = getNetworkTransport(
             currentSwap.oft.sourceAsset,
         );
-        if (sourceTransport !== NetworkTransport.Evm) {
-            throw new Error(
-                `OFT send decoding requires an EVM source asset, got ${String(sourceTransport)}`,
-            );
+        let guid: string | undefined;
+
+        switch (sourceTransport) {
+            case NetworkTransport.Evm: {
+                const sendReceipt = await waitForOftSendReceipt(
+                    currentSwap.id,
+                    currentSwap.oft.sourceAsset,
+                    currentSwap.oft.txHash,
+                );
+                if (sendReceipt === undefined) {
+                    return;
+                }
+
+                if (sendReceipt.status === 0) {
+                    await abandonFailedOftSend(
+                        currentSwap.id,
+                        currentSwap.oft.sourceAsset,
+                        currentSwap.oft.txHash,
+                        sendReceipt.blockNumber,
+                    );
+                    return;
+                }
+
+                const sourceProvider = getOftProvider(
+                    currentSwap.oft.sourceAsset,
+                );
+                const sourceContract = await createOftContract(
+                    oftRoute,
+                    sourceProvider,
+                );
+                guid = getOftSentEvent(
+                    sourceContract,
+                    sendReceipt,
+                    sourceOft.address,
+                ).guid;
+                break;
+            }
+
+            case NetworkTransport.Solana: {
+                const sendTransaction = await waitForSolanaOftSendConfirmation(
+                    currentSwap.id,
+                    currentSwap.oft.sourceAsset,
+                    currentSwap.oft.txHash,
+                );
+                if (sendTransaction === undefined) {
+                    return;
+                }
+
+                guid = getSolanaOftGuidFromLogs(
+                    sendTransaction.meta.logMessages,
+                );
+                break;
+            }
+
+            case NetworkTransport.Tron:
+                throw new Error(
+                    `Unsupported OFT source transport for pre-lockup execution: ${sourceTransport}`,
+                );
         }
-        const sourceContract = createOftContract(
-            sourceOft.address,
-            sourceProvider,
-        );
-        const { guid } = getOftSentEvent(
-            sourceContract,
-            sendReceipt,
-            sourceOft.address,
-        );
+
+        if (guid === undefined) {
+            throw new Error("Swap execution failed to find OFT send guid");
+        }
 
         log.info(
             "Swap execution decoded OFT send guid",
