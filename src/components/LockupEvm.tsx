@@ -11,7 +11,6 @@ import {
     type Setter,
     Show,
     createEffect,
-    createMemo,
     createResource,
     createSignal,
 } from "solid-js";
@@ -40,14 +39,6 @@ import {
     sendPopulatedTransaction,
 } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
-import {
-    getOftDirectRequiredNativeBalance,
-    getOftDirectRequiredTokenAmount,
-    getOftDirectSendTarget,
-    requiresOftDirectUserApproval,
-    sendOftDirect,
-} from "../utils/oft/directSend";
-import { getQuotedOftContract, quoteOftSend } from "../utils/oft/oft";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     GasAbstractionType,
@@ -55,11 +46,12 @@ import {
     type SomeSwap,
 } from "../utils/swapCreator";
 import ApproveErc20 from "./ApproveErc20";
-import BlockExplorer, { ExplorerKind } from "./BlockExplorer";
 import ConnectWallet from "./ConnectWallet";
 import ContractTransaction from "./ContractTransaction";
+import InsufficientBalance from "./InsufficientBalance";
 import LoadingSpinner from "./LoadingSpinner";
 import OptimizedRoute from "./OptimizedRoute";
+import SendToOft from "./SendToOft";
 
 const lockupGasUsage = 46_000n;
 
@@ -396,323 +388,6 @@ const lockupWithHops = async (
     return commitmentTxHash;
 };
 
-const InsufficientBalance = (props: { asset?: string }) => {
-    const { t } = useGlobalContext();
-
-    return (
-        <>
-            <p>{t("insufficient_balance_line")}</p>
-            <ConnectWallet asset={props.asset} />
-            <button class="btn" disabled={true}>
-                {t("insufficient_balance")}
-            </button>
-        </>
-    );
-};
-
-const WaitForOft = (props: { asset: string; transactionHash: string }) => {
-    const { t } = useGlobalContext();
-
-    return (
-        <>
-            <h2>{t("waiting_for_oft")}</h2>
-            <LoadingSpinner />
-            <BlockExplorer
-                asset={props.asset}
-                txId={props.transactionHash}
-                explorer={ExplorerKind.LayerZero}
-                typeLabel={"lockup_tx"}
-            />
-        </>
-    );
-};
-
-const SendToOft = (props: {
-    oft: OftDetail;
-    swapId: string;
-    amount: bigint;
-}) => {
-    const { setSwap, swap } = usePayContext();
-    const { t, getSwap, setSwapStorage } = useGlobalContext();
-    const { signer, getGasAbstractionSigner } = useWeb3Signer();
-
-    const expectedChainId = () =>
-        config.assets?.[props.oft.sourceAsset]?.network?.chainId;
-
-    const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
-    const [requiredTokenBalance, setRequiredTokenBalance] =
-        createSignal<bigint>(undefined);
-    const [hasEnoughMsgFee, setHasEnoughMsgFee] =
-        createSignal<boolean>(undefined);
-    const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
-    const [approvalTarget, setApprovalTarget] = createSignal<string>(undefined);
-    const txSent = createMemo(() => {
-        return swap()?.oft?.txHash;
-    });
-
-    const [signerChainId] = createResource(signer, async (currentSigner) => {
-        return await currentSigner.provider
-            .getNetwork()
-            .then((n) => Number(n.chainId));
-    });
-
-    const sourceWalletReady = () =>
-        signer() !== undefined && signerChainId() === expectedChainId();
-
-    const refreshOftSendState = async (connectedSigner: Signer) => {
-        const oftRoute = {
-            from: props.oft.sourceAsset,
-            to: props.oft.destinationAsset,
-        };
-        const signerAddress = await connectedSigner.getAddress();
-        const recipient = getGasAbstractionSigner(
-            props.oft.destinationAsset,
-        ).address;
-        const tokenContract = createTokenContract(
-            props.oft.sourceAsset,
-            connectedSigner,
-        );
-        const directSendTarget = await getOftDirectSendTarget(oftRoute);
-        const quotedOftInstance = await getQuotedOftContract(oftRoute);
-        const [
-            balance,
-            needsUserApproval,
-            nativeBalance,
-            { sendParam, msgFee },
-        ] = await Promise.all([
-            tokenContract.balanceOf(signerAddress),
-            requiresOftDirectUserApproval(directSendTarget, connectedSigner),
-            connectedSigner.provider.getBalance(signerAddress),
-            quoteOftSend(quotedOftInstance, oftRoute, recipient, props.amount),
-        ]);
-
-        const requiredTokenAmount = getOftDirectRequiredTokenAmount(
-            directSendTarget,
-            props.amount,
-            msgFee,
-        );
-        const requiredNativeBalance = getOftDirectRequiredNativeBalance(
-            directSendTarget,
-            msgFee,
-        );
-
-        let needsUpdatedApproval = false;
-        if (needsUserApproval) {
-            const allowance = await tokenContract.allowance(
-                signerAddress,
-                directSendTarget.executionContract.address,
-            );
-
-            needsUpdatedApproval = allowance < requiredTokenAmount;
-        }
-
-        const hasEnoughTokenBalance = balance >= requiredTokenAmount;
-        const hasEnoughNativeBalanceForMsgFee =
-            nativeBalance >= requiredNativeBalance;
-
-        log.info("OFT signer token balance check", {
-            asset: props.oft.sourceAsset,
-            balance: balance.toString(),
-            requiredAmount: requiredTokenAmount.toString(),
-            sufficient: hasEnoughTokenBalance,
-        });
-        log.info("OFT signer native balance check", {
-            asset: props.oft.sourceAsset,
-            destinationAsset: props.oft.destinationAsset,
-            nativeBalance: nativeBalance.toString(),
-            requiredMsgFee: requiredNativeBalance.toString(),
-            sufficient: hasEnoughNativeBalanceForMsgFee,
-        });
-
-        setSignerBalance(balance);
-        setRequiredTokenBalance(requiredTokenAmount);
-        setHasEnoughMsgFee(hasEnoughNativeBalanceForMsgFee);
-        setNeedsApproval(needsUpdatedApproval);
-        setApprovalTarget(
-            needsUserApproval
-                ? directSendTarget.executionContract.address
-                : undefined,
-        );
-
-        return {
-            directSendTarget,
-            recipient,
-            sendParam,
-            msgFee,
-            signerAddress,
-            hasEnoughTokenBalance,
-            hasEnoughNativeBalanceForMsgFee,
-            needsUpdatedApproval,
-        };
-    };
-
-    createEffect(() => {
-        if (signer() === undefined || signerChainId() !== expectedChainId()) {
-            return;
-        }
-
-        void (async () => {
-            const connectedSigner = signer();
-            if (connectedSigner === undefined) {
-                return;
-            }
-            await refreshOftSendState(connectedSigner);
-        })();
-    });
-
-    return (
-        <Show
-            when={txSent() === undefined}
-            fallback={
-                <WaitForOft
-                    asset={props.oft.sourceAsset}
-                    transactionHash={txSent()}
-                />
-            }>
-            <Show
-                when={
-                    signerBalance() !== undefined &&
-                    hasEnoughMsgFee() !== undefined
-                }
-                fallback={
-                    <Show
-                        when={sourceWalletReady()}
-                        fallback={
-                            <ConnectWallet asset={props.oft.sourceAsset} />
-                        }>
-                        <LoadingSpinner />
-                    </Show>
-                }>
-                <Show
-                    when={
-                        signerBalance() >=
-                        (requiredTokenBalance() ?? props.amount)
-                    }
-                    fallback={
-                        <InsufficientBalance asset={props.oft.sourceAsset} />
-                    }>
-                    <Show
-                        when={hasEnoughMsgFee()}
-                        fallback={
-                            <InsufficientBalance
-                                asset={props.oft.sourceAsset}
-                            />
-                        }>
-                        <Show
-                            when={!needsApproval()}
-                            fallback={
-                                <ApproveErc20
-                                    asset={props.oft.sourceAsset}
-                                    value={() =>
-                                        requiredTokenBalance() ?? props.amount
-                                    }
-                                    setNeedsApproval={setNeedsApproval}
-                                    approvalTarget={approvalTarget()}
-                                    resetAllowanceFirst={true}
-                                />
-                            }>
-                            <ContractTransaction
-                                asset={props.oft.sourceAsset}
-                                /* eslint-disable-next-line solid/reactivity */
-                                onClick={async () => {
-                                    const connectedSigner = signer();
-                                    if (connectedSigner === undefined) {
-                                        throw new Error(
-                                            "connected signer is required for OFT send",
-                                        );
-                                    }
-                                    const {
-                                        directSendTarget,
-                                        recipient,
-                                        sendParam,
-                                        msgFee,
-                                        signerAddress,
-                                        hasEnoughTokenBalance,
-                                        hasEnoughNativeBalanceForMsgFee,
-                                        needsUpdatedApproval,
-                                    } =
-                                        await refreshOftSendState(
-                                            connectedSigner,
-                                        );
-                                    log.debug(
-                                        `Sending OFT ${props.oft.destinationAsset} to ${recipient}`,
-                                    );
-                                    if (needsUpdatedApproval) {
-                                        throw new Error(
-                                            "Approval is no longer sufficient for the updated OFT quote. Please approve the new amount and try again.",
-                                        );
-                                    }
-                                    if (!hasEnoughTokenBalance) {
-                                        throw new Error(
-                                            "Token balance is no longer sufficient for the updated OFT quote.",
-                                        );
-                                    }
-                                    if (!hasEnoughNativeBalanceForMsgFee) {
-                                        throw new Error(
-                                            "Native balance is no longer sufficient for the updated OFT message fee.",
-                                        );
-                                    }
-                                    log.debug("Quoted OFT send", {
-                                        swapId: props.swapId,
-                                        sourceAsset: props.oft.sourceAsset,
-                                        destinationAsset:
-                                            props.oft.destinationAsset,
-                                        recipient,
-                                        amount: props.amount.toString(),
-                                        nativeFee: msgFee[0].toString(),
-                                        lzTokenFee: msgFee[1].toString(),
-                                    });
-                                    const tx = await sendOftDirect({
-                                        target: directSendTarget,
-                                        runner: connectedSigner,
-                                        sendParam,
-                                        msgFee,
-                                        refundAddress: signerAddress,
-                                    });
-
-                                    const currentSwap = await getSwap(
-                                        props.swapId,
-                                    );
-                                    if (currentSwap.oft !== undefined) {
-                                        currentSwap.oft = {
-                                            ...currentSwap.oft,
-                                            txHash: tx.hash,
-                                        };
-                                    }
-
-                                    setSwap(currentSwap);
-                                    await setSwapStorage(currentSwap);
-                                    log.info(
-                                        "Persisted OFT send tx hash for background worker",
-                                        {
-                                            swapId: props.swapId,
-                                            sourceAsset: props.oft.sourceAsset,
-                                            destinationAsset:
-                                                props.oft.destinationAsset,
-                                            txHash: tx.hash,
-                                        },
-                                    );
-                                }}
-                                children={
-                                    <ConnectWallet
-                                        asset={props.oft.sourceAsset}
-                                    />
-                                }
-                                buttonText={t("send")}
-                                promptText={t("transaction_prompt", {
-                                    button: t("send"),
-                                })}
-                                waitingText={t("tx_in_mempool_subline")}
-                                showHr={false}
-                            />
-                        </Show>
-                    </Show>
-                </Show>
-            </Show>
-        </Show>
-    );
-};
-
 const LockupTransaction = (props: {
     asset: string;
     gasAbstraction: GasAbstractionType;
@@ -905,107 +580,118 @@ const LockupEvm = (props: {
             .then((n) => Number(n.chainId));
     });
 
-    // eslint-disable-next-line solid/reactivity
-    createEffect(async () => {
-        if (props.oft !== undefined) {
-            setOftValue(
-                (await getHopExecutionQuote(props.hops[0], value(), slippage()))
-                    .amountIn,
-            );
-            return;
-        }
+    createEffect(() => {
+        void (async () => {
+            if (props.oft !== undefined) {
+                setOftValue(
+                    (
+                        await getHopExecutionQuote(
+                            props.hops[0],
+                            value(),
+                            slippage(),
+                        )
+                    ).amountIn,
+                );
+                return;
+            }
 
-        if (signer() === undefined) {
-            return;
-        }
+            if (signer() === undefined) {
+                return;
+            }
 
-        if (signerChainId() === undefined) {
-            return;
-        }
+            if (signerChainId() === undefined) {
+                return;
+            }
 
-        if (hasHopsBefore()) {
-            const hop = props.hops[0];
-            const hopInputContract = createTokenContract(hop.from, signer());
-            const router = createRouterContract(hop.from, signer());
-            const [permit2Address, signerAddress] = await Promise.all([
-                router.PERMIT2(),
-                signer().getAddress(),
-            ]);
-
-            const [balance, allowance, requiredValue] = await Promise.all([
-                hopInputContract.balanceOf(signerAddress),
-                hopInputContract.allowance(signerAddress, permit2Address),
-                getHopExecutionQuote(hop, value(), slippage()).then(
-                    ({ amountIn }) => amountIn,
-                ),
-            ]);
-
-            log.info("Hop input token balance", balance);
-            log.info(
-                "Hop required amount (DEX quote + slippage)",
-                requiredValue,
-            );
-
-            setSignerBalance(balance);
-            setRequiredValue(requiredValue);
-            // Permit2 requires a one-time unlimited approval of the
-            // input token to the Permit2 contract
-            setNeedsApproval(allowance < requiredValue);
-            setApprovalTarget(permit2Address);
-
-            return;
-        }
-
-        switch (getKindForAsset(props.asset)) {
-            case AssetKind.EVMNative: {
-                const [balance, gasPrice] = await Promise.all([
-                    signer().provider.getBalance(await signer().getAddress()),
-                    signer()
-                        .provider.getFeeData()
-                        .then((data) => data.gasPrice),
+            if (hasHopsBefore()) {
+                const hop = props.hops[0];
+                const hopInputContract = createTokenContract(
+                    hop.from,
+                    signer(),
+                );
+                const router = createRouterContract(hop.from, signer());
+                const [permit2Address, signerAddress] = await Promise.all([
+                    router.PERMIT2(),
+                    signer().getAddress(),
                 ]);
 
-                const spendable = balance - gasPrice * lockupGasUsage;
-                log.info("EVM signer spendable balance", spendable);
-                setSignerBalance(spendable);
-                setRequiredValue(value());
-                setNeedsApproval(false);
-                setApprovalTarget(undefined);
-
-                break;
-            }
-            case AssetKind.ERC20: {
-                const contract = createTokenContract(props.asset, signer());
-                const router = createRouterContract(props.asset, signer());
-
-                const approvalTarget =
-                    props.gasAbstraction !== GasAbstractionType.None
-                        ? await router.PERMIT2()
-                        : await getErc20Swap(props.asset).getAddress();
-
-                const [balance, allowance] = await Promise.all([
-                    contract.balanceOf(await signer().getAddress()),
-                    contract.allowance(
-                        await signer().getAddress(),
-                        approvalTarget,
+                const [balance, allowance, requiredValue] = await Promise.all([
+                    hopInputContract.balanceOf(signerAddress),
+                    hopInputContract.allowance(signerAddress, permit2Address),
+                    getHopExecutionQuote(hop, value(), slippage()).then(
+                        ({ amountIn }) => amountIn,
                     ),
                 ]);
 
-                log.info("ERC20 signer balance", balance);
-
-                const needsApproval = allowance < value();
-                log.info("ERC20 signer needs approval", needsApproval);
+                log.info("Hop input token balance", balance);
+                log.info(
+                    "Hop required amount (DEX quote + slippage)",
+                    requiredValue,
+                );
 
                 setSignerBalance(balance);
-                setRequiredValue(value());
-                setNeedsApproval(needsApproval);
-                setApprovalTarget(approvalTarget);
+                setRequiredValue(requiredValue);
+                // Permit2 requires a one-time unlimited approval of the
+                // input token to the Permit2 contract
+                setNeedsApproval(allowance < requiredValue);
+                setApprovalTarget(permit2Address);
 
-                break;
+                return;
             }
-            default:
-                break;
-        }
+
+            switch (getKindForAsset(props.asset)) {
+                case AssetKind.EVMNative: {
+                    const [balance, gasPrice] = await Promise.all([
+                        signer().provider.getBalance(
+                            await signer().getAddress(),
+                        ),
+                        signer()
+                            .provider.getFeeData()
+                            .then((data) => data.gasPrice),
+                    ]);
+
+                    const spendable = balance - gasPrice * lockupGasUsage;
+                    log.info("EVM signer spendable balance", spendable);
+                    setSignerBalance(spendable);
+                    setRequiredValue(value());
+                    setNeedsApproval(false);
+                    setApprovalTarget(undefined);
+
+                    break;
+                }
+                case AssetKind.ERC20: {
+                    const contract = createTokenContract(props.asset, signer());
+                    const router = createRouterContract(props.asset, signer());
+
+                    const approvalTarget =
+                        props.gasAbstraction !== GasAbstractionType.None
+                            ? await router.PERMIT2()
+                            : await getErc20Swap(props.asset).getAddress();
+
+                    const [balance, allowance] = await Promise.all([
+                        contract.balanceOf(await signer().getAddress()),
+                        contract.allowance(
+                            await signer().getAddress(),
+                            approvalTarget,
+                        ),
+                    ]);
+
+                    log.info("ERC20 signer balance", balance);
+
+                    const needsApproval = allowance < value();
+                    log.info("ERC20 signer needs approval", needsApproval);
+
+                    setSignerBalance(balance);
+                    setRequiredValue(value());
+                    setNeedsApproval(needsApproval);
+                    setApprovalTarget(approvalTarget);
+
+                    break;
+                }
+                default:
+                    break;
+            }
+        })();
     });
 
     return (

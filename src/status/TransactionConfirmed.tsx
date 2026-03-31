@@ -3,7 +3,6 @@ import type { ERC20Swap } from "boltz-core/typechain/ERC20Swap";
 import type { Router } from "boltz-core/typechain/Router";
 import {
     AbiCoder,
-    MaxUint256,
     Signature,
     type Wallet,
     ZeroAddress,
@@ -38,7 +37,6 @@ import { usePayContext } from "../context/Pay";
 import {
     type Signer,
     createRouterContract,
-    createTokenContract,
     useWeb3Signer,
 } from "../context/Web3";
 import type { DictKey } from "../i18n/i18n";
@@ -62,12 +60,13 @@ import {
 } from "../utils/evmTransaction";
 import {
     type OftQuoteOptions,
-    createOftContract,
-    getOftContract,
+    buildOftApprovalCall,
     getQuotedOftContract,
     quoteOftReceiveAmount,
     quoteOftSend,
 } from "../utils/oft/oft";
+import { getOftContract } from "../utils/oft/registry";
+import type { OftReceiveQuote } from "../utils/oft/types";
 import {
     type ClaimQuote,
     type DexQuote,
@@ -209,7 +208,7 @@ const getAcceptedQuoteAmount = async (
         dexDetails,
         adjustedClaimAmount,
     );
-    const adjustedOftQuote = await quoteOftReceiveAmount(
+    const adjustedOftQuote: OftReceiveQuote = await quoteOftReceiveAmount(
         {
             from: oft.sourceAsset,
             to: oft.destinationAsset,
@@ -491,8 +490,6 @@ const claimErc20ViaRouterOft = async (
         );
     }
 
-    const oftExecutionInstance = createOftContract(oftContract.address, signer);
-    const approvalRequired = await oftExecutionInstance.approvalRequired();
     const router = createRouterContract(asset, signer);
     const assetAmount = satsToAssetAmount(amount, asset);
     const [routerAddress, { chainId }] = await Promise.all([
@@ -620,30 +617,18 @@ const claimErc20ViaRouterOft = async (
         })),
     );
 
-    if (approvalRequired) {
-        const tokenContract = createTokenContract(oft.sourceAsset, signer);
-        const allowance = await tokenContract.allowance(
-            routerAddress,
-            oftContract.address,
-        );
-        if (allowance < amountOut * 10n) {
-            const approveTx = await tokenContract.approve.populateTransaction(
-                oftContract.address,
-                MaxUint256,
-            );
-            if (
-                typeof approveTx.to !== "string" ||
-                typeof approveTx.data !== "string"
-            ) {
-                throw new Error("failed to populate OFT approval transaction");
-            }
-
-            routerCalls.push({
-                target: approveTx.to,
-                value: "0",
-                callData: approveTx.data,
-            });
-        }
+    const approvalCall = await buildOftApprovalCall(
+        oftRoute,
+        routerAddress,
+        amountOut,
+        signer,
+    );
+    if (approvalCall !== undefined) {
+        routerCalls.push({
+            target: approvalCall.to,
+            value: "0",
+            callData: approvalCall.data,
+        });
     }
 
     const tx = await router.claimERC20ExecuteOft.populateTransaction(

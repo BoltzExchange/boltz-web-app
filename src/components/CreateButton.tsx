@@ -87,7 +87,8 @@ const buildOftDetail = (
 };
 
 const getLockupGasAbstraction = (assetSend: string): GasAbstractionType => {
-    if (isEvmAsset(assetSend) && assetSend !== RBTC) {
+    const asset = getCanonicalAsset(assetSend);
+    if (isEvmAsset(asset) && asset !== RBTC) {
         return GasAbstractionType.Signer;
     }
 

@@ -7,13 +7,15 @@ import { config as mainnetConfig } from "../../src/configs/mainnet";
 
 const {
     decodeExecutorNativeAmountExceedsCapError,
-    getOftContract,
     getOftReceivedEventByGuid,
     isExecutorNativeAmountExceedsCapError,
     quoteOftAmountInForAmountOut,
     quoteOftSend,
     clearOftDeployments,
 } = await import("../../src/utils/oft/oft");
+const { getOftContract } = await import("../../src/utils/oft/registry");
+const { getSolanaOftGuidFromLogs: getSolanaOftSentEventFromTransaction } =
+    await import("../../src/utils/oft/solana");
 const { shouldCreateSolanaTokenAccount } =
     await import("../../src/utils/chains/solana");
 
@@ -118,14 +120,8 @@ describe("oft", () => {
         );
 
         const oft = {
-            quoteOFT: {
-                staticCall: vi
-                    .fn()
-                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
-            },
-            quoteSend: {
-                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
-            },
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
         };
 
         const { sendParam, msgFee } = await quoteOftSend(
@@ -143,7 +139,7 @@ describe("oft", () => {
 
         expect(sendParam[4]).not.toBe("0x");
         expect(sendParam[4].startsWith("0x0003")).toBe(true);
-        expect(oft.quoteOFT.staticCall).toHaveBeenCalledWith(
+        expect(oft.quoteOFT).toHaveBeenCalledWith(
             expect.arrayContaining([
                 expect.any(Number),
                 expect.any(String),
@@ -161,6 +157,68 @@ describe("oft", () => {
                 explorer: "",
             },
         );
+    });
+
+    test("should normalize quoteSend fee tuples into a mutable array", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn().mockResolvedValue({
+                    usdt0: {
+                        native: [
+                            {
+                                name: "Ethereum",
+                                chainId: 1,
+                                lzEid: "30101",
+                                contracts: [
+                                    {
+                                        name: "OFT Adapter",
+                                        address:
+                                            "0x1000000000000000000000000000000000000001",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                            {
+                                name: "Polygon PoS",
+                                chainId: 137,
+                                lzEid: "30109",
+                                contracts: [
+                                    {
+                                        name: "OFT",
+                                        address:
+                                            "0x1000000000000000000000000000000000000000",
+                                        explorer: "",
+                                    },
+                                ],
+                            },
+                        ],
+                        legacyMesh: [],
+                    },
+                }),
+            }),
+        );
+
+        const oft = {
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi
+                .fn()
+                .mockResolvedValue(Object.freeze([5n, 0n]) as [bigint, bigint]),
+        };
+
+        const { msgFee } = await quoteOftSend(
+            oft as never,
+            getOftRoute("USDT0-ETH", "USDT0-POL"),
+            "0x2000000000000000000000000000000000000000",
+            100n,
+        );
+
+        expect(msgFee).toEqual([5n, 0n]);
+        expect(Object.isFrozen(msgFee)).toBe(false);
+
+        msgFee[0] = 6n;
+        expect(msgFee[0]).toBe(6n);
     });
 
     test("should resolve legacy mesh assets by configured endpoint id", async () => {
@@ -275,14 +333,8 @@ describe("oft", () => {
         );
 
         const oft = {
-            quoteOFT: {
-                staticCall: vi
-                    .fn()
-                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
-            },
-            quoteSend: {
-                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
-            },
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
             send: vi.fn(),
         };
         const recipient = validSolanaRecipient;
@@ -339,14 +391,8 @@ describe("oft", () => {
         );
 
         const oft = {
-            quoteOFT: {
-                staticCall: vi
-                    .fn()
-                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
-            },
-            quoteSend: {
-                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
-            },
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
         };
 
         await quoteOftSend(
@@ -399,14 +445,8 @@ describe("oft", () => {
         );
 
         const oft = {
-            quoteOFT: {
-                staticCall: vi
-                    .fn()
-                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
-            },
-            quoteSend: {
-                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
-            },
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
         };
 
         const { sendParam } = await quoteOftSend(
@@ -434,14 +474,8 @@ describe("oft", () => {
         );
 
         const oft = {
-            quoteOFT: {
-                staticCall: vi
-                    .fn()
-                    .mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
-            },
-            quoteSend: {
-                staticCall: vi.fn().mockResolvedValue([5n, 0n]),
-            },
+            quoteOFT: vi.fn().mockResolvedValue([[0n, 0n], [], [100n, 99n]]),
+            quoteSend: vi.fn().mockResolvedValue([5n, 0n]),
             send: vi.fn(),
         };
 
@@ -467,6 +501,8 @@ describe("oft", () => {
             ]),
         };
         const contract = {
+            transport: NetworkTransport.Evm,
+            approvalRequired: vi.fn(),
             interface: {
                 encodeFilterTopics: vi
                     .fn()
@@ -505,6 +541,15 @@ describe("oft", () => {
             toBlock: "latest",
             topics: ["0xtopic", "0xguid"],
         });
+    });
+
+    test("should parse a Solana OFT send return from transaction logs", () => {
+        const event = getSolanaOftSentEventFromTransaction([
+            "Program return: Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7 RAYfEjUX28McJNZS29+yNa3JaNehFEaKBZ0WYsGMxBPhBAAAAAAAAA3PDQAAAAAAAAAAAAAAAAApqB4AAAAAAM+lHgAAAAAA",
+        ]);
+        expect(event).toEqual(
+            "0x44061f123517dbc31c24d652dbdfb235adc968d7a114468a059d1662c18cc413",
+        );
     });
 
     test("should decode Executor_NativeAmountExceedsCap reverts", () => {

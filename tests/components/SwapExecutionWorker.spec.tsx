@@ -162,6 +162,9 @@ vi.mock("../../src/utils/provider", () => ({
 
 vi.mock("../../src/utils/oft/oft", () => ({
     createOftContract: vi.fn((address: string) => ({ address })),
+}));
+
+vi.mock("../../src/utils/oft/registry", () => ({
     getOftContract: vi.fn((route: { from: string }) =>
         Promise.resolve({
             address:
@@ -170,6 +173,10 @@ vi.mock("../../src/utils/oft/oft", () => ({
                     : "0x2222222222222222222222222222222222222222",
         }),
     ),
+}));
+
+vi.mock("../../src/utils/oft/oft", () => ({
+    createOftContract: vi.fn((address: string) => ({ address })),
     getOftProvider: vi.fn(() => ({
         getTransactionReceipt: vi.fn().mockResolvedValue({
             logs: [],

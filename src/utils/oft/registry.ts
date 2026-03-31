@@ -106,7 +106,7 @@ export const findOftChainContract = (
         .find((contract): contract is OftContract => contract !== undefined);
 };
 
-export const getPrimaryOftContract = async (
+export const getOftContract = async (
     route: OftRoute,
     oftName = defaultOftName,
 ): Promise<OftContract> => {

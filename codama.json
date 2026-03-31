@@ -1,0 +1,16 @@
+{
+    "idl": "src/generated/idl.json",
+    "before": [],
+    "scripts": {
+        "js": {
+            "from": "@codama/renderers-js",
+            "args": [
+                "src/generated/solana-oft",
+                {
+                    "formatCode": false,
+                    "syncPackageJson": false
+                }
+            ]
+        }
+    }
+}

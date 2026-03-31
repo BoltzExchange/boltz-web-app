@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library";
 import { BigNumber } from "bignumber.js";
 
 import Fees from "../../src/components/Fees";
+import { config as runtimeConfig } from "../../src/config";
+import { config as mainnetConfig } from "../../src/configs/mainnet";
 import { BTC, LBTC, LN, RBTC, USDT0 } from "../../src/consts/Assets";
 import { Denomination, SwapType } from "../../src/consts/Enums";
 import * as web3Context from "../../src/context/Web3";
@@ -25,6 +27,7 @@ import {
 import { pairs } from "../pairs";
 
 const mockUseWeb3Signer = vi.fn();
+const originalAssets = structuredClone(runtimeConfig.assets ?? {});
 
 vi.mock("../../src/utils/boltzClient", () => ({
     getPairs: vi.fn(() => Promise.resolve(pairs)),
@@ -35,6 +38,13 @@ const setPairAssets = (fromAsset: string, toAsset: string) => {
 };
 
 describe("Fees component", () => {
+    beforeAll(() => {
+        runtimeConfig.assets = {
+            ...runtimeConfig.assets,
+            "USDT0-SOL": structuredClone(mainnetConfig.assets["USDT0-SOL"]),
+        };
+    });
+
     beforeEach(() => {
         localStorage.clear();
         vi.spyOn(fiat, "getBtcPriceFailover").mockResolvedValue(
@@ -69,6 +79,10 @@ describe("Fees component", () => {
     afterEach(() => {
         localStorage.clear();
         vi.restoreAllMocks();
+    });
+
+    afterAll(() => {
+        runtimeConfig.assets = originalAssets;
     });
 
     test("should render", () => {
@@ -835,6 +849,49 @@ describe("Fees component", () => {
                 .parentElement?.querySelector(".denominator-text-symbol")
                 ?.textContent,
         ).toEqual("Ξ");
+    });
+
+    test("should format Solana OFT messaging fees in lamports", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: "USDT0-SOL",
+            toAsset: BTC,
+            swapToCreate: {
+                type: SwapType.Chain,
+            },
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            oftMessagingFeeToken: "SOL",
+            oftTransferFeeAsset: undefined,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => 500_000_000n),
+            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
+                "0.5",
+            );
+        });
     });
 
     test.each`
