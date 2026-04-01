@@ -24,42 +24,24 @@ import {
     solanaAtaRentExemptLamports,
 } from "../chains/solana";
 import { decodeTronBase58Address } from "../chains/tron";
-import { formatError } from "../errors";
 import {
     type Provider,
     createAssetProvider,
     requireRpcUrls,
 } from "../provider";
+import {
+    type OftContract,
+    clearOftRegistry,
+    defaultOftName,
+    formatRoute,
+    getOftChain,
+    getPrimaryOftContract,
+} from "./registry";
 
 // TODO: review quote methods
 
-type OftContract = {
-    name: string;
-    address: string;
-    explorer: string;
-};
-
-type OftChain = {
-    name: string;
-    chainId?: number;
-    lzEid?: string;
-    isSource?: boolean;
-    contracts: OftContract[];
-};
-
-type OftTokenConfig = {
-    native: OftChain[];
-    legacyMesh: OftChain[];
-};
-
-type OftRegistry = Record<string, OftTokenConfig>;
-
-const oftDeploymentsEndpoint = "https://docs.usdt0.to/api/deployments";
-const defaultOftName = "usdt0";
 const providerCache = new Map<string, Provider>();
 const executorNativeAmountExceedsCapSelector = "0x0084ce02";
-
-export const formatRoute = (route: OftRoute) => `${route.from} -> ${route.to}`;
 
 const oftAbi = [
     "function quoteOFT(tuple(uint32,bytes32,uint256,uint256,bytes,bytes,bytes)) view returns (tuple(uint256,uint256), tuple(int256,string)[], tuple(uint256,uint256))",
@@ -192,10 +174,8 @@ type OftContractInstance = {
     }>;
 };
 
-let oftDeploymentsPromise: Promise<OftRegistry> | undefined;
-
 export const clearOftDeployments = () => {
-    oftDeploymentsPromise = undefined;
+    clearOftRegistry();
     providerCache.clear();
     clearSolanaTokenAccountCreationCache();
 };
@@ -206,62 +186,6 @@ const optionTypeLzReceive = 1;
 const optionTypeNativeDrop = 2;
 const hundredPercentBps = 10_000n;
 const legacyBridgeFeeBps = 3n;
-
-const fetchOftDeployments = async (): Promise<OftRegistry> => {
-    const response = await fetch(oftDeploymentsEndpoint);
-    if (!response.ok) {
-        throw new Error(
-            `Failed to fetch OFT deployments: ${response.status} ${response.statusText}`,
-        );
-    }
-
-    const data: unknown = await response.json();
-    return data as OftRegistry;
-};
-
-const getOftDeployments = (): Promise<OftRegistry> => {
-    if (!oftDeploymentsPromise) {
-        oftDeploymentsPromise = fetchOftDeployments().catch(
-            (error: unknown) => {
-                log.error(
-                    "Failed to fetch OFT deployments",
-                    formatError(error),
-                );
-                oftDeploymentsPromise = undefined;
-                throw error;
-            },
-        );
-    }
-
-    return oftDeploymentsPromise;
-};
-
-const getOftChain = async (
-    asset: string,
-    route: OftRoute,
-    oftName = defaultOftName,
-): Promise<OftChain | undefined> => {
-    const deployments = await getOftDeployments();
-    const tokenConfig = deployments[oftName.toLowerCase()];
-    if (tokenConfig === undefined) {
-        return undefined;
-    }
-
-    const assetConfig = config.assets?.[asset];
-    const meshKind = getUsdt0Mesh(route.from, route.to);
-    const registryKey: keyof OftTokenConfig =
-        meshKind === Usdt0Kind.Legacy ? "legacyMesh" : "native";
-
-    const chains = tokenConfig[registryKey];
-    const assetChainId = assetConfig?.network?.chainId;
-    const assetChainName = assetConfig?.network?.chainName?.toLowerCase();
-    return chains.find(
-        (chain) =>
-            (assetChainId !== undefined && chain.chainId === assetChainId) ||
-            (assetChainName !== undefined &&
-                chain.name.toLowerCase() === assetChainName),
-    );
-};
 
 export const getOftProvider = (sourceAsset: string): Provider => {
     const rpcUrls = requireRpcUrls(sourceAsset);
@@ -288,23 +212,10 @@ export const getQuotedOftContract = async (
     return createOftContract(oftContract.address, getOftProvider(route.from));
 };
 
-export const getOftContract = async (
+export const getOftContract = (
     route: OftRoute,
     oftName = defaultOftName,
-): Promise<OftContract> => {
-    const chain = await getOftChain(route.from, route, oftName);
-    const contract =
-        chain?.contracts.find((contract) => contract.name === "OFT") ??
-        chain?.contracts.find((contract) => contract.name === "OFT Adapter") ??
-        chain?.contracts.find((contract) => contract.name === "OFT Program");
-    if (contract === undefined) {
-        throw new Error(
-            `Missing OFT contract for route ${formatRoute(route)} and OFT ${oftName}`,
-        );
-    }
-
-    return contract;
-};
+): Promise<OftContract> => getPrimaryOftContract(route, oftName);
 
 export const createOftContract = (
     address: string,

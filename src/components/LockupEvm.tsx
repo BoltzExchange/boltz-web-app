@@ -41,11 +41,13 @@ import {
 } from "../utils/evmTransaction";
 import type { HardwareSigner } from "../utils/hardware/HardwareSigner";
 import {
-    createOftContract,
-    getOftContract,
-    getQuotedOftContract,
-    quoteOftSend,
-} from "../utils/oft/oft";
+    getOftDirectRequiredNativeBalance,
+    getOftDirectRequiredTokenAmount,
+    getOftDirectSendTarget,
+    requiresOftDirectUserApproval,
+    sendOftDirect,
+} from "../utils/oft/directSend";
+import { getQuotedOftContract, quoteOftSend } from "../utils/oft/oft";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
     GasAbstractionType,
@@ -438,6 +440,8 @@ const SendToOft = (props: {
         config.assets?.[props.oft.sourceAsset]?.network?.chainId;
 
     const [signerBalance, setSignerBalance] = createSignal<bigint>(undefined);
+    const [requiredTokenBalance, setRequiredTokenBalance] =
+        createSignal<bigint>(undefined);
     const [hasEnoughMsgFee, setHasEnoughMsgFee] =
         createSignal<boolean>(undefined);
     const [needsApproval, setNeedsApproval] = createSignal<boolean>(false);
@@ -455,82 +459,104 @@ const SendToOft = (props: {
     const sourceWalletReady = () =>
         signer() !== undefined && signerChainId() === expectedChainId();
 
+    const refreshOftSendState = async (connectedSigner: Signer) => {
+        const oftRoute = {
+            from: props.oft.sourceAsset,
+            to: props.oft.destinationAsset,
+        };
+        const signerAddress = await connectedSigner.getAddress();
+        const recipient = getGasAbstractionSigner(
+            props.oft.destinationAsset,
+        ).address;
+        const tokenContract = createTokenContract(
+            props.oft.sourceAsset,
+            connectedSigner,
+        );
+        const directSendTarget = await getOftDirectSendTarget(oftRoute);
+        const quotedOftInstance = await getQuotedOftContract(oftRoute);
+        const [
+            balance,
+            needsUserApproval,
+            nativeBalance,
+            { sendParam, msgFee },
+        ] = await Promise.all([
+            tokenContract.balanceOf(signerAddress),
+            requiresOftDirectUserApproval(directSendTarget, connectedSigner),
+            connectedSigner.provider.getBalance(signerAddress),
+            quoteOftSend(quotedOftInstance, oftRoute, recipient, props.amount),
+        ]);
+
+        const requiredTokenAmount = getOftDirectRequiredTokenAmount(
+            directSendTarget,
+            props.amount,
+            msgFee,
+        );
+        const requiredNativeBalance = getOftDirectRequiredNativeBalance(
+            directSendTarget,
+            msgFee,
+        );
+
+        let needsUpdatedApproval = false;
+        if (needsUserApproval) {
+            const allowance = await tokenContract.allowance(
+                signerAddress,
+                directSendTarget.executionContract.address,
+            );
+
+            needsUpdatedApproval = allowance < requiredTokenAmount;
+        }
+
+        const hasEnoughTokenBalance = balance >= requiredTokenAmount;
+        const hasEnoughNativeBalanceForMsgFee =
+            nativeBalance >= requiredNativeBalance;
+
+        log.info("OFT signer token balance check", {
+            asset: props.oft.sourceAsset,
+            balance: balance.toString(),
+            requiredAmount: requiredTokenAmount.toString(),
+            sufficient: hasEnoughTokenBalance,
+        });
+        log.info("OFT signer native balance check", {
+            asset: props.oft.sourceAsset,
+            destinationAsset: props.oft.destinationAsset,
+            nativeBalance: nativeBalance.toString(),
+            requiredMsgFee: requiredNativeBalance.toString(),
+            sufficient: hasEnoughNativeBalanceForMsgFee,
+        });
+
+        setSignerBalance(balance);
+        setRequiredTokenBalance(requiredTokenAmount);
+        setHasEnoughMsgFee(hasEnoughNativeBalanceForMsgFee);
+        setNeedsApproval(needsUpdatedApproval);
+        setApprovalTarget(
+            needsUserApproval
+                ? directSendTarget.executionContract.address
+                : undefined,
+        );
+
+        return {
+            directSendTarget,
+            recipient,
+            sendParam,
+            msgFee,
+            signerAddress,
+            hasEnoughTokenBalance,
+            hasEnoughNativeBalanceForMsgFee,
+            needsUpdatedApproval,
+        };
+    };
+
     createEffect(() => {
         if (signer() === undefined || signerChainId() !== expectedChainId()) {
             return;
         }
 
         void (async () => {
-            const oftRoute = {
-                from: props.oft.sourceAsset,
-                to: props.oft.destinationAsset,
-            };
-            const oftContract = await getOftContract(oftRoute);
-
             const connectedSigner = signer();
-            const signerAddress = await connectedSigner.getAddress();
-            const recipient = getGasAbstractionSigner(
-                props.oft.destinationAsset,
-            ).address;
-            const tokenContract = createTokenContract(
-                props.oft.sourceAsset,
-                connectedSigner,
-            );
-            const oftInstance = createOftContract(
-                oftContract.address,
-                connectedSigner,
-            );
-            const quotedOftInstance = await getQuotedOftContract(oftRoute);
-            const [balance, approvalRequired, nativeBalance, { msgFee }] =
-                await Promise.all([
-                    tokenContract.balanceOf(signerAddress),
-                    oftInstance.approvalRequired(),
-                    connectedSigner.provider.getBalance(signerAddress),
-                    quoteOftSend(
-                        quotedOftInstance,
-                        oftRoute,
-                        recipient,
-                        props.amount,
-                    ),
-                ]);
-
-            // Some buffer to pay for gas
-            const requiredNativeBalance =
-                (msgFee[0] * BigInt(110)) / BigInt(100);
-
-            let needsApproval = false;
-            if (approvalRequired) {
-                const allowance = await tokenContract.allowance(
-                    signerAddress,
-                    oftContract.address,
-                );
-                needsApproval = allowance < props.amount;
+            if (connectedSigner === undefined) {
+                return;
             }
-
-            const hasEnoughTokenBalance = balance >= props.amount;
-            const hasEnoughNativeBalanceForMsgFee =
-                nativeBalance >= requiredNativeBalance;
-
-            log.info("OFT signer token balance check", {
-                asset: props.oft.sourceAsset,
-                balance: balance.toString(),
-                requiredAmount: props.amount.toString(),
-                sufficient: hasEnoughTokenBalance,
-            });
-            log.info("OFT signer native balance check", {
-                asset: props.oft.sourceAsset,
-                destinationAsset: props.oft.destinationAsset,
-                nativeBalance: nativeBalance.toString(),
-                requiredMsgFee: requiredNativeBalance.toString(),
-                sufficient: hasEnoughNativeBalanceForMsgFee,
-            });
-
-            setSignerBalance(balance);
-            setHasEnoughMsgFee(hasEnoughNativeBalanceForMsgFee);
-            setNeedsApproval(needsApproval);
-            setApprovalTarget(
-                approvalRequired ? oftContract.address : undefined,
-            );
+            await refreshOftSendState(connectedSigner);
         })();
     });
 
@@ -558,7 +584,10 @@ const SendToOft = (props: {
                     </Show>
                 }>
                 <Show
-                    when={signerBalance() >= props.amount}
+                    when={
+                        signerBalance() >=
+                        (requiredTokenBalance() ?? props.amount)
+                    }
                     fallback={
                         <InsufficientBalance asset={props.oft.sourceAsset} />
                     }>
@@ -574,7 +603,9 @@ const SendToOft = (props: {
                             fallback={
                                 <ApproveErc20
                                     asset={props.oft.sourceAsset}
-                                    value={() => props.amount}
+                                    value={() =>
+                                        requiredTokenBalance() ?? props.amount
+                                    }
                                     setNeedsApproval={setNeedsApproval}
                                     approvalTarget={approvalTarget()}
                                     resetAllowanceFirst={true}
@@ -585,32 +616,42 @@ const SendToOft = (props: {
                                 /* eslint-disable-next-line solid/reactivity */
                                 onClick={async () => {
                                     const connectedSigner = signer();
-                                    const recipient = getGasAbstractionSigner(
-                                        props.oft.destinationAsset,
-                                    ).address;
+                                    if (connectedSigner === undefined) {
+                                        throw new Error(
+                                            "connected signer is required for OFT send",
+                                        );
+                                    }
+                                    const {
+                                        directSendTarget,
+                                        recipient,
+                                        sendParam,
+                                        msgFee,
+                                        signerAddress,
+                                        hasEnoughTokenBalance,
+                                        hasEnoughNativeBalanceForMsgFee,
+                                        needsUpdatedApproval,
+                                    } =
+                                        await refreshOftSendState(
+                                            connectedSigner,
+                                        );
                                     log.debug(
                                         `Sending OFT ${props.oft.destinationAsset} to ${recipient}`,
                                     );
-                                    const oftRoute = {
-                                        from: props.oft.sourceAsset,
-                                        to: props.oft.destinationAsset,
-                                    };
-                                    const oftContract =
-                                        await getOftContract(oftRoute);
-
-                                    const quotedOftInstance =
-                                        await getQuotedOftContract(oftRoute);
-                                    const oftInstance = createOftContract(
-                                        oftContract.address,
-                                        connectedSigner,
-                                    );
-                                    const { sendParam, msgFee } =
-                                        await quoteOftSend(
-                                            quotedOftInstance,
-                                            oftRoute,
-                                            recipient,
-                                            props.amount,
+                                    if (needsUpdatedApproval) {
+                                        throw new Error(
+                                            "Approval is no longer sufficient for the updated OFT quote. Please approve the new amount and try again.",
                                         );
+                                    }
+                                    if (!hasEnoughTokenBalance) {
+                                        throw new Error(
+                                            "Token balance is no longer sufficient for the updated OFT quote.",
+                                        );
+                                    }
+                                    if (!hasEnoughNativeBalanceForMsgFee) {
+                                        throw new Error(
+                                            "Native balance is no longer sufficient for the updated OFT message fee.",
+                                        );
+                                    }
                                     log.debug("Quoted OFT send", {
                                         swapId: props.swapId,
                                         sourceAsset: props.oft.sourceAsset,
@@ -621,14 +662,13 @@ const SendToOft = (props: {
                                         nativeFee: msgFee[0].toString(),
                                         lzTokenFee: msgFee[1].toString(),
                                     });
-                                    const tx = await oftInstance.send(
+                                    const tx = await sendOftDirect({
+                                        target: directSendTarget,
+                                        runner: connectedSigner,
                                         sendParam,
                                         msgFee,
-                                        await signer().getAddress(),
-                                        {
-                                            value: msgFee[0],
-                                        },
-                                    );
+                                        refundAddress: signerAddress,
+                                    });
 
                                     const currentSwap = await getSwap(
                                         props.swapId,
