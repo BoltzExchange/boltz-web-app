@@ -17,6 +17,7 @@ import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
 import Pair from "../utils/Pair";
 import { handleListKeyDown, scrollToFocused } from "../utils/assetSearch";
+import { shouldPreserveOnchainAddress } from "../utils/preserveDestination";
 import { canSelectAsset } from "../utils/selectableAsset";
 
 const hasUsdt0 = USDT0 in config.assets;
@@ -76,24 +77,27 @@ const SelectAsset = () => {
         // clear invoice every time asset changes
         setInvoice("");
 
+        let nextPair: Pair;
+
         // set new asset and swap assets if the other asset is the same
         if (assetSelected() === Side.Send) {
             let toAsset = pair().toAsset;
             if (toAsset === newAsset) {
                 toAsset = pair().fromAsset;
-                // only clear onchain address if assetReceive did change
-                setOnchainAddress("");
             }
-            setPair(new Pair(pairs(), newAsset, toAsset, regularPairs()));
+            nextPair = new Pair(pairs(), newAsset, toAsset, regularPairs());
         } else {
             let fromAsset = pair().fromAsset;
             if (fromAsset === newAsset) {
                 fromAsset = pair().toAsset;
             }
-            setPair(new Pair(pairs(), fromAsset, newAsset, regularPairs()));
-            // always clear onchain address if assetReceive changes
+            nextPair = new Pair(pairs(), fromAsset, newAsset, regularPairs());
+        }
+
+        if (!shouldPreserveOnchainAddress(pair(), nextPair)) {
             setOnchainAddress("");
         }
+        setPair(nextPair);
 
         close();
 
