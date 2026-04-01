@@ -256,7 +256,10 @@ const usdt0Variants: Usdt0Variant[] = [
         chainId: 1329,
         tokenAddress: "0x9151434b16b9763660705744891fA906F660EcC5",
         blockExplorerUrl: "https://seitrace.com",
-        rpcUrls: ["https://sei.api.pocket.network"],
+        rpcUrls: [
+            "https://sei.api.pocket.network",
+            "https://evm-rpc.sei-apis.com",
+        ],
     },
     {
         asset: "USDT0-STABLE",
