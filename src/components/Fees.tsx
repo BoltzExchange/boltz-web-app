@@ -19,6 +19,7 @@ import { formatAmount } from "../utils/denomination";
 import { getPair } from "../utils/helper";
 import { weiToSatoshi } from "../utils/rootstock";
 import { GasAbstractionType } from "../utils/swapCreator";
+import AmountDenominator from "./AmountDenominator";
 import { getClaimAddress } from "./CreateButton";
 import FeesCollapse from "./FeesCollapse";
 import Denomination from "./settings/Denomination";
@@ -62,10 +63,12 @@ export const RoutingFee = (props: { addLineBreak?: boolean }) => {
 
     return (
         <Show when={pair().maxRoutingFee !== undefined}>
-            {props.addLineBreak && <br />}
-            {t("routing_fee_limit")}:{" "}
-            <span data-testid="routing-fee-limit">
-                {pair().maxRoutingFee * ppmFactor} ppm
+            <span class="fees-extra-line">
+                {props.addLineBreak && <br />}
+                {t("routing_fee_limit")}:{" "}
+                <span data-testid="routing-fee-limit">
+                    {pair().maxRoutingFee * ppmFactor} ppm
+                </span>
             </span>
         </Show>
     );
@@ -228,18 +231,17 @@ const Fees = () => {
                     fallback={<FeesCollapse />}>
                     <label>
                         {t("network_fee")}:{" "}
-                        <span class="network-fee" data-testid="network-fee">
-                            {formatAmount(
-                                BigNumber(minerFee()),
-                                denomination(),
-                                separator(),
-                                BTC,
-                                true,
-                            )}
-                            <span
-                                class="denominator"
-                                data-denominator={denomination()}
-                            />
+                        <span class="fee-amount">
+                            <span class="network-fee" data-testid="network-fee">
+                                {formatAmount(
+                                    BigNumber(minerFee()),
+                                    denomination(),
+                                    separator(),
+                                    BTC,
+                                    true,
+                                )}
+                            </span>
+                            <AmountDenominator value={denomination()} />
                         </span>
                         <br />
                         {t("fee")} (
@@ -260,18 +262,17 @@ const Fees = () => {
                             %
                         </span>
                         ):{" "}
-                        <span class="boltz-fee" data-testid="boltz-fee">
-                            {formatAmount(
-                                boltzFeeAmount(),
-                                denomination(),
-                                separator(),
-                                BTC,
-                                true,
-                            )}
-                            <span
-                                class="denominator"
-                                data-denominator={denomination()}
-                            />
+                        <span class="fee-amount">
+                            <span class="boltz-fee" data-testid="boltz-fee">
+                                {formatAmount(
+                                    boltzFeeAmount(),
+                                    denomination(),
+                                    separator(),
+                                    BTC,
+                                    true,
+                                )}
+                            </span>
+                            <AmountDenominator value={denomination()} />
                         </span>
                         <RoutingFee addLineBreak={true} />
                     </label>

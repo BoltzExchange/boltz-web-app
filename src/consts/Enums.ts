@@ -43,3 +43,9 @@ export enum RskRescueMode {
     Refund = "refund",
     Claim = "resume",
 }
+
+export enum FetchStatus {
+    Ok = "ok",
+    Loading = "loading",
+    Error = "error",
+}
