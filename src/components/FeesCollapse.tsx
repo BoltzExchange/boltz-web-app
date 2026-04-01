@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js";
-import { formatEther, formatUnits } from "ethers";
+import { formatUnits } from "ethers";
 import log from "loglevel";
 import { VsChevronRight } from "solid-icons/vs";
 import {
@@ -50,6 +50,26 @@ const TokenFee = (props: { token?: string }) => {
     );
 };
 
+const getOftMessagingFeeTokenDecimals = (token: string | undefined): number => {
+    if (token === undefined) {
+        return 18;
+    }
+
+    const directAssetConfig = config.assets?.[token];
+    const directDecimals =
+        directAssetConfig?.token?.decimals ??
+        directAssetConfig?.network?.nativeCurrency?.decimals;
+    if (directDecimals !== undefined) {
+        return directDecimals;
+    }
+
+    return (
+        Object.values(config.assets ?? {}).find(
+            (assetConfig) => assetConfig.network?.gasToken === token,
+        )?.network?.nativeCurrency?.decimals ?? 18
+    );
+};
+
 const FeesCollapse = () => {
     const {
         btcPrice,
@@ -95,6 +115,10 @@ const FeesCollapse = () => {
         },
     );
 
+    const oftMessagingFeeTokenDecimals = createMemo(() =>
+        getOftMessagingFeeTokenDecimals(pair().oftMessagingFeeToken),
+    );
+
     const boltzFeeAmount = createMemo(() => {
         if (!pair().isRoutable) {
             return BigNumber(0);
@@ -129,6 +153,11 @@ const FeesCollapse = () => {
         receiveAmount();
 
         return pair().oftMessagingFeeFromLatestQuote(sendAmount());
+    });
+
+    const hasOftMessagingFee = createMemo(() => {
+        const fee = oftMessagingFee();
+        return fee !== undefined && fee > 0n;
     });
 
     const totalCollapsibleFeesUsdView = createMemo<FeeUsdView>(() => {
@@ -168,7 +197,7 @@ const FeesCollapse = () => {
         const messagingFee = oftMessagingFee();
         const messagingFeeTokenUsdRate = oftMessagingFeeTokenUsdPrice();
 
-        if (oftMessagingFeeIncluded() && messagingFee !== undefined) {
+        if (oftMessagingFeeIncluded() && hasOftMessagingFee()) {
             if (messagingFeeTokenUsdRate === undefined) {
                 if (!hasOftMessagingFeeTokenUsdLookup()) {
                     return { status: FeeUsdViewStatus.Error };
@@ -182,9 +211,9 @@ const FeesCollapse = () => {
             }
 
             amount = amount.plus(
-                BigNumber(formatEther(messagingFee)).multipliedBy(
-                    messagingFeeTokenUsdRate,
-                ),
+                BigNumber(
+                    formatUnits(messagingFee, oftMessagingFeeTokenDecimals()),
+                ).multipliedBy(messagingFeeTokenUsdRate),
             );
         }
 
@@ -224,17 +253,11 @@ const FeesCollapse = () => {
 
     const formattedOftMessagingFee = createMemo(() => {
         const fee = oftMessagingFee();
-        if (fee === undefined) {
+        if (fee === undefined || fee <= 0n) {
             return undefined;
         }
 
-        return BigNumber(
-            formatUnits(
-                fee,
-                config.assets[pair().fromAsset]?.network?.nativeCurrency
-                    ?.decimals ?? 18,
-            ),
-        )
+        return BigNumber(formatUnits(fee, oftMessagingFeeTokenDecimals()))
             .toFixed(6)
             .replace(/\.?0+$/, "");
     });
@@ -336,6 +359,7 @@ const FeesCollapse = () => {
                         <Show
                             when={
                                 oftMessagingFeeIncluded() &&
+                                hasOftMessagingFee() &&
                                 formattedOftMessagingFee() !== undefined
                             }>
                             <br />
@@ -364,6 +388,7 @@ const FeesCollapse = () => {
             <Show
                 when={
                     !oftMessagingFeeIncluded() &&
+                    hasOftMessagingFee() &&
                     formattedOftMessagingFee() !== undefined
                 }>
                 <span class="fees-extra-line">
