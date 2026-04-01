@@ -596,8 +596,6 @@ describe("Fees component", () => {
                 ),
             );
 
-            fireEvent.click(await screen.findByTestId("fees-toggle"));
-
             const networkFeeElement = (await screen.findByTestId("network-fee"))
                 .textContent;
             const boltzFeeElement = (await screen.findByTestId("boltz-fee"))

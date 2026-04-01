@@ -140,7 +140,10 @@ hr.spacer {
 }
 
 .fees-toggle {
-    display: inline;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.2rem;
     border: none;
     background: none;
     margin: 0;
@@ -149,6 +152,7 @@ hr.spacer {
     font: inherit;
     color: inherit;
     text-align: right;
+    transition: color 0.18s ease-out;
 }
 
 @media (hover: hover) {
@@ -159,32 +163,63 @@ hr.spacer {
 
 .fees-toggle-icon {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
     vertical-align: middle;
     font-size: 0.85em;
+    rotate: 0deg;
+    transition: rotate 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: rotate;
+}
+
+.fees-toggle[aria-expanded="true"] .fees-toggle-icon {
+    rotate: 90deg;
 }
 
 .fees-details-shell {
     display: grid;
     grid-template-rows: 0fr;
-    overflow: hidden;
-    transition: grid-template-rows 0.3s ease-out;
+    overflow: clip;
+    opacity: 0;
+    transition:
+        grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.16s ease-out;
 }
 
 .fees-details-shell.is-expanded {
     grid-template-rows: 1fr;
-    overflow: visible;
+    opacity: 1;
 }
 
 .fees-details-inner {
     min-height: 0;
-    overflow: hidden;
+    overflow: clip;
     opacity: 0;
-    transition: opacity 0.85s ease-out;
+    translate: 0 -0.35rem;
+    transition:
+        opacity 0.22s ease-out,
+        translate 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .fees-details-shell.is-expanded .fees-details-inner {
     overflow: visible;
     opacity: 1;
+    translate: 0 0;
+}
+
+@supports (interpolate-size: allow-keywords) {
+    .fees-details-shell {
+        interpolate-size: allow-keywords;
+        display: block;
+        block-size: 0;
+        transition:
+            block-size 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.16s ease-out;
+    }
+
+    .fees-details-shell.is-expanded {
+        block-size: auto;
+    }
 }
 
 .fees-details {
@@ -194,12 +229,14 @@ hr.spacer {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .fees-toggle-icon,
     .fees-details-shell {
         transition: none;
     }
 
     .fees-details-inner {
         transition: none;
+        translate: 0 0;
         opacity: 1;
     }
 }

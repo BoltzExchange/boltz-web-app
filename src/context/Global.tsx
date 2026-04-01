@@ -468,7 +468,7 @@ const GlobalProvider = (props: { children: JSX.Element }) => {
         try {
             const fetchedRecently =
                 Date.now() - lastPriceFetch() < 1000 * 60 * 5; // 5 minutes
-            if (fetchedRecently && btcPrice() instanceof BigNumber) {
+            if (fetchedRecently && BigNumber.isBigNumber(btcPrice())) {
                 return;
             }
             const btcPriceFetched = await getBtcPriceFailover();
