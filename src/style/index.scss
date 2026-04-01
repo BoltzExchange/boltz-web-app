@@ -135,8 +135,18 @@ hr.spacer {
 
     .denominator {
         transform-origin: right center;
-        margin-left: 0.5em;
     }
+}
+
+.fee-amount {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    vertical-align: middle;
+}
+
+.fee-amount > .denominator {
+    margin-left: -0.9em;
 }
 
 .fees-toggle {
@@ -246,7 +256,7 @@ hr.spacer {
     cursor: pointer;
 }
 
-.fees-oft-line {
+.fees-extra-line {
     display: block;
     text-align: right;
 }
@@ -725,6 +735,23 @@ textarea.invalid {
     mask-size: contain;
 }
 
+.denominator-text {
+    display: inline-block;
+    line-height: 1;
+    vertical-align: middle;
+    margin-right: 0.25em;
+}
+
+.denominator-text-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    font-size: 0.95rem;
+    line-height: 1;
+    transform: translateY(1px);
+}
+
 .denomination .active {
     filter: none;
     border-radius: 50%;
@@ -1116,7 +1143,7 @@ textarea.invalid {
 }
 .network-fee,
 .boltz-fee {
-    margin-right: 4px;
+    margin-right: 0.75rem;
 }
 
 .globe {
@@ -1233,6 +1260,10 @@ header {
 .swap-limits {
     display: inline-flex;
     gap: 0.8rem;
+
+    .denominator-text {
+        margin-left: 0.5rem;
+    }
 }
 
 .text-bold {

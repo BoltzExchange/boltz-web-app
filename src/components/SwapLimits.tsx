@@ -3,6 +3,7 @@ import { BigNumber } from "bignumber.js";
 import { getAssetDisplaySymbol, isUsdt0Asset } from "../consts/Assets";
 import { type Denomination } from "../consts/Enums";
 import { formatAmount } from "../utils/denomination";
+import AmountDenominator from "./AmountDenominator";
 
 type SwapLimitProps = {
     amount: number;
@@ -38,7 +39,7 @@ const SwapLimit = (props: SwapLimitProps) => {
                     props.asset,
                 )}
             </span>
-            <span class="denominator" data-denominator={props.icon} />
+            <AmountDenominator value={props.icon} />
         </span>
     );
 };

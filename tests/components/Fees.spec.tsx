@@ -84,6 +84,68 @@ describe("Fees component", () => {
         globalSignals.setPairs(pairs);
     });
 
+    test("should render inline fee denominators and routing fees", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+        globalSignals.setDenomination(Denomination.Btc);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: BTC,
+            toAsset: LN,
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 300,
+            maxRoutingFee: 0.0123,
+            oftMessagingFeeToken: undefined,
+            oftTransferFeeAsset: undefined,
+            feeOnSend: vi.fn(() => BigNumber(200)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("routing-fee-limit").textContent).toEqual(
+                "123 ppm",
+            );
+        });
+
+        expect(
+            screen
+                .getByTestId("network-fee")
+                .parentElement?.querySelector(
+                    '.denominator[data-denominator="btc"]',
+                ),
+        ).not.toBeNull();
+        expect(
+            screen
+                .getByTestId("boltz-fee")
+                .parentElement?.querySelector(
+                    '.denominator[data-denominator="btc"]',
+                ),
+        ).not.toBeNull();
+        expect(
+            screen.getByTestId("routing-fee-limit").closest(".fees-extra-line"),
+        ).not.toBeNull();
+    });
+
     test("should recalculate limits on direction switch", async () => {
         render(
             () => (
@@ -468,7 +530,7 @@ describe("Fees component", () => {
             );
         });
 
-        expect(document.querySelector(".fees-oft-line")).toBeNull();
+        expect(document.querySelector(".fees-extra-line")).toBeNull();
 
         fireEvent.click(screen.getByTestId("fees-toggle"));
 
@@ -566,11 +628,16 @@ describe("Fees component", () => {
                 "0.001",
             );
         });
-        expect(document.querySelector(".fees-oft-line")).not.toBeNull();
+        expect(document.querySelector(".fees-extra-line")).not.toBeNull();
         expect(
             document.querySelectorAll('[data-testid="oft-messaging-fee"]')
                 .length,
         ).toEqual(1);
+        expect(
+            screen
+                .getByTestId("oft-messaging-fee")
+                .parentElement?.querySelector(".denominator-text")?.textContent,
+        ).toEqual("POL");
     });
 
     test("should show the collapsed USD fee total and expand details on toggle", async () => {
@@ -635,6 +702,33 @@ describe("Fees component", () => {
         expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
             "0.001",
         );
+        expect(
+            screen
+                .getByTestId("network-fee")
+                .parentElement?.querySelector(
+                    '.denominator[data-denominator="btc"]',
+                ),
+        ).not.toBeNull();
+        expect(
+            screen
+                .getByTestId("boltz-fee")
+                .parentElement?.querySelector(
+                    '.denominator[data-denominator="btc"]',
+                ),
+        ).not.toBeNull();
+        expect(
+            screen
+                .getByTestId("legacy-mesh-fee")
+                .parentElement?.querySelector(
+                    '.denominator[data-denominator="USDT"]',
+                ),
+        ).not.toBeNull();
+        expect(
+            screen
+                .getByTestId("oft-messaging-fee")
+                .parentElement?.querySelector(".denominator-text-symbol")
+                ?.textContent,
+        ).toEqual("Ξ");
     });
 
     test.each`

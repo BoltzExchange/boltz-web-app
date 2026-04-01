@@ -11,7 +11,11 @@ import {
 } from "solid-js";
 
 import { config } from "../config";
-import { BTC, requireTokenConfig } from "../consts/Assets";
+import {
+    BTC,
+    getAssetDisplaySymbol,
+    requireTokenConfig,
+} from "../consts/Assets";
 import { Currency } from "../consts/Enums";
 import { useCreateContext } from "../context/Create";
 import { useGlobalContext } from "../context/Global";
@@ -22,6 +26,7 @@ import {
     hasGasTokenPriceLookup,
 } from "../utils/fiat";
 import { getPair } from "../utils/helper";
+import AmountDenominator from "./AmountDenominator";
 import { RoutingFee, getFeeHighlightClass } from "./Fees";
 
 const enum FeeUsdViewStatus {
@@ -34,6 +39,16 @@ type FeeUsdView =
     | { status: FeeUsdViewStatus.Loading }
     | { status: FeeUsdViewStatus.Error }
     | { status: FeeUsdViewStatus.Ok; amount: BigNumber };
+
+const TokenFee = (props: { token?: string }) => {
+    return (
+        <Show when={props.token}>
+            {(token) => (
+                <AmountDenominator value={getAssetDisplaySymbol(token())} />
+            )}
+        </Show>
+    );
+};
 
 const FeesCollapse = () => {
     const {
@@ -249,19 +264,18 @@ const FeesCollapse = () => {
                 <div class="fees-details-inner">
                     <label class="fees-details">
                         {t("network_fee")}:{" "}
-                        <span class="network-fee" data-testid="network-fee">
-                            {formatAmount(
-                                BigNumber(minerFee()),
-                                denomination(),
-                                separator(),
-                                BTC,
-                                true,
-                            )}
+                        <span class="fee-amount">
+                            <span class="network-fee" data-testid="network-fee">
+                                {formatAmount(
+                                    BigNumber(minerFee()),
+                                    denomination(),
+                                    separator(),
+                                    BTC,
+                                    true,
+                                )}
+                            </span>
+                            <AmountDenominator value={denomination()} />
                         </span>
-                        <span
-                            class="denominator"
-                            data-denominator={denomination()}
-                        />
                         <br />
                         {t("fee")} (
                         <span
@@ -281,19 +295,18 @@ const FeesCollapse = () => {
                             %
                         </span>
                         ):{" "}
-                        <span class="boltz-fee" data-testid="boltz-fee">
-                            {formatAmount(
-                                boltzFeeAmount(),
-                                denomination(),
-                                separator(),
-                                BTC,
-                                true,
-                            )}
+                        <span class="fee-amount">
+                            <span class="boltz-fee" data-testid="boltz-fee">
+                                {formatAmount(
+                                    boltzFeeAmount(),
+                                    denomination(),
+                                    separator(),
+                                    BTC,
+                                    true,
+                                )}
+                            </span>
+                            <AmountDenominator value={denomination()} />
                         </span>
-                        <span
-                            class="denominator"
-                            data-denominator={denomination()}
-                        />
                         <Show
                             when={
                                 oftTransferFee() !== undefined &&
@@ -302,22 +315,23 @@ const FeesCollapse = () => {
                             }>
                             <br />
                             {t("legacy_mesh_fee_label")}:{" "}
-                            <span data-testid="legacy-mesh-fee">
-                                {formatAmount(
-                                    oftTransferFee()!,
-                                    denomination(),
-                                    separator(),
-                                    pair().oftTransferFeeAsset!,
-                                    true,
-                                )}
+                            <span class="fee-amount">
+                                <span data-testid="legacy-mesh-fee">
+                                    {formatAmount(
+                                        oftTransferFee()!,
+                                        denomination(),
+                                        separator(),
+                                        pair().oftTransferFeeAsset!,
+                                        true,
+                                    )}
+                                </span>
+                                <AmountDenominator
+                                    value={formatDenomination(
+                                        denomination(),
+                                        pair().oftTransferFeeAsset!,
+                                    )}
+                                />
                             </span>
-                            <span
-                                class="denominator"
-                                data-denominator={formatDenomination(
-                                    denomination(),
-                                    pair().oftTransferFeeAsset!,
-                                )}
-                            />
                         </Show>
                         <Show
                             when={
@@ -326,12 +340,14 @@ const FeesCollapse = () => {
                             }>
                             <br />
                             {t("oft_messaging_fee_label")}:{" "}
-                            <span
-                                class="oft-messaging-fee"
-                                data-testid="oft-messaging-fee">
-                                {formattedOftMessagingFee()}
-                            </span>{" "}
-                            {pair().oftMessagingFeeToken}
+                            <span class="fee-amount">
+                                <span
+                                    class="oft-messaging-fee"
+                                    data-testid="oft-messaging-fee">
+                                    {formattedOftMessagingFee()}
+                                </span>
+                                <TokenFee token={pair().oftMessagingFeeToken} />
+                            </span>
                         </Show>
                         <Show when={getGasToken()}>
                             <br />
@@ -350,14 +366,16 @@ const FeesCollapse = () => {
                     !oftMessagingFeeIncluded() &&
                     formattedOftMessagingFee() !== undefined
                 }>
-                <span class="fees-oft-line">
+                <span class="fees-extra-line">
                     {t("oft_messaging_fee_label")}:{" "}
-                    <span
-                        class="oft-messaging-fee"
-                        data-testid="oft-messaging-fee">
-                        {formattedOftMessagingFee()}
-                    </span>{" "}
-                    {pair().oftMessagingFeeToken}
+                    <span class="fee-amount">
+                        <span
+                            class="oft-messaging-fee"
+                            data-testid="oft-messaging-fee">
+                            {formattedOftMessagingFee()}
+                        </span>
+                        <TokenFee token={pair().oftMessagingFeeToken} />
+                    </span>
                 </span>
             </Show>
         </>
