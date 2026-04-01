@@ -498,13 +498,68 @@ textarea.invalid {
 #receiveAmount,
 #sendAmount {
     font-size: 33px;
+    line-height: 1.2;
     text-align: right;
+}
+#receiveAmount:disabled,
+#sendAmount:disabled {
+    user-select: none;
+    -webkit-user-select: none;
 }
 @media (max-width: 488px) {
     #receiveAmount,
     #sendAmount {
         font-size: 30px;
     }
+}
+
+.amount-field {
+    position: relative;
+    width: 100%;
+}
+
+.amount-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.amount-value-skeleton {
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(46%, 7.75rem);
+    height: calc(33px * 0.85);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 5;
+    background: linear-gradient(
+        90deg,
+        var(--color-white-10) 25%,
+        var(--color-white-15) 50%,
+        var(--color-white-10) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 2s ease-in-out infinite;
+}
+
+@media (max-width: 488px) {
+    .amount-value-skeleton {
+        width: min(44%, 7rem);
+        height: calc(30px * 0.85);
+        transform: translateY(-50%);
+    }
+}
+
+.amount-field input.amount-input--quote-pending {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent;
+    caret-color: transparent;
+}
+
+.amount-field input.amount-input--quote-pending::placeholder {
+    color: transparent;
+    opacity: 0;
 }
 
 .input-with-label {

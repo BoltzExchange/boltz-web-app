@@ -57,14 +57,13 @@ export const isToUnconfidentialLiquid = ({
     addressValid() &&
     !isConfidentialAddress(onchainAddress());
 
-export const RoutingFee = (props: { addLineBreak?: boolean }) => {
+export const RoutingFee = () => {
     const { t } = useGlobalContext();
     const { pair } = useCreateContext();
 
     return (
         <Show when={pair().maxRoutingFee !== undefined}>
             <span class="fees-extra-line">
-                {props.addLineBreak && <br />}
                 {t("routing_fee_limit")}:{" "}
                 <span data-testid="routing-fee-limit">
                     {pair().maxRoutingFee * ppmFactor} ppm
@@ -274,7 +273,7 @@ const Fees = () => {
                             </span>
                             <AmountDenominator value={denomination()} />
                         </span>
-                        <RoutingFee addLineBreak={true} />
+                        <RoutingFee />
                     </label>
                 </Show>
             </div>

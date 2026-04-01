@@ -377,4 +377,63 @@ describe("InvoiceInput", () => {
             expect(input.className).toContain("invalid");
         });
     });
+
+    test("should ignore stale quote results when invoice validation reruns", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <InvoiceInput />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        setPairAssets(BTC, LN);
+
+        const currentPair = signals.pair();
+        const pendingZeroFeeQuotes: Array<(value: BigNumber) => void> = [];
+
+        currentPair.calculateSendAmount = vi.fn((amount, fee) => {
+            if (fee === 0) {
+                return new Promise((resolve) => {
+                    pendingZeroFeeQuotes.push(resolve);
+                });
+            }
+
+            if (fee === 1) {
+                return Promise.resolve(BigNumber(2_222));
+            }
+
+            return Promise.resolve(amount);
+        });
+
+        const input = (await screen.findByTestId(
+            "invoice",
+        )) as HTMLTextAreaElement;
+
+        fireEvent.input(input, {
+            target: { value: "lnbcrt1stalequote" },
+        });
+
+        await waitFor(() => {
+            expect(pendingZeroFeeQuotes.length).toBeGreaterThan(0);
+        });
+
+        signals.setMinerFee(1);
+
+        await waitFor(() => {
+            expect(signals.receiveAmount()).toEqual(BigNumber(1000));
+            expect(signals.sendAmount()).toEqual(BigNumber(2_222));
+        });
+
+        pendingZeroFeeQuotes.forEach((resolve) => {
+            resolve(BigNumber(1_111));
+        });
+
+        await waitFor(() => {
+            expect(signals.receiveAmount()).toEqual(BigNumber(1000));
+            expect(signals.sendAmount()).toEqual(BigNumber(2_222));
+        });
+    });
 });
