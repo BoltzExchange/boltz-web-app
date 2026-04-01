@@ -289,7 +289,10 @@ const usdt0Variants: Usdt0Variant[] = [
         transport: NetworkTransport.Solana,
         tokenAddress: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
         blockExplorerUrl: "https://solscan.io",
-        rpcUrls: ["https://solana-rpc.publicnode.com"],
+        rpcUrls: [
+            "https://api.mainnet.solana.com",
+            "https://solana-rpc.publicnode.com",
+        ],
         mesh: Usdt0Kind.Legacy,
     },
     {

@@ -53,13 +53,18 @@ const FeesCollapse = () => {
         return pair().hasPostOft;
     });
 
+    const hasOftMessagingFeeTokenUsdLookup = createMemo(() => {
+        const token = pair().oftMessagingFeeToken;
+        return token !== undefined && hasGasTokenPriceLookup(token);
+    });
+
     const [oftMessagingFeeTokenUsdPrice] = createResource<
         BigNumber | Error | undefined,
         string
     >(
         () => {
             const token = pair().oftMessagingFeeToken;
-            return token !== undefined && hasGasTokenPriceLookup(token)
+            return token !== undefined && hasOftMessagingFeeTokenUsdLookup()
                 ? token
                 : undefined;
         },
@@ -135,10 +140,13 @@ const FeesCollapse = () => {
         let amount = btcFeesUsd;
 
         const transferFee = oftTransferFee();
-        if (transferFee !== undefined && !transferFee.isNaN()) {
-            const { decimals } = requireTokenConfig(
-                pair().oftTransferFeeAsset!,
-            );
+        const transferFeeAsset = pair().oftTransferFeeAsset;
+        if (
+            transferFee !== undefined &&
+            !transferFee.isNaN() &&
+            transferFeeAsset !== undefined
+        ) {
+            const { decimals } = requireTokenConfig(transferFeeAsset);
             amount = amount.plus(transferFee.div(BigNumber(10).pow(decimals)));
         }
 
@@ -147,6 +155,10 @@ const FeesCollapse = () => {
 
         if (oftMessagingFeeIncluded() && messagingFee !== undefined) {
             if (messagingFeeTokenUsdRate === undefined) {
+                if (!hasOftMessagingFeeTokenUsdLookup()) {
+                    return { status: FeeUsdViewStatus.Error };
+                }
+
                 return { status: FeeUsdViewStatus.Loading };
             }
 

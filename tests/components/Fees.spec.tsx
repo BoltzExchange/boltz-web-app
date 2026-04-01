@@ -381,6 +381,50 @@ describe("Fees component", () => {
         });
     });
 
+    test("should ignore legacy mesh transfer fees without an asset config", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: BTC,
+            toAsset: "USDT0-SOL",
+            hasPostOft: false,
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            oftMessagingFeeToken: undefined,
+            oftTransferFeeAsset: undefined,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => undefined),
+            oftTransferFeeFromLatestQuote: vi.fn(() => BigNumber(30_000)),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("fees-total-amount").textContent).toEqual(
+                "0.00",
+            );
+        });
+    });
+
     test("should show post-OFT messaging fees only inside the expanded details", async () => {
         render(
             () => (
@@ -431,6 +475,52 @@ describe("Fees component", () => {
         expect(screen.getByTestId("oft-messaging-fee").textContent).toEqual(
             "0.001",
         );
+    });
+
+    test("should show the fiat rate fallback when the post-OFT fee token is unsupported", async () => {
+        render(
+            () => (
+                <>
+                    <TestComponent />
+                    <Fees />
+                </>
+            ),
+            { wrapper: contextWrapper },
+        );
+
+        globalSignals.setPairs(pairs);
+
+        const mockPair = {
+            isRoutable: true,
+            fromAsset: BTC,
+            toAsset: "USDT0-ARB",
+            hasPostOft: true,
+            swapToCreate: {
+                type: SwapType.Submarine,
+            },
+            feePercentage: 1,
+            minerFees: 0,
+            maxRoutingFee: undefined,
+            oftMessagingFeeToken: "ARB",
+            oftTransferFeeAsset: undefined,
+            feeOnSend: vi.fn(() => BigNumber(0)),
+            boltzSwapSendAmountFromLatestQuote: vi.fn(() => BigNumber(1000)),
+            oftMessagingFeeFromLatestQuote: vi.fn(() => 1_000_000_000_000_000n),
+            oftTransferFeeFromLatestQuote: vi.fn(() => undefined),
+            getMinimum: vi.fn().mockResolvedValue(1),
+            getMaximum: vi.fn().mockResolvedValue(10_000),
+        } as unknown as Pair;
+
+        signals.setPair(mockPair);
+        signals.setSendAmount(BigNumber(2_000_000));
+
+        await waitFor(() => {
+            expect(screen.getByTestId("fees-toggle").textContent).toContain(
+                "USD rate unavailable",
+            );
+        });
+        expect(screen.queryByTestId("fees-total-amount")).toBeNull();
+        expect(document.querySelector(".fees-toggle .skeleton")).toBeNull();
     });
 
     test("should keep pre-OFT messaging fees in the inline summary row", async () => {
