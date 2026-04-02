@@ -321,6 +321,51 @@ describe("SwapExecutionWorker", () => {
         );
     });
 
+    test("should stop before rebroadcasting when recovery finds multiple matching pre-OFT lockups", async () => {
+        mockQueryFilter.mockResolvedValue([
+            {
+                data: "0xlockup-1",
+                topics: ["0xtopic"],
+                transactionHash: "0xmatch-one",
+                index: 7,
+            },
+            {
+                data: "0xlockup-2",
+                topics: ["0xtopic"],
+                transactionHash: "0xmatch-two",
+                index: 8,
+            },
+        ]);
+        mockLockupParseLog.mockReturnValue({
+            name: "Lockup",
+            args: {
+                preimageHash:
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                tokenAddress: "0xf100000000000000000000000000000000000000",
+                claimAddress: "0xc000000000000000000000000000000000000000",
+                refundAddress: "0x9000000000000000000000000000000000000000",
+                timelock: 321n,
+            },
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockQueryFilter).toHaveBeenCalledWith(
+                "lockup-filter",
+                5,
+                "latest",
+            );
+        });
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+
+        expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+        expect(currentSwap.commitmentLockupTxHash).toBeUndefined();
+        expect(
+            mockPostCommitmentSignatureForTransaction,
+        ).not.toHaveBeenCalled();
+    });
+
     test("should recover the commitment lockup after an Alchemy send failure", async () => {
         mockSendPopulatedTransaction.mockRejectedValueOnce(
             new Error("Alchemy request failed for wallet_sendPreparedCalls"),

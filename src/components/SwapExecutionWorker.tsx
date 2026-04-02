@@ -131,6 +131,24 @@ const enum CommitmentLockupTransactionSource {
     Broadcast = "broadcast",
 }
 
+const enum PreOftCommitmentLockupRecoveryStatus {
+    Recovered = "recovered",
+    Ambiguous = "ambiguous",
+    NotFound = "not-found",
+}
+
+type PreOftCommitmentLockupRecoveryResult =
+    | {
+          status: PreOftCommitmentLockupRecoveryStatus.Recovered;
+          transactionHash: string;
+      }
+    | {
+          status: PreOftCommitmentLockupRecoveryStatus.Ambiguous;
+      }
+    | {
+          status: PreOftCommitmentLockupRecoveryStatus.NotFound;
+      };
+
 const isTaskRelevant = (
     stage: TaskStage,
     swap: SomeSwap | null | undefined,
@@ -199,7 +217,7 @@ export const SwapExecutionWorker = () => {
         gasAbstractionSigner: {
             address: string;
         },
-    ) => {
+    ): Promise<PreOftCommitmentLockupRecoveryResult> => {
         const commitmentAsset = currentSwap.assetSend;
         const erc20Swap = getErc20Swap(commitmentAsset).connect(
             createAssetProvider(commitmentAsset),
@@ -270,7 +288,10 @@ export const SwapExecutionWorker = () => {
                     logIndex: recovered.logIndex,
                 }),
             );
-            return recovered.transactionHash;
+            return {
+                status: PreOftCommitmentLockupRecoveryStatus.Recovered,
+                transactionHash: recovered.transactionHash,
+            };
         }
 
         if (matchingLockups.length > 1) {
@@ -285,9 +306,14 @@ export const SwapExecutionWorker = () => {
                     })),
                 }),
             );
+            return {
+                status: PreOftCommitmentLockupRecoveryStatus.Ambiguous,
+            };
         }
 
-        return undefined;
+        return {
+            status: PreOftCommitmentLockupRecoveryStatus.NotFound,
+        };
     };
 
     const abandonFailedOftSend = async (
@@ -539,19 +565,25 @@ export const SwapExecutionWorker = () => {
         const gasAbstractionSigner = getGasAbstractionSigner(
             latestSwap.oft.destinationAsset,
         );
-        const recoveredCommitmentLockupTxHash =
-            await recoverPreOftCommitmentLockup(
-                latestSwap,
-                receivedEvent,
-                gasAbstractionSigner,
-            );
-        if (recoveredCommitmentLockupTxHash !== undefined) {
-            await persistCommitmentLockupTransaction(
-                latestSwap.id,
-                recoveredCommitmentLockupTxHash,
-                CommitmentLockupTransactionSource.Recovered,
-            );
-            return;
+        const recoveryResult = await recoverPreOftCommitmentLockup(
+            latestSwap,
+            receivedEvent,
+            gasAbstractionSigner,
+        );
+        switch (recoveryResult.status) {
+            case PreOftCommitmentLockupRecoveryStatus.Ambiguous:
+                return;
+
+            case PreOftCommitmentLockupRecoveryStatus.Recovered:
+                await persistCommitmentLockupTransaction(
+                    latestSwap.id,
+                    recoveryResult.transactionHash,
+                    CommitmentLockupTransactionSource.Recovered,
+                );
+                return;
+
+            case PreOftCommitmentLockupRecoveryStatus.NotFound:
+                break;
         }
         const receivedAmount = receivedEvent.amountReceivedLD;
         const expectedAmount = satsToAssetAmount(
@@ -653,19 +685,25 @@ export const SwapExecutionWorker = () => {
                 },
             );
         } catch (error) {
-            const recoveredCommitmentLockupTxHash =
-                await recoverPreOftCommitmentLockup(
-                    latestSwap,
-                    receivedEvent,
-                    gasAbstractionSigner,
-                );
-            if (recoveredCommitmentLockupTxHash !== undefined) {
-                await persistCommitmentLockupTransaction(
-                    latestSwap.id,
-                    recoveredCommitmentLockupTxHash,
-                    CommitmentLockupTransactionSource.Recovered,
-                );
-                return;
+            const recoveryResult = await recoverPreOftCommitmentLockup(
+                latestSwap,
+                receivedEvent,
+                gasAbstractionSigner,
+            );
+            switch (recoveryResult.status) {
+                case PreOftCommitmentLockupRecoveryStatus.Ambiguous:
+                    return;
+
+                case PreOftCommitmentLockupRecoveryStatus.Recovered:
+                    await persistCommitmentLockupTransaction(
+                        latestSwap.id,
+                        recoveryResult.transactionHash,
+                        CommitmentLockupTransactionSource.Recovered,
+                    );
+                    return;
+
+                case PreOftCommitmentLockupRecoveryStatus.NotFound:
+                    break;
             }
 
             throw error;
