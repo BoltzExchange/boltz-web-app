@@ -1,6 +1,8 @@
 import { render, waitFor } from "@solidjs/testing-library";
 
 let currentSwap: Record<string, unknown>;
+const mockQueryFilter = vi.fn();
+const mockLockupParseLog = vi.fn();
 
 const mockSetSwapStorage = vi.fn((swap: Record<string, unknown>) => {
     currentSwap = { ...swap };
@@ -17,6 +19,27 @@ const mockSendPopulatedTransaction = vi
 const mockPostCommitmentSignatureForTransaction = vi
     .fn<(...args: unknown[]) => Promise<void>>()
     .mockResolvedValue(undefined);
+const createMockErc20Swap = () => {
+    const contract = {
+        getAddress: vi
+            .fn()
+            .mockResolvedValue("0x8000000000000000000000000000000000000000"),
+        version: vi.fn().mockResolvedValue("2"),
+        queryFilter: mockQueryFilter as (
+            ...args: unknown[]
+        ) => Promise<unknown[]>,
+        filters: {
+            Lockup: vi.fn().mockReturnValue("lockup-filter"),
+        },
+        interface: {
+            parseLog: mockLockupParseLog as (...args: unknown[]) => unknown,
+        },
+        connect: vi.fn(),
+    };
+    contract.connect.mockReturnValue(contract);
+
+    return contract;
+};
 
 vi.mock("../../src/config", () => ({
     config: {
@@ -77,14 +100,7 @@ vi.mock("../../src/context/Web3", () => ({
         },
     }),
     useWeb3Signer: () => ({
-        getErc20Swap: vi.fn(() => ({
-            getAddress: vi
-                .fn()
-                .mockResolvedValue(
-                    "0x8000000000000000000000000000000000000000",
-                ),
-            version: vi.fn().mockResolvedValue("2"),
-        })),
+        getErc20Swap: vi.fn(() => createMockErc20Swap()),
         getGasAbstractionSigner: vi.fn((asset: string) => ({
             address:
                 asset === "DST"
@@ -138,6 +154,12 @@ vi.mock("../../src/utils/evmTransaction", () => ({
         mockSendPopulatedTransaction(...args),
 }));
 
+vi.mock("../../src/utils/provider", () => ({
+    createAssetProvider: vi.fn(() => ({
+        getLogs: vi.fn(),
+    })),
+}));
+
 vi.mock("../../src/utils/oft/oft", () => ({
     createOftContract: vi.fn((address: string) => ({ address })),
     getOftContract: vi.fn((route: { from: string }) =>
@@ -156,6 +178,7 @@ vi.mock("../../src/utils/oft/oft", () => ({
     })),
     getOftReceivedEventByGuid: vi.fn().mockResolvedValue({
         amountReceivedLD: 150n,
+        blockNumber: 5,
     }),
     getOftSentEvent: vi.fn().mockReturnValue({
         guid: "0xguid",
@@ -184,6 +207,14 @@ const oftUtils = await import("../../src/utils/oft/oft");
 describe("SwapExecutionWorker", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockSendPopulatedTransaction
+            .mockReset()
+            .mockResolvedValue("0xcommitment");
+        mockPostCommitmentSignatureForTransaction
+            .mockReset()
+            .mockResolvedValue(undefined);
+        mockQueryFilter.mockReset().mockResolvedValue([]);
+        mockLockupParseLog.mockReset();
         Object.defineProperty(window.navigator, "locks", {
             configurable: true,
             value: {
@@ -207,6 +238,7 @@ describe("SwapExecutionWorker", () => {
             preimage: "11".repeat(32),
             lockupDetails: {
                 timeoutBlockHeight: 144,
+                claimAddress: "0xc000000000000000000000000000000000000000",
             },
             dex: {
                 position: "before",
@@ -244,6 +276,109 @@ describe("SwapExecutionWorker", () => {
             expect(currentSwap.commitmentLockupTxHash).toEqual("0xcommitment");
             expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
         });
+    });
+
+    test("should recover a pre-existing pre-OFT commitment lockup without sending again", async () => {
+        mockQueryFilter.mockResolvedValue([
+            {
+                data: "0xlockup",
+                topics: ["0xtopic"],
+                transactionHash: "0xrecovered",
+                index: 7,
+            },
+        ]);
+        mockLockupParseLog.mockReturnValue({
+            name: "Lockup",
+            args: {
+                preimageHash:
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                tokenAddress: "0xf100000000000000000000000000000000000000",
+                claimAddress: "0xc000000000000000000000000000000000000000",
+                refundAddress: "0x9000000000000000000000000000000000000000",
+                timelock: 321n,
+            },
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSendPopulatedTransaction).not.toHaveBeenCalled();
+            expect(
+                mockPostCommitmentSignatureForTransaction,
+            ).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commitmentTxHash: "0xrecovered",
+                }),
+            );
+            expect(currentSwap.commitmentLockupTxHash).toEqual("0xrecovered");
+            expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
+        });
+
+        expect(mockQueryFilter).toHaveBeenCalledWith(
+            "lockup-filter",
+            5,
+            "latest",
+        );
+    });
+
+    test("should recover the commitment lockup after an Alchemy send failure", async () => {
+        mockSendPopulatedTransaction.mockRejectedValueOnce(
+            new Error("Alchemy request failed for wallet_sendPreparedCalls"),
+        );
+        mockQueryFilter.mockResolvedValueOnce([]).mockResolvedValueOnce([
+            {
+                data: "0xlockup",
+                topics: ["0xtopic"],
+                transactionHash: "0xrecovered-after-send",
+                index: 8,
+            },
+        ]);
+        mockLockupParseLog.mockReturnValue({
+            name: "Lockup",
+            args: {
+                preimageHash:
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                tokenAddress: "0xf100000000000000000000000000000000000000",
+                claimAddress: "0xc000000000000000000000000000000000000000",
+                refundAddress: "0x9000000000000000000000000000000000000000",
+                timelock: 321n,
+            },
+        });
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSendPopulatedTransaction).toHaveBeenCalledTimes(1);
+            expect(
+                mockPostCommitmentSignatureForTransaction,
+            ).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    commitmentTxHash: "0xrecovered-after-send",
+                }),
+            );
+            expect(currentSwap.commitmentLockupTxHash).toEqual(
+                "0xrecovered-after-send",
+            );
+            expect(currentSwap.commitmentSignatureSubmitted).toEqual(true);
+        });
+    });
+
+    test("should keep the swap unresolved when recovery finds no lockup after an Alchemy send failure", async () => {
+        mockSendPopulatedTransaction.mockRejectedValueOnce(
+            new Error("Alchemy request failed for wallet_sendPreparedCalls"),
+        );
+        mockQueryFilter.mockResolvedValue([]);
+
+        render(() => <SwapExecutionWorker />);
+
+        await waitFor(() => {
+            expect(mockSendPopulatedTransaction).toHaveBeenCalledTimes(1);
+        });
+
+        expect(currentSwap.commitmentLockupTxHash).toBeUndefined();
+        expect(
+            mockPostCommitmentSignatureForTransaction,
+        ).not.toHaveBeenCalled();
     });
 
     test("should ignore stale pre-OFT swaps that already moved past the pre-lockup stage", async () => {

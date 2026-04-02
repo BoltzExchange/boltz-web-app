@@ -95,6 +95,7 @@ export type OftReceivedEvent = {
     srcEid: bigint;
     toAddress: string;
     amountReceivedLD: bigint;
+    blockNumber: number;
     logIndex: number;
 };
 
@@ -272,6 +273,7 @@ const parseOftReceivedLog = (
         srcEid,
         toAddress,
         amountReceivedLD,
+        blockNumber: oftReceivedLog.blockNumber,
         logIndex: oftReceivedLog.index,
     };
 };
@@ -339,6 +341,7 @@ export const getOftReceivedEvent = (
         srcEid: event.srcEid.toString(),
         toAddress: event.toAddress,
         amountReceivedLD: event.amountReceivedLD.toString(),
+        blockNumber: event.blockNumber,
         logIndex: event.logIndex,
     });
 
@@ -396,6 +399,7 @@ export const getOftReceivedEventByGuid = async (
         srcEid: event.srcEid.toString(),
         toAddress: event.toAddress,
         amountReceivedLD: event.amountReceivedLD.toString(),
+        blockNumber: event.blockNumber,
         logIndex: event.logIndex,
     });
 

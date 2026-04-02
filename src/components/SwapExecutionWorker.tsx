@@ -39,6 +39,7 @@ import {
     getOftReceivedEventByGuid,
     getOftSentEvent,
 } from "../utils/oft/oft";
+import { createAssetProvider } from "../utils/provider";
 import { fetchDexQuote } from "../utils/qouter";
 import { prefix0x, satsToAssetAmount } from "../utils/rootstock";
 import {
@@ -52,6 +53,7 @@ import {
 
 const retryIntervalMs = 1_000;
 const taskRetryIntervalMs = 3_000;
+const emptyPreimageHash = prefix0x("00".repeat(32));
 
 const sleep = (ms: number) =>
     new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -81,6 +83,11 @@ const getCommitmentChainAsset = (swap: SomeSwap) =>
     swap.oft?.position === OftPosition.Pre
         ? swap.oft.destinationAsset
         : swap.assetSend;
+
+const getPreOftCommitmentClaimAddress = (swap: SomeSwap) =>
+    swap.type === SwapType.Chain
+        ? (swap as ChainSwap).lockupDetails.claimAddress
+        : swap.claimAddress;
 
 const getSwapPreimageHash = async (swap: SomeSwap): Promise<string> => {
     switch (swap.type) {
@@ -118,6 +125,12 @@ const needsCommitmentPost = (swap: SomeSwap | null | undefined) =>
 
 type TaskStage = "pre-oft" | "commitment";
 
+const enum CommitmentLockupTransactionSource {
+    Recovered = "recovered",
+    Resumed = "resumed",
+    Broadcast = "broadcast",
+}
+
 const isTaskRelevant = (
     stage: TaskStage,
     swap: SomeSwap | null | undefined,
@@ -152,6 +165,129 @@ export const SwapExecutionWorker = () => {
         if (swap()?.id === updatedSwap.id) {
             setSwap(updatedSwap);
         }
+    };
+
+    const persistCommitmentLockupTransaction = async (
+        swapId: string,
+        commitmentLockupTxHash: string,
+        source: CommitmentLockupTransactionSource,
+    ) => {
+        const latestSwap = await getSwap<SomeSwap>(swapId);
+        if (latestSwap === undefined || latestSwap === null) {
+            return false;
+        }
+
+        latestSwap.commitmentLockupTxHash = commitmentLockupTxHash;
+        latestSwap.commitmentLockupCallId = undefined;
+        latestSwap.commitmentSignatureSubmitted = false;
+        await persistSwap(latestSwap);
+        log.info(
+            `Swap execution persisted ${source} commitment lockup transaction`,
+            getSwapExecutionLogContext(latestSwap.id, {
+                commitmentLockupTxHash,
+            }),
+        );
+        queueRelevantTasks(latestSwap);
+        return true;
+    };
+
+    const recoverPreOftCommitmentLockup = async (
+        currentSwap: SomeSwap,
+        receivedEvent: {
+            blockNumber: number;
+        },
+        gasAbstractionSigner: {
+            address: string;
+        },
+    ) => {
+        const commitmentAsset = currentSwap.assetSend;
+        const erc20Swap = getErc20Swap(commitmentAsset).connect(
+            createAssetProvider(commitmentAsset),
+        );
+        const lockupLogs = await erc20Swap.queryFilter(
+            erc20Swap.filters.Lockup(),
+            receivedEvent.blockNumber,
+            "latest",
+        );
+        const claimAddress = getPreOftCommitmentClaimAddress(currentSwap);
+        if (typeof claimAddress !== "string") {
+            log.warn(
+                "Swap execution cannot recover pre-OFT commitment lockup without claim address",
+                getSwapExecutionLogContext(currentSwap.id, {
+                    commitmentAsset,
+                    fromBlock: receivedEvent.blockNumber,
+                }),
+            );
+            return undefined;
+        }
+        const tokenAddress = getTokenAddress(commitmentAsset);
+        const matchingLockups = lockupLogs.flatMap((event) => {
+            const parsedLog = erc20Swap.interface.parseLog({
+                data: event.data,
+                topics: [...event.topics],
+            });
+            if (parsedLog?.name !== "Lockup") {
+                return [];
+            }
+
+            const {
+                preimageHash,
+                tokenAddress: lockupTokenAddress,
+                claimAddress: lockupClaimAddress,
+                refundAddress,
+            } = parsedLog.args;
+            const matches =
+                typeof event.transactionHash === "string" &&
+                preimageHash.toLowerCase() ===
+                    emptyPreimageHash.toLowerCase() &&
+                lockupTokenAddress.toLowerCase() ===
+                    tokenAddress.toLowerCase() &&
+                lockupClaimAddress.toLowerCase() ===
+                    claimAddress.toLowerCase() &&
+                refundAddress.toLowerCase() ===
+                    gasAbstractionSigner.address.toLowerCase();
+
+            if (!matches) {
+                return [];
+            }
+
+            return [
+                {
+                    transactionHash: event.transactionHash,
+                    logIndex: event.index,
+                },
+            ];
+        });
+
+        if (matchingLockups.length === 1) {
+            const recovered = matchingLockups[0];
+            log.info(
+                "Swap execution recovered pre-OFT commitment lockup",
+                getSwapExecutionLogContext(currentSwap.id, {
+                    commitmentAsset,
+                    commitmentLockupTxHash: recovered.transactionHash,
+                    fromBlock: receivedEvent.blockNumber,
+                    logIndex: recovered.logIndex,
+                }),
+            );
+            return recovered.transactionHash;
+        }
+
+        if (matchingLockups.length > 1) {
+            log.warn(
+                "Swap execution found multiple matching pre-OFT commitment lockups",
+                getSwapExecutionLogContext(currentSwap.id, {
+                    commitmentAsset,
+                    fromBlock: receivedEvent.blockNumber,
+                    matches: matchingLockups.map((lockup) => ({
+                        transactionHash: lockup.transactionHash,
+                        logIndex: lockup.logIndex,
+                    })),
+                }),
+            );
+        }
+
+        return undefined;
     };
 
     const abandonFailedOftSend = async (
@@ -313,22 +449,11 @@ export const SwapExecutionWorker = () => {
                 await waitForPreparedCallTransactionHash(
                     currentSwap.commitmentLockupCallId,
                 );
-            const latestSwap = await getSwap<SomeSwap>(currentSwap.id);
-            if (latestSwap === undefined || latestSwap === null) {
-                return;
-            }
-
-            latestSwap.commitmentLockupTxHash = commitmentLockupTxHash;
-            latestSwap.commitmentLockupCallId = undefined;
-            latestSwap.commitmentSignatureSubmitted = false;
-            await persistSwap(latestSwap);
-            log.info(
-                "Swap execution persisted resumed commitment lockup transaction",
-                getSwapExecutionLogContext(latestSwap.id, {
-                    commitmentLockupTxHash,
-                }),
+            await persistCommitmentLockupTransaction(
+                currentSwap.id,
+                commitmentLockupTxHash,
+                CommitmentLockupTransactionSource.Resumed,
             );
-            queueRelevantTasks(latestSwap);
             return;
         }
 
@@ -414,6 +539,20 @@ export const SwapExecutionWorker = () => {
         const gasAbstractionSigner = getGasAbstractionSigner(
             latestSwap.oft.destinationAsset,
         );
+        const recoveredCommitmentLockupTxHash =
+            await recoverPreOftCommitmentLockup(
+                latestSwap,
+                receivedEvent,
+                gasAbstractionSigner,
+            );
+        if (recoveredCommitmentLockupTxHash !== undefined) {
+            await persistCommitmentLockupTransaction(
+                latestSwap.id,
+                recoveredCommitmentLockupTxHash,
+                CommitmentLockupTransactionSource.Recovered,
+            );
+            return;
+        }
         const receivedAmount = receivedEvent.amountReceivedLD;
         const expectedAmount = satsToAssetAmount(
             latestSwap.sendAmount,
@@ -482,9 +621,7 @@ export const SwapExecutionWorker = () => {
         const tx = await router.executeAndLockERC20.populateTransaction(
             prefix0x("00".repeat(32)),
             getTokenAddress(latestSwap.assetSend),
-            latestSwap.type === SwapType.Chain
-                ? (latestSwap as ChainSwap).lockupDetails.claimAddress
-                : latestSwap.claimAddress,
+            getPreOftCommitmentClaimAddress(latestSwap),
             gasAbstractionSigner.address,
             commitmentLockupDetails.timelock,
             encoded.calls.map((call) => ({
@@ -495,35 +632,50 @@ export const SwapExecutionWorker = () => {
         );
         calls.push(toAlchemyCall(tx));
 
-        latestSwap.commitmentLockupTxHash = await sendPopulatedTransaction(
-            GasAbstractionType.Signer,
-            gasAbstractionSigner,
-            calls,
-            {
-                alchemy: {
-                    onPreparedCallId: async (callId) => {
-                        latestSwap.commitmentLockupCallId = callId;
-                        await persistSwap(latestSwap);
-                        log.info(
-                            "Swap execution persisted commitment lockup call ID",
-                            getSwapExecutionLogContext(latestSwap.id, {
-                                callId,
-                            }),
-                        );
+        try {
+            latestSwap.commitmentLockupTxHash = await sendPopulatedTransaction(
+                GasAbstractionType.Signer,
+                gasAbstractionSigner,
+                calls,
+                {
+                    alchemy: {
+                        onPreparedCallId: async (callId) => {
+                            latestSwap.commitmentLockupCallId = callId;
+                            await persistSwap(latestSwap);
+                            log.info(
+                                "Swap execution persisted commitment lockup call ID",
+                                getSwapExecutionLogContext(latestSwap.id, {
+                                    callId,
+                                }),
+                            );
+                        },
                     },
                 },
-            },
+            );
+        } catch (error) {
+            const recoveredCommitmentLockupTxHash =
+                await recoverPreOftCommitmentLockup(
+                    latestSwap,
+                    receivedEvent,
+                    gasAbstractionSigner,
+                );
+            if (recoveredCommitmentLockupTxHash !== undefined) {
+                await persistCommitmentLockupTransaction(
+                    latestSwap.id,
+                    recoveredCommitmentLockupTxHash,
+                    CommitmentLockupTransactionSource.Recovered,
+                );
+                return;
+            }
+
+            throw error;
+        }
+
+        await persistCommitmentLockupTransaction(
+            latestSwap.id,
+            latestSwap.commitmentLockupTxHash,
+            CommitmentLockupTransactionSource.Broadcast,
         );
-        latestSwap.commitmentLockupCallId = undefined;
-        latestSwap.commitmentSignatureSubmitted = false;
-        await persistSwap(latestSwap);
-        log.info(
-            "Swap execution persisted commitment lockup transaction",
-            getSwapExecutionLogContext(latestSwap.id, {
-                commitmentLockupTxHash: latestSwap.commitmentLockupTxHash,
-            }),
-        );
-        queueRelevantTasks(latestSwap);
     };
 
     const clearScheduledRetry = (taskId: string) => {

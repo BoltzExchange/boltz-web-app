@@ -461,6 +461,7 @@ describe("oft", () => {
                 {
                     data: "0x1234",
                     topics: ["0xtopic", "0xguid"],
+                    blockNumber: 123,
                     index: 5,
                 },
             ]),
@@ -494,6 +495,7 @@ describe("oft", () => {
             srcEid: 40161n,
             toAddress: "0x5000000000000000000000000000000000000000",
             amountReceivedLD: 42n,
+            blockNumber: 123,
             logIndex: 5,
         });
 
